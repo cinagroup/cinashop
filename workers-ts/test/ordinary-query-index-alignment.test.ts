@@ -17,7 +17,7 @@ const prior = [...read("orm-query-index-reconciliation.json").entries, ...read("
 const baseKeys = prior.map((entry) => entry.key);
 
 describe("DB-009D2b3b complete ordinary index disposition", () => {
-  it("binds all remaining 22 objects and ordered columns to immutable history and real query source lines", () => {
+  it("binds all remaining 22 objects and ordered columns to immutable history and live query snippets", () => {
     const expected = historical.entries.filter((entry) => entry.decision === "review-orm-only");
     expect(manifest.entries).toHaveLength(22);
     expect(manifest.entries.map((entry) => entry.key)).toEqual(expected.map((entry) => entry.key));
@@ -29,8 +29,10 @@ describe("DB-009D2b3b complete ordinary index disposition", () => {
       const query = entry.queryEvidence;
       expect(query.purpose).toBeTruthy();
       const source = readFileSync(query.source, "utf8").replace(/\r\n/g, "\n");
-      expect(source.split("\n").slice(query.sourceLine - 1).join("\n").startsWith(query.sourceSql),
-        `${entry.key}: ${query.source}:${query.sourceLine}`).toBe(true);
+      // The manifest records the source line at review time. Later source edits may move
+      // the query, but its exact SQL evidence must still exist once in the live file.
+      expect(query.sourceLine, `${entry.key}: historical source line`).toBeGreaterThan(0);
+      expect(source.split(query.sourceSql), `${entry.key}: ${query.source}:${query.sourceLine}`).toHaveLength(2);
       for (const column of entry.columns) {
         const camel = column.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
         expect(query.sourceSql.includes(column) || query.sourceSql.includes(camel), `${entry.key}.${column}`).toBe(true);

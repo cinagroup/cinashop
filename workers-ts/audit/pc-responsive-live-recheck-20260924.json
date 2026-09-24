@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-pc-responsive-live-recheck",
+  "observedAtUtc": "2026-09-24T05:00:44Z",
+  "checklistItem": "FE-002D",
+  "deployment": {
+    "project": "cinashop-pc",
+    "environment": "production",
+    "deploymentId": "b4d86172-5ced-40ee-84fc-8b89dcae0f98",
+    "sourceCommit": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "baseUrl": "https://b4d86172.cinashop-pc.pages.dev",
+    "identityEvidence": "pc-product-detail-live-recheck-20260924.json",
+    "entryScript": "/assets/index-B9i69U9K.js"
+  },
+  "method": "installed Microsoft Edge --headless=new through Chrome DevTools Protocol; anonymous, 844px height, deviceScaleFactor 1, mobile=false",
+  "checks": [
+    {
+      "viewportWidth": 320,
+      "route": "/search?keyword=%E6%B5%8B%E8%AF%95",
+      "heading": "搜索: 测试",
+      "clientWidth": 305,
+      "scrollWidth": 305,
+      "bodyScrollWidth": 305,
+      "visibleNavLinks": 8,
+      "allNavWithinHorizontalBounds": true,
+      "searchInputWithinHorizontalBounds": true,
+      "searchButtonWithinHorizontalBounds": true,
+      "searchButtonRight": 293
+    },
+    {
+      "viewportWidth": 320,
+      "route": "/goods/70",
+      "heading": "测试商品A",
+      "clientWidth": 305,
+      "scrollWidth": 305,
+      "bodyScrollWidth": 305,
+      "visibleNavLinks": 8,
+      "allNavWithinHorizontalBounds": true,
+      "searchInputWithinHorizontalBounds": true,
+      "searchButtonWithinHorizontalBounds": true,
+      "searchButtonRight": 293
+    },
+    {
+      "viewportWidth": 390,
+      "route": "/search?keyword=%E6%B5%8B%E8%AF%95",
+      "heading": "搜索: 测试",
+      "clientWidth": 375,
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "visibleNavLinks": 8,
+      "allNavWithinHorizontalBounds": true,
+      "searchInputWithinHorizontalBounds": true,
+      "searchButtonWithinHorizontalBounds": true,
+      "searchButtonRight": 363
+    },
+    {
+      "viewportWidth": 390,
+      "route": "/goods/70",
+      "heading": "测试商品A",
+      "clientWidth": 375,
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "visibleNavLinks": 8,
+      "allNavWithinHorizontalBounds": true,
+      "searchInputWithinHorizontalBounds": true,
+      "searchButtonWithinHorizontalBounds": true,
+      "searchButtonRight": 363
+    },
+    {
+      "viewportWidth": 768,
+      "route": "/search?keyword=%E6%B5%8B%E8%AF%95",
+      "heading": "搜索: 测试",
+      "clientWidth": 753,
+      "scrollWidth": 753,
+      "bodyScrollWidth": 753,
+      "visibleNavLinks": 8,
+      "allNavWithinHorizontalBounds": true,
+      "searchInputWithinHorizontalBounds": true,
+      "searchButtonWithinHorizontalBounds": true,
+      "searchButtonRight": 636
+    },
+    {
+      "viewportWidth": 768,
+      "route": "/goods/70",
+      "heading": "测试商品A",
+      "clientWidth": 753,
+      "scrollWidth": 753,
+      "bodyScrollWidth": 753,
+      "visibleNavLinks": 8,
+      "allNavWithinHorizontalBounds": true,
+      "searchInputWithinHorizontalBounds": true,
+      "searchButtonWithinHorizontalBounds": true,
+      "searchButtonRight": 636
+    }
+  ],
+  "runtime": {
+    "allSixEntryScriptsMatchDeployment": true,
+    "allSixRequestMethodsObserved": ["GET"],
+    "nonGetRequestsBlockedByCdp": 0,
+    "consoleErrorsOrWarnings": 0,
+    "runtimeExceptions": 0,
+    "nonCanceledNetworkFailures": 0,
+    "httpErrorsAtLeast400": 0
+  },
+  "interpretation": "The six anonymous pages have no document-level horizontal overflow and the visible navigation, search input, and search button are within each viewport's client width.",
+  "limits": [
+    "Authenticated-role navigation and controls were not tested.",
+    "The package-purchase modal and its open state were not tested.",
+    "This is Edge headless viewport emulation, not a physical phone or another browser; no write, login, deployment, or production mutation was performed."
+  ]
+}

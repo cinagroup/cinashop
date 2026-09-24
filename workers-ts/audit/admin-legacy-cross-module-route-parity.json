@@ -1,0 +1,719 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "The 18 as-yet-unreviewed surface=page routes from routes.js (2), statistic.js (6), finance.js (4), echarts.js (2), only /admin/login from frameOut.js (1), index.js (1), and system.js (2). Three other routes.js pages already belong to the setting/system ledgers; Kefu frameOut pages belong to the kefu ledger.",
+    "reviewBasis": "Compare behavior-bearing old Vue components and APIs against actual target Admin screens, registered Worker APIs, data entities and permissions. Static old auth and component lines are pinned to seven router hashes; generation requires only this repository. An API-only route or similarly named screen does not establish parity. Empty or hard-coded demo screens are retired only with source evidence.",
+    "validationBoundary": "Code-only semantic review; no real-role browser E2E, representative data reconciliation, production deployment, or publication is claimed. Functional acceptance stays open."
+  },
+  "summary": {
+    "legacyRoutes": 18,
+    "reviewed": 18,
+    "candidate": 4,
+    "partial": 10,
+    "missing": 3,
+    "retired": 1,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/pages/diy",
+        "title": "首页装修",
+        "component": "@/pages/setting/devise/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/setting/devise/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/setting/devise/index.vue:31",
+        "source": "cinashop-php/view/admin/src/router/routes.js:98",
+        "routerSha256": "9432b5a0b65c09adaf828dbb7125352eea94c54b444f5197647c59aa40fe13c2",
+        "auth": "['admin-setting-pages-diy']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/dise"
+      ],
+      "targetApis": [
+        "GET /adminapi/dise/list",
+        "POST /adminapi/dise/save"
+      ],
+      "covered": [
+        "新 DIY 目录可列出、建立并编辑首页合同的 value JSON，按旧字段保存。"
+      ],
+      "remaining": [
+        "旧拖拽装修组件、页面预览、默认首页切换及小程序码入口未在新 Admin 提供可视化流程；新建默认停用。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/routes.js",
+        "cinashop-php/view/admin/src/pages/setting/devise/index.vue",
+        "cinashop-php/view/admin/src/pages/setting/devise/index.vue:31",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/content/DiseList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "dise.view/dise.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/pages/special/diy",
+        "title": "专题页设计",
+        "component": "@/pages/setting/special/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/setting/special/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/setting/special/index.vue:21",
+        "source": "cinashop-php/view/admin/src/router/routes.js:107",
+        "routerSha256": "9432b5a0b65c09adaf828dbb7125352eea94c54b444f5197647c59aa40fe13c2",
+        "auth": "['setting-diy-special-diy']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/dise/list"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧专题页有独立装修、保存和重置；新 DIY 目录的新建动作固定 type=1 首页合同，没有专题页可视化编辑入口。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/routes.js",
+        "cinashop-php/view/admin/src/pages/setting/special/index.vue",
+        "cinashop-php/view/admin/src/pages/setting/special/index.vue:21",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/content/DiseList.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/echarts/trade/order",
+        "title": "交易统计",
+        "component": "@/pages/echarts/trade/order",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/echarts/trade/order.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:174",
+        "source": "cinashop-php/view/admin/src/router/modules/echarts.js:23",
+        "routerSha256": "802b0c43086a708e236580a94958b037bf30c27795f5e4fe05144537762afbaa",
+        "auth": "['admin-order-storeOrder-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/order",
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/chart",
+        "GET /adminapi/order/list",
+        "GET /adminapi/statistic/order/get_basic"
+      ],
+      "covered": [
+        "旧页挂载时请求一次 GET /order/chart；服务端实际为 all/unpaid/unshipped/untake/unevaluate/complete 六项赋值。新订单页和只读 Worker /order/chart 以当前有效履约单口径提供六数；订单统计 tab 另有支付与退款统计。"
+      ],
+      "remaining": [
+        "旧 PHP 默认仅平台、pid 0/-1 且含用户删除行；新页跨平台/门店/供应商统计未删除的当前履约单和拆单子单，需用历史数据核对范围差异。旧页的退款中/已退款标签读取 refunding/refund，但服务端对应赋值已注释；日期控件仅本地绑定，时间回调为空，类型/状态选择未重新请求计数。旧 PV/UV 曲线、固定卡片和 John Brown 样例表格仅是演示内容。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/echarts.js",
+        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue",
+        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:174",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/order/OrderList.vue",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "cinashop-php/view/admin/src/api/order.js:28",
+        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:71",
+        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:227",
+        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:231",
+        "cinashop-php/app/common/controller/Order.php:56",
+        "cinashop-php/app/services/order/StoreOrderServices.php:1040",
+        "cinashop-php/app/services/order/StoreOrderServices.php:1097",
+        "cinashop-php/app/services/order/StoreOrderServices.php:1101",
+        "workers-ts/src/services/admin/AdminOrderReadService.ts",
+        "view/admin-ts/src/api/order.ts"
+      ],
+      "targetPermissions": [
+        "order.view",
+        "statistic.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/echarts/trade/product",
+        "title": "商品统计",
+        "component": "@/pages/echarts/trade/product",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/echarts/trade/product.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/echarts/trade/product.vue:1",
+        "source": "cinashop-php/view/admin/src/router/modules/echarts.js:32",
+        "routerSha256": "802b0c43086a708e236580a94958b037bf30c27795f5e4fe05144537762afbaa",
+        "auth": "['admin-order-storeOrder-index']"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧组件仅空 template 和 name='product'，没有商品查询、图表或操作；真实商品统计另由 /admin/statistic/product 承担。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/echarts.js",
+        "cinashop-php/view/admin/src/pages/echarts/trade/product.vue",
+        "cinashop-php/view/admin/src/pages/echarts/trade/product.vue:1",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/finance/user_extract/index",
+        "title": "提现申请",
+        "component": "@/pages/finance/userExtract/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/finance/userExtract/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/finance/userExtract/index.vue:16",
+        "source": "cinashop-php/view/admin/src/router/modules/finance.js:26",
+        "routerSha256": "03e5ca60c72930a0aee0d0d52b76a97c231b41ca86174d9de8853b46628a92a0",
+        "auth": "['finance-user_extract']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/finance/extract"
+      ],
+      "targetApis": [
+        "GET /adminapi/extract/list",
+        "POST /adminapi/extract/status/:id"
+      ],
+      "covered": [
+        "新提现审核页可按状态列出申请，并按 extract.manage 通过或拒绝。"
+      ],
+      "remaining": [
+        "旧日期/提现方式/账号筛选、统计卡、收款二维码、编辑收款资料、备注及无效状态动作未在新页等量呈现。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/finance.js",
+        "cinashop-php/view/admin/src/pages/finance/userExtract/index.vue",
+        "cinashop-php/view/admin/src/pages/finance/userExtract/index.vue:16",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/ExtractList.vue",
+        "view/admin-ts/src/api/finance.ts"
+      ],
+      "targetPermissions": [
+        "extract.view/extract.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/finance/user_recharge/index",
+        "title": "充值记录",
+        "component": "@/pages/finance/financialRecords/recharge",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/finance/financialRecords/recharge/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/finance/financialRecords/recharge/index.vue:16",
+        "source": "cinashop-php/view/admin/src/router/modules/finance.js:35",
+        "routerSha256": "03e5ca60c72930a0aee0d0d52b76a97c231b41ca86174d9de8853b46628a92a0",
+        "auth": "['finance-user-recharge']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/bill/list"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧充值订单目录含已付/未付、充值单号、充值统计、退款和删除；新资金流水仅列已入账 user_bill，不能展示未付充值单或做充值退款。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/finance.js",
+        "cinashop-php/view/admin/src/pages/finance/financialRecords/recharge/index.vue",
+        "cinashop-php/view/admin/src/pages/finance/financialRecords/recharge/index.vue:16",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/BillList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/finance/finance/bill",
+        "title": "资金记录",
+        "component": "@/pages/finance/financialRecords/bill",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/finance/financialRecords/bill/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/finance/financialRecords/bill/index.vue:14",
+        "source": "cinashop-php/view/admin/src/router/modules/finance.js:44",
+        "routerSha256": "03e5ca60c72930a0aee0d0d52b76a97c231b41ca86174d9de8853b46628a92a0",
+        "auth": "['finance-finance-bill']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/finance/bill"
+      ],
+      "targetApis": [
+        "GET /adminapi/bill/list"
+      ],
+      "covered": [
+        "新资金流水页分页列出 user_bill，显示用户、类型、收支金额、余额和备注。"
+      ],
+      "remaining": [
+        "旧昵称/ID、时间、业务类型筛选及导出缺失；新页只筛收入/支出。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/finance.js",
+        "cinashop-php/view/admin/src/pages/finance/financialRecords/bill/index.vue",
+        "cinashop-php/view/admin/src/pages/finance/financialRecords/bill/index.vue:14",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/BillList.vue",
+        "view/admin-ts/src/api/finance.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "bill.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/finance/finance/commission",
+        "title": "佣金记录",
+        "component": "@/pages/finance/commission/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/finance/commission/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/finance/commission/index.vue:15",
+        "source": "cinashop-php/view/admin/src/router/modules/finance.js:53",
+        "routerSha256": "03e5ca60c72930a0aee0d0d52b76a97c231b41ca86174d9de8853b46628a92a0",
+        "auth": "['finance-finance-commission']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/bill/list"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧页按用户汇总总佣金、账户佣金、提现到账佣金，并有用户明细和导出；新 user_bill 流水不是按用户聚合的佣金账本页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/finance.js",
+        "cinashop-php/view/admin/src/pages/finance/commission/index.vue",
+        "cinashop-php/view/admin/src/pages/finance/commission/index.vue:15",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/BillList.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/login",
+        "title": "$t:page.login.title",
+        "component": "@/pages/account/login",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/account/login/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/account/login/index.vue:119",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:14",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "public"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/login"
+      ],
+      "targetApis": [
+        "POST /adminapi/login"
+      ],
+      "covered": [
+        "新管理端有账号密码登录、动态品牌素材和限流。"
+      ],
+      "remaining": [
+        "旧页的短信登录、忘记密码/手机号重置和图形/拼图校验分支未由新登录屏承接。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/pages/account/login/index.vue",
+        "cinashop-php/view/admin/src/pages/account/login/index.vue:119",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/Login.vue",
+        "view/admin-ts/src/stores/auth.ts",
+        "view/admin-ts/src/api/publicBranding.ts"
+      ],
+      "targetPermissions": [
+        "public_login"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/",
+        "title": "主页",
+        "component": "@/pages/index/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/index/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/index/index.vue:5",
+        "source": "cinashop-php/view/admin/src/router/modules/index.js:28",
+        "routerSha256": "17c65f8061218397fa3ace2d4763760bb9dbdaac500f5695ed74fabf21c405c6",
+        "auth": "['admin-index-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/dashboard"
+      ],
+      "targetApis": [
+        "GET /adminapi/home/header",
+        "GET /adminapi/home/order",
+        "GET /adminapi/home/user"
+      ],
+      "covered": [
+        "新控制台列出经营统计卡、订单周期趋势、近 30 天新增用户与购买用户分层，并加载待办提醒。"
+      ],
+      "remaining": [
+        "旧 gridMenu 的运营快捷入口与旧首页组件筛选/卡片细项未逐项迁移核对；需用生产数据核对图表和统计口径。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/index.js",
+        "cinashop-php/view/admin/src/pages/index/index.vue",
+        "cinashop-php/view/admin/src/pages/index/index.vue:5",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/Dashboard.vue",
+        "cinashop-php/view/admin/src/pages/index/components/gridMenu.vue",
+        "view/admin-ts/src/api/auth.ts",
+        "workers-ts/src/controllers/api/v1/AdminController.ts"
+      ],
+      "targetPermissions": [
+        "dashboard.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/statistic/product",
+        "title": "商品统计",
+        "component": "@/pages/statistic/product/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/statistic/product/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/statistic/product/index.vue:4",
+        "source": "cinashop-php/view/admin/src/router/modules/statistic.js:27",
+        "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
+        "auth": "inherited auth: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/statistic/product/get_basic",
+        "GET /adminapi/statistic/product/get_product_ranking",
+        "GET /adminapi/statistic/product/get_excel"
+      ],
+      "covered": [
+        "新商品统计 tab 有基础指标、趋势、经营排行和 CSV 导出。"
+      ],
+      "remaining": [
+        "旧排行可展开商品详情与更多筛选；新 tab 只显示排行行，旧导出与历史数据口径仍需核对。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/statistic.js",
+        "cinashop-php/view/admin/src/pages/statistic/product/index.vue",
+        "cinashop-php/view/admin/src/pages/statistic/product/index.vue:4",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "view/admin-ts/src/api/statistic.ts",
+        "cinashop-php/view/admin/src/pages/statistic/product/components/productRanking.vue"
+      ],
+      "targetPermissions": [
+        "statistic.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/statistic/user",
+        "title": "用户统计",
+        "component": "@/pages/statistic/user/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/statistic/user/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/statistic/user/index.vue:10",
+        "source": "cinashop-php/view/admin/src/router/modules/statistic.js:35",
+        "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
+        "auth": "inherited auth: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/statistic/user/get_basic",
+        "GET /adminapi/statistic/user/get_region",
+        "GET /adminapi/statistic/user/get_excel"
+      ],
+      "covered": [
+        "新用户统计 tab 包含基础、趋势、微信、地域、性别和 CSV 导出。"
+      ],
+      "remaining": [
+        "旧页面渠道及付费分析的全部切换/字段未逐项验证，历史统计和导出口径需真实数据对照。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/statistic.js",
+        "cinashop-php/view/admin/src/pages/statistic/user/index.vue",
+        "cinashop-php/view/admin/src/pages/statistic/user/index.vue:10",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "view/admin-ts/src/pages/statistic/components/UserStatisticsPanel.vue",
+        "view/admin-ts/src/api/statistic.ts"
+      ],
+      "targetPermissions": [
+        "statistic.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/statistic/transaction",
+        "title": "交易统计",
+        "component": "@/pages/statistic/transaction/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/statistic/transaction/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/statistic/transaction/index.vue:4",
+        "source": "cinashop-php/view/admin/src/router/modules/statistic.js:43",
+        "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
+        "auth": "inherited auth: true"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/statistic/trade/top_trade",
+        "GET /adminapi/statistic/trade/bottom_trade"
+      ],
+      "covered": [
+        "新交易统计 tab 使用对应 top/bottom API，展示今日、月度及交易概况，并支持 CSV 导出。"
+      ],
+      "remaining": [
+        "仍需以旧生产数据核对各支付/退款口径、图表时区和导出结果；代码分类不等于上线验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/statistic.js",
+        "cinashop-php/view/admin/src/pages/statistic/transaction/index.vue",
+        "cinashop-php/view/admin/src/pages/statistic/transaction/index.vue:4",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "view/admin-ts/src/pages/statistic/components/TradeStatisticsPanel.vue",
+        "view/admin-ts/src/api/statistic.ts"
+      ],
+      "targetPermissions": [
+        "statistic.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/statistic/capital",
+        "title": "资金流水",
+        "component": "@/pages/statistic/capital/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/statistic/capital/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/statistic/capital/index.vue:14",
+        "source": "cinashop-php/view/admin/src/router/modules/statistic.js:51",
+        "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
+        "auth": "['admin-statistic-capital']"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/finance/capital-flow"
+      ],
+      "targetApis": [
+        "GET /adminapi/flow/get_list",
+        "POST /adminapi/flow/set_mark/:id"
+      ],
+      "covered": [
+        "新平台资金流水页使用独立 capital_flow 账本，可按交易类型、订单/昵称/电话/UID及时间区间筛选，分页显示旧列，并在 capital_flow.manage 权限下编辑备注。"
+      ],
+      "remaining": [
+        "仍需真实角色浏览器验收及代表性资金流水数据核对，尤其时间边界、权限与备注保存结果；代码候选不等于生产验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/statistic.js",
+        "cinashop-php/view/admin/src/pages/statistic/capital/index.vue",
+        "cinashop-php/view/admin/src/pages/statistic/capital/index.vue:14",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/CapitalFlowList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCapitalFlowController.ts",
+        "workers-ts/src/services/finance/CapitalFlowService.ts",
+        "view/admin-ts/src/api/finance.ts",
+        "view/admin-ts/src/pages/finance/capitalFlowRange.ts"
+      ],
+      "targetPermissions": [
+        "capital_flow.view/capital_flow.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/statistic/order",
+        "title": "订单统计",
+        "component": "@/pages/statistic/order/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/statistic/order/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/statistic/order/index.vue:8",
+        "source": "cinashop-php/view/admin/src/router/modules/statistic.js:60",
+        "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
+        "auth": "inherited auth: true"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/statistic/order/get_basic",
+        "GET /adminapi/statistic/order/get_channel",
+        "GET /adminapi/statistic/order/get_type"
+      ],
+      "covered": [
+        "新订单统计 tab 有支付/退款/优惠指标、营业趋势、来源和类型分布，对应旧统计 API。"
+      ],
+      "remaining": [
+        "仍需用真实订单核对渠道归因、退款口径、统计日期边界和旧图表显示。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/statistic.js",
+        "cinashop-php/view/admin/src/pages/statistic/order/index.vue",
+        "cinashop-php/view/admin/src/pages/statistic/order/index.vue:8",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "view/admin-ts/src/api/statistic.ts"
+      ],
+      "targetPermissions": [
+        "statistic.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/statistic/balance",
+        "title": "余额统计",
+        "component": "@/pages/statistic/balance/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/statistic/balance/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/statistic/balance/index.vue:8",
+        "source": "cinashop-php/view/admin/src/router/modules/statistic.js:68",
+        "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
+        "auth": "inherited auth: true"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/statistic/balance/get_basic",
+        "GET /adminapi/statistic/balance/get_channel",
+        "GET /adminapi/statistic/balance/get_type"
+      ],
+      "covered": [
+        "新余额统计 tab 有当前余额、累计收入/支出、趋势及来源/消耗分布，对应旧统计 API。"
+      ],
+      "remaining": [
+        "仍需用旧生产流水核对有效状态、分类和历史余额口径。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/statistic.js",
+        "cinashop-php/view/admin/src/pages/statistic/balance/index.vue",
+        "cinashop-php/view/admin/src/pages/statistic/balance/index.vue:8",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "view/admin-ts/src/pages/statistic/components/BalanceStatisticsPanel.vue",
+        "view/admin-ts/src/api/statistic.ts"
+      ],
+      "targetPermissions": [
+        "statistic.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/out",
+        "title": "对外接口",
+        "component": "@/pages/system/out/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/system/out/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/system/out/index.vue:49",
+        "source": "cinashop-php/view/admin/src/router/modules/system.js:144",
+        "routerSha256": "f84e11ebb974799f4cf3da05daa772c9b973c07960ddb6e86fcef823b58cb0ff",
+        "auth": "['admin-out']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/system/out"
+      ],
+      "targetApis": [
+        "GET /adminapi/system_out/index",
+        "POST /adminapi/system_out/save",
+        "GET /adminapi/system_out/interface/list"
+      ],
+      "covered": [
+        "新对外接口页可筛选、新建、编辑、启停和删除 API 账户，按接口树授权，并以一次性密钥轮换替代明文重显。"
+      ],
+      "remaining": [
+        "旧推送开关、推送账号/密码、Token URL、用户/订单/售后回调及测试链接未迁移；Worker 的 set_up/text_out_url 明确返回不可用，旧明文凭据也不能原样复用。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/system.js",
+        "cinashop-php/view/admin/src/pages/system/out/index.vue",
+        "cinashop-php/view/admin/src/pages/system/out/index.vue:49",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/system/ExternalApi.vue",
+        "view/admin-ts/src/api/externalApi.ts",
+        "workers-ts/src/controllers/api/v1/AdminOutApiController.ts"
+      ],
+      "targetPermissions": [
+        "external_api.view/external_api.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/out_interface",
+        "title": "接口文档",
+        "component": "@/pages/system/out/interface",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/system/out/interface.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/system/out/interface.vue:17",
+        "source": "cinashop-php/view/admin/src/router/modules/system.js:153",
+        "routerSha256": "f84e11ebb974799f4cf3da05daa772c9b973c07960ddb6e86fcef823b58cb0ff",
+        "auth": "['admin-out-interface']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/system/out"
+      ],
+      "targetApis": [
+        "GET /adminapi/system_out/interface/list",
+        "GET /adminapi/system_out/interface/info/:id"
+      ],
+      "covered": [
+        "新对外接口页的接口目录和详情抽屉可查看方法、URL、描述及请求/返回示例，并标出运行时状态。"
+      ],
+      "remaining": [
+        "旧接口文档页可新增分类与接口、改名、编辑方法/参数/示例、保存或删除；Worker 文档写接口明确为只读不可用，新页也无编辑流程。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/system.js",
+        "cinashop-php/view/admin/src/pages/system/out/interface.vue",
+        "cinashop-php/view/admin/src/pages/system/out/interface.vue:17",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/system/ExternalApi.vue",
+        "view/admin-ts/src/api/externalApi.ts",
+        "workers-ts/src/controllers/api/v1/AdminOutApiController.ts"
+      ],
+      "targetPermissions": [
+        "external_api.view/external_api.manage"
+      ]
+    }
+  ]
+}

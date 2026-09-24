@@ -49,4 +49,14 @@ describe('explicitly reviewed business privilege inventory', () => {
     expect(admin.functions).toEqual([]);
     expect(app.functions).toEqual(['checkout_lock_pricing_v1()','ooa_lock_pricing()']);
   });
+  it('allows only the application identity to capture purchase evidence, never to rewrite it', () => {
+    const app=runtimeBusinessPrivilegePlan('app'),admin=runtimeBusinessPrivilegePlan('admin');
+    for(const table of ['store_order_purchase_origin','store_order_purchase_cancellation']) {
+      expect(app.tables[table]).toEqual(['SELECT','INSERT']);
+      expect(app.updateColumns[table]).toBeUndefined();
+      expect(admin.tables[table]).toBeUndefined();
+      expect(admin.updateColumns[table]).toBeUndefined();
+    }
+    expect([...app.functions,...admin.functions].some(name=>name.includes('purchase_'))).toBe(false);
+  });
 });

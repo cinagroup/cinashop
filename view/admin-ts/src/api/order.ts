@@ -4,10 +4,14 @@
  */
 import request, { getData } from "@/utils/request";
 import type { AdminUser } from "@/types/admin";
-import { orderNumber, parseAdminOrderList, parseAdminOrderDetail, type AdminOrderQuery } from '@/utils/orderRead';
+import { orderNumber, parseAdminOrderList, parseAdminOrderDetail, parseAdminOrderChart, type AdminOrderQuery } from '@/utils/orderRead';
 import { sendOrderRequest } from '@/utils/orderRequest';
 
 // ─── 订单管理 ───────────────────────────────────────────────
+export async function apiAdminOrderChart(signal?: AbortSignal) {
+  return parseAdminOrderChart(await sendOrderRequest('/order/chart', 'get', undefined, undefined, signal));
+}
+
 export async function apiAdminOrderList(params: AdminOrderQuery, signal?: AbortSignal) {
   const query = { ...params };
   if (query.order_id) orderNumber(query.order_id);

@@ -1,7 +1,488 @@
 {
   "schemaVersion": 1,
-  "snapshotDate": "2026-09-21",
+  "snapshotDate": "2026-09-24",
   "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
+  "latestGovernanceAndRankingIncrement": {
+    "date": "2026-09-24",
+    "status": "local-partial-candidate-not-deployed",
+    "contracts": [
+      "Public /agreement/:type independently returns the membership or agent agreement in member_explain even when disabled; payVip accepts the exact complete member agreement, never a user agreement alias; the membership home separately hides disabled agreements",
+      "Ranking decorates only the current visible page with server-selected activity IDs and expiry; UniApp validates product, priority, type and time before navigating",
+      "Password, SMS and social identity lookup plus per-request user authentication exclude both is_del and delete_time soft-deletion markers",
+      "Private member and six-digit code responses prohibit storage and referrer disclosure; the QR scan and cashier consumption chain is still missing"
+    ],
+    "verification": {
+      "workerAgreement": { "passed": 3, "failed": 0 },
+      "uniAgreement": { "passed": 7, "failed": 0 },
+      "rankPostgres": { "passed": 4, "failed": 0 },
+      "uniRank": { "passed": 7, "failed": 0 },
+      "softDeletedUserSql": { "passed": 3, "failed": 0 }
+    },
+    "remaining": "FE-003B/D remain open for account cancellation, member QR and cashier consumption, type-7 purchase, presale limits, real agreement and rank data, native devices, exact Linux CI and release",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "governanceAgreementIncrement": {
+    "date": "2026-09-24",
+    "status": "local-public-read-only-candidate-not-deployed",
+    "mappedRoutes": [
+      { "legacy": "/pages/users/privacy/index", "target": "/pages/user/legalContent", "coverage": "partial_replacement" },
+      { "legacy": "/pages/users/user_agreement_list/index", "target": "/pages/user/agreements", "coverage": "candidate_covered" }
+    ],
+    "contract": "Exact public user/privacy/cancel/supplier agreement keys, sanitized rich text and a three-link old agreement index; missing, payVip or unknown type makes no request because old payVip expects membership member_explain, not the Worker's user agreement alias",
+    "verification": {
+      "governanceRuntime": { "passed": 5, "failed": 0 },
+      "workerAgreementContract": { "passed": 6, "failed": 0 },
+      "unifiedUniToolchain": { "passed": 738, "failed": 0 },
+      "routeLedger": { "passed": 16, "failed": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0 }
+    },
+    "remaining": "Account cancellation write, member QR, payVip membership explanation, real published content, devices and release remain open; FE-003B stays unchecked",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "activityLongTailIncrement": {
+    "date": "2026-09-24",
+    "status": "local-read-only-candidate-not-deployed",
+    "directRoutes": ["/pages/columnGoods/rank/index", "/pages/columnGoods/live_list/index"],
+    "contracts": [
+      "Ranking uses the existing public product/rank endpoint for three legacy tabs and bounded ten-item pages; row click opens product details, but ranked activity purchase identity is absent",
+      "Live list uses existing public wechat/live endpoint for ten-room pages; the page and player navigation are WeChat mini-program-only"
+    ],
+    "verification": {
+      "rankTargetedRuntime": { "passed": 6, "failed": 0 },
+      "newcomerLegacyDetailRuntime": { "passed": 12, "failed": 0 },
+      "unifiedUniToolchain": { "passed": 733, "failed": 0 },
+      "routeLedger": { "passed": 15, "failed": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0 }
+    },
+    "remaining": "Real rank and live content, WeChat live-player plugin and native devices, type-7 checkout and presale limits, exact Linux CI and production release remain unverified; FE-003D stays open",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "newcomerIncrement": {
+    "date": "2026-09-24",
+    "status": "local-read-only-candidate-not-deployed",
+    "directRoute": "/pages/activity/new_customer/index",
+    "additionalDetailRoute": "/pages/activity/newcomerDetail",
+    "entryPoints": ["DiyHomeRenderer newVip", "activity catalogue"],
+    "contract": "Authenticated newcomer info and a 9-item activity list link by newcomer activity ID to a read-only activity detail; no type=7 purchase or ordinary-product checkout fallback",
+    "verification": {
+      "targetedRuntime": { "passed": 10, "failed": 0 },
+      "uniToolchain": { "passed": 725, "failed": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0 },
+      "browser": "local desktop H5 rendered directory request failure/retry and invalid detail ID; 0 application errors, existing vue-router deprecation warning; no Worker or mobile viewport acceptance"
+    },
+    "remaining": "Type-7 activity SKU purchase/checkout, real login and operational data, native devices, exact CI and release remain open; FE-003D stays unchecked",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "feedbackWorkIncrement": {
+    "date": "2026-09-24",
+    "status": "local-candidate-partial-not-deployed",
+    "directRoutes": [
+      "/pages/extension/customer_list/feedback",
+      "/pages/work/userInfo/index",
+      "/pages/work/orderList/index",
+      "/pages/work/orderDetail/index",
+      "/pages/work/record/index",
+      "/pages/work/groupInfo/index"
+    ],
+    "verification": {
+      "targetedRuntime": { "passed": 13, "failed": 0 },
+      "uniToolchain": { "passed": 725, "failed": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0 },
+      "workerRouteParity": { "passed": 13, "failed": 0 },
+      "routeLedgerAudit": "passed for six feedback/Work routes at 82 target routes and 20 direct before later increments; current ledger is 88 target, 23 direct, 100 mapped, 28 gaps",
+      "groupMemberNavigation": "passed: explicit userid survives group member to customer, order, order detail and record; ordinary no-hint tabs still recheck SDK target; URL contains no Work token",
+      "chatSwitchFence": "passed: no-hint OAuth callback rechecks SDK before exchange and before activation; five private pages recheck before presenting responses, three pagination paths before requests and responses, group member click before navigation; SDK target itself is never cached"
+    },
+    "browser": {
+      "surface": "local H5 preview with anonymous/synthetic state",
+      "passed": [
+        "Feedback desktop and 390x844 anonymous rendering with login navigation",
+        "Five Work routes at 390px expose a clear missing-SDK state without private data or horizontal overflow"
+      ],
+      "console": "0 application errors; 1 existing vue-router deprecation warning"
+    },
+    "remaining": [
+      "Real Enterprise WeChat SDK, OAuth/signatures and employee-follow relationships are unverified",
+      "No-hint entry, OAuth callback, data response, pagination and product send recheck the current SDK target; background/pagehide clear private state. A visible page with a userid hint cannot guarantee immediate clearing on an otherwise unobserved chat switch",
+      "Authenticated feedback submission, native devices, production data and old-client in-place upgrade remain unverified; FE-003G stays open"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "communityDeepLinkIncrement": {
+    "date": "2026-09-23",
+    "status": "local-candidate-covered-not-deployed",
+    "directRoutes": [
+      "/pages/discover/discoverTopic/index",
+      "/pages/discover/discoverSearch/index",
+      "/pages/discover/discoverVideo/index"
+    ],
+    "additionalAppRoute": "/pages/discover/discoverVideo/app",
+    "queryContracts": [
+      "Topic id/topic_id and hot/new order require an active server topic; no invalid topic falls back to the general feed",
+      "Search keyword/searchVal and optional topic_id are retained in the route when submitting or changing topic",
+      "Video id/start_id, relation_id and legacy content_type=0 mixed feed are retained; an exact id is loaded before later pages",
+      "Old APP-PLUS embedded web-view URL is parsed for validated id/relation_id/content_type only; arbitrary host and token are never used"
+    ],
+    "interaction": [
+      "Topic posting uses an in-page authenticated sheet with topic_id and refresh after success",
+      "Image post details open in-page with comments; video cards open a registered video route",
+      "Offset paging retries the same failed page and discards stale route or identity responses"
+    ],
+    "verification": {
+      "targetedRuntime": { "passed": 9, "failed": 0 },
+      "uniToolchain": { "passed": 702, "failed": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0 },
+      "workerRouteParity": { "passed": 12, "failed": 0 },
+      "routeLedgerAudit": "passed: 151 legacy logical routes, 76 target routes, 14 direct, 98 mapped, 39 gaps"
+    },
+    "browser": {
+      "surface": "local H5 preview with synthetic community data",
+      "passed": [
+        "Topic id=1 direct entry, hot-to-new URL and sort change, image detail/comment overlay, preview topic post and refreshed feed",
+        "Search keyword plus topic direct entry, typed search URL change and refresh restoration, empty state, and all-topic results",
+        "Video id=9003 plus relation_id direct entry and explicit no-media state",
+        "All three pages at 390x844 without horizontal overflow"
+      ],
+      "console": "0 application errors; 2 existing vue-router deprecation warnings"
+    },
+    "remaining": [
+      "Preview video has no playable media; actual video playback, native devices and real API data remain unverified under FE-003J/K",
+      "Old APP-PLUS arbitrary web-view URL loading remains retired under FE-003F"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "assistedCashierIncrement": {
+    "date": "2026-09-23",
+    "status": "local-tests-and-three-platform-builds-passed-rendered-browser-unavailable-not-deployed",
+    "route": "/pages/behalf/cashier/index",
+    "legacyProductionDistribution": "Owner confirms existing online WeChat mini-program and App users require in-place upgrade; actual published IDs, native package/signature and highest versions remain unverified",
+    "implemented": [
+      "Admin-scoped order status and minimal detail are reread before any explicit cashier action; no automatic payment on page entry",
+      "Cash settlement requires an explicit administrator confirmation; zero-amount assisted orders follow the old PHP behavior but require an explicit completion confirmation and no QR",
+      "Every assisted payment request includes the confirmed expected_pay_price; backend lock-time validation is tracked separately",
+      "Provider QR content is rendered locally on a quiet-zone integer-pixel canvas with no third-party image host; uncertain outcomes require manual status review",
+      "Page/session hide clears sensitive detail and QR; no refund or cancellation capability added"
+    ],
+    "verification": {
+      "cashierTargeted": { "passed": 15, "failed": 0 },
+      "cashLockNativePostgres": { "passed": 39, "failed": 0, "skipped": 0, "fixtureRemaining": 0, "pgCtlStopped": true, "note": "First run 37/39 due two new test lock-observation timeouts; corrected synchronization and reran independently, not summed" },
+      "uniToolchain": { "passed": 693, "failed": 0, "skipped": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0 },
+      "targetRegisteredRoutes": 72,
+      "legacyDirectRoutes": 11,
+      "legacyUnmappedOrCrossSurface": 42,
+      "oldLegacyRoutesAccounted": 151,
+      "routeLedgerAudit": "passed"
+    },
+    "browser": {
+      "status": "root-kernel-failed-independent-iab-anonymous-h5-passed",
+      "rootError": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "renderedChecksPassed": 2,
+      "passed": ["Desktop and 390px cashier route render an independent Admin login guard with no payment button", "Record/login navigation reaches the independent Admin login page; mobile has no horizontal overflow"],
+      "console": "0 errors; 1 existing Vue Router deprecated-import warning",
+      "networkAudit": "Browser safety check rejected CDP Network.enable; external requests not verified",
+      "authenticatedOrPaymentAcceptance": false,
+      "previewStopped": true,
+      "fallbackUsed": false
+    },
+    "remaining": [
+      "Cash and zero-amount lock-time guard passed native PG16 flow 39/39; first run 37/39 due a test lock-observation timeout and was not counted as green",
+      "Provider initiation now persists a one-time intent under the order lock before external contact; uncommitted callback-first evidence, unknown outcomes, real callbacks and retry acceptance remain release blockers",
+      "Real Admin login, H5/mini-program/App rendered and device acceptance, distribution upgrade and production release gate remain open",
+      "Feedback and enterprise Work pages are still missing, so FE-003G remains open"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false,
+    "parentChecklistClosed": false
+  },
+  "assistedDetailIncrement": {
+    "date": "2026-09-23",
+    "status": "local-tests-and-builds-passed-prior-anonymous-browser-final-browser-unavailable-not-deployed",
+    "route": "/pages/behalf/order_detail/index",
+    "implemented": [
+      "Creating-Admin-scoped minimal order and original-item detail under order.assisted; no broad Admin order projection",
+      "Record list no longer returns or displays recipient names, phone numbers, addresses, cart JSON or refund internals",
+      "Root-only detail navigation; split payment roots explicitly label original purchase snapshots, not child fulfillment state",
+      "Exact order ID required for detail and verified payment status responses; legacy prefixed payment lookup cannot silently alias a different displayed order",
+      "Independent memory-only Admin session, hide/unload/session-change clearing and late-response rejection; expiry timer plus onShow recheck clear visible data without a new request, and an old timer cannot clear a new login; no payment, cancel or refund writes"
+    ],
+    "verification": {
+      "uniToolchain": { "passed": 674, "failed": 0, "skipped": 0, "newExpiryCases": 6 },
+      "workerStaticNavigationAndPermission": { "passed": 21, "failed": 0, "files": 3 },
+      "assistedDetailNativePostgres": { "passed": 33, "failed": 0, "skipped": 0, "seconds": 291.11, "isolatedInstance": "finance-postgres-3k0h2F:65245", "fixtureRemaining": 0, "pgCtlStopped": true, "pidAndBootstrapPasswordAbsent": true, "listenerAbsent": true },
+      "assistedPurchaseFlowNativePostgres": { "passed": 37, "failed": 0, "skipped": 0, "seconds": 321.20, "isolatedInstance": "finance-postgres-9oMC0z:63698", "fixtureRemaining": 0, "pgCtlStopped": true, "pidAndBootstrapPasswordAbsent": true, "listenerAbsent": true },
+      "uniTypecheck": "passed",
+      "uniBuildsAndArtifacts": "Final source H5, MP-WEIXIN and APP-PLUS passed; artifacts 3/3; MP has existing nonfatal empty utils/articleRichText chunk",
+      "targetRegisteredRoutes": 71,
+      "legacyDirectRoutes": 10,
+      "note": "The new detail route is not an original PHP manifest route; it does not raise the old direct-route ledger. Historical increment test counts below are snapshots, not additional current-run passes. A transitional strict-ID PG run was 32/33 due one non-reproduced form-upload expiration; a diagnostic rerun was 33/33. Final-source native 33 and 37 are distinct cases in separate clean clusters; neither the failed attempt nor earlier green reruns are added."
+    },
+    "browser": {
+      "surface": "in-app browser, loopback H5 preview only; anonymous smoke ran before expiry-timer edits",
+      "url": "http://127.0.0.1:5174/#/pages/behalf/order_detail/index?orderId=ORDER_1",
+      "passed": ["Rendered anonymous Admin-login guard without application overlay", "Record/login navigation reached the independent Admin login page"],
+      "console": "No application error; an existing DCloud/vue-router deprecated-import warning remained",
+      "finalSourceRecheck": "IAB unavailable (Browser is not available: iab; browser inventory empty), so no final-source rendered proof; no Playwright fallback",
+      "scope": "No authenticated Admin detail, production API, real buyer data, provider payment or native-device acceptance",
+      "previewPort5175Stopped": true,
+      "port5174": "Observed occupied on later Vite start; no action taken against its process"
+    },
+    "remaining": ["Assisted cashier and real payment/provider acceptance", "Unused/unknown-result image lifecycle", "Full coupon and large-list pagination, staff_id index and deep-offset/query-plan scale audit", "Legacy PHP app record clients require upgrade or a safely versioned summary because the private list no longer returns raw refund/cartInfo", "Real Admin/Redis/Hyperdrive/device acceptance and independently approved deployment"],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false,
+    "parentChecklistClosed": false
+  },
+  "assistedCheckoutIncrement": {
+    "date": "2026-09-23",
+    "status": "local-code-tests-builds-passed-rendered-browser-blocked-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "routes": ["/pages/behalf/order_confirm/index"],
+    "features": ["Scoped complete quote/create through independent Admin session", "Saved/manual city_area addresses and actual pickup stores", "Candidate coupon, integral, complete money breakdown and explicit native confirmation", "Disclosed per-Admin durable frozen intent with read-back before dispatch", "Original-key/payload recovery and server verification before result clearing", "Buyer/cart write guards and immediate invalidation on draft/session replacement"],
+    "authorization": "Admin-only order.assisted; fresh member selection also requires user.view and product.view. Public city/store directories use neither shopper nor Admin tokens. No automatic payment.",
+    "storage": "Contains unencrypted delivery PII but no authentication tokens/passwords; explicit UI notice and consent before first save. Unknown/corrupt records fail closed. Device storage is not a cross-tab transaction or authorization boundary.",
+    "verification": {
+      "uniToolchain": { "passed": 612, "seconds": 23.3583315, "session": 20601 },
+      "runtimeDependencyAndRealBuilds": { "passed": 9, "seconds": 27.1858166, "platforms": ["H5", "MP-WEIXIN", "APP-PLUS"] },
+      "artifacts": { "passed": 3, "seconds": 0.1093111, "registeredRoutes": 70 },
+      "navigation": { "passed": 17, "files": 2, "seconds": 2.94, "startedLocal": "13:03:08" },
+      "typecheck": "passed: UniApp vue-tsc --noEmit",
+      "distinctPassed": 641,
+      "newCases": { "confirmRuntime": 44, "selectionRecovery": 3, "total": 47 },
+      "skipped": 0,
+      "failuresAndReruns": ["Initial existing draft adapter had TS1005 (missing closing parenthesis); fixed without relaxing contract", "Partial 88/99-case and intermediate full runs are not added to distinct totals", "Final full runtime/typecheck/three-platform build/artifact checks repeated after postage display and directory-retry edits"],
+      "buildWarning": "Initial standalone MP build retained existing empty utils/articleRichText chunk warning",
+      "scope": "Real Vue/Pinia/SFC setup/API/request layer with synthetic native lifecycle, HTTP and storage. No new SQL/provider/browser end-to-end proof.",
+      "routeLedgerAudit": "passed: 70 target, 10 direct, 98 mappings, 43 missing/cross-surface; old 151 fully accounted; FE-003G remains open"
+    },
+    "browser": {
+      "classification": "available-invocation-failed",
+      "command": "cua.getState()",
+      "failure": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "renderedPages": 0,
+      "screenshots": 0,
+      "interactions": 0,
+      "fallbackUsed": false,
+      "previewServerStarted": false
+    },
+    "remaining": ["Cashier and assisted required-system-form contract", "Full coupon rules/paging and large address/store/cart catalogues", "Cross-tab atomic coordination and manual resolution of permanently unverifiable journals", "Real Admin login/Redis/Hyperdrive/provider/browser and native-device acceptance", "Current candidate Linux/CI and independently approved release"],
+    "productionTouched": false,
+    "gitMutation": false,
+    "sourceSha256": {
+      "view/common/assistedCheckout.ts": "3241fed6c14c468542b56f44d9574db5a64d6d9d453f41f88abda6b2a0ca6e60",
+      "view/uniapp-ts/src/api/assistedCheckout.ts": "3cd9c1da9343a4b1dde6fc895ea7b8ec9a07d408e1202b7e0f1f69b1ebd75f9f",
+      "view/uniapp-ts/src/composables/useAssistedCheckout.ts": "abe18725bef89dfa838a33b7cf78bc338c84c5481d633b49eb59730fb7e75e85",
+      "view/uniapp-ts/src/pages/behalf/order_confirm/index.vue": "247e336a2ecc419ecfe565e73586f5f129d69ffdfaa3e9551e20c2062054df70",
+      "view/uniapp-ts/scripts/assisted-checkout-runtime.test.cjs": "1f7d53686297dca47ae237323e382f62f25f291792689c87702e89a9e84d430d",
+      "view/uniapp-ts/scripts/assisted-selection-runtime.test.cjs": "3f0e6a2b7da8dc2a35ced46827cbdb947f308582d6c3364f0260549b6f97aede",
+      "view/uniapp-ts/src/stores/assistedDraft.ts": "4fe89f017dcfa19ce3926c4d8c157c6fc14148583e38a89a7258a0e034367190",
+      "view/uniapp-ts/src/stores/adminSession.ts": "849afa1d7a348312af08fd68aa0fd1d6f9e5c7e1b52c1165a1d247bf0aef7006",
+      "view/uniapp-ts/src/composables/useAssistedShopping.ts": "98c830006129c9e8dc267a80acb44048beda0a1cd11588596d1bea94ed215931",
+      "view/uniapp-ts/src/composables/useAssistedBuyers.ts": "49b5f03832274e266c5b1bdf93aa418984440c80a26f922aca0d6bf1f004863c",
+      "view/uniapp-ts/src/pages/behalf/goods_list/index.vue": "a1becc7681f8097726179a1be58d6bf84e52e1b44b9bb1577062736ab2b3bbe1",
+      "view/uniapp-ts/src/pages/behalf/user_list/index.vue": "8323b1b949699e95182af2f74a5fcd86b483e95293b6f04f0239fbc7de6518b9",
+      "view/uniapp-ts/src/api/assistedSelection.ts": "6f3640b21e9371429ae04cacb1fcc12d74b8fd233c0e913a7552bc2a10fcafdd",
+      "view/uniapp-ts/src/utils/assistedIntent.ts": "54978c80e2935172e62f3a0c1304ffabd179ea539d41dc32240d2c33e7292762",
+      "view/uniapp-ts/src/config/navigation.ts": "d0b0af2d051dab946a43cdac510cc117450b62c66fa5a55886162d6b69fe5120",
+      "view/uniapp-ts/package.json": "92fbefd13fb9d21838c88f4aafeac4f49d105bc7279a150a0bb57831069e8161",
+      "workers-ts/test/uniapp-frontend-parity.test.ts": "2b7a74793205987162c72763f02c6b10c5ead366c9e204e171fb838df07e6a04"
+    }
+  },
+  "assistedSelectionIncrement": {
+    "date": "2026-09-23",
+    "status": "local-code-tests-builds-passed-rendered-browser-blocked-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "routes": ["/pages/behalf/user_list/index", "/pages/behalf/goods_list/index"],
+    "implemented": [
+      "Separate memory-only Admin login, buyer directory search/paging/retry and active-member selection; guest path requires secure randomness",
+      "Product search and explicit real SKU selection; presale/sold-out products excluded from ordinary assisted-cart selection",
+      "Actor/buyer/guest-scoped cart reads, additive add, absolute quantity update and confirmed exact-row removal via existing endpoints",
+      "Strict bounded response parsing, stale-session/view/SKU rejection, minimum ID-only cross-page draft and customer PII cleared on hide",
+      "Single-flight mutations remain locked across hide, never auto-retry; unknown outcomes require fresh read plus explicit operator acknowledgement",
+      "Profile and record-page entries, runtime route allowlist and three-platform manifest registration; no checkout/payment write added"
+    ],
+    "authorization": "user.view for directory; product.view for catalogue/SKU; order.assisted for cart. Shopper token is never sent and caller-selected adminId/staff_id is never submitted.",
+    "intentionalLimits": [
+      "Directory/selected buyer is not final checkout authorization; server rechecks cart writes",
+      "URL UID alone is insufficient: direct links/reload require a current in-memory selection",
+      "Guest label and mutation-recovery lock are memory-only, lost on application reload or Admin replacement; guest cart is not rediscovered by this UI",
+      "Unsupported secure randomness fails closed (including current App guest path); H5/Weixin device behavior not accepted",
+      "Operator acknowledgement is not proof that a timed-out write stopped; no durable idempotency or cross-tab protocol is claimed",
+      "Up to 200 cart rows and 500 SKU rows parsed, fail closed above limits; existing backend list scalability/pagination is not changed",
+      "Category hierarchy, advanced PHP filters/member badges, confirmation/cashier, order details/payment navigation and full old-page parity remain open"
+    ],
+    "tests": {
+      "uniquePassed": 594, "newCases": 53, "skipped": 0,
+      "uniToolchain": { "passed": 565, "seconds": 19.693, "session": 52000, "newSelectionCases": 52 },
+      "runtimeI18n": { "passed": 9, "seconds": 26.600, "session": 52000, "actualTemporaryPlatformBuilds": ["h5", "mp-weixin", "app"] },
+      "defaultPlatformBuilds": { "passed": ["h5", "mp-weixin", "app"], "session": 27561 },
+      "builtArtifacts": { "passed": 3, "seconds": 0.105, "chunk": "8db832", "h5Strengthening": "Checks all actual built route declarations including the root-page alias, not merely a nonempty entry" },
+      "workerNavigation": { "passed": 17, "seconds": 2.30, "startedLocal": "12:00:48", "newCase": 1 },
+      "typecheck": "UniApp vue-tsc passed in final session 52000",
+      "counting": "565 + 9 + 3 + 17 = 594; standalone 50-case development run, earlier 563-case run, repeated builds/tests and previous backend tests not added",
+      "nativeIoBoundary": "Actual Vue/Pinia/composables/request adapters and two real SFC setups; synthetic uni.request, lifecycle, navigation, confirmation and randomness. Not a DOM/browser/backend/database E2E run.",
+      "routeLedgerAudit": "passed: 69 target routes, 9 direct legacy routes, 98 mappings and 44 unmapped/cross-surface; parent FE-003G remains open"
+    },
+    "developmentFailures": [
+      "Artifact check initially found stale 67-route default Weixin/App outputs after temporary i18n builds; rebuilt all default outputs without weakening route assertions",
+      "New H5 artifact assertion first rejected the home page because Uni registers it as root with a page-path alias; verified the built declaration and explicitly checks this root alias while other pages require their exact path"
+    ],
+    "buildWarnings": ["Weixin generated an empty utils/articleRichText chunk; existing non-assistance module, build and complete page-resource checks passed"],
+    "browser": {
+      "status": "blocked-by-prior-unified-browser-initialization-failure",
+      "error": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "priorAttempts": 2, "newAttempts": 0, "renderedChecksPassed": 0, "screenshots": 0,
+      "fallback": "Existing Playwright fallback authorization remains unanswered; not used",
+      "pendingFlow": "profile -> buyer Admin login -> select buyer/guest -> choose product/SKU -> mutate and reread scoped cart; desktop/mobile rendering, console and native interactions remain unverified"
+    },
+    "sourceSha256": {
+      "view/uniapp-ts/src/api/adminRequest.ts": "2324faee0511c0f3cb04d4ccb06fd89d2bfe1983db345ae369635e5133fb23a7",
+      "view/uniapp-ts/src/api/assistedRecords.ts": "22faf489030c46c06fdb3820015b9333a96a9fe8f96df963bd6645fb410bb827",
+      "view/uniapp-ts/src/api/assistedSelection.ts": "7f2065a1227f12aab480af9fb5da080bcf1d80285a0bdb5b2b464b26bb90f0a0",
+      "view/uniapp-ts/src/stores/assistedDraft.ts": "8b84862db8fefae012e744204eaa2348f022f4dcce38229c60b153c02067d003",
+      "view/uniapp-ts/src/composables/useAssistedBuyers.ts": "def0aeab87bf646573b0d6446d09f51185aecaedc2d293d96df56c645faee338",
+      "view/uniapp-ts/src/composables/useAssistedShopping.ts": "449cf126d341d7fcfa9d2d8edf8f4d323d07fe621571116ff8bee6899625ec06",
+      "view/uniapp-ts/src/pages/behalf/user_list/index.vue": "d79fe9e9334a4852d104279b794e41d3f079952b035148c4b4ec95c457c414e8",
+      "view/uniapp-ts/src/pages/behalf/goods_list/index.vue": "205c852e00c252a160da436d77cbdcb34b9fcb304b90cc3acd33e4f93654862a",
+      "view/uniapp-ts/src/pages/behalf/selection.css": "922ffe13bf2f866d404339fe16151d7b7ed6e6b2e7bd3a3861b6409e5bf1b05e",
+      "view/uniapp-ts/src/pages/behalf/record/index.vue": "1869bbf0c41c4c22a9072f3831bdc146f54c48b93024e6bb87e6b4bb5439def5",
+      "view/uniapp-ts/src/pages/user/index.vue": "728605c53075e4b7c7718aa1863805de9c14ac0399d4c91abdda47aeac294261",
+      "view/uniapp-ts/src/pages.json": "33f211e18f056e0668e2941ef96f10dabadad4d6ebcd1932d6eaa400bc789c2b",
+      "view/uniapp-ts/src/config/navigation.ts": "c760f12c01828815ca55c6cdc687e175cb7bac711fa51c7d9cfb5558c2e2f19d",
+      "view/uniapp-ts/scripts/assisted-selection-runtime.test.cjs": "8d1810c4c9448f61e8287f317684068a430655256e46b0b3acfd9ff9079a357a",
+      "view/uniapp-ts/scripts/uni-store-runtime.cjs": "cab40c911df77c3923c56aefe962e845caf401451278edc39d2a1c474bcd44e2",
+      "view/uniapp-ts/scripts/build-artifacts.test.cjs": "4ea6263236f25abd75bb743f3771cda7612c89b035e80400d435110535e588cf",
+      "view/uniapp-ts/package.json": "08080ca4038893c58c22a9089d96795d0df654fd5bc7293212d5a6892fc7b1b9",
+      "workers-ts/test/uniapp-frontend-parity.test.ts": "cd455e0b2001b70456a28c7d833b49696043d4783ca01593aec0ba5cd1840abc"
+    },
+    "schemaChanged": false, "backendBusinessChanged": false, "runtimePrivilegePlanChanged": false,
+    "productionConnected": false, "committed": false, "deployed": false,
+    "newDatabaseClustersOrBrowserServers": 0, "parentChecklistClosed": false,
+    "remaining": ["Confirm/cashier transaction UI", "Broader PHP category/filter/member display parity", "Browser/device/real login/Redis/provider/Hyperdrive acceptance", "Current candidate Linux/workerd/CI and separately approved release"]
+  },
+  "assistedUserListReadIncrement": {
+    "date": "2026-09-23",
+    "status": "local-backend-prerequisite-passed-not-ui-parity-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "routes": ["/api/admin/user/list", "/adminapi/user/list"],
+    "permission": "user.view unchanged; neither user.view nor order.assisted implies the other",
+    "changes": [
+      "Explicit 12-column SQL projection plus four snake_case aliases; no credentials/documents/login metadata/extended JSON",
+      "Bounded query validation before business SQL, deterministic UID descending pages, both deletion markers excluded",
+      "Literal nickname/phone substring or exact UID lookup, intersected with precise uid/phone/group/status filters",
+      "Read-only short transaction, at most 5000ms statement timeout preserving stricter settings, private no-store responses"
+    ],
+    "intentionalDifferences": ["UID exact rather than PHP substring search", "Unsupported filters rejected rather than ignored", "No full legacy advanced filters or derived membership badges"],
+    "tests": {
+      "uniquePassed": 242, "newCases": 25, "skipped": 0,
+      "localFourFiles": { "passed": 154, "seconds": 22.15, "startedLocal": "11:24:22", "session": 90721 },
+      "nativeThreeFiles": { "passed": 110, "seconds": 259.15, "startedLocal": "11:19:49", "session": 88096, "userList": 22, "assistedRuntime": 28, "presaleCheckout": 60 },
+      "finalNativeUserList": { "passed": 22, "seconds": 11.29, "startedLocal": "11:25:24", "session": 74977, "superuser": false },
+      "counting": "154 + 110 - 22 shared directory cases = 242. Final 22-case native rerun and earlier failed/intermediate attempts not added. Directory file has 10 SQL and 12 parser cases.",
+      "proof": ["Real Admin JWT/SQL route authorization and independent application/Admin LOGINs", "Unauthorized actors never reach Admin business observer", "Directory reader cannot add assisted cart", "Successful directory read after removing whole-table SELECT and granting only list/filter columns on the disposable reader", "Actual UPDATE rejected with SQLSTATE 25006", "0/250ms caller timeout becomes 5000/250ms only within the transaction", "Synthetic business rows unchanged; request sessions released"],
+      "typecheck": "Worker unit and runtime passed, session 24037",
+      "runnerSyntax": "passed",
+      "whitespace": "passed"
+    },
+    "developmentFailures": [
+      "First focused two-case contract run failed against old whole-row responses/missing template aliases; first eight-case run passed after implementation",
+      "Expanded local run had 151 pass/2 fail: a transaction spy double-wrapped the PGlite row-array adapter. Replaced with container-boundary proxy; 153 then final 154 cases passed without relaxing assertions"
+    ],
+    "cleanup": {
+      "clusters": [{ "name": "finance-postgres-3PU0cd", "port": 64734 }, { "name": "finance-postgres-svHBd9", "port": 65106 }],
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "independentPgCtlStatusExit": [3, 3],
+      "pidFiles": 0, "passwordFiles": 0, "ownedProcesses": 0, "listeners": 0,
+      "verificationNote": "Initial sandbox read was denied by private ACL and treated as unknown. Elevated read-only inspection confirmed shutdown and zero PostgreSQL processes. Stopped private diagnostic directories retained."
+    },
+    "sourceSha256": {
+      "workers-ts/src/services/admin/AdminUserListService.ts": "6f686f81b07c2e96296d7c81fd6a82e8e455a6cdb3d65e348fcf173baf8537d0",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "3c7561ffd3062894061ad57b42b38f6aee7854d658a4a7816b1b35a9ef5a0908",
+      "workers-ts/test/admin-user-list-postgres.test.ts": "9c7cffb4a03536e5221286e553f40ff8622c0f483e2cf433e0d70a6555950dc2",
+      "workers-ts/test/assisted-purchase-runtime-postgres.test.ts": "2961aa983ce29d3d2607b41d58ef028e0604ee0ced58e68aa42e4fec6fd2ffdf",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "7d33a0ed7805dfa0bca3705a35f4883218917822263fbd7bb39af3f4a77c8389",
+      "workers-ts/test/local-finance-postgres-runner.test.ts": "249dde931151ac5ebf039e718351a6d07c7acdca0dc302f42217f0205fe3869e"
+    },
+    "schemaChanged": false, "runtimePrivilegePlanChanged": false, "frontendChanged": false,
+    "productionConnected": false, "committed": false, "deployed": false,
+    "parentChecklistClosed": false,
+    "remaining": ["Buyer selection/product/cart/confirm/cashier pages", "Derived membership display and unsupported PHP directory filters", "Real login/Redis/provider/Hyperdrive/browser acceptance", "Current candidate Linux/workerd/CI and separately approved release"]
+  },
+  "assistedRecordIncrement": {
+    "date": "2026-09-23",
+    "status": "local-code-tests-builds-passed-rendered-browser-blocked-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "implemented": [
+      "Direct old record route and shopper-profile entry without requiring shopper login",
+      "Separate memory-only Admin session, real login endpoint contract and order.assisted permission UI",
+      "Actor-scoped list search, status filtering, original-page retry and server payment-status reads",
+      "No-auth Admin/Work expiry no longer clears shopper session; current Admin expiry clears only Admin",
+      "Hide/unload/logout clear displayed PII; late reads, login results and old failures cannot replace a newer Admin generation"
+    ],
+    "notImplemented": ["Other four behalf pages", "Order detail/payment navigation", "Server-side Admin token revocation from this page", "Actual login/Redis/provider/browser-server acceptance"],
+    "newCases": 25,
+    "tests": {
+      "uniquePassed": 541, "skipped": 0,
+      "uniToolchain": { "passed": 513, "seconds": 21.215, "session": 49750, "newAssistedCases": 24 },
+      "builtArtifacts": { "passed": 3 },
+      "runtimeI18n": { "passed": 9, "seconds": 29.021, "actualPlatformBuilds": ["h5", "mp-weixin", "app"] },
+      "workerNavigation": { "passed": 16, "seconds": 2.46, "startedLocal": "11:02:04", "newCase": 1 },
+      "counting": "Final toolchain/artifact/i18n/navigation runs only. Earlier 84-case subset, 15-case navigation run and first 22-case failed attempt excluded",
+      "typecheck": "UniApp vue-tsc passed",
+      "threePlatformBuilds": "passed",
+      "routeLedgerAudit": "passed: 67 target routes, 7 direct legacy routes, 98 mappings, 46 unmapped/cross-surface; registration is not full functional parity"
+    },
+    "developmentFailures": [
+      "Initial typecheck referenced a nonexistent floating-navigation component; changed to the actual globally registered DiySuspendedNavigation",
+      "First new runtime run: 21 passed/1 failed; stale login finally released a newer login busy lock. Fixed by matching both view generation and Admin session version, then full rerun passed"
+    ],
+    "browser": {
+      "tool": "mcp__cua_repl unified browser interface",
+      "target": "http://127.0.0.1:54361/#/pages/behalf/record/index",
+      "data": "loopback synthetic API only; no production proxy",
+      "attempts": 2,
+      "recovery": "reset kernel then repeat initial tab creation",
+      "error": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "pageOpened": false, "renderedChecksPassed": 0, "screenshots": 0,
+      "fallback": "Permission to use existing local Playwright requested; not used in this increment",
+      "fixtureCleanup": "Exact temporary script and port ownership checked; Ctrl-C/Stop-Process did not stop it, then exact verified PID terminated; no owned process or listener remains. Temporary synthetic fixture script retained outside repository."
+    },
+    "sourceSha256": {
+      "view/uniapp-ts/src/utils/request.ts": "0b63a825bb956ec0dc6e0005d688aff3af8119fcd42e7caada28c1c1734d5673",
+      "view/uniapp-ts/src/stores/adminSession.ts": "a57f7e09e39376cb862900e11c4c434f1cd2c36b8f55000011f39c78e3eed830",
+      "view/uniapp-ts/src/api/assistedRecords.ts": "0d4b803d04255e8f584efc1047032a2135c7baf225758c93659620b988ca4eb4",
+      "view/uniapp-ts/src/composables/useAssistedRecords.ts": "10c8af8d0ed0f7883555b3482803a66dcb09af6eabec979c8a32155340b119c3",
+      "view/uniapp-ts/src/pages/behalf/record/index.vue": "f02172a92a5f8a5d10951a6f32da58926d4f2922b9c5091534333f784d7c15ef",
+      "view/uniapp-ts/scripts/assisted-records-runtime.test.cjs": "63de37b55326ce27f129733170761dedd7efd0f2ebd821604d196de110e10807"
+    },
+    "productionConnected": false, "committed": false, "deployed": false,
+    "parentChecklistClosed": false
+  },
   "counting": {
     "legacy": {
       "pagesTreeVueFiles": 250,
@@ -17,18 +498,18 @@
       ]
     },
     "target": {
-      "pagesTreeVueFiles": 63,
-      "logicalManifestRouteRecords": 63,
-      "platformActiveRouteRecords": { "H5": 63, "MP-WEIXIN": 63, "APP-PLUS": 63 },
+      "pagesTreeVueFiles": 88,
+      "logicalManifestRouteRecords": 88,
+      "platformActiveRouteRecords": { "H5": 88, "MP-WEIXIN": 88, "APP-PLUS": 88 },
       "manifestHashNormalization": "LF",
-      "manifestSha256": "FE80E5D2341EF333BD53551843DBB75D08ED18E1D93EFADB482E98BED9CEBA56"
+      "manifestSha256": "668AAA97D0F07F02135B60242AFF1F382340E24243579770122A4FFA27510138"
     },
     "routeLedger": {
-      "directRegistered": 6,
-      "legacyCompatibilityRules": 96,
-      "candidateCoveredRules": 60,
-      "partialReplacementRules": 36,
-      "unmappedOrCrossSurface": 49,
+      "directRegistered": 23,
+      "legacyCompatibilityRules": 100,
+      "candidateCoveredRules": 61,
+      "partialReplacementRules": 39,
+      "unmappedOrCrossSurface": 28,
       "accountedLegacyRoutes": 151
     },
     "method": "Use active pages.json records as the denominator. Raw Vue files include embedded components, templates and unrouted files and are never treated as route coverage."
@@ -47,6 +528,23 @@
     { "root": "pages/discover", "routes": 7 }
   ],
   "directRegisteredLegacyRoutes": [
+    "/pages/columnGoods/rank/index",
+    "/pages/columnGoods/live_list/index",
+    "/pages/activity/new_customer/index",
+    "/pages/discover/discoverTopic/index",
+    "/pages/discover/discoverSearch/index",
+    "/pages/discover/discoverVideo/index",
+    "/pages/extension/customer_list/feedback",
+    "/pages/work/userInfo/index",
+    "/pages/work/orderList/index",
+    "/pages/work/orderDetail/index",
+    "/pages/work/record/index",
+    "/pages/work/groupInfo/index",
+    "/pages/behalf/cashier/index",
+    "/pages/behalf/order_confirm/index",
+    "/pages/behalf/user_list/index",
+    "/pages/behalf/goods_list/index",
+    "/pages/behalf/record/index",
     "/pages/index/index",
     "/pages/user/index",
     "/pages/annex/vip_active/index",
@@ -60,13 +558,10 @@
       "title": "User governance and history screens",
       "status": "missing_actionable",
       "legacyRoutes": [
-        "/pages/users/privacy/index",
         "/pages/users/user_cancellation/index",
-        "/pages/users/visit_list/index",
-        "/pages/users/user_agreement_list/index",
         "/pages/users/user_member_code/index"
       ],
-      "remaining": "Restore privacy/account-cancellation/agreement rendering, visit history and member QR only against explicit Worker contracts."
+      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate membership agreement rather than the user agreement alias; the public endpoint and page accept disabled records as old PHP did, while the membership home hides them. Account cancellation write and member QR/scan/cashier consumption still lack complete target contracts; deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames, full activity-flow parity, native-device and deployed real-user acceptance remain open."
     },
     {
       "id": "FE-003C",
@@ -84,14 +579,9 @@
     {
       "id": "FE-003D",
       "title": "Presale, newcomer, live and ranking activities",
-      "status": "missing_actionable",
-      "legacyRoutes": [
-        "/pages/activity/presell/index",
-        "/pages/activity/new_customer/index",
-        "/pages/columnGoods/live_list/index",
-        "/pages/columnGoods/rank/index"
-      ],
-      "remaining": "The consolidated activity page currently exposes seckill, bargain, combination and lottery only."
+      "status": "local_candidate_partial",
+      "legacyRoutes": [],
+      "remaining": "Presale has local PC/UniApp catalogues, base-SKU type-6 purchase and deferred-fulfillment candidates, while cumulative limits remain closed. Newcomer has a directly registered authenticated read-only gift/list/detail path with exact legacy type routing; type-7 activity SKU purchase and checkout are not connected. Live list and product ranking old routes are directly registered local read-only candidates; ranking now has validated current-page activity IDs and expiry. Real login, operational content, WeChat live-player plugin, native devices and release acceptance remain open; route registration alone does not close FE-003D."
     },
     {
       "id": "FE-003E",
@@ -133,32 +623,16 @@
     {
       "id": "FE-003G",
       "title": "Feedback, enterprise work mode and behalf ordering",
-      "status": "missing_actionable",
-      "legacyRoutes": [
-        "/pages/extension/customer_list/feedback",
-        "/pages/work/userInfo/index",
-        "/pages/work/orderList/index",
-        "/pages/work/orderDetail/index",
-        "/pages/work/record/index",
-        "/pages/work/groupInfo/index",
-        "/pages/behalf/user_list/index",
-        "/pages/behalf/goods_list/index",
-        "/pages/behalf/record/index",
-        "/pages/behalf/order_confirm/index",
-        "/pages/behalf/cashier/index"
-      ],
-      "remaining": "work.ts has context APIs but no registered UI consumer; feedback and behalf ordering have neither registered routes nor complete target flows."
+      "status": "local_candidate_partial",
+      "legacyRoutes": [],
+      "remaining": "All five original behalf routes are directly registered: records, buyer selection, product/cart, confirm and cashier; a new read-only detail route was not an original PHP manifest route. Registration and local synthetic tests do not establish full PHP flow parity. Confirm has scoped quote/create, delivery, candidate coupons, points, authoritative form components, private image upload/preview and an operator-disclosed submission journal. Detail/list are creating-Admin-scoped minimal projections. Cashier requires explicit payment initiation, status/detail checks and a displayed expected amount; zero-price assisted orders require confirmation without QR, and external QR is drawn locally. Cash/zero lock-time amount validation passed native PG16 flow 39/39; a later native PG16 flow 43/43 added a persistent one-time provider intent before external contact. Uncommitted callback-first evidence, unknown outcomes, real callback, authenticated device and retry acceptance remain release blockers. Public list requests without unique paging=cursor now receive an upgrade error; this does not force-upgrade the online old mini-program and App. Owner confirms existing users, but published package identity, signing, version and actual API origin are unverified. Category/advanced filters, large-catalog paging, keyword/status query plans, fresh buyer selection, unused-image lifecycle, cross-tab coordination and real Admin/Redis/Hyperdrive acceptance remain open. Feedback and five Work pages now have local route consumers. Work tokens stay separate from shopper login and in memory. No-hint entry and product send check the current SDK target; background/pagehide clear private state. A visible page with a userid hint cannot guarantee immediate clearing on an otherwise unobserved chat switch. Real Enterprise WeChat SDK/employee authorization, authenticated feedback submission, native devices and deployment are not verified."
     },
     {
       "id": "FE-003H",
       "title": "Community topic, search and video deep links",
-      "status": "partial_replacement",
-      "legacyRoutes": [
-        "/pages/discover/discoverTopic/index",
-        "/pages/discover/discoverSearch/index",
-        "/pages/discover/discoverVideo/index"
-      ],
-      "remaining": "Feed, publish, detail modal and social relationships exist, but these three query-addressable screens do not yet have equivalent deep-link state."
+      "status": "local_candidate_covered",
+      "legacyRoutes": [],
+      "remaining": "The three logical legacy routes now preserve topic id/hot-new order, search keyword/topic filters, and video id/author/content-type state with pagination, retry and stale-response guards. The old APP-PLUS /app web-view URL extracts only validated page state, never loads the embedded host or token; generic unrestricted web-view behavior remains retired under FE-003F. Topic publishing and post detail are available within the deep-link page. Local preview video has no playable media, so real media playback and native-device/production acceptance remain under FE-003J/K."
     }
   ],
   "platformBuildMatrix": [
@@ -167,14 +641,14 @@
     { "platform": "APP-PLUS", "command": "npm run build:app", "status": "completed_local_candidate", "note": "Build succeeds with the existing mixed static/dynamic request.ts chunk warning" }
   ],
   "checklist": [
-    { "id": "FE-003A", "done": true, "item": "Recount active manifests, install a registered-route allowlist, map 97 legacy routes and normalize legacy query keys" },
+    { "id": "FE-003A", "done": true, "item": "Recount active manifests, install a registered-route allowlist, map 98 legacy routes and normalize legacy query keys" },
     { "id": "FE-003B", "done": false, "item": "Restore user governance/history screens" },
     { "id": "FE-003C", "done": false, "item": "Implement distributor and agent self-service without conflating Supplier roles" },
     { "id": "FE-003D", "done": false, "item": "Restore or explicitly retire presale, newcomer, live and ranking experiences" },
     { "id": "FE-003E", "done": false, "item": "Validate legacy mobile-admin replacements on the Admin surface and retirement redirects" },
     { "id": "FE-003F", "done": false, "item": "Run real payment callback and historical deep-link E2E; retain generic webview retirement unless allowlisted" },
     { "id": "FE-003G", "done": false, "item": "Restore feedback, enterprise work mode and behalf-ordering flows" },
-    { "id": "FE-003H", "done": false, "item": "Restore query-addressable community topic, search and video deep links" },
+    { "id": "FE-003H", "done": true, "item": "Restore query-addressable community topic, search and video deep links" },
     { "id": "FE-003I", "done": true, "item": "Run local H5, WeChat mini-program and App conditional production builds" },
     { "id": "FE-003J", "done": false, "item": "Run real-device H5, WeChat mini-program and App smoke tests" },
     { "id": "FE-003K", "done": false, "item": "Run real customer/operator accounts, provider callbacks and production data E2E before release" }

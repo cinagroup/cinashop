@@ -23,6 +23,7 @@ import type {
   OrderMessage,
   OrderNotificationOutboxMessage,
   OrderPaidOutboxMessage,
+  PresaleDeliveryOutboxMessage,
 } from "@/env";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { allocatePaidOrderBySupplier } from "@/services/order/OrderSupplierAllocationService";
@@ -44,6 +45,13 @@ import { WITHDRAWAL_APPLICATION_EVENT, processWithdrawalApplication } from "@/se
 import { deliverStaffRefresh, type StaffPublisher } from "@/services/notification/StaffNotificationDeliveryService";
 import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
 import { recordPaidOrderMembershipSavings } from './OrderMembershipSavings';
+import { enqueuePresaleDeliveryIntent, preparePresaleDeliveryClaim, PRESALE_DELIVERY_EVENT,
+  readPresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
+import { deliverDuePresale } from '@/services/activity/PresaleDeliveryResolver';
+import { preparePresalePaidRecovery } from '@/services/activity/PresalePaidRecovery';
+import { assertPresaleSupplierRefundProof } from '@/services/activity/PresaleSupplierRefundProof';
+
+type OutboxMessage = OrderPaidOutboxMessage | OrderNotificationOutboxMessage | PresaleDeliveryOutboxMessage;
 
 export const ORDER_PAID_EVENT = "order.paid";
 export const OUTBOX_PROCESS_LEASE_SECONDS = 120;
@@ -127,6 +135,15 @@ export function isOrderNotificationOutboxMessage(
   );
 }
 
+export function isPresaleDeliveryOutboxMessage(value: unknown): value is PresaleDeliveryOutboxMessage {
+  if (!value || typeof value !== 'object') return false;
+  const message = value as Record<string, unknown>;
+  if (message.action !== 'processPresaleDeliveryOutbox' || typeof message.outboxId !== 'number' ||
+    !Number.isSafeInteger(message.outboxId) || message.outboxId <= 0 || message.outboxId > 2_147_483_647 ||
+    typeof message.eventKey !== 'string' || !/^order\.presale\.fulfillment:[1-9]\d{0,9}$/.test(message.eventKey)) return false;
+  return Number(message.eventKey.slice(`${PRESALE_DELIVERY_EVENT}:`.length)) <= 2_147_483_647;
+}
+
 function isNotificationEventType(eventType: string): boolean {
   return isWithdrawalNoticeEvent(eventType)
     || eventType === WITHDRAWAL_APPLICATION_EVENT
@@ -156,7 +173,10 @@ function queueMessageForOutboxEvent(event: {
   id: number;
   eventKey: string;
   eventType: string;
-}): OrderPaidOutboxMessage | OrderNotificationOutboxMessage {
+}): OutboxMessage {
+  if (event.eventType === PRESALE_DELIVERY_EVENT) {
+    return { action: 'processPresaleDeliveryOutbox', outboxId: event.id, eventKey: event.eventKey };
+  }
   if (event.eventType === ORDER_PAID_EVENT) {
     return {
       action: "processOrderPaidOutbox",
@@ -339,16 +359,15 @@ export class OrderOutboxService {
   }
 
   async processMessage(
-    message: OrderPaidOutboxMessage | OrderNotificationOutboxMessage,
+    message: OutboxMessage,
   ): Promise<
-    "completed" | "already-completed" | "busy" | "dead"
+    "completed" | "already-completed" | "busy" | "dead" | "deferred"
   > {
     const claim = await this.claimForProcessing(message);
     if (typeof claim === "string") return claim;
 
     try {
-      await this.runClaimedEvent(claim);
-      return "completed";
+      return await this.runClaimedEvent(claim) ?? "completed";
     } catch (error) {
       await this.recordFailure(claim, error);
       throw error;
@@ -411,11 +430,17 @@ export class OrderOutboxService {
   }
 
   private async claimForProcessing(
-    message: OrderPaidOutboxMessage | OrderNotificationOutboxMessage,
-  ): Promise<ClaimedEvent | "already-completed" | "busy" | "dead"> {
-    const now = Math.floor(Date.now() / 1000);
+    message: OutboxMessage,
+  ): Promise<ClaimedEvent | "already-completed" | "busy" | "dead" | "deferred"> {
+    let now = Math.floor(Date.now() / 1000);
     const leaseToken = crypto.randomUUID();
     return withTx(this.container, async (tx) => {
+      if (message.action === 'processPresaleDeliveryOutbox') {
+        if (!isPresaleDeliveryOutboxMessage(message)) throw new ValidateException('预售交付消息无效');
+        const preparation = await preparePresaleDeliveryClaim(tx, message);
+        if (preparation.kind !== 'ready') return preparation.kind;
+        now = preparation.now;
+      }
       const rows = await tx
         .select()
         .from(storeOrderOutbox)
@@ -428,7 +453,8 @@ export class OrderOutboxService {
       if (
         (message.action === "processOrderPaidOutbox" && event.eventType !== ORDER_PAID_EVENT) ||
         (message.action === "processOrderNotificationOutbox" &&
-          !isNotificationEventType(event.eventType))
+          !isNotificationEventType(event.eventType)) ||
+        (message.action === 'processPresaleDeliveryOutbox' && event.eventType !== PRESALE_DELIVERY_EVENT)
       ) {
         throw new ValidateException("outbox 消息动作与事件类型不匹配");
       }
@@ -459,7 +485,7 @@ export class OrderOutboxService {
     });
   }
 
-  private async runClaimedEvent(claim: ClaimedEvent): Promise<void> {
+  private async runClaimedEvent(claim: ClaimedEvent): Promise<void | 'deferred'> {
     if (claim.eventType === STAFF_REFRESH_EVENT) {
       if (!this.env.STAFF_NOTICE) throw new Error("实时通知绑定未配置");
       const [event] = await this.container.db.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.id, claim.id),
@@ -474,7 +500,7 @@ export class OrderOutboxService {
       return;
     }
     const now = Math.floor(Date.now() / 1000);
-    await withTx(this.container, async (tx) => {
+    return withTx(this.container, async (tx) => {
       const eventRows = await tx
         .select()
         .from(storeOrderOutbox)
@@ -500,18 +526,34 @@ export class OrderOutboxService {
       if (event.eventType === ORDER_PAID_EVENT) {
         assertOrderPaidPayload(event.payload, event.aggregateId);
 
-        const allocation = await allocatePaidOrderBySupplier(
+        const recovery = await preparePresalePaidRecovery(tx, event.payload.orderId, event.payload.orderNo);
+        const allocation = recovery?.allocation ?? await allocatePaidOrderBySupplier(
           tx,
           event.payload.orderId,
           event.payload.orderNo,
           now,
         );
         const order = allocation.paymentOrder;
+        // Assisted checkout deliberately has no user row for a guest. Only
+        // that explicit origin may omit account effects; a missing member
+        // must still fail instead of silently losing rewards/pay-count facts.
+        const assistedGuest = order.uid === 0 && order.type === 0
+          && order.isChannel === 2 && order.staffId > 0 && order.couponId === 0;
+        if (order.uid === 0 && !assistedGuest) throw new Error('游客付款订单来源无效');
         await recordPaidOrderMembershipSavings(tx, order, now);
 
-      // PHP 的 OrderPayHandelJob 在支付后异步发卡。这里复用同一个可重放
-      // outbox，并把卡密认领、订单发货状态和其余支付后置任务放进同一事务。
-        await deliverPaidVirtualOrders(tx, allocation.fulfillmentOrders, now);
+        // Payment effects commit once. Presale secrets are delivered by a
+        // separate durable event, even if its boundary has already passed.
+        const immediate = [];
+        for (const fulfillment of allocation.fulfillmentOrders) {
+          // Only proven completed refund partitions lose fulfillment eligibility.
+          // Payment facts below retain their original root/fulfillment scope.
+          if (recovery && !recovery.activeOrderIds.has(fulfillment.id)) continue;
+          if (fulfillment.type === 6 && fulfillment.productType === 1) {
+            await enqueuePresaleDeliveryIntent(tx, fulfillment, order.id);
+          } else immediate.push(fulfillment);
+        }
+        await deliverPaidVirtualOrders(tx, immediate, now);
 
         // PHP starts a "purchase + N days" second-card window at payment, not
         // checkout or delayed outbox processing. Supplier allocation runs first
@@ -535,22 +577,36 @@ export class OrderOutboxService {
             );
         }
 
-        await grantPaidOrderProductCoupons(tx, order.id, order.uid, now);
-        if (order.payType !== "offline" && order.type !== 8) {
-          await grantLotteryEntitlement(tx, {
-            uid: order.uid,
-            factor: 3,
-            sourceType: "order",
-            sourceId: order.id,
-            now,
-          });
+        if (!assistedGuest) {
+          await grantPaidOrderProductCoupons(tx, order.id, order.uid, now);
+          if (order.payType !== "offline" && order.type !== 8) {
+            await grantLotteryEntitlement(tx, {
+              uid: order.uid,
+              factor: 3,
+              sourceType: "order",
+              sourceId: order.id,
+              now,
+            });
+          }
         }
 
+        if (recovery) {
+          // Orders/carts/buyer are already locked. Acquire supplier/ledger locks
+          // only after all other effects, then require the SAME structural scope.
+          const financial = await assertPresaleSupplierRefundProof(tx, order.id);
+          if (financial.coveredOrderIds.size !== recovery.coveredOrderIds.size
+            || [...financial.coveredOrderIds].some(id => !recovery.coveredOrderIds.has(id))
+            || financial.refundIds.size !== recovery.refundIds.size
+            || [...financial.refundIds].some(id => !recovery.refundIds.has(id))) {
+            throw new Error('预售付款恢复的财务与数量凭据范围不一致');
+          }
+        }
         for (const fulfillmentOrder of allocation.fulfillmentOrders) {
+          if (recovery?.coveredOrderIds.has(fulfillmentOrder.id)) continue;
           await recordSupplierPayment(tx, fulfillmentOrder, now);
         }
 
-        await this.incrementBuyerPayCount(tx, order);
+        if (!assistedGuest) await this.incrementBuyerPayCount(tx, order);
         await tx.insert(storeOrderStatus).values({
           oid: order.id,
           changeType: "pay_success",
@@ -559,6 +615,18 @@ export class OrderOutboxService {
             : "订单支付成功，后置任务处理完成",
           changeTime: now,
         });
+      } else if (event.eventType === PRESALE_DELIVERY_EVENT) {
+        const intent = readPresaleDeliveryIntent(event.payload, event.aggregateId);
+        if (await deliverDuePresale(tx, intent) === 'waiting') {
+          // Expected business waiting is not a failure and consumes no attempt.
+          // Queue will ACK; the ordinary durable scanner revisits availability.
+          await tx.update(storeOrderOutbox).set({ status: 'PENDING',
+            availableTime: sql`greatest(${intent.dueAt}, floor(extract(epoch FROM clock_timestamp()))::integer + 300)`,
+            attemptCount: sql`${storeOrderOutbox.attemptCount} - 1`, leaseUntil: 0, leaseToken: '', lastError: '',
+            updateTime: sql`floor(extract(epoch FROM clock_timestamp()))::integer`,
+          }).where(eq(storeOrderOutbox.id, event.id));
+          return 'deferred' as const;
+        }
       } else if (event.eventType === WITHDRAWAL_APPLICATION_EVENT) {
         await processWithdrawalApplication(tx, event, now);
       } else if (isWithdrawalNoticeEvent(event.eventType)) {

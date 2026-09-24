@@ -38,6 +38,15 @@ import { OFFLINE_INSTALLATION_SQL } from '../src/migrations/offlineOrderInstalla
 import { runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
 import { CHECKOUT_PRICING_LOCK_INSTALLATION_SQL } from '../src/migrations/checkoutPricingLockInstallation';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
+import { runPresaleDeliveryOutbox } from '../src/migrations/runPresaleDeliveryOutbox';
+import { runSupplierRefundLookupIndexes } from '../src/migrations/runSupplierRefundLookupIndexes';
+import { SUPPLIER_REFUND_LOOKUP_INDEX_SQL } from '../src/migrations/supplierRefundLookupIndexes';
+import { runPurchaseOriginEvidenceSchema } from '../src/migrations/runPurchaseOriginEvidence';
+import { PURCHASE_ORIGIN_INSTALLATION_SQL } from '../src/migrations/purchaseOriginEvidenceInstallation';
+import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '../src/migrations/purchaseCancellationEvidenceInstallation';
+import { runPurchaseCancellationEvidenceSchema } from '../src/migrations/runPurchaseCancellationEvidence';
+import { ASSISTED_ORDER_LIST_INDEX_SQL } from '../src/migrations/assistedOrderListIndex';
+import { runAssistedOrderListIndex } from '../src/migrations/runAssistedOrderListIndex';
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -57,6 +66,11 @@ vi.mock('../src/migrations/runInvoiceEvidence', () => ({ runInvoiceEvidenceSchem
 vi.mock('../src/migrations/runRefundOrderSplit', () => ({ runRefundOrderSplitSchema: vi.fn() }));
 vi.mock('../src/migrations/runOfflineOrder', () => ({ runOfflineOrderSchema: vi.fn() }));
 vi.mock('../src/migrations/runCheckoutPricingLock', () => ({ runCheckoutPricingLockSchema: vi.fn() }));
+vi.mock('../src/migrations/runPresaleDeliveryOutbox', () => ({ runPresaleDeliveryOutbox: vi.fn() }));
+vi.mock('../src/migrations/runSupplierRefundLookupIndexes', () => ({ runSupplierRefundLookupIndexes: vi.fn() }));
+vi.mock('../src/migrations/runPurchaseOriginEvidence', () => ({ runPurchaseOriginEvidenceSchema: vi.fn() }));
+vi.mock('../src/migrations/runPurchaseCancellationEvidence', () => ({ runPurchaseCancellationEvidenceSchema: vi.fn() }));
+vi.mock('../src/migrations/runAssistedOrderListIndex', () => ({ runAssistedOrderListIndex: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
@@ -73,9 +87,14 @@ const invoiceRunner = vi.mocked(runInvoiceEvidenceSchema);
 const splitRunner = vi.mocked(runRefundOrderSplitSchema);
 const offlineRunner = vi.mocked(runOfflineOrderSchema);
 const pricingRunner = vi.mocked(runCheckoutPricingLockSchema);
+const presaleRunner = vi.mocked(runPresaleDeliveryOutbox);
+const supplierLookupRunner = vi.mocked(runSupplierRefundLookupIndexes);
+const originRunner = vi.mocked(runPurchaseOriginEvidenceSchema);
+const cancellationRunner = vi.mocked(runPurchaseCancellationEvidenceSchema);
+const assistedListRunner = vi.mocked(runAssistedOrderListIndex);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 167 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 172 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -94,7 +113,7 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
   });
   // Deliberate orchestration-only double; no driver/client is created. Real
   // database shape and SQL semantics are tested in the existing PG16 paths.
-  const container = { db: { transaction } } as unknown as Container;
+  const container = { db: { transaction, execute: vi.fn(async () => [{ presale_ready: false }]) } } as unknown as Container;
   runner.mockImplementation(async db => {
     expect(db).toBe(container.db);
     expect(depth, "0151 must receive the root DB outside an outer transaction").toBe(0);
@@ -172,6 +191,26 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(db).toBe(container.db); expect(depth, '0166 must receive the root DB').toBe(0);
     expect(offlineRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  presaleRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0167 must receive the root DB').toBe(0);
+    expect(pricingRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
+  supplierLookupRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0168 must receive the root DB').toBe(0);
+    expect(presaleRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
+  originRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0169 must receive the root DB').toBe(0);
+    expect(supplierLookupRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
+  cancellationRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0170 must receive the root DB').toBe(0);
+    expect(originRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
+  assistedListRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0171 must receive the root DB').toBe(0);
+    expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -192,10 +231,15 @@ beforeEach(() => {
   splitRunner.mockReset();
   offlineRunner.mockReset();
   pricingRunner.mockReset();
+  presaleRunner.mockReset();
+  supplierLookupRunner.mockReset();
+  originRunner.mockReset();
+  cancellationRunner.mockReset();
+  assistedListRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0166, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0171, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -229,6 +273,18 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.service.refundOrderSplitMigrationSqlForVerification()).toBe(REFUND_SPLIT_INSTALLATION_SQL);
     expect(setup.service.offlineOrderMigrationSqlForVerification()).toBe(OFFLINE_INSTALLATION_SQL);
     expect(setup.service.checkoutPricingLockMigrationSqlForVerification()).toBe(CHECKOUT_PRICING_LOCK_INSTALLATION_SQL);
+    expect(setup.service.supplierRefundLookupIndexesMigrationSqlForVerification()).toBe(SUPPLIER_REFUND_LOOKUP_INDEX_SQL);
+    expect(SUPPLIER_REFUND_LOOKUP_INDEX_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0162_supplier_refund_lookup_indexes.sql'),'utf8').trim());
+    expect(supplierLookupRunner).not.toHaveBeenCalled();
+    expect(setup.service.purchaseOriginEvidenceMigrationSqlForVerification()).toBe(PURCHASE_ORIGIN_INSTALLATION_SQL);
+    expect(PURCHASE_ORIGIN_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0163_purchase_origin_evidence.sql'),'utf8').trim());
+    expect(originRunner).not.toHaveBeenCalled();
+    expect(setup.service.purchaseCancellationEvidenceMigrationSqlForVerification()).toBe(PURCHASE_CANCELLATION_INSTALLATION_SQL);
+    expect(PURCHASE_CANCELLATION_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0164_purchase_cancellation_evidence.sql'),'utf8').replace(/\r\n/g,'\n').trim());
+    expect(cancellationRunner).not.toHaveBeenCalled();
+    expect(setup.service.assistedOrderListIndexMigrationSqlForVerification()).toBe(ASSISTED_ORDER_LIST_INDEX_SQL);
+    expect(ASSISTED_ORDER_LIST_INDEX_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0165_assisted_order_list_index.sql'),'utf8').trim());
+    expect(assistedListRunner).not.toHaveBeenCalled();
     expect(CHECKOUT_PRICING_LOCK_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0160_checkout_pricing_lock.sql'),'utf8').trim());
     expect(OFFLINE_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0159_offline_order.sql'),'utf8').trim());
     expect(REFUND_SPLIT_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0158_refund_order_split.sql'),'utf8').trim());
@@ -241,7 +297,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 167 steps in order and dispatches 0151–0166 to independent root transaction runners", async () => {
+  it("executes all 172 steps in order and dispatches 0151–0171 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -261,6 +317,11 @@ describe("embedded 0151 sequence registration", () => {
     expect(splitRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(offlineRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(pricingRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(presaleRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(supplierLookupRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(originRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(assistedListRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.sqlCalls.filter(c => c.sql === "SET LOCAL search_path TO public, pg_temp")).toHaveLength(151);
     expect(setup.sqlCalls.some(c => c.sql === KEFU_SEQUENCE_ALIGNMENT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PINK_RECOVERY_INDEX_SQL)).toBe(false);
@@ -278,6 +339,9 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.sqlCalls.some(c => c.sql === REFUND_SPLIT_INSTALLATION_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === OFFLINE_INSTALLATION_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === CHECKOUT_PRICING_LOCK_INSTALLATION_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === SUPPLIER_REFUND_LOOKUP_INDEX_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === PURCHASE_CANCELLATION_INSTALLATION_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === ASSISTED_ORDER_LIST_INDEX_SQL)).toBe(false);
   });
 
   it.each([new Error("already exists"), new Error("sequence drift"), "raw rejection"])(
@@ -500,5 +564,42 @@ describe("embedded 0151 sequence registration", () => {
     const setup=harness(); offlineRunner.mockRejectedValue(new Error('offline drift'));
     expect(await setup.service.runAll()).toEqual({executed:names.slice(0,165),errors:['0165: offline drift']});
     expect(pricingRunner).not.toHaveBeenCalled();
+  });
+  it('fails closed at 0167 without claiming deployment success', async () => {
+    const setup = harness(); presaleRunner.mockRejectedValue(Error('event CHECK drift'));
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,167), errors: ['0167: event CHECK drift'] });
+    expect(presaleRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(supplierLookupRunner).not.toHaveBeenCalled();
+  });
+  it.each([new Error('already exists'), new Error('index drift'), 'raw rejection'])('fails closed at 0168 without retry or false success (%s)', async error => {
+    const setup = harness(); supplierLookupRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,168), errors: [`0168: ${error instanceof Error ? error.message : error}`] });
+    expect(supplierLookupRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(presaleRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+    expect(originRunner).not.toHaveBeenCalled();
+  });
+  it.each([new Error('already exists'), new Error('origin drift'), 'raw rejection'])('fails closed at 0169 without retry or false success (%s)', async error => {
+    const setup = harness(); originRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,169), errors: [`0169: ${error instanceof Error ? error.message : error}`] });
+    expect(originRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(supplierLookupRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+    expect(cancellationRunner).not.toHaveBeenCalled();
+  });
+  it.each([new Error('already exists'), new Error('cancellation drift'), 'raw rejection'])('fails closed at 0170 without retry or false success (%s)', async error => {
+    const setup = harness(); cancellationRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,170), errors: [`0170: ${error instanceof Error ? error.message : error}`] });
+    expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(originRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+    expect(assistedListRunner).not.toHaveBeenCalled();
+  });
+  it.each([new Error('already exists'), new Error('index drift'), 'raw rejection'])('fails closed at 0171 without retry or false success (%s)', async error => {
+    const setup = harness(); assistedListRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,171), errors: [`0171: ${error instanceof Error ? error.message : error}`] });
+    expect(assistedListRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
 });

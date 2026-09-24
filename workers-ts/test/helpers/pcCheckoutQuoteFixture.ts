@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { and, eq } from 'drizzle-orm';
 import { financePostgres } from "./financePostgres";
 import { checkoutPricingFixture } from './checkoutPricingFixture';
+import { purchaseOriginCheckoutFixture } from './purchaseOriginCheckoutFixture';
 import type { PgTable } from "drizzle-orm/pg-core";
 import { createContainerFromDb } from "../../src/lib/di";
 import { orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
@@ -17,13 +18,16 @@ import type { AppVariables, Env } from "../../src/env";
 // remains the existing disposable column fixture; no environment/production fallback.
 type QuoteFixtureDatabase = Pick<Awaited<ReturnType<typeof financePostgres>>, 'db' | 'exec' | 'close'>;
 export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
-  createDatabase: (tables: PgTable[]) => Promise<QuoteFixtureDatabase> = financePostgres) {
+  createDatabase: (tables: PgTable[]) => Promise<QuoteFixtureDatabase> = tables => financePostgres(tables, { namespace: 'public' })) {
   let fixture = await createDatabase([...new Set([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
     memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore, ...extraTables])]);
   // Native checkout tests explicitly commission the real protocol. PGlite can
   // still exercise read-only quotes, but cannot certify/create a PG16 checkout.
   try {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) fixture = await checkoutPricingFixture(fixture);
+    if (process.env.TEST_FINANCE_POSTGRES_URL) {
+      fixture = await checkoutPricingFixture(fixture);
+      await purchaseOriginCheckoutFixture(fixture);
+    }
   } catch (error) { await fixture.close(); throw error; }
   const container = createContainerFromDb(fixture.db);
   const cache = new Map<string, string>();

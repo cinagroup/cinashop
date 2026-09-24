@@ -17,8 +17,9 @@ const item = { id: 10, productId: 70, unique: 'red001', cartNum: 2, type: 0, isN
 const gate = () => { let resolve; return { promise: new Promise(done => { resolve = done; }), resolve }; };
 
 export function registerCheckoutIntentRecoveryTests(getContext) {
-  async function mount(create = async () => { throw Error('network uncertainty'); }) {
+  async function mount(create = async () => { throw Error('network uncertainty'); }, { type = 0, quote = value => value } = {}) {
     const { server, api, response } = getContext();
+    const selected = { ...item, type };
     const component = (await server.ssrLoadModule('/src/pages/order/Checkout.shipping-test.ts')).default;
     const calls = []; let view;
     api.defaults.adapter = async config => {
@@ -26,15 +27,16 @@ export function registerCheckoutIntentRecoveryTests(getContext) {
       calls.push({ url: config.url, body, saved: sessionStorage.getItem(storageKey) });
       let data;
       if (config.url.startsWith('/order/create/')) return response(config, await create(body, config));
-      if (config.url === '/cart/list') data = [item];
+      if (config.url === '/cart/list') data = [selected];
       else if (config.url === '/address/list') data = [{ id: 11, real_name: '本地测试', phone: '00000000000', is_default: 1 }];
       else if (config.url === '/store/list' || config.url === '/coupons/order/0') data = [];
       else if (config.url === '/order/confirm' || config.url.startsWith('/order/computed/')) data = {
-        orderKey: key, quoteToken: 'a'.repeat(32), addressInfo: { id: body.addressId }, cartInfo: [{ ...item, truePrice: '10.00' }],
+        orderKey: key, quoteToken: 'a'.repeat(32), addressInfo: { id: body.addressId }, cartInfo: [{ ...selected, truePrice: '10.00' }],
         priceGroup: { sumPrice: '20.00', totalPrice: '20.00', pay_price: '20.00', total_postage: '0.00', pay_postage: '0.00', storePostageDiscount: '0.00',
           vipPrice: '0.00', levelPrice: '0.00', memberPrice: '0.00', couponPrice: '0.00', deduction_price: '0.00', firstOrderPrice: '0.00', usedIntegral: 0, SurplusIntegral: 0, pay_integral: 0 },
       };
       else throw Error('Unexpected request ' + config.url);
+      if (config.url === '/order/confirm' || config.url.startsWith('/order/computed/')) data = await quote(data, body);
       return response(config, { status: 200, data });
     };
     const page = { setup(props, ctx) { view = component.setup(props, ctx); return () => null; } };
@@ -46,6 +48,72 @@ export function registerCheckoutIntentRecoveryTests(getContext) {
     return { get view() { return view; }, calls, router, writes: () => calls.filter(call => call.url.startsWith('/order/create/')),
       close() { if (!closed) { app.unmount(); closed = true; } } };
   }
+
+  function integralQuote(value, body, token = 'b') {
+    return { ...value, quoteToken: token.repeat(32), priceGroup: { ...value.priceGroup,
+      pay_price: body.useIntegral ? '19.50' : '20.00', deduction_price: body.useIntegral ? '0.50' : '0.00',
+      usedIntegral: body.useIntegral ? 50 : 0, SurplusIntegral: body.useIntegral ? 0 : 50 } };
+  }
+
+  for (const type of [0, 1, 3, 4, 5, 6]) it(`PC points eligibility and transmitted flag agree for type ${type}`, async () => {
+    const f = await mount(undefined, { type, quote: integralQuote });
+    try {
+      const eligible = type === 0 || type === 6;
+      assert.equal(f.view.integralEligible.value, eligible);
+      f.view.useIntegral.value = true; await flush();
+      assert.equal(f.view.quoteOptions.value.useIntegral, eligible);
+      assert.equal(f.view.quoteState.value.result.prices.usedIntegral, eligible ? 50 : 0);
+      if (type !== 0) { assert.equal(f.view.quoteOptions.value.couponId, 0); assert.equal(f.calls.some(c => c.url.startsWith('/coupons/')), false); }
+    } finally { f.close(); }
+  });
+
+  it('PC presale toggle invalidates submission and ignores a late points quote', async () => {
+    const waiting = gate(); let slow = true;
+    const f = await mount(undefined, { type: 6, quote: async (data, body) => {
+      if (slow && body.useIntegral) await waiting.promise;
+      return integralQuote(data, body);
+    } });
+    try {
+      f.view.useIntegral.value = true; assert.equal(f.view.canSubmit.value, false); await flush();
+      await f.view.submitOrder(); assert.equal(f.writes().length, 0);
+      f.view.useIntegral.value = false; await flush();
+      assert.equal(f.view.canSubmit.value, true);
+      waiting.resolve(); await flush(); assert.equal(f.view.quoteState.value.result.prices.usedIntegral, 0);
+      slow = false; f.view.useIntegral.value = true; await flush();
+      assert.equal(f.view.quoteState.value.result.prices.payable, '19.50');
+    } finally { waiting.resolve(); f.close(); }
+  });
+
+  it('PC presale reconfirmation retains points selection and replaces the receipt before a new intent', async () => {
+    let attempts = 0;
+    const f = await mount(async () => {
+      if (++attempts === 1) return { status: 400, msg: '积分已变化', data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: key } };
+      throw Error('network uncertainty');
+    }, { type: 6, quote: (data, body) => integralQuote(data, body, attempts ? 'c' : 'b') });
+    try {
+      f.view.useIntegral.value = true; await flush(); await f.view.submitOrder();
+      assert.equal(f.view.pendingIntent.value, null); assert.equal(f.view.useIntegral.value, true);
+      assert.equal(f.view.quoteState.value.result.quoteToken, 'c'.repeat(32));
+      await f.view.submitOrder();
+      assert.equal(f.writes()[0].body.quoteToken, 'b'.repeat(32));
+      assert.equal(f.writes()[1].body.quoteToken, 'c'.repeat(32));
+      assert.equal(f.writes()[1].body.useIntegral, true);
+    } finally { f.close(); }
+  });
+
+  it('PC uncertain presale points intent survives recreation even if current controls change', async () => {
+    const first = await mount(undefined, { type: 6, quote: integralQuote }); let saved;
+    try {
+      first.view.useIntegral.value = true; await flush(); await first.view.submitOrder();
+      saved = first.writes()[0].body; assert.equal(saved.useIntegral, true); assert.equal(saved.couponId, 0);
+    } finally { first.close(); }
+    const second = await mount(undefined, { type: 6, quote: integralQuote });
+    try {
+      assert.equal(second.calls.length, 0); second.view.useIntegral.value = false; await second.view.submitOrder();
+      assert.deepEqual(second.writes()[0].body, saved);
+      assert.equal(second.writes()[0].url, `/order/create/${key}`);
+    } finally { second.close(); }
+  });
 
   it('PC persists a frozen order before sending and restores it across component recreation without repricing', async () => {
     const first = await mount(); let saved;

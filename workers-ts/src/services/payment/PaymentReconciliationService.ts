@@ -45,7 +45,8 @@ import {
   type PaymentProviderQueryRequest,
   type PaymentProviderQueryResult,
 } from "@/services/payment/PaymentProviderQuery";
-import { registerPaymentReconciliationTx } from "@/services/payment/PaymentReconciliationRegistry";
+import { lockPaymentReconciliationRegistrationTx, registerPaymentReconciliationTx } from "@/services/payment/PaymentReconciliationRegistry";
+import { lockStoreOrderPaymentBoundary } from "@/services/payment/StoreOrderPaymentBoundary";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { settleOfflineOrderExternalPayment, settleOfflineOrderQueryPayment } from "@/services/order/OfflineOrderExternalPaymentService";
 import { queryOfflineOrderPayment } from '@/services/order/OfflineOrderPaymentQueryService';
@@ -60,6 +61,7 @@ const MAX_QUERY_ATTEMPTS = 12;
 const NO_PAYMENT_MIN_AGE_SECONDS = 30 * 60;
 const RETENTION_SECONDS = 400 * 24 * 60 * 60;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const PROVIDER_TRANSACTION_ID = /^[A-Za-z0-9_-]{1,100}$/;
 const REASON_CODE = /^[a-z][a-z0-9_]{2,63}$/;
 const TERMINAL_STATUSES: PaymentReconciliationStatus[] = [
   "SETTLED",
@@ -106,7 +108,7 @@ interface SettlementResult {
 }
 
 type PaymentReconciliationSettler = (
-  request: PaymentProviderQueryRequest,
+  request: ClaimedCase,
   result: PaymentProviderQueryResult,
 ) => Promise<SettlementResult>;
 
@@ -339,7 +341,7 @@ export class PaymentReconciliationService {
 
     if (
       result.amountCents !== claim.expectedAmountCents
-      || !result.transactionId
+      || !PROVIDER_TRANSACTION_ID.test(result.transactionId)
       || result.errorCode
     ) {
       return this.finish(claim, {
@@ -349,6 +351,10 @@ export class PaymentReconciliationService {
         errorCode: result.errorCode || "provider_evidence_mismatch",
       });
     }
+    // Persist the queried transaction before settlement. A verified callback
+    // may have committed during provider I/O with a different identity.
+    const registered = await this.registerQueriedSuccess(claim, result);
+    if (registered) return registered;
     try {
       const settled = await this.settler(claim, result);
       if (settled.status === "unknown") {
@@ -378,6 +384,79 @@ export class PaymentReconciliationService {
       }
       return this.finishQueryFailure(claim, error, result);
     }
+  }
+
+  private async registerQueriedSuccess(
+    claim: ClaimedCase,
+    result: PaymentProviderQueryResult,
+  ): Promise<PaymentReconciliationProcessResult | null> {
+    return withTx(this.container, async (tx) => {
+      // This case already exists. Reuse the registration lock order without an
+      // INSERT privilege or an unnecessary speculative INSERT on every query.
+      await lockPaymentReconciliationRegistrationTx(tx, claim.provider, claim.orderNo, result.transactionId);
+      const [current] = await tx.select().from(paymentReconciliationCase)
+        .where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for("update");
+      if (!current || current.replayKey !== claim.replayKey
+        || current.provider !== claim.provider || current.orderNo !== claim.orderNo) {
+        throw new Error("payment_reconciliation_query_registration_mismatch");
+      }
+      const now = Math.floor(Date.now() / 1_000);
+      const [foreignTransaction] = await tx.execute<{ present: boolean }>(sql`SELECT EXISTS(
+        SELECT 1 FROM ${paymentReconciliationCase}
+        WHERE provider=${claim.provider} AND provider_transaction_id=${result.transactionId}
+          AND order_no<>${claim.orderNo}
+      ) AS present`);
+      const conflict = current.profile !== claim.profile
+        || current.expectedAmountCents !== claim.expectedAmountCents
+        || current.currency !== "CNY"
+        || !!(current.orderDomain && claim.orderDomain && current.orderDomain !== claim.orderDomain)
+        || !!(current.providerTransactionId && current.providerTransactionId !== result.transactionId)
+        || foreignTransaction.present;
+      if (conflict && current.status !== "CONFLICT") {
+        await tx.update(paymentReconciliationCase).set({
+          status: "CONFLICT",
+          nextCheckTime: 0,
+          leaseUntil: 0,
+          leaseToken: "",
+          lastErrorCode: "provider_query_transaction_conflict",
+          resolvedTime: now,
+          retainUntil: now + RETENTION_SECONDS,
+          updateTime: now,
+        }).where(eq(paymentReconciliationCase.id, claim.id));
+        return "conflict";
+      }
+      if (current.status === "CONFLICT") {
+        await tx.update(paymentReconciliationCase).set({
+          nextCheckTime: 0,
+          leaseUntil: 0,
+          leaseToken: "",
+          updateTime: now,
+        }).where(eq(paymentReconciliationCase.id, claim.id));
+        return "conflict";
+      }
+      if (TERMINAL_STATUSES.includes(current.status)) return "already-terminal";
+      if (current.status !== "QUERYING" || current.leaseToken !== claim.leaseToken) {
+        throw new Error("payment_reconciliation_processing_fence_lost");
+      }
+      if (current.callbackEventId !== claim.callbackEventId) {
+        await tx.update(paymentReconciliationCase).set({
+          status: "UNKNOWN",
+          nextCheckTime: now + paymentReconciliationBackoff(claim.attemptCount),
+          leaseUntil: 0,
+          leaseToken: "",
+          lastErrorCode: "concurrent_callback_evidence",
+          updateTime: now,
+        }).where(eq(paymentReconciliationCase.id, claim.id));
+        return "unknown";
+      }
+      await tx.update(paymentReconciliationCase).set({
+        providerTransactionId: result.transactionId,
+        providerEventTime: current.providerEventTime || result.providerEventTime,
+        providerStatus: "SUCCESS",
+        updateTime: now,
+      }).where(eq(paymentReconciliationCase.id, claim.id));
+      return null;
+    });
   }
 
   private async recoverOfflinePayment(claim: ClaimedCase): Promise<PaymentReconciliationProcessResult> {
@@ -637,37 +716,66 @@ export class PaymentReconciliationService {
     },
   ): Promise<PaymentReconciliationProcessResult> {
     const now = Math.floor(Date.now() / 1_000);
-    const terminal = TERMINAL_STATUSES.includes(outcome.status)
-      || outcome.status === "CONFLICT"
-      || outcome.status === "DEAD";
-    const updated = await withTx(this.container, (tx) => tx.update(paymentReconciliationCase).set({
-      status: outcome.status,
-      providerStatus: outcome.providerStatus,
-      // Query evidence may have committed after the claim was read. A later
-      // settlement failure must not erase that durable transaction with the
-      // claim's stale empty identity; retries validate the original evidence.
-      providerTransactionId: outcome.result.transactionId || sql`${paymentReconciliationCase.providerTransactionId}`,
-      providerEventTime: outcome.result.providerEventTime || sql`${paymentReconciliationCase.providerEventTime}`,
-      orderDomain: outcome.orderDomain || claim.orderDomain,
-      nextCheckTime: terminal ? 0 : now + paymentReconciliationBackoff(claim.attemptCount),
-      leaseUntil: 0,
-      leaseToken: "",
-      lastErrorCode: outcome.errorCode,
-      resolvedTime: terminal ? now : 0,
-      retainUntil: terminal ? now + RETENTION_SECONDS : sql`${paymentReconciliationCase.retainUntil}`,
-      updateTime: now,
-    }).where(and(
-      eq(paymentReconciliationCase.id, claim.id),
-      eq(paymentReconciliationCase.status, "QUERYING"),
-      eq(paymentReconciliationCase.leaseToken, claim.leaseToken),
-    )).returning({ id: paymentReconciliationCase.id }));
-    if (updated.length !== 1) throw new Error("payment_reconciliation_processing_fence_lost");
-    if (outcome.status === "SETTLED") return "settled";
-    if (outcome.status === "CONFIRMED") return "confirmed";
-    if (outcome.status === "WAITING") return "waiting";
-    if (outcome.status === "NO_PAYMENT") return "no-payment";
-    if (outcome.status === "CONFLICT") return "conflict";
-    if (outcome.status === "DEAD") return "dead";
+    const status = await withTx(this.container, async (tx) => {
+      // The provider query happened without SQL locks. Re-read the case under
+      // its row lock: a verified callback may have arrived after claim().
+      const [current] = await tx.select().from(paymentReconciliationCase)
+        .where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for("update");
+      if (!current) throw new Error("payment_reconciliation_processing_fence_lost");
+      // A callback can terminate the case after query registration.
+      if (current.status === "CONFLICT") return "CONFLICT";
+      if (current.status === "CONFIRMED") return "CONFIRMED";
+      if (current.status === "SETTLED") return "SETTLED";
+      if (current.status === "CLOSED") return "CLOSED";
+      if (current.status !== "QUERYING" || current.leaseToken !== claim.leaseToken) {
+        throw new Error("payment_reconciliation_processing_fence_lost");
+      }
+      const queryTransaction = outcome.result.transactionId;
+      const transactionConflict = !!(current.providerTransactionId && queryTransaction
+        && current.providerTransactionId !== queryTransaction);
+      const knownDomain = current.orderDomain || claim.orderDomain;
+      const domainConflict = !!(knownDomain && outcome.orderDomain && knownDomain !== outcome.orderDomain);
+      const newEvidence = current.callbackEventId !== claim.callbackEventId
+        || (current.providerTransactionId !== claim.providerTransactionId
+          && current.providerTransactionId !== queryTransaction);
+      // Preserve the callback's immutable transaction/event evidence. If the
+      // two trusted sources disagree, require review. If a callback appeared
+      // while querying, let its outbox settle before drawing a query conclusion.
+      const effectiveStatus: PaymentReconciliationStatus = transactionConflict || domainConflict
+        ? "CONFLICT" : newEvidence ? "UNKNOWN" : outcome.status;
+      const terminal = TERMINAL_STATUSES.includes(effectiveStatus) || effectiveStatus === "DEAD";
+      const errorCode = transactionConflict ? "provider_query_transaction_conflict"
+        : domainConflict ? "provider_query_domain_conflict"
+          : newEvidence ? "concurrent_callback_evidence" : outcome.errorCode;
+      const updated = await tx.update(paymentReconciliationCase).set({
+        status: effectiveStatus,
+        providerStatus: transactionConflict || domainConflict || newEvidence
+          ? current.providerStatus : outcome.providerStatus,
+        providerTransactionId: current.providerTransactionId || queryTransaction,
+        providerEventTime: current.providerEventTime || outcome.result.providerEventTime,
+        orderDomain: knownDomain || outcome.orderDomain || "",
+        nextCheckTime: terminal ? 0 : now + paymentReconciliationBackoff(claim.attemptCount),
+        leaseUntil: 0,
+        leaseToken: "",
+        lastErrorCode: errorCode,
+        resolvedTime: terminal ? now : 0,
+        retainUntil: terminal ? now + RETENTION_SECONDS : sql`${paymentReconciliationCase.retainUntil}`,
+        updateTime: now,
+      }).where(and(
+        eq(paymentReconciliationCase.id, claim.id),
+        eq(paymentReconciliationCase.status, "QUERYING"),
+        eq(paymentReconciliationCase.leaseToken, claim.leaseToken),
+      )).returning({ id: paymentReconciliationCase.id });
+      if (updated.length !== 1) throw new Error("payment_reconciliation_processing_fence_lost");
+      return effectiveStatus;
+    });
+    if (status === "SETTLED") return "settled";
+    if (status === "CONFIRMED") return "confirmed";
+    if (status === "WAITING") return "waiting";
+    if (status === "NO_PAYMENT") return "no-payment";
+    if (status === "CONFLICT") return "conflict";
+    if (status === "DEAD") return "dead";
+    if (status === "CLOSED") return "already-terminal";
     return "unknown";
   }
 
@@ -724,8 +832,31 @@ export class PaymentReconciliationService {
     });
   }
 
+  private async assertQueriedSettlementEvidenceTx(
+    tx: DbClient,
+    claim: ClaimedCase,
+    result: PaymentProviderQueryResult,
+    domain: PaymentCallbackOrderDomain,
+  ): Promise<void> {
+    // The order row was locked by the caller. Hold this boundary until its
+    // paid transition commits, and re-read callback/query evidence inside it.
+    await lockStoreOrderPaymentBoundary(tx, claim.orderNo);
+    const [current] = await tx.select().from(paymentReconciliationCase)
+      .where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for("update");
+    if (!current || current.replayKey !== claim.replayKey
+      || current.status !== "QUERYING" || current.leaseToken !== claim.leaseToken
+      || current.provider !== claim.provider || current.profile !== claim.profile
+      || current.orderNo !== claim.orderNo
+      || current.expectedAmountCents !== claim.expectedAmountCents
+      || current.providerTransactionId !== result.transactionId
+      || !!(current.orderDomain && current.orderDomain !== domain)
+      || current.callbackEventId !== claim.callbackEventId) {
+      throw new ValidateException("支付查询期间出现新的回调或对账状态，停止结算");
+    }
+  }
+
   private async settle(
-    request: PaymentProviderQueryRequest,
+    request: ClaimedCase,
     result: PaymentProviderQueryResult,
   ): Promise<SettlementResult> {
     const [store, recharge, membership] = await Promise.all([
@@ -751,6 +882,7 @@ export class PaymentReconciliationService {
         orderId: store.id,
         payType,
         tradeNo: result.transactionId,
+        authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "store_order"),
       });
       if (settled.outbox) {
         try {
@@ -773,6 +905,7 @@ export class PaymentReconciliationService {
         payType,
         tradeNo: result.transactionId,
         expectedAmountCents: result.amountCents,
+        authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "recharge"),
       });
       return settlementOutcome("recharge", settled.outcome);
     }
@@ -781,6 +914,7 @@ export class PaymentReconciliationService {
       payType,
       tradeNo: result.transactionId,
       expectedAmountCents: result.amountCents,
+      authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "membership"),
     });
     return settlementOutcome("membership", settled.outcome);
   }
@@ -811,22 +945,36 @@ async function localPaidTx(
   orderNo: string,
   domain: PaymentCallbackOrderDomain,
 ): Promise<boolean> {
-  if (domain === "store_order") {
-    const rows = await tx.select({ paid: storeOrder.paid }).from(storeOrder)
-      .where(eq(storeOrder.orderId, orderNo)).limit(2).for("update");
-    return rows.length === 1 && rows[0].paid === 1;
+  try {
+    // ACCEPT_LOCAL already owns the case row. Every settlement now locks its
+    // local order row before rechecking this case, so never wait backwards.
+    if (domain === "store_order") {
+      const rows = await tx.select({ paid: storeOrder.paid }).from(storeOrder)
+        .where(eq(storeOrder.orderId, orderNo)).limit(2).for("update", { noWait: true });
+      return rows.length === 1 && rows[0].paid === 1;
+    }
+    if (domain === "recharge") {
+      const rows = await tx.select({ paid: userRecharge.paid }).from(userRecharge)
+        .where(eq(userRecharge.orderId, orderNo)).limit(2).for("update", { noWait: true });
+      return rows.length === 1 && rows[0].paid === 1;
+    }
+    if (domain === "membership") {
+      const rows = await tx.select({ paid: otherOrder.paid, type: otherOrder.type }).from(otherOrder)
+        .where(eq(otherOrder.orderId, orderNo)).limit(2).for("update", { noWait: true });
+      return rows.length === 1 && isPaidMembershipOrder(rows[0]);
+    }
+    return false;
+  } catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+      if ("code" in cause && cause.code === "55P03") {
+        throw new ValidateException("订单正在更新，请稍后重试人工对账处置");
+      }
+      if (!("cause" in cause) || cause.cause === cause) break;
+      cause = cause.cause;
+    }
+    throw error;
   }
-  if (domain === "recharge") {
-    const rows = await tx.select({ paid: userRecharge.paid }).from(userRecharge)
-      .where(eq(userRecharge.orderId, orderNo)).limit(2).for("update");
-    return rows.length === 1 && rows[0].paid === 1;
-  }
-  if (domain === "membership") {
-    const rows = await tx.select({ paid: otherOrder.paid, type: otherOrder.type }).from(otherOrder)
-      .where(eq(otherOrder.orderId, orderNo)).limit(2).for("update");
-    return rows.length === 1 && isPaidMembershipOrder(rows[0]);
-  }
-  return false;
 }
 
 interface QueueControl {

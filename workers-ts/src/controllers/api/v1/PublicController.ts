@@ -16,6 +16,7 @@ import { ProductWordsService } from "@/services/product/ProductWordsService";
 import { PublicBrandingService } from "@/services/system/PublicBrandingService";
 import { PublicBootstrapCompatibilityService } from "@/services/system/PublicBootstrapCompatibilityService";
 import { PublicLocationStoreService } from "@/services/system/PublicLocationStoreService";
+import { readAgreementByType } from "@/services/user/PublicAgreementService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
 
@@ -94,6 +95,18 @@ export async function getUserAgreement(c: C) {
   const type = c.req.param("type") ?? "1";
   const content = await new LegacyContentService(c.get("container")).agreement(type);
   return jsonOk(c, { content, type });
+}
+
+/** GET /api/agreement/:type — legacy public member (1) or agent (2) agreement. */
+export async function getAgreement(c: C) {
+  try {
+    return jsonOk(c, {
+      member_explain: await readAgreementByType(c.get("container"), c.req.param("type")),
+    });
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }
 
 /** GET /api/get_open_adv — PHP-compatible splash advertisement. */

@@ -46,10 +46,21 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 if (schemaMaintenance) {
   const allowed = new Set([
     'test/runtime-business-login.test.ts',
+    'test/assisted-purchase-runtime-postgres.test.ts',
+    'test/assisted-purchase-flow-postgres.test.ts',
+    'test/assisted-payment-race-postgres.test.ts',
+    'test/assisted-form-consumption-postgres.test.ts',
+    'test/admin-user-list-postgres.test.ts',
     'test/shipping-lifecycle-route-auth.test.ts',
     'test/order-delivery-address.test.ts',
     'test/bargain-pickup-postgres.test.ts',
     'test/bargain-pickup-admission.test.ts',
+    'test/bargain-order-participation.test.ts',
+    'test/brokerage-paid-order-migration.test.ts',
+    'test/coupon-product-scope-migration.test.ts',
+    'test/refund-line-finance.test.ts',
+    'test/split-order-line-finance.test.ts',
+    'test/supplier-split-ledger.test.ts',
     'test/checkout-coupon-management.test.ts',
     'test/admin-runtime-login.test.ts',
     'test/runtime-admin-boundary.test.ts',
@@ -64,7 +75,38 @@ if (schemaMaintenance) {
     'test/release-shared-indexes.test.ts',
     'test/runtime-role-provisioning.test.ts',
     // Current checkout fixtures create a separate NOLOGIN pricing owner.
+    'test/bargain-cart-binding.test.ts',
+    // Read-only A3e catalog fixture commissions the checkout NOLOGIN owner.
+    'test/bargain-selection-catalog.test.ts',
+    'test/presale-checkout-postgres.test.ts',
+    // This policy suite performs real checkout after its read-only assertions.
+    'test/membership-pricing-policy.test.ts',
+    // Uses the existing checkout NOLOGIN protocol before real refund materialization.
+    'test/presale-refund-baseline-postgres.test.ts',
+    // Full schema, atomic refunds, paid recovery and due delivery under an owned LOGIN.
+    'test/presale-runtime-permissions.test.ts',
+    // Immutable quota quantity receipts under the existing independent refund LOGIN.
+    'test/purchase-quota-refund-receipt-postgres.test.ts',
+    'test/purchase-quota-payment-ledger-postgres.test.ts',
+    // Actual unpaid mixed-owner checkout cancellation using the existing refund LOGIN profile.
+    'test/unpaid-mixed-order-cancellation-postgres.test.ts',
+    // Registered origin protocol and real checkout in newly owned synthetic databases.
+    'test/purchase-origin-evidence-postgres.test.ts',
+    'test/purchase-origin-installation.test.ts',
+    'test/purchase-cancellation-evidence-postgres.test.ts',
+    'test/purchase-cancellation-installation.test.ts',
+    // Ordinary-index catalog drift is injected only in this fresh owned PG16 cluster.
+    'test/supplier-refund-lookup-indexes.test.ts',
+    'test/assisted-order-list-index.test.ts',
+    'test/admin-assisted-order-cursor-postgres.test.ts',
     'test/bargain-order-concurrency-postgres.test.ts',
+    'test/bargain-participation-concurrency-postgres.test.ts',
+    // A3f rule admission tests commission the same isolated checkout owner.
+    'test/bargain-help-rule-concurrency-postgres.test.ts',
+    'test/bargain-help-concurrency-postgres.test.ts',
+    'test/bargain-admin-concurrency-postgres.test.ts',
+    'test/bargain-admin-save.test.ts',
+    'test/bargain-admin-dates-postgres.test.ts',
     'test/seckill-schedule-postgres.test.ts',
     'test/refund-line-compensation.test.ts',
     'test/bargain-admin-retirement.test.ts',
@@ -114,6 +156,24 @@ if (schemaMaintenance) {
     'test/checkout-pricing-service-runtime.test.ts',
     'test/checkout-marketing-scenarios-postgres.test.ts',
     'test/checkout-pricing-fixture.test.ts',
+    // These existing checkout suites now install the real public origin protocol
+    // and the existing NOLOGIN pricing owner in their own disposable databases.
+    'test/finance-fixture-advisory-isolation.test.ts',
+    'test/checkout-line-finance.test.ts',
+    'test/checkout-coupon-template-authority.test.ts',
+    'test/checkout-membership-boundary.test.ts',
+    'test/checkout-brokerage-boundary.test.ts',
+    'test/checkout-brokerage-authority.test.ts',
+    'test/checkout-brokerage-paid-authority.test.ts',
+    'test/checkout-member-evidence.test.ts',
+    'test/checkout-catalog-management.test.ts',
+    'test/checkout-mobile-product-concurrency.test.ts',
+    'test/checkout-out-product-concurrency.test.ts',
+    'test/checkout-sku-lifecycle-concurrency.test.ts',
+    'test/level-pricing-activation.test.ts',
+    'test/pc-coupon-wallet-postgres.test.ts',
+    'test/product-price-truncation.test.ts',
+    'test/out-stock-candidate-boundary.test.ts',
     'test/checkout-pricing-config-authority.test.ts',
     'test/admin-config-batch-postgres.test.ts',
     'test/brokerage-paid-business-transactions.test.ts',

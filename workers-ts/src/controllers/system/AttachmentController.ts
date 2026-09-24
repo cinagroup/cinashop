@@ -63,7 +63,7 @@ async function boundedJson(c: C): Promise<Record<string, unknown>> {
   return parsed as Record<string, unknown>;
 }
 
-async function boundedMultipartImage(c: C): Promise<{ file: File; pid: string | File | null }> {
+export async function boundedMultipartImage(c: C): Promise<{ file: File; pid: string | File | null }> {
   const contentType = c.req.header("content-type") ?? "";
   if (!/^multipart\/form-data\s*;/i.test(contentType)) {
     throw new ValidateException("请使用multipart/form-data上传图片");
@@ -99,7 +99,7 @@ async function boundedMultipartImage(c: C): Promise<{ file: File; pid: string | 
   } catch {
     throw new ValidateException("上传表单格式错误");
   }
-  const entries = [form.get("file"), form.get("filename")];
+  const entries = [...form.getAll("file"), ...form.getAll("filename")];
   const files = entries.filter((entry): entry is File => entry instanceof File && entry.size > 0);
   if (files.length !== 1) throw new ValidateException("请选择一个图片文件");
   return { file: files[0], pid: form.get("pid") };

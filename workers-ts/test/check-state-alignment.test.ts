@@ -5,6 +5,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { assertAllConstraintsAligned, assertCheckStatesAligned } from "../scripts/data-migration/check-state-contracts";
+import { PRESALE_OUTBOX_CHECK_KEY, PRESALE_OUTBOX_CHECK_DEFINITION, PRESALE_OUTBOX_MODEL_DECLARATION, withPresaleOutboxContract } from "../scripts/data-migration/presale-outbox-contract";
 import { CHECK_STATE_ALIGNMENT_SQL as sql } from "../src/migrations/checkStateAlignment";
 import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
 
@@ -26,7 +27,7 @@ describe("DB-009E4 nine exact CHECK states",()=>{
     expect(manifest.entries).toHaveLength(9);
     expect(manifest.entries.filter(e=>!e.catalog.validated)).toHaveLength(8);
     for(const e of manifest.entries) {
-      assertModelDeclaration(read(e.model.file),String(e.catalog.table),e.model.declaration);
+      assertModelDeclaration(read(e.model.file),String(e.catalog.table),e.key===PRESALE_OUTBOX_CHECK_KEY?PRESALE_OUTBOX_MODEL_DECLARATION:e.model.declaration);
       for(const field of e.fieldDeclarations)assertModelDeclaration(read(e.model.file),String(e.catalog.table),field);
       expect(e.snapshot.notValid===true).toBe(!e.catalog.validated);
       expect(e.previousSnapshot.notValid).toBeUndefined();
@@ -43,6 +44,25 @@ describe("DB-009E4 nine exact CHECK states",()=>{
         if(s.file.startsWith("migrations/"))expect(read(s.file).split("\n").slice(s.line-1,s.line-1+s.lineCount).join("\n")).toContain(s.sql);
       }
     }
+  });
+  it("overlays only the reviewed 0161 event expansion without mutating historical evidence",()=>{
+    const before=structuredClone(manifest),current=withPresaleOutboxContract(manifest);
+    expect(manifest).toEqual(before);
+    const currentCatalog={...catalog,constraints:current.entries.map(e=>e.catalog)};
+    expect(()=>assertCheckStatesAligned(currentCatalog,current)).not.toThrow();
+    expect(()=>assertCheckStatesAligned(catalog,current)).toThrow(PRESALE_OUTBOX_CHECK_KEY);
+    expect(()=>assertCheckStatesAligned(currentCatalog,manifest)).toThrow(PRESALE_OUTBOX_CHECK_KEY);
+    for(const entry of current.entries)expect(entry).toEqual(entry.key===PRESALE_OUTBOX_CHECK_KEY
+      ? {...before.entries.find(e=>e.key===entry.key)!,catalog:{...before.entries.find(e=>e.key===entry.key)!.catalog,definition:PRESALE_OUTBOX_CHECK_DEFINITION}}
+      : before.entries.find(e=>e.key===entry.key));
+    expect(()=>withPresaleOutboxContract(current)).toThrow("exact historical");
+    expect(()=>withPresaleOutboxContract({entries:[]})).toThrow("exact historical");
+    expect(()=>withPresaleOutboxContract({entries:[...manifest.entries,manifest.entries.find(e=>e.key===PRESALE_OUTBOX_CHECK_KEY)!]})).toThrow("exact historical");
+    const alias={...currentCatalog,constraints:[...currentCatalog.constraints,{...manifest.entries.find(e=>e.key===PRESALE_OUTBOX_CHECK_KEY)!.catalog,key:"store_order_outbox.old_alias",name:"old_alias"}]};
+    expect(()=>assertAllConstraintsAligned(currentCatalog,alias)).toThrow();
+    const runner=read("scripts/orm-ddl-audit.ts");
+    expect(runner.indexOf("presaleBefore[0].definition !== PRESALE_OUTBOX_CHECK_DEFINITION")).toBeLessThan(runner.indexOf("await runPresaleDeliveryOutbox(shippingDb)"));
+    expect(runner).toContain("withPresaleOutboxContract(JSON.parse");
   });
   it("mirrors reviewed replacements, all-before-mutation preflight, dependency and comment contract",()=>{
     expect(read("migrations/0144_check_state_alignment.sql").trim()).toBe(sql.trim());
@@ -99,6 +119,11 @@ describe("DB-009E4 nine exact CHECK states",()=>{
       });
       expect(result.error,result.stdout+result.stderr).toBeUndefined();expect(result.status,result.stdout+result.stderr).toBe(0);
       expect(result.stdout).toContain("DB-009E4 "+format+": 9 CHECKs aligned;");
+      const forwardLine=result.stdout.split(/\r?\n/).find(line=>line.startsWith("CHECK_STATE_LOCAL_AUDIT "));
+      expect(forwardLine).toBeDefined();
+      expect(JSON.parse(forwardLine!.slice("CHECK_STATE_LOCAL_AUDIT ".length)).presaleForward).toEqual({
+        applied:true,generatedProposalStatements:2,exactSingleCatalogChange:true,repeatPreserved:true,historicalDowngradeRefused:true,
+      });
       const audit=JSON.parse(readFileSync(report,"utf8"));expect(audit.networkAttempts).toBe(0);
       expect(audit.loaded.filter((path:string)=>path.includes("/@esbuild-kit/"))).toEqual([]);
     }finally{

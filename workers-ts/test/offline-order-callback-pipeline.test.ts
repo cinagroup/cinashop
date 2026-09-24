@@ -167,6 +167,24 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
       expect(api.query).not.toHaveBeenCalled();
     });
   });
+  it('keeps a signed offline callback outside the store-order advisory boundary', async () => {
+    await runtime(async r => {
+      const order = await create(r, 'wechat'), api = await pipeline(r);
+      await f.withPeer!(async holder => {
+        await holder.exec('BEGIN');
+        try {
+          await holder.db.execute(sql`SELECT pg_advisory_xact_lock(
+            hashtextextended(${`store-order-payment-evidence:v1:${order.order_id}`},0)
+          )`);
+          // A store-order boundary wait here would time out while the holder
+          // remains open. The offline domain retains its own order/transaction
+          // lock sequence and must still persist signed callback evidence.
+          expect((await api.post('/api/pay/notify/wechat', wechat(order.order_id))).status).toBe(200);
+          expect((await evidence()).rows[0]).toMatchObject({ events: 1, outboxes: 1, cases: 1, bindings: 1 });
+        } finally { await holder.exec('ROLLBACK'); }
+      });
+    });
+  });
   it.each(['signature', 'app', 'merchant', 'amount', 'original-app', 'original-merchant', 'payer', 'missing-payer'] as const)('rejects WeChat %s without committing any canonical or financial evidence', async failure => {
     await runtime(async r => {
       const order = await create(r, 'wechat', 'wechat'), api = await pipeline(r);

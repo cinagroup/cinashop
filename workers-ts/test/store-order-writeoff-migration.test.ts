@@ -146,8 +146,8 @@ describe("pickup-store and writeoff migration", () => {
   });
 
   it("keeps the production verify-code lookup index in an idempotent migration", () => {
-    const migration = readFileSync("migrations/0078_fulfillment_lookup_indexes.sql", "utf8").trim();
-    const service = readFileSync("src/services/MigrationService.ts", "utf8");
+    const migration = readFileSync("migrations/0078_fulfillment_lookup_indexes.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const service = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const embedded = service.match(
       /private migration_0085\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1].trim();

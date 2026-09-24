@@ -4,7 +4,7 @@ import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { adminActivitySave, adminActivityStatus } from '../src/controllers/api/v1/AdminCrudController';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
-import { storeBargain, storeSeckill, storeCombination, storeIntegral } from '../src/models/schema';
+import { storeBargain, storeBargainUser, storeBargainUserHelp, storeSeckill, storeCombination, storeIntegral } from '../src/models/schema';
 
 describe('bargain admin edits preserve existing business data', () => {
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
@@ -99,6 +99,23 @@ describe('bargain admin edits preserve existing business data', () => {
       expected: { stock: 8, quota: 8 } })).toMatchObject({ status: 200 });
     expect(await snapshot()).toEqual({ ...before, bargains: before.bargains.map(row => ({ ...row,
       people: 3, num: 2, minPrice: '3.00', quota: 6, quotaShow: 6 })) });
+  });
+  it('does not shrink people below help history on a non-deleted purchased participation', async () => {
+    await f.db.update(storeBargain).set({ people: 3 }).where(eq(storeBargain.id, 40));
+    await f.db.insert(storeBargainUserHelp).values([11, 22, 33].map(uid => ({
+      uid, bargainId: 40, bargainUserId: 83, price: '1.00', type: uid === 11 ? 1 : 0,
+    })));
+    const before = await snapshot();
+    expect(await request({ type: 'bargain', id: 40, people: 2 })).toMatchObject({
+      status: 400, msg: '砍价人数不能少于已帮助人数',
+    });
+    expect(await snapshot()).toEqual(before);
+
+    await f.db.update(storeBargainUser).set({ isDel: 1 }).where(eq(storeBargainUser.id, 83));
+    const afterDeletion = await snapshot();
+    expect(await request({ type: 'bargain', id: 40, people: 2 })).toMatchObject({ status: 200 });
+    expect(await snapshot()).toEqual({ ...afterDeletion,
+      bargains: afterDeletion.bargains.map(row => ({ ...row, people: 2 })) });
   });
   it.each([{ productId: 999 }, { price: '0.00' }, { people: 801 }, { quota: 101 }, { minPrice: '10.00' }])('rejects invalid basic creation %j', async patch => {
     const before = await snapshot();

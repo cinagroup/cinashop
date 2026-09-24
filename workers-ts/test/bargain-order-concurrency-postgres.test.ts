@@ -7,8 +7,9 @@ import { reserveRefundQuantities } from "../src/services/order/RefundQuantityRes
 import { StoreOrderCreateService, cancelStoreOrder, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
+import { retirePlatformSourceProduct } from "../src/services/activity/BargainSourceProductLifecycle";
 import { storeCart, storeBargain, storeBargainUser, systemStore, storeOrderCartInfo, storeOrderStatus, printDocument,
-  storeOrder, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage } from "../src/models/schema";
+  storeOrder, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProduct } from "../src/models/schema";
 
 // Only independent PG16 backends can prove these row-wait/conditional-update races.
 // Never replace with PGlite concurrency or inherit production credentials.
@@ -39,6 +40,31 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
       prints: await f.db.select().from(printDocument) };
   };
   const nextParams = { ...params, key: "next_bargain", cartIds: [11], bargainUserId: 90 };
+  it("rejects virtual bargain checkout when its source retires after the quote but before final inventory write", async () => {
+    await f.db.update(storeProduct).set({ productType: 3 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeCart).set({ productType: 3, bargainUserId: 80 }).where(eq(storeCart.id, 10));
+    await f.db.update(storeBargain).set({ deliveryType: "1" }).where(eq(storeBargain.id, 40));
+    await f.exec(`CREATE FUNCTION qa_virtual_bargain_inventory_wait() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.id=1 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
+      CREATE TRIGGER qa_virtual_bargain_inventory_wait AFTER UPDATE OF stock ON store_product_attr_value
+      FOR EACH ROW EXECUTE FUNCTION qa_virtual_bargain_inventory_wait()`);
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([gate, buyer, retiring]) => {
+      await gate.exec("BEGIN; SELECT pg_advisory_xact_lock(731635,70)");
+      const buying = outcome(create(buyer, { ...params, key: "virtual_retired", shippingType: 1,
+        storeId: 0, realName: undefined, userPhone: undefined }));
+      await waitForFinanceBlock(f.db, buyer.pid, gate.pid);
+      await expect(retirePlatformSourceProduct(createContainerFromDb(retiring.db), 70)).resolves.toBeUndefined();
+      await gate.exec("COMMIT");
+      expect(await buying).toMatchObject({ ok: false, error: { message: expect.stringContaining("砍价商品归属、上架状态已变化") } });
+    });
+    const after = await snapshot();
+    expect(after.orders).toHaveLength(0);
+    expect(after.carts).toEqual(before.carts);
+    expect(after.skus).toEqual(before.skus);
+    expect(after.bargains).toEqual(before.bargains);
+    expect(after.products.find(product => product.id === 70)?.isDel).toBe(1);
+  }, 25_000);
   const prepareSecond = async (paid: boolean) => {
     await create();
     if (paid) {

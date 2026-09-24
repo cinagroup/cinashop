@@ -45,6 +45,11 @@
             <span>评分 {{ detail.star }}</span>
           </div>
 
+          <p v-if="detail.is_presale_product === 1" class="purchase-recovery">
+            此商品为全款预售。
+            <router-link :to="`/presale/${detail.id}`">查看预售时间、限购规则并选择规格</router-link>
+          </p>
+
           <div v-if="discountPackages.length" class="package-list">
             <div class="package-title">搭配购</div>
             <button

@@ -1,0 +1,105 @@
+{
+  "date": "2026-09-23",
+  "status": "local-upload-prerequisite-verified-order-consumption-and-ui-incomplete-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "schemaChanged": false,
+    "privilegePlanChanged": false,
+    "bindingsOrDependenciesChanged": false,
+    "frontendChanged": false
+  },
+  "contract": {
+    "endpoint": "POST /api/admin/order/form_image/:key/:uid under existing order.assisted authorization and application LOGIN",
+    "authority": "Authenticated administrator and existing server-side checkout snapshot; multipart actor/buyer/guest/form fields cannot override it",
+    "namespace": "system_attachment type=1, relation_id=adminId, module_type=5, file_type=1, image_type=8, pid=0",
+    "persistentScope": "Full SHA-256 base64url digest of version/adminId/uid/touristUid/checkout key/form ID in attachments/ao/<digest>/<random UUID without hyphens>.<extension>; maximum 96 ASCII bytes in name(100)",
+    "admission": "Unexpired checkout, uncreated order key, exact live actor/buyer/cart ownership and one active product-selected form containing an upload component",
+    "transactions": "Initial bounded READ ONLY REPEATABLE READ SQL scope check; R2 put outside SQL transaction; metadata transaction repeats checks and pins cart/product/form with FOR SHARE NOWAIT",
+    "failure": "Definite pre-write or SQL rejection compensates the R2 object; failed direct cleanup queues the exact key. Unknown metadata commit outcome retains objects. SQLSTATE 40003 is explicitly unknown, not a generic class-40 rollback.",
+    "multipart": "Existing 10 MiB image / 10.25 MiB multipart bounds and content/MIME validation retained; duplicate file/filename file parts no longer silently select the first"
+  },
+  "runs": [
+    {
+      "kind": "intermediate-native-full-file",
+      "session": 39275,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-NwrsWA",
+      "port": 49481,
+      "startLocal": "2026-09-23 14:15:46 Asia/Singapore",
+      "durationSeconds": 569.89,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "finalSourceEvidence": false,
+      "note": "Final code subsequently narrowed SQLSTATE classification, added 40003/08006 acknowledgement-loss coverage, required metadata authorization callback and bounded SQL transaction settings; this run is not counted as final.",
+      "fixtureRemainder": 0,
+      "shutdownVerified": { "pgCtlExit": 3, "pidExists": false, "bootstrapPasswordExists": false, "listeners": 0 }
+    },
+    {
+      "kind": "final-native-full-file",
+      "session": 36614,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-lsnIDB",
+      "port": 56921,
+      "status": "passed",
+      "startLocal": "2026-09-23 14:26:51 Asia/Singapore",
+      "durationSeconds": 590.72,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "finalSourceEvidence": true,
+      "fixtureRemainder": 0,
+      "shutdownVerified": { "pgCtlExit": 3, "pidExists": false, "bootstrapPasswordExists": false, "listeners": 0 }
+    },
+    {
+      "kind": "final-unit-six-files",
+      "startLocal": "2026-09-23 14:26:57 Asia/Singapore",
+      "durationSeconds": 6.61,
+      "passed": 70,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "test/assisted-form-attachment-scope.test.ts",
+        "test/attachment-storage-migration.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-permission.test.ts",
+        "test/system-form-migration.test.ts",
+        "test/admin-system-forms.test.ts"
+      ]
+    }
+  ],
+  "finalCoverage": { "distinctTests": 147, "newTests": 52, "native": 77, "unitAndContracts": 70, "files": 7, "skipped": 0 },
+  "typecheck": { "unit": "passed", "runtime": "passed", "session": 49307 },
+  "sources": {
+    "workers-ts/src/services/system/AssistedFormAttachmentScope.ts": "79e6608502f0c8109086e3808f4daca412e607f4cc8011f0867f3dded52a15cd",
+    "workers-ts/src/services/system/AttachmentService.ts": "454cb187c1cfe0007a909930cd21dcd7a26296cb4e87fe62f5d577baf7ed76e6",
+    "workers-ts/src/services/admin/AdminAssistedOrderService.ts": "804574a9ca8ffae2d9e1a3b11ec4df02a31af562181605894aa80005473aa063",
+    "workers-ts/src/controllers/system/AttachmentController.ts": "e84851b05caba9a349d88314486134221637e98a058fec826e618cb051506260",
+    "workers-ts/src/controllers/api/v1/AdminController.ts": "79907be2830d8654b7027b9c09b2aed06e5e02ebf871e3e5f3db605adf626d3e",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "95788fa52e0ab5298a013b335204d476c47b3c4114fc3b31022aabcdbc12371d",
+    "workers-ts/src/routes/v1/index.ts": "9f5c8c749be6e532ad562c9d0070b7b72934efcdbb1a659f6e7e8df014ed7d88",
+    "workers-ts/test/assisted-form-attachment-scope.test.ts": "2d4571c5f95796db657f103cd25ad056e9ed96bb11f891033dab7d23d82f355a",
+    "workers-ts/test/assisted-purchase-runtime-postgres.test.ts": "720cb695acaec14caf96845fb63713ff21ac3ec7be0f3e2ec7c5a42c309feef7",
+    "workers-ts/test/admin-assisted-order-migration.test.ts": "f6fc0d00d55275c5e7f839e71fb54201dc94f1e42292d6277aeb7ed117b9e70e"
+  },
+  "evidenceLimits": [
+    "PostgreSQL schema, independent app/admin LOGINs and JWT/SQL route authorization are real locally; KV/Sequence/Queue/Hyperdrive transport and R2 bytes are synthetic.",
+    "Signed asset service reads synthetic object bytes; this is not a real R2, workerd, browser or provider acceptance run.",
+    "Unknown metadata outcomes and R2 write/cleanup uncertainty still need scoped operational reconciliation; no claim of distributed SQL/R2 atomicity.",
+    "No frontend upload use, assisted module-5 submission consumption, immutable order image scope/readback, answer recovery or cross-request template fingerprint integration yet. Existing frontend still blocks formId>0."
+  ],
+  "remaining": [
+    "Wire server-derived assisted scope into canonical image consumption and immutable order snapshot/read paths, including split orders and guest admin reads.",
+    "Add authenticated draft preview renewal plus bounded lifecycle/reconciliation of unused or uncertain objects without deleting referenced images.",
+    "Integrate the ten-component form UI, scoped upload, minimal answer persistence and exact-content unknown-result replay.",
+    "Bind authoritative template content across quote/create and validate actual image/browsers/provider/production gates."
+  ],
+  "references": [
+    "https://www.postgresql.org/docs/16/errcodes-appendix.html",
+    "https://developers.cloudflare.com/r2/api/workers/workers-api-reference/"
+  ],
+  "typesReference": "Latest type retrieval was blocked by sandbox socket access; inspected installed @cloudflare/workers-types 5.20260828.1 R2Bucket/R2PutOptions and current official R2 docs. No dependency/binding/configuration changes.",
+  "checklist": { "done": 240, "open": 164, "total": 404, "closedThisTurn": 0 }
+}

@@ -12,10 +12,26 @@ export interface LegacyRouteRule {
  * into a silent UniApp navigation failure.
  */
 export const REGISTERED_PAGE_ROUTES = new Set<string>([
+  "/pages/behalf/record/index",
+  "/pages/behalf/user_list/index",
+  "/pages/behalf/goods_list/index",
+  "/pages/behalf/order_confirm/index",
+  "/pages/behalf/order_detail/index",
+  "/pages/behalf/cashier/index",
+  "/pages/extension/customer_list/feedback",
+  "/pages/work/userInfo/index",
+  "/pages/work/orderList/index",
+  "/pages/work/orderDetail/index",
+  "/pages/work/record/index",
+  "/pages/work/groupInfo/index",
   "/pages/index/index",
   "/pages/goods/cate",
   "/pages/discover/index",
   "/pages/discover/people",
+  "/pages/discover/discoverTopic/index",
+  "/pages/discover/discoverSearch/index",
+  "/pages/discover/discoverVideo/index",
+  "/pages/discover/discoverVideo/app",
   "/pages/cart/index",
   "/pages/user/index",
   "/pages/goods/list",
@@ -41,6 +57,8 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/integral",
   "/pages/user/sign",
   "/pages/user/profile",
+  "/pages/user/agreements",
+  "/pages/user/legalContent",
   "/pages/user/couponCenter",
   "/pages/user/messageDetail",
   "/pages/user/integralLogs",
@@ -48,6 +66,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/balanceLogs",
   "/pages/user/address",
   "/pages/user/collect",
+  "/pages/user/visitHistory",
   "/pages/user/coupon",
   "/pages/user/couponProducts",
   "/pages/user/finance",
@@ -67,6 +86,12 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/activity/goods_combination_status/index",
   "/pages/activity/seckillDetail",
   "/pages/activity/bargainDetail",
+  "/pages/activity/new_customer/index",
+  "/pages/activity/newcomerDetail",
+  "/pages/activity/presaleDetail",
+  "/pages/activity/presale",
+  "/pages/columnGoods/rank/index",
+  "/pages/columnGoods/live_list/index",
   "/pages/order/payResult",
   "/pages/user/level",
   "/pages/user/recharge",
@@ -110,7 +135,10 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/users/retrievePassword/index": { target: "/pages/auth/reset", coverage: "candidate_covered" },
   "/pages/users/user_set/index": { target: "/pages/user/profile", coverage: "partial_replacement" },
   "/pages/users/user_info/index": { target: "/pages/user/profile", coverage: "candidate_covered" },
+  "/pages/users/privacy/index": { target: "/pages/user/legalContent", coverage: "partial_replacement" },
+  "/pages/users/user_agreement_list/index": { target: "/pages/user/agreements", coverage: "candidate_covered" },
   "/pages/users/user_goods_collection/index": { target: "/pages/user/collect", coverage: "candidate_covered" },
+  "/pages/users/visit_list/index": { target: "/pages/user/visitHistory", coverage: "partial_replacement" },
   "/pages/users/user_sgin/index": { target: "/pages/user/sign", coverage: "candidate_covered" },
   "/pages/users/user_sgin_list/index": { target: "/pages/user/integralLogs", coverage: "partial_replacement" },
   "/pages/users/user_money/index": { target: "/pages/user/balanceLogs", coverage: "partial_replacement" },
@@ -146,7 +174,10 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/activity/goods_bargain_details/index": { target: "/pages/activity/bargainDetail", coverage: "candidate_covered" },
   "/pages/activity/goods_combination/index": { target: "/pages/activity/index", coverage: "candidate_covered" },
   "/pages/activity/goods_seckill/index": { target: "/pages/activity/index", coverage: "candidate_covered" },
-  "/pages/activity/goods_details/index": { target: "/pages/goods/detail", coverage: "partial_replacement" },
+  // Metadata target is safe if a caller reads this table directly. The actual
+  // activity destination is selected by type in resolveLegacyActivityDetail.
+  "/pages/activity/goods_details/index": { target: "/pages/activity/index", coverage: "partial_replacement" },
+  "/pages/activity/presell/index": { target: "/pages/activity/presale", coverage: "partial_replacement" },
   "/pages/activity/bargain/index": { target: "/pages/activity/index", coverage: "partial_replacement" },
   "/pages/activity/points_mall/index": { target: "/pages/user/integral", coverage: "candidate_covered" },
   "/pages/activity/coupon/index": { target: "/pages/user/couponCenter", coverage: "candidate_covered" },
@@ -219,7 +250,47 @@ function aliasQuery(query: string, aliases: Readonly<Record<string, string>> | u
   }).join("&");
 }
 
+function canonicalActivityId(value: string): string {
+  if (!/^[1-9]\d{0,9}$/.test(value)) return "";
+  const number = Number(value);
+  return Number.isSafeInteger(number) && number <= 2_147_483_647 ? String(number) : "";
+}
+
+/** Old activity `id` is an activity identity, never an ordinary product id. */
+function resolveLegacyActivityDetail(query: string): string {
+  if (!query || query.length > 2_048) return "";
+  const fields = new Map<string, string>();
+  try {
+    for (const part of query.split("&")) {
+      const separator = part.indexOf("=");
+      if (separator < 1) return "";
+      const key = decodeURIComponent(part.slice(0, separator));
+      const value = decodeURIComponent(part.slice(separator + 1));
+      if (key === "id" || key === "type" || key === "pink_id" || key === "pinkId") {
+        if (fields.has(key)) return "";
+        fields.set(key, value);
+      }
+    }
+  } catch { return ""; }
+  const id = canonicalActivityId(fields.get("id") ?? "");
+  const type = fields.get("type");
+  if (!id || !type) return "";
+  if (type === "7") return `/pages/activity/newcomerDetail?id=${id}`;
+  if (type === "1") return `/pages/activity/seckillDetail?id=${id}`;
+  if (type === "6") return `/pages/activity/presaleDetail?id=${id}`;
+  if (type === "3") {
+    const groupA = fields.get("pink_id"), groupB = fields.get("pinkId");
+    if (groupA !== undefined && groupB !== undefined) return "";
+    const rawGroup = groupA ?? groupB;
+    const group = rawGroup === undefined ? "" : canonicalActivityId(rawGroup);
+    if (rawGroup !== undefined && !group) return "";
+    return `/pages/activity/detail?id=${id}${group ? `&pinkId=${group}` : ""}`;
+  }
+  return "";
+}
+
 export function resolveRegisteredPageRoute(path: string, query = ""): string {
+  if (path === "/pages/activity/goods_details/index") return resolveLegacyActivityDetail(query);
   const rule = LEGACY_ROUTE_RULES[path];
   const target = rule?.target ?? path;
   if (!REGISTERED_PAGE_ROUTES.has(target)) return "";

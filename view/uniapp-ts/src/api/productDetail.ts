@@ -12,6 +12,9 @@ function optionalSkuMoney(sku: Record<string, unknown>, snake: string, camel: st
 export function normalizeMobileGoods(value: unknown): GoodsDetail {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("商品详情格式错误");
   const raw = value as Record<string, unknown>;
+  const presale = raw.is_presale_product ?? raw.isPresaleProduct ?? 0;
+  if (presale !== 0 && presale !== 1 || raw.is_presale_product !== undefined && raw.isPresaleProduct !== undefined && raw.is_presale_product !== raw.isPresaleProduct
+    || raw.is_presale_product === null || raw.isPresaleProduct === null) throw new Error('商品预售标记无效');
   const field = (snake: string, camel: string = snake) => raw[snake] ?? raw[camel];
   const text = (snake: string, camel: string = snake) => typeof field(snake, camel) === "string" ? field(snake, camel) as string : "";
   const number = (snake: string, camel: string = snake) => typeof field(snake, camel) === "number" && Number.isFinite(field(snake, camel)) ? field(snake, camel) as number : 0;
@@ -30,7 +33,7 @@ export function normalizeMobileGoods(value: unknown): GoodsDetail {
       ot_price: optionalSkuMoney(sku, "ot_price", "otPrice"), vip_price: optionalSkuMoney(sku, "vip_price", "vipPrice") };
   });
   const slider = field("slider_image", "sliderImage");
-  return { id: Number(raw.id), stock: Number(raw.stock), price: quoteMoney(raw.price), skus,
+  return { id: Number(raw.id), stock: Number(raw.stock), price: quoteMoney(raw.price), skus, is_presale_product: presale,
     store_name: text("store_name", "storeName"), store_info: text("store_info", "storeInfo"), image: text("image"),
     slider_image: Array.isArray(slider) ? slider.filter((image): image is string => typeof image === "string") : [],
     ot_price: text("ot_price", "otPrice"), vip_price: text("vip_price", "vipPrice"), sales: number("sales"), ficti: number("ficti"), fsales: number("fsales"),

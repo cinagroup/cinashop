@@ -147,6 +147,13 @@ export interface OrderPaidOutboxMessage {
   eventKey: string;
 }
 
+/** Durable presale delivery; no order snapshots or secrets in Queue messages. */
+export interface PresaleDeliveryOutboxMessage {
+  action: "processPresaleDeliveryOutbox";
+  outboxId: number;
+  eventKey: string;
+}
+
 /** Delivery/refund notices share the durable order outbox but have a distinct consumer contract. */
 export interface OrderNotificationOutboxMessage {
   action: "processOrderNotificationOutbox";
@@ -387,6 +394,7 @@ export interface PaymentReconciliationDispatchMessage {
 
 export type OrderMessage =
   | OrderPaidOutboxMessage
+  | PresaleDeliveryOutboxMessage
   | OrderNotificationOutboxMessage
   | OrderNotificationDeliveryMessage
   | OrderPrintJobMessage

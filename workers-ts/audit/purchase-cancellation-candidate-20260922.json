@@ -1,0 +1,170 @@
+{
+  "date": "2026-09-22",
+  "status": "unregistered-local-candidate-not-deployed",
+  "head": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "branch": "codex/user-visit-history-20260921",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "legacyBackfill": false,
+    "cumulativeQuotaEnabled": false,
+    "registeredMigrationChanged": false,
+    "existingBusinessServiceChanged": false
+  },
+  "implementation": {
+    "capture": "database unpaid-to-cancelled transition trigger",
+    "validation": "deferred constraint trigger before commit",
+    "protectedTable": "public.store_order_purchase_cancellation",
+    "directInsertRejected": true,
+    "immutable": true,
+    "securityInvoker": true,
+    "runtimeCandidateGrant": [
+      "SELECT",
+      "INSERT"
+    ],
+    "businessWritersAndSchemaOwnersTrusted": true,
+    "inventoryCompensationRemainsAtomicServiceResponsibility": true,
+    "readerIsNotQuotaReleaseAuthority": true,
+    "uncommittedReceiptIsNotCommittedFact": true
+  },
+  "schema": {
+    "registeredTables": 278,
+    "embeddedSteps": 170,
+    "externalSteps": 165,
+    "extraCandidateTablePerFixture": 1,
+    "completeCatalogAuditPerformed": false
+  },
+  "checklist": {
+    "complete": 240,
+    "open": 164,
+    "total": 404
+  },
+  "tests": {
+    "native": {
+      "files": 1,
+      "passed": 34,
+      "skipped": 0,
+      "session": 23065,
+      "seconds": 257.63,
+      "cluster": "finance-postgres-s9Gcx9",
+      "port": 61713,
+      "testFiles": [
+        "test/purchase-cancellation-evidence-postgres.test.ts"
+      ]
+    },
+    "unit": {
+      "files": 4,
+      "passed": 213,
+      "skipped": 0,
+      "session": 46514,
+      "seconds": 10.2,
+      "suites": [
+        {
+          "file": "test/purchase-cancellation-evidence.test.ts",
+          "passed": 23
+        },
+        {
+          "file": "test/purchase-origin-evidence.test.ts",
+          "passed": 29
+        },
+        {
+          "file": "test/unpaid-order-cancellation-evidence.test.ts",
+          "passed": 54
+        },
+        {
+          "file": "test/local-finance-postgres-runner.test.ts",
+          "passed": 107
+        }
+      ]
+    },
+    "totalPassed": 247,
+    "totalFiles": 5,
+    "newCases": 58,
+    "skipped": 0,
+    "unitAndRuntimeTypesPassed": true,
+    "finalTypecheckSession": 46514,
+    "runnerSyntaxPassed": true,
+    "diffWhitespacePassed": true,
+    "countingPolicy": "Only distinct final passing cases; no addition of prior-turn totals or superseded runs.",
+    "sourceLookupCapacity": {
+      "unrelatedRowsEach": 200000,
+      "tables": [
+        "store_order_status",
+        "user_bill"
+      ],
+      "nativeExplainAnalyze": true,
+      "seqScanDisabled": false,
+      "expectedIndexes": [
+        "sos_oid_idx or sos_oid_change_time",
+        "ub_cat_type_link_idx"
+      ],
+      "realCancellationAfterSeedPassed": true
+    }
+  },
+  "supersededPassingRuns": [
+    {
+      "nativePassed": 22,
+      "files": 1,
+      "session": 41653,
+      "seconds": 151.88,
+      "cluster": "finance-postgres-mlIbQ5",
+      "port": 55030,
+      "countedInTotal": false
+    },
+    {
+      "unitPassed": 130,
+      "files": 2,
+      "session": 17259,
+      "seconds": 8.31,
+      "countedInTotal": false
+    }
+  ],
+  "testFailures": [],
+  "toolLimitations": [
+    "Firecrawl CLI unavailable; official Cloudflare page retrieved with read-only web tool.",
+    "Latest workers-types registry lookup EACCES; used installed 5.20260828.1 without dependency/binding changes.",
+    "Sandbox could not read first private cluster log; independent explicit-target escalated status/listener/process checks succeeded."
+  ],
+  "cleanup": {
+    "clusters": [
+      {
+        "name": "finance-postgres-mlIbQ5",
+        "port": 55030
+      },
+      {
+        "name": "finance-postgres-s9Gcx9",
+        "port": 61713
+      }
+    ],
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "independentPgCtlStatuses": [
+      3,
+      3
+    ],
+    "pidFiles": false,
+    "bootstrapPasswordFiles": false,
+    "ownedListeners": 0,
+    "ownedPostgresProcesses": 0,
+    "testRunnersOrWorkers": 0,
+    "stoppedDiagnosticDirectoriesRetained": true
+  },
+  "hashScope": "Selected source/test/runner raw-file SHA-256 only; not a full repository/test-input closure.",
+  "hashes": {
+    "workers-ts/src/migrations/purchaseCancellationEvidence.ts": "26e539e6490cb9f8bc58d2316dc9fa250dbfb8467fe3cb330d92a7bdb4080765",
+    "workers-ts/src/services/order/PurchaseCancellationEvidence.ts": "a057cc7cd851dfcf3ab7f4c0469881c5374947ae12f026fae52d2027b6c49e6c",
+    "workers-ts/test/purchase-cancellation-evidence.test.ts": "f1896c2e143d9ef073b780eb03616e92736625d40574d943cdef6598688d52d4",
+    "workers-ts/test/purchase-cancellation-evidence-postgres.test.ts": "f5f1444d402820206e1242a0769ae4da15a03c0260c65cab82cbf9f245b6d244",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "51a95d13d7806236aa6c61f10504ac80badd66ffdb2ebe39af033cb08302ea43",
+    "workers-ts/test/local-finance-postgres-runner.test.ts": "374fd896844a7defc2a8bf15db09a52ea973ee21a9af358ab480ff1ed4645fca"
+  },
+  "remaining": [
+    "Guarded installation/catalog/ownership/role/default-ACL protocol",
+    "ORM and external/embedded registration, explicit empty-ORM completion, forward upgrades and full-path catalog verification",
+    "All actual cancellation entry points and LOGINs including activities/admin-assisted/guest/scheduled roles",
+    "Production origin/cancellation commissioning and approved rollout",
+    "Cross-root concurrent quota protocol and owner decision on quota restoration timing",
+    "Real browser/provider/user acceptance beyond this increment"
+  ]
+}

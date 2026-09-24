@@ -11,6 +11,8 @@ import { adminAuthMiddleware } from '../src/middleware/admin-auth';
 import { createToken, md5 } from '../src/utils/jwt';
 import { systemConfig, systemAdmin, systemRole, storeOrderCartInfo, storeOrderStatus, printDocument } from '../src/models/schema';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { withFinancePeers, waitForFinanceBlock, type FinancePeer } from './helpers/financePeers';
 
@@ -59,6 +61,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
       try {
         const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
         await db.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(db.db);
+        await completePurchaseCancellationEvidenceOrm(db.db);
         owned = db; return db;
       } catch (error) { await db.close(); throw error; }
     } : undefined);

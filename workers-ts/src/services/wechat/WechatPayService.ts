@@ -132,6 +132,8 @@ export class WechatPayService {
     openid?: string;
     attach?: string;
     payerClientIp?: string;
+    /** Assisted orders persist their one-shot claim after local validation and before HTTP. */
+    beforeProviderRequest?: () => Promise<void>;
   }): Promise<Record<string, unknown>> {
     const cfg = await this.getConfig(params.profile);
     const path = `/v3/pay/transactions/${params.type}`;
@@ -152,6 +154,12 @@ export class WechatPayService {
         payer_client_ip: params.payerClientIp ?? "0.0.0.0",
         h5_info: { type: "Wap" },
       };
+    }
+
+    if (params.beforeProviderRequest) {
+      // A malformed merchant key must fail before the durable initiation claim.
+      await rsaSign(cfg.privateKey, "assisted-provider-preflight");
+      await params.beforeProviderRequest();
     }
 
     const result = await this.callApi<Record<string, unknown>>("POST", path, body, cfg);

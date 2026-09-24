@@ -1,0 +1,827 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "Only the 20 surface=page routes under /admin/work in the authoritative 274-route inventory.",
+    "reviewBasis": "Compare each pinned legacy component and API workflow with the target Admin page, Worker adminapi contract, data entity and permission map. Legacy paths and meta.auth are static review evidence; generation requires only this repository. An API without an Admin operation surface, including a 501 compatibility route, does not establish screen parity. Shared work_group_template data does not establish separate send workflows or detail parity.",
+    "validationBoundary": "Code-only semantic review. No production data, provider writes, real-role browser E2E, deployment, or publication is claimed. FE-001D remains open."
+  },
+  "summary": {
+    "legacyRoutes": 20,
+    "reviewed": 20,
+    "candidate": 0,
+    "partial": 8,
+    "missing": 12,
+    "retired": 0,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/work/channel_code",
+        "title": "企业渠道码",
+        "component": "@/pages/work/channelCode/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/channelCode/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/channelCode/index.vue:25",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:28",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-channel-code']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/channel_code"
+      ],
+      "covered": [
+        "新目录的渠道码 tab 可分页查看名称、状态、接待成员数和新增客户数。"
+      ],
+      "remaining": [
+        "旧分类/类型筛选、二维码下载、关联客户查看、分类批量设置及状态/删除操作缺失；目标只读，渠道码写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/channelCode/index.vue",
+        "cinashop-php/view/admin/src/pages/work/channelCode/index.vue:25",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/work.ts",
+        "cinashop-php/route/admin.php",
+        "cinashop-php/app/controller/admin/v1/work/ChannelCode.php"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/createCode/:id?",
+        "title": "添加企业渠道码",
+        "component": "@/pages/work/channelCode/createCode",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/channelCode/createCode.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/channelCode/createCode.vue:20",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:37",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-code-create']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "POST /adminapi/work/channel_code",
+        "PUT /adminapi/work/channel_code/:id"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧表单配置成员轮值、工作时间、备用员工、欢迎语、客户标签与二维码；新 Admin 无创建/编辑表单，兼容写接口统一返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/channelCode/createCode.vue",
+        "cinashop-php/view/admin/src/pages/work/channelCode/createCode.vue:20",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/work.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/group_chat",
+        "title": "客户群列表",
+        "component": "@/pages/work/customerBase/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/customerBase/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/customerBase/index.vue:9",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:46",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-customer-base']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/group_chat",
+        "GET /adminapi/work/group_chat/member/:id"
+      ],
+      "covered": [
+        "客户群 tab 可分页查看群名、群主、成员数、退群数和状态。"
+      ],
+      "remaining": [
+        "旧日期筛选、群成员弹窗、同步及跳转单群统计缺失；群成员虽有 Worker API，却没有 Admin 操作入口。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/customerBase/index.vue",
+        "cinashop-php/view/admin/src/pages/work/customerBase/index.vue:9",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/work/EnterpriseWechatGroupChatCurrentService.ts",
+        "cinashop-php/route/admin.php",
+        "cinashop-php/app/controller/admin/v1/work/GroupChat.php"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/statistical/:id?",
+        "title": "客户群统计",
+        "component": "@/pages/work/customerBase/statistical",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/customerBase/statistical.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/customerBase/statistical.vue:19",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:55",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-statistical']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧页按群 ID 展示新增/退群/当前成员指标、时间曲线和每日明细；新页仅有全局群数汇总，不提供单群统计屏。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/customerBase/statistical.vue",
+        "cinashop-php/view/admin/src/pages/work/customerBase/statistical.vue:19",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "cinashop-php/route/admin.php",
+        "cinashop-php/app/controller/admin/v1/work/GroupChat.php"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/list",
+        "title": "客户列表",
+        "component": "@/pages/work/customerBase/list",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/customerBase/list.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/customerBase/list.vue:49",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:64",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-list']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work",
+        "/user"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/client",
+        "GET /adminapi/user/list",
+        "GET /adminapi/work/label",
+        "GET /adminapi/work/client/synch",
+        "POST /adminapi/work/client/batchLabel",
+        "PUT /adminapi/work/client/:id"
+      ],
+      "covered": [
+        "新企业微信客户 tab 可分页查看脱敏客户；通用用户页可列出商城用户并打开基础详情。"
+      ],
+      "remaining": [
+        "旧企微/非企微双 tab、客服/标签/时间筛选、企微备注和打标签、同步、非企微发券/编辑均未形成同等流程；企微写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/customerBase/list.vue",
+        "cinashop-php/view/admin/src/pages/work/customerBase/list.vue:49",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/UserList.vue",
+        "workers-ts/src/services/work/EnterpriseWechatClientCurrentService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "user.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/auth_group",
+        "title": "自动拉群",
+        "component": "@/pages/work/authGroup/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/authGroup/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/authGroup/index.vue:10",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:73",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-auth-group']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/work/group_chat_auth",
+        "POST /adminapi/work/group_chat_auth",
+        "PUT /adminapi/work/group_chat_auth/:id",
+        "DELETE /adminapi/work/group_chat_auth/:id"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧自动拉群规则目录可查筛选、进入编辑并删除；Worker 只有只读目录 API，新 Admin 七个 tab 无自动拉群入口，写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/authGroup/index.vue",
+        "cinashop-php/view/admin/src/pages/work/authGroup/index.vue:10",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "cinashop-php/app/controller/admin/v1/work/GroupChatAuth.php"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/welcome",
+        "title": "欢迎语",
+        "component": "@/pages/work/welcome/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/welcome/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/welcome/index.vue:11",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:82",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-welcome']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/welcome",
+        "POST /adminapi/work/welcome",
+        "PUT /adminapi/work/welcome/:id",
+        "DELETE /adminapi/work/welcome/:id"
+      ],
+      "covered": [
+        "欢迎语 tab 可分页查看适用范围、内容预览、附件数和排序。"
+      ],
+      "remaining": [
+        "旧新增/编辑/删除及完整附件内容不可操作；兼容写接口返回 501，客户后置动作处置不是欢迎语配置。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/welcome/index.vue",
+        "cinashop-php/view/admin/src/pages/work/welcome/index.vue:11",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/work/EnterpriseWechatContactActionService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/addWelcome/:id?",
+        "title": "新建好友欢迎语",
+        "component": "@/pages/work/welcome/addWelcome",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/welcome/addWelcome.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/welcome/addWelcome.vue:20",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:91",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-addWelcome']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "POST /adminapi/work/welcome",
+        "PUT /adminapi/work/welcome/:id"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧表单按成员/范围设置欢迎语、图片、链接或小程序素材和排序；新 Admin 没有可保存表单，写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/welcome/addWelcome.vue",
+        "cinashop-php/view/admin/src/pages/work/welcome/addWelcome.vue:20",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/addAuthGroup/:id?",
+        "title": "新建自动拉群",
+        "component": "@/pages/work/authGroup/addAuthGroup",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/authGroup/addAuthGroup.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/authGroup/addAuthGroup.vue:21",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:100",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-addAuthGroup']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/work/group_chat_auth",
+        "POST /adminapi/work/group_chat_auth",
+        "PUT /adminapi/work/group_chat_auth/:id"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧表单选择群聊、自动建群、管理员、客户标签及欢迎内容；新 Admin 没有该编辑表单，写接口返回 501。旧 PHP 新建/更新接收字段还不对称，需单独验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/authGroup/addAuthGroup.vue",
+        "cinashop-php/view/admin/src/pages/work/authGroup/addAuthGroup.vue:21",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "cinashop-php/app/controller/admin/v1/work/GroupChatAuth.php"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/staffList",
+        "title": "员工列表",
+        "component": "@/pages/work/staffList/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/staffList/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/staffList/index.vue:6",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:109",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-staffList']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/member",
+        "GET /adminapi/work/tree",
+        "POST /adminapi/work/synchMember"
+      ],
+      "covered": [
+        "成员 tab 可分页查看脱敏员工、职务、部门及状态。"
+      ],
+      "remaining": [
+        "旧部门树/员工条件筛选和手动同步未在页面提供；部门树仅有 API，手动同步接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/staffList/index.vue",
+        "cinashop-php/view/admin/src/pages/work/staffList/index.vue:6",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/work/EnterpriseWechatDepartmentCurrentService.ts",
+        "workers-ts/src/services/work/EnterpriseWechatMemberCurrentService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/group",
+        "title": "客户群发",
+        "component": "@/pages/work/clientGroup/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/clientGroup/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/clientGroup/index.vue:12",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:118",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-group']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/group_template",
+        "POST /adminapi/work/group_template"
+      ],
+      "covered": [
+        "群发历史 tab 可分页查看 work_group_template 中客户群发任务的名称、对象类型、成员数和发送状态。"
+      ],
+      "remaining": [
+        "旧页用 type=0 区分客户群发；新 tab 混列两种 type，缺少发送时间/客户类型筛选、送达统计、任务详情、提醒发送、删除和新建；写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/clientGroup/index.vue",
+        "cinashop-php/view/admin/src/pages/work/clientGroup/index.vue:12",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/work.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/add_group",
+        "title": "新建客户群发",
+        "component": "@/pages/work/clientGroup/addClientGroup",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/clientGroup/addClientGroup.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/clientGroup/addClientGroup.vue:21",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:127",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-add_group']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "POST /adminapi/work/group_template"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧客户群发创建页选择员工、客户标签/时间范围、文本和媒体、立即/定时发送；新 Admin 没有表单，写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/clientGroup/addClientGroup.vue",
+        "cinashop-php/view/admin/src/pages/work/clientGroup/addClientGroup.vue:21",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/group_info/:id?",
+        "title": "客户群发详情",
+        "component": "@/pages/work/clientGroup/clientGroupInfo",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/clientGroup/clientGroupInfo.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/clientGroup/clientGroupInfo.vue:30",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:136",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-groupInfo']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧详情有模板内容、员工/客户送达分页明细和提醒发送；新群发历史 tab 只展示聚合行，未提供按 ID 详情屏。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/clientGroup/clientGroupInfo.vue",
+        "cinashop-php/view/admin/src/pages/work/clientGroup/clientGroupInfo.vue:30",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/work.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/moment",
+        "title": "朋友圈列表",
+        "component": "@/pages/work/clientMoment/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/clientMoment/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/clientMoment/index.vue:12",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:145",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-moment']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/moment",
+        "POST /adminapi/work/moment",
+        "DELETE /adminapi/work/moment/:id"
+      ],
+      "covered": [
+        "朋友圈历史 tab 可分页查看任务名、成员数、发送时间和远端 ID 是否记录。"
+      ],
+      "remaining": [
+        "旧日期筛选、任务详情、删除和新增/投递流程缺失；兼容写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/clientMoment/index.vue",
+        "cinashop-php/view/admin/src/pages/work/clientMoment/index.vue:12",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/work.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view",
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/add_moment",
+        "title": "朋友圈添加",
+        "component": "@/pages/work/clientMoment/addMoment",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/clientMoment/addMoment.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/clientMoment/addMoment.vue:26",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:154",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-add-moment']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "POST /adminapi/work/moment"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧朋友圈创建页选择发表成员、可见客户/标签、图文链接或媒体及定时发送；新 Admin 没有写入表单，接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/clientMoment/addMoment.vue",
+        "cinashop-php/view/admin/src/pages/work/clientMoment/addMoment.vue:26",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/client/moment_info/:id?",
+        "title": "朋友圈详情",
+        "component": "@/pages/work/clientMoment/clientMomentInfo",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/clientMoment/clientMomentInfo.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/clientMoment/clientMomentInfo.vue:24",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:163",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-client-momentInfo']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧详情先按任务 ID 取得外部 moment_id，再查看员工发表与送达列表；新目录只显示任务聚合行和失败标记，没有详情入口或明细。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/clientMoment/clientMomentInfo.vue",
+        "cinashop-php/view/admin/src/pages/work/clientMoment/clientMomentInfo.vue:24",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/group/template",
+        "title": "客户群群发",
+        "component": "@/pages/work/groupTemplate/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/groupTemplate/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/groupTemplate/index.vue:12",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:172",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-group-template']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/work"
+      ],
+      "targetApis": [
+        "GET /adminapi/work/group_template"
+      ],
+      "covered": [
+        "新群发历史 tab 也列出 work_group_template 中 type=1 的旧客户群群发任务摘要。"
+      ],
+      "remaining": [
+        "旧页用 group_template_chat URL 和 type=1 区分群群发；新 tab 混列 type=0/1，缺少按群主/送达群聊统计、发送时间筛选、详情、提醒发送和删除。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/groupTemplate/index.vue",
+        "cinashop-php/view/admin/src/pages/work/groupTemplate/index.vue:12",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/work.ts",
+        "cinashop-php/app/controller/admin/v1/work/GroupTemplate.php"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/group/add_template",
+        "title": "添加客户群群发",
+        "component": "@/pages/work/groupTemplate/add_template",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/groupTemplate/add_template.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/groupTemplate/add_template.vue:21",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:181",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-group-add_template']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "POST /adminapi/work/group_template"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧群群发创建页选择群主、群聊、消息内容及立即/定时发送；新 Admin 无群群发创建表单，通用 group_template 写接口返回 501。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/groupTemplate/add_template.vue",
+        "cinashop-php/view/admin/src/pages/work/groupTemplate/add_template.vue:21",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": [
+        "enterprise_wechat.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/group/template_info/:id?",
+        "title": "客户群群发详情",
+        "component": "@/pages/work/groupTemplate/groupTemplateInfo",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/groupTemplate/groupTemplateInfo.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/groupTemplate/groupTemplateInfo.vue:20",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:190",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['work-group-templateInfo']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧群群发详情按群主/群聊查看送达与失败记录；新 Admin 无按 ID 的群群发详情和送达明细。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/groupTemplate/groupTemplateInfo.vue",
+        "cinashop-php/view/admin/src/pages/work/groupTemplate/groupTemplateInfo.vue:20",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/work/config",
+        "title": "企业微信设置",
+        "component": "@/pages/work/config/index.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/work/config/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/work/config/index.vue:3",
+        "source": "cinashop-php/view/admin/src/router/modules/work.js:199",
+        "routerSha256": "9d6dd8ff6a6c1f8adbcf0232cc70af3decf1cbe0b2245a6add7fc6fd85116ce6",
+        "auth": "['admin-work-config']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧动态表单编辑 Corp ID、Secret、Token、AES Key 与自建应用配置；新 Admin 无企业微信配置页。/api/work/config 是企业侧 JS-SDK 签名接口，不能替代管理配置。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/work.js",
+        "cinashop-php/view/admin/src/pages/work/config/index.vue",
+        "cinashop-php/view/admin/src/pages/work/config/index.vue:3",
+        "cinashop-php/view/admin/src/api/work.js",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/pages/operations/EnterpriseWechat.vue",
+        "view/admin-ts/src/api/enterpriseWechat.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/controllers/api/v1/AdminEnterpriseWechatController.ts",
+        "workers-ts/src/services/work/EnterpriseWechatCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "cinashop-php/view/admin/src/pages/setting/shop/buildData.js",
+        "cinashop-php/app/services/system/config/SystemConfigServices.php",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/src/controllers/api/v1/EnterpriseWechatController.ts"
+      ],
+      "targetPermissions": []
+    }
+  ]
+}

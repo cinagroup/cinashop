@@ -1,0 +1,89 @@
+{
+  "date": "2026-09-23",
+  "status": "local-assisted-lifecycle-and-guest-paid-effects-passed-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "previousEvidence": "assisted-purchase-runtime-20260923.json",
+  "scope": {
+    "productionConnected": false, "committed": false, "pushed": false, "deployed": false,
+    "businessChange": "Only explicitly marked ordinary assisted UID=0 orders omit account rewards and pay count; supplier/payment effects still finish atomically. Other missing-user failures remain errors.",
+    "businessFile": "src/services/order/OrderOutboxService.ts",
+    "guestAdmissionMarkers": "uid=0 AND type=0 AND is_channel=2 AND staff_id>0 AND coupon_id=0",
+    "schemaOrPrivilegePlanChanged": false, "bindingsOrDependenciesChanged": false,
+    "runnerChangedThisPhase": false, "cumulativeQuotaEnabled": false,
+    "testOnlyPortabilityFix": "Normalize CRLF/LF in existing checkout-payment SQL/embedded migration comparison; no SQL change"
+  },
+  "acceptance": {
+    "schema": "Complete registered 279-table owned PostgreSQL 16.15 fixture",
+    "runtimeRoles": "Independent app/admin LOGINs, reviewed commissioning and exact privilege audit, actual per-route Admin JWT and live SQL permissions, level=1 with order.assisted only",
+    "httpRoutes": [
+      "GET cart/:uid", "POST cart/add/:uid", "DELETE cart/del/:uid", "POST cart/num/:uid",
+      "GET place/list", "POST confirm/:uid", "POST computed/:key/:uid", "GET coupons/:uid",
+      "POST create/:key/:uid", "POST pay/:uid", "GET pay/status"
+    ],
+    "cash": "Member and guest created through real controllers; wrong actor/target denied, actor-scoped list/status, paid marker + audit + durable event, one supplier payment and COMPLETED event, repeated payment/processing no additional effects",
+    "accountRewards": "Synthetic product coupon and active lottery enabled: member receives each once and pay_count increments once; guest gets neither, no UID=0 account created",
+    "cart": "Actor/target/guest-scoped reads; exact-set delete and quantity update reject unauthorized or overstock requests; changed quantity invalidates old quote before sequence or business writes",
+    "coupon": "Member-only applicable list excludes foreign coupons; quote/recompute/reserve with 100 points; cancel releases, payment consumes, replay is idempotent",
+    "paymentRollback": "Missing application INSERT on order outbox or status rolls back payment, audit and durable event with zero Queue sends; only exact test baseline privilege explicitly restored",
+    "queueFailure": "Synthetic Queue rejection keeps committed payment and FAILED durable event; duplicate pay neither changes state nor resends; later direct real consumer service invocation completes retained event once",
+    "guestOriginRejection": "Removing staff_id or is_channel rejects UID=0 postprocessing; all business effects roll back, durable event records FAILED",
+    "externalPayment": "WeChat/Alipay missing-config rejection only; no paid transition and global fetch never called",
+    "requestSessionsRemaining": 0,
+    "syntheticBoundaries": ["Locally issued JWT, not real login", "KV", "Sequence", "Loopback URLs, not Hyperdrive transport", "Redis token revocation disabled", "Queue sendBatch transport; actual consumer service called directly"]
+  },
+  "tests": {
+    "uniquePassed": 79, "newCases": 11, "files": 8, "skipped": 0,
+    "counting": "26 assisted native + 29 existing native regressions + 24 unit cases; earlier phase, first failing native run and failing unit attempt excluded",
+    "nativeAssisted": {
+      "passed": 26, "seconds": 229.13, "session": 61726, "startedLocal": "10:36:11",
+      "cluster": "finance-postgres-2f6QKR", "port": 59520,
+      "testFiles": ["test/assisted-purchase-runtime-postgres.test.ts"]
+    },
+    "nativeRegression": {
+      "passed": 29, "seconds": 153.47, "session": 57286, "startedLocal": "10:40:33",
+      "cluster": "finance-postgres-U8YE46", "port": 58350,
+      "testFiles": ["test/order-member-economize.test.ts", "test/presale-runtime-permissions.test.ts"]
+    },
+    "unit": {
+      "passed": 24, "seconds": 9.78, "session": 90638, "startedLocal": "10:37:15",
+      "testFiles": ["test/admin-assisted-order-migration.test.ts", "test/order-outbox.test.ts", "test/checkout-payment.test.ts", "test/order-paid-outbox-queue-consumer.test.ts", "test/order-notification-outbox.test.ts"]
+    },
+    "typecheck": {"unit": "passed", "runtime": "passed", "session": 25500},
+    "workerdRunThisPhase": false,
+    "workerdGate": "Prior Windows startup access violation remains open; no current candidate Linux/workerd/CI acceptance claimed",
+    "diffWhitespace": "passed"
+  },
+  "developmentFailures": [
+    {"session": 97432, "cluster": "finance-postgres-R7kkKs", "port": 62154,
+      "passed": 16, "failed": 1, "seconds": 143.01, "startedLocal": "10:30:17",
+      "cause": "Actual UID=0 cash payment committed, but outbox incrementBuyerPayCount threw because guest has no user row",
+      "fix": "Narrowly omit account-only effects for explicitly marked assisted guests; keep supplier effects and missing-member errors"},
+    {"startedLocal": "10:36:16", "passed": 23, "failed": 1, "seconds": 8.70,
+      "cause": "Existing checkout-payment migration text equality compared CRLF against LF",
+      "fix": "Normalize only line endings in both test inputs; no migration SQL or production code changed for this failure"}
+  ],
+  "cleanup": {
+    "clusters": ["finance-postgres-R7kkKs", "finance-postgres-2f6QKR", "finance-postgres-U8YE46"],
+    "eachRunnerReportedFixtureDatabasesAndRolesRemaining": 0,
+    "eachIndependentPgCtlStatus": 3, "eachPidFilePresent": false, "eachBootstrapPasswordPresent": false,
+    "ownedPostgresProcessCount": 0, "matchingListeners": 0, "matchingTestOrTypeProcesses": 0,
+    "stoppedDiagnosticDirectoriesRetained": true
+  },
+  "sourceSha256": {
+    "test/assisted-purchase-runtime-postgres.test.ts": "567ba504734cc4216999e97df96383b1926fc6caee22032238b645b2b4b57b5b",
+    "src/services/order/OrderOutboxService.ts": "ce37d8162769a9a267a3c710cd010fc832d15447f45e1c3ce289b7f32b80dfa8",
+    "test/checkout-payment.test.ts": "10418a397937a88f85d302052051456079b7b3a141289edc39bc1302fe099ce6",
+    "src/services/admin/AdminAssistedOrderService.ts": "51693867367379b42efdbfef6befb938b0503987ffbf92234f403e1aefca19f5",
+    "src/controllers/api/v1/AdminController.ts": "e155379aec599cae7504702a6701b4a5f2afb4512c63df0c048bb2193512ffcb",
+    "src/migrations/runtimeBusinessPrivilegePlan.ts": "4e7fa3903bce0df87386d394d986708231f39d8f3b2ed1cd1601703a209c10d8"
+  },
+  "checklist": {"completed": 240, "open": 164, "total": 404},
+  "remaining": [
+    "Frontend assisted pages FE-003G and real browser/server integration",
+    "Actual login, Redis revocation, provider and Hyperdrive acceptance",
+    "Real Cloudflare Queue transport/scheduled delivery and current candidate Linux/workerd/CI",
+    "Other activity types, virtual/other assisted payment combinations and broader concurrency acceptance",
+    "Production protocol/role rollout and explicit release workflow",
+    "Cumulative quota policy/integration; disabled"
+  ]
+}

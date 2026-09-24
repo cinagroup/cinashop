@@ -184,7 +184,7 @@ describe("order Queue dead-letter operations", () => {
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0087\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, '\n')).toBe(migration.replace(/\r\n/g, '\n'));
     expect(migration).toContain('CONSTRAINT "sqdl_queue_message_uq" UNIQUE');
     expect(migration).toContain("'BLOCK_SENSITIVE'");
 

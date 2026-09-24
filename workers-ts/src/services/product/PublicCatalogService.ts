@@ -39,6 +39,7 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { getOrderInvalidTime } from "@/services/payment/OrderPaymentPolicy";
 import { StoreProductService, type GoodsListParams } from "./StoreProductService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { presaleProductVisibility, readPresaleCatalogAccount, validatePresaleCatalogUid, withPresaleCatalogSnapshot } from '@/services/activity/PresaleCatalogSnapshot';
 
 const MAX_LIMIT = 100;
 const GROUP_KEYS = [
@@ -679,29 +680,36 @@ export class PublicCatalogService {
   }
 
   async presale(uid: number, timeType: number, pageValue: unknown, limitValue: unknown) {
+    validatePresaleCatalogUid(uid);
+    if (![0, 1, 2, 3].includes(timeType)) throw new ValidateException('预售时段参数错误');
     const { page, limit } = normalizeCatalogPage(pageValue, limitValue);
-    const now = Math.floor(Date.now() / 1_000);
-    const timeCondition = timeType === 1
-      ? gt(storeProduct.presaleStartTime, now)
-      : timeType === 2
-        ? and(lte(storeProduct.presaleStartTime, now), gte(storeProduct.presaleEndTime, now))
-        : timeType === 3
-          ? lt(storeProduct.presaleEndTime, now)
-          : undefined;
-    const condition = and(
-      eq(storeProduct.isPresaleProduct, 1), eq(storeProduct.isDel, 0),
-      eq(storeProduct.isShow, 1), eq(storeProduct.isVerify, 1), timeCondition,
-    );
-    const [rows, countRows] = await Promise.all([
-      this.container.db.select().from(storeProduct).where(condition)
-        .orderBy(desc(storeProduct.addTime)).limit(limit).offset((page - 1) * limit),
-      this.container.db.select({ count: sql<number>`COUNT(*)::int` }).from(storeProduct).where(condition),
-    ]);
-    void uid;
-    return { list: await this.decorateProducts(rows.map(productListRow)), count: Number(countRows[0]?.count ?? 0) };
+    if (!Number.isSafeInteger(page) || !Number.isSafeInteger(limit) || limit < 1 || (page - 1) * limit > 2_147_483_647) {
+      throw new ValidateException('预售页码超出范围');
+    }
+    const clock = Date.now(), now = Math.floor(clock / 1_000);
+    return withPresaleCatalogSnapshot(this.container, async snapshot => {
+      const account = await readPresaleCatalogAccount(snapshot.db, uid);
+      const timeCondition = timeType === 1
+        ? gt(storeProduct.presaleStartTime, now)
+        : timeType === 2
+          ? and(lte(storeProduct.presaleStartTime, now), gte(storeProduct.presaleEndTime, now))
+          : timeType === 3
+            ? lt(storeProduct.presaleEndTime, now)
+            : undefined;
+      const condition = and(
+        eq(storeProduct.isPresaleProduct, 1), eq(storeProduct.isDel, 0),
+        eq(storeProduct.isShow, 1), eq(storeProduct.isVerify, 1), timeCondition, presaleProductVisibility(account, clock),
+      );
+      const [rows, countRows] = await Promise.all([
+        snapshot.db.select().from(storeProduct).where(condition)
+          .orderBy(desc(storeProduct.addTime), desc(storeProduct.id)).limit(limit).offset((page - 1) * limit),
+        snapshot.db.select({ count: sql<number>`COUNT(*)::int` }).from(storeProduct).where(condition),
+      ]);
+      return { list: await new PublicCatalogService(snapshot, this.env).decorateProducts(rows.map(productListRow), now), count: Number(countRows[0]?.count ?? 0) };
+    });
   }
 
-  async decorateProducts(list: Record<string, unknown>[]) {
+  async decorateProducts(list: Record<string, unknown>[], presaleNow?: number): Promise<Record<string, unknown>[]> {
     if (!list.length) return list;
     const brandIds = [...new Set(list.map((item) => int(item.brand_id)).filter(Boolean))];
     const labelIds = [...new Set(list.flatMap((item) => csvIds(item.store_label_id)))];
@@ -727,6 +735,7 @@ export class PublicCatalogService {
         item.is_presale_product,
         item.presale_start_time,
         item.presale_end_time,
+        presaleNow,
       ),
     }));
   }

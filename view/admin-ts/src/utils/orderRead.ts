@@ -40,6 +40,17 @@ function header(value: unknown): AdminOrder {
     addTime: integer(row.addTime), remark: text(row.remark) };
 }
 export interface AdminOrderQuery { page?: number; limit?: number; order_id?: string; status?: number; paid?: number }
+export interface AdminOrderChart {
+  all: number; unpaid: number; unshipped: number; untake: number; unevaluate: number; complete: number;
+}
+export function parseAdminOrderChart(value: unknown): AdminOrderChart {
+  const row = record(value);
+  const keys: Array<keyof AdminOrderChart> = ['all', 'unpaid', 'unshipped', 'untake', 'unevaluate', 'complete'];
+  if (Object.keys(row).length !== keys.length) throw invalid();
+  const counts = Object.fromEntries(keys.map(key => [key, integer(row[key])])) as unknown as AdminOrderChart;
+  if (counts.unpaid + counts.unshipped + counts.untake + counts.unevaluate + counts.complete > counts.all) throw invalid();
+  return counts;
+}
 export function parseAdminOrderList(value: unknown, query: AdminOrderQuery) {
   const row = record(value), page = integer(row.page, 1, 10000), limit = integer(row.limit, 1, 100), total = integer(row.total);
   if (page !== (query.page ?? 1) || limit !== (query.limit ?? 10) || !Array.isArray(row.list)) throw invalid();

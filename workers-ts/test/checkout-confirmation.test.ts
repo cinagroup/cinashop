@@ -51,7 +51,9 @@ describe('immutable server checkout receipts', () => {
   });
 });
 
-describe('actual HTTP and SQL quote confirmation', () => {
+// Real order creation now requires the protected purchase-origin protocol,
+// installed only by the isolated PG16 fixture (not PGlite's loose ORM tables).
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual HTTP and SQL quote confirmation', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   const input = { cartIds: [1], addressId: 11, shippingType: 1 };
   beforeEach(async () => {

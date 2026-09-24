@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, or } from "drizzle-orm";
 import type { AppVariables } from "@/env";
 import type { Container } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -96,6 +96,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   },
   { key: "level", label: "会员等级", path: "/level", matches: ["level/"], manage: true },
   { key: "coupon", label: "优惠券管理", path: "/coupon", matches: ["coupon/"], manage: true },
+  { key: "coupon_record", label: "用户领取记录", path: "/marketing/coupon-records", matches: ["marketing/coupon-records/"], manage: false },
   {
     key: "activity",
     label: "营销活动",
@@ -121,6 +122,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   { key: "extract", label: "提现审核", path: "/finance/extract", matches: ["extract/"], manage: true },
   { key: "supplier_extract", label: "供应商提现", path: "/finance/supplier-extract", matches: ["supplier/extract/"], manage: true },
   { key: "bill", label: "财务流水", path: "/finance/bill", matches: ["bill/"], manage: false },
+  { key: "integral_log", label: "积分日志", path: "/marketing/user-point", matches: ["marketing/user-point/"], manage: false },
   { key: "capital_flow", label: "平台资金流水", path: "/finance/capital-flow", matches: ["flow/"], manage: true },
   { key: "shipping", label: "运费模板", path: "/shipping", matches: ["shipping_template/"], manage: true },
   { key: "express", label: "快递公司", path: "/express", matches: ["express/"], manage: true },
@@ -227,7 +229,10 @@ function matchesRoute(route: string, matcher: string): boolean {
 }
 
 function isAssistedOrderRoute(route: string): boolean {
-  return route === "order/place/list" || route === "order/pay/status" ||
+  if (/^order\/form_image\/[^/]+\/[^/]+$/.test(route)) return true;
+  if (/^order\/form_preview\/[^/]+\/[^/]+$/.test(route)) return true;
+  if (/^order\/form\/[^/]+\/[^/]+$/.test(route)) return true;
+  return route === "order/place/list" || /^order\/place\/detail\/[^/]+$/.test(route) || route === "order/pay/status" ||
     /^order\/(?:cart\/[^/]+|cart\/(?:add|del|num)\/[^/]+|confirm\/[^/]+|computed\/[^/]+\/[^/]+|coupons\/[^/]+|create\/[^/]+\/[^/]+|pay\/[^/]+)$/.test(route);
 }
 
@@ -269,10 +274,21 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     // never let a view-only role mutate membership inventory or catalog state.
     return "paid_membership.manage";
   }
+  if (group.key === "config" && /^form\/set_show\/[^/]+\/[^/]+$/.test(route)) {
+    // Keep the legacy GET status mutation behind the same capability as PUT.
+    return "config.manage";
+  }
   if (group.key === "activity" && route.startsWith("discounts/set_status/")) {
     // CRMEB exposed this mutation as GET. A view-only role must never be able
     // to change package availability through that compatibility route.
     return "activity.manage";
+  }
+  if (
+    group.key === "distribution"
+    && /^promoter\/apply\/examine\/[^/]+\/[^/]+\/[^/]+$/.test(route)
+  ) {
+    // The legacy review URL mutates application state despite using GET.
+    return "distribution.manage";
   }
   if (
     group.key === "order"
@@ -340,6 +356,7 @@ export function assertDelegablePermissions(
 
 function menuPathPermission(menuPath: string): string | null {
   const route = menuPath.trim().toLowerCase();
+  if (route === "/admin/statistic/capital") return "capital_flow.view";
   const group = ADMIN_PERMISSION_GROUPS.find((candidate) =>
     candidate.path === route || route.includes(candidate.path),
   );
@@ -421,6 +438,7 @@ export class AdminPermissionService {
       ? await this.container.db
           .select({
             id: systemMenus.id,
+            authType: systemMenus.authType,
             apiUrl: systemMenus.apiUrl,
             methods: systemMenus.methods,
             menuPath: systemMenus.menuPath,
@@ -431,7 +449,11 @@ export class AdminPermissionService {
             and(
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
-              eq(systemMenus.authType, 2),
+              or(eq(systemMenus.authType, 2), and(
+                eq(systemMenus.authType, 1),
+                eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
+                eq(systemMenus.menuPath, "/admin/statistic/capital"),
+              )),
               eq(systemMenus.access, 1),
               eq(systemMenus.isDel, 0),
             ),
@@ -479,6 +501,7 @@ export class AdminPermissionService {
     const menuQuery = this.container.db
           .select({
             id: systemMenus.id,
+            authType: systemMenus.authType,
             apiUrl: systemMenus.apiUrl,
             methods: systemMenus.methods,
             menuPath: systemMenus.menuPath,
@@ -489,7 +512,11 @@ export class AdminPermissionService {
             and(
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
-              eq(systemMenus.authType, 2),
+              or(eq(systemMenus.authType, 2), and(
+                eq(systemMenus.authType, 1),
+                eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
+                eq(systemMenus.menuPath, "/admin/statistic/capital"),
+              )),
               eq(systemMenus.access, 1),
               eq(systemMenus.isDel, 0),
             ),
@@ -504,6 +531,7 @@ export class AdminPermissionService {
     tokens: readonly string[],
     menus: ReadonlyArray<{
       id: number;
+      authType: number;
       apiUrl: string;
       methods: string;
       menuPath: string;
@@ -515,6 +543,11 @@ export class AdminPermissionService {
     if (allowedLegacyIds.size) {
       for (const menu of menus) {
         if (!allowedLegacyIds.has(menu.id)) continue;
+        if (menu.authType === 1) {
+          // One legacy page-only rule grants visibility, never remark writes.
+          resolved.add("capital_flow.view");
+          continue;
+        }
         if (permissionKeys.has(menu.uniqueAuth)) {
           resolved.add(menu.uniqueAuth);
           continue;

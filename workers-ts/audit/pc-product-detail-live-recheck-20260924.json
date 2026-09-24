@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-pc-product-detail-live-recheck",
+  "observedAtUtc": "2026-09-24T04:29:11Z",
+  "checklistItem": "FE-002B",
+  "deployment": {
+    "source": "wrangler pages deployment list --project-name cinashop-pc --environment production --json",
+    "project": "cinashop-pc",
+    "environment": "production",
+    "deploymentId": "b4d86172-5ced-40ee-84fc-8b89dcae0f98",
+    "sourceCommit": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "fixCommit": "9308448d89087853332e4f427f502e892802d281",
+    "fixIsAncestor": true,
+    "ancestorEvidence": "GitHub compare/9308448...7a5508f returned status=ahead and merge_base_commit=9308448d89087853332e4f427f502e892802d281"
+  },
+  "publicHtml": {
+    "method": "GET",
+    "aliasUrl": "https://cinashop-pc.pages.dev/goods/70",
+    "deploymentUrl": "https://b4d86172.cinashop-pc.pages.dev/goods/70",
+    "bothStatus": 200,
+    "bothSha256": "7f87170a24aa5fde40947c54b163f350543e818e1c9c294d53921a34cb4a2166",
+    "bothEntryScript": "/assets/index-B9i69U9K.js"
+  },
+  "liveApi": {
+    "method": "GET",
+    "url": "https://b4d86172.cinashop-pc.pages.dev/api/product/detail/70",
+    "status": 200,
+    "id": 70,
+    "title": "测试商品A",
+    "subtitle": "这是一个测试商品",
+    "price": "99.90",
+    "originalPrice": "199.00",
+    "vipPrice": "0",
+    "productStock": 100,
+    "isShow": 1,
+    "isDel": 0,
+    "cartButton": 1,
+    "attrValueCount": 0,
+    "productAttrCount": 0,
+    "productValueEmpty": true
+  },
+  "renderedPage": {
+    "tool": "installed Microsoft Edge --headless=new through Chrome DevTools Protocol",
+    "url": "https://b4d86172.cinashop-pc.pages.dev/goods/70",
+    "documentTitle": "CinaShop - PC 商城",
+    "heading": "测试商品A",
+    "subtitle": "这是一个测试商品",
+    "priceText": "¥99.90",
+    "stockText": "库存 0",
+    "noSkuText": "暂无有效规格，暂不可购买",
+    "buttons": {
+      "加入购物车": { "disabled": true, "ariaDisabled": "true" },
+      "立即购买": { "disabled": true, "ariaDisabled": "true" }
+    },
+    "entryScript": "https://b4d86172.cinashop-pc.pages.dev/assets/index-B9i69U9K.js",
+    "consoleErrorsOrWarnings": 0,
+    "runtimeExceptions": 0,
+    "networkFailures": 0,
+    "httpErrorsAtLeast400": 0,
+    "requestMethodsObserved": ["GET"],
+    "nonGetRequestsBlockedByCdp": 0
+  },
+  "interpretation": "The API's product-level stock is 100, but it has no effective SKU. The page displays purchasable selected-SKU stock 0 and disables both purchase actions; this is consistent with the current incomplete test product.",
+  "limits": [
+    "No login, cart write, order creation, payment, or production mutation was performed.",
+    "This check does not validate a product with a real SKU, image assets, other devices or browsers, or all CDN locations.",
+    "Image materials and full purchase flow remain under FE-002C and FE-002E respectively."
+  ]
+}

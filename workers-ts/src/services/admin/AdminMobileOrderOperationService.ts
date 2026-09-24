@@ -7,6 +7,7 @@ import {
   storeOrderWriteoff,
 } from "@/models/schema";
 import { lockOrderSettlement } from "@/services/order/OrderBrokerageService";
+import { hasInitiatedAssistedProviderPayment } from "@/services/payment/AssistedProviderPaymentClaim";
 import {
   parseAdminOrderNumber,
   parseAdminOrderPrimaryId,
@@ -226,6 +227,7 @@ export class AdminMobileOrderOperationService {
       const rows = await tx
         .select({
           id: storeOrder.id,
+          orderId: storeOrder.orderId,
           paid: storeOrder.paid,
           payPrice: storeOrder.payPrice,
           changePrice: storeOrder.changePrice,
@@ -241,6 +243,9 @@ export class AdminMobileOrderOperationService {
       const order = rows[0];
       if (!order) throw new NotFoundException("订单不存在");
       if (order.paid !== 0) throw new ValidateException("订单已支付");
+      if (await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+        throw new ValidateException("扫码支付已发起，改价前请先人工对账");
+      }
       const next = computeAdminOrderPrice(order.payPrice, order.changePrice, input.priceCents);
       if (!next.changed) return { changed: false };
       const updated = await tx

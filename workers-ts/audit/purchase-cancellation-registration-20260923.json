@@ -1,0 +1,714 @@
+{
+  "date": "2026-09-23",
+  "status": "local-registration-verified-not-deployed",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "cumulativeQuotaEnabled": false
+  },
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "registration": {
+    "external": "0164_purchase_cancellation_evidence.sql",
+    "embedded": "0170",
+    "model": "src/models/schema/purchase_cancellation_evidence.ts",
+    "registeredTables": 279,
+    "externalSteps": 166,
+    "embeddedSteps": 171,
+    "automaticRuntimeGrants": false,
+    "backfill": false
+  },
+  "tests": {
+    "unit": {
+      "passed": 337,
+      "files": 8,
+      "session": 53265,
+      "seconds": 10.83,
+      "testFiles": [
+        "test/kefu-sequence-registration.test.ts",
+        "test/data-migration.test.ts",
+        "test/data-migration-scope.test.ts",
+        "test/table-catalog-gate.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/purchase-cancellation-evidence.test.ts",
+        "test/purchase-origin-evidence.test.ts",
+        "test/unpaid-order-cancellation-evidence.test.ts"
+      ]
+    },
+    "nativeGroups": [
+      {
+        "passed": 34,
+        "files": 1,
+        "session": 97253,
+        "cluster": "finance-postgres-a0crTc",
+        "port": 61156,
+        "testFiles": [
+          "test/purchase-cancellation-evidence-postgres.test.ts"
+        ],
+        "note": "Entire passing service file only; failed 90-case installation file excluded."
+      },
+      {
+        "passed": 162,
+        "files": 2,
+        "session": 11911,
+        "seconds": 119.39,
+        "cluster": "finance-postgres-t3mG2O",
+        "port": 54855,
+        "testFiles": [
+          "test/purchase-cancellation-installation.test.ts",
+          "test/purchase-origin-installation.test.ts"
+        ],
+        "fileCases": [
+          90,
+          72
+        ]
+      },
+      {
+        "passed": 320,
+        "files": 8,
+        "session": 82093,
+        "seconds": 231.62,
+        "cluster": "finance-postgres-uFllyw",
+        "port": 55295,
+        "testFiles": [
+          "test/admin-refund-operation-migration.test.ts",
+          "test/admin-refund-creation-migration.test.ts",
+          "test/invoice-evidence-registration.test.ts",
+          "test/refund-split-migration.test.ts",
+          "test/offline-order-registration.test.ts",
+          "test/shipping-lifecycle-migration.test.ts",
+          "test/shipping-lifecycle-indexes.test.ts",
+          "test/shipping-lifecycle-interactions.test.ts"
+        ]
+      },
+      {
+        "passed": 140,
+        "files": 4,
+        "session": 1295,
+        "seconds": 345.53,
+        "cluster": "finance-postgres-Xq1u2W",
+        "port": 51597,
+        "testFiles": [
+          "test/admin-config-batch-postgres.test.ts",
+          "test/checkout-coupon-management.test.ts",
+          "test/checkout-pricing-config-authority.test.ts",
+          "test/checkout-mobile-product-concurrency.test.ts"
+        ]
+      },
+      {
+        "passed": 72,
+        "files": 4,
+        "session": 52323,
+        "seconds": 213.6,
+        "cluster": "finance-postgres-6DoGwt",
+        "port": 50493,
+        "testFiles": [
+          "test/checkout-out-product-concurrency.test.ts",
+          "test/checkout-sku-lifecycle-concurrency.test.ts",
+          "test/checkout-catalog-management.test.ts",
+          "test/out-stock-candidate-boundary.test.ts"
+        ]
+      },
+      {
+        "passed": 79,
+        "files": 4,
+        "session": 69745,
+        "seconds": 327.47,
+        "cluster": "finance-postgres-gNBPSP",
+        "port": 61425,
+        "testFiles": [
+          "test/unpaid-mixed-order-cancellation-postgres.test.ts",
+          "test/customer-order-deletion.test.ts",
+          "test/purchase-origin-evidence-postgres.test.ts",
+          "test/presale-runtime-permissions.test.ts"
+        ]
+      }
+    ],
+    "typecheck": {
+      "session": 70772,
+      "unit": true,
+      "runtime": true,
+      "runnerSyntax": true
+    },
+    "newCases": 5,
+    "countingPolicy": "Distinct cases from complete passing files only; repeated, failed and unobserved files excluded. No prior-stage totals.",
+    "acceptedDistinctCases": 1144,
+    "acceptedFiles": 31,
+    "skipped": 0
+  },
+  "developmentFailures": [
+    {
+      "session": 97253,
+      "cluster": "finance-postgres-a0crTc",
+      "port": 61156,
+      "total": 124,
+      "passed": 122,
+      "failed": 2,
+      "seconds": 301.35,
+      "reason": "Two new forward-upgrade assertions omitted the PG16 pg_constraint row for the deferred constraint trigger. Observed 668 instead of 667. Corrected expected count and added explicit type=t, deferrable/deferred/validated proof. No executable protocol change."
+    }
+  ],
+  "unobservedRuns": [
+    {
+      "date": "2026-09-22",
+      "nativeSession": 48063,
+      "typecheckSession": 7014,
+      "cluster": "finance-postgres-88Yhnz",
+      "port": 55327,
+      "finalResultsAvailable": false,
+      "excludedFromAcceptedCount": true,
+      "independentStopped": true,
+      "pgCtlStatus": 3,
+      "pidFile": false,
+      "bootstrapPasswordFile": false,
+      "listeners": 0,
+      "ownedProcesses": 0,
+      "fixtureDatabaseAndRoleCount": null,
+      "note": "Both handles were missing on 2026-09-23. Independent process/cluster checks confirmed stopped before retry in a new cluster. Preserved stopped diagnostics."
+    }
+  ],
+  "nativeCatalogAudit": {
+    "session": 17046,
+    "cluster": "finance-postgres-aBmPpj",
+    "port": 61685,
+    "exitCode": 0,
+    "serverVersionNum": 160015,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 166
+      },
+      {
+        "path": "embedded",
+        "steps": 171
+      },
+      {
+        "path": "orm",
+        "steps": 1163
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1283
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1164
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1155
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1164
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1157
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1163
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1075,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "externalInputSha256": "85d7c834384279551169c6b1fab561991bea4c7c27370aaf4937b51742388d17",
+    "generatedSqlSha256": "a5e07d3436fecfd85929c3a6260592d9d8ab87c09b1d1a42a5545fa4d6625bee",
+    "purchaseOriginVerification": {
+      "external": {
+        "initial": "v1",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "embedded": {
+        "initial": "v1",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_upgrade": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_default_upgrade": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_constraints": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_fk_names": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_checks": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_sequences": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      }
+    },
+    "purchaseCancellationVerification": {
+      "external": {
+        "initial": "v1",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "embedded": {
+        "initial": "v1",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_upgrade": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_default_upgrade": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_constraints": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_fk_names": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_checks": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_sequences": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      }
+    },
+    "fullTableCatalogContract": {
+      "mode": "all nine paths: exact 279 unique public tables and every raw metadata field; no omissions, additions or aliases waived",
+      "count": 279,
+      "fields": [
+        "forceRowSecurity",
+        "key",
+        "kind",
+        "name",
+        "partition",
+        "partitionKey",
+        "persistence",
+        "rowSecurity"
+      ]
+    },
+    "fullConstraintCatalogContract": {
+      "mode": "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance",
+      "count": 668
+    },
+    "cleanupConfirmed": true,
+    "cleanupRecoveries": [],
+    "scope": "Five complete catalog categories plus explicit origin/cancellation protocol checks; not an all-functions/ACL/policies equivalence claim."
+  },
+  "cleanup": {
+    "observedRunsIndependentlyStopped": true,
+    "checkedClusters": [
+      {
+        "cluster": "finance-postgres-a0crTc",
+        "port": 61156,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      },
+      {
+        "cluster": "finance-postgres-aBmPpj",
+        "port": 61685,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      },
+      {
+        "cluster": "finance-postgres-t3mG2O",
+        "port": 54855,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      },
+      {
+        "cluster": "finance-postgres-uFllyw",
+        "port": 55295,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      },
+      {
+        "cluster": "finance-postgres-Xq1u2W",
+        "port": 51597,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      },
+      {
+        "cluster": "finance-postgres-6DoGwt",
+        "port": 50493,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      },
+      {
+        "cluster": "finance-postgres-gNBPSP",
+        "port": 61425,
+        "pgCtlStatus": 3,
+        "pidFile": false,
+        "bootstrapPasswordFile": false,
+        "listeners": 0,
+        "ownedProcesses": 0,
+        "fixtureDatabaseAndRoleCount": 0
+      }
+    ],
+    "matchingTestOrTypecheckProcesses": 0,
+    "stoppedDiagnosticDirectoriesRetained": true,
+    "unobservedRunFixtureCleanupConfirmed": false,
+    "note": "Seven observed run clusters reported zero fixture DB/roles and were independently stopped. The separate 2026-09-22 unobserved run is stopped but its fixture DB/role count remains unknown; no claim of zero for that run."
+  },
+  "checklist": {
+    "complete": 240,
+    "open": 164,
+    "total": 404
+  },
+  "remaining": [
+    "Complete activity/assisted/guest creation and cancellation coverage with exact application/admin runtime authority profiles",
+    "Actual business LOGIN inventory and coordinated production protocol/role/code rollout remain separate acceptance gates",
+    "Cumulative quota reservation/release remains disabled; restoration timing still requires its separate owner decision",
+    "Real provider and production end-to-end acceptance; local synthetic payments are not provider evidence"
+  ],
+  "selectedSourceHashes": [
+    {
+      "path": "src/services/MigrationService.ts",
+      "sha256": "8f097e0976c7556be5fa6525d756ecc58de243dd4626260535b4a4f48e7ff1d7"
+    },
+    {
+      "path": "src/models/schema/index.ts",
+      "sha256": "c1ff4d1223977d9f1be21904fcf9be5aff9626776a7dc0bc96acb11d0dbf9a85"
+    },
+    {
+      "path": "src/models/schema/purchase_cancellation_evidence.ts",
+      "sha256": "6de901cc6c96e33d29b82e9e298a6e8a340e53affab9d265112cacd33f928c3e"
+    },
+    {
+      "path": "src/migrations/purchaseCancellationEvidence.ts",
+      "sha256": "4cba187db6bce4b08174d184434d7f04ec0419d9b468ebe02714d3edf309a00d"
+    },
+    {
+      "path": "src/migrations/purchaseCancellationEvidenceInstallation.ts",
+      "sha256": "b6b26eda0f99585e90e9abd3fa6f9654970344db5848e2f30791b952da8e9bbe"
+    },
+    {
+      "path": "src/migrations/purchaseCancellationEvidenceCatalog.ts",
+      "sha256": "7f75796decf3e48014482c1774a0ed326c3e4f94159b72326c6ac63157f8ec83"
+    },
+    {
+      "path": "src/migrations/runPurchaseCancellationEvidence.ts",
+      "sha256": "66c00970cedef246d89c2791716b346bd2ab323fd56c593dfed6fd99545ce049"
+    },
+    {
+      "path": "migrations/0164_purchase_cancellation_evidence.sql",
+      "sha256": "9265a76348d765c421be6b206ffcda61784533b20d2fbba8b44852dc5a9f3b67"
+    },
+    {
+      "path": "scripts/orm-ddl-audit.ts",
+      "sha256": "039630fe52877f9da77c0867543b3032ec09f1c7620002d6e947725542f56e44"
+    },
+    {
+      "path": "scripts/data-migration/table-catalog-contracts.ts",
+      "sha256": "7324e6dc3d125a0d6d4947a3743a3f48d3811cbf1e548d88caa2a582dc23f978"
+    },
+    {
+      "path": "scripts/run-local-finance-postgres.mjs",
+      "sha256": "b2f317ce2451ad07c4b08ffb84df7a5b9f0b388b2c41b9b66f28081a0e66ddc3"
+    },
+    {
+      "path": "test/helpers/refundRuntimeFixture.ts",
+      "sha256": "22f84f8bdd279bade78e6a6897df94d42493f7ff58e96ffcd7f86583a30c29d1"
+    },
+    {
+      "path": "test/purchase-cancellation-installation.test.ts",
+      "sha256": "a480e262bfdfc4d5c3c68a6112f3486d41e24301fff08ea04e1e7458ac9b2c82"
+    },
+    {
+      "path": "test/purchase-cancellation-evidence-postgres.test.ts",
+      "sha256": "899489ce6ba7fce649cacbe1df755ae515b2b6b5c34c8eb4775737f788cf6c1c"
+    },
+    {
+      "path": "test/purchase-origin-installation.test.ts",
+      "sha256": "8daacf72f205cc466cfdc245992f4cb7502d48af2bd52591b5788641de0ec780"
+    },
+    {
+      "path": "test/kefu-sequence-registration.test.ts",
+      "sha256": "5506f9bc8124ddccc10c64a236d4020c6a6359ad47c2805b6ca8bd2d10853ba8"
+    },
+    {
+      "path": "audit/data-migration-scope.json",
+      "sha256": "4e3e3e0c85ca8cf87a6501ea5978a97b96f034b3112ab0b9614336878b49acab"
+    }
+  ],
+  "hashScope": "Selected raw file bytes, not a complete transitive input closure; separate whole external-SQL and generated-ORM digests independently rechecked.",
+  "finalInputDigests": {
+    "externalSteps": 166,
+    "lastExternal": "0164_purchase_cancellation_evidence.sql",
+    "modelTables": 279,
+    "externalInputSha256": "85d7c834384279551169c6b1fab561991bea4c7c27370aaf4937b51742388d17",
+    "generatedSqlSha256": "a5e07d3436fecfd85929c3a6260592d9d8ab87c09b1d1a42a5545fa4d6625bee"
+  },
+  "staticEntryPointSurvey": {
+    "scope": "Read-only call-site survey, not an exhaustive runtime identity/production authorization acceptance.",
+    "commonCancellation": "src/services/order/StoreOrderCreateService.ts:421",
+    "observedEntryPoints": [
+      {
+        "entry": "customer cancel",
+        "route": "/api/order/cancel",
+        "controller": "src/controllers/api/v1/OrderController.ts:810",
+        "service": "StoreOrderCreateService.cancel"
+      },
+      {
+        "entry": "customer unpaid delete",
+        "route": "/api/order/del",
+        "controller": "src/controllers/api/v1/OrderController.ts:825",
+        "service": "StoreOrderCreateService.del -> cancelStoreOrder"
+      },
+      {
+        "entry": "integral order delete wrapper",
+        "route": "/api/store_integral/order/del",
+        "controller": "src/controllers/api/v1/OrderController.ts:718",
+        "service": "src/services/activity/StoreIntegralOrderService.ts:86 -> StoreOrderCreateService.del"
+      },
+      {
+        "entry": "scheduled unpaid close",
+        "service": "src/services/order/ScheduledMaintenanceService.ts:245 -> StoreOrderCreateService.cancel"
+      }
+    ],
+    "adminAssistedCreation": "src/services/admin/AdminAssistedOrderService.ts:822 -> createOrder -> requirePurchaseOrigin:true",
+    "connectionBoundaries": [
+      "src/lib/di.ts:124 application Hyperdrive",
+      "src/lib/di.ts:223 independent admin Hyperdrive"
+    ],
+    "productionLoginsInspected": false
+  },
+  "finalChecks": {
+    "selectedSourceHashesVerified": 17,
+    "externalAndGeneratedDigestsReverified": true,
+    "whitespaceCheck": true,
+    "headUnchanged": true,
+    "indexEntries": 0,
+    "checklist": {
+      "complete": 240,
+      "open": 164,
+      "total": 404
+    }
+  }
+}

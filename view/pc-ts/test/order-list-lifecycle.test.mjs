@@ -34,8 +34,8 @@ export function registerOrderListTests(getContext){
   it('shared deletion admission matches unpaid, cancelled, completed and refunded physical orders only',async()=>{
     const {canDeleteOrder,orderDeleteConfirmation}=await getContext().server.ssrLoadModule('/@fs/'+new URL('../../common/orderDeletion.ts',import.meta.url).pathname.replace(/^\/(?:([A-Z]:))/i,'$1'));
     const base={id:1,uid:11,order_id:'local_list_1',paid:0,status:0,pid:0,supplier_allocation_status:0,refund_status:0};
-    for(const patch of [{},{status:-2},{paid:1,status:3},{paid:1,status:0,refund_status:2,pid:99},{paid:1,status:2,refund_status:2}])assert.equal(canDeleteOrder({...base,...patch}),true,JSON.stringify(patch));
-    for(const patch of [{paid:1,status:0},{paid:1,status:1},{paid:1,status:2},{paid:1,status:4},{paid:1,status:5},{refund_status:1},{refund_status:4},{pid:-1},{pid:undefined},{supplier_allocation_status:1},{supplier_allocation_status:undefined},{paid:'1'},{uid:0},{id:0},{order_id:'x'.repeat(51)},{order_id:'../escape'},{is_del:1},{is_system_del:1},{paid:1,refund_status:2,status:NaN}])assert.equal(canDeleteOrder({...base,...patch}),false,JSON.stringify(patch));
+    for(const patch of [{},{supplier_allocation_status:1},{status:-2},{paid:1,status:3},{paid:1,status:0,refund_status:2,pid:99},{paid:1,status:2,refund_status:2}])assert.equal(canDeleteOrder({...base,...patch}),true,JSON.stringify(patch));
+    for(const patch of [{paid:1,status:0},{paid:1,status:1},{paid:1,status:2},{paid:1,status:4},{paid:1,status:5},{refund_status:1},{refund_status:4},{pid:-1},{pid:undefined},{pid:99},{supplier_allocation_status:2},{supplier_allocation_status:1,pid:99},{supplier_allocation_status:1,status:-2},{supplier_allocation_status:1,paid:1,status:3},{supplier_allocation_status:undefined},{paid:'1'},{uid:0},{id:0},{order_id:'x'.repeat(51)},{order_id:'../escape'},{is_del:1},{is_system_del:1},{paid:1,refund_status:2,status:NaN}])assert.equal(canDeleteOrder({...base,...patch}),false,JSON.stringify(patch));
     assert.match(orderDeleteConfirmation(base),/取消并删除未付款订单 local_list_1/);
     assert.match(orderDeleteConfirmation({...base,paid:1,status:3}),/不会发起退款.*售后退款记录仍会保留/);
   });
@@ -54,6 +54,17 @@ export function registerOrderListTests(getContext){
   it('PC delete succeeds once and reloads page one without skipping shifted offset rows',async()=>{
     let removed=false;const f=await mount(c=>{if(c.method==='post'){removed=true;return{status:200,data:null};}const all=Array.from({length:22},(_,i)=>row(i+1)).filter(r=>!removed||r.id!==1);return{status:200,data:all.slice((c.params.page-1)*20,c.params.page*20)};});
     try{await f.view.loadMore();assert.equal(f.view.orders.value.length,22);await f.view.remove(f.view.orders.value[0]);assert.equal(f.view.list.page,1);assert.equal(f.view.orders.value.length,20);assert.equal(f.view.orders.value[0].id,2);await f.view.loadMore();assert.deepEqual(f.view.orders.value.map(r=>r.id),Array.from({length:21},(_,i)=>i+2));assert.equal(f.calls.filter(c=>c.method==='post').length,1);assert.deepEqual(f.dialog.messages,['订单已删除']);}finally{f.close();}
+  });
+  it('PC unpaid mixed-owner deletion confirms compensation, dispatches once and rereads the list',async()=>{
+    let removed=false,confirmation='';const f=await mount(c=>{
+      if(c.method==='post'){removed=true;return{status:200,data:null};}
+      return{status:200,data:removed?[]:[row(1,{supplierAllocationStatus:1})]};
+    });f.dialog.confirm=async content=>{confirmation=content;};
+    try{const order=f.view.orders.value[0];await f.view.remove(order);await f.view.remove(order);
+      assert.match(confirmation,/取消并删除未付款订单 local_list_1.*释放库存、优惠券和抵扣积分/);
+      assert.equal(f.calls.filter(c=>c.method==='post').length,1);assert.equal(f.view.orders.value.length,0);
+      assert.deepEqual(f.dialog.messages,['订单已删除']);
+    }finally{f.close();}
   });
   for(const ending of ['filter','identity','unmount'])it(`PC delete confirmation cannot follow ${ending}`,async()=>{
     const wait=gate(),f=await mount();f.dialog.confirm=()=>wait.promise;
@@ -81,7 +92,7 @@ export function registerOrderListTests(getContext){
     try{const old=f.view.orders.value[0];await f.view.remove({...old});assert.equal(f.view.deleting.value,false);const pending=f.view.remove(old);old.paid=1;old.status=3;wait.resolve();await pending;assert.equal(f.calls.filter(c=>c.method==='post').length,0);assert.match(f.view.actionError.value,/状态已变化/);}finally{wait.resolve();f.close();}
   });
   it('PC deletion does not offer a mutation for review, partial fulfillment, audit roots or active refunds',async()=>{
-    const f=await mount(()=>({status:200,data:[row(1,{paid:1,status:2}),row(2,{paid:1,status:4}),row(3,{paid:1,status:5}),row(4,{pid:-1}),row(5,{supplierAllocationStatus:1}),row(6,{paid:1,status:3,refundStatus:1})]}));let confirmations=0;f.dialog.confirm=async()=>{confirmations++;};
+    const f=await mount(()=>({status:200,data:[row(1,{paid:1,status:2}),row(2,{paid:1,status:4}),row(3,{paid:1,status:5}),row(4,{pid:-1}),row(5,{paid:1,supplierAllocationStatus:1}),row(6,{paid:1,status:3,refundStatus:1})]}));let confirmations=0;f.dialog.confirm=async()=>{confirmations++;};
     try{for(const order of f.view.orders.value)await f.view.remove(order);assert.equal(confirmations,0);assert.equal(f.calls.length,1);}finally{f.close();}
   });
   it('PC order list loads orders beyond the first 20 without losing the first page',async()=>{

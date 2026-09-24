@@ -48,8 +48,8 @@ describe("order cart and group-buy migration parity", () => {
   });
 
   it("widens the PHP refund-reference field in both external and embedded migrations", () => {
-    const migration = readFileSync("migrations/0079_pink_refund_reference.sql", "utf8").trim();
-    const service = readFileSync("src/services/MigrationService.ts", "utf8");
+    const migration = readFileSync("migrations/0079_pink_refund_reference.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const service = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const embedded = service.match(
       /private migration_0086\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1].trim();

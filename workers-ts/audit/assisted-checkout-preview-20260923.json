@@ -1,0 +1,102 @@
+{
+  "date": "2026-09-23",
+  "status": "local-assisted-checkout-preview-verified-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "schemaOrPrivilegePlanChanged": false,
+    "platformBindingsOrDependenciesChanged": false,
+    "frontendPagesChanged": false,
+    "cumulativeQuotaEnabled": false,
+    "businessChange": "Complete assisted confirm/computed response and one read-only SQL snapshot; internal preview-only first-order config preload"
+  },
+  "contract": {
+    "responseVersion": 1,
+    "selection": ["adminId", "uid", "touristUid", "cartIds", "isNew", "shippingType", "storeId", "addressSource", "addressRequired", "useIntegral", "couponId", "payType", "systemFormId"],
+    "computedCompatibility": "Preserves data.result flat amounts and quoteToken; adds full confirmation, priceGroup and original orderKey",
+    "sqlSnapshot": "Application LOGIN; REPEATABLE READ READ ONLY; local statement/idle timeout caps of 5000 ms preserving stricter settings",
+    "remoteBoundary": "Existing first-order KV authority and payment readiness read before transaction; checkout snapshot/immutable receipt writes after commit",
+    "firstOrderBoundary": "Preloaded policy is internal preview input, not an HTTP field; creation re-reads existing authority. No claim of atomic KV/SQL policy snapshot",
+    "manualAddress": "Validated structured fields returned, no address-book write; saved address ID remains owner-scoped",
+    "paymentTypes": ["weixin", "alipay", "cash"],
+    "pickup": "Explicit store must currently be enabled; creation still revalidates"
+  },
+  "runs": [
+    {
+      "session": 93892,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-LadLKa",
+      "port": 56205,
+      "startLocal": "2026-09-23 12:15:52 Asia/Singapore",
+      "durationSeconds": 298.94,
+      "files": ["test/assisted-purchase-runtime-postgres.test.ts", "test/presale-checkout-postgres.test.ts"],
+      "passed": 95,
+      "failed": 2,
+      "presalePassed": 60,
+      "failureExplanation": [
+        "Concurrency sample doubled price while halving quantity; not-equal-total assertion was invalid. Changed sample price increment to avoid cancellation.",
+        "KV probe counted a concurrent autocommit configuration SELECT as a held business transaction. Final probe rejects KV inside actual pricing core and checks idle-in-transaction sessions."
+      ],
+      "finalApplicationCodeUnchangedAfterRun": true,
+      "fixtureRemainder": 0
+    },
+    {
+      "session": 5730,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-hNCj9N",
+      "port": 55211,
+      "startLocal": "2026-09-23 12:21:54 Asia/Singapore",
+      "durationSeconds": 297.40,
+      "files": {
+        "test/assisted-purchase-runtime-postgres.test.ts": 37,
+        "test/checkout-confirmation.test.ts": 27,
+        "test/order-delivery-address.test.ts": 58
+      },
+      "passed": 122,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureRemainder": 0
+    },
+    {
+      "file": "test/admin-assisted-order-migration.test.ts",
+      "startLocal": "2026-09-23 12:18:10 Asia/Singapore",
+      "durationSeconds": 6.46,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": { "uniquePassed": 186, "newCases": 9, "skipped": 0, "retriesCountedTwice": false },
+  "types": {
+    "finalSession": 4673,
+    "unit": "passed",
+    "runtime": "passed",
+    "initialTestDeclarationFailure": "Explicit this annotation and narrow SystemConfigEnv KV interface needed for spy overloads; corrected without any/double-cast",
+    "workersTypes": "Installed 5.20260828.1; latest npm metadata request blocked by EACCES, no dependency change"
+  },
+  "finalSourceSha256": {
+    "src/services/admin/AdminAssistedOrderService.ts": "4213297f98b155a60d931466e11b07d57cbc9f96852badf2da12913b6bbc25ab",
+    "src/services/order/StoreOrderCreateService.ts": "4ebc01dbce2a5404c01b2ed8f6c3e5f0466657c6216ff2ef359025ccab3b9308",
+    "test/assisted-purchase-runtime-postgres.test.ts": "da440a45927ffd32cd985e0663361171b5e5e95cdd6c52696f10fc13138e350e",
+    "test/presale-checkout-postgres.test.ts": "8f5e6ad0be5241e0c8f8809bf61602436d635b82088c413f630af5b86b78afec",
+    "test/checkout-confirmation.test.ts": "564e4ab4f6f9d87dd470cbc52a2028dc471abe076096cf6d180bf2d657f26222",
+    "test/order-delivery-address.test.ts": "f97edcca7347975f0a5cbfac8da5b4809fde5080c150d03788d37fe7b190fb87"
+  },
+  "independentCleanup": {
+    "bothPgCtlExitCodes": [3, 3],
+    "bothPidFilesAbsent": true,
+    "bothBootstrapPasswordFilesAbsent": true,
+    "bothListenersAbsent": true,
+    "finalPostgresProcessCount": 0,
+    "stoppedSyntheticDiagnosticsRetained": true
+  },
+  "limitations": [
+    "Node HTTP controllers, local JWTs and real SQL LOGINs; KV/Sequence/Hyperdrive transport are synthetic, Redis revocation disabled",
+    "No workerd/Linux/CI, browser, real login, provider or production acceptance this turn",
+    "Confirm/cashier UI, actual custom forms, complete coupon rules/pagination and same-snapshot integration remain open",
+    "Frozen request and original-key recovery after unknown create results remain frontend work",
+    "No new cumulative quota policy inferred from the confirmed presale points decision"
+  ],
+  "checklist": { "complete": 240, "open": 164, "total": 404, "FE-003G": "open", "registeredUniappPages": 69 }
+}

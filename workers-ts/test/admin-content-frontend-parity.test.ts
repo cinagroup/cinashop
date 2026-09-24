@@ -6,11 +6,13 @@ interface ContentRouteAudit {
   summary: Record<"legacyRoutes" | Status, number>;
   routes: Array<{
     legacyPath: string;
+    legacyComponent: string;
     status: Status;
     newScreens: string[];
     newApiContracts: string[];
     covered: string;
     remaining: string;
+    evidence?: string[];
   }>;
 }
 
@@ -37,8 +39,8 @@ describe("legacy Admin content screen parity", () => {
     ]);
     expect(audit.summary).toEqual({
       legacyRoutes: 13,
-      candidate: 9,
-      partial: 2,
+      candidate: 8,
+      partial: 3,
       missing: 2,
       retired: 0,
     });
@@ -56,6 +58,18 @@ describe("legacy Admin content screen parity", () => {
         expect(row.newApiContracts.length).toBeGreaterThan(0);
       }
     }
+  });
+
+  it("records the missing community material and product pickers as partial parity", () => {
+    const editor = audit.routes.find((row) => row.legacyPath === "/admin/content/community/addContent/:id?");
+    const page = readFileSync("../view/admin-ts/src/pages/community/CommunityOperations.vue", "utf8");
+    expect(editor?.status).toBe("partial");
+    expect(editor?.legacyComponent).toBe("pages/content/community/addContent.vue");
+    expect(editor?.remaining).toMatch(/material upload\/selection dialog.*searchable product selection dialog/u);
+    expect(editor?.evidence).toContain("cinashop-php/view/admin/src/pages/content/community/addContent.vue:250");
+    expect(editor?.evidence).toContain("cinashop-php/view/admin/src/pages/content/community/addContent.vue:268");
+    expect(page).toContain('label="商品 ID（逗号分隔）"');
+    expect(page).toContain('label="图集地址（每行一个）"');
   });
 
   it("keeps the consolidated CMS article replacement contract complete and explicit", () => {

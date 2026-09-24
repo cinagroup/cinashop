@@ -1,0 +1,1586 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "Only the 48 surface=page routes under /admin/marketing in the authoritative 274-route inventory; four commonForm auxiliary routes are excluded.",
+    "reviewBasis": "Compare the legacy PHP component and API observations pinned to marketing.js SHA-256 with the target Admin route/page, Worker adminapi contract, and permission map. Legacy paths and meta.auth are recorded static review evidence; generation requires only this repository. An API without an Admin operation surface does not establish screen parity. Candidate means local code-level workflow coverage only; partial records a material subset; missing records no viable target Admin screen. Do not infer domain coverage from /activity or a shared title.",
+    "validationBoundary": "Code-only semantic review. No production data, provider, real-role browser E2E, deployment, or publication is claimed. FE-001D and FE-001G/H remain open."
+  },
+  "summary": {
+    "legacyRoutes": 48,
+    "reviewed": 48,
+    "candidate": 3,
+    "partial": 22,
+    "missing": 23,
+    "retired": 0,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/marketing/home",
+        "title": "营销中心",
+        "component": "@/pages/marketing/home/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/home/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:23",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-marketing-home']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/coupon",
+        "/activity",
+        "/marketing/lottery",
+        "/content/wechat-qrcode"
+      ],
+      "targetApis": [],
+      "covered": [
+        "新 Admin 菜单可进入优惠券、活动、抽奖和公众号渠道码。"
+      ],
+      "remaining": [
+        "旧营销宫格的促销、积分分类/签到、充值及活动边框/背景等目的地仍缺；没有同等的营销总览。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/home/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/coupon/CouponList.vue",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "view/admin-ts/src/pages/activity/LotteryList.vue",
+        "view/admin-ts/src/pages/content/WechatQrcode.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "view/admin-ts/src/layouts/AdminLayout.vue"
+      ],
+      "targetPermissions": [
+        "coupon.view / coupon.manage",
+        "activity.view / activity.manage",
+        "lottery.view / lottery.manage",
+        "wechat_qrcode.view / wechat_qrcode.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_combination/index",
+        "title": "拼团商品",
+        "component": "@/pages/marketing/storeCombination/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCombination/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:32",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_combination']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/combination",
+        "POST /adminapi/activity/save",
+        "POST /adminapi/activity/status",
+        "DELETE /adminapi/activity/del/:type/:id"
+      ],
+      "covered": [
+        "拼团 tab 可列出活动并进入新增、编辑、启停和删除。"
+      ],
+      "remaining": [
+        "新目录无分页/旧筛选，BaseDao 因未收到 page 而实际无界查询；详情、复制和专门统计仍缺。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCombination/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/dao/BaseDao.ts",
+        "cinashop-php/app/controller/admin/v1/marketing/combination/StoreCombination.php"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_combination/combina_list",
+        "title": "拼团列表",
+        "component": "@/pages/marketing/storeCombination/combinaList",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCombination/combinaList.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:41",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_combination-combina_list']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/pink/:combinationId"
+      ],
+      "covered": [
+        "拼团 tab 的团列表弹窗能读取指定活动的团记录。"
+      ],
+      "remaining": [
+        "旧独立团列表的查询、订单关联和完整状态操作仍缺。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCombination/combinaList.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_combination/create/:id?/:copy?",
+        "title": "添加拼团",
+        "component": "@/pages/marketing/storeCombination/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCombination/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:50",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_combination-create']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "POST /adminapi/activity/save"
+      ],
+      "covered": [
+        "聚合表单可保存拼团商品、价格、库存、人数和状态等基础字段。"
+      ],
+      "remaining": [
+        "旧活动起止时间、SKU/限购/分享配置和 copy 参数未恢复；完整前端表单提交仍需并发库存/额度边界验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCombination/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_combination/statistics/:id?",
+        "title": "拼团统计",
+        "component": "@/pages/marketing/storeCombination/statistics",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCombination/statistics.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:59",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "not declared in route"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/pink/:combinationId"
+      ],
+      "covered": [
+        "可在团列表弹窗读取一部分参与团记录。"
+      ],
+      "remaining": [
+        "旧 statistics/head、list、order 三组统计、订单维度和图表没有等价页面/API。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCombination/statistics.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_coupon/index",
+        "title": "优惠券模板",
+        "component": "@/pages/marketing/storeCoupon/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCoupon/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:67",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_coupon']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧页管理 store_coupon 模板并可发券；新 /coupon 读写 store_coupon_issue 发行实例，不管理模板实体。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCoupon/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/coupon/CouponList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_coupon_issue/index",
+        "title": "优惠券列表",
+        "component": "@/pages/marketing/storeCouponIssue/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCouponIssue/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:76",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_coupon_issue']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/coupon"
+      ],
+      "targetApis": [
+        "GET /adminapi/coupon/list",
+        "POST /adminapi/coupon/save",
+        "POST /adminapi/coupon/status/:id",
+        "DELETE /adminapi/coupon/del/:id"
+      ],
+      "covered": [
+        "新页可列出已发行优惠券并做基础编辑、停发和删除。"
+      ],
+      "remaining": [
+        "旧领取方式、数量、范围、复制和领取日志入口仍缺；新列表未过滤 is_del，软删后仍显示历史发行券。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCouponIssue/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/coupon/CouponList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "cinashop-php/app/services/activity/coupon/StoreCouponIssueServices.php"
+      ],
+      "targetPermissions": [
+        "coupon.view / coupon.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_coupon_issue/create/:id?",
+        "title": "添加优惠券",
+        "component": "@/pages/marketing/storeCouponIssue/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCouponIssue/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:85",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-marketing-store_coupon_issue-create']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/coupon"
+      ],
+      "targetApis": [
+        "POST /adminapi/coupon/save"
+      ],
+      "covered": [
+        "新表单可编辑发行券名称、面额、门槛和有效天数。"
+      ],
+      "remaining": [
+        "旧普通/会员券、手领/后台发、商品/品类/品牌范围、数量和使用期字段未在 Admin 表单暴露；Worker 接受部分字段不等于页面覆盖。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCouponIssue/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/coupon/CouponList.vue"
+      ],
+      "targetPermissions": [
+        "coupon.view / coupon.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/list",
+        "title": "限时折扣",
+        "component": "@/pages/marketing/discount/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/discount/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:94",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-list']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧促销总目录含独立规则列表和状态动作，新 Admin 没有促销规则页面或对应操作合同。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/discount/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/give",
+        "title": "满送活动",
+        "component": "@/pages/marketing/fullDelivery/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/fullDelivery/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:103",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-give']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧满送列表管理赠品/赠券规则，新 Admin 没有该规则目录。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/fullDelivery/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/add_give/:id?",
+        "title": "添加满送活动",
+        "component": "@/pages/marketing/addDelivery/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/addDelivery/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:112",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-add_give']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧满送编辑页的门槛、赠品/赠券和适用范围没有 Admin 写入表单。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/addDelivery/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/full_discount",
+        "title": "满减满折",
+        "component": "@/pages/marketing/fullDiscount/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/fullDiscount/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:121",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-full_discount']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧满减规则目录和状态管理没有 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/fullDiscount/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/add_discount/:id?",
+        "title": "添加满减满折",
+        "component": "@/pages/marketing/addFullDiscount/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/addFullDiscount/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:130",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-add_discount']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧满减规则创建/编辑的阶梯门槛和范围没有 Admin 写入表单。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/addFullDiscount/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/add/:id?",
+        "title": "添加限时折扣",
+        "component": "@/pages/marketing/addDiscount/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/addDiscount/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:139",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-add']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧单品折扣编辑页的商品/会员/标签范围没有 Admin 写入表单。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/addDiscount/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/pieces_discount",
+        "title": "第N件N折",
+        "component": "@/pages/marketing/piecesDiscount/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/piecesDiscount/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:148",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-pieces_discount']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧多件折扣目录没有 Admin 页面或状态操作面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/piecesDiscount/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/discount/add_pieces/:id?",
+        "title": "添加第N件N折",
+        "component": "@/pages/marketing/addPiecesDiscount/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/addPiecesDiscount/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:157",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-discount-add_pieces']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧多件折扣门槛、折扣和商品范围编辑流程没有 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/addPiecesDiscount/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_coupon_user/index",
+        "title": "用户领取记录",
+        "component": "@/pages/marketing/storeCouponUser/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeCouponUser/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:166",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_coupon_user']"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/coupon-records"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/coupon-records/list"
+      ],
+      "covered": [
+        "独立只读领取记录页按状态、领取人和优惠券名筛选，按 ID 倒序每页 15 条展示旧页十项数据；GET 接口只读取 store_coupon_user 领取实例。"
+      ],
+      "remaining": [
+        "仅完成本地代码映射；真实历史领取记录、受限角色及发布后流程仍待验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeCouponUser/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/CouponRecords.vue",
+        "cinashop-php/app/services/activity/coupon/StoreCouponUserServices.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponUserDao.php",
+        "workers-ts/src/services/admin/AdminCouponRecordService.ts",
+        "workers-ts/scripts/data-migration/manifest.ts",
+        "workers-ts/test/admin-coupon-records.test.ts"
+      ],
+      "targetPermissions": [
+        "coupon_record.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/coupon/system_config/:type?/:tab_id?",
+        "title": "优惠券配置",
+        "component": "@/pages/setting/setSystem/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:175",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-order-storeOrder-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧优惠券动态配置表单没有逐键核验的新专页；不能借 /coupon 的发行列表推定配置已覆盖。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_bargain/index",
+        "title": "砍价商品",
+        "component": "@/pages/marketing/storeBargain/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeBargain/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:184",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_bargain']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/bargain",
+        "POST /adminapi/activity/save",
+        "POST /adminapi/activity/status",
+        "DELETE /adminapi/activity/del/:type/:id"
+      ],
+      "covered": [
+        "砍价 tab 可列活动、编辑、启停和删除。"
+      ],
+      "remaining": [
+        "新目录固定前100条且无分页/旧筛选，超过100条会静默漏项；活动配置和参与统计仍需专门对照。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeBargain/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/dao/BaseDao.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_bargain/bargain_list",
+        "title": "砍价列表",
+        "component": "@/pages/marketing/storeBargain/bargainList",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeBargain/bargainList.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:205",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_bargain-bargain_list']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/bargain_users/:bargainId"
+      ],
+      "covered": [
+        "砍价明细弹窗可看指定活动的参与记录。"
+      ],
+      "remaining": [
+        "旧参与者目录的查询、详情及订单动作未完整迁入。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeBargain/bargainList.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_bargain/create/:id?/:copy?",
+        "title": "添加砍价",
+        "component": "@/pages/marketing/storeBargain/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeBargain/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:214",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_bargain-create']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/bargain/sku-options",
+        "POST /adminapi/activity/save"
+      ],
+      "covered": [
+        "新表单使用权威 SKU 选择并可编辑价格、库存、人数、内容和配送。"
+      ],
+      "remaining": [
+        "旧 copy 参数及全部活动素材/规则字段尚无逐字段等价证据。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeBargain/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_bargain/statistics/:id?",
+        "title": "砍价统计",
+        "component": "@/pages/marketing/storeBargain/statistics",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeBargain/statistics.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:223",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "not declared in route"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/bargain_users/:bargainId"
+      ],
+      "covered": [
+        "可由砍价明细弹窗读取部分参与者信息。"
+      ],
+      "remaining": [
+        "旧 statistics/head、list、order 的汇总、趋势和订单报表未恢复。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeBargain/statistics.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_seckill/index",
+        "title": "秒杀商品",
+        "component": "@/pages/marketing/storeSeckill/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeSeckill/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:231",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_seckill']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/seckill",
+        "POST /adminapi/activity/save",
+        "POST /adminapi/activity/status",
+        "DELETE /adminapi/activity/del/:type/:id"
+      ],
+      "covered": [
+        "秒杀 tab 可列活动并做基础编辑、状态和删除。"
+      ],
+      "remaining": [
+        "新目录无分页/旧筛选，BaseDao 因未收到 page 而实际无界查询；旧时段关系和统计仍缺，新建未选择时段时默认 timeId='1'。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeSeckill/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/dao/BaseDao.ts",
+        "cinashop-php/app/controller/admin/v1/marketing/seckill/StoreSeckill.php"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_seckill/list",
+        "title": "秒杀列表",
+        "component": "@/pages/marketing/storeSeckill/list",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeSeckill/list.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:240",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-seckill_list']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/activity/seckill_times"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧屏管理含日期、场次、参与商品数、状态与复制的秒杀活动；新时段只读接口及商品 tab 没有这个独立活动目录。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeSeckill/list.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_seckill_data/index",
+        "title": "秒杀配置",
+        "component": "@/pages/marketing/storeSeckill/config",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeSeckill/config.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:249",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_seckill-data']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧 seckill_data 页管理秒杀幻灯片、描述与启停；新 seckill_times 仅是时段读取，不能代替这块内容配置。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeSeckill/config.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_seckill/create/:id?/:copy?",
+        "title": "添加秒杀",
+        "component": "@/pages/marketing/storeSeckill/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeSeckill/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:258",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_seckill-create']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "POST /adminapi/activity/save"
+      ],
+      "covered": [
+        "聚合表单可保存秒杀商品、价格、库存和限购等基础值。"
+      ],
+      "remaining": [
+        "旧 SKU、活动时间、场次选择/复制及图文配置未恢复；新建未传 timeId 时默认 '1'，完整表单提交仍需并发库存/额度验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeSeckill/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_seckill/statistics/:id?",
+        "title": "秒杀统计",
+        "component": "@/pages/marketing/storeSeckill/statistics",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeSeckill/statistics.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:267",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "not declared in route"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧秒杀 head、people、order 统计没有新 Admin 统计页；活动目录和时段只读接口不提供该屏语义。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeSeckill/statistics.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/user_point/index",
+        "title": "积分日志",
+        "component": "@/pages/marketing/userPoint/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/userPoint/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:288",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-user_point']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/marketing/user-point"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/user-point/logs",
+        "GET /adminapi/marketing/user-point/statistics"
+      ],
+      "covered": [
+        "新页按用户 ID/标题、时间及可选精确类型读取分页积分流水，展示同条件的四项统计；旧页有用户 ID/标题和时间筛选，但统计卡在初始化时单独加载，不随筛选刷新。"
+      ],
+      "remaining": [
+        "旧页由 export-userPoint 授权的积分日志导出按钮及逐页 Excel 导出流程未恢复；真实历史流水、受限角色和发布后行为仍待验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/userPoint/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/IntegralLog.vue",
+        "cinashop-php/app/services/user/UserBillServices.php",
+        "cinashop-php/app/controller/admin/v1/other/export/ExportExcel.php"
+      ],
+      "targetPermissions": [
+        "integral_log.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/integral/signIn",
+        "title": "积分签到",
+        "component": "@/pages/marketing/signIn/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/signIn/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:297",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-integral-sign']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧积分签到视觉和 group_data 配置没有新 Admin 编辑页。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/signIn/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/point_statistic",
+        "title": "积分统计",
+        "component": "@/pages/marketing/pointStatistic/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/pointStatistic/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:306",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-point_statistic-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧积分基本、趋势、渠道与类型四组统计没有新 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/pointStatistic/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/integral/classify",
+        "title": "积分分类",
+        "component": "@/pages/marketing/integralClassify/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/integralClassify/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:315",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-integral-classify']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧积分分类新增、编辑和显隐没有新 Admin 管理页。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/integralClassify/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/balance_recharge",
+        "title": "充值金额",
+        "component": "@/pages/marketing/recharge/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/recharge/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:324",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-balance_recharge']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧充值金额 group_data 列表/编辑没有新 Admin 页面；支付充值能力不代表运营配置页。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/recharge/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/lottery/index",
+        "title": "抽奖列表",
+        "component": "@/pages/marketing/lottery/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/lottery/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:345",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/marketing/lottery"
+      ],
+      "targetApis": [
+        "GET /adminapi/lottery/list",
+        "GET /adminapi/lottery/detail/:id",
+        "POST /adminapi/lottery/add",
+        "PUT /adminapi/lottery/edit/:id",
+        "POST /adminapi/lottery/set_status/:id/:status",
+        "DELETE /adminapi/lottery/del/:id"
+      ],
+      "covered": [
+        "新抽奖页可按名称、参与条件和启停筛选，列表支持编辑、状态和删除。"
+      ],
+      "remaining": [
+        "旧未开始/进行中/已结束筛选未在新列表提供；真实奖品/运营数据仍待核验。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/lottery/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/LotteryList.vue"
+      ],
+      "targetPermissions": [
+        "lottery.view / lottery.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/lottery/create",
+        "title": "创建抽奖",
+        "component": "@/pages/marketing/lottery/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/lottery/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:354",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/marketing/lottery"
+      ],
+      "targetApis": [
+        "GET /adminapi/lottery/factor_info/:factor",
+        "POST /adminapi/lottery/add",
+        "PUT /adminapi/lottery/edit/:id"
+      ],
+      "covered": [
+        "新抽奖弹窗可配置活动与八个奖位并保存或编辑。"
+      ],
+      "remaining": [
+        "旧微信红包和未明确等级奖品不能在新页新建；素材与奖品字段仍需真实数据对照。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/lottery/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/LotteryList.vue"
+      ],
+      "targetPermissions": [
+        "lottery.view / lottery.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/lottery/recording_list",
+        "title": "中奖记录",
+        "component": "@/pages/marketing/lottery/recordingList",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/lottery/recordingList.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:363",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-marketing-lottery-recording_list']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/marketing/lottery"
+      ],
+      "targetApis": [
+        "GET /adminapi/lottery/record/list",
+        "GET /adminapi/lottery/record/list/:id",
+        "POST /adminapi/lottery/record/deliver"
+      ],
+      "covered": [
+        "新页中奖记录抽屉可读记录并处理站内商品发货/备注。"
+      ],
+      "remaining": [
+        "旧活动/奖品/用户/时间筛选和完整翻页未恢复；新抽屉固定读取前100条。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/lottery/recordingList.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/LotteryList.vue"
+      ],
+      "targetPermissions": [
+        "lottery.view / lottery.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_discounts/index",
+        "title": "套餐列表",
+        "component": "@/pages/marketing/storeDiscounts/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeDiscounts/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:372",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "true"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/discounts/list",
+        "GET /adminapi/discounts/info/:id",
+        "POST /adminapi/discounts/save",
+        "PUT /adminapi/discounts/set_status/:id/:status",
+        "DELETE /adminapi/discounts/del/:id"
+      ],
+      "covered": [
+        "优惠套餐 tab 提供类型/状态/名称筛选、分页、详情、启停和删除。"
+      ],
+      "remaining": [
+        "仅完成本地代码映射；真实套餐/SKU、受限角色与发布后流程仍需 FE-001G/H 验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeDiscounts/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "view/admin-ts/src/pages/activity/DiscountPackageManager.vue",
+        "workers-ts/src/services/activity/AdminDiscountPackageService.ts",
+        "MIGRATION_AUDIT.md"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_discounts/create",
+        "title": "创建套餐",
+        "component": "@/pages/marketing/storeDiscounts/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeDiscounts/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:381",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "true"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/discounts/list",
+        "GET /adminapi/discounts/info/:id",
+        "POST /adminapi/discounts/save",
+        "PUT /adminapi/discounts/set_status/:id/:status",
+        "DELETE /adminapi/discounts/del/:id"
+      ],
+      "covered": [
+        "新套餐表单支持固定/任选套餐、商品 SKU、限量、有效期、标签、包邮与退款规则的创建和编辑。"
+      ],
+      "remaining": [
+        "仅完成本地代码映射；真实历史套餐、受限角色和订单闭环仍需 FE-001G/H 验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeDiscounts/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "view/admin-ts/src/pages/activity/DiscountPackageManager.vue",
+        "workers-ts/src/services/activity/AdminDiscountPackageService.ts",
+        "MIGRATION_AUDIT.md"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_integral/index",
+        "title": "积分商品",
+        "component": "@/pages/marketing/storeIntegral/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeIntegral/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:390",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_integral']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/integral",
+        "POST /adminapi/activity/save",
+        "POST /adminapi/activity/status",
+        "DELETE /adminapi/activity/del/:type/:id"
+      ],
+      "covered": [
+        "积分商城 tab 可列积分商品并做基础编辑、启停和删除。"
+      ],
+      "remaining": [
+        "新目录无分页/旧筛选，BaseDao 因未收到 page 而实际无界查询；复制和旧商品字段仍缺。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeIntegral/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/dao/BaseDao.ts",
+        "cinashop-php/app/controller/admin/v1/marketing/integral/StoreIntegral.php"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_integral/create/:id?/:copy?",
+        "title": "添加积分商品",
+        "component": "@/pages/marketing/storeIntegral/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeIntegral/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:399",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_integral-create']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/activity"
+      ],
+      "targetApis": [
+        "POST /adminapi/activity/save"
+      ],
+      "covered": [
+        "聚合表单可保存积分商品基本价格、积分、库存、排序和状态。"
+      ],
+      "remaining": [
+        "旧 SKU 及多字段积分商品编辑与 copy 参数语义未逐项恢复；完整表单提交仍需并发库存/额度边界验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeIntegral/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "activity.view / activity.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/store_integral/add_store_integral",
+        "title": "批量添加积分商品",
+        "component": "@/pages/marketing/storeIntegral/addStoreIntegral",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/storeIntegral/addStoreIntegral.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:408",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-store_integral-create']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧批量添加积分商品页没有 Admin 批量操作入口；单件新增弹窗不等于批量流程。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/storeIntegral/addStoreIntegral.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/activity_frame",
+        "title": "活动边框",
+        "component": "@/pages/marketing/activityFrame",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/activityFrame/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:417",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-marketing-activity_frame']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧活动边框目录/状态管理没有新 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/activityFrame/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/activity_frame/create/:id?",
+        "title": "添加活动边框",
+        "component": "@/pages/marketing/activityFrame/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/activityFrame/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:426",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-activity_frame-create']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧活动边框素材、适用范围和编辑保存没有新 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/activityFrame/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/activity_background",
+        "title": "活动背景",
+        "component": "@/pages/marketing/activityBackground",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/activityBackground/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:435",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-marketing-activity_background']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧活动背景目录/状态管理没有新 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/activityBackground/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/activity_background/create/:id?",
+        "title": "添加活动背景",
+        "component": "@/pages/marketing/activityBackground/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/activityBackground/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:444",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-activity_background-create']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧活动背景素材、适用范围和编辑保存没有新 Admin 页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/activityBackground/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/channel_code",
+        "title": "渠道码",
+        "component": "@/pages/marketing/channelCode/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/channelCode/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:453",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-channel_code']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/wechat-qrcode"
+      ],
+      "targetApis": [
+        "GET /adminapi/wechat_qrcode/list",
+        "GET /adminapi/wechat_qrcode/info/:id",
+        "POST /adminapi/wechat_qrcode/save/:id",
+        "GET /adminapi/wechat_qrcode/statistic/:qid"
+      ],
+      "covered": [
+        "公众号渠道码页可列目录、分类、状态、扫码用户并请求异步生成。"
+      ],
+      "remaining": [
+        "公众号扫码回调尚未启用，真实远端码/历史扫码及角色验收未完成。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/channelCode/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/content/WechatQrcode.vue"
+      ],
+      "targetPermissions": [
+        "wechat_qrcode.view / wechat_qrcode.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/channel_code/create/:id?",
+        "title": "添加渠道码",
+        "component": "@/pages/marketing/channelCode/create",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/channelCode/create.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:463",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-channel_code-create']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/wechat-qrcode"
+      ],
+      "targetApis": [
+        "GET /adminapi/wechat_qrcode/info/:id",
+        "POST /adminapi/wechat_qrcode/save/:id",
+        "POST /adminapi/wechat_qrcode/provision/:id"
+      ],
+      "covered": [
+        "公众号渠道码页提供分类选择及新增/编辑、生成任务入口。"
+      ],
+      "remaining": [
+        "旧表单全部用户标签/回复字段及远端生成结果未逐字段和真实渠道验证。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/channelCode/create.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/content/WechatQrcode.vue"
+      ],
+      "targetPermissions": [
+        "wechat_qrcode.view / wechat_qrcode.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/channel_code/statistic/:id?",
+        "title": "二维码统计",
+        "component": "@/pages/marketing/channelCode/statistic",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/channelCode/statistic.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:472",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['marketing-channel_code-statistic']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/wechat-qrcode"
+      ],
+      "targetApis": [
+        "GET /adminapi/wechat_qrcode/statistic/:qid",
+        "GET /adminapi/wechat_qrcode/user_list/:qid"
+      ],
+      "covered": [
+        "公众号渠道码页有扫码统计和用户抽屉。"
+      ],
+      "remaining": [
+        "真实扫码回调未启用，历史数据、受限角色和远端二维码/扫码结果仍需验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/channelCode/statistic.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/content/WechatQrcode.vue"
+      ],
+      "targetPermissions": [
+        "wechat_qrcode.view / wechat_qrcode.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/marketing/sign_rewards",
+        "title": "签到奖励",
+        "component": "@/pages/marketing/signRewards",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/marketing/signRewards/index.vue",
+        "source": "cinashop-php/view/admin/src/router/modules/marketing.js:493",
+        "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
+        "auth": "['admin-marketing-sign_rewards']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/setting/sign/rewards",
+        "POST /adminapi/setting/sign/save_rewards/:id"
+      ],
+      "covered": [],
+      "remaining": [
+        "Worker 有签到奖励读写合同，但新 Admin 没有签到奖励列表/编辑页面，API-only 不构成整屏覆盖。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/marketing/signRewards/index.vue",
+        "cinashop-php/view/admin/src/router/modules/marketing.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    }
+  ]
+}

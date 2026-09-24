@@ -140,7 +140,7 @@ describe("CORE-001-C active payment reconciliation", () => {
     const reconciliation = readFileSync(
       "src/services/payment/PaymentReconciliationService.ts",
       "utf8",
-    );
+    ).replace(/\r\n/g, "\n");
     const wechat = readFileSync("src/services/wechat/WechatPayService.ts", "utf8");
     const alipay = readFileSync("src/services/payment/AlipayTradeQueryService.ts", "utf8");
     const entry = readFileSync("src/index.ts", "utf8");

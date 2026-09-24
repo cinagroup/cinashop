@@ -2,6 +2,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import type { DbClient } from "@/lib/di";
 import { paymentCallbackEvent, paymentCallbackOutbox, type PaymentCallbackProfile, type PaymentCallbackProvider } from "@/models/schema";
 import { registerPaymentReconciliationTx } from "./PaymentReconciliationRegistry";
+import { lockStoreOrderPaymentBoundary } from "./StoreOrderPaymentBoundary";
 
 const RETENTION_SECONDS = 400 * 24 * 60 * 60;
 const PROVIDER_EVENT_ID = /^[A-Za-z0-9._:-]{1,128}$/;
@@ -93,6 +94,10 @@ export async function persistVerifiedPaymentCallbackTx(tx: DbClient, callback: V
   const replayKey = crypto.randomUUID();
   const retainUntil = now + RETENTION_SECONDS;
 
+  // The verified callback is not yet durable. For store-order numbers, take
+  // the same boundary as assisted repricing/cancellation before transaction
+  // keys or event writes. The reserved offline prefix keeps its own protocol.
+  await lockStoreOrderPaymentBoundary(tx, callback.orderNo);
   // Serialize evidence for one provider transaction so two different,
   // concurrently delivered event IDs cannot settle different orders.
   await tx.execute(sql`SELECT pg_advisory_xact_lock(

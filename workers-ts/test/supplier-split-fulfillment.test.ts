@@ -95,9 +95,9 @@ describe("supplier split fulfillment migration contracts", () => {
     expect(source).toContain('"/order/split_order/:id"');
   });
 
-  it("keeps the file migration and embedded Worker migration byte-equivalent after trimming", () => {
-    const migration = readFileSync("migrations/0017_supplier_split_fulfillment.sql", "utf8").trim();
-    const service = readFileSync("src/services/MigrationService.ts", "utf8");
+  it("keeps the file and embedded Worker migration equal after line-ending normalization and trimming", () => {
+    const migration = readFileSync("migrations/0017_supplier_split_fulfillment.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const service = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const embedded = service.match(/private migration_0024\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]?.trim();
     expect(embedded).toBe(migration);
   });

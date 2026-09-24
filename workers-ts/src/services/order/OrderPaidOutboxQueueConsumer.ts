@@ -2,6 +2,7 @@ import type { OrderMessage } from "@/env";
 import {
   isOrderNotificationOutboxMessage,
   isOrderPaidOutboxMessage,
+  isPresaleDeliveryOutboxMessage,
   type OrderOutboxService,
 } from "@/services/order/OrderOutboxService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
@@ -11,6 +12,22 @@ type OrderPaidOutboxQueueMessage = Pick<
   Message<OrderMessage>,
   "body" | "attempts" | "ack" | "retry"
 >;
+
+export async function consumePresaleDeliveryOutboxQueueMessage(
+  message: OrderPaidOutboxQueueMessage, processor: OrderPaidOutboxProcessor,
+): Promise<void> {
+  if (!isPresaleDeliveryOutboxMessage(message.body)) throw Error('Queue message is not a presale delivery event');
+  try {
+    const result = await processor.processMessage(message.body);
+    if (result === 'busy') { message.retry({ delaySeconds: paymentOutboxQueueRetryDelaySeconds(message.attempts) }); return; }
+    // Includes ordinary due/refund waiting: availability is durable in Postgres.
+    message.ack();
+  } catch (error) {
+    emitOperationalEvent('error', { event: 'presale_delivery_failed', component: 'queue',
+      operation: 'presale_delivery', outcome: 'retry', errorCode: operationalErrorCode(error) });
+    message.retry({ delaySeconds: paymentOutboxQueueRetryDelaySeconds(message.attempts) });
+  }
+}
 
 export function paymentOutboxQueueRetryDelaySeconds(attempts: number): number {
   return Math.min(30 * 2 ** Math.max(Math.trunc(attempts) - 1, 0), 900);

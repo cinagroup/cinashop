@@ -14,6 +14,7 @@ import {
 } from "@/services/kefu/KefuOwnership";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { lockOrderSettlement } from "@/services/order/OrderBrokerageService";
+import { hasInitiatedAssistedProviderPayment } from "@/services/payment/AssistedProviderPaymentClaim";
 import {
   lockRefundExecution,
   StoreOrderRefundService,
@@ -353,6 +354,9 @@ export class KefuOrderManagementService {
       const order = await lockOwnedOrder(tx, kefuUid, id, preliminary.uid);
       if (order.orderId !== input.orderId) throw new ValidateException("订单编号与当前订单不一致");
       if (order.paid !== 0) throw new ValidateException("订单已支付，不能修改金额");
+      if (await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+        throw new ValidateException("扫码支付已发起，改价前请先人工对账");
+      }
       assertReadonlyOrderValues(order, input);
 
       const priorBaseCents = decimalToCents(order.payPrice) + signedDecimalToCents(order.changePrice);

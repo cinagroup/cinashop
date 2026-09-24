@@ -7,6 +7,25 @@ const setup=(override=()=>undefined)=>runtime({component:'pages/order/list.vue',
 const writes=r=>r.calls.filter(c=>c.url==='/api/order/del');
 const confirmDelete=r=>{r.uni.showModal=options=>options.success({confirm:true,cancel:false});};
 
+test('UniApp unpaid mixed-owner deletion confirms compensation once and refreshes away the order',async()=>{
+  let removed=false,confirmation='';const r=setup(c=>{
+    if(c.url.endsWith('/order/del')){removed=true;return{data:null};}
+    return{data:removed?[]:[row(1,{supplierAllocationStatus:1})]};
+  });r.uni.showModal=options=>{confirmation=options.content;options.success({confirm:true});};
+  try{await r.start({});const order=r.checkout.orders.value[0];await r.checkout.remove(order);await r.checkout.remove(order);
+    assert.match(confirmation,/取消并删除未付款订单 local_list_1.*释放库存、优惠券和抵扣积分/);
+    assert.deepEqual(writes(r).map(c=>c.data),[{order_id:'local_list_1'}]);assert.equal(r.checkout.orders.value.length,0);
+  }finally{r.stop();}
+});
+
+test('UniApp paid allocation, unpaid children and allocated-unpaid rows cannot request deletion',async()=>{
+  const r=setup(()=>({data:[row(1,{paid:1,supplierAllocationStatus:1}),row(2,{pid:99}),row(3,{supplierAllocationStatus:2})]}));
+  let confirmations=0;r.uni.showModal=()=>{confirmations++;};
+  try{await r.start({});for(const order of r.checkout.orders.value)await r.checkout.remove(order);
+    assert.equal(confirmations,0);assert.equal(writes(r).length,0);
+  }finally{r.stop();}
+});
+
 test('UniApp deletion confirms cancellation consequences but cancelled dialog performs no write',async()=>{
   const r=setup();let modal;r.uni.showModal=options=>{modal=options;options.success({confirm:false,cancel:true});};
   try{await r.start({});await r.checkout.remove(r.checkout.orders.value[0]);assert.match(modal.content,/取消并删除未付款订单 local_list_1.*释放库存、优惠券和抵扣积分/);assert.equal(modal.confirmText,'确认删除');assert.equal(writes(r).length,0);assert.equal(r.checkout.orders.value.length,10);assert.equal(r.checkout.busy.value,false);}finally{r.stop();}

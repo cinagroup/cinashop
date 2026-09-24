@@ -6,11 +6,13 @@ const { PGlite } = require("@electric-sql/pglite");
 const tsx = require("tsx/cjs/api");
 const { readCatalog } = tsx.require("../../scripts/data-migration/postgres-catalog-audit.ts", __filename);
 const { assertCheckStatesAligned } = tsx.require("../../scripts/data-migration/check-state-contracts.ts", __filename);
+const { PRESALE_OUTBOX_CHECK_KEY, LEGACY_OUTBOX_CHECK_SNAPSHOT, PRESALE_OUTBOX_CHECK_SNAPSHOT, withPresaleOutboxContract } = tsx.require("../../scripts/data-migration/presale-outbox-contract.ts", __filename);
 const { matchesDatabaseError } = require("./constraintNameAudit.cjs");
 const f = require("./checkStateFixtures.cjs"), q=f.quote, l=f.literal;
 const root=join(__dirname,"../..");
 const manifest=JSON.parse(readFileSync(join(root,"audit/orm-check-state-reconciliation.json"),"utf8"));
 const sql=readFileSync(join(root,"migrations/0144_check_state_alignment.sql"),"utf8");
+const presaleSql=readFileSync(join(root,"migrations/0161_presale_delivery_outbox.sql"),"utf8");
 const entries=manifest.entries, tables=[...new Set(entries.map(e=>e.catalog.table))].sort();
 const alter=(e,tail,schema="public")=>"ALTER TABLE "+q(schema)+"."+q(e.catalog.table)+" "+tail+";";
 const replace=(e,definition)=>alter(e,"DROP CONSTRAINT "+q(e.catalog.name))+alter(e,"ADD CONSTRAINT "+q(e.catalog.name)+" "+definition);
@@ -20,12 +22,16 @@ const normalized=(rows)=>rows.map(row=>JSON.stringify(row)).sort();
 const withoutLocations=tree=>tree.replace(/ :location -?[0-9]+(?=[ )}])/g," :location -1");
 
 module.exports=async function auditCheckStates({api,models,format,database}) {
-  const started=Date.now(),snapshot=api.generateDrizzleJson(models),old=structuredClone(snapshot);
+  const started=Date.now(),snapshot=api.generateDrizzleJson(models),old=structuredClone(snapshot),historicTarget=structuredClone(snapshot);
   for(const e of entries) {
-    assert.deepEqual(JSON.parse(JSON.stringify(snapshot.tables["public."+e.catalog.table].checkConstraints[e.catalog.name])),e.snapshot);
+    const presale=e.key===PRESALE_OUTBOX_CHECK_KEY;
+    if(presale)assert.deepEqual(e.snapshot,LEGACY_OUTBOX_CHECK_SNAPSHOT);
+    assert.deepEqual(JSON.parse(JSON.stringify(snapshot.tables["public."+e.catalog.table].checkConstraints[e.catalog.name])),presale?PRESALE_OUTBOX_CHECK_SNAPSHOT:e.snapshot);
+    historicTarget.tables["public."+e.catalog.table].checkConstraints[e.catalog.name]=e.snapshot;
     old.tables["public."+e.catalog.table].checkConstraints[e.catalog.name]=e.previousSnapshot;
   }
-  const proposal=await api.generateMigration(old,api.generateDrizzleJson(models,old.id));
+  historicTarget.prevId=old.id;
+  const proposal=await api.generateMigration(old,historicTarget);
   assert.equal(proposal.length,18);
   assert.equal(proposal.filter(s=>s.includes(" DROP CONSTRAINT ")).length,9);
   assert.equal(proposal.filter(s=>s.includes(" ADD CONSTRAINT ")).length,9);
@@ -282,13 +288,37 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
     }catch(error){await db.exec("ROLLBACK");throw error;}
     assert.equal((await capture()).rows.length,0);
     assert.deepEqual(await api.generateMigration(snapshot,api.generateDrizzleJson(models,snapshot.id)),[]);
+    // Keep all historic nine-CHECK probes intact, then execute the actual forward
+    // migration. Never rewrite history or accept a missing event registration.
+    const beforeForward=await capture(),currentManifest=withPresaleOutboxContract(manifest);
+    const forwardProposal=await api.generateMigration(historicTarget,api.generateDrizzleJson(models,historicTarget.id));
+    assert.equal(forwardProposal.length,2);
+    assert.ok(forwardProposal.every(statement=>statement.includes('"soob_event_type_ck"')));
+    await db.exec("BEGIN");
+    try {await db.exec(presaleSql);await db.exec("COMMIT");}
+    catch(error){await db.exec("ROLLBACK");throw error;}
+    const forward=await capture(),expectedCatalog=structuredClone(beforeForward.catalog);
+    expectedCatalog.constraints.find(c=>c.key===PRESALE_OUTBOX_CHECK_KEY).definition=currentManifest.entries.find(e=>e.key===PRESALE_OUTBOX_CHECK_KEY).catalog.definition;
+    assert.deepEqual(forward.catalog,expectedCatalog,"0161 changes exactly one catalog definition");
+    assertCheckStatesAligned(forward.catalog,currentManifest);
+    await db.exec("BEGIN");
+    try {await db.exec(presaleSql);await db.exec("COMMIT");}
+    catch(error){await db.exec("ROLLBACK");throw error;}
+    assert.deepEqual(await capture(),forward,"0161 repeat preserves all identities and rows");
+    await db.exec("BEGIN");
+    try {
+      await savepoint(()=>assert.rejects(db.exec(sql),error=>error.code==="P0001"&&error.message.includes("0144")));
+      await db.exec(f.insert("store_order_outbox",{...f.row("store_order_outbox",9000),event_type:"order.presale.fulfillment"}));
+    }finally{await db.exec("ROLLBACK");}
+    assert.deepEqual(await capture(),forward,"Historic bootstrap cannot downgrade the forward CHECK");
     assert.equal(rejectionCases.length,55);
     assert.equal(invalidInsertContracts,58);assert.equal(invalidUpdateContracts,58);
     assert.equal(validBoundaryContracts,70);assert.equal(nullColumns,32);assert.equal(committedOldRows,8);
     assert.deepEqual([...locationOnlyExpressionChanges].sort(),
       engine<170000?entries.filter(e=>!e.catalog.validated).map(e=>e.key).sort():[]);
     console.log("DB-009E4 "+format+": 9 CHECKs aligned; "+rejectionCases.length+" drift refusals; "+invalidInsertContracts+" invalid insert/update pairs; "+(Date.now()-started)+"ms");
-    return {initialStatements:initial.length,guardedStatements:1,generatedProposalStatements:proposal.length,
+    return {initialStatements:initial.length,guardedStatements:2,generatedProposalStatements:proposal.length,
+      presaleForward:{applied:true,generatedProposalStatements:forwardProposal.length,exactSingleCatalogChange:true,repeatPreserved:true,historicalDowngradeRefused:true},
       alignedKeys:entries.map(e=>e.key),rejectionCases,rawProposalReplacements,
       changedTargetConstraintOids:9,targetDependencyObjectIdsChanged:true,commentsPreserved:true,
       expressionComparison:{ignoredInternalFields:["location"],semanticDriftRefusals:7,

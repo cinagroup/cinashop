@@ -66,7 +66,7 @@
     <view v-else-if="block.name === 'liveBroadcast' && miniProgram && liveRooms.length" class="commerce-panel" :style="panelStyle">
       <view class="commerce-heading">
         <text>{{ sectionTitle }}</text>
-        <text class="commerce-more">微信直播</text>
+        <text class="commerce-more" @tap="open('/pages/columnGoods/live_list/index')">查看全部 ›</text>
       </view>
       <view class="live-grid">
         <view v-for="room in liveRooms" :key="room.id" class="live-card" @tap="openLive(room.room_id)">

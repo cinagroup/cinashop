@@ -1,5 +1,7 @@
 <template>
   <view class="activity-page">
+    <button @tap="goPresale">预售专区 · 查看全款预售</button>
+    <button @tap="goNewcomer">新人礼 · 查看专享福利</button>
     <!-- Tab 切换 -->
     <view class="tabs">
       <view
@@ -217,6 +219,20 @@ function goMyBargain() {
 
 function goLottery() {
   uni.navigateTo({ url: "/pages/activity/lottery" });
+}
+
+function goPresale() {
+  if (!visible) return;
+  uni.navigateTo({ url: '/pages/activity/presale', fail: () => {
+    if (visible) uni.showToast({ title: '预售专区打开失败，请重试', icon: 'none' });
+  } });
+}
+
+function goNewcomer() {
+  if (!visible) return;
+  uni.navigateTo({ url: '/pages/activity/new_customer/index', fail: () => {
+    if (visible) uni.showToast({ title: '新人礼打开失败，请重试', icon: 'none' });
+  } });
 }
 
 onLoad(query => { if (tabs.some(tab => tab.key === query?.type)) active.value = query!.type!; });

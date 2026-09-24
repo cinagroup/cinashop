@@ -82,5 +82,7 @@ describe("Admin system form operations", () => {
     expect(routes).toContain('put("/form/set_show/:id/:is_show"');
     expect(requiredAdminPermission("GET", "/adminapi/form/data/:id")).toBe("config.view");
     expect(requiredAdminPermission("PUT", "/adminapi/form/set_show/:id/:is_show")).toBe("config.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/form/set_show/12/1")).toBe("config.manage");
+    expect(requiredAdminPermission("GET", "/api/admin/form/set_show/12/0")).toBe("config.manage");
   });
 });

@@ -212,7 +212,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(277);
+    expect(report.targetTableCount).toBe(279);
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
     expect(report.sourceColumnGapTableCount).toBe(0);
@@ -259,6 +259,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "store_order_invoice_evidence",
       "store_order_outbox",
       "store_order_product_coupon_reward",
+      "store_order_purchase_cancellation",
+      "store_order_purchase_origin",
       "store_order_refund_payment",
       "store_order_refund_split",
       "store_product_sku_retirement_log",
@@ -299,8 +301,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       report.sharedTables.map((table) => table.table).sort(),
     );
     expect(definitionDrift).toEqual({
-      externalTableCount: 277,
-      workerTableCount: 277,
+      externalTableCount: 279,
+      workerTableCount: 279,
       externalOnlyTables: [],
       workerOnlyTables: [],
       columnDrift: [],
@@ -1677,7 +1679,7 @@ describe("live migration safety plan", () => {
       "migrations/0064_store_legacy_auxiliary.sql",
       "utf8",
     ).trim();
-    const service = readFileSync("src/services/MigrationService.ts", "utf8");
+    const service = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const productMigration = readFileSync(
       "migrations/0016_supplier_product_management.sql",
       "utf8",

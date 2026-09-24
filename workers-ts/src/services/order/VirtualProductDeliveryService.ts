@@ -8,6 +8,7 @@ import {
   storeProductVirtual,
 } from "@/models/schema";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { assertPresaleDispatchReady } from '@/services/activity/PresaleFulfillmentSnapshot';
 
 const CARD_PRODUCT_TYPE = 1;
 const MAX_VIRTUAL_INFO_BYTES = 1024 * 1024;
@@ -152,6 +153,8 @@ export async function deliverPaidVirtualOrders(
     const currentRows = await tx
       .select({
         id: storeOrder.id,
+        type: storeOrder.type,
+        productType: storeOrder.productType,
         uid: storeOrder.uid,
         orderId: storeOrder.orderId,
         userAddress: storeOrder.userAddress,
@@ -179,6 +182,10 @@ export async function deliverPaidVirtualOrders(
       continue;
     }
     if (current.status !== 0) throw new Error(`卡密订单 ${order.orderId} 状态不允许自动发货`);
+    // The payment caller also passes physical/manual orders. Their payment
+    // facts must not wait for fulfillment; their own delivery/writeoff paths
+    // enforce the presale boundary. Only secret assignment is gated here.
+    if (current.productType === CARD_PRODUCT_TYPE) await assertPresaleDispatchReady(tx, current);
     const openRefunds = await tx
       .select({ id: storeOrderRefund.id })
       .from(storeOrderRefund)

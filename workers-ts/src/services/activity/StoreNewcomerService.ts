@@ -30,6 +30,7 @@ import {
 } from "@/services/product/StoreProductService";
 import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { ReplyService } from "@/services/product/ReplyService";
+import { projectOwnedCoupon } from "@/services/activity/UserCouponWalletService";
 
 const CONFIG_KEYS = [
   "newcomer_status",
@@ -847,10 +848,22 @@ export class StoreNewcomerService {
     const couponIds = configFlag(values.register_coupon_status)
       ? parseConfigIds(values.register_give_coupon)
       : [];
-    const coupons = couponIds.length
+    const ownedCoupons = couponIds.length
       ? (await this.container.storeCouponUserDao.listByUid(uid)).filter((coupon) =>
           couponIds.includes(coupon.issueCouponId))
       : [];
+    const issues = ownedCoupons.length
+      ? await this.container.db.select().from(storeCouponIssue).where(inArray(
+          storeCouponIssue.id, [...new Set(ownedCoupons.map((coupon) => coupon.issueCouponId))],
+        ))
+      : [];
+    const issueById = new Map(issues.map((issue) => [issue.id, issue]));
+    // PHP getInfo/getGift runs tidyCouponList before returning a user's issued
+    // coupons. Reuse the wallet's owned-coupon projection so the old snake_case
+    // money/type/scope fields and current camelCase consumers describe the same
+    // voucher, including a missing-template scope of -1.
+    const coupons = ownedCoupons.map((coupon) =>
+      projectOwnedCoupon(coupon, issueById.get(coupon.issueCouponId) ?? null));
     const limitDays = Math.max(0, parseConfigInteger(values.newcomer_limit_time, 0));
     const limitEnabled = configFlag(values.newcomer_limit_status, true);
     const response: Record<string, unknown> = {

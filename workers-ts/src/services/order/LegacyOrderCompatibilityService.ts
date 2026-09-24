@@ -26,6 +26,27 @@ const CHECKOUT_TTL_SECONDS = 30 * 60;
 const LEGACY_ALIPAY_TTL_SECONDS = 5 * 60;
 const MAX_CHECKOUT_ITEMS = 200;
 
+function checkedAlipayGatewayUrl(value: unknown, orderId: string): string {
+  if (typeof value !== "string" || value.length < 80 || value.length > 16_384) {
+    throw new ValidateException("支付宝支付地址无效");
+  }
+  try {
+    const url = new URL(value);
+    if (url.origin !== "https://openapi.alipay.com" || url.pathname !== "/gateway.do"
+      || url.username || url.password || url.hash
+      || url.searchParams.get("method") !== "alipay.trade.wap.pay"
+      || !url.searchParams.get("app_id") || !url.searchParams.get("biz_content")
+      || !url.searchParams.get("sign")) throw new Error("invalid_gateway");
+    const business = JSON.parse(url.searchParams.get("biz_content") ?? "null") as Record<string, unknown> | null;
+    if (!business || business.out_trade_no !== orderId || !/^\d+\.\d{2}$/.test(String(business.total_amount ?? ""))) {
+      throw new Error("invalid_business");
+    }
+    return value;
+  } catch {
+    throw new ValidateException("支付宝支付地址无效");
+  }
+}
+
 type LegacyCartSelection = { cartId: number; cartNum?: number };
 
 export interface LegacyCheckoutPreviewOptions {
@@ -223,17 +244,18 @@ export class LegacyOrderCompatibilityService {
     }
   }
 
-  async createAlipayKey(uid: number, orderId: string): Promise<string> {
+  async createAlipayKey(uid: number, orderId: string, payUrl?: unknown): Promise<string> {
     const key = crypto.randomUUID().replaceAll("-", "");
+    const checkedUrl = payUrl === undefined ? undefined : checkedAlipayGatewayUrl(payUrl, orderId);
     await this.env.CONFIG_KV.put(
       `pay:alipay:${key}`,
-      JSON.stringify({ uid, orderId }),
+      JSON.stringify({ uid, orderId, ...(checkedUrl ? { payUrl: checkedUrl } : {}) }),
       { expirationTtl: LEGACY_ALIPAY_TTL_SECONDS },
     );
     return key;
   }
 
-  async consumeAlipayKey(key: string): Promise<{ uid: number; orderId: string }> {
+  async consumeAlipayKey(key: string): Promise<{ uid: number; orderId: string; payUrl?: string }> {
     if (!/^[a-f0-9]{32}$/.test(key)) throw new ValidateException("该订单无法支付");
     const cacheKey = `pay:alipay:${key}`;
     const value = await this.env.CONFIG_KV.get(cacheKey);
@@ -249,8 +271,9 @@ export class LegacyOrderCompatibilityService {
     if (!Number.isSafeInteger(uid) || uid <= 0 || !orderId) {
       throw new ValidateException("该订单无法支付");
     }
+    const payUrl = data.payUrl === undefined ? undefined : checkedAlipayGatewayUrl(data.payUrl, orderId);
     await this.env.CONFIG_KV.delete(cacheKey);
-    return { uid, orderId };
+    return { uid, orderId, ...(payUrl ? { payUrl } : {}) };
   }
 
   async checkShipping(uid: number, cartIds: number[], bargainOnly = false) {

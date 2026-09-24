@@ -15,7 +15,7 @@ import { createContainerFromDb } from '../src/lib/di';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefund,
   storeOrderStatus, storeProduct, storeProductAttrValue, storeOrderInvoice, storeOrderRefundPayment,
-  storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin } from '../src/models/schema';
+  storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin, paymentReconciliationCase } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
 let applicationNumber = 0;
@@ -40,7 +40,8 @@ const state = async () => ({ ...await f.snapshot(), carts: await f.db.select().f
 beforeEach(async () => {
   applicationNumber = 0;
   f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
-    storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin]);
+    storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage, systemAdmin,
+    paymentReconciliationCase]);
   await f.exec('CREATE UNIQUE INDEX refund_line_fixture_event ON store_order_outbox(event_key)');
   await f.exec(INVOICE_EVIDENCE_SQL);
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));

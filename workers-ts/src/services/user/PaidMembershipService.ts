@@ -1,8 +1,7 @@
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import { withTx, type Container } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
 import {
-  agreement,
   memberCard,
   memberCardBatch,
   memberRight,
@@ -27,6 +26,7 @@ import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentR
 import { signAlipayParams, type AlipayParams } from "@/utils/alipay";
 import { parseConfigInteger } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { readVisibleAgreement } from "@/services/user/PublicAgreementService";
 
 const MEMBER_CHANNELS: Readonly<Record<string, string>> = {
   weixin: "wechat",
@@ -74,6 +74,8 @@ export interface ApplyMembershipPaymentInput {
   debitBalance?: boolean;
   expectedAmountCents?: number;
   now?: number;
+  /** Recheck a provider query's evidence while the order row is locked. */
+  authorizeBeforePayment?: (tx: DbClient) => Promise<void>;
 }
 
 export interface MembershipPaymentResult {
@@ -352,6 +354,7 @@ export async function applyMembershipPayment(
     if (params.uid !== undefined && order.uid !== params.uid) {
       throw new ValidateException("订单不属于当前用户");
     }
+    await params.authorizeBeforePayment?.(tx);
 
     const payCents = decimalToCents(order.payPrice);
     if (
@@ -687,12 +690,7 @@ export class PaidMembershipService {
           .from(memberRight)
           .where(eq(memberRight.status, 1))
           .orderBy(desc(memberRight.sort), memberRight.id),
-        this.container.db
-          .select()
-          .from(agreement)
-          .where(and(eq(agreement.type, 1), eq(agreement.status, 1)))
-          .orderBy(desc(agreement.sort), desc(agreement.id))
-          .limit(1),
+        readVisibleAgreement(this.container, 1),
         this.container.db
           .select()
           .from(memberShip)
@@ -787,7 +785,7 @@ export class PaidMembershipService {
           shop_name: config.site_name ?? "",
         },
       },
-      member_explain: agreements[0] ?? "",
+      member_explain: Array.isArray(agreements) ? "" : agreements,
       member_type: memberTypes,
       member_coupons: enabled ? coupons : [],
     };

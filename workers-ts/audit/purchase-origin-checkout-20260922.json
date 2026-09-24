@@ -1,0 +1,277 @@
+{
+  "date": "2026-09-22",
+  "status": "local-candidate-not-deployed",
+  "head": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "branch": "codex/user-visit-history-20260921",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "legacyBackfill": false,
+    "cumulativeQuotaEnabled": false,
+    "frontendChangedThisIncrement": false
+  },
+  "implementation": {
+    "publicCreateForcesOrigin": true,
+    "quoteDoesNotCapture": true,
+    "preflightReplayDoesNotCapture": true,
+    "postLockReplayDoesNotCapture": true,
+    "captureBeforeFinalAdmission": true,
+    "atomicRollback": true,
+    "componentFixturesMayOmitAdapterPolicy": true,
+    "productionCommissioningPending": true
+  },
+  "schema": {
+    "tables": 278,
+    "embeddedSteps": 170,
+    "externalSteps": 165,
+    "ddlChangedThisIncrement": false,
+    "ninePathAuditRerunThisIncrement": false
+  },
+  "checklist": {
+    "complete": 240,
+    "open": 164,
+    "total": 404
+  },
+  "tests": {
+    "unit": {
+      "files": 3,
+      "passed": 138,
+      "skipped": 0,
+      "session": 16107,
+      "seconds": 12.03,
+      "testFiles": [
+        "test/purchase-origin-evidence.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/local-finance-postgres-runner.test.ts"
+      ]
+    },
+    "unitAndRuntimeTypesPassed": true,
+    "newCases": 24,
+    "acceptedNativeGroups": [
+      {
+        "cluster": "finance-postgres-Eb6LiG",
+        "port": 55890,
+        "session": 13127,
+        "passed": 103,
+        "files": 5,
+        "note": "Five fully passing files only; excludes the entire 15-case checkout-pricing-service-runtime suite, repeated in ozNUvB.",
+        "testFiles": [
+          "test/purchase-origin-evidence-postgres.test.ts",
+          "test/presale-checkout-postgres.test.ts",
+          "test/checkout-pricing-fixture.test.ts",
+          "test/finance-fixture-advisory-isolation.test.ts",
+          "test/presale-runtime-permissions.test.ts"
+        ]
+      },
+      {
+        "cluster": "finance-postgres-ozNUvB",
+        "port": 60218,
+        "session": 41447,
+        "passed": 352,
+        "files": 4,
+        "seconds": 426.95,
+        "testFiles": [
+          "test/checkout-pricing-service-runtime.test.ts",
+          "test/checkout-confirmation-rules.test.ts",
+          "test/checkout-coupon-item-authority.test.ts",
+          "test/checkout-pricing-config-authority.test.ts"
+        ]
+      },
+      {
+        "cluster": "finance-postgres-IN7zXA",
+        "port": 54449,
+        "session": 22859,
+        "passed": 261,
+        "files": 4,
+        "seconds": 217.01,
+        "testFiles": [
+          "test/checkout-brokerage-authority.test.ts",
+          "test/checkout-brokerage-paid-authority.test.ts",
+          "test/checkout-brokerage-boundary.test.ts",
+          "test/checkout-membership-boundary.test.ts"
+        ]
+      },
+      {
+        "cluster": "finance-postgres-NQXJvH",
+        "port": 61362,
+        "session": 55089,
+        "passed": 131,
+        "files": 5,
+        "seconds": 76.72,
+        "testFiles": [
+          "test/checkout-confirmation.test.ts",
+          "test/checkout-line-finance.test.ts",
+          "test/checkout-coupon-template-authority.test.ts",
+          "test/checkout-coupon-relations-authority.test.ts",
+          "test/checkout-member-evidence.test.ts"
+        ]
+      },
+      {
+        "cluster": "finance-postgres-0UIdnb",
+        "port": 50982,
+        "session": 55089,
+        "passed": 92,
+        "files": 5,
+        "seconds": 289.47,
+        "testFiles": [
+          "test/checkout-catalog-management.test.ts",
+          "test/checkout-mobile-product-concurrency.test.ts",
+          "test/checkout-out-product-concurrency.test.ts",
+          "test/checkout-sku-lifecycle-concurrency.test.ts",
+          "test/out-stock-candidate-boundary.test.ts"
+        ]
+      },
+      {
+        "cluster": "finance-postgres-GUfxKP",
+        "port": 64149,
+        "session": 23569,
+        "passed": 138,
+        "files": 7,
+        "note": "Seven fully passing files only; excludes both mixed-mode files repeated completely in qWpGBl.",
+        "testFiles": [
+          "test/bargain-cart-binding.test.ts",
+          "test/level-pricing-activation.test.ts",
+          "test/membership-pricing-policy.test.ts",
+          "test/order-delivery-address.test.ts",
+          "test/pc-checkout-form-postgres.test.ts",
+          "test/pc-coupon-wallet-postgres.test.ts",
+          "test/product-price-truncation.test.ts"
+        ]
+      },
+      {
+        "cluster": "finance-postgres-qWpGBl",
+        "port": 60618,
+        "session": 54530,
+        "passed": 100,
+        "files": 2,
+        "seconds": 205.36,
+        "testFiles": [
+          "test/admin-config-batch-postgres.test.ts",
+          "test/checkout-coupon-management.test.ts"
+        ]
+      }
+    ],
+    "nativePassed": 1177,
+    "nativeFiles": 32,
+    "totalPassed": 1315,
+    "totalFiles": 35,
+    "skipped": 0,
+    "finalTypecheckSession": 11293,
+    "countingPolicy": "Distinct cases from fully passing files only. Superseded/partial runs and repeated files are not added. Not a full repository suite or production acceptance."
+  },
+  "developmentFailures": [
+    {
+      "kind": "test-type-errors",
+      "fixed": [
+        "await Hono Response-or-Promise before json()",
+        "use node:url URL for node:fs overload"
+      ]
+    },
+    {
+      "kind": "runner-allowlist",
+      "attempts": 2,
+      "clustersCreated": 0,
+      "fix": "Added 16 exact existing native checkout suites; no wildcard, deadline, credential or production-target relaxation."
+    },
+    {
+      "kind": "fixture-initialization-timeout",
+      "cluster": "finance-postgres-Eb6LiG",
+      "total": 118,
+      "passed": 117,
+      "failed": 1,
+      "seconds": 410.24,
+      "note": "Migration 0060 initialization hit PostgreSQL statement timeout; secondary close error. Same suite passed in ozNUvB. Root cause not established; no stability claim."
+    },
+    {
+      "kind": "oversized-parallel-batch",
+      "cluster": "finance-postgres-ehEYH2",
+      "port": 56765,
+      "session": 32792,
+      "exit": "ETIMEDOUT",
+      "deadlineSeconds": 600,
+      "note": "12-file batch timed out. Before timeout: three coupon-item cases and one confirmation-rule case timed out; 20 full-ORM pricing cases rejected missing explicit protection completion. Added explicit empty-ORM completion in eight construction factories; verified smaller serial batches with unchanged assertions/deadlines. Do not count partial results.",
+      "retainedSyntheticDatabases": [
+        "finance_fixture_22aca272a0a24412aa1131c25c482c5e",
+        "finance_fixture_e119ddcb43f44223a2f70706f0d964df",
+        "finance_fixture_51a23e4e863e4b858e63db8cbf7d47ef"
+      ]
+    },
+    {
+      "kind": "mixed-column-and-orm-fixture-omission",
+      "cluster": "finance-postgres-GUfxKP",
+      "port": 64149,
+      "session": 23569,
+      "files": 9,
+      "total": 238,
+      "passed": 188,
+      "failed": 50,
+      "seconds": 267.52,
+      "note": "Only the ORM branches of admin-config-batch (23) and checkout-coupon-management (27) missed explicit empty-ORM completion. Added the same reviewed completion to both factories. Seven other files passed. Complete 46/54-case files, not just failed cases, passed in qWpGBl."
+    }
+  ],
+  "initialSupersededRun": {
+    "cluster": "finance-postgres-JBWrsp",
+    "port": 59711,
+    "session": 73952,
+    "files": 4,
+    "passed": 101,
+    "seconds": 215.2,
+    "countedInFinal": false
+  },
+  "cleanup": {
+    "independentlyStopped": [
+      "finance-postgres-JBWrsp",
+      "finance-postgres-Eb6LiG",
+      "finance-postgres-ehEYH2",
+      "finance-postgres-ozNUvB",
+      "finance-postgres-IN7zXA",
+      "finance-postgres-NQXJvH",
+      "finance-postgres-0UIdnb",
+      "finance-postgres-GUfxKP",
+      "finance-postgres-qWpGBl"
+    ],
+    "allConfirmedStatuses": 3,
+    "pidFiles": false,
+    "bootstrapPasswordFiles": false,
+    "ownedListeners": 0,
+    "ownedPostgresProcesses": 0,
+    "retainedDiagnosticCluster": "finance-postgres-ehEYH2",
+    "otherCompletedClustersRemainingDatabasesAndRoles": 0,
+    "testRunnersOrWorkers": 0,
+    "retainedDiagnosticClusterRoleCount": "not checked; database cleanup assertion stopped before role check"
+  },
+  "hashes": {
+    "workers-ts/src/services/order/StoreOrderCreateService.ts": "45d4f29f6c365fba9450c41fc3b7d47e9439e1ae9f7b9e565c70f7000e441bbf",
+    "workers-ts/src/services/order/PurchaseOriginEvidence.ts": "e3b7987c8e6aff77caeee599dfd3969376cdd5238a8138705aa4fcb6c591d80e",
+    "workers-ts/migrations/0163_purchase_origin_evidence.sql": "cc75b8c6dba6e4bc7e64f625c752bd63ed5da127bbd165f3586eab84069b27c5",
+    "workers-ts/test/purchase-origin-evidence-postgres.test.ts": "9f040969160c935034b5f5ca79944dd7fb54f42fdfe324991adda293ec5c89b4",
+    "workers-ts/test/helpers/financePostgres.ts": "bc061e16bbd0cd605860075f306b7bb98553936090cd155f84293e50cfe1b273",
+    "workers-ts/test/helpers/financePeers.ts": "e33a957c9e9cbdd71716be56abcbf735ba2c6bfc645eabdef607b2820c15e8bd",
+    "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts": "34be806b35c07922caf7960938e4482fc98195f3b75233956c8eb2acc403b48f",
+    "workers-ts/test/helpers/purchaseOriginCheckoutFixture.ts": "cbd50b6e7f947f11c45d0c2a3f23555504d20faa82864fe6a65a0f583c855957",
+    "workers-ts/test/helpers/refundRuntimeFixture.ts": "b0e5c3e5281f81f856641fb40fc9a4fe82a771e34444c8304d5ebc569682cea8",
+    "workers-ts/test/admin-config-batch-postgres.test.ts": "8574b4b54fabb74920a56c1d6bf4a4748b1fee167568d53f594bbf8bc291ea2d",
+    "workers-ts/test/checkout-coupon-management.test.ts": "d1b3db170349e0a4a7351a050706337b2539344cff3b3010c65755e0192e6f9a",
+    "workers-ts/test/checkout-catalog-management.test.ts": "9802b5bd637b8b192caf4fd08b4bb93e9943c8d948c33e62eda6c0d8a42882c3",
+    "workers-ts/test/checkout-mobile-product-concurrency.test.ts": "770d1c97689b8b2f2110855e4d1271381542f64651b9f88349b86c90efbfea9c",
+    "workers-ts/test/checkout-out-product-concurrency.test.ts": "e4cf8bc51cf344adfb9bab3639a4598853ca4812023c71aee312c5b36ed19bb0",
+    "workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts": "790161aa400e2ef6c34f1ce4dbd9d9dcbdce09e398eec83d25df753e022dbded",
+    "workers-ts/test/checkout-pricing-config-authority.test.ts": "906d063cdc168c55e215b3939874c7ee37570de56b8ab53238cebf5ed0e6b81a",
+    "workers-ts/test/out-stock-candidate-boundary.test.ts": "52c1997c2f4a6f55b2aa6053b93609b1a9be7ba6834a9647cc1033638f505786",
+    "workers-ts/test/presale-checkout-postgres.test.ts": "8f5e6ad0be5241e0c8f8809bf61602436d635b82088c413f630af5b86b78afec",
+    "workers-ts/test/checkout-pricing-fixture.test.ts": "5e1d7ba27de706c60300a6c10942fb4bdf752b806f5fdc28b1f611019df9df6e",
+    "workers-ts/test/purchase-origin-evidence.test.ts": "6aa37d1045d9ce53ba687ad5df384c9551788a6cfdc68f99ef257ea01807425e",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "96b8c97b5e6572ee79381a53dc713b89cebecb0ec54f5868421e6ace1f73f426",
+    "workers-ts/test/local-finance-postgres-runner.test.ts": "a3a6055491826c2dce8b919a11f7f51f5a96d9f2573f37abd180c2973fb4cde0"
+  },
+  "remaining": [
+    "Production v1 schema/role commissioning and rollout approval",
+    "Immutable cancellation receipt",
+    "Owner decision on cumulative quota restoration timing",
+    "Cross-root concurrent quota protocol",
+    "Actual provider/browser/production acceptance beyond this increment"
+  ],
+  "hashScope": "Selected source/test/runner files only; not a full repository or complete test-input-closure digest."
+}

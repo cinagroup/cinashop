@@ -8,6 +8,8 @@ import { createContainerFromDb, withTx } from '../../src/lib/di';
 import { MigrationService } from '../../src/services/MigrationService';
 import { runInvoiceEvidence } from '../../src/migrations/runInvoiceEvidence';
 import { runRefundOrderSplit } from '../../src/migrations/runRefundOrderSplit';
+import { runPurchaseOriginEvidence } from '../../src/migrations/runPurchaseOriginEvidence';
+import { runPurchaseCancellationEvidence } from '../../src/migrations/runPurchaseCancellationEvidence';
 import { StoreOrderCreateService } from '../../src/services/order/StoreOrderCreateService';
 import { StoreOrderInvoiceService } from '../../src/services/order/StoreOrderInvoiceService';
 import { applyOrderRefundWithMaterialization, finalizeStoreOrderRefund } from '../../src/services/order/StoreOrderRefundService';
@@ -29,24 +31,26 @@ export const runtimeTablePrivileges: Record<string, readonly string[]> = {
   store_order_status: ['SELECT', 'INSERT'], store_order_outbox: ['SELECT', 'INSERT'],
   user_bill: ['SELECT', 'INSERT', 'UPDATE'], user_brokerage: ['SELECT', 'INSERT', 'UPDATE'],
   supplier_flowing_water: ['SELECT', 'INSERT', 'UPDATE'], supplier_transactions: ['SELECT', 'INSERT'],
-  member_right: ['SELECT'], system_config: ['SELECT'],
+  member_right: ['SELECT'], system_config: ['SELECT'], payment_reconciliation_case: ['SELECT', 'INSERT', 'UPDATE'],
   user_address: ['SELECT'], city_area: ['SELECT'], system_user_level: ['SELECT'], agent_level: ['SELECT'],
   system_supplier: ['SELECT'], system_store: ['SELECT'], user_invoice: ['SELECT'],
   shipping_templates: ['SELECT'], shipping_templates_region: ['SELECT'],
   shipping_templates_free: ['SELECT'], shipping_templates_no_delivery: ['SELECT'],
   print_document: ['SELECT'], supplier_extract: ['SELECT'], order_waybill_job: ['SELECT'],
   store_order_refund_payment: ['SELECT'],
-  // These four are commissioned by the actual reviewed maintenance protocols.
+  // These are commissioned by the actual reviewed maintenance protocols.
+  store_order_purchase_origin: ['SELECT', 'INSERT'],
+  store_order_purchase_cancellation: ['SELECT', 'INSERT'],
   store_order_invoice_evidence: ['SELECT'], store_order_invoice_allocation: ['SELECT', 'INSERT'],
   store_order_refund_split: ['SELECT', 'INSERT'], store_order_fulfillment_branch: ['SELECT', 'INSERT'],
 };
 export const runtimeRowLockTables = ['user_address', 'city_area', 'system_user_level', 'agent_level',
   'system_supplier', 'user_invoice', 'supplier_transactions', 'order_waybill_job'] as const;
 const protectedTables = new Set(['store_order_invoice_evidence', 'store_order_invoice_allocation',
-  'store_order_refund_split', 'store_order_fulfillment_branch']);
+  'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin', 'store_order_purchase_cancellation']);
 export const runtimeSequenceTables = ['store_order', 'store_order_cart_info', 'store_order_refund',
   'store_order_invoice', 'store_order_status', 'store_order_outbox', 'user_bill', 'user_brokerage',
-  'supplier_flowing_water', 'supplier_transactions'] as const;
+  'supplier_flowing_water', 'supplier_transactions', 'payment_reconciliation_case'] as const;
 export const shipping = { deliveryType: 'express', deliveryName: 'Local', deliveryCode: 'local',
   deliveryId: 'NO-SHIPMENT', fictitiousContent: '', deliveryUid: 0 } as const;
 
@@ -57,11 +61,11 @@ export async function refundRuntimeFixture() {
     if (!whole.withRuntimeRole) throw Error('Independent runtime LOGIN is required');
     await whole.exec('SET client_min_messages=warning');
     expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({
-      executed: Array.from({ length: 167 }, (_, i) => String(i).padStart(4, '0')), errors: [],
+      executed: Array.from({ length: 172 }, (_, i) => String(i).padStart(4, '0')), errors: [],
     });
     const [catalog] = await whole.db.execute(sql`SELECT count(*)::integer AS tables FROM pg_class
       WHERE relnamespace='public'::regnamespace AND relkind='r'`);
-    expect(catalog.tables).toBe(277);
+    expect(catalog.tables).toBe(279);
     // The fresh migration seeds integral at id=1; the existing quote fixture
     // owns ids 1/2. Relocate that one synthetic default, retaining its content.
     const moved = await whole.db.update(memberRight).set({ id: 3 })
@@ -98,6 +102,8 @@ export async function refundRuntimeFixture() {
         await whole.exec(`GRANT EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() TO "${peer.role}"`);
         expect((await runInvoiceEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
         expect((await runRefundOrderSplit(whole.db, peer.role)).runtimeReady).toBe(true);
+        expect((await runPurchaseOriginEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
+        expect((await runPurchaseCancellationEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
         return callback(operations(peer));
       });
     const state = async () => {

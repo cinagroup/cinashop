@@ -13,8 +13,14 @@ const databaseName = /^finance_fixture_[a-f0-9]{32}$/;
  * protocol or concurrency. All SQL, parameters, errors, transaction options and
  * savepoints still execute in PGlite. Native PG16 remains required for locks,
  * independent sessions, privileges and non-transactional sequence behavior. */
+const memoryRowArrayProxies = new WeakSet<object>();
+
 function memoryRowArrays<T extends object>(database: T): T {
-  return new Proxy(database, {
+  // A test may spy on transaction() of the exposed proxy. That spy can pass an
+  // already adapted transaction back through this helper; wrapping it twice
+  // would mistake the first adapter's row array for a raw PGlite result.
+  if (memoryRowArrayProxies.has(database)) return database;
+  const proxy = new Proxy(database, {
     get(target, property, receiver) {
       const method: unknown = Reflect.get(target, property, receiver);
       if (typeof method !== 'function') return method;
@@ -38,6 +44,8 @@ function memoryRowArrays<T extends object>(database: T): T {
       return method.bind(target);
     },
   });
+  memoryRowArrayProxies.add(proxy);
+  return proxy;
 }
 
 export function validateFinanceFixtureUrl(value: string): URL {
@@ -66,7 +74,7 @@ export function ownsFinanceFixtureEndpoint(database: string, schema: string, bas
 }
 
 /** Local memory by default. CI can opt into its dedicated disposable PostgreSQL 16 service only. */
-export async function financePostgres(tables: PgTable[]) {
+export async function financePostgres(tables: PgTable[], options: { namespace?: 'public' } = {}) {
   const url = process.env.TEST_FINANCE_POSTGRES_URL;
   let db: DbClient;
   let exec: (query: string) => Promise<unknown>;
@@ -74,8 +82,8 @@ export async function financePostgres(tables: PgTable[]) {
   if (url) {
     const base = validateFinanceFixtureUrl(url);
     const database = `finance_fixture_${crypto.randomUUID().replaceAll('-', '')}`;
-    const schema = `finance_test_${crypto.randomUUID().replaceAll("-", "")}`;
-    if (!databaseName.test(database) || !/^finance_test_[a-f0-9]{32}$/.test(schema)) throw new Error("Invalid test database/schema");
+    const schema = options.namespace ?? `finance_test_${crypto.randomUUID().replaceAll("-", "")}`;
+    if (!databaseName.test(database) || (schema !== 'public' && !/^finance_test_[a-f0-9]{32}$/.test(schema))) throw new Error("Invalid test database/schema");
     const coordinator = postgres(base.href, { max: 1, prepare: false, connect_timeout: 5,
       connection: { options: '-c statement_timeout=30000 -c lock_timeout=3000' } });
     let client: ReturnType<typeof postgres> | undefined;
@@ -120,7 +128,7 @@ export async function financePostgres(tables: PgTable[]) {
       const peer = await verify(client, database);
       if (!ownsFinanceFixtureEndpoint(database, schema, base.href, peer.server_host, peer.server_port))
         throw Error('Finance fixture server changed from coordinator');
-      await client.unsafe(`CREATE SCHEMA "${schema}"`);
+      if (schema !== 'public') await client.unsafe(`CREATE SCHEMA "${schema}"`);
       const checkedClient = client;
       db = drizzlePostgres(checkedClient) as unknown as DbClient;
       exec = (query) => checkedClient.unsafe(query);

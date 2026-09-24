@@ -113,10 +113,10 @@ describe("checkout payment migration", () => {
   });
 
   it("keeps the SQL and embedded recharge indexes aligned", () => {
-    const migration = readFileSync("migrations/0082_payment_checkout_integrity.sql", "utf8").trim();
+    const migration = readFileSync("migrations/0082_payment_checkout_integrity.sql", "utf8").replaceAll('\r\n', '\n').trim();
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0089\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
-      ?.trim();
+      ?.replaceAll('\r\n', '\n').trim();
     expect(embedded).toBe(migration);
   });
 });

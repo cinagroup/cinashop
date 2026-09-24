@@ -58,8 +58,8 @@ function queueMessage() {
 
 describe("电子面单持久签发账本", () => {
   it("文件迁移与 Worker 内嵌迁移一致，UNKNOWN/DEAD 未处置前阻止第二次签发", () => {
-    const migration = readFileSync("migrations/0091_electronic_waybill_outbox.sql", "utf8").trim();
-    const service = readFileSync("src/services/MigrationService.ts", "utf8");
+    const migration = readFileSync("migrations/0091_electronic_waybill_outbox.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const service = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const embedded = service.match(
       /private migration_0098\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1]?.trim();

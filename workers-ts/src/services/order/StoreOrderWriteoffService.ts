@@ -25,6 +25,7 @@ import {
   settleCompletedOrderInTx,
 } from "@/services/order/OrderBrokerageService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 
 const VERIFY_CODE_LOCK_NAMESPACE = 63_843;
 const OPEN_REFUND_TYPES = [0, 1, 2, 4, 5];
@@ -437,6 +438,9 @@ export class StoreOrderWriteoffService {
       const mode = this.writeoffMode(order);
       const operator = await this.requireOperator(tx, actor, order, mode);
       await this.assertOrderState(tx, order, mode);
+      // Authoritative mutation gate after actor validation and the exact order
+      // lock; read-only previews are not fulfillment authorization.
+      await assertPresaleDispatchReady(tx, order, "核销");
 
       const carts = await tx
         .select()

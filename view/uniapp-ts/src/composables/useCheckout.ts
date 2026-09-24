@@ -9,7 +9,7 @@ import type { UserAddress, PickupStore } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import { CheckoutQuoteSession, checkoutQuoteFingerprint, type CheckoutQuoteOptions, type CheckoutQuoteState } from "../../../common/checkoutQuote";
 import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "../../../common/orderCoupons";
-import { parseCheckoutSelection, checkoutRequiresAddress, type CheckoutCartItem } from "../../../common/checkoutSelection";
+import { parseCheckoutSelection, checkoutRequiresAddress, checkoutSupportsIntegral, type CheckoutCartItem } from "../../../common/checkoutSelection";
 import { CheckoutIntentJournal, type CheckoutIntent } from "../../../common/checkoutIntent";
 import { prepareOrderSystemFormSubmission } from "../../../common/order-system-form";
 import type { BargainShippingSelection } from '../../../common/bargainShipping';
@@ -33,12 +33,13 @@ export function useCheckout() {
   const locked = computed(() => loading.value || shippingLoading.value || !!pending.value || !visible.value || !auth.isLoggedIn);
   // Native image selection can hide the page. Do not invalidate its owned form on that hide.
   const formLocked = computed(() => loading.value || !!pending.value || !auth.isLoggedIn);
+  const integralEligible = computed(() => checkoutSupportsIntegral(items.value));
   const allowedShippingTypes = computed<readonly number[]>(() => activity.value.type === 2 ? shippingSelection.value?.shippingTypes ?? [] : items.value.some(i => i.productInfo?.productType === 4) ? [2] : [1,2]);
   const requiresAddress = computed(() => activity.value.type === 2
     ? shippingSelection.value?.requiresAddress !== false : checkoutRequiresAddress(items.value));
   const options = computed<CheckoutQuoteOptions>(() => ({ ...activity.value, addressId: shippingType.value === 1 && requiresAddress.value ? addressId.value : 0,
     shippingType: shippingType.value, storeId: shippingType.value === 2 ? storeId.value : 0,
-    couponId: activity.value.type === 0 ? couponId.value : 0, useIntegral: activity.value.type === 0 && useIntegral.value }));
+    couponId: activity.value.type === 0 ? couponId.value : 0, useIntegral: integralEligible.value && useIntegral.value }));
   const deliveryError = computed(() => shippingLoading.value ? '正在读取活动配送规则' : shippingError.value ||
     (!allowedShippingTypes.value.includes(shippingType.value) ? allowedShippingTypes.value.length ? '原配送方式已不可用，请重新选择' : '当前没有可用配送方式，请刷新或联系商家' : shippingType.value === 1 && !requiresAddress.value ? '' : shippingType.value === 1
     ? addressError.value || (!addresses.value.some((a) => a.id === addressId.value) ? "请选择收货地址" : "")
@@ -217,6 +218,6 @@ export function useCheckout() {
   onHide(suspend); onUnload(suspend);
   return { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
     allowedShippingTypes, requiresAddress, shippingLoading,
-    customForm, formName, formRevision, formValidation, uploads, activity, useIntegral, quote, ready, deliveryError, refreshQuote,
+    customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
     coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit };
 }

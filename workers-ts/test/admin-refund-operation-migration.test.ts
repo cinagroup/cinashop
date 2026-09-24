@@ -48,21 +48,21 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
   it.each(['external','embedded','orm'] as const)('registers the receipt in the complete %s schema before any standalone repair', async path => {
     if (path==='external') {
       const files=readdirSync('migrations').filter(name=>/^\d+.*\.sql$/.test(name)).sort();
-      expect(files.at(-1)).toBe('0160_checkout_pricing_lock.sql');
+      expect(files.at(-1)).toBe('0165_assisted_order_list_index.sql');
       for (const file of files) await f.db.transaction(async tx=>{
         await tx.execute(sql`SET LOCAL search_path=public,pg_temp`);
         await tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8')));
       });
     } else if (path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({
-        executed:Array.from({length: 167},(_,i)=>String(i).padStart(4,'0')),errors:[],
+        executed:Array.from({length: 172},(_,i)=>String(i).padStart(4,'0')),errors:[],
       });
     } else {
       const api=await import('drizzle-kit/api');
       await f.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(models))).join('\n'));
     }
     expect(await f.db.execute(sql`SELECT COUNT(*)::int AS count FROM pg_class
-      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:277}]);
+      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:279}]);
     expect(await inspectAdminRefundOperation(f.db)).toMatchObject({present:true,complete:true});
     expect(await shape()).toMatchObject({safe:true,shape:ADMIN_REFUND_OPERATION_EXPECTED_SHAPE});
     await seed();const before=await identity(),rows=await f.db.select().from(adminRefundOperation);

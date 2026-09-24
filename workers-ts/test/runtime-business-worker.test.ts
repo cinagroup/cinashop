@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks=vi.hoisted(()=>({open:vi.fn(),close:vi.fn(),inspect:vi.fn(),apply:vi.fn(),shipping:vi.fn(),audit:vi.fn(),exercise:vi.fn()}));
 vi.mock('../src/lib/di',()=>({createDbFromConnectionString:mocks.open}));
-vi.mock('../src/migrations/runRuntimeBusinessCommissioning',()=>({RUNTIME_COMMISSION_OPERATION:'isolated-business-runtime-v1',
+vi.mock('../src/migrations/runRuntimeBusinessCommissioning',()=>({RUNTIME_COMMISSION_OPERATION:'isolated-business-runtime-v2-purchase-evidence',
   RUNTIME_SHIPPING_OPERATION:'shipping-replay-schema-0154-v1',runRuntimeShippingPrerequisite:mocks.shipping,
   inspectRuntimeBusinessCommissioning:mocks.inspect,runRuntimeBusinessCommissioning:mocks.apply}));
 vi.mock('../src/migrations/auditRuntimeBusinessPrivileges',()=>({auditRuntimeBusinessPrivileges:mocks.audit}));
@@ -13,8 +13,8 @@ describe('fixed runtime commissioning maintenance boundary',()=>{
   let env:RuntimeBusinessCommissionEnv;
   beforeEach(async()=>{
     vi.resetAllMocks();mocks.close.mockResolvedValue(undefined);mocks.open.mockReturnValue({$client:{end:mocks.close}});
-    mocks.inspect.mockResolvedValue({operation:'isolated-business-runtime-v1',applyEnabled:false});
-    mocks.apply.mockResolvedValue({operation:'isolated-business-runtime-v1',grantsApplied:true});
+    mocks.inspect.mockResolvedValue({operation:'isolated-business-runtime-v2-purchase-evidence',applyEnabled:false});
+    mocks.apply.mockResolvedValue({operation:'isolated-business-runtime-v2-purchase-evidence',grantsApplied:true});
     mocks.audit.mockResolvedValue({ready:true,failures:[]});
     const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));
     env={AUDIT_TOKEN_SHA256:[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join(''),
@@ -35,15 +35,19 @@ describe('fixed runtime commissioning maintenance boundary',()=>{
     });
   it('requires the exact operation and an empty body',async()=>{
     expect((await worker.fetch(request('/apply','POST'),env)).status).toBe(400);
-    expect((await worker.fetch(request('/apply','POST',{'X-Migration-Operation':'isolated-business-runtime-v1'},'{}'),env)).status).toBe(400);
+    expect((await worker.fetch(request('/apply','POST',{'X-Migration-Operation':'isolated-business-runtime-v2-purchase-evidence'},'{}'),env)).status).toBe(400);
     expect(mocks.open).not.toHaveBeenCalled();
+  });
+  it('does not reuse historical v1 grant authorization for the evidence-capable profile',async()=>{
+    expect((await worker.fetch(request('/apply','POST',{'X-Migration-Operation':'isolated-business-runtime-v1'}),env)).status).toBe(400);
+    expect(mocks.open).not.toHaveBeenCalled();expect(mocks.apply).not.toHaveBeenCalled();
   });
   it('selects maintenance only for fixed status and closes the connection',async()=>{
     const response=await worker.fetch(request(),env);expect(response.status).toBe(200);expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(mocks.open.mock.calls[0][0]).toBe('maintenance-test');expect(mocks.apply).not.toHaveBeenCalled();expect(mocks.close).toHaveBeenCalledTimes(1);
   });
   it('keeps schema-only authorization separate from business grants',async()=>{
-    const grant={'X-Migration-Operation':'isolated-business-runtime-v1'},schema={'X-Migration-Operation':'shipping-replay-schema-0154-v1'};
+    const grant={'X-Migration-Operation':'isolated-business-runtime-v2-purchase-evidence'},schema={'X-Migration-Operation':'shipping-replay-schema-0154-v1'};
     expect((await worker.fetch(request('/shipping-schema','GET'),env)).status).toBe(405);
     expect((await worker.fetch(request('/shipping-schema','POST',grant),env)).status).toBe(400);
     expect((await worker.fetch(request('/apply','POST',schema),env)).status).toBe(400);
@@ -62,7 +66,7 @@ describe('fixed runtime commissioning maintenance boundary',()=>{
   it('requires separate exercise authorization and verified profiles before synthetic service writes',async()=>{
     const headers={'X-Migration-Operation':'isolated-runtime-rollback-exercise-v1'};
     expect((await worker.fetch(request('/exercise','GET'),env)).status).toBe(405);
-    expect((await worker.fetch(request('/exercise','POST',{'X-Migration-Operation':'isolated-business-runtime-v1'}),env)).status).toBe(400);
+    expect((await worker.fetch(request('/exercise','POST',{'X-Migration-Operation':'isolated-business-runtime-v2-purchase-evidence'}),env)).status).toBe(400);
     mocks.audit.mockResolvedValueOnce({ready:false,failures:['staff_boundary']});
     const log=vi.spyOn(console,'error').mockImplementation(()=>{});
     try{
@@ -78,7 +82,7 @@ describe('fixed runtime commissioning maintenance boundary',()=>{
     mocks.apply.mockRejectedValue({message:'private-data',cause:{code:'42501',query:'private-query'}});
     const log=vi.spyOn(console,'error').mockImplementation(()=>{});
     try{
-      const response=await worker.fetch(request('/apply','POST',{'X-Migration-Operation':'isolated-business-runtime-v1'}),env);
+      const response=await worker.fetch(request('/apply','POST',{'X-Migration-Operation':'isolated-business-runtime-v2-purchase-evidence'}),env);
       expect(response.status).toBe(503);const text=await response.text();expect(text).toContain('42501');expect(text).not.toContain('private');
       expect(mocks.close).toHaveBeenCalledTimes(1);
     }finally{log.mockRestore();}

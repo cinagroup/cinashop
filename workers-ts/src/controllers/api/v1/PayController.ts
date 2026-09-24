@@ -60,7 +60,7 @@ export async function orderPay(c: C) {
     );
     if (result.pay_type === "alipay" && result.paid === false) {
       result.pay_key = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
-        .createAlipayKey(uid, body.uni);
+        .createAlipayKey(uid, body.uni, result.payUrl);
     }
     return jsonOk(c, result, result.paid === true ? "支付成功" : "支付下单成功");
   } catch (e) {
@@ -239,7 +239,7 @@ export async function aliPay(c: C) {
   try {
     const compatibility = new LegacyOrderCompatibilityService(c.get("container"), c.env);
     const payment = await compatibility.consumeAlipayKey(key);
-    const payContent = await new StoreOrderPayService(c.get("container"), c.env)
+    const payContent = payment.payUrl ?? await new StoreOrderPayService(c.get("container"), c.env)
       .alipayPay(payment.uid, payment.orderId);
     return jsonOk(c, { pay_content: payContent });
   } catch (error) {

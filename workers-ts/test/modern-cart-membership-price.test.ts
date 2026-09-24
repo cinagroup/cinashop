@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { cartList } from '../src/controllers/api/v1/OrderController';
 import { StoreCartService } from '../src/services/order/StoreCartService';
-import { storeCart, storeProduct, storeProductAttrValue, systemUserLevel, user } from '../src/models/schema';
+import { memberRight, storeCart, storeProduct, storeProductAttrValue, systemUserLevel, user } from '../src/models/schema';
 
 interface CartQuoteRow {
   id: number; truePrice?: string; trueSumPrice?: string; priceType?: string; levelName?: string; sumPrice?: string;
@@ -101,5 +101,35 @@ describe('modern cart current-user prices, actual HTTP handler and PostgreSQL', 
     const spy = vi.spyOn(f.container.systemUserLevelDao, 'getById');
     const list = await new StoreCartService(f.container).list(11, { mode: 'cart' });
     expect(spy).toHaveBeenCalledTimes(1); expect(list).toEqual(expect.arrayContaining([expect.objectContaining({ truePrice: '17.59' })]));
+  });
+
+  it.each([
+    { name: 'level with per-unit truncation', paid: false, config: {}, level: '88.50', productVip: 1, right: 1, expected: '17.59', type: 'level' },
+    { name: 'cheaper paid SKU price', paid: true, config: {}, level: '88.50', productVip: 1, right: 1, expected: '10.00', type: 'member' },
+    { name: 'cheaper level price', paid: true, config: {}, level: '50.00', productVip: 1, right: 1, expected: '9.99', type: 'level' },
+    { name: 'paid membership switch off', paid: true, config: { member_card_status: '0' }, level: '88.50', productVip: 1, right: 1, expected: '17.59', type: 'level' },
+    { name: 'paid pricing switch off', paid: true, config: { svip_price_status: '0' }, level: '88.50', productVip: 1, right: 1, expected: '17.59', type: 'level' },
+    { name: 'level pricing switch off', paid: true, config: { member_func_status: '0' }, level: '88.50', productVip: 1, right: 1, expected: '10.00', type: 'member' },
+    { name: 'product paid-price opt-out', paid: true, config: {}, level: '88.50', productVip: 0, right: 1, expected: '17.59', type: 'level' },
+    { name: 'paid right disabled', paid: true, config: {}, level: '88.50', productVip: 1, right: 0, expected: '17.59', type: 'level' },
+  ])('presale direct-buy display matches real confirmation: $name', async scenario => {
+    await f.db.update(storeProduct).set({ isPresaleProduct: 1, presaleStartTime: 0,
+      presaleEndTime: 2147483647, presaleDay: 7, isVip: scenario.productVip });
+    await f.db.update(storeCart).set({ type: 6 }).where(eq(storeCart.id, 3));
+    await f.db.update(user).set({ isEverLevel: scenario.paid ? 1 : 0 }).where(eq(user.uid, 11));
+    await f.db.update(systemUserLevel).set({ discount: scenario.level });
+    await f.db.update(memberRight).set({ status: scenario.right }).where(eq(memberRight.rightType, 'vip_price'));
+    for (const [key, value] of Object.entries(scenario.config)) await f.setConfig({ [key]: value });
+    const before = await f.snapshot();
+    const [display] = await rows('scope=buy&ids=3');
+    expect(display).toMatchObject({ id: 3, truePrice: scenario.expected, trueSumPrice: scenario.expected,
+      priceType: scenario.type, levelName: scenario.type === 'level' ? '银卡' : '',
+      productInfo: { price: '19.99' }, sumPrice: '19.99' });
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: {
+      'content-type': 'application/json', 'x-fixture-user': '11' },
+      body: JSON.stringify({ cartIds: [3], addressId: 11, type: 6, useIntegral: false }) }, f.env);
+    const body = await response.json() as { status: number; msg: string; data: { priceGroup: { pay_price: string } } };
+    expect(body.status, body.msg).toBe(200); expect(body.data.priceGroup.pay_price).toBe(display.trueSumPrice);
+    expect(await f.snapshot()).toEqual(before);
   });
 });

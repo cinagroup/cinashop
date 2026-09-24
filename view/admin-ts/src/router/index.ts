@@ -96,6 +96,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "用户管理" },
       },
       {
+        path: "user/groups",
+        name: "user-groups",
+        component: () => import("@/pages/user/UserGroups.vue"),
+        meta: { title: "商城用户分组" },
+      },
+      {
         path: "member",
         name: "paid-membership",
         component: () => import("@/pages/user/PaidMembership.vue"),
@@ -252,6 +258,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "财务流水" },
       },
       {
+        path: "finance/capital-flow",
+        name: "finance-capital-flow",
+        component: () => import("@/pages/finance/CapitalFlowList.vue"),
+        meta: { title: "平台资金流水" },
+      },
+      {
         path: "level",
         name: "level",
         component: () => import("@/pages/level/LevelList.vue"),
@@ -346,6 +358,18 @@ const routes: RouteRecordRaw[] = [
         name: "setting-waybill",
         component: () => import("@/pages/setting/WaybillOperations.vue"),
         meta: { title: "电子面单" },
+      },
+      {
+        path: "marketing/user-point",
+        name: "integral-log",
+        component: () => import("@/pages/marketing/IntegralLog.vue"),
+        meta: { title: "积分日志" },
+      },
+      {
+        path: "marketing/coupon-records",
+        name: "coupon-records",
+        component: () => import("@/pages/marketing/CouponRecords.vue"),
+        meta: { title: "用户领取记录" },
       },
     ],
   },

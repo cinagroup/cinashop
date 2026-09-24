@@ -48,6 +48,10 @@ async function main(){
     assert.equal((await inspectShippingLifecycleIndexes(f.db)).complete,true,'Full ORM must include the formal indexes');
     // Simulate the pre-index upgrade shape only in this newly created fixture.
     for(const spec of SHIPPING_LIFECYCLE_INDEXES) await f.exec(`DROP INDEX public.${spec.name}`);
+    // Bulk loading this throwaway fixture can launch autovacuum on a source
+    // table just as the lifecycle installer requests its NOWAIT table barrier.
+    // Explicit ANALYZE below still supplies planner statistics for each table.
+    for(const table of tables) await f.exec(`ALTER TABLE public.${table} SET (autovacuum_enabled=false)`);
     await f.exec(`INSERT INTO public.shipping_templates(id,name) VALUES(1,'default'),(10,'common'),(11,'unreferenced'),(12,'rare');
       INSERT INTO public.store_order(id,order_id,pay_postage,cart_id) VALUES(999,'capacity-history','12.34','[77]')`);
     for(const table of tables){

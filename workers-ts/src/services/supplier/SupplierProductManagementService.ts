@@ -9,6 +9,7 @@ import {
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
+import { boundBargainSourceProductRetirement, lockBargainSourceProductRetirement } from '@/services/activity/BargainSourceProductLifecycle';
 import {
   storeCart,
   storeProduct,
@@ -767,14 +768,24 @@ export class SupplierProductManagementService {
 
   async recycleProduct(supplierId: number, productId: number) {
     await withTx(this.container, async (tx) => {
+      // Retire every bargain admission on this source before changing the
+      // product row. Cancellation/refund remain independent of this boundary.
+      await boundBargainSourceProductRetirement(tx);
+      await lockBargainSourceProductRetirement(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
+      const [owned] = await tx.select({ id: storeProduct.id }).from(storeProduct)
+        .where(this.tenantProductWhere(supplierId, productId)).limit(1);
+      if (!owned) throw new NotFoundException("商品不存在或不属于当前供应商");
+      // Checkout claims cart rows before its final product inventory write.
+      // Disable carts first so recycling cannot hold the product row while
+      // waiting for a checkout-owned cart row.
+      await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, productId));
       const rows = await tx
         .update(storeProduct)
         .set({ isDel: 1, isShow: 0 })
         .where(this.tenantProductWhere(supplierId, productId))
         .returning({ id: storeProduct.id });
       if (!rows[0]) throw new NotFoundException("商品不存在或不属于当前供应商");
-      await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, productId));
       await tx
         .update(storeProductRelation)
         .set({ status: 0 })

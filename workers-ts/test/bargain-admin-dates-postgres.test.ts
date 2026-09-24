@@ -70,7 +70,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('admin bargain da
     });
     expect((await snapshot()).bargains[0]).toMatchObject({startTime:start,stopTime:f.stopTime});
   }, 15_000);
-  it('postponing the start remains compatible with help KEY SHARE and rejects late help', async () => {
+  it('waits for an in-flight help before postponing the start', async () => {
     await f.exec(`CREATE FUNCTION qa_date_wait() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
       PERFORM pg_advisory_xact_lock(731631,40); RETURN NEW; END $$;
       CREATE TRIGGER qa_date_wait AFTER INSERT ON store_bargain_user_help FOR EACH ROW EXECUTE FUNCTION qa_date_wait()`);
@@ -79,9 +79,17 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('admin bargain da
       await blocker.exec('BEGIN; SELECT pg_advisory_xact_lock(731631,40)');
       const helping = outcome(new ActivityJoinService(createContainerFromDb(helper.db)).helpBargain(11,81));
       await waitForFinanceBlock(f.db,helper.pid,blocker.pid);
-      await saveBargain(createContainerFromDb(editor.db),{id:40,startTime:startTime.toISOString()});
-      await blocker.exec('COMMIT'); await refuses(helping,'砍价活动');
+      const editing = outcome(saveBargain(createContainerFromDb(editor.db),{id:40,startTime:startTime.toISOString()}));
+      await waitForFinanceBlock(f.db,editor.pid,helper.pid);
+      await blocker.exec('COMMIT');
+      expect(await helping).toMatchObject({ok:true});
+      expect(await editing).toMatchObject({ok:true,value:40});
     });
-    expect(await snapshot()).toEqual({...before,bargains:before.bargains.map(row=>({...row,startTime}))});
+    const after = await snapshot();
+    expect(after.bargains).toEqual(before.bargains.map(row=>({...row,startTime})));
+    expect(after.helps).toHaveLength(before.helps.length+1);
+    expect(after.helps.slice(0,before.helps.length)).toEqual(before.helps);
+    expect(after.participations.find(row=>row.id===81)?.price)
+      .not.toBe(before.participations.find(row=>row.id===81)?.price);
   }, 15_000);
 });

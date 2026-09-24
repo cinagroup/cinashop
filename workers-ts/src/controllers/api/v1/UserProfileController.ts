@@ -29,6 +29,11 @@ async function response<T>(c: C, operation: () => Promise<T>) {
   }
 }
 
+function privateCodeResponse(c: C): void {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
+}
+
 /** GET /api/user/activity — public activity-presence flags. */
 export async function activity(c: C) {
   return response(c, () => service(c).activity());
@@ -36,16 +41,19 @@ export async function activity(c: C) {
 
 /** GET /api/user — PHP-compatible personal-home aggregation. */
 export async function personalHome(c: C) {
+  privateCodeResponse(c);
   return response(c, () => service(c).personalHome(uid(c)));
 }
 
 /** GET /api/userinfo — legacy safe self-profile alias. */
 export async function userInfo(c: C) {
+  privateCodeResponse(c);
   return response(c, () => service(c).userInfo(uid(c)));
 }
 
 /** GET /api/user/rand_code — cryptographically secure, ten-minute payment code. */
 export async function randCode(c: C) {
+  privateCodeResponse(c);
   return response(c, async () => ({ code: await service(c).paymentCode(uid(c)) }));
 }
 

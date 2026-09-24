@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 interface InventoryRoute {
@@ -13,10 +14,11 @@ interface ReportRoute {
   targetApis: string[];
   covered: string[];
   remaining: string[];
+  evidence: string[];
 }
 
 interface Report {
-  methodology: { productionAccess: string };
+  methodology: { productionAccess: string; reviewBasis: string };
   summary: Record<string, number>;
   routes: ReportRoute[];
 }
@@ -39,20 +41,21 @@ describe("legacy Admin setting route parity audit", () => {
     expect(report.routes.map((route) => route.legacy.path)).toEqual(expectedPaths);
     expect(report.summary).toMatchObject({
       legacyRoutes: 76,
-      reviewed: 15,
-      candidate: 11,
-      partial: 3,
-      missing: 0,
-      retired: 1,
-      unreviewed: 61,
+      reviewed: 76,
+      candidate: 17,
+      partial: 24,
+      missing: 30,
+      retired: 5,
+      unreviewed: 0,
     });
+    expect(report.methodology.reviewBasis).toMatch(/code-only audit/);
     expect(report.methodology.productionAccess).toMatch(/READ ONLY transaction/);
     expect(report.methodology.productionAccess).toMatch(/no payment DDL\/DML ran/i);
     expect(report.methodology.productionAccess).toMatch(/idempotent second pass/);
     expect(report.methodology.productionAccess).toMatch(/no main Worker or frontend was deployed/i);
   });
 
-  it("records the first reviewed print and notification routes without guessing the rest", () => {
+  it("retains the first 15 print, notification, and commerce conclusions", () => {
     const status = Object.fromEntries(report.routes.map((route) => [route.legacy.path, route.status]));
     expect(status).toMatchObject({
       "/admin/setting/document": "candidate",
@@ -71,12 +74,62 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/system_form": "candidate",
       "/admin/setting/system_form/data": "candidate",
     });
-    for (const route of report.routes.filter((entry) => entry.status === "unreviewed")) {
-      expect(route.targetScreens).toEqual([]);
-      expect(route.targetApis).toEqual([]);
-      expect(route.covered).toEqual([]);
-      expect(route.remaining.join(" ")).toContain("尚未逐屏比对");
+    const retiredPrintConfig = report.routes.find((route) => route.legacy.path === "/admin/setting/document/config");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:82");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:192");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:202");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:215");
+  });
+
+  it("classifies all 61 newly reviewed routes with route-specific evidence", () => {
+    const byPath = new Map(report.routes.map((route) => [route.legacy.path, route]));
+    expect(report.routes).toHaveLength(76);
+    for (const route of report.routes) {
+      expect(route.status).not.toBe("unreviewed");
+      expect(route.evidence.length, route.legacy.path).toBeGreaterThan(0);
+      expect(route.covered.length + route.remaining.length, route.legacy.path).toBeGreaterThan(0);
+      if (route.status === "candidate") expect(route.targetScreens.length, route.legacy.path).toBeGreaterThan(0);
+      if (route.status === "retired") expect(route.remaining).toEqual([]);
     }
+
+    const groupData = report.routes.filter((route) =>
+      route.legacy.path.startsWith("/admin/setting/system_group_data")
+      && route.legacy.path !== "/admin/setting/system_group_data/kf_adv");
+    expect(groupData).toHaveLength(17);
+    expect(groupData.every((route) => route.status === "missing")).toBe(true);
+    expect(byPath.get("/admin/setting/system_group_data/kf_adv")?.status).toBe("candidate");
+
+    for (const path of [
+      "/admin/setting/freight/shipping_templates/list",
+      "/admin/setting/merchant/system_store/list",
+      "/admin/setting/merchant/system_store_staff/index",
+      "/admin/setting/delivery_service/index",
+      "/admin/setting/userAgreement/index",
+    ]) expect(byPath.get(path)?.status).toBe("candidate");
+
+    for (const path of [
+      "/admin/setting/platform/list/index",
+      "/admin/setting/platform/order/index",
+      "/admin/setting/platform/bill/index",
+      "/admin/setting/platform/setting/index",
+    ]) expect(byPath.get(path)?.status).toBe("retired");
+    expect(byPath.get("/admin/setting/platform/index")?.status).toBe("partial");
+    expect(byPath.get("/admin/setting/membership_level/index")?.status).toBe("missing");
+    expect(byPath.get("/admin/setting/system_menus/index")?.status).toBe("missing");
+    expect(byPath.get("/admin/setting/merchant/system_store/index")?.status).toBe("partial");
+    expect(byPath.get("/admin/setting/freight/express/index")?.status).toBe("partial");
+    expect(byPath.get("/admin/setting/system_visualization_data")?.status).toBe("partial");
+    expect(byPath.get("/admin/setting/storage")?.status).toBe("partial");
+    expect(byPath.get("/admin/setting/pages/fab")?.status).toBe("partial");
+    expect(byPath.get("/admin/setting/city/delivery/setting")?.status).toBe("missing");
+    expect(byPath.get("/admin/setting/city/delivery/record")?.status).toBe("missing");
+  });
+
+  it("keeps the generated ledger byte-for-byte aligned with the review source", () => {
+    const generated = execFileSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts"], {
+      cwd: process.cwd(), encoding: "utf8",
+    });
+    expect(generated).toBe(source("audit/admin-legacy-setting-route-parity.json"));
   });
 
   it("closes the three system-form screens with a bounded editor and data viewer", () => {

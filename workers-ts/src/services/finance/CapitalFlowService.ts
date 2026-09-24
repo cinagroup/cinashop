@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
-import { capitalFlow } from "@/models/schema";
-import type { Container } from "@/lib/di";
+import { capitalFlow, systemLog } from "@/models/schema";
+import { withTx, type Container } from "@/lib/di";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const CAPITAL_TYPE_NAMES: Record<number, string> = {
@@ -79,6 +79,12 @@ export type AdminCapitalFlowQuery = {
   export?: boolean;
 };
 
+export type AdminCapitalFlowActor = { id: number; name: string; ip: string };
+
+function literalLikePattern(value: string): string {
+  return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
+}
+
 export class CapitalFlowService {
   constructor(private readonly container: Container) {}
 
@@ -122,15 +128,13 @@ export class CapitalFlowService {
     }
     const keywords = query.keywords?.trim();
     if (keywords) {
+      const pattern = literalLikePattern(keywords);
       const keywordConditions: SQL[] = [
-        ilike(capitalFlow.orderId, `%${keywords}%`),
-        ilike(capitalFlow.nickname, `%${keywords}%`),
-        ilike(capitalFlow.phone, `%${keywords}%`),
+        ilike(capitalFlow.orderId, pattern),
+        sql`${capitalFlow.uid}::text ILIKE ${pattern}`,
+        ilike(capitalFlow.nickname, pattern),
+        ilike(capitalFlow.phone, pattern),
       ];
-      const numericUid = Number(keywords);
-      if (Number.isSafeInteger(numericUid) && numericUid >= 0) {
-        keywordConditions.push(eq(capitalFlow.uid, numericUid));
-      }
       conditions.push(or(...keywordConditions)!);
     }
     const where = conditions.length ? and(...conditions) : undefined;
@@ -181,14 +185,29 @@ export class CapitalFlowService {
     return { list, count: countRows[0]?.count ?? 0, status: ADMIN_TYPE_NAMES };
   }
 
-  async setMark(id: number, mark: string): Promise<void> {
+  async setMark(id: number, mark: string, actor: AdminCapitalFlowActor): Promise<{ id: number; mark: string }> {
     if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误");
-    if (mark.length > 500) throw new ValidateException("备注不能超过500个字符");
-    const updated = await this.container.db
-      .update(capitalFlow)
-      .set({ mark })
-      .where(eq(capitalFlow.id, id))
-      .returning({ id: capitalFlow.id });
-    if (!updated.length) throw new NotFoundException("资金流水不存在");
+    if (typeof mark !== "string" || mark.length > 200) throw new ValidateException("备注不能超过200个字符");
+    if (!Number.isSafeInteger(actor.id) || actor.id <= 0) throw new ValidateException("管理员身份无效");
+    return withTx(this.container, async (tx) => {
+      const [updated] = await tx
+        .update(capitalFlow)
+        .set({ mark })
+        .where(eq(capitalFlow.id, id))
+        .returning({ id: capitalFlow.id, mark: capitalFlow.mark });
+      if (!updated) throw new NotFoundException("资金流水不存在");
+      await tx.insert(systemLog).values({
+        adminId: actor.id,
+        adminName: actor.name.slice(0, 64),
+        path: "/adminapi/flow/set_mark/:id",
+        page: "/finance/capital-flow",
+        method: "POST",
+        action: `capital_flow.mark.update;id=${id};length=${mark.length}`,
+        ip: actor.ip.slice(0, 45),
+        type: "capital_flow",
+        addTime: Math.floor(Date.now() / 1_000),
+      });
+      return updated;
+    });
   }
 }

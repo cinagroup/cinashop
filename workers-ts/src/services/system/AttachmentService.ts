@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import type { AttachmentObjectCleanupMessage, Env } from "@/env";
-import { withTx, type Container } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
 import {
   systemAttachment,
   systemAttachmentCategory,
@@ -8,6 +8,10 @@ import {
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import {
+  assistedFormAttachmentKey, assertAssistedFormAttachmentScope, isAssistedFormAttachmentKey,
+  type AssistedFormAttachmentScope,
+} from './AssistedFormAttachmentScope';
 
 export const R2_IMAGE_TYPE = 8;
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -233,6 +237,7 @@ export function isAttachmentObjectCleanupMessage(
       typeof key === "string" &&
       key.length <= 180 &&
       (
+        isAssistedFormAttachmentKey(key) ||
         /^attachments\/(?:admin|supplier|user|kefu|visitor)\/[1-9]\d*\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|png|webp|gif|mp4)$/.test(key) ||
         /^attachments\/tmp\/supplier\/[1-9]\d*\/[0-9a-f]{64}\/(?:[1-9]\d{0,2})\.part$/.test(key)
       )
@@ -470,6 +475,21 @@ function scopeFolder(scope: AttachmentScope): "admin" | "supplier" | "user" | "k
   return scope.type === 1 ? "admin" : scope.type === 4 ? "supplier" : "user";
 }
 
+/** Conservative SQLSTATE allowlist: 40003 explicitly means completion unknown,
+ * despite belonging to class 40. Network/shutdown/unclassified failures must
+ * never authorize deleting an object after a metadata write was attempted. */
+export function isDefiniteImageMetadataRejection(error: unknown): boolean {
+  let source: unknown = error;
+  for (let depth = 0; depth < 4 && source && typeof source === 'object'; depth++) {
+    if ('code' in source) {
+      const code = String(source.code);
+      return /^(?:22|23|42)[A-Z0-9]{3}$/.test(code) || code === '40001' || code === '40P01';
+    }
+    source = 'cause' in source ? source.cause : undefined;
+  }
+  return false;
+}
+
 export class AttachmentService {
   constructor(
     private readonly container: Container,
@@ -477,6 +497,20 @@ export class AttachmentService {
   ) {}
 
   async uploadImage(scope: AttachmentScope, file: File, pidValue: unknown) {
+    return this.storeImage(scope, file, pidValue);
+  }
+
+  /** Separate from the ordinary material-library scope: no generic list,
+   * rename, move or delete endpoint accepts module 5. */
+  async uploadAssistedFormImage(scope: AssistedFormAttachmentScope, file: File,
+    authorizeMetadata: (tx: DbClient) => Promise<void>) {
+    assertAssistedFormAttachmentScope(scope);
+    if (typeof authorizeMetadata !== 'function') throw new ValidateException('缺少代客表单图片提交校验');
+    return this.storeImage(scope, file, 0, authorizeMetadata);
+  }
+
+  private async storeImage(scope: AttachmentScope | AssistedFormAttachmentScope, file: File, pidValue: unknown,
+    authorizeMetadata?: (tx: DbClient) => Promise<void>) {
     if (!(file instanceof File) || file.size <= 0) throw new ValidateException("请选择图片文件");
     if (file.size > MAX_IMAGE_BYTES) throw new ValidateException("图片不能超过10 MiB");
     const detected = detectImageType(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
@@ -486,11 +520,12 @@ export class AttachmentService {
       throw new ValidateException("图片内容与声明类型不一致");
     }
     const pid = nonNegativeId(pidValue, "分类ID");
-    if (pid > 0) await this.assertCategory(scope, pid, 1);
+    if (scope.moduleType === 5 && pid !== 0) throw new ValidateException('代客表单图片不使用素材分类');
+    if (pid > 0 && scope.moduleType !== 5) await this.assertCategory(scope, pid, 1);
 
     const now = new Date();
     const owner = scope.relationId > 0 ? scope.relationId : 1;
-    const key = [
+    const key = scope.moduleType === 5 ? assistedFormAttachmentKey(scope, detected.extension) : [
       "attachments",
       scopeFolder(scope),
       String(owner),
@@ -539,8 +574,11 @@ export class AttachmentService {
     }
 
     let id: number;
+    let metadataWriteStarted = false;
     try {
       id = await withTx(this.container, async (tx) => {
+        await authorizeMetadata?.(tx);
+        metadataWriteStarted = true;
         const inserted = await tx.insert(systemAttachment).values({
           type: scope.type,
           fileType: 1,
@@ -563,14 +601,30 @@ export class AttachmentService {
         return attachmentId;
       });
     } catch (error) {
-      await this.env.ASSETS_BUCKET.delete(key);
+      // A lost COMMIT reply can coexist with a committed metadata row. Only a
+      // pre-write rejection or an explicit SQL data/integrity/rollback/access
+      // error proves this assisted upload did not commit. Retain uncertain
+      // objects for reconciliation; never delete a possibly referenced object.
+      const uncertain = scope.moduleType === 5 && metadataWriteStarted && !isDefiniteImageMetadataRejection(error);
+      if (!uncertain) {
+        try { await this.env.ASSETS_BUCKET.delete(key); }
+        catch (cleanupError) {
+          if (scope.moduleType !== 5) throw cleanupError;
+          try { await this.env.ORDER_QUEUE.send({ action: 'deleteAttachmentObjects', keys: [key] }); }
+          catch (queueError) {
+            emitOperationalEvent('error', { event: 'attachment_cleanup_enqueue_and_fallback_failed', component: 'r2',
+              operation: 'cleanup', outcome: 'failure', resourceCount: 1,
+              errorCode: operationalErrorCode(queueError) });
+          }
+        }
+      }
       emitOperationalEvent("error", {
         event: "r2_metadata_commit_failed",
         component: "r2",
         operation: "metadata_commit",
         outcome: "failure",
         durationMs: Date.now() - r2StartedAt,
-        errorCode: operationalErrorCode(error),
+        errorCode: uncertain ? 'metadata_outcome_unknown' : operationalErrorCode(error),
       });
       throw error;
     }

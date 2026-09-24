@@ -70,8 +70,8 @@ describe("外部通知投递账本", () => {
   });
 
   it("人工处置迁移与内嵌迁移一致，且审计表不复制目标或消息正文", () => {
-    const migration = readFileSync("migrations/0086_notification_delivery_operations.sql", "utf8").trim();
-    const migrationService = readFileSync("src/services/MigrationService.ts", "utf8");
+    const migration = readFileSync("migrations/0086_notification_delivery_operations.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const migrationService = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const embedded = migrationService.match(
       /private migration_0093\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1].trim();

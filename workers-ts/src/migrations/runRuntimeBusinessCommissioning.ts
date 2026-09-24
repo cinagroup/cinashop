@@ -13,10 +13,11 @@ import { installRuntimeAdminBoundaryInTransaction } from './runtimeAdminBoundary
 import { installRuntimeLockOnlyBoundaryInTransaction } from './runtimeLockOnlyBoundary';
 import { inspectShippingTemplateCreateReplay } from './runShippingTemplateCreateReplay';
 import { SHIPPING_CREATE_REPLAY_INSTALLATION_SQL } from './shippingTemplateCreateReplayInstallation';
+import { inspectRuntimePurchaseEvidence, lockRuntimePurchaseEvidenceForGrants } from './runtimePurchaseEvidence';
 
 type Query=Pick<DbClient,'execute'>;
 export interface RuntimeCommissionTarget {database:string;maintenance:string;app:string;admin:string;pricingOwner:string}
-export const RUNTIME_COMMISSION_OPERATION='isolated-business-runtime-v1';
+export const RUNTIME_COMMISSION_OPERATION='isolated-business-runtime-v2-purchase-evidence';
 export const RUNTIME_SHIPPING_OPERATION='shipping-replay-schema-0154-v1';
 function validate(target:RuntimeCommissionTarget){
   Object.values(target).forEach(pricingIdentifier);
@@ -75,13 +76,14 @@ async function inspect(tx:Query,target:RuntimeCommissionTarget){
   const [invoice]=await tx.execute(sql.raw(INVOICE_EVIDENCE_STATE_SQL)),[refund]=await tx.execute(sql.raw(REFUND_SPLIT_STATE_SQL));
   const operation=await inspectAdminRefundOperation(tx),creation=await inspectAdminRefundCreation(tx);
   const shippingReplay=await inspectShippingTemplateCreateReplay(tx);
+  const purchaseEvidence=await inspectRuntimePurchaseEvidence(tx,target.maintenance);
   return {roles:Array.from(roles),tablesReady:catalog.length===tables.length && catalog.every(r=>r.ordinary===true),
     missingTables:tables.filter(t=>!catalog.some(r=>r.name===t)),
     nonordinaryTables:catalog.filter(r=>r.ordinary!==true).map(r=>({name:r.name,kind:r.kind,owner:r.owner})),
     sequencesReady:sequences.every(r=>r.ordinary===true) && standalone?.ready===true,
     pricingReady:pricingCatalogReady(pricing) && pricing.ownerOid===owner?.oid,offlineReady:offline?.state==='v1',
     refundProtocolsReady:invoice?.state==='v2' && refund?.state==='v1' && operation.complete && creation.complete,
-    shippingReplay,
+    shippingReplay,purchaseEvidence,
     ownedSequences:sequences.map(r=>({name:String(r.name),table:String(r.table)})) satisfies RuntimeOwnedSequence[]};
 }
 /** Separately authorized schema prerequisite only: exact existing external
@@ -111,14 +113,16 @@ export async function installRuntimeBusinessInTransaction(tx:Query,target:Runtim
   await setup(tx,target);
   const [gate]=await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731625,2) AS locked`);
   if(gate?.locked!==true)throw Error('Runtime commissioning is busy');
+  await lockRuntimePurchaseEvidenceForGrants(tx,target.maintenance);
   const state=await inspect(tx,target);
   if(state.roles.length!==2 || state.roles.some(r=>r.restricted!==true || r.empty!==true || r.no_definer!==true || r.no_default_grants!==true)
-    || !state.tablesReady || !state.sequencesReady || !state.pricingReady || !state.offlineReady || !state.refundProtocolsReady || !state.shippingReplay.complete)
+    || !state.tablesReady || !state.sequencesReady || !state.pricingReady || !state.offlineReady || !state.refundProtocolsReady || !state.shippingReplay.complete || !state.purchaseEvidence.ready)
     throw Error('Runtime commissioning preflight refused; inspect existing authority and protocol');
   await installRuntimeAdminBoundaryInTransaction(tx,target.app,target.maintenance);
   await installRuntimeLockOnlyBoundaryInTransaction(tx,target.app,target.admin,target.maintenance);
   for(const kind of ['app','admin'] as const)
     for(const statement of runtimeBusinessGrantSql(kind,target[kind],state.ownedSequences))await tx.execute(sql.raw(statement));
+  if(!(await inspectRuntimePurchaseEvidence(tx,target.maintenance)).ready)throw Error('Purchase evidence verification failed after grants');
   return {operation:RUNTIME_COMMISSION_OPERATION,grantsApplied:true as const,businessValidationRequired:true as const};
 }
 export async function runRuntimeBusinessCommissioning(db:DbClient,target:RuntimeCommissionTarget){

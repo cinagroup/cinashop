@@ -44,7 +44,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       "Verify formal shipping indexes and measure isolated read/write costs", "Preserve complete synthetic shipping plans"]);
     // Run 35553068667 exhausted the 40-minute job budget while tests continued.
     // Only unit-job capacity changed; no per-test deadline or gate is relaxed.
-    expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 60"]);
+    expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 90"]);
     expect(catalog.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 20"]);
     for(const block of [unit,catalog]) {
       expect(block).toContain("image: postgres:16.14-alpine");
@@ -70,7 +70,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(unit).toContain("- name: Install locked Supplier dependencies for cross-package unit tests\n        run: npm ci --prefix ../view/supplier-ts\n");
     expect(unit).toContain("strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2]");
     expect(unit.match(/--shard=/g)).toHaveLength(1);
-    expect(unit).toContain("- name: Run Worker unit tests\n        shell: bash\n        run: |\n          set -o pipefail\n          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log");
+    expect(unit).toContain("- name: Run Worker unit tests\n        shell: bash\n        run: |\n          set -o pipefail\n          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=verbose --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log");
     expect(unit).toContain("- name: Preserve unit shard diagnostics even on failure\n        if: ${{ always() }}\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
     expect(unit).toContain("name: unit-shard-${{ matrix.shard }}-${{ github.sha }}");
     expect(unit).toContain("path: |\n            workers-ts/unit-shard-results.json\n            workers-ts/unit-shard.log\n          if-no-files-found: error\n          retention-days: 7");

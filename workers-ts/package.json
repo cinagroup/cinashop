@@ -30,6 +30,7 @@
     "audit:admin-frontend": "tsx scripts/admin-frontend-parity-audit.ts",
     "audit:admin-api": "tsx scripts/admin-frontend-api-audit.ts",
     "audit:admin-setting": "tsx scripts/admin-setting-frontend-parity-audit.ts",
+    "audit:admin-marketing": "tsx scripts/admin-marketing-frontend-parity-audit.ts",
     "audit:observability": "tsx scripts/observability-audit.ts",
     "audit:uniapp": "tsx scripts/uniapp-frontend-parity-audit.ts",
     "audit:legacy-schema:update": "tsx scripts/generate-legacy-schema-authority.ts",

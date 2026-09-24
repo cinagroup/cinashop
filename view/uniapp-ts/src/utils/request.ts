@@ -119,7 +119,9 @@ export function baseResponse<T>(
           return;
         }
         // 登录失效
-        if (body && [410000, 410001, 410002].includes(body.status)) {
+        // noAuth callers own another authorization domain (Admin/Work/OAuth).
+        // Their failure must not revoke or navigate the shopper session.
+        if (!options.noAuth && body && [410000, 410001, 410002].includes(body.status)) {
           authStore.clear();
           toLogin();
         }

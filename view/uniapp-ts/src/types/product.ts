@@ -21,6 +21,7 @@ export interface GoodsItem {
 export interface GoodsSku extends SkuMembershipPrice { unique: string; suk: string; price: string; ot_price: string | null; vip_price: string | null; stock: number }
 
 export interface GoodsDetail {
+  is_presale_product: 0 | 1;
   skus: GoodsSku[];
   id: number;
   store_name: string;

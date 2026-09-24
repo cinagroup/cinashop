@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-03",
+  "generatedAt": "2026-09-24",
   "scope": "The 13 active legacy Admin content screens imported by the legacy content router: community, CMS articles, and mini-program live operations. Status measures screen semantics, not route-name similarity.",
   "statusDefinitions": {
     "candidate": "The routed screen's primary operations have a new Admin screen and executable authenticated API contracts; production E2E is still required.",
@@ -9,8 +9,8 @@
   },
   "summary": {
     "legacyRoutes": 13,
-    "candidate": 9,
-    "partial": 2,
+    "candidate": 8,
+    "partial": 3,
     "missing": 2,
     "retired": 0
   },
@@ -39,14 +39,15 @@
     },
     {
       "legacyPath": "/admin/content/community/addContent/:id?",
-      "legacyComponent": "pages/content/community/addContent/index.vue",
+      "legacyComponent": "pages/content/community/addContent.vue",
       "title": "添加内容",
-      "status": "candidate",
+      "status": "partial",
       "newScreens": ["/community#posts"],
       "newApiContracts": ["GET /adminapi/community/community/info/:id", "GET /adminapi/community/all_topic", "POST /adminapi/community/community/save/:id"],
       "permission": "community.view / community.manage",
-      "covered": "Platform content create and edit cover title, body, image or video, gallery, topic and product relations, recommendation, visibility, star, sorting, bounded inputs, and database serialization.",
-      "remaining": "Production media URL validation, historical-data validation, and real-role create/edit E2E remain required."
+      "covered": "Platform content create and edit save title, body, image or video URLs, gallery URLs, topic and product IDs, recommendation, visibility, star and sorting through bounded inputs and database serialization.",
+      "remaining": "The old editor's material upload/selection dialog and searchable product selection dialog are absent: the replacement requires operators to type media URLs and comma-separated product IDs. Production media URL validation, historical-data validation, and real-role create/edit E2E also remain required.",
+      "evidence": ["cinashop-php/view/admin/src/pages/content/community/addContent.vue:250", "cinashop-php/view/admin/src/pages/content/community/addContent.vue:268", "view/admin-ts/src/pages/community/CommunityOperations.vue:269", "view/admin-ts/src/pages/community/CommunityOperations.vue:274"]
     },
     {
       "legacyPath": "/admin/content/community/comment",

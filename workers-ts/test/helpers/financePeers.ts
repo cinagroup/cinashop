@@ -11,7 +11,7 @@ export function validateFinancePeerUrl(value: string): string {
 
 export interface FinancePeer { db: DbClient; pid: number; exec: (query: string) => Promise<unknown> }
 
-/** Reuse ONLY the registered random database/schema owned by a finance fixture.
+/** Reuse ONLY the registered random database and namespace owned by a finance fixture.
  * Each peer has one non-expiring connection. A reserved Sql cannot be used here:
  * postgres-js begin() belongs to the root pool, so reserving its only slot would stall Drizzle.
  */
@@ -21,7 +21,7 @@ export async function withFinancePeers<T>(observer: DbClient,
   const [origin] = await observer.select({ schema: sql<string>`current_schema()`, database: sql<string>`current_database()`,
     role: sql<string>`current_user`, version: sql<string>`current_setting('server_version_num')`, pid: sql<number>`pg_backend_pid()` })
     .from(sql`(values (1)) as probe(n)`);
-  if (!/^finance_test_[a-f0-9]{32}$/.test(origin.schema) || !ownsFinanceFixtureTarget(origin.database, origin.schema, url) ||
+  if ((origin.schema !== 'public' && !/^finance_test_[a-f0-9]{32}$/.test(origin.schema)) || !ownsFinanceFixtureTarget(origin.database, origin.schema, url) ||
     origin.role !== "finance_test" || Math.floor(Number(origin.version) / 10_000) !== 16) {
     throw new Error("Unexpected finance observer identity/schema/version");
   }

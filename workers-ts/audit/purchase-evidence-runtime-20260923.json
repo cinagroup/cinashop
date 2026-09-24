@@ -1,0 +1,125 @@
+{
+  "date": "2026-09-23",
+  "status": "local-app-admin-profile-integration-verified-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "cumulativeQuotaEnabled": false,
+    "canonicalEvidenceSqlChanged": false,
+    "schemaRegistrationChanged": false,
+    "ninePathCatalogRerunThisPhase": false,
+    "platformBindingsOrDependenciesChanged": false
+  },
+  "contract": {
+    "operation": "isolated-business-runtime-v2-purchase-evidence",
+    "appAddedCapabilities": {
+      "store_order_purchase_origin": ["SELECT", "INSERT"],
+      "store_order_purchase_cancellation": ["SELECT", "INSERT"]
+    },
+    "adminEvidenceCapabilities": [],
+    "additionalRoutineOrSequenceCapabilities": [],
+    "precondition": "Both canonical v1 protocols and source metadata must already be ready under the explicit maintenance owner",
+    "grantTransaction": "Owned READ COMMITTED read-write transaction; shared advisory fence (731611,0), canonical six-table NOWAIT locks, pre/post metadata proof; existing nonempty profiles rejected",
+    "audit": "Real independent LOGIN; REPEATABLE READ read-only metadata and exact effective ACL audit; no SET ROLE, data reads, repair or grants",
+    "existingProfileUpgrade": "Reviewed origin upgrade followed by cancellation upgrade, then exact whole-shop audit; unrelated ACLs and object identities preserved; origin-only state remains unready",
+    "legacyProductionScript": "run-runtime-business-production.ps1 deliberately retains historical v1 and pre-cutover binding guard; not a deployment path for this candidate"
+  },
+  "tests": {
+    "uniquePassed": 53,
+    "newCases": 28,
+    "files": 4,
+    "skipped": 0,
+    "counting": "Only final passing files; no failed/repeated executions or earlier phases added",
+    "unit": {
+      "passed": 22,
+      "seconds": 2.89,
+      "startedLocal": "09:52:39",
+      "testFiles": ["test/runtime-business-privilege-plan.test.ts", "test/runtime-business-worker.test.ts"]
+    },
+    "native": {
+      "passed": 31,
+      "seconds": 245.08,
+      "startedLocal": "09:57:30",
+      "session": 76889,
+      "cluster": "finance-postgres-W0mrdG",
+      "port": 64244,
+      "version": "PostgreSQL 16.15",
+      "testFiles": ["test/runtime-business-login.test.ts", "test/admin-runtime-login.test.ts"],
+      "fixtures": "Complete registered 279-table schema for business profile cases; separate minimal admin middleware regression fixture; loopback-owned databases and independently authenticated LOGINs",
+      "synthetic": ["HTTP user identity", "KV", "Sequence", "local test business rows"],
+      "real": ["public confirm/create/cancel/delete controllers", "scheduled cancellation service", "SQL services and triggers", "independent LOGIN permissions", "admin middleware connection separation"],
+      "externalFetchForbidden": true,
+      "coverage": [
+        "Ordinary/presale public confirmation and creation, replay, cancel/delete/scheduled close, 100-point deduction/restoration and stock/cart/user restoration",
+        "Presale points opt-out with zero restoration",
+        "Missing required origin SELECT/INSERT or cancellation INSERT rolls back actual public operations",
+        "Missing cancellation SELECT fails profile audit and direct read but is not falsely treated as an invoker-trigger write dependency",
+        "Missing/drifted protocol, insecure functions, PUBLIC access, missing source index and ORM-pending table refuse without repair or partial grants",
+        "Post-grant drift is rejected by read-only app/admin audits without mutation",
+        "Shared advisory fence and six table locks reject contenders without partial grants",
+        "Root/owner/isolation checks and explicit-owner metadata inspection preserve actual runtime identity",
+        "Existing profile component upgrade preserves unrelated objects/ACLs and rejects whole-shop replay",
+        "Existing shipping/status/profile, checkout/offline wallet/cache/Out boundaries and admin middleware regression"
+      ]
+    },
+    "typecheck": {"unit": "passed", "runtime": "passed", "finalSession": 34268},
+    "diffWhitespace": "passed",
+    "workerd": {
+      "session": 10218,
+      "testFile": "test/runtime/runtime-business-worker.test.ts",
+      "result": "failed-to-start",
+      "executedTests": 0,
+      "error": "Windows structured exception 0xc0000005 / ERR_RUNTIME_FAILURE",
+      "exitCode": 1,
+      "closeTimeoutReported": true,
+      "standaloneVersionCommand": "workerd 2026-08-11",
+      "causeConfirmed": false,
+      "countedAsPassing": false,
+      "environmentChanged": false
+    }
+  },
+  "developmentFailures": [
+    {"stage": "Original blind baseline", "session": 33383, "cluster": "finance-postgres-ol9eJv", "passed": 4, "seconds": 35.00, "meaning": "Test omitted public requirePurchaseOrigin capture; not evidence of actual public creation capability"},
+    {"stage": "Red native regression", "session": 97725, "cluster": "finance-postgres-8vpSA3", "passed": 3, "failed": 1, "seconds": 34.57, "meaning": "Required origin capture failed with actual PostgreSQL 42501 on store_order_purchase_origin"},
+    {"stage": "Red plan unit", "passed": 6, "failed": 1, "seconds": 2.35, "meaning": "Expected SELECT/INSERT was undefined"},
+    {"stage": "Initial native fix", "session": 9934, "cluster": "finance-postgres-DZriTM", "passed": 4, "seconds": 34.63, "countedSeparately": false},
+    {"stage": "Expanded native first run", "session": 65838, "cluster": "finance-postgres-qj4aS7", "passed": 29, "failed": 1, "seconds": 203.33, "meaning": "Test incorrectly expected revoked cancellation SELECT to prevent a write validated using NEW and source reads", "resolution": "Test now revokes required origin SELECT; added separate cancellation-read/audit case. Canonical protocol and business implementation not changed to satisfy the test. Full 31-case rerun passed."}
+  ],
+  "cleanup": {
+    "clusters": [
+      {"name": "finance-postgres-ol9eJv", "port": 51079},
+      {"name": "finance-postgres-8vpSA3", "port": 51124},
+      {"name": "finance-postgres-DZriTM", "port": 51163},
+      {"name": "finance-postgres-qj4aS7", "port": 54371},
+      {"name": "finance-postgres-W0mrdG", "port": 64244}
+    ],
+    "eachRunnerReportedFixtureDatabasesAndRolesRemaining": 0,
+    "eachIndependentPgCtlStatus": 3,
+    "eachPidFilePresent": false,
+    "eachExactBootstrapPasswordFilePresent": false,
+    "eachOwnedPostgresProcessCount": 0,
+    "matchingListeners": 0,
+    "matchingTestOrTypeProcesses": 0,
+    "stoppedDiagnosticDirectoriesRetained": true,
+    "verification": "Final independent exact-path checks used bootstrap-password (not bootstrap-password.txt) and normalized process paths"
+  },
+  "sourceSha256": {
+    "src/migrations/runtimePurchaseEvidence.ts": "f4b2d78046a5f5016ffb7bf71a56c7ad610c4403623dccaae65db7041cd158c6",
+    "src/migrations/runtimeBusinessPrivilegePlan.ts": "4e7fa3903bce0df87386d394d986708231f39d8f3b2ed1cd1601703a209c10d8",
+    "src/migrations/runRuntimeBusinessCommissioning.ts": "374ee656ba3349173ab7b5f67bb2ff94771b09581a542eb3868b9c484d9d7d97",
+    "src/migrations/auditRuntimeBusinessPrivileges.ts": "82d4bc4e18455b423cbb86f96bb5d1874d1a47e397cad19a2d9ab7a7fea6ae44",
+    "test/runtime-business-login.test.ts": "67e842a68001b01527fd9d6b87b2473f6dc999fd74cd34b787693664059a3901",
+    "test/runtime-business-privilege-plan.test.ts": "71ed571b72dab3f0e38f6b06f3d1ff16750f11d54540a433cf3e15586226a44a",
+    "test/runtime-business-worker.test.ts": "27e5a3d6dddcf906fd56d7ff77ccea8a1df01ac1fe8fdf406fc796dd8d91144c"
+  },
+  "checklist": {"completed": 240, "open": 164, "total": 404},
+  "remaining": [
+    "All activity, assisted and guest entry points under actual runtime identities",
+    "Reviewed production schema/role upgrade and rollout sequencing, real Hyperdrive identities",
+    "Current-candidate Linux/workerd/immutable CI and provider/browser acceptance",
+    "Cumulative purchase quota policy and integration remain independent; disabled"
+  ]
+}

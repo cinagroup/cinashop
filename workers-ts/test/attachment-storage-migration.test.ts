@@ -60,7 +60,9 @@ describe("attachment and R2 storage migration boundary", () => {
     const migration = readFileSync("migrations/0067_attachment_storage.sql", "utf8").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(/private migration_0074\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]?.trim();
-    expect(embedded).toBe(migration);
+    // Windows checkout line endings do not change this DDL contract. Preserve
+    // every other byte so a real external/embedded SQL drift still fails.
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     expect(migration).not.toMatch(/FOREIGN KEY\s*\(|REFERENCES\s+"|CREATE UNIQUE INDEX/i);
     expect(migration).toContain('"type" SMALLINT DEFAULT 1,');
     expect(migration).toContain('"access_key" VARCHAR(100)');

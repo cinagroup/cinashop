@@ -39,6 +39,7 @@ import {
   type WaybillIssueResult,
 } from "@/services/waybill/CrmebOnePassWaybillProvider";
 import { normalizeConfigScalar } from "@/utils/config";
+import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
@@ -455,12 +456,15 @@ async function loadIssueInput(tx: DbClient, job: typeof orderWaybillJob.$inferSe
     eq(storeOrder.id, job.orderId),
     eq(storeOrder.supplierId, job.supplierId),
     eq(storeOrder.isSystemDel, 0),
-  )).limit(1);
+  )).limit(1).for("update", { noWait: true });
   const order = orders[0];
   if (!order) throw new WaybillConfigurationError("电子面单订单已不存在或越过供应商边界");
   if (order.paid !== 1 || order.status !== 0 || order.shippingType !== 1 || order.isDel) {
     throw new WaybillConfigurationError("电子面单订单已不处于可发货状态");
   }
+  // Recheck old queued jobs before allocating a provider number. The transaction
+  // ends before external I/O; applyFulfillment revalidates before local writes.
+  await assertPresaleDispatchReady(tx, order);
   const carts = await tx.select({
     cartId: storeOrderCartInfo.cartId,
     cartNum: storeOrderCartInfo.cartNum,
@@ -545,6 +549,7 @@ export class OrderWaybillJobService {
       }
 
       const { root, active } = await resolveActiveOrder(tx, actor, orderReference);
+      await assertPresaleDispatchReady(tx, active);
       const activeJobs = await tx.select({ id: orderWaybillJob.id })
         .from(orderWaybillJob).where(and(
           eq(orderWaybillJob.rootOrderId, root.id),

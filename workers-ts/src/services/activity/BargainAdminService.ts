@@ -1,12 +1,13 @@
 import { and, eq, sql } from "drizzle-orm";
 import { withTx, type Container, type DbClient } from "@/lib/di";
-import { storeBargain } from "@/models/schema";
+import { storeBargain, storeBargainUser, storeBargainUserHelp } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 import { lockBargainProductPolicy } from "./BargainProductPolicy";
 import { parseBargainSku, saveBargainSku } from "./BargainAdminSkuService";
 import { alignBargainCover, parseBargainContent, saveBargainDescription } from "./BargainContentService";
 import { parseBargainShipping, prepareBargainShipping } from './BargainAdminShippingService';
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
+import { lockBargainHelpRuleExclusive } from "./BargainHelpRuleLock";
 
 type Patch = Partial<typeof storeBargain.$inferInsert>;
 const MAX_INT = 2_147_483_647;
@@ -108,6 +109,11 @@ export async function saveBargain(container: Container, body: Record<string, unk
   }
   return withTx(container, async tx => {
     await limits(tx);
+    // Help holds this activity rule boundary through commit. Take it before the
+    // activity row so checkout's activity -> participant path cannot form a cycle.
+    if (id && [patch.people, patch.status, patch.startTime, patch.stopTime].some(value => value !== undefined)) {
+      await lockBargainHelpRuleExclusive(tx, id);
+    }
     const current = id ? (await tx.select().from(storeBargain).where(eq(storeBargain.id, id)).limit(1).for("no key update"))[0] : undefined;
     if (id && (!current || current.isDel !== 0)) throw new ValidateException("砍价活动不存在或已删除");
     alignBargainCover(patch,current?.images ?? '');
@@ -133,6 +139,28 @@ export async function saveBargain(container: Container, body: Record<string, unk
     }
     if (!current || patch.stock !== undefined || patch.quota !== undefined) {
       if (integer(merged.quota, "额度") > integer(merged.stock, "库存")) throw new ValidateException("砍价额度不能超过库存");
+    }
+    if (current && patch.people !== undefined) {
+      // Historical purchased rows remain visible. No non-deleted participation
+      // may already have more helpers than the new activity limit.
+      const helpCount = sql`(SELECT COUNT(*) FROM ${storeBargainUserHelp}
+        WHERE ${storeBargainUserHelp.bargainUserId} = ${storeBargainUser.id})`;
+      const overLimit = await tx.select({ id: storeBargainUser.id }).from(storeBargainUser).where(and(
+        eq(storeBargainUser.bargainId, current.id), eq(storeBargainUser.isDel, 0),
+        sql`${helpCount} > ${patch.people}`,
+      )).limit(1);
+      if (overLimit[0]) throw new ValidateException("砍价人数不能少于已帮助人数");
+      // At equality helpBargain cannot add another cut. The record must already
+      // be purchase-ready under its own price snapshot, including no overcut.
+      // numeric arithmetic matches the money columns without JS float rounding.
+      const saturatedIncomplete = await tx.select({ id: storeBargainUser.id }).from(storeBargainUser).where(and(
+        eq(storeBargainUser.bargainId, current.id), eq(storeBargainUser.isDel, 0), eq(storeBargainUser.status, 1),
+        sql`${helpCount} >= ${patch.people}`,
+        sql`NOT (${storeBargainUser.bargainPrice} >= 0 AND ${storeBargainUser.bargainPriceMin} >= 0
+          AND ${storeBargainUser.price} >= 0 AND ${storeBargainUser.bargainPrice} >= ${storeBargainUser.bargainPriceMin}
+          AND ${storeBargainUser.bargainPrice} - ${storeBargainUser.price} = ${storeBargainUser.bargainPriceMin})`,
+      )).limit(1);
+      if (saturatedIncomplete[0]) throw new ValidateException("砍价人数调整会使未完成参与无法继续砍价");
     }
     // PHP rechecks the source on every save, even when productId was omitted.
     // Only changed inherited fields are written; ordinary no-op edits stay no-op.
@@ -181,6 +209,7 @@ export async function setBargainStatus(container: Container, body: Record<string
   const status = integer(body.status, "状态", 0, 1);
   await withTx(container, async tx => {
     await limits(tx);
+    await lockBargainHelpRuleExclusive(tx, id);
     const rows = await tx.update(storeBargain).set({ status }).where(and(eq(storeBargain.id, id), eq(storeBargain.isDel, 0)))
       .returning({ id: storeBargain.id });
     if (!rows[0]) throw new ValidateException("砍价活动不存在或已删除");

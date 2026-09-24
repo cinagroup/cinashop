@@ -1,5 +1,18 @@
 <template>
   <div class="order-list">
+    <el-card shadow="never" class="chart-card" v-loading="chartLoading">
+      <template #header><strong>订单状态概览</strong></template>
+      <p class="chart-tip">全部当前履约单，含平台、门店及供应商；包含拆单子单，不含已删除订单及拆单支付父单。计数不随下方搜索变化。</p>
+      <el-alert v-if="chartError" :title="chartError" type="error" :closable="false" show-icon />
+      <el-button v-if="chartError && sessionValid" @click="fetchChart">重新加载</el-button>
+      <div v-if="!chartError" class="chart-grid" aria-label="订单状态计数">
+        <div v-for="item in chartCards" :key="item.label" class="chart-item">
+          <span class="chart-label">{{ item.label }}</span>
+          <strong class="chart-number">{{ item.count ?? '—' }}</strong>
+        </div>
+      </div>
+      <p class="chart-tip">“全部”还包含退款及取消单，因此可能大于其余状态数之和。</p>
+    </el-card>
     <el-card shadow="never" class="filter-card">
       <el-form inline>
         <el-form-item label="订单号">
@@ -132,6 +145,7 @@ import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { ElMessage } from "element-plus";
 import {
   apiAdminDeliveryOptions,
+  apiAdminOrderChart,
   apiAdminOrderList,
   apiAdminOrderDelivery,
   apiAdminCreateWaybill,
@@ -143,11 +157,22 @@ import type { AdminOrder } from "@/types/admin";
 import dayjs from "dayjs";
 import { createAdminSessionScope } from '@/utils/adminSessionScope';
 import { getAdminSession } from '@/utils/auth';
-import { adminOrderStatus, isCurrentFulfillment, orderNumber } from '@/utils/orderRead';
+import { adminOrderStatus, isCurrentFulfillment, orderNumber, type AdminOrderChart } from '@/utils/orderRead';
 
 const router = useRouter();
 
 const list = ref<AdminOrder[]>([]);
+const chart = ref<AdminOrderChart | null>(null);
+const chartLoading = ref(false);
+const chartError = ref('');
+const chartCards = computed(() => [
+  { label: '全部', count: chart.value?.all },
+  { label: '未支付', count: chart.value?.unpaid },
+  { label: '未发货', count: chart.value?.unshipped },
+  { label: '待收货', count: chart.value?.untake },
+  { label: '待评价', count: chart.value?.unevaluate },
+  { label: '交易完成', count: chart.value?.complete },
+]);
 const loading = ref(false);
 const total = ref(0);
 const readError = ref('');
@@ -170,17 +195,22 @@ const deliveryForm = reactive({
   fictitious_content: "",
 });
 const query = reactive({ page: 1, limit: 10, order_id: "", status: undefined as number | undefined });
-let epoch = 0, deliveryEpoch = 0;
+let epoch = 0, chartEpoch = 0, deliveryEpoch = 0;
 let readController: AbortController | undefined;
+let chartController: AbortController | undefined;
 const scope = createAdminSessionScope(() => {
-  sessionValid.value = false; reset(); readError.value = '登录状态已变化，请重新打开页面';
+  sessionValid.value = false; reset(); clearChart(); readError.value = '登录状态已变化，请重新打开页面';
 });
 function reset(clearCount = true) {
   epoch++; readController?.abort(); list.value = []; if (clearCount) total.value = 0; loading.value = false;
   deliveryVisible.value = false; deliveryOrder.value = null; deliveryEpoch++;
   deliveryOptions.value = []; expressOptions.value = []; deliveryOptionsLoading.value = false;
 }
-function dispose() { reset(); scope.dispose(); }
+function clearChart() {
+  chartEpoch++; chartController?.abort(); chartController = undefined;
+  chart.value = null; chartLoading.value = false; chartError.value = '';
+}
+function dispose() { reset(); clearChart(); scope.dispose(); }
 onBeforeUnmount(dispose);
 onBeforeRouteLeave(dispose);
 watch(deliveryVisible, visible => { if (!visible) { deliveryEpoch++; deliveryOrder.value = null; } }, { flush: 'sync' });
@@ -193,6 +223,24 @@ function canDeliver(row: AdminOrder) {
 
 function formatTime(ts: number): string {
   return ts ? dayjs(ts * 1000).format("YYYY-MM-DD HH:mm") : "-";
+}
+
+async function fetchChart() {
+  if (!scope.isCurrent()) return;
+  chartEpoch++; chartController?.abort();
+  const generation = chartEpoch, controller = new AbortController(); chartController = controller;
+  chartLoading.value = true; chartError.value = '';
+  try {
+    const result = await apiAdminOrderChart(controller.signal);
+    if (scope.isCurrent() && generation === chartEpoch) chart.value = result;
+  } catch (error) {
+    if (scope.isCurrent() && generation === chartEpoch) {
+      chart.value = null;
+      chartError.value = error instanceof Error ? error.message : '状态计数加载失败';
+    }
+  } finally {
+    if (generation === chartEpoch) chartLoading.value = false;
+  }
 }
 
 async function fetch() {
@@ -318,6 +366,7 @@ async function submitDelivery() {
     ElMessage.success("发货成功");
     deliveryVisible.value = false;
     await fetch();
+    void fetchChart();
   } catch (e) {
     if (!current()) return;
     ElMessage.error(e instanceof Error ? e.message : "发货失败");
@@ -326,10 +375,35 @@ async function submitDelivery() {
   }
 }
 
-onMounted(fetch);
+onMounted(() => { void fetch(); void fetchChart(); });
 </script>
 
 <style scoped>
+.chart-card {
+  margin-bottom: 16px;
+}
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.chart-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+}
+.chart-label, .chart-tip {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.chart-number {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
 .filter-card {
   margin-bottom: 16px;
 }

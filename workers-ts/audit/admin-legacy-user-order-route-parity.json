@@ -1,0 +1,760 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "Only the 12 user.js and 6 order.js surface=page routes in the authoritative 274-page inventory; auxiliary components are excluded.",
+    "reviewBasis": "Compare each pinned old Vue component, auth and API workflow with the new Admin screen, Worker route, data contract and permission map. Old router/auth/line evidence is a static reviewed snapshot; CI reads only this repository. A shared page, API-only stub or legacy mutation route returning 410 does not establish full parity. Security improvements that remove plaintext card-password retrieval are recorded as intentional differences.",
+    "validationBoundary": "Code-only semantic review. No production payment, refund, old card recovery, real-role browser E2E, deployment or publication is claimed. FE-001D remains open."
+  },
+  "summary": {
+    "legacyRoutes": 18,
+    "reviewed": 18,
+    "bySource": {
+      "src/router/modules/user.js": 12,
+      "src/router/modules/order.js": 6
+    },
+    "candidate": 2,
+    "partial": 14,
+    "missing": 2,
+    "retired": 0,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/order/list",
+        "title": "订单管理",
+        "component": "@/pages/order/orderList/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/order/orderList/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/order/orderList/index.vue:10",
+        "source": "cinashop-php/view/admin/src/router/modules/order.js:23",
+        "routerSha256": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
+        "auth": "['admin-order-storeOrder-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/order",
+        "/order/:orderId"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/list",
+        "GET /adminapi/order/detail/:id",
+        "POST /adminapi/order/delivery/:id",
+        "POST /adminapi/order/print/:id"
+      ],
+      "covered": [
+        "新订单页按订单号和状态分页查看当前履约单，可查主单及子单详情、打印、平台/快递/电子面单/虚拟发货与核销。"
+      ],
+      "remaining": [
+        "旧页还有多维时间、来源、门店/供应商、支付与用户筛选，以及备注、改价/改地址、线下支付、批量处理、导出、退货和删除等操作；新页未形成同等全流程，不能因主列表和若干写 API 判完成。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/order.js",
+        "cinashop-php/view/admin/src/pages/order/orderList/index.vue",
+        "cinashop-php/view/admin/src/pages/order/orderList/index.vue:10",
+        "cinashop-php/view/admin/src/api/order.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/order/OrderList.vue",
+        "view/admin-ts/src/pages/order/OrderDetail.vue",
+        "cinashop-php/view/admin/src/pages/order/orderList/orderlistDetails.vue",
+        "cinashop-php/view/admin/src/pages/order/orderList/components/tableList.vue",
+        "view/admin-ts/src/api/order.ts"
+      ],
+      "targetPermissions": [
+        "order.view",
+        "order.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/order/split_list",
+        "title": "子订单列表",
+        "component": "@/pages/order/orderList/splitList.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/order/orderList/splitList.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/order/orderList/splitList.vue:68",
+        "source": "cinashop-php/view/admin/src/router/modules/order.js:32",
+        "routerSha256": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
+        "auth": "['admin-order-storeOrder-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/order",
+        "/order/:orderId"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/list",
+        "GET /adminapi/order/detail/:id"
+      ],
+      "covered": [
+        "新订单列表可用原支付单号找到当前子单，主单详情列出子单链接和状态，当前子单可逐一打开。"
+      ],
+      "remaining": [
+        "旧独立子订单表可按门店、供应商、状态和时间筛选并执行线下收款、发货、打印、备注、退款等操作；新页没有同等子单专用筛选及所有旧动作。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/order.js",
+        "cinashop-php/view/admin/src/pages/order/orderList/splitList.vue",
+        "cinashop-php/view/admin/src/pages/order/orderList/splitList.vue:68",
+        "cinashop-php/view/admin/src/api/order.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/order/OrderList.vue",
+        "view/admin-ts/src/pages/order/OrderDetail.vue",
+        "view/admin-ts/src/utils/orderRead.ts"
+      ],
+      "targetPermissions": [
+        "order.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/order/offline",
+        "title": "收银订单",
+        "component": "@/pages/order/offline/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/order/offline/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/order/offline/index.vue:48",
+        "source": "cinashop-php/view/admin/src/router/modules/order.js:41",
+        "routerSha256": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
+        "auth": "['admin-order-offline']"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/order/offline"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/scan_list",
+        "GET /adminapi/order/offline_scan",
+        "GET /adminapi/order/scan_detail/:id"
+      ],
+      "covered": [
+        "新页覆盖旧收银订单列表、订单号/用户/时间查询和 H5/小程序收银码，增加逐单本地收款凭据核验、状态说明和受限角色查看。"
+      ],
+      "remaining": [
+        "仍需在生产用真实旧记录、收款凭据、扫码设备和受限角色做只读/端到端验收；旧原支付标记不能直接作为到账结论。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/order.js",
+        "cinashop-php/view/admin/src/pages/order/offline/index.vue",
+        "cinashop-php/view/admin/src/pages/order/offline/index.vue:48",
+        "cinashop-php/view/admin/src/api/order.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/order/OfflineOrders.vue",
+        "view/admin-ts/src/api/offline.ts",
+        "workers-ts/src/controllers/api/v1/AdminOfflineOrderController.ts"
+      ],
+      "targetPermissions": [
+        "order.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/order/refund",
+        "title": "售后订单",
+        "component": "@/pages/order/refund/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/order/refund/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/order/refund/index.vue:24",
+        "source": "cinashop-php/view/admin/src/router/modules/order.js:50",
+        "routerSha256": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
+        "auth": "['admin-order-refund']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/refund"
+      ],
+      "targetApis": [
+        "GET /adminapi/refund/list",
+        "GET /adminapi/refund/detail/:id",
+        "POST /adminapi/refund/operations/execute/:id",
+        "POST /adminapi/refund/operations/receipt"
+      ],
+      "covered": [
+        "新售后页可按单号/状态读取列表与详情，并通过版本化、带原请求键的操作合同处理退货、拒绝和退款，支持回执核对与恢复。"
+      ],
+      "remaining": [
+        "旧按原因/日期/申请类型筛选、ERP 分支、商品/门店/供应商范围等流程未逐项覆盖；旧 /refund/refund/:id 和 /refund/refuse/:id 明确返回 410，不能算迁移。真实支付渠道、退款回调及角色 E2E 仍待验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/order.js",
+        "cinashop-php/view/admin/src/pages/order/refund/index.vue",
+        "cinashop-php/view/admin/src/pages/order/refund/index.vue:24",
+        "cinashop-php/view/admin/src/api/order.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/refund/RefundList.vue",
+        "workers-ts/src/routes/admin-refund-operations.ts",
+        "workers-ts/src/app.ts",
+        "workers-ts/src/controllers/api/v1/AdminRefundOperationController.ts"
+      ],
+      "targetPermissions": [
+        "refund.view",
+        "refund.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/order/invoice/list",
+        "title": "发票管理",
+        "component": "@/pages/order/invoice/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/order/invoice/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/order/invoice/index.vue:174",
+        "source": "cinashop-php/view/admin/src/router/modules/order.js:59",
+        "routerSha256": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
+        "auth": "['admin-order-startOrderInvoice-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧页有发票统计、开票状态/时间查询、个人/企业抬头详情、发票号/金额/备注录入及导出；新 Admin 无发票管理页或等价 Worker 管理合同。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/order.js",
+        "cinashop-php/view/admin/src/pages/order/invoice/index.vue",
+        "cinashop-php/view/admin/src/pages/order/invoice/index.vue:174",
+        "cinashop-php/view/admin/src/api/order.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/order/queue/list",
+        "title": "任务列表",
+        "component": "@/pages/order/orderList/handle/queueList",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/order/orderList/handle/queueList.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/order/orderList/handle/queueList.vue:555",
+        "source": "cinashop-php/view/admin/src/router/modules/order.js:80",
+        "routerSha256": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
+        "auth": "none (commented out)"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/legacy-runtime"
+      ],
+      "targetApis": [
+        "GET /adminapi/queue/index",
+        "GET /adminapi/queue/delivery/log/:id/:type"
+      ],
+      "covered": [
+        "新迁移历史页可按类型/状态查看旧 queue_list 任务进度和逐项结果。"
+      ],
+      "remaining": [
+        "旧组件虽然被登记为路由，实际是默认关闭的弹窗；从订单页可查看、下载、重试、停止或清除批量任务。新页只读旧记录，当前 Worker outbox/Queue 是独立权威，不能重放旧 PHP 任务。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/order.js",
+        "cinashop-php/view/admin/src/pages/order/orderList/handle/queueList.vue",
+        "cinashop-php/view/admin/src/pages/order/orderList/handle/queueList.vue:555",
+        "cinashop-php/view/admin/src/api/order.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/operations/LegacyRuntimeHistory.vue",
+        "view/admin-ts/src/api/legacyRuntime.ts",
+        "workers-ts/src/services/system/LegacyRuntimeCatalogService.ts"
+      ],
+      "targetPermissions": [
+        "legacy_runtime.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/user/list",
+        "title": "用户列表",
+        "component": "@/pages/user/list/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/list/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/list/index.vue:49",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:27",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['admin-user-user-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/user"
+      ],
+      "targetApis": [
+        "GET /adminapi/user/list",
+        "GET /adminapi/user/info/:id",
+        "POST /adminapi/user/update_other/:uid"
+      ],
+      "covered": [
+        "新用户页可按手机号分页查看基础用户信息、余额/积分/等级与推广摘要，打开详情并调整余额。"
+      ],
+      "remaining": [
+        "旧页可按分组、标签、性别、等级、付费会员、访问/订单/地域等维度筛选，并支持发券、标签/分组/等级批量设置、积分/时长调整、推广关系及导出；新页无这些操作入口。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/list/index.vue",
+        "cinashop-php/view/admin/src/pages/user/list/index.vue:49",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/UserList.vue",
+        "view/admin-ts/src/api/order.ts"
+      ],
+      "targetPermissions": [
+        "user.view",
+        "user.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/level/list",
+        "title": "会员等级",
+        "component": "@/pages/user/level/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/level/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/level/index.vue:237",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:48",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['user-user-level']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/level"
+      ],
+      "targetApis": [
+        "GET /adminapi/level/list",
+        "POST /adminapi/level/save",
+        "DELETE /adminapi/level/del/:id"
+      ],
+      "covered": [
+        "新等级页可列出、新增、编辑和删除等级，维护折扣、经验、颜色、说明和启用字段。"
+      ],
+      "remaining": [
+        "旧页还提供等级任务/奖励明细、筛选与独立状态切换；新 Admin 没有等级任务管理入口，需验证历史等级和消费方。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/level/index.vue",
+        "cinashop-php/view/admin/src/pages/user/level/index.vue:237",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/level/LevelList.vue",
+        "cinashop-php/view/admin/src/pages/user/level/handle/task.vue",
+        "view/admin-ts/src/api/level.ts"
+      ],
+      "targetPermissions": [
+        "level.view",
+        "level.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/user/group",
+        "title": "用户分组",
+        "component": "@/pages/user/group/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/group/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/group/index.vue:96",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:84",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['user-user-group']"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/user/groups"
+      ],
+      "targetApis": [
+        "GET /adminapi/user_group/list",
+        "POST /adminapi/user_group/save",
+        "DELETE /adminapi/user_group/del/:id"
+      ],
+      "covered": [
+        "新用户分组页可按名称查询并分页查看分组，新增、编辑和删除分组；写操作按 user.manage 授权，已关联用户的分组由 Worker 拒绝删除。"
+      ],
+      "remaining": [
+        "旧表单名称上限20字，新页及Worker限64字，需确认运营是否接受扩展；仍需在生产用真实分组和受限角色核对名称、编辑及删除行为；用户批量分组设置属于旧用户列表流程，未因分组目录迁移而完成。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/group/index.vue",
+        "cinashop-php/view/admin/src/pages/user/group/index.vue:96",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/UserGroups.vue",
+        "view/admin-ts/src/api/userGroups.ts",
+        "workers-ts/src/services/user/UserSegmentationService.ts"
+      ],
+      "targetPermissions": [
+        "user.view",
+        "user.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/user/label",
+        "title": "用户标签",
+        "component": "@/pages/user/label/cate",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/label/cate.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/label/cate.vue:64",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:94",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['user-user-label']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/label"
+      ],
+      "targetApis": [
+        "GET /adminapi/user_label/list",
+        "POST /adminapi/user_label/save",
+        "DELETE /adminapi/user_label/del/:id"
+      ],
+      "covered": [
+        "新标签页的用户 tab 可列出、新增、编辑和删除平面用户标签。"
+      ],
+      "remaining": [
+        "旧分类侧栏、分类增删改、按类筛选及企业微信标签同步不在新页；新用户标签 CRUD 不代表分类或远端同步能力。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/label/cate.vue",
+        "cinashop-php/view/admin/src/pages/user/label/cate.vue:64",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/label/LabelList.vue"
+      ],
+      "targetPermissions": [
+        "label.view",
+        "label.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/user/recharge/:id",
+        "title": "充值配置",
+        "component": "@/pages/system/group/list",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/system/group/list.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/system/group/list.vue:216",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:104",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['user-user-recharge']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧路由复用 system/group/list，以 gid 管理充值组合数据条目及状态；新后台没有充值金额/赠送组合数据的配置页。新人注册赠余额和用户余额调整不是充值套餐配置。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/system/group/list.vue",
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:216",
+        "cinashop-php/view/admin/src/api/system.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/config/NewcomerSettings.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/grade/type",
+        "title": "会员类型",
+        "component": "@/pages/user/grade/type/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/grade/type/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/grade/type/index.vue:38",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:114",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['admin-user-member-type']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/member"
+      ],
+      "targetApis": [
+        "GET /adminapi/member/ship",
+        "POST /adminapi/member_ship/save/:id"
+      ],
+      "covered": [
+        "新会员套餐 tab 可新建、编辑、启停免费/周期/永久套餐，维护价格、期限、排序和推荐标记。"
+      ],
+      "remaining": [
+        "旧页可删除普通套餐；新页没有删除入口（虽有 Worker 删除 API），且真实商户支付、历史套餐与前台消费仍需验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/grade/type/index.vue",
+        "cinashop-php/view/admin/src/pages/user/grade/type/index.vue:38",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/api/membership.ts"
+      ],
+      "targetPermissions": [
+        "paid_membership.view",
+        "paid_membership.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/grade/card",
+        "title": "卡密会员",
+        "component": "@/pages/user/grade/card/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/grade/card/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/grade/card/index.vue:322",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:124",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['admin-user-grade-card']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/member"
+      ],
+      "targetApis": [
+        "GET /adminapi/member_batch/index",
+        "POST /adminapi/member_batch/save/:id",
+        "POST /adminapi/member_batch/set_value/:id",
+        "GET /adminapi/member_scan"
+      ],
+      "covered": [
+        "新卡批次 tab 可分页、制卡、编辑、冻结/启用、查看卡片与二维码，并在新建时一次性下载卡密 CSV。"
+      ],
+      "remaining": [
+        "旧页可按批次名称搜索并导出历史卡密；新页不回显或导出历史密码，这是有意的安全收口。生产旧批次、计数漂移和二维码渠道仍需核验。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/grade/card/index.vue",
+        "cinashop-php/view/admin/src/pages/user/grade/card/index.vue:322",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/api/membership.ts",
+        "workers-ts/src/controllers/api/v1/AdminPaidMembershipController.ts"
+      ],
+      "targetPermissions": [
+        "paid_membership.view",
+        "paid_membership.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/grade/record",
+        "title": "会员记录",
+        "component": "@/pages/user/grade/record/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/grade/record/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/grade/record/index.vue:367",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:134",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['admin-user-grade-record']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/member"
+      ],
+      "targetApis": [
+        "GET /adminapi/member/record"
+      ],
+      "covered": [
+        "新会员记录 tab 可按姓名/手机号/订单号和支付方式分页查看已支付记录、套餐与脱敏卡号。"
+      ],
+      "remaining": [
+        "旧会员类型、购买时间筛选及到期时间列未在新页提供；需核对历史免费/卡密记录与支付状态口径。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/grade/record/index.vue",
+        "cinashop-php/view/admin/src/pages/user/grade/record/index.vue:367",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/api/membership.ts"
+      ],
+      "targetPermissions": [
+        "paid_membership.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/grade/right",
+        "title": "会员权益",
+        "component": "@/pages/user/grade/right/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/grade/right/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/grade/right/index.vue:275",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:144",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['admin-user-grade-right']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/member"
+      ],
+      "targetApis": [
+        "GET /adminapi/member/right",
+        "POST /adminapi/member_right/save/:id",
+        "POST /adminapi/member/save/content/:id"
+      ],
+      "covered": [
+        "新权益 tab 可读取、增加和编辑权益名称、类型、数值、排序、状态、摘要及详细内容。"
+      ],
+      "remaining": [
+        "旧权益图标素材选择与富文本视觉编辑不在新页；当前编辑是文本输入，需验证历史图片引用和客户端呈现。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/grade/right/index.vue",
+        "cinashop-php/view/admin/src/pages/user/grade/right/index.vue:275",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/api/membership.ts"
+      ],
+      "targetPermissions": [
+        "paid_membership.view",
+        "paid_membership.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/grade/list/:id",
+        "title": "会员卡列表",
+        "component": "@/pages/user/grade/card/list",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/grade/card/list.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/grade/card/list.vue:107",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:154",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['user-member_card-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/member"
+      ],
+      "targetApis": [
+        "GET /adminapi/member_card/index/:card_batch_id",
+        "POST /adminapi/member_card/set_status"
+      ],
+      "covered": [
+        "新批次卡片抽屉可按卡号/使用状态分页查看使用人、时间并冻结/启用卡。"
+      ],
+      "remaining": [
+        "旧列表可按手机号检索且直接显示卡密；新列表不提供手机号筛选，历史卡密码永久隐藏，不能按旧明文查看合同宣称等价。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/grade/card/list.vue",
+        "cinashop-php/view/admin/src/pages/user/grade/card/list.vue:107",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/api/membership.ts",
+        "workers-ts/src/controllers/api/v1/AdminPaidMembershipController.ts"
+      ],
+      "targetPermissions": [
+        "paid_membership.view",
+        "paid_membership.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/vipuser/grade/agreement",
+        "title": "会员协议",
+        "component": "@/pages/user/grade/agreement/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/grade/agreement/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/grade/agreement/index.vue:100",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:164",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['admin-user-grade-agreement']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/member"
+      ],
+      "targetApis": [
+        "GET /adminapi/member/agreement",
+        "POST /adminapi/member_agreement/save/:id"
+      ],
+      "covered": [
+        "新协议 tab 可读取并保存标题、内容和前台启用状态。"
+      ],
+      "remaining": [
+        "旧 WangEditor 富文本所见即所得编辑器未迁移，新页是纯文本域；历史 HTML 的编辑可用性与前台安全呈现需实际核验。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/grade/agreement/index.vue",
+        "cinashop-php/view/admin/src/pages/user/grade/agreement/index.vue:100",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/api/membership.ts"
+      ],
+      "targetPermissions": [
+        "paid_membership.view",
+        "paid_membership.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/user/setup_user",
+        "title": "用户设置",
+        "component": "@/pages/user/setupUser/index.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/user/setupUser/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/user/setupUser/index.vue:1585",
+        "source": "cinashop-php/view/admin/src/router/modules/user.js:174",
+        "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
+        "auth": "['user-user-setup_user']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config/newcomer"
+      ],
+      "targetApis": [
+        "GET /adminapi/config/user/register",
+        "POST /adminapi/config/user/register"
+      ],
+      "covered": [
+        "新新人运营页覆盖登录注册方式、新人礼总开关/时效、赠送积分/余额/优惠券及首单优惠。"
+      ],
+      "remaining": [
+        "旧同屏还编辑会员等级经验、会员卡激活与奖励、付费会员启用和价格展示；新页没有这些设置，不能把会员运营目录当作开关合同。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/user.js",
+        "cinashop-php/view/admin/src/pages/user/setupUser/index.vue",
+        "cinashop-php/view/admin/src/pages/user/setupUser/index.vue:1585",
+        "cinashop-php/view/admin/src/api/user.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/config/NewcomerSettings.vue",
+        "view/admin-ts/src/api/newcomer.ts",
+        "workers-ts/src/controllers/api/v1/AdminNewcomerController.ts"
+      ],
+      "targetPermissions": [
+        "config.view",
+        "config.manage"
+      ]
+    }
+  ]
+}

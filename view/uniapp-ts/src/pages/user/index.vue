@@ -36,6 +36,8 @@
 
     <!-- 功能菜单 -->
     <view class="menu-section">
+      <view class="menu-item" @tap="goAdminRecords"><text>代客下单记录（管理员）</text><text class="arrow">›</text></view>
+      <view class="menu-item" @tap="goAdminBuyers"><text>代客选客与选品（管理员）</text><text class="arrow">›</text></view>
       <view class="menu-item" @tap="go('/pages/annex/offline_pay/index')"><text>¥ 线下消费收银</text><text class="arrow">›</text></view>
       <view class="menu-item" @tap="go('/pages/user/profile')">
         <text>👤 个人资料</text>
@@ -55,6 +57,10 @@
       </view>
       <view class="menu-item" @tap="go('/pages/user/collect')">
         <text>⭐ 我的收藏</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-item" @tap="go('/pages/user/visitHistory')">
+        <text>👣 我的足迹</text>
         <text class="arrow">›</text>
       </view>
       <view class="menu-item" @tap="go('/pages/user/coupon')">
@@ -109,6 +115,10 @@
         <text>💬 在线客服</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="go('/pages/extension/customer_list/feedback')">
+        <text>✉️ 意见反馈</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="go('/pages/goods/search')">
         <text>🔍 商品搜索</text>
         <text class="arrow">›</text>
@@ -143,6 +153,9 @@ function goLogin() {
     uni.navigateTo({ url: "/pages/auth/login" });
   }
 }
+
+function goAdminRecords() { uni.navigateTo({ url: '/pages/behalf/record/index' }); }
+function goAdminBuyers() { uni.navigateTo({ url: '/pages/behalf/user_list/index' }); }
 
 function goOrders(type?: number) {
   uni.navigateTo({ url: `/pages/order/list${type !== undefined ? `?type=${type}` : ""}` });

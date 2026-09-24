@@ -14,7 +14,13 @@ test("H5 build has an HTML entry and nonempty referenced application modules", (
   const html = artifact("dist/build/h5/index.html");
   const modules = [...html.matchAll(/<script[^>]*\bsrc="([^"]+\.js)"/g)];
   assert.ok(modules.length > 0);
-  for (const [, path] of modules) artifact(resolve("dist/build/h5", path.replace(/^\//, "")));
+  const entries = modules.map(([, path]) => artifact(resolve("dist/build/h5", path.replace(/^\//, "")))).join("\n");
+  // An old nonempty entry is not proof that newly registered pages were built.
+  for (const page of pages) {
+    // Uni's first page is registered at '/' with its page path as an alias.
+    const route = page === pages[0] ? `path:"/",alias:"/${page}"` : `path:"/${page}"`;
+    assert.ok(entries.includes(route), page);
+  }
 });
 
 test("Weixin build preserves the registered pages and produces page resources", () => {

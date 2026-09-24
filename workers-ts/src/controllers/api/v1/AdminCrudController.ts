@@ -50,8 +50,10 @@ import { StoreOperationsService } from "@/services/store/StoreOperationsService"
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
+import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 import { AdminRefundReadService, adminRefundId } from "@/services/admin/AdminRefundReadService";
 import { AdminOrderReadService } from "@/services/admin/AdminOrderReadService";
+import { listAdminUsers } from "@/services/admin/AdminUserListService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
 import {
@@ -61,6 +63,7 @@ import {
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { retireBargain } from "@/services/activity/BargainRetirementService";
 import { saveBargain, setBargainStatus } from "@/services/activity/BargainAdminService";
+import { retirePlatformSourceProduct } from "@/services/activity/BargainSourceProductLifecycle";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -407,15 +410,24 @@ export async function adminProductSkuRestore(c: C) {
 
 /** DELETE /api/admin/product/del/:id — 删除商品 (软删除) */
 export async function adminProductDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  await c.get("container").storeProductDao.update(id, { isDel: 1 });
+  const rawId = c.req.param("id") ?? "";
+  if (!/^[1-9]\d{0,9}$/.test(rawId)) return jsonFail(c, "参数错误");
+  const id = Number(rawId);
+  if (id > 2_147_483_647) return jsonFail(c, "参数错误");
+  await retirePlatformSourceProduct(c.get("container"), id);
   return jsonOk(c, null, "删除成功");
 }
 
 // ═══════════════════════════════════════════════════════════
 // 订单管理
 // ═══════════════════════════════════════════════════════════
+
+/** GET /api/admin/order/chart — current fulfillment status counts. */
+export async function adminOrderChart(c: C) {
+  privateNoStore(c);
+  if (Object.keys(c.req.queries()).length) throw new ValidateException('状态计数不支持筛选参数');
+  return jsonOk(c, await new AdminOrderReadService(c.get('container')).chart());
+}
 
 /** GET /api/admin/order/list — 订单列表 */
 export async function adminOrderList(c: C) {
@@ -541,6 +553,7 @@ export async function adminOrderDelivery(c: C) {
         throw new ValidateException("拼团尚未成功，不能发货");
       }
     }
+    await assertPresaleDispatchReady(tx, order);
     let verifyCode = "";
     if (deliveryType === "send") {
       const activeDelivery = await tx
@@ -679,14 +692,17 @@ export async function adminMobileUserDefaultAddress(c: C) {
 }
 
 export async function adminUserGroupList(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await userSegmentation(c).groupList(c.req.query()));
 }
 
 export async function adminUserGroupSave(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await userSegmentation(c).saveGroup(await metadataBody(c)), "提交成功");
 }
 
 export async function adminUserGroupDelete(c: C) {
+  privateNoStore(c);
   await userSegmentation(c).deleteGroup(metadataId(c));
   return jsonOk(c, null, "删除成功");
 }
@@ -714,18 +730,11 @@ export async function adminUsersSetLabel(c: C) {
 
 /** GET /api/admin/user/list — 用户列表 */
 export async function adminUserList(c: C) {
-  const q = c.req.query();
-  const page = Number(q.page ?? 1);
-  const limit = Number(q.limit ?? 10);
-  const container = c.get("container");
-
-  const where: Record<string, unknown> = { isDel: 0 };
-  if (q.uid) where.uid = Number(q.uid);
-  if (q.phone) where.phone = q.phone;
-  if (q.group_id) where.groupId = Number(q.group_id);
-
-  const list = await container.userDao.selectList({ where, page, limit });
-  return jsonOk(c, { list, page, limit });
+  privateNoStore(c);
+  if (Object.values(c.req.queries()).some(values => values.length !== 1)) {
+    throw new ValidateException('用户查询参数不能重复');
+  }
+  return jsonOk(c, await listAdminUsers(c.get('container'), c.req.query()));
 }
 
 /** GET /api/admin/user/info/:id — 用户详情 */
@@ -1271,14 +1280,14 @@ export async function adminCouponDel(c: C) {
 /** GET /api/admin/activity/seckill — 秒杀活动列表 */
 export async function adminSeckillList(c: C) {
   const container = c.get("container");
-  const list = await container.storeSeckillDao.selectList({ where: {}, limit: 100 });
+  const list = await container.storeSeckillDao.selectList({ where: { isDel: 0 }, limit: 100 });
   return jsonOk(c, list);
 }
 
 /** GET /api/admin/activity/combination — 拼团活动列表 */
 export async function adminCombinationList(c: C) {
   const container = c.get("container");
-  const list = await container.storeCombinationDao.selectList({ where: {}, limit: 100 });
+  const list = await container.storeCombinationDao.selectList({ where: { isDel: 0 }, limit: 100 });
   return jsonOk(c, list);
 }
 
@@ -1293,7 +1302,7 @@ export async function adminBargainList(c: C) {
 /** GET /api/admin/activity/integral — 积分商品列表 */
 export async function adminIntegralList(c: C) {
   const container = c.get("container");
-  const list = await container.storeIntegralDao.selectList({ where: {}, limit: 100 });
+  const list = await container.storeIntegralDao.selectList({ where: { isDel: 0 }, limit: 100 });
   return jsonOk(c, list);
 }
 
@@ -1310,23 +1319,16 @@ export async function adminActivityStatus(c: C) {
     id: number;
     status: number;
   };
-  const container = c.get("container");
   const { type, id, status } = body;
-  if (!type || !id) return jsonFail(c, "参数错误");
-
-  switch (type) {
-    case "seckill":
-      await container.storeSeckillDao.update(id, { status });
-      break;
-    case "combination":
-      await container.storeCombinationDao.update(id, { status });
-      break;
-    case "integral":
-      await container.storeIntegralDao.update(id, { status });
-      break;
-    default:
-      return jsonFail(c, "未知活动类型");
-  }
+  if (!Number.isInteger(id) || id <= 0 || id > 2_147_483_647 || (status !== 0 && status !== 1)) return jsonFail(c, "参数错误");
+  if (type !== "seckill" && type !== "combination" && type !== "integral") return jsonFail(c, "未知活动类型");
+  const schema = await import("@/models/schema");
+  const table = { seckill: schema.storeSeckill, combination: schema.storeCombination,
+    integral: schema.storeIntegral }[type];
+  const { and, eq } = await import("drizzle-orm");
+  const updated = await c.get("container").db.update(table).set({ status })
+    .where(and(eq(table.id, id), eq(table.isDel, 0))).returning({ id: table.id });
+  if (!updated.length) return jsonFail(c, "活动不存在");
   return jsonOk(c, null, "操作成功");
 }
 
@@ -2080,9 +2082,7 @@ export async function adminActivitySave(c: C) {
   const { eq } = await import("drizzle-orm");
   const schema = await import("@/models/schema");
   const now = Math.floor(Date.now() / 1000);
-  const sort = body.sort ?? 90;
-  const status = body.status ?? 1;
-  const common = {
+  const createCommon = {
     productId: body.productId ?? 0,
     storeName: body.storeName ?? "新活动",
     image: body.image ?? "",
@@ -2091,63 +2091,83 @@ export async function adminActivitySave(c: C) {
     quota: body.quota ?? 100,
     quotaShow: body.quota ?? 100,
     stock: body.stock ?? 100,
-    status,
-    sort,
+    status: body.status ?? 1,
+    sort: body.sort ?? 90,
   };
+
+  if (body.id !== undefined && (!Number.isInteger(body.id) || body.id <= 0 || body.id > 2_147_483_647)) {
+    return jsonFail(c, "活动ID错误");
+  }
+  if (body.quota !== undefined && (!Number.isSafeInteger(body.quota) || body.quota < 0 || body.quota > 2_147_483_647)) {
+    return jsonFail(c, "活动额度错误");
+  }
 
   return withTx(container, async tx => {
     const activityTables = { seckill: schema.storeSeckill, combination: schema.storeCombination, integral: schema.storeIntegral };
     if (!['seckill', 'combination', 'integral'].includes(body.type)) return jsonFail(c, "未知活动类型");
     const activityTable = activityTables[body.type as keyof typeof activityTables];
     if (!activityTable) return jsonFail(c, "未知活动类型");
-    if (body.id) {
+    let current: { productId: number; tempId: number; freight: number;
+      quota: number; quotaShow: number; isDel: number } | undefined;
+    if (body.id !== undefined) {
       const { boundShippingTemplateTransaction } = await import('@/services/order/ShippingTemplateSnapshot');
       const { lockActivityShippingSource, shippingLifecycleLock } = await import('@/services/product/ShippingTemplateLifecycleService');
       await boundShippingTemplateTransaction(tx);
-      const [current] = await shippingLifecycleLock(() => tx.select({ tempId: activityTable.tempId, freight: activityTable.freight, productId: activityTable.productId })
+      [current] = await shippingLifecycleLock(() => tx.select({ tempId: activityTable.tempId, freight: activityTable.freight,
+        productId: activityTable.productId, quota: activityTable.quota, quotaShow: activityTable.quotaShow,
+        isDel: activityTable.isDel })
         .from(activityTable).where(eq(activityTable.id, body.id!)).limit(1).for('no key update', { noWait: true }));
-      if (current) {
-        if (body.productId === undefined) common.productId = current.productId;
-        await lockActivityShippingSource(tx, common.productId, current);
-      }
+      if (!current || current.isDel !== 0) return jsonFail(c, "活动不存在");
+      await lockActivityShippingSource(tx, body.productId ?? current.productId, current);
     }
+    const quotaShow = current && body.quota !== undefined && body.quota !== current.quota
+      ? current.quotaShow + body.quota - current.quota : undefined;
+    if (quotaShow !== undefined && (!Number.isSafeInteger(quotaShow) || quotaShow < 0 || quotaShow > 2_147_483_647)) {
+      return jsonFail(c, "活动额度小于已售数量或超出范围");
+    }
+    const updateCommon = current ? {
+      ...(body.productId === undefined ? {} : { productId: body.productId }),
+      ...(body.storeName === undefined ? {} : { storeName: body.storeName }),
+      ...(body.image === undefined ? {} : { image: body.image }),
+      ...(body.price === undefined ? {} : { price: body.price }),
+      ...(body.otPrice === undefined ? {} : { otPrice: body.otPrice }),
+      ...(quotaShow === undefined ? {} : { quota: body.quota!, quotaShow }),
+      ...(body.stock === undefined ? {} : { stock: body.stock }),
+      ...(body.status === undefined ? {} : { status: body.status }),
+      ...(body.sort === undefined ? {} : { sort: body.sort }),
+    } : {};
     if (body.type === "seckill") {
-      const vals = {
-        ...common,
-        timeId: body.timeId ?? "1",
-        num: body.num ?? 2,
-        sales: 0,
-        addTime: now,
-      };
-      if (body.id) {
-        await tx.update(schema.storeSeckill).set(vals).where(eq(schema.storeSeckill.id, body.id));
+      if (body.id !== undefined) {
+        const patch = { ...updateCommon,
+          ...(body.timeId === undefined ? {} : { timeId: body.timeId }),
+          ...(body.num === undefined ? {} : { num: body.num }) };
+        if (Object.keys(patch).length) await tx.update(schema.storeSeckill).set(patch).where(eq(schema.storeSeckill.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await tx.insert(schema.storeSeckill).values(vals).returning({ id: schema.storeSeckill.id });
+      const row = await tx.insert(schema.storeSeckill).values({ ...createCommon, timeId: body.timeId ?? "1",
+        num: body.num ?? 2, sales: 0, addTime: now }).returning({ id: schema.storeSeckill.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     if (body.type === "combination") {
-      const vals = { ...common, people: body.people ?? 2, sales: 0, addTime: now };
-      if (body.id) {
-        await tx.update(schema.storeCombination).set(vals).where(eq(schema.storeCombination.id, body.id));
+      if (body.id !== undefined) {
+        const patch = { ...updateCommon, ...(body.people === undefined ? {} : { people: body.people }) };
+        if (Object.keys(patch).length) await tx.update(schema.storeCombination).set(patch).where(eq(schema.storeCombination.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await tx.insert(schema.storeCombination).values(vals).returning({ id: schema.storeCombination.id });
+      const row = await tx.insert(schema.storeCombination).values({ ...createCommon, people: body.people ?? 2,
+        sales: 0, addTime: now }).returning({ id: schema.storeCombination.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     if (body.type === "integral") {
-      const vals = {
-        ...common,
-        integral: body.integral ?? 100,
-        num: body.num ?? 1,
-        sales: 0,
-        addTime: now,
-      };
-      if (body.id) {
-        await tx.update(schema.storeIntegral).set(vals).where(eq(schema.storeIntegral.id, body.id));
+      if (body.id !== undefined) {
+        const patch = { ...updateCommon,
+          ...(body.integral === undefined ? {} : { integral: body.integral }),
+          ...(body.num === undefined ? {} : { num: body.num }) };
+        if (Object.keys(patch).length) await tx.update(schema.storeIntegral).set(patch).where(eq(schema.storeIntegral.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await tx.insert(schema.storeIntegral).values(vals).returning({ id: schema.storeIntegral.id });
+      const row = await tx.insert(schema.storeIntegral).values({ ...createCommon, integral: body.integral ?? 100,
+        num: body.num ?? 1, sales: 0, addTime: now }).returning({ id: schema.storeIntegral.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     return jsonFail(c, "未知活动类型");
@@ -2156,25 +2176,27 @@ export async function adminActivitySave(c: C) {
 
 /** DELETE /api/admin/activity/del/:type/:id — 删除活动 */
 export async function adminActivityDel(c: C) {
+  privateNoStore(c);
   const type = c.req.param("type") as "seckill" | "combination" | "bargain" | "integral";
-  const id = Number(c.req.param("id") ?? "0");
+  const rawId = c.req.param("id") ?? "";
   const container = c.get("container");
   if (type === "bargain") {
-    privateNoStore(c);
-    await retireBargain(container, c.req.param("id"));
+    await retireBargain(container, rawId);
     return jsonOk(c, null, "删除成功");
   }
+  if (type !== "seckill" && type !== "combination" && type !== "integral") return jsonFail(c, "未知活动类型");
+  if (!/^[1-9]\d{0,9}$/.test(rawId) || Number(rawId) > 2_147_483_647) return jsonFail(c, "活动ID错误");
+  const id = Number(rawId);
   const { eq } = await import("drizzle-orm");
   const schema = await import("@/models/schema");
   const tableMap = {
     seckill: schema.storeSeckill,
     combination: schema.storeCombination,
-    bargain: schema.storeBargain,
     integral: schema.storeIntegral,
   };
   const table = tableMap[type];
-  if (!table) return jsonFail(c, "未知活动类型");
-  await container.db.delete(table).where(eq(table.id, id));
+  const retired = await container.db.update(table).set({ isDel: 1 }).where(eq(table.id, id)).returning({ id: table.id });
+  if (!retired.length) return jsonFail(c, "活动不存在");
   return jsonOk(c, null, "删除成功");
 }
 

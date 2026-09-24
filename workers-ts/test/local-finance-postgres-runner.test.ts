@@ -80,7 +80,13 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.stdout).toBe('');
     expect(result.stderr).toContain(error);
   });
-  it.each(['admin-refund-operation-http','runtime-business-login','admin-runtime-login'])('admits the reviewed %s maintenance suite before binary validation',name=>{
+  it.each(['admin-refund-operation-http','runtime-business-login','assisted-purchase-runtime-postgres','assisted-purchase-flow-postgres','admin-user-list-postgres','admin-runtime-login','presale-runtime-permissions','membership-pricing-policy','purchase-quota-refund-receipt-postgres','purchase-quota-payment-ledger-postgres','unpaid-mixed-order-cancellation-postgres','purchase-origin-evidence-postgres','purchase-origin-installation',
+    'purchase-cancellation-evidence-postgres',
+    'purchase-cancellation-installation',
+    'finance-fixture-advisory-isolation','checkout-line-finance','checkout-coupon-template-authority','checkout-membership-boundary',
+    'checkout-brokerage-boundary','checkout-brokerage-authority','checkout-brokerage-paid-authority','checkout-member-evidence',
+    'checkout-catalog-management','checkout-mobile-product-concurrency','checkout-out-product-concurrency','checkout-sku-lifecycle-concurrency',
+    'level-pricing-activation','pc-coupon-wallet-postgres','product-price-truncation','out-stock-candidate-boundary'])('admits the reviewed %s maintenance suite before binary validation',name=>{
     const result=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',`test/${name}.test.ts`],
       {cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
     expect(result.error).toBeUndefined();expect(result.status).not.toBe(0);expect(result.stdout).toBe('');

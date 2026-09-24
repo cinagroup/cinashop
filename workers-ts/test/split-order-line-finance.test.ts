@@ -10,7 +10,8 @@ import { INVOICE_EVIDENCE_SQL } from '../src/migrations/invoiceEvidence';
 import { createContainerFromDb, withTx, type DbClient } from '../src/lib/di';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderOutbox, storeOrderRefund,
-  storeOrderStatus, storeProduct, storeProductAttrValue, systemSupplier, orderWaybillJob, user, userBrokerage, supplierFlowingWater, supplierTransactions } from '../src/models/schema';
+  storeOrderStatus, storeProduct, storeProductAttrValue, systemSupplier, orderWaybillJob, user, userBrokerage, supplierFlowingWater, supplierTransactions,
+  paymentReconciliationCase } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
 const delivery = { deliveryType: 'express' as const, deliveryName: 'Synthetic shipping', deliveryCode: 'local',
@@ -58,7 +59,8 @@ const allocate = async (oid: number, db = f.db) => {
 };
 beforeEach(async () => {
   f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderInvoice, storeOrderOutbox,
-    storeOrderRefund, storeOrderStatus, systemSupplier, orderWaybillJob, userBrokerage, supplierFlowingWater, supplierTransactions]);
+    storeOrderRefund, storeOrderStatus, systemSupplier, orderWaybillJob, userBrokerage, supplierFlowingWater, supplierTransactions,
+    paymentReconciliationCase]);
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   await f.exec(INVOICE_EVIDENCE_SQL);
   await f.exec('CREATE UNIQUE INDEX split_fixture_outbox_event ON store_order_outbox(event_key)');

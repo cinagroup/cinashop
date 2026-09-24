@@ -116,13 +116,15 @@ describe("actual bargain create/cancel on isolated SQL (no payment/provider)", (
     expect(await snapshot()).toEqual(before);
   });
 
-  it("rejects mixed new/legacy cart snapshots before touching any inventory", async () => {
+  it("rejects duplicate mixed cart rows at the cancellation evidence boundary before inventory compensation", async () => {
     await create();
     const [row] = await f.db.select().from(storeOrderCartInfo);
     const value = JSON.parse(row.cartInfo!); delete value.bargainParticipation;
     await f.db.insert(storeOrderCartInfo).values({ ...row, id: row.id + 100,
       unique: "mixed_local_snapshot", cartInfo: JSON.stringify(value) });
-    const before = await snapshot(); await expect(cancel()).rejects.toThrow("快照"); expect(await snapshot()).toEqual(before);
+    const before = await snapshot();
+    await expect(cancel()).rejects.toThrow("取消订单数量或归属凭据不一致");
+    expect(await snapshot()).toEqual(before);
   });
 
   it("keeps unambiguous pre-snapshot orders cancellable, but refuses ambiguous legacy identities", async () => {

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq, sql } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { createBargainSelectionFixture } from "./helpers/bargainSelectionFixture";
+import { withFinancePeers } from "./helpers/financePeers";
 import { BargainSkuCatalogService } from "../src/services/activity/BargainSkuCatalogService";
 import { storeBargain, storeBargainUser, storeProduct, storeProductAttrValue, user } from "../src/models/schema";
 import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "../../view/pc-ts/src/api/checkoutQuote";
@@ -159,6 +161,66 @@ describe("bounded bargain selection catalogue, actual controller and isolated SQ
       deadline: deadline === "0" ? "5s" : "750ms", idle: deadline === "0" ? "5s" : "750ms" }]);
     expect(rows(await f.db.execute(settingsSql))).toEqual(before);
   });
+  it("keeps one catalogue response on its repeatable-read snapshot while another backend commits price and stock", async () => {
+    const assertBefore = (result: Awaited<ReturnType<typeof read>>) => {
+      expect(result).toMatchObject({ activity_price: "10.00", participation: { catalog_price: "2.00" } });
+      expect(result.skus[0]).toMatchObject({ unique: "actred40", max_quantity: 6, catalog_price: "2.00" });
+    };
+    const assertAfter = (result: Awaited<ReturnType<typeof read>>) => {
+      expect(result).toMatchObject({ activity_price: "12.00", participation: { catalog_price: "4.00", activity_price_changed: true } });
+      expect(result.skus[0]).toMatchObject({ unique: "actred40", max_quantity: 1, catalog_price: "4.00" });
+    };
+    const change = async (db: typeof f.db) => {
+      await db.transaction(async tx => {
+        await tx.update(storeBargain).set({ price: "12.00", stock: 4 }).where(eq(storeBargain.id, 40));
+        await tx.update(storeProductAttrValue).set({ stock: 1 }).where(eq(storeProductAttrValue.id, 3));
+      });
+    };
+    if (!process.env.TEST_FINANCE_POSTGRES_URL) {
+      // PGlite has no independent backend. Keep the same old/new contract active
+      // locally; the native branch below proves the in-flight snapshot boundary.
+      assertBefore(await read());
+      await change(f.db);
+      assertAfter(await read());
+      return;
+    }
+    await withFinancePeers(f.db, async ([writer, observer]) => {
+      const original = f.db.transaction.bind(f.db);
+      const dialect = new PgDialect();
+      let checkpoints = 0;
+      const transactionSpy = vi.spyOn(f.db, "transaction").mockImplementation((fn, config) => original(async tx => {
+        const execute = tx.execute.bind(tx);
+        const executeSpy = vi.spyOn(tx, "execute").mockImplementation(statement => {
+          const result = execute(statement);
+          const command = typeof statement === "string" ? statement : dialect.sqlToQuery(statement.getSQL()).sql;
+          if (command.includes("pg_catalog.set_config('statement_timeout'")) {
+            return Promise.resolve(result).then(async resolved => {
+              checkpoints++;
+              const [snapshot] = await tx.select({ price: storeBargain.price, stock: storeBargain.stock })
+                .from(storeBargain).where(eq(storeBargain.id, 40));
+              const [identity] = await execute(sql`SELECT pg_backend_pid() AS pid, current_setting('transaction_isolation') AS isolation,
+                current_setting('transaction_read_only') AS read_only`);
+              expect(snapshot).toMatchObject({ price: "10.00", stock: 8 });
+              expect(identity).toMatchObject({ isolation: "repeatable read", read_only: "on" });
+              expect(new Set([Number(identity.pid), writer.pid, observer.pid]).size).toBe(3);
+              await change(writer.db);
+              const [committed] = await observer.db.select({ price: storeBargain.price, stock: storeBargain.stock })
+                .from(storeBargain).where(eq(storeBargain.id, 40));
+              expect(committed).toMatchObject({ price: "12.00", stock: 4 });
+              return resolved;
+            }) as unknown as ReturnType<typeof tx.execute>;
+          }
+          return result;
+        });
+        try { return await fn(tx); } finally { executeSpy.mockRestore(); }
+      }, config));
+      try {
+        assertBefore(await read());
+      } finally { transactionSpy.mockRestore(); }
+      expect(checkpoints).toBe(1);
+      assertAfter(await read());
+    });
+  }, 30000);
   it("round-trips real activity SKU to the owner's cart and exact full quote, including mutable activity-price effect", async () => {
     for (const activityPrice of ["10.00", "12.00"]) {
       await f.db.update(storeBargain).set({ price: activityPrice });

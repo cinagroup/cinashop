@@ -103,7 +103,7 @@ describe("second-card reminder migration", () => {
     );
     expect(outbox).toContain('return "reminder_brink_death"');
     expect(outbox).toContain('return "expiration_reminder"');
-    expect(outbox).toContain("if (isSecondCard) return");
+    expect(outbox).toContain("if (isSecondCard || payload.userId === 0) return");
     expect(outbox).toContain('secondCard.kind === "advent"');
     for (const contract of [migration, embedded, schema]) {
       expect(contract).toContain("soob_event_type_ck");

@@ -32,6 +32,10 @@
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/user')" index="/user/groups">
+          <el-icon><User /></el-icon>
+          <span>商城用户分组</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/community')" index="/community">
           <el-icon><ChatLineRound /></el-icon>
           <span>社区运营</span>
@@ -84,6 +88,10 @@
           <el-icon><Ticket /></el-icon>
           <span>优惠券管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/marketing/coupon-records')" index="/marketing/coupon-records">
+          <el-icon><Ticket /></el-icon>
+          <span>用户领取记录</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/activity')" index="/activity">
           <el-icon><Present /></el-icon>
           <span>营销活动</span>
@@ -95,6 +103,10 @@
         <el-menu-item v-if="canMenu('/marketing/live')" index="/marketing/live">
           <el-icon><VideoCamera /></el-icon>
           <span>小程序直播</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/marketing/user-point')" index="/marketing/user-point">
+          <el-icon><Tickets /></el-icon>
+          <span>积分日志</span>
         </el-menu-item>
         <el-menu-item v-if="canMenu('/system/out')" index="/system/out">
           <el-icon><Key /></el-icon>
@@ -131,6 +143,10 @@
         <el-menu-item v-if="canMenu('/finance/bill')" index="/finance/bill">
           <el-icon><Tickets /></el-icon>
           <span>财务流水</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/finance/capital-flow')" index="/finance/capital-flow">
+          <el-icon><Wallet /></el-icon>
+          <span>平台资金流水</span>
         </el-menu-item>
         <el-menu-item v-if="canMenu('/level')" index="/level">
           <el-icon><Medal /></el-icon>
@@ -251,6 +267,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/product")) return "/product";
   if (path === "/order/offline") return "/order/offline";
   if (path.startsWith("/order")) return "/order";
+  if (path.startsWith("/user/groups")) return "/user/groups";
   if (path.startsWith("/user")) return "/user";
   if (path.startsWith("/community")) return "/community";
   if (path.startsWith("/member")) return "/member";
@@ -266,9 +283,11 @@ const activeMenu = computed(() => {
   if (path.startsWith("/assets")) return "/assets";
   if (path.startsWith("/category")) return "/category";
   if (path.startsWith("/coupon")) return "/coupon";
+  if (path.startsWith("/marketing/coupon-records")) return "/marketing/coupon-records";
   if (path.startsWith("/activity")) return "/activity";
   if (path.startsWith("/marketing/lottery")) return "/marketing/lottery";
   if (path.startsWith("/marketing/live")) return "/marketing/live";
+  if (path.startsWith("/marketing/user-point")) return "/marketing/user-point";
   if (path.startsWith("/system/out")) return "/system/out";
   if (path.startsWith("/kefu")) return "/kefu";
   if (path.startsWith("/reply")) return "/reply";
@@ -276,6 +295,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/system/log")) return "/system/log";
   if (path.startsWith("/system")) return "/system";
   if (path.startsWith("/finance/supplier-extract")) return "/finance/supplier-extract";
+  if (path.startsWith("/finance/capital-flow")) return "/finance/capital-flow";
   if (path.startsWith("/finance/bill")) return "/finance/bill";
   if (path.startsWith("/finance")) return "/finance/extract";
   if (path.startsWith("/level")) return "/level";

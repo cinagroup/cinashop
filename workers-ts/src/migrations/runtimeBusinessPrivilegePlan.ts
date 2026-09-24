@@ -1,4 +1,4 @@
-/** Reviewed whole-shop v1 profile with independent LOGIN acceptance tests.
+/** Reviewed whole-shop profile with independent LOGIN acceptance tests.
  * Commissioning remains an explicit maintenance operation, never startup or
  * missing-permission repair. Runtime audit and business acceptance must still
  * pass on the actual Hyperdrives before switching the application.
@@ -13,6 +13,11 @@ import { RUNTIME_TABLE_LOCK_UPDATE } from './runtimeLockOnlyBoundary';
 const names = (value: string) => value.trim().split(/\s+/);
 const unique = (...groups: readonly string[][]) => [...new Set(groups.flat())].sort();
 export const RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY = true;
+
+// Public checkout, authenticated/guest assisted checkout and scheduled unpaid
+// cancellation use the application connection. Admin management does not need
+// these capabilities. Canonical protocol readiness is a grant prerequisite.
+export const RUNTIME_PURCHASE_EVIDENCE_TABLES = ['store_order_purchase_origin', 'store_order_purchase_cancellation'] as const;
 
 // Customer/supplier commerce, durable payment state, fulfillment and messaging.
 const sharedInsert = names(`
@@ -155,7 +160,7 @@ export interface RuntimePrivilegePlan {
 }
 export function runtimeBusinessPrivilegePlan(kind: 'app'|'admin'): RuntimePrivilegePlan {
   if (kind !== 'app' && kind !== 'admin') throw Error('Explicit runtime profile required');
-  const insert=unique(sharedInsert,[...OFFLINE_TABLES],kind==='admin'?adminInsert:[]);
+  const insert=unique(sharedInsert,[...OFFLINE_TABLES],kind==='admin'?adminInsert:[...RUNTIME_PURCHASE_EVIDENCE_TABLES]);
   const update=unique(sharedUpdate,RUNTIME_TABLE_LOCK_UPDATE,kind==='admin'?adminUpdate:[]);
   const remove=unique(sharedDelete,kind==='admin'?adminDelete:[]);
   const read=unique(sharedRead,insert,update,remove,Object.keys(sharedColumns),kind==='admin'?['system_timer','queue_list','queue_auxiliary']:[]);

@@ -44,6 +44,7 @@ import {
 } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
 import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
+import { claimAssistedProviderPayment, hasInitiatedAssistedProviderPayment } from "@/services/payment/AssistedProviderPaymentClaim";
 import {
   assertMarketingOfflinePaymentAllowed,
   getOrderInvalidTime,
@@ -232,7 +233,10 @@ export async function applyStoreOrderPayment(
     if (order.status !== 0 || order.isDel !== 0) {
       return { outcome: "not-payable", outbox: null };
     }
-
+    if (order.isChannel === 2 && params.payType !== PayType.WEIXIN && params.payType !== PayType.ALIPAY
+      && await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+      throw new ValidateException("扫码支付已发起，请查询支付状态；结果未知时请先人工对账");
+    }
     await assertActivityOrderPaymentEvidence(tx, order);
 
     await debitRequiredOrderIntegral(tx, order, now);
@@ -301,6 +305,9 @@ export async function applyStoreOrderBalancePayment(
     if (order.paid === 1) return { outcome: "already-paid", outbox: null };
     if (order.status !== 0 || order.isDel !== 0) {
       return { outcome: "not-payable", outbox: null };
+    }
+    if (order.isChannel === 2 && await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+      throw new ValidateException("扫码支付已发起，请查询支付状态；结果未知时请先人工对账");
     }
     await assertActivityOrderPaymentEvidence(tx, order);
     await assertPinkOrderPayable(tx, order);
@@ -401,6 +408,7 @@ export class StoreOrderPayService {
     payType: string,
     from: unknown,
     payerClientIp?: string,
+    beforeProviderRequest?: () => Promise<void>,
   ): Promise<Record<string, unknown>> {
     const normalizedPayType = payType.trim().toLowerCase();
     const supportedMethods: readonly string[] = [
@@ -447,14 +455,14 @@ export class StoreOrderPayService {
       return { order_id: orderId, paid: true, pay_type: PayType.YUE };
     }
     if (normalizedPayType === PayType.WEIXIN) {
-      return this.wechatPay(uid, orderId, from, payerClientIp);
+      return this.wechatPay(uid, orderId, from, payerClientIp, beforeProviderRequest);
     }
     if (normalizedPayType === PayType.ALIPAY) {
       return {
         order_id: orderId,
         paid: false,
         pay_type: PayType.ALIPAY,
-        payUrl: await this.alipayPay(uid, orderId),
+        payUrl: await this.alipayPay(uid, orderId, beforeProviderRequest),
       };
     }
     return this.offlinePay(uid, orderId, from);
@@ -465,6 +473,7 @@ export class StoreOrderPayService {
     orderId: string,
     from: unknown,
     payerClientIp?: string,
+    beforeProviderRequest?: () => Promise<void>,
   ): Promise<Record<string, unknown>> {
     const order = await this.container.storeOrderDao.findByOrderId(orderId);
     if (!order || order.uid !== uid || order.isDel !== 0) throw new NotFoundException("订单不存在");
@@ -479,14 +488,21 @@ export class StoreOrderPayService {
       payerClientIp,
     );
     await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
-    await registerPaymentReconciliationIntent(this.container, {
-      provider: "wechat",
-      profile: identity.profile,
-      orderDomain: "store_order",
-      orderNo: order.orderId,
-      expectedAmountCents: decimalToCents(order.payPrice),
-      initiated: true,
-    });
+    const claim = beforeProviderRequest ?? (order.isChannel === 2
+      ? () => claimAssistedProviderPayment(this.container, {
+        adminId: order.staffId, uid, orderId: order.id, orderNo: order.orderId,
+        provider: "wechat", profile: identity.profile, expectedPayCents: decimalToCents(order.payPrice),
+      }) : undefined);
+    if (!claim) {
+      const intent = await registerPaymentReconciliationIntent(this.container, {
+        provider: "wechat", profile: identity.profile, orderDomain: "store_order",
+        orderNo: order.orderId, expectedAmountCents: decimalToCents(order.payPrice), initiated: true,
+      });
+      if (intent.status === "CONFLICT" || intent.expectedAmountCents !== decimalToCents(order.payPrice)
+        || intent.profile !== identity.profile || intent.orderDomain !== "store_order") {
+        throw new ValidateException("支付金额或渠道与已发起的交易不一致，请先人工对账");
+      }
+    }
     const jsConfig = await new WechatPayService(this.container, this.env).createOrder({
       profile: identity.profile,
       type: identity.type,
@@ -496,6 +512,7 @@ export class StoreOrderPayService {
       ...(identity.openid ? { openid: identity.openid } : {}),
       ...(identity.payerClientIp ? { payerClientIp: identity.payerClientIp } : {}),
       attach: "product",
+      ...(claim ? { beforeProviderRequest: claim } : {}),
     });
     return {
       order_id: order.orderId,
@@ -522,6 +539,9 @@ export class StoreOrderPayService {
       if (!order || order.uid !== uid || order.isDel !== 0) throw new NotFoundException("订单不存在");
       if (order.paid === 1) return { order_id: orderId, paid: true, pay_type: order.payType };
       if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
+      if (order.isChannel === 2 && await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+        throw new ValidateException("扫码支付已发起，请查询支付状态；结果未知时请先人工对账");
+      }
       assertMarketingOfflinePaymentAllowed(order.type, from);
       await assertActivityOrderPaymentEvidence(tx, order);
       await assertPinkOrderPayable(tx, order);
@@ -592,7 +612,7 @@ export class StoreOrderPayService {
    * 生成经过 RSA2 签名的支付宝 H5 网关 URL。
    * 配置不完整时直接拒绝，避免把占位链接误当作可用支付。
    */
-  async alipayPay(uid: number, orderId: string): Promise<string> {
+  async alipayPay(uid: number, orderId: string, beforeProviderRequest?: () => Promise<void>): Promise<string> {
     const c = this.container;
     const order = await c.storeOrderDao.findByOrderId(orderId);
     if (!order) throw new NotFoundException("订单不存在");
@@ -609,15 +629,6 @@ export class StoreOrderPayService {
     if (!appId || !privateKey || !notifyUrl || !returnUrl) {
       throw new ValidateException("支付宝支付尚未完成商户配置");
     }
-
-    await registerPaymentReconciliationIntent(this.container, {
-      provider: "alipay",
-      profile: "alipay",
-      orderDomain: "store_order",
-      orderNo: order.orderId,
-      expectedAmountCents: decimalToCents(order.payPrice),
-      initiated: true,
-    });
 
     const gateway = "https://openapi.alipay.com/gateway.do";
     const params: AlipayParams = {
@@ -637,6 +648,23 @@ export class StoreOrderPayService {
       }),
     };
     params.sign = await signAlipayParams(params, privateKey);
+    const claim = beforeProviderRequest ?? (order.isChannel === 2
+      ? () => claimAssistedProviderPayment(this.container, {
+        adminId: order.staffId, uid, orderId: order.id, orderNo: order.orderId,
+        provider: "alipay", profile: "alipay", expectedPayCents: decimalToCents(order.payPrice),
+      }) : undefined);
+    if (claim) {
+      await claim();
+    } else {
+      const intent = await registerPaymentReconciliationIntent(this.container, {
+        provider: "alipay", profile: "alipay", orderDomain: "store_order",
+        orderNo: order.orderId, expectedAmountCents: decimalToCents(order.payPrice), initiated: true,
+      });
+      if (intent.status === "CONFLICT" || intent.expectedAmountCents !== decimalToCents(order.payPrice)
+        || intent.profile !== "alipay" || intent.orderDomain !== "store_order") {
+        throw new ValidateException("支付金额或渠道与已发起的交易不一致，请先人工对账");
+      }
+    }
     return `${gateway}?${new URLSearchParams(params).toString()}`;
   }
 

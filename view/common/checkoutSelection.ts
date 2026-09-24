@@ -24,6 +24,12 @@ export interface CheckoutCartItem {
 
 export type CheckoutSelection = { mode: "cart" } | { mode: "buy"; ids: number[] };
 
+/** UI eligibility only; the server determines the available points and final deduction. */
+export function checkoutSupportsIntegral(items: readonly Pick<CheckoutCartItem, "type">[]): boolean {
+  const type = items[0]?.type;
+  return (type === 0 || type === 6) && items.every(item => item.type === type);
+}
+
 /** UI eligibility only: the order service re-reads product types and delivery rules. */
 export function checkoutRequiresAddress(items: readonly Pick<CheckoutCartItem, "productInfo">[]): boolean {
   // Empty or incomplete selections fail closed; only known non-logistics types are exempt.

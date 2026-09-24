@@ -113,7 +113,7 @@ v1Routes.get("/get_copyright", PublicController.getCopyright);
 v1Routes.get("/search/hot_keyword", PublicController.hotKeywords);
 v1Routes.get("/search/keyword", PublicController.searchWords);
 v1Routes.get("/user_agreement/:type", PublicController.getUserAgreement);
-v1Routes.get("/agreement/:type", PublicController.getUserAgreement);
+v1Routes.get("/agreement/:type", PublicController.getAgreement);
 v1Routes.get("/get_open_adv", PublicController.getOpenAdv);
 v1Routes.get("/navigation", PublicController.navigation);
 v1Routes.get("/navigation/:template_name", PublicController.navigation);
@@ -1429,6 +1429,7 @@ v1Routes.put(
 v1Routes.delete("/admin/product/words/:id", adminAuth, AdminProductWords.remove);
 
 // 订单管理
+v1Routes.get("/admin/order/chart", adminAuth, AdminCrud.adminOrderChart);
 v1Routes.get("/admin/order/list", adminAuth, AdminCrud.adminOrderList);
 v1Routes.get("/admin/order/detail/:orderId", adminAuth, AdminCrud.adminOrderDetail);
 v1Routes.get("/admin/order/cart/:uid", adminAuth, AdminController.adminAssistedCartList);
@@ -1436,8 +1437,12 @@ v1Routes.post("/admin/order/cart/add/:uid", adminAuth, AdminController.adminAssi
 v1Routes.delete("/admin/order/cart/del/:uid", adminAuth, AdminController.adminAssistedCartDel);
 v1Routes.post("/admin/order/cart/num/:uid", adminAuth, AdminController.adminAssistedCartNum);
 v1Routes.get("/admin/order/place/list", adminAuth, AdminController.adminAssistedPlaceList);
+v1Routes.get("/admin/order/place/detail/:orderId", adminAuth, AdminController.adminAssistedPlaceDetail);
 v1Routes.post("/admin/order/confirm/:uid", adminAuth, AdminController.adminAssistedConfirm);
 v1Routes.post("/admin/order/computed/:key/:uid", adminAuth, AdminController.adminAssistedComputed);
+v1Routes.post("/admin/order/form_image/:key/:uid", adminAuth, AdminController.adminAssistedFormImage);
+v1Routes.post("/admin/order/form_preview/:key/:uid", adminAuth, AdminController.adminAssistedFormPreview);
+v1Routes.get("/admin/order/form/:orderId/:uid", adminAuth, AdminController.adminAssistedOrderForm);
 v1Routes.get("/admin/order/coupons/:uid", adminAuth, AdminController.adminAssistedCoupons);
 v1Routes.post("/admin/order/create/:key/:uid", adminAuth, AdminController.adminAssistedCreate);
 v1Routes.post("/admin/order/pay/:uid", adminAuth, AdminController.adminAssistedPay);

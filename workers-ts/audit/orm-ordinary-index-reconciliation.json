@@ -239,9 +239,9 @@
       ],
       "queryEvidence": {
         "source": "src/services/activity/ActivityJoinService.ts",
-        "sourceLine": 805,
+        "sourceLine": 838,
         "purpose": "User bargain participation list",
-        "sourceSql": "      .from(storeBargainUser)\n      .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))\n      .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))\n      .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))"
+        "sourceSql": "      .from(storeBargainUser)\n      .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))\n      .leftJoin(storeProduct, eq(storeProduct.id, storeBargain.productId))\n      .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))\n      .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))"
       },
       "decision": "restore-worker-query-index",
       "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."

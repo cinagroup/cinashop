@@ -95,6 +95,9 @@ interface NoticeContext {
     isDel: number;
     isSystemDel: number;
     refundStatus: number;
+    type: number;
+    staffId: number;
+    couponId: number;
   };
 }
 
@@ -112,6 +115,13 @@ interface NoticeConfig {
 function positiveId(value: unknown, label: string): number {
   if (!Number.isSafeInteger(value) || Number(value) <= 0) throw new Error(`${label} 无效`);
   return Number(value);
+}
+
+function assertAssistedGuestDeliverySource(order: {
+  uid: number; type: number; isChannel: number; staffId: number; couponId: number;
+} | undefined): void {
+  if (!order || order.uid !== 0 || order.type !== 0 || order.isChannel !== 2
+    || order.staffId <= 0 || order.couponId !== 0) throw new Error('游客发货通知订单来源无效');
 }
 
 function requiredString(value: unknown, label: string, maxLength: number): string {
@@ -219,8 +229,17 @@ export async function enqueueOrderDeliveryNoticeEvent(
   now = Math.floor(Date.now() / 1_000),
 ): Promise<{ id: number; eventKey: string }> {
   const orderId = positiveId(input.orderId, "订单 ID");
-  const userId = positiveId(input.userId, "用户 ID");
+  const userId = input.userId === 0 ? 0 : positiveId(input.userId, "用户 ID");
   const orderNo = requiredString(input.orderNo, "订单号", 32);
+  if (userId === 0) {
+    // Guest delivery still has an order-specific SMS destination. It must never
+    // borrow a UID=0 account, inbox or WeChat identity. Check the SQL source,
+    // not an optional caller-provided guest flag, in the delivery transaction.
+    const [order] = await db.select({ uid: storeOrder.uid, type: storeOrder.type,
+      isChannel: storeOrder.isChannel, staffId: storeOrder.staffId, couponId: storeOrder.couponId,
+    }).from(storeOrder).where(and(eq(storeOrder.id, orderId), eq(storeOrder.orderId, orderNo))).limit(1);
+    assertAssistedGuestDeliverySource(order);
+  }
   if (!["express", "send", "fictitious"].includes(input.deliveryType)) {
     throw new Error("发货类型无效");
   }
@@ -312,7 +331,7 @@ export function assertOrderNotificationPayload(
   if (!value || typeof value !== "object") throw new Error("通知 outbox payload 不是对象");
   const payload = value as Record<string, unknown>;
   positiveId(payload.orderId, "通知订单 ID");
-  positiveId(payload.userId, "通知用户 ID");
+  if (!(eventType === ORDER_DELIVERY_NOTICE_EVENT && payload.userId === 0)) positiveId(payload.userId, "通知用户 ID");
   if (payload.orderId !== aggregateId) throw new Error("通知 outbox 聚合 ID 不匹配");
   requiredString(payload.orderNo, "通知订单号", 32);
 
@@ -440,7 +459,7 @@ async function noticeContext(
         .where(eq(storeOrderCartInfo.oid, payload.orderId))
         .orderBy(asc(storeOrderCartInfo.id));
   const [buyerRows, cartRows, orderRows, identities] = await Promise.all([
-    tx.select({ nickname: user.nickname }).from(user).where(eq(user.uid, payload.userId)).limit(1),
+    payload.userId === 0 ? Promise.resolve([]) : tx.select({ nickname: user.nickname }).from(user).where(eq(user.uid, payload.userId)).limit(1),
     cartQuery,
     tx
       .select({
@@ -461,11 +480,14 @@ async function noticeContext(
         isDel: storeOrder.isDel,
         isSystemDel: storeOrder.isSystemDel,
         refundStatus: storeOrder.refundStatus,
+        type: storeOrder.type,
+        staffId: storeOrder.staffId,
+        couponId: storeOrder.couponId,
       })
       .from(storeOrder)
       .where(eq(storeOrder.id, payload.orderId))
       .limit(1),
-    tx
+    payload.userId === 0 ? Promise.resolve([]) : tx
       .select({
         id: wechatUser.id,
         userType: wechatUser.userType,
@@ -482,6 +504,7 @@ async function noticeContext(
   if (!order || order.uid !== payload.userId || order.orderId !== payload.orderNo) {
     throw new Error("通知订单快照与当前订单不匹配");
   }
+  if (payload.userId === 0) assertAssistedGuestDeliverySource(order);
   const storeName = secondCard?.storeName ?? utf8Prefix(
     cartRows.map((row) => productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join("|"),
     20,
@@ -678,7 +701,7 @@ async function stageExternalNotifications(
   }
 
   // The PHP second-card notices only had system-message and SMS consumers.
-  if (isSecondCard) return;
+  if (isSecondCard || payload.userId === 0) return;
 
   const officialEnabled = config?.isWechat === 1 &&
     (isRefund || delivery?.deliveryType === "express");
@@ -851,7 +874,7 @@ export async function processOrderNotificationOutboxEvent(
     return "disabled";
   }
   await stageExternalNotifications(tx, event, payload, mark, template, context, now);
-  if (!template || template.isSystem !== 1) return "disabled";
+  if (!template || template.isSystem !== 1 || payload.userId === 0) return "disabled";
 
   const title = renderTemplate(template.title, context.values);
   const content = renderTemplate(template.content, context.values);

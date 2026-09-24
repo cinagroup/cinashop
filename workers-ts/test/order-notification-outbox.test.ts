@@ -65,6 +65,17 @@ describe("order notification outbox", () => {
     }, ORDER_DELIVERY_NOTICE_EVENT, 42)).toThrow("聚合 ID 不匹配");
   });
 
+  it('admits zero only as a delivery payload candidate; the SQL source is checked by enqueue and processing', () => {
+    const payload = { orderId: 42, orderNo: 'ORDER42', userId: 0, deliveryType: 'express',
+      deliveryName: 'Local', deliveryId: 'Local', userAddress: '' };
+    expect(() => assertOrderNotificationPayload(payload, ORDER_DELIVERY_NOTICE_EVENT, 42)).not.toThrow();
+    for (const userId of [-1, 0.1, NaN, '0'])
+      expect(() => assertOrderNotificationPayload({ ...payload, userId }, ORDER_DELIVERY_NOTICE_EVENT, 42)).toThrow('用户 ID 无效');
+    expect(() => assertOrderNotificationPayload({ ...payload, refundId: 1, payPrice: '1.00' }, ORDER_REFUND_REFUSED_NOTICE_EVENT, 42))
+      .toThrow('用户 ID 无效');
+    expect(() => assertOrderNotificationPayload(payload, 'order.second_card.advent.notice', 42)).toThrow('用户 ID 无效');
+  });
+
   it("acks successful notices, retries failures and allows idempotent DLQ replay", async () => {
     const success = notificationMessage();
     const processor = { processMessage: vi.fn().mockResolvedValue("completed") };
@@ -92,8 +103,8 @@ describe("order notification outbox", () => {
   });
 
   it("keeps physical and embedded DDL identical and wires every current mutation path", () => {
-    const migration = readFileSync("migrations/0084_order_notification_outbox.sql", "utf8").trim();
-    const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
+    const migration = readFileSync("migrations/0084_order_notification_outbox.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const embedded = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n")
       .match(/private migration_0091\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
     expect(embedded).toBe(migration);

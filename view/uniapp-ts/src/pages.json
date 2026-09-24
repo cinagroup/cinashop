@@ -8,6 +8,54 @@
       }
     },
     {
+      "path": "pages/behalf/record/index",
+      "style": { "navigationBarTitleText": "代客下单记录" }
+    },
+    {
+      "path": "pages/behalf/user_list/index",
+      "style": { "navigationBarTitleText": "代客选择买家" }
+    },
+    {
+      "path": "pages/behalf/order_confirm/index",
+      "style": { "navigationBarTitleText": "代客确认订单" }
+    },
+    {
+      "path": "pages/behalf/order_detail/index",
+      "style": { "navigationBarTitleText": "代客订单详情" }
+    },
+    {
+      "path": "pages/behalf/cashier/index",
+      "style": { "navigationBarTitleText": "代客订单收银" }
+    },
+    {
+      "path": "pages/behalf/goods_list/index",
+      "style": { "navigationBarTitleText": "代客选品与购物车" }
+    },
+    {
+      "path": "pages/extension/customer_list/feedback",
+      "style": { "navigationBarTitleText": "意见反馈" }
+    },
+    {
+      "path": "pages/work/userInfo/index",
+      "style": { "navigationBarTitleText": "企业微信客户" }
+    },
+    {
+      "path": "pages/work/orderList/index",
+      "style": { "navigationBarTitleText": "客户订单" }
+    },
+    {
+      "path": "pages/work/orderDetail/index",
+      "style": { "navigationBarTitleText": "客户订单详情" }
+    },
+    {
+      "path": "pages/work/record/index",
+      "style": { "navigationBarTitleText": "客户商品记录" }
+    },
+    {
+      "path": "pages/work/groupInfo/index",
+      "style": { "navigationBarTitleText": "企业微信群" }
+    },
+    {
       "path": "pages/goods/cate",
       "style": {
         "navigationBarTitleText": "分类"
@@ -24,6 +72,22 @@
       "style": {
         "navigationBarTitleText": "社区关系"
       }
+    },
+    {
+      "path": "pages/discover/discoverTopic/index",
+      "style": { "navigationBarTitleText": "话题列表" }
+    },
+    {
+      "path": "pages/discover/discoverSearch/index",
+      "style": { "navigationBarTitleText": "搜索结果" }
+    },
+    {
+      "path": "pages/discover/discoverVideo/index",
+      "style": { "navigationBarTitleText": "社区视频" }
+    },
+    {
+      "path": "pages/discover/discoverVideo/app",
+      "style": { "navigationBarTitleText": "社区视频" }
     },
     {
       "path": "pages/cart/index",
@@ -52,6 +116,22 @@
       "style": {
         "navigationBarTitleText": "商品详情"
       }
+    },
+    {
+      "path": "pages/activity/presale",
+      "style": { "navigationBarTitleText": "预售专区" }
+    },
+    {
+      "path": "pages/activity/presaleDetail",
+      "style": { "navigationBarTitleText": "全款预售" }
+    },
+    {
+      "path": "pages/columnGoods/rank/index",
+      "style": { "navigationBarTitleText": "商品排行榜" }
+    },
+    {
+      "path": "pages/columnGoods/live_list/index",
+      "style": { "navigationBarTitleText": "微信直播", "enablePullDownRefresh": true }
     },
     {
       "path": "pages/article/list",
@@ -182,6 +262,14 @@
       }
     },
     {
+      "path": "pages/user/agreements",
+      "style": { "navigationBarTitleText": "用户协议" }
+    },
+    {
+      "path": "pages/user/legalContent",
+      "style": { "navigationBarTitleText": "协议详情" }
+    },
+    {
       "path": "pages/user/couponCenter",
       "style": {
         "navigationBarTitleText": "领券中心"
@@ -222,6 +310,10 @@
       "style": {
         "navigationBarTitleText": "我的收藏"
       }
+    },
+    {
+      "path": "pages/user/visitHistory",
+      "style": { "navigationBarTitleText": "我的足迹" }
     },
     {
       "path": "pages/user/coupon",
@@ -317,6 +409,18 @@
       "path": "pages/activity/bargainDetail",
       "style": {
         "navigationBarTitleText": "砍价详情"
+      }
+    },
+    {
+      "path": "pages/activity/new_customer/index",
+      "style": {
+        "navigationBarTitleText": "新人礼"
+      }
+    },
+    {
+      "path": "pages/activity/newcomerDetail",
+      "style": {
+        "navigationBarTitleText": "新人专享商品"
       }
     },
     {

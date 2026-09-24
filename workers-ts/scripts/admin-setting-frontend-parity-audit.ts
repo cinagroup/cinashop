@@ -206,7 +206,10 @@ const reviews: Record<string, Review> = {
     covered: ["确认旧页面是误复制的商品规格代码，不是可工作的单据设置"],
     remaining: [],
     evidence: [
-      "legacy component imports productSpecsList but calls undefined isShowApi/userLabelAddApi and deletes product/specs/:id",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:82",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:192",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:202",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:215",
     ],
   },
   "/admin/setting/document/content": {
@@ -365,6 +368,234 @@ const reviews: Record<string, Review> = {
   },
 };
 
+// The remaining routes were compared against their legacy component and the new Admin
+// router, page, and Worker route. A shared old component is not proof of shared parity.
+const newRouter = "view/admin-ts/src/router/index.ts";
+const adminApiRoutes = "workers-ts/src/routes/adminapi.ts";
+const legacyRouter = "cinashop-php/view/admin/src/router/modules/setting.js";
+
+function addReview(
+  path: string,
+  status: Exclude<Status, "unreviewed">,
+  targetScreens: string[],
+  targetApis: string[],
+  covered: string[],
+  remaining: string[],
+  evidence: string[],
+): void {
+  if (reviews[path]) throw new Error(`Duplicate review: ${path}`);
+  reviews[path] = { status, targetScreens, targetApis, covered, remaining, evidence };
+}
+
+addReview("/admin/setting/third_party", "missing", [], [], [],
+  ["旧页按 third 类型加载第三方身份配置动态表单；新版无对应受控管理页或字段合同"],
+  ["cinashop-php/view/admin/src/pages/setting/third_party/index.vue", "cinashop-php/view/admin/src/pages/setting/shop/buildData.js", newRouter, adminApiRoutes]);
+addReview("/admin/setting/distribution/deliver", "missing", [], [], [],
+  ["旧页按 deliver 类型加载发货设置动态表单；运费模板和订单发货页不替代这组发货配置"],
+  ["cinashop-php/view/admin/src/pages/setting/distribution/deliver.vue", "cinashop-php/view/admin/src/pages/setting/shop/buildData.js", newRouter]);
+addReview("/admin/setting/system_role/index", "partial", ["/system（角色权限）"],
+  ["GET /adminapi/system_role/list", "POST /adminapi/system_role/save", "DELETE /adminapi/system_role/del/:id", "GET /adminapi/system_menus/tree"],
+  ["新版可列出、新增、编辑、删除角色并选择已有权限树节点"],
+  ["旧页的角色状态切换、筛选和完整权限规则管理尚无对应操作；需验证历史角色权限映射"],
+  ["cinashop-php/view/admin/src/pages/setting/systemRole/index.vue", "view/admin-ts/src/pages/system/SystemList.vue", adminApiRoutes]);
+addReview("/admin/setting/system_admin/index", "partial", ["/system（管理员）"],
+  ["GET /adminapi/system_admin/list", "POST /adminapi/system_admin/save"],
+  ["新版可列出、新增、编辑管理员及角色关联，并以受控密码字段保存"],
+  ["旧页账号启停和筛选未在新版页面提供；真实主管理员及受限角色仍需端到端核验"],
+  ["cinashop-php/view/admin/src/pages/setting/systemAdmin/index.vue", "view/admin-ts/src/pages/system/SystemList.vue", adminApiRoutes]);
+addReview("/admin/setting/system_menus/index", "missing", [], ["GET /adminapi/system_menus/tree"], [],
+  ["新版权限树仅供角色授权读取，缺旧页菜单规则列表、新增、编辑与显隐操作"],
+  ["cinashop-php/view/admin/src/pages/setting/systemMenus/index.vue", "view/admin-ts/src/pages/system/SystemList.vue", adminApiRoutes]);
+addReview("/admin/setting/system_config/:type?/:tab_id?", "partial",
+  ["/config", "/config/commerce", "/config/newcomer", "/config/runtime-content"],
+  ["GET|POST /adminapi/config/commerce", "GET|POST /adminapi/config/user/register", "GET|POST /adminapi/config/runtime_content"],
+  ["新版以白名单页面承接商城、新人和客户端内容中的部分旧动态配置"],
+  ["旧应用设置按 type/tab 加载的其他分类及动态提交动作未逐字段承接，不能把受限配置入口等同原任意表单"],
+  ["cinashop-php/view/admin/src/pages/setting/setSystem/index.vue", "view/admin-ts/src/pages/ConfigList.vue", "view/admin-ts/src/pages/config/CommerceSettings.vue"]);
+addReview("/admin/setting/system_config/payment/:type?/:tab_id?", "partial", ["/config/commerce（支付设置）"],
+  ["GET|POST /adminapi/config/commerce"],
+  ["新版承接支付开关、公开商户号和证书序列号，运行时凭据经 Secret 提供"],
+  ["旧动态支付配置的每个 tab 与渠道字段尚未一一确认；密钥类字段不得移入 Admin 表单"],
+  ["cinashop-php/view/admin/src/pages/setting/setSystem/index.vue", "view/admin-ts/src/pages/config/CommerceSettings.vue", "workers-ts/src/services/system/AdminCommerceSettingsService.ts"]);
+addReview("/admin/setting/membership_level/index", "missing", [],
+  ["GET /adminapi/agent/level_task"], [],
+  ["旧页管理分销等级和等级任务；新版 /level 是会员等级，agent/level_task 仅有后端接口，没有对应 Admin 操作页"],
+  ["cinashop-php/view/admin/src/pages/setting/membershipLevel/index.vue", "view/admin-ts/src/pages/level/LevelList.vue", newRouter, adminApiRoutes]);
+addReview("/admin/setting/system_config_message/:type?/:tab_id?", "partial", ["/setting/notification"],
+  ["GET /adminapi/notification/order-config", "PUT /adminapi/notification/order-config/:mark"],
+  ["新版可配置已迁移订单通知的站内、短信及微信渠道"],
+  ["旧短信开关动态分类和会员/平台通知目录未全部迁移"],
+  ["cinashop-php/view/admin/src/pages/setting/setSystem/index.vue", "view/admin-ts/src/pages/setting/NotificationList.vue", adminApiRoutes]);
+addReview("/admin/setting/system_config_logistics/:type?/:tab_id?", "partial", ["/shipping", "/express", "/setting/waybill"],
+  ["GET /adminapi/shipping_template/list", "GET /adminapi/express/list"],
+  ["运费模板、快递公司与电子面单有专用页面"],
+  ["旧物流配置动态字段及发货参数未按 tab 逐项承接"],
+  ["cinashop-php/view/admin/src/pages/setting/setSystem/index.vue", "view/admin-ts/src/pages/shipping/ShippingTemplates.vue", "view/admin-ts/src/pages/express/ExpressList.vue"]);
+addReview("/admin/setting/sms/sms_config/index", "partial", ["/setting/notification（提供商就绪状态）"],
+  ["GET /adminapi/sms/config"],
+  ["新版展示短信提供商是否已由 Worker Secret 配齐，并有订单短信模板管理"],
+  ["旧页通过第三方 iframe 接收并提交一号通 accessKey/secretKey；新版没有一号通账户配置或迁移流程，不能将其视作已退休"],
+  ["cinashop-php/view/admin/src/pages/setting/smsConfig/index.vue", "view/admin-ts/src/pages/setting/NotificationList.vue", adminApiRoutes]);
+
+// These 16 paths all use the same legacy group-data editor, with distinct group IDs.
+const groupDataTopics: Array<[string, string]> = [
+  ["index/:id", "首页导航按钮"], ["slide/:id", "首页幻灯片"], ["sign/:id", "签到天数配置"],
+  ["order/:id", "订单详情动态图"], ["user/:id", "个人中心菜单"], ["new/:id", "首页滚动新闻"],
+  ["search/:id", "热门搜索"], ["hot/:id", "热门榜单推荐"], ["new_product/:id", "首发新品推荐"],
+  ["promotion/:id", "促销单品推荐"], ["poster/:id", "个人中心分销海报"], ["best/:id", "精品推荐"],
+  ["activity/:id", "首页活动区域图片"], ["system/:id", "首页配置"], ["hot_money/:id", "首页超值爆款"],
+  ["", "数据配置目录"],
+];
+for (const [suffix, title] of groupDataTopics) {
+  const path = "/admin/setting/system_group_data" + (suffix ? "/" + suffix : "");
+  addReview(path, "missing", [], [], [],
+    ["旧" + title + "使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"],
+    ["cinashop-php/view/admin/src/pages/system/group/list.vue:196", "cinashop-php/view/admin/src/api/system.js:142", newRouter, adminApiRoutes]);
+}
+
+addReview("/admin/setting/merchant/system_store/index", "partial", ["/operations/store（门店管理）"],
+  ["GET /adminapi/merchant/store"],
+  ["新版可管理门店实体、营业/自提状态和配送人员"],
+  ["旧门店设置动态表单的键配置、定位服务参数和开关未全部对应；门店列表不能替代设置表单"],
+  ["cinashop-php/view/admin/src/pages/setting/systemStore/index.vue", "view/admin-ts/src/pages/operations/StoreOperations.vue", adminApiRoutes]);
+addReview("/admin/setting/freight/express/index", "partial", ["/express"],
+  ["GET /adminapi/express/list", "POST /adminapi/express/save", "DELETE /adminapi/express/del/:id"],
+  ["新版快递公司支持列表、新增、编辑、显隐字段和删除"],
+  ["旧页的一键同步快递公司动作没有新版 Admin 操作或 Worker 路由"],
+  ["cinashop-php/view/admin/src/pages/setting/freight/index.vue:186", "view/admin-ts/src/pages/express/ExpressList.vue", adminApiRoutes]);
+addReview("/admin/setting/store_service/index", "partial", ["/kefu"],
+  ["GET /adminapi/service/sessions", "GET /adminapi/service/chat", "POST /adminapi/service/send"],
+  ["新版可浏览客服会话并回复用户"],
+  ["旧页客服人员列表、添加、编辑、状态和会话记录筛选未在新版页面实现"],
+  ["cinashop-php/view/admin/src/pages/setting/storeService/index.vue", "view/admin-ts/src/pages/kefu/KefuList.vue", adminApiRoutes]);
+addReview("/admin/setting/store_service/speechcraft", "partial", [],
+  ["GET|POST /adminapi/wechat/speechcraft", "GET /adminapi/wechat/speechcraft/categories", "PUT|DELETE /adminapi/wechat/speechcraft/:id"],
+  ["Worker 有话术及分类数据接口"],
+  ["旧页分类、搜索、分页和话术增改删没有新版 Admin 操作页"],
+  ["cinashop-php/view/admin/src/pages/setting/storeService/speechcraft.vue", adminApiRoutes, newRouter]);
+addReview("/admin/setting/store_service/feedback", "partial", [],
+  ["GET /adminapi/feedback", "GET|PUT|DELETE /adminapi/feedback/:id"],
+  ["Worker 有留言列表、详情、处理和删除接口"],
+  ["旧页按时间和内容筛选、查看状态、备注处理及删除没有新版 Admin 页面"],
+  ["cinashop-php/view/admin/src/pages/setting/storeService/feedback.vue", adminApiRoutes, newRouter]);
+addReview("/admin/setting/freight/city/list", "missing", [], ["GET /adminapi/shipping_template/city_list"], [],
+  ["新版只向运费编辑器提供只读城市候选，缺旧城市树新增、编辑和清缓存管理"],
+  ["cinashop-php/view/admin/src/pages/setting/cityDada/index.vue", "view/admin-ts/src/pages/shipping/ShippingTemplateEditor.vue", adminApiRoutes]);
+addReview("/admin/setting/freight/shipping_templates/list", "candidate", ["/shipping"],
+  ["GET /adminapi/shipping_template/list", "GET /adminapi/shipping_template/:id/edit", "POST /adminapi/shipping_template/save", "DELETE /adminapi/shipping_template/del/:id"],
+  ["新版支持模板搜索、分页、添加、完整地区计费/包邮/禁配编辑及受保护删除"],
+  ["需对生产历史模板地区层级、引用保护和受限角色完成验收"],
+  ["cinashop-php/view/admin/src/pages/setting/shippingTemplates/index.vue", "view/admin-ts/src/pages/shipping/ShippingTemplates.vue", "view/admin-ts/src/pages/shipping/ShippingTemplateEditor.vue", adminApiRoutes]);
+addReview("/admin/setting/merchant/system_store/list", "candidate", ["/operations/store（门店）"],
+  ["GET /adminapi/merchant/store", "POST /adminapi/merchant/store/:id"],
+  ["新版门店支持关键词/状态筛选、分页、新增、编辑、营业/自提状态及回收恢复"],
+  ["需以生产历史门店和受限角色核对地址、经纬度、可见性与回收关系"],
+  ["cinashop-php/view/admin/src/pages/setting/storeList/index.vue", "view/admin-ts/src/pages/operations/StoreOperations.vue", adminApiRoutes]);
+addReview("/admin/setting/merchant/system_store_staff/index", "candidate", ["/operations/store（店员与核销）"],
+  ["GET /adminapi/merchant/store_staff", "POST /adminapi/merchant/store_staff/save/:id", "DELETE /adminapi/merchant/store_staff/del/:id"],
+  ["新版店员支持门店/关键词筛选、分页、增改、核销资格、启停和删除"],
+  ["需以生产关联用户、门店和受限角色验证核销资格"],
+  ["cinashop-php/view/admin/src/pages/setting/clerkList/index.vue", "view/admin-ts/src/pages/operations/StoreOperations.vue", adminApiRoutes]);
+addReview("/admin/setting/merchant/system_verify_order/index", "missing", [], [], [],
+  ["旧页按核销时间、订单/用户/商品及门店查询核销订单记录；新版订单详情虽可执行核销，但无对应核销记录列表"],
+  ["cinashop-php/view/admin/src/pages/setting/verifyOrder/index.vue", "view/admin-ts/src/pages/order/OrderDetail.vue", "view/admin-ts/src/pages/operations/StoreOperations.vue", newRouter]);
+addReview("/admin/setting/pages/special", "partial", ["/content/dise"],
+  ["GET /adminapi/dise/list", "POST /adminapi/dise/save"],
+  ["新版可查看和编辑已有 DIY 页面原始 JSON"],
+  ["旧专题页 type=2 创建与图形设计流程未恢复；新版新增固定为停用的 type=1 首页"],
+  ["cinashop-php/view/admin/src/pages/setting/special/list.vue", "view/admin-ts/src/pages/content/DiseList.vue"]);
+addReview("/admin/setting/pages/links", "partial", ["/config/runtime-content（UniApp 页面路径表）"],
+  ["GET /adminapi/diy/get_url"],
+  ["新版可只读查看页面名称、路径和参数"],
+  ["旧页生成的示例地址与一键复制按钮未恢复"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/links.vue", "view/admin-ts/src/pages/config/RuntimeContent.vue", adminApiRoutes]);
+addReview("/admin/setting/pages/template", "partial", ["/content/dise"],
+  ["GET /adminapi/dise/list", "POST /adminapi/dise/save"],
+  ["新版可读写已有 DIY 页的原始 value JSON"],
+  ["旧 iframe 预览、组件右侧配置和视觉交互编辑器未恢复"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/template.vue", "view/admin-ts/src/pages/content/DiseList.vue"]);
+addReview("/admin/setting/system_group_data/kf_adv", "candidate", ["/config/runtime-content（客服页面内容）"],
+  ["GET|POST /adminapi/config/runtime_content", "GET /adminapi/setting/get_kf_adv", "POST /adminapi/setting/set_kf_adv"],
+  ["新版读写同一客服 HTML 内容，并保留旧读取/保存别名"],
+  ["需核验生产历史 HTML 与客户端展示；新版采用原始 HTML 文本编辑"],
+  ["cinashop-php/view/admin/src/pages/system/group/kfAdv.vue", "view/admin-ts/src/pages/config/RuntimeContent.vue", "workers-ts/src/services/system/LegacyContentService.ts"]);
+addReview("/admin/setting/userAgreement/index", "candidate", ["/config/runtime-content（隐私协议）"],
+  ["GET|POST /adminapi/config/runtime_content", "GET /adminapi/setting/get_user_agreement/:type"],
+  ["新版可编辑隐私协议 HTML 并通过旧公共协议合同读取"],
+  ["旧页面请求 type=undefined 是旧缺参错误；需核对生产 privacy 历史内容与客户端读取"],
+  ["cinashop-php/view/admin/src/pages/setting/userAgreement/index.vue", "cinashop-php/view/admin/src/api/system.js:519", "cinashop-php/app/controller/admin/v1/system/config/SystemGroupData.php:388", "view/admin-ts/src/pages/config/RuntimeContent.vue", "workers-ts/src/services/system/LegacyContentService.ts"]);
+addReview("/admin/setting/system_group_data/pc/:id", "missing", [], [], [],
+  ["旧 PC 主页轮播使用通用 group_data 行编辑器；新版未提供对应 PC 轮播行管理"],
+  ["cinashop-php/view/admin/src/pages/system/group/list.vue", "cinashop-php/view/admin/src/pages/system/group/pc.vue", newRouter]);
+addReview("/admin/setting/system_config_member_right/:type?/:tab_id?", "missing", [], [], [],
+  ["旧会员权益按动态配置 tab 编辑；新版付费会员业务页没有对应权益配置管理"],
+  ["cinashop-php/view/admin/src/pages/setting/setSystem/index.vue", "view/admin-ts/src/pages/user/PaidMembership.vue", newRouter]);
+addReview("/admin/setting/delivery_service/index", "candidate", ["/operations/store（配送员）"],
+  ["GET /adminapi/order/delivery/index", "POST /adminapi/order/delivery/save", "PUT /adminapi/order/delivery/update/:id", "DELETE /adminapi/order/delivery/del/:id"],
+  ["新版配送员支持关键词筛选、分页、新增、编辑、启停和删除，并供订单发货选择"],
+  ["需以生产配送员身份、受限角色和真实配送订单验证"],
+  ["cinashop-php/view/admin/src/pages/setting/deliveryService/index.vue", "view/admin-ts/src/pages/operations/StoreOperations.vue", "view/admin-ts/src/pages/order/OrderList.vue", adminApiRoutes]);
+addReview("/admin/setting/city/delivery/setting", "missing", [], [], [],
+  ["旧 city_deliver 动态配置表单尚无新版同城配送平台、计价或范围设置页"],
+  ["cinashop-php/view/admin/src/pages/setting/cityDelivery/setting.vue", "cinashop-php/view/admin/src/pages/setting/shop/buildData.js", newRouter]);
+addReview("/admin/setting/city/delivery/record", "missing", [], [], [],
+  ["旧页查询达达/UU 跑腿配送记录、状态与取消发单；新版无同城第三方配送记录页"],
+  ["cinashop-php/view/admin/src/pages/setting/cityDelivery/record.vue", newRouter, adminApiRoutes]);
+addReview("/admin/setting/platform/index", "partial", ["/dashboard", "/operations/store"],
+  ["GET /adminapi/order/list", "GET /adminapi/merchant/store"],
+  ["新版有真实业务总览和门店管理；旧首页自身的泛用订单/用户图表有 API 调用"],
+  ["旧门店卡片读取初始化的 extractStatistics，未见加载；新版也无对应门店维度首页统计合同"],
+  ["cinashop-php/view/admin/src/pages/platform/index/index.vue", "view/admin-ts/src/pages/Dashboard.vue", "view/admin-ts/src/pages/operations/StoreOperations.vue"]);
+addReview("/admin/setting/platform/list/index", "retired", [], [],
+  ["旧门店列表页写死示例 orderList，挂载和查询动作为空，操作链接无处理器"], [],
+  ["cinashop-php/view/admin/src/pages/platform/list/index.vue:100", "cinashop-php/view/admin/src/pages/platform/list/index.vue:105", legacyRouter]);
+addReview("/admin/setting/platform/order/index", "retired", [], [],
+  ["旧门店订单页使用固定示例订单，挂载/搜索为空且真实 getList 已注释"], [],
+  ["cinashop-php/view/admin/src/pages/platform/order/index.vue:195", "cinashop-php/view/admin/src/pages/platform/order/index.vue:250", legacyRouter]);
+addReview("/admin/setting/platform/bill/index", "retired", [], [],
+  ["旧账单记录页使用固定示例数据且真实 getList 已注释"], [],
+  ["cinashop-php/view/admin/src/pages/platform/bill/index.vue:149", "cinashop-php/view/admin/src/pages/platform/bill/index.vue:155", legacyRouter]);
+addReview("/admin/setting/platform/setting/index", "retired", [], [],
+  ["旧财务设置页 save() 为空实现，不存在可保存的设置合同"], [],
+  ["cinashop-php/view/admin/src/pages/platform/setting/index.vue:88", "cinashop-php/view/admin/src/pages/platform/setting/index.vue:89", legacyRouter]);
+addReview("/admin/setting/storage", "partial", ["/assets"],
+  ["GET /adminapi/config/storage", "GET /adminapi/config/storage/config"],
+  ["新版素材中心可管理 R2 资产，Worker 可只读报告存储状态"],
+  ["旧本地/云存储供应商切换、同步和凭据写入操作未在新版 Admin 迁移；生产配置需独立核验"],
+  ["cinashop-php/view/admin/src/pages/setting/storage/index.vue", "view/admin-ts/src/pages/system/AttachmentLibrary.vue", adminApiRoutes]);
+addReview("/admin/setting/pages/devise", "partial", ["/content/dise"],
+  ["GET /adminapi/dise/list", "POST /adminapi/dise/save"],
+  ["新版可列出、新增并编辑原始 DIY JSON，且保留独立旧版 content"],
+  ["旧店铺装修页面的模板选择、实时预览和可视组件编辑器没有对应实现"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/list.vue", "cinashop-php/view/admin/src/pages/setting/devise/template.vue", "view/admin-ts/src/pages/content/DiseList.vue"]);
+addReview("/admin/setting/pages/home", "missing", [], [], [],
+  ["旧个人中心可视配置会员、订单、广告与菜单模块；新版没有这些模块的结构化编辑合同"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/users.vue", "view/admin-ts/src/pages/content/DiseList.vue", newRouter]);
+addReview("/admin/setting/pages/product_category", "missing", [], [], [],
+  ["旧 product_category_diy 可选二/三级分类与样式；新版商品分类 CRUD 不管理此客户端页面样式"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/goodClass.vue", "view/admin-ts/src/pages/category/CategoryList.vue", newRouter]);
+addReview("/admin/setting/pages/product_detail", "missing", [], [], [],
+  ["旧 product_detail_diy 可视配置商品详情模块显隐与样式；新版商品 CRUD 不编辑此页面结构"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/newGoods.vue", "view/admin-ts/src/pages/product/ProductForm.vue", newRouter]);
+addReview("/admin/setting/theme_style", "missing", [], [], [],
+  ["旧页读写客户端主题色；新版没有主题风格读写入口或同名受控配置字段"],
+  ["cinashop-php/view/admin/src/pages/setting/themeStyle/index.vue", "view/admin-ts/src/pages/config/CommerceSettings.vue", newRouter]);
+addReview("/admin/setting/system_visualization_data", "partial", ["/config/runtime-content（开屏广告）"],
+  ["GET|POST /adminapi/config/runtime_content", "GET /adminapi/diy/open_adv/info", "POST /adminapi/diy/open_adv/add"],
+  ["新版覆盖启用、图片/视频、时长、间隔、图片跳转和说明字段"],
+  ["旧拖拽排序、实时轮播预览、素材选择和页面链接选择器尚未恢复；需验证历史素材"],
+  ["cinashop-php/view/admin/src/pages/system/group/visualization.vue", "view/admin-ts/src/pages/config/RuntimeContent.vue", adminApiRoutes]);
+addReview("/admin/setting/pc_group_data", "partial", ["/config/runtime-content（客服 HTML）"],
+  ["GET|POST /adminapi/config/runtime_content"],
+  ["旧 PC 配置中的客服 HTML 可由新版客户端内容页编辑"],
+  ["旧 pc_logo、pc_home_banner 与 PC 首页配置写入流程没有专用替代页"],
+  ["cinashop-php/view/admin/src/pages/system/group/pc.vue", "view/admin-ts/src/pages/config/RuntimeContent.vue", "workers-ts/src/services/system/AdminCommerceSettingsService.ts"]);
+addReview("/admin/setting/pages/fab", "partial", ["/config/commerce（悬浮菜单开关）"],
+  ["GET|POST /adminapi/config/commerce"],
+  ["新版仅承接悬浮菜单启停开关"],
+  ["旧 suspended_window_diy 的四种风格、位置、图片、按钮及跳转配置均无新版编辑页"],
+  ["cinashop-php/view/admin/src/pages/setting/devise/fab.vue", "view/admin-ts/src/pages/config/CommerceSettings.vue", "workers-ts/src/services/system/AdminCommerceSettingsService.ts"]);
+
 const inventory = JSON.parse(readFileSync(inventoryFile, "utf8")) as Inventory;
 const legacyRoutes = inventory.legacy.routes.filter((route) => (
   route.surface === "page" && route.path.startsWith("/admin/setting")
@@ -376,15 +607,21 @@ if (new Set(legacyRoutes.map((route) => route.path)).size !== legacyRoutes.lengt
   throw new Error("Legacy setting route inventory contains duplicate paths");
 }
 
+const inventoryPaths = new Set(legacyRoutes.map((route) => route.path));
+for (const path of Object.keys(reviews)) {
+  if (!inventoryPaths.has(path)) throw new Error(`Review path missing from inventory: ${path}`);
+}
+
 const routes = legacyRoutes.map((route) => {
-  const review = reviews[route.path] ?? {
-    status: "unreviewed" as const,
-    targetScreens: [],
-    targetApis: [],
-    covered: [],
-    remaining: ["尚未逐屏比对旧页面、接口、权限、数据边界与交互"],
-    evidence: [],
-  };
+  const review = reviews[route.path];
+  if (!review) throw new Error(`Missing semantic review: ${route.path}`);
+  if (
+    !review.evidence.length
+    || (review.status !== "missing" && !review.covered.length)
+    || (!review.covered.length && !review.remaining.length)
+  ) {
+    throw new Error(`Review lacks evidence or conclusion: ${route.path}`);
+  }
   return {
     legacy: {
       path: route.path,
@@ -413,6 +650,7 @@ const report = {
       retired: "Reviewed legacy route is intentionally not migrated because it is broken, duplicated, or obsolete.",
       unreviewed: "Inventory only; no semantic parity conclusion has been made.",
     },
+    reviewBasis: "For all 76 routes, compare the legacy component and API with the new Admin router, page, Worker route and consumer. A useful API-only subset may be partial; a read-only lookup is not proof of parity. A business screen with no viable Admin replacement is missing. Retired requires evidence of a broken or inert old screen. This batch is a code-only audit and does not assert production parity.",
     productionAccess: "Token-protected temporary Workers used the configured Hyperdrive for bounded aggregate checks. The second-card audit applied a preconditioned outbox whitelist and two partial indexes, then verified an idempotent second pass. The payment audit used a READ ONLY transaction and returned only presence, format, length, distinct-value and aggregate counts; no payment DDL/DML ran. Every temporary Worker was deleted and no main Worker or frontend was deployed.",
   },
   summary: {

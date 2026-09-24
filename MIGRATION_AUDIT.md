@@ -7555,6 +7555,28 @@ A3k11b调用链审查：普通创建OrderController:351先查地址但仅对查�
 
 上述为源码证据，不是已修复或实际创建回归。后续必须把来源选择、必填与快照重验贯通实际创建核心及普通/活动/套餐/代客路径，并保留预览、优惠券和幂等控制样本；现有SQL夹具中包含空区县/合成电话和直接cityId参数，不应通过禁用校验或仅改控制器来维持旧夹具通过。Workers技能用于请求边界与现有绑定，PostgreSQL技能用于有界事务/锁序审查；本轮此阶段没有改动订单代码、生产SQL或部署。
 
+## 2026-09-24 FE-001D4 系统设置 76 屏逐项代码审计
+
+以 `a6922089453f69cef2ca0f2eecab881e6ac2737a` 为基线，继续审计权威前端盘点中剩余 61 条 `/admin/setting*` 业务页。每条对照旧路由/组件、旧 API 行为、新 Admin 路由与页面、新 Worker 路由及具体消费者；旧路由共用组件时仍按业务标题与参数单独下结论。机器台账在 `workers-ts/audit/admin-legacy-setting-route-parity.json`，结论源在 `workers-ts/scripts/admin-setting-frontend-parity-audit.ts`。生成器现在要求 76 条均有明确 review，路径漏项、额外 review、重复或分母变化会失败；定向测试还比较生成输出与台账字节一致。
+
+| 结论 | 76 屏总数 | 本批 61 屏 | 含义 |
+| --- | ---: | ---: | --- |
+| candidate | 17 | 6 | 本地代码与 Admin 操作面覆盖原业务工作流，生产验收仍待做 |
+| partial | 24 | 21 | 有可用子集，但原工作流的实质部分仍缺 |
+| missing | 30 | 30 | 没有可用的新版 Admin 替代屏 |
+| retired | 5 | 4 | 有旧页损坏或空实现的具体证据 |
+| unreviewed | 0 | 0 | 已无仅盘点未判定项 |
+
+旧 `system_group_data` 共用编辑器的 16 条路由与单独的 PC 轮播路由均缺新版编辑入口，合计 17 条 missing；新 `/config/runtime-content` 的客服 HTML 不能推导这些数据组已迁移。分销等级页不同于新 `/level` 普通会员等级；城市树、核销订单记录、达达/UU 同城配送配置及记录、主题风格和专用客户端页面样式也保守判为 missing。旧第三方身份和发货动态表单实际会拉取规则，不能仅因新页缺失判为 retired。
+
+门店列表、核销员、配送员和运费模板有真实 Admin/Worker 操作面，列 candidate；门店“设置”仍缺 `valid_time` 等独立字段，快递公司仍缺旧同步动作，列 partial。角色/管理员虽有增改，缺旧启停；菜单规则只有供角色选择的只读树，缺规则管理。客服会话已有操作页，话术和留言虽有 Worker API 仍缺 Admin 屏。旧短信账户 iframe 会向一号通写入凭据，新后台只有 Worker Secret 就绪显示，不能据此判退休。旧存储多提供商设置仅有 R2 素材管理和只读状态，列 partial，不能把历史元数据当运行时权威配置。
+
+四个旧 `platform/list|order|bill|setting` 页分别是固定示例数据或空保存函数，才列 retired；旧 `platform/index` 有泛用图表 API 调用，单独保持 partial。DIY 原始 JSON 编辑不等于旧专题、店铺装修、个人中心及商品详情可视编辑器。开屏广告虽有同一 `open_adv` 持久合同，仍缺拖拽、素材和链接选择，列 partial。旧单独隐私协议页的无 `type` 请求是旧缺参错误；新 `privacy` 合同有明确客户端读取，连同客服 HTML 按可编辑内容列 candidate，但生产历史 HTML 与角色仍待验收。
+
+本批只读本地源码及已有审计证据；没有连接生产 Hyperdrive、查询业务表、运行 DDL/DML、发短信/支付请求或部署。`candidate` 是本地迁移候选，不是线上可用或完整迁移验收；`partial`/`missing` 缺口仍需后续实施，特别是动态配置分类、group_data 编辑器、同城配送、DIY 可视编辑和管理权限。FE-001D4 逐屏代码审计项在精确提交 ece6ded6b9b05a2b1d1a5228f5fdbb0b89c14b3e 的 Linux CI 成功后勾选；30 个 missing 和 24 个 partial 的功能补齐与生产验收继续归 FE-001D/G/H。
+
+验证：审计生成器 `--write` 成功；定向 Vitest 1 文件 8 项通过；逐条证据文件路径本地检查 0 缺失；Worker `typecheck:unit` 通过。随后精确提交 ece6ded6b9b05a2b1d1a5228f5fdbb0b89c14b3e 的 [Linux CI](https://github.com/cinagroup/cinashop/actions/runs/35950719144) 11/11 成功，两个 Worker 分片合计 10,716/10,716、零跳过，审计测试 8/8；真实浏览器和生产验收未做。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

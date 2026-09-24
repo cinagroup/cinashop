@@ -1,5 +1,6 @@
 <template>
   <view class="kefu-page">
+    <button class="feedback-link" @tap="openFeedback">客服离线？提交反馈</button>
     <view v-if="kfAdv" class="kf-adv">
       <rich-text :nodes="kfAdv" />
     </view>
@@ -92,6 +93,7 @@ interface DisplayMessage {
 }
 
 const authStore = useAuthStore();
+function openFeedback() { uni.navigateTo({ url: "/pages/extension/customer_list/feedback" }); }
 const messages = ref<DisplayMessage[]>([]);
 const inputText = ref("");
 const uploadingImage = ref(false);
@@ -430,6 +432,8 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100vh;
 }
+.feedback-link { align-self: flex-end; margin: 10rpx 20rpx; color: #2768ca; background: transparent; font-size: 24rpx; }
+.feedback-link::after { border: 0; }
 
 .kf-adv {
   flex-shrink: 0;
