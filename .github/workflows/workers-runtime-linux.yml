@@ -121,7 +121,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log
+          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=verbose --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log
 
       - name: Preserve unit shard diagnostics even on failure
         if: ${{ always() }}

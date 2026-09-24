@@ -159,7 +159,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
         { orderId: 'chart-deleted', uid: 11, paid: 1, status: 0, isDel: 1 },
         { orderId: 'chart-system-deleted', uid: 11, paid: 1, status: 0, isSystemDel: 1 },
         { orderId: 'chart-payment-parent', uid: 11, pid: -1, paid: 1, status: 0 },
-      ]);
+      ].map(order => ({ ...order, unique: order.orderId })));
       const before = await f.state();
       const expected = { all: 9, unpaid: 1, unshipped: 2, untake: 2, unevaluate: 1, complete: 1 };
       expect(await read('/adminapi/order/chart')).toEqual(expected);

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { and, eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
-import { storeBargain, storeBargainUser, storeCart, storeProduct, user } from '../src/models/schema';
+import { storeBargain, storeBargainUser, storeCart, storeProduct, storeProductRelation, user } from '../src/models/schema';
 import { ActivityJoinService } from '../src/services/activity/ActivityJoinService';
 import { retirePlatformSourceProduct } from '../src/services/activity/BargainSourceProductLifecycle';
 import { SupplierProductManagementService } from '../src/services/supplier/SupplierProductManagementService';
@@ -16,7 +16,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain source r
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
 
   beforeEach(async () => {
-    f = await createBargainSelectionFixture();
+    f = await createBargainSelectionFixture([storeProductRelation]);
     await f.db.insert(user).values({ uid: 30, account: 'new-owner-30', nickname: '新参与者30' });
     await f.db.insert(storeBargain).values({ id: 41, productId: 70, title: '同源第二活动',
       price: '10.00', minPrice: '2.00', people: 2, stock: 8, quota: 8,
