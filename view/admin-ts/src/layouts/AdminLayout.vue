@@ -96,6 +96,10 @@
           <el-icon><Present /></el-icon>
           <span>营销活动</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/activity/seckill-statistics')" index="/activity/seckill-statistics">
+          <el-icon><Present /></el-icon>
+          <span>秒杀统计</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/marketing/lottery')" index="/marketing/lottery">
           <el-icon><Trophy /></el-icon>
           <span>抽奖活动</span>
@@ -284,6 +288,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/category")) return "/category";
   if (path.startsWith("/coupon")) return "/coupon";
   if (path.startsWith("/marketing/coupon-records")) return "/marketing/coupon-records";
+  if (path.startsWith("/activity/seckill-statistics")) return "/activity/seckill-statistics";
   if (path.startsWith("/activity")) return "/activity";
   if (path.startsWith("/marketing/lottery")) return "/marketing/lottery";
   if (path.startsWith("/marketing/live")) return "/marketing/live";

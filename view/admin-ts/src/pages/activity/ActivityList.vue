@@ -42,6 +42,14 @@
       <el-table-column label="操作" width="220">
         <template #default="{ row }">
           <el-button
+            v-if="activeTab === 'seckill' && canSeckillStatistics"
+            link
+            type="primary"
+            @click="openSeckillStatistics(row)"
+          >
+            统计
+          </el-button>
+          <el-button
             v-if="activeTab === 'combination'"
             link
             type="primary"
@@ -249,6 +257,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { computed } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import {
   apiAdminSeckillList,
@@ -275,6 +287,10 @@ import { shippingForm, withBargainShipping, type BargainShippingFields } from '@
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
 const activeTab = ref(previewMode ? "discounts" : "seckill");
+const router = useRouter();
+const auth = useAuthStore();
+const canSeckillStatistics = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes("seckill_statistics.view")));
 const list = ref<ActivityItem[]>([]);
 const loading = ref(true);
 const pinkVisible = ref(false);
@@ -324,6 +340,11 @@ function formatTime(ts: number): string {
   const d = new Date(ts * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function openSeckillStatistics(row: ActivityItem) {
+  if (!Number.isSafeInteger(row.id) || row.id <= 0) return;
+  void router.push({ name: "seckill-statistics", params: { id: String(row.id) } });
 }
 
 async function showPinks(row: ActivityItem) {

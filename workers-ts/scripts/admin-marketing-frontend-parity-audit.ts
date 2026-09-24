@@ -32,6 +32,7 @@ const reviewedRouterSha256 = "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c17
 const screens: Record<string, string> = {
   "/coupon": "view/admin-ts/src/pages/coupon/CouponList.vue",
   "/activity": "view/admin-ts/src/pages/activity/ActivityList.vue",
+  "/activity/seckill-statistics/:id?": "view/admin-ts/src/pages/activity/SeckillStatistics.vue",
   "/marketing/lottery": "view/admin-ts/src/pages/activity/LotteryList.vue",
   "/marketing/user-point": "view/admin-ts/src/pages/marketing/IntegralLog.vue",
   "/marketing/coupon-records": "view/admin-ts/src/pages/marketing/CouponRecords.vue",
@@ -40,6 +41,7 @@ const screens: Record<string, string> = {
 const permissionKeys: Record<string, string> = {
   "/coupon": "coupon.view / coupon.manage",
   "/activity": "activity.view / activity.manage",
+  "/activity/seckill-statistics/:id?": "seckill_statistics.view",
   "/marketing/lottery": "lottery.view / lottery.manage",
   "/marketing/user-point": "integral_log.view",
   "/marketing/coupon-records": "coupon_record.view",
@@ -191,8 +193,16 @@ add("/admin/marketing/store_seckill_data/index", "missing", [], [], "",
 add("/admin/marketing/store_seckill/create/:id?/:copy?", "partial", ["/activity"], ["POST /adminapi/activity/save"],
   "聚合表单可保存秒杀商品、价格、库存和限购等基础值。",
   "旧 SKU、活动时间、场次选择/复制及图文配置未恢复；新建未传 timeId 时默认 '1'，完整表单提交仍需并发库存/额度验收。");
-add("/admin/marketing/store_seckill/statistics/:id?", "missing", [], [], "",
-  "旧秒杀 head、people、order 统计没有新 Admin 统计页；活动目录和时段只读接口不提供该屏语义。");
+add("/admin/marketing/store_seckill/statistics/:id?", "candidate", ["/activity/seckill-statistics/:id?"], [
+  "GET /adminapi/activity/seckill-statistics/:id/head",
+  "GET /adminapi/activity/seckill-statistics/:id/people",
+  "GET /adminapi/activity/seckill-statistics/:id/orders",
+],
+  "独立只读页恢复旧四卡、参与人聚合、订单列表、搜索、状态和15条分页；独立 seckill_statistics.view 权限保护包含个人信息的三组 GET。订单列表和总数均按已支付主单，修正旧页总数筛选不一致；pay_rate 明确标为剩余额度/展示总额度。",
+  "订单 tab 的搜索仅覆盖订单快照中的订单号/姓名/电话/UID，未包含旧通用 StoreOrderDao 通过用户、地址、商品及活动标题进行的隐式关联搜索；参与人 tab 仍仅查订单姓名/电话/UID。真实历史订单、受限角色与发布后流程仍待验收。",
+  ["cinashop-php/app/services/activity/seckill/StoreSeckillServices.php", "cinashop-php/app/dao/order/StoreOrderDao.php",
+    "workers-ts/src/services/admin/AdminSeckillStatisticsService.ts", "view/admin-ts/src/api/seckillStatistics.ts",
+    "workers-ts/test/admin-seckill-statistics.test.ts"]);
 
 add("/admin/marketing/user_point/index", "partial", ["/marketing/user-point"],
   ["GET /adminapi/marketing/user-point/logs", "GET /adminapi/marketing/user-point/statistics"],

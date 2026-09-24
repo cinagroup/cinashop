@@ -9,9 +9,9 @@
   "summary": {
     "legacyRoutes": 48,
     "reviewed": 48,
-    "candidate": 3,
+    "candidate": 4,
     "partial": 22,
-    "missing": 23,
+    "missing": 22,
     "retired": 0,
     "unreviewed": 0
   },
@@ -877,21 +877,37 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "not declared in route"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/activity/seckill-statistics/:id?"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/seckill-statistics/:id/head",
+        "GET /adminapi/activity/seckill-statistics/:id/people",
+        "GET /adminapi/activity/seckill-statistics/:id/orders"
+      ],
+      "covered": [
+        "独立只读页恢复旧四卡、参与人聚合、订单列表、搜索、状态和15条分页；独立 seckill_statistics.view 权限保护包含个人信息的三组 GET。订单列表和总数均按已支付主单，修正旧页总数筛选不一致；pay_rate 明确标为剩余额度/展示总额度。"
+      ],
       "remaining": [
-        "旧秒杀 head、people、order 统计没有新 Admin 统计页；活动目录和时段只读接口不提供该屏语义。"
+        "订单 tab 的搜索仅覆盖订单快照中的订单号/姓名/电话/UID，未包含旧通用 StoreOrderDao 通过用户、地址、商品及活动标题进行的隐式关联搜索；参与人 tab 仍仅查订单姓名/电话/UID。真实历史订单、受限角色与发布后流程仍待验收。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeSeckill/statistics.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/SeckillStatistics.vue",
+        "cinashop-php/app/services/activity/seckill/StoreSeckillServices.php",
+        "cinashop-php/app/dao/order/StoreOrderDao.php",
+        "workers-ts/src/services/admin/AdminSeckillStatisticsService.ts",
+        "view/admin-ts/src/api/seckillStatistics.ts",
+        "workers-ts/test/admin-seckill-statistics.test.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "seckill_statistics.view"
+      ]
     },
     {
       "legacy": {

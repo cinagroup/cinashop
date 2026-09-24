@@ -33,8 +33,8 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(inventory.legacy.routes.filter((route) => route.path.startsWith("/admin/marketing"))).toHaveLength(52);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(businessPaths);
     expect(report.summary).toEqual({
-      legacyRoutes: 48, reviewed: 48, candidate: 3, partial: 22,
-      missing: 23, retired: 0, unreviewed: 0,
+      legacyRoutes: 48, reviewed: 48, candidate: 4, partial: 22,
+      missing: 22, retired: 0, unreviewed: 0,
     });
   });
 
@@ -98,6 +98,12 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(couponRecord?.remaining.join(" ")).toContain("真实历史领取记录");
     expect(byPath.get("/admin/marketing/store_seckill/list")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/store_seckill_data/index")?.status).toBe("missing");
+    const seckillStatistics = byPath.get("/admin/marketing/store_seckill/statistics/:id?");
+    expect(seckillStatistics?.status).toBe("candidate");
+    expect(seckillStatistics?.targetScreens).toEqual(["/activity/seckill-statistics/:id?"]);
+    expect(seckillStatistics?.targetPermissions).toEqual(["seckill_statistics.view"]);
+    expect(seckillStatistics?.targetApis).toHaveLength(3);
+    expect(seckillStatistics?.covered.join(" ")).toContain("已支付主单");
     expect(byPath.get("/admin/marketing/sign_rewards")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/sign_rewards")?.targetApis).toContain("GET /adminapi/setting/sign/rewards");
     const integralLog = byPath.get("/admin/marketing/user_point/index");
