@@ -1,0 +1,572 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "Only the 13 surface=page /kefu routes from the pinned frameOut.js router in the authoritative 274-page legacy Admin inventory. /admin/kefu/setup is an auxiliary user.js route outside this denominator.",
+    "reviewBasis": "Compare each old Vue page and kefuapi workflow with the dedicated Kefu, PC buyer, and UniApp buyer screens and Worker routes. Legacy auth and behavior lines are static review evidence; generation requires only this repository. Admin /kefu's 501 endpoints are not customer-service parity. A matching API or responsive container alone does not establish all old screen behavior.",
+    "validationBoundary": "Code-only semantic review. No real-role browser E2E, production data, provider integration, deployment, or publication is claimed. FE-001D remains open."
+  },
+  "summary": {
+    "legacyRoutes": 13,
+    "reviewed": 13,
+    "candidate": 1,
+    "partial": 12,
+    "missing": 0,
+    "retired": 0,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/kefu",
+        "title": "客服管理",
+        "component": "@/pages/kefu/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/index.vue:14",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:23",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/login"
+      ],
+      "targetApis": [
+        "POST /kefuapi/login",
+        "GET /kefuapi/scan/:key",
+        "GET /kefuapi/wechat"
+      ],
+      "covered": [
+        "独立客服登录页有账号密码、一次性扫码和微信授权入口；登录后只进入客服身份域。"
+      ],
+      "remaining": [
+        "仍需用真实客服账号、扫码及微信回调做跨端验收；旧版权/站名动态展示没有等量迁移。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/index.vue:14",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/LoginPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/kefu-ts/src/stores/auth.ts",
+        "workers-ts/src/middleware/kefu-auth.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent.login"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/mobile_list",
+        "title": "消息列表",
+        "component": "@/pages/kefu/mobile/chat_list",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/chat_list.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/chat_list.vue:6",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:33",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/user/record"
+      ],
+      "covered": [
+        "响应式工作台可按已注册/游客会话展示最近消息、未读数并搜索。"
+      ],
+      "remaining": [
+        "旧移动端来源标签、下拉分页和在线/离线状态切换尚未完成等价验收；新工作台当前会话首次各取 60 条。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/chat_list.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/chat_list.vue:6",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/kefu-ts/src/services/realtime.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/mobile_chat",
+        "title": "对话详情",
+        "component": "@/pages/kefu/mobile/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/index.vue:8",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:43",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/service/list",
+        "POST /kefuapi/service/transfer"
+      ],
+      "covered": [
+        "工作台可查看和回复会话、上传图片、使用快捷话术并转接给其他客服。"
+      ],
+      "remaining": [
+        "旧移动会话中的订单/商品卡片、独立导航及所有消息类型未逐项证明等价；需真实客服角色实时双端验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/index.vue:8",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/kefu-ts/src/services/realtime.ts",
+        "workers-ts/src/services/kefu/KefuSocketGateway.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/pc_list",
+        "title": "客服",
+        "component": "@/pages/kefu/pc/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/pc/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/pc/index.vue:28",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:53",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/user/record",
+        "GET /kefuapi/service/list",
+        "POST /kefuapi/service/transfer"
+      ],
+      "covered": [
+        "独立桌面工作台有会话、实时消息、客户资料、订单/商品上下文、话术和转接。"
+      ],
+      "remaining": [
+        "旧 PC 右侧菜单的全部改价/退款、富消息及订单操作未逐项等价；管理员会话页调用的 /adminapi/service/* 是 501，不能替代客服身份。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/pc/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/pc/index.vue:28",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/admin-ts/src/pages/kefu/KefuList.vue",
+        "workers-ts/src/controllers/api/v1/AdminController.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/orderList/:type?/:toUid?",
+        "title": "订单列表",
+        "component": "@/pages/kefu/mobile/orderList/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/index.vue:18",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:63",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/order/list/:uid",
+        "GET /kefuapi/refund/list"
+      ],
+      "covered": [
+        "工作台按当前客户列出订单和售后摘要，可搜索订单号或商品。"
+      ],
+      "remaining": [
+        "旧移动订单页的多状态筛选、独立全页分页及核销入口未在该列表等量呈现；工作台每次仅请求 20 条。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/index.vue:18",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "workers-ts/src/services/kefu/KefuOrderService.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/orderDetail/:id?/:goname?",
+        "title": "订单详情",
+        "component": "@/pages/kefu/mobile/orderList/orderDetail.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDetail.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDetail.vue:21",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:73",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/order/info/:id",
+        "GET /kefuapi/order/refund/detail/:id"
+      ],
+      "covered": [
+        "工作台弹窗展示订单/售后明细及部分改价、备注、履约和核销操作。"
+      ],
+      "remaining": [
+        "旧独立页的赠品、虚拟信息、自定义表单、优惠拆项及退款材料未逐字段证明等价。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDetail.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDetail.vue:21",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/kefu-ts/src/types/kefu.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/orderDelivery/:id?/:orderId?",
+        "title": "发货",
+        "component": "@/pages/kefu/mobile/orderList/orderDelivery.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDelivery.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDelivery.vue:17",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:83",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "POST /kefuapi/order/delivery/:id",
+        "PUT /kefuapi/order/split_delivery/:id"
+      ],
+      "covered": [
+        "工作台可按订单发货，支持快递、配送、虚拟发货和拆单商品数量。"
+      ],
+      "remaining": [
+        "旧发货页的电子面单模板、发货人员等字段及真实物流提交结果未逐项验收；新工作台未调用模板 API。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDelivery.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/orderList/orderDelivery.vue:17",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "workers-ts/src/services/kefu/KefuOrderManagementService.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/user/index/:uid?/:type?",
+        "title": "客户信息",
+        "component": "@/pages/kefu/mobile/user/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/user/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/user/index.vue:11",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:93",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/user/info/:uid",
+        "GET /kefuapi/user/label/:uid",
+        "PUT /kefuapi/user/group/:uid/:id"
+      ],
+      "covered": [
+        "工作台客户侧栏有基本资料、分组、标签，并可提交分组与标签修改。"
+      ],
+      "remaining": [
+        "旧独立客户页的全部会员字段和跨会话导航尚未逐项核对；游客仅显示隔离身份。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/user/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/user/index.vue:11",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "workers-ts/src/services/kefu/KefuCoreService.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/goods/list",
+        "title": "商品列表",
+        "component": "@/pages/kefu/mobile/goods/list.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/goods/list.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/goods/list.vue:7",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:103",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/product/cart/:uid",
+        "GET /kefuapi/product/visit/:uid",
+        "GET /kefuapi/product/hot/:uid"
+      ],
+      "covered": [
+        "工作台商品上下文有已购、浏览、热销三个 tab 及商品搜索。"
+      ],
+      "remaining": [
+        "旧独立商品列表的分页、完整字段和向会话发送商品卡片动作尚未等量呈现。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/goods/list.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/goods/list.vue:7",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "workers-ts/src/services/kefu/KefuProductService.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/goods/detail",
+        "title": "商品列表",
+        "component": "@/pages/kefu/mobile/goods/detail.vue",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/mobile/goods/detail.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/mobile/goods/detail.vue:7",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:113",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/workbench"
+      ],
+      "targetApis": [
+        "GET /kefuapi/product/info/:id"
+      ],
+      "covered": [
+        "工作台可从商品上下文打开商品详情弹窗，展示图片、价格、库存和说明。"
+      ],
+      "remaining": [
+        "旧详情页的全部 SKU/规格及购买信息未逐字段比对，也未做历史商品数据验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/goods/detail.vue",
+        "cinashop-php/view/admin/src/pages/kefu/mobile/goods/detail.vue:7",
+        "view/kefu-ts/src/router/index.ts",
+        "view/kefu-ts/src/pages/WorkbenchPage.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/kefu-ts/src/types/kefu.ts"
+      ],
+      "targetPermissions": [
+        "kefu_agent"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/appChat",
+        "title": "客服",
+        "component": "@/pages/kefu/appChat/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/appChat/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/appChat/index.vue:24",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:123",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/service"
+      ],
+      "targetApis": [
+        "GET /kefuapi/tourist/user",
+        "GET /kefuapi/tourist/chat"
+      ],
+      "covered": [
+        "PC 买家客服页支持已登录用户和签名游客的会话与实时文字/图片消息。"
+      ],
+      "remaining": [
+        "旧浮窗的商品/订单富消息卡片、内嵌离线反馈及广告位没有在 PC 新页完整承接。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/appChat/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/appChat/index.vue:24",
+        "view/pc-ts/src/router/index.ts",
+        "view/pc-ts/src/pages/service/CustomerService.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/pc-ts/src/api/customerService.ts",
+        "view/pc-ts/src/services/customerServiceSocket.ts"
+      ],
+      "targetPermissions": [
+        "pc_user_or_visitor"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/mobile_user_chat",
+        "title": "用户客服",
+        "component": "@/pages/kefu/appChat/mobile/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/index.vue:8",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:133",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/pages/user/kefu"
+      ],
+      "targetApis": [
+        "GET /kefuapi/tourist/user",
+        "GET /kefuapi/tourist/chat"
+      ],
+      "covered": [
+        "UniApp 买家客服页支持用户/游客会话、文字/图片消息与实时连接。"
+      ],
+      "remaining": [
+        "旧商品/订单消息卡片、入场携带的商品/订单上下文及一键查看详情未逐项迁移。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/index.vue",
+        "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/index.vue:8",
+        "view/uniapp-ts/src/config/navigation.ts",
+        "view/uniapp-ts/src/pages/user/kefu.vue",
+        "workers-ts/src/routes/kefuapi.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts"
+      ],
+      "targetPermissions": [
+        "mobile_user_or_visitor"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/kefu/mobile_feedback",
+        "title": "用户反馈",
+        "component": "@/pages/kefu/appChat/mobile/feedback",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/feedback.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/feedback.vue:11",
+        "source": "cinashop-php/view/admin/src/router/modules/frameOut.js:143",
+        "routerSha256": "88b9a955c75fc95b44fcff0ffe5a75b7f9a631be23a49276fb02db7668b628e6",
+        "auth": "auth: true; kefu: true"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/pages/extension/customer_list/feedback"
+      ],
+      "targetApis": [
+        "GET /api/user/service/feedback",
+        "POST /api/user/service/feedback"
+      ],
+      "covered": [
+        "UniApp 有离线反馈说明、姓名、电话、内容校验和提交表单。"
+      ],
+      "remaining": [
+        "旧 /kefuapi/tourist/feedback 允许游客反馈；新页面要求用户登录，匿名离线反馈入口未等价。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/frameOut.js",
+        "cinashop-php/view/admin/src/api/kefu.js",
+        "cinashop-php/route/kefu.php",
+        "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/feedback.vue",
+        "cinashop-php/view/admin/src/pages/kefu/appChat/mobile/feedback.vue:11",
+        "view/uniapp-ts/src/config/navigation.ts",
+        "view/uniapp-ts/src/pages/extension/customer_list/feedback.vue",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/src/controllers/kefu/KefuController.ts",
+        "view/kefu-ts/src/api/kefu.ts",
+        "view/uniapp-ts/src/api/feedback.ts",
+        "workers-ts/src/controllers/api/v1/CustomerServiceCatalogController.ts"
+      ],
+      "targetPermissions": [
+        "mobile_user"
+      ]
+    }
+  ]
+}

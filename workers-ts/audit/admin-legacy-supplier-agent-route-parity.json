@@ -1,0 +1,774 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "Only the 11 supplier.js and 8 agent.js surface=page business routes in the authoritative 274-page inventory. The supplier/finance/set commonForm auxiliary route is excluded.",
+    "reviewBasis": "Compare pinned legacy Vue behavior, auth, PHP API and data entity with actual target Admin operations, registered Worker routes and target permission. Legacy auth and behavior lines are static reviewed evidence; generation requires only this repository. A similar page title or API alone cannot establish screen parity.",
+    "validationBoundary": "Code-only semantic review. No production data, historical supplier/agent reconciliation, real-role browser E2E, financial transfer, deployment or publication is claimed. FE-001D remains open."
+  },
+  "summary": {
+    "legacyRoutes": 19,
+    "reviewed": 19,
+    "candidate": 0,
+    "partial": 10,
+    "missing": 9,
+    "retired": 0,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/agent/agent_manage/index",
+        "title": "分销员管理",
+        "component": "@/pages/agent/agentManage",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/agent/agentManage.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/agent/agentManage.vue:74",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:26",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-agent-manage']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/agent"
+      ],
+      "targetApis": [
+        "GET /adminapi/spread/list",
+        "GET /adminapi/brokerage/list"
+      ],
+      "covered": [
+        "新分销页提供推广人及佣金的只读列表。"
+      ],
+      "remaining": [
+        "旧推广人页还按日期/昵称查询、查看下级与订单、导出、生成公众号/小程序/H5 二维码、调整上级及赠送等级；新页缺这些操作，且新 spread/list 的人群口径需与旧 agent/index 核对。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/agent/agentManage.vue",
+        "cinashop-php/view/admin/src/pages/agent/agentManage.vue:74",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/AgentList.vue",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ],
+      "targetPermissions": [
+        "distribution.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/agreement",
+        "title": "分销说明",
+        "component": "@/pages/agent/agreement",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/agent/agreement/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/agent/agreement/index.vue:24",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:35",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-agreement']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧富文本页读取并保存 agent/get_agent_agreement 与 set_agent_agreement 的 type=2 推广员协议；新运行时内容的代理商入驻协议是另一文档，不能替代旧协议编辑。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/agent/agreement/index.vue",
+        "cinashop-php/view/admin/src/pages/agent/agreement/index.vue:24",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "cinashop-php/view/admin/src/api/user.js",
+        "cinashop-php/app/controller/admin/v1/agent/AgentManage.php",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/division_list",
+        "title": "区域代理列表",
+        "component": "@/pages/division/list/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/division/list/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/division/list/index.vue:27",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:44",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-division-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/division"
+      ],
+      "targetApis": [
+        "GET /adminapi/agent/division/list",
+        "GET /adminapi/agent/division/detail/:uid",
+        "POST /adminapi/agent/division/save",
+        "PUT /adminapi/agent/division/status/:uid/:status",
+        "DELETE /adminapi/agent/division/del/:uid"
+      ],
+      "covered": [
+        "新事业部页可按角色类型列出事业部，创建/编辑管理员和事业部，启停、解除角色。"
+      ],
+      "remaining": [
+        "旧事业部行可逐级查看所辖代理商并按上级切入管理；新页只有全局类型 tab，缺同一事业部行的下级钻取及旧查询/导出细节。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/division/list/index.vue",
+        "cinashop-php/view/admin/src/pages/division/list/index.vue:27",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+        "view/admin-ts/src/api/division.ts",
+        "workers-ts/src/controllers/api/v1/AdminDivisionController.ts"
+      ],
+      "targetPermissions": [
+        "division.view",
+        "division.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/order",
+        "title": "事业部订单",
+        "component": "@/pages/division/agent/order",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/division/agent/order.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/division/agent/order.vue:90",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:53",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-division-order']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/division"
+      ],
+      "targetApis": [
+        "GET /adminapi/agent/division/order/list",
+        "GET /adminapi/agent/division/option",
+        "GET /adminapi/agent/division/agent_option/:divisionId"
+      ],
+      "covered": [
+        "新事业部订单 tab 可按事业部/代理商及关键词查订单、金额和三级佣金。"
+      ],
+      "remaining": [
+        "旧订单页有日期筛选、明细展开和导出；新 tab 未暴露这些操作，不能完成旧订单复核流程。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/division/agent/order.vue",
+        "cinashop-php/view/admin/src/pages/division/agent/order.vue:90",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+        "view/admin-ts/src/api/division.ts",
+        "workers-ts/src/controllers/api/v1/AdminDivisionController.ts"
+      ],
+      "targetPermissions": [
+        "division.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/agent_list",
+        "title": "代理商列表",
+        "component": "@/pages/division/agent/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/division/agent/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/division/agent/index.vue:26",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:62",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-division-agent-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/division"
+      ],
+      "targetApis": [
+        "GET /adminapi/agent/division/list",
+        "POST /adminapi/agent/division_agent/save",
+        "POST /adminapi/agent/division_staff/save",
+        "PUT /adminapi/agent/division/status/:uid/:status",
+        "DELETE /adminapi/agent/division/del/:uid"
+      ],
+      "covered": [
+        "新角色 tab 可按代理商/员工类型列出、创建、编辑、启停和解除角色，并在员工表单选择上级代理商。"
+      ],
+      "remaining": [
+        "旧代理商目录可从单行查看和管理其直属员工；新页缺按代理商行的下级钻取与员工关联视图。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/division/agent/index.vue",
+        "cinashop-php/view/admin/src/pages/division/agent/index.vue:26",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+        "view/admin-ts/src/api/division.ts",
+        "workers-ts/src/controllers/api/v1/AdminDivisionController.ts"
+      ],
+      "targetPermissions": [
+        "division.view",
+        "division.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/statistics",
+        "title": "事业部统计",
+        "component": "@/pages/division/agent/statistics",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/division/agent/statistics.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/division/agent/statistics.vue:268",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:71",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-division-statistics']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/division"
+      ],
+      "targetApis": [
+        "GET /adminapi/agent/division/statistics",
+        "GET /adminapi/agent/division/ranking",
+        "GET /adminapi/agent/division/trend"
+      ],
+      "covered": [
+        "新事业部页展示总量卡与业绩排行。"
+      ],
+      "remaining": [
+        "旧统计页可选日期并绘制业绩趋势；新页无日期条件和趋势图。Worker 虽注册 trend API，新页面没有调用，不能据 API 判为整屏覆盖。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/division/agent/statistics.vue",
+        "cinashop-php/view/admin/src/pages/division/agent/statistics.vue:268",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+        "view/admin-ts/src/api/division.ts",
+        "workers-ts/src/controllers/api/v1/AdminDivisionController.ts"
+      ],
+      "targetPermissions": [
+        "division.view"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/apply_list",
+        "title": "代理商申请",
+        "component": "@/pages/division/agent/applyList",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/division/agent/applyList.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/division/agent/applyList.vue:67",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:81",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['agent-division-agent-applyList']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/division"
+      ],
+      "targetApis": [
+        "GET /adminapi/agent/division/apply/list",
+        "POST /adminapi/agent/division/apply/examine/save",
+        "DELETE /adminapi/agent/division/apply/del/:id"
+      ],
+      "covered": [
+        "新代理申请 tab 可按状态/关键词分页，审批、拒绝和删除。"
+      ],
+      "remaining": [
+        "旧申请可审阅上传的证明材料；新 API 有 images 字段但新表格不显示材料，审核依据展示不完整。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/division/agent/applyList.vue",
+        "cinashop-php/view/admin/src/pages/division/agent/applyList.vue:67",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+        "view/admin-ts/src/api/division.ts",
+        "workers-ts/src/controllers/api/v1/AdminDivisionController.ts"
+      ],
+      "targetPermissions": [
+        "division.view",
+        "division.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/agent/promoter/apply",
+        "title": "分销员申请",
+        "component": "@/pages/division/promoter/apply",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/division/promoter/apply.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/division/promoter/apply.vue:69",
+        "source": "cinashop-php/view/admin/src/router/modules/agent.js:90",
+        "routerSha256": "4a4e8da561f2f77a439e4a0da1a01b28fb36fb3da5c4fa1a786af8b01b3b622d",
+        "parentAuth": "true",
+        "auth": "['admin-agent-promoter-apply']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/promoter/apply/list",
+        "GET /adminapi/promoter/apply/examine/:id/:uid/:status",
+        "DELETE /adminapi/promoter/apply/del/:id"
+      ],
+      "covered": [],
+      "remaining": [
+        "旧推广员申请页有列表、材料审阅、通过/拒绝和删除；Worker 已注册申请 API，但新 /agent 没有申请管理 tab 或可执行审核屏。审核接口仍使用 GET；本地候选修复已对该写操作显式要求 distribution.manage，仍需 CI 和真实角色验收。API 注册不能代替旧页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/agent.js",
+        "cinashop-php/view/admin/src/pages/division/promoter/apply.vue",
+        "cinashop-php/view/admin/src/pages/division/promoter/apply.vue:69",
+        "cinashop-php/view/admin/src/api/agent.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/controllers/api/v1/PromoterApplicationController.ts",
+        "view/admin-ts/src/pages/agent/AgentList.vue"
+      ],
+      "targetPermissions": [
+        "distribution.view",
+        "distribution.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/supplier/index",
+        "title": "供应商菜单",
+        "component": "@/pages/supplier/supplierList/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/supplierList/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/supplierList/index.vue:303",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:25",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-supplier-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧路径实际是供应商菜单/规则树，支持按 supplier 角色添加子菜单和权限规则、编辑、删除、启停；新 /system 只管理平台系统权限，没有供应商规则编辑及授权关系。路由名中的 supplier 不表示供应商目录。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/supplierList/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/supplierList/index.vue:303",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "cinashop-php/view/admin/src/api/systemMenus.js",
+        "view/admin-ts/src/pages/system/SystemList.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/apply",
+        "title": "供应商申请",
+        "component": "@/pages/supplier/supplierApply/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/supplierApply/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/supplierApply/index.vue:64",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:34",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-apply']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/supplier/applications"
+      ],
+      "targetApis": [
+        "GET /adminapi/supplier/apply/list",
+        "GET /adminapi/supplier/apply/info/:id",
+        "POST /adminapi/supplier/apply/verify/:id",
+        "POST /adminapi/supplier/apply/mark/:id",
+        "DELETE /adminapi/supplier/apply/del/:id"
+      ],
+      "covered": [
+        "新页按状态/关键词分页列申请，支持审批、拒绝、内部备注和删除，Worker 审批会创建待激活供应商账号。"
+      ],
+      "remaining": [
+        "旧页可按日期筛选并查看全部资质图片；新页无日期筛选，仅链接首张图片并显示张数，完整材料核验和历史申请数据仍需验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/supplierApply/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/supplierApply/index.vue:64",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/supplier/SupplierApplications.vue",
+        "view/admin-ts/src/api/supplierApplication.ts",
+        "workers-ts/src/controllers/api/v1/SupplierApplicationController.ts"
+      ],
+      "targetPermissions": [
+        "supplier_application.view",
+        "supplier_application.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/menu/list",
+        "title": "供应商管理",
+        "component": "@/pages/supplier/supplier-supplier_list/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/supplier-supplier_list/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/supplier-supplier_list/index.vue:188",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:43",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-menu-list']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧组件实际是已入驻供应商目录，支持查询、启停、手工新增/编辑、删除和快捷登录；新申请页只管理入驻申请，不提供既有供应商目录或快捷登录。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/supplier-supplier_list/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/supplier-supplier_list/index.vue:188",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/supplier/SupplierApplications.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/supplierAdd/:id?",
+        "title": "供应商添加",
+        "component": "@/pages/supplier/supplierAdd/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/supplierAdd/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/supplierAdd/index.vue:169",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:52",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-supplierAdd']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧新增/编辑表单管理供应商联系人、地址、邮箱、账户、密码、排序和启用状态；新后台没有对应手工建档/编辑表单，申请审批建号不能替代。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/supplierAdd/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/supplierAdd/index.vue:169",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/supplier/SupplierApplications.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/orderList/index",
+        "title": "订单列表",
+        "component": "@/pages/supplier/orderList/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/orderList/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/orderList/index.vue:348",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:61",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-orderList']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/order"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/list",
+        "GET /adminapi/order/detail/:id",
+        "POST /adminapi/order/delivery/:id"
+      ],
+      "covered": [
+        "新全局订单页可分页查询履约单、查看详情和发货。"
+      ],
+      "remaining": [
+        "旧页按供应商、时间、订单类型、支付和订单状态筛选，并提供供应商订单专有操作；新全局订单查询无 supplier_id 条件，也没有旧筛选和供应商范围的完整操作集。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/orderList/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/orderList/index.vue:348",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/order/OrderList.vue",
+        "view/admin-ts/src/api/order.ts",
+        "workers-ts/src/services/admin/AdminOrderReadService.ts"
+      ],
+      "targetPermissions": [
+        "order.view",
+        "order.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/afterOrder/index",
+        "title": "售后订单",
+        "component": "@/pages/supplier/afterOrder/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/afterOrder/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/afterOrder/index.vue:539",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:70",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-afterOrder']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/refund"
+      ],
+      "targetApis": [
+        "GET /adminapi/refund/list",
+        "GET /adminapi/refund/detail/:id",
+        "POST /adminapi/refund/operations/execute/:id",
+        "POST /adminapi/refund/operations/receipt"
+      ],
+      "covered": [
+        "新全局退款页可检索、查看退款申请并执行受控审核/退款流程。"
+      ],
+      "remaining": [
+        "旧供应商售后页按供应商、日期、退款状态和订单筛选，并显示所属供应商；新退款页与读取合同没有供应商筛选，供应商维度售后工作台尚未恢复。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/afterOrder/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/afterOrder/index.vue:539",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/refund/RefundList.vue",
+        "view/admin-ts/src/api/refund.ts",
+        "workers-ts/src/app.ts",
+        "workers-ts/src/routes/admin-refund-operations.ts",
+        "workers-ts/src/services/admin/AdminRefundReadService.ts"
+      ],
+      "targetPermissions": [
+        "refund.view",
+        "refund.manage"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/orderStatistics/index",
+        "title": "订单统计",
+        "component": "@/pages/supplier/orderStatistics/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/orderStatistics/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/orderStatistics/index.vue:625",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:79",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-supplier_list']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧页按供应商与日期显示订单汇总、趋势、渠道/类型分析及供应商统计表；新通用统计页没有 supplier/home 这些供应商维度指标与图表。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/orderStatistics/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/orderStatistics/index.vue:625",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/capital/index",
+        "title": "供应商流水",
+        "component": "@/pages/supplier/capital/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/capital/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/capital/index.vue:56",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:88",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-capital-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧页是 supplier/flowing_water 供应商资金流水，含供应商/日期/订单筛选、导出和备注；新平台流水与通用账单不是该实体，没有对应供应商流水管理屏。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/capital/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/capital/index.vue:56",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/BillList.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/bill/index",
+        "title": "账单记录",
+        "component": "@/pages/supplier/bill/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/bill/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/bill/index.vue:77",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:97",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-bill-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧 supplier/fund_record 账单按日/周/月、供应商、时间和状态查询详情及导出；新 /finance/bill 是平台/用户账单，缺供应商 fund_record 合同和页面。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/bill/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/bill/index.vue:77",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/BillList.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/bill/index/:type?",
+        "title": "对账管理",
+        "component": "@/pages/supplier/bill/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/bill/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/bill/index.vue:77",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:106",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-bill-index']"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧同组件以可选 :type 参数预选 supplier/fund_record 的账单状态或类型，仍可查详情与导出；新财务账单不读取供应商 fund_record，也不实现该路由参数语义。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/bill/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/bill/index.vue:77",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/BillList.vue"
+      ],
+      "targetPermissions": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/supplier/cash/index",
+        "title": "转账申请",
+        "component": "@/pages/supplier/cash/index",
+        "resolvedComponent": "cinashop-php/view/admin/src/pages/supplier/cash/index.vue",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/supplier/cash/index.vue:102",
+        "source": "cinashop-php/view/admin/src/router/modules/supplier.js:115",
+        "routerSha256": "441dd080a46a1a841568fdd5b3307fe4d1edb34bc6b32b37f55ee8fa328ff3e8",
+        "parentAuth": null,
+        "auth": "['admin-supplier-cash-index']"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/finance/supplier-extract"
+      ],
+      "targetApis": [
+        "GET /adminapi/supplier/extract/list",
+        "POST /adminapi/supplier/extract/verify/:id",
+        "POST /adminapi/supplier/extract/save_transfer/:id",
+        "POST /adminapi/supplier/extract/mark/:id"
+      ],
+      "covered": [
+        "新提现页按阶段、关键词和方式分页，显示阶段金额，并可审批/拒绝与登记实际转账凭证。"
+      ],
+      "remaining": [
+        "旧页还可按供应商和日期筛选并修改后台备注；新 Worker 有 mark API，但新页面未暴露备注操作，且无明确供应商/日期筛选。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/supplier.js",
+        "cinashop-php/view/admin/src/pages/supplier/cash/index.vue",
+        "cinashop-php/view/admin/src/pages/supplier/cash/index.vue:102",
+        "cinashop-php/view/admin/src/api/supplier.js",
+        "cinashop-php/route/admin.php",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/SupplierExtractList.vue",
+        "view/admin-ts/src/api/finance.ts",
+        "workers-ts/src/controllers/api/v1/AdminSupplierFinanceController.ts"
+      ],
+      "targetPermissions": [
+        "supplier_extract.view",
+        "supplier_extract.manage"
+      ]
+    }
+  ]
+}

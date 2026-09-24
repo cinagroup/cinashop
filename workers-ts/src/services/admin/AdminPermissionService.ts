@@ -278,6 +278,13 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     return "activity.manage";
   }
   if (
+    group.key === "distribution"
+    && /^promoter\/apply\/examine\/[^/]+\/[^/]+\/[^/]+$/.test(route)
+  ) {
+    // The legacy review URL mutates application state despite using GET.
+    return "distribution.manage";
+  }
+  if (
     group.key === "order"
     && (route.startsWith("order/wirteoff/records/") || route === "order/order_verific")
   ) {

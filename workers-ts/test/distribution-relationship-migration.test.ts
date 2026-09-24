@@ -50,6 +50,12 @@ describe("distribution relationship migration", () => {
     expect(requiredAdminPermission("GET", "/adminapi/promoter/apply/list")).toBe(
       "distribution.view",
     );
+    expect(requiredAdminPermission("GET", "/adminapi/promoter/apply/examine/1/2/1")).toBe(
+      "distribution.manage",
+    );
+    expect(requiredAdminPermission("GET", "/api/admin/promoter/apply/examine/1/2/2")).toBe(
+      "distribution.manage",
+    );
     expect(
       requiredAdminPermission("DELETE", "/api/admin/promoter/apply/del/1"),
     ).toBe("distribution.manage");
