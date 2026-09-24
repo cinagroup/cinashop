@@ -169,6 +169,8 @@ if (schemaMaintenance) {
     'test/checkout-catalog-management.test.ts',
     'test/checkout-mobile-product-concurrency.test.ts',
     'test/checkout-out-product-concurrency.test.ts',
+    'test/account-cancellation-order-admission-postgres.test.ts',
+    'test/seckill-concurrency-postgres.test.ts',
     'test/checkout-sku-lifecycle-concurrency.test.ts',
     'test/level-pricing-activation.test.ts',
     'test/pc-coupon-wallet-postgres.test.ts',

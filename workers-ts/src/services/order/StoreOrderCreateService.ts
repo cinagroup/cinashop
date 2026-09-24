@@ -17,7 +17,7 @@
  *   - 库存扣减加 WHERE stock>=n 守卫 (PHP decStockIncSales 缺失, 靠事务行锁兜底)
  *   - 不使用 Durable Object 包裹空操作来伪装数据库事务已串行化
  */
-import { and, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import {
   storeCart,
   storeOrder,
@@ -1830,6 +1830,18 @@ export class StoreOrderCreateService {
         if (confirmation && await checkoutFingerprint(seckillSchedule) !== await checkoutFingerprint(seckillConfirmationSchedule)) {
           throw new OrderQuoteReconfirmRequired(key);
         }
+      }
+      // The request's earlier auth read can predate an account cancellation.
+      // Hold the active user row through the final order INSERT. Activity rows
+      // are locked first for refund compatibility; carts and SKUs come later.
+      if (uid > 0) {
+        const [activeAccount] = await tx.select({ uid: userTable.uid }).from(userTable)
+          .where(and(
+            eq(userTable.uid, uid), eq(userTable.status, 1),
+            eq(userTable.isDel, 0), isNull(userTable.deleteTime),
+          ))
+          .limit(1).for("update");
+        if (!activeAccount) throw new NotFoundException("用户不存在或已失效");
       }
       const now = Math.floor(Date.now() / 1000);
       if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && supportsIntegralDeduction))) {
