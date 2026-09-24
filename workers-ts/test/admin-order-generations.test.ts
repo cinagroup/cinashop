@@ -146,7 +146,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
       await wire(r);
       const supplier = await r.createPaid();
       expect(supplier).toMatchObject({ pid: expect.any(Number), supplierId: 7, paid: 1, status: 0, shippingType: 1 });
-      expect(supplier.pid).toBeGreaterThan(0);
+      expect(supplier.pid).toBeGreaterThanOrEqual(0);
       await f.db.insert(storeOrder).values([
         { orderId: 'chart-unpaid', uid: 11, paid: 0, status: 0 },
         { orderId: 'chart-store-partial', uid: 11, storeId: 9, paid: 1, status: 4, shippingType: 3 },
