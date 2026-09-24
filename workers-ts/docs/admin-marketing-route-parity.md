@@ -8,9 +8,9 @@
 
 | 状态 | 屏数 | 判断边界 |
 | --- | ---: | --- |
-| candidate | 3 | 优惠套餐列表和创建/编辑、用户优惠券领取记录已有本地 Admin 与 Worker 操作面；仍待真实角色和生产流程验收。 |
+| candidate | 4 | 优惠套餐列表和创建/编辑、用户优惠券领取记录、签到奖励已有本地 Admin 与 Worker 操作面；仍待真实角色和生产流程验收。 |
 | partial | 22 | 新页面可承接有意义的部分操作，但旧筛选、字段、导出、发行或渠道闭环尚不完整。 |
-| missing | 23 | 无可执行的新 Admin 整屏替代；仅有 Worker API 或前台业务能力不足以提高状态。 |
+| missing | 22 | 无可执行的新 Admin 整屏替代；仅有 Worker API 或前台业务能力不足以提高状态。 |
 | retired | 0 | 未发现足以证明旧路由是无效占位页的证据。 |
 
 容易混淆的映射：
@@ -24,6 +24,6 @@
 - 旧营销渠道码映射到跨域 `/content/wechat-qrcode`。目录、编辑和统计均有本地入口；公众号扫码回调尚未启用，三屏仍为 partial。
 - 新 `/marketing/user-point` 的独立只读权限、分页积分流水与四项统计可部分承接旧积分日志。旧页只有用户 ID/标题和时间筛选，统计卡在初始化时单独加载；新页增加可选精确类型并按同条件查询统计。旧 Excel 导出尚未恢复，历史流水和受限角色仍待验收，因此保持 partial。`/marketing/sign-rewards` 用连续/累积两个页签、15 条分页和添加/编辑/确认删除承接旧签到奖励页，沿用 `config.view/manage`，列为本地 candidate；生产非空规则、受限角色与发布后签到结果仍待验。积分分类/独立统计、充值配置、促销规则及活动边框/背景仍无整屏替代。
 
-本批只完成代码级语义映射。当前 11 份逐屏台账合计 **274/274 已审**；其中营销域为 3 条 candidate、22 条 partial、23 条 missing。已审不等于功能已覆盖：跨域真实角色/数据 E2E 及发布验收仍开放，FE-001D 不因本文件关闭。
+本批只完成代码级语义映射。当前 11 份逐屏台账合计 **274/274 已审**；其中营销域为 4 条 candidate、22 条 partial、22 条 missing。已审不等于功能已覆盖：跨域真实角色/数据 E2E 及发布验收仍开放，FE-001D 不因本文件关闭。
 
 定向复核命令：在 `workers-ts` 下运行 `node node_modules/vitest/vitest.mjs run test/admin-marketing-frontend-parity.test.ts`。重新生成台账用 `node node_modules/tsx/dist/cli.mjs scripts/admin-marketing-frontend-parity-audit.ts --write`。
