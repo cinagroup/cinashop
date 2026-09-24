@@ -250,17 +250,28 @@ export function formatLegacyShippingRuleGroups(
   });
 }
 
-export function formatValidatedShippingRuleGroups(rows: Parameters<typeof formatLegacyShippingRuleGroups>[0], kind: 'region' | 'free' | 'no_delivery') {
+export async function formatValidatedShippingRuleGroups(
+  tx: DbClient,
+  rows: Parameters<typeof formatLegacyShippingRuleGroups>[0],
+  kind: 'region' | 'free' | 'no_delivery',
+) {
   // A group must be homogeneous. The historical formatter takes its last row;
   // silently choosing that row would erase inconsistent stored facts on save.
   const seen = new Map<string, string>();
+  const projectedRows: LegacyRuleRow[] = [];
+  const legacyPaths: number[][] = [];
   for (const row of rows) {
-    if (!row.value && row.cityId === 0 && row.provinceId === 0 && kind === 'region') row.value = '[0]';
+    const value = !row.value && row.cityId === 0 && row.provinceId === 0 && kind === 'region' ? '[0]' : row.value;
     let path: unknown;
-    try { path = JSON.parse(row.value); } catch { throw new ValidateException('模板地区路径缺失或损坏，请先核对原始规则'); }
+    try { path = JSON.parse(value); } catch { throw new ValidateException('模板地区路径缺失或损坏，请先核对原始规则'); }
+    const inferredProvinceId = Array.isArray(path) && row.provinceId === 0 && path[0] !== 0 ? path[0] : row.provinceId;
     if (!Array.isArray(path) || !path.length || path.length > 4 || path.some(p => !Number.isSafeInteger(p) || p < 0)
-      || new Set(path).size !== path.length || path.at(-1) !== row.cityId || path[0] !== row.provinceId
+      || new Set(path).size !== path.length || path.at(-1) !== row.cityId || path[0] !== inferredProvinceId
       || (path.includes(0) && !(kind === 'region' && path.length === 1))) throw new ValidateException('模板地区路径与地区ID不一致，请先核对原始规则');
+    // PHP's V1 writers stored the full path and endpoint, leaving province_id at
+    // its SQL default 0. Derive it for the editor only after checking city authority.
+    if (row.provinceId === 0 && path[0] !== 0) legacyPaths.push(path);
+    projectedRows.push({ ...row, value, provinceId: inferredProvinceId });
     const key = row.uniqid || `legacy-${row.id}`;
     const fields = JSON.stringify(kind === 'region' ? [row.first, row.firstPrice, row.continue, row.continuePrice, row.billingGroup]
       : kind === 'free' ? [row.number, row.price, row.billingGroup] : []);
@@ -268,7 +279,8 @@ export function formatValidatedShippingRuleGroups(rows: Parameters<typeof format
     seen.set(key, fields);
   }
   if (seen.size > 100) throw new ValidateException('模板规则超过100组，不能编辑不完整规则');
-  return formatLegacyShippingRuleGroups(rows, kind);
+  if (legacyPaths.length) await authoritativeCities(tx, legacyPaths);
+  return formatLegacyShippingRuleGroups(projectedRows, kind);
 }
 
 function randomRuleId(): string {
@@ -276,12 +288,7 @@ function randomRuleId(): string {
   return `sup${[...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export async function cityAuthority(tx: DbClient, input: SupplierShippingTemplateInput) {
-  const paths = [
-    ...input.regions.flatMap((row) => row.paths),
-    ...input.freeRules.flatMap((row) => row.paths),
-    ...input.noDeliveryRules.flatMap((row) => row.paths),
-  ];
+async function authoritativeCities(tx: DbClient, paths: number[][]) {
   const ids = [...new Set(paths.flat().filter((id) => id > 0))];
   const rows = ids.length
     ? await tx
@@ -307,6 +314,14 @@ export async function cityAuthority(tx: DbClient, input: SupplierShippingTemplat
     }
   }
   return byId;
+}
+
+export async function cityAuthority(tx: DbClient, input: SupplierShippingTemplateInput) {
+  return authoritativeCities(tx, [
+    ...input.regions.flatMap((row) => row.paths),
+    ...input.freeRules.flatMap((row) => row.paths),
+    ...input.noDeliveryRules.flatMap((row) => row.paths),
+  ]);
 }
 
 export async function replaceRules(
