@@ -59,6 +59,8 @@ export function seckillCatalogSchedulePredicate(timeId: string, now = new Date()
         AND mod(parent.start_day::bigint + 28800, 86400) = 0 AND mod(parent.end_day::bigint + 28800, 86400) = 0))
       AND ${clock}::numeric >= allowed.starts AND ${clock}::numeric < allowed.ends
       AND ${Number(timeId)} = ANY(allowed.slot_ids)
+      AND NOT EXISTS (SELECT 1 FROM unnest(allowed.slot_ids) AS configured(id)
+        WHERE NOT EXISTS (SELECT 1 FROM store_seckill_time AS configured_slot WHERE configured_slot.id = configured.id))
       AND NOT EXISTS (SELECT 1 FROM store_seckill_time AS slot WHERE slot.id = ANY(allowed.slot_ids) AND slot.status = 1
         AND ((${from}) IS NULL OR (${to}) IS NULL OR (${from}) >= (${to})))
       AND EXISTS (SELECT 1 FROM store_seckill_time AS slot WHERE slot.id = ${Number(timeId)} AND slot.status = 1
