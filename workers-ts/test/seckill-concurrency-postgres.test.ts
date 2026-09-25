@@ -395,6 +395,72 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
   }, 15_000);
 
+  it("a reusable add crossing the schedule cutoff while waiting on its cart rolls back", async () => {
+    await f.db.update(storeCart).set({ isNew: 0, cartNum: 1 }).where(eq(storeCart.id, 1));
+    const [clock] = await f.db.select({ now: sql<string>`(extract(epoch from clock_timestamp()) * 1000)::text` })
+      .from(sql`(values (1)) as probe(n)`);
+    const deadline = Math.floor(Number(clock.now)) + 3_000;
+    await f.db.update(storeSeckill).set({ stopTime: new Date(deadline) }).where(eq(storeSeckill.id, 20));
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([holder, adder]) => {
+      await holder.exec("BEGIN; SELECT id FROM store_cart WHERE id=1 FOR UPDATE");
+      const pending = outcome(new StoreCartService(createContainerFromDb(adder.db)).add({
+        uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1,
+      }));
+      await waitForFinanceBlock(f.db, adder.pid, holder.pid);
+      await waitForFinanceClock(f.db, deadline + 1);
+      await holder.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: expect.stringMatching(/^秒杀已结束$|^秒杀时段已结束或购物车已下单$/) } });
+    });
+    expect(await snapshot()).toEqual(before);
+  }, 15_000);
+
+  it("a real Admin limit save during a reusable add's cart wait rejects the stale quantity", async () => {
+    await f.db.update(storeCart).set({ isNew: 0, cartNum: 1 }).where(eq(storeCart.id, 1));
+    await f.db.update(storeSeckill).set({ freight: 3, tempId: 10 }).where(eq(storeSeckill.id, 20));
+    let afterEdit: Awaited<ReturnType<typeof snapshot>> | undefined;
+    await withFinancePeers(f.db, async ([holder, adder, editor]) => {
+      const admin = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+      admin.use("*", async (c, next) => { c.set("container", createContainerFromDb(editor.db)); await next(); });
+      admin.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
+      admin.post("/activity/save", adminActivitySave);
+      await holder.exec("BEGIN; SELECT id FROM store_cart WHERE id=1 FOR UPDATE");
+      const pending = outcome(new StoreCartService(createContainerFromDb(adder.db)).add({
+        uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1,
+      }));
+      await waitForFinanceBlock(f.db, adder.pid, holder.pid);
+      const saved = await admin.request("/activity/save", { method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "seckill", id: 20, num: 1 }),
+      }, f.env);
+      expect(await saved.json()).toMatchObject({ status: 200, data: { id: 20 } });
+      afterEdit = await snapshot();
+      await holder.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: expect.stringMatching(/累计限购|总共限购/) } });
+    });
+    expect(await snapshot()).toEqual(afterEdit);
+  }, 15_000);
+
+  it("a first reusable add waiting on its user lock rereads a disabled schedule", async () => {
+    await f.db.delete(storeCart);
+    let afterEdit: Awaited<ReturnType<typeof snapshot>> | undefined;
+    await withFinancePeers(f.db, async ([holder, adder, editor]) => {
+      await holder.exec("BEGIN; SELECT pg_advisory_xact_lock(1128354388, 11)");
+      const pending = outcome(new StoreCartService(createContainerFromDb(adder.db)).add({
+        uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1,
+      }));
+      await waitForFinanceBlock(f.db, adder.pid, holder.pid);
+      await editor.db.update(storeSeckill).set({ status: 0 }).where(eq(storeSeckill.id, 20));
+      afterEdit = await snapshot();
+      await holder.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: "秒杀商品已下架" } });
+    });
+    expect(await snapshot()).toEqual(afterEdit);
+  }, 15_000);
+
   it.each([
     ["qatime01", "qared001"],
     ["qared001", "qatime01"],

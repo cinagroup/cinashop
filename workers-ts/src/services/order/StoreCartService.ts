@@ -392,14 +392,17 @@ export class StoreCartService {
         throw new ValidateException("加入购物车数量超过库存");
       }
       // The read above can predate an order claim or another add. Recheck the
-      // complete reusable-cart quote at the UPDATE after any row-lock wait.
-      if (type === 1 || type === 2) {
+      // complete reusable-cart quote after any row-lock wait.
+      if (type === 1) {
+        // The cart lock may wait behind checkout. Re-read schedule, Admin
+        // limits and inventory in the same transaction as the quantity write.
+        await setSeckillCartQuantity(this.container, uid, existing.id, newNum, existing);
+      } else if (type === 2) {
         const updated = await this.container.db.update(storeCart).set({ cartNum: newNum }).where(and(
           activityCartQuoteGuard(existing), eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ""),
           eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1),
         )).returning({ id: storeCart.id });
-        if (!updated.length) throw new ValidateException(type === 1
-          ? "秒杀购物车已变化或被占用，请刷新后重试" : "砍价购物车已变化或被占用，请刷新后重试");
+        if (!updated.length) throw new ValidateException("砍价购物车已变化或被占用，请刷新后重试");
       } else await this.container.storeCartDao.update(existing.id, { cartNum: newNum });
       return { id: existing.id, cartNum: newNum };
     }
