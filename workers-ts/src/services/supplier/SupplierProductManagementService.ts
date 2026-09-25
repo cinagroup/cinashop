@@ -9,7 +9,7 @@ import {
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
-import { boundBargainSourceProductRetirement, lockBargainSourceProductRetirement } from '@/services/activity/BargainSourceProductLifecycle';
+import { boundBargainSourceProductChange, lockBargainSourceProductChange } from '@/services/activity/BargainSourceProductLifecycle';
 import {
   storeCart,
   storeProduct,
@@ -770,8 +770,8 @@ export class SupplierProductManagementService {
     await withTx(this.container, async (tx) => {
       // Retire every bargain admission on this source before changing the
       // product row. Cancellation/refund remain independent of this boundary.
-      await boundBargainSourceProductRetirement(tx);
-      await lockBargainSourceProductRetirement(tx, productId);
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const [owned] = await tx.select({ id: storeProduct.id }).from(storeProduct)
         .where(this.tenantProductWhere(supplierId, productId)).limit(1);
@@ -796,6 +796,10 @@ export class SupplierProductManagementService {
   async setProductShow(supplierId: number, productId: number, isShow: number) {
     if (isShow !== 0 && isShow !== 1) throw new ValidateException("商品状态错误");
     await withTx(this.container, async (tx) => {
+      // A source hide must serialize with every bargain start/help before the
+      // product is read or changed, including when another activity shares it.
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const product = (
         await tx
