@@ -38,15 +38,15 @@ describe('PC seckill selection contract with real disposable HTTP/SQL', () => {
   });
   it('merges a reusable seckill cart while keeping an explicit new purchase separate', async () => {
     const before = await f.snapshot();
-    const post = async (cartNum: number, isNew: 0 | 1) => {
+    const post = async (cartNum: number, isNew: 0 | 1, unique = 'actred20') => {
       const response = await f.app.request('/api/cart/add', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authori-zation': 'Bearer isolated-seckill-session' },
-        body: JSON.stringify({ productId: 70, activityId: 20, type: 1, unique: 'actred20', cartNum, new: isNew }) }, f.env);
+        body: JSON.stringify({ productId: 70, activityId: 20, type: 1, unique, cartNum, new: isNew }) }, f.env);
       return response.json() as Promise<{ status: number; data: { id: number; cartNum: number } }>;
     };
     try {
       const first = await post(1, 0);
-      const merged = await post(1, 0);
+      const merged = await post(1, 0, 'qared001');
       const direct = await post(1, 1);
       expect(first).toMatchObject({ status: 200, data: { cartNum: 1 } });
       expect(merged).toMatchObject({ status: 200, data: { id: first.data.id, cartNum: 2 } });

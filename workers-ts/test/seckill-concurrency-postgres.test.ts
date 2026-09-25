@@ -395,6 +395,41 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
   }, 15_000);
 
+  it.each([
+    ["qatime01", "qared001"],
+    ["qared001", "qatime01"],
+  ])("first reusable adds with %s then %s create one canonical cart", async (firstUnique, secondUnique) => {
+    // The shared quote fixture seeds id=1 explicitly without advancing its
+    // sequence; remove that unrelated direct-buy row before default inserts.
+    await f.db.delete(storeCart);
+    const before = await snapshot();
+    const add = (peer: FinancePeer, unique: string) => new StoreCartService(createContainerFromDb(peer.db)).add({
+      uid: 11, productId: 70, activityId: 20, type: 1, unique, cartNum: 1,
+    });
+    await withFinancePeers(f.db, async ([holder, first, second]) => {
+      // Both calls finish the unlocked absent-row discovery before entering
+      // the same bounded first-insert lock queue.
+      await holder.exec("BEGIN; SELECT pg_advisory_xact_lock(1128354388, 11)");
+      const a = outcome(add(first, firstUnique));
+      await waitForFinanceBlock(f.db, first.pid, holder.pid);
+      const b = outcome(add(second, secondUnique));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await holder.exec("COMMIT");
+      const [firstResult, secondResult] = await Promise.all([a, b]);
+      if (!firstResult.ok) throw firstResult.error;
+      if (!secondResult.ok) throw secondResult.error;
+      expect(firstResult.value).toMatchObject({ cartNum: 1 });
+      expect(secondResult.value).toEqual({ id: firstResult.value.id, cartNum: 2 });
+    });
+    const after = await snapshot();
+    expect(after.carts).toHaveLength(1);
+    expect(after.carts.filter(cart => cart.isNew === 0 && cart.type === 1)).toMatchObject([{
+      uid: 11, staffId: 0, touristUid: "", storeId: 0, activityId: 20,
+      productAttrUnique: "qared001", cartNum: 2, isPay: 0, isDel: 0,
+    }]);
+    expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
+  }, 15_000);
+
   it.each(["stock", "total-limit"])("two independently blocked buyers cannot exceed shared %s", async target => {
     await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
       type: 1, activityId: 20, isNew: 1, status: 1 });

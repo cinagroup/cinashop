@@ -173,7 +173,7 @@ export class StoreCartService {
     });
   }
 
-  private async addResolved(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
+  private async addResolved(params: CartAddParams, firstAddLockHeld = false): Promise<{ id: number; cartNum: number }> {
     const { uid, cartNum } = params;
     const type = params.type ?? 0;
     const isNew = params.isNew ?? 0;
@@ -402,6 +402,22 @@ export class StoreCartService {
           ? "秒杀购物车已变化或被占用，请刷新后重试" : "砍价购物车已变化或被占用，请刷新后重试");
       } else await this.container.storeCartDao.update(existing.id, { cartNum: newNum });
       return { id: existing.id, cartNum: newNum };
+    }
+
+    if (type === 1 && isNew === 0 && !firstAddLockHeld) {
+      if (!Number.isSafeInteger(uid) || uid <= 0 || uid > 2_147_483_647) throw new ValidateException("请先登录");
+      // Only the absent reusable seckill row needs the user lock. Re-run all
+      // schedule, SKU, quantity and cart checks after waiting; a concurrent
+      // first add may have created the canonical row in the meantime.
+      return withTx(this.container, async tx => {
+        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+        await tx.execute(sql.raw(`SELECT
+          pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+          pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true),
+          pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+        await lockCartUser(tx, uid);
+        return new StoreCartService(createContainerFromDb(tx), this.env).addResolved(params, true);
+      });
     }
 
     const row = await this.container.storeCartDao.save({
