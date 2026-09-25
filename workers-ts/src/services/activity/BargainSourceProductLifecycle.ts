@@ -7,8 +7,9 @@ import { ValidateException } from "@/utils/errors";
 // product retirement/visibility writers share this boundary without holding a
 // product row lock across a participant wait. Checkout owns activity/cart rows
 // before it updates the product row, so FOR SHARE here could create a lock cycle.
-// This covers the Worker soft-delete paths and supplier show/hide. Other
-// visibility/review writers must join this boundary before changing the source.
+// Every Worker source-product visibility/review writer must acquire the
+// exclusive side before any product, SKU, or cart row lock. Direct SQL and
+// legacy PHP writers do not participate in this application lock protocol.
 const BARGAIN_SOURCE_PRODUCT_LIFECYCLE_NAMESPACE = 731_634;
 
 function assertProductId(productId: number): void {

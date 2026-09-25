@@ -8,8 +8,10 @@ import { StoreOrderCreateService, cancelStoreOrder, type CreateOrderParams } fro
 import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
 import { retirePlatformSourceProduct } from "../src/services/activity/BargainSourceProductLifecycle";
+import { SupplierProductManagementService } from "../src/services/supplier/SupplierProductManagementService";
 import { storeCart, storeBargain, storeBargainUser, systemStore, storeOrderCartInfo, storeOrderStatus, printDocument,
-  storeOrder, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProduct } from "../src/models/schema";
+  storeOrder, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProduct,
+  storeProductRelation } from "../src/models/schema";
 
 // Only independent PG16 backends can prove these row-wait/conditional-update races.
 // Never replace with PGlite concurrency or inherit production credentials.
@@ -19,7 +21,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
     shippingType: 2, storeId: 1, realName: "隔离砍价并发", userPhone: "00000000000", userIp: "127.0.0.1" };
   beforeEach(async () => {
     f = await createBargainSelectionFixture([storeOrderCartInfo, storeOrderStatus, printDocument,
-      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProductRelation]);
     await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
     await f.db.insert(storeCart).values([10, 11].map(id => ({ id, uid: 11, productId: 70,
       productAttrUnique: "qared001", cartNum: 1, type: 2, activityId: 40, isNew: 1, status: 1 })));
@@ -64,6 +66,63 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
     expect(after.skus).toEqual(before.skus);
     expect(after.bargains).toEqual(before.bargains);
     expect(after.products.find(product => product.id === 70)?.isDel).toBe(1);
+  }, 25_000);
+
+  it("rejects a shown but unreviewed bargain source before changing any order or inventory", async () => {
+    await f.db.update(storeProduct).set({ isVerify: 0 }).where(eq(storeProduct.id, 70));
+    const before = await snapshot();
+    await expect(create()).rejects.toThrow("砍价基础商品未审核通过");
+    expect(await snapshot()).toEqual(before);
+  }, 15_000);
+
+  it("rolls back checkout when source approval is removed after its quote but before the final product write", async () => {
+    await f.exec(`CREATE FUNCTION qa_bargain_approval_final_wait() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.id=1 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
+      CREATE TRIGGER qa_bargain_approval_final_wait AFTER UPDATE OF stock ON store_product_attr_value
+      FOR EACH ROW EXECUTE FUNCTION qa_bargain_approval_final_wait()`);
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([gate, buyer, editor]) => {
+      await gate.exec("BEGIN; SELECT pg_advisory_xact_lock(731635,70)");
+      const buying = outcome(create(buyer, { ...params, key: "unreviewed_after_quote" }));
+      await waitForFinanceBlock(f.db, buyer.pid, gate.pid);
+      await editor.db.update(storeProduct).set({ isVerify: 0 }).where(eq(storeProduct.id, 70));
+      await gate.exec("COMMIT");
+      expect(await buying).toMatchObject({ ok: false,
+        error: { message: expect.stringContaining("商品归属、上架状态已变化") } });
+    });
+    const after = await snapshot();
+    expect(after.orders).toHaveLength(0);
+    expect(after.carts).toEqual(before.carts);
+    expect(after.skus).toEqual(before.skus);
+    expect(after.bargains).toEqual(before.bargains);
+    expect(after.products.find(product => product.id === 70)).toMatchObject({ isShow: 1, isVerify: 0, stock: 8 });
+  }, 25_000);
+
+  it("supplier hide owns the cart first, then a waiting checkout rejects without an order or stock change", async () => {
+    await f.db.update(storeProduct).set({ type: 2, relationId: 7 }).where(eq(storeProduct.id, 70));
+    await f.exec(`CREATE FUNCTION qa_supplier_hide_cart_wait() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.id=10 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
+      CREATE TRIGGER qa_supplier_hide_cart_wait AFTER UPDATE OF status ON store_cart
+      FOR EACH ROW EXECUTE FUNCTION qa_supplier_hide_cart_wait()`);
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([gate, hiding, buyer]) => {
+      await gate.exec("BEGIN; SELECT pg_advisory_xact_lock(731635,70)");
+      const hide = outcome(new SupplierProductManagementService(createContainerFromDb(hiding.db))
+        .setProductShow(7, 70, 0));
+      await waitForFinanceBlock(f.db, hiding.pid, gate.pid);
+      const buying = outcome(create(buyer, { ...params, key: "supplier_hidden_cart" }));
+      await waitForFinanceBlock(f.db, buyer.pid, hiding.pid);
+      await gate.exec("COMMIT");
+      const hidden = await hide;
+      expect(hidden, hidden.ok ? '' : String(hidden.error)).toMatchObject({ ok: true });
+      expect(await buying).toMatchObject({ ok: false });
+    });
+    const after = await snapshot();
+    expect(after.orders).toHaveLength(0);
+    expect(after.skus).toEqual(before.skus);
+    expect(after.bargains).toEqual(before.bargains);
+    expect(after.products.find(product => product.id === 70)).toMatchObject({ isShow: 0, stock: 8 });
+    expect(after.carts.find(cart => cart.id === 10)).toMatchObject({ status: 0, isPay: 0 });
   }, 25_000);
   const prepareSecond = async (paid: boolean) => {
     await create();

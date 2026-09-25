@@ -8,6 +8,7 @@ import {
 } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { boundBargainSourceProductChange, lockBargainSourceProductChange } from "@/services/activity/BargainSourceProductLifecycle";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 import {
   legacyCategory,
@@ -539,6 +540,10 @@ export class AdminMobileProductService {
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      await boundBargainSourceProductChange(tx);
+      // integerIds sorts and deduplicates these IDs. Acquire every source
+      // boundary before the product-write and row locks below.
+      for (const productId of input.ids) await lockBargainSourceProductChange(tx, productId);
       for (const productId of input.ids) await lockProductWrite(tx, productId);
       const products = await inventoryLock(() => tx.select({
         id: storeProduct.id,
