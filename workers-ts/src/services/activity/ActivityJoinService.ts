@@ -421,9 +421,13 @@ export class ActivityJoinService {
       const bargain = bargains[0];
       if (!bargain) throw new NotFoundException("砍价活动不存在");
       if (bargain.productId !== source.productId) throw new ValidateException("砍价关联商品已变化，请重试");
-      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct)
-        .where(and(eq(storeProduct.id, source.productId), eq(storeProduct.isDel, 0))).limit(1);
-      if (!product) throw new NotFoundException("砍价关联商品不存在或已删除");
+      const [product] = await tx.select({
+        isShow: storeProduct.isShow, isDel: storeProduct.isDel, isVerify: storeProduct.isVerify,
+      }).from(storeProduct).where(eq(storeProduct.id, source.productId)).limit(1);
+      if (!product || product.isDel !== 0) throw new NotFoundException("砍价关联商品不存在或已删除");
+      if (product.isShow !== 1 || product.isVerify !== 1) {
+        throw new NotFoundException("砍价关联商品不可见或未审核");
+      }
 
       const existing = await tx
         .select({ id: storeBargainUser.id })
@@ -617,9 +621,13 @@ export class ActivityJoinService {
       const bargain = bargainRows[0];
       if (!bargain) throw new ValidateException("砍价活动已结束");
       if (bargain.productId !== source.productId) throw new ValidateException("砍价关联商品已变化，请重试");
-      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct)
-        .where(and(eq(storeProduct.id, source.productId), eq(storeProduct.isDel, 0))).limit(1);
-      if (!product) throw new ValidateException("砍价关联商品已删除");
+      const [product] = await tx.select({
+        isShow: storeProduct.isShow, isDel: storeProduct.isDel, isVerify: storeProduct.isVerify,
+      }).from(storeProduct).where(eq(storeProduct.id, source.productId)).limit(1);
+      if (!product || product.isDel !== 0) throw new ValidateException("砍价关联商品已删除");
+      if (product.isShow !== 1 || product.isVerify !== 1) {
+        throw new ValidateException("砍价关联商品不可见或未审核");
+      }
       // Read the database wall clock AFTER the lock wait, not application time
       // or transaction-start NOW(). KEY SHARE must remain compatible with the
       // checkout activity lock; a fresh statement also observes schedule edits.
