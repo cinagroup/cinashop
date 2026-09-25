@@ -6,7 +6,7 @@ import { createContainerFromDb, withTx } from "../src/lib/di";
 import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
 import { ensureAutomaticOrderRefund, finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
-import { storeActivity, storeSeckillTime, storeSeckill, storeProductAttrValue, systemStore,
+import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, systemStore,
   storeCart, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrder, storeOrderRefund, storeOrderRefundPayment,
   storeOrderInvoice, storeOrderOutbox, userBrokerage } from "../src/models/schema";
 
@@ -229,6 +229,81 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
         error: { message: expect.stringMatching(target === "stock" ? /库存不足/ : /总共限购/) } });
     });
     expect((await oneOrder()).children[0]).toMatchObject(target === "stock" ? { stock: 1, quota: 1 } : { stock: 5, quota: 4 });
+  }, 15_000);
+
+  it("separate seckill activities sharing one base SKU cannot oversell or deadlock", async () => {
+    const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
+    await f.db.insert(storeActivity).values({ id: 10, type: 1, status: 1, timeId: "4",
+      startDay: today - 86_400, endDay: today + 86_400 });
+    await f.db.insert(storeSeckill).values({ id: 21, productId: 70, activityId: 10, timeId: "4", storeName: "另一秒杀",
+      stock: 7, quota: 6, onceNum: 3, num: 10, status: 1, isShow: 1, isDel: 0 });
+    await f.db.insert(storeProductAttrValue).values({ id: 3, productId: 21, type: 1, unique: "qasec002",
+      suk: "红色,大号", stock: 7, quota: 6, price: "6.25" });
+    await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001",
+      cartNum: 2, type: 1, activityId: 21, isNew: 1, status: 1 });
+    await f.db.update(storeProductAttrValue).set({ stock: 3 }).where(eq(storeProductAttrValue.id, 1));
+
+    await withFinancePeers(f.db, async ([blocker, first, second]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE");
+      const a = outcome(create(first));
+      await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      const b = outcome(create(second, { ...params, key: "other_activity", cartIds: [2], seckillId: 21 }));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await blocker.exec("COMMIT");
+      expect(await a).toMatchObject({ ok: true });
+      expect(await b).toMatchObject({ ok: false,
+        error: { message: expect.stringContaining("秒杀基础规格已变化或库存不足") } });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(1);
+    expect(state.details).toHaveLength(1);
+    expect(state.carts.find(cart => cart.id === 1)?.isPay).toBe(1);
+    expect(state.carts.find(cart => cart.id === 2)?.isPay).toBe(0);
+    expect(state.products[0].stock).toBe(6);
+    expect(state.skus.find(sku => sku.id === 1)?.stock).toBe(1);
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.skus.find(sku => sku.id === 3)).toMatchObject({ stock: 7, quota: 6 });
+    expect(state.children.find(child => child.id === 20)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.children.find(child => child.id === 21)).toMatchObject({ stock: 7, quota: 6 });
+  }, 15_000);
+
+  it("separate seckill activities with different SKUs share the product stock limit", async () => {
+    const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
+    await f.db.insert(storeActivity).values({ id: 10, type: 1, status: 1, timeId: "4",
+      startDay: today - 86_400, endDay: today + 86_400 });
+    await f.db.insert(storeSeckill).values({ id: 21, productId: 70, activityId: 10, timeId: "4", storeName: "另一秒杀",
+      stock: 7, quota: 6, onceNum: 3, num: 10, status: 1, isShow: 1, isDel: 0 });
+    await f.db.insert(storeProductAttrValue).values([
+      { id: 3, productId: 21, type: 1, unique: "qasec002", suk: "蓝色,大号", stock: 7, quota: 6, price: "6.25" },
+      { id: 4, productId: 70, type: 0, unique: "qablue01", suk: "蓝色,大号", stock: 8, price: "10.00" },
+    ]);
+    await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qablue01",
+      cartNum: 2, type: 1, activityId: 21, isNew: 1, status: 1 });
+    await f.db.update(storeProduct).set({ stock: 3 }).where(eq(storeProduct.id, 70));
+
+    await withFinancePeers(f.db, async ([blocker, first, second]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_product WHERE id=70 FOR UPDATE");
+      const a = outcome(create(first));
+      await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      const b = outcome(create(second, { ...params, key: "other_sku", cartIds: [2], seckillId: 21 }));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await blocker.exec("COMMIT");
+      expect(await a).toMatchObject({ ok: true });
+      expect(await b).toMatchObject({ ok: false,
+        error: { message: expect.stringContaining("秒杀基础商品已变化或库存不足") } });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(1);
+    expect(state.details).toHaveLength(1);
+    expect(state.products[0].stock).toBe(1);
+    expect(state.carts.find(cart => cart.id === 1)?.isPay).toBe(1);
+    expect(state.carts.find(cart => cart.id === 2)?.isPay).toBe(0);
+    expect(state.skus.find(sku => sku.id === 1)?.stock).toBe(6);
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.skus.find(sku => sku.id === 3)).toMatchObject({ stock: 7, quota: 6 });
+    expect(state.skus.find(sku => sku.id === 4)?.stock).toBe(8);
+    expect(state.children.find(child => child.id === 20)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.children.find(child => child.id === 21)).toMatchObject({ stock: 7, quota: 6 });
   }, 15_000);
 
   it("rechecks the cart CAS after waiting for a real quantity transaction to commit", async () => {
