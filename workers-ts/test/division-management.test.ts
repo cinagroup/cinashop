@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertActiveAgentSelfService,
+  assertDivisionApplicationEligibility,
   normalizeDivisionEndTime,
   normalizeDivisionPercent,
   parseDivisionDateRange,
   validateDivisionHierarchy,
+  validateDivisionApplicationInput,
   type DivisionParentSnapshot,
 } from "@/services/division/DivisionManagementService";
 
@@ -23,6 +26,32 @@ function parent(overrides: Partial<DivisionParentSnapshot> = {}): DivisionParent
 }
 
 describe("division management validation", () => {
+  it("rejects bad agent application fields and ineligible ownership before SMS consumption", () => {
+    const input = { uid: 25, id: 9, divisionName: "青山代理商", name: "Alice", phone: "13800138000", divisionInvite: 123456, images: ["/assets/one"] };
+    expect(validateDivisionApplicationInput(input)).toBe('["/assets/one"]');
+    expect(() => validateDivisionApplicationInput({ ...input, divisionInvite: 0 })).toThrow("邀请码错误");
+    expect(() => validateDivisionApplicationInput({ ...input, phone: "not-phone" })).toThrow("手机号格式错误");
+    expect(() => validateDivisionApplicationInput({ ...input, id: -1 })).toThrow("申请编号错误");
+    const applicant = { isDel: 0, status: 1, divisionType: 0, phone: input.phone };
+    const divisions = [{ uid: 10, divisionEndTime: 1_800_000_000 }];
+    expect(() => assertDivisionApplicationEligibility(input, applicant, divisions, 1_700_000_000)).not.toThrow();
+    expect(() => assertDivisionApplicationEligibility(input, { ...applicant, phone: "13900139000" }, divisions, 1_700_000_000)).toThrow("已绑定手机号");
+    expect(() => assertDivisionApplicationEligibility(input, { ...applicant, divisionType: 2 }, divisions, 1_700_000_000)).toThrow("拥有事业部角色");
+    expect(() => assertDivisionApplicationEligibility(input, applicant, [], 1_700_000_000)).toThrow("事业部不存在");
+    expect(() => assertDivisionApplicationEligibility(input, applicant, divisions, 1_900_000_000)).toThrow("事业部已到期");
+  });
+  it("requires a live unexpired agent for customer-side staff reads and writes", () => {
+    const agent = parent({ divisionType: 2, divisionStatus: 1, divisionEndTime: 1_800_000_000 });
+    expect(() => assertActiveAgentSelfService(agent, 1_700_000_000)).not.toThrow();
+    for (const inactive of [
+      undefined,
+      parent({ divisionType: 1 }),
+      parent({ divisionType: 2, divisionStatus: 0 }),
+      parent({ divisionType: 2, status: 0 }),
+      parent({ divisionType: 2, isDel: 1 }),
+      parent({ divisionType: 2, divisionEndTime: 1_600_000_000 }),
+    ]) expect(() => assertActiveAgentSelfService(inactive, 1_700_000_000)).toThrow("有效代理商");
+  });
   it("accepts integer percentages at both boundaries", () => {
     expect(normalizeDivisionPercent(0)).toBe(0);
     expect(normalizeDivisionPercent("100")).toBe(100);
