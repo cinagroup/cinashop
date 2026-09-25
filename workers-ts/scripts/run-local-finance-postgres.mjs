@@ -108,6 +108,8 @@ if (schemaMaintenance) {
     'test/bargain-admin-save.test.ts',
     'test/bargain-admin-dates-postgres.test.ts',
     'test/seckill-schedule-postgres.test.ts',
+    'test/seckill-concurrency-postgres.test.ts',
+    'test/seckill-sku-identity-fence-postgres.test.ts',
     'test/refund-line-compensation.test.ts',
     'test/bargain-admin-retirement.test.ts',
     'test/orphan-test-order-snapshot.test.ts',

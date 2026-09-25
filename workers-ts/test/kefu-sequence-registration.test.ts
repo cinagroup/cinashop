@@ -47,6 +47,8 @@ import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '../src/migrations/purcha
 import { runPurchaseCancellationEvidenceSchema } from '../src/migrations/runPurchaseCancellationEvidence';
 import { ASSISTED_ORDER_LIST_INDEX_SQL } from '../src/migrations/assistedOrderListIndex';
 import { runAssistedOrderListIndex } from '../src/migrations/runAssistedOrderListIndex';
+import { SECKILL_SKU_IDENTITY_FENCE_SQL } from '../src/migrations/seckillSkuIdentityFence';
+import { runSeckillSkuIdentityFence } from '../src/migrations/runSeckillSkuIdentityFence';
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -71,6 +73,7 @@ vi.mock('../src/migrations/runSupplierRefundLookupIndexes', () => ({ runSupplier
 vi.mock('../src/migrations/runPurchaseOriginEvidence', () => ({ runPurchaseOriginEvidenceSchema: vi.fn() }));
 vi.mock('../src/migrations/runPurchaseCancellationEvidence', () => ({ runPurchaseCancellationEvidenceSchema: vi.fn() }));
 vi.mock('../src/migrations/runAssistedOrderListIndex', () => ({ runAssistedOrderListIndex: vi.fn() }));
+vi.mock('../src/migrations/runSeckillSkuIdentityFence', () => ({ runSeckillSkuIdentityFence: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
@@ -92,9 +95,10 @@ const supplierLookupRunner = vi.mocked(runSupplierRefundLookupIndexes);
 const originRunner = vi.mocked(runPurchaseOriginEvidenceSchema);
 const cancellationRunner = vi.mocked(runPurchaseCancellationEvidenceSchema);
 const assistedListRunner = vi.mocked(runAssistedOrderListIndex);
+const seckillSkuRunner = vi.mocked(runSeckillSkuIdentityFence);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 172 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 173 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -211,6 +215,10 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(db).toBe(container.db); expect(depth, '0171 must receive the root DB').toBe(0);
     expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  seckillSkuRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0172 must receive the root DB').toBe(0);
+    expect(assistedListRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -236,10 +244,11 @@ beforeEach(() => {
   originRunner.mockReset();
   cancellationRunner.mockReset();
   assistedListRunner.mockReset();
+  seckillSkuRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0171, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0172, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -285,6 +294,9 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.service.assistedOrderListIndexMigrationSqlForVerification()).toBe(ASSISTED_ORDER_LIST_INDEX_SQL);
     expect(ASSISTED_ORDER_LIST_INDEX_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0165_assisted_order_list_index.sql'),'utf8').trim());
     expect(assistedListRunner).not.toHaveBeenCalled();
+    expect(setup.service.seckillSkuIdentityFenceMigrationSqlForVerification()).toBe(SECKILL_SKU_IDENTITY_FENCE_SQL);
+    expect(SECKILL_SKU_IDENTITY_FENCE_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0166_seckill_sku_identity_fence.sql'),'utf8').trim());
+    expect(seckillSkuRunner).not.toHaveBeenCalled();
     expect(CHECKOUT_PRICING_LOCK_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0160_checkout_pricing_lock.sql'),'utf8').trim());
     expect(OFFLINE_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0159_offline_order.sql'),'utf8').trim());
     expect(REFUND_SPLIT_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0158_refund_order_split.sql'),'utf8').trim());
@@ -297,7 +309,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 172 steps in order and dispatches 0151–0171 to independent root transaction runners", async () => {
+  it("executes all 173 steps in order and dispatches 0151–0172 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -322,6 +334,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(originRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(assistedListRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(seckillSkuRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.sqlCalls.filter(c => c.sql === "SET LOCAL search_path TO public, pg_temp")).toHaveLength(151);
     expect(setup.sqlCalls.some(c => c.sql === KEFU_SEQUENCE_ALIGNMENT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PINK_RECOVERY_INDEX_SQL)).toBe(false);
@@ -600,6 +613,14 @@ describe("embedded 0151 sequence registration", () => {
     expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,171), errors: [`0171: ${error instanceof Error ? error.message : error}`] });
     expect(assistedListRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(cancellationRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+    expect(seckillSkuRunner).not.toHaveBeenCalled();
+  });
+  it.each([new Error('already exists'), new Error('index drift'), 'raw rejection'])('fails closed at 0172 without retry or false success (%s)', async error => {
+    const setup = harness(); seckillSkuRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,172), errors: [`0172: ${error instanceof Error ? error.message : error}`] });
+    expect(seckillSkuRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(assistedListRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
 });
