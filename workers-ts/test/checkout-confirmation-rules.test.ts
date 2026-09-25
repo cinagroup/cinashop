@@ -10,7 +10,7 @@ import { orderCreate } from '../src/controllers/api/v1/OrderController';
 import { runCouponProductScopeFence } from '../src/migrations/runCouponProductScopeFence';
 import { storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, storeCouponUser, storeCouponProduct,
   storeDiscounts, storeDiscountsProducts, storeProduct, storeProductAttrValue, storeCart, storeBargain,
-  storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink, storeIntegral, storeNewcomer, user } from '../src/models/schema';
+  storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink, storeIntegral, storeNewcomer, systemConfig, user } from '../src/models/schema';
 
 // These scenarios commit orders and require the native purchase-origin schema.
 // PGlite's simplified table generator cannot stand in for its protected SQL.
@@ -63,6 +63,12 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
           await f.db.insert(storeNewcomer).values({ id: 40, productId: 70 });
           await f.db.update(user).set({ addTime: Math.floor(Date.now() / 1000) });
           Object.assign(f.config, { newcomer_status: '1', register_price_status: '1' });
+          await f.db.insert(systemConfig).values([
+            { menuName: 'newcomer_status', value: '1' },
+            { menuName: 'register_price_status', value: '1' },
+            { menuName: 'newcomer_limit_status', value: '0' },
+            { menuName: 'newcomer_limit_time', value: '0' },
+          ]);
         }
       }
     }
@@ -644,7 +650,12 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     else if (kind === 'seckill') await f.db.update(storeSeckill).set(variant === 'primary' ? { onceNum: 4 } : { stopTime: new Date(Date.now() + 86_400_000) });
     else if (kind === 'combination') await f.db.update(storeCombination).set(variant === 'primary' ? { people: 3 } : { effectiveTime: 7200 });
     else if (kind === 'integral') await f.db.update(storeIntegral).set(variant === 'primary' ? { onceNum: 4 } : { num: 9 });
-    else Object.assign(f.config, { newcomer_limit_status: '1', newcomer_limit_time: variant === 'primary' ? '30' : '60' });
+    else {
+      const limitTime = variant === 'primary' ? '30' : '60';
+      Object.assign(f.config, { newcomer_limit_status: '1', newcomer_limit_time: limitTime });
+      await f.db.update(systemConfig).set({ value: '1' }).where(eq(systemConfig.menuName, 'newcomer_limit_status'));
+      await f.db.update(systemConfig).set({ value: limitTime }).where(eq(systemConfig.menuName, 'newcomer_limit_time'));
+    }
     const before = await state(), path = `/api/order/create/${a.data.orderKey}`;
     expect(await request(path, { ...input, quoteToken: a.data.quoteToken })).toMatchObject({ status: 400,
       data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: a.data.orderKey } });

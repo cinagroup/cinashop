@@ -86,6 +86,8 @@ import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '@/migrations/purchaseCan
 import { runPurchaseCancellationEvidenceSchema } from '@/migrations/runPurchaseCancellationEvidence';
 import { ASSISTED_ORDER_LIST_INDEX_SQL } from '@/migrations/assistedOrderListIndex';
 import { runAssistedOrderListIndex } from '@/migrations/runAssistedOrderListIndex';
+import { SECKILL_SKU_IDENTITY_FENCE_SQL } from '@/migrations/seckillSkuIdentityFence';
+import { runSeckillSkuIdentityFence } from '@/migrations/runSeckillSkuIdentityFence';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -108,6 +110,10 @@ export class MigrationService {
 
   assistedOrderListIndexMigrationSqlForVerification(): string {
     return this.migration_0171();
+  }
+
+  seckillSkuIdentityFenceMigrationSqlForVerification(): string {
+    return this.migration_0172();
   }
 
   shippingLifecycleMigrationSqlForVerification(): string {
@@ -537,10 +543,16 @@ export class MigrationService {
       this.migration_0169(),
       this.migration_0170(),
       this.migration_0171(),
+      this.migration_0172(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 172) {
+          await runSeckillSkuIdentityFence(this.container.db);
+          executed.push('0172');
+          continue;
+        }
         if (i === 171) {
           await runAssistedOrderListIndex(this.container.db);
           executed.push('0171');
@@ -8739,5 +8751,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0171(): string {
     return ASSISTED_ORDER_LIST_INDEX_SQL;
+  }
+
+  private migration_0172(): string {
+    return SECKILL_SKU_IDENTITY_FENCE_SQL;
   }
 }

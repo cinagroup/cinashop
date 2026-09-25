@@ -224,7 +224,9 @@ module.exports=async function auditKefuSequence({api,models,format,database,runA
         assert.deepEqual(await readCatalog(async q=>(await fresh.query(q)).rows),finalCatalog,"Complete fresh/old-upgraded catalogs match");
       }finally{await fresh.close();}
     }
-    const report={initialStatements:initial.length,guardedStatements:1,generatedProposalStatements:proposal.length,modelAligned,
+    const report={initialStatements:initial.length,
+      seckillSkuIdentityIndexStatements:initial.filter(statement=>/spav_seckill_active_(suk|unique)_uq/.test(statement)),
+      guardedStatements:1,generatedProposalStatements:proposal.length,modelAligned,
       committedUpgradeExecution:runAlignment||!database?"standalone-drizzle-transaction":"direct-sql",
       changedSequenceStorageFiles:1,originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved:true,
       committedOldRowsPreserved:2,originalCounterPreserved:true,driftRefusals:refusals,

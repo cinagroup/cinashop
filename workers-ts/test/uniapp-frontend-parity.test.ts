@@ -170,7 +170,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.checklist.find(item => item.id === 'FE-003G')?.done).toBe(false);
   });
 
-  it('registers the newcomer gift as a read-only activity path while FE-003D stays open', () => {
+  it('registers the newcomer purchase path and uses server goods payable in type-7 checkout while FE-003D stays open', () => {
     const oldRoute = '/pages/activity/new_customer/index';
     expect(resolveRegisteredPageRoute(oldRoute)).toBe(oldRoute);
     expect(parity.directRegisteredLegacyRoutes).toContain(oldRoute);
@@ -179,7 +179,11 @@ describe("UniApp manifest and legacy-navigation parity", () => {
       .toBe('/pages/activity/newcomerDetail?id=9');
     expect(parity.checklist.find(item => item.id === 'FE-003D')?.done).toBe(false);
     const detail = readFileSync('../view/uniapp-ts/src/pages/activity/newcomerDetail.vue', 'utf8');
-    expect(detail).toContain('当前页面仅供查看活动信息');
+    expect(detail).toContain('立即购买');
+    expect(detail).toContain('活动规格库存仅为配置快照');
+    const checkout = readFileSync('../view/uniapp-ts/src/pages/order/confirm.vue', 'utf8');
+    expect(checkout).toContain("activity.type === 7 ? '新人专享价' : '商品金额'");
+    expect(checkout).toContain('activity.type === 7 ? quote.result.prices.goodsPayable : quote.result.prices.subtotal');
   });
 
   it('registers the old rank and live list routes while keeping activity checkout and release open', () => {
