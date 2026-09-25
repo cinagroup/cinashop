@@ -77,9 +77,14 @@ describe("standalone sequence transaction execution boundary", () => {
   });
 
   it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
-    // The complete current ORM includes seven more statements than the prior
-    // 1156-statement baseline; the audit executes every generated statement.
-    expect(fullPath.initialStatements).toBe(1163);
+    // The complete current ORM includes the two active seckill identity indexes;
+    // the audit executes every generated statement, including their exact DDL.
+    expect(fullPath.initialStatements).toBe(1165);
+    const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
+    expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([
+      `CREATE UNIQUE INDEX "spav_seckill_active_suk_uq" ON "store_product_attr_value" USING btree ("product_id","suk") ${activeSeckillPredicate}`,
+      `CREATE UNIQUE INDEX "spav_seckill_active_unique_uq" ON "store_product_attr_value" USING btree ("product_id","unique") ${activeSeckillPredicate}`,
+    ]);
     expect(fullPath.committedUpgradeExecution).toBe("standalone-drizzle-transaction");
     expect(fullPath.driftRefusals).toHaveLength(30);
     expect(fullPath.originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved).toBe(true);
