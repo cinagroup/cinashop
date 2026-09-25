@@ -18,11 +18,11 @@ function plainIo(value) {
 
 // Real Vue reactivity, Pinia stores, request layer, API adapters and the selected composable.
 // Only native lifecycle/I/O is replaced. Platform preprocessing is covered by the three builds, not this loader.
-function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component } = {}) {
+function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {} } = {}) {
   const hooks = {}, calls = [], navigations = [], toasts = [], modals = [], cache = new Map();
   const uni = {
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
-    navigateTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); }, redirectTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail(new Error('navigation failed')); else opts.success(); },
+    navigateTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); }, redirectTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); },
     showToast: opts => toasts.push(opts), switchTab: opts => navigations.push(opts.url),
     showModal: modal === undefined ? undefined : opts => { modals.push(opts); if (typeof modal === 'function') modal(opts);
       else opts.success?.({ confirm: modal, cancel: !modal }); },
@@ -59,7 +59,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
   if (!auth.isLoggedIn) auth.setLogin('synthetic-local-token', 11);
   const scope = vue.effectScope();
   const checkout = scope.run(() => component
-    ? load(path.join(root, 'src', component)).default.setup({}, { expose() {} })
+    ? load(path.join(root, 'src', component)).default.setup(props, { expose() {} })
     : load(path.join(root, 'src/composables', feature + '.ts'))[feature]());
   return { checkout, auth, storage, calls, navigations, toasts, modals, hooks, load, uni,
     async start(query = { mode: 'buy', cartId: '1' }) { await hooks.onLoad?.(query); hooks.onShow?.(); await tick(); },
