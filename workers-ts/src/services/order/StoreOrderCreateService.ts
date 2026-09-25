@@ -2892,6 +2892,31 @@ export class StoreOrderCreateService {
           throw new ValidateException("活动时间、会员或分佣资格已变化，请重新确认");
         }
       }
+      // The earlier auth read can predate cancellation. Check after every
+      // business wait and hold this row until commit. NOWAIT rolls the whole
+      // transaction back if a user editor owns the row, avoiding SKU -> user
+      // waits that would invert ordinary and points checkout or refund locks.
+      if (uid > 0) {
+        try {
+          const [activeAccount] = await tx.select({ uid: userTable.uid }).from(userTable)
+            .where(and(
+              eq(userTable.uid, uid), eq(userTable.status, 1),
+              eq(userTable.isDel, 0), isNull(userTable.deleteTime),
+            ))
+            .limit(1).for("update", { noWait: true });
+          if (!activeAccount) throw new NotFoundException("用户不存在或已失效");
+        } catch (error) {
+          let cause: unknown = error;
+          for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+            if ("code" in cause && cause.code === "55P03") {
+              throw new ValidateException("用户状态正在变化，请稍后重新确认");
+            }
+            if (!("cause" in cause) || cause.cause === cause) break;
+            cause = cause.cause;
+          }
+          throw error;
+        }
+      }
       return order;
     });
 
