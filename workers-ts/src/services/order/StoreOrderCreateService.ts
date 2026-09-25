@@ -1123,6 +1123,7 @@ export class StoreOrderCreateService {
         throw new ValidateException("新人专享基础商品已下架、未审核或变更为特殊商品");
       }
       if (type === 1 && product.isVerify !== 1) throw new ValidateException("秒杀基础商品未审核通过");
+      if (type === 2 && product.isVerify !== 1) throw new ValidateException("砍价基础商品未审核通过");
       if (cart.productType !== product.productType) {
         throw new ValidateException(`商品「${product.storeName}」类型已变化，请重新购买`);
       }
@@ -2635,10 +2636,12 @@ export class StoreOrderCreateService {
               activityFreightIsInherited(item) ? and(eq(storeProduct.freight,product.freight),eq(storeProduct.postage,product.postage),eq(storeProduct.tempId,product.tempId)) : undefined) : undefined,
             // Every bargain delivery mode must recheck the source at the final
             // inventory write. A virtual or non-shipping order has no shipping
-            // snapshot, and retirement may commit after the earlier quote read.
+            // snapshot, and visibility, review, or retirement may change after
+            // the earlier quote read.
             type === 2 ? and(
               eq(storeProduct.type, product.type), eq(storeProduct.relationId, product.relationId),
-              eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
+              eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1),
+              eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1),
             ) : undefined,
             type === 1 ? seckillProductQuoteGuard(product) : undefined,
             type === 7 ? and(

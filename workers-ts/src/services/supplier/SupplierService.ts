@@ -13,6 +13,7 @@ import { createToken, md5 } from "@/utils/jwt";
 import { setTokenBucket } from "@/utils/cache";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { SupplierPermissionService } from "@/services/supplier/SupplierPermissionService";
+import { SupplierProductManagementService } from "@/services/supplier/SupplierProductManagementService";
 import { SupplierOrderReadService, type SupplierOrderQuery } from './SupplierOrderReadService';
 import { SupplierPickingSheetReadService } from './SupplierPickingSheetReadService';
 export { normalizeSupplierPickingSheetIds, projectPickingSheetCartItem, type PickingSheetCartSource } from './SupplierPickingSheetReadService';
@@ -531,20 +532,7 @@ export class SupplierService {
   }
 
   async setProductShow(supplierId: number, productId: number, isShow: number) {
-    if (isShow !== 0 && isShow !== 1) throw new ValidateException("商品状态错误");
-    const rows = await this.container.db
-      .update(storeProduct)
-      .set({ isShow })
-      .where(
-        and(
-          eq(storeProduct.id, productId),
-          eq(storeProduct.type, 2),
-          eq(storeProduct.relationId, supplierId),
-          eq(storeProduct.isDel, 0),
-        ),
-      )
-      .returning({ id: storeProduct.id });
-    if (!rows[0]) throw new NotFoundException("商品不存在或不属于当前供应商");
+    await new SupplierProductManagementService(this.container).setProductShow(supplierId, productId, isShow);
   }
 
   async orderList(supplierId: number, query: SupplierOrderQuery) {
