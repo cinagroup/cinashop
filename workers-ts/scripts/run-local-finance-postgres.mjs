@@ -177,6 +177,8 @@ if (schemaMaintenance) {
     'test/product-price-truncation.test.ts',
     'test/out-stock-candidate-boundary.test.ts',
     'test/checkout-pricing-config-authority.test.ts',
+    // Full-ORM seckill/Admin shipping race fixture installs the lifecycle protocol.
+    'test/seckill-shared-rule-concurrency-postgres.test.ts',
     'test/admin-config-batch-postgres.test.ts',
     'test/brokerage-paid-business-transactions.test.ts',
     'test/checkout-confirmation.test.ts',
