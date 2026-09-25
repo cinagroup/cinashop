@@ -1866,6 +1866,18 @@ export class StoreOrderCreateService {
         if (confirmation && await checkoutFingerprint(seckillSchedule) !== await checkoutFingerprint(seckillConfirmationSchedule)) {
           throw new OrderQuoteReconfirmRequired(key);
         }
+        const quotedSku = orderItems[0]?.activitySku;
+        if (!quotedSku) throw new ValidateException("秒杀规格信息无效");
+        // A legacy admin/import can insert another active row with the same suk
+        // while the buyer waits for the parent. The old row's inventory CAS
+        // cannot detect that new identity, so recheck the complete match set.
+        const currentSkus = await tx.select({ id: storeProductAttrValue.id }).from(storeProductAttrValue)
+          .where(and(eq(storeProductAttrValue.productId, params.seckillId!), eq(storeProductAttrValue.type, 1),
+            eq(storeProductAttrValue.suk, quotedSku.suk), eq(storeProductAttrValue.isRetired, 0)))
+          .orderBy(asc(storeProductAttrValue.id)).limit(2);
+        if (currentSkus.length !== 1 || currentSkus[0].id !== quotedSku.id) {
+          throw new ValidateException("秒杀规格身份已变化，请刷新后重试");
+        }
       }
       const now = Math.floor(Date.now() / 1000);
       if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && supportsIntegralDeduction))) {

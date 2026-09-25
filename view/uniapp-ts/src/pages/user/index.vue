@@ -75,6 +75,10 @@
         <text>💸 分销中心</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="go('/pages/users/agent/record')">
+        <text>📋 分销与代理申请</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="go('/pages/user/supplierApply')">
         <text>🏪 供应商入驻</text>
         <text class="arrow">›</text>

@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome, type FinancePeer } from "./helpers/financePeers";
 import { createContainerFromDb, withTx } from "../src/lib/di";
+import type { AppVariables, Env } from "../src/env";
+import { adminActivitySave } from "../src/controllers/api/v1/AdminCrudController";
 import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
 import { ensureAutomaticOrderRefund, finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
-import { storeActivity, storeSeckillTime, storeSeckill, storeProductAttrValue, systemStore,
+import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, systemStore,
   storeCart, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrder, storeOrderRefund, storeOrderRefundPayment,
   storeOrderInvoice, storeOrderOutbox, userBrokerage } from "../src/models/schema";
 
@@ -154,6 +157,82 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect(state.users[0].nowMoney).toBe("12.50"); expect(state.bills.filter(bill => bill.type === "pay_product_refund")).toHaveLength(1);
   }, 15_000);
 
+  it("a real admin limit save commits during the parent's checkout lock wait and rejects the stale order", async () => {
+    // The Admin handler also validates the retained freight template. Supply the
+    // fixture's real template instead of bypassing that application gate.
+    await f.db.update(storeSeckill).set({ freight: 3, tempId: 10 }).where(eq(storeSeckill.id, 20));
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      const admin = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+      admin.use("*", async (c, next) => { c.set("container", createContainerFromDb(editor.db)); await next(); });
+      admin.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
+      admin.post("/activity/save", adminActivitySave);
+
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      const pending = outcome(create(buyer));
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      const saved = await admin.request("/activity/save", { method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "seckill", id: 20, num: 1 }),
+      }, f.env);
+      expect(await saved.json()).toMatchObject({ status: 200, data: { id: 20 } });
+      const [changed] = await f.db.select({ num: storeSeckill.num }).from(storeSeckill).where(eq(storeSeckill.id, 20));
+      expect(changed.num).toBe(1);
+
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: "秒杀库存不足、排期或计价规则已变化，请刷新后重试" } });
+    });
+    const after = await snapshot();
+    expect(after).toEqual({ ...before,
+      children: before.children.map(child => child.id === 20 ? { ...child, num: 1 } : child) });
+  }, 15_000);
+
+  it("rejects a newly inserted same-suk activity SKU after quote and the parent lock wait", async () => {
+    const quote = await new StoreOrderCreateService(f.container, f.env).quoteOrder({
+      uid: 11, cartIds: [1], type: 1, seckillId: 20, shippingType: 2, storeId: 1,
+      realName: "隔离并发样本", userPhone: "00000000000",
+    });
+    expect(quote.payCents).toBe(1250);
+    let afterEdit: Awaited<ReturnType<typeof snapshot>> | undefined;
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      const pending = outcome(create(buyer));
+      // The buyer has resolved the original SKU in preflight and reached the
+      // real PostgreSQL parent lock. A legacy admin/import insert is not
+      // protected by that lock, so it can commit a second active identity.
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      await editor.db.insert(storeProductAttrValue).values({ id: 3, productId: 20, type: 1,
+        unique: "qaalt001", suk: "红色,大号", stock: 7, quota: 6, price: "5.00" });
+      afterEdit = await snapshot();
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: "秒杀规格身份已变化，请刷新后重试" } });
+    });
+    expect(await snapshot()).toEqual(afterEdit);
+  }, 15_000);
+
+  it("keeps the quoted SKU valid when the same activity gains a different SKU", async () => {
+    await f.db.insert(storeProductAttrValue).values({ id: 3, productId: 70, type: 0,
+      unique: "qablue01", suk: "蓝色,大号", stock: 8, price: "10.00" });
+    expect((await new StoreOrderCreateService(f.container, f.env).quoteOrder({
+      uid: 11, cartIds: [1], type: 1, seckillId: 20, shippingType: 2, storeId: 1,
+      realName: "隔离并发样本", userPhone: "00000000000",
+    })).payCents).toBe(1250);
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      const pending = outcome(create(buyer));
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      await editor.db.insert(storeProductAttrValue).values({ id: 4, productId: 20, type: 1,
+        unique: "qablue20", suk: "蓝色,大号", stock: 7, quota: 6, price: "7.00" });
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: true });
+    });
+    const state = await oneOrder();
+    expect(state.skus.find(sku => sku.id === 3)).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 4)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+  }, 15_000);
+
   it.each(["parent", "slot"])("rereads a stopped %s after an observed lock wait and rolls back", async target => {
     const before = await snapshot();
     await withFinancePeers(f.db, async ([blocker, buyer]) => {
@@ -229,6 +308,81 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
         error: { message: expect.stringMatching(target === "stock" ? /库存不足/ : /总共限购/) } });
     });
     expect((await oneOrder()).children[0]).toMatchObject(target === "stock" ? { stock: 1, quota: 1 } : { stock: 5, quota: 4 });
+  }, 15_000);
+
+  it("separate seckill activities sharing one base SKU cannot oversell or deadlock", async () => {
+    const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
+    await f.db.insert(storeActivity).values({ id: 10, type: 1, status: 1, timeId: "4",
+      startDay: today - 86_400, endDay: today + 86_400 });
+    await f.db.insert(storeSeckill).values({ id: 21, productId: 70, activityId: 10, timeId: "4", storeName: "另一秒杀",
+      stock: 7, quota: 6, onceNum: 3, num: 10, status: 1, isShow: 1, isDel: 0 });
+    await f.db.insert(storeProductAttrValue).values({ id: 3, productId: 21, type: 1, unique: "qasec002",
+      suk: "红色,大号", stock: 7, quota: 6, price: "6.25" });
+    await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001",
+      cartNum: 2, type: 1, activityId: 21, isNew: 1, status: 1 });
+    await f.db.update(storeProductAttrValue).set({ stock: 3 }).where(eq(storeProductAttrValue.id, 1));
+
+    await withFinancePeers(f.db, async ([blocker, first, second]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE");
+      const a = outcome(create(first));
+      await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      const b = outcome(create(second, { ...params, key: "other_activity", cartIds: [2], seckillId: 21 }));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await blocker.exec("COMMIT");
+      expect(await a).toMatchObject({ ok: true });
+      expect(await b).toMatchObject({ ok: false,
+        error: { message: expect.stringContaining("秒杀基础规格已变化或库存不足") } });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(1);
+    expect(state.details).toHaveLength(1);
+    expect(state.carts.find(cart => cart.id === 1)?.isPay).toBe(1);
+    expect(state.carts.find(cart => cart.id === 2)?.isPay).toBe(0);
+    expect(state.products[0].stock).toBe(6);
+    expect(state.skus.find(sku => sku.id === 1)?.stock).toBe(1);
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.skus.find(sku => sku.id === 3)).toMatchObject({ stock: 7, quota: 6 });
+    expect(state.children.find(child => child.id === 20)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.children.find(child => child.id === 21)).toMatchObject({ stock: 7, quota: 6 });
+  }, 15_000);
+
+  it("separate seckill activities with different SKUs share the product stock limit", async () => {
+    const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
+    await f.db.insert(storeActivity).values({ id: 10, type: 1, status: 1, timeId: "4",
+      startDay: today - 86_400, endDay: today + 86_400 });
+    await f.db.insert(storeSeckill).values({ id: 21, productId: 70, activityId: 10, timeId: "4", storeName: "另一秒杀",
+      stock: 7, quota: 6, onceNum: 3, num: 10, status: 1, isShow: 1, isDel: 0 });
+    await f.db.insert(storeProductAttrValue).values([
+      { id: 3, productId: 21, type: 1, unique: "qasec002", suk: "蓝色,大号", stock: 7, quota: 6, price: "6.25" },
+      { id: 4, productId: 70, type: 0, unique: "qablue01", suk: "蓝色,大号", stock: 8, price: "10.00" },
+    ]);
+    await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qablue01",
+      cartNum: 2, type: 1, activityId: 21, isNew: 1, status: 1 });
+    await f.db.update(storeProduct).set({ stock: 3 }).where(eq(storeProduct.id, 70));
+
+    await withFinancePeers(f.db, async ([blocker, first, second]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_product WHERE id=70 FOR UPDATE");
+      const a = outcome(create(first));
+      await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      const b = outcome(create(second, { ...params, key: "other_sku", cartIds: [2], seckillId: 21 }));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await blocker.exec("COMMIT");
+      expect(await a).toMatchObject({ ok: true });
+      expect(await b).toMatchObject({ ok: false,
+        error: { message: expect.stringContaining("秒杀基础商品已变化或库存不足") } });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(1);
+    expect(state.details).toHaveLength(1);
+    expect(state.products[0].stock).toBe(1);
+    expect(state.carts.find(cart => cart.id === 1)?.isPay).toBe(1);
+    expect(state.carts.find(cart => cart.id === 2)?.isPay).toBe(0);
+    expect(state.skus.find(sku => sku.id === 1)?.stock).toBe(6);
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.skus.find(sku => sku.id === 3)).toMatchObject({ stock: 7, quota: 6 });
+    expect(state.skus.find(sku => sku.id === 4)?.stock).toBe(8);
+    expect(state.children.find(child => child.id === 20)).toMatchObject({ stock: 5, quota: 4 });
+    expect(state.children.find(child => child.id === 21)).toMatchObject({ stock: 7, quota: 6 });
   }, 15_000);
 
   it("rechecks the cart CAS after waiting for a real quantity transaction to commit", async () => {
