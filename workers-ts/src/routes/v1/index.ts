@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { privateRefundOperationResponse, retiredAdminRefundMutation as adminRefundMutationUnavailable } from '@/controllers/api/v1/AdminRefundOperationController';
 import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import { authMiddleware } from "@/middleware/auth";
+import { memberWriteoffRateLimit } from "@/middleware/member-writeoff-rate-limit";
 import * as LoginController from "@/controllers/api/v1/LoginController";
 import * as AppleAuthController from "@/controllers/api/v1/AppleAuthController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
@@ -509,6 +510,24 @@ v1Routes.post(
   StoreOrderWriteoff.staffExecute,
 );
 v1Routes.post(
+  "/store/order/member_lookup",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("staff", "lookup"),
+  StoreOrderWriteoff.staffMemberLookup,
+);
+v1Routes.post(
+  "/store/order/member_info",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("staff", "info"),
+  StoreOrderWriteoff.staffMemberInfo,
+);
+v1Routes.post(
+  "/store/order/member_writeoff",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("staff", "execute"),
+  StoreOrderWriteoff.staffMemberExecute,
+);
+v1Routes.post(
   "/delivery/order/writeoff_info",
   authMiddleware({ force: true }),
   StoreOrderWriteoff.deliveryInfo,
@@ -517,6 +536,24 @@ v1Routes.post(
   "/delivery/order/writeoff",
   authMiddleware({ force: true }),
   StoreOrderWriteoff.deliveryExecute,
+);
+v1Routes.post(
+  "/delivery/order/member_lookup",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("delivery", "lookup"),
+  StoreOrderWriteoff.deliveryMemberLookup,
+);
+v1Routes.post(
+  "/delivery/order/member_info",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("delivery", "info"),
+  StoreOrderWriteoff.deliveryMemberInfo,
+);
+v1Routes.post(
+  "/delivery/order/member_writeoff",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("delivery", "execute"),
+  StoreOrderWriteoff.deliveryMemberExecute,
 );
 
 // ─── 订单 (M3) ─────────────────────────────────────────────────

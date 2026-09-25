@@ -46,6 +46,19 @@ function service(c: C) {
   return new StoreOrderWriteoffService(c.get("container"), c.env);
 }
 
+function privateMemberResponse(c: C) {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
+}
+
+function memberCodeFrom(body: Record<string, unknown>): unknown {
+  return body.member_code ?? body.memberCode;
+}
+
+function memberOrderIdFrom(body: Record<string, unknown>): unknown {
+  return body.order_id ?? body.orderId;
+}
+
 export async function publicPickupStores(c: C) {
   const rows = await new StoreOperationsService(c.get("container")).publicPickupStores();
   return jsonOk(c, rows);
@@ -69,6 +82,30 @@ export async function staffExecute(c: C) {
   return jsonOk(c, result, result.completed ? "核销完成" : "部分核销成功");
 }
 
+export async function staffMemberLookup(c: C) {
+  privateMemberResponse(c);
+  const body = await requestBody(c);
+  return jsonOk(c, await service(c).memberSummarySearch(
+    { kind: "staff", uid: Number(c.get("uid") ?? 0) }, memberCodeFrom(body)));
+}
+
+export async function staffMemberInfo(c: C) {
+  privateMemberResponse(c);
+  const body = await requestBody(c);
+  return jsonOk(c, await service(c).memberInfo(
+    { kind: "staff", uid: Number(c.get("uid") ?? 0) }, memberCodeFrom(body), memberOrderIdFrom(body)));
+}
+
+export async function staffMemberExecute(c: C) {
+  privateMemberResponse(c);
+  const body = await requestBody(c);
+  const result = await service(c).executeMember(
+    { kind: "staff", uid: Number(c.get("uid") ?? 0) },
+    { memberCode: memberCodeFrom(body), orderId: memberOrderIdFrom(body), items: parseItems(body) },
+  );
+  return jsonOk(c, result, result.completed ? "核销完成" : "部分核销成功");
+}
+
 export async function deliveryInfo(c: C) {
   const body = await requestBody(c);
   return jsonOk(c, await service(c).info({ kind: "delivery", uid: Number(c.get("uid") ?? 0) }, codeFrom(body)));
@@ -79,6 +116,30 @@ export async function deliveryExecute(c: C) {
   const result = await service(c).execute(
     { kind: "delivery", uid: Number(c.get("uid") ?? 0) },
     { code: String(codeFrom(body) ?? ""), items: parseItems(body) },
+  );
+  return jsonOk(c, result, result.completed ? "送达核销完成" : "部分送达核销成功");
+}
+
+export async function deliveryMemberLookup(c: C) {
+  privateMemberResponse(c);
+  const body = await requestBody(c);
+  return jsonOk(c, await service(c).memberSummarySearch(
+    { kind: "delivery", uid: Number(c.get("uid") ?? 0) }, memberCodeFrom(body)));
+}
+
+export async function deliveryMemberInfo(c: C) {
+  privateMemberResponse(c);
+  const body = await requestBody(c);
+  return jsonOk(c, await service(c).memberInfo(
+    { kind: "delivery", uid: Number(c.get("uid") ?? 0) }, memberCodeFrom(body), memberOrderIdFrom(body)));
+}
+
+export async function deliveryMemberExecute(c: C) {
+  privateMemberResponse(c);
+  const body = await requestBody(c);
+  const result = await service(c).executeMember(
+    { kind: "delivery", uid: Number(c.get("uid") ?? 0) },
+    { memberCode: memberCodeFrom(body), orderId: memberOrderIdFrom(body), items: parseItems(body) },
   );
   return jsonOk(c, result, result.completed ? "送达核销完成" : "部分送达核销成功");
 }

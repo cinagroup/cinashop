@@ -171,6 +171,17 @@ export interface OperatorWriteoffResult {
   status: number;
 }
 
+export interface OperatorMemberOrderSummary {
+  id: number;
+  order_id: string;
+  status: number;
+  total_num: number;
+  pay_price: string;
+  add_time: string;
+  product_type: number;
+  image: string;
+}
+
 export function apiWriteoffOperatorProfile(): Promise<WriteoffOperatorProfile> {
   return http.get<WriteoffOperatorProfile>("/store/operator/profile");
 }
@@ -181,6 +192,24 @@ export function apiOperatorWriteoffInfo(
 ): Promise<OperatorWriteoffPreview> {
   const prefix = role === "delivery" ? "/delivery" : "/store";
   return http.post<OperatorWriteoffPreview>(`${prefix}/order/writeoff_info`, { code });
+}
+
+export function apiOperatorMemberLookup(role: "staff" | "delivery", memberCode: string): Promise<{ data: OperatorMemberOrderSummary[] }> {
+  const prefix = role === "delivery" ? "/delivery" : "/store";
+  return http.post<{ data: OperatorMemberOrderSummary[] }>(`${prefix}/order/member_lookup`, { member_code: memberCode });
+}
+
+export function apiOperatorMemberInfo(role: "staff" | "delivery", memberCode: string, orderId: number): Promise<OperatorWriteoffPreview> {
+  const prefix = role === "delivery" ? "/delivery" : "/store";
+  return http.post<OperatorWriteoffPreview>(`${prefix}/order/member_info`, { member_code: memberCode, order_id: orderId });
+}
+
+export function apiOperatorMemberWriteoff(
+  role: "staff" | "delivery", memberCode: string, orderId: number,
+  items: Array<{ order_cart_id: number; quantity: number }>,
+): Promise<OperatorWriteoffResult> {
+  const prefix = role === "delivery" ? "/delivery" : "/store";
+  return http.post<OperatorWriteoffResult>(`${prefix}/order/member_writeoff`, { member_code: memberCode, order_id: orderId, items });
 }
 
 export function apiOperatorWriteoff(
