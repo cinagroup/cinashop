@@ -119,6 +119,10 @@ export const user = pgTable(
     uniqueIndex("user_active_phone_uq")
       .on(t.phone)
       .where(sql`${t.isDel} = 0 AND ${t.deleteTime} IS NULL AND ${t.phone} <> ''`),
+    // A retired account still owns its member barcode: never reissue its identity.
+    uniqueIndex("user_bar_code_uq")
+      .on(t.barCode)
+      .where(sql`${t.barCode} <> ''`),
     index("user_delete_time_idx").on(t.deleteTime),
     index("add_time_delete_sex").on(t.addTime, t.deleteTime, t.sex),
     index("user_division_parent").on(t.divisionId, t.agentId, t.staffId),

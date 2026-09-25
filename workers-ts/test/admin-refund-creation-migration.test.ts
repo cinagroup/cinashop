@@ -48,14 +48,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
   it.each(['external','embedded','orm'] as const)('registers the receipt in the complete %s schema before any standalone repair', async path => {
     if (path==='external') {
       const files=readdirSync('migrations').filter(name=>/^\d+.*\.sql$/.test(name)).sort();
-      expect(files.at(-1)).toBe('0166_seckill_sku_identity_fence.sql');
+      expect(files.at(-1)).toBe('0167_member_barcode_index.sql');
       for (const file of files) await f.db.transaction(async tx=>{
         await tx.execute(sql`SET LOCAL search_path=public,pg_temp`);
         await tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8')));
       });
     } else if (path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({
-        executed:Array.from({length: 173},(_,i)=>String(i).padStart(4,'0')),errors:[],
+        executed:Array.from({length: 174},(_,i)=>String(i).padStart(4,'0')),errors:[],
       });
     } else {
       const api=await import('drizzle-kit/api');

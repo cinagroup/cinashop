@@ -146,13 +146,25 @@ export const OFFLINE_ORM_CATALOG_VERSIONS: Record<string, string> = {
   user_bill: 'b0390aca3bbc3e790de7581444678f594a65d1778187b05fd2701f2994f2faf9',
   user_money: '7d80098a75e284bc393dd16dc98fb867435cc3fc4f107f43aaa490c2a560e763',
 };
+// The offline installer runs before member-barcode migration 0173. Retain its
+// exact prior catalog versions and recognize the independently verified index
+// delta after 0173; the member-code endpoint separately requires that index.
+const MEMBER_BARCODE_USER_FINGERPRINT = 'dfb5e16b3b94a8035c0911768c9ce9a9ac155eeb6e8809057b3f1195b1e6c8b1';
+export const OFFLINE_BARCODE_CATALOG_VERSIONS: { fresh: Record<string, string>; v1: Record<string, string>; orm: Record<string, string> } = {
+  fresh: { ...OFFLINE_CATALOG_VERSIONS.fresh, user: MEMBER_BARCODE_USER_FINGERPRINT },
+  v1: { ...OFFLINE_CATALOG_VERSIONS.v1, user: MEMBER_BARCODE_USER_FINGERPRINT },
+  orm: { ...OFFLINE_ORM_CATALOG_VERSIONS, user: MEMBER_BARCODE_USER_FINGERPRINT },
+};
 const matches = (expected: Record<string, string>, missing: readonly string[]) =>
   [...Object.entries(expected).map(([name, fingerprint]) => `(objects->'${name}') @> '${JSON.stringify({ present: true, owned: true, safe: true, fingerprint })}'::jsonb`),
     ...missing.map(name => `(objects->'${name}') @> '{"present":false}'::jsonb`)].join(' AND ') || 'false';
 export const OFFLINE_STATE_SQL = `WITH catalog AS (${OFFLINE_CATALOG_SQL}),
   snapshot AS (SELECT count(*) AS components,jsonb_object_agg(name,to_jsonb(catalog)) AS objects FROM catalog)
 SELECT CASE WHEN components<>27 THEN 'drift'
-  WHEN ${matches(OFFLINE_CATALOG_VERSIONS.fresh, [...OFFLINE_TABLES, ...OFFLINE_FUNCTIONS])} THEN 'fresh'
-  WHEN ${matches(OFFLINE_CATALOG_VERSIONS.v1, [])} THEN 'v1'
-  WHEN ${matches(OFFLINE_ORM_CATALOG_VERSIONS, OFFLINE_FUNCTIONS)} THEN 'orm-pending'
+  WHEN (${matches(OFFLINE_CATALOG_VERSIONS.fresh, [...OFFLINE_TABLES, ...OFFLINE_FUNCTIONS])}
+    OR ${matches(OFFLINE_BARCODE_CATALOG_VERSIONS.fresh, [...OFFLINE_TABLES, ...OFFLINE_FUNCTIONS])}) THEN 'fresh'
+  WHEN (${matches(OFFLINE_CATALOG_VERSIONS.v1, [])}
+    OR ${matches(OFFLINE_BARCODE_CATALOG_VERSIONS.v1, [])}) THEN 'v1'
+  WHEN (${matches(OFFLINE_ORM_CATALOG_VERSIONS, OFFLINE_FUNCTIONS)}
+    OR ${matches(OFFLINE_BARCODE_CATALOG_VERSIONS.orm, OFFLINE_FUNCTIONS)}) THEN 'orm-pending'
   ELSE 'drift' END AS state FROM snapshot`;

@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { UserProfileService } from "@/services/user/UserProfileService";
+import { MemberBarcodeService } from "@/services/user/MemberBarcodeService";
 import { ScanLoginService } from "@/services/auth/ScanLoginService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
@@ -55,6 +56,12 @@ export async function userInfo(c: C) {
 export async function randCode(c: C) {
   privateCodeResponse(c);
   return response(c, async () => ({ code: await service(c).paymentCode(uid(c)) }));
+}
+
+/** POST /api/user/bar_code — allocate once, then read the same stable member code. */
+export async function memberBarcode(c: C) {
+  privateCodeResponse(c);
+  return response(c, async () => ({ bar_code: await new MemberBarcodeService(c.get('container')).allocateOrRead(uid(c)) }));
 }
 
 /** POST /api/user/share — durable five-minute share cooldown. */
