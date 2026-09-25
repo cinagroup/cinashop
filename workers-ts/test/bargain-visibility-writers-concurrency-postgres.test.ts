@@ -6,11 +6,11 @@ import { AdminMobileProductService } from '../src/services/admin/AdminMobileProd
 import { OutProductService } from '../src/services/out/OutProductService';
 import { ProductAssociationService } from '../src/services/product/ProductAssociationService';
 import { outProductWriteReplay, storeBargain, storeBargainUser, storeProduct,
-  storeProductRelation, systemLog, user } from '../src/models/schema';
+  storeProductCategory, storeProductRelation, systemLog, user } from '../src/models/schema';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 
-type Writer = 'mobile' | 'association' | 'out';
+type Writer = 'mobile' | 'association' | 'out' | 'association-save' | 'out-save';
 type Admission = 'start' | 'help';
 const actor = { id: 1, name: 'isolated-admin', ip: '127.0.0.1' };
 
@@ -21,7 +21,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('all routed sourc
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
 
   beforeEach(async () => {
-    f = await createBargainSelectionFixture([storeProductRelation, systemLog, outProductWriteReplay]);
+    f = await createBargainSelectionFixture([storeProductRelation, storeProductCategory, systemLog, outProductWriteReplay]);
     await f.db.update(storeBargain).set({ people: 1 }).where(eq(storeBargain.id, 40));
     await f.db.update(storeBargainUser).set({ price: '0.00', status: 1 }).where(eq(storeBargainUser.id, 81));
     await f.db.insert(user).values({ uid: 30, account: 'visibility-writer-owner', nickname: '可见性参与者' });
@@ -30,6 +30,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('all routed sourc
       startTime: f.startTime, stopTime: f.stopTime });
     await f.db.insert(storeBargainUser).values({ id: 84, uid: 22, bargainId: 41,
       bargainPrice: '10.00', bargainPriceMin: '2.00', price: '0.00', status: 1 });
+    await f.db.insert(storeProductCategory).values({ id: 9, cateName: '隔离平台分类', isShow: 1 });
+    await f.db.update(storeProduct).set({ specType: 1, cateId: '9' }).where(eq(storeProduct.id, 70));
+    await f.exec('CREATE UNIQUE INDEX qa_visibility_product_description ON store_product_description(product_id,type)');
   }, 30_000);
 
   afterEach(async () => { await f?.close(); });
@@ -40,6 +43,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('all routed sourc
       case 'mobile': await new AdminMobileProductService(container).setShow({ ids: [70], is_show: 0 }, actor); return;
       case 'association': await new ProductAssociationService(container).setShow(70, 0, actor); return;
       case 'out': await new OutProductService(container).setShow({ id: 7 }, 70, 0, crypto.randomUUID()); return;
+      case 'association-save': await new ProductAssociationService(container)
+        .save(70, { store_name: '隔离运营隐藏', is_show: 0 }, actor); return;
+      case 'out-save': await new OutProductService(container).save({ id: 7 }, 70, {
+        product_type: 0, supplier_id: 0, cate_id: [9], store_name: '隔离 Out 隐藏',
+        slider_image: ['/api/qa/image.svg'], delivery_type: [1], freight: 1,
+        spec_type: 1, is_show: 0,
+        items: [{ value: '组合', detail: ['红色,大号', '蓝色,小号'] }],
+        attrs: [
+          { suk: '红色,大号', detail: { 组合: '红色,大号' }, unique: 'qared001', price: '10.00', stock: 8 },
+          { suk: '蓝色,小号', detail: { 组合: '蓝色,小号' }, unique: 'qablue01', price: '20.00', stock: 2 },
+        ],
+      }, crypto.randomUUID()); return;
     }
   };
   const admission = async (kind: Admission, db: DbClient): Promise<void> => {
@@ -52,7 +67,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('all routed sourc
     return { participations: snapshot.participations, helps: snapshot.helps };
   };
 
-  it.each(['mobile', 'association', 'out'] as const)('%s hide commits first: both activities reject new starts and help', async writer => {
+  it.each(['mobile', 'association', 'out', 'association-save', 'out-save'] as const)('%s hide commits first: both activities reject new starts and help', async writer => {
     await f.exec(`CREATE FUNCTION qa_visibility_writer_hold() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN IF NEW.id=70 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
       CREATE TRIGGER qa_visibility_writer_hold AFTER UPDATE OF is_show ON store_product
@@ -73,7 +88,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('all routed sourc
     expect((await f.snapshot()).products.find(row => row.id === 70)).toMatchObject({ isShow: 0, isVerify: 1 });
   }, 20_000);
 
-  it.each(['mobile', 'association', 'out'] as const)('%s hide commits first: an in-flight help waits and preserves history', async writer => {
+  it.each(['mobile', 'association', 'out', 'association-save', 'out-save'] as const)('%s hide commits first: an in-flight help waits and preserves history', async writer => {
     await f.exec(`CREATE FUNCTION qa_visibility_writer_hold() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN IF NEW.id=70 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
       CREATE TRIGGER qa_visibility_writer_hold AFTER UPDATE OF is_show ON store_product
@@ -96,6 +111,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('all routed sourc
     ['mobile', 'start'], ['mobile', 'help'],
     ['association', 'start'], ['association', 'help'],
     ['out', 'start'], ['out', 'help'],
+    ['association-save', 'start'], ['association-save', 'help'],
+    ['out-save', 'start'], ['out-save', 'help'],
   ] as const)('%s hide waits for an in-flight %s, then preserves its committed history', async (writer, kind) => {
     if (kind === 'start') {
       await f.exec(`CREATE FUNCTION qa_visibility_admission_hold() RETURNS trigger LANGUAGE plpgsql AS $$
