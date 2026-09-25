@@ -48,8 +48,22 @@ describe("seckill Shanghai schedule policy", () => {
     const value = fixture(); value.slots = []; expect(state("2026-09-07T09:00:00+08:00", value).state).toBe("unavailable");
     value.slots = [{ id: 4, status: 0, startTime: "08:00", endTime: "10:00" }]; expect(state("2026-09-07T09:00:00+08:00", value).state).toBe("unavailable");
     for (const [startTime, endTime] of [["2200", "0200"], ["0800", "0800"], ["8am", "1000"], ["0800", "2460"]]) {
-      value.slots = [{ id: 4, status: 1, startTime, endTime }]; expect(state("2026-09-07T09:00:00+08:00", value).state).toBe("invalid");
+      value.slots = [{ id: 4, status: 1, startTime, endTime },
+        { id: 8, status: 0, startTime: "18:00", endTime: "20:00" }];
+      expect(state("2026-09-07T09:00:00+08:00", value).state).toBe("invalid");
     }
+  });
+  it("rejects an absent permitted slot while retaining an existing disabled slot", () => {
+    const value = fixture();
+    value.slots = [{ id: 4, status: 1, startTime: "08:00", endTime: "10:00" }];
+    expect(state("2026-09-07T09:00:00+08:00", value).state).toBe("unavailable");
+    expect(() => assertSeckillSchedule(value, new Date("2026-09-07T09:00:00+08:00")))
+      .toThrow("秒杀时段配置缺失");
+    value.slots.push({ id: 8, status: 0, startTime: "18:00", endTime: "20:00" });
+    expect(state("2026-09-07T09:00:00+08:00", value).activeSlotIds).toEqual([4]);
+    value.parent!.timeId = "4";
+    value.slots.pop();
+    expect(state("2026-09-07T09:00:00+08:00", value).activeSlotIds).toEqual([4]);
   });
   it("preserves precise non-midnight endpoints while treating legacy midnight dates inclusively", () => {
     const value = fixture(); value.child.stopTime = new Date("2026-09-07T09:15:00+08:00");
@@ -59,7 +73,8 @@ describe("seckill Shanghai schedule policy", () => {
     expect(state("2026-09-07T19:00:00+08:00", value).state).toBe("active");
   });
   it("allows explicit whole-day slots and closes exactly at the final-day boundary", () => {
-    const value = fixture(); value.slots = [{ id: 4, status: 1, startTime: "0000", endTime: "2400" }];
+    const value = fixture(); value.slots = [{ id: 4, status: 1, startTime: "0000", endTime: "2400" },
+      { id: 8, status: 0, startTime: "18:00", endTime: "20:00" }];
     expect(state("2026-09-08T23:59:59.999+08:00", value).state).toBe("active");
     expect(state("2026-09-09T00:00:00+08:00", value).state).toBe("ended");
   });

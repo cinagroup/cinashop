@@ -5,7 +5,7 @@ import { storeActivity, storeSeckill, storeSeckillTime } from "../src/models/sch
 import { StoreSeckillDao, StoreSeckillTimeDao } from "../src/dao/activity/ActivityDaos";
 import { ActivityService } from "../src/services/activity/ActivityService";
 import { createContainerFromDb } from "../src/lib/di";
-import { canBrowseSeckillSlot, loadSeckillSchedule } from "../src/services/activity/SeckillScheduleService";
+import { canBrowseSeckillSlot, evaluateSeckillSchedule, loadSeckillSchedule } from "../src/services/activity/SeckillScheduleService";
 
 const day = (date: string) => Date.parse(`${date}T00:00:00+08:00`) / 1000;
 const time = (clock = "09:00:00", date = "2026-09-07") => new Date(`${date}T${clock}+08:00`);
@@ -103,6 +103,8 @@ describe("seckill catalogue SQL matches purchase schedule before pagination", ()
     await f.db.insert(storeSeckillTime).values({ id: 12, status: 1, startTime: "invalid", endTime: "invalid" }); await compare();
     expect(await dao.getByTimeId("4", 1, 10, time())).toHaveLength(1);
     await f.db.delete(storeSeckillTime).where(eq(storeSeckillTime.id, 8)); await compare();
+    expect(evaluateSeckillSchedule(await loadSeckillSchedule(f.db, 20), time()).state).toBe("unavailable");
+    expect(await dao.getByTimeId("4", 1, 10, time())).toHaveLength(0);
     await f.db.delete(storeActivity); await compare();
   });
   it("honors inclusive legacy final day and precise endpoints independently of the database timezone", async () => {
