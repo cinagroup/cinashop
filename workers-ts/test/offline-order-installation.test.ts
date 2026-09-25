@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { checkoutPricingMigrationDatabase as sequenceRunnerDatabase } from './helpers/checkoutPricingMigrationDatabase';
-import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_DEPENDENCIES, OFFLINE_TABLES } from '../src/migrations/offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_DEPENDENCIES, OFFLINE_TABLES } from '../src/migrations/offlineOrderCatalog';
 import { OFFLINE_ORDER_ADMISSION_SQL } from '../src/migrations/offlineOrderAdmission';
 import { OFFLINE_ORDER_PAYMENT_SELECTION_SQL } from '../src/migrations/offlineOrderPaymentSelection';
 import { OFFLINE_ORDER_BALANCE_SQL } from '../src/migrations/offlineOrderBalance';
@@ -28,7 +28,11 @@ describe('offline controlled PG16 installation', () => {
     if (!process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Owned native PG16 required');
     ddl = await offlinePredecessorSchemaSql();
   }, 30000);
-  beforeEach(async () => { f = await sequenceRunnerDatabase(); await f.exec(ddl); }, 30000);
+  beforeEach(async () => {
+    f = await sequenceRunnerDatabase(); await f.exec(ddl);
+    // This predecessor fixture pins the exact stage before external 0167.
+    await f.exec('DROP INDEX public.user_bar_code_uq');
+  }, 30000);
   afterEach(async () => { await f?.close(); }, 30000);
   it('pins the independently constructed canonical catalog', async () => {
     for (const state of ['fresh', 'v1'] as const) {
@@ -214,11 +218,11 @@ describe('offline controlled PG16 installation', () => {
       } else {
         await whole.exec('SET client_min_messages=warning');
         const result = await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(173);
-        expect(result.executed.at(-1)).toBe('0172');
+        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(174);
+        expect(result.executed.at(-1)).toBe('0173');
       }
       const rows = await whole.db.execute(sql.raw(OFFLINE_CATALOG_SQL));
-      expect(Object.fromEntries(rows.filter(r => r.present).map(r => [r.name, r.fingerprint]))).toEqual(OFFLINE_CATALOG_VERSIONS.v1);
+      expect(Object.fromEntries(rows.filter(r => r.present).map(r => [r.name, r.fingerprint]))).toEqual(OFFLINE_BARCODE_CATALOG_VERSIONS.v1);
       expect(await inspectOfflineOrderSchema(whole.db)).toEqual({ state: 'v1' });
       await runOfflineOrderSchema(whole.db); expect(await inspectOfflineOrderSchema(whole.db)).toEqual({ state: 'v1' });
     } finally { await whole.close(); }
