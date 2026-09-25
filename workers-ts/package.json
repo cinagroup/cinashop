@@ -57,16 +57,17 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
-    "@cloudflare/vitest-pool-workers": "0.21.2",
-    "@cloudflare/workers-types": "^5.20260828.1",
+    "@cloudflare/vitest-plugin": "1.1.7",
+    "@cloudflare/workers-types": "5.20260910.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^26.1.2",
     "drizzle-kit": "file:vendor/drizzle-kit-0.31.10-no-esm-loader.tgz",
     "esbuild": "0.28.2",
+    "miniflare": "5.20260910.0-alpha",
     "mysql2": "3.23.2",
     "tsx": "4.23.11",
     "typescript": "^5.7.2",
     "vitest": "4.1.11",
-    "wrangler": "4.122.0"
+    "wrangler": "4.131.0"
   }
 }
