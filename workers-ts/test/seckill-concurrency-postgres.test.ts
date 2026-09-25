@@ -269,6 +269,41 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect(await snapshot()).toEqual(before);
   }, 15_000);
 
+  it("rejects a deleted permitted slot after a parent lock wait, then accepts its raw reinsertion and fresh quote", async () => {
+    await f.db.update(storeActivity).set({ timeId: "4,8" }).where(eq(storeActivity.id, 9));
+    await f.db.update(storeSeckill).set({ timeId: "4,8" }).where(eq(storeSeckill.id, 20));
+    await f.db.insert(storeSeckillTime).values({ id: 8, startTime: "0000", endTime: "2400", status: 0 });
+    const freshQuote = () => new StoreOrderCreateService(f.container, f.env).quoteOrder({
+      uid: 11, cartIds: [1], type: 1, seckillId: 20, shippingType: 2, storeId: 1,
+      realName: "隔离并发样本", userPhone: "00000000000",
+    });
+    expect((await freshQuote()).payCents).toBe(1250); // Existing disabled slot is not missing.
+    let afterDelete: Awaited<ReturnType<typeof snapshot>> | undefined;
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      let held = true;
+      try {
+        const pending = outcome(create(buyer));
+        await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+        // Legacy/direct SQL does not take the parent's row lock. The buyer
+        // must reread the complete configured slot set after it is released.
+        await editor.exec("DELETE FROM store_seckill_time WHERE id=8");
+        afterDelete = await snapshot();
+        await blocker.exec("COMMIT"); held = false;
+        expect(await pending).toMatchObject({ ok: false,
+          error: { message: "秒杀时段配置缺失" } });
+        expect(await snapshot()).toEqual(afterDelete);
+        await expect(freshQuote()).rejects.toThrow("秒杀时段配置缺失");
+        await editor.exec("INSERT INTO store_seckill_time (id,start_time,end_time,status) VALUES (8,'0000','2400',0)");
+      } finally { if (held) await blocker.exec("ROLLBACK"); }
+    });
+    expect((await freshQuote()).payCents).toBe(1250);
+    expect(await StoreOrderCreateService.createWithRuntime(f.container,
+      { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_after_requote" },
+      { ...params, key: "after_requote" })).toMatchObject({ orderId: "isolated_after_requote" });
+    expect((await snapshot()).orders).toHaveLength(1);
+  }, 20_000);
+
   it.each(["parent", "slot"])("holds the %s admission lock until the actual order transaction commits", async target => {
     await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
       await blocker.exec("BEGIN; SELECT id FROM store_cart WHERE id=1 FOR UPDATE");

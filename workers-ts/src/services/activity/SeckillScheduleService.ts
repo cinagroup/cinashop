@@ -73,6 +73,11 @@ export function evaluateSeckillSchedule(snapshot: SeckillScheduleSnapshot, now: 
       ids = ids.filter(id => parentIds.has(id));
       if (!ids.length || start >= end) throw new ValidateException("秒杀父子排期配置不一致");
     }
+    // A configured row that has been deleted is a different state from an
+    // existing disabled row. Otherwise a legacy/direct slot INSERT can fill
+    // the gap without changing either locked parent or child configuration.
+    const loadedIds = new Set(snapshot.slots.map(slot => slot.id));
+    if (ids.some(id => !loadedIds.has(id))) return result("unavailable", "秒杀时段配置缺失");
     const permitted = new Set(ids), seen = new Set<number>();
     const slots = snapshot.slots.filter(slot => permitted.has(slot.id) && slot.status === 1).map(slot => {
       if (seen.has(slot.id)) throw new ValidateException("秒杀时段标识重复");
