@@ -333,6 +333,11 @@
         "navigationBarTitleText": "分销推广"
       }
     },
+    { "path": "pages/users/distributor/apply", "style": { "navigationBarTitleText": "申请分销员" } },
+    { "path": "pages/users/agent/apply", "style": { "navigationBarTitleText": "申请代理商" } },
+    { "path": "pages/users/agent/state", "style": { "navigationBarTitleText": "申请状态" } },
+    { "path": "pages/users/agent/record", "style": { "navigationBarTitleText": "我的申请" } },
+    { "path": "pages/users/agent/staff_list", "style": { "navigationBarTitleText": "我的员工" } },
     {
       "path": "pages/user/bank",
       "style": {

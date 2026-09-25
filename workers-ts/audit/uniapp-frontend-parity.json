@@ -498,18 +498,18 @@
       ]
     },
     "target": {
-      "pagesTreeVueFiles": 88,
-      "logicalManifestRouteRecords": 88,
-      "platformActiveRouteRecords": { "H5": 88, "MP-WEIXIN": 88, "APP-PLUS": 88 },
+      "pagesTreeVueFiles": 93,
+      "logicalManifestRouteRecords": 93,
+      "platformActiveRouteRecords": { "H5": 93, "MP-WEIXIN": 93, "APP-PLUS": 93 },
       "manifestHashNormalization": "LF",
-      "manifestSha256": "668AAA97D0F07F02135B60242AFF1F382340E24243579770122A4FFA27510138"
+      "manifestSha256": "3877374985BCAEA3EF2D168EEFDCB1E4A306AC4075355446928EB00ABD1638F8"
     },
     "routeLedger": {
-      "directRegistered": 23,
+      "directRegistered": 28,
       "legacyCompatibilityRules": 100,
       "candidateCoveredRules": 61,
       "partialReplacementRules": 39,
-      "unmappedOrCrossSurface": 28,
+      "unmappedOrCrossSurface": 23,
       "accountedLegacyRoutes": 151
     },
     "method": "Use active pages.json records as the denominator. Raw Vue files include embedded components, templates and unrouted files and are never treated as route coverage."
@@ -550,7 +550,12 @@
     "/pages/annex/vip_active/index",
     "/pages/annex/offline_pay/index",
     "/pages/annex/offline_result/index",
-    "/pages/activity/goods_combination_status/index"
+    "/pages/activity/goods_combination_status/index",
+    "/pages/users/distributor/apply",
+    "/pages/users/agent/apply",
+    "/pages/users/agent/state",
+    "/pages/users/agent/record",
+    "/pages/users/agent/staff_list"
   ],
   "gaps": [
     {
@@ -566,15 +571,9 @@
     {
       "id": "FE-003C",
       "title": "Distributor and agent self-service",
-      "status": "missing_actionable",
-      "legacyRoutes": [
-        "/pages/users/distributor/apply",
-        "/pages/users/agent/apply",
-        "/pages/users/agent/state",
-        "/pages/users/agent/record",
-        "/pages/users/agent/staff_list"
-      ],
-      "remaining": "Do not alias these roles to Supplier onboarding; define the migrated division/agent customer workflow first."
+      "status": "local_candidate_pending_ci",
+      "legacyRoutes": [],
+      "remaining": "Five original paths are directly registered with distinct promoter and division applications, current-status/record reads and owner-scoped staff operations. Purpose-bound one-time SMS replaces the incompatible old code cache. Real role/data, native device and release checks remain under FE-003J/K; this item stays unchecked until its exact-head Linux CI succeeds."
     },
     {
       "id": "FE-003D",

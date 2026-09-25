@@ -10,7 +10,9 @@ export type UserSmsType =
   | "reset"
   | "binding"
   | "social_binding"
-  | "update_phone";
+  | "update_phone"
+  | "promoter_application"
+  | "division_application";
 
 export interface SmsChallenge {
   key: string;

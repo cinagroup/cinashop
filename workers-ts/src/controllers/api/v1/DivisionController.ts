@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { DivisionManagementService } from "@/services/division/DivisionManagementService";
 import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
+import { SmsVerificationService } from "@/services/message/SmsVerificationService";
 import { ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
 
@@ -32,22 +33,30 @@ export async function applyAgent(c: C) {
     division_name?: string;
     name?: string;
     phone?: string;
+    code?: string;
     division_invite?: number;
     images?: unknown[];
   };
   const service = new DivisionManagementService(c.get("container"));
   return withValidation(
     c,
-    () =>
-      service.submitApplication({
-        uid: uid(c),
-        id: Number(c.req.param("id") ?? 0) || undefined,
+    async () => {
+      const applicantUid = uid(c);
+      const applicationId = Number(c.req.param("id") ?? 0);
+      const input = {
+        uid: applicantUid,
+        id: applicationId === 0 ? undefined : applicationId,
         divisionName: body.division_name ?? "",
         name: body.name ?? "",
         phone: body.phone ?? "",
         divisionInvite: Number(body.division_invite ?? 0),
         images: body.images,
-      }),
+      };
+      await service.prevalidateApplication(input);
+      await new SmsVerificationService(c.get("container"), c.env)
+        .consumeUserCode("user_division_application", body.phone, body.code);
+      return service.submitApplication(input);
+    },
     "申请提交成功",
   );
 }

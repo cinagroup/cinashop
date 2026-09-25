@@ -32,15 +32,15 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.counting.legacy.pagesTreeVueFiles).toBe(250);
     expect(parity.counting.legacy.logicalManifestRouteRecords).toBe(151);
     expect(parity.counting.legacy.platformActiveRouteRecords).toEqual({ H5: 151, "MP-WEIXIN": 150, "APP-PLUS": 150 });
-    expect(parity.counting.target.pagesTreeVueFiles).toBe(88);
-    expect(parity.counting.target.logicalManifestRouteRecords).toBe(88);
-    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 88, "MP-WEIXIN": 88, "APP-PLUS": 88 });
+    expect(parity.counting.target.pagesTreeVueFiles).toBe(93);
+    expect(parity.counting.target.logicalManifestRouteRecords).toBe(93);
+    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 93, "MP-WEIXIN": 93, "APP-PLUS": 93 });
     expect(parity.counting.routeLedger).toMatchObject({
-      directRegistered: 23,
+      directRegistered: 28,
       legacyCompatibilityRules: 100,
       candidateCoveredRules: 61,
       partialReplacementRules: 39,
-      unmappedOrCrossSurface: 28,
+      unmappedOrCrossSurface: 23,
       accountedLegacyRoutes: 151,
     });
   });
@@ -70,7 +70,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     ];
     expect(accounted).toHaveLength(151);
     expect(new Set(accounted).size).toBe(151);
-    expect(gapRoutes).toHaveLength(28);
+    expect(gapRoutes).toHaveLength(23);
     expect(parity.gaps.map((gap) => gap.id)).toEqual([
       "FE-003B", "FE-003C", "FE-003D", "FE-003E", "FE-003F", "FE-003G", "FE-003H",
     ]);
@@ -97,6 +97,24 @@ describe("UniApp manifest and legacy-navigation parity", () => {
       expect(parity.gaps.flatMap(gap => gap.legacyRoutes)).not.toContain(path);
     }
     expect(parity.checklist.find(item => item.id === "FE-003F")?.done).toBe(false);
+  });
+
+  it("registers five distinct distributor and agent customer routes without Supplier aliases", () => {
+    const routes = [
+      "/pages/users/distributor/apply", "/pages/users/agent/apply",
+      "/pages/users/agent/state", "/pages/users/agent/record", "/pages/users/agent/staff_list",
+    ];
+    for (const route of routes) {
+      expect(resolveRegisteredPageRoute(route, "id=7&type=promoter")).toBe(`${route}?id=7&type=promoter`);
+      expect(parity.directRegisteredLegacyRoutes).toContain(route);
+      expect(existsSync(resolve("../view/uniapp-ts/src", `${route.slice(1)}.vue`))).toBe(true);
+    }
+    expect(parity.gaps.find((gap) => gap.id === "FE-003C")?.legacyRoutes).toEqual([]);
+    expect(parity.checklist.find((item) => item.id === "FE-003C")?.done).toBe(false);
+    const api = readFileSync("../view/uniapp-ts/src/api/agentSelfService.ts", "utf8");
+    expect(api).toContain('"/user/promoter/apply/info"');
+    expect(api).toContain('"/division/agent/apply/info"');
+    expect(api).not.toContain("/user/apply/supplier/");
   });
 
   it("maps visit history to a real authenticated page without closing the governance parent", () => {
