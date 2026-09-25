@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
-import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_FUNCTIONS, OFFLINE_TABLES, OFFLINE_DISPATCH_COLUMNS } from './offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_FUNCTIONS, OFFLINE_TABLES, OFFLINE_DISPATCH_COLUMNS } from './offlineOrderCatalog';
 import { OFFLINE_RUNTIME_READ_TABLES, OFFLINE_RUNTIME_INSERT_TABLES, OFFLINE_RUNTIME_UPDATE_TABLES,
   OFFLINE_RUNTIME_UPDATE_COLUMNS, OFFLINE_RUNTIME_SEQUENCES } from './offlineOrderRuntimeContract';
 import { auditCheckoutPricingLockRuntime, inspectCheckoutPricingLock } from './checkoutPricingLock';
@@ -38,7 +38,8 @@ export async function auditOfflineOrderRuntimePermissions(
     const expected = OFFLINE_CATALOG_VERSIONS.v1;
     const catalogVerified = rows.length === 27 && new Set(rows.map(r => r.name)).size === 27
       && rows.every(r => typeof r.name === 'string' && Object.hasOwn(expected,r.name)
-        && r.present === true && r.safe === true && r.fingerprint === expected[r.name]);
+        && r.present === true && r.safe === true
+        && (r.fingerprint === expected[r.name] || r.fingerprint === OFFLINE_BARCODE_CATALOG_VERSIONS.v1[r.name]));
     const offlineOid = catalogVerified ? rows.find(row => row.kind === 'function' && row.name === 'ooa_lock_pricing')?.oid : null;
     // Explicit shared scope additionally verifies checkout's exact definition,
     // restricted NOLOGIN owner, ACLs AND this connection's pricing authority.

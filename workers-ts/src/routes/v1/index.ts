@@ -734,6 +734,7 @@ v1Routes.get("/recharge/index", authMiddleware({ force: true }), UserMessageCont
 v1Routes.get("/user", authMiddleware({ force: true }), UserProfileController.personalHome);
 v1Routes.get("/userinfo", authMiddleware({ force: true }), UserProfileController.userInfo);
 v1Routes.get("/user/rand_code", authMiddleware({ force: true }), UserProfileController.randCode);
+v1Routes.post("/user/bar_code", authMiddleware({ force: true }), UserProfileController.memberBarcode);
 v1Routes.post("/user/share", authMiddleware({ force: true }), UserProfileController.userShare);
 v1Routes.get("/user/share/words", authMiddleware({ force: true }), UserProfileController.shareWords);
 v1Routes.get("/user/routine_code", authMiddleware({ force: true }), UserProfileController.routineCode);

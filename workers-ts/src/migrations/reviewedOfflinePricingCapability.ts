@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
-import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
 
 export type PricingRuntimeScope = 'isolated' | 'shared-shop';
 export function validatePricingRuntimeScope(scope: PricingRuntimeScope) {
@@ -18,7 +18,8 @@ export async function reviewedOfflinePricingOid(tx: Pick<DbClient, 'execute'>, s
   const expected = OFFLINE_CATALOG_VERSIONS.v1;
   if (rows.length !== 27 || new Set(rows.map(row => row.name)).size !== 27
     || !rows.every(row => typeof row.name === 'string' && Object.hasOwn(expected, row.name)
-      && row.present === true && row.safe === true && row.fingerprint === expected[row.name])) return null;
+      && row.present === true && row.safe === true
+      && (row.fingerprint === expected[row.name] || row.fingerprint === OFFLINE_BARCODE_CATALOG_VERSIONS.v1[row.name]))) return null;
   const capability = rows.find(row => row.kind === 'function' && row.name === 'ooa_lock_pricing');
   return typeof capability?.oid === 'string' && /^\d+$/.test(capability.oid) ? capability.oid : null;
 }
