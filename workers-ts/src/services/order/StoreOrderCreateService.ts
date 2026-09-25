@@ -17,7 +17,7 @@
  *   - 库存扣减加 WHERE stock>=n 守卫 (PHP decStockIncSales 缺失, 靠事务行锁兜底)
  *   - 不使用 Durable Object 包裹空操作来伪装数据库事务已串行化
  */
-import { and, desc, eq, ilike, inArray, isNull, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import {
   storeCart,
   storeOrder,
@@ -70,6 +70,8 @@ import {
   calculateFirstOrderDiscountCents,
   loadFirstOrderDiscountConfig,
   loadNewcomerEligibilityConfig,
+  loadNewcomerEligibilityConfigFromDb,
+  newcomerBaseProductIsEligible,
   type FirstOrderDiscountConfig,
   type NewcomerEligibilityConfig,
 } from "@/services/activity/StoreNewcomerService";
@@ -1117,6 +1119,9 @@ export class StoreOrderCreateService {
       if (!product.isShow || product.isDel) {
         throw new ValidateException(`商品「${product.storeName}」已下架`);
       }
+      if (type === 7 && !newcomerBaseProductIsEligible(product)) {
+        throw new ValidateException("新人专享基础商品已下架、未审核或变更为特殊商品");
+      }
       if (type === 1 && product.isVerify !== 1) throw new ValidateException("秒杀基础商品未审核通过");
       if (cart.productType !== product.productType) {
         throw new ValidateException(`商品「${product.storeName}」类型已变化，请重新购买`);
@@ -1126,11 +1131,21 @@ export class StoreOrderCreateService {
       }
       let itemSystemFormId = product.systemFormId;
       let activitySku: typeof storeProductAttrValue.$inferSelect | null = null;
-      let sku = await c.storeProductAttrValueDao.getByUnique(
-        cart.productAttrUnique,
-        0,
-        product.id,
-      );
+      const type7BaseSkus = type === 7
+        ? await c.db.select().from(storeProductAttrValue).where(and(
+            eq(storeProductAttrValue.productId, product.id),
+            eq(storeProductAttrValue.type, 0),
+            eq(storeProductAttrValue.unique, cart.productAttrUnique),
+            eq(storeProductAttrValue.isRetired, 0),
+          )).limit(2)
+        : null;
+      if (type === 7 && type7BaseSkus?.length !== 1) {
+        throw new ValidateException("新人专享基础规格标识无效或重复");
+      }
+      let sku = type7BaseSkus
+        ? type7BaseSkus[0]
+        : await c.storeProductAttrValueDao.getByUnique(
+            cart.productAttrUnique, 0, product.id);
       if (!sku && [1, 2, 3].includes(type)) {
         const pair = await resolveLegacyActivitySkuPair(c.db, {
           activityId: cart.activityId,
@@ -1395,10 +1410,10 @@ export class StoreOrderCreateService {
               eq(storeProductAttrValue.isRetired, 0),
             ),
           )
-          .limit(1);
+          .limit(2);
         // Keep the actual type=7 SKU for ledger and line snapshots, like PHP
         // checkNewcomerStock's attrInfo. A local declaration would shadow it.
-        activitySku = activitySkuRows[0] ?? null;
+        activitySku = activitySkuRows.length === 1 ? activitySkuRows[0] : null;
         if (!activitySku) throw new ValidateException("新人专享规格已失效");
         newcomerActivitySkuId = activitySku.id;
         unitPriceCents = Math.round(Number(activitySku.price) * 100);
@@ -1810,6 +1825,27 @@ export class StoreOrderCreateService {
       if (concurrentExistingRows[0]) assertExistingScope(concurrentExistingRows[0]);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
 
+      if (type === 7) {
+        // Admin replaces newcomer configuration and activity SKUs under this
+        // same lock. Acquire it before business row locks, then bypass KV and
+        // hold the config decision until commit. A stale quote must reconfirm.
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('admin-newcomer-register-config'))`);
+        const currentConfig = await loadNewcomerEligibilityConfigFromDb(createContainerFromDb(tx));
+        if (!currentConfig.enabled || !currentConfig.priceEnabled) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("新人专享活动未开启");
+        }
+        if (!newcomerConfig ||
+          currentConfig.enabled !== newcomerConfig.enabled ||
+          currentConfig.priceEnabled !== newcomerConfig.priceEnabled ||
+          currentConfig.limitEnabled !== newcomerConfig.limitEnabled ||
+          currentConfig.limitDays !== newcomerConfig.limitDays) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("新人专享规则已变化，请重新确认订单");
+        }
+        newcomerConfig = currentConfig;
+      }
+
       // Before cart claims as well as SKU/group writes: cancellation restores
       // carts and refunds can relink pending orders under this same boundary.
       if (type === 3) await lockPinkInventory(tx, pinkCombinationId);
@@ -1829,6 +1865,18 @@ export class StoreOrderCreateService {
         // Current eligibility alone does not authorize a different confirmed schedule.
         if (confirmation && await checkoutFingerprint(seckillSchedule) !== await checkoutFingerprint(seckillConfirmationSchedule)) {
           throw new OrderQuoteReconfirmRequired(key);
+        }
+        const quotedSku = orderItems[0]?.activitySku;
+        if (!quotedSku) throw new ValidateException("秒杀规格信息无效");
+        // A legacy admin/import can insert another active row with the same suk
+        // while the buyer waits for the parent. The old row's inventory CAS
+        // cannot detect that new identity, so recheck the complete match set.
+        const currentSkus = await tx.select({ id: storeProductAttrValue.id }).from(storeProductAttrValue)
+          .where(and(eq(storeProductAttrValue.productId, params.seckillId!), eq(storeProductAttrValue.type, 1),
+            eq(storeProductAttrValue.suk, quotedSku.suk), eq(storeProductAttrValue.isRetired, 0)))
+          .orderBy(asc(storeProductAttrValue.id)).limit(2);
+        if (currentSkus.length !== 1 || currentSkus[0].id !== quotedSku.id) {
+          throw new ValidateException("秒杀规格身份已变化，请刷新后重试");
         }
       }
       const now = Math.floor(Date.now() / 1000);
@@ -1949,7 +1997,7 @@ export class StoreOrderCreateService {
             isNewcomer: userTable.isNewcomer,
           })
           .from(userTable)
-          .where(eq(userTable.uid, uid))
+          .where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0), isNull(userTable.deleteTime)))
           .limit(1)
           .for("update");
         const newcomerUser = newcomerUsers[0];
@@ -1984,28 +2032,31 @@ export class StoreOrderCreateService {
         if (!lockedNewcomer[0] || lockedNewcomer[0].productId !== orderItems[0]?.product.id) {
           throw new ValidateException("新人专享商品已下架或删除");
         }
-        const lockedActivitySku = await tx
+        const lockedActivitySkus = await tx
           .select({ id: storeProductAttrValue.id, price: storeProductAttrValue.price,
-            cost: storeProductAttrValue.cost, settlePrice: storeProductAttrValue.settlePrice })
+            cost: storeProductAttrValue.cost, settlePrice: storeProductAttrValue.settlePrice,
+            unique: storeProductAttrValue.unique })
           .from(storeProductAttrValue)
           .where(
             and(
-              eq(storeProductAttrValue.id, newcomerActivitySkuId),
               eq(storeProductAttrValue.productId, newcomerActivityId),
               eq(storeProductAttrValue.type, 7),
               eq(storeProductAttrValue.suk, orderItems[0]?.sku.suk ?? ""),
-              eq(storeProductAttrValue.unique, orderItems[0]?.activitySku?.unique ?? ""),
               eq(storeProductAttrValue.isRetired, 0),
             ),
           )
-          .limit(1)
+          .orderBy(asc(storeProductAttrValue.id))
+          .limit(2)
           .for("update");
+        const lockedActivitySku = lockedActivitySkus.length === 1 ? lockedActivitySkus[0] : null;
         if (
-          !lockedActivitySku[0] ||
-          Math.round(Number(lockedActivitySku[0].price) * 100) !== orderItems[0]?.unitPriceCents ||
-          lockedActivitySku[0].cost !== orderItems[0]?.activitySku?.cost ||
-          lockedActivitySku[0].settlePrice !== orderItems[0]?.activitySku?.settlePrice
+          !lockedActivitySku || lockedActivitySku.id !== newcomerActivitySkuId ||
+          lockedActivitySku.unique !== orderItems[0]?.activitySku?.unique ||
+          Math.round(Number(lockedActivitySku.price) * 100) !== orderItems[0]?.unitPriceCents ||
+          lockedActivitySku.cost !== orderItems[0]?.activitySku?.cost ||
+          lockedActivitySku.settlePrice !== orderItems[0]?.activitySku?.settlePrice
         ) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
           throw new ValidateException("新人专享价格或结算信息已变化，请刷新后重试");
         }
         const consumed = await tx
@@ -2590,9 +2641,21 @@ export class StoreOrderCreateService {
               eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
             ) : undefined,
             type === 1 ? seckillProductQuoteGuard(product) : undefined,
+            type === 7 ? and(
+              eq(storeProduct.type, product.type),
+              eq(storeProduct.relationId, product.relationId),
+              eq(storeProduct.productType, product.productType),
+              eq(storeProduct.merId, product.merId),
+              eq(storeProduct.isSupportRefund, product.isSupportRefund),
+              eq(storeProduct.systemFormId, product.systemFormId),
+              eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
+              eq(storeProduct.isVerify, 1), eq(storeProduct.isVipProduct, 0),
+              eq(storeProduct.isPresaleProduct, 0),
+            ) : undefined,
             type === 6 ? presaleProductQuoteGuard(product) : eq(storeProduct.isPresaleProduct, 0)))
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
+          if (type === 7 && confirmation) throw new OrderQuoteReconfirmRequired(key);
           throw new ValidateException(shippingSnapshot ? "配送商品归属或规则已变化，请刷新后重试" : type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
             : type === 2 && shippingType === 2 ? "砍价自提商品归属、上架状态已变化或库存不足，请刷新后重试"
             : type === 2 ? "砍价商品归属、上架状态已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);

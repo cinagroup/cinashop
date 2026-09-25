@@ -26,7 +26,9 @@ export type UserSmsType =
   | "reset"
   | "binding"
   | "social_binding"
-  | "update_phone";
+  | "update_phone"
+  | "promoter_application"
+  | "division_application";
 export type UserSmsPurpose = Exclude<SmsVerificationPurpose, "supplier_application">;
 
 export interface VerificationCodeCache {
@@ -149,6 +151,8 @@ export function normalizeUserSmsType(value: unknown): {
   if (type === "binding") return { type, purpose: "user_phone_binding" };
   if (type === "social_binding") return { type, purpose: "user_social_binding" };
   if (type === "update_phone") return { type, purpose: "user_phone_update" };
+  if (type === "promoter_application") return { type, purpose: "user_promoter_application" };
+  if (type === "division_application") return { type, purpose: "user_division_application" };
   throw new ValidateException("短信验证码用途错误");
 }
 
@@ -173,6 +177,8 @@ export function isSmsVerificationMessage(value: unknown): value is SmsVerificati
       "user_phone_binding",
       "user_social_binding",
       "user_phone_update",
+      "user_promoter_application",
+      "user_division_application",
     ].includes(
       String(candidate.purpose),
     ) &&

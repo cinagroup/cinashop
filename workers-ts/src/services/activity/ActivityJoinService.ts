@@ -750,26 +750,24 @@ export class ActivityJoinService {
 
   async bargainHelpCount(uid: number, bargainUserId: number) {
     const records = await this.container.db
-      .select()
+      .select({
+        bargainPrice: storeBargainUser.bargainPrice,
+        bargainPriceMin: storeBargainUser.bargainPriceMin,
+        price: storeBargainUser.price,
+        status: storeBargainUser.status,
+        count: sql<number>`(SELECT COUNT(*)::int FROM ${storeBargainUserHelp}
+          WHERE ${storeBargainUserHelp.bargainUserId} = ${bargainUserId})`,
+        hasOwnHelp: sql<boolean>`EXISTS (SELECT 1 FROM ${storeBargainUserHelp}
+          WHERE ${storeBargainUserHelp.bargainUserId} = ${bargainUserId}
+            AND ${storeBargainUserHelp.uid} = ${uid})`,
+      })
       .from(storeBargainUser)
       .where(and(eq(storeBargainUser.id, bargainUserId), eq(storeBargainUser.isDel, 0)))
       .limit(1);
     const record = records[0];
     if (!record) throw new NotFoundException("砍价记录不存在");
-    const [countRows, ownHelpRows] = await Promise.all([
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(storeBargainUserHelp)
-        .where(eq(storeBargainUserHelp.bargainUserId, bargainUserId)),
-      this.container.db
-        .select({ id: storeBargainUserHelp.id })
-        .from(storeBargainUserHelp)
-        .where(and(
-          eq(storeBargainUserHelp.bargainUserId, bargainUserId),
-          eq(storeBargainUserHelp.uid, uid),
-        ))
-        .limit(1),
-    ]);
+    // One statement gives participation, count and this helper's history the
+    // same READ COMMITTED snapshot, even if a cut commits during this read.
     const originalCents = decimalToCents(record.bargainPrice);
     const minimumCents = decimalToCents(record.bargainPriceMin);
     const alreadyCents = decimalToCents(record.price);
@@ -779,8 +777,8 @@ export class ActivityJoinService {
       ? Math.min(100, Math.floor(alreadyCents * 100 / capacityCents))
       : 100;
     return {
-      userBargainStatus: !ownHelpRows[0],
-      count: countRows[0]?.count ?? 0,
+      userBargainStatus: !record.hasOwnHelp,
+      count: record.count,
       price: centsToDecimal(remainingCents),
       status: record.status,
       alreadyPrice: centsToDecimal(alreadyCents),

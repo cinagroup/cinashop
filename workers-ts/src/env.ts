@@ -274,6 +274,8 @@ export interface SmsVerificationMessage {
   expiresIn: number;
   purpose:
     | "supplier_application"
+    | "user_promoter_application"
+    | "user_division_application"
     | "user_register"
     | "user_login"
     | "user_password_reset"
