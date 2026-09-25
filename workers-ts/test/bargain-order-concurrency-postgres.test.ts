@@ -11,7 +11,7 @@ import { retirePlatformSourceProduct } from "../src/services/activity/BargainSou
 import { SupplierProductManagementService } from "../src/services/supplier/SupplierProductManagementService";
 import { storeCart, storeBargain, storeBargainUser, systemStore, storeOrderCartInfo, storeOrderStatus, printDocument,
   storeOrder, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProduct,
-  storeProductRelation } from "../src/models/schema";
+  storeProductAttrValue, storeProductCategory, storeProductRelation, storeProductStockRecord } from "../src/models/schema";
 
 // Only independent PG16 backends can prove these row-wait/conditional-update races.
 // Never replace with PGlite concurrency or inherit production credentials.
@@ -21,7 +21,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
     shippingType: 2, storeId: 1, realName: "隔离砍价并发", userPhone: "00000000000", userIp: "127.0.0.1" };
   beforeEach(async () => {
     f = await createBargainSelectionFixture([storeOrderCartInfo, storeOrderStatus, printDocument,
-      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProductRelation]);
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage,
+      storeProductCategory, storeProductRelation, storeProductStockRecord]);
     await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
     await f.db.insert(storeCart).values([10, 11].map(id => ({ id, uid: 11, productId: 70,
       productAttrUnique: "qared001", cartNum: 1, type: 2, activityId: 40, isNew: 1, status: 1 })));
@@ -123,6 +124,85 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
     expect(after.bargains).toEqual(before.bargains);
     expect(after.products.find(product => product.id === 70)).toMatchObject({ isShow: 0, stock: 8 });
     expect(after.carts.find(cart => cart.id === 10)).toMatchObject({ status: 0, isPay: 0 });
+  }, 25_000);
+
+  const supplierSaveBody = { product_type: 0, store_name: '成交后重新送审', cate_id: [12],
+    slider_image: ['/api/qa/image.svg'], spec_type: 1,
+    items: [{ value: '颜色', detail: ['红色', '蓝色'] },
+      { value: '尺码', detail: ['大号', '小号'] }],
+    attrs: [
+      { suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001',
+        price: '10.00', settle_price: '5.00', stock: 7 },
+      { suk: '红色,小号', detail: { 颜色: '红色', 尺码: '小号' }, unique: 'qaextra1',
+        price: '10.00', settle_price: '5.00', stock: 1 },
+      { suk: '蓝色,大号', detail: { 颜色: '蓝色', 尺码: '大号' }, unique: 'qaextra2',
+        price: '20.00', settle_price: '10.00', stock: 1 },
+      { suk: '蓝色,小号', detail: { 颜色: '蓝色', 尺码: '小号' }, unique: 'qablue01',
+        price: '20.00', settle_price: '10.00', stock: 2 },
+    ], freight: 1, is_postage: 1 };
+  const prepareSupplierSave = async () => {
+    await f.exec('CREATE UNIQUE INDEX qa_checkout_supplier_description ON store_product_description(product_id,type)');
+    await f.db.insert(storeProductCategory).values({ id: 12, pid: 0, type: 2,
+      relationId: 7, cateName: '隔离供应商分类', isShow: 1 });
+    await f.db.insert(storeProductAttrValue).values([
+      { id: 5, productId: 70, type: 0, unique: 'qaextra1', suk: '红色,小号', stock: 1, price: '10.00' },
+      { id: 6, productId: 70, type: 0, unique: 'qaextra2', suk: '蓝色,大号', stock: 1, price: '20.00' },
+    ]);
+    await f.db.update(storeProduct).set({ stock: 12 }).where(eq(storeProduct.id, 70));
+  };
+
+  it('supplier save owns the cart first: a real checkout waits and rolls back', async () => {
+    await f.db.update(storeProduct).set({ type: 2, relationId: 7, specType: 1 }).where(eq(storeProduct.id, 70));
+    await prepareSupplierSave();
+    await f.exec(`CREATE FUNCTION qa_supplier_save_checkout_hold() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.id=10 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
+      CREATE TRIGGER qa_supplier_save_checkout_hold AFTER UPDATE OF status ON store_cart
+      FOR EACH ROW EXECUTE FUNCTION qa_supplier_save_checkout_hold()`);
+    await withFinancePeers(f.db, async ([gate, editor, buyer]) => {
+      await gate.exec('BEGIN; SELECT pg_advisory_xact_lock(731635,70)');
+      const editing = outcome(new SupplierProductManagementService(createContainerFromDb(editor.db))
+        .saveProduct(7, 70, supplierSaveBody));
+      await waitForFinanceBlock(f.db, editor.pid, gate.pid);
+      const buying = outcome(create(buyer));
+      await waitForFinanceBlock(f.db, buyer.pid, editor.pid);
+      await gate.exec('COMMIT');
+      const edited = await editing;
+      expect(edited, edited.ok ? '' : String(edited.error)).toMatchObject({ ok: true });
+      expect(await buying).toMatchObject({ ok: false });
+    });
+    const after = await snapshot();
+    expect(after.orders).toHaveLength(0);
+    expect(after.carts.find(cart => cart.id === 10)).toMatchObject({ isPay: 0, status: 0 });
+    expect(after.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 7, sales: 0 });
+    expect(after.products.find(product => product.id === 70)).toMatchObject({
+      isShow: 0, isVerify: 0, storeName: '成交后重新送审' });
+  }, 25_000);
+
+  it.each(['show', 'save'] as const)("checkout owns the cart first: supplier %s waits for its real order before hiding", async operation => {
+    await f.db.update(storeProduct).set({ type: 2, relationId: 7, specType: 1 }).where(eq(storeProduct.id, 70));
+    if (operation === 'save') await prepareSupplierSave();
+    await withFinancePeers(f.db, async ([gate, buyer, editor]) => {
+      await gate.exec('BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE');
+      const buying = outcome(create(buyer));
+      await waitForFinanceBlock(f.db, buyer.pid, gate.pid);
+      const supplier = new SupplierProductManagementService(createContainerFromDb(editor.db));
+      const editing = outcome((async () => {
+        if (operation === 'show') await supplier.setProductShow(7, 70, 0);
+        else await supplier.saveProduct(7, 70, supplierSaveBody);
+      })());
+      await waitForFinanceBlock(f.db, editor.pid, buyer.pid);
+      await gate.exec('COMMIT');
+      const bought = await buying, edited = await editing;
+      expect(bought, bought.ok ? '' : String(bought.error)).toMatchObject({ ok: true });
+      expect(edited, edited.ok ? '' : String(edited.error)).toMatchObject({ ok: true });
+    });
+    const after = await snapshot();
+    expect(after.orders).toHaveLength(1);
+    expect(after.carts.find(cart => cart.id === 10)).toMatchObject({ isPay: 1, status: 0 });
+    expect(after.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 7, sales: 1 });
+    expect(after.products.find(product => product.id === 70)).toMatchObject(operation === 'show'
+      ? { isShow: 0, isVerify: 1 }
+      : { isShow: 0, isVerify: 0, storeName: '成交后重新送审' });
   }, 25_000);
   const prepareSecond = async (paid: boolean) => {
     await create();
