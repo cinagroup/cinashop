@@ -9,7 +9,7 @@ import {
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
-import { boundBargainSourceProductRetirement, lockBargainSourceProductRetirement } from '@/services/activity/BargainSourceProductLifecycle';
+import { boundBargainSourceProductChange, lockBargainSourceProductChange } from '@/services/activity/BargainSourceProductLifecycle';
 import {
   storeCart,
   storeProduct,
@@ -579,6 +579,10 @@ export class SupplierProductManagementService {
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {
     const input = normalizeSupplierProductInput(rawInput);
     return withTx(this.container, async (tx) => {
+      if (productId > 0) {
+        await boundBargainSourceProductChange(tx);
+        await lockBargainSourceProductChange(tx, productId);
+      }
       await this.lockProduct(tx, supplierId, productId);
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
@@ -651,6 +655,9 @@ export class SupplierProductManagementService {
       } as const;
       let savedProductId = productId;
       if (existing) {
+        // Checkout claims carts before SKU and product stock. Disable carts
+        // before either row write so a checkout-owned cart cannot form a cycle.
+        await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, productId));
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
       } else {
         const rows = await tx
@@ -694,7 +701,7 @@ export class SupplierProductManagementService {
         dimensions: input.dimensions,
         skus: input.skus.map((sku) => ({ ...sku, ...DEFAULT_SECOND_CARD_CONFIGURATION })),
       }, now);
-      await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
+      if (!existing) await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     });
   }
@@ -770,8 +777,8 @@ export class SupplierProductManagementService {
     await withTx(this.container, async (tx) => {
       // Retire every bargain admission on this source before changing the
       // product row. Cancellation/refund remain independent of this boundary.
-      await boundBargainSourceProductRetirement(tx);
-      await lockBargainSourceProductRetirement(tx, productId);
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const [owned] = await tx.select({ id: storeProduct.id }).from(storeProduct)
         .where(this.tenantProductWhere(supplierId, productId)).limit(1);
@@ -796,6 +803,10 @@ export class SupplierProductManagementService {
   async setProductShow(supplierId: number, productId: number, isShow: number) {
     if (isShow !== 0 && isShow !== 1) throw new ValidateException("商品状态错误");
     await withTx(this.container, async (tx) => {
+      // A source hide must serialize with every bargain start/help before the
+      // product is read or changed, including when another activity shares it.
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const product = (
         await tx
@@ -807,8 +818,9 @@ export class SupplierProductManagementService {
       if (!product) throw new NotFoundException("商品不存在或不属于当前供应商");
       if (isShow === 1 && product.isVerify !== 1) throw new ValidateException("商品尚未审核通过，不能上架");
       if (isShow === 1 && moneyCents(product.price) <= 0n) throw new ValidateException("商品价格必须大于0才能上架");
-      await tx.update(storeProduct).set({ isShow }).where(eq(storeProduct.id, productId));
+      // A checkout owns its cart before its final product row update.
       await tx.update(storeCart).set({ status: isShow }).where(eq(storeCart.productId, productId));
+      await tx.update(storeProduct).set({ isShow }).where(eq(storeProduct.id, productId));
       await tx
         .update(storeProductRelation)
         .set({ status: isShow })

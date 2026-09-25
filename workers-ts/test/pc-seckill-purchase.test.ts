@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPcSeckillFixture } from './helpers/pcSeckillFixture';
+import { storeCart } from '../src/models/schema';
 import { parseSeckillIndex, parseSeckillList, parseSeckillSelection, seckillCartInput, seckillId, seckillImage, seckillOpen } from '../../view/common/seckillPurchase';
 
 describe('PC seckill selection contract with real disposable HTTP/SQL', () => {
@@ -34,6 +35,58 @@ describe('PC seckill selection contract with real disposable HTTP/SQL', () => {
     expect(after.carts).toMatchObject([{ uid: 11, activityId: 20, type: 1, productAttrUnique: 'qablue01', cartNum: 2, isNew: 1 }]);
     expect(after.products).toEqual(before.products); expect(after.skus).toEqual(before.skus); expect(after.orders).toEqual([]);
     await f.clearCarts();
+  });
+  it('merges a reusable seckill cart while keeping an explicit new purchase separate', async () => {
+    const before = await f.snapshot();
+    const post = async (cartNum: number, isNew: 0 | 1, unique = 'actred20') => {
+      const response = await f.app.request('/api/cart/add', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authori-zation': 'Bearer isolated-seckill-session' },
+        body: JSON.stringify({ productId: 70, activityId: 20, type: 1, unique, cartNum, new: isNew }) }, f.env);
+      return response.json() as Promise<{ status: number; data: { id: number; cartNum: number } }>;
+    };
+    try {
+      const first = await post(1, 0);
+      const merged = await post(1, 0, 'qared001');
+      const direct = await post(1, 1);
+      expect(first).toMatchObject({ status: 200, data: { cartNum: 1 } });
+      expect(merged).toMatchObject({ status: 200, data: { id: first.data.id, cartNum: 2 } });
+      expect(direct).toMatchObject({ status: 200, data: { cartNum: 1 } });
+      expect(direct.data.id).not.toBe(first.data.id);
+      const after = await f.snapshot();
+      expect(after.carts.sort((a, b) => a.id - b.id)).toMatchObject([
+        { id: first.data.id, isNew: 0, cartNum: 2, productAttrUnique: 'qared001' },
+        { id: direct.data.id, isNew: 1, cartNum: 1, productAttrUnique: 'qared001' },
+      ]);
+      expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
+    } finally { await f.clearCarts(); }
+  });
+  it('does not reuse assisted, tourist, or store-scoped seckill carts for a plain user', async () => {
+    const scoped = [
+      { id: 801, staffId: 9, touristUid: '', storeId: 0 },
+      { id: 802, staffId: 0, touristUid: 'other', storeId: 0 },
+      { id: 803, staffId: 0, touristUid: '', storeId: 9 },
+    ];
+    await f.db.insert(storeCart).values(scoped.map(row => ({ ...row, uid: 11,
+      productId: 70, productAttrUnique: 'qared001', type: 1, activityId: 20,
+      cartNum: 1, isNew: 0, status: 1 })));
+    const post = async () => {
+      const response = await f.app.request('/api/cart/add', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authori-zation': 'Bearer isolated-seckill-session' },
+        body: JSON.stringify({ productId: 70, activityId: 20, type: 1, unique: 'actred20', cartNum: 1, new: 0 }) }, f.env);
+      return response.json() as Promise<{ status: number; data: { id: number; cartNum: number } }>;
+    };
+    try {
+      const first = await post(), second = await post();
+      expect(first).toMatchObject({ status: 200, data: { cartNum: 1 } });
+      expect(second).toMatchObject({ status: 200, data: { id: first.data.id, cartNum: 2 } });
+      expect(scoped.map(row => row.id)).not.toContain(first.data.id);
+      const carts = (await f.snapshot()).carts;
+      for (const row of scoped) expect(carts.find(cart => cart.id === row.id))
+        .toMatchObject({ ...row, cartNum: 1, isPay: 0, isDel: 0 });
+      expect(carts.find(cart => cart.id === first.data.id)).toMatchObject({
+        uid: 11, staffId: 0, touristUid: '', storeId: 0, cartNum: 2, isNew: 0,
+      });
+    } finally { await f.clearCarts(); }
   });
   it('rejects stale active catalogue after parent stop, retaining no new cart or inventory effects', async () => {
     const input = seckillCartInput(await read(), 'actred20', 1);

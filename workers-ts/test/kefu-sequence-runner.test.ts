@@ -79,7 +79,7 @@ describe("standalone sequence transaction execution boundary", () => {
   it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
     // The complete current ORM includes the two active seckill identity indexes;
     // the audit executes every generated statement, including their exact DDL.
-    expect(fullPath.initialStatements).toBe(1165);
+    expect(fullPath.initialStatements).toBe(1166);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([
       `CREATE UNIQUE INDEX "spav_seckill_active_suk_uq" ON "store_product_attr_value" USING btree ("product_id","suk") ${activeSeckillPredicate}`,

@@ -10,6 +10,8 @@ describe('fixed atomic release protocol schema PG16', () => {
   beforeEach(async () => {
     f = await checkoutPricingMigrationDatabase();
     await f.exec(await offlinePredecessorSchemaSql());
+    // Release protocol predecessor checks the reviewed pre-barcode index stage.
+    await f.exec('DROP INDEX public.user_bar_code_uq');
     // Build this independently from the canonical ORM, then remove only empty
     // unprotected new protocol tables in our own disposable database.
     await f.exec(`DROP TABLE public.admin_refund_operation,public.admin_refund_creation,

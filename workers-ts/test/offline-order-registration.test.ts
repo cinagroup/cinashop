@@ -2,7 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, it, expect } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { spawnSync } from 'node:child_process';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
-import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_ORM_CATALOG_VERSIONS, OFFLINE_TABLES, OFFLINE_DEPENDENCIES } from '../src/migrations/offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_SQL, OFFLINE_TABLES, OFFLINE_DEPENDENCIES } from '../src/migrations/offlineOrderCatalog';
 import { OFFLINE_INSTALLATION_SQL, OFFLINE_ORM_INSTALLATION_SQL } from '../src/migrations/offlineOrderInstallation';
 import { inspectOfflineOrderSchema, inspectOfflineOrder, runOfflineOrder, runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
 import { OFFLINE_ORDER_ADMISSION_GUARD_SQL } from '../src/migrations/offlineOrderAdmission';
@@ -38,7 +38,7 @@ describe('offline registered schema PG16', () => {
     expect(rows).toHaveLength(27);
     expect(rows.filter(r => r.present)).toHaveLength(17);
     expect(rows.filter(r => r.present).every(r => r.owned && r.safe)).toBe(true);
-    expect(Object.fromEntries(rows.filter(r => r.present).map(r => [r.name,r.fingerprint]))).toEqual(OFFLINE_ORM_CATALOG_VERSIONS);
+    expect(Object.fromEntries(rows.filter(r => r.present).map(r => [r.name,r.fingerprint]))).toEqual(OFFLINE_BARCODE_CATALOG_VERSIONS.orm);
     const before = await identities();
     await runOfflineOrderSchema(f.db, true);
     const installed = await identities();
@@ -46,7 +46,7 @@ describe('offline registered schema PG16', () => {
     rows = await catalog();
     expect(rows).toHaveLength(27);
     expect(rows.every(r => r.present && r.owned && r.safe)).toBe(true);
-    expect(Object.fromEntries(rows.map(r => [r.name,r.fingerprint]))).toEqual(OFFLINE_CATALOG_VERSIONS.v1);
+    expect(Object.fromEntries(rows.map(r => [r.name,r.fingerprint]))).toEqual(OFFLINE_BARCODE_CATALOG_VERSIONS.v1);
     await runOfflineOrderSchema(f.db); await runOfflineOrderSchema(f.db, true);
     expect(await identities()).toEqual(installed);
     expect(await inspectOfflineOrderSchema(f.db)).toEqual({ state: 'v1' });

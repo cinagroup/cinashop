@@ -88,6 +88,8 @@ import { ASSISTED_ORDER_LIST_INDEX_SQL } from '@/migrations/assistedOrderListInd
 import { runAssistedOrderListIndex } from '@/migrations/runAssistedOrderListIndex';
 import { SECKILL_SKU_IDENTITY_FENCE_SQL } from '@/migrations/seckillSkuIdentityFence';
 import { runSeckillSkuIdentityFence } from '@/migrations/runSeckillSkuIdentityFence';
+import { MEMBER_BARCODE_INDEX_SQL } from '@/migrations/memberBarcodeIndex';
+import { runMemberBarcodeIndex } from '@/migrations/runMemberBarcodeIndex';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -114,6 +116,10 @@ export class MigrationService {
 
   seckillSkuIdentityFenceMigrationSqlForVerification(): string {
     return this.migration_0172();
+  }
+
+  memberBarcodeIndexMigrationSqlForVerification(): string {
+    return this.migration_0173();
   }
 
   shippingLifecycleMigrationSqlForVerification(): string {
@@ -544,10 +550,16 @@ export class MigrationService {
       this.migration_0170(),
       this.migration_0171(),
       this.migration_0172(),
+      this.migration_0173(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 173) {
+          await runMemberBarcodeIndex(this.container.db);
+          executed.push('0173');
+          continue;
+        }
         if (i === 172) {
           await runSeckillSkuIdentityFence(this.container.db);
           executed.push('0172');
@@ -8755,5 +8767,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0172(): string {
     return SECKILL_SKU_IDENTITY_FENCE_SQL;
+  }
+
+  private migration_0173(): string {
+    return MEMBER_BARCODE_INDEX_SQL;
   }
 }
