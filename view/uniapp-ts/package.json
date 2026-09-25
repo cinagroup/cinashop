@@ -14,6 +14,7 @@
     "test:admzip": "node --test scripts/encrypted-uni-modules-admzip.test.cjs",
     "test:automator-qr": "node --test scripts/automator-qr-dependency.test.cjs",
     "test:express-qs": "node --test scripts/express-qs-ssr-boundary.test.cjs",
+    "test:jest-jsdom-once": "node --test scripts/jest-jsdom-once-boundary.test.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

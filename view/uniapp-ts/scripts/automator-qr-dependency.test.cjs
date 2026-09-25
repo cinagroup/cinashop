@@ -100,7 +100,8 @@ test("current source does not invoke the optional automator remote path", () => 
   const sourceDirs = [resolve(__dirname, "../src"), resolve(__dirname, "../functions"), __dirname];
   let checked = 0;
   for (const dir of sourceDirs) for (const path of filesUnder(dir)) {
-    if (path === __filename || !/[.](?:js|cjs|mjs|ts|tsx|vue)$/.test(path)) continue;
+    // The Jest dependency audit intentionally loads the Node-only automator package.
+    if (path === __filename || basename(path) === "jest-jsdom-once-boundary.test.cjs" || !/[.](?:js|cjs|mjs|ts|tsx|vue)$/.test(path)) continue;
     const source = readFileSync(path, "utf8");
     assert.doesNotMatch(source, /@dcloudio\/uni-automator|uni\.automator(?:\.js)?|Tool\.enableRemoteDebug|\.remote\s*\(/, path);
     checked++;
