@@ -349,6 +349,52 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect(state.children[0]).toMatchObject({ stock: 5, quota: 4 });
   }, 15_000);
 
+  it("a reusable add waiting behind a real order claim cannot change the paid cart", async () => {
+    await f.db.update(storeCart).set({ isNew: 0 }).where(eq(storeCart.id, 1));
+    const add = (peer: FinancePeer) => new StoreCartService(createContainerFromDb(peer.db)).add({
+      uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1,
+    });
+    await withFinancePeers(f.db, async ([stockHolder, buyer, adder]) => {
+      await stockHolder.exec("BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE");
+      const purchase = outcome(create(buyer));
+      // Checkout has already claimed the cart before reaching the base SKU.
+      await waitForFinanceBlock(f.db, buyer.pid, stockHolder.pid);
+      const addition = outcome(add(adder));
+      await waitForFinanceBlock(f.db, adder.pid, buyer.pid);
+      await stockHolder.exec("COMMIT");
+      expect(await purchase).toMatchObject({ ok: true });
+      expect(await addition).toMatchObject({ ok: false,
+        error: { message: "秒杀购物车已变化或被占用，请刷新后重试" } });
+    });
+    const state = await oneOrder();
+    expect(state.carts[0]).toMatchObject({ isNew: 0, cartNum: 2, isPay: 1 });
+    expect(state.details[0].cartNum).toBe(2);
+  }, 15_000);
+
+  it("concurrent reusable adds report a conflict instead of silently losing an increment", async () => {
+    await f.db.update(storeCart).set({ isNew: 0, cartNum: 1 }).where(eq(storeCart.id, 1));
+    const add = (peer: FinancePeer) => new StoreCartService(createContainerFromDb(peer.db)).add({
+      uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1,
+    });
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([holder, first, second]) => {
+      await holder.exec("BEGIN; SELECT id FROM store_cart WHERE id=1 FOR UPDATE");
+      const a = outcome(add(first));
+      await waitForFinanceBlock(f.db, first.pid, holder.pid);
+      const b = outcome(add(second));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await holder.exec("COMMIT");
+      const results = await Promise.all([a, b]);
+      expect(results.filter(result => result.ok)).toHaveLength(1);
+      expect(results.filter(result => !result.ok)).toMatchObject([{ ok: false,
+        error: { message: "秒杀购物车已变化或被占用，请刷新后重试" } }]);
+      expect(results.find(result => result.ok)).toMatchObject({ ok: true, value: { id: 1, cartNum: 2 } });
+    });
+    const after = await snapshot();
+    expect(after.carts).toMatchObject([{ id: 1, isNew: 0, cartNum: 2, isPay: 0 }]);
+    expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
+  }, 15_000);
+
   it.each(["stock", "total-limit"])("two independently blocked buyers cannot exceed shared %s", async target => {
     await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
       type: 1, activityId: 20, isNew: 1, status: 1 });
