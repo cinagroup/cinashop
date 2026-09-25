@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPcSeckillFixture } from './helpers/pcSeckillFixture';
+import { storeCart } from '../src/models/schema';
 import { parseSeckillIndex, parseSeckillList, parseSeckillSelection, seckillCartInput, seckillId, seckillImage, seckillOpen } from '../../view/common/seckillPurchase';
 
 describe('PC seckill selection contract with real disposable HTTP/SQL', () => {
@@ -57,6 +58,34 @@ describe('PC seckill selection contract with real disposable HTTP/SQL', () => {
         { id: direct.data.id, isNew: 1, cartNum: 1, productAttrUnique: 'qared001' },
       ]);
       expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
+    } finally { await f.clearCarts(); }
+  });
+  it('does not reuse assisted, tourist, or store-scoped seckill carts for a plain user', async () => {
+    const scoped = [
+      { id: 801, staffId: 9, touristUid: '', storeId: 0 },
+      { id: 802, staffId: 0, touristUid: 'other', storeId: 0 },
+      { id: 803, staffId: 0, touristUid: '', storeId: 9 },
+    ];
+    await f.db.insert(storeCart).values(scoped.map(row => ({ ...row, uid: 11,
+      productId: 70, productAttrUnique: 'qared001', type: 1, activityId: 20,
+      cartNum: 1, isNew: 0, status: 1 })));
+    const post = async () => {
+      const response = await f.app.request('/api/cart/add', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authori-zation': 'Bearer isolated-seckill-session' },
+        body: JSON.stringify({ productId: 70, activityId: 20, type: 1, unique: 'actred20', cartNum: 1, new: 0 }) }, f.env);
+      return response.json() as Promise<{ status: number; data: { id: number; cartNum: number } }>;
+    };
+    try {
+      const first = await post(), second = await post();
+      expect(first).toMatchObject({ status: 200, data: { cartNum: 1 } });
+      expect(second).toMatchObject({ status: 200, data: { id: first.data.id, cartNum: 2 } });
+      expect(scoped.map(row => row.id)).not.toContain(first.data.id);
+      const carts = (await f.snapshot()).carts;
+      for (const row of scoped) expect(carts.find(cart => cart.id === row.id))
+        .toMatchObject({ ...row, cartNum: 1, isPay: 0, isDel: 0 });
+      expect(carts.find(cart => cart.id === first.data.id)).toMatchObject({
+        uid: 11, staffId: 0, touristUid: '', storeId: 0, cartNum: 2, isNew: 0,
+      });
     } finally { await f.clearCarts(); }
   });
   it('rejects stale active catalogue after parent stop, retaining no new cart or inventory effects', async () => {
