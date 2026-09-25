@@ -35,6 +35,30 @@ describe('PC seckill selection contract with real disposable HTTP/SQL', () => {
     expect(after.products).toEqual(before.products); expect(after.skus).toEqual(before.skus); expect(after.orders).toEqual([]);
     await f.clearCarts();
   });
+  it('merges a reusable seckill cart while keeping an explicit new purchase separate', async () => {
+    const before = await f.snapshot();
+    const post = async (cartNum: number, isNew: 0 | 1) => {
+      const response = await f.app.request('/api/cart/add', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authori-zation': 'Bearer isolated-seckill-session' },
+        body: JSON.stringify({ productId: 70, activityId: 20, type: 1, unique: 'actred20', cartNum, new: isNew }) }, f.env);
+      return response.json() as Promise<{ status: number; data: { id: number; cartNum: number } }>;
+    };
+    try {
+      const first = await post(1, 0);
+      const merged = await post(1, 0);
+      const direct = await post(1, 1);
+      expect(first).toMatchObject({ status: 200, data: { cartNum: 1 } });
+      expect(merged).toMatchObject({ status: 200, data: { id: first.data.id, cartNum: 2 } });
+      expect(direct).toMatchObject({ status: 200, data: { cartNum: 1 } });
+      expect(direct.data.id).not.toBe(first.data.id);
+      const after = await f.snapshot();
+      expect(after.carts.sort((a, b) => a.id - b.id)).toMatchObject([
+        { id: first.data.id, isNew: 0, cartNum: 2, productAttrUnique: 'qared001' },
+        { id: direct.data.id, isNew: 1, cartNum: 1, productAttrUnique: 'qared001' },
+      ]);
+      expect({ ...after, carts: [] }).toEqual({ ...before, carts: [] });
+    } finally { await f.clearCarts(); }
+  });
   it('rejects stale active catalogue after parent stop, retaining no new cart or inventory effects', async () => {
     const input = seckillCartInput(await read(), 'actred20', 1);
     await f.setActive(false);
