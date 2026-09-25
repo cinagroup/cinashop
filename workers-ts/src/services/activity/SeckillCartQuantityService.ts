@@ -4,12 +4,14 @@ import { storeCart, storeOrder, storeProduct, storeSeckill } from "@/models/sche
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { resolveLegacyActivitySkuPair } from "./ActivityOrderSkuService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "./SeckillScheduleService";
+import { activityCartQuoteGuard } from "./ActivityCartQuoteGuard";
 
 /** Quantity is not a reservation. Lock only the cart to serialize with order claim;
  * dependency reads intentionally take no row locks (create locks activity before cart).
  * Mutable activity/stock rules are checked again by the order transaction.
  */
-export async function setSeckillCartQuantity(container: Container, uid: number, id: number, quantity: number): Promise<void> {
+export async function setSeckillCartQuantity(container: Container, uid: number, id: number, quantity: number,
+  expected?: typeof storeCart.$inferSelect): Promise<void> {
   if (!Number.isSafeInteger(uid) || uid <= 0 || !Number.isSafeInteger(id) || id <= 0 ||
     !Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 32767) {
     throw new ValidateException("购物车参数错误");
@@ -17,9 +19,13 @@ export async function setSeckillCartQuantity(container: Container, uid: number, 
   await withTx(container, async tx => {
     const scope = and(eq(storeCart.id, id), eq(storeCart.uid, uid), eq(storeCart.type, 1),
       eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1),
-      eq(storeCart.staffId, 0), eq(storeCart.touristUid, ""), eq(storeCart.storeId, 0));
+      eq(storeCart.staffId, 0), eq(storeCart.touristUid, ""), eq(storeCart.storeId, 0),
+      expected ? activityCartQuoteGuard(expected) : undefined);
     const [cart] = await tx.select().from(storeCart).where(scope).limit(1).for("update");
-    if (!cart) throw new NotFoundException("购物车项不存在或已下单");
+    if (!cart) {
+      if (expected) throw new ValidateException("秒杀购物车已变化或被占用，请刷新后重试");
+      throw new NotFoundException("购物车项不存在或已下单");
+    }
     if (!cart.productAttrUnique.trim()) throw new ValidateException("商品规格标识无效");
     const schedule = await loadSeckillSchedule(tx, cart.activityId);
     assertSeckillSchedule(schedule);
