@@ -11,6 +11,7 @@
     "test:toolchain": "node --test scripts/assisted-cashier-runtime.test.cjs scripts/assisted-checkout-runtime.test.cjs scripts/assisted-selection-runtime.test.cjs scripts/assisted-records-runtime.test.cjs scripts/assisted-detail-runtime.test.cjs scripts/dev-server-security.test.cjs scripts/checkout-runtime.test.cjs scripts/cart-runtime.test.cjs scripts/wallet-runtime.test.cjs scripts/coupon-products-runtime.test.cjs scripts/product-sku-runtime.test.cjs scripts/product-detail-lifecycle.test.cjs scripts/order-detail-lifecycle.test.cjs scripts/order-list-lifecycle.test.cjs scripts/order-pay-result.test.cjs scripts/offline-cashier-runtime.test.cjs scripts/refund-apply-lifecycle.test.cjs scripts/refund-records-lifecycle.test.cjs scripts/seckill-runtime.test.cjs scripts/combination-runtime.test.cjs scripts/pink-status-runtime.test.cjs scripts/pink-cancellation-runtime.test.cjs scripts/bargain-runtime.test.cjs scripts/visit-history-runtime.test.cjs scripts/presale-runtime.test.cjs scripts/presale-catalog-runtime.test.cjs scripts/community-deep-links-runtime.test.cjs scripts/feedback-work-runtime.test.cjs scripts/newcomer-runtime.test.cjs scripts/product-rank-runtime.test.cjs scripts/governance-agreements-runtime.test.cjs",
     "test:build-artifacts": "node --test scripts/build-artifacts.test.cjs",
     "test:runtime-i18n": "node --test scripts/runtime-i18n-audit.test.cjs",
+    "test:admzip": "node --test scripts/encrypted-uni-modules-admzip.test.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
