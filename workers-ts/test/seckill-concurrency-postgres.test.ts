@@ -188,6 +188,51 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
       children: before.children.map(child => child.id === 20 ? { ...child, num: 1 } : child) });
   }, 15_000);
 
+  it("rejects a newly inserted same-suk activity SKU after quote and the parent lock wait", async () => {
+    const quote = await new StoreOrderCreateService(f.container, f.env).quoteOrder({
+      uid: 11, cartIds: [1], type: 1, seckillId: 20, shippingType: 2, storeId: 1,
+      realName: "隔离并发样本", userPhone: "00000000000",
+    });
+    expect(quote.payCents).toBe(1250);
+    let afterEdit: Awaited<ReturnType<typeof snapshot>> | undefined;
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      const pending = outcome(create(buyer));
+      // The buyer has resolved the original SKU in preflight and reached the
+      // real PostgreSQL parent lock. A legacy admin/import insert is not
+      // protected by that lock, so it can commit a second active identity.
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      await editor.db.insert(storeProductAttrValue).values({ id: 3, productId: 20, type: 1,
+        unique: "qaalt001", suk: "红色,大号", stock: 7, quota: 6, price: "5.00" });
+      afterEdit = await snapshot();
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: "秒杀规格身份已变化，请刷新后重试" } });
+    });
+    expect(await snapshot()).toEqual(afterEdit);
+  }, 15_000);
+
+  it("keeps the quoted SKU valid when the same activity gains a different SKU", async () => {
+    await f.db.insert(storeProductAttrValue).values({ id: 3, productId: 70, type: 0,
+      unique: "qablue01", suk: "蓝色,大号", stock: 8, price: "10.00" });
+    expect((await new StoreOrderCreateService(f.container, f.env).quoteOrder({
+      uid: 11, cartIds: [1], type: 1, seckillId: 20, shippingType: 2, storeId: 1,
+      realName: "隔离并发样本", userPhone: "00000000000",
+    })).payCents).toBe(1250);
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      const pending = outcome(create(buyer));
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      await editor.db.insert(storeProductAttrValue).values({ id: 4, productId: 20, type: 1,
+        unique: "qablue20", suk: "蓝色,大号", stock: 7, quota: 6, price: "7.00" });
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: true });
+    });
+    const state = await oneOrder();
+    expect(state.skus.find(sku => sku.id === 3)).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 4)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+  }, 15_000);
+
   it.each(["parent", "slot"])("rereads a stopped %s after an observed lock wait and rolls back", async target => {
     const before = await snapshot();
     await withFinancePeers(f.db, async ([blocker, buyer]) => {
