@@ -240,10 +240,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
     const whole=await sequenceRunnerDatabase();
     try {
       if(path==='external') {
-        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();expect(files.at(-1)).toBe('0166_seckill_sku_identity_fence.sql');
+        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();expect(files.at(-1)).toBe('0167_member_barcode_index.sql');
         for(const file of files) await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       }else if(path==='embedded') {
-        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 173},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 174},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       }else{
         const api=await import('drizzle-kit/api');await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(allModels))).join('\n'));
         await expect(runRefundOrderSplitSchema(whole.db,true)).rejects.toThrow();
