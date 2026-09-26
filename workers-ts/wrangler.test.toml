@@ -1,4 +1,4 @@
-# Local-only workerd bindings for @cloudflare/vitest-pool-workers.
+# Local-only workerd bindings for @cloudflare/vitest-plugin.
 # No binding in this file points at a deployed Cloudflare resource.
 name = "cinashop-api-runtime-test"
 main = "src/index.ts"
