@@ -43,6 +43,60 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
       prints: await f.db.select().from(printDocument) };
   };
   const nextParams = { ...params, key: "next_bargain", cartIds: [11], bargainUserId: 90 };
+  it("real checkout commits before supplier recycling without a cart/product lock inversion", async () => {
+    await f.db.update(storeProduct).set({ type: 2, relationId: 7 }).where(eq(storeProduct.id, 70));
+    await f.exec(`CREATE FUNCTION qa_supplier_checkout_cart_gate() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.id=10 AND NEW.is_pay=1 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
+      CREATE TRIGGER qa_supplier_checkout_cart_gate AFTER UPDATE OF is_pay ON store_cart
+      FOR EACH ROW EXECUTE FUNCTION qa_supplier_checkout_cart_gate()`);
+    await withFinancePeers(f.db, async ([gate, buyer, retiring]) => {
+      await gate.exec("BEGIN; SELECT pg_advisory_xact_lock(731635,70)");
+      const purchase = outcome(create(buyer, { ...params, key: "supplier_checkout_first" }));
+      await waitForFinanceBlock(f.db, buyer.pid, gate.pid);
+      const retirement = outcome(new SupplierProductManagementService(createContainerFromDb(retiring.db)).recycleProduct(7, 70));
+      await waitForFinanceBlock(f.db, retiring.pid, buyer.pid);
+      await gate.exec("COMMIT");
+      expect(await purchase).toMatchObject({ ok: true });
+      expect(await retirement).toMatchObject({ ok: true });
+    });
+    const after = await snapshot();
+    expect(after.orders).toHaveLength(1);
+    expect(after.details).toHaveLength(1);
+    expect(after.carts.find(row => row.id === 10)).toMatchObject({ isPay: 1, status: 0 });
+    expect(after.carts.find(row => row.id === 11)).toMatchObject({ isPay: 0, status: 0 });
+    expect(after.products.find(row => row.id === 70)).toMatchObject({ stock: 7, isDel: 1 });
+    expect(after.skus.find(row => row.id === 1)).toMatchObject({ stock: 7, sales: 1 });
+    expect(after.skus.find(row => row.id === 3)).toMatchObject({ stock: 6, quota: 5, sales: 1 });
+    expect(after.bargains.find(row => row.id === 40)).toMatchObject({ stock: 7, quota: 7, sales: 1 });
+    expect(after.participations.find(row => row.id === 80)?.status).toBe(4);
+  }, 25_000);
+
+  it("supplier recycling commits before a waiting real checkout and leaves no order writes", async () => {
+    await f.db.update(storeProduct).set({ type: 2, relationId: 7 }).where(eq(storeProduct.id, 70));
+    await f.exec(`CREATE FUNCTION qa_supplier_retire_product_gate() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.id=70 THEN PERFORM pg_advisory_xact_lock(731635,70); END IF; RETURN NEW; END $$;
+      CREATE TRIGGER qa_supplier_retire_product_gate AFTER UPDATE OF is_del ON store_product
+      FOR EACH ROW EXECUTE FUNCTION qa_supplier_retire_product_gate()`);
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([gate, retiring, buyer]) => {
+      await gate.exec("BEGIN; SELECT pg_advisory_xact_lock(731635,70)");
+      const retirement = outcome(new SupplierProductManagementService(createContainerFromDb(retiring.db)).recycleProduct(7, 70));
+      await waitForFinanceBlock(f.db, retiring.pid, gate.pid);
+      const purchase = outcome(create(buyer, { ...params, key: "supplier_retire_first" }));
+      await waitForFinanceBlock(f.db, buyer.pid, retiring.pid);
+      await gate.exec("COMMIT");
+      expect(await retirement).toMatchObject({ ok: true });
+      expect(await purchase).toMatchObject({ ok: false, error: { message: expect.stringContaining("砍价购物车已变化或被占用") } });
+    });
+    const after = await snapshot();
+    expect(after).toEqual({ ...before,
+      carts: before.carts.map(row => row.productId === 70 ? { ...row, status: 0 } : row),
+      products: before.products.map(row => row.id === 70 ? { ...row, isDel: 1, isShow: 0 } : row),
+    });
+    expect(after.products.find(row => row.id === 70)).toMatchObject({ stock: 8, isDel: 1 });
+    expect(after.carts.find(row => row.id === 10)).toMatchObject({ isPay: 0, status: 0 });
+  }, 25_000);
+
   it("rejects virtual bargain checkout when its source retires after the quote but before final inventory write", async () => {
     await f.db.update(storeProduct).set({ productType: 3 }).where(eq(storeProduct.id, 70));
     await f.db.update(storeCart).set({ productType: 3, bargainUserId: 80 }).where(eq(storeCart.id, 10));
