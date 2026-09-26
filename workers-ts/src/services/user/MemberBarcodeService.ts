@@ -42,7 +42,7 @@ function isIndexConflict(error: unknown): boolean {
   return false;
 }
 
-async function requireInstalledIndex(tx: DbClient): Promise<void> {
+export async function requireMemberBarcodeIndex(tx: DbClient): Promise<void> {
   const [row] = await tx.select({ ready: sql<boolean>`EXISTS (
     SELECT 1 FROM pg_class c JOIN pg_index i ON i.indexrelid=c.oid
     JOIN pg_am am ON am.oid=c.relam
@@ -75,7 +75,7 @@ export class MemberBarcodeService {
           if (account.status !== 1 || account.isDel !== 0 || account.deleteTime !== null) {
             throw new ValidateException('当前账号不可使用会员码');
           }
-          await requireInstalledIndex(tx);
+          await requireMemberBarcodeIndex(tx);
           if (account.barCode) {
             if (!validExistingCode(account.barCode)) throw new ValidateException('历史会员码无效，请联系管理员');
             const matches = await tx.select({ uid: user.uid }).from(user)

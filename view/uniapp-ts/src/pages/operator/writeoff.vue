@@ -21,20 +21,29 @@
       </view>
 
       <view class="scan-card">
-        <text class="section-title">扫描或输入客户核销码</text>
+        <text class="section-title">扫描或输入订单核销码／会员码</text>
         <input
           v-model="code"
           class="code-input"
-          type="number"
-          maxlength="12"
-          placeholder="12位核销码"
+          type="text"
+          maxlength="32"
+          placeholder="12位订单码或客户会员码"
           confirm-type="search"
           @confirm="preview"
         />
         <view class="scan-actions">
           <button class="secondary-button" @tap="scan">扫码</button>
-          <button class="primary-button" :loading="loadingPreview" @tap="preview">校验核销码</button>
+          <button class="primary-button" :loading="loadingPreview" :disabled="executing || confirming" @tap="preview">查找待核销订单</button>
         </view>
+      </view>
+
+      <view v-if="memberCandidates.length" class="candidate-card">
+        <text class="section-title">选择待核销订单（{{ memberCandidates.length }}）</text>
+        <button v-for="item in memberCandidates" :key="item.id" class="candidate-row"
+          :disabled="loadingPreview || executing || confirming" @tap="previewMember(item)">
+          <text>{{ item.order_id }} · {{ item.total_num }} 件</text>
+          <text>{{ item.add_time }}</text>
+        </button>
       </view>
 
       <view v-if="previewOrder" class="preview-card">
@@ -70,39 +79,55 @@
           </view>
         </view>
 
-        <button class="execute-button" :loading="executing" :disabled="selectedQuantity <= 0" @tap="execute">
+        <button class="execute-button" :loading="executing || confirming" :disabled="selectedQuantity <= 0 || writeUncertain" @tap="execute">
           确认{{ role === "delivery" ? "送达" : "核销" }}（{{ selectedQuantity }}）
         </button>
-        <text class="irreversible">操作不可撤销；部分核销后当前码会立即失效。</text>
+        <text class="irreversible">操作不可撤销；部分核销后订单码会立即失效。</text>
       </view>
+      <view v-if="writeUncertain" class="state-card warning">核销结果尚待确认，请重新查单后再操作。</view>
     </template>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { computed, ref, watch } from "vue";
+import { onHide, onLoad, onShow, onUnload } from "@dcloudio/uni-app";
 import {
   apiOperatorWriteoff,
   apiOperatorWriteoffInfo,
+  apiOperatorMemberLookup,
+  apiOperatorMemberInfo,
+  apiOperatorMemberWriteoff,
   apiWriteoffOperatorProfile,
+  type OperatorMemberOrderSummary,
   type OperatorWriteoffPreview,
   type WriteoffOperatorProfile,
 } from "@/api/order";
+import { useAuthStore } from "@/stores/auth";
+import { operatorScanSiteOrigins, parseOperatorScanCode, parseOperatorScene } from "@/utils/operatorScanCode";
 
 type OperatorRole = "staff" | "delivery";
 
+const auth = useAuthStore();
 const profile = ref<WriteoffOperatorProfile | null>(null);
 const role = ref<OperatorRole>("staff");
 const code = ref("");
+const memberCandidates = ref<OperatorMemberOrderSummary[]>([]);
 const previewOrder = ref<OperatorWriteoffPreview | null>(null);
+const previewKind = ref<"order" | "member" | null>(null);
 const quantities = ref<Record<number, number>>({});
 const selected = ref<Record<number, boolean>>({});
 const loadingProfile = ref(true);
 const loadingPreview = ref(false);
 const executing = ref(false);
+const confirming = ref(false);
+const writeUncertain = ref(false);
 let requestedRole: OperatorRole | null = null;
 let pendingCode = "";
+let pendingCodeSession = -1;
+let visible = false;
+let generation = 0;
+let profileRequestId = 0;
 
 const hasStaffRole = computed(() => (profile.value?.staff_stores.length ?? 0) > 0);
 const hasDeliveryRole = computed(() => Boolean(profile.value?.delivery));
@@ -139,80 +164,158 @@ function productName(snapshot: Record<string, unknown> | null): string {
   return "商品";
 }
 
-function extractVerifyCode(value: unknown): string {
-  const text = String(value ?? "").trim();
-  if (/^\d{12}$/.test(text)) return text;
-  const queryMatch = text.match(/[?&#](?:code|verify_code|verifyCode)=(\d{12})(?:[&#]|$)/);
-  if (queryMatch) return queryMatch[1];
-  const plainMatch = text.match(/(?:^|\D)(\d{12})(?:\D|$)/);
-  return plainMatch?.[1] ?? "";
-}
-
 function resetPreview() {
   previewOrder.value = null;
+  previewKind.value = null;
   quantities.value = {};
   selected.value = {};
+}
+
+function invalidatePrivate(clearCode = false) {
+  generation++;
+  memberCandidates.value = [];
+  resetPreview();
+  loadingPreview.value = false;
+  confirming.value = false;
+  if (clearCode) code.value = "";
+}
+
+function current(generationAtStart: number, session: number, selectedRole: OperatorRole, scanCode: string) {
+  return visible && auth.isLoggedIn && auth.sessionVersion === session
+    && generation === generationAtStart && role.value === selectedRole && code.value === scanCode;
+}
+
+function acceptPreview(result: OperatorWriteoffPreview, expected: OperatorMemberOrderSummary | null, selectedRole: OperatorRole) {
+  if (!result || !Number.isSafeInteger(result.id) || result.id <= 0 || !result.order_id
+    || result.actor_kind !== selectedRole || (expected && (result.id !== expected.id || result.order_id !== expected.order_id))
+    || !Array.isArray(result.cart_info) || !result.cart_info.length || result.cart_info.length > 500
+    || new Set(result.cart_info.map((item) => item.id)).size !== result.cart_info.length
+    || result.cart_info.some((item) => !Number.isSafeInteger(item.id) || item.id <= 0
+      || !Number.isSafeInteger(item.write_surplus_times) || item.write_surplus_times < 0)) {
+    throw new Error("核销订单响应不完整，请重新查询");
+  }
+  previewOrder.value = result;
+  quantities.value = Object.fromEntries(result.cart_info.map((item) => [item.id, item.write_surplus_times]));
+  selected.value = Object.fromEntries(result.cart_info.map((item) => [item.id, item.write_surplus_times > 0]));
+  writeUncertain.value = false;
 }
 
 function selectRole(value: OperatorRole) {
   if (value === "staff" && !hasStaffRole.value) return;
   if (value === "delivery" && !hasDeliveryRole.value) return;
+  if (role.value === value) return;
   role.value = value;
-  code.value = "";
-  resetPreview();
+  invalidatePrivate(true);
 }
 
 async function loadProfile() {
+  invalidatePrivate(true);
+  const requestId = ++profileRequestId;
+  const session = auth.sessionVersion;
+  const ownGeneration = generation;
+  if (!auth.isLoggedIn) { profile.value = null; loadingProfile.value = false; return; }
   loadingProfile.value = true;
   try {
-    profile.value = await apiWriteoffOperatorProfile();
+    const result = await apiWriteoffOperatorProfile();
+    if (!visible || auth.sessionVersion !== session || generation !== ownGeneration) return;
+    if (!result || !Array.isArray(result.staff_stores) || typeof result.can_writeoff !== "boolean") {
+      throw new Error("核销身份响应无效");
+    }
+    profile.value = result;
     if (requestedRole === "delivery" && hasDeliveryRole.value) role.value = "delivery";
     else if (requestedRole === "staff" && hasStaffRole.value) role.value = "staff";
     else if (!hasStaffRole.value && hasDeliveryRole.value) role.value = "delivery";
     else role.value = "staff";
-    if (pendingCode && profile.value.can_writeoff) {
+    if (!result.can_writeoff || pendingCodeSession !== session) pendingCode = "";
+    if (pendingCode) {
       code.value = pendingCode;
       pendingCode = "";
       await preview();
     }
   } catch (error) {
+    if (!visible || auth.sessionVersion !== session || generation !== ownGeneration) return;
     profile.value = null;
+    pendingCode = "";
     toast(error instanceof Error ? error.message : "身份核验失败");
   } finally {
-    loadingProfile.value = false;
+    if (visible && auth.sessionVersion === session && profileRequestId === requestId) {
+      loadingProfile.value = false;
+    }
   }
 }
 
 function scan() {
+  if (!visible || !profile.value?.can_writeoff || executing.value || confirming.value) return;
+  const session = auth.sessionVersion, selectedRole = role.value, ownGeneration = generation;
   uni.scanCode({
     scanType: ["qrCode", "barCode"],
     success: (result) => {
-      const parsed = extractVerifyCode(result.result);
-      if (!parsed) return toast("二维码中没有有效的12位核销码");
-      code.value = parsed;
+      if (!visible || auth.sessionVersion !== session || role.value !== selectedRole || generation !== ownGeneration) return;
+      const origins = operatorScanSiteOrigins();
+      const parsed = parseOperatorScanCode((result as typeof result & { path?: string }).path, origins)
+        ?? parseOperatorScanCode(result.result, origins);
+      if (!parsed) return toast("扫码内容没有有效的订单码或会员码");
+      code.value = parsed.code;
       void preview();
     },
     fail: (error) => {
-      if (!String(error.errMsg ?? "").includes("cancel")) toast("当前环境无法扫码，请手动输入核销码");
+      if (visible && auth.sessionVersion === session && generation === ownGeneration
+        && !String(error.errMsg ?? "").includes("cancel")) toast("当前环境无法扫码，请手动输入码");
     },
   });
 }
 
 async function preview() {
-  const normalized = extractVerifyCode(code.value);
-  if (!normalized) return toast("请输入12位核销码");
+  if (!visible || !profile.value?.can_writeoff || loadingPreview.value || executing.value || confirming.value) return;
+  const parsed = parseOperatorScanCode(code.value, operatorScanSiteOrigins());
+  if (!parsed) return toast("请输入有效的订单码或会员码");
+  code.value = parsed.code;
+  const ownGeneration = ++generation, session = auth.sessionVersion, selectedRole = role.value;
+  loadingPreview.value = true;
+  memberCandidates.value = [];
+  resetPreview();
+  try {
+    if (parsed.kind === "order") {
+      const result = await apiOperatorWriteoffInfo(selectedRole, parsed.code);
+      if (!current(ownGeneration, session, selectedRole, parsed.code)) return;
+      acceptPreview(result, null, selectedRole);
+      previewKind.value = "order";
+    } else {
+      const result = await apiOperatorMemberLookup(selectedRole, parsed.code);
+      if (!current(ownGeneration, session, selectedRole, parsed.code)) return;
+      const rows = result?.data;
+      if (!Array.isArray(rows) || rows.length > 20
+        || new Set(rows.map((row) => row.id)).size !== rows.length
+        || rows.some((row) => !Number.isSafeInteger(row.id) || row.id <= 0 || typeof row.order_id !== "string" || !row.order_id)) {
+        throw new Error("会员码查单响应无效");
+      }
+      memberCandidates.value = rows;
+      if (!rows.length) toast("该会员码暂无可核销订单");
+    }
+  } catch (error) {
+    if (current(ownGeneration, session, selectedRole, parsed.code)) toast(error instanceof Error ? error.message : "查单失败");
+  } finally {
+    if (current(ownGeneration, session, selectedRole, parsed.code)) loadingPreview.value = false;
+  }
+}
+
+async function previewMember(item: OperatorMemberOrderSummary) {
+  if (!visible || loadingPreview.value || executing.value || confirming.value
+    || !memberCandidates.value.some((candidate) => candidate.id === item.id && candidate.order_id === item.order_id)) return;
+  const parsed = parseOperatorScanCode(code.value, operatorScanSiteOrigins());
+  if (!parsed || parsed.kind !== "member") return;
+  const ownGeneration = ++generation, session = auth.sessionVersion, selectedRole = role.value;
   loadingPreview.value = true;
   resetPreview();
   try {
-    const result = await apiOperatorWriteoffInfo(role.value, normalized);
-    code.value = normalized;
-    previewOrder.value = result;
-    quantities.value = Object.fromEntries(result.cart_info.map((item) => [item.id, item.write_surplus_times]));
-    selected.value = Object.fromEntries(result.cart_info.map((item) => [item.id, item.write_surplus_times > 0]));
+    const result = await apiOperatorMemberInfo(selectedRole, parsed.code, item.id);
+    if (!current(ownGeneration, session, selectedRole, parsed.code)) return;
+    acceptPreview(result, item, selectedRole);
+    previewKind.value = "member";
   } catch (error) {
-    toast(error instanceof Error ? error.message : "核销码校验失败");
+    if (current(ownGeneration, session, selectedRole, parsed.code)) toast(error instanceof Error ? error.message : "订单预览失败");
   } finally {
-    loadingPreview.value = false;
+    if (current(ownGeneration, session, selectedRole, parsed.code)) loadingPreview.value = false;
   }
 }
 
@@ -243,48 +346,95 @@ function changeQuantity(id: number, delta: number) {
 
 function confirmExecute(): Promise<boolean> {
   return new Promise((resolve) => {
-    uni.showModal({
-      title: "确认核销",
-      content: `确认本次核销 ${selectedQuantity.value} 次？操作不可撤销。`,
-      confirmText: "确认核销",
-      success: (result) => resolve(Boolean(result.confirm)),
-      fail: () => resolve(false),
-    });
+    try {
+      uni.showModal({
+        title: "确认核销",
+        content: `确认本次核销 ${selectedQuantity.value} 次？操作不可撤销。`,
+        confirmText: "确认核销",
+        success: (result) => resolve(Boolean(result.confirm)),
+        fail: () => resolve(false),
+      });
+    } catch { resolve(false); }
   });
 }
 
 async function execute() {
-  if (!previewOrder.value || selectedQuantity.value <= 0 || executing.value) return;
-  if (!(await confirmExecute())) return;
-  const items = previewOrder.value.cart_info
+  if (!visible || !previewOrder.value || !previewKind.value || selectedQuantity.value <= 0
+    || executing.value || confirming.value || writeUncertain.value) return;
+  const preview = previewOrder.value, kind = previewKind.value, selectedRole = role.value;
+  const scannedCode = code.value, session = auth.sessionVersion, ownGeneration = generation;
+  const items = preview.cart_info
     .filter((item) => selected.value[item.id] && Number(quantities.value[item.id] ?? 0) > 0)
     .map((item) => ({ order_cart_id: item.id, quantity: Number(quantities.value[item.id]) }));
+  if (!items.length || items.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity <= 0
+    || item.quantity > (preview.cart_info.find((row) => row.id === item.order_cart_id)?.write_surplus_times ?? 0))) return;
+  const quantitySnapshot = JSON.stringify(quantities.value);
+  confirming.value = true;
+  const confirmed = await confirmExecute();
+  if (!current(ownGeneration, session, selectedRole, scannedCode) || previewOrder.value !== preview
+    || previewKind.value !== kind) return;
+  confirming.value = false;
+  if (!confirmed || quantitySnapshot !== JSON.stringify(quantities.value)) return;
   executing.value = true;
+  let acknowledged = false;
   try {
-    const result = await apiOperatorWriteoff(role.value, code.value, items);
+    const result = kind === "member"
+      ? await apiOperatorMemberWriteoff(selectedRole, scannedCode, preview.id, items)
+      : await apiOperatorWriteoff(selectedRole, scannedCode, items);
+    if (!current(ownGeneration, session, selectedRole, scannedCode) || previewOrder.value !== preview) return;
+    if (!result || result.order_id !== preview.order_id || typeof result.completed !== "boolean"
+      || !Number.isSafeInteger(result.status)) throw new Error("核销回执不完整，请重新查单确认");
+    acknowledged = true;
     uni.showToast({ title: result.completed ? "核销完成" : "部分核销成功", icon: "success" });
     code.value = "";
+    memberCandidates.value = [];
+    writeUncertain.value = false;
     resetPreview();
   } catch (error) {
-    toast(error instanceof Error ? error.message : "核销失败");
+    if (current(ownGeneration, session, selectedRole, scannedCode)) {
+      writeUncertain.value = true;
+      resetPreview();
+      toast(error instanceof Error ? error.message : "核销结果待确认，请重新查单");
+    }
   } finally {
     executing.value = false;
+    if (!acknowledged && auth.sessionVersion === session) writeUncertain.value = true;
   }
 }
 
 onLoad((query) => {
   requestedRole = query?.role === "delivery" ? "delivery" : query?.role === "staff" ? "staff" : null;
-  pendingCode = extractVerifyCode(query?.code);
+  pendingCode = (parseOperatorScene(query?.scene)
+    ?? parseOperatorScanCode(query?.code, operatorScanSiteOrigins()))?.code ?? "";
+  pendingCodeSession = auth.sessionVersion;
 });
 
 onShow(() => {
+  visible = true;
+  if (pendingCodeSession !== auth.sessionVersion) pendingCode = "";
   void loadProfile();
 });
+
+onHide(() => { visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
+onUnload(() => { visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
+watch(code, () => invalidatePrivate(), { flush: "sync" });
+watch(() => auth.sessionVersion, () => {
+  pendingCode = "";
+  profile.value = null;
+  writeUncertain.value = false;
+  invalidatePrivate(true);
+  // setLogin increments the epoch before updating token/uid. Reload after the
+  // action completes so the request binds to the replacement credentials.
+  const session = auth.sessionVersion;
+  if (visible) queueMicrotask(() => {
+    if (visible && auth.sessionVersion === session) void loadProfile();
+  });
+}, { flush: "sync" });
 </script>
 
 <style scoped>
 .operator-page { min-height: 100vh; padding: 24rpx; background: #f5f6f8; box-sizing: border-box; color: #242424; }
-.state-card, .identity-card, .scan-card, .preview-card { display: flex; flex-direction: column; gap: 14rpx; padding: 28rpx; margin-bottom: 20rpx; border-radius: 20rpx; background: #fff; }
+.state-card, .identity-card, .scan-card, .preview-card, .candidate-card { display: flex; flex-direction: column; gap: 14rpx; padding: 28rpx; margin-bottom: 20rpx; border-radius: 20rpx; background: #fff; }
 .state-card { align-items: center; margin-top: 120rpx; color: #777; }
 .state-title, .section-title, .identity-title { font-size: 30rpx; font-weight: 650; color: #222; }
 .warning { color: #d94838; }
@@ -295,6 +445,7 @@ onShow(() => {
 .code-input { height: 92rpx; padding: 0 22rpx; border: 2rpx solid #dcdfe6; border-radius: 14rpx; font-size: 42rpx; letter-spacing: 8rpx; box-sizing: border-box; }
 .scan-actions { display: flex; gap: 18rpx; }
 .scan-actions button { flex: 1; margin: 0; font-size: 28rpx; }
+.candidate-row { display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 22rpx; text-align: left; background: #f7f8fa; color: #333; font-size: 26rpx; }
 .primary-button, .execute-button { background: #e93323; color: #fff; }
 .secondary-button { background: #fff; color: #e93323; border: 2rpx solid #e93323; }
 .preview-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8rpx; }
