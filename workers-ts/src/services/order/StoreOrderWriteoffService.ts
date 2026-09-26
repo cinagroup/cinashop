@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNull, ne, not, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
@@ -26,12 +26,14 @@ import {
 } from "@/services/order/OrderBrokerageService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
+import { requireMemberBarcodeIndex } from "@/services/user/MemberBarcodeService";
 
 const VERIFY_CODE_LOCK_NAMESPACE = 63_843;
 const OPEN_REFUND_TYPES = [0, 1, 2, 4, 5];
 const MAX_LEGACY_BARCODE_LENGTH = 32;
 const MAX_LEGACY_SEARCH_RESULTS = 100;
 const MAX_ADMIN_LEGACY_SEARCH_RESULTS = 20;
+const MAX_MEMBER_SEARCH_RESULTS = 20;
 const MAX_JSON_SNAPSHOT_BYTES = 256 * 1024;
 const MAX_ADMIN_SUMMARY_SNAPSHOT_BYTES = 32 * 1024;
 const MAX_ORDER_CART_ROWS = 500;
@@ -150,6 +152,21 @@ function legacyLookupValue(value: unknown): string {
   if (!normalized || normalized === "undefined") throw new ValidateException("缺少核销码");
   if (normalized.length > MAX_LEGACY_BARCODE_LENGTH) throw new ValidateException("核销码格式错误");
   return normalized;
+}
+
+function memberBindingNotFound(): NotFoundException {
+  return new NotFoundException("核销订单不存在或不可核销");
+}
+
+/** The member lookup is an explicit protocol, never the twelve-digit order-code fallback. */
+export function normalizeMemberWriteoffCode(value: unknown): string {
+  if (typeof value !== "string") throw new ValidateException("会员码格式错误");
+  const code = value.trim();
+  if (!code || code !== value || code === "undefined" || code.length > MAX_LEGACY_BARCODE_LENGTH
+    || /[\u0000-\u001f\u007f]/u.test(code) || /^\d{12}$/u.test(code)) {
+    throw new ValidateException("会员码格式错误");
+  }
+  return code;
 }
 
 export function calculateWriteoffLinePrice(value: string | null, quantity: number): string {
@@ -400,26 +417,127 @@ export class StoreOrderWriteoffService {
     });
   }
 
+  /** Bounded, role-scoped member-code lookup for the operator scan flow. */
+  async memberSummarySearch(actor: WriteoffActor, rawCode: unknown) {
+    const code = normalizeMemberWriteoffCode(rawCode);
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
+      await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      let memberUid: number;
+      try {
+        memberUid = await this.requireMemberUidUsing(tx, code);
+      } catch (error) {
+        // A guess cannot distinguish an unknown/retired code from a real
+        // member who simply has no eligible orders. Catalog faults propagate.
+        if (error instanceof NotFoundException) return { data: [] };
+        throw error;
+      }
+      if (actor.kind === "kefu") {
+        try {
+          if (!Number.isSafeInteger(actor.kefuId) || actor.kefuId <= 0) return { data: [] };
+          await assertKefuConversationOwnership(tx, actor.kefuUid, memberUid);
+        } catch (error) {
+          if (error instanceof ValidateException || error instanceof NotFoundException) return { data: [] };
+          throw error;
+        }
+      }
+      const orders = await tx.select({ id: storeOrder.id }).from(storeOrder).where(and(
+        eq(storeOrder.uid, memberUid), this.actorLookupCondition(actor),
+        this.memberActorDirectoryCondition(actor), this.memberOrderEligibilityCondition(tx, actor),
+        eq(storeOrder.paid, 1), inArray(storeOrder.refundStatus, [0, 3]),
+        eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0),
+      )).orderBy(desc(storeOrder.payTime), desc(storeOrder.id)).limit(MAX_MEMBER_SEARCH_RESULTS + 1);
+      if (orders.length > MAX_MEMBER_SEARCH_RESULTS) {
+        throw new ValidateException("待核销订单超过20单，请改用12位订单码查询");
+      }
+      const data: Awaited<ReturnType<StoreOrderWriteoffService["summaryUsing"]>>[] = [];
+      for (const order of orders) {
+        try {
+          data.push(await this.summaryUsing(tx, actor, order.id, memberUid, code));
+        } catch (error) {
+          // A refunded, expired or reassigned order cannot hide the other
+          // currently eligible orders. Never return its summary to the actor.
+          if (error instanceof ValidateException || error instanceof NotFoundException) continue;
+          throw error;
+        }
+      }
+      return { data };
+    });
+  }
+
+  async memberInfo(actor: WriteoffActor, rawCode: unknown, rawOrderId: unknown) {
+    const code = normalizeMemberWriteoffCode(rawCode);
+    const orderId = positiveOrderId(rawOrderId);
+    return withTx(this.container, async (tx) => {
+      let memberUid: number;
+      try { memberUid = await this.requireMemberUidUsing(tx, code); }
+      catch (error) {
+        if (error instanceof NotFoundException) throw memberBindingNotFound();
+        throw error;
+      }
+      try { return await this.infoUsing(tx, actor, { orderId, memberUid }); }
+      catch (error) {
+        if (error instanceof NotFoundException || error instanceof ValidateException) {
+          throw memberBindingNotFound();
+        }
+        throw error;
+      }
+    });
+  }
+
   async execute(actor: WriteoffActor, input: ExecuteWriteoffInput) {
-    const code = normalizePickupVerifyCode(input.code);
+    return this.executeSelected(actor, {
+      kind: "orderCode", code: normalizePickupVerifyCode(input.code), items: input.items,
+    });
+  }
+
+  async executeMember(actor: WriteoffActor, input: { memberCode: unknown; orderId: unknown; items?: WriteoffLineInput[] }) {
+    return this.executeSelected(actor, {
+      kind: "memberCode", memberCode: normalizeMemberWriteoffCode(input.memberCode),
+      orderId: positiveOrderId(input.orderId), items: input.items,
+    });
+  }
+
+  private async executeSelected(actor: WriteoffActor, input:
+    | { kind: "orderCode"; code: string; items?: WriteoffLineInput[] }
+    | { kind: "memberCode"; memberCode: string; orderId: number; items?: WriteoffLineInput[] }) {
     const settlement = await loadOrderReceiptSettlementContext(this.container, this.env);
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '10s'"));
+      let memberUid = 0;
+      if (input.kind === "memberCode") {
+        try { memberUid = await this.requireMemberUidUsing(tx, input.memberCode); }
+        catch (error) {
+          if (error instanceof NotFoundException) throw memberBindingNotFound();
+          throw error;
+        }
+      }
       const candidates = await tx
         .select({ id: storeOrder.id, uid: storeOrder.uid })
         .from(storeOrder)
         .where(and(
-          eq(storeOrder.verifyCode, code),
+          input.kind === "orderCode" ? eq(storeOrder.verifyCode, input.code)
+            : and(eq(storeOrder.id, input.orderId), eq(storeOrder.uid, memberUid)),
           this.actorLookupCondition(actor),
           eq(storeOrder.isDel, 0),
           eq(storeOrder.isSystemDel, 0),
         ))
         .limit(2);
-      if (candidates.length !== 1) throw new NotFoundException("核销订单不存在或核销码不唯一");
+      if (candidates.length !== 1) {
+        if (input.kind === "memberCode") throw memberBindingNotFound();
+        throw new NotFoundException("核销订单不存在或核销码不唯一");
+      }
 
       if (actor.kind === "kefu") {
-        await lockKefuConversationOwnership(tx, actor.kefuUid, candidates[0].uid);
+        try { await lockKefuConversationOwnership(tx, actor.kefuUid, candidates[0].uid); }
+        catch (error) {
+          if (input.kind === "memberCode"
+            && (error instanceof NotFoundException || error instanceof ValidateException)) {
+            throw memberBindingNotFound();
+          }
+          throw error;
+        }
       }
 
       await lockOrderSettlement(tx, candidates[0].id);
@@ -429,14 +547,45 @@ export class StoreOrderWriteoffService {
         .where(and(
           eq(storeOrder.id, candidates[0].id),
           eq(storeOrder.uid, candidates[0].uid),
-          eq(storeOrder.verifyCode, code),
+          input.kind === "orderCode" ? eq(storeOrder.verifyCode, input.code)
+            : eq(storeOrder.uid, memberUid),
         ))
         .limit(1)
         .for("update");
       const order = orderRows[0];
-      if (!order) throw new ValidateException("核销码已失效，请重新读取订单");
-      const mode = this.writeoffMode(order);
-      const operator = await this.requireOperator(tx, actor, order, mode);
+      if (!order) {
+        if (input.kind === "memberCode") throw memberBindingNotFound();
+        throw new ValidateException("核销码已失效，请重新读取订单");
+      }
+      if (input.kind === "memberCode") {
+        // The list/preview are never a grant. Rebind the scanned code to the
+        // exact owner after the order lock, in this same mutation transaction.
+        // Do not pre-lock the buyer: settlement locks all recipient users in
+        // ascending UID order, and a buyer-first lock can deadlock cross-orders.
+        let reboundUid: number;
+        try { reboundUid = await this.requireMemberUidUsing(tx, input.memberCode); }
+        catch (error) {
+          if (error instanceof NotFoundException) throw memberBindingNotFound();
+          throw error;
+        }
+        if (reboundUid !== order.uid) throw memberBindingNotFound();
+        if (!/^\d{12}$/u.test(order.verifyCode)) {
+          throw memberBindingNotFound();
+        }
+      }
+      const code = input.kind === "orderCode" ? input.code : order.verifyCode;
+      let mode: WriteoffMode;
+      let operator: WriteoffOperator;
+      try {
+        mode = this.writeoffMode(order);
+        operator = await this.requireOperator(tx, actor, order, mode);
+      } catch (error) {
+        if (input.kind === "memberCode"
+          && (error instanceof NotFoundException || error instanceof ValidateException)) {
+          throw memberBindingNotFound();
+        }
+        throw error;
+      }
       await this.assertOrderState(tx, order, mode);
       // Authoritative mutation gate after actor validation and the exact order
       // lock; read-only previews are not fulfillment authorization.
@@ -553,15 +702,17 @@ export class StoreOrderWriteoffService {
   private async infoUsing(
     tx: DbClient,
     actor: WriteoffActor,
-    lookup: { code: string } | { orderId: number },
+    lookup: { code: string } | { orderId: number; memberUid?: number },
   ) {
     const orders = await tx
       .select()
       .from(storeOrder)
       .where(and(
-        "code" in lookup
-          ? eq(storeOrder.verifyCode, lookup.code)
-          : eq(storeOrder.id, lookup.orderId),
+          "code" in lookup
+            ? eq(storeOrder.verifyCode, lookup.code)
+            : eq(storeOrder.id, lookup.orderId),
+        "memberUid" in lookup && lookup.memberUid !== undefined
+          ? eq(storeOrder.uid, lookup.memberUid) : undefined,
         this.actorLookupCondition(actor),
         eq(storeOrder.isDel, 0),
         eq(storeOrder.isSystemDel, 0),
@@ -637,12 +788,19 @@ export class StoreOrderWriteoffService {
     };
   }
 
-  private async summaryUsing(tx: DbClient, actor: WriteoffActor, orderId: number) {
+  private async summaryUsing(
+    tx: DbClient, actor: WriteoffActor, orderId: number, memberUid?: number, memberCode?: string,
+  ) {
     const rows = await tx
       .select()
       .from(storeOrder)
       .where(and(
         eq(storeOrder.id, orderId),
+        memberUid === undefined ? undefined : eq(storeOrder.uid, memberUid),
+        memberCode === undefined ? undefined : exists(tx.select({ uid: user.uid }).from(user).where(and(
+          eq(user.uid, storeOrder.uid), eq(user.barCode, memberCode), eq(user.status, 1),
+          eq(user.isDel, 0), isNull(user.deleteTime),
+        ))),
         this.actorLookupCondition(actor),
         eq(storeOrder.isDel, 0),
         eq(storeOrder.isSystemDel, 0),
@@ -695,6 +853,66 @@ export class StoreOrderWriteoffService {
       return or(eq(storeOrder.shippingType, 2), eq(storeOrder.deliveryType, "send"));
     }
     return or(eq(storeOrder.shippingType, 2), eq(storeOrder.deliveryType, "send"));
+  }
+
+  /** Filter the bounded candidate query by the operator's live directory scope. */
+  private memberActorDirectoryCondition(actor: WriteoffActor) {
+    if (actor.kind === "staff") {
+      return sql`(SELECT COUNT(*) FROM ${systemStoreStaff}
+        INNER JOIN ${systemStore} ON ${systemStore.id} = ${systemStoreStaff.storeId}
+        INNER JOIN ${user} ON ${user.uid} = ${systemStoreStaff.uid}
+        WHERE ${systemStoreStaff.uid} = ${actor.uid}
+          AND ${systemStoreStaff.storeId} = ${storeOrder.storeId}
+          AND ${systemStoreStaff.status} = 1 AND ${systemStoreStaff.verifyStatus} = 1
+          AND ${systemStoreStaff.isDel} = 0 AND ${systemStore.isStore} = 1
+          AND ${systemStore.isShow} = 1 AND ${systemStore.isDel} = 0
+          AND ${user.status} = 1 AND ${user.isDel} = 0) = 1`;
+    }
+    if (actor.kind === "delivery") {
+      return sql`(SELECT COUNT(*) FROM ${deliveryService}
+        INNER JOIN ${user} ON ${user.uid} = ${deliveryService.uid}
+        WHERE ${deliveryService.uid} = ${actor.uid}
+          AND ${deliveryService.type} = 0 AND ${deliveryService.relationId} = 0
+          AND ${deliveryService.status} = 1 AND ${deliveryService.isDel} = 0
+          AND ${user.status} = 1 AND ${user.isDel} = 0) = 1`;
+    }
+    return undefined;
+  }
+
+  /** Match the read-side business gates before applying the 21-row boundary. */
+  private memberOrderEligibilityCondition(tx: DbClient, actor: WriteoffActor) {
+    const pickup = and(
+      eq(storeOrder.shippingType, 2), gt(storeOrder.storeId, 0),
+      inArray(storeOrder.status, [0, 5]),
+      exists(tx.select({ id: systemStore.id }).from(systemStore)
+        .where(eq(systemStore.id, storeOrder.storeId))),
+    );
+    const delivery = and(
+      inArray(storeOrder.shippingType, [1, 3]), eq(storeOrder.deliveryType, "send"),
+      gt(storeOrder.deliveryUid, 0), inArray(storeOrder.status, [1, 5]),
+    );
+    const mode = actor.kind === "staff" ? pickup : actor.kind === "delivery" ? delivery : or(pickup, delivery);
+    const openRefund = exists(tx.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(and(
+      eq(storeOrderRefund.storeOrderId, storeOrder.id),
+      inArray(storeOrderRefund.refundType, OPEN_REFUND_TYPES),
+      eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0),
+    )));
+    const successfulPink = exists(tx.select({ id: storePink.id }).from(storePink)
+      .where(and(eq(storePink.id, storeOrder.pinkId), eq(storePink.status, 2))));
+    return and(mode, ne(storeOrder.pid, -1), ne(storeOrder.supplierAllocationStatus, 1),
+      not(openRefund), or(ne(storeOrder.type, 3), successfulPink));
+  }
+
+  private async requireMemberUidUsing(tx: DbClient, code: string): Promise<number> {
+    await requireMemberBarcodeIndex(tx);
+    const rows = await tx.select({ uid: user.uid, status: user.status, isDel: user.isDel,
+      deleteTime: user.deleteTime }).from(user).where(eq(user.barCode, code))
+      .orderBy(asc(user.uid)).limit(2);
+    if (rows.length !== 1 || rows[0].status !== 1 || rows[0].isDel !== 0
+      || rows[0].deleteTime !== null) {
+      throw new NotFoundException("会员码不存在或不可使用");
+    }
+    return rows[0].uid;
   }
 
   private writeoffMode(order: typeof storeOrder.$inferSelect): WriteoffMode {
