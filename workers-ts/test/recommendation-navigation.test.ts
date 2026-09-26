@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import type { AppVariables, Env } from "../src/env";
 import { createContainerFromDb } from "../src/lib/di";
 import { storeActivity, storeBargain, storeBrand, storeCombination, storeProduct, storeProductAttrValue,
-  storeProductLabel, storeSeckill, storeSeckillTime, user, systemConfig, memberRight } from "../src/models/schema";
+  storeProductLabel, storeSeckill, storeSeckillTime, user, systemConfig, memberRight, storePromotions } from "../src/models/schema";
 import { RecommendationNavigationService } from "../src/services/product/RecommendationNavigationService";
 import { productHot } from "../src/controllers/api/v1/ProductController";
 import { seckillDetail } from "../src/controllers/api/v1/UserActivityController";
@@ -19,7 +19,7 @@ describe("hot recommendation navigation against real disposable SQL", () => {
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
     f = await financePostgres([storeActivity, storeBargain, storeBrand, storeCombination, storeProduct, storeProductAttrValue,
-      storeProductLabel, storeSeckill, storeSeckillTime, user, systemConfig, memberRight]);
+      storeProductLabel, storeSeckill, storeSeckillTime, user, systemConfig, memberRight, storePromotions]);
     const container = createContainerFromDb(f.db); service = new RecommendationNavigationService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use("*", async (c, next) => { c.set("container", container); c.set("uid", 0); await next(); });

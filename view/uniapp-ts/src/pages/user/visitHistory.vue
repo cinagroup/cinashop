@@ -34,8 +34,7 @@
         <view v-if="recommendationError" class="notice error" role="alert"><text>{{ recommendationError }}</text></view>
         <view class="product-grid recommendation-grid">
           <view v-for="item in recommendations" :key="item.productId" class="product-card recommendation-card" @tap="openRecommendation(item.productId)">
-            <image v-if="item.image && !failedImages.includes(item.image)" class="product-image" :src="item.image" mode="aspectFill" @error="failImage(item.image)" />
-            <view v-else class="product-image image-placeholder">暂无商品图片</view>
+            <VisitRecommendationImage :item="item" />
             <view class="product-info">
               <text v-if="item.brand" class="brand-name">{{ item.brand }}</text>
               <text class="product-name">{{ item.name || '未命名商品' }}</text>
@@ -66,6 +65,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useVisitHistory } from "@/composables/useVisitHistory";
+import VisitRecommendationImage from "@/components/VisitRecommendationImage.vue";
 const { items, total, groups, loading, loaded, error, hasMore, managing, selected, confirming, deleting, collecting, uncertain,
   loggedIn, blocked, load, toggleManage, toggle, toggleAll, openProduct, removeSelected, collectSelected, login,
   recommendations, recommendationLoading, recommendationLoaded, recommendationError, recommendationHasMore, loadRecommendations, openRecommendation } = useVisitHistory();
