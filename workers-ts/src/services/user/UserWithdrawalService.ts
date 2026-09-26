@@ -215,6 +215,12 @@ export class UserWithdrawalService {
       if (!request) throw new NotFoundException("提现记录不存在");
       if (request.status === finalStatus) return { id, replayed: true };
       if (request.status !== 0) throw new ValidateException("提现记录已审核，不可改变结果");
+      // A completed decision can be replayed without a write. Pending decisions
+      // must recheck the locked account: cancellation may have committed after
+      // the initial, unlocked request lookup and before this transaction.
+      if (account.isDel !== 0 || account.deleteTime !== null) {
+        throw new ValidateException("提现用户已注销，需人工核对");
+      }
       if (!rejected && request.extractType === "weixin" && parseConfigInteger(config.brokerage_type, 0) === 1) {
         throw new ValidateException("自动微信提现渠道尚未完成打款接入，不能标记成功");
       }
