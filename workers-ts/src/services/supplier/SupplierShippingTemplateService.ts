@@ -90,14 +90,14 @@ export class SupplierShippingTemplateService {
     return shippingLifecycleLock(() => withTx(this.container, async tx => {
       await boundShippingTransaction(tx);
       const { snapshot: s, revision } = await readShippingEditorSnapshot(tx, templateId, supplierId);
-      const templateList = formatValidatedShippingRuleGroups(s.regions.map(r => ({ ...r, cityId: r.regionId })), "region");
+      const templateList = await formatValidatedShippingRuleGroups(tx, s.regions.map(r => ({ ...r, cityId: r.regionId })), "region");
       if (!templateList.some(row => (row.city_ids as number[][]).some(path => path.length === 1 && path[0] === 0))) {
         templateList.unshift({ city_ids: [[0]], city_id: [0], regionName: "默认全国" });
       }
       return { revision,
-        appointList: formatValidatedShippingRuleGroups(s.free.map(r => ({ ...r })), "free"),
+        appointList: await formatValidatedShippingRuleGroups(tx, s.free.map(r => ({ ...r })), "free"),
         templateList,
-        noDeliveryList: formatValidatedShippingRuleGroups(s.noDelivery.map(r => ({ ...r })), "no_delivery"),
+        noDeliveryList: await formatValidatedShippingRuleGroups(tx, s.noDelivery.map(r => ({ ...r })), "no_delivery"),
         formData: { name: s.template.name, type: s.template.type, appoint_check: s.template.appoint,
           no_delivery_check: s.template.noDelivery, sort: s.template.sort },
       };
