@@ -65,6 +65,11 @@ describe('signed original-identity provider query adapters (no provider or datab
   });
   it.each(['signature', 'missing', 'serial', 'old-time', 'future-time', 'malformed-time', 'sign-test'] as const)
     ('WeChat rejects %s verification evidence', async failure => {
+      // Keep the +301s case outside the verifier's 300s window even across a second boundary.
+      if (failure === 'future-time') {
+        const now = Date.now();
+        vi.spyOn(Date, 'now').mockReturnValue(now);
+      }
       const response = f.wechatResponse(f.wxBody(), 200, failure === 'old-time' ? '1'
         : failure === 'future-time' ? String(Math.floor(Date.now() / 1000) + 301)
           : failure === 'malformed-time' ? '1e9' : undefined);

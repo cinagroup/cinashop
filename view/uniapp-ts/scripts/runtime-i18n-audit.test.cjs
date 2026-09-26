@@ -174,6 +174,8 @@ for (const platform of ["h5", "mp-weixin", "app"]) {
       assert.equal(record.platform, platform);
       assert.ok(record.chunks > 0 && record.loadedModules > 0 && record.entries.length > 0);
       assert.deepEqual(record.intlify, []);
+      assert.deepEqual(record.automatorQr, []);
+      assert.deepEqual(record.jestJsdomOnce, []);
       assert.deepEqual(record.separateScriptModules, []);
       assert.deepEqual(record.separateScriptAssets, []);
       if (record.compiler !== "nvue") assert.equal(record.hasMain, true);
