@@ -9,7 +9,7 @@ export default defineConfig({
   },
   test: {
     // 纯单元测试用 node 环境 (不依赖 Workers runtime)
-    // 集成测试 (涉及 DO/Queue/Hyperdrive) 后续切 @cloudflare/vitest-pool-workers
+    // 集成测试 (涉及 DO/Queue/Hyperdrive) 使用 @cloudflare/vitest-plugin
     environment: "node",
     include: ["test/*.test.ts"],
     globals: false,
