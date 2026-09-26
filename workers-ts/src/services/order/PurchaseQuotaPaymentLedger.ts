@@ -5,6 +5,7 @@ import { readRefundGenerationMarker, type RefundGenerationMarker } from './Refun
 import { readRefundQuantityReservation } from './RefundQuantityReservation';
 import { refundOrderSplitFingerprint } from './RefundOrderSplitIdentity';
 import { readPurchaseQuotaRefundFamily, type PurchaseQuotaRefundReceipt } from './PurchaseQuotaRefundReceipt';
+import { readPurchaseOriginEvidence, verifyPurchaseOriginEvidence, type PurchaseOriginEvidence } from './PurchaseOriginEvidence';
 
 type Query = Pick<DbClient, 'execute'>;
 export interface PurchaseQuotaPaymentScope { paymentOrderId: number; buyerId: number }
@@ -13,6 +14,8 @@ export interface PurchaseQuotaPaymentLedger extends PurchaseQuotaPaymentScope {
   products: Array<{ productId: number; purchased: number; refunded: number; pending: number; remaining: number }>;
   refundIds: number[];
   branchIds: string[];
+  /** Read-side budget metadata, never an allowance or reservation. */
+  evidenceRows: number;
 }
 interface Order { id: number; pid: number; uid: number; supplierId: number; storeId: number; type: number;
   paid: number; totalNum: number; refundStatus: number; refundType: number }
@@ -60,6 +63,34 @@ function quantity(lines: Map<number, Line>): number { return [...lines.values()]
 function sameLine(a: Line | undefined, b: Line): boolean {
   return !!a && a.id === b.id && a.cartId === b.cartId && a.oldCartId === b.oldCartId
     && a.productId === b.productId && a.quantity === b.quantity;
+}
+
+/** Bind the retained payment root to the append-only checkout capture. The
+ * lineage verifier below checks descendants, while this check prevents a
+ * coherent rewrite of the original business rows from becoming new history. */
+export function verifyPurchaseQuotaRootOrigin(input: Pick<PurchaseQuotaPaymentEvidence, 'orders' | 'carts'>,
+  evidence: PurchaseOriginEvidence, expected: PurchaseQuotaPaymentScope, expectedPaid: 0 | 1): void {
+  const origin = verifyPurchaseOriginEvidence(evidence, { orderId: expected.paymentOrderId, buyerId: expected.buyerId });
+  const roots = input.orders.map(object).filter(row => row.id === expected.paymentOrderId);
+  if (roots.length !== 1 || roots[0].uid !== expected.buyerId || roots[0].paid !== expectedPaid
+    || roots[0].type !== origin.orderType || roots[0].totalNum !== origin.totalNum) return invalid();
+  const lines = input.carts.map(object).filter(row => row.oid === expected.paymentOrderId);
+  if (lines.length !== origin.lines.length) return invalid();
+  const byId = new Map(lines.map(row => [integer(row.id, 1), row]));
+  if (byId.size !== lines.length) return invalid();
+  for (const line of origin.lines) {
+    const row = byId.get(line.rowId);
+    if (!row || row.uid !== expected.buyerId || row.cartId !== line.cartId || row.oldCartId !== ''
+      || row.productId !== line.productId || row.cartNum !== line.quantity || row.skuUnique !== line.skuUnique) return invalid();
+    const snapshot = object(row.snapshot);
+    if (snapshot.valid !== true || snapshot.version !== 'checkout-line-finance-v1'
+      || snapshot.skuId !== line.skuId || snapshot.id !== line.cartId || snapshot.cartNum !== line.quantity) return invalid();
+  }
+}
+
+export function verifyPurchaseQuotaPaymentOrigin(input: PurchaseQuotaPaymentEvidence,
+  evidence: PurchaseOriginEvidence, expected: PurchaseQuotaPaymentScope): void {
+  verifyPurchaseQuotaRootOrigin(input, evidence, expected, 1);
 }
 
 /** Server-only structural proof of ONE paid payment family at one snapshot.
@@ -290,7 +321,8 @@ export async function verifyPurchaseQuotaPaymentLedger(input: PurchaseQuotaPayme
     products.set(row.productId, product);
   }
   return { version: 'purchase-quota-payment-ledger-v1', ...expected, products: [...products.values()].sort((a, b) => a.productId - b.productId),
-    refundIds: [...consumed].sort((a, b) => a - b), branchIds: [...consumedBranches].sort() };
+    refundIds: [...consumed].sort((a, b) => a - b), branchIds: [...consumedBranches].sort(),
+    evidenceRows: input.orders.length + input.carts.length + input.branches.length + input.refunds.length + receipts.length };
 }
 
 /** Uses a caller-owned repeatable/serializable snapshot. Neither this result nor
@@ -301,6 +333,8 @@ export async function readPurchaseQuotaPaymentLedger(tx: Query, expected: Purcha
   if (Object.hasOwn(tx, '$client')) return invalid();
   const [mode] = await tx.execute(sql`SELECT current_setting('transaction_isolation') AS isolation`);
   if (!['repeatable read', 'serializable'].includes(String(mode?.isolation))) return invalid();
+  const origin = await readPurchaseOriginEvidence(tx, { orderId: expected.paymentOrderId, buyerId: expected.buyerId });
+  if (!origin) return invalid();
   const orders = await tx.execute(sql`SELECT id, pid, uid, supplier_id AS "supplierId", store_id AS "storeId", type, paid,
     total_num AS "totalNum", refund_status AS "refundStatus", refund_type AS "refundType" FROM store_order
     WHERE id = ${expected.paymentOrderId} OR pid = ${expected.paymentOrderId} ORDER BY id LIMIT 203`);
@@ -309,14 +343,16 @@ export async function readPurchaseQuotaPaymentLedger(tx: Query, expected: Purcha
   const ids = sql.join(orders.map(row => sql`${integer(row.id, 1)}`), sql`, `);
   const carts = await tx.execute(sql`WITH candidates AS MATERIALIZED (
     SELECT id, oid, uid, product_id AS "productId", cart_id AS "cartId", old_cart_id AS "oldCartId", cart_num AS "cartNum",
+      sku_unique AS "skuUnique",
       refund_num AS "refundNum", split_status AS "splitStatus", split_surplus_num AS "splitSurplusNum", cart_info
     FROM store_order_cart_info WHERE oid IN (${ids}) ORDER BY id LIMIT 40401
   ), parsed AS MATERIALIZED (
     SELECT *, CASE WHEN octet_length(cart_info) <= 65536 AND SUM(octet_length(cart_info)::bigint) OVER () <= 8388608
       THEN cart_info::jsonb ELSE NULL END AS info FROM candidates
-  ) SELECT id, oid, uid, "productId", "cartId", "oldCartId", "cartNum", "refundNum", "splitStatus", "splitSurplusNum",
+  ) SELECT id, oid, uid, "productId", "cartId", "oldCartId", "cartNum", "skuUnique", "refundNum", "splitStatus", "splitSurplusNum",
     jsonb_build_object('valid', jsonb_typeof(info) = 'object', 'marker', info->'refund_order_generation',
-      'version', info->'financial_version', 'id', info->'id', 'cartNum', info->'cart_num') AS snapshot FROM parsed`);
+      'version', info->'financial_version', 'id', info->'id', 'cartNum', info->'cart_num',
+      'skuId', info#>'{sku,id}') AS snapshot FROM parsed`);
   const branches = await tx.execute(sql`WITH candidates AS MATERIALIZED (
     SELECT id, source_branch_id AS "sourceBranchId", source_refund_id AS "sourceRefundId",
     source_order_id AS "sourceOrderId", payment_order_id AS "paymentOrderId", child_order_id AS "childOrderId", uid,
@@ -337,5 +373,7 @@ export async function readPurchaseQuotaPaymentLedger(tx: Query, expected: Purcha
     "isCancel", "isDel", CASE WHEN octet_length(cart_info) <= 65536 AND SUM(octet_length(cart_info)::bigint) OVER () <= 8388608
       THEN cart_info ELSE NULL END AS "cartInfo" FROM candidates`);
   const receipts = await readPurchaseQuotaRefundFamily(tx, expected);
-  return verifyPurchaseQuotaPaymentLedger({ orders, carts, branches, refunds }, receipts, expected);
+  const input = { orders, carts, branches, refunds };
+  verifyPurchaseQuotaPaymentOrigin(input, origin, expected);
+  return verifyPurchaseQuotaPaymentLedger(input, receipts, expected);
 }

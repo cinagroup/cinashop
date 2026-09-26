@@ -5,12 +5,13 @@ import { and, eq, sql } from 'drizzle-orm';
 import { createContainerFromDb, withTx } from '@/lib/di';
 import { refundRuntimeFixture, shipping } from './helpers/refundRuntimeFixture';
 import { readPurchaseQuotaPaymentLedger } from '@/services/order/PurchaseQuotaPaymentLedger';
-import { StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
+import { readPurchaseQuotaHistory } from '@/services/order/PurchaseQuotaHistory';
+import { cancelStoreOrder, StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
 import { finalizeStoreOrderRefund, StoreOrderRefundService } from '@/services/order/StoreOrderRefundService';
 import { allocatePaidOrderBySupplier } from '@/services/order/OrderSupplierAllocationService';
 import { recordSupplierPayment } from '@/services/supplier/SupplierFinanceService';
 import { SupplierFulfillmentService } from '@/services/supplier/SupplierFulfillmentService';
-import { storeCart, storeOrder, storeProduct, storeOrderRefund } from '@/models/schema';
+import { storeCart, storeOrder, storeOrderCartInfo, storeProduct, storeOrderRefund } from '@/models/schema';
 
 type Fixture = Awaited<ReturnType<typeof refundRuntimeFixture>>;
 type Runtime = Parameters<Parameters<Fixture['withRuntime']>[0]>[0];
@@ -20,6 +21,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid purchase qu
   afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); await f?.close(); } }, 45000);
   const read = (r: Runtime, root: number, buyerId = 11) => r.db.transaction(
     tx => readPurchaseQuotaPaymentLedger(tx, { paymentOrderId: root, buyerId }), { isolationLevel: 'repeatable read', accessMode: 'read only' });
+  const history = (r: Runtime, buyerId = 11) => r.db.transaction(
+    tx => readPurchaseQuotaHistory(tx, buyerId), { isolationLevel: 'repeatable read', accessMode: 'read only' });
   async function paid(r: Runtime, presale = false) {
     if (presale) {
       await f.db.update(storeProduct).set({ isPresaleProduct: 1, presaleStartTime: 0, presaleEndTime: 2147483647, isLimit: 0 })
@@ -27,8 +30,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid purchase qu
       await f.db.update(storeCart).set({ type: 6, cartNum: 3 }).where(eq(storeCart.id, 1));
     }
     const created = presale ? await StoreOrderCreateService.createWithRuntime(r.container,
-      { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'local_quota_presale' },
-      { uid: 11, key: 'local-quota-presale', type: 6, cartIds: [1], addressId: 11, useIntegral: true, userIp: '127.0.0.1' }) : await r.checkout();
+      { CONFIG_KV: f.env.CONFIG_KV, requirePurchaseOrigin: true, nextOrderId: async () => 'local_quota_presale' },
+      { uid: 11, key: 'local-quota-presale', type: 6, cartIds: [1], addressId: 11, useIntegral: true, userIp: '127.0.0.1' }) :
+      await StoreOrderCreateService.createWithRuntime(r.container,
+        { CONFIG_KV: f.env.CONFIG_KV, requirePurchaseOrigin: true, nextOrderId: async () => 'local_quota_order' },
+        { uid: 11, key: 'local-quota-order', cartIds: [1, 2], addressId: 11, useIntegral: true, userIp: '127.0.0.1' });
     return withTx(r.container, async tx => {
       const [order] = await tx.update(storeOrder).set({ paid: 1, payType: 'yue', payTime: 100, tradeNo: 'LOCAL-SYNTHETIC' })
         .where(and(eq(storeOrder.orderId, created.orderId), eq(storeOrder.paid, 0))).returning();
@@ -143,6 +149,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid purchase qu
       const purchase = await paid(r), before = await f.state(), scope = { paymentOrderId: purchase.root, buyerId: 11 };
       await expect(readPurchaseQuotaPaymentLedger(r.db, scope)).rejects.toThrow();
       await expect(r.db.transaction(tx => readPurchaseQuotaPaymentLedger(tx, scope))).rejects.toThrow();
+      await expect(readPurchaseQuotaHistory(r.db, 11)).rejects.toThrow();
+      await expect(r.db.transaction(tx => readPurchaseQuotaHistory(tx, 11))).rejects.toThrow();
       await expect(read(r, purchase.root, 22)).rejects.toThrow();
       await expect(read(r, 2147483647)).rejects.toThrow();
       expect((await read(r, purchase.root)).products).toHaveLength(2); expect(await f.state()).toEqual(before);
@@ -174,6 +182,65 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid purchase qu
         } finally { await f.exec(`GRANT SELECT ON public.${table} TO "${r.role}"`); }
       }
       expect((await read(r, purchase.root)).products[0].refunded).toBe(1); expect(await f.state()).toEqual(before);
+    });
+  }, 45000);
+  it('classifies paid, active unpaid and cancelled roots without granting a purchase allowance', async () => {
+    await f.withRuntime(async r => {
+      const purchase = await paid(r), [base] = await f.db.select().from(storeCart).where(eq(storeCart.id, 1));
+      await f.db.insert(storeCart).values({ id: 3, uid: 11, productId: 70,
+        productAttrUnique: base.productAttrUnique, cartNum: 1, status: 1, isNew: 1 });
+      const created = await StoreOrderCreateService.createWithRuntime(r.container,
+        { CONFIG_KV: f.env.CONFIG_KV, requirePurchaseOrigin: true, nextOrderId: async () => 'local_quota_second' },
+        { uid: 11, key: 'local-quota-second', cartIds: [3], addressId: 11, userIp: '127.0.0.1' });
+      const initial = await history(r);
+      expect(initial).toMatchObject({ status: 'verified_retained_roots', incomplete: true,
+        reason: 'preactivation_history_unproven', verifiedRootCount: 2 });
+      expect(initial.products?.[0]).toMatchObject({ productId: 70, activeUnpaid: 1,
+        paidPurchased: 2, completedRefund: 0, pendingRefund: 0 });
+      expect(initial.products?.[1]).toMatchObject({ productId: 71, paidPurchased: 1 });
+      expect('allowance' in initial).toBe(false);
+      await cancelStoreOrder(r.container, { uid: 11, orderId: created.orderId });
+      const cancelled = await history(r);
+      expect(cancelled.products?.[0]).toMatchObject({ productId: 70, activeUnpaid: 0,
+        cancelledUnpaid: 1, paidPurchased: 2 });
+      const application = await r.apply(purchase.orders[0].id);
+      expect((await history(r)).products?.[0]).toMatchObject({ productId: 70, pendingRefund: 1, completedRefund: 0 });
+      await r.db.transaction(async tx => {
+        const before = await readPurchaseQuotaHistory(tx, 11);
+        expect(await finalizeStoreOrderRefund(createContainerFromDb(f.db), application.refundId)).toBe('completed');
+        expect(await readPurchaseQuotaHistory(tx, 11)).toEqual(before);
+      }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+      expect((await history(r)).products?.[0]).toMatchObject({ productId: 70, paidPurchased: 2,
+        completedRefund: 1, pendingRefund: 0, cancelledUnpaid: 1 });
+    });
+  }, 60000);
+  it('reports missing pre-activation origin as incomplete, never as zero history', async () => {
+    await f.withRuntime(async r => {
+      await r.checkout(); // The synthetic legacy core omits requirePurchaseOrigin.
+      expect(await history(r)).toEqual({ version: 'purchase-quota-history-v1', buyerId: 11,
+        status: 'incomplete', incomplete: true, reason: 'missing_origin_or_order', products: null });
+    });
+  }, 45000);
+  it('rejects a paid root SKU rewrite that leaves the mutable quantity lineage coherent', async () => {
+    await f.withRuntime(async r => {
+      const purchase = await paid(r), before = await history(r);
+      await expect(f.db.transaction(async tx => {
+        await tx.update(storeOrderCartInfo).set({ skuUnique: 'rewritten' }).where(eq(storeOrderCartInfo.oid, purchase.root));
+        await readPurchaseQuotaHistory(tx, 11);
+      }, { isolationLevel: 'repeatable read' })).rejects.toThrow();
+      expect(await history(r)).toEqual(before);
+    });
+  }, 45000);
+  it('fails closed when the restricted reader loses origin or cancellation receipt SELECT', async () => {
+    await f.withRuntime(async r => {
+      await paid(r);
+      for (const table of ['store_order_purchase_origin', 'store_order_purchase_cancellation']) {
+        await f.exec(`REVOKE SELECT ON public.${table} FROM "${r.role}"`);
+        try {
+          await expect(history(r)).rejects.toMatchObject({ cause: { code: '42501' } });
+        } finally { await f.exec(`GRANT SELECT ON public.${table} TO "${r.role}"`); }
+      }
+      expect((await history(r)).status).toBe('verified_retained_roots');
     });
   }, 45000);
 });
