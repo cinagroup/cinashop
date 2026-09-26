@@ -12,6 +12,7 @@
     "test:build-artifacts": "node --test scripts/build-artifacts.test.cjs",
     "test:runtime-i18n": "node --test scripts/runtime-i18n-audit.test.cjs",
     "test:admzip": "node --test scripts/encrypted-uni-modules-admzip.test.cjs",
+    "test:automator-qr": "node --test scripts/automator-qr-dependency.test.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
