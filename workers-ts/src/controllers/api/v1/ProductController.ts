@@ -12,6 +12,7 @@ import { ProductExperienceService } from "@/services/product/ProductExperienceSe
 import { PublicCatalogService, normalizeCatalogPage } from "@/services/product/PublicCatalogService";
 import { RecommendationNavigationService } from "@/services/product/RecommendationNavigationService";
 import { PresaleSkuCatalogService } from "@/services/activity/PresaleSkuCatalogService";
+import { V2PromotionCompatibilityService } from "@/services/activity/V2PromotionCompatibilityService";
 import { jsonFail } from "@/utils/json";
 import { NotFoundException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
@@ -254,7 +255,8 @@ export async function productHot(c: C) {
   if (!Number.isSafeInteger(paging.page) || (paging.page - 1) * paging.limit > 2_147_483_647) return jsonFail(c, "页码超出范围");
   const list = await new PublicCatalogService(c.get("container"), c.env)
     .recommend(c.get("uid") ?? 0, { flag: "hot", ...paging });
-  return jsonOk(c, await new RecommendationNavigationService(c.get("container")).decorate(list));
+  const framed = await new V2PromotionCompatibilityService(c.get("container"), c.env).decorateProductFrames(list);
+  return jsonOk(c, await new RecommendationNavigationService(c.get("container")).decorate(framed));
 }
 
 /** GET /api/presale/list */

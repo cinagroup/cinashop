@@ -5,9 +5,11 @@ export const VISIT_PAGE_SIZE = 20;
 export const VISIT_COLLECT_LIMIT = 100;
 export const VISIT_RECOMMENDATION_PAGE_SIZE = 10;
 export interface VisitRecommendationLabel { id: number; name: string; icon: string; color: string; background: string; border: string }
+export interface VisitRecommendationFrame { id: number; name: string; image: string }
 export interface VisitRecommendation {
   productId: number; name: string; image: string; price: string; stock: number;
   brand: string; labels: VisitRecommendationLabel[];
+  activityFrame: VisitRecommendationFrame | null;
   offer: { label: string; price: string } | null;
   destination: string | null; navigationHint: string; navigationExpiresAt: number | null;
 }
@@ -59,6 +61,14 @@ function recommendationLabels(value: unknown): VisitRecommendationLabel[] {
     if (labels.length === 8) break;
   }
   return labels;
+}
+function recommendationFrame(value: unknown): VisitRecommendationFrame | null {
+  // A frame is optional decoration; bad metadata must not discard the product.
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>, name = optionalText(row.name, 255);
+  const url = image(optionalText(row.image, 2048));
+  if (typeof row.id !== "number" || !Number.isSafeInteger(row.id) || row.id <= 0 || row.id > 2_147_483_647 || !name || !url) return null;
+  return { id: row.id, name, image: url };
 }
 function recommendationOffer(row: Record<string, unknown>, price: string): VisitRecommendation["offer"] {
   // vip_price is a shared legacy slot: it can hold a LEVEL price, not just SVIP.
@@ -153,7 +163,7 @@ export async function apiVisitRecommendations(page: number): Promise<VisitRecomm
       if (seen.has(productId) || typeof row.price !== "string" || !/^\d{1,10}\.\d{2}$/.test(row.price)) throw Error("invalid recommendation");
       seen.add(productId);
       return { productId, name: text(row.store_name, 512), image: image(row.image), price: row.price, stock: integer(row.stock),
-        brand: optionalText(row.brand_name, 128), labels: recommendationLabels(row.store_label),
+        brand: optionalText(row.brand_name, 128), labels: recommendationLabels(row.store_label), activityFrame: recommendationFrame(row.activity_frame),
         offer: recommendationOffer(row, row.price), ...recommendationNavigation(row, productId) };
     });
   } catch { throw Error("推荐商品响应无效，请刷新记录"); }
