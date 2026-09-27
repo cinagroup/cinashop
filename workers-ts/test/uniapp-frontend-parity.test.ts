@@ -32,15 +32,15 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.counting.legacy.pagesTreeVueFiles).toBe(250);
     expect(parity.counting.legacy.logicalManifestRouteRecords).toBe(151);
     expect(parity.counting.legacy.platformActiveRouteRecords).toEqual({ H5: 151, "MP-WEIXIN": 150, "APP-PLUS": 150 });
-    expect(parity.counting.target.pagesTreeVueFiles).toBe(93);
-    expect(parity.counting.target.logicalManifestRouteRecords).toBe(93);
-    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 93, "MP-WEIXIN": 93, "APP-PLUS": 93 });
+    expect(parity.counting.target.pagesTreeVueFiles).toBe(94);
+    expect(parity.counting.target.logicalManifestRouteRecords).toBe(94);
+    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 94, "MP-WEIXIN": 94, "APP-PLUS": 94 });
     expect(parity.counting.routeLedger).toMatchObject({
-      directRegistered: 28,
+      directRegistered: 29,
       legacyCompatibilityRules: 100,
       candidateCoveredRules: 61,
       partialReplacementRules: 39,
-      unmappedOrCrossSurface: 23,
+      unmappedOrCrossSurface: 22,
       accountedLegacyRoutes: 151,
     });
   });
@@ -70,7 +70,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     ];
     expect(accounted).toHaveLength(151);
     expect(new Set(accounted).size).toBe(151);
-    expect(gapRoutes).toHaveLength(23);
+    expect(gapRoutes).toHaveLength(22);
     expect(parity.gaps.map((gap) => gap.id)).toEqual([
       "FE-003B", "FE-003C", "FE-003D", "FE-003E", "FE-003F", "FE-003G", "FE-003H",
     ]);
@@ -202,8 +202,16 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(LEGACY_ROUTE_RULES['/pages/users/privacy/index'].coverage).toBe('partial_replacement');
     expect(LEGACY_ROUTE_RULES['/pages/users/user_agreement_list/index'].coverage).toBe('candidate_covered');
     expect(parity.gaps.find(gap => gap.id === 'FE-003B')?.legacyRoutes).toEqual([
-      '/pages/users/user_cancellation/index', '/pages/users/user_member_code/index',
+      '/pages/users/user_cancellation/index',
     ]);
+    expect(parity.checklist.find(item => item.id === 'FE-003B')?.done).toBe(false);
+  });
+
+  it('registers the original member-code route without claiming full governance or provider parity', () => {
+    const route = '/pages/users/user_member_code/index';
+    expect(resolveRegisteredPageRoute(route)).toBe(route);
+    expect(parity.directRegisteredLegacyRoutes).toContain(route);
+    expect(parity.gaps.flatMap(gap => gap.legacyRoutes)).not.toContain(route);
     expect(parity.checklist.find(item => item.id === 'FE-003B')?.done).toBe(false);
   });
 
