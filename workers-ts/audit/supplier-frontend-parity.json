@@ -174,7 +174,19 @@
       "legacy": "attachment and rich media picker",
       "target": "ProductImagePicker.vue with current-folder reads/uploads, carousel/SKU/description stable references and shared sanitized preview",
       "status": "completed_local_candidate",
-      "security": "supplier.attachment.view/manage and current session scope; type4/module1/current supplier/fileType1/R2 ownership validation and transaction SHARE NOWAIT; temporary preview tickets never persisted",
+      "security": "supplier.attachment.view/manage and current session scope; type4/module1/current supplier/fileType1/R2 ownership validation and transaction SHARE NOWAIT; safe public root-relative/HTTPS references remain compatible; actual /api/assets and /kefuapi/assets aliases canonicalize before the same tenant lock; copied/unvalidated tickets and private aliases are not direct previews, approved fresh signed previews come from the current-account projection and only stable references persist",
+      "localEvidence": {
+        "originalHead": "96c6cf0d2fa008f331a1ae2f84d5d65e1686e2c9",
+        "originalLinuxRun": "36300640603",
+        "originalLinuxJobs": "9/11",
+        "originalLinuxUnit": { "files": 631, "passed": 11151, "failed": 13, "total": 11164, "skipped": 0 },
+        "originalFailure": "13 genuine root-relative media compatibility regressions across four existing suites; legacy fixtures unchanged",
+        "fixedLocalSource": "seven frozen files and SHA-256 table in workers-ts/docs/supplier-product-media.md",
+        "fixedCurrentTests": { "nativeMedia": 44, "nativeExistingThreeSuites": 65, "actualSfc": 24, "passed": 133, "total": 133, "skipped": 0 },
+        "shippingPriorSource": { "passed": 56, "total": 56, "skipped": 0, "helperSha256": "79AE57DDFEF4D648A29E92CD17AFC77CE48F60BCF9FE4FA87C25FC0EFA7F4C93", "scope": "before Kefu namespace and dual URL hint; excluded from current-source 133; updated Linux execution still required" },
+        "currentGates": ["Worker and Supplier typecheck", "Supplier production build", "independent seven-file source review without remaining blocker"],
+        "updatedLinuxStatus": "required; original failed run is not acceptance of the repair"
+      },
       "remaining": ["exact-head Linux CI", "SUP-003 production attachment aggregate and ticket audit", "real primary/restricted Supplier account and object-provider E2E"]
     }
   ],

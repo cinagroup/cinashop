@@ -35,7 +35,7 @@ const ALLOWED_ATTRIBUTES: Readonly<Record<string, ReadonlySet<string>>> = {
   tr: new Set(["colspan", "height", "rowspan", "width"]),
 };
 
-function decodeAttributeEntities(value: string): string {
+export function decodePublishedArticleAttribute(value: string): string {
   return value
     .replace(/&#x([0-9a-f]{1,6});?/gi, (_, digits: string) => {
       const codePoint = Number.parseInt(digits, 16);
@@ -56,6 +56,8 @@ function decodeAttributeEntities(value: string): string {
       tab: "\t",
     })[name.toLowerCase()] ?? "");
 }
+
+const decodeAttributeEntities = decodePublishedArticleAttribute;
 
 function escapeAttribute(value: string): string {
   return value
@@ -238,14 +240,15 @@ export function sanitizePublishedArticleHtml(value: unknown): string {
 /** Preserve editing HTML byte-for-byte except short-lived private asset attributes.
  * Uses the publication parser's tag/attribute grammar; it is not a rendered HTML projection.
  */
-export function canonicalizePublishedHtmlAttachmentReferences(value: unknown, onReference?: (reference: string) => void): string {
+export function canonicalizePublishedHtmlAttachmentReferences(value: unknown, onReference?: (reference: string) => void,
+  normalizeReference?: (reference: string) => string): string {
   return transformPublishedArticleHtml(value, source => source.replace(
     new RegExp(ATTRIBUTE_PATTERN.source, ATTRIBUTE_PATTERN.flags),
     (attribute, name: string, double: string | undefined, single: string | undefined, bare: string | undefined) => {
       if (!/^(?:src|href)$/i.test(name)) return attribute;
       const raw = double ?? single ?? bare;
       if (raw === undefined) return attribute;
-      let canonical = canonicalizePublishedAttachmentReference(raw);
+      let canonical = normalizeReference ? normalizeReference(decodeAttributeEntities(raw)) : canonicalizePublishedAttachmentReference(raw);
       if (!/^\/api\/assets\/[1-9]\d*$/.test(canonical)) {
         try {
           const url = new URL(canonical);

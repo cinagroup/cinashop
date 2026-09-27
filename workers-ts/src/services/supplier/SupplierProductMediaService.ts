@@ -5,9 +5,11 @@ import { ValidateException } from '@/utils/errors';
 import {
   canonicalizePublishedAttachmentReference,
   canonicalizePublishedHtmlAttachmentReferences,
+  decodePublishedArticleAttribute,
   sanitizePublishedArticleHtml,
 } from '@/services/content/ArticleContentPolicy';
 import { parseCanonicalAttachmentId, R2_IMAGE_TYPE, signAttachmentReferences } from '@/services/system/AttachmentService';
+import { classifyProductMediaReference } from '../../../../view/common/productMediaReference';
 
 export const MAX_SUPPLIER_PRODUCT_MEDIA_REFERENCES = 640;
 export const MAX_SUPPLIER_PRODUCT_HTML_MEDIA_REFERENCES = 100;
@@ -29,27 +31,24 @@ export interface SupplierProductMediaProjection {
   description_html: string;
 }
 
-/** A signature is transport state. Persist only the asset ID or an external HTTPS reference. */
+/** A signature is transport state. Persist an asset ID, public root path or HTTPS reference. */
 export function normalizeSupplierProductMediaReference(value: unknown): string {
   if (value === undefined || value === null || value === '') return '';
   if (typeof value !== 'string' || value.length > MAX_REFERENCE_CHARS) throw new ValidateException('商品图片引用无效');
-  const reference = canonicalizePublishedAttachmentReference(value);
-  if (/^\/api\/assets\//.test(reference)) {
-    const id = parseCanonicalAttachmentId(reference);
-    if (!id || id > 2_147_483_647) throw new ValidateException('商品图片引用无效');
+  const result = classifyProductMediaReference(decodePublishedArticleAttribute(value));
+  if (result.kind === 'invalid') throw new ValidateException('商品图片必须使用HTTPS、安全站内路径或稳定附件引用');
+  return result.reference;
+}
+
+function canonicalizeSupplierProductHtml(value: string, onReference?: (reference: string) => void): string {
+  return canonicalizePublishedHtmlAttachmentReferences(value, onReference, reference => {
+    const result = classifyProductMediaReference(reference);
+    if (result.kind === 'asset') return result.reference;
+    if (result.kind === 'invalid' && result.privateNamespace) throw new ValidateException('商品附件引用无效');
+    // Ordinary links and editing markup retain their exact bytes. Publication
+    // sanitization remains separate; this hook only handles private asset paths.
     return reference;
-  }
-  if (/[\u0000-\u0020\u007f\\]/u.test(reference)) throw new ValidateException('商品图片引用无效');
-  let url: URL;
-  try { url = new URL(reference); } catch { throw new ValidateException('商品图片必须使用HTTPS或稳定附件引用'); }
-  if (url.protocol !== 'https:' || url.username || url.password) throw new ValidateException('商品图片必须使用HTTPS或稳定附件引用');
-  // Imported absolute asset tickets must also shed their expiring query string.
-  if (/^\/api\/assets\/[1-9]\d*$/.test(url.pathname)) {
-    const id = parseCanonicalAttachmentId(url.pathname);
-    if (!id || id > 2_147_483_647) throw new ValidateException('商品图片引用无效');
-    return url.pathname;
-  }
-  return reference;
+  });
 }
 
 export function prepareSupplierProductMediaInput(input: Record<string, unknown>): Record<string, unknown> {
@@ -68,7 +67,7 @@ export function prepareSupplierProductMediaInput(input: Record<string, unknown>)
     copy.attrs = copy.attrs.map(row => row && typeof row === 'object' && !Array.isArray(row)
       ? { ...row, image: normalizeSupplierProductMediaReference(row.image) } : row);
   }
-  if (typeof copy.description === 'string') copy.description = canonicalizePublishedHtmlAttachmentReferences(copy.description);
+  if (typeof copy.description === 'string') copy.description = canonicalizeSupplierProductHtml(copy.description);
   return copy;
 }
 
@@ -80,7 +79,7 @@ export function supplierProductEditingMediaReference(value: string): string {
 
 export function supplierProductEditingHtml(value: string): string {
   if (value.length > MAX_HTML_CHARS * 2) return value;
-  try { return canonicalizePublishedHtmlAttachmentReferences(value); }
+  try { return canonicalizeSupplierProductHtml(value); }
   catch (error) {
     if (!(error instanceof ValidateException)) throw error;
     // Oversized historical editing content is retained; the media projection
@@ -92,8 +91,8 @@ export function supplierProductEditingHtml(value: string): string {
 function mediaReferences(input: SupplierProductMediaInput): { references: string[]; html: string } {
   if (input.description.length > MAX_HTML_CHARS * 2) throw new ValidateException('商品详情过大，无法解析媒体');
   const privateHtmlReferences: string[] = [];
-  canonicalizePublishedHtmlAttachmentReferences(input.description, reference => privateHtmlReferences.push(reference));
-  const html = sanitizePublishedArticleHtml(input.description);
+  const editingHtml = canonicalizeSupplierProductHtml(input.description, reference => privateHtmlReferences.push(reference));
+  const html = sanitizePublishedArticleHtml(editingHtml);
   // This operates on the shared allowlist's normalized output, not arbitrary input HTML.
   const attributes = [...html.matchAll(/\b(src|href)="([^"]*)"/g)];
   const htmlReferences = attributes.filter(match => match[1] === 'src' || /^\/api\/assets\//.test(match[2]));
