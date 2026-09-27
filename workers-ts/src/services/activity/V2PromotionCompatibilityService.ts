@@ -369,6 +369,38 @@ export class V2PromotionCompatibilityService {
   }
 
   /**
+   * Add display-only type-5 frames to an already paginated product list. Never
+   * run the promotion product catalogue here: it would replace the hot ranking,
+   * visibility and pagination, or apply a monetary promotion to its price.
+   */
+  async decorateProductFrames(
+    list: readonly Record<string, unknown>[],
+  ): Promise<Record<string, unknown>[]> {
+    if (list.length > MAX_PAGE_SIZE) throw new ValidateException("推荐边框商品数量超出范围");
+    const productIds = list.map((item) => {
+      const id = item.id;
+      if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) {
+        throw new ValidateException("推荐边框商品标识无效");
+      }
+      return id;
+    });
+    if (new Set(productIds).size !== productIds.length) throw new ValidateException("推荐边框商品标识无效");
+    if (!list.length) return [];
+    const frames = await this.activePromotions(5);
+    if (!frames.length) return list.map((item) => ({ ...item, activity_frame: [] }));
+    const [auxiliaries, relations] = await Promise.all([
+      this.scopeAuxiliaries(frames),
+      this.productRelations(productIds),
+    ]);
+    return list.map((item) => {
+      const id = Number(item.id);
+      // activePromotions orders by update_time DESC, then ID for stable ties.
+      const frame = frames.find((candidate) => this.matches(id, relations.get(id), candidate, auxiliaries));
+      return { ...item, activity_frame: frame ? { id: frame.id, name: frame.name, image: frame.image } : [] };
+    });
+  }
+
+  /**
    * Attach the three legacy catalogue promotion slots to an existing product
    * list. Collection/history endpoints need these stable keys but must retain
    * unavailable products that the public recommendation query filters out.

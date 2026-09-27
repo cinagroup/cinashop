@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import type { Env, AppVariables } from '../src/env';
 import { createContainerFromDb } from '../src/lib/di';
 import { productHot } from '../src/controllers/api/v1/ProductController';
-import { storeProduct, storeBrand, storeProductLabel, user, systemConfig, memberRight } from '../src/models/schema';
+import { storeProduct, storeBrand, storeProductLabel, user, systemConfig, memberRight, storePromotions } from '../src/models/schema';
 import { financePostgres } from './helpers/financePostgres';
 
 // Actual Hono controller -> catalogue service -> DAO -> disposable SQL.
@@ -18,7 +18,7 @@ describe('legacy product/hot offset contract', () => {
     brands: await f.db.select().from(storeBrand), labels: await f.db.select().from(storeProductLabel),
     rights: await f.db.select().from(memberRight) });
   beforeAll(async () => {
-    f = await financePostgres([storeProduct, storeBrand, storeProductLabel, user, systemConfig, memberRight]);
+    f = await financePostgres([storeProduct, storeBrand, storeProductLabel, user, systemConfig, memberRight, storePromotions]);
     container = createContainerFromDb(f.db);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use('*', async (c, next) => { c.set('container', container); c.set('uid', c.req.header('x-fixture-user') === '11' ? 11 : 0); await next(); });

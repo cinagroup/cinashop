@@ -4,6 +4,10 @@
 
 ## 审计结论
 
+最新主线基线（2026-09-26，未发布）：经批准，TEST-004E 三份源 PR 与后续八份源 PR 均已依序合入 `main@548b881ae3423cf7da365e1b2892223bc494179a`；当前清单为 **247 勾选／157 开放／404 总项**。TEST-004E 已从开放改勾选；会员扫码、UniApp 依赖审计、运费、提现和预售履约增量不代替功能父项的完整验收。最终主线 Git tree 与 [PR #43 整合彩排](https://github.com/cinagroup/cinashop/pull/43) 一致，其[精确提交 Linux CI](https://github.com/cinagroup/cinashop/actions/runs/36204711944) 11/11、原始 Worker 11,051/11,051、627 个无重叠文件、零跳过；另行跟进[最终 main CI](https://github.com/cinagroup/cinashop/actions/runs/36208706540)。整合彩排草稿均未合并；本批未部署或执行生产迁移。
+
+FE-003B 足迹推荐促销边框增量（2026-09-26，本地候选／未发布）：`/product/hot` 在既有分页结果上批量补旧 `activity_frame` 的 id/name/image，只选有效的平台父活动 type=5，沿用全场／指定／排除／品牌／标签范围和最新优先规则；不调整金额、顺序或导航。UniApp 在主图成功后叠加等尺寸边框，图框失败保留主图，主图失败隐藏边框；可选字段降级、安全图片 URL、255 字活动名、刷新／换身份／迟到图片事件均有运行时回归。新增图框 SQL 13 项；关联分页与导航原生 PostgreSQL 16 共29/29，默认 PGlite 37/37，UniApp 实际 API／页面／组件／编译事件回归52/52、Worker双类型与UniApp类型通过。H5隔离合成数据在1280×900与390×844验证边框、失败降级、滚动分页、刷新及点击精确商品导航；无横向溢出或应用错误，保留一条DCloud既有Vue Router导入警告。当前候选仍须自身Linux CI与真实渠道验收；FE-003B及247／157／404保持不变。
+
 FE-003C 五旧客户路由代码主线合入（2026-09-25，未发布）：经批准，[PR #11](https://github.com/cinagroup/cinashop/pull/11) 已合入 `main@211ee4e10b8a0f2c5f3d61660db683a862f68f66`。仅 FE-003C 从开放改勾选；远端原文独立核算为 **246 勾选／158 开放／404 总项**。旧申请、状态、双域当前记录及员工页按原路径直达，代理商与分销员分别接真实 Worker 合同；独立 PostgreSQL 16.15 五项路由/并发场景、UniApp 工具链 752/752、三端构建和 390×844 H5 合成只读路由烟测通过，详见 `workers-ts/audit/fe003c-h5-local-smoke.md`。PR 精确头完整 Linux CI 11/11 成功，主线合并提交的[完整 Linux CI](https://github.com/cinagroup/cinashop/actions/runs/36085034725) 已启动；FE-003J/K 的真实设备、账号、历史数据、旧客户端原位升级和发布门禁仍开放。本次合入未触发部署。
 
 后台营销三项主线合入（2026-09-24，未发布）：经批准，依序合并 [PR #2](https://github.com/cinagroup/cinashop/pull/2)、[PR #3](https://github.com/cinagroup/cinashop/pull/3) 和 [PR #5](https://github.com/cinagroup/cinashop/pull/5)，远端 `main@960f5503bd93256db32eb6ededd2d595d3adb431` 的[完整 Linux CI](https://github.com/cinagroup/cinashop/actions/runs/36019582026) 11/11 成功。积分统计与秒杀统计恢复独立只读权限、无缓存投影和后台候选页；签到奖励恢复连续／累计配置及受限写入。274 条后台旧路由的逐屏审计现为 candidate 44／partial 121／missing 102／retired 7；其中营销 48 屏为 6／22／20。三项仍缺代表性生产数据、真实受限角色、完整业务流程和发布验收，故清单继续为 **245 勾选／159 开放／404 总项**；本次合入未触发部署。
