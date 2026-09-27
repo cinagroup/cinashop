@@ -33,6 +33,9 @@ import {
   replaceProductSkuEditor,
 } from "@/services/product/ProductSkuEditorService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import type { Env } from '@/env';
+import { lockSupplierProductMedia, prepareSupplierProductMediaInput, projectSupplierProductMedia,
+  supplierProductEditingHtml, supplierProductEditingMediaReference } from './SupplierProductMediaService';
 
 export {
   buildSkuCombinations,
@@ -118,6 +121,13 @@ function optionalString(value: unknown, field: string, maxLength: number): strin
   const normalized = value.trim();
   if (normalized.length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
   return normalized;
+}
+
+function editingDescription(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string') throw new ValidateException('商品详情格式错误');
+  if (value.length > 200_000) throw new ValidateException('商品详情不能超过200000个字符');
+  return value;
 }
 
 function integerValue(
@@ -264,7 +274,7 @@ export function normalizeSupplierProductInput(
     barCode: optionalString(firstValue(input, "bar_code", "barCode"), "商品条码", 15),
     cateIds: normalizeCategoryIds(firstValue(input, "cate_id", "cateIds", "cate_ids")),
     sliderImages,
-    description: optionalString(input.description, "商品详情", 200_000),
+    description: editingDescription(input.description),
     specType,
     dimensions,
     skus,
@@ -339,7 +349,7 @@ function buildCategoryTree<T extends { id: number; pid: number }>(rows: T[]): Ar
 }
 
 export class SupplierProductManagementService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly env?: Pick<Env, 'APP_KEY'>) {}
 
   private tenantProductWhere(supplierId: number, productId: number) {
     return and(
@@ -577,7 +587,7 @@ export class SupplierProductManagementService {
   }
 
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {
-    const input = normalizeSupplierProductInput(rawInput);
+    const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(rawInput));
     return withTx(this.container, async (tx) => {
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
@@ -609,6 +619,7 @@ export class SupplierProductManagementService {
       }
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
+      await lockSupplierProductMedia(tx, supplierId, input);
       const stock = input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const price = minMoney(input.skus.map((sku) => sku.price));
@@ -737,7 +748,7 @@ export class SupplierProductManagementService {
         .limit(1),
       loadProductSkuEditor(this.container.db, productId, product.specType),
     ]);
-    return {
+    const detail = {
       id: product.id,
       product_type: product.productType,
       store_name: product.storeName,
@@ -749,13 +760,15 @@ export class SupplierProductManagementService {
       slider_image: (() => {
         try {
           const parsed: unknown = JSON.parse(product.sliderImage);
-          return Array.isArray(parsed) ? parsed : [];
+          return Array.isArray(parsed) ? parsed.map(value => typeof value === 'string' ? supplierProductEditingMediaReference(value) : value) : [];
         } catch {
           return [];
         }
       })(),
-      description: descriptions[0]?.description ?? "",
+      description: supplierProductEditingHtml(descriptions[0]?.description ?? ""),
       ...skuEditor,
+      attrs: skuEditor.attrs.map(row => ({ ...row, image: supplierProductEditingMediaReference(row.image) })),
+      retired_attrs: skuEditor.retired_attrs.map(row => ({ ...row, image: supplierProductEditingMediaReference(row.image) })),
       freight: product.freight,
       postage: product.postage,
       temp_id: product.tempId,
@@ -771,6 +784,10 @@ export class SupplierProductManagementService {
       is_verify: product.isVerify,
       refusal: product.refusal,
     };
+    const media = await projectSupplierProductMedia(this.container.db, supplierId, {
+      sliderImages: detail.slider_image, skus: [...detail.attrs, ...detail.retired_attrs], description: detail.description,
+    }, this.env?.APP_KEY);
+    return { ...detail, media };
   }
 
   async recycleProduct(supplierId: number, productId: number) {

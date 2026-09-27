@@ -75,7 +75,7 @@ function financeService(c: SupplierContext) {
 }
 
 function productManagementService(c: SupplierContext) {
-  return new SupplierProductManagementService(c.get("container"));
+  return new SupplierProductManagementService(c.get("container"), c.env);
 }
 
 function productSkuRetirementService(c: SupplierContext) {
