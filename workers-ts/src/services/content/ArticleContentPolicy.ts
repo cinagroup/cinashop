@@ -18,6 +18,9 @@ const VOID_TAGS = new Set(["br", "col", "hr", "img"]);
 const TEXT_ATTRIBUTES = new Set(["alt", "title"]);
 const DIMENSION_ATTRIBUTES = new Set(["height", "width"]);
 const CELL_ATTRIBUTES = new Set(["colspan", "rowspan"]);
+// Browsers retain '=' inside a bare attribute despite the HTML parse error.
+// Consume its complete URL so old unquoted asset tickets cannot be persisted partially.
+const ATTRIBUTE_PATTERN = /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>`]+)))?/g;
 
 const ALLOWED_ATTRIBUTES: Readonly<Record<string, ReadonlySet<string>>> = {
   a: new Set(["href", "title"]),
@@ -160,7 +163,7 @@ function sanitizeTag(source: string): string {
   const allowed = ALLOWED_ATTRIBUTES[tag] ?? new Set<string>();
   const attributes = new Map<string, string>();
   const attributeSource = opening[2].replace(/\/?\s*$/, "");
-  const attributePattern = /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  const attributePattern = new RegExp(ATTRIBUTE_PATTERN.source, ATTRIBUTE_PATTERN.flags);
   let match: RegExpExecArray | null;
   while ((match = attributePattern.exec(attributeSource)) !== null) {
     const name = match[1].toLowerCase();
@@ -182,8 +185,8 @@ function sanitizeTag(source: string): string {
   return `<${tag}${serialized ? ` ${serialized}` : ""}>`;
 }
 
-/** Rebuild legacy HTML from an allowlist before it reaches storage or a client. */
-export function sanitizePublishedArticleHtml(value: unknown): string {
+/** Shared quote-aware tag walker for publication and durable editing references. */
+function transformPublishedArticleHtml(value: unknown, tag: (source: string) => string, preserveMarkup = false): string {
   if (typeof value !== "string") throw new ValidateException("文章正文格式错误");
   if ([...value].length > MAX_PUBLISHED_ARTICLE_HTML_CHARS) {
     throw new ValidateException(`文章正文不能超过${MAX_PUBLISHED_ARTICLE_HTML_CHARS}个字符`);
@@ -197,7 +200,8 @@ export function sanitizePublishedArticleHtml(value: unknown): string {
 
     if (value.startsWith("<!--", opening)) {
       const commentEnd = value.indexOf("-->", opening + 4);
-      if (commentEnd < 0) return result;
+      if (commentEnd < 0) return preserveMarkup ? result + value.slice(opening) : result;
+      if (preserveMarkup) result += value.slice(opening, commentEnd + 3);
       cursor = commentEnd + 3;
       continue;
     }
@@ -216,14 +220,45 @@ export function sanitizePublishedArticleHtml(value: unknown): string {
       }
     }
     if (closing < 0) {
-      result += "&lt;";
+      result += preserveMarkup ? "<" : "&lt;";
       cursor = opening + 1;
       continue;
     }
-    result += sanitizeTag(value.slice(opening, closing + 1));
+    result += tag(value.slice(opening, closing + 1));
     cursor = closing + 1;
   }
   return result;
+}
+
+/** Rebuild legacy HTML from an allowlist before it reaches storage or a client. */
+export function sanitizePublishedArticleHtml(value: unknown): string {
+  return transformPublishedArticleHtml(value, sanitizeTag);
+}
+
+/** Preserve editing HTML byte-for-byte except short-lived private asset attributes.
+ * Uses the publication parser's tag/attribute grammar; it is not a rendered HTML projection.
+ */
+export function canonicalizePublishedHtmlAttachmentReferences(value: unknown, onReference?: (reference: string) => void): string {
+  return transformPublishedArticleHtml(value, source => source.replace(
+    new RegExp(ATTRIBUTE_PATTERN.source, ATTRIBUTE_PATTERN.flags),
+    (attribute, name: string, double: string | undefined, single: string | undefined, bare: string | undefined) => {
+      if (!/^(?:src|href)$/i.test(name)) return attribute;
+      const raw = double ?? single ?? bare;
+      if (raw === undefined) return attribute;
+      let canonical = canonicalizePublishedAttachmentReference(raw);
+      if (!/^\/api\/assets\/[1-9]\d*$/.test(canonical)) {
+        try {
+          const url = new URL(canonical);
+          if (url.protocol === 'https:' && !url.username && !url.password && /^\/api\/assets\/[1-9]\d*$/.test(url.pathname)) canonical = url.pathname;
+        } catch { /* ordinary editable attribute */ }
+      }
+      if (!/^\/api\/assets\/[1-9]\d*$/.test(canonical)) return attribute;
+      onReference?.(canonical);
+      if (canonical === raw) return attribute;
+      const start = attribute.indexOf(raw, attribute.indexOf('=') + 1);
+      return start < 0 ? attribute : attribute.slice(0, start) + canonical + attribute.slice(start + raw.length);
+    },
+  ), true);
 }
 
 /**
