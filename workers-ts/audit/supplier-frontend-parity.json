@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotDate": "2026-09-02",
+  "snapshotDate": "2026-09-27",
   "scope": "supplier frontend migration from cinashop-php to view/supplier-ts",
   "counting": {
     "legacy": {
@@ -91,7 +91,7 @@
       "legacyPage": "pages/product/productList/index.vue plus 8 embedded components",
       "target": ["/products", "Products.vue", "VirtualInventoryAlerts.vue", "VirtualInventory.vue"],
       "status": "candidate_covered",
-      "remaining": ["production product lifecycle E2E", "attachment integration"]
+      "remaining": ["production product lifecycle E2E", "SUP-003 production attachment and ticket acceptance"]
     },
     {
       "legacyPath": "/supplier/product/product_attr",
@@ -117,9 +117,9 @@
     {
       "legacyPath": "/supplier/product/edit_product/:id?",
       "legacyPage": "pages/product/productEdit/index.vue",
-      "target": ["/products/new", "/products/:id/edit", "ProductForm.vue"],
+      "target": ["/products/new", "/products/:id/edit", "ProductForm.vue", "ProductImagePicker.vue"],
       "status": "partial_replacement",
-      "remaining": ["production create/edit E2E", "attachment/media picker", "rich-content compatibility"]
+      "remaining": ["production create/edit E2E", "SUP-003 production attachment and ticket acceptance", "legacy rich-editor compatibility on real content"]
     },
     {
       "legacyPath": "/supplier/setting/merchant",
@@ -172,9 +172,10 @@
     },
     {
       "legacy": "attachment and rich media picker",
-      "target": "no production-verified Supplier attachment UI",
-      "status": "blocked_external_authorization",
-      "security": "depends on SUP-003 production attachment aggregate and ticket audit"
+      "target": "ProductImagePicker.vue with current-folder reads/uploads, carousel/SKU/description stable references and shared sanitized preview",
+      "status": "completed_local_candidate",
+      "security": "supplier.attachment.view/manage and current session scope; type4/module1/current supplier/fileType1/R2 ownership validation and transaction SHARE NOWAIT; temporary preview tickets never persisted",
+      "remaining": ["exact-head Linux CI", "SUP-003 production attachment aggregate and ticket audit", "real primary/restricted Supplier account and object-provider E2E"]
     }
   ],
   "checklist": [
