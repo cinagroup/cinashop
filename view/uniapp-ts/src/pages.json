@@ -316,6 +316,10 @@
       "style": { "navigationBarTitleText": "我的足迹" }
     },
     {
+      "path": "pages/users/user_member_code/index",
+      "style": { "navigationBarTitleText": "会员核销码" }
+    },
+    {
       "path": "pages/user/coupon",
       "style": {
         "navigationBarTitleText": "我的优惠券"

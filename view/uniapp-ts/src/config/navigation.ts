@@ -67,6 +67,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/address",
   "/pages/user/collect",
   "/pages/user/visitHistory",
+  "/pages/users/user_member_code/index",
   "/pages/user/coupon",
   "/pages/user/couponProducts",
   "/pages/user/finance",

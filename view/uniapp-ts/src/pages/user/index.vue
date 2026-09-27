@@ -63,6 +63,10 @@
         <text>👣 我的足迹</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="go('/pages/users/user_member_code/index')">
+        <text>会员核销码</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="go('/pages/user/coupon')">
         <text>🎫 我的优惠券</text>
         <text class="arrow">›</text>
