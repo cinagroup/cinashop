@@ -12,6 +12,7 @@ import { createToken, md5 } from '../src/utils/jwt';
 import * as cache from '../src/utils/cache';
 import { canonicalizePublishedHtmlAttachmentReferences, sanitizePublishedArticleHtml } from '../src/services/content/ArticleContentPolicy';
 import { SupplierProductManagementService } from '../src/services/supplier/SupplierProductManagementService';
+import { classifyProductMediaReference } from '../../view/common/productMediaReference';
 import {
   normalizeSupplierProductMediaReference, prepareSupplierProductMediaInput, projectSupplierProductMedia,
 } from '../src/services/supplier/SupplierProductMediaService';
@@ -53,6 +54,28 @@ describe('Supplier stable product media policy', () => {
     expect(normalized.description).toBe(stableHtml);
     expect((normalized.attrs as any[])[0].image).toBe('/api/assets/13');
     expect(raw.description).toBe(editingHtml);
+  });
+  it('retains safe root-relative public media while canonicalizing routed private aliases', () => {
+    for (const reference of ['/api/qa/image.svg', '/isolated.png', '/images/图.jpg?x=1&y=2', '/images/a%20b.jpg'])
+      expect(normalizeSupplierProductMediaReference(reference)).toBe(reference);
+    for (const reference of ['/old/../api/assets/11?expires=1&signature=old', '/old/%2e%2e/api/assets/11',
+      '/%61pi/assets/%31%31?ticket=old', 'https://old.example/old/../api/assets/11?ticket=old',
+      '/kefuapi/assets/11?expires=1&signature=old', 'https://old.example/old/../kefuapi/assets/11?ticket=old',
+      '/old/%2e%2e/%6befuapi/assets/%31%31?ticket=old'])
+      expect(normalizeSupplierProductMediaReference(reference)).toBe('/api/assets/11');
+  });
+  it('rejects ambiguous routing aliases without dropping private paths into the public branch', () => {
+    for (const value of [null, {}, 1, Symbol('not-a-url'), 'x'.repeat(4097)])
+      expect(classifyProductMediaReference(value)).toEqual({ kind: 'invalid', privateNamespace: false });
+    for (const reference of ['/api%2fassets%2f11', '/api/assets%2f11', '/api/%2561ssets/11',
+      '/api/ass%0aets/11', '/api\\assets\\11', '/api//assets/11', '/api/assets/11/extra', '/api/assets',
+      '//host.example/api/assets/11', '/images/a%ZZ.jpg', '/images/a%255c.jpg',
+      '/kefuapi%2fassets%2f11', '/kefuapi/assets/11/extra', 'https:\\host.example\\kefuapi\\assets\\11'])
+      expect(() => normalizeSupplierProductMediaReference(reference), reference).toThrow();
+    for (const reference of ['/api%2fassets%2f11', '/api/%2561ssets/11', '/api/ass%0aets/11',
+      '/kefuapi%2fassets%2f11', 'https:\\host.example\\api\\assets\\11', 'https:\\host.example\\kefuapi\\assets\\11',
+      'https:/api/assets/11?ticket=old', 'https:/kefuapi/assets/11?ticket=old'])
+      expect(() => prepareSupplierProductMediaInput({ description: `<unknown src="${reference}">source</unknown>` }), reference).toThrow();
   });
 });
 
@@ -199,6 +222,71 @@ describe('Supplier product media save/read through JWT, RBAC and registered HTTP
     const detail = (await request(saved.body.data.id)).body.data;
     expect(detail.description).toBe(html); expect(detail.media.description_html).toContain('https://images.example/a.jpg?x=1&amp;y=2');
     expect(detail.media.status).toBe('ready'); expect(detail.media.previews['https://images.example/b.jpg']).toEqual({status:'ready',src:'https://images.example/b.jpg',expires_at:null});
+  });
+  it('roundtrips public root-relative gallery, SKU and raw HTML without changing ordinary links or editing markup', async () => {
+    const html = '\n <p onclick="legacy()">历史<script>source()</script></p><!-- keep -->' +
+      '<img src=/api/qa/image.svg?x=1&y=2><img src="/images/legacy.png">' +
+      '<a href="mailto:owner@example.test">邮件</a><a href="tel:123">电话</a><a href="#section">目录</a> \n';
+    const input = product({ slider_image: ['/api/qa/image.svg', '/isolated.png?x=1&y=2'],
+      attrs: [{ suk: '默认', image: '/images/legacy.png', price: '10', settle_price: '8', stock: 3 }], description: html });
+    const saved = await request(0, input); expect(saved.body.status, saved.body.msg).toBe(200);
+    const detail = (await request(saved.body.data.id)).body.data;
+    expect(detail.slider_image).toEqual(input.slider_image); expect(detail.attrs[0].image).toBe('/images/legacy.png');
+    expect(detail.description).toBe(html); expect(detail.media.status).toBe('ready');
+    expect(detail.media.description_html).not.toMatch(/onclick=|<script|<!--/);
+    expect(detail.media.description_html).toContain('src="/api/qa/image.svg?x=1&amp;y=2"');
+    for (const link of ['mailto:owner@example.test', 'tel:123', '#section']) expect(detail.media.description_html).toContain(`href="${link}"`);
+    expect(detail.media.previews['/isolated.png?x=1&y=2']).toEqual({ status: 'ready', src: '/isolated.png?x=1&y=2', expires_at: null });
+    expect((await f.db.select().from(storeProductDescription).where(eq(storeProductDescription.productId, saved.body.data.id)))[0].description).toBe(html);
+    expect(objectGet).not.toHaveBeenCalled();
+  });
+  it.each(['gallery', 'sku', 'html', 'hidden-html'])('normalizes a routed foreign private alias in %s then refuses tenant ownership atomically', async location => {
+    const input = product();
+    const alias = '/old/%2e%2e/%61pi/assets/%32%31?expires=1&signature=old';
+    if (location === 'gallery') input.slider_image = [alias];
+    if (location === 'sku') (input.attrs as any[])[0].image = alias;
+    if (location === 'html') input.description = `<a href="${alias}">copied link</a>`;
+    if (location === 'hidden-html') input.description = `<unknown src="${alias}">hidden</unknown>`;
+    const result = await request(0, input);
+    expect(result.body).toMatchObject({ status: 400, msg: '商品附件不可用，请重新选择当前供应商素材' });
+    for (const table of [storeProduct, storeProductRelation, storeProductDescription, storeProductAttrValue, storeProductAttrResult])
+      expect(await f.db.select().from(table)).toEqual([]);
+    expect(objectGet).not.toHaveBeenCalled();
+  });
+  it('canonicalizes every actual owned Kefu asset mount before saving and returns only the matching fresh Supplier previews', async () => {
+    const rootAlias = '/kefuapi/assets/11?expires=1&signature=old';
+    const absoluteAlias = 'https://old.example/legacy/../kefuapi/assets/13?expires=1&signature=old';
+    const hiddenAlias = '/old/%2e%2e/%6befuapi/assets/%31%32?expires=1&signature=old';
+    const html = `<unknown src="${hiddenAlias}">legacy</unknown><a href="${rootAlias}">owned link</a>`;
+    const saved = await request(0, product({ slider_image: [rootAlias],
+      attrs: [{ suk: '默认', image: absoluteAlias, price: '10', settle_price: '8', stock: 3 }], description: html }));
+    expect(saved.body.status, saved.body.msg).toBe(200);
+    const detail = (await request(saved.body.data.id)).body.data;
+    expect(detail.slider_image).toEqual(['/api/assets/11']); expect(detail.attrs[0].image).toBe('/api/assets/13');
+    expect(detail.description).toBe(html.replace(hiddenAlias, '/api/assets/12').replace(rootAlias, '/api/assets/11'));
+    expect(Object.keys(detail.media.previews).sort()).toEqual(['/api/assets/11', '/api/assets/12', '/api/assets/13']);
+    for (const id of [11, 12, 13]) {
+      const preview = detail.media.previews[`/api/assets/${id}`];
+      expect(preview).toMatchObject({ status: 'ready', src: expect.stringMatching(new RegExp(`^/api/assets/${id}\\?expires=`)), expires_at: expect.any(Number) });
+    }
+    expect(detail.media.description_html).not.toContain('kefuapi'); expect(detail.media.description_html).toContain('href="/api/assets/11?expires=');
+    expect((await f.db.select().from(storeProductDescription).where(eq(storeProductDescription.productId, saved.body.data.id)))[0].description).not.toContain('signature=');
+    expect(objectGet).not.toHaveBeenCalled();
+  });
+  it.each(['gallery', 'sku', 'href', 'hidden-html'])('refuses a foreign copied Kefu ticket in %s using the same tenant lock boundary', async location => {
+    const input = product();
+    const rootAlias = '/kefuapi/assets/21?expires=1&signature=old';
+    const absoluteAlias = 'https://old.example/legacy/../kefuapi/assets/21?expires=1&signature=old';
+    const encodedAlias = '/old/%2e%2e/%6befuapi/assets/%32%31?expires=1&signature=old';
+    if (location === 'gallery') input.slider_image = [rootAlias];
+    if (location === 'sku') (input.attrs as any[])[0].image = absoluteAlias;
+    if (location === 'href') input.description = `<a href="${encodedAlias}">foreign</a>`;
+    if (location === 'hidden-html') input.description = `<unknown src="${encodedAlias}">hidden</unknown>`;
+    const result = await request(0, input);
+    expect(result.body).toMatchObject({ status: 400, msg: '商品附件不可用，请重新选择当前供应商素材' });
+    for (const table of [storeProduct, storeProductRelation, storeProductDescription, storeProductAttrValue, storeProductAttrResult])
+      expect(await f.db.select().from(table)).toEqual([]);
+    expect(objectGet).not.toHaveBeenCalled();
   });
   it('retains oversized historical editing text and reports a bounded render failure without issuing tickets', async () => {
     const saved = await request(0,product()); const id = saved.body.data.id;

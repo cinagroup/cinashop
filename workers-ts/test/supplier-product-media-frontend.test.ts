@@ -264,3 +264,52 @@ it('renders legacy bare HTTPS image queries completely through the shared saniti
   expect(runtime.media.productDescriptionPreview('<img src=https://images.example/a.jpg?x=1&y=2>', {}))
     .toBe('<img src="https://images.example/a.jpg?x=1&amp;y=2" width="100%">');
 });
+it('renders and submits root-relative gallery, SKU and description while retaining complete public queries', async () => {
+  const html = '<img src=/api/qa/image.svg?x=1&y=2><a href="mailto:owner@example.test">邮件</a><a href="tel:123">电话</a><a href="#section">目录</a>';
+  const f = await mount('Form', c => c.url === '/product/product/5' ? { ...product(), slider_image: ['/api/qa/image.svg', '/isolated.png'],
+    attrs: [{ ...sku(), image: '/images/sku.png' }], description: html } : undefined);
+  try {
+    expect(f.view.previewImage('/api/qa/image.svg')).toBe('/api/qa/image.svg');
+    expect(f.view.previewImage(f.view.form.attrs[0].image)).toBe('/images/sku.png');
+    expect(f.view.descriptionPreview.value).toContain('src="/api/qa/image.svg?x=1&amp;y=2"');
+    for (const link of ['mailto:owner@example.test', 'tel:123', '#section']) expect(f.view.descriptionPreview.value).toContain(`href="${link}"`);
+    await f.view.submit();
+    const payload = JSON.parse(f.calls.find(c => c.method === 'post').data);
+    expect(payload.slider_image).toEqual(['/api/qa/image.svg', '/isolated.png']);
+    expect(payload.attrs[0].image).toBe('/images/sku.png'); expect(payload.description).toBe(html);
+  } finally { f.close(); }
+});
+it('never treats private absolute, dot, encoded or ticket aliases as public previews or HTML links', () => {
+  const canonical = '/api/assets/7', previews = { [canonical]: { status: 'ready', src: ticket(7), expires_at: Math.floor(Date.now() / 1000) + 900 } };
+  expect(runtime.media.productImagePreview(canonical, previews)).toBe(ticket(7));
+  for (const reference of [null, {}, 1, Symbol('not-a-url')]) expect(runtime.media.productImagePreview(reference, previews)).toBeNull();
+  for (const reference of [ticket(7), `https://host.example${ticket(7)}`, '/old/../api/assets/7', '/%61pi/assets/%37',
+    '/api%2fassets%2f7', '/api/%2561ssets/7', '/api/ass%0aets/7', '/api\\assets\\7', '/api/assets/7/extra',
+    '/kefuapi/assets/7?expires=1&signature=old', 'https://host.example/kefuapi/assets/7?expires=1&signature=old',
+    '/old/../kefuapi/assets/7', '/%6befuapi/assets/%37', '/kefuapi%2fassets%2f7',
+    'https:\\host.example\\api\\assets\\7?signature=old', 'https:\\host.example\\kefuapi\\assets\\7?signature=old',
+    'https:/api/assets/7?ticket=old', 'https:/kefuapi/assets/7?ticket=old',
+    'http://host.example/image.png', '//host.example/image.png', 'https://user:pw@host.example/image.png']) {
+    expect(runtime.media.productImagePreview(reference, previews), reference).toBeNull();
+    const html = runtime.media.productDescriptionPreview(`<img src="${reference}"><a href="${reference}">old link</a>`, previews);
+    expect(html, reference).not.toContain('<img');
+    if (reference.includes('assets') || reference.includes('ass%')) expect(html, reference).not.toContain('href=');
+  }
+  expect(runtime.media.productImagePreview('/public.jpg?next=/api/assets/7&x=1', {})).toBe('/public.jpg?next=/api/assets/7&x=1');
+});
+it('the actual form never renders copied Kefu IMG, SKU or href tickets despite a public-looking preview entry', async () => {
+  const copied = '/kefuapi/assets/7?expires=1&signature=old';
+  const skuAlias = 'https://host.example/old/../kefuapi/assets/7?ticket=old';
+  const linkAlias = '/old/%2e%2e/%6befuapi/assets/%37?ticket=old';
+  const f = await mount('Form', c => c.url === '/product/product/5' ? { ...product(), slider_image: [copied, '/api/assets/7'],
+    attrs: [{ ...sku(), image: skuAlias }], description: `<a href="${linkAlias}">old</a><img src="${copied}">`,
+    media: { version: 1, previews: { [copied]: { status: 'ready', src: copied, expires_at: null },
+      '/api/assets/7': { status: 'ready', src: ticket(7), expires_at: Math.floor(Date.now() / 1000) + 900 } } } } : undefined);
+  try {
+    expect(f.view.previewImage(f.view.form.slider_image[0])).toBeNull();
+    expect(f.view.previewImage(f.view.form.attrs[0].image)).toBeNull();
+    expect(f.view.previewImage(f.view.form.slider_image[1])).toBe(ticket(7));
+    expect(f.view.descriptionPreview.value).not.toMatch(/<img|href=|kefuapi|ticket=old|signature=old/);
+    expect(f.calls.filter(c => c.method === 'post')).toEqual([]);
+  } finally { f.close(); }
+});

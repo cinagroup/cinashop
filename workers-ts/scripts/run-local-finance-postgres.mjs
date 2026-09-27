@@ -160,6 +160,7 @@ if (schemaMaintenance) {
     'test/assisted-form-consumption-postgres.test.ts',
     'test/admin-user-list-postgres.test.ts',
     'test/shipping-lifecycle-route-auth.test.ts',
+    'test/shipping-template-lifecycle-services.test.ts',
     'test/order-delivery-address.test.ts',
     'test/bargain-pickup-postgres.test.ts',
     'test/bargain-shipping-selection-postgres.test.ts',
