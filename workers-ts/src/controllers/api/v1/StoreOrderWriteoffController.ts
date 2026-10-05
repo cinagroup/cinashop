@@ -4,6 +4,7 @@ import { StoreOrderWriteoffService, type WriteoffLineInput } from "@/services/or
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import * as DeliveryWorkbenchWriteoff from "./DeliveryWorkbenchWriteoffController";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -70,17 +71,11 @@ export async function staffExecute(c: C) {
 }
 
 export async function deliveryInfo(c: C) {
-  const body = await requestBody(c);
-  return jsonOk(c, await service(c).info({ kind: "delivery", uid: Number(c.get("uid") ?? 0) }, codeFrom(body)));
+  return DeliveryWorkbenchWriteoff.info(c);
 }
 
 export async function deliveryExecute(c: C) {
-  const body = await requestBody(c);
-  const result = await service(c).execute(
-    { kind: "delivery", uid: Number(c.get("uid") ?? 0) },
-    { code: String(codeFrom(body) ?? ""), items: parseItems(body) },
-  );
-  return jsonOk(c, result, result.completed ? "送达核销完成" : "部分送达核销成功");
+  return DeliveryWorkbenchWriteoff.execute(c);
 }
 
 export async function adminInfo(c: C) {

@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const row = (id = 1, price = '17.59') => ({ id, productId: 70, cartNum: 2, type: 0, unique: 'red001', isNew: 0, isValid: true,
   productInfo: { price: '19.99', otPrice: '25.00', storeName: '本地商品', image: '', stock: 8, suk: '红色', systemFormId: 0, productType: 0 },
@@ -8,6 +9,13 @@ function setup(override = () => undefined) {
   return runtime({ component: 'pages/cart/index.vue', send: call => override(call) ?? (call.url.endsWith('/cart/list')
     ? { data: [row(), { ...row(2), isValid: false, productInfo: null }] } : { data: null }) });
 }
+const promotion = (id = 1) => ({ key: id, productId: 70, quantity: 3, unitPriceCents: null, totalPriceCents: 2900,
+  promotionSavingsCents: 100, segments: [
+    { quantity: 1, unitPriceCents: 900, totalPriceCents: 900, promotionIds: [41] },
+    { quantity: 2, unitPriceCents: 1000, totalPriceCents: 2000, promotionIds: [] },
+  ] });
+const promotionRow = () => ({ ...row(), cartNum: 3, productInfo: { ...row().productInfo, price: '10.00' },
+  sumPrice: '30.00', truePrice: '9.66', trueSumPrice: '29.00', priceType: 'promotions', promotion: promotion() });
 test('actual mobile cart selects only valid rows and uses membership totals', async () => {
   const r = setup(); try { await r.start(); const p = r.checkout; p.toggleAll();
     assert.equal(p.cartStore.totalPrice, '35.18'); assert.equal(p.allChecked.value, true);
@@ -16,6 +24,24 @@ test('actual mobile cart selects only valid rows and uses membership totals', as
     r.hooks.onHide(); assert.deepEqual(p.cartStore.checkedItems.map(row => row.id), [1]);
     assert.equal(p.blocked.value, true); p.goCheckout(); assert.equal(r.navigations.length, 1);
   } finally { r.stop(); }
+});
+test('partial activity cap displays the exact line total and priced segments, never floor unit times quantity', async () => {
+  const r = setup(call => call.url.endsWith('/cart/list') ? { data: [promotionRow()] } : undefined);
+  try {
+    await r.start(); const p = r.checkout, line = p.cartStore.items[0]; p.toggleAll();
+    const pricing = r.load(path.join(path.resolve(__dirname, '..'), '../common/cartPrice.ts'));
+    assert.equal(p.cartStore.totalPrice, '29.00');
+    assert.equal(pricing.cartUnitPrice(line), '9.66');
+    assert.equal(pricing.cartLinePrice(line), '29.00');
+    assert.match(pricing.cartPriceLabel(line), /分段计价/);
+    assert.equal(pricing.cartPromotionSummary(line), '活动 1 件 ¥9.00，其余 2 件 ¥20.00');
+  } finally { r.stop(); }
+});
+test('cart rejects a fabricated activity total instead of multiplying the display unit', async () => {
+  const bad = promotionRow(); bad.promotion.totalPriceCents = 2899;
+  const r = setup(call => call.url.endsWith('/cart/list') ? { data: [bad] } : undefined);
+  try { await r.start(); assert.equal(r.checkout.cartStore.ready, false); assert.match(r.checkout.cartStore.error, /活动报价/); }
+  finally { r.stop(); }
 });
 test('mobile initial failure is explicit and retry reads without automatically selecting or writing', async () => {
   let fail = true; const r = setup(call => call.url.endsWith('/cart/list') && fail ? { transport: 'offline' } : undefined);

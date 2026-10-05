@@ -1,5 +1,7 @@
 # Admin system 旧路由逐屏代码审计
 
+2026-09-28 只读续批：旧 `/admin/system/maintain/system_log/index` 已由新 `/system/log` 恢复上海时间、管理员、路径及 IP 筛选，分页展示 ID、操作者、路径、行为、类型、IP 和时间。`GET /log/list` 与新增 `GET /log/admin-options` 在两个 Admin 前缀下均要求 `log.view`，列表及选项都受当前管理员可见范围约束；页面切号/卸载会取消请求并清空旧数据。本地原生 PostgreSQL16 **4/4**、前端运行时 **5/5**、权限定向 **13/13** 通过。独立日期台账为 [系统逐屏只读续批](../audit/admin-legacy-system-route-parity-read-followup-20260928.json)，17 屏现为 **1 candidate／3 partial／12 missing／1 retired**。这仍是未发布的本地候选；真实历史日志、受限角色浏览器、规模和生产验收开放。旧 `/admin/system/log` 是浏览器 Vuex 前端事件页，仍为 missing。下文保留前批审计口径。
+
 本批以 `audit/admin-frontend-inventory.json` 为权威分母，审计 `/admin/system*` 且 `surface=page` 的 **17 条**旧业务路由。`/admin/system.User/list.html` 是辅助组件，不在 274 条业务页分母内；同在旧 `system.js` 的 `/admin/out*` 属另一个路径域，不在本批。`audit/admin-legacy-system-route-parity.json` 由 `scripts/admin-system-frontend-parity-audit.ts` 生成，逐条给出旧路径、组件、`meta.auth`、目标页面/API/权限、已覆盖行为、缺口和证据。
 
 旧路由快照分别来自 `routes.js` SHA-256 `9432b5a0b65c09adaf828dbb7125352eea94c54b444f5197647c59aa40fe13c2` 与 `modules/system.js` SHA-256 `f84e11ebb974799f4cf3da05daa772c9b973c07960ddb6e86fcef823b58cb0ff`。旧 `meta.auth` 和组件行为行号是本地审阅后的静态证据。生成和 CI 只使用本仓库的权威清单及新代码，不依赖相邻 `cinashop-php` checkout；路由快照变化需重新审阅，旧组件独立变化也需人工复核行号。

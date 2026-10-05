@@ -7,9 +7,14 @@ const VERSION = 'refund-quantity-reservation-v1';
 /** Durable server-selected execution contract. Never inferred from current
  * config during a callback/retry, and never accepted from an HTTP body. */
 export const MATERIALIZED_REFUND_VERSION = 'refund-quantity-materialization-v2';
-interface Selection { cartId: number; cartNum: number }
+/** Customer HTTP selects physical row PKs. The immutable opaque catalogue key
+ * is retained separately, so numeric alias collisions never select a peer. */
+export const CUSTOMER_ROW_REFUND_VERSION = 'refund-quantity-customer-row-v3';
+interface Selection { cartId: number; cartNum: number; sourceCartId?: string }
 interface Claim extends Selection { rowId: number; beforeRefundNum: number; totalNum: number }
-interface Reservation { version: typeof VERSION | typeof MATERIALIZED_REFUND_VERSION; orderId: number; uid: number; items: Claim[] }
+interface Reservation { version: typeof VERSION | typeof MATERIALIZED_REFUND_VERSION | typeof CUSTOMER_ROW_REFUND_VERSION; orderId: number; uid: number; items: Claim[] }
+export function refundClaimCartKey(item:Claim):string{return item.sourceCartId??String(item.cartId);}
+export function isMaterializedRefundClaim(claim:Reservation|null|undefined):claim is Reservation{return claim?.version===MATERIALIZED_REFUND_VERSION||claim?.version===CUSTOMER_ROW_REFUND_VERSION;}
 type Refund = Pick<typeof storeOrderRefund.$inferSelect, 'storeOrderId' | 'uid' | 'refundNum' | 'cartInfo'>;
 const invalid = () => new ValidateException('退款商品数量预占记录不一致，请人工核对');
 function integer(value: unknown, zero = false): number {
@@ -20,9 +25,9 @@ function object(value: unknown, keys: readonly string[]): Record<string, unknown
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== keys.length || keys.some(key => !Object.hasOwn(value, key))) throw invalid();
   return value as Record<string, unknown>;
 }
-function selections(value: unknown): Selection[] {
+function selections(value: unknown,rowNamespace=false): Selection[] {
   if (!Array.isArray(value) || !value.length || value.length > 100) throw invalid();
-  const result = value.map(value => { const r = object(value, ['cartId', 'cartNum']); return { cartId: integer(r.cartId), cartNum: integer(r.cartNum) }; });
+  const result = value.map(value => { const r = object(value, rowNamespace?['cartId','cartNum','sourceCartId']:['cartId', 'cartNum']);if(rowNamespace&&(typeof r.sourceCartId!=='string'||!r.sourceCartId||r.sourceCartId!==r.sourceCartId.trim()||Array.from(r.sourceCartId).length>128||/[\u0000-\u001f\u007f]/.test(r.sourceCartId)))throw invalid();return { cartId: integer(r.cartId), cartNum: integer(r.cartNum),...(rowNamespace?{sourceCartId:r.sourceCartId as string}:{}) }; });
   if (new Set(result.map(row => row.cartId)).size !== result.length) throw invalid();
   return result.sort((a, b) => a.cartId - b.cartId);
 }
@@ -37,13 +42,14 @@ export function readRefundQuantityReservation(refund: Refund): Reservation | nul
   if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.hasOwn(value, 'quantityReservation')) return null;
   const snapshot = object(value, ['cartIds', 'quantityReservation']);
   const r = object(snapshot.quantityReservation, ['version', 'orderId', 'uid', 'items']);
-  if ((r.version !== VERSION && r.version !== MATERIALIZED_REFUND_VERSION) || r.orderId !== refund.storeOrderId || r.uid !== refund.uid) throw invalid();
-  const orderId = integer(r.orderId), uid = integer(r.uid), selected = selections(snapshot.cartIds);
+  if ((r.version !== VERSION && r.version !== MATERIALIZED_REFUND_VERSION&&r.version!==CUSTOMER_ROW_REFUND_VERSION) || r.orderId !== refund.storeOrderId || r.uid !== refund.uid) throw invalid();
+  const rowNamespace=r.version===CUSTOMER_ROW_REFUND_VERSION,orderId = integer(r.orderId), uid = integer(r.uid), selected = selections(snapshot.cartIds,rowNamespace);
   if (!Array.isArray(r.items) || r.items.length !== selected.length) throw invalid();
   const items = r.items.map(value => {
-    const c = object(value, ['rowId', 'cartId', 'cartNum', 'beforeRefundNum', 'totalNum']);
+    const c = object(value, ['rowId', 'cartId', 'cartNum', 'beforeRefundNum', 'totalNum',...(rowNamespace?['sourceCartId']:[])]);
     const claim = { rowId: integer(c.rowId), cartId: integer(c.cartId), cartNum: integer(c.cartNum),
-      beforeRefundNum: integer(c.beforeRefundNum, true), totalNum: integer(c.totalNum) };
+      beforeRefundNum: integer(c.beforeRefundNum, true), totalNum: integer(c.totalNum),...(rowNamespace?{sourceCartId:c.sourceCartId as string}:{}) };
+    if(rowNamespace&&(claim.cartId!==claim.rowId||claim.sourceCartId!==selected.find(x=>x.cartId===claim.cartId)?.sourceCartId))throw invalid();
     if (claim.beforeRefundNum + claim.cartNum > claim.totalNum) throw invalid();
     return claim;
   }).sort((a, b) => a.cartId - b.cartId);
@@ -59,17 +65,17 @@ function transaction(tx: DbClient) {
 export async function reserveRefundQuantities(tx: DbClient, order: { id: number; uid: number }, input: readonly Selection[],
   version: Reservation['version'] = VERSION): Promise<string> {
   transaction(tx); integer(order.id); integer(order.uid);
-  const selected = selections(input);
+  const rowNamespace=version===CUSTOMER_ROW_REFUND_VERSION,selected = selections(input,rowNamespace);
   const rows = await tx.select().from(storeOrderCartInfo)
-    .where(and(eq(storeOrderCartInfo.oid, order.id), inArray(storeOrderCartInfo.cartId, selected.map(row => String(row.cartId)))))
+    .where(and(eq(storeOrderCartInfo.oid, order.id), rowNamespace?inArray(storeOrderCartInfo.id,selected.map(row=>row.cartId)):inArray(storeOrderCartInfo.cartId, selected.map(row => String(row.cartId)))))
     .orderBy(asc(storeOrderCartInfo.id)).for('update');
   if (rows.length !== selected.length) throw invalid();
   const claims: Claim[] = [];
   for (const row of rows) {
-    const selection = selected.find(item => String(item.cartId) === row.cartId);
+    const selection = selected.find(item => rowNamespace?item.cartId===row.id&&item.sourceCartId===row.cartId:String(item.cartId) === row.cartId);
     if (!selection || row.uid !== order.uid) throw invalid();
     const claim = { rowId: integer(row.id), cartId: selection.cartId, cartNum: selection.cartNum,
-      beforeRefundNum: integer(row.refundNum, true), totalNum: integer(row.cartNum) };
+      beforeRefundNum: integer(row.refundNum, true), totalNum: integer(row.cartNum),...(rowNamespace?{sourceCartId:row.cartId}:{}) };
     if (claim.beforeRefundNum + claim.cartNum > claim.totalNum) throw new ValidateException('退款数量超过尚未预占的商品数量');
     const changed = await tx.update(storeOrderCartInfo).set({ refundNum: claim.beforeRefundNum + claim.cartNum })
       .where(and(eq(storeOrderCartInfo.id, row.id), eq(storeOrderCartInfo.refundNum, claim.beforeRefundNum), eq(storeOrderCartInfo.cartNum, claim.totalNum)))
@@ -92,7 +98,7 @@ export async function assertRefundQuantitiesHeld(tx: DbClient, refund: Refund): 
   if (rows.length !== claim.items.length) throw invalid();
   for (const item of claim.items) {
     const row = rows.find(row => row.id === item.rowId);
-    if (!row || row.oid !== claim.orderId || row.uid !== claim.uid || row.cartId !== String(item.cartId)
+    if (!row || row.oid !== claim.orderId || row.uid !== claim.uid || row.cartId !== refundClaimCartKey(item)
       || row.cartNum !== item.totalNum || row.refundNum !== item.beforeRefundNum + item.cartNum) throw invalid();
   }
   return true;

@@ -24,6 +24,7 @@ import {
 import { createToken, md5 } from "@/utils/jwt";
 import { setTokenBucket, type TokenBucket } from "@/utils/cache";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
+import { evaluateAgentLevelsAfterRegistration } from '@/services/agent/AgentLevelRegistrationEffects';
 import { readRegistrationLevelStatus } from "@/services/user/RegistrationLevelActivation";
 import {
   applyRegistrationGifts,
@@ -98,6 +99,7 @@ export class LoginService {
     if (!user.status) throw new ValidateException("已被禁止,请联系管理员");
     const result = await this.issueToken(user, issuedAtSeconds);
     await this.container.userDao.touchLogin(uid, ip);
+    await evaluateAgentLevelsAfterRegistration(this.container,uid);
     return result;
   }
 
@@ -156,8 +158,7 @@ export class LoginService {
         });
     }
 
-    // 9. TODO(M2+): event('user.login') —— 队列触发登录后置
-    //    await env.ORDER_QUEUE.send({ action: 'onUserLogin', ... });
+    await evaluateAgentLevelsAfterRegistration(this.container,u.uid);
 
     return result;
   }
@@ -222,6 +223,7 @@ export class LoginService {
         });
     }
 
+    await evaluateAgentLevelsAfterRegistration(c,row.uid);
     return this.issueToken(row);
   }
 
@@ -292,6 +294,7 @@ export class LoginService {
           throw error;
         });
     }
+    await evaluateAgentLevelsAfterRegistration(this.container,current.uid);
     return this.issueToken(current);
   }
 

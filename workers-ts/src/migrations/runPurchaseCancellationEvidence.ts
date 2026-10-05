@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
-import { PURCHASE_CANCELLATION_STATE_SQL } from './purchaseCancellationEvidenceCatalog';
+import { PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchaseCancellationGiftEvidenceCatalog';
+import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from './purchaseCancellationGiftEvidenceInstallation';
 import { PURCHASE_CANCELLATION_SETUP_SQL, PURCHASE_CANCELLATION_SOURCE_SQL, PURCHASE_CANCELLATION_INSTALLATION_SQL, PURCHASE_CANCELLATION_ORM_INSTALLATION_SQL } from './purchaseCancellationEvidenceInstallation';
 
 type Root = Pick<DbClient,'transaction'> & Partial<Pick<DbClient,'$client'>>;
@@ -14,9 +15,10 @@ async function inspect(tx: Query) {
     AND current_setting('transaction_isolation')='read committed' AND current_setting('session_replication_role')='origin'
     AND NOT EXISTS(SELECT 1 FROM pg_event_trigger WHERE evtenabled<>'D') AS safe`);
   if (environment?.safe!==true) throw Error('Purchase cancellation inspection requires reviewed PG16 READ COMMITTED');
-  const [row] = await tx.execute(sql.raw(`SELECT s.state,p.ready FROM (${PURCHASE_CANCELLATION_STATE_SQL}) s CROSS JOIN (${PURCHASE_CANCELLATION_SOURCE_SQL}) p`));
+  const [row] = await tx.execute(sql.raw(`SELECT s.state,p.ready FROM (${PURCHASE_CANCELLATION_GIFT_STATE_SQL}) s CROSS JOIN (${PURCHASE_CANCELLATION_SOURCE_SQL}) p`));
   const state = row?.state;
-  if (state!=='fresh' && state!=='v1' && state!=='orm-pending' && state!=='drift') throw Error('Purchase cancellation catalog unavailable');
+  if (state!=='fresh' && state!=='v1' && state!=='gift-v1'
+    && state!=='orm-pending' && state!=='drift') throw Error('Purchase cancellation catalog unavailable');
   return { state,sourcesReady:row.ready===true };
 }
 async function authority(tx: Query, role: string) {
@@ -61,20 +63,29 @@ export async function inspectPurchaseCancellationEvidence(db: Root, role?: strin
     const state = await inspect(tx);
     if (role===undefined) return state;
     const runtimeSafe = await authority(tx,role);
-    return { ...state,runtimeSafe,runtimeReady:runtimeSafe && state.sourcesReady && state.state==='v1'
+    return { ...state,runtimeSafe,runtimeReady:runtimeSafe && state.sourcesReady
+      && (state.state==='v1' || state.state==='gift-v1')
       && await prerequisites(tx,role) && await runtimeReady(tx,role) };
   },{ isolationLevel:'read committed',accessMode:'read only' });
 }
 export async function runPurchaseCancellationEvidenceSchema(db: Root): Promise<void> {
   validate(db);
-  await db.transaction(tx => tx.execute(sql.raw(PURCHASE_CANCELLATION_INSTALLATION_SQL)),
-    { isolationLevel:'read committed',accessMode:'read write' });
+  await db.transaction(async tx => {
+    await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
+    const state = await inspect(tx);
+    await tx.execute(sql.raw(state.state==='gift-v1'
+      ? PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL : PURCHASE_CANCELLATION_INSTALLATION_SQL));
+  },{ isolationLevel:'read committed',accessMode:'read write' });
 }
 /** Separate empty-ORM construction follow-up; no grants, history or repair. */
 export async function completePurchaseCancellationEvidenceOrm(db: Root): Promise<void> {
   validate(db);
-  await db.transaction(tx => tx.execute(sql.raw(PURCHASE_CANCELLATION_ORM_INSTALLATION_SQL)),
-    { isolationLevel:'read committed',accessMode:'read write' });
+  await db.transaction(async tx => {
+    await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
+    const state = await inspect(tx);
+    await tx.execute(sql.raw(state.state==='gift-v1'
+      ? PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL : PURCHASE_CANCELLATION_ORM_INSTALLATION_SQL));
+  },{ isolationLevel:'read committed',accessMode:'read write' });
 }
 /** Only receipt SELECT/INSERT. Prerequisites must already exist; no schema or
  * role ownership, source repair, role creation, or quota-policy activation. */
@@ -83,12 +94,14 @@ export async function runPurchaseCancellationEvidence(db: Root, role: string) {
   return db.transaction(async tx => {
     await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
     const initial = await inspect(tx);
-    if (!initial.sourcesReady || !['fresh','v1'].includes(initial.state) || !await authority(tx,role) || !await prerequisites(tx,role))
+    if (!initial.sourcesReady || !['fresh','v1','gift-v1'].includes(initial.state)
+      || !await authority(tx,role) || !await prerequisites(tx,role))
       throw Error('Purchase cancellation runtime authority or source prerequisites are unsafe or missing');
-    await tx.execute(sql.raw(PURCHASE_CANCELLATION_INSTALLATION_SQL));
+    await tx.execute(sql.raw(initial.state==='gift-v1'
+      ? PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL : PURCHASE_CANCELLATION_INSTALLATION_SQL));
     await tx.execute(sql.raw(`GRANT SELECT,INSERT ON public.store_order_purchase_cancellation TO "${role}"`));
     const final = await inspect(tx);
-    if (final.state!=='v1' || !final.sourcesReady || !await authority(tx,role)
+    if (!['v1','gift-v1'].includes(final.state) || !final.sourcesReady || !await authority(tx,role)
       || !await prerequisites(tx,role) || !await runtimeReady(tx,role)) throw Error('Purchase cancellation runtime verification failed');
     return { ...final,runtimeSafe:true,runtimeReady:true };
   },{ isolationLevel:'read committed',accessMode:'read write' });

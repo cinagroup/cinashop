@@ -26,6 +26,11 @@ import {
 } from "@/services/order/OrderBrokerageService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
+import { requireDeliveryScope, type DeliveryActor, type DeliverySelection } from "@/services/store/DeliveryPrincipalScope";
+import { authorizeCustomerWorkActor, type CustomerWorkActor } from '@/services/customer-work/CustomerWorkScope';
+import { authorizeCustomerOperationOwner } from '@/services/customer-work/CustomerWorkOperationRequest';
+import { acquireCustomerWorkScopeLock } from '@/migrations/runCustomerWorkScopeLock';
+import { customerWriteoffLinePrice } from '@/services/customer-work/CustomerWorkWriteoffSalePrice';
 
 const VERIFY_CODE_LOCK_NAMESPACE = 63_843;
 const OPEN_REFUND_TYPES = [0, 1, 2, 4, 5];
@@ -39,8 +44,23 @@ const MAX_ORDER_CART_ROWS = 500;
 export type WriteoffActor =
   | { kind: "staff"; uid: number }
   | { kind: "delivery"; uid: number }
+  | { kind: "scoped-delivery"; uid: number; actor: DeliveryActor; selection: DeliverySelection; scopeKey: string }
   | { kind: "admin"; adminId: number }
-  | { kind: "kefu"; kefuId: number; kefuUid: number };
+  | { kind: "kefu"; kefuId: number; kefuUid: number }
+  | CustomerWriteoffActor;
+
+/** Server-only ordinary UserJWT principal. Neither JSON fields nor a UID can
+ * supply the mandatory full-intent authorizer. The core also checks the real
+ * account/scope itself, independently of this callback. */
+export interface CustomerWriteoffActor {
+  kind: 'customer';
+  uid: number;
+  actor: CustomerWorkActor;
+  serviceId: number;
+  scopeKey: string;
+  authorize: (tx: DbClient, order: typeof storeOrder.$inferSelect,
+    carts: Array<typeof storeOrderCartInfo.$inferSelect>, mode: 'pickup'|'delivery', lock: boolean) => Promise<void>;
+}
 
 export interface WriteoffLineInput {
   /** store_order_cart_info.id. */
@@ -152,7 +172,7 @@ function legacyLookupValue(value: unknown): string {
   return normalized;
 }
 
-export function calculateWriteoffLinePrice(value: string | null, quantity: number): string {
+export function calculateWriteoffLinePrice(value: string | null, quantity: number, useSaleSnapshot = false): string {
   const snapshot = parseSnapshot(value);
   if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
     throw new Error("订单商品价格快照缺失，不能安全核销");
@@ -164,7 +184,7 @@ export function calculateWriteoffLinePrice(value: string | null, quantity: numbe
   const legacy = source.productInfo && typeof source.productInfo === "object" && !Array.isArray(source.productInfo)
     ? source.productInfo as Record<string, unknown>
     : null;
-  const raw = sku?.price ?? legacy?.truePrice ?? legacy?.price;
+  const raw = (useSaleSnapshot ? source.truePrice : undefined) ?? sku?.price ?? legacy?.truePrice ?? legacy?.price;
   if (typeof raw !== "string" && typeof raw !== "number") {
     throw new Error("订单商品价格快照无效，不能安全核销");
   }
@@ -435,9 +455,10 @@ export class StoreOrderWriteoffService {
         .for("update");
       const order = orderRows[0];
       if (!order) throw new ValidateException("核销码已失效，请重新读取订单");
-      const mode = this.writeoffMode(order);
-      const operator = await this.requireOperator(tx, actor, order, mode);
-      await this.assertOrderState(tx, order, mode);
+      if (order.isDel || order.isSystemDel) throw new ValidateException("订单已删除，不能核销");
+      const mode = this.writeoffMode(order, actor);
+      const operator = await this.requireOperator(tx, actor, order, mode, true);
+      await this.assertOrderState(tx, order, mode, actor);
       // Authoritative mutation gate after actor validation and the exact order
       // lock; read-only previews are not fulfillment authorization.
       await assertPresaleDispatchReady(tx, order, "核销");
@@ -449,9 +470,20 @@ export class StoreOrderWriteoffService {
         .orderBy(asc(storeOrderCartInfo.id))
         .for("update");
       if (!carts.length) throw new Error("订单缺少商品快照，不能安全核销");
+      if (actor.kind === 'customer') {
+        if (carts.length > MAX_ORDER_CART_ROWS || carts.some(cart => cart.oid !== order.id || cart.uid !== order.uid)
+          || carts.reduce((sum, cart) => sum + new TextEncoder().encode(cart.cartInfo ?? '').length, 0) > MAX_JSON_SNAPSHOT_BYTES) {
+          throw new ValidateException('核销商品归属或原快照超过完整核对容量');
+        }
+        if (!input.items?.length || input.items.some(item => item.orderCartId === undefined || item.cartId !== undefined)) {
+          throw new ValidateException('手机核销必须明确选择真实商品行');
+        }
+        await actor.authorize(tx, order, carts, mode, true);
+      }
       const requested = validateRequestedLines(input.items, carts);
       if (!requested.size) throw new ValidateException("订单没有剩余可核销商品");
       const now = Math.floor(Date.now() / 1000);
+      const recordIds: number[] = [];
 
       for (const cart of carts) {
         const quantity = requested.get(cart.id);
@@ -475,7 +507,7 @@ export class StoreOrderWriteoffService {
           ))
           .returning({ id: storeOrderCartInfo.id });
         if (!updated[0]) throw new ValidateException("核销商品已被处理，请刷新后重试");
-        await tx.insert(storeOrderWriteoff).values({
+        const records = await tx.insert(storeOrderWriteoff).values({
           uid: order.uid,
           oid: order.id,
           orderCartId: cart.id,
@@ -485,12 +517,16 @@ export class StoreOrderWriteoffService {
           productId: cart.productId,
           productType: cart.productType,
           writeoffNum: quantity,
-          writeoffPrice: calculateWriteoffLinePrice(cart.cartInfo, quantity),
+          writeoffPrice: actor.kind === 'customer'
+            ? customerWriteoffLinePrice(cart, quantity)
+            : calculateWriteoffLinePrice(cart.cartInfo, quantity, actor.kind === "scoped-delivery"),
           writeoffCode: code,
           isAdmin: operator.isAdmin,
           adminId: operator.adminId,
           addTime: now,
-        });
+        }).returning({ id: storeOrderWriteoff.id });
+        if (records.length !== 1) throw Error("核销记录未原子落库");
+        recordIds.push(records[0].id);
       }
 
       const completed = carts.every((cart) => {
@@ -514,7 +550,9 @@ export class StoreOrderWriteoffService {
             changeTime: now,
           });
         }
-        return { order_id: order.orderId, completed: false, status: 5 };
+        if (actor.kind === 'customer') await tx.insert(storeOrderStatus).values({ oid: order.id,
+          changeType: 'customer_order_writeoff', changeMessage: `手机订单用户 ${actor.uid}，经营身份 ${actor.serviceId} 完成部分核销`, changeTime: now });
+        return { order_id: order.orderId, completed: false, status: 5, ...(actor.kind === "scoped-delivery" || actor.kind === 'customer' ? { record_ids: recordIds } : {}) };
       }
 
       const allowedStatuses = mode === "pickup" ? [0, 5] : [1, 5];
@@ -532,11 +570,13 @@ export class StoreOrderWriteoffService {
         now,
         actor.kind === "admin"
           ? "管理员完成订单核销"
-          : actor.kind === "delivery"
+          : actor.kind === "delivery" || actor.kind === "scoped-delivery"
             ? "配送员完成送达核销"
             : actor.kind === "kefu"
               ? "客服完成订单核销"
-              : "门店店员完成订单核销",
+              : actor.kind === 'customer'
+                ? '手机订单用户完成订单核销'
+                : "门店店员完成订单核销",
       );
       if (actor.kind === "kefu") {
         await tx.insert(storeOrderStatus).values({
@@ -546,7 +586,9 @@ export class StoreOrderWriteoffService {
           changeTime: now,
         });
       }
-      return { order_id: order.orderId, completed: true, status: 2 };
+      if (actor.kind === 'customer') await tx.insert(storeOrderStatus).values({ oid: order.id,
+        changeType: 'customer_order_writeoff', changeMessage: `手机订单用户 ${actor.uid}，经营身份 ${actor.serviceId} 完成全部核销`, changeTime: now });
+      return { order_id: order.orderId, completed: true, status: 2, ...(actor.kind === "scoped-delivery" || actor.kind === 'customer' ? { record_ids: recordIds } : {}) };
     });
   }
 
@@ -688,6 +730,9 @@ export class StoreOrderWriteoffService {
 
   private actorLookupCondition(actor: WriteoffActor) {
     if (actor.kind === "staff") return eq(storeOrder.shippingType, 2);
+    if (actor.kind === "scoped-delivery") {
+      return and(eq(storeOrder.deliveryType, "send"), eq(storeOrder.deliveryUid, actor.uid), actor.selection.kind === "store" ? eq(storeOrder.storeId, actor.selection.store_id) : undefined);
+    }
     if (actor.kind === "delivery") {
       return and(eq(storeOrder.deliveryType, "send"), eq(storeOrder.deliveryUid, actor.uid));
     }
@@ -697,8 +742,11 @@ export class StoreOrderWriteoffService {
     return or(eq(storeOrder.shippingType, 2), eq(storeOrder.deliveryType, "send"));
   }
 
-  private writeoffMode(order: typeof storeOrder.$inferSelect): WriteoffMode {
+  private writeoffMode(order: typeof storeOrder.$inferSelect, actor?: WriteoffActor): WriteoffMode {
     if (order.shippingType === 2 && order.storeId > 0) return "pickup";
+    // This is only a mode candidate. The mandatory customer full-intent
+    // authorizer must prove the immutable cashier origin before any DML.
+    if (actor?.kind === 'customer' && order.shippingType === 2 && order.storeId === 0) return 'pickup';
     if ([1, 3].includes(order.shippingType) && order.deliveryType === "send" && order.deliveryUid > 0) {
       return "delivery";
     }
@@ -709,7 +757,11 @@ export class StoreOrderWriteoffService {
     tx: DbClient,
     order: typeof storeOrder.$inferSelect,
     mode: WriteoffMode,
+    actor?: WriteoffActor,
   ): Promise<void> {
+    if (actor?.kind === 'customer' && order.type === 4) {
+      throw new ValidateException('积分兑换订单不属于普通用户核销范围');
+    }
     if (!order.paid) throw new ValidateException("订单尚未支付");
     const allowedStatuses = mode === "pickup" ? [0, 5] : [1, 5];
     if (!allowedStatuses.includes(order.status)) throw new ValidateException("订单状态不允许核销");
@@ -717,7 +769,7 @@ export class StoreOrderWriteoffService {
     if (order.pid === -1 || order.supplierAllocationStatus === 1) {
       throw new ValidateException("订单正在拆分或分配，不能核销");
     }
-    if (mode === "pickup") {
+    if (mode === "pickup" && !(actor?.kind === 'customer' && order.storeId === 0)) {
       const stores = await tx
         .select({ id: systemStore.id })
         .from(systemStore)
@@ -751,7 +803,18 @@ export class StoreOrderWriteoffService {
     actor: WriteoffActor,
     order: typeof storeOrder.$inferSelect,
     mode: WriteoffMode,
+    lock = false,
   ): Promise<WriteoffOperator> {
+    if (actor.kind === 'customer') {
+      if (typeof actor.authorize !== 'function' || actor.uid !== actor.actor.uid || !Number.isSafeInteger(actor.uid)
+        || actor.uid <= 0 || !Number.isSafeInteger(actor.serviceId) || actor.serviceId <= 0 || !/^[a-f0-9]{64}$/.test(actor.scopeKey)) {
+        throw new ValidateException('手机核销必须来自真实用户会话和独立经营身份');
+      }
+      if (lock) { await authorizeCustomerOperationOwner(tx, actor.actor); await acquireCustomerWorkScopeLock(tx, actor.uid); }
+      const scope = await authorizeCustomerWorkActor(tx, actor.actor);
+      if (scope.service_id !== actor.serviceId || scope.scope_key !== actor.scopeKey) throw new ValidateException('手机核销经营身份已变化');
+      return { staffId: 0, deliveryId: 0, clerkUid: actor.uid, isAdmin: 0, adminId: 0 };
+    }
     if (actor.kind === "kefu") {
       if (!Number.isSafeInteger(actor.kefuId) || actor.kefuId <= 0) {
         throw new ValidateException("客服账号身份无效");
@@ -764,6 +827,12 @@ export class StoreOrderWriteoffService {
       return { staffId: 0, deliveryId: 0, clerkUid: 0, isAdmin: 1, adminId: actor.adminId };
     }
     if (!Number.isSafeInteger(actor.uid) || actor.uid <= 0) throw new ValidateException("核销员身份无效");
+    if (actor.kind === "scoped-delivery") {
+      if (actor.actor.uid !== actor.uid || mode !== "delivery" || order.deliveryUid !== actor.uid || order.deliveryType !== "send" || order.pid < 0 || order.isDel || order.isSystemDel) throw new ValidateException("当前账号不是该订单的配送员");
+      const scope = await requireDeliveryScope(tx, actor.actor, actor.selection, { lock, expectedScopeKey: actor.scopeKey });
+      if (scope.kind === "store" && order.storeId !== scope.store_id) throw new ValidateException("配送订单不属于所选门店");
+      return { staffId: 0, deliveryId: scope.delivery_id, clerkUid: actor.uid, isAdmin: 0, adminId: 0 };
+    }
     if (actor.kind === "delivery") {
       if (mode !== "delivery" || order.deliveryUid !== actor.uid) {
         throw new ValidateException("当前账号不是该订单的配送员");

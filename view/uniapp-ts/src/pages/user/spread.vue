@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="spread-page">
     <!-- 推广卡片 -->
     <view class="spread-card">
@@ -55,9 +56,11 @@
     <view class="extract-btn" @tap="goExtract">申请提现 ›</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
@@ -114,7 +117,7 @@ onMounted(loadData);
 }
 
 .spread-card {
-  background: linear-gradient(135deg, #e93323, #ff6b35);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 20rpx;
   padding: 40rpx 30rpx;
   margin-bottom: 20rpx;
@@ -180,7 +183,7 @@ onMounted(loadData);
 }
 
 .copy-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 24rpx;
   padding: 10rpx 24rpx;
@@ -235,7 +238,7 @@ onMounted(loadData);
 .people-avatar {
   width: 60rpx;
   height: 60rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   border-radius: 50%;
   font-size: 28rpx;
@@ -265,8 +268,8 @@ onMounted(loadData);
   left: 30rpx;
   right: 30rpx;
   background: #fff;
-  color: #e93323;
-  border: 2rpx solid #e93323;
+  color: var(--view-theme, #e93323);
+  border: 2rpx solid var(--view-theme, #e93323);
   text-align: center;
   padding: 24rpx;
   border-radius: 44rpx;

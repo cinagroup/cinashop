@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="sign-page">
     <!-- 签到头部 -->
     <view class="sign-card">
@@ -20,9 +21,11 @@
     <view class="go-shop" @tap="goIntegral">去积分商城逛逛 ›</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
 
@@ -87,7 +90,7 @@ onMounted(load);
 }
 
 .sign-card {
-  background: linear-gradient(135deg, #f5a623, #f76b1c);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 40rpx 30rpx;
   color: #fff;
@@ -108,7 +111,7 @@ onMounted(load);
 
 .sign-btn {
   background: #fff;
-  color: #f76b1c;
+  color: var(--view-theme, #e93323);
   font-size: 30rpx;
   font-weight: 600;
   border-radius: 40rpx;
@@ -143,7 +146,7 @@ onMounted(load);
 
 .go-shop {
   text-align: center;
-  color: #f76b1c;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
   padding: 20rpx;
 }

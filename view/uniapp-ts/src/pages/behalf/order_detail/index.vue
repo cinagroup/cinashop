@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="detail-page">
     <view class="eyebrow">管理员 · 代客下单</view><view class="title">订单详情</view>
     <view v-if="!canRead" class="panel notice">请登录具有代客下单权限的管理员。商城会员登录不能授权此页面。<button @tap="goRecords">前往代客记录／登录</button></view>
@@ -32,8 +33,10 @@
     </template>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useAssistedDetail } from '@/composables/useAssistedDetail';
 const { session, canRead, detail, loading, error, load, goRecords, goCashier } = useAssistedDetail();
 function formatTime(seconds: number) { return seconds ? new Date(seconds * 1000).toLocaleString('zh-CN', { hour12: false }) : '时间未记录'; }

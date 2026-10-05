@@ -240,16 +240,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
     const whole=await sequenceRunnerDatabase();
     try {
       if(path==='external') {
-        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();expect(files.at(-1)).toBe('0165_assisted_order_list_index.sql');
+        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();expect(files.at(-1)).toBe('0169_coupon_template_catalog.sql');
         for(const file of files) await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       }else if(path==='embedded') {
-        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 172},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 176},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       }else{
         const api=await import('drizzle-kit/api');await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(allModels))).join('\n'));
         await expect(runRefundOrderSplitSchema(whole.db,true)).rejects.toThrow();
         await runInvoiceEvidenceSchema(whole.db,true);
       }
-      expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:279}]);
+      expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:281}]);
       expect(await inspectRefundOrderSplitSchema(whole.db)).toEqual({state:path==='orm'?'orm-pending':'v1',invoiceProtectionReady:true});
       if(path==='orm') await runRefundOrderSplitSchema(whole.db,true);
       await whole.db.insert(storeOrderRefundSplit).values(split);await whole.db.insert(storeOrderFulfillmentBranch).values(branch);

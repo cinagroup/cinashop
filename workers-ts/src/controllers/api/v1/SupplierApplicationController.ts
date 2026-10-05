@@ -98,10 +98,12 @@ export async function requestCode(c: C) {
 }
 
 export async function adminList(c: C) {
+  c.header("Cache-Control", "no-store");
   return jsonOk(c, await service(c).adminList(c.req.query()));
 }
 
 export async function adminDetail(c: C) {
+  c.header("Cache-Control", "no-store");
   return jsonOk(c, await service(c).adminDetail(c.req.param("id")));
 }
 
@@ -118,16 +120,17 @@ export async function adminMark(c: C) {
   const input = await body(c);
   return jsonOk(
     c,
-    await service(c).mark(c.req.param("id"), input.mark),
+    await service(c).mark(c.req.param("id"), input.mark, input.expected_version),
     "备注已保存",
   );
 }
 
 export async function adminDelete(c: C) {
-  return jsonOk(c, await service(c).delete(c.req.param("id")), "申请已删除");
+  return jsonOk(c, await service(c).delete(c.req.param("id"), c.req.query("expected_version")), "申请已删除");
 }
 
 export async function adminReviewForm(c: C) {
+  c.header("Cache-Control", "no-store");
   const info = await service(c).adminDetail(c.req.param("id"));
   return jsonOk(c, {
     title: "供应商入驻审核",
@@ -145,6 +148,7 @@ export async function adminReviewForm(c: C) {
 }
 
 export async function adminMarkForm(c: C) {
+  c.header("Cache-Control", "no-store");
   const info = await service(c).adminDetail(c.req.param("id"));
   return jsonOk(c, {
     title: "供应商申请备注",

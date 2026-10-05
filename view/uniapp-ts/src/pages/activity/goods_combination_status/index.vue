@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="pink-status">
     <view class="heading">拼团状态</view>
     <view class="hint">团记录 #{{ recordId || '无效' }} · 刷新仅查询，取消须单独确认</view>
@@ -62,9 +63,11 @@
     </template>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onShareAppMessage } from '@dcloudio/uni-app';
 import { usePinkStatus } from '@/composables/usePinkStatus';
 const { recordId, detail, loading, error, navigating, loggedIn, pending, canJoin, title, remaining,
@@ -82,8 +85,8 @@ onShareAppMessage(() => invitation() ?? { title: '查看拼团活动', path: '/p
 .card { background: white; border-radius: 18rpx; padding: 26rpx; margin: 24rpx 0; }
 .product { display: flex; align-items: center; gap: 24rpx; }.product > view { min-width: 0; }
 .product-image { width: 160rpx; height: 160rpx; flex-shrink: 0; }.product-title { font-size: 30rpx; font-weight: 600; overflow-wrap: anywhere; }
-.price { color: #b72a1d; margin-top: 12rpx; }.state { font-size: 40rpx; font-weight: 600; margin: 24rpx 0; }.pending { color: #8a5700; }
+.price { color: var(--view-priceColor, #e93323); margin-top: 12rpx; }.state { font-size: 40rpx; font-weight: 600; margin: 24rpx 0; }.pending { color: #8a5700; }
 .members { display: flex; flex-wrap: wrap; gap: 20rpx; margin: 24rpx 0; }.member { width: 132rpx; text-align: center; font-size: 23rpx; overflow-wrap: anywhere; }
 .avatar { width: 86rpx; height: 86rpx; border-radius: 50%; margin: 0 auto 10rpx; }.fallback { background: #eee; color: #666; line-height: 86rpx; }
-button { font-size: 27rpx; margin-top: 18rpx; overflow-wrap: anywhere; }.primary { background: #e93323; color: white; }
+button { font-size: 27rpx; margin-top: 18rpx; overflow-wrap: anywhere; }.primary { background: var(--view-theme, #e93323); color: white; }
 </style>

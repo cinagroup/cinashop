@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="newcomer-detail">
     <view class="heading">新人专享商品</view>
     <view v-if="loading" class="notice" role="status">正在加载新人商品…</view>
@@ -6,7 +7,9 @@
     <button v-if="!auth.isLoggedIn" @tap="login">登录后查看</button>
     <button v-else size="mini" :disabled="loading" @tap="load">刷新商品</button>
     <view v-if="detail" class="product">
-      <image v-if="detail.image" :src="detail.image" mode="aspectFit" class="hero-image" />
+      <ProductMedia :images="detail.image?[detail.image]:[]" video="" :picture-config="activityDesign.pictureConfig" :dots="activityDesign.swiperDot" :active="visible"/>
+      <view v-if="activityDesignError" class="notice">{{activityDesignError}}<button size="mini" @tap="reloadActivityDesign">重试展示设置</button></view>
+      <ActivityDetailMenu :menu="activityDesign.menuList" :product-id="detail.id" :path="'/pages/activity/newcomerDetail?id='+detail.id" :title="detail.title" :image="detail.image" :active="visible"/>
       <view class="content">
         <view class="name">{{ detail.title }}</view>
         <view v-if="detail.description" class="notice">{{ detail.description }}</view>
@@ -22,13 +25,20 @@
       </view>
     </view>
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+import ProductMedia from '@/components/productDetail/ProductMedia.vue';
+import ActivityDetailMenu from '@/components/productDetail/ActivityDetailMenu.vue';
+import {useActivityDetailDesign,useActivityDetailShare} from '@/composables/useActivityDetailDesign';
+const {activityDesign,activityDesignError,reloadActivityDesign}=useActivityDetailDesign();
 import { useNewcomerProduct } from '@/composables/useNewcomerProduct';
-const { auth, detail, loading, error, load, login } = useNewcomerProduct();
+const { auth, detail, loading, error, visible,load, login } = useNewcomerProduct();
+useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/newcomerDetail?id=${detail.value.id}`,image:detail.value.image}:null,()=>visible.value);
 </script>
 <style scoped>
 .newcomer-detail { max-width: 900px; margin: auto; padding: 24rpx 24rpx calc(60rpx + env(safe-area-inset-bottom)); overflow-wrap: anywhere; }
 .heading { font-size: 38rpx; font-weight: 700; margin-bottom: 20rpx; }.notice { color: #67636a; font-size: 25rpx; line-height: 1.6; margin: 18rpx 0; }.error { color: #a62b22; padding: 18rpx; background: #fff0ee; margin-bottom: 14rpx; }
-.product { border-radius: 18rpx; overflow: hidden; background: white; }.hero-image { width: 100%; height: 400rpx; background: #f5f5f5; }.content { padding: 26rpx; }.name { font-size: 34rpx; font-weight: 650; }.price { color: #c32e1e; font-size: 34rpx; margin: 22rpx 0; }.original { color: #888; text-decoration: line-through; font-size: 23rpx; }.section-title { font-size: 28rpx; font-weight: 600; margin: 26rpx 0 12rpx; }.sku { display: flex; align-items: center; gap: 18rpx; border-top: 1rpx solid #eee; padding: 15rpx 0; }.sku-image { flex: none; width: 70rpx; height: 70rpx; }.sku-price { color: #b63725; font-size: 24rpx; margin-top: 6rpx; }
+.product { border-radius: 18rpx; overflow: hidden; background: white; }.hero-image { width: 100%; height: 400rpx; background: #f5f5f5; }.content { padding: 26rpx; }.name { font-size: 34rpx; font-weight: 650; }.price { color: var(--view-priceColor, #e93323); font-size: 34rpx; margin: 22rpx 0; }.original { color: #888; text-decoration: line-through; font-size: 23rpx; }.section-title { font-size: 28rpx; font-weight: 600; margin: 26rpx 0 12rpx; }.sku { display: flex; align-items: center; gap: 18rpx; border-top: 1rpx solid #eee; padding: 15rpx 0; }.sku-image { flex: none; width: 70rpx; height: 70rpx; }.sku-price { color: var(--view-priceColor, #e93323); font-size: 24rpx; margin-top: 6rpx; }
 </style>

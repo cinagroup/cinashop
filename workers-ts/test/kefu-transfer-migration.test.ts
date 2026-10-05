@@ -15,7 +15,7 @@ describe("customer-service transfer migration", () => {
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0101\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     expect(migration).toContain('PRIMARY KEY');
     expect(migration).toContain('"sst_customer_time"');
     expect(migration).toContain('"sst_target_time"');

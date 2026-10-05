@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view class="tabs">
       <button v-for="tab in tabs" :key="tab.type" class="tab" :class="{ active: activeType === tab.type }" @tap="switchTab(tab.type)">{{ tab.name }}（{{ state.counts?.[tab.count] ?? '—' }}）</button>
@@ -49,8 +50,10 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useAuthStore } from "@/stores/auth";
 import { useCouponWallet } from "@/composables/useCouponWallet";
 import type { WalletStatus, WalletFilter } from "@/api/couponWallet";
@@ -73,7 +76,7 @@ function login() { uni.navigateTo({ url: "/pages/auth/login" }); }
 .error { color: #b72a1d; padding: 20rpx 0; line-height: 1.7; }
 .coupon-list { margin-top: 20rpx; }
 .coupon-card { display: flex; background: white; border-radius: 12rpx; overflow: hidden; margin-bottom: 20rpx; }
-.coupon-left { flex: 0 0 180rpx; background: linear-gradient(135deg,#d83122,#e95a27); color: white; padding: 28rpx 10rpx; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.coupon-left { flex: 0 0 180rpx; background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931)); color: white; padding: 28rpx 10rpx; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .unavailable { background: #727272; }
 .amount { font-size: 36rpx; font-weight: 700; }
 .minimum { font-size: 20rpx; margin-top: 10rpx; }
@@ -88,7 +91,7 @@ function login() { uni.navigateTo({ url: "/pages/auth/login" }); }
 .mask { position: fixed; inset: 0; z-index: 120; background: #0008; display: flex; align-items: center; justify-content: center; padding: 28rpx; }
 .detail-card { box-sizing: border-box; width: 620rpx; max-width: 100%; max-height: 80vh; overflow-y: auto; background: white; border-radius: 20rpx; padding: 30rpx; }
 .detail-head { text-align: center; padding-bottom: 20rpx; border-bottom: 1rpx dashed #ddd; }
-.detail-amount { font-size: 52rpx; font-weight: 700; color: #c8271a; }
+.detail-amount { font-size: 52rpx; font-weight: 700; color: var(--view-priceColor, #e93323); }
 .detail-row { padding: 14rpx 0; line-height: 1.6; }
 .detail-card button { margin-top: 14rpx; font-size: 26rpx; }
 </style>

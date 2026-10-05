@@ -21,8 +21,15 @@ describe('notification HTTP session boundaries', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { finish = resolve; })));
     sessionStorage.setItem(KEFU_TOKEN_KEY, 'old'); const old = apiRequest('/kefuapi/messages');
     sessionStorage.setItem(KEFU_TOKEN_KEY, 'new'); sessionStorage.setItem(KEFU_INFO_KEY, 'new identity');
-    finish(Response.json({ status: 401, msg: 'expired' }, { status: 401 })); await expect(old).rejects.toThrow('expired');
+    finish(Response.json({ status: 401, msg: 'expired' }, { status: 401 })); await expect(old).rejects.toThrow('身份已变更');
     expect(sessionStorage.getItem(KEFU_TOKEN_KEY)).toBe('new'); expect(sessionStorage.getItem(KEFU_INFO_KEY)).toBe('new identity');
+  });
+  it('rejects a late successful response after identity replacement', async () => {
+    let finish!: (value: Response) => void;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { finish = resolve; })));
+    sessionStorage.setItem(KEFU_TOKEN_KEY, 'old'); const old = apiRequest('/kefuapi/service/list');
+    sessionStorage.setItem(KEFU_TOKEN_KEY, 'new');
+    finish(Response.json({ status: 200, data: ['old private history'] })); await expect(old).rejects.toThrow('身份已变更');
   });
   it.each([403, 503])('does not log out on permission or infrastructure status %s', async (status) => {
     sessionStorage.setItem(KEFU_TOKEN_KEY, 'current');

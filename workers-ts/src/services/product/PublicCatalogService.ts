@@ -3,42 +3,44 @@ import {
   asc,
   desc,
   eq,
+  exists,
   gt,
   gte,
   inArray,
   isNull,
   lt,
   lte,
+  notExists,
+  notInArray,
   or,
   sql,
 } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
+import { withTx,createContainerFromDb,type Container } from "@/lib/di";
 import {
   storeBrand,
   storeCouponIssue,
   storeCouponProduct,
-  storeDiscounts,
-  storeDiscountsProducts,
-  storeOrder,
-  storeOrderCartInfo,
   storeProduct,
   storeProductCategory,
-  storeProductDescription,
   storeProductLabel,
+  storeProductRelation,
   storePromotions,
   storePromotionsAuxiliary,
-  storeService,
   systemDise,
   systemGroup,
   systemGroupData,
-  user,
   wechatUser,
 } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
-import { getOrderInvalidTime } from "@/services/payment/OrderPaymentPolicy";
 import { StoreProductService, type GoodsListParams } from "./StoreProductService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { readProductDetailDesignSnapshot,publicProductDetailDesign } from '@/services/content/ProductDetailDesignReadService';
+import { themeDeadlines } from '@/services/content/ThemeReadService';
+import { UserCenterPublicReadService } from '@/services/content/UserCenterPublicReadService';
+import { publicOrdinaryProductIdentitySql } from './OrdinaryProductReadData';
+import { readDetailDescription,renderDetailDescription,readDetailPackages } from './ProductDetailDesignData';
+import { publicProductPictures,renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { presaleProductVisibility, readPresaleCatalogAccount, validatePresaleCatalogUid, withPresaleCatalogSnapshot } from '@/services/activity/PresaleCatalogSnapshot';
 
 const MAX_LIMIT = 100;
@@ -127,15 +129,6 @@ function csvIds(value: unknown): number[] {
 function int(value: unknown, fallback = 0): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
-}
-
-function parseJsonObject(value: string | null): Record<string, unknown> {
-  if (!value || value.length > 1_000_000) return {};
-  try {
-    return plainObject(JSON.parse(value)) ?? {};
-  } catch {
-    return {};
-  }
 }
 
 function parseJsonArray(value: string | null): unknown[] {
@@ -383,123 +376,9 @@ export class PublicCatalogService {
     return Boolean(rows[0]?.subscribe);
   }
 
-  async menuUser(uid: number): Promise<Record<string, unknown>> {
-    const [groups, configs, users, memberRows] = await Promise.all([
-      this.groupDataMany(["routine_my_menus", "routine_my_banner"]),
-      this.config.getMany([
-        "member_func_status", "brokerage_func_status", "store_brokerage_apply",
-        "balance_func_status", "member_card_status", "division_open", "division_apply_open",
-        "routine_contact_type", "level_activate_status", "site_url", "routine_spread_banner",
-      ]),
-      uid ? this.container.db.select().from(user).where(eq(user.uid, uid)).limit(1) : Promise.resolve([]),
-      this.container.db.select({ value: systemDise.value, status: systemDise.status })
-        .from(systemDise)
-        .where(and(eq(systemDise.templateName, "member"), eq(systemDise.type, 3), eq(systemDise.isDel, 0)))
-        .orderBy(desc(systemDise.id)).limit(1),
-    ]);
-    const current = users[0];
-    const enabled = (name: string, fallback = false) => {
-      const value = configs[name];
-      return value === "" ? fallback : value === "1" || value === "true";
-    };
-    const divisionValid = !current || current.divisionType === 0
-      || (current.divisionStatus === 1 && current.divisionEndTime > Math.floor(Date.now() / 1_000));
-    const hidden: Record<string, boolean> = {
-      "/pages/users/user_vip/index": !enabled("member_func_status"),
-      "/pages/users/user_spread_user/index": !uid || !enabled("brokerage_func_status") || !current?.isPromoter || !divisionValid,
-      "/pages/users/agent/apply": !uid || !enabled("brokerage_func_status") || !enabled("division_open") || !enabled("division_apply_open") || current?.divisionType !== 0,
-      "/pages/users/distributor/apply": !uid || !enabled("brokerage_func_status") || Boolean(current?.isPromoter) || !enabled("store_brokerage_apply"),
-      "/pages/users/user_money/index": !enabled("balance_func_status"),
-      "/pages/annex/vip_paid/index": !enabled("member_card_status"),
-    };
-    const filterMenu = (items: Record<string, unknown>[]) => items.flatMap((item) => {
-      const url = String(item.url ?? "");
-      if (hidden[url]) return [];
-      const next = { ...item };
-      if (url === "/pages/users/user_vip/index" && enabled("level_activate_status") && current?.levelStatus === 0) {
-        next.url = "/pages/annex/vip_grade_active/index";
-      }
-      return [next];
-    });
-    const diyData = parseJsonObject(memberRows[0]?.value ?? null);
-    for (const key of ["menu", "merMenu"]) {
-      const block = plainObject(diyData[key]);
-      if (block && Array.isArray(block.list)) {
-        block.list = filterMenu(
-          block.list.flatMap((item): Record<string, unknown>[] => {
-            const record = plainObject(item);
-            return record ? [record] : [];
-          }),
-        );
-      }
-    }
-    let spreadBanner: unknown = [];
-    try { spreadBanner = JSON.parse(configs.routine_spread_banner || "[]"); } catch { /* empty */ }
-    return {
-      routine_my_menus: filterMenu(groups.routine_my_menus),
-      routine_my_banner: groups.routine_my_banner,
-      routine_spread_banner: Array.isArray(spreadBanner) ? spreadBanner : [],
-      routine_contact_type: int(configs.routine_contact_type),
-      diy_data: diyData,
-    };
-  }
+  async menuUser(uid: number): Promise<Record<string, unknown>> { return new UserCenterPublicReadService(this.container,this.env).menu(uid); }
 
-  async menuUserData(uid: number): Promise<Record<string, unknown>> {
-    if (!uid) return { commission: [], order: [], not_pay_order: [] };
-    const users = await this.container.db.select().from(user).where(eq(user.uid, uid)).limit(1);
-    const current = users[0];
-    if (!current) return { commission: [], order: [], not_pay_order: [] };
-    const [downlineRows, serviceRows, unpaidRows] = await Promise.all([
-      current.isPromoter
-        ? this.container.db.select({
-          number: sql<number>`COUNT(DISTINCT ${user.uid})::int`,
-          orderNum: sql<number>`COUNT(${storeOrder.id}) FILTER (WHERE ${storeOrder.paid} = 1 AND ${storeOrder.isDel} = 0 AND ${storeOrder.pid} = 0)::int`,
-        }).from(user).leftJoin(storeOrder, eq(storeOrder.uid, user.uid)).where(eq(user.spreadUid, uid))
-        : Promise.resolve([]),
-      this.container.db.select({ id: storeService.id }).from(storeService).where(and(
-        eq(storeService.uid, uid), eq(storeService.accountStatus, 1), eq(storeService.status, 1),
-        eq(storeService.customer, 1), eq(storeService.isDel, 0),
-      )).limit(1),
-      this.container.db.select().from(storeOrder).where(and(
-        eq(storeOrder.uid, uid), eq(storeOrder.pid, 0), eq(storeOrder.paid, 0),
-        eq(storeOrder.status, 0), eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0),
-      )).orderBy(desc(storeOrder.addTime)).limit(1),
-    ]);
-    const commission = current.isPromoter ? {
-      brokerage_price: current.brokeragePrice,
-      number: Number(downlineRows[0]?.number ?? 0),
-      order_num: Number(downlineRows[0]?.orderNum ?? 0),
-    } : [];
-    let orderData: Record<string, unknown> | [] = [];
-    if (serviceRows.length) {
-      const rows = await this.container.db.select({
-        price: sql<string>`COALESCE(SUM(${storeOrder.payPrice}), 0)::numeric(14,2)`,
-        num: sql<number>`COUNT(*)::int`,
-        consignment: sql<number>`COUNT(*) FILTER (WHERE ${storeOrder.status} = 1)::int`,
-      }).from(storeOrder).where(and(
-        inArray(storeOrder.pid, [0, -1]), eq(storeOrder.paid, 1), eq(storeOrder.isDel, 0),
-        eq(storeOrder.isSystemDel, 0), inArray(storeOrder.refundStatus, [0, 3]),
-      ));
-      orderData = { user_order: true, ...rows[0] };
-    } else {
-      orderData = { user_order: false };
-    }
-    let notPay: Record<string, unknown> | [] | null = [];
-    if (unpaidRows[0]) {
-      const order = unpaidRows[0];
-      const carts = await this.container.db.select({ cartInfo: storeOrderCartInfo.cartInfo })
-        .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id)).limit(1);
-      const cart = parseJsonObject(carts[0]?.cartInfo ?? null);
-      const productInfo = plainObject(cart.productInfo) ?? {};
-      const stopTime = await getOrderInvalidTime(this.container, this.env, order.type, order.addTime);
-      notPay = stopTime > Math.floor(Date.now() / 1_000) ? {
-        id: order.id, order_id: order.orderId, pay_price: order.payPrice, pay_type: order.payType,
-        type: order.type, add_time: order.addTime, img: productInfo.image ?? "",
-        store_name: productInfo.store_name ?? "", stop_time: stopTime,
-      } : null;
-    }
-    return { commission, order: orderData, not_pay_order: notPay };
-  }
+  async menuUserData(uid: number): Promise<Record<string, unknown>> { return new UserCenterPublicReadService(this.container,this.env).data(uid); }
 
   private async categoryIds(selectId: number): Promise<number[]> {
     if (!selectId) return [];
@@ -603,36 +482,80 @@ export class PublicCatalogService {
   }
 
   async detailRecommend(uid: number, productId: number, limit = 12) {
-    const product = await this.container.storeProductDao.getById(productId);
-    if (!product) return [];
-    const ids = csvIds(product.recommendList);
-    return ids.length
-      ? this.recommend(uid, { ids, limit })
-      : this.recommend(uid, { flag: "good", limit });
+    // The normal detail assembles its public recommendations in the same RR
+    // snapshot as visibility, ownership, membership and design authority.
+    const detail=await this.products.getProductDetail(productId,uid);
+    return Array.isArray(detail.recommend)?detail.recommend.slice(0,Math.max(0,Math.min(24,limit))):[];
   }
 
   async detailContent(productId: number): Promise<{ description: string }> {
-    const product = await this.container.storeProductDao.getById(productId);
-    if (!product || product.isDel || !product.isShow || product.isVerify !== 1) {
-      throw new NotFoundException("商品不存在或已下架");
-    }
-    const rows = await this.container.db.select({ description: storeProductDescription.description })
-      .from(storeProductDescription).where(and(
-        eq(storeProductDescription.productId, productId), eq(storeProductDescription.type, 0),
-      )).limit(1);
-    return { description: rows[0]?.description ?? "" };
+    const result=await withTx(this.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);
+      const [product]=await tx.select({type:storeProduct.type,relationId:storeProduct.relationId}).from(storeProduct).where(and(eq(storeProduct.id,productId),publicOrdinaryProductIdentitySql())).limit(1);
+      if(!product)throw new NotFoundException('商品不存在或已下架');return readDetailDescription(tx,productId,0,product);});
+    return {description:await renderDetailDescription(this.env?.APP_KEY,result)};
   }
 
-  async productActivity(productId: number): Promise<Record<string, unknown>> {
+  async productActivity(productId: number, promotionType = 0): Promise<Record<string, unknown>> {
+    const result=await withTx(this.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);
+      return new PublicCatalogService(createContainerFromDb(tx),this.env).productActivityInSnapshot(productId,promotionType);});
+    const promotions=result.promotions as Array<{image:string}>,background=result.activity_background as {image?:string},packages=result.discounts_products as Array<{image:string;products:Array<{image:string}>}>;
+    const refs=[...promotions.map(row=>row.image),background.image??'',...packages.flatMap(row=>[row.image,...row.products.map(product=>product.image)])],images=await renderProductPictures(this.env?.APP_KEY,refs);let cursor=0;
+    for(const row of promotions)row.image=images[cursor++];if(background.image!==undefined)background.image=images[cursor];cursor++;
+    for(const row of packages){row.image=images[cursor++];for(const product of row.products)product.image=images[cursor++];}return result;
+  }
+  private async productActivityInSnapshot(productId: number,promotionType:number):Promise<Record<string,unknown>>{
     const empty = {
       activity: [], coupons: [], discounts_products: [], promotions: [],
       activity_background: [], computed: { deduction: [] },
     };
-    const product = await this.container.storeProductDao.getById(productId);
+    const [product] = await this.container.db.select({id:storeProduct.id,pid:storeProduct.pid,isPresaleProduct:storeProduct.isPresaleProduct}).from(storeProduct)
+      .where(and(eq(storeProduct.id,productId),publicOrdinaryProductIdentitySql())).limit(1);
     if (!product || product.isPresaleProduct) return empty;
     const nowDate = new Date();
     const now = Math.floor(nowDate.getTime() / 1_000);
-    const [coupons, discounts, promotions] = await Promise.all([
+    const design=publicProductDetailDesign(await readProductDetailDesignSnapshot(this.container.db)).value;
+    const showService = design.showService;
+    const showMarketing = Array.isArray(showService)
+      && showService.some((value) => value === 0);
+    const promotionTypes = promotionType > 0
+      ? [promotionType]
+      : showMarketing ? [1, 2, 3, 4, 6] : [6];
+    const promotionProductId = product.pid > 0 ? product.pid : productId;
+    const auxiliary = storePromotionsAuxiliary;
+    const scopeAuxiliary = and(
+      eq(auxiliary.promotionsId, storePromotions.id),
+      eq(auxiliary.type, 1),
+      // Decorative activities are saved against one explicit scope. Keep the
+      // older price-promotion interpretation for types 1–4 unchanged.
+      or(notInArray(storePromotions.promotionsType, [5, 6]),
+        eq(auxiliary.productPartakeType, storePromotions.productPartakeType)),
+    );
+    const matchesProduct = exists(this.container.db.select({ id: auxiliary.id }).from(auxiliary).where(and(
+      scopeAuxiliary, eq(auxiliary.productId, promotionProductId),
+    )));
+    const notExcluded = notExists(this.container.db.select({ id: auxiliary.id }).from(auxiliary).where(and(
+      scopeAuxiliary, eq(auxiliary.productId, promotionProductId), eq(auxiliary.isAll, 1),
+    )));
+    const matchesBrand = exists(this.container.db.select({ id: auxiliary.id }).from(auxiliary)
+      .innerJoin(storeProductRelation, and(
+        eq(storeProductRelation.productId, promotionProductId),
+        eq(storeProductRelation.type, 2),
+        eq(storeProductRelation.relationId, auxiliary.brandId),
+      )).where(and(scopeAuxiliary, gt(auxiliary.brandId, 0))));
+    const matchesLabel = exists(this.container.db.select({ id: auxiliary.id }).from(auxiliary)
+      .innerJoin(storeProductRelation, and(
+        eq(storeProductRelation.productId, promotionProductId),
+        eq(storeProductRelation.type, 3),
+        eq(storeProductRelation.relationId, auxiliary.storeLabelId),
+      )).where(and(scopeAuxiliary, gt(auxiliary.storeLabelId, 0))));
+    const promotionScope = or(
+      eq(storePromotions.productPartakeType, 1),
+      and(eq(storePromotions.productPartakeType, 2), matchesProduct),
+      and(eq(storePromotions.productPartakeType, 3), notExcluded),
+      and(eq(storePromotions.productPartakeType, 4), matchesBrand),
+      and(eq(storePromotions.productPartakeType, 5), matchesLabel),
+    );
+    const [coupons, promotions] = await Promise.all([
       this.container.db.selectDistinct({
         id: storeCouponIssue.id, type: storeCouponIssue.type, coupon_type: storeCouponIssue.couponType,
         coupon_title: storeCouponIssue.couponTitle, coupon_price: storeCouponIssue.couponPrice,
@@ -645,17 +568,7 @@ export class PublicCatalogService {
           or(isNull(storeCouponIssue.startTime), lte(storeCouponIssue.startTime, nowDate)),
           or(isNull(storeCouponIssue.endTime), gte(storeCouponIssue.endTime, nowDate)),
         )).orderBy(desc(storeCouponIssue.couponPrice)).limit(3),
-      this.container.db.selectDistinct({
-        id: storeDiscounts.id, type: storeDiscounts.type, title: storeDiscounts.title,
-        image: storeDiscounts.image, is_limit: storeDiscounts.isLimit,
-        limit_num: storeDiscounts.limitNum, product_ids: storeDiscounts.productIds,
-        sort: storeDiscounts.sort,
-      }).from(storeDiscounts).innerJoin(storeDiscountsProducts, eq(storeDiscountsProducts.discountId, storeDiscounts.id))
-        .where(and(
-          eq(storeDiscountsProducts.productId, productId), eq(storeDiscounts.status, 1),
-          eq(storeDiscounts.isDel, 0), or(eq(storeDiscounts.isTime, 0), and(lte(storeDiscounts.startTime, now), gte(storeDiscounts.stopTime, now))),
-        )).orderBy(desc(storeDiscounts.sort)).limit(2),
-      this.container.db.selectDistinct({
+      this.container.db.selectDistinctOn([storePromotions.promotionsType], {
         id: storePromotions.id, type: storePromotions.type, title: storePromotions.title,
         name: storePromotions.name, promotions_type: storePromotions.promotionsType,
         threshold_type: storePromotions.thresholdType, threshold: storePromotions.threshold,
@@ -663,17 +576,21 @@ export class PublicCatalogService {
         desc: storePromotions.description, image: storePromotions.image,
         start_time: storePromotions.startTime, stop_time: storePromotions.stopTime,
         sort: storePromotions.sort,
-      }).from(storePromotions).innerJoin(storePromotionsAuxiliary, eq(storePromotionsAuxiliary.promotionsId, storePromotions.id))
+      }).from(storePromotions)
         .where(and(
-          eq(storePromotionsAuxiliary.productId, productId), eq(storePromotions.status, 1),
-          eq(storePromotions.isDel, 0), lte(storePromotions.startTime, now), gte(storePromotions.stopTime, now),
-        )).orderBy(desc(storePromotions.sort), desc(storePromotions.id)),
+          eq(storePromotions.pid, 0), eq(storePromotions.type, 1), eq(storePromotions.storeId, 0),
+          eq(storePromotions.status, 1), eq(storePromotions.isDel, 0),
+          inArray(storePromotions.promotionsType, promotionTypes),
+          lte(storePromotions.startTime, now), gte(storePromotions.stopTime, now), promotionScope,
+        )).orderBy(storePromotions.promotionsType, desc(storePromotions.updateTime), desc(storePromotions.id)),
     ]);
     const background = promotions.find((item) => item.promotions_type === 6);
+    const pictures=await publicProductPictures(this.container.db,promotions.map(row=>({image:row.image,type:0,relationId:0})));
+    for(let index=0;index<promotions.length;index++)promotions[index].image=pictures[index];
     return {
       ...empty,
       coupons,
-      discounts_products: discounts.map((item) => ({ ...item, products: [] })),
+      discounts_products: design.showMatch?await readDetailPackages(this.container.db,productId,design.matchNum,false):[],
       promotions: promotions.filter((item) => item.promotions_type !== 6),
       activity_background: background ? { id: background.id, name: background.name, image: background.image } : [],
     };

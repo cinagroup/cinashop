@@ -7,12 +7,65 @@ import {
   user,
   userBill,
   userLevel,
+  userLabel,
+  userLabelRelation,
 } from "@/models/schema";
 import type { Container, DbClient } from "@/lib/di";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { loadRefundLineCompensation } from './RefundLineCompensation';
 import { targetLineCompensation, type RefundLineCompensation } from './OrderSplitFinance';
+import { ValidateException } from '@/utils/errors';
+import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
+
+/** Labels are purchase effects, never eligibility or refundable gift inventory. */
+export function promotionPaidLabelIds(value: string | null): number[] | null {
+  if (!value || value === '[]' || value === 'null') return null;
+  const gift = readOrderPromotionGiftIntent(value);
+  if (gift) return [...new Set([...gift.price_promotions, ...gift.promotions]
+    .flatMap(promotion => promotion.label_id))].sort((a, b) => a - b);
+  if (new TextEncoder().encode(value).length > 65536) throw new ValidateException('促销标签快照过大');
+  let parsed: unknown;
+  try { parsed = JSON.parse(value); } catch { throw new ValidateException('促销标签快照无效'); }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)
+    || !('version' in parsed)) return null; // Unversioned PHP gift evidence is not this contract.
+  const intent = parsed as { version?: unknown; promotions?: unknown };
+  if (Object.keys(intent).some(key => !['version', 'promotions'].includes(key))
+    || intent.version !== 'order-promotion-labels-v1' || !Array.isArray(intent.promotions) || intent.promotions.length > 600) {
+    throw new ValidateException('促销标签快照版本无效');
+  }
+  const labels = new Set<number>();
+  for (const row of intent.promotions) {
+    if (!row || typeof row !== 'object' || !Number.isSafeInteger(row.id) || row.id <= 0
+      || Object.keys(row).some(key => !['id', 'label_id', 'name'].includes(key))
+      || typeof row.name !== 'string' || row.name.length > 255 || !Array.isArray(row.label_id) || row.label_id.length > 100
+      || row.label_id.some((id: unknown) => typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0)) {
+      throw new ValidateException('促销标签快照无效');
+    }
+    for (const id of row.label_id) labels.add(id);
+  }
+  return [...labels].sort((a, b) => a - b);
+}
+
+/** Called once by the owning paid outbox transaction, on the original payment root. */
+export async function grantPaidPromotionLabels(tx: DbClient,
+  order: Pick<typeof storeOrder.$inferSelect, 'uid' | 'pid' | 'paid' | 'promotionsGive'>): Promise<void> {
+  const ids = promotionPaidLabelIds(order.promotionsGive);
+  if (!ids?.length || order.uid === 0) return;
+  if (order.paid !== 1 || order.pid > 0) throw new ValidateException('促销标签付款归属无效');
+  const [account] = await tx.select({ uid: user.uid }).from(user).where(eq(user.uid, order.uid)).limit(1).for('update');
+  if (!account) throw new ValidateException('促销标签用户不存在');
+  const labels = await tx.select({ id: userLabel.id }).from(userLabel)
+    .where(and(inArray(userLabel.id, ids), eq(userLabel.type, 0), eq(userLabel.relationId, 0), eq(userLabel.status, 1))).for('share');
+  // A label deliberately retired after checkout is no longer assigned at payment.
+  if (!labels.length) return;
+  const existing = await tx.select({ id: userLabelRelation.labelId }).from(userLabelRelation)
+    .where(and(eq(userLabelRelation.uid, order.uid), eq(userLabelRelation.type, 0), eq(userLabelRelation.relationId, 0),
+      inArray(userLabelRelation.labelId, labels.map(label => label.id))));
+  const owned = new Set(existing.map(row => row.id));
+  const missing = labels.filter(label => !owned.has(label.id)).map(label => ({ uid: order.uid, type: 0, relationId: 0, labelId: label.id }));
+  if (missing.length) await tx.insert(userLabelRelation).values(missing);
+}
 
 const RATE_SCALE = 10_000;
 const INTEGRAL_GRANT_EVENTS = ["pay_give_integral", "order_give_integral"] as const;
@@ -139,13 +192,17 @@ export async function loadOrderRewardConfig(
   container: Container,
   env: SystemConfigEnv,
 ): Promise<OrderRewardConfig> {
-  const values = await new SystemConfigService(container, env).getMany([
-    "order_give_integral",
-    "member_func_status",
-    "order_give_exp",
-    "member_card_status",
+  const [values, memberCardStatus] = await Promise.all([
+    new SystemConfigService(container, env).getMany([
+      "order_give_integral",
+      "member_func_status",
+      "order_give_exp",
+    ]),
+    // This business switch must follow SQL even if an older KV read refills
+    // the cache after an admin save. Preserve the existing scalar/default rules.
+    container.systemConfigDao.getValue("member_card_status").then(normalizeConfigScalar),
   ]);
-  const memberCardEnabled = parseConfigInteger(values.member_card_status, 1) === 1;
+  const memberCardEnabled = parseConfigInteger(memberCardStatus, 1) === 1;
   let memberIntegralMultiplier = 1;
   if (memberCardEnabled) {
     const rights = await container.db

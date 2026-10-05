@@ -24,6 +24,7 @@ import {
   user,
 } from "@/models/schema";
 import { assertKefuConversation, parseKefuPageLimit } from "@/services/kefu/KefuCoreService";
+import { readPromotionLineEvidence } from "@/services/order/RefundSplitAllocation";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_PAGE = 1_000_000;
@@ -139,6 +140,12 @@ function money(value: unknown): string {
 
 export function cartProjection(row: CartRow) {
   const snapshot = record(parseSnapshot(row.cartInfo));
+  // A versioned line has exact mixed-price and member-saving amounts. Never
+  // reconstruct them from the rounded display unit or hide invalid evidence.
+  if (!snapshot && row.cartInfo?.includes("promotion_quote_version")) {
+    throw new ValidateException("客服订单商品促销金额快照无效");
+  }
+  const promotion = snapshot ? readPromotionLineEvidence(snapshot, row.cartNum) : null;
   const product = record(snapshot?.product);
   const productInfo = record(snapshot?.productInfo) ?? product;
   const sku = record(snapshot?.sku);
@@ -161,8 +168,12 @@ export function cartProjection(row: CartRow) {
     is_support_refund: row.isSupportRefund,
     truePrice,
     vip_truePrice: vipTruePrice,
-    vip_sum_truePrice: money(Number(vipTruePrice) * Math.max(row.cartNum, 1)),
-    sum_true_price: money(Number(truePrice) * row.cartNum),
+    vip_sum_truePrice: promotion
+      ? (promotion.memberSavingsCents / 100).toFixed(2)
+      : money(Number(vipTruePrice) * Math.max(row.cartNum, 1)),
+    sum_true_price: promotion
+      ? money(snapshot?.sum_true_price)
+      : money(Number(truePrice) * row.cartNum),
     postage_price: textValue(snapshot?.postage_price ?? snapshot?.postagePrice, "0.00"),
     coupon_price: textValue(snapshot?.coupon_price ?? snapshot?.couponPrice, "0.00"),
     integral_price: textValue(snapshot?.integral_price ?? snapshot?.integralPrice, "0.00"),

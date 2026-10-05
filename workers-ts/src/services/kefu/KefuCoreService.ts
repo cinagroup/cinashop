@@ -3,16 +3,20 @@ import {
   asc,
   desc,
   eq,
+  exists,
   ilike,
+  isNull,
   lt,
   or,
   sql,
   type SQL,
 } from "drizzle-orm";
 import type { Env, AppVariables } from "@/env";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
+import { createContainerFromDb, withTx } from "@/lib/di";
 import {
   storeService,
+  kefuVisitorSession,
   storeServiceLog,
   storeServiceRecord,
   systemUserLevel,
@@ -26,9 +30,23 @@ import {
   signAttachmentReferences,
 } from "@/services/system/AttachmentService";
 import { UserSegmentationService } from "@/services/user/UserSegmentationService";
+import { lockKefuConversationOwnership } from "@/services/kefu/KefuOwnership";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import type { SQLWrapper } from "drizzle-orm";
 
 const MAX_PAGE_SIZE = 100;
+
+function visitorAssignment(db: DbClient, kefuUid: number, peerUid: number | SQLWrapper) {
+  return exists(db.select({ uid: kefuVisitorSession.visitorUid }).from(kefuVisitorSession).where(and(
+    eq(kefuVisitorSession.visitorUid, peerUid), eq(kefuVisitorSession.kefuUid, kefuUid),
+    eq(kefuVisitorSession.revokedAt, 0), sql`${kefuVisitorSession.expiresAt} > ${Math.floor(Date.now() / 1000)}`,
+  )));
+}
+
+function conversationScope(db: DbClient, kefuUid: number, peerUid: number, isTourist: number) {
+  return and(eq(storeServiceRecord.userId, kefuUid), eq(storeServiceRecord.toUid, peerUid),
+    eq(storeServiceRecord.isTourist, isTourist), isTourist === 1 ? visitorAssignment(db, kefuUid, peerUid) : undefined);
+}
 
 function integer(
   value: unknown,
@@ -114,15 +132,12 @@ export async function assertKefuConversation(
   const record = await container.db
     .select({ id: storeServiceRecord.id })
     .from(storeServiceRecord)
-    .where(and(
-      eq(storeServiceRecord.userId, kefuUid),
-      eq(storeServiceRecord.toUid, peerUid),
-      eq(storeServiceRecord.isTourist, isTourist),
-    ))
-    .limit(1);
+    .where(conversationScope(container.db, kefuUid, peerUid, isTourist))
+    .limit(2);
   // Historical messages are not an ownership grant. A completed transfer
   // deletes the source record, immediately closing every old HTTP path.
-  if (!record[0]) throw new NotFoundException("当前客服与该用户没有会话");
+  if (!record.length) throw new NotFoundException("当前客服与该用户没有会话");
+  if (record.length > 1) throw new ValidateException("当前会话存在重复归属，请先修复数据");
 }
 
 export class KefuCoreService {
@@ -174,6 +189,7 @@ export class KefuCoreService {
       eq(storeService.online, 1),
       sql`${storeService.uid} <> ${kefuUid}`,
       sql`${storeService.uid} > 0`,
+      eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
     ];
     const nickname = query.nickname?.trim();
     if (nickname) conditions.push(ilike(storeService.nickname, `%${nickname.slice(0, 50)}%`));
@@ -186,6 +202,7 @@ export class KefuCoreService {
         online: storeService.online,
       })
       .from(storeService)
+      .innerJoin(userTable, eq(userTable.uid, storeService.uid))
       .where(and(...conditions))
       .orderBy(desc(storeService.online), asc(storeService.id))
       .limit(limit);
@@ -196,11 +213,16 @@ export class KefuCoreService {
     const limit = parseKefuPageLimit(query.limit);
     const isTourist = booleanFlag(query.is_tourist, "游客状态");
     const cursor = parseKefuSessionCursor(query.cursor);
+    const duplicates = await this.container.db.select({ uid: storeServiceRecord.toUid }).from(storeServiceRecord)
+      .where(and(eq(storeServiceRecord.userId, kefuUid), eq(storeServiceRecord.isTourist, isTourist)))
+      .groupBy(storeServiceRecord.toUid).having(sql`count(*) > 1`).limit(1);
+    if (duplicates.length) throw new ValidateException("当前会话存在重复归属，请先修复数据");
     const conditions: SQL[] = [
       // PHP StoreServiceRecordServices::getServiceList($kefuUid) scopes by
       // user_id (the record owner); to_uid is the customer/peer.
       eq(storeServiceRecord.userId, kefuUid),
       eq(storeServiceRecord.isTourist, isTourist),
+      ...(isTourist === 1 ? [visitorAssignment(this.container.db, kefuUid, storeServiceRecord.toUid)] : []),
     ];
     if (cursor) {
       conditions.push(sql`(${storeServiceRecord.updateTime}, ${storeServiceRecord.id}) < (${cursor.updateTime}, ${cursor.id})`);
@@ -236,7 +258,8 @@ export class KefuCoreService {
       .from(storeServiceRecord)
       .leftJoin(
         userTable,
-        and(eq(userTable.uid, storeServiceRecord.toUid), eq(userTable.isDel, 0)),
+        and(eq(storeServiceRecord.isTourist, 0), eq(userTable.uid, storeServiceRecord.toUid),
+          eq(userTable.isDel, 0), isNull(userTable.deleteTime)),
       )
       .where(and(...conditions))
       .orderBy(desc(storeServiceRecord.updateTime), desc(storeServiceRecord.id))
@@ -287,6 +310,10 @@ export class KefuCoreService {
       .where(and(
         conversation,
         eq(storeServiceLog.isTourist, isTourist),
+        // Recheck the grant inside the read itself: the earlier existence check
+        // may finish before a transfer commits and closes the source record.
+        exists(this.container.db.select({ id: storeServiceRecord.id }).from(storeServiceRecord)
+          .where(conversationScope(this.container.db, kefuUid, peerUid, isTourist))),
         upperId > 0 ? lt(storeServiceLog.id, upperId) : undefined,
       ))
       .orderBy(desc(storeServiceLog.id))
@@ -296,77 +323,80 @@ export class KefuCoreService {
 
   async userInfo(kefuUid: number, uidValue: unknown) {
     const uid = integer(uidValue, "用户ID", { min: 1 });
-    await this.assertConversation(kefuUid, uid, 0);
-    const user = (
-      await this.container.db
-        .select({
-          uid: userTable.uid,
-          nickname: userTable.nickname,
-          avatar: userTable.avatar,
-          spreadUid: userTable.spreadUid,
-          isPromoter: userTable.isPromoter,
-          birthday: userTable.birthday,
-          nowMoney: userTable.nowMoney,
-          userType: userTable.userType,
-          level: userTable.level,
-          groupId: userTable.groupId,
-          phone: userTable.phone,
-          isMoneyLevel: userTable.isMoneyLevel,
-        })
-        .from(userTable)
-        .where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0)))
-        .limit(1)
-    )[0];
-    if (!user) throw new NotFoundException("用户不存在");
-    const [labels, group, level, spread] = await Promise.all([
-      new UserSegmentationService(this.container).userLabels(uid),
-      user.groupId > 0
-        ? this.container.db
-            .select({ name: userGroup.groupName })
-            .from(userGroup)
-            .where(eq(userGroup.id, user.groupId))
-            .limit(1)
-        : Promise.resolve([]),
-      user.level > 0
-        ? this.container.db
-            .select({ name: systemUserLevel.name })
-            .from(systemUserLevel)
-            .where(eq(systemUserLevel.id, user.level))
-            .limit(1)
-        : Promise.resolve([]),
-      user.spreadUid > 0
-        ? this.container.db
-            .select({ nickname: userTable.nickname })
-            .from(userTable)
-            .where(eq(userTable.uid, user.spreadUid))
-            .limit(1)
-        : Promise.resolve([]),
-    ]);
-    return {
-      uid: user.uid,
-      nickname: user.nickname,
-      avatar: user.avatar,
-      spread_uid: user.spreadUid,
-      spread_name: spread[0]?.nickname ?? "",
-      is_promoter: user.isPromoter,
-      birthday: user.birthday,
-      now_money: user.nowMoney,
-      user_type: user.userType,
-      level: user.level,
-      level_name: level[0]?.name ?? "",
-      group_id: user.groupId,
-      group_name: group[0]?.name ?? "",
-      phone: user.phone,
-      is_money_level: user.isMoneyLevel,
-      labelNames: labels.map((item) => item.label_name),
-      labels,
-    };
+    return this.withOwnedCustomer(kefuUid, uid, false, async (container) => {
+      const user = (
+        await container.db
+          .select({
+            uid: userTable.uid,
+            nickname: userTable.nickname,
+            avatar: userTable.avatar,
+            spreadUid: userTable.spreadUid,
+            isPromoter: userTable.isPromoter,
+            birthday: userTable.birthday,
+            nowMoney: userTable.nowMoney,
+            userType: userTable.userType,
+            level: userTable.level,
+            groupId: userTable.groupId,
+            phone: userTable.phone,
+            isMoneyLevel: userTable.isMoneyLevel,
+          })
+          .from(userTable)
+          .where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
+            exists(container.db.select({ id: storeServiceRecord.id }).from(storeServiceRecord)
+              .where(conversationScope(container.db, kefuUid, uid, 0)))))
+          .limit(1)
+      )[0];
+      if (!user) throw new NotFoundException("用户不存在");
+      const [labels, group, level, spread] = await Promise.all([
+        new UserSegmentationService(container).userLabels(uid),
+        user.groupId > 0
+          ? container.db
+              .select({ name: userGroup.groupName })
+              .from(userGroup)
+              .where(eq(userGroup.id, user.groupId))
+              .limit(1)
+          : Promise.resolve([]),
+        user.level > 0
+          ? container.db
+              .select({ name: systemUserLevel.name })
+              .from(systemUserLevel)
+              .where(eq(systemUserLevel.id, user.level))
+              .limit(1)
+          : Promise.resolve([]),
+        user.spreadUid > 0
+          ? container.db
+              .select({ nickname: userTable.nickname })
+              .from(userTable)
+              .where(and(eq(userTable.uid, user.spreadUid), eq(userTable.isDel, 0), isNull(userTable.deleteTime)))
+              .limit(1)
+          : Promise.resolve([]),
+      ]);
+      return {
+        uid: user.uid,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        spread_uid: user.spreadUid,
+        spread_name: spread[0]?.nickname ?? "",
+        is_promoter: user.isPromoter,
+        birthday: user.birthday,
+        now_money: user.nowMoney,
+        user_type: user.userType,
+        level: user.level,
+        level_name: level[0]?.name ?? "",
+        group_id: user.groupId,
+        group_name: group[0]?.name ?? "",
+        phone: user.phone,
+        is_money_level: user.isMoneyLevel,
+        labelNames: labels.map((item) => item.label_name),
+        labels,
+      };
+    });
   }
 
   async userLabels(kefuUid: number, uidValue: unknown) {
     const uid = integer(uidValue, "用户ID", { min: 1 });
-    await this.assertConversation(kefuUid, uid, 0);
-    return new UserSegmentationService(this.container).userLabelOptions(uid);
+    return this.withOwnedCustomer(kefuUid, uid, false,
+      (container) => new UserSegmentationService(container).userLabelOptions(uid));
   }
 
   async userGroups() {
@@ -380,14 +410,32 @@ export class KefuCoreService {
   async setUserGroup(kefuUid: number, uidValue: unknown, groupIdValue: unknown) {
     const uid = integer(uidValue, "用户ID", { min: 1 });
     const groupId = integer(groupIdValue, "分组ID", { min: 1 });
-    await this.assertConversation(kefuUid, uid, 0);
-    await new UserSegmentationService(this.container).assignGroup([uid], groupId);
+    await this.withOwnedCustomer(kefuUid, uid, true,
+      (container) => new UserSegmentationService(container).assignGroup([uid], groupId));
   }
 
   async setUserLabels(kefuUid: number, uidValue: unknown, input: unknown) {
     const uid = integer(uidValue, "用户ID", { min: 1 });
-    await this.assertConversation(kefuUid, uid, 0);
-    await new UserSegmentationService(this.container).setUserLabels(uid, input);
+    await this.withOwnedCustomer(kefuUid, uid, true,
+      (container) => new UserSegmentationService(container).setUserLabels(uid, input));
+  }
+
+  private async withOwnedCustomer<T>(kefuUid: number, uid: number, write: boolean,
+    operation: (container: Container) => Promise<T>): Promise<T> {
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
+      await tx.execute(sql.raw("SET LOCAL statement_timeout = '10s'"));
+      // The shared transfer -> chat protocol keeps the grant valid until all
+      // context reads or nested segmentation writes finish on this transaction.
+      await lockKefuConversationOwnership(tx, kefuUid, uid);
+      const container = createContainerFromDb(tx);
+      await assertKefuConversation(container, kefuUid, uid, 0);
+      const customer = await tx.select({ uid: userTable.uid }).from(userTable)
+        .where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0), isNull(userTable.deleteTime)))
+        .limit(1).for(write ? "update" : "share");
+      if (!customer.length) throw new NotFoundException("用户不存在");
+      return operation(container);
+    });
   }
 
   private async assertConversation(kefuUid: number, peerUid: number, isTourist: number) {

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="balance-logs">
     <!-- 余额总览 -->
     <view class="balance-card">
@@ -36,9 +37,11 @@
     <view v-if="hasMore" class="load-more" @tap="loadMore">加载更多</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed, onMounted } from "vue";
 import { http } from "@/utils/request";
 
@@ -108,7 +111,7 @@ onMounted(async () => {
 }
 
 .balance-card {
-  background: linear-gradient(135deg, #e93323, #ff7a45);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 30rpx;
   color: #fff;
@@ -143,7 +146,7 @@ onMounted(async () => {
 }
 
 .filter-item.active {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-weight: 600;
 }

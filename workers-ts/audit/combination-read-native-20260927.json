@@ -1,0 +1,166 @@
+{
+  "date": "2026-09-27",
+  "status": "passed-local-final-source",
+  "published": false,
+  "scope": "Combination catalog prices/raw counts/export, global leaders/members, independent six-card statistics/scoped groups/paid-root orders;8operations16newGETroutes",
+  "aggregation": {
+    "nativeUniqueFiles": 6,
+    "nativeUniquePassed": 140,
+    "scopeUniquePassed": 105,
+    "regressionUniquePassed": 35,
+    "skipped": 0,
+    "rule": "Initial four complete green files128 plus final two files12; initial formal6 entirely excluded and initial HTTP6 superseded. Not one140/140 run, not135+12."
+  },
+  "initial": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-native-20260927.log",
+      "sha256": "436fc53d6f1a48240549c9f43a688428d5cf8ffd9fdaeefe5d503dc56f817d93"
+    },
+    "observed": {
+      "files": 6,
+      "passed": 135,
+      "failed": 5,
+      "exitCode": 1
+    },
+    "accepted": [
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-statistics.test.ts",
+        "sha256": "4ef5317bc9af7f52cada34102359a9f483e10c9ab73c9709e2e9e48a852dd7ac",
+        "passed": 69
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-export.test.ts",
+        "sha256": "d46b0df11b4b0ba63042ea03d4214867aa74615c1810804d467e6a290d3e06fe",
+        "passed": 24
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination.test.ts",
+        "sha256": "1fd653c105843a62fc9114ea86fbc7e17a9d0d7dcfcb1bf0df72f9ce1ea519c3",
+        "passed": 28
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-http.test.ts",
+        "sha256": "24c5890f4f7e5a0649cc3725f217bee5274a8adac5d83ced41ee012ab41dc31d",
+        "passed": 7
+      }
+    ],
+    "excluded": "Whole formal6 due shared fixture authority-role drift; initial HTTP6 replaced by final same file6"
+  },
+  "final": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-native-repaired-final-20260927.log",
+      "sha256": "26e2eb682e09691b078ec6c1132be350982cb86a7e55d074c8c7ea8ce4f1e310"
+    },
+    "files": [
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-statistics-postgres.test.ts",
+        "sha256": "0e0823d9a6997fd87bc26cd9401978b098515d5b2ed4c29adb66c6307f6f23fc",
+        "passed": 6
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-statistics-http.test.ts",
+        "sha256": "f3dc949524066c7def9a97307b1bcdc7e9af09b2844e6ca0193e4c523c3ff432",
+        "passed": 6
+      }
+    ],
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "repair": "Formal test creates/closes fresh schema per test; business SQL/role guards not weakened. Final Hono/JWT/commissioned role matrix and read row/sequence preservation tested."
+  },
+  "permission": {
+    "passed": 26,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-permission-final-20260927.log",
+      "sha256": "6eafa1c7ede34e71404e6ceffd73eac0ffe5da1399143c07be20c0834ee482b0"
+    }
+  },
+  "frontend": {
+    "passed": 72,
+    "newCases": 33,
+    "existingFormRegression": 39,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-remaining-frontend-frozen-final-20260927.log",
+      "sha256": "8b5417f79e1dad187d9497c3c1bc4ed4bfea7cc67d7258be83209c87d9e9619a"
+    }
+  },
+  "checks": {
+    "workerUnitAndRuntimeTypes": {
+      "exitCode": 0,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-worker-types-final-20260927.log",
+        "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+      }
+    },
+    "adminTypesAndProductionBuild": {
+      "exitCode": 0,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-admin-build-final-20260927.log",
+        "sha256": "6e40e5353ad424d5087e7fc6aad73b9860f939c2c1a540fb75b9682538b7244e"
+      }
+    },
+    "ledger": {
+      "files": 17,
+      "passed": 92,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-ledger-tests-final-20260927.log",
+        "sha256": "89580bf5740ad60519ecd10f82cfef1387664836a56b233f74582349445176b9"
+      }
+    }
+  },
+  "diagnostics": {
+    "initialLedger": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-ledger-tests-20260927.log",
+      "sha256": "6db689ce30636ada314530e7b5c5c98fb05a0d0a57ca5f2377430604dc8716b7"
+    },
+    "initialWorkerTypes": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-worker-types-20260927.log",
+      "sha256": "626631bc15cd2d3e830fd4d17e66f16f41c11959d217e3e91be38e8ef2b046c5"
+    },
+    "initialAdminBuild": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-admin-build-20260927.log",
+      "sha256": "32823711a2395e388354fb92571ed5ca60e1c50fb19ac71bd9adde0fd6b08c54"
+    },
+    "initialPermission": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-permission-20260927.log",
+      "sha256": "3e923402c9063e16107b8dc9ce0160d5fec77c41121a214bda016c0f972fb78d"
+    },
+    "rule": "Failed/superseded runs retained, not added to passed totals; types repaired only export-test array cast/unused frontend binding."
+  },
+  "review": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-native-review-20260927.json",
+    "sha256": "40a8b09be84e5f8a7e8e5aef0e07faad7690215c813cd01ed2e3f38e564ec4e8"
+  },
+  "cleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-postgres-stop-20260927.json",
+    "sha256": "8b47b67c13efbf2f8b2b84c6401bbffec19b3d80b5f0dbe3186b23c4584afdb7"
+  },
+  "sourceClosure": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-runtime-accepted-snapshot/manifest.json",
+    "sha256": "3947f9f6069c5231219dc454e6f83f1994530d5ed4e03b21d16171420a12cb89"
+  },
+  "finalDist": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-dist-accepted-snapshot/manifest.json",
+    "sha256": "5c5408b329a9822b817163cb6bc43a3d3717d43fc5218ad4516becfbb8f2aade"
+  },
+  "browser": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-browser-20260927.json",
+    "sha256": "097a534448dacdbe65c3ea3e08b9cb22cb8d4cfbe04726a8e95ed84d9f51022c"
+  },
+  "priorCatalogBaseline": {
+    "evidence": {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-native-20260927.json",
+      "sha256": "3c04e897bf74442a0f5bf77ccb9f493f85f92319dfa57085a4a8e506d170799f"
+    },
+    "external170Embedded175": "Previously accepted9paths279tables/fivecategorydiff0; not rerun for read batch",
+    "modelsMigrations": "Protected20 prior source files verified unchanged by independent review; read increment introduces no model/migration/ACL/grant/DML/row-lock/provider change"
+  },
+  "limitations": [
+    "Whole dirty worktree contains earlier unrelated changes and is not certified by this scoped read-only assertion.",
+    "Green per-file counts independently derived from AST expansion and aggregate log; Tee logs do not include per-file green lines or literal final exit marker; root tool returned exit0.",
+    "Full Linux CI and real configuration/provider/device/publication still open; opening/joining success notifications remain incomplete."
+  ],
+  "noProductionConnection": true,
+  "noLivePrivilegeChanges": true
+}

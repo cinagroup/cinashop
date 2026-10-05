@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="register-page">
     <view class="login-box">
       <view class="logo">CinaShop</view>
@@ -46,9 +47,11 @@
       <view class="to-login" @tap="goLogin">已有账号? 去登录</view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onUnmounted, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiRegister, apiRequestCode } from "@/api/auth";
@@ -132,7 +135,7 @@ function goLogin() {
   text-align: center;
   font-size: 48rpx;
   font-weight: 700;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .title {
@@ -165,12 +168,12 @@ function goLogin() {
 .code-button {
   flex-shrink: 0;
   padding-left: 24rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 25rpx;
 }
 
 .login-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 40rpx;
@@ -181,7 +184,7 @@ function goLogin() {
 
 .to-login {
   text-align: center;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
   margin-top: 30rpx;
 }

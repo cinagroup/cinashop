@@ -13,6 +13,8 @@ export interface PricedCouponItem {
   cart: { cartNum: number };
   product: { id: number; pid: number; cateId: string; brandId: number };
   unitPriceCents: number;
+  /** Exact eligible line amount after promotion overlay and partial quantity caps. */
+  couponEligibleGrossCents?: number;
 }
 export interface OrderCouponQuery { limit: number; before: number; unpaged: boolean }
 export type OrderCouponPage = Awaited<ReturnType<typeof eligibleOrderCoupons>>;
@@ -42,13 +44,13 @@ export async function prepareCouponScope(container: Container, orderItems: reado
   }
   const categoryById = new Map(categories.map((row) => [row.id, row]));
   const brandById = new Map(brands.map((row) => [row.id, row]));
-  const items: CouponScopeItem[] = orderItems.map(({ cart, product, unitPriceCents }) => {
+  const items: CouponScopeItem[] = orderItems.map(({ cart, product, unitPriceCents, couponEligibleGrossCents }) => {
     const direct = parseCouponScopeIds(product.cateId);
     const brand = brandById.get(product.brandId);
     return { productId: product.id, parentProductId: product.pid || product.id, categoryIds: direct,
       categoryAncestorIds: direct.flatMap((id) => { const row = categoryById.get(id); return row ? parseCouponScopeIds(row.pid, row.path) : []; }),
       brandId: product.brandId, brandAncestorIds: brand ? parseCouponScopeIds(brand.pid, brand.fid) : [],
-      subtotalCents: unitPriceCents * cart.cartNum };
+      subtotalCents: couponEligibleGrossCents ?? unitPriceCents * cart.cartNum };
   });
   return { related, items };
 }
@@ -59,20 +61,22 @@ function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<Retu
   if (coupon.startTime && coupon.startTime.getTime() > now) throw new ValidateException("优惠券尚未到可用时间");
   if (coupon.endTime && coupon.endTime.getTime() < now) throw new ValidateException("优惠券已过期");
   if (![0, 1, 2, 3].includes(issue.couponType) || ![1, 2].includes(issue.type)) throw new ValidateException("优惠券类型配置无效");
-  const eligibleSubtotalCents = calculateCouponEligibleSubtotalCents({ scopeType: issue.couponType,
+  const couponScope = { scopeType: issue.couponType,
     productIds: reconcileCouponProductScopeIds([issue.legacyProductIds, issue.productId], scope.related.get(issue.id) ?? []),
     categoryIds: parseCouponScopeIds(issue.legacyCategoryId, issue.category_id),
-    brandIds: parseCouponScopeIds(issue.legacyBrandId, issue.brandId), items: scope.items });
+    brandIds: parseCouponScopeIds(issue.legacyBrandId, issue.brandId) };
+  const lineEligibleCents = scope.items.map(item => calculateCouponEligibleSubtotalCents({ ...couponScope, items: [item] }));
+  const eligibleSubtotalCents = lineEligibleCents.reduce((sum, amount) => sum + amount, 0);
   if (eligibleSubtotalCents <= 0) throw new ValidateException("优惠券不适用于当前商品");
   let minimum: number;
   try { minimum = decimalToCents(coupon.useMinPrice); } catch { throw new ValidateException("优惠券使用门槛配置无效"); }
   if (eligibleSubtotalCents < minimum) throw new ValidateException(`适用商品满 ¥${coupon.useMinPrice} 才能使用该券`);
-  return { eligibleSubtotalCents, priceCents: calculateCouponDiscountCents({ discountType: issue.type, couponPrice: coupon.couponPrice, eligibleSubtotalCents }) };
+  return { eligibleSubtotalCents, lineEligibleCents, priceCents: calculateCouponDiscountCents({ discountType: issue.type, couponPrice: coupon.couponPrice, eligibleSubtotalCents }) };
 }
 
 /** Authoritative single-coupon resolution shared by quote, create and the order picker. */
 export async function resolveOrderCoupon(container: Container, uid: number, couponId: number | undefined, items: readonly PricedCouponItem[]) {
-  if (!couponId) return { priceCents: 0, row: null, quoteFacts: null, template: null };
+  if (!couponId) return { priceCents: 0, row: null, quoteFacts: null, template: null, lineEligibleCents: null };
   const rows = await container.db.select({ coupon: storeCouponUser, issue: storeCouponIssue }).from(storeCouponUser)
     .leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
     .where(and(eq(storeCouponUser.id, couponId), eq(storeCouponUser.uid, uid))).limit(1);
@@ -99,6 +103,7 @@ export async function resolveOrderCoupon(container: Container, uid: number, coup
     })).sort((a, b) => a.productId - b.productId || a.subtotalCents - b.subtotalCents),
   };
   return { priceCents: evaluated.priceCents, row: coupon, quoteFacts,
+    lineEligibleCents: evaluated.lineEligibleCents,
     template: couponTemplateSnapshot(issue, scope.related.get(issue.id) ?? [], scope.items) };
 }
 

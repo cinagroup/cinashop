@@ -23,6 +23,7 @@ beforeAll(async () => {
         export { default as Page } from './src/pages/marketing/IntegralLog.vue';
         export { default as request } from './src/utils/request';
         export * as integralLog from './src/api/integralLog';
+        export * as integralLogExport from './src/api/integralLogExport';
         export { createRenderer, nextTick } from 'vue';
         export { createPinia } from 'pinia';
         export * as message from 'element-plus';
@@ -56,6 +57,18 @@ const row = (id: number) => ({
 });
 const rows = (page = 1) => ({ list: [row(page === 1 ? 3 : 1)], count: 21, page, limit: 15 });
 const stats = (total = "100") => ({ total_integral: total, sign_count: "3", sign_integral: "15", used_integral: "7" });
+const exportRow = (id: number) => ({ id: String(id), title: "签到积分", balance: "100", number: "5",
+  mark: "每日签到", nickname: "会员甲", add_time: "2023-11-15 06:13:20" });
+const exportPages = Array.from({ length: 1001 }, (_, index) => exportRow(1001 - index));
+const exportBytes = () => new TextEncoder().encode(runtime.integralLogExport.buildIntegralLogCsv(exportPages)).byteLength;
+const exportManifest = (page: number, change: Record<string, unknown> = {}) => ({
+  header: [...runtime.integralLogExport.integralLogExportHeaders],
+  filekey: [...runtime.integralLogExport.integralLogExportKeys],
+  export: page === 1 ? exportPages.slice(0, 1000) : exportPages.slice(1000),
+  filename: "积分日志", count: 1001, page, limit: 1000, has_more: page === 1,
+  snapshot: "a".repeat(64), csv_bytes: exportBytes(), max_rows: 100000,
+  max_bytes: 16777216, timezone: "Asia/Shanghai", ...change,
+});
 const flush = async () => {
   for (let index = 0; index < 12; index++) {
     await new Promise((done) => setTimeout(done, 1));
@@ -231,5 +244,100 @@ it("ignores stale list and statistics responses and clears both on account repla
     await fixture.view.loadList(1);
     await fixture.view.loadStats();
     expect(fixture.calls).toHaveLength(callsAfterReplacement);
+  } finally { fixture.close(); }
+});
+
+it("requires both independent view and export grants before starting a download", async () => {
+  const viewOnly = await mount(["integral_log.view"]);
+  try {
+    expect(viewOnly.view.canExport.value).toBe(false);
+    await viewOnly.view.exportCsv();
+    expect(viewOnly.calls.some((call) => call.url.endsWith("/export"))).toBe(false);
+  } finally { viewOnly.close(); }
+  const exportOnly = await mount(["integral_log.export"]);
+  try {
+    expect(exportOnly.view.canView.value).toBe(false);
+    expect(exportOnly.view.canExport.value).toBe(false);
+    await exportOnly.view.exportCsv();
+    expect(exportOnly.calls).toEqual([]);
+  } finally { exportOnly.close(); }
+  expect(runtime.integralLogExport.buildIntegralLogCsv([exportRow(1)])).toContain('"签到积分"');
+});
+
+it("downloads only a complete stable 1001-row manifest across two pages", async () => {
+  const calls: any[] = [];
+  runtime.request.defaults.adapter = async (config: any) => {
+    calls.push(config);
+    return { config, data: envelope(exportManifest(config.params.page)), status: 200,
+      statusText: "frontend fixture", headers: {} };
+  };
+  const updates: [number, number][] = [];
+  const result = await runtime.integralLogExport.collectIntegralLogExport({ keyword: "会员甲", type: "sign" },
+    new AbortController().signal, (read: number, total: number) => updates.push([read, total]));
+  expect(calls.map((call) => call.url)).toEqual(["/marketing/user-point/export", "/marketing/user-point/export"]);
+  expect(calls[0].params).toMatchObject({ keyword: "会员甲", type: "sign", page: 1, limit: 1000 });
+  expect(calls[1].params).toMatchObject({ keyword: "会员甲", type: "sign", page: 2,
+    limit: 1000, snapshot: "a".repeat(64) });
+  expect(updates).toEqual([[1000, 1001], [1001, 1001]]);
+  expect(result.filename).toBe("积分日志");
+  expect(new TextEncoder().encode(result.csv).byteLength).toBe(exportBytes());
+  expect(result.csv.match(/\r\n/gu)).toHaveLength(1002);
+});
+
+it("starts the page download only after its full manifest validates", async () => {
+  const clicked: string[] = [];
+  const revoked: string[] = [];
+  const link = { href: "", download: "", style: { display: "" }, click() { clicked.push(this.download); }, remove() {} };
+  vi.stubGlobal("document", { createElement: () => link, body: { appendChild() {} } });
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:integral-log");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(url => { revoked.push(url); });
+  const fixture = await mount(["integral_log.view", "integral_log.export"], config =>
+    config.url.endsWith("/export") ? envelope(exportManifest(config.params.page)) : undefined);
+  try {
+    await fixture.view.exportCsv();
+    expect(fixture.calls.filter(call => call.url.endsWith("/export"))).toHaveLength(2);
+    expect(clicked).toHaveLength(1);
+    expect(clicked[0]).toMatch(/^积分日志_\d+\.csv$/u);
+    expect(revoked).toEqual(["blob:integral-log"]);
+    expect(fixture.view.exportError.value).toBe("");
+  } finally { fixture.close(); vi.restoreAllMocks(); }
+});
+
+it("rejects truncated, drifting, repeated and unprotected export pages without a file", async () => {
+  for (const corrupt of [
+    { export: exportPages.slice(0, 999) },
+    { export: exportPages.slice(0, 999).concat(exportPages[0]) },
+    { export: [{ ...exportPages[0], title: "=1+1" }, ...exportPages.slice(1, 1000)] },
+  ]) {
+    runtime.request.defaults.adapter = async (config: any) => ({ config, data: envelope(exportManifest(1, corrupt)),
+      status: 200, statusText: "fixture", headers: {} });
+    await expect(runtime.integralLogExport.collectIntegralLogExport({}, new AbortController().signal, () => {})).rejects.toThrow();
+  }
+  runtime.request.defaults.adapter = async (config: any) => ({ config,
+    data: envelope(exportManifest(config.params.page, config.params.page === 2 ? { snapshot: "b".repeat(64) } : {})),
+    status: 200, statusText: "fixture", headers: {} });
+  await expect(runtime.integralLogExport.collectIntegralLogExport({}, new AbortController().signal, () => {})).rejects.toThrow("快照");
+});
+
+it("cancels a running export on account replacement and never applies its late response", async () => {
+  let resolveExport!: (value: unknown) => void;
+  const pending = new Promise(resolve => { resolveExport = resolve; });
+  const fixture = await mount(["integral_log.view", "integral_log.export"], config =>
+    config.url.endsWith("/export") ? pending : undefined);
+  try {
+    expect(fixture.view.canExport.value).toBe(true);
+    const running = fixture.view.exportCsv();
+    await flush();
+    const exportCall = fixture.calls.find(call => call.url.endsWith("/export"));
+    expect(exportCall).toBeTruthy();
+    login([], "integral-token-b", 21);
+    browser.dispatchEvent(new Event("admin-session-changed"));
+    await flush();
+    expect(exportCall.signal.aborted).toBe(true);
+    resolveExport(envelope(exportManifest(1)));
+    await running;
+    expect(fixture.view.exporting.value).toBe(false);
+    expect(fixture.view.canExport.value).toBe(false);
+    expect(fixture.view.exportError.value).toBe("");
   } finally { fixture.close(); }
 });

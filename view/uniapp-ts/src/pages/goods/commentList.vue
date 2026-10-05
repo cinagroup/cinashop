@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="comment-page">
     <!-- 评价统计 -->
     <view class="stats-bar" v-if="stats">
@@ -47,9 +48,11 @@
     <view v-if="list.length && !hasMore" class="load-more">没有更多了</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { apiReplyConfig, apiReplyList } from "@/api/reply";
@@ -178,8 +181,8 @@ onLoad((options) => {
 }
 
 .filter-tab.active {
-  background: #fff5f4;
-  color: #e93323;
+  background: var(--view-minorColorT, rgba(233, 51, 35, 0.1));
+  color: var(--view-theme, #e93323);
   font-weight: 600;
 }
 
@@ -199,7 +202,7 @@ onLoad((options) => {
 .avatar {
   width: 48rpx;
   height: 48rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   border-radius: 50%;
   font-size: 24rpx;

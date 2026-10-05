@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-27T02:21:45.850Z",
+  "state": "local_candidate_verified_not_released",
+  "scope": "Admin store_seckill_time CRUD, fixed reference-lock capability, full-schema forward/fresh paths, actual runtime LOGIN and unchanged seckill consumers; isolated loopback PG16.15 only.",
+  "native": {
+    "uniqueFiles": 11,
+    "passed": 342,
+    "failed": 0,
+    "skipped": 0,
+    "acceptedFinalRuns": [
+      {
+        "accepted": true,
+        "files": 4,
+        "passed": 77,
+        "failed": 0,
+        "skipped": 0,
+        "exitCode": 0,
+        "sessionId": 46442,
+        "durationSeconds": 94.01,
+        "log": {
+          "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-guard-native-20260927-final.log",
+          "sha256": "7a6dfbd43e1a2d6138ff3c124a153ce62656718e7052ec91040de5f328157cf4"
+        },
+        "selectedTests": [
+          "test/admin-seckill-time.test.ts",
+          "test/admin-seckill-time-postgres.test.ts",
+          "test/seckill-time-reference-lock.test.ts",
+          "test/seckill-time-reference-lock-upgrade.test.ts"
+        ],
+        "caseGroups": {
+          "adminBusiness": 28,
+          "adminConcurrency": 14,
+          "capability": 33,
+          "completeSchemaThreePaths": 2
+        },
+        "cluster": "finance-postgres-gKyKKo",
+        "host": "127.0.0.1",
+        "port": 57752,
+        "postgresVersion": "16.15",
+        "fixtureRemaining": 0,
+        "pgCtlStatus": 3,
+        "listening": 0
+      },
+      {
+        "accepted": true,
+        "files": 1,
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exitCode": 0,
+        "sessionId": 8329,
+        "durationSeconds": 253.87,
+        "log": {
+          "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-guard-runtime-login-20260927-final.log",
+          "sha256": "67a8c43d6c670672da1775ec953ae9315f72cafecfff38c247a26ef87cd0ea15"
+        },
+        "selectedTests": [
+          "test/runtime-business-login.test.ts"
+        ],
+        "cluster": "finance-postgres-BCBHaw",
+        "host": "127.0.0.1",
+        "port": 50743,
+        "postgresVersion": "16.15",
+        "fixtureRemaining": 0,
+        "pgCtlStatus": 3,
+        "listening": 0,
+        "actualSeckillAppPurchaseCovered": false
+      }
+    ],
+    "consumerRegression": {
+      "kind": "seckill_existing_consumer_native_verification",
+      "date": "2026-09-27",
+      "postgresVersion": "16.15",
+      "productionAccess": false,
+      "effectiveUniqueFiles": 6,
+      "effectiveUniquePassedTests": 235,
+      "failed": 0,
+      "skipped": 0,
+      "selectedTests": [
+        "test/seckill-schedule.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts"
+      ],
+      "batches": [
+        {
+          "log": {
+            "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-existing-native-20260927-catalog.log",
+            "sha256": "9f8a2dae0e367343f4e096ba0fb63b3ec87e08113e8eed0d021cad46406ff8f5"
+          },
+          "files": 3,
+          "testsPassed": 102,
+          "exitCode": 0,
+          "schemaMaintenance": false,
+          "port": 59636,
+          "cluster": "finance-postgres-UubUus",
+          "fixtureRemaining": 0,
+          "pgCtlStatus": 3,
+          "portConnections": 0
+        },
+        {
+          "log": {
+            "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-existing-native-20260927-checkout.log",
+            "sha256": "67e1622177219c348bd19cfd5751d69a75faeeafa2a331ef10fb52d82ed7f001"
+          },
+          "files": 3,
+          "testsPassed": 133,
+          "exitCode": 0,
+          "schemaMaintenance": true,
+          "port": 61969,
+          "cluster": "finance-postgres-oQlfTK",
+          "fixtureRemaining": 0,
+          "pgCtlStatus": 3,
+          "portConnections": 0
+        },
+        {
+          "log": {
+            "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-existing-native-20260927-catalog-final.log",
+            "sha256": "ac31924a02c1314045df60234f282f1631dcec82127483da5e2a0ea6039e318c"
+          },
+          "files": 1,
+          "testsPassed": 48,
+          "exitCode": 0,
+          "schemaMaintenance": false,
+          "port": 56182,
+          "cluster": "finance-postgres-4yZZZs",
+          "fixtureRemaining": 0,
+          "pgCtlStatus": 3,
+          "portConnections": 0,
+          "selectedTests": [
+            "test/seckill-catalog-schedule-postgres.test.ts"
+          ],
+          "replacesPriorResult": true
+        },
+        {
+          "log": {
+            "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-existing-native-20260927-pc-final.log",
+            "sha256": "151af57ea8223dd12d623f3bae4565d3049024408f4b5b1e1c8bc1d8ae7dac87"
+          },
+          "files": 1,
+          "testsPassed": 6,
+          "exitCode": 0,
+          "schemaMaintenance": true,
+          "port": 63066,
+          "cluster": "finance-postgres-4YjHCu",
+          "fixtureRemaining": 0,
+          "pgCtlStatus": 3,
+          "portConnections": 0,
+          "selectedTests": [
+            "test/pc-seckill-purchase.test.ts"
+          ],
+          "replacesPriorResult": true
+        }
+      ],
+      "finalPolicyChange": "Canonical asset ID PG32 range protection landed between batches. After its owner confirmed freeze, the affected catalogue/index and PC consumer files were rerun on final code. Reruns replace earlier evidence and do not inflate unique totals.",
+      "observedInputChangesAfterFreeze": [],
+      "finalInputs": [
+        {
+          "file": "workers-ts/test/seckill-schedule.test.ts",
+          "sha256": "c9b71f2d4630b1c6ba022e65795fa1cf25f5f3c27d3762838e60d3f81e14b7af"
+        },
+        {
+          "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+          "sha256": "46b5503bcbe45242cac02afe683c192b315109c9e9b7548d61098b995b68a4e2"
+        },
+        {
+          "file": "workers-ts/test/seckill-concurrency-postgres.test.ts",
+          "sha256": "e1195704b24799338fa54647f49d3299598c1a8d8181858d66a71da5d5581483"
+        },
+        {
+          "file": "workers-ts/test/seckill-catalog-schedule-postgres.test.ts",
+          "sha256": "be0bb882f6f89a065f5223e47cda8d4ef35b1ccb9fc7c94881e112c0efedaa64"
+        },
+        {
+          "file": "workers-ts/test/seckill-sku-catalog-postgres.test.ts",
+          "sha256": "c23bf2839ba37c75a3fbf47de97bac1a822279850339137ca9ff6503289990f8"
+        },
+        {
+          "file": "workers-ts/test/pc-seckill-purchase.test.ts",
+          "sha256": "04c6c8847c03ba34be8a8aa474c8d860445546ee971f69b7672b6536e35973cf"
+        },
+        {
+          "file": "workers-ts/test/helpers/financePostgres.ts",
+          "sha256": "abe129b1fe10320fe8726fd02959bca770d2926f677a3374e7a221750ef45562"
+        },
+        {
+          "file": "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts",
+          "sha256": "34be806b35c07922caf7960938e4482fc98195f3b75233956c8eb2acc403b48f"
+        },
+        {
+          "file": "workers-ts/test/helpers/checkoutPricingFixture.ts",
+          "sha256": "2622a2dbe2a84bb2a0aeea43aab0fa545b574544c2de0249694156d1d5aa8853"
+        },
+        {
+          "file": "workers-ts/test/helpers/pcSeckillFixture.ts",
+          "sha256": "62f1edda5e9d25a5e02686959b05cb9ddcf1b00abc2827e394f4906d5f2224e4"
+        },
+        {
+          "file": "workers-ts/src/services/activity/ActivityService.ts",
+          "sha256": "4a6134838d6010eb48884b1baf3f8a0c29d71a1297fdbc4b2d39fddc2b08e241"
+        },
+        {
+          "file": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+          "sha256": "dc31a172bc219b084ea879e4306c92de6047823cdb57e6e247dbb8c3ec13cebd"
+        },
+        {
+          "file": "workers-ts/src/services/activity/SeckillTimeAssetPolicy.ts",
+          "sha256": "612053570c679e5eb89980b3e0f8c61ee95027ad73e390d51416de7a32942b23"
+        }
+      ]
+    },
+    "capabilityEvidence": "workers-ts/audit/seckill-time-reference-lock-20260927.json",
+    "replaysReplaceEarlierRunsAndAreNotAddedToTotals": true,
+    "schemaMaintenanceRunnerIsRootForSetup": true,
+    "actualRestrictedLoginsAreVerifiedByCapabilityAndRuntimeSuites": true,
+    "runtimeLoginCoverage": "ordinary/presale business and admin fixed capability; not actual restricted-app seckill purchase",
+    "seckillPurchaseConcurrencyUsesMaintenanceFixture": true
+  },
+  "nonNative": {
+    "pgliteBusiness": {
+      "passed": 28,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-pglite-20260927.log",
+        "sha256": "ef058ebc7c1d056c4bf910bbf8b862c05bacc63911840f787ece6dade275f0df"
+      },
+      "narrowCapabilityMocked": true,
+      "notAdditionalUniqueNativeCases": true
+    },
+    "frontendRuntime": {
+      "passed": 30,
+      "newSlot": 22,
+      "existingActivityList": 8,
+      "notIncludedInNativeTotal": true
+    },
+    "ledgerRegression": {
+      "files": 5,
+      "passed": 18,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-final-ledger-20260927.log",
+        "sha256": "185e9eef59bbce3cf1441f9e81604f41baf57eb87c7f9af2c614bf07ad7e3e48"
+      }
+    },
+    "registrationAndPrivilegePlanUnit": {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts test/kefu-sequence-registration.test.ts test/runtime-business-privilege-plan.test.ts test/seckill-time-reference-lock.test.ts",
+      "sessionId": 67334,
+      "exitCode": 0,
+      "filesPassed": 3,
+      "testsPassed": 91,
+      "nativeCasesSkipped": 29,
+      "nativeSkipIsNotPermissionEvidence": true,
+      "durationSeconds": 39.89,
+      "unitTypecheck": {
+        "command": "npm run typecheck:unit",
+        "sessionId": 55725,
+        "exitCode": 0
+      },
+      "guardPhase": "pre-guard-patch",
+      "countingRule": "Separate pre-guard light unit/orchestration suite; not added to 107 native-environment assertions and not current full-tree unit evidence."
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "sessionId": 2249,
+      "exitCode": 0,
+      "unit": "passed",
+      "runtime": "passed",
+      "sequential": true,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-typecheck-final-20260927.log",
+        "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+      }
+    },
+    "adminBuild": {
+      "passed": true,
+      "finalChunk": "SeckillTimes-344ByW2p.js",
+      "command": "vue-tsc -b && vite build"
+    },
+    "browserEvidence": "workers-ts/audit/seckill-time-browser-20260927.json"
+  },
+  "cleanup": {
+    "independentMaintenanceChecks": [
+      {
+        "Cluster": "kQbkhJ",
+        "Port": 54797,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "07gpeG",
+        "Port": 58310,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "robJS0",
+        "Port": 58402,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "sFBUrA",
+        "Port": 54371,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "bn9zyn",
+        "Port": 64329,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      }
+    ],
+    "finalChecks": [
+      {
+        "Cluster": "gKyKKo",
+        "Port": 57752,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "BCBHaw",
+        "Port": 50743,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      }
+    ],
+    "browser": {
+      "tabClosed": true,
+      "viewportReset": true,
+      "serverStopped": true,
+      "port": 5198,
+      "listening": false
+    },
+    "failedInitdbAlsoPgCtlStoppedAndNoListener": true
+  },
+  "inputCapture": {
+    "scope": "Final frozen selected source bytes; not a pre-run immutable commit of the entire uncommitted checkout.",
+    "files": [
+      {
+        "file": "workers-ts/src/services/admin/AdminSeckillTimeService.ts",
+        "sha256": "2a2eb6ef8060b17725dd2738cb43866b81bea71f88b82ea46a28ea17c87af83b"
+      },
+      {
+        "file": "workers-ts/src/controllers/api/v1/AdminSeckillTimeController.ts",
+        "sha256": "7cc3428f0ea47a1258c70a990b3af2210c7b8422877dda4e3648f48e0e63e15a"
+      },
+      {
+        "file": "workers-ts/src/services/activity/SeckillTimeAssetPolicy.ts",
+        "sha256": "612053570c679e5eb89980b3e0f8c61ee95027ad73e390d51416de7a32942b23"
+      },
+      {
+        "file": "workers-ts/src/services/activity/ActivityService.ts",
+        "sha256": "4a6134838d6010eb48884b1baf3f8a0c29d71a1297fdbc4b2d39fddc2b08e241"
+      },
+      {
+        "file": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+        "sha256": "dc31a172bc219b084ea879e4306c92de6047823cdb57e6e247dbb8c3ec13cebd"
+      },
+      {
+        "file": "workers-ts/src/routes/adminapi.ts",
+        "sha256": "ee51ac2c598209c321a9dfcfb12f48d21589731f7e0d4217f5b655172a368679"
+      },
+      {
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "8b27716ae9a2a8d65e9e0d275825e52508424f26af7f122ecd2b7dad37a18936"
+      },
+      {
+        "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "sha256": "b3085e30f1cbe4d6dc02aa6508b22b49d4e040f5fcc6fdfd60a31bcd152a18a1"
+      },
+      {
+        "file": "workers-ts/src/migrations/seckillTimeReferenceLockCatalog.ts",
+        "sha256": "167c9ea7a310a81c45a86359151489e85dc1f58d7148c40f3b57568cfb113a25"
+      },
+      {
+        "file": "workers-ts/src/migrations/seckillTimeReferenceLockInstallation.ts",
+        "sha256": "4237f8693786287d8946b1ab8d274048861cba56f41181a48c35e0cf75665301"
+      },
+      {
+        "file": "workers-ts/src/migrations/seckillTimeReferenceLock.ts",
+        "sha256": "be1c33ae073908262b9db8395b43954da6cba4b5683aad3a77e3a752887bc0cf"
+      },
+      {
+        "file": "workers-ts/src/migrations/runSeckillTimeReferenceLock.ts",
+        "sha256": "c73b5f6e18c913ceb3bcab7e089275aaf8d6e385f19af9dc46b45215c7ad8c25"
+      },
+      {
+        "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+        "sha256": "cf6998f1894284b4c9caa82e99177a60d537a51774f6e67f8c11779983f50bec"
+      },
+      {
+        "file": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "sha256": "9bf7ee72e67f8eb02892b4b179053abdc122e562280a738d3471b19378e04bad"
+      },
+      {
+        "file": "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+        "sha256": "f8a8c6989cb9a2883574fbdf5f4fb1affb0dab831fde51fbfc88083f8759463f"
+      },
+      {
+        "file": "workers-ts/src/services/MigrationService.ts",
+        "sha256": "ee4371ba1381495448ee60873b00d530d7fab8e7e270651a0410c744b7832cda"
+      },
+      {
+        "file": "workers-ts/migrations/0167_seckill_time_reference_lock.sql",
+        "sha256": "e06955c6b03f9a9cdef5520e27d1cafc5389c2bd2491dc4580cad42942df4fbb"
+      },
+      {
+        "file": "workers-ts/test/admin-seckill-time.test.ts",
+        "sha256": "e254498d130df890c8d6b564ad830f8a0cb64cb99a5ec6a1d3e522b457469c66"
+      },
+      {
+        "file": "workers-ts/test/admin-seckill-time-postgres.test.ts",
+        "sha256": "40a0aa26a449291df448456c65ab4c998e2a7f5f1d2d918ea3fa2a9e3c2a3bf2"
+      },
+      {
+        "file": "workers-ts/test/seckill-time-reference-lock.test.ts",
+        "sha256": "85e66fc6b4a6f2cd0b00f5234bb230a9cef897448f1e085ba85470aa03be5b7f"
+      },
+      {
+        "file": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+        "sha256": "f05f6e4e4d382188310ef335fc8fa5e4b0a428c44c0c1d5ab95a051474783e82"
+      },
+      {
+        "file": "workers-ts/test/runtime-business-login.test.ts",
+        "sha256": "67e842a68001b01527fd9d6b87b2473f6dc999fd74cd34b787693664059a3901"
+      },
+      {
+        "file": "workers-ts/test/helpers/seckillTimeFixture.ts",
+        "sha256": "42b9c8cecd095f7271b175f48800dc5acb51b1e194c6148191af2b939981845e"
+      },
+      {
+        "file": "workers-ts/test/helpers/seckillTimeReferenceLockFixture.ts",
+        "sha256": "5ed62695f906c237b142b8a8ff4cbae292169377555d34e082b0d837d90760a0"
+      },
+      {
+        "file": "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts",
+        "sha256": "a387b9f23923eb82a8d9ec4441d5de79a42952c8f1e1998e90ca4ed05cee8e0f"
+      },
+      {
+        "file": "workers-ts/scripts/orm-ddl-audit.ts",
+        "sha256": "6ecbcc1bcd6af2aa10936332c76d820f4c699e3224cfa7a59f56047302228718"
+      },
+      {
+        "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "7975f88aa36d37a97967a184baf6a719a7fc61b42a66ca34d5eebd81e7f2c6a5"
+      },
+      {
+        "file": "view/admin-ts/src/pages/activity/SeckillTimes.vue",
+        "sha256": "2bb0fd4fa3df2871f821ff927e8e5259acdabeaa56aadf9ed9cd74a92bb91165"
+      },
+      {
+        "file": "view/admin-ts/src/api/seckillTime.ts",
+        "sha256": "99b74210ec16ca9a534c14496df96a96cfc22748345936680a5047639b2ef0ef"
+      },
+      {
+        "file": "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "sha256": "b831a2b15e594162c871f55e7da990816a9aa0b03d76513b8437942c4cdabdf2"
+      }
+    ],
+    "priorConsumerInputDrift": [],
+    "priorBrowserInputDrift": [],
+    "fullExternal169InputHash": "0bbc9548cf024ccdcc900b4e6b264b5c79f53d5a906120e425c5fcd1f2e982ad"
+  },
+  "history": {
+    "earlierSuccessfulBusiness41AndThen42RunsReplacedByFinal77Batch": true,
+    "firstCapability30NotAddedAgainAfterFinal33": true,
+    "firstCombinedCapabilityUpgradeRuntimeBatchExitCode": 1,
+    "firstCombinedFailures": [
+      "upgrade fixture used zero-dimensional ACL array",
+      "embedded fixture lost explicit owner settings on idle connection",
+      "runtime LOGIN hit Windows file open Invalid argument"
+    ],
+    "firstUpgrade2AndRuntime30GreenRunsPrecededFinalOwnerColumnAclGuard": true,
+    "agentApprovalServiceNetworkRevocationInterruptedRetries": true,
+    "rootNormalApprovalLaterSucceededWithoutBypass": true,
+    "initdbTimeout": {
+      "testsExecuted": false,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-native-20260927-initdb-timeout.log",
+        "sha256": "bbcf490fe7eeeec132646ac972904fcbf956a161993803f890bfbd08c3518a20"
+      }
+    },
+    "narrowerOwnerColumnPrivilegeGuardAddedAfterFirstGreenUpgradeAndRuntimeRuns": true,
+    "priorRechargeSeedNinePaths168External173EmbeddedAreHistoricalAndNotRecounted": true
+  },
+  "remaining": [
+    "Full Linux CI for final candidate",
+    "Real roles and operational slot/asset configuration",
+    "Existing app role SELECT-only parent/slot cannot take purchase FOR SHARE: fixed lock authorization and actual restricted-app seckill purchase validation remain open",
+    "Parent store_activity(type=1) directory/date/multi-slot/copy/product-SKU contract",
+    "Existing seckill product list main image signing contract",
+    "Production fixed capability commissioning and independent release approval"
+  ],
+  "productionAccess": false,
+  "productionGrantsOrMigrations": false,
+  "committedPushedOrDeployed": false
+}

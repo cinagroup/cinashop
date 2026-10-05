@@ -3,7 +3,9 @@ import {
   asc,
   desc,
   eq,
+  exists,
   inArray,
+  isNull,
   lt,
   or,
   sql,
@@ -196,6 +198,7 @@ async function assertDatabaseIdentity(
         eq(storeService.accountStatus, 1),
         eq(userTable.isDel, 0),
         eq(userTable.status, 1),
+        isNull(userTable.deleteTime),
       ))
       .limit(2);
     if (rows.length !== 1 || md5(rows[0].password) !== session.authVersion) {
@@ -235,6 +238,7 @@ async function assertDatabaseIdentity(
         eq(userTable.uid, session.principalUid),
         eq(userTable.status, 1),
         eq(userTable.isDel, 0),
+        isNull(userTable.deleteTime),
       ))
       .limit(1)
   )[0];
@@ -260,11 +264,13 @@ async function assertTarget(
     const services = await db
       .select({ nickname: storeService.nickname, avatar: storeService.avatar })
       .from(storeService)
+      .innerJoin(userTable, eq(userTable.uid, storeService.uid))
       .where(and(
         eq(storeService.uid, toUid),
         eq(storeService.isDel, 0),
         eq(storeService.status, 1),
         eq(storeService.accountStatus, 1),
+        eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
       ))
       .limit(2);
     if (services.length !== 1) throw new NotFoundException("客服不存在、已禁用或身份不唯一");
@@ -292,7 +298,7 @@ async function assertTarget(
     await db
       .select({ nickname: userTable.nickname, avatar: userTable.avatar })
       .from(userTable)
-      .where(and(eq(userTable.uid, toUid), eq(userTable.isDel, 0)))
+      .where(and(eq(userTable.uid, toUid), eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime)))
       .limit(1)
   )[0];
   if (!user) throw new NotFoundException("用户不存在");
@@ -564,6 +570,7 @@ async function listServices(db: DbClient, onlineOnly: boolean) {
     eq(storeService.isDel, 0),
     eq(storeService.status, 1),
     eq(storeService.accountStatus, 1),
+    eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
   ];
   if (onlineOnly) conditions.push(eq(storeService.online, 1));
   return db
@@ -575,6 +582,7 @@ async function listServices(db: DbClient, onlineOnly: boolean) {
       online: storeService.online,
     })
     .from(storeService)
+    .innerJoin(userTable, eq(userTable.uid, storeService.uid))
     .where(and(...conditions))
     .orderBy(desc(storeService.online), asc(storeService.id))
     .limit(100);
@@ -609,6 +617,39 @@ export class KefuRealtimeService {
     await withTx(this.container, async (tx) => assertDatabaseIdentity(tx, session, allowLegacyUserAuth));
   }
 
+  /** A committed message/transfer event can arrive after ownership moved.
+   * Payload scope, rather than the socket's active view, is the delivery grant. */
+  async canDeliverConversation(
+    session: ChatSocketSession,
+    peerUidValue: unknown,
+    isTouristValue: unknown,
+    recordIdValue?: unknown,
+  ): Promise<boolean> {
+    if (session.role !== 2) return false;
+    const allowLegacyUserAuth = await this.assertSessionCredentials(session);
+    const peerUid = integer(peerUidValue, "会话用户", { min: 1 });
+    const isTourist = integer(isTouristValue, "游客状态", { min: 0, max: 1 });
+    const recordId = recordIdValue === undefined ? undefined : integer(recordIdValue, "会话记录", { min: 1 });
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await tx.execute(sql`SET LOCAL statement_timeout = '5s'`);
+      await assertDatabaseIdentity(tx, session, allowLegacyUserAuth);
+      const peerScope = isTourist === 1
+        ? exists(tx.select({ uid: kefuVisitorSession.visitorUid }).from(kefuVisitorSession).where(and(
+            eq(kefuVisitorSession.visitorUid, peerUid), eq(kefuVisitorSession.serviceId, session.authId),
+            eq(kefuVisitorSession.kefuUid, session.principalUid), eq(kefuVisitorSession.revokedAt, 0),
+            sql`${kefuVisitorSession.expiresAt} > ${Math.floor(Date.now() / 1000)}`,
+          )))
+        : exists(tx.select({ uid: userTable.uid }).from(userTable).where(and(
+            eq(userTable.uid, peerUid), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
+          )));
+      const records = await tx.select({ id: storeServiceRecord.id }).from(storeServiceRecord)
+        .where(and(eq(storeServiceRecord.userId, session.principalUid), eq(storeServiceRecord.toUid, peerUid),
+          eq(storeServiceRecord.isTourist, isTourist), peerScope)).limit(2);
+      return records.length === 1 && (recordId === undefined || records[0].id === recordId);
+    });
+  }
+
   async setOnline(session: ChatSocketSession, online: boolean): Promise<void> {
     const allowLegacyUserAuth = await this.assertSessionCredentials(session);
     await withTx(this.container, async (tx) => {
@@ -618,6 +659,9 @@ export class KefuRealtimeService {
           .update(storeService)
           .set({ online: online ? 1 : 0 })
           .where(and(eq(storeService.id, session.authId), eq(storeService.uid, session.principalUid)));
+        // Staff availability is global authority on store_service. Legacy
+        // record.type is a PHP client form-type and cannot identify peer roles.
+        return;
       }
       await tx
         .update(storeServiceRecord)
@@ -638,6 +682,7 @@ export class KefuRealtimeService {
           .update(storeService)
           .set({ online: 0 })
           .where(and(eq(storeService.id, session.authId), eq(storeService.uid, session.principalUid)));
+        return;
       }
       await tx
         .update(storeServiceRecord)
@@ -757,9 +802,15 @@ export class KefuRealtimeService {
 
   async switchConversation(session: ChatSocketSession, toUidValue: unknown): Promise<number> {
     const allowLegacyUserAuth = await this.assertSessionCredentials(session);
-    const toUid = integer(toUidValue, "会话用户", { min: 1 });
+    const toUid = integer(toUidValue, "会话用户", { min: session.role === 2 ? 0 : 1 });
     if (toUid === session.principalUid) throw new ValidateException("不能和自己聊天");
     await withTx(this.container, async (tx) => {
+      // Staff may subscribe to summaries without actively viewing any peer.
+      // Cancelling a view must never mark messages read or touch peer presence.
+      if (toUid === 0) {
+        await assertDatabaseIdentity(tx, session, allowLegacyUserAuth);
+        return;
+      }
       await lockConversation(tx, session.role, session.principalUid, toUid, session.isTourist);
       await assertDatabaseIdentity(tx, session, allowLegacyUserAuth);
       await assertTarget(tx, session, toUid);
@@ -826,9 +877,13 @@ export class KefuRealtimeService {
         uid: storeService.uid,
         nickname: storeService.nickname,
         avatar: storeService.avatar,
+        online: storeService.online,
       })
       .from(storeService)
-      .where(inArray(storeService.uid, serviceUids))
+      .innerJoin(userTable, eq(userTable.uid, storeService.uid))
+      .where(and(inArray(storeService.uid, serviceUids), eq(storeService.status, 1),
+        eq(storeService.accountStatus, 1), eq(storeService.isDel, 0), eq(userTable.status, 1),
+        eq(userTable.isDel, 0), isNull(userTable.deleteTime)))
       .orderBy(desc(storeService.id));
     const serviceByUid = new Map<number, (typeof services)[number]>();
     for (const service of services) {
@@ -854,6 +909,7 @@ export class KefuRealtimeService {
         ...mapRecord(row),
         nickname: service?.nickname || row.nickname,
         avatar: service?.avatar || row.avatar,
+        online: service?.online ?? 0,
         message,
         _update_time: new Date((row.updateTime + 8 * 60 * 60) * 1_000)
           .toISOString().slice(0, 16).replace("T", " "),

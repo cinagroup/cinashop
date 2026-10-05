@@ -1,0 +1,107 @@
+{
+  "capturedAt": "2026-09-27T01:07:55.446Z",
+  "scope": "Complete native PG16 recharge seed installation/forward upgrade and affected historical migration/runtime permission suites. No Linux CI or production acceptance.",
+  "sourceLog": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/recharge-seed-maintenance-20260927.log",
+  "sourceLogSha256": "1426d34a0152f02a6218d69638be312d5ca8b5df638b87d3ac65ca475c4060ec",
+  "filesPassed": 13,
+  "testsPassed": 403,
+  "testsSkipped": 0,
+  "testsFailed": 0,
+  "batches": [
+    {
+      "version": "postgres (PostgreSQL) 16.15",
+      "host": "127.0.0.1",
+      "port": 57206,
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-QrAVq6",
+      "testFiles": [
+        "test/recharge-quota-seed-upgrade.test.ts",
+        "test/admin-refund-creation-migration.test.ts",
+        "test/admin-refund-operation-migration.test.ts"
+      ],
+      "filesPassed": 3,
+      "testsPassed": 93,
+      "fixturesRemaining": 0,
+      "stopped": true,
+      "batch": 1,
+      "exitCode": 0
+    },
+    {
+      "version": "postgres (PostgreSQL) 16.15",
+      "host": "127.0.0.1",
+      "port": 63635,
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-3zHMDt",
+      "testFiles": [
+        "test/brokerage-paid-order-migration.test.ts",
+        "test/coupon-product-scope-migration.test.ts",
+        "test/shipping-lifecycle-indexes.test.ts",
+        "test/shipping-lifecycle-interactions.test.ts",
+        "test/shipping-lifecycle-migration.test.ts"
+      ],
+      "filesPassed": 5,
+      "testsPassed": 158,
+      "fixturesRemaining": 0,
+      "stopped": true,
+      "batch": 2,
+      "exitCode": 0
+    },
+    {
+      "version": "postgres (PostgreSQL) 16.15",
+      "host": "127.0.0.1",
+      "port": 53506,
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-hfpryP",
+      "testFiles": [
+        "test/invoice-evidence-migration.test.ts",
+        "test/invoice-evidence-registration.test.ts",
+        "test/offline-order-installation.test.ts",
+        "test/refund-split-migration.test.ts",
+        "test/refund-runtime-permissions.test.ts"
+      ],
+      "filesPassed": 5,
+      "testsPassed": 152,
+      "fixturesRemaining": 0,
+      "stopped": true,
+      "batch": 3,
+      "exitCode": 0
+    }
+  ],
+  "cleanup": [
+    {
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-QrAVq6",
+      "port": 57206,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    },
+    {
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-3zHMDt",
+      "port": 63635,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    },
+    {
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-hfpryP",
+      "port": 53506,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    }
+  ],
+  "inputSha256": {
+    "test/recharge-quota-seed-upgrade.test.ts": "bb89dcbd1b4027405351c48be0df27d3158fa7de4e47c86710f5a57737b9f771",
+    "test/admin-refund-creation-migration.test.ts": "b50b488a1301a14620fc92b08c2b1ef9356b4fa2d105fbddbb655f6a0436bfc5",
+    "test/admin-refund-operation-migration.test.ts": "d668ede18e9974402510acedc738cbd615c35b885af17a1b4c11adee3228512f",
+    "test/brokerage-paid-order-migration.test.ts": "7525ddb084a7a93a63a62eb760217f1cb6c181c277ff39635d570f1e3221a8e3",
+    "test/coupon-product-scope-migration.test.ts": "27a00786b092396a2461499946964d7b850467ec03666327cfab88b5d022853c",
+    "test/shipping-lifecycle-indexes.test.ts": "cbfbc693338b6f6baeb06a389900cc729a46530f2041709e56b599a891c509e3",
+    "test/shipping-lifecycle-interactions.test.ts": "aef2ea52304aab62a2d86e3cdcdd78a6b661fe8d3484e80992ccd24d65e987e8",
+    "test/shipping-lifecycle-migration.test.ts": "1ba9dd4babd205b983133d0436204313c4137071d7c17efd2e8f9a8da23b0137",
+    "test/invoice-evidence-migration.test.ts": "5de407170fc7fae148174f13b8353cf08efc71cb37c9f1801eb97c38793d9af7",
+    "test/invoice-evidence-registration.test.ts": "f9245f975806852edce352aa7639b3206acc809efffd0ee7b006dbee58b49a90",
+    "test/offline-order-installation.test.ts": "c9eb25c7a0f11b21665324fd480bf483a9c7c1caa40a754dff39473161c65b3e",
+    "test/refund-split-migration.test.ts": "ac31335ddaa732d2e4d271e923890842644a9137a7dbd8450ee9ea3ac4ae570b",
+    "test/refund-runtime-permissions.test.ts": "59af607207595f91c62790004087fb5caded1e0ab6084846a69cce71873c790e",
+    "test/helpers/refundRuntimeFixture.ts": "39d1b244f4663947b0f9d72b76c169041b9e0cfc915502ef90de32d5ffefb603",
+    "src/migrations/rechargeQuotaGroupSeed.ts": "6ae01c5f868dbee4a92231bc77f82c487836717a2eaaf04cd7035fe8831ca373",
+    "src/migrations/runRechargeQuotaGroupSeed.ts": "f0ddc9ea66b609378307891a825fb5009ffabc3395e34846515e54d1a1809e67",
+    "migrations/0166_recharge_quota_group_seed.sql": "17a0d3fd8a7d7bc9c86e98cb12079a9a2afae7187aaac8c2d7c0166c3b294a1b",
+    "src/services/MigrationService.ts": "d10a3b334bb3482ba1d3dc09c454afafd7bbd6fa402afce14a3b68747905f073"
+  }
+}

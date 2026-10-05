@@ -1,0 +1,114 @@
+{
+  "dateUtc": "2026-09-28 04:30:08 UTC",
+  "scope": "Local, unpublished read-only follow-up to legacy Admin operation logs and recharge orders",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 59,
+      "partial": 115,
+      "missing": 93,
+      "retired": 7
+    },
+    "legacySystemScreens": {
+      "total": 17,
+      "candidate": 1,
+      "partial": 3,
+      "missing": 12,
+      "retired": 1
+    },
+    "legacyCrossModuleScreens": {
+      "total": 18,
+      "candidate": 4,
+      "partial": 11,
+      "missing": 2,
+      "retired": 1
+    },
+    "workerRoutes": 1839,
+    "adminApi": {
+      "callSites": 426,
+      "pathVariants": 450,
+      "executable": 450,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 75,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "systemLogNativePg16": {
+      "files": [
+        "test/admin-system-log-postgres.test.ts"
+      ],
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "rechargeNativePg16": {
+      "files": [
+        "test/admin-recharge-order-postgres.test.ts",
+        "test/admin-recharge-order-http.test.ts"
+      ],
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "systemLogPermission": 13,
+    "frontendRuntime": {
+      "systemLog": 5,
+      "rechargeOrder": 5
+    },
+    "finalStaticAndFrontendSuites": {
+      "files": 9,
+      "passed": 46,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminProductionBuild": "passed",
+    "adminApiAudit": "450 executable variants; 0 unregistered or unresolved",
+    "browserWrite": "not run; no business mutation or production deployment"
+  },
+  "limitations": [
+    "Server-side operation log is separate from the old browser Vuex event log, which remains missing.",
+    "Recharge refund, unpaid deletion and export are not implemented; the old screen remains partial.",
+    "Real historical data, constrained roles in a browser, production scale and full Linux CI remain unverified.",
+    "Two sandbox pg_ctl starts failed before recharge tests; the final isolated native PostgreSQL run completed, cleared fixtures and stopped."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "f369f9ac56c852a493193302fe2cfd5d678551591e6bc6d22274880f47ba745c",
+    "view/admin-ts/src/api/systemLog.ts": "ee4a3032c695a1f714f8bf375ebccbb120b85556de7d5843ca79b9ff83a0e919",
+    "view/admin-ts/src/api/rechargeOrders.ts": "f6cdff3552c2be0c4baf8f987b835e0cb3422f1c69167a4b40b9762987a62ce3",
+    "view/admin-ts/src/pages/system/LogList.vue": "20b2cce1e3cad17b7e9a70727e91ecf857854fd7643cedda29c6bbd78427c3dd",
+    "view/admin-ts/src/pages/finance/RechargeOrders.vue": "23645c50bfa6497b8d68aa176b66da333339181efe35be09370c04e796af35b8",
+    "view/admin-ts/src/router/index.ts": "839c2aaedcb19c61a41adae94dfdbd330071606d11d4f1330faad3b2d923bac6",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "356b2d2261592c761d68afb214b1489a5f6006f7165984fe85c177642b557166",
+    "workers-ts/src/services/admin/AdminSystemLogReadService.ts": "d83ba06b581e5bf5a96072a076b174665f6bdb0f9caf6de04dc2f74438b632f9",
+    "workers-ts/src/services/admin/AdminRechargeOrderService.ts": "39113382b6bf34d68a1ffc5e3d0a1c986bf9c8e61bc1461fb12b5b266fb834bc",
+    "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "e417c0ee0a8ae89a41ecf697aa7d28b3d12312d1a3ff880ada6f13d1a6784f93",
+    "workers-ts/src/controllers/api/v1/AdminRechargeOrderController.ts": "7e3f7e94793eb1e0c83f4855d0a305edb3fae854b1d35e249c3f233721be86f4",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "fde00922aa0f7214b0a2b62db370157e07effd992669edde454ee629c2b99cdd",
+    "workers-ts/src/routes/adminapi.ts": "b83a29fa8ab969d3d267f1dbce0aa34409f01e40f540e9bb8fe7c15b5c9782ff",
+    "workers-ts/src/routes/v1/index.ts": "27517409d80af91dc96014da1354e35c3402bb2842b1fbb5228f4594867c1b13",
+    "workers-ts/test/admin-system-log-postgres.test.ts": "34db903fa824068a8c667111dffa847089aea6c71b32a721e28533ee6273a24a",
+    "workers-ts/test/admin-system-log-frontend.test.ts": "2ae76f241b9cacb604b018fed1f05db25715537b75b2eec84b68b710291fe3e4",
+    "workers-ts/test/admin-recharge-order-postgres.test.ts": "86861e0273ab8b0919d5a8eba0f0d7dbdd46d49d5d029ee28ec687e2a1993b72",
+    "workers-ts/test/admin-recharge-order-http.test.ts": "fd9cbde3e840511c36a55f699b50ef7ed4516885c7a5d45c8b91ae44f82e5e24",
+    "workers-ts/test/admin-recharge-orders-frontend.test.ts": "fa97b31c39f653a7d7c910d478a2d3b0758bfd7b4ab883637218322bdd9e07be",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "4cccdc6e0e32281c041b25f861b1227ae2865a89857882cf72a9a8fe08c1ce13",
+    "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+    "workers-ts/audit/admin-legacy-cross-module-route-parity-recharge-followup-20260928.json": "143fdac9c1d2bba07ef4dcdbff9036145d6476bf92a2014ed82c7c457c4bfc55",
+    "workers-ts/audit/route-distribution-recharge-read-followup-20260928.json": "0a785ebcb38eb2ab2745ecb89a28dd0b58a14944a1ded312ff6874725da5bc9f",
+    "workers-ts/audit/admin-frontend-inventory-recharge-read-followup-20260928.json": "7ff4a6a25ba2f0a8d0f4ea0b598293ac95e6bd17fbfee4df4af64ae638568094",
+    "workers-ts/audit/admin-frontend-api-contracts-recharge-read-followup-20260928.json": "2ddf90dc15caca90825a34c1e974f7b11940e1eebc6a020e637044a05451f9fe",
+    "workers-ts/docs/admin-system-route-parity.md": "90c8364f416204ebcb00d6a824388ce9cdd5cbb141c31a917b69621cedc36cde",
+    "workers-ts/docs/admin-recharge-order-contract.md": "31864c86e689372a37bdb704cccc1a1acd56320ac9920635d79435c199c862a4",
+    "workers-ts/docs/admin-cross-module-route-parity.md": "7c2b3b2663b7e8183f16d904a53fb5f674df345616445e9d827f3c9223196968"
+  }
+}

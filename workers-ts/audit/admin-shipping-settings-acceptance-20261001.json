@@ -1,0 +1,494 @@
+{
+  "version": 1,
+  "dateUtc": "2026-10-01",
+  "frozenAtUtc": "2026-10-01T01:18:38.600Z",
+  "phase": "locally_verified_candidate_unpublished",
+  "status": "candidate",
+  "productionAccepted": false,
+  "published": false,
+  "scope": "Complete fixed legacy shipping settings screen, default pickup store graph, SQL-authoritative pickup consumers and unchanged postal pricing regressions.",
+  "outcome": {
+    "workerRoutes": 2090,
+    "workerRouteFileSurfaces": {
+      "api": 1086,
+      "admin": 729,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "surfaceCountingBoundary": "By source route file. v1 Admin aliases count under API file; file totals do not mean public authorization. Each Admin prefix gains four literal routes placed before generic config/:menuName.",
+    "legacyPhpRoutes": {
+      "php": 1904,
+      "ts": 2090,
+      "matched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "missing": 1001,
+      "retired": 17,
+      "actionableMissing": 984,
+      "coveragePercent": 47.4,
+      "executableCoveragePercent": 46.3,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 102,
+    "adminApi": {
+      "callSites": 555,
+      "pathVariants": 579,
+      "registered": 579,
+      "executable": 579,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "legacySettingsScreens": {
+      "legacyRoutes": 76,
+      "reviewed": 76,
+      "candidate": 20,
+      "partial": 23,
+      "missing": 28,
+      "retired": 5,
+      "unreviewed": 0
+    },
+    "legacyMarketingScreens": {
+      "legacyRoutes": 48,
+      "reviewed": 48,
+      "candidate": 33,
+      "partial": 14,
+      "missing": 0,
+      "retired": 1,
+      "unreviewed": 0
+    },
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 86,
+      "partial": 113,
+      "missing": 67,
+      "retired": 8
+    },
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "screenClassificationChanges": [
+      {
+        "path": "/admin/setting/distribution/deliver",
+        "from": "missing",
+        "to": "candidate",
+        "target": "/setting/shipping"
+      }
+    ]
+  },
+  "contracts": {
+    "source": "SystemConfigServices::deliverFormBuild, latest id nondeleted getStoreInfo, menu1359 exact unique_auth/path. Four flags/decimal threshold plus complete pickup graph; manual coordinates without provider claim.",
+    "authority": "Independent shipping_settings.view/manage. Old exact menu pair grants view only; generic config/store permissions do not imply manage. Both real JWT Admin prefixes tested.",
+    "state": "Global config winner sort DESC/id DESC, field status ignored, no KV authority. GET read-only does not seed. Full row/xmin revisions detect default changes and ABA. Enabled store repairs is_show/is_store; disabled store remains unchanged.",
+    "concurrency": "Bounded RC write, config then store SHARE ROW EXCLUSIVE, sorted city FOR SHARE, reread/CAS and atomic system_log receipt. All graph or final receipt failures rollback. Existing current ACL used without DDL or new grants.",
+    "recovery": "Frozen actor/UUID/body/hash survives refresh. Real receipt HTTP404 alone permits explicit identical retry. Deterministic CAS rollback proof uses actual HTTP409 and exact code/UUID/hash, emitted only before business DML after successful rollback; successful old journal takes precedence.",
+    "checkout": "All pickup quotes require SQL store_func_status/store_self_mention and active pickup store in one snapshot. Confirmation binds location semantic details; FOR SHARE NOWAIT protects metadata, fixed pricing capability fences configs and late reread rejects drift. Existing complete order replay remains accepted.",
+    "consumers": "v2 store status and ordinary shipping suggestions read same SQL authority. Nearby directory unchanged. Specialized bargain consumer regressions retained. Existing 11-key postal calculation and discount priority unchanged.",
+    "remainingSettings": [
+      "verify_expire_time",
+      "store_user_avatar",
+      "system_secure_type",
+      "system_password_length",
+      "system_password_type",
+      "system_login_error_num",
+      "system_login_lock_time"
+    ]
+  },
+  "verification": {
+    "native": {
+      "batches": [
+        {
+          "log": ".cache/shipping-pricing-native-20261001.log",
+          "files": 1,
+          "passed": 20,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 118.18,
+          "tests": [
+            "test/checkout-pricing-config-authority.test.ts"
+          ],
+          "port": 52781,
+          "cluster": ".cache/finance-postgres-RjrRC3",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        },
+        {
+          "log": ".cache/shipping-admin-native-accepted-20261001.log",
+          "files": 5,
+          "passed": 53,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 36.55,
+          "tests": [
+            "test/admin-shipping-settings.test.ts",
+            "test/admin-shipping-settings-http.test.ts",
+            "test/admin-shipping-settings-postgres.test.ts",
+            "test/checkout-pickup-consumers.test.ts",
+            "test/checkout-pickup-policy-postgres.test.ts"
+          ],
+          "port": 60606,
+          "cluster": ".cache/finance-postgres-kI8Wsb",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        },
+        {
+          "log": ".cache/shipping-order-native-final-accepted-20261001.log",
+          "files": 2,
+          "passed": 12,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 40.05,
+          "tests": [
+            "test/checkout-shipping-settings-consumer.test.ts",
+            "test/pc-checkout-quote-postgres.test.ts"
+          ],
+          "port": 55205,
+          "cluster": ".cache/finance-postgres-4ZDTKB",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        },
+        {
+          "log": ".cache/shipping-bargain-native-accepted-20261001.log",
+          "files": 2,
+          "passed": 16,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 25.76,
+          "tests": [
+            "test/bargain-pickup-postgres.test.ts",
+            "test/bargain-shipping-selection-postgres.test.ts"
+          ],
+          "port": 59060,
+          "cluster": ".cache/finance-postgres-GbQ8Yb",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        }
+      ],
+      "uniqueFiles": 10,
+      "uniquePassed": 101,
+      "pureInputCasesWithinBatches": 7,
+      "databaseCases": 94,
+      "failed": 0,
+      "skipped": 0,
+      "boundary": "Fresh owned PostgreSQL16.15 clusters, real SQL/controller order graphs and finite multi-session blockers. Dedicated nonowner Admin/app LOGINS use unchanged production ACL slice with real lock-only guards. Slice evidence does not replace full commissioning or production Hyperdrive acceptance.",
+      "independentFinalCleanup": {
+        "passed": true,
+        "log": ".cache/shipping-cluster-cleanup-final-20261001.log",
+        "clusters": [
+          {
+            "cluster": "finance-postgres-RjrRC3",
+            "port": 52781,
+            "dataAbsent": true,
+            "noListener": true
+          },
+          {
+            "cluster": "finance-postgres-kI8Wsb",
+            "port": 60606,
+            "dataAbsent": true,
+            "noListener": true
+          },
+          {
+            "cluster": "finance-postgres-4ZDTKB",
+            "port": 55205,
+            "dataAbsent": true,
+            "noListener": true
+          },
+          {
+            "cluster": "finance-postgres-GbQ8Yb",
+            "port": 59060,
+            "dataAbsent": true,
+            "noListener": true
+          }
+        ]
+      }
+    },
+    "audit": {
+      "files": 6,
+      "passed": 39,
+      "failed": 0,
+      "log": ".cache/shipping-audits-final-20261001.log"
+    },
+    "frontendUnit": {
+      "passed": 14,
+      "failed": 0,
+      "log": ".cache/shipping-frontend-tests-final-20261001.log"
+    },
+    "typechecks": {
+      "passed": true,
+      "logs": [
+        ".cache/shipping-worker-types-final-20261001.log",
+        ".cache/shipping-worker-runtime-types-final-20261001.log",
+        ".cache/shipping-admin-types-final-20261001.log"
+      ]
+    },
+    "adminBuild": {
+      "passed": true,
+      "durationSeconds": 37.5,
+      "log": ".cache/shipping-admin-build-final-20261001.log"
+    },
+    "browser": {
+      "passed": true,
+      "functionalGroups": 21,
+      "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-browser-qa.json",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "driver": "regular Playwright + local Chrome headless",
+      "availability": "Absent",
+      "reason": "Browser plugin not available",
+      "regionControls": "All four inputs and select wrappers explicitly disabled in readonly, confirmation and unknown-pending states; checked inside existing21 groups.",
+      "rootScreenshotReview": {
+        "passed": true,
+        "finalScreens": [
+          "shipping-settings-desktop.png",
+          "shipping-settings-pending-desktop.png",
+          "shipping-settings-mobile-pickup.png"
+        ]
+      },
+      "boundary": "Synthetic API/session with actual final Vue bundles whose served hashes match local dist. Native SQL/JWT and real roles verified separately. No production-provider or real-device claim.",
+      "screenshots": [
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-desktop-pickup.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-saved-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-pending-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-mobile.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-mobile-pickup.png"
+      ]
+    },
+    "scopedDiffCheck": {
+      "passed": true,
+      "includesUntrackedSources": true
+    },
+    "attempts": [
+      {
+        "log": ".cache/shipping-consumer-native-first-20261001.log",
+        "accepted": false,
+        "executedCases": 0,
+        "reason": "Explicit runner allowlist lacked existing PC quote filename; added exact filename."
+      },
+      {
+        "log": ".cache/shipping-freeze-first-20261001.log",
+        "accepted": false,
+        "executedCases": 0,
+        "reason": "Acceptance helper referenced V2 consumer under system instead of actual content directory. Source existence assertion refused freeze; corrected evidence path without business edits."
+      },
+      {
+        "log": ".cache/shipping-consumer-native-final-20261001.log",
+        "accepted": false,
+        "passed": 23,
+        "failed": 8,
+        "reason": "Pricing concurrency deadline failures plus PC 5-second fixture initialization timeout and one incorrect expected wrapped error. Original pricing deadlines/assertions unchanged; complete independent pricing file passed. PC suite fixture allowance now30s; canonical wrapped reconfirm code asserted."
+      },
+      {
+        "log": ".cache/shipping-admin-native-20261001.log",
+        "accepted": false,
+        "passed": 51,
+        "failed": 2,
+        "reason": "v1 config/:menuName captured shipping literals. Moved four literal routes before generic; complete53-case final group passed."
+      },
+      {
+        "log": ".cache/shipping-order-native-accepted-20261001.log",
+        "accepted": false,
+        "passed": 11,
+        "failed": 1,
+        "reason": "Old named pickup test store lacked is_store=1. Fixed eligibility fixture and reran complete two-file group."
+      },
+      {
+        "log": ".cache/shipping-worker-types-first-20261001.log",
+        "accepted": false,
+        "reason": "Synthetic KV Env and transaction DbClient types corrected."
+      },
+      {
+        "log": ".cache/shipping-admin-types-first-20261001.log",
+        "accepted": false,
+        "reason": "Unused API type import removed."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-browser-qa-before-select-disable.json",
+        "accepted": false,
+        "superseded": true,
+        "passed": 21,
+        "failed": 0,
+        "reason": "Root visual review found explicit select disabled=false overriding ElForm readonly/pending state. Event guards prevented mutation but controls could open. All four conditions now explicitly include permission/lock/readiness and existing region rules; final same21 groups assert readonly/pending/confirmation controls disabled."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-browser-qa-before-screenshot-settle.json",
+        "accepted": false,
+        "superseded": true,
+        "passed": 21,
+        "failed": 0,
+        "reason": "Pending screenshot captured confirmation close animation. Wait for dialog hidden before stable screenshot; complete same21 groups rerun. No business change in that attempt."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-browser-qa-first.json",
+        "accepted": false,
+        "passed": 8,
+        "failed": 12,
+        "reason": "Real root region pid0 incorrectly treated as end. Corrected lazy-load traversal and rebuilt; final full21 groups includes stale rollback proof."
+      }
+    ]
+  },
+  "remaining": [
+    "Unpublished local candidate; no commit, push or deploy. Existing unrelated working changes preserved.",
+    "Checklist158 open and Admin113 partial/67 missing remain; parent FE-001D4 and FE-003L-A3k11d are not closed by one local candidate screen.",
+    "Same-city configuration/records, third-party dynamic settings and seven remaining tab26 settings are open.",
+    "Real production roles, Hyperdrive, region/store history, scale contention, true devices, map provider and release acceptance remain open.",
+    "Historical reports/manifests remain unchanged historical snapshots. Closing/clearing browser storage loses pending receipt recovery."
+  ],
+  "evidence": {
+    "logs": [
+      ".cache/shipping-pricing-native-20261001.log",
+      ".cache/shipping-admin-native-accepted-20261001.log",
+      ".cache/shipping-order-native-final-accepted-20261001.log",
+      ".cache/shipping-bargain-native-accepted-20261001.log",
+      ".cache/shipping-cluster-cleanup-final-20261001.log",
+      ".cache/shipping-audits-final-20261001.log",
+      ".cache/shipping-frontend-tests-final-20261001.log",
+      ".cache/shipping-worker-types-final-20261001.log",
+      ".cache/shipping-worker-runtime-types-final-20261001.log",
+      ".cache/shipping-admin-types-final-20261001.log",
+      ".cache/shipping-admin-build-final-20261001.log",
+      ".cache/shipping-browser-final-20261001.log"
+    ],
+    "reports": [
+      "workers-ts/audit/route-distribution-shipping-settings-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-inventory-shipping-settings-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-api-contracts-shipping-settings-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-setting-route-parity-shipping-settings-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-app-route-parity.json",
+      "workers-ts/audit/admin-legacy-content-route-parity.json",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+      "workers-ts/audit/admin-legacy-product-route-parity.json",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-work-route-parity.json"
+    ],
+    "sourceHashAlgorithm": "SHA256 UTF-8 with CRLF/CR normalized to LF",
+    "sourceHashCount": 73,
+    "sourceHashes": {
+      "MIGRATION_CHECKLIST.md": "5e3a4e19f7a11dd35482cf609ebd4bebe37306c2d015eb03f537c76e6f58bcbc",
+      "view/admin-ts/src/api/shippingSettings.ts": "45fabc52cff7774e67b77f6bcefbf797f8938f77a48268e13a7a1b7a8c8c0525",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "232850e3bc31fa8ae16555245a0f63b0af329f3d817bd3c8bf97f98736f48133",
+      "view/admin-ts/src/pages/setting/ShippingSettings.vue": "b0c6187808da755c2eab0a151e11d5d76381880ab263614246af7eb61f161d0c",
+      "view/admin-ts/src/router/index.ts": "731d5d2aaf3538fe905db0b61494a402e494686d9ef414db3c19c9e9fca41413",
+      "view/admin-ts/test/shippingSettings.test.ts": "7aecf6a44396105ba424342829317363c360d0423ace8041dd6699373d450e5e",
+      "workers-ts/audit/admin-frontend-api-contracts-shipping-settings-followup-20261001.json": "c82f474b813cdddb2a439c111a07b1ed76df037a38afc9a0c2ea4961a1c20471",
+      "workers-ts/audit/admin-frontend-inventory-shipping-settings-followup-20261001.json": "00058cfb8739e4cbb9b9a67d8b46eeb43d6c50a03210d4f03456ceb9c755e3b9",
+      "workers-ts/audit/admin-legacy-app-route-parity.json": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3",
+      "workers-ts/audit/admin-legacy-content-route-parity.json": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json": "7d069a52a7c2877cad510d9926e76791f6922965910ab02ed664a72366288ea5",
+      "workers-ts/audit/admin-legacy-product-route-parity.json": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "workers-ts/audit/admin-legacy-setting-route-parity-shipping-settings-followup-20261001.json": "ed5d35c4e858187ab83a4077946ad78470cf52778a23222f07d2873bb537a3bf",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438",
+      "workers-ts/audit/admin-legacy-work-route-parity.json": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf",
+      "workers-ts/audit/route-distribution-shipping-settings-followup-20261001.json": "13c67507a9a2b1efc6b3c2b1ce7b9babd83c3b44af771855a04f062532dc1237",
+      "workers-ts/docs/admin-shipping-settings.md": "74fbc13724ef18d6ee95f74c4e5ce8af7c4a918d57d01b1cfcffcaf185684713",
+      "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "7cf1730217fab899c02f87c19c47b2043d72e8811686ff5bf11b3d1edf259380",
+      "workers-ts/scripts/admin-frontend-api-audit.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",
+      "workers-ts/scripts/admin-frontend-parity-audit.ts": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0",
+      "workers-ts/scripts/admin-setting-frontend-parity-audit.ts": "d77c6874d56f1a2d9fedf11201469c05f87af6362c240eb6b1397aeb9c37b01c",
+      "workers-ts/scripts/route-parity-audit.ts": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "770eec84f18871cdd99fd86b77703a8ebf7bdf0badd9bff139d7aa402fba3e9f",
+      "workers-ts/src/controllers/api/v1/AdminShippingSettingsController.ts": "000bee996a749cee19e643f5b7dfc28084e6753b08d8fc3c0cfdcf21aae98f52",
+      "workers-ts/src/lib/di.ts": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805",
+      "workers-ts/src/migrations/checkoutPricingLock.ts": "f580ad4e59ddc064ce5551db8dbd4a975c7e48987a797ad672033dd7d6f941d2",
+      "workers-ts/src/migrations/checkoutPricingLockCatalog.ts": "3256e08a4f609e2de9d4fdd23f24e715c0a61ed3a35a4c8f016de0af2564d404",
+      "workers-ts/src/migrations/checkoutPricingLockInstallation.ts": "2ab128d09a38729c4c655555fe7639672c8a45127bf1d901e40da15078a634ae",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+      "workers-ts/src/migrations/runtimeLockOnlyBoundary.ts": "60a8a43b309f32e069d2a60f42388f6df2228c6f2f491cb4c12d2b2a8c7c9144",
+      "workers-ts/src/routes/adminapi.ts": "9f9903cbf67e4b083d15f752d9c3ca292271274ba46fdfa34d2b11d880c3994f",
+      "workers-ts/src/routes/v1/index.ts": "c5dd7afa22a34aa58c2f342ddeccdb58a18a1df203b7adfc2e555ef1cb06bbdf",
+      "workers-ts/src/services/activity/BargainPickupPolicy.ts": "2a0e355a25ae08731e28d991203a668ca5e2e69dfbf3756eaac277a50ef5d2a6",
+      "workers-ts/src/services/activity/BargainShippingSelection.ts": "d174c70fec8266d80bf1db8cc16176109128a7322cc3366310d78c30becb2e75",
+      "workers-ts/src/services/admin/AdminLevelActivationInput.ts": "d5a6535b45bcb7eb1e9804d160beab159fbeeefafc75f9b9bb02768f1f4a24f9",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "98b861db7793aaeeef2a03d0b9db2c061a3ea605d3991d5495417d9ec78d7c6f",
+      "workers-ts/src/services/admin/AdminShippingSettingsInput.ts": "5ec94d844f94b50659332b4d996a93c707fae351cd9e0a4f1593a760568628ed",
+      "workers-ts/src/services/admin/AdminShippingSettingsService.ts": "92fa0129cc2d5e219662fd4b6f42b0128ce3d255bdcdd9d8653d57e885c13d50",
+      "workers-ts/src/services/content/V2PublicCompatibilityService.ts": "3261295b1a5ecea242ccf7c4d6dab00259267eecf17695b1c1ebda06672d5b7e",
+      "workers-ts/src/services/order/CheckoutPickupPolicy.ts": "4073f9d6f5b5041c4c87bf459dc919d85a11bea1d1f86dc88bfa3b3092e43120",
+      "workers-ts/src/services/order/CheckoutPricingSources.ts": "f17baadb0242d9524b4d4bc681b18d1ae9c9df9ca70a01748c5ee6ede559a764",
+      "workers-ts/src/services/order/LegacyOrderCompatibilityService.ts": "4c2592d49b05b134c6fbd06275e1ef47885e74af3f9b7c7fc7576f3da5442e43",
+      "workers-ts/src/services/order/StoreOrderCreateService.ts": "3d3aede2a2e54fb8d2fe10a854ec52adf9e43250cce6a5a77d804878a6f58d99",
+      "workers-ts/src/utils/config.ts": "2898634b4dfaf6d7ef5f417591ea704f21fd799b9b906e4f6a40ad339689cbe9",
+      "workers-ts/src/utils/request-body.ts": "8004bd6c9205ce389e505d280e7a593a76ffc7158a657e0c6d7e792bc2b245cd",
+      "workers-ts/test/admin-all-frontend-parity.test.ts": "e0a07580134dd66986d954e0c7521324ab85d43fdb9e03b093c74e226e437931",
+      "workers-ts/test/admin-frontend-api-audit.test.ts": "f3b07fc6c764dc52424a171d2884fe12a81371cfddaa8bca4b0e4e1bf37bcf71",
+      "workers-ts/test/admin-frontend-api-contract.test.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",
+      "workers-ts/test/admin-frontend-inventory.test.ts": "f3312244f1520c416556bfb6ab62b5150ebe9b79c86b54346537562c518be2d6",
+      "workers-ts/test/admin-marketing-frontend-parity.test.ts": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+      "workers-ts/test/admin-setting-frontend-parity.test.ts": "d91e97ea0d53585a03f83b7dd8a03d90f757a3960e71428a007b02682d2ae099",
+      "workers-ts/test/admin-shipping-settings-http.test.ts": "41640b9a795c59dc46881ed53def600e14b47b58a7e4659df034adad8db71774",
+      "workers-ts/test/admin-shipping-settings-postgres.test.ts": "0954b3c78a964b5cface085b926eb7b0f76abd0a9f689bebba989a401ab11f0e",
+      "workers-ts/test/admin-shipping-settings.test.ts": "f9ff54fdf3acc8d05bc90636c5af0c846c8ba726b738016c9cf8b44beb7b0784",
+      "workers-ts/test/bargain-pickup-postgres.test.ts": "ad6a85d2c2f4323eb6601e00e45d03815a7b8fe0d3bfa4b2d1551a3c76e99204",
+      "workers-ts/test/bargain-shipping-selection-postgres.test.ts": "1187b5f43daf2a4191f7168426f7f0d93388e34c78e375d7a52bd42214c728b2",
+      "workers-ts/test/checkout-pickup-consumers.test.ts": "932bd47ca943b8b52a1cb224684219572e18bbb83bce8873320ab1c79909e3b8",
+      "workers-ts/test/checkout-pickup-policy-postgres.test.ts": "6f5306fec464490e7ff0376588e24c1644dfcad1d9956598e12e85775fe9d56d",
+      "workers-ts/test/checkout-pricing-config-authority.test.ts": "36ca99750e6493b0b852211bc830eba9227500e11c3a3700667c30c6b53830ef",
+      "workers-ts/test/checkout-shipping-settings-consumer.test.ts": "ad00374e77d14b36a0b347b3ab7d5427f485e4701f7e98184790c67b539a92b4",
+      "workers-ts/test/helpers/bargainSelectionFixture.ts": "e2542dce0772463306560f3330a05d3b98d12d09789dae6abdbadeb989e28ad1",
+      "workers-ts/test/helpers/checkoutPricingFixture.ts": "c3b4a7c230ed34ab0a9425e32a430ea2e19528b5c442b0c14dd50bb3b678baf8",
+      "workers-ts/test/helpers/financePeers.ts": "51bf74693df51da8d99bc14b5b5625c059b948915ce88b592223fe3f4df632e8",
+      "workers-ts/test/helpers/financePostgres.ts": "8a7849c2749f5ef2e08543a6185989b27dc3de604193a19dcf847aa6cd0fdfbe",
+      "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33",
+      "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts": "29575c5525f219a18c90df05ea29464dda8228818147b898c250823711d25581",
+      "workers-ts/test/helpers/shippingSettingsFixture.ts": "21e2267683e77d993c0254ef9049bb76eb6960c5032ee01b2bb9dd2c2ef9466d",
+      "workers-ts/test/pc-checkout-quote-postgres.test.ts": "0112bc811c725d9fc1ce040eb05fd47e7847ced06e9c73a93e42baa1eb192c07"
+    },
+    "unchangedRuntimePrivilegeSources": {
+      "comparedWith": "workers-ts/audit/admin-marketing-config-acceptance-20260930.json",
+      "hashes": {
+        "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+        "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805"
+      },
+      "boundary": "Two fixed privilege sources match the prior full commissioning manifest; no claim that all shared business sources remain unchanged."
+    },
+    "logHashes": {
+      ".cache/shipping-pricing-native-20261001.log": "c0c4a3c275df65ada5978ee66d2ebfc31a7b294e35712c8f90bdf6d1cc0e3f75",
+      ".cache/shipping-admin-native-accepted-20261001.log": "01705eb0f7ba6e5dd566a56b9e768bf0a6849ba1a217400bf62d85f5a4e198b5",
+      ".cache/shipping-order-native-final-accepted-20261001.log": "7a092d31a00fd617c29e8f97cea978e586f1e76a7b44db4e3a46f254ba882501",
+      ".cache/shipping-bargain-native-accepted-20261001.log": "dc9c561c0d474e45c59d7fd0413cff95efdd6796babf8e7495178955c9a025ff",
+      ".cache/shipping-cluster-cleanup-final-20261001.log": "5575e90dfd3e7be52faf6590af23803f399175a7918b15dde1562b08bc2be891",
+      ".cache/shipping-audits-final-20261001.log": "28a9fb55e0ba810f7ab4aebab4559f3caa543d71c2e35dd52a14745345353d69",
+      ".cache/shipping-frontend-tests-final-20261001.log": "fb2a3a992ef6135b7e4d626090598f802add4856169e54949b3b3119cec1f44c",
+      ".cache/shipping-worker-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/shipping-worker-runtime-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/shipping-admin-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/shipping-admin-build-final-20261001.log": "da766e03e7a5b395c553fd1195b574a0f569c5ba69317684daae16e36b90f78a",
+      ".cache/shipping-browser-final-20261001.log": "436e3e2759f771d3411a6d16fbe7f782355049c3190798a58e3e97dc1220e0f9"
+    },
+    "browserArtifactHashes": {
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-browser-qa.json": "4f494ead35474fb97621eeae95cffb026d842ee6aa20cafea62522a082cf7c00",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-browser-qa.cjs": "73f5e52b150d9ffdec2cafbc2e4c236d484426cbf4377daf67973eb0e5d1f013",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-desktop.png": "87a3f1b2ecc6e4838182fa467abd5c5717d6621e33432e22b106542041920944",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-desktop-pickup.png": "af36179500bd1748cec88b34ad115360e41cd45e61abeda2546a4c2a10ef2088",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-saved-desktop.png": "61182f6485651a1f357ae4886cc5b40044e0ee5c6106c1a69e237be5c3d31b66",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-pending-desktop.png": "8495a2b6314cabe03b89fb34f7852662dce998834da50347726f1bdc6ab981d2",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-mobile.png": "1c9ca1df6418a75ffc22c08bfe1e52d2fd148828d3b0b7674ca08f04cd7c51b9",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/shipping-settings-mobile-pickup.png": "0fdb33228977c3541f0718ee6f12c90b27749a0a437a8c525e0877fd9c4a596d"
+    }
+  }
+}

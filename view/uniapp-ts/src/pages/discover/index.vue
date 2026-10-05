@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="discover">
     <view class="top-bar">
       <text class="top-title">逛逛</text>
@@ -110,9 +111,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import {
@@ -323,9 +326,9 @@ onShow(load);
 }
 
 .publish-btn {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
-  border: 2rpx solid #e93323;
+  border: 2rpx solid var(--view-theme, #e93323);
   border-radius: 28rpx;
   padding: 8rpx 24rpx;
 }
@@ -377,7 +380,7 @@ onShow(load);
   height: 15rpx;
   border: 3rpx solid #fff;
   border-radius: 50%;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
 }
 
 .follow-name {
@@ -485,7 +488,7 @@ onShow(load);
 }
 
 .sheet-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 12rpx;
@@ -537,7 +540,7 @@ onShow(load);
 }
 
 .like-btn.liked {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .detail-meta-item {
@@ -596,7 +599,7 @@ onShow(load);
 }
 
 .send-btn {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 28rpx;
 }
 </style>

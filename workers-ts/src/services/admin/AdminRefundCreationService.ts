@@ -3,7 +3,7 @@ import type { Env } from '@/env';
 import { ValidateException } from '@/utils/errors';
 import { normalizeOutRequestKey, outRequestHash } from '@/services/out/OutIdempotency';
 import { amountToCents } from '@/services/payment/RefundGateway';
-import { applyOrderRefund } from '@/services/order/StoreOrderRefundService';
+import { applyOrderRefundFromPublicEntry } from '@/services/order/StoreOrderRefundService';
 import { authorizeAdminRefundActor, type AdminRefundDecisionActor } from './AdminRefundDecisionService';
 import { parseAdminRefundCreation, adminRefundCreationNumber } from './AdminRefundCreationProtocol';
 import { appendRefundCreation, checkRefundCreation, readRefundCreation } from './AdminRefundCreationLedger';
@@ -27,7 +27,7 @@ export async function createAdminRefundApplication(container:Container,actorInpu
     await authorizeAdminRefundActor(tx,actor);
     const prior=await checkRefundCreation(tx,operation);
     if(prior)return {receipt:prior,replayed:true};
-    const result=await applyOrderRefund(createContainerFromDb(tx),{
+    const result=await applyOrderRefundFromPublicEntry(createContainerFromDb(tx),{
       uid:body.review.uid,orderId:body.review.orderId,applyType:4,privilegedActor:'admin',
       resolveRefundTimeDays:lockAdminRefundWindow,
       refundReason:body.reason,refundExplain:body.reason,

@@ -25,12 +25,18 @@ const tables = [...new Set([...Object.keys(RUNTIME_LOCK_ONLY_RULES.app), ...Obje
 const functionName = 'cinashop_runtime_lock_only_v1';
 const triggerName = functionName;
 
-function body(app: string, admin: string) {
+export type RuntimeLockBoundaryVersion='legacy'|'promotion-gifts'|'agent-levels';
+export function runtimeLockOnlyBoundaryBody(app: string, admin: string,version:RuntimeLockBoundaryVersion='legacy') {
   pricingIdentifier(app); pricingIdentifier(admin);
   if (app === admin) throw Error('Distinct runtime identities required');
+  if(!['legacy','promotion-gifts','agent-levels'].includes(version))throw Error('Fixed lock boundary version required');
   const branches = (['app','admin'] as const).map(kind => {
     const role = kind==='app'?app:admin;
-    const cases = Object.entries(RUNTIME_LOCK_ONLY_RULES[kind]).sort(([a],[b])=>a.localeCompare(b)).map(([table,columns]) => {
+    const cases = Object.entries(RUNTIME_LOCK_ONLY_RULES[kind])
+      .filter(([table])=>!(version!=='legacy' && kind==='admin' && ['store_promotions','store_promotions_auxiliary'].includes(table)))
+      .filter(([table])=>!(version==='agent-levels' && kind==='admin' && table==='agent_level'))
+      .sort(([a],[b])=>a.localeCompare(b)).map(([table,priorColumns]) => {
+      const columns=version!=='legacy' && kind==='app' && table==='store_promotions_auxiliary'?['surplus_num']:priorColumns;
       const excluded=columns.length?`ARRAY[${columns.map(c=>`'${c}'`).join(',')}]::text[]`:`ARRAY[]::text[]`;
       return `WHEN '${table}' THEN
         IF (pg_catalog.to_jsonb(NEW) - ${excluded}) IS DISTINCT FROM (pg_catalog.to_jsonb(OLD) - ${excluded}) THEN
@@ -42,9 +48,9 @@ function body(app: string, admin: string) {
   return `BEGIN\n${branches}\nRETURN NEW;\nEND`;
 }
 
-export async function inspectRuntimeLockOnlyBoundary(tx: Query, app: string, admin: string, maintenance: string) {
+export async function inspectRuntimeLockOnlyBoundary(tx: Query, app: string, admin: string, maintenance: string,version:RuntimeLockBoundaryVersion='legacy') {
   pricingIdentifier(maintenance);
-  const definition=body(app,admin);
+  const definition=runtimeLockOnlyBoundaryBody(app,admin,version);
   const [r]=await tx.execute(sql`WITH routines AS (
     SELECT p.* FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname=${functionName}
   ), targets AS (SELECT c.* FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace
@@ -78,9 +84,9 @@ export async function inspectRuntimeLockOnlyBoundary(tx: Query, app: string, adm
 
 /** Existing caller-owned, bounded maintenance transaction only. Does not grant
  * privileges, change business data, repair drift or create/alter LOGIN roles. */
-export async function installRuntimeLockOnlyBoundaryInTransaction(tx: Query, app: string, admin: string, maintenance: string) {
+export async function installRuntimeLockOnlyBoundaryInTransaction(tx: Query, app: string, admin: string, maintenance: string,version:RuntimeLockBoundaryVersion='legacy') {
   if (Object.hasOwn(tx,'$client')) throw Error('Lock-only boundary requires an existing transaction');
-  body(app,admin); pricingIdentifier(maintenance);
+  runtimeLockOnlyBoundaryBody(app,admin,version); pricingIdentifier(maintenance);
   await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
     set_config('idle_in_transaction_session_timeout','5000',true)`);
   const [environment]=await tx.execute(sql`SELECT current_user=${maintenance} AND session_user=current_user
@@ -93,15 +99,51 @@ export async function installRuntimeLockOnlyBoundaryInTransaction(tx: Query, app
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS supported`);
   if(environment?.supported!==true)throw Error('Lock-only boundary identity requires review');
   await tx.execute(sql.raw('LOCK TABLE '+tables.map(t=>'public.'+pricingIdentifier(t)).join(',')+' IN ACCESS EXCLUSIVE MODE NOWAIT'));
-  const state=await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance);
+  const state=await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance,version);
   if(state.ready)return {applied:false,...state};
   if(!state.absent || !state.tablesSafe)throw Error('Lock-only boundary catalog drift');
   await tx.execute(sql.raw(`CREATE FUNCTION public.${functionName}() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER
-    SET search_path=pg_catalog,pg_temp AS $lock_boundary$${body(app,admin)}$lock_boundary$`));
+    SET search_path=pg_catalog,pg_temp AS $lock_boundary$${runtimeLockOnlyBoundaryBody(app,admin,version)}$lock_boundary$`));
   await tx.execute(sql.raw(`REVOKE ALL ON FUNCTION public.${functionName}() FROM PUBLIC`));
   for(const table of tables)await tx.execute(sql.raw(`CREATE TRIGGER ${triggerName} BEFORE UPDATE ON public.${pricingIdentifier(table)}
     FOR EACH ROW EXECUTE FUNCTION public.${functionName}()`));
-  const after=await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance);
+  const after=await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance,version);
   if(!after.ready)throw Error('Lock-only boundary verification failed');
   return {applied:true,...after};
+}
+
+/** Explicit promotion forward only. The installed legacy definition must match
+ * exactly; a changed owner/body/ACL/trigger is refused, never repaired. */
+export async function upgradePromotionGiftLockBoundaryInTransaction(tx:Query,app:string,admin:string,maintenance:string) {
+  if(Object.hasOwn(tx,'$client'))throw Error('Promotion lock boundary requires a transaction');
+  runtimeLockOnlyBoundaryBody(app,admin);pricingIdentifier(maintenance);
+  const [gate]=await tx.execute(sql`SELECT current_user=${maintenance} AND session_user=current_user
+    AND current_setting('transaction_isolation')='read committed' AND NOT current_setting('transaction_read_only')::boolean
+    AND current_setting('server_version_num')::int/10000=16 AND current_setting('session_replication_role')='origin'
+    AND EXISTS(SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=current_user AND rolsuper) AS ready`);
+  if(gate?.ready!==true)throw Error('Promotion lock boundary maintenance identity required');
+  await tx.execute(sql.raw('LOCK TABLE '+tables.map(t=>'public.'+pricingIdentifier(t)).join(',')+' IN ACCESS EXCLUSIVE MODE NOWAIT'));
+  if(!(await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance,'legacy')).ready)throw Error('Exact legacy lock boundary required');
+  await tx.execute(sql.raw(`CREATE OR REPLACE FUNCTION public.${functionName}() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path=pg_catalog,pg_temp AS $lock_boundary$${runtimeLockOnlyBoundaryBody(app,admin,'promotion-gifts')}$lock_boundary$`));
+  if(!(await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance,'promotion-gifts')).ready)throw Error('Promotion lock boundary verification failed');
+}
+
+/** Fixed distributor forward. Only the exact promotion-era definition may be
+ * replaced. All other role/table cases and the existing trigger OIDs remain. */
+export async function upgradeAgentLevelLockBoundaryInTransaction(tx:Query,app:string,admin:string,maintenance:string) {
+  if(Object.hasOwn(tx,'$client'))throw Error('Distributor lock boundary requires a transaction');
+  runtimeLockOnlyBoundaryBody(app,admin,'agent-levels');pricingIdentifier(maintenance);
+  const [gate]=await tx.execute(sql`SELECT current_user=${maintenance} AND session_user=current_user
+    AND current_setting('transaction_isolation')='read committed' AND NOT current_setting('transaction_read_only')::boolean
+    AND current_setting('server_version_num')::int/10000=16 AND current_setting('session_replication_role')='origin'
+    AND EXISTS(SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=current_user AND rolsuper) AS ready`);
+  if(gate?.ready!==true)throw Error('Distributor lock boundary maintenance identity required');
+  await tx.execute(sql.raw('LOCK TABLE '+tables.map(t=>'public.'+pricingIdentifier(t)).join(',')+' IN ACCESS EXCLUSIVE MODE NOWAIT'));
+  if(!(await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance,'promotion-gifts')).ready)
+    throw Error('Exact promotion-era lock boundary required');
+  await tx.execute(sql.raw(`CREATE OR REPLACE FUNCTION public.${functionName}() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path=pg_catalog,pg_temp AS $lock_boundary$${runtimeLockOnlyBoundaryBody(app,admin,'agent-levels')}$lock_boundary$`));
+  if(!(await inspectRuntimeLockOnlyBoundary(tx,app,admin,maintenance,'agent-levels')).ready)
+    throw Error('Distributor lock boundary verification failed');
 }

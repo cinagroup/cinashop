@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="assisted-page">
     <view class="eyebrow">管理员 · 代客下单</view><view class="title">确认订单</view>
     <view v-if="!authorized" class="notice">请登录原管理员的代客会话。商城会员登录不能授权此页面。
@@ -23,7 +24,10 @@
       <template v-else-if="!loading && !error && items.length">
         <view class="panel"><view class="section-title">本次商品</view>
           <view v-for="item in (quote ? quote.items : items)" :key="item.id" class="cart-item">
-            <view class="name">{{ item.name }}</view><view class="hint">{{ item.sku }} · {{ item.quantity }} 件 · 单价{{ quote ? '' : '参考' }} ¥{{ item.price }}</view>
+            <view class="name">{{ item.name }}</view>
+            <view class="hint">{{ item.sku }} · {{ item.quantity }} 件 · {{ quote && item.nonUniform ? '活动分段计价' : `单价${quote ? '' : '参考'} ¥${item.price}` }}</view>
+            <view v-if="quote" class="hint">本商品小计 ¥{{ item.totalPrice }}</view>
+            <view v-if="quote && partSummary(item.id)" class="hint">{{ partSummary(item.id) }}</view>
           </view><view v-if="!quote" class="hint">参考价不是应付金额，请取得当前完整报价。</view>
         </view>
         <view class="panel"><view class="section-title">配送与收货</view>
@@ -103,8 +107,10 @@
     </template>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useAssistedCheckout } from '@/composables/useAssistedCheckout';
 import SystemFormFields from '@/components/SystemFormFields.vue';
 const { session,scope,authorized,loading,error,notice,items,addresses,stores,addressId,storeId,addressError,storeError,
@@ -115,8 +121,9 @@ const { session,scope,authorized,loading,error,notice,items,addresses,stores,add
   updateForm,onFormChoosing,onFormPending,uploadFormImage,refreshPreviews,
   confirmSubmit,submit,clearResult,goBuyers,goRecords,goDetail,goCashier,goCart }=useAssistedCheckout();
 const paymentMethods=[{value:'cash',label:'现金'},{value:'weixin',label:'微信'},{value:'alipay',label:'支付宝'}] as const;
+const partSummary=(id:number)=>quote.value?.items.find(item=>item.id===id)?.promotionSummary||'';
 const amountLines=[{key:'original',label:'商品原价',discount:false},{key:'membership',label:'会员优惠',discount:true},
-  {key:'products',label:'商品小计',discount:false},{key:'coupon',label:'优惠券',discount:true},
+  {key:'promotion',label:'活动优惠',discount:true},{key:'products',label:'商品小计',discount:false},{key:'coupon',label:'优惠券',discount:true},
   {key:'firstOrder',label:'首单优惠',discount:true},{key:'points',label:'积分抵扣',discount:true},
   {key:'originalPostage',label:'原始运费',discount:false},{key:'postageDiscount',label:'运费优惠',discount:true},{key:'postage',label:'应付运费',discount:false}] as const;
 </script>

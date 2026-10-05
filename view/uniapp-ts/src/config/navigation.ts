@@ -1,3 +1,4 @@
+import { resolveCustomerWorkPageRoute } from '../../../common/customerWorkRoute';
 export type LegacyRouteCoverage = "candidate_covered" | "partial_replacement";
 
 export interface LegacyRouteRule {
@@ -12,6 +13,33 @@ export interface LegacyRouteRule {
  * into a silent UniApp navigation failure.
  */
 export const REGISTERED_PAGE_ROUTES = new Set<string>([
+  "/pages/customer-work/index",
+  "/pages/customer-work/statistics",
+  "/pages/customer-work/orders",
+  "/pages/customer-work/orderDetail",
+  "/pages/customer-work/refunds",
+  "/pages/customer-work/refundDetail",
+  "/pages/customer-work/refund",
+  "/pages/customer-work/logistics",
+  "/pages/customer-work/delivery",
+  "/pages/customer-work/products",
+  "/pages/customer-work/productSkus",
+  "/pages/customer-work/users",
+  "/pages/customer-work/userDetail",
+  "/pages/customer-work/scanning",
+  "/pages/customer-work/writeoff",
+  "/pages/customer-work/writeoffRecords",
+  "/pages/customer-work/writeoffResult",
+  "/pages/delivery/index",
+  "/pages/delivery/orderDetail",
+  "/pages/delivery/scanning",
+  "/pages/delivery/scanDetail",
+  "/pages/merchant/statistics",
+  "/pages/merchant/orders",
+  "/pages/merchant/orderDetail",
+  "/pages/merchant/delivery",
+  "/pages/merchant/refund",
+  "/pages/merchant/logistics",
   "/pages/behalf/record/index",
   "/pages/behalf/user_list/index",
   "/pages/behalf/goods_list/index",
@@ -36,6 +64,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/index",
   "/pages/goods/list",
   "/pages/goods/detail",
+  "/pages/goods/productCommunity",
   "/pages/article/list",
   "/pages/article/detail",
   "/pages/diy/detail",
@@ -57,6 +86,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/integral",
   "/pages/user/sign",
   "/pages/user/profile",
+  "/pages/user/memberCode",
   "/pages/user/agreements",
   "/pages/user/legalContent",
   "/pages/user/couponCenter",
@@ -70,6 +100,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/coupon",
   "/pages/user/couponProducts",
   "/pages/user/finance",
+  "/pages/users/user_distribution_level/index",
   "/pages/user/spread",
   "/pages/users/distributor/apply",
   "/pages/users/agent/apply",
@@ -94,6 +125,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/activity/new_customer/index",
   "/pages/activity/newcomerDetail",
   "/pages/activity/presaleDetail",
+  "/pages/activity/integralDetail",
   "/pages/activity/presale",
   "/pages/columnGoods/rank/index",
   "/pages/columnGoods/live_list/index",
@@ -105,6 +137,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/activity/lotteryRecords",
   "/pages/user/supplierApply",
   "/pages/operator/writeoff",
+  "/pages/common/fabWebView",
 ] as const);
 
 export const TAB_ROUTES = new Set<string>([
@@ -122,6 +155,19 @@ const orderIdAlias = { order_id: "orderId" } as const;
  * lands on a consolidated screen, but is not counted as full functional parity.
  */
 export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
+  "/pages/admin/work/index": { target: "/pages/customer-work/index", coverage: "partial_replacement" },
+  "/pages/admin/order/index": { target: "/pages/customer-work/statistics", coverage: "partial_replacement" },
+  "/pages/admin/orderList/index": { target: "/pages/customer-work/orders", coverage: "partial_replacement", queryAliases: { types: "status" } },
+  "/pages/admin/orderDetail/index": { target: "/pages/customer-work/orderDetail", coverage: "partial_replacement", queryAliases: { id: "orderId", types: "status" } },
+  "/pages/admin/refundOrderList/index": { target: "/pages/customer-work/refunds", coverage: "partial_replacement" },
+  "/pages/admin/refundOrderDetail/index": { target: "/pages/customer-work/refundDetail", coverage: "partial_replacement", queryAliases: { id: "refundOrderId" } },
+  "/pages/admin/delivery/index": { target: "/pages/customer-work/delivery", coverage: "partial_replacement", queryAliases: { id: "orderId" } },
+  "/pages/admin/goods/index": { target: "/pages/customer-work/products", coverage: "partial_replacement", queryAliases: { store_name: "keyword" } },
+  "/pages/admin/user/list": { target: "/pages/customer-work/users", coverage: "partial_replacement", queryAliases: { keyword: "nickname", label_id: "label_ids" } },
+  "/pages/admin/user/index": { target: "/pages/customer-work/userDetail", coverage: "partial_replacement" },
+  "/pages/admin/goods/specs": { target: "/pages/customer-work/productSkus", coverage: "partial_replacement", queryAliases: { id: "productId" } },
+  "/pages/admin/refund/index": { target: "/pages/customer-work/refund", coverage: "partial_replacement", queryAliases: { id: "orderId" } },
+  "/pages/admin/logistics/index": { target: "/pages/customer-work/logistics", coverage: "partial_replacement" },
   "/pages/guide/index": { target: "/pages/index/index", coverage: "partial_replacement" },
   "/pages/order_addcart/order_addcart": { target: "/pages/cart/index", coverage: "candidate_covered" },
   "/pages/goods_details/index": { target: "/pages/goods/detail", coverage: "candidate_covered" },
@@ -140,6 +186,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/users/retrievePassword/index": { target: "/pages/auth/reset", coverage: "candidate_covered" },
   "/pages/users/user_set/index": { target: "/pages/user/profile", coverage: "partial_replacement" },
   "/pages/users/user_info/index": { target: "/pages/user/profile", coverage: "candidate_covered" },
+  "/pages/users/user_member_code/index": { target: "/pages/user/memberCode", coverage: "partial_replacement" },
   "/pages/users/privacy/index": { target: "/pages/user/legalContent", coverage: "partial_replacement" },
   "/pages/users/user_agreement_list/index": { target: "/pages/user/agreements", coverage: "candidate_covered" },
   "/pages/users/user_goods_collection/index": { target: "/pages/user/collect", coverage: "candidate_covered" },
@@ -158,7 +205,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/users/user_cash/index": { target: "/pages/user/finance", coverage: "candidate_covered" },
   "/pages/users/user_cash/status": { target: "/pages/user/finance", coverage: "partial_replacement" },
   "/pages/users/user_vip/index": { target: "/pages/user/vipOpen", coverage: "candidate_covered" },
-  "/pages/users/user_distribution_level/index": { target: "/pages/user/finance", coverage: "partial_replacement" },
+  "/pages/users/user_distribution_level/index": { target: "/pages/users/user_distribution_level/index", coverage: "candidate_covered" },
   "/pages/users/user_address_list/index": { target: "/pages/user/address", coverage: "candidate_covered" },
   "/pages/users/user_address/index": { target: "/pages/user/address", coverage: "candidate_covered" },
   "/pages/users/user_address/addClient": { target: "/pages/user/address", coverage: "partial_replacement" },
@@ -187,8 +234,10 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/activity/points_mall/index": { target: "/pages/user/integral", coverage: "candidate_covered" },
   "/pages/activity/coupon/index": { target: "/pages/user/couponCenter", coverage: "candidate_covered" },
 
-  "/pages/admin/distribution/scanning/index": { target: "/pages/operator/writeoff", coverage: "partial_replacement" },
-  "/pages/admin/distribution/scanning/detail/index": { target: "/pages/operator/writeoff", coverage: "partial_replacement" },
+  "/pages/admin/distribution/index": { target: "/pages/delivery/index", coverage: "partial_replacement" },
+  "/pages/admin/distribution/orderDetail/index": { target: "/pages/delivery/orderDetail", coverage: "partial_replacement", queryAliases: { id: "orderId" } },
+  "/pages/admin/distribution/scanning/index": { target: "/pages/delivery/scanning", coverage: "partial_replacement" },
+  "/pages/admin/distribution/scanning/detail/index": { target: "/pages/delivery/scanDetail", coverage: "partial_replacement", queryAliases: { id: "orderId" } },
   "/pages/admin/writeRecordList/index": { target: "/pages/operator/writeoff", coverage: "partial_replacement" },
   "/pages/admin/offOrderResult/index": { target: "/pages/operator/writeoff", coverage: "partial_replacement" },
   "/pages/admin/writeOffCard/index": { target: "/pages/operator/writeoff", coverage: "candidate_covered" },
@@ -265,12 +314,14 @@ function canonicalActivityId(value: string): string {
 function resolveLegacyActivityDetail(query: string): string {
   if (!query || query.length > 2_048) return "";
   const fields = new Map<string, string>();
+  const spreadFields: string[] = [];
   try {
     for (const part of query.split("&")) {
       const separator = part.indexOf("=");
       if (separator < 1) return "";
       const key = decodeURIComponent(part.slice(0, separator));
       const value = decodeURIComponent(part.slice(separator + 1));
+      if (key === "spid") spreadFields.push(value);
       if (key === "id" || key === "type" || key === "pink_id" || key === "pinkId") {
         if (fields.has(key)) return "";
         fields.set(key, value);
@@ -283,6 +334,12 @@ function resolveLegacyActivityDetail(query: string): string {
   if (type === "7") return `/pages/activity/newcomerDetail?id=${id}`;
   if (type === "1") return `/pages/activity/seckillDetail?id=${id}`;
   if (type === "6") return `/pages/activity/presaleDetail?id=${id}`;
+  if (type === "4") {
+    if (spreadFields.length > 1) return "";
+    const spread = spreadFields.length ? canonicalActivityId(spreadFields[0]!) : "";
+    if (spreadFields.length && !spread) return "";
+    return `/pages/activity/integralDetail?id=${id}${spread ? `&spid=${spread}` : ""}`;
+  }
   if (type === "3") {
     const groupA = fields.get("pink_id"), groupB = fields.get("pinkId");
     if (groupA !== undefined && groupB !== undefined) return "";
@@ -295,7 +352,10 @@ function resolveLegacyActivityDetail(query: string): string {
 }
 
 export function resolveRegisteredPageRoute(path: string, query = ""): string {
+  const work = resolveCustomerWorkPageRoute(path, query);
+  if (work !== null) return work;
   if (path === "/pages/activity/goods_details/index") return resolveLegacyActivityDetail(query);
+  if (path === "/pages/activity/integralDetail") return resolveLegacyActivityDetail(`${query}&type=4`);
   const rule = LEGACY_ROUTE_RULES[path];
   const target = rule?.target ?? path;
   if (!REGISTERED_PAGE_ROUTES.has(target)) return "";

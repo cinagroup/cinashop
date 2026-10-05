@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-27",
+  "state": "accepted_fixed_boundaries_and_existing_role_forwards_native24_actual_login11_final_types; production_installation_not_applied",
+  "scope": {
+    "scheduleFunction": "cinashop_runtime_seckill_schedule_lock_only_v1",
+    "fixedTables": [
+      "public.store_activity",
+      "public.store_seckill_time"
+    ],
+    "appAdditionalAuthority": [
+      "UPDATE(id) public.store_activity",
+      "UPDATE(id) public.store_seckill_time"
+    ],
+    "appSemanticUpdatesRejected": true,
+    "unknownUserUpdateTriggersRejectedInCatalogAndBody": true,
+    "internalFkTriggersPreserved": true,
+    "adminAdditionalAuthority": [
+      "INSERT,UPDATE public.store_activity",
+      "USAGE public.store_activity_id_seq"
+    ],
+    "adminParentPhysicalDelete": false,
+    "profileStages": [
+      "legacy-seckill-schedule",
+      "seckill-schedule",
+      "current"
+    ],
+    "scheduleForward": "runSeckillScheduleRuntimeUpgrade",
+    "parentForward": "runSeckillParentRuntimeUpgrade",
+    "freshCommissioningIncludesBoth": true,
+    "legacyLockOnlyV1ChangedInThisBatch": false,
+    "migrationRegistryChangedInThisBatch": false,
+    "externalMigrationCount": 169,
+    "embeddedMigrationCount": 174,
+    "productionInstalled": false,
+    "liveGrantsApplied": false
+  },
+  "validation": {
+    "baseline": {
+      "session": 17817,
+      "status": "passed_actual_old_profile_negative_control",
+      "passed": 1,
+      "failed": 0,
+      "seconds": 16.13,
+      "port": 51756,
+      "cluster": "finance-postgres-6emRJc",
+      "assertion": "Actual StoreOrderCreateService type1 returns 42501 on parent FOR SHARE under exact old profile; business state unchanged",
+      "cleanup": "remaining=0;STOPPED"
+    },
+    "firstInfrastructureAttempt": {
+      "session": 10657,
+      "exit": 1,
+      "testsExecuted": false,
+      "reason": "Worker node_modules Vitest entry missing before test execution; existing lockfile dependencies subsequently restored by root",
+      "port": 63173,
+      "cluster": "finance-postgres-vbdRjR",
+      "cleanup": "remaining=0;STOPPED"
+    },
+    "firstNativeStage": {
+      "session": 5935,
+      "exit": 1,
+      "passed": 10,
+      "failed": 12,
+      "seconds": 63.0,
+      "port": 56072,
+      "cluster": "finance-postgres-540FsW",
+      "reasons": [
+        "Structural target metadata was mistakenly included in distinct identity validation; fixed explicit app/admin/maintenance tuple",
+        "Negative catalog overload fixture used PostgreSQL-forbidden trigger function argument; replaced with ordinary integer-return overload"
+      ],
+      "cleanup": "remaining=0;STOPPED"
+    },
+    "acceptedPermissionNative": {
+      "session": 97667,
+      "overallExit": 1,
+      "overallPassed": 31,
+      "overallFailed": 2,
+      "seconds": 169.67,
+      "permissionFiles": [
+        "test/runtime-seckill-schedule-lock.test.ts",
+        "test/runtime-seckill-parent-privileges.test.ts"
+      ],
+      "schedulePassed": 17,
+      "parentPassed": 7,
+      "permissionTotalPassed": 24,
+      "permissionFailed": 0,
+      "permissionSkipped": 0,
+      "actualAppPassed": 7,
+      "actualAppFailed": 2,
+      "actualAppFailure": "Admin display snapshot used store_product_attr_result UPDATE, which the exact existing profile does not grant; backend changed to existing INSERT/DELETE without expanding the profile",
+      "port": 65053,
+      "cluster": "finance-postgres-IvMP9W",
+      "cleanup": "remaining=0;STOPPED",
+      "permissionInputsRemainFrozen": true
+    },
+    "lightweightUnit": {
+      "exit": 0,
+      "passed": 9,
+      "nativeSkipped": 24,
+      "nativePassClaim": false,
+      "command": "node node_modules/vitest/vitest.mjs run test/runtime-business-privilege-plan.test.ts test/runtime-seckill-schedule-lock.test.ts test/runtime-seckill-parent-privileges.test.ts --maxWorkers=2"
+    },
+    "typechecks": [
+      {
+        "session": 57366,
+        "exit": 1,
+        "status": "pre_stage2 diagnostics; fixed unused native parameter and backend imports"
+      },
+      {
+        "session": 89921,
+        "exit": 1,
+        "status": "permission sources had no diagnostics; backend clock.now unknown and unused test import subsequently fixed; final complete types not yet accepted"
+      }
+    ],
+    "finalActualLogin": {
+      "session": 55418,
+      "exit": 0,
+      "files": 1,
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 110.92,
+      "port": 62256,
+      "cluster": "finance-postgres-8ZyeSc",
+      "cleanup": "remaining=0;STOPPED",
+      "scope": [
+        "actual Hono type1 confirm/create/replay using independent app LOGIN",
+        "linked parent and standalone child",
+        "cancel/delete stock and quota recovery",
+        "real Admin quota edit/retirement without changing purchased SKU identity",
+        "real app purchase serialized with Admin parent or slot close using exact blocking PIDs"
+      ]
+    },
+    "laterBusinessNative": {
+      "session": 17548,
+      "overallExit": 1,
+      "overallPassed": 43,
+      "overallFailed": 2,
+      "seconds": 108.69,
+      "acceptedBackendBusiness": 26,
+      "acceptedBackendConcurrency": 8,
+      "priorActualAppPassed": 9,
+      "priorActualAppFailed": 2,
+      "actualAppFailure": "withFinancePeers requires finance fixture registry, while this full schema database belongs to sequenceRunnerDatabase; the ownership gate correctly refused before the concurrency assertion",
+      "correction": "use the owning sequence fixture withPeer; no role grant or endpoint/registry validation was relaxed",
+      "actualAppSupersededBySession": 55418,
+      "port": 52670,
+      "cluster": "finance-postgres-uiI2jY",
+      "cleanup": "remaining=0;STOPPED"
+    },
+    "finalTypes": {
+      "session": 5359,
+      "command": "npm run typecheck",
+      "unitExit": 0,
+      "runtimeExit": 0,
+      "overallExit": 0,
+      "sourceDiagnosticsRemaining": []
+    },
+    "uniqueNativeAcceptance": {
+      "total": 69,
+      "permission": 24,
+      "backendBusiness": 26,
+      "backendConcurrency": 8,
+      "actualLogin": 11,
+      "authoritativeParentEvidence": "workers-ts/audit/seckill-parent-native-20260927.json",
+      "baselineAndRepeatedRunsAddedToTotal": false,
+      "lightweightNativeSkipsAddedToTotal": false
+    }
+  },
+  "remaining": [
+    "Explicit production installation of the fixed protocols/forwards",
+    "Actual Hyperdrive identity audit and deployment acceptance"
+  ],
+  "inputFreeze": {
+    "observedBeforeAndAfterPermissionNative": true,
+    "files": [
+      {
+        "path": "workers-ts/src/migrations/runtimeSeckillScheduleLockBoundary.ts",
+        "sha256": "46578b922db88bb2664652b7a6edec205cea171cdb5a936ca42205b339c1a2c6"
+      },
+      {
+        "path": "workers-ts/src/migrations/runSeckillScheduleRuntimeUpgrade.ts",
+        "sha256": "c74a978bb8928de355cba1119ec689d93dad6298d02465a187c71f4a289be12f"
+      },
+      {
+        "path": "workers-ts/src/migrations/runSeckillParentRuntimeUpgrade.ts",
+        "sha256": "b9374522a19c333565ace159c4045294cc41576c27caaaf293a36ebf4b6e69ed"
+      },
+      {
+        "path": "workers-ts/src/migrations/seckillParentRuntimeCatalog.ts",
+        "sha256": "e14891cd7858702cdd2e220eed4be3b347035097b7ba7dc172ab29b51a7d1239"
+      },
+      {
+        "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+        "sha256": "829ac844be0ca80194a5ee37dc5377c1c8cc5b32352c34964a7b10d0a03b2fd7"
+      },
+      {
+        "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "sha256": "83cf027914c95d100c1b4a69fe98eb27e1f6a18ad6b28c566f44b75c3441a38f"
+      },
+      {
+        "path": "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+        "sha256": "0651fc3e0a258c7e50ffa857e49bd194a3e6bed33c92abadaf0121a40a07fc6f"
+      },
+      {
+        "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+        "sha256": "0a67d9bd7bf1c3fbaa12204a418ba8393842de22bc1584c01187b04aaa918520"
+      },
+      {
+        "path": "workers-ts/src/migrations/runtimeLockOnlyBoundary.ts",
+        "sha256": "a32c1b00f81841d8ebf6136efbf7c078d2c09a0d198afe44078d832fa373373b"
+      },
+      {
+        "path": "workers-ts/test/runtime-seckill-schedule-lock.test.ts",
+        "sha256": "36f52bcd5093218d4e796445911e631c9823c5e87d4f388882aa0e3e517a255a"
+      },
+      {
+        "path": "workers-ts/test/runtime-seckill-parent-privileges.test.ts",
+        "sha256": "bc042f0268ee1946086c5cc0d8a4cdbbb3a9453ac412bf3c5e156121ee7dddcd"
+      },
+      {
+        "path": "workers-ts/test/runtime-business-privilege-plan.test.ts",
+        "sha256": "7519311210aa1cc6be476931f32cc9a9430a2ca58aaf06987a564f34ddc11341"
+      }
+    ],
+    "doc": {
+      "path": "workers-ts/docs/seckill-runtime-privileges.md",
+      "sha256": "845408c2af1b675070a5d6fb08d7113b85474afa8637e92b2dddb133f8cce412",
+      "modifiedAfterPermissionNative": "description only: final actual LOGIN11, registry fixture correction, independent cleanup and root69 unique evidence link"
+    },
+    "finalVerification": {
+      "all12PermissionInputsUnchanged": true,
+      "acceptedNative24ReusedOnlyOnIdenticalInputs": true,
+      "noPermissionSourceChangeAfterNative": true
+    }
+  },
+  "logs": [
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-runtime-select-only-repro-20260927.log",
+      "sha256": "de1b245dd909bf21cb31cc994e1e3ee5d9650f6999868210aec51e0f3e5b4dfc"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-runtime-select-only-repro-20260927-retry.log",
+      "sha256": "3ecd2ac1237e28020ba4ed8f5e60582a736643acc5aa98c3f7cd105ab56fee6c"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-runtime-stage1-native-20260927.log",
+      "sha256": "96d5a1c28d71f22a45313b1d4ab6928bb7e67850992494fb5c8574b74b1cfe11"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-role-native-20260927.log",
+      "sha256": "09a1eaeba8a4a9bc05239d360faceb7f68f2a4c43cceabbda56a4e5994ec0af3"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-business-native-20260927-final.log",
+      "sha256": "a583fd224a78f74177b7d866c10180e4e7f901187ec818915cd7a8c80d3bcf14"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-actual-login-20260927-final.log",
+      "sha256": "e13551eaea0d204c27614a9c69059d6499ba49c8da2fef778b61ee946d3eedc5"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-typecheck-final-20260927.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-permission-cleanup-20260927.json",
+      "sha256": "0cc355291ab2a9bd1004f18d23a942e321e6dc6d5bcca9e28a99e2651c95b760"
+    }
+  ],
+  "history": {
+    "priorCapEvidence": "workers-ts/audit/seckill-time-reference-lock-20260927.json",
+    "priorCapEvidenceOverwritten": false,
+    "oldSeedNinePathsReRun": false,
+    "priorRuntime30IsNormalPresaleOnly": true,
+    "priorMaintenanceSeckillFixtureIsNotActualAppProfileEvidence": true
+  },
+  "independentCleanup": {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-permission-cleanup-20260927.json",
+    "sha256": "0cc355291ab2a9bd1004f18d23a942e321e6dc6d5bcca9e28a99e2651c95b760",
+    "allStopped": true,
+    "instances": [
+      {
+        "cluster": "finance-postgres-IvMP9W",
+        "port": 65053,
+        "pgCtlExit": 3,
+        "listenCount": 0
+      },
+      {
+        "cluster": "finance-postgres-uiI2jY",
+        "port": 52670,
+        "pgCtlExit": 3,
+        "listenCount": 0
+      },
+      {
+        "cluster": "finance-postgres-8ZyeSc",
+        "port": 62256,
+        "pgCtlExit": 3,
+        "listenCount": 0
+      }
+    ],
+    "onlyReadCommands": true
+  }
+}

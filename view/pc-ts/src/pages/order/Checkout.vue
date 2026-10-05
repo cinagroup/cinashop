@@ -86,35 +86,45 @@
           <template #default="{ row }">
             <div class="product-cell">
               <ProductImage v-if="row.productInfo" :src="row.productInfo.image" :alt="row.productInfo.storeName" class="thumb" />
-              <span>{{ row.productInfo?.storeName }}<small class="checkout-sku">{{ row.productInfo?.suk }}</small></span>
+              <span>{{ row.productInfo?.storeName }}<small class="checkout-sku">{{ row.productInfo?.suk }}</small><small v-if="quoteReady && partSummary(row.id)" class="checkout-sku">{{ partSummary(row.id) }}</small></span>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="商品单价" width="120">
           <template #default="{ row }">
-            <span v-if="quoteReady">¥{{ row.productInfo?.price }}<small v-if="row.quotedUnitPrice !== row.productInfo?.price" class="checkout-sku">优惠价 ¥{{ row.quotedUnitPrice }}</small></span>
+            <span v-if="quoteReady">¥{{ row.productInfo?.price }}<small v-if="row.promotion?.unitPriceCents === null" class="checkout-sku">活动分段计价</small><small v-else-if="row.quotedUnitPrice !== row.productInfo?.price" class="checkout-sku">优惠价 ¥{{ row.quotedUnitPrice }}</small></span>
             <span v-else>待报价</span>
           </template>
         </el-table-column>
         <el-table-column prop="cartNum" label="数量" width="80" />
-        <el-table-column label="优惠前小计" width="120">
-          <template #default="{ row }">{{ quoteReady ? `¥${row.sumPrice}` : '待报价' }}</template>
+        <el-table-column label="商品小计" width="120">
+          <template #default="{ row }">{{ quoteReady ? `¥${row.quotedTotalPrice}` : '待报价' }}</template>
         </el-table-column>
       </el-table>
       <ul class="checkout-mobile-items" aria-label="结算商品">
         <li v-for="item in displayItems" :key="item.id">
           <div class="product-cell">
             <ProductImage v-if="item.productInfo" :src="item.productInfo.image" :alt="item.productInfo.storeName" class="thumb" />
-            <span>{{ item.productInfo?.storeName }}<small class="checkout-sku">{{ item.productInfo?.suk }}</small></span>
+            <span>{{ item.productInfo?.storeName }}<small class="checkout-sku">{{ item.productInfo?.suk }}</small><small v-if="quoteReady && partSummary(item.id)" class="checkout-sku">{{ partSummary(item.id) }}</small></span>
           </div>
           <dl>
             <div><dt>商品单价</dt><dd>{{ quoteReady ? `¥${item.productInfo?.price}` : '待报价' }}</dd></div>
-            <div v-if="quoteReady && 'quotedUnitPrice' in item && item.quotedUnitPrice !== item.productInfo?.price"><dt>优惠单价</dt><dd>¥{{ item.quotedUnitPrice }}</dd></div>
+            <div v-if="quoteReady && partNonUniform(item.id)"><dt>活动计价</dt><dd>按分段计价</dd></div>
+            <div v-else-if="quoteReady && 'quotedUnitPrice' in item && item.quotedUnitPrice !== item.productInfo?.price"><dt>优惠单价</dt><dd>¥{{ item.quotedUnitPrice }}</dd></div>
             <div><dt>数量</dt><dd>{{ item.cartNum }}</dd></div>
-            <div><dt>优惠前小计</dt><dd>{{ quoteReady ? `¥${item.sumPrice}` : '待报价' }}</dd></div>
+            <div><dt>商品小计</dt><dd>{{ quoteReady && 'quotedTotalPrice' in item ? `¥${item.quotedTotalPrice}` : '待报价' }}</dd></div>
           </dl>
         </li>
       </ul>
+      <div v-if="quoteReady && quoteState.result && (quoteState.result.gifts.products.length || quoteState.result.gifts.coupons.length || quoteState.result.gifts.integral)" class="checkout-gifts" aria-label="满送活动赠礼">
+        <h4>满送活动赠礼</h4>
+        <p>以下奖励按本次报价展示，支付成功后生效。</p>
+        <ul>
+          <li v-for="gift in quoteState.result.gifts.products" :key="gift.id">赠品：{{ gift.name }} · {{ gift.suk || gift.unique }} × {{ gift.quantity }}</li>
+          <li v-for="(coupon, index) in quoteState.result.gifts.coupons" :key="`${coupon.id}-${index}`">赠券：{{ coupon.title }}（满 ¥{{ coupon.minPrice }} 可用）</li>
+          <li v-if="quoteState.result.gifts.integral">赠送积分：{{ quoteState.result.gifts.integral }}</li>
+        </ul>
+      </div>
       <el-checkbox v-if="integralEligible" v-model="useIntegral" :disabled="checkoutLoading || !!pendingSubmission">使用积分抵扣（可用额度由系统计算）</el-checkbox>
     </section>
 
@@ -156,8 +166,10 @@
       <el-button v-if="quoteState.error && !pendingSubmission" @click="renewQuote">重新获取报价</el-button>
       <el-button v-if="addressError || storeError" :disabled="!!pendingSubmission" @click="loadCheckout">重试配送信息</el-button>
       <dl v-if="quoteReady && quoteState.result" class="quote-prices">
-        <div><dt>商品金额</dt><dd>¥{{ quoteState.result.prices.subtotal }}</dd></div>
+        <div><dt>商品原价</dt><dd>¥{{ quoteState.result.prices.subtotal }}</dd></div>
         <div v-if="quoteState.result.prices.memberDiscount !== '0.00'"><dt>会员优惠</dt><dd>-¥{{ quoteState.result.prices.memberDiscount }}</dd></div>
+        <div v-if="quoteState.result.prices.promotionDiscount !== '0.00'"><dt>活动优惠</dt><dd>-¥{{ quoteState.result.prices.promotionDiscount }}</dd></div>
+        <div><dt>商品小计</dt><dd>¥{{ quoteState.result.prices.goodsPayable }}</dd></div>
         <div v-if="quoteState.result.prices.firstOrderDiscount !== '0.00'"><dt>首单优惠（不与优惠券叠加）</dt><dd>-¥{{ quoteState.result.prices.firstOrderDiscount }}</dd></div>
         <div v-if="quoteState.result.prices.couponDiscount !== '0.00'"><dt>优惠券</dt><dd>-¥{{ quoteState.result.prices.couponDiscount }}</dd></div>
         <div v-if="quoteState.result.prices.integralDiscount !== '0.00'"><dt>积分抵扣（{{ quoteState.result.prices.usedIntegral }} 积分）</dt><dd>-¥{{ quoteState.result.prices.integralDiscount }}</dd></div>
@@ -232,6 +244,7 @@ import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "@/a
 import CouponCards from "@/components/CouponCards.vue";
 import type { BargainShippingSelection } from '../../../../common/bargainShipping';
 import { checkoutRequiresAddress, checkoutSupportsIntegral } from '../../../../common/checkoutSelection';
+import { cartPromotionSummary } from '../../../../common/cartPrice';
 import { CheckoutIntentJournal, type CheckoutIntent } from '../../../../common/checkoutIntent';
 import { captureAuthSession, isCurrentAuthSession, getUid, isLoggedIn, onAuthChange } from '@/utils/auth';
 
@@ -317,6 +330,11 @@ const quoteReady = computed(() => currentOwner.value && !pendingIntent.value && 
   && !quoteState.value.loading && !!quoteState.value.result
   && quoteState.value.fingerprint === checkoutQuoteFingerprint(checkoutItems.value, quoteOptions.value));
 const displayItems = computed(() => quoteReady.value ? quoteState.value.result!.items : checkoutItems.value);
+const partSummary = (id: number) => {
+  const item = quoteState.value.result?.items.find(row => row.id === id);
+  return item ? cartPromotionSummary(item) : '';
+};
+const partNonUniform = (id: number) => quoteState.value.result?.items.find(row => row.id === id)?.promotion?.unitPriceCents === null;
 const canSubmit = computed(() => currentOwner.value && loadedRoute.value === route.fullPath && !checkoutLoading.value && !selectionError.value
   && !submitting.value && !savingAddress.value && (pendingIntent.value ? pendingIntent.value.uid === getUid()
     : quoteReady.value && !systemFormError.value && !formValidationError.value && pendingUploads.value === 0));
@@ -653,6 +671,10 @@ onUnmounted(() => { disposed = true; ownerVersion.value++; stopAuth(); checkoutG
 .checkout-mobile-items dl { margin: 12px 0 0; }
 .checkout-mobile-items dl > div { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; }
 .checkout-mobile-items dd { margin: 0; }
+.checkout-gifts { margin: 14px 0; padding: 14px; border: 1px solid #e7dac1; border-radius: 8px; background: #fffaf0; }
+.checkout-gifts h4 { margin: 0 0 7px; }
+.checkout-gifts p { margin: 0 0 8px; color: #715b35; }
+.checkout-gifts ul { margin: 0; padding-left: 20px; line-height: 1.8; }
 .quote-prices { width: min(100%, 430px); margin: 0 0 0 auto; }
 .quote-prices > div { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; }
 .quote-prices dd { margin: 0; flex-shrink: 0; }

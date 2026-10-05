@@ -1,0 +1,81 @@
+{
+  "dateUtc": "2026-09-28T09:08:29Z",
+  "scope": "Local, unpublished legacy Admin supplier application, directory/create, promoter agreement follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 67,
+      "partial": 116,
+      "missing": 84,
+      "retired": 7
+    },
+    "legacySupplierAgentScreens": {
+      "total": 19,
+      "candidate": 9,
+      "partial": 9,
+      "missing": 1,
+      "retired": 0
+    },
+    "workerRoutes": 1914,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminApi": {
+      "callSites": 460,
+      "pathVariants": 484,
+      "executable": 484,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 83,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "focusedPgliteAndStatic": {
+      "files": 20,
+      "passed": 108,
+      "failed": 0,
+      "nativeOnlySkipped": 4,
+      "maxWorkers": 1
+    },
+    "nativePostgresql16": {
+      "files": 8,
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "supplierTypecheckAndProductionBuild": "passed",
+    "adminApiStrictAudit": "484 executable variants; 0 unregistered or unresolved",
+    "parallelTimeoutRecheck": "An initial 20-file parallel run hit three default 5-10 second test/hook timeouts; the same 20 files passed with maxWorkers=1.",
+    "browserWrite": "not run; no production mutation or deployment"
+  },
+  "limitations": [
+    "Supplier directory remains partial because the legacy quick-login path is unsafe and no replacement impersonation contract is implemented.",
+    "The legacy supplier menu/rules tree is the supplier-agent domain's one missing screen; the runtime role lacks substantive menu write privileges, and fixed Supplier navigation does not derive from those rows.",
+    "Supplier profile expected_revision is used by the new UI; old unversioned full-form clients remain compatible and can still overwrite the same field until their request contract is migrated.",
+    "Legacy supplier review SMS/WeChat notification channels are not rebuilt; the configured system message path is covered.",
+    "Real-role browser flows, real supplier application materials and account history, production-scale queries, full Linux CI and post-release acceptance remain unverified."
+  ],
+  "evidence": [
+    "docs/admin-supplier-directory-application-agreement-contract.md",
+    "docs/admin-supplier-menu-rules-gap.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "audit/admin-legacy-supplier-agent-route-parity-supplier-closure-followup-20260928.json",
+    "audit/route-distribution-supplier-closure-followup-20260928.json",
+    "audit/admin-frontend-inventory-supplier-closure-followup-20260928.json",
+    "audit/admin-frontend-api-contracts-supplier-closure-followup-20260928.json"
+  ]
+}

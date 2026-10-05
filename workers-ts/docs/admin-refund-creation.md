@@ -11,6 +11,10 @@ The later [line-based refund quotation](refund-line-finance.md) corrects modern
 freight allocation and preserves completed-claim residues; actual Admin quote
 and immutable creation receipt coverage is recorded there, without a new UI or
 protocol version. Existing admitted requests are not re-priced on recovery.
+The 2026-09-30 [full-gift public refund increment](full-gift-refund-entry.md)
+admits whole original undelivered full-gift orders after exact paid completion
+and fixed runtime-catalog checks. It requires all purchase/gift quantities and
+the full paid amount; this bounded case does not admit partial or split refunds.
 **Physical split/refund parity, production migration, deployment and live
 payment acceptance remain unfinished**.
 This does not close the proactive/split-refund PHP migration item or make the

@@ -80,4 +80,17 @@ describe("customer-service realtime reducers", () => {
     expect(result[0]).toMatchObject({ id: 2, message: "message-31", is_tourist: 1 });
     expect(result[1]).toMatchObject({ id: 1, message: "old", is_tourist: 0 });
   });
+  it("does not roll a session summary back for late timestamps or same-second message IDs", () => {
+    const source = [session(1, 2001)];
+    const fresh = updateSessionFromMessage(source, { ...message(50), add_time: 100 }, 1001);
+    expect(updateSessionFromMessage(fresh, { ...message(49), add_time: 100 }, 1001)).toBe(fresh);
+    expect(updateSessionFromMessage(fresh, { ...message(60), add_time: 99 }, 1001)).toBe(fresh);
+  });
+  it("shows safe readable rich-message summaries without bare IDs", () => {
+    expect([2, 3, 5, 6, 7].map(type => sessionMessagePreview("123", type))).toEqual(["[表情]", "[图片]", "[商品]", "[订单]", "[售后订单]"]);
+    expect(sessionMessagePreview("", 1)).toBe("[新消息]");
+  });
+  it("updates read evidence only when the server acknowledges a persisted ID", () => {
+    const original = [message(9)]; expect(upsertMessage(original, { ...message(9), type: 1 })[0].type).toBe(1);
+  });
 });

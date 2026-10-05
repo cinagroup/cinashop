@@ -15,6 +15,8 @@ describe("coupon-user migration parity", () => {
       remainCount: 0,
       receiveLimit: 1,
       receiveType: 1,
+      category: 0,
+      appType: 0,
       startTime: new Date("2026-01-01T00:00:00Z"),
       endTime: new Date("2027-01-01T00:00:00Z"),
       day: 30,

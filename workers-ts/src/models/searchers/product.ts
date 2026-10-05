@@ -20,6 +20,8 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
+import { publicCategoryRelationSelection } from '@/services/product/PublicCategoryPolicy';
+import { publicOrdinaryProductIdentitySql } from '@/services/product/OrdinaryProductReadData';
 import { storeProduct } from "@/models/schema";
 import type { SearcherMap } from "./types";
 
@@ -48,6 +50,7 @@ function relationIn(type: number, relationIds: number[]): SQL {
 }
 
 export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
+  publicCatalog: (value) => value ? publicOrdinaryProductIdentitySql() : undefined,
   // Explicit product-id scopes also drive CASE ordering in StoreProductDao.
   // Keep the predicate here so a requested subset cannot silently widen to all products.
   ids: (value) => {
@@ -136,18 +139,7 @@ export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
     const id = Number(value);
     return inArray(
       storeProduct.id,
-      sql`(SELECT relation.product_id
-        FROM store_product_relation AS relation
-        WHERE relation.type = 1
-          AND relation.relation_id IN (
-            SELECT category.id
-            FROM store_product_category AS category
-            WHERE category.id = ${id}
-              OR category.path = ${String(id)}
-              OR category.path LIKE ${`${id},%`}
-              OR category.path LIKE ${`%,${id},%`}
-              OR category.path LIKE ${`%,${id}`}
-          ))` as never,
+      sql`(${publicCategoryRelationSelection(id, 'cid')})` as never,
     );
   },
   sid: (value) => {
@@ -155,19 +147,12 @@ export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
     const id = Number(value);
     return inArray(
       storeProduct.id,
-      sql`(SELECT relation.product_id
-        FROM store_product_relation AS relation
-        WHERE relation.type = 1
-          AND relation.relation_id IN (
-            SELECT category.id
-            FROM store_product_category AS category
-            WHERE category.id = ${id} OR category.pid = ${id}
-          ))` as never,
+      sql`(${publicCategoryRelationSelection(id, 'sid')})` as never,
     );
   },
   tid: (value) => {
     if (!value) return undefined;
-    return relationIn(1, [Number(value)]);
+    return inArray(storeProduct.id, sql`(${publicCategoryRelationSelection(Number(value), 'tid')})` as never);
   },
 
   // ─── 品牌 ────────────────────────────────────────────────

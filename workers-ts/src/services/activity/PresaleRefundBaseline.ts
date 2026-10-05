@@ -3,7 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderRefundSplit } from '@/models/schema';
 import { loadRefundOrderGeneration } from '@/services/order/RefundOrderGeneration';
 import { refundOrderSplitFingerprint } from '@/services/order/RefundOrderSplitIdentity';
-import { readRefundQuantityReservation } from '@/services/order/RefundQuantityReservation';
+import { readRefundQuantityReservation,CUSTOMER_ROW_REFUND_VERSION,refundClaimCartKey } from '@/services/order/RefundQuantityReservation';
 import type { PresaleDeliveryIntent, PresaleDeliveryLine } from './PresaleDeliveryIntent';
 
 export interface PresaleRefundBaseline { refundId: number; historyDigest: string }
@@ -56,20 +56,19 @@ async function inspectBaseline(tx: DbClient, scope: Scope, refundId: number,
   for (const row of chain) {
     if (!Array.isArray(row.partitions) || !row.partitions.length || row.partitions.length > 200) throw invalid();
     const sourceIds = new Set<number>(), cartIds = new Set<string>(), selectedIds = new Set<number>();
-    const remaining = new Map<number, number>(), selected = new Map<number, number>();
+    const remaining = new Map<number, number>(), selected = new Map<string, number>();
     const parts = row.partitions.map((value: unknown) => {
       if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid();
       const part = value as Record<string, unknown>;
       if (Object.keys(part).length !== 6 || !integer(part.sourceRowId, 1) || sourceIds.has(part.sourceRowId)
-        || typeof part.sourceCartId !== 'string' || !/^[1-9]\d{0,9}$/.test(part.sourceCartId)
-        || !integer(Number(part.sourceCartId), 1) || cartIds.has(part.sourceCartId)
+        || typeof part.sourceCartId !== 'string' || !part.sourceCartId || part.sourceCartId!==part.sourceCartId.trim() || Array.from(part.sourceCartId).length>128 || /[\u0000-\u001f\u007f]/.test(part.sourceCartId) || cartIds.has(part.sourceCartId)
         || !integer(part.selectedNum) || !integer(part.remainingNum)
         || part.selectedNum + part.remainingNum < 1 || part.selectedNum + part.remainingNum > 32767
         || (previousRemainder && previousRemainder.get(part.sourceRowId) !== part.selectedNum + part.remainingNum)) throw invalid();
       sourceIds.add(part.sourceRowId); cartIds.add(part.sourceCartId);
       if (part.selectedNum) {
         if (!integer(part.selectedRowId, 1) || selectedIds.has(part.selectedRowId)) throw invalid();
-        selectedIds.add(part.selectedRowId); selected.set(Number(part.sourceCartId), part.selectedNum);
+        selectedIds.add(part.selectedRowId); selected.set(part.sourceCartId, part.selectedNum);
       } else if (part.selectedRowId !== null) throw invalid();
       if (part.remainingNum) {
         if (!integer(part.remainingRowId, 1) || remaining.has(part.remainingRowId)) throw invalid();
@@ -89,10 +88,11 @@ async function inspectBaseline(tx: DbClient, scope: Scope, refundId: number,
       || refund.storeId !== scope.storeId || refund.refundType !== 6 || refund.isCancel
       || refund.refundedPrice !== refund.refundPrice || await refundOrderSplitFingerprint(refund) !== row.fingerprint) throw invalid();
     const claim = readRefundQuantityReservation(refund);
+    if(claim?.version!==CUSTOMER_ROW_REFUND_VERSION&&parts.some(x=>!/^[1-9]\d{0,9}$/.test(x.sourceCartId)||!integer(Number(x.sourceCartId),1)))throw invalid();
     if (!claim || claim.items.length !== selected.size || claim.items.some(item => {
-      const part = parts.find(part => part.sourceCartId === String(item.cartId));
+      const part = parts.find(part => part.sourceCartId === refundClaimCartKey(item));
       return !part || part.sourceRowId !== item.rowId || item.beforeRefundNum !== 0
-        || part.selectedNum + part.remainingNum !== item.totalNum || selected.get(item.cartId) !== item.cartNum;
+        || part.selectedNum + part.remainingNum !== item.totalNum || selected.get(refundClaimCartKey(item)) !== item.cartNum;
     })
       || refund.refundNum !== [...selected.values()].reduce((sum, n) => sum + n, 0)) throw invalid();
     previousRemainder = remaining;

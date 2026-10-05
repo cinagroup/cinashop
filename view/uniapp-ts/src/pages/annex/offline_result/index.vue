@@ -1,5 +1,8 @@
-<template><OfflineCashierView :state="state" :cashier="cashier" :logged-in="auth.isLoggedIn" :result-only="true" :login="login" :launch="launchOfflineTicket" /></template>
+<template>
+  <ThemePage><OfflineCashierView :state="state" :cashier="cashier" :logged-in="auth.isLoggedIn" :result-only="true" :login="login" :launch="launchOfflineTicket" />  </ThemePage>
+</template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import OfflineCashierView from '@/components/OfflineCashierView.vue';
 import { useOfflineCashier } from '@/composables/useOfflineCashier';
 const {auth,state,cashier,login,launchOfflineTicket}=useOfflineCashier(true);

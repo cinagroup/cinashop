@@ -1,0 +1,303 @@
+{
+  "version": 2,
+  "dateUtc": "2026-09-30",
+  "phase": "locally_verified_partial_unpublished",
+  "status": "partial",
+  "productionAccepted": false,
+  "published": false,
+  "scope": "Bounded public customer/Admin full-gift whole original undelivered refund, exact paid completion and fixed refund/invoice runtime contracts",
+  "outcome": {
+    "workerRoutes": 2060,
+    "workerRouteSurfaces": {
+      "api": 1071,
+      "admin": 714,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "retired": 17,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 99,
+    "adminApi": {
+      "callSites": 540,
+      "pathVariants": 564,
+      "registered": 564,
+      "executable": 564,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "legacyMarketingScreens": {
+      "total": 48,
+      "candidate": 31,
+      "partial": 14,
+      "missing": 3,
+      "retired": 0
+    },
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 83,
+      "partial": 113,
+      "missing": 71,
+      "retired": 7
+    },
+    "screenClassificationChanges": [],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "contracts": {
+    "entry": "Existing customer refundApply/refundVerify and both Admin refund creation prefixes; immutable actor/key/review/quote and execution receipts preserved. No route, UI or client-controlled materialization flag added.",
+    "activation": "Trusted public-entry server policy plus strict persisted full-gift source selects v2 inside the order lock; ordinary public applications retain v1. Generic, automatic and broad explicit-server contracts remain separate; old v1 full-gift claims cannot upgrade on execution or replay.",
+    "admission": "Original pid=0/type=0/status=0 paid whole order only, positive full paid amount, yue/weixin/alipay, customer type1 or authorized Admin type4, at most100 lines, exact whole purchase and gift quantities, SKU, coupon-instance provenance and source gift points. Partial quantities, reduced Admin cash, splits, delivery, type2 return or gift-only remainder refuse.",
+    "paidCompletion": "Exactly one order.paid:{id}, order aggregate identity, exact two-field orderId/orderNo payload and COMPLETED terminal state required even for physical-gift-only campaigns. Read-only outbox lookup preserves worker outbox-to-order lock order; quote/create/provider admission/finalizer recheck.",
+    "runtimeCatalog": "Eight canonical invoice/refund components with exact fingerprint, safety and same-owner checks plus current LOGIN SELECT/UPDATE/append privileges, PG16 public/read-committed/origin environment and no enabled event triggers. Missing/drifted catalog or permissions returns503 before a claim or quote; no DDL/grant/repair or v1 fallback.",
+    "settlement": "Whole receipt keeps original order/cart entities and atomically returns purchased/gift stock, cash and available source gift points; immutable receipt failure rolls back all local state. Paid coupon instances, paid labels and paid campaign/coupon pools retained under the legacy PHP boundary.",
+    "release": "Customer cancellation and Admin refusal release exact quantity reservations independently of newly added financial admission. No paid-pool return or late reward grant.",
+    "recovery": "Persisted original provider refund identifier and known SUCCESS survive local finalizer failure; fresh service resumes local settlement without another provider request/query. Terminal notify-time projection is allowed; cash, stock, points, coupons, labels and paid pools remain idempotent. Provider results are mocked in this local proof.",
+    "compatibility": "Ordinary customer/Admin refund, immutable quote and create/execute recovery, v1 quantity reservations, cross-session contention and lookup receipts remain covered. No broader physical partial/split refund activation."
+  },
+  "verification": {
+    "nativeCombinedAttempt": {
+      "files": 8,
+      "passed": 165,
+      "failed": 1,
+      "skipped": 0,
+      "version": "16.15",
+      "durationSeconds": 148.47,
+      "tests": [
+        "test/order-full-gift-checkout.test.ts",
+        "test/order-full-gift-refund.test.ts",
+        "test/admin-refund-creation-quote.test.ts",
+        "test/order-full-gift-refund-http.test.ts",
+        "test/customer-refund-application.test.ts",
+        "test/refund-quantity-reservation.test.ts",
+        "test/admin-refund-creation.test.ts",
+        "test/admin-refund-creation-http.test.ts"
+      ],
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-L3EfjM",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "failure": "Physical-gift-only test expected empty coupon string, while actual StoreOrderCreateService persists null; exact assertion corrected to toBeNull, then the entire32-case HTTP file rerun. Production source unchanged."
+    },
+    "nativeUnaffectedFiles": {
+      "files": 7,
+      "passed": 134,
+      "failed": 0,
+      "skipped": 0,
+      "basis": "Seven complete passing files from nativeCombinedAttempt, excluding the32-case HTTP file. No summing its31 passing cases into the final32-case retry.",
+      "tests": [
+        "test/order-full-gift-checkout.test.ts",
+        "test/order-full-gift-refund.test.ts",
+        "test/admin-refund-creation-quote.test.ts",
+        "test/customer-refund-application.test.ts",
+        "test/refund-quantity-reservation.test.ts",
+        "test/admin-refund-creation.test.ts",
+        "test/admin-refund-creation-http.test.ts"
+      ]
+    },
+    "nativeFullGiftHttpFinal": {
+      "files": 1,
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "version": "16.15",
+      "durationSeconds": 54.81,
+      "tests": [
+        "test/order-full-gift-refund-http.test.ts"
+      ],
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-1RTGVI",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "coverage": "Actual checkout/Admin campaign and paid outbox; customer controller and owner-scoped UID fixture; both Admin prefixes with real JWT middleware/SQL roles; full whole selection and paid/source negatives; offline/split/delivered/type2 refusal; exact physical-only wait; cancellation, same-order contention, wallet finalizer once, late rollback and mocked Wechat SUCCESS recovery; disabled canonical trigger, missing canonical index and PUBLIC grant reject both quotes and creation with503/no local writes; reduced Admin cash refused."
+    },
+    "nativeIndependentLogins": {
+      "files": 1,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "version": "16.15",
+      "durationSeconds": 31.67,
+      "tests": [
+        "test/runtime-promotion-gift-refund.test.ts"
+      ],
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-4kzV7d",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "coverage": "Fresh complete178-step/282-table commissioning; separate restricted app/Admin LOGINs and independent backends/current-user identity; actual balance payment100-to80, paid gift points100-to106 and full reversal; customer controller/Admin authorized execution, Admin quote/create/receipt replay, both read projections; pending outbox refusal; refund.view refusal; receipt SELECT-only and revoked-read refusal; revoked app split append privilege503/no writes and no repair; explicit owner restore then finalize; unchanged catalog OIDs/owners/ACLs/triggers/functions and ready privilege audits before/after.",
+      "identityBoundary": "Trusted customer UID and Admin actor/SQL capability; synthetic KV/Queue, local database identity and disposable roles. This file is not JWT/Redis/Hyperdrive/browser/provider acceptance. Production sources unchanged after this run."
+    },
+    "nativeAcceptedUniqueCases": {
+      "files": 9,
+      "passed": 169,
+      "calculation": "134 whole passing unaffected cases +32 complete corrected HTTP cases +3 independent LOGIN cases. Verified across separate runs, not a one-shot169/169 or an accumulation of repeated attempts."
+    },
+    "auditRegression": {
+      "files": 5,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 3.07,
+      "tests": [
+        "test/admin-marketing-frontend-parity.test.ts",
+        "test/admin-all-frontend-parity.test.ts",
+        "test/admin-frontend-inventory.test.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/admin-frontend-api-contract.test.ts"
+      ],
+      "coverage": "All274 screens reconcile to latest dated ledgers; new full-gift refund ledger and prior full-gift snapshot reproduce byte-for-byte; all564 frontend request variants are executable."
+    },
+    "typechecks": {
+      "unitAndScripts": {
+        "passed": true,
+        "command": "node --max-old-space-size=6144 node_modules/typescript/bin/tsc --noEmit"
+      },
+      "workerRuntime": {
+        "passed": true,
+        "command": "node --max-old-space-size=6144 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+      },
+      "execution": "Native PostgreSQL runs and heavy typechecks ran sequentially; no concurrent resource contention."
+    },
+    "staticChecks": {
+      "adminApiStrict": {
+        "passed": true,
+        "callSites": 540,
+        "pathVariants": 564,
+        "executable": 564,
+        "unregistered": 0,
+        "unresolved": 0
+      },
+      "currentRouteAudit": {
+        "passed": true,
+        "worker": 2060,
+        "php": 1904,
+        "executableMatched": 882,
+        "effectiveExecutableCoveragePercent": 46.7
+      },
+      "runnerSyntax": {
+        "passed": true,
+        "command": "node --check scripts/run-local-finance-postgres.mjs"
+      },
+      "whitespace": {
+        "passed": true,
+        "scope": "Increment files; standard Git CRLF warnings only, no whitespace errors"
+      },
+      "independentReview": "Read-only production and documentation review found no new blocker; no production release inferred."
+    },
+    "frontendAndBrowser": {
+      "changedInThisIncrement": false,
+      "rerun": false,
+      "basis": "Backend refund entry only. Prior full-gift management/confirmation synthetic desktop and390px acceptance stays historical; it does not establish actual full-gift refund browser acceptance."
+    },
+    "nonAcceptanceAttempts": [
+      {
+        "scope": "Initial two PGlite files",
+        "passed": 19,
+        "failed": 1,
+        "skipped": 1,
+        "reason": "Old Admin quote negative fixture lacked coupon receipt relation after full admission became reachable; receipt relation added, corrected full17-case file passed native."
+      },
+      {
+        "scope": "Initial native bootstrap",
+        "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-Zp4Tz6",
+        "reason": "initdb timed out at old30s/default128MB before tests; runner now uses32MB shared buffers and60s initdb, no durability weakening; stopped state confirmed before synthetic data cleanup."
+      },
+      {
+        "scope": "Initial native four-file attempt",
+        "passed": 52,
+        "failed": 2,
+        "skipped": 0,
+        "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-7dIYUQ",
+        "reason": "Physical-only campaign fixture must update tier through real Admin mutation; terminal provider callback legitimately sets notifyTime. Corrected exact fixtures/projections then all affected HTTP cases passed; no business assertion weakened."
+      },
+      {
+        "scope": "Ordinary compatibility PGlite attempt",
+        "passed": 98,
+        "failed": 5,
+        "skipped": 4,
+        "reason": "PGlite RowList.count property affected missing-schema result assertion; four independent-native-peer cases were unguarded without URL. Fixed exact row destructuring/native suite gate; all complete107 ordinary compatibility cases passed under final nativeCombinedAttempt, including independent-session cases."
+      }
+    ]
+  },
+  "remaining": [
+    "Partial quantities/reduced cash, split or delivered full-gift refunds, return inspection and gift-only remainder entitlement adapters",
+    "Actual full-gift refund browser journey and complete customer JWT/Redis/runtime chain; local UID/JWT and independent LOGIN proofs do not establish production roles",
+    "Live provider acceptance, Workers/Hyperdrive, Linux CI, production data/scale/statistics and native UniApp type/build",
+    "Explicit maintenance commissioning and production privilege audit remain deployment prerequisites; no runtime repair",
+    "Both full-gift screens remain partial; no Checklist ticks, commit, push or deployment"
+  ],
+  "evidence": [
+    "docs/full-gift-refund-entry.md",
+    "docs/admin-full-gift-route-contract.md",
+    "docs/admin-refund-creation.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "docs/refund-atomic-materialization.md",
+    "audit/admin-legacy-marketing-route-parity-full-gift-refund-followup-20260930.json",
+    "audit/admin-full-gift-acceptance-20260930.json"
+  ],
+  "sourceEvidence": {
+    "normalization": "UTF-8 text with CRLF/CR normalized to LF",
+    "scope": "Final local bounded public full-gift refund increment; prior dated snapshots retain their historical hashes",
+    "sha256": {
+      "../MIGRATION_CHECKLIST.md": "4818a6306d6b9707418efdaf24739734bc7f91c8d9dd99ad58c4c72cc12b7266",
+      "docs/full-gift-refund-entry.md": "c32b9147287ec0cbbfceba8d8e270c0651c8c138b8692f86f4d1bab50178807b",
+      "docs/admin-full-gift-route-contract.md": "4e306d64deb866ec453a88428ac9be93243f614bedf38e7b14c076fffc39c4cc",
+      "docs/admin-refund-creation.md": "5f433a228da56a218ab03e9323edf5467980f934750582d635fb06ac71505dd7",
+      "docs/checklist-route-contract-distribution-20260928.md": "66888633598c5a08d3edd1bc9c95534f91485e979acc7f99fd0e6f4ee24d9176",
+      "docs/refund-atomic-materialization.md": "5daa69dd7414af53902879ad81ec2d75b0a689bb5e4a16f40a9d88b31b40ad65",
+      "src/routes/v1/index.ts": "0249114052ab7a8276f1dd57e07c834182ff329f6d2449d6e53751623dd35880",
+      "src/routes/adminapi.ts": "01fcf689aa2ec4e4b2d8faf9d7857672152e1b0be1436ea65ba394deef6227ed",
+      "src/controllers/api/v1/PayController.ts": "9de74f520534d07411b922fa3082f3ca980043aba1b2127cc1a8a7ca00ce6374",
+      "src/controllers/api/v1/AdminRefundCreationController.ts": "4a644c9b7a98e27064abcd3c766ee2bb9916fdf2436bdec85cb40d8efbcd6378",
+      "src/services/order/StoreOrderRefundService.ts": "8e398ccd4ebf6e1d222351a8d14a6a0346e3c6ae4ad1dd770ec6ea25c8c87f2e",
+      "src/services/order/OrderPromotionGiftRefund.ts": "03b84c57582b3bd453bde35cfef857101ca0a4e3b9a6466e841a6051579ac3dc",
+      "src/services/order/WholeOrderFullGiftRefundCatalog.ts": "16f36551655ea4bc76f0131b51761993404c218b8df2418b79d3eba89c3918e4",
+      "src/services/order/RefundAtomicMaterialization.ts": "985683d04043a1804bf363c38b23e529524c0c4c04f85e51b33b11ea3ce1020b",
+      "src/services/order/RefundQuantityReservation.ts": "99038c4c805be01dd6efebafac49aca783d2e7dba5eab3c656dafaada85fdf1f",
+      "src/services/order/OrderOutboxService.ts": "579a1a19a901cded5e76ad08b619d0ac6fd430dfc2351d6357bea42a9f632ee1",
+      "src/services/order/StoreOrderPayService.ts": "6d01bf61379cae1feee860a46f3579824b0e4b18739bcb9b8cdc9f0decb39b99",
+      "src/services/admin/AdminRefundCreationService.ts": "c355073c4374a5590831ec8c4188d2952c0d77d1aca8cfb91b42d5b079a684d4",
+      "src/services/admin/AdminRefundCreationQuoteService.ts": "447b6a106eb410f231c1003240d53a20f5e5ccce8b9ba93c2836261d7f8ccbd1",
+      "src/services/admin/AdminRefundCreationLedger.ts": "a2e8b76ef578e48d9b5e5cbde1f0c73bcdf2918ed8335950de486e765a6fab62",
+      "src/services/admin/AdminRefundOperationService.ts": "b6ebea7b372682335ecb5506c1cffe73dec67b7f826391035769315ebfcd402c",
+      "src/migrations/invoiceEvidenceCatalog.ts": "671bd44b2f6eeabdd5f5f9d9ff74af5c73047293357f02ca74efa211b19dbbc9",
+      "src/migrations/refundOrderSplitCatalog.ts": "46c12772e4cfaa0b05b3fcf0af4f0ea143a50ea5ccbfd262e9f3214657c5619b",
+      "src/migrations/runtimeBusinessPrivilegePlan.ts": "25189eb2f68b5ce5e56df4f070c3340ca440dcb4a7ced9908d2311caf4c8d912",
+      "src/migrations/runRuntimeBusinessCommissioning.ts": "d4589b50098bea0bb4aff4242364caa2330c1d07e00086932c5d02edbd7eac7e",
+      "scripts/run-local-finance-postgres.mjs": "4e6797f8e25141a979ba5e813a2824ca34ffcc89c7f86786cb291370ac12802a",
+      "scripts/admin-marketing-frontend-parity-audit.ts": "ee86421b83c1904fc0011b8879b370fbe54889a566768abfe7d64ae17f11ee88",
+      "tsconfig.json": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df",
+      "tsconfig.runtime-test.json": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8",
+      "audit/admin-legacy-marketing-route-parity-full-gift-refund-followup-20260930.json": "01a2f0638207069374756a526b94328eeec6e7fd53f72d10ed4004c12f583c22",
+      "test/order-full-gift-refund-http.test.ts": "b9fe30dc65cb50487589ae8fd7378c1e1c7b0c5133e8af25a2c1245469f78b0d",
+      "test/runtime-promotion-gift-refund.test.ts": "5673c3874e962e620110022ea1ae03f4be1efdb6b41d3f0fe0342389a6de9d51",
+      "test/order-full-gift-checkout.test.ts": "f7de7b93cbcf382ff34c4f126d9a70c0a20df3e853c5c94abe1c02515eb79840",
+      "test/order-full-gift-refund.test.ts": "a28570b2d7771e731c8fc210388fad6320e77813f6c26579d0b350cc618d22d1",
+      "test/admin-refund-creation-quote.test.ts": "810b98bb749e566765b062cba0e9197e47921c6c9a34896755dfe9bb4666d9ab",
+      "test/customer-refund-application.test.ts": "665fee41e875c2f0ad730b769ebd18406ae46dbb4b5fb0cc0ce0c95648eba551",
+      "test/refund-quantity-reservation.test.ts": "9928116c8c1ee0efea8fa66c62bf72357943aad53a34ccf463775d2b59af6abc",
+      "test/admin-refund-creation.test.ts": "400f46dbb94ba0b3c2620d0cc30bc183ede0d4b4853e514a5670f397dcd4362c",
+      "test/admin-refund-creation-http.test.ts": "c7826b215c7176f4a0877bc9bf98d9ded2025a4ad4c557b5d85a69a3ad70c697",
+      "test/admin-all-frontend-parity.test.ts": "3fa158ba9eb752e6b647fb81cd6966942afe7a3949f0322b9c04160d93298db2",
+      "test/admin-marketing-frontend-parity.test.ts": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+      "test/admin-frontend-inventory.test.ts": "4b792aee9cccdff7aa254f1b6958dbdb3530daf045ec5536f81293d1289fd6f2",
+      "test/admin-frontend-api-audit.test.ts": "75b5a6186b679346774121bf7d1b3e756492578cf87bbdcbb3bd73459ba01417",
+      "test/admin-frontend-api-contract.test.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",
+      "test/helpers/adminRefundEvidenceFixture.ts": "ea95fc58d30f87a689f68b29e93ffe5b015c5a6204e1ff8ff943d113c91768d5",
+      "test/helpers/customerRefundApplicationFixture.ts": "34b635ef37c4b354da555f66d84684f0c45b2df3d0a151137f664da0d4573716",
+      "test/helpers/refundRuntimeFixture.ts": "e5d99aa7640bb764ffefd0b359f99da0c72d3de17aee12a89b12ca855ed415cc",
+      "test/helpers/financePeers.ts": "51bf74693df51da8d99bc14b5b5625c059b948915ce88b592223fe3f4df632e8"
+    }
+  },
+  "verifiedAtUtc": "2026-09-30T09:44:35.065Z"
+}

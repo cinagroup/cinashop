@@ -20,6 +20,7 @@ import {
   storePromotionsAuxiliary,
 } from "@/models/schema";
 import { legacyCouponProjection } from "@/services/activity/V2CouponCompatibilityService";
+import { discountUnitPriceCents } from "@/services/activity/OrderPromotionQuoteService";
 import { StoreProductService } from "@/services/product/StoreProductService";
 import { ValidateException } from "@/utils/errors";
 
@@ -69,11 +70,14 @@ function numberValue(value: unknown): number {
   return Number.isFinite(result) ? result : 0;
 }
 
-/** PHP used bcdiv(discount, 100, 2) then bcmul(price, ratio, 2). */
+/** Type-1 integer discounts use the checkout's per-unit saving rule. */
 export function legacyPromotionPrice(price: unknown, discount: unknown): number {
   const priceCents = Math.max(0, Math.round(numberValue(price) * 100));
-  const integerPercent = Math.max(0, Math.min(100, Math.trunc(numberValue(discount))));
-  return Math.trunc(priceCents * integerPercent / 100) / 100;
+  const percent = numberValue(discount);
+  // Legacy non-integer imported rows remain display-compatible; new Admin
+  // type-1 rules accept only integer percentages and checkout rejects others.
+  if (!Number.isInteger(percent)) return Math.trunc(priceCents * Math.max(0, Math.min(100, Math.trunc(percent))) / 100) / 100;
+  return discountUnitPriceCents(priceCents, Math.max(0, Math.min(100, percent))) / 100;
 }
 
 function promotionCatalogProjection(row: Promotion): Record<string, unknown> {
@@ -222,7 +226,9 @@ export class V2PromotionCompatibilityService {
     promotion: Promotion,
     auxiliaries: readonly PromotionAuxiliary[],
   ): SQL | undefined {
-    const own = auxiliaries.filter((row) => row.promotionsId === promotion.id);
+    const own = auxiliaries.filter((row) => row.promotionsId === promotion.id
+      && (promotion.promotionsType !== 5 && promotion.promotionsType !== 6
+        || row.productPartakeType === promotion.productPartakeType));
     switch (promotion.productPartakeType) {
       case 1:
         return sql`true`;
@@ -306,7 +312,9 @@ export class V2PromotionCompatibilityService {
     promotion: Promotion,
     auxiliaries: readonly PromotionAuxiliary[],
   ): boolean {
-    const own = auxiliaries.filter((row) => row.promotionsId === promotion.id);
+    const own = auxiliaries.filter((row) => row.promotionsId === promotion.id
+      && (promotion.promotionsType !== 5 && promotion.promotionsType !== 6
+        || row.productPartakeType === promotion.productPartakeType));
     if (promotion.productPartakeType === 1) return true;
     if (promotion.productPartakeType === 2) return own.some((row) => row.productId === productId);
     if (promotion.productPartakeType === 3) {
@@ -377,23 +385,84 @@ export class V2PromotionCompatibilityService {
     list: readonly Record<string, unknown>[],
   ): Promise<Record<string, unknown>[]> {
     if (!list.length) return [];
-    const productIds = [...new Set(list
-      .map((item) => Number(item.product_id ?? item.id))
+    const productIdFor = (item: Record<string, unknown>) => {
+      const parentId = Number(item.pid);
+      return Number.isSafeInteger(parentId) && parentId > 0
+        ? parentId : Number(item.product_id ?? item.id);
+    };
+    const productIds = [...new Set(list.map(productIdFor)
       .filter((id) => Number.isSafeInteger(id) && id > 0))];
-    const promotions = await this.activePromotions();
-    const auxiliaries = await this.scopeAuxiliaries(promotions);
-    const relations = await this.productRelations(productIds);
-    return list.map((item) => {
-      const productId = Number(item.product_id ?? item.id);
-      const matches = promotions.filter((promotion) => this.matches(
-        productId,
-        relations.get(productId),
-        promotion,
-        auxiliaries,
+    const selected = new Map<number, { promotion?: Promotion; frame?: Promotion; background?: Promotion }>();
+    if (productIds.length) {
+      // Select only the winning row for each slot of each requested product. A
+      // platform may have more than 200 active promotions unrelated to this page.
+      const targets = sql.join(productIds.map((id) => sql`(${id}::integer)`), sql`, `);
+      const now = Math.floor(Date.now() / 1_000);
+      // Types 5/6 use a single configured scope. Historical types 1–4 retain
+      // their existing auxiliary-row interpretation for price compatibility.
+      const matchingAuxiliaryScope = sql`(promotion.promotions_type NOT IN (5,6)
+        OR auxiliary.product_partake_type = promotion.product_partake_type)`;
+      const ranked = await this.container.db.execute(sql`
+        WITH targets(product_id) AS (VALUES ${targets})
+        SELECT DISTINCT ON (target.product_id, CASE
+          WHEN promotion.promotions_type BETWEEN 1 AND 4 THEN 0 ELSE promotion.promotions_type END)
+          target.product_id, promotion.id AS promotion_id,
+          CASE WHEN promotion.promotions_type BETWEEN 1 AND 4 THEN 0 ELSE promotion.promotions_type END AS slot
+        FROM targets AS target
+        JOIN ${storePromotions} AS promotion ON
+          promotion.pid = 0 AND promotion.type = 1 AND promotion.store_id = 0
+          AND promotion.status = 1 AND promotion.is_del = 0
+          AND promotion.start_time <= ${now} AND promotion.stop_time >= ${now}
+          AND promotion.promotions_type BETWEEN 1 AND 6
+        WHERE
+          promotion.product_partake_type = 1
+          OR (promotion.product_partake_type = 2 AND EXISTS (
+            SELECT 1 FROM ${storePromotionsAuxiliary} AS auxiliary
+            WHERE auxiliary.promotions_id = promotion.id AND auxiliary.type = 1
+              AND ${matchingAuxiliaryScope} AND auxiliary.product_id = target.product_id
+          ))
+          OR (promotion.product_partake_type = 3 AND NOT EXISTS (
+            SELECT 1 FROM ${storePromotionsAuxiliary} AS auxiliary
+            WHERE auxiliary.promotions_id = promotion.id AND auxiliary.type = 1
+              AND ${matchingAuxiliaryScope}
+              AND auxiliary.product_id = target.product_id AND auxiliary.is_all = 1
+          ))
+          OR (promotion.product_partake_type = 4 AND EXISTS (
+            SELECT 1 FROM ${storePromotionsAuxiliary} AS auxiliary
+            JOIN ${storeProductRelation} AS relation ON
+              relation.product_id = target.product_id AND relation.type = 2
+              AND relation.relation_id = auxiliary.brand_id
+            WHERE auxiliary.promotions_id = promotion.id AND auxiliary.type = 1
+              AND ${matchingAuxiliaryScope} AND auxiliary.brand_id > 0
+          ))
+          OR (promotion.product_partake_type = 5 AND EXISTS (
+            SELECT 1 FROM ${storePromotionsAuxiliary} AS auxiliary
+            JOIN ${storeProductRelation} AS relation ON
+              relation.product_id = target.product_id AND relation.type = 3
+              AND relation.relation_id = auxiliary.store_label_id
+            WHERE auxiliary.promotions_id = promotion.id AND auxiliary.type = 1
+              AND ${matchingAuxiliaryScope} AND auxiliary.store_label_id > 0
+          ))
+        ORDER BY target.product_id,
+          CASE WHEN promotion.promotions_type BETWEEN 1 AND 4 THEN 0 ELSE promotion.promotions_type END,
+          promotion.promotions_type, promotion.update_time DESC, promotion.id DESC
+      `) as unknown as { product_id: number; promotion_id: number; slot: number }[];
+      const promotions = await this.container.db.select().from(storePromotions).where(inArray(
+        storePromotions.id, ranked.map((row) => row.promotion_id),
       ));
-      const promotion = matches.find((row) => row.promotionsType >= 1 && row.promotionsType <= 4);
-      const frame = matches.find((row) => row.promotionsType === 5);
-      const background = matches.find((row) => row.promotionsType === 6);
+      const promotionById = new Map(promotions.map((row) => [row.id, row]));
+      for (const row of ranked) {
+        const promotion = promotionById.get(row.promotion_id);
+        if (!promotion) continue;
+        const slots = selected.get(row.product_id) ?? {};
+        if (row.slot === 0) slots.promotion = promotion;
+        else if (row.slot === 5) slots.frame = promotion;
+        else if (row.slot === 6) slots.background = promotion;
+        selected.set(row.product_id, slots);
+      }
+    }
+    return list.map((item) => {
+      const { promotion, frame, background } = selected.get(productIdFor(item)) ?? {};
       return {
         ...item,
         promotions: promotion ? promotionCatalogProjection(promotion) : {},

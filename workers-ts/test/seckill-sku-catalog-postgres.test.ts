@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { financePostgres } from "./helpers/financePostgres";
 import { createContainerFromDb } from "../src/lib/di";
-import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user } from "../src/models/schema";
+import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user, systemDise, storeProductDescription, storeProductRelation, storeProductEnsure, storeProductReply, userRelation, systemAttachment, systemStore, systemSupplier } from "../src/models/schema";
 import { SeckillSkuCatalogService } from "../src/services/activity/SeckillSkuCatalogService";
 import { ActivityService } from "../src/services/activity/ActivityService";
 import { seckillDayStart } from "../src/services/activity/SeckillScheduleService";
@@ -19,7 +19,7 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
   let service: SeckillSkuCatalogService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
-    f = await financePostgres([storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user]);
+    f = await financePostgres([storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user, systemDise, storeProductDescription, storeProductRelation, storeProductEnsure, storeProductReply, userRelation, systemAttachment, systemStore, systemSupplier]);
     container = createContainerFromDb(f.db);
     service = new SeckillSkuCatalogService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -52,17 +52,36 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
     activities: await f.db.select().from(storeSeckill), carts: await f.db.select().from(storeCart),
     orders: await f.db.select().from(storeOrder), users: await f.db.select().from(user) });
 
+  // Observe the actual transaction client: selection remains four batched queries,
+  // and the six bounded public-display reads are constant for 2 and 500 SKUs.
+  const observeBoundedRead = async () => {
+    const transaction=f.db.transaction.bind(f.db);
+    const transactions=vi.spyOn(f.db,"transaction").mockImplementation((fn,config)=>transaction(async tx=>{
+      const selects=vi.spyOn(tx,"select");
+      try { return await fn(tx); }
+      finally {
+        expect(selects).toHaveBeenCalledTimes(10);
+        expect(selects.mock.calls[0]?.[0]).toHaveProperty("parent");
+        expect(selects.mock.calls[1]?.[0]).toHaveProperty("quota");
+        expect(Object.keys(selects.mock.calls[2]?.[0]??{}).sort()).toEqual(["stock","suk","unique"]);
+        selects.mockRestore();
+      }
+    },config));
+    try { const result=await read();expect(transactions).toHaveBeenCalledTimes(1);return result; }
+    finally { transactions.mockRestore(); }
+  };
+
   it("returns matching activity SKUs and schedule with a six-stock minimum in four bounded queries without writes", async () => {
-    const before = await snapshot(), spy = vi.spyOn(f.db, "select");
-    let result: Awaited<ReturnType<typeof read>>;
-    try { result = await read(); expect(spy).toHaveBeenCalledTimes(4); } finally { spy.mockRestore(); }
-    expect(result!).toEqual({ selection_only: true, type: 1, seckill_id: 20, product_id: 70, parent_activity_id: 900,
+    const before = await snapshot(), result = await observeBoundedRead();
+    expect(result!).toMatchObject({ selection_only: true, type: 1, seckill_id: 20, product_id: 70, parent_activity_id: 900,
       title: "秒杀<script>文字</script>", image: "/seckill.svg", once_limit: 3, total_limit: 6,
       date_window: "active", start_time: null, stop_time: null,
       schedule: { timezone: "Asia/Shanghai", state: "active", message: "秒杀进行中", starts_at: expect.any(String), ends_at: expect.any(String), active_slot_ids: [4] }, skus: [
         { unique: "actired1", base_unique: "basered1", suk: "红色,大号", catalog_price: "8.25", ot_price: "90.00", stock: 6, max_quantity: 3, image: "/red.svg" },
         { unique: "actiblu1", base_unique: "baseblu1", suk: "蓝色,小号", catalog_price: "12.75", ot_price: "100.00", stock: 2, max_quantity: 2, image: "/seckill.svg" },
       ] });
+    expect(Object.keys(result.product_detail_design.value)).toHaveLength(19);
+    expect(result).toMatchObject({description:"",ensure:[],reply:[],replyCount:0,replyChance:100});
     expect(await snapshot()).toEqual(before);
     expect(JSON.stringify(result!)).not.toMatch(/cost|brokerage|diskInfo|quotaShow|current_user|account/);
   });
@@ -237,11 +256,8 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
       { id: 100 + i, productId: 20, type: 1, unique: `aa${String(i).padStart(6, "0")}`, suk: `规格${i}`, stock: 1, quota: 1, price: "1.23" },
       { id: 1000 + i, productId: 70, type: 0, unique: `bb${String(i).padStart(6, "0")}`, suk: `规格${i}`, stock: 1 },
     ]).flat());
-    const spy = vi.spyOn(f.db, "select");
-    try {
-      const result = await read(); expect(result.skus).toHaveLength(500); expect(spy).toHaveBeenCalledTimes(4);
-      expect(result.skus.at(-1)).toMatchObject({ unique: "aa000497", base_unique: "bb000497", catalog_price: "1.23", max_quantity: 1 });
-    } finally { spy.mockRestore(); }
+    const result = await observeBoundedRead(); expect(result.skus).toHaveLength(500);
+    expect(result.skus.at(-1)).toMatchObject({ unique: "aa000497", base_unique: "bb000497", catalog_price: "1.23", max_quantity: 1 });
   });
   it("returns no manufactured default SKU when there are no active activity SKUs", async () => {
     await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.type, 1));

@@ -12,6 +12,7 @@ import {
   reserveChildOrderIds,
 } from "@/services/supplier/SupplierFulfillmentService";
 import { planOrderFinancialSplit } from './OrderSplitFinance';
+import { assertOrderPromotionLedger, writeOrderPromotionLedger } from './OrderPromotionLedgerSplit';
 import { lockSplitInvoices, prepareSplitInvoice, materializeSplitInvoice } from './SplitInvoiceAllocation';
 
 type OrderRow = typeof storeOrder.$inferSelect;
@@ -207,6 +208,7 @@ export async function allocatePaidOrderBySupplier(
   if (totalQuantity !== root.totalNum) {
     throw new Error("支付订单商品数量与主单不一致，不能安全拆分");
   }
+  await assertOrderPromotionLedger(tx, root, cartRows);
 
   const candidateSupplierIds = [
     ...new Set(
@@ -312,6 +314,9 @@ export async function allocatePaidOrderBySupplier(
     await tx
       .insert(storeOrderCartInfo)
       .values(groupCarts.map((cart) => cloneAllocatedCart(cart, child.id, snapshots.get(cart.id) ?? cart.cartInfo)));
+    await writeOrderPromotionLedger(tx, child, groupCarts.map((cart) => ({
+      ...cart, cartInfo: snapshots.get(cart.id) ?? cart.cartInfo,
+    })), now);
     await tx.insert(storeOrderStatus).values({
       oid: child.id,
       changeType: "supplier_split_create_order",

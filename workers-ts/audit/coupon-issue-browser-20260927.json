@@ -1,0 +1,141 @@
+{
+  "date": "2026-09-27",
+  "status": "passed-local-final-dist-synthetic",
+  "published": false,
+  "authority": "CUA rendered actual Admin dist with owned loopback memory APIs. Real authorization, SQL, locking and public customer JWT are separately tested in the native capsule.",
+  "fixture": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-fixture-20260927.cjs",
+    "sha256": "d401dd61e8e122eddd0d7114cca83f8038bad4e9566a887a2decceac017c1c7f",
+    "bytes": 30300
+  },
+  "bind": "127.0.0.1",
+  "port": 5204,
+  "realBusinessWrites": 0,
+  "finalMemory": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-memory-final-20260927.json",
+    "sha256": "258ec97c6d95e50b740455a695f7e2514e92d4585c0239808d9a0d9c15145077",
+    "bytes": 818829
+  },
+  "requests": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-requests-20260927.json",
+    "sha256": "e36b04bad80a1bbaef848e1d603d2c7f1b95f14c01a54f2a96b1a96d79cd6c54",
+    "bytes": 48089
+  },
+  "observations": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-ui-observations-20260927.json",
+    "sha256": "020607296a1665685f99634d953a46f15035b8e762def3fa43e120e367c1cf93",
+    "bytes": 79009
+  },
+  "observationCount": 28,
+  "observationCountIsNotAutomatedTestCount": true,
+  "syntheticResults": {
+    "initialRows": 123,
+    "finalRows": 127,
+    "visibleRows": 126,
+    "products": 135,
+    "creates": 4,
+    "statusChanges": 1,
+    "deletes": 1,
+    "financialWrites": 6,
+    "unknownCreateRequests": 1,
+    "sourceTemplate9001Status": 0,
+    "remainingInjectedFailures": []
+  },
+  "verified": [
+    "15-row pagination past 100 and literal %_ search",
+    "full new and copy: general/category/product/brand; copy inserts new ID without source proof",
+    "member category and historical 85.99 percentage retained and shown as 85% payable",
+    "Shanghai fixed-use/claim windows round trip and finite stock 7",
+    "cross-page product 1/135 complete set, cancel discards draft, no partial adoption",
+    "duplicate/null/negative/orphan ordinary claims and distinct member owned source",
+    "historical deleted product rejects copying and extended ISO dates remain readable",
+    "independent -1 issuer reopen leaves template9001 stopped and proof unchanged",
+    "soft delete filters list and retains product set",
+    "all six GET failures independently recover without stale or default data",
+    "unknown committed create keeps original UUID/body/product context; reread and human acknowledgment do not resubmit",
+    "six synthetic grant combinations isolate management and claimant identities",
+    "390x844 CSS mobile: documentWidth390, operation cells relative, table horizontal scroll opens full detail"
+  ],
+  "mobile": {
+    "cssWidth": 390,
+    "cssHeight": 844,
+    "documentWidth": 390,
+    "operationPosition": "relative",
+    "horizontalScrollForDetail": 1239.3333740234375,
+    "screenshotScale": 1.5,
+    "screenshotPixels": {
+      "width": 585,
+      "height": 1266
+    },
+    "note": "Windows DIP/compositor scaling required native Page capture at scale1.5. Earlier viewport/screenshot attempts are retained separately and excluded; this is emulation, not a real device."
+  },
+  "screenshots": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-desktop-20260927.jpg",
+      "sha256": "dfa40131c81065f4ed60942f3444e2c9e00a31193f356bc02324df750e79e891",
+      "bytes": 79253
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-final-desktop-20260927.jpg",
+      "sha256": "1fff5e58cf9782fc1df6c65bb445c77ea50fbd0a4201febb8cd190754a282066",
+      "bytes": 56891
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-form-20260927.jpg",
+      "sha256": "a36dbf59f44444e609190d9cf782e12e0079b2457ab9775b795650cbace68ae4",
+      "bytes": 60146
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-unknown-20260927.jpg",
+      "sha256": "ef443c3716b5dcfd458823e637cdee4d8846c469b91ab19a50e0b450e024d546",
+      "bytes": 68424
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-mobile-20260927.png",
+      "sha256": "f32c617fa71f81715a9ae8244bccc675edccd7231427b7ec9a6b31ca559300be",
+      "bytes": 68178
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-mobile-detail-20260927.png",
+      "sha256": "0ec46c93be631034d5dd90567dc31dffe0d1b3c775ae4cb121d613f0ea194f72",
+      "bytes": 86989
+    }
+  ],
+  "console": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-browser-console-20260927.json",
+    "sha256": "e7d398ff8cdf2db5c22738e2ac15c6083b658cc7870a1269e4bb262ff6f0f200",
+    "bytes": 33
+  },
+  "distManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-dist-after-final-20260927.manifest.json",
+    "sha256": "5b9c5835931cd2034872dcee6b4d01a42bd0f3468c36704889f460fe0c29c2d5",
+    "bytes": 22065
+  },
+  "build": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-build-final-20260927.log",
+    "sha256": "6b818c2dfa172636e2b480d4dc0affe010c606c7a44e6fba3678bc7cd17402aa",
+    "bytes": 14940
+  },
+  "frontendRuntime": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-frontend-runtime-final-20260927.log",
+    "sha256": "071a4f3ef7e7e20eaff4a48b59c7cdfd8c0e4fcde78e21508f3a748c61969dfb",
+    "bytes": 476
+  },
+  "frontendRuntimePassed": 47,
+  "sourceSnapshot": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-frontend-accepted-snapshot/manifest.json",
+    "sha256": "c9d8b2e1bf4e42fa09190f44bf4bcb035e9f169ede0d9571994bf640bee844b4",
+    "bytes": 1397
+  },
+  "cleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-cleanup-20260927.json",
+    "sha256": "73898623a95281e7ac2a09a2f398a3b9ce4800546520cd5281c59f0e6acdf97d",
+    "bytes": 934
+  },
+  "limitations": [
+    "Synthetic menus do not prove real server menu authorization; native HTTP independently verifies both prefixes with real JWT/LOGIN.",
+    "No production data, DB, provider, R2, customer coupons or deployment in the browser fixture.",
+    "Unknown recovery is memory-only; acknowledgment is not server-result proof and a new UUID can duplicate creation.",
+    "Full Linux, real roles/configuration/devices/providers and automatic/member entitlement channels remain open."
+  ]
+}

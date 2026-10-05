@@ -83,7 +83,7 @@ describe("Out API user write migration", () => {
     })).toThrow("至少修改一项");
   });
 
-  it("keeps external and embedded DDL exact and replay rows content-free", () => {
+  it("keeps external and embedded DDL exact with canonical line endings and replay rows content-free", () => {
     expect(getTableName(outUserWriteReplay)).toBe("out_user_write_replay");
     expect(Object.keys(getTableColumns(outUserWriteReplay))).toEqual([
       "id",
@@ -96,11 +96,11 @@ describe("Out API user write migration", () => {
       "integralLedgerId",
       "addTime",
     ]);
-    const migration = readFileSync("migrations/0099_out_user_write_replay.sql", "utf8").trim();
+    const migration = readFileSync("migrations/0099_out_user_write_replay.sql", "utf8").replace(/\r\n?/g, "\n").trim();
     const migrationService = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = migrationService
       .match(/private migration_0106\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
-      ?.trim();
+      ?.replace(/\r\n?/g, "\n").trim();
     expect(embedded).toBe(migration);
     const replayDefinition = migration.slice(
       migration.indexOf('CREATE TABLE IF NOT EXISTS "out_user_write_replay"'),

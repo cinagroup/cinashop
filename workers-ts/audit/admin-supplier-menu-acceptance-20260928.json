@@ -1,0 +1,54 @@
+{
+  "dateUtc": "2026-09-28T09:39:20Z",
+  "scope": "Local, unpublished supplier type-4 menu/rules read screen and optional controlled write capability",
+  "outcome": {
+    "legacyAdminScreens": { "total": 274, "candidate": 67, "partial": 117, "missing": 83, "retired": 7 },
+    "legacySupplierAgentScreens": { "total": 19, "candidate": 9, "partial": 10, "missing": 0, "retired": 0 },
+    "workerRoutes": 1928,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 84,
+    "adminApi": { "callSites": 463, "pathVariants": 487, "executable": 487, "unregistered": 0, "unresolved": 0 },
+    "menuRuleScreen": "partial",
+    "controlledWriteInstalledInProduction": false,
+    "checklist": { "checked": 246, "open": 158, "total": 404 }
+  },
+  "verification": {
+    "focusedPgliteFrontendAndParity": { "files": 6, "passed": 40, "failed": 0, "skipped": 0, "maxWorkers": 1 },
+    "nativePostgresql16Capability": { "files": 1, "passed": 6, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "nativePostgresql16Http": { "files": 1, "passed": 1, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiStrictAudit": "487 executable variants; 0 unregistered or unresolved",
+    "routeAudit": "1928 Worker registrations; 882 executable legacy-path matches unchanged",
+    "browserAndProductionWrite": "not run; no production capability install, mutation or deployment"
+  },
+  "limitations": [
+    "The new Admin page reviews the legacy type-4 tree but has no create, edit, visibility or delete controls, so the legacy screen remains partial.",
+    "The optional database capability needs explicit maintenance installation and an exact catalog/ACL readiness check before write routes can operate; without it they return 503.",
+    "Raw numeric role references include inactive or unassigned roles. Mapped permission keys do not prove that a given supplier account has those permissions.",
+    "Current Supplier navigation comes from the fixed permission catalog rather than system_menus; legacy navigation semantics are not restored.",
+    "Legacy setting/menus paths are still unmatched; new independent URLs do not increase exact PHP route coverage.",
+    "Real-role browser flows, actual supplier role assignments, production-scale data, full Linux CI and post-release acceptance remain open."
+  ],
+  "evidence": [
+    "docs/admin-supplier-menu-rules-gap.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+    "audit/route-distribution-supplier-menu-followup-20260928.json",
+    "audit/admin-frontend-inventory-supplier-menu-followup-20260928.json",
+    "audit/admin-frontend-api-contracts-supplier-menu-followup-20260928.json",
+    "test/admin-supplier-menu-rules-read.test.ts",
+    "test/admin-supplier-menu-rules-http.test.ts",
+    "test/admin-supplier-menu-rules-native-http.test.ts",
+    "test/admin-supplier-menu-write-capability.test.ts",
+    "test/admin-supplier-menu-rules-frontend.test.ts"
+  ]
+}

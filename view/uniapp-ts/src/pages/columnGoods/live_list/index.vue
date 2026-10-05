@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="live-page">
     <view class="heading">
       <view class="title">微信直播</view>
@@ -34,9 +35,11 @@
       <view v-else-if="rooms.length && !hasMore" class="message">已加载全部直播间</view>
     </template>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from 'vue';
 import { onShow, onHide, onUnload, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app';
 import { apiLiveRooms, type LiveRoomListItem } from '@/api/activity';

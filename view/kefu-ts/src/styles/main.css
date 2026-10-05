@@ -18,6 +18,18 @@
 }
 
 * { box-sizing: border-box; }
+.list-status { padding: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+.load-more { display: block; margin: 12px auto; padding: 9px 16px; border: 1px solid var(--line); border-radius: 6px; background: white; }
+.session-domain { font-size: 10px; font-style: normal; font-weight: normal; color: var(--muted); }
+.session-tabs.domain-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.session-tabs.domain-tabs button { width: auto; font-size: 12px; }
+.chat-domain { margin-left: 6px; color: var(--muted); font-size: 10px; font-weight: normal; }
+.session-actions { display: flex; align-items: center; gap: 8px; }
+.mobile-session-action { display: none; padding: 7px 0; border: 0; background: transparent; font-size: 12px; }
+.rich-message { display: grid; gap: 8px; min-width: 190px; max-width: 280px; text-align: left; border: 1px solid var(--line); cursor: pointer; }
+.rich-message img { width: 100%; height: 110px; object-fit: contain; }
+.rich-message strong { overflow-wrap: anywhere; }
+.rich-message small, .rich-message em { font-size: 12px; font-style: normal; color: var(--muted); }
 html, body, #app { width: 100%; min-width: 320px; height: 100%; margin: 0; }
 body { overflow: hidden; }
 button, input, textarea, select { font: inherit; }
@@ -368,8 +380,8 @@ svg { width: 1.35rem; height: 1.35rem; }
 .brand-mark.pulse { animation: pulse 1.25s ease-in-out infinite; }
 @keyframes pulse { 50% { transform: scale(.94); opacity: .75; } }
 
-@media (max-width: 1260px) {
-  .workbench { grid-template-columns: 82px 315px minmax(500px, 1fr) 330px; }
+@media (max-width: 1440px) {
+  .workbench { grid-template-columns: 82px 315px minmax(0, 1fr) 330px; }
   .header-labels { display: none; }
 }
 
@@ -388,6 +400,7 @@ svg { width: 1.35rem; height: 1.35rem; }
   body { overflow: hidden; }
   .workbench { display: block; min-height: 0; background: #fff; }
   .app-rail { display: none; }
+  .mobile-session-action { display: block; }
   .session-panel { z-index: 1; position: absolute; inset: 0; border: 0; }
   .workbench.mobile-list-mode .session-panel { z-index: 3; }
   .session-header { padding: calc(20px + env(safe-area-inset-top)) 18px 14px; }

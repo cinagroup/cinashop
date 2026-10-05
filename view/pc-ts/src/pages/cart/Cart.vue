@@ -18,11 +18,12 @@
               <ProductImage v-if="row.productInfo" :src="row.productInfo.image" :alt="row.productInfo.storeName" class="thumb" />
               <span class="name">{{ row.productInfo?.storeName ?? "商品已失效" }}</span>
               <small>{{ row.productInfo?.suk }}</small>
+              <small v-if="row.isValid && cartPromotionSummary(row)" class="price-label">{{ cartPromotionSummary(row) }}</small>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="单价" width="120">
-          <template #default="{ row }"><template v-if="row.isValid">¥{{ cartUnitPrice(row) }}<small class="price-label">{{ cartPriceLabel(row) }}</small></template><span v-else>已失效</span></template>
+          <template #default="{ row }"><template v-if="row.isValid"><span v-if="row.promotion?.unitPriceCents === null">分段计价</span><span v-else>¥{{ cartUnitPrice(row) }}</span><small class="price-label">{{ cartPriceLabel(row) }}</small></template><span v-else>已失效</span></template>
         </el-table-column>
         <el-table-column label="数量" width="160">
           <template #default="{ row }">
@@ -75,7 +76,7 @@ import { computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useCartStore } from "@/stores/cart";
 import { onAuthChange } from '@/utils/auth';
-import { cartUnitPrice, cartLinePrice, cartPriceLabel } from '../../../../common/cartPrice';
+import { cartUnitPrice, cartLinePrice, cartPriceLabel, cartPromotionSummary } from '../../../../common/cartPrice';
 
 const router = useRouter();
 const cartStore = useCartStore();

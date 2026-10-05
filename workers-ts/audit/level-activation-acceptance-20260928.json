@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "date": "2026-09-28",
+  "status": "local-accepted-unpublished",
+  "scope": "ordinary level activation nine-key Admin configuration through actual activation consumer",
+  "routes": {
+    "workerRegistered": 1819,
+    "workerDelta": 6,
+    "phpExactMatched": 892,
+    "phpExecutableMatched": 871,
+    "adminCallSites": 416,
+    "adminPathVariants": 440,
+    "adminExecutableVariants": 440,
+    "adminUnregisteredOrUnresolved": 0,
+    "legacyAdminScreens": 274,
+    "legacyAdminStatus": { "candidate": 57, "partial": 114, "missing": 96, "retired": 7 },
+    "legacyUserOrderStatus": { "candidate": 2, "partial": 14, "missing": 2, "retired": 0 },
+    "legacySetupUser": "partial",
+    "newAdminBusinessPageRoutes": 72
+  },
+  "validation": {
+    "workerTypecheckUnitAndRuntime": "passed",
+    "adminProductionBuild": "passed",
+    "unitFiles": [
+      "test/admin-level-activation-input.test.ts",
+      "test/admin-level-activation-frontend.test.ts",
+      "test/user-level-migration.test.ts"
+    ],
+    "unitPassed": 75,
+    "userOrderLedgerPassed": 5,
+    "newNative": {
+      "service": { "file": "test/admin-level-activation-postgres.test.ts", "passed": 11, "cluster": ".cache/finance-postgres-NYb6ob", "fixturesRemaining": 0, "stopped": true },
+      "http": { "file": "test/admin-level-activation-http.test.ts", "passed": 4, "cluster": ".cache/finance-postgres-GOiofd", "fixturesRemaining": 0, "stopped": true },
+      "uniquePassed": 15,
+      "singleRun": false
+    },
+    "nativeRegression": {
+      "files": [
+        "test/level-pricing-activation.test.ts",
+        "test/registration-level-activation.test.ts",
+        "test/coupon-gift-use-window-postgres.test.ts"
+      ],
+      "passed": 111,
+      "cluster": ".cache/finance-postgres-O6uG3p",
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    "auditFiles": [
+      "audit/route-distribution-20260928.json",
+      "audit/admin-frontend-inventory-20260928.json",
+      "audit/admin-frontend-api-contracts-20260928.json",
+      "audit/admin-legacy-user-order-route-parity-20260928.json"
+    ],
+    "browserQa": {
+      "mode": "built Admin dist with isolated localhost synthetic API and roles",
+      "fixture": "test/fixtures/level-activation-browser-qa.cjs",
+      "fixtureRunNote": "The local run used the same fixture with an absolute dist path; the checked-in copy resolves that dist relative to the repository and passed syntax/startup/health checks.",
+      "observed": [
+        "Admin sidebar exposes the dedicated level-activation page.",
+        "Manager can select a second profile field and a discount coupon in separate confirmable drafts.",
+        "Discount coupon is shown as 8.5 fold / 85 percent settlement while preserving the 85.99 percent raw value.",
+        "The save dialog lists the exact profile, gift and coupon draft before mutation.",
+        "One synthetic POST and subsequent GET persisted and displayed both selected fields and coupons.",
+        "Reader sees the persisted data with disabled fields and no save or selection controls."
+      ],
+      "apiReads": 3,
+      "couponOptionReads": 1,
+      "apiWrites": 1,
+      "productionDataUsed": false
+    }
+  },
+  "excludedAttempts": [
+    "Sandbox-local pg_ctl start returned 1 before tests; its unique cluster .cache/finance-postgres-aUIRZi was stopped.",
+    "Initial two-file native run had 11 service passes and 4 HTTP fixture failures because synthetic role_name exceeded varchar(32); the failing HTTP file is excluded and fully replaced by the final 4-pass run.",
+    "An intermediate corrected HTTP run also passed 4 before the final test added manager POST/readback; the final full HTTP file is the counted version."
+  ],
+  "sha256": {
+    "src/services/admin/AdminLevelActivationInput.ts": "d5a6535b45bcb7eb1e9804d160beab159fbeeefafc75f9b9bb02768f1f4a24f9",
+    "src/services/admin/AdminLevelActivationService.ts": "528b3eac853f8b71ab33dc2a0ce9b4364487e1cf3fa85ea4d36a4454bb75c160",
+    "src/services/user/UserLevelService.ts": "89d580325fb84526dd0970e57ae0ae1ba1b8c805d09206c63cb0e72c976b0130",
+    "src/controllers/api/v1/AdminLevelActivationController.ts": "59bd870a46e1359b4203e7a544a25e67ecf8fe9b5695b01113f65ea297955964",
+    "test/admin-level-activation-postgres.test.ts": "618bcd9c985efeb9b3da54db55fb0ff7589d776e994f110198be727428341e12",
+    "test/admin-level-activation-http.test.ts": "c7ec444654bc184843c458f2ce30c52d497901effe351a121cc911153da19efd",
+    "test/admin-level-activation-input.test.ts": "d17bc2ca4850315b961b23f84de832e50e26c10d0495cd3a5e747740adfc51f5",
+    "test/admin-level-activation-frontend.test.ts": "2d22e684c88a24ee0513221a701b07fce2834ca01910d9d7944e0e01532e2fc7",
+    "test/fixtures/level-activation-browser-qa.cjs": "79011a1e831a9c9a04b9e587a936491158ccb5adcce9e179f40c780aad7a14de",
+    "../view/admin-ts/src/api/levelActivation.ts": "c117d0b4d8e7a726627b695f8cca8506c1ef2c9a647a0060354b90231fde56a9",
+    "../view/admin-ts/src/pages/config/LevelActivationSettings.vue": "b702cdc9e6959548df2f61601fb55ec47f7713c834b8e332185482c1ce0d7664",
+    "audit/route-distribution-20260928.json": "903e1de50872553c2f615470ab157c2b48c9fa563009342ffb0cf936421b8e06",
+    "audit/admin-frontend-inventory-20260928.json": "d42e8ddac36030170cc4aeb3b105d94b497ee406e3bc1ef6179d7ae789b5d3b3",
+    "audit/admin-frontend-api-contracts-20260928.json": "171d7a39e70f1146c233e5928ebcb5c658179c764e418c0150e0b07bd226e099",
+    "audit/admin-legacy-user-order-route-parity-20260928.json": "7c4981334726c9d4c11a9d7ff15196ed37ce8161fde58c5b9741db0a7519dac9"
+  },
+  "limits": [
+    "No production configuration or customer records were used.",
+    "Synthetic local-browser QA does not claim production role/configuration, Linux, device, provider, deployment or publication acceptance.",
+    "New dedicated paths do not increase exact legacy PHP path matches or turn the complete old setup_user page into a candidate."
+  ]
+}

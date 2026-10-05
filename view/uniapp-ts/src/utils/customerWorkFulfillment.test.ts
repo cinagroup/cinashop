@@ -1,0 +1,32 @@
+import { customerWorkSha256 } from '../../../common/customerWorkIntent';
+import { parseCustomerWorkQuery,resolveCustomerWorkPageRoute } from '../../../common/customerWorkRoute';
+import { customerWorkIntentHash,customerWorkCanonicalJson,isCustomerWorkOperationBody,isCustomerWorkPendingIntent,customerWorkPendingIntents,retainCustomerWorkIntent,releaseCustomerWorkIntent,parseCustomerWorkReceipt,isCustomerWorkWaybillJob,isCustomerWorkCityReadiness,customerWorkWriteEndpoint } from './customerWorkFulfillment';
+import type { CustomerWorkOperationBody,CustomerWorkPendingIntent } from '../types/customerWorkFulfillment';
+export function runCustomerWorkFulfillmentPureTests(assert:{equal:(a:unknown,b:unknown)=>void;deepEqual:(a:unknown,b:unknown)=>void;throws:(fn:()=>unknown,pattern?:RegExp)=>void}){
+  assert.equal(customerWorkSha256('abc'),'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+  assert.equal(customerWorkCanonicalJson({z:2,a:{b:1,a:'中文'}}),'\u007b"a":{"a":"中文","b":1},"z":2}');
+  assert.deepEqual(parseCustomerWorkQuery('delivery','id=ORDER_PARENT&listId=999&totalNum=3&orderStatus=0&comeType=2&productType=3'),{orderId:'ORDER_PARENT'});
+  assert.equal(resolveCustomerWorkPageRoute('/pages/admin/delivery/index','id=ORDER_PARENT&listId=999'),'/pages/customer-work/delivery?orderId=ORDER_PARENT');
+  for(const query of ['id=ORDER_PARENT&id=ORDER_PARENT','id=ORDER_PARENT&orderId=ORDER_PARENT','id=ORDER_PARENT&store_id=1','id=ORDER_PARENT&listId=0','id=ORDER_PARENT&productType=9'])assert.throws(()=>parseCustomerWorkQuery('delivery',query));
+  const body:CustomerWorkOperationBody={version:'customer-work-operation-v1',scope_key:'a'.repeat(64),order_id:1,expected_order_revision:'b'.repeat(64),expected_fulfillment_revision:'c'.repeat(64),payload:{remark:'原订单处理备注'}};
+  assert.equal(isCustomerWorkOperationBody(body),true);assert.equal(isCustomerWorkOperationBody({...body,store_id:1}),false);assert.equal(isCustomerWorkOperationBody({...body,order_id:0}),false);
+  const hash=customerWorkIntentHash(11,'remark',body);assert.equal(hash.length,64);assert.equal(hash===customerWorkIntentHash(12,'remark',body),false);
+  const intent:CustomerWorkPendingIntent={version:'customer-work-pending-v1',request_key:'12345678-1234-4123-8123-123456789abc',request_hash:hash,actor_uid:11,service_id:1,scope_key:body.scope_key,order_no:'ORDER_PARENT',root_order_id:1,kind:'remark',body,endpoint:'/mobile/work/orders/1/remark',method:'POST',created_at:1791075600};
+  assert.equal(isCustomerWorkPendingIntent(intent),true);assert.equal(isCustomerWorkPendingIntent({...intent,endpoint:'/admin/order/remark'}),false);assert.equal(isCustomerWorkPendingIntent({...intent,body:{...body,payload:{remark:'改写'}}}),false);
+  assert.equal(isCustomerWorkPendingIntent({...intent,token:'private-token'}),false);
+  retainCustomerWorkIntent(intent);retainCustomerWorkIntent(intent);assert.equal(customerWorkPendingIntents().length,1);
+  assert.throws(()=>retainCustomerWorkIntent({...intent,created_at:intent.created_at+1}),/不能替换/);
+  const read=customerWorkPendingIntents();read[0]!.body.payload.remark='不能污染原记录';assert.equal(customerWorkPendingIntents()[0]!.body.payload.remark,'原订单处理备注');
+  const receipt={version:body.version,request_key:intent.request_key,request_hash:hash,actor_uid:11,service_id:1,order_id:1,kind:'remark',outcome:'remark-saved',evidence:{changed:true}};
+  assert.deepEqual(parseCustomerWorkReceipt({receipt},intent),receipt);assert.equal(parseCustomerWorkReceipt({receipt:null},intent),null);
+  for(const changed of [{actor_uid:12},{order_id:102},{service_id:2},{request_hash:'d'.repeat(64)},{outcome:'provider-admitted'}])assert.throws(()=>parseCustomerWorkReceipt({receipt:{...receipt,...changed}},intent));
+  assert.equal(parseCustomerWorkReceipt({receipt:{...receipt,service_id:0,outcome:'rollback-rejected',evidence:{code:'403'}}},intent)?.outcome,'rollback-rejected');
+  assert.throws(()=>parseCustomerWorkReceipt({receipt:{...receipt,service_id:0}},intent));
+  assert.throws(()=>parseCustomerWorkReceipt({receipt:{...receipt,evidence:{changed:true,user_phone:'别人的隐私'}}},intent));
+  releaseCustomerWorkIntent(intent.request_key);assert.equal(customerWorkPendingIntents().length,0);
+  assert.deepEqual(customerWorkWriteEndpoint('split_delivery',102),{endpoint:'/mobile/work/orders/102/split-fulfillment',method:'PUT'});
+  assert.deepEqual(customerWorkWriteEndpoint('waybill_close',102,8),{endpoint:'/mobile/work/fulfillment/waybills/8/decisions',method:'POST'});
+  assert.equal(isCustomerWorkWaybillJob({status:'SENT',fulfilled_order_id:0}),false);
+  assert.equal(isCustomerWorkCityReadiness({schema_ready:true,providers:[],station:null,job:null}),true);
+  assert.equal(isCustomerWorkCityReadiness({schema_ready:true,providers:[{station_type:1,provider:'uu',available:true,reasons:[]}],station:null,job:null}),false);
+}

@@ -1,0 +1,386 @@
+{
+  "version": 2,
+  "dateUtc": "2026-09-30",
+  "phase": "locally_verified_partial_unpublished",
+  "scope": "Full-gift independent Admin management, ordinary checkout, stock/pools, paid entitlements, unpaid cancellation, guarded server-only whole atomic refund, and explicit fixed runtime privilege forward",
+  "status": "partial",
+  "productionAccepted": false,
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 83,
+      "partial": 113,
+      "missing": 71,
+      "retired": 7
+    },
+    "legacyMarketingScreens": {
+      "total": 48,
+      "candidate": 31,
+      "partial": 14,
+      "missing": 3,
+      "retired": 0
+    },
+    "workerRoutes": 2060,
+    "workerRouteSurfaces": {
+      "api": 1071,
+      "admin": 714,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "retired": 17,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 99,
+    "adminApi": {
+      "callSites": 540,
+      "pathVariants": 564,
+      "registered": 564,
+      "executable": 564,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "screenChanges": [
+      "/admin/marketing/discount/give: missing->partial",
+      "/admin/marketing/discount/add_give/:id?: missing->partial"
+    ],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "contracts": {
+    "management": "Eleven REST operations per Admin prefix; full_gift.view/manage exactly pair legacy1395/1399 menu auth/path; tiers, loop, positive amount/quantity thresholds, points, coupon and SKU total campaign pools, paid labels, strict scope, revision/UUID replay",
+    "poolAccounting": "Existing auxiliary IDs and spent/reserved quantities retained; new limit minus already consumed must fit current stock; retired pools preserved for unpaid source cancellation",
+    "quoteAndIdentity": "Amount threshold uses participating purchased lines after coupon allocation; physical gifts and looped points scale with repetitions, coupons once per campaign; independent purchase cart IDs, numeric gift cart IDs, short char(8) SKU normalization,512-char SKU name boundary",
+    "physicalOrder": "Gift entities have zero price, postage, discount, settlement, commission and product-grant values; total_num includes all physical units while purchase origin and quotas include only paid purchase lines",
+    "paidEntitlements": "Gift coupon instance provenance is immutable to app/admin rewrites; source points replay index and paid-outbox replay; gift products never trigger purchased-product coupon grants",
+    "unpaidCancellation": "Exact forward0177 validator proves gift extensions to the preserved old purchase-origin/cancellation contract, returning actual gift stock and reserved campaign/coupon pools once",
+    "refundBoundary": "Complete undelivered original order only; whole physical quantities, SKU and immutable paid coupon/point evidence required. Server-only atomic materialization is exercised but unmounted. Current public customer/Admin quote and creation both refuse full-gift refunds. Partial/split/delivered and gift-only remainder adapters unfinished",
+    "refundRecovery": "Recover available source gift points with explicit original/actual values; replay cannot duplicate reversal; paid coupons and labels retained and paid pools not returned, consistent with legacy PHP",
+    "runtimeForward": "Pre-full-gifts retains previous coupon-template profile; fixed promotion-gift forward upgrades approved Admin management and app surplus-counter capability plus receipt append/read. No role creation/password change or drift repair; unsupported ACL, body, sequence and index states refuse; late failure rolls back all grants",
+    "offlineCompatibility": "Frozen canonical offline v1 remains unchanged. A separate27-component inspection excludes exactly the0176 points index only after exact receipt/sequence/points prerequisites. Any partial0176 presence refuses legacy downgrade; unrelated offline index drift still fails",
+    "catalogConcurrency": "Shared promotion catalog locks plus actual two-buyer last-gift stock/pool contention verified against independent PG backends; failed creation rolls back purchased stock and cart claims."
+  },
+  "verification": {
+    "nativeBusinessAndSourceCatalog": {
+      "files": 4,
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0,
+      "version": "16.15",
+      "tests": [
+        "test/order-promotion-gift-catalog.test.ts",
+        "test/order-full-gift-quote.test.ts",
+        "test/order-full-gift-refund.test.ts",
+        "test/admin-refund-creation-quote.test.ts"
+      ],
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-VWLPxE",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/order-promotion-gift-catalog.test.ts test/order-full-gift-quote.test.ts test/order-full-gift-refund.test.ts test/admin-refund-creation-quote.test.ts",
+      "durationSeconds": 32.66
+    },
+    "nativeManagementCancellationAndExistingDiscounts": {
+      "files": 6,
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0,
+      "version": "16.15",
+      "tests": [
+        "test/admin-full-gift.test.ts",
+        "test/admin-full-gift-http.test.ts",
+        "test/admin-permission.test.ts",
+        "test/purchase-cancellation-gift-evidence.test.ts",
+        "test/order-full-discount-checkout.test.ts",
+        "test/order-nth-discount-checkout.test.ts"
+      ],
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-BnGTA2",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/admin-full-gift.test.ts test/admin-full-gift-http.test.ts test/admin-permission.test.ts test/purchase-cancellation-gift-evidence.test.ts test/order-full-discount-checkout.test.ts test/order-nth-discount-checkout.test.ts",
+      "durationSeconds": 41.53
+    },
+    "nativeFullGiftCheckoutAndPaidOutbox": {
+      "files": 1,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "version": "16.15",
+      "tests": [
+        "test/order-full-gift-checkout.test.ts"
+      ],
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-XNAyI4",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/order-full-gift-checkout.test.ts",
+      "durationSeconds": 15.15,
+      "startAtLocal": "2026-09-30 16:36:07",
+      "concurrencyProof": "Two independently verified PostgreSQL backend PIDs; disjoint buyer/purchased SKU rows; both confirmations pass with enough stock for only one gift grant. Exactly one creation succeeds; loser explicitly fails with gift stock insufficiency, preserving all purchased/gift stock, gift/coupon pools, coupon issue inventory, cart ownership and order rows."
+    },
+    "nativeRuntimeForwardAndHistoricalProfiles": {
+      "files": 5,
+      "caseInventory": 70,
+      "validatedCases": 70,
+      "tests": [
+        "test/runtime-promotion-gift-privileges.test.ts",
+        "test/runtime-coupon-template-privileges.test.ts",
+        "test/runtime-seckill-parent-privileges.test.ts",
+        "test/runtime-seckill-schedule-lock.test.ts",
+        "test/runtime-business-login.test.ts"
+      ],
+      "fullBatch": {
+        "passed": 68,
+        "failed": 2,
+        "skipped": 0,
+        "version": "16.15",
+        "durationSeconds": 465.59,
+        "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-X96iV6",
+        "fixtureSchemasRemaining": 0,
+        "clusterStopped": true,
+        "failureReasons": [
+          "Old test expected cancellation v1 rather than installed0177 gift-v1",
+          "Old test expected generic preflight rejection rather than the earlier exact missing-coupon-template rejection"
+        ]
+      },
+      "focusedFollowup": {
+        "files": 2,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 45,
+        "skipReason": "Literal case filter deliberately selects the two corrected expectations; all other68 cases already passed in the full batch",
+        "version": "16.15",
+        "durationSeconds": 27.59,
+        "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-Fzjswe",
+        "fixtureSchemasRemaining": 0,
+        "clusterStopped": true,
+        "literalCases": [
+          "keeps root/owner/isolation boundaries and never changes the inspecting runtime identity",
+          "upgrades only two column ACLs and three new objects; retains every old OID/ACL/body and business row"
+        ],
+        "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance --case <literalCase1> --case <literalCase2> ../.cache/postgres16-20260915/runtime/pgsql/bin test/runtime-business-login.test.ts test/runtime-seckill-schedule-lock.test.ts"
+      },
+      "sourceBoundary": "No production runtime or migration code changed between the full batch and its follow-up. Only the two stale test expectations were corrected. Counts refer to70 unique cases, not70 passing in one invocation.",
+      "status": "validated_full_batch_plus_focused_correction"
+    },
+    "auditRegression": {
+      "files": 5,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "includesApiContractSubset": 10
+    },
+    "pgliteCatalogAndPrivilegePlan": {
+      "files": 2,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "pgliteAdminQuoteAndGiftRefund": {
+      "files": 2,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "Independent native quote-lock wait only"
+    },
+    "frontendRuntime": {
+      "adminFullGift": {
+        "passed": 5,
+        "failed": 0
+      },
+      "sharedGiftQuote": {
+        "passed": 7,
+        "failed": 0
+      },
+      "workerPcCheckoutQuote": {
+        "passed": 12,
+        "failed": 0
+      }
+    },
+    "workerUnitTypecheck": "passed after final code and concurrency-test freeze",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": {
+      "status": "passed",
+      "command": "npm run build",
+      "modules": 2660,
+      "viteSeconds": 26.15
+    },
+    "pcTypecheckAndProductionBuild": {
+      "status": "passed",
+      "command": "npm run build",
+      "modules": 1908,
+      "viteSeconds": 10.33,
+      "note": "512-char parser boundary adjusted afterward; final focused parser test7/7 passed"
+    },
+    "uniappNativeTypecheckAndBuild": {
+      "status": "unverified",
+      "reason": "Local vue-tsc command unavailable; earlier required @dcloudio/types also unresolved. No native build acceptance claimed"
+    },
+    "gitDiffCheck": {
+      "status": "passed",
+      "scope": "Existing workspace plus this increment; only standard Git line-ending warnings, no whitespace error"
+    },
+    "publication": "No commit, push, deployment or production mutation",
+    "nativeBusinessCasesValidated": 93,
+    "resourceRecovery": {
+      "excludedAttempts": [
+        {
+          "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-82139p",
+          "reason": "Concurrent typecheck and PostgreSQL processes exhausted Windows commit memory; PostgreSQL logged out-of-memory/error1455 and stopped",
+          "clusterStopped": true,
+          "fixtureCleanupVerified": false
+        },
+        {
+          "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-u1kDOe",
+          "reason": "Disk exhausted during fixture initialization; two selected cases did not execute",
+          "fixtureSchemasRemaining": 0,
+          "clusterStopped": true
+        }
+      ],
+      "mitigation": "Complete-schema runtime fixtures now use one Vitest worker; actual concurrency proofs still use independent DB backends. Removed only14 explicitly identified, verified-stopped synthetic test data directories from this increment and retained every log. Other workspace and cache content preserved.",
+      "laterValidation": "Final full batch/focused correction and six-case consumer runs above are the acceptance evidence; failed resource attempts are excluded from passing counts."
+    }
+  },
+  "browser": {
+    "classification": "Browser plugin absent; bundled Playwright with local Chrome fallback",
+    "viewports": [
+      "1440x1000",
+      "390x844"
+    ],
+    "data": "Synthetic APIs, not production or actual restricted-role Browser acceptance",
+    "surfaces": [
+      "/marketing/full-gifts",
+      "/marketing/full-gifts/create/:id?",
+      "PC /order/confirm"
+    ],
+    "checks": {
+      "pageIdentity": "passed",
+      "blankPage": "passed",
+      "frameworkOverlay": "passed",
+      "consoleErrors": 0,
+      "failedResponses": 0,
+      "interactionProof": "passed",
+      "screenshotsInspected": "passed"
+    },
+    "interactionLoop": "Admin create/edit with tiers, coupon/gift SKU selection and pool limits, date-day endpoints, filters/status/delete, readonly/revoked permission and unknown-post replay guard; PC confirm separately displays zero-price gifts, coupons and points at unchanged payable total on desktop/mobile",
+    "adminRequests": 15,
+    "serversStopped": true,
+    "scripts": [
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-browser-qa.cjs",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pc-full-gift-confirm-browser-qa.cjs"
+    ],
+    "screenshots": [
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-list-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-form-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-gift-picker-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-list-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-date-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-gift-form-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pc-full-gift-confirm-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pc-full-gift-confirm-mobile.png"
+    ]
+  },
+  "remaining": [
+    "Public customer/Admin refund flow for full-gift orders remains refused; partial quantity, split or delivered order and gift-only remaining entitlement adapters unfinished",
+    "Native role capability tests do not replace real restricted-role browser acceptance or production role installation",
+    "Production statistics/scale, Linux CI, Workers/Hyperdrive, UniApp native type/build, deployment and post-publication acceptance remain open",
+    "Two legacy screens remain partial and no Checklist tick is added"
+  ],
+  "evidence": [
+    "docs/admin-full-gift-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "audit/admin-legacy-marketing-route-parity-full-gift-followup-20260930.json",
+    "audit/route-distribution-full-gift-followup-20260930.json",
+    "audit/admin-frontend-inventory-full-gift-followup-20260930.json",
+    "audit/admin-frontend-api-contracts-full-gift-followup-20260930.json"
+  ],
+  "sourceEvidence": {
+    "normalization": "UTF-8 text with CRLF/CR normalized to LF",
+    "scope": "Final local full-gift partial increment; prior dated snapshots retain their own historical source hashes",
+    "sha256": {
+      "docs/checklist-route-contract-distribution-20260928.md": "576839fd1430e4bc466fbc898509eea18dc4acdd74b6e66566e7de59b3e41dff",
+      "../MIGRATION_CHECKLIST.md": "97264a09e49f1d057ea1e20264e0028af7984bb78b3560f53a2ef6d801a551a8",
+      "src/controllers/api/v1/AdminFullGiftController.ts": "863cf38d895ded31f3f5d57c129bf074c652a75f26c594ba0d3a481dc98778fe",
+      "src/services/admin/AdminFullGiftService.ts": "498595590480223fbe1b36a5a9e7e43e72fec4f07a4443831bf81410aad23bf9",
+      "src/services/admin/AdminPermissionService.ts": "3917c3c526a58ac37b234083a8131e8154b1f5308ce583bc569e0b956370ac7b",
+      "src/services/admin/AdminPromotionSales.ts": "fc6a150a5ca4fc922986074638803c076756116f58967a0adac1dca7dfca994c",
+      "src/routes/v1/index.ts": "0249114052ab7a8276f1dd57e07c834182ff329f6d2449d6e53751623dd35880",
+      "src/routes/adminapi.ts": "01fcf689aa2ec4e4b2d8faf9d7857672152e1b0be1436ea65ba394deef6227ed",
+      "src/models/schema/promotions.ts": "073e87b81ec24cef29680e2e1cf5b01c8d05994ddbcb1c6483d6581cff258ccf",
+      "src/models/schema/activity.ts": "0c378180b4f80e9ab02d3e2ba0daea9fcb2e408436f5f1834f5bd220437cdc9c",
+      "src/services/activity/OrderPromotionGiftService.ts": "b4babfea04cd582f0d1643c4fceb96fa676c92504196021b7e9d1759be566f56",
+      "src/services/activity/OrderPromotionGiftSnapshot.ts": "5cb4d6386c6b0e3bb412d590ace8e2767c04d5ca07862a8797baab0f1a5d0baa",
+      "src/services/activity/OrderPromotionQuoteService.ts": "088a568eec9ab47dc846fd07e0f1adf4b7efdeb72b1c28a658d3b1fff71c8cdd",
+      "src/services/order/StoreOrderCreateService.ts": "ba36fd2f384474488d624e82164d3635bc53eef63e7a16916bc0aa4b973ffd0e",
+      "src/services/order/LegacyOrderCompatibilityService.ts": "fb8d6b20d2eb2686fe42879081360b7363d690ae777d21552a4873d57bc0db54",
+      "src/services/order/OrderPaidOutboxQueueConsumer.ts": "65cf59412974c86b0f7ead62a265c8aab424e50bb83a3450f050cc1d28503826",
+      "src/services/order/OrderOutboxService.ts": "579a1a19a901cded5e76ad08b619d0ac6fd430dfc2351d6357bea42a9f632ee1",
+      "src/services/activity/ProductCouponService.ts": "a1719f8fc6ffdf7244c9acff17c9293b0450ba9fa689d200b283feab166e7d68",
+      "src/services/order/OrderPromotionGiftRefund.ts": "1338773857e879a208e4a319cf63902599df8eb42a9929a14e17803d0b38c632",
+      "src/services/order/StoreOrderRefundService.ts": "a26ad8c412d8a7317339677ef13be02f0f1b64c6a6f58aedc1ed9d619b3d9260",
+      "src/services/order/RefundAtomicMaterialization.ts": "1e87abb90fe0c0ad7d2d369d2aa706aab9ea41ec45ecd7e62a41fd8a6f557481",
+      "src/services/MigrationService.ts": "04efa7a003ef3e1ff9d080a2651787d3f0fbcc8efeb428d9fd5541e15fc01633",
+      "src/migrations/orderPromotionGiftReceipt.ts": "e2565f60657c9b010802a74607ac69b97eeff1101e56b49276a4bf75a8ab2b72",
+      "src/migrations/offlineOrderCatalog.ts": "b2b62e970668e31c33c03e973c22bb65e75fdbf81531a47b20fda9a7b9a461cb",
+      "src/migrations/offlineOrderInstallation.ts": "c929b944d62d5f538495d257a2a82436a712d51f65fdfa5fb0055b6249e459e2",
+      "src/migrations/purchaseCancellationEvidence.ts": "4cba187db6bce4b08174d184434d7f04ec0419d9b468ebe02714d3edf309a00d",
+      "src/migrations/purchaseCancellationEvidenceCatalog.ts": "7f75796decf3e48014482c1774a0ed326c3e4f94159b72326c6ac63157f8ec83",
+      "src/migrations/runOrderPromotionGiftReceipt.ts": "ae303e1ec9c4565cd0f96029572fefe74fe6bd2fd7f46970c983c6677281c296",
+      "src/migrations/purchaseCancellationGiftEvidence.ts": "8808d130c8b5df51259f28e3db8d206de21c997118b9b799609df50fe90a2a5f",
+      "src/migrations/purchaseCancellationGiftEvidenceCatalog.ts": "d46182be17bcb25fc7cdc8b0ca35fee62041fff750fb03ffa7d5d34d37f5545d",
+      "src/migrations/runPurchaseCancellationGiftEvidence.ts": "8c0876ac61e067f30fc567cef785af88bde0b2d7170a3a6f4c38d080f4113c74",
+      "src/migrations/runPurchaseCancellationEvidence.ts": "0c76e23e1b320df88b67e4a5c1d3c99b7d0224a271ededd3f2678d63ba8653da",
+      "src/migrations/runtimePurchaseEvidence.ts": "bbacef37c7c396fc5bb6cc3a8298838135f8a397100c930857e3ba6326501de5",
+      "src/migrations/runtimeBusinessPrivilegePlan.ts": "25189eb2f68b5ce5e56df4f070c3340ca440dcb4a7ced9908d2311caf4c8d912",
+      "src/migrations/runtimeLockOnlyBoundary.ts": "60a8a43b309f32e069d2a60f42388f6df2228c6f2f491cb4c12d2b2a8c7c9144",
+      "src/migrations/promotionManagementRuntimeCatalog.ts": "e5dcd12716f077f609940d25cc6a359d89614ea900c3f99cea2fb810b1ad4118",
+      "src/migrations/runPromotionGiftRuntimeUpgrade.ts": "1a56745533112724ebdaf6cd7bd826171068c0dfcd1ed4039c38b1bf84eb307d",
+      "src/migrations/runCouponTemplateRuntimeUpgrade.ts": "4ade6c3434ebf79152c880f6b5a414cea4fc9fbf4bfd1e874c14619a293adff7",
+      "src/migrations/runRuntimeBusinessCommissioning.ts": "d4589b50098bea0bb4aff4242364caa2330c1d07e00086932c5d02edbd7eac7e",
+      "src/migrations/auditRuntimeBusinessPrivileges.ts": "fef5b4911cb5f77436f6c2e6ddc9d2525508fa7e7f387597f3472ecd26e049c5",
+      "src/migrations/reviewedOfflineGiftCatalog.ts": "f447266d5fb35c3495dc78d7755c4a01cb068d31254f302486c42f3d8d2e67c7",
+      "src/migrations/reviewedOfflinePricingCapability.ts": "413241b485202b30d5e748fd3f216767e14846c43f0eccbdc9e23fa44c81fba8",
+      "src/migrations/auditOfflineOrderRuntimePermissions.ts": "b61dd51c1443ec3f76bf0525fb463bb90779eb5333869a85acaac1140eff3d6d",
+      "migrations/0170_order_promotion_gift_receipt.sql": "db9c4c75894a51993bacd4f4c4289481379ea4a8e569c92c1e02df1578e8f7d7",
+      "migrations/0171_purchase_cancellation_gift_evidence.sql": "6c7ecf9aa3191c912f566fbed23dcbb76e77cea713a57b378879eb20d31c5c7d",
+      "test/admin-full-gift.test.ts": "81344b02bd22fa11fe0e06ee6922cf69e249b76451918099d5aa109ca9756be3",
+      "test/admin-full-gift-http.test.ts": "3095747f091d2447045d63fb99c3f56c66cb00b04b0299347c5cdc6a8ae91fac",
+      "test/admin-permission.test.ts": "6cdd1fd1b6d1bdec2d2536801b8c092d85ad3ec44f0229f5cb397b8fa231d31c",
+      "test/order-full-gift-quote.test.ts": "3d181bc3b279ff1c5a09b6c53d4eaea6f85c814f2cfe4e56380f891c61307262",
+      "test/order-full-gift-checkout.test.ts": "cdc1d9dd261d406619b272606013c450c9113098eed7737c1650967af24e631f",
+      "test/order-full-gift-refund.test.ts": "2059020d0a91982e1205db29ba3ae13e5ca615302456edbae3f86b6a37c7d15c",
+      "test/order-promotion-gift-catalog.test.ts": "2e04889e8209528dd39190c19979dc80e1272dfad60ac2c32b7f533511df3d45",
+      "test/purchase-cancellation-gift-evidence.test.ts": "ecb516ebabf7cf5b795ad9dfeb8e9b7746d18367f346ef26c243f5401c9a773b",
+      "test/admin-refund-creation-quote.test.ts": "404f820400a2986ed4e030a083b7fb0a31946bd899cc92684ba9b19f75cc3c3f",
+      "test/runtime-promotion-gift-privileges.test.ts": "08a82a0dbf98a6855f8a27b0999420ad5f054ae0a80c9c1b3784861a596e3022",
+      "test/helpers/refundRuntimeFixture.ts": "e5d99aa7640bb764ffefd0b359f99da0c72d3de17aee12a89b12ca855ed415cc",
+      "test/helpers/runtimeHistoricalProfile.ts": "32e0f4fb177e7d5299acb25dc070db15248cc39c8b4a47b3b25e3d3418d0ad83",
+      "test/runtime-business-login.test.ts": "6fd74cbe7da7cd00bfd7652d80286009fa36e350f8a3b61b927e7d517ca93b89",
+      "test/runtime-seckill-schedule-lock.test.ts": "5005b426e69e6ee1f0a8e9cb2ea3964eeb9397974915afb4db2bdf7c5c7dc1ac",
+      "test/runtime-seckill-parent-privileges.test.ts": "e4102ca220863752a72af70b9da37e0cebbdd31e4ab37d3c2db6cb74465ac086",
+      "test/runtime-coupon-template-privileges.test.ts": "36f53e8e2d6f44f19ebdd677a5159807f606ee1efed5107dd29192d300216933",
+      "scripts/run-local-finance-postgres.mjs": "5a16cec60b59b0c29dcb56fc5d538eb5287af73c5ee22878bd2d823592a816d6",
+      "scripts/admin-marketing-frontend-parity-audit.ts": "b77284662369a4f7904d7453b3f4ca269e7a6cc1b0f2d94fe94d666a9d21bf31",
+      "test/admin-all-frontend-parity.test.ts": "8cc66643c3a839adba795e128a41f442de76d3d507f1d4c8cb689e4fe805ac08",
+      "docs/admin-full-gift-route-contract.md": "629e0c98fe4f27ff3a42cfd15b7054c02b28884bdc371fd0102a20f140fd7477",
+      "../view/admin-ts/src/api/fullGift.ts": "83a8eb5e4f1942ceace11b65a87beb3f15a846b840a8c16bc604ed240b19d71b",
+      "../view/admin-ts/src/pages/marketing/FullGiftList.vue": "6f6b9c07717292ee3a4d47ee23011f3752858acdd3c567ef172a723e0bdac933",
+      "../view/admin-ts/src/pages/marketing/FullGiftForm.vue": "9698278d5e5571f0bddd4b60e2ca7c03066a300e9d2aa12966cb300f8c539c6f",
+      "../view/admin-ts/test/fullGift.test.ts": "535f32bcfeb9b9ce455916774efc741f885f601e3fa15d4aafe44b965c5b0985",
+      "../view/common/checkoutQuote.ts": "381f343065bde44abc4b2d0f1a012c431c734502f4e4b1c6520fbcba489d5cbb",
+      "../view/pc-ts/test/checkout-gift-quote.test.mjs": "3312aef99cfd3fe688655dcc5f94e18e9c42c9ef08e16cc0adeff6a6854ebc1f",
+      "../view/pc-ts/src/pages/order/Checkout.vue": "85205a74a8ad6e636d898583e9ddf2969220edecf6d154b766cb5ac032f07e8c",
+      "../view/uniapp-ts/src/pages/order/confirm.vue": "bb953aa7a70e3669b2f66683fae12c952f23290e4a9a2d6b38c927548dac9bd2"
+    }
+  },
+  "published": false
+}

@@ -54,11 +54,14 @@ describe("official-account content migration", () => {
   });
 
   it("keeps external 0071 and embedded 0078 SQL exactly equivalent", () => {
-    const migration = readFileSync("migrations/0071_wechat_reply_content.sql", "utf8").trim();
+    // Git may check out the external SQL and this TypeScript source with
+    // different line endings on Windows; compare their SQL text after folding
+    // only the platform newline convention.
+    const migration = readFileSync("migrations/0071_wechat_reply_content.sql", "utf8").replace(/\r\n?/g, "\n").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(
       /private migration_0078\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
-    )?.[1]?.trim();
+    )?.[1]?.replace(/\r\n?/g, "\n").trim();
     expect(embedded).toBe(migration);
     expect(migration).not.toMatch(/FOREIGN KEY\s*\(|REFERENCES\s+"/i);
     expect(migration.match(/CREATE UNIQUE INDEX/gi)).toHaveLength(1);
@@ -124,7 +127,7 @@ describe("official-account content migration", () => {
     expect(requiredAdminPermission("GET", "/adminapi/wechat/keyword")).toBe("wechat_content.view");
     expect(requiredAdminPermission("POST", "/adminapi/wechat/keyword/0")).toBe("wechat_content.manage");
     expect(requiredAdminPermission("DELETE", "/adminapi/wechat/news/1")).toBe("wechat_content.manage");
-    expect(requiredAdminPermission("GET", "/adminapi/wechat/speechcraft")).toBe("service.view");
+    expect(requiredAdminPermission("GET", "/adminapi/wechat/speechcraft")).toBe("speechcraft.view");
   });
 
   it("uses transactional catalog locks and refuses unsafe external fanout", () => {

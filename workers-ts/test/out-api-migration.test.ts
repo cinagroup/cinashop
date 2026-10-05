@@ -40,11 +40,11 @@ describe("third-party API migration boundary", () => {
   });
 
   it("keeps external 0075 and embedded 0082 SQL exactly equivalent", () => {
-    const migration = readFileSync("migrations/0075_external_api.sql", "utf8").trim();
+    const migration = readFileSync("migrations/0075_external_api.sql", "utf8").replace(/\r\n/g, "\n").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(
       /private migration_0082\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
-    )?.[1]?.trim();
+    )?.[1]?.replace(/\r\n/g, "\n").trim();
     expect(embedded).toBe(migration);
     expect(migration).toContain('"apppwd" VARCHAR(100)');
     expect(migration).toContain('"push_password" VARCHAR(255)');
@@ -53,11 +53,11 @@ describe("third-party API migration boundary", () => {
   });
 
   it("keeps the privacy audit migration and model append-only and free of raw request data", () => {
-    const migration = readFileSync("migrations/0083_out_api_audit.sql", "utf8").trim();
+    const migration = readFileSync("migrations/0083_out_api_audit.sql", "utf8").replace(/\r\n/g, "\n").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(
       /private migration_0090\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
-    )?.[1]?.trim();
+    )?.[1]?.replace(/\r\n/g, "\n").trim();
     expect(embedded).toBe(migration);
     expect(getTableName(outApiAudit)).toBe("out_api_audit");
     expect(Object.keys(getTableColumns(outApiAudit))).toEqual([

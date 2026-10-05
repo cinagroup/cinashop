@@ -1,8 +1,10 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import type { DbClient } from "@/lib/di";
 import {
   storeOrderCartInfo,
   storeOrder,
+  storeOrderRefund,
+  storePink,
   storeOrderOutbox,
   notificationTemplate,
   orderNotificationDelivery,
@@ -11,25 +13,33 @@ import {
   systemNotification,
   user,
   wechatUser,
+  storeDeliveryOrder,
+  customerCityDeliveryJob,
+  customerCityDeliveryAttempt,
+  customerCityDeliveryBinding,
   type OrderDeliveryNoticeOutboxPayload,
   type OrderNotificationChannel,
   type OrderNotificationDeliveryPayload,
   type OrderOutboxPayload,
   type OrderRefundRefusedNoticeOutboxPayload,
   type OrderSecondCardNoticeOutboxPayload,
+  type OrderPinkSuccessNoticeOutboxPayload,
 } from "@/models/schema";
 import { normalizeConfigScalar } from "@/utils/config";
+import { assertCustomerCityDeliveryReady } from '@/migrations/customerCityDelivery';
 
 export const ORDER_DELIVERY_NOTICE_EVENT = "order.delivery.notice";
 export const ORDER_REFUND_REFUSED_NOTICE_EVENT = "order.refund.refused.notice";
 export const ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT = "order.second_card.advent.notice";
 export const ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT = "order.second_card.expired.notice";
+export const ORDER_PINK_SUCCESS_NOTICE_EVENT = 'order.pink.success.notice';
 
 export type OrderNotificationEventType =
   | typeof ORDER_DELIVERY_NOTICE_EVENT
   | typeof ORDER_REFUND_REFUSED_NOTICE_EVENT
   | typeof ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
-  | typeof ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
+  | typeof ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT
+  | typeof ORDER_PINK_SUCCESS_NOTICE_EVENT;
 
 export interface OrderNotificationOutboxEvent {
   id: number;
@@ -44,9 +54,10 @@ export interface DeliveryNoticeInput {
   orderNo: string;
   userId: number;
   userAddress: string;
-  deliveryType: "express" | "send" | "fictitious";
+  deliveryType: "express" | "send" | "fictitious" | "city_delivery";
   deliveryName: string;
   deliveryId: string;
+  cityDeliveryJobId?: number;
 }
 
 export interface RefundRefusedNoticeInput {
@@ -73,10 +84,12 @@ type NotificationResult = "created" | "already-created" | "disabled";
 interface NoticeContext {
   values: Record<string, string>;
   storeName: string;
+  buyerPhone: string;
   shippingItemDescription: string;
   officialOpenid: string;
   routineOpenid: string;
   secondCardActive: boolean;
+  pinkSuccessActive: boolean;
   order: {
     id: number;
     orderId: string;
@@ -98,6 +111,9 @@ interface NoticeContext {
     type: number;
     staffId: number;
     couponId: number;
+    activityId: number;
+    pinkId: number;
+    unique: string | null;
   };
 }
 
@@ -138,8 +154,9 @@ function boundedString(value: unknown, label: string, maxLength: number): string
   return value;
 }
 
-export function orderDeliveryNoticeEventKey(orderId: number): string {
-  return `${ORDER_DELIVERY_NOTICE_EVENT}:${positiveId(orderId, "订单 ID")}`;
+export function orderDeliveryNoticeEventKey(orderId: number, cityDeliveryJobId?: number): string {
+  return `${ORDER_DELIVERY_NOTICE_EVENT}:${positiveId(orderId, "订单 ID")}`
+    + (cityDeliveryJobId === undefined ? '' : `:city:${positiveId(cityDeliveryJobId, '同城任务 ID')}`);
 }
 
 export function orderRefundRefusedNoticeEventKey(refundId: number): string {
@@ -178,6 +195,7 @@ async function insertImmutableNotificationEvent(
     payload:
       | OrderDeliveryNoticeOutboxPayload
       | OrderRefundRefusedNoticeOutboxPayload
+      | OrderPinkSuccessNoticeOutboxPayload
       | OrderSecondCardNoticeOutboxPayload;
     now: number;
   },
@@ -240,9 +258,11 @@ export async function enqueueOrderDeliveryNoticeEvent(
     }).from(storeOrder).where(and(eq(storeOrder.id, orderId), eq(storeOrder.orderId, orderNo))).limit(1);
     assertAssistedGuestDeliverySource(order);
   }
-  if (!["express", "send", "fictitious"].includes(input.deliveryType)) {
+  if (!["express", "send", "fictitious", "city_delivery"].includes(input.deliveryType)) {
     throw new Error("发货类型无效");
   }
+  const cityDeliveryJobId=input.deliveryType==='city_delivery'?positiveId(input.cityDeliveryJobId,'同城任务 ID'):undefined;
+  if(input.deliveryType!=='city_delivery'&&input.cityDeliveryJobId!==undefined)throw Error('同城任务不能用于其他发货通知');
   const payload: OrderDeliveryNoticeOutboxPayload = {
     orderId,
     orderNo,
@@ -251,9 +271,10 @@ export async function enqueueOrderDeliveryNoticeEvent(
     deliveryName: boundedString(input.deliveryName, "配送名称", 64),
     deliveryId: boundedString(input.deliveryId, "配送单号", 64),
     userAddress: boundedString(input.userAddress, "收货地址", 100),
+    ...(cityDeliveryJobId===undefined?{}:{cityDeliveryJobId}),
   };
   return insertImmutableNotificationEvent(db, {
-    eventKey: orderDeliveryNoticeEventKey(orderId),
+    eventKey: orderDeliveryNoticeEventKey(orderId,cityDeliveryJobId),
     aggregateId: orderId,
     eventType: ORDER_DELIVERY_NOTICE_EVENT,
     payload,
@@ -320,6 +341,19 @@ export async function enqueueSecondCardNoticeEvent(
   });
 }
 
+export async function enqueueOrderPinkSuccessNoticeEvent(
+  db: DbClient,
+  input: OrderPinkSuccessNoticeOutboxPayload,
+  now = Math.floor(Date.now() / 1000),
+): Promise<{ id: number; eventKey: string }> {
+  assertOrderNotificationPayload(input, ORDER_PINK_SUCCESS_NOTICE_EVENT, input.orderId);
+  return insertImmutableNotificationEvent(db, {
+    eventKey: `${ORDER_PINK_SUCCESS_NOTICE_EVENT}:${input.orderId}`,
+    aggregateId: input.orderId, eventType: ORDER_PINK_SUCCESS_NOTICE_EVENT,
+    payload: { orderId: input.orderId, orderNo: input.orderNo, userId: input.userId, pinkId: input.pinkId, people: input.people }, now,
+  });
+}
+
 export function assertOrderNotificationPayload(
   value: unknown,
   eventType: string,
@@ -327,6 +361,7 @@ export function assertOrderNotificationPayload(
 ): asserts value is
   | OrderDeliveryNoticeOutboxPayload
   | OrderRefundRefusedNoticeOutboxPayload
+  | OrderPinkSuccessNoticeOutboxPayload
   | OrderSecondCardNoticeOutboxPayload {
   if (!value || typeof value !== "object") throw new Error("通知 outbox payload 不是对象");
   const payload = value as Record<string, unknown>;
@@ -335,13 +370,22 @@ export function assertOrderNotificationPayload(
   if (payload.orderId !== aggregateId) throw new Error("通知 outbox 聚合 ID 不匹配");
   requiredString(payload.orderNo, "通知订单号", 32);
 
+  if (eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) {
+    positiveId(payload.pinkId, '通知团长 ID');
+    if (Number(payload.pinkId) > 2_147_483_647 || Number(payload.orderId) > 2_147_483_647 || Number(payload.userId) > 2_147_483_647) throw new Error('通知身份超出范围');
+    if (!Number.isSafeInteger(payload.people) || Number(payload.people) < 2 || Number(payload.people) > 500) throw new Error('通知成团人数无效');
+    return;
+  }
+
   if (eventType === ORDER_DELIVERY_NOTICE_EVENT) {
-    if (!["express", "send", "fictitious"].includes(String(payload.deliveryType))) {
+    if (!["express", "send", "fictitious", "city_delivery"].includes(String(payload.deliveryType))) {
       throw new Error("通知发货类型无效");
     }
     boundedString(payload.deliveryName, "通知配送名称", 64);
     boundedString(payload.deliveryId, "通知配送单号", 64);
     boundedString(payload.userAddress, "通知收货地址", 100);
+    if(payload.deliveryType==='city_delivery')positiveId(payload.cityDeliveryJobId,'通知同城任务 ID');
+    else if(payload.cityDeliveryJobId!==undefined)throw Error('同城任务不能用于其他发货通知');
     return;
   }
   if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) {
@@ -368,19 +412,58 @@ export function assertOrderNotificationPayload(
   throw new Error("通知 outbox 事件类型不受支持");
 }
 
+/** A cancelled historical city attempt must never materialize a fresh notice
+ * for a later attempt. Rider callbacks may replace order deliveryId with the
+ * rider phone; use the exact durable provider record instead. */
+export async function customerCityNoticeIsActive(tx:DbClient,payload:OrderDeliveryNoticeOutboxPayload) {
+  if(payload.deliveryType!=='city_delivery')return true;
+  const id=positiveId(payload.cityDeliveryJobId,'通知同城任务 ID');
+  await assertCustomerCityDeliveryReady(tx,false);
+  const rows=await tx.select({job:customerCityDeliveryJob,binding:customerCityDeliveryBinding,attempt:customerCityDeliveryAttempt,delivery:storeDeliveryOrder,order:storeOrder})
+    .from(customerCityDeliveryJob).innerJoin(customerCityDeliveryBinding,eq(customerCityDeliveryBinding.jobId,customerCityDeliveryJob.id))
+    .innerJoin(customerCityDeliveryAttempt,eq(customerCityDeliveryAttempt.id,customerCityDeliveryBinding.attemptId))
+    .innerJoin(storeDeliveryOrder,eq(storeDeliveryOrder.id,customerCityDeliveryBinding.deliveryOrderId))
+    .innerJoin(storeOrder,eq(storeOrder.id,customerCityDeliveryBinding.orderId)).where(eq(customerCityDeliveryJob.id,id)).limit(1);
+  const row=rows[0];if(!row)return false;
+  const {job,binding,attempt,delivery,order}=row,result=attempt.result;
+  return ['ADMITTED','DELIVERED'].includes(job.status)&&binding.active===1&&attempt.phase==='ACCEPTED'
+    &&attempt.jobId===job.id&&attempt.requestKey===job.requestKey
+    &&binding.rootOrderId===job.rootOrderId&&binding.provider===job.provider&&binding.providerOrderId===job.providerOrderId
+    &&binding.customerUid===job.customerUid&&binding.storeId===job.storeId&&binding.supplierId===job.supplierId
+    &&binding.orderId===payload.orderId&&order.id===payload.orderId&&order.orderId===payload.orderNo&&order.uid===payload.userId
+    &&order.uid===binding.customerUid&&order.storeId===binding.storeId&&order.supplierId===binding.supplierId
+    &&(order.pid>0?order.pid:order.id)===binding.rootOrderId&&order.deliveryType==='city_delivery'
+    &&order.paid===1&&order.isDel===0&&order.isSystemDel===0&&[1,2,3,4,5].includes(order.status)&&[0,3].includes(order.refundStatus)
+    &&delivery.oid===order.id&&delivery.uid===order.uid&&delivery.orderId===binding.providerOrderId
+    &&delivery.stationType===(job.provider==='dada'?1:2)&&delivery.deliveryNo===payload.deliveryId
+    &&result.provider_order_id===delivery.orderId&&result.delivery_no===delivery.deliveryNo;
+}
+
+export async function customerCityQueuedNoticeIsActive(tx:DbClient,eventKey:string) {
+  if(!eventKey.startsWith(ORDER_DELIVERY_NOTICE_EVENT+':')||!eventKey.includes(':city:'))return true;
+  const [event]=await tx.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.eventKey,eventKey)).limit(1);
+  if(!event||event.eventType!==ORDER_DELIVERY_NOTICE_EVENT)return false;
+  assertOrderNotificationPayload(event.payload,event.eventType,event.aggregateId);
+  const payload=event.payload as OrderDeliveryNoticeOutboxPayload;
+  if(payload.deliveryType!=='city_delivery'||orderDeliveryNoticeEventKey(payload.orderId,payload.cityDeliveryJobId)!==eventKey)return false;
+  return customerCityNoticeIsActive(tx,payload);
+}
+
 function noticeMark(
   eventType: string,
   payload:
     | OrderDeliveryNoticeOutboxPayload
     | OrderRefundRefusedNoticeOutboxPayload
+    | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload,
 ): string {
   if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) return "send_order_refund_no_status";
+  if (eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) return 'order_user_groups_success';
   if (eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT) return "reminder_brink_death";
   if (eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT) return "expiration_reminder";
   const delivery = payload as OrderDeliveryNoticeOutboxPayload;
   if (delivery.deliveryType === "express") return "order_postage_success";
-  if (delivery.deliveryType === "send") return "order_deliver_success";
+  if ((delivery.deliveryType === "send" || delivery.deliveryType === "city_delivery")) return "order_deliver_success";
   return "order_fictitious_success";
 }
 
@@ -403,6 +486,19 @@ function productTitleFromSnapshot(value: string | null): string {
   } catch {
     return "";
   }
+}
+
+function pinkProductTitleFromSnapshot(value: string | null): string {
+  if (!value || value.length > 1_048_576) return '';
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    const product = parsed.product;
+    if (product && typeof product === 'object' && !Array.isArray(product)) {
+      const name = (product as Record<string, unknown>).storeName;
+      if (typeof name === 'string' && name) return name;
+    }
+    return productTitleFromSnapshot(value);
+  } catch { return ''; }
 }
 
 function shippingTitleFromSnapshot(value: string | null): string {
@@ -432,6 +528,7 @@ async function noticeContext(
   payload:
     | OrderDeliveryNoticeOutboxPayload
     | OrderRefundRefusedNoticeOutboxPayload
+    | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload,
 ): Promise<NoticeContext> {
   const isSecondCard = eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
@@ -459,7 +556,7 @@ async function noticeContext(
         .where(eq(storeOrderCartInfo.oid, payload.orderId))
         .orderBy(asc(storeOrderCartInfo.id));
   const [buyerRows, cartRows, orderRows, identities] = await Promise.all([
-    payload.userId === 0 ? Promise.resolve([]) : tx.select({ nickname: user.nickname }).from(user).where(eq(user.uid, payload.userId)).limit(1),
+    payload.userId === 0 ? Promise.resolve([]) : tx.select({ nickname: user.nickname, phone: user.phone }).from(user).where(eq(user.uid, payload.userId)).limit(1),
     cartQuery,
     tx
       .select({
@@ -483,6 +580,9 @@ async function noticeContext(
         type: storeOrder.type,
         staffId: storeOrder.staffId,
         couponId: storeOrder.couponId,
+        activityId: storeOrder.activityId,
+        pinkId: storeOrder.pinkId,
+        unique: storeOrder.unique,
       })
       .from(storeOrder)
       .where(eq(storeOrder.id, payload.orderId))
@@ -506,7 +606,8 @@ async function noticeContext(
   }
   if (payload.userId === 0) assertAssistedGuestDeliverySource(order);
   const storeName = secondCard?.storeName ?? utf8Prefix(
-    cartRows.map((row) => productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join("|"),
+    cartRows.map((row) => eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
+      ? pinkProductTitleFromSnapshot(row.cartInfo) : productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join("|"),
     20,
   );
   const shippingItemDescription = cartRows
@@ -517,7 +618,30 @@ async function noticeContext(
     identities.find((identity) => identity.userType === type && identity.openid.trim())?.openid.trim()
       ?? "";
   let values: Record<string, string>;
-  if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) {
+  let pinkSuccessActive = true;
+  if (eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) {
+    const pink = payload as OrderPinkSuccessNoticeOutboxPayload;
+    const pendingRefunds = await tx.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(and(
+      eq(storeOrderRefund.storeOrderId, order.id), eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0),
+      inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
+    )).limit(1);
+    const [leader] = await tx.select().from(storePink).where(eq(storePink.id, pink.pinkId)).limit(1);
+    const members = await tx.select().from(storePink).where(and(
+      eq(storePink.uid, pink.userId), eq(storePink.isVirtual, 0), eq(storePink.status, 2), eq(storePink.isRefund, 0),
+      or(eq(storePink.id, pink.pinkId), eq(storePink.kId, pink.pinkId)),
+    )).orderBy(asc(storePink.id)).limit(2);
+    const member = members[0];
+    pinkSuccessActive = Boolean(leader && member && members.length === 1 && leader.kId === 0 && leader.status === 2 &&
+      leader.isRefund === 0 && leader.isVirtual === 0 && leader.uid > 0 && leader.people === pink.people && order.type === 3 && order.paid === 1 &&
+      order.pinkId === pink.pinkId && order.activityId === leader.combinationId &&
+      order.isDel === 0 && order.isSystemDel === 0 && [0, 3].includes(order.refundStatus) && pendingRefunds.length === 0 &&
+      member.combinationId === leader.combinationId && member.productId === leader.productId &&
+      (member.orderId === '' || member.orderId === '0' || member.orderId === order.orderId) &&
+      (member.orderIdKey === '' || member.orderIdKey === '0' || member.orderIdKey === String(order.id) || member.orderIdKey === order.unique) &&
+      (member.orderId === order.orderId || member.orderIdKey === String(order.id) || member.orderIdKey === order.unique));
+    values = { title: storeName, store_name: storeName, nickname: leader?.nickname ?? '', count: String(pink.people),
+      pink_time: chinaDateTime(member?.addTime ?? order.payTime), order_id: order.orderId };
+  } else if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) {
     const refusal = payload as OrderRefundRefusedNoticeOutboxPayload;
     values = {
       order_id: refusal.orderNo,
@@ -549,6 +673,7 @@ async function noticeContext(
   return {
     values,
     storeName,
+    buyerPhone: buyerRows[0]?.phone.trim() ?? '',
     shippingItemDescription,
     officialOpenid: openid("wechat"),
     routineOpenid: openid("routine"),
@@ -560,6 +685,7 @@ async function noticeContext(
       && order.isSystemDel === 0
       && [0, 3].includes(order.refundStatus)
     ),
+    pinkSuccessActive,
     order,
   };
 }
@@ -668,12 +794,33 @@ async function stageExternalNotifications(
   payload:
     | OrderDeliveryNoticeOutboxPayload
     | OrderRefundRefusedNoticeOutboxPayload
+    | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload,
   mark: string,
   config: NoticeConfig | undefined,
   context: NoticeContext,
   now: number,
 ): Promise<void> {
+  if (event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) {
+    // The old success callback invokes system, SMS and routine channels;
+    // its official-account callback is commented out, so do not invent it.
+    if (config?.isSms === 1) await createImmutableDelivery(tx, {
+      event, payload, mark, channel: 'sms', target: context.buyerPhone, templateCode: config.smsId.trim(),
+      deliveryPayload: { kind: 'sms', params: { title: context.storeName, nickname: context.values.nickname } },
+      skipReason: !context.buyerPhone ? 'target_not_configured' : !config.smsId.trim() ? 'template_not_configured' : undefined, now,
+    });
+    if (config?.isRoutine === 1) {
+      const templateCode = await configuredTemplate(tx, '3098', 0);
+      await createImmutableDelivery(tx, {
+        event, payload, mark, channel: 'wechat_routine', target: context.routineOpenid, templateCode,
+        deliveryPayload: { kind: 'wechat_routine', data: { thing1: utf8Prefix(context.storeName, 20),
+          name3: routineDeliveryName(context.values.nickname), date5: context.values.pink_time, number2: context.values.count },
+          url: `/pages/goods/order_details/index?order_id=${payload.orderNo}` },
+        skipReason: !context.routineOpenid ? 'target_not_configured' : !templateCode ? 'template_not_configured' : undefined, now,
+      });
+    }
+    return;
+  }
   const isRefund = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
   const isSecondCard = event.eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || event.eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
@@ -738,7 +885,7 @@ async function stageExternalNotifications(
   }
 
   const routineEnabled = config?.isRoutine === 1 &&
-    (isRefund || delivery?.deliveryType === "express" || delivery?.deliveryType === "send");
+    (isRefund || delivery?.deliveryType === "express" || (delivery?.deliveryType === "send" || delivery?.deliveryType === "city_delivery"));
   if (routineEnabled) {
     const templateMark = isRefund
       ? "1451"
@@ -812,7 +959,7 @@ async function stageExternalNotifications(
   }
   const logisticsType = context.order.shippingType !== 1
     ? 4
-    : delivery.deliveryType === "express" ? 1 : delivery.deliveryType === "send" ? 2 : 3;
+    : delivery.deliveryType === "express" ? 1 : (delivery.deliveryType === "send" || delivery.deliveryType === "city_delivery") ? 2 : 3;
   const transactionId = context.order.tradeNo.trim();
   const target = context.routineOpenid;
   await createImmutableDelivery(tx, {
@@ -846,6 +993,7 @@ export async function processOrderNotificationOutboxEvent(
   const payload = event.payload as
     | OrderDeliveryNoticeOutboxPayload
     | OrderRefundRefusedNoticeOutboxPayload
+    | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload;
   const mark = noticeMark(event.eventType, payload);
   const templates = await tx
@@ -865,7 +1013,9 @@ export async function processOrderNotificationOutboxEvent(
     .limit(2);
   if (templates.length > 1) throw new Error(`通知模板 ${mark} 存在重复启用来源`);
   const template = templates[0];
+  if(event.eventType===ORDER_DELIVERY_NOTICE_EVENT&&!await customerCityNoticeIsActive(tx,payload as OrderDeliveryNoticeOutboxPayload))return 'disabled';
   const context = await noticeContext(tx, event.eventType, payload);
+  if (event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT && !context.pinkSuccessActive) return 'disabled';
   if (
     (event.eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
       || event.eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT)

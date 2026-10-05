@@ -150,9 +150,10 @@ import {
   diyNumber,
   diyText,
   openDiyLink,
-  safeDiyColor,
   safeDiyImageUrl,
 } from "@/utils/diy";
+import { useThemeStore } from '@/stores/theme';
+import { diyThemeColor, diyThemeVariables } from '@/utils/diyTheme';
 
 interface CommerceCard {
   id: number;
@@ -206,9 +207,7 @@ function configRecord(key: string): Record<string, unknown> | null {
 }
 
 function configColor(key: string, fallback: string): string {
-  const colors = configRecord(key)?.color;
-  const value = Array.isArray(colors) ? asDiyRecord(colors[0])?.item : undefined;
-  return safeDiyColor(value, fallback);
+  return diyThemeColor(props.block, key, 0, fallback, theme.preset);
 }
 
 function safeImage(value: unknown): string {
@@ -221,6 +220,7 @@ function open(target: unknown): void {
 
 const limit = computed(() => bounded(diyNumber(props.block, "numberConfig", 6), 6, 1, 20));
 const outerStyle = computed<Record<string, string>>(() => ({
+  ...diyThemeVariables(props.block, theme.preset),
   padding: `${bounded(diyNumber(props.block, "topConfig"), 0, 0, 100) * 2}rpx ${bounded(diyNumber(props.block, "prConfig"), 0, 0, 80) * 2}rpx ${bounded(diyNumber(props.block, "bottomConfig"), 0, 0, 100) * 2}rpx`,
   marginTop: `${bounded(diyNumber(props.block, "mbConfig"), 0, 0, 100) * 2}rpx`,
   backgroundColor: configColor("bottomBgColor", "transparent"),
@@ -228,9 +228,10 @@ const outerStyle = computed<Record<string, string>>(() => ({
 const panelStyle = computed(() => ({
   borderRadius: `${bounded(configRecord("fillet")?.val, 12, 0, 60) * 2}rpx`,
 }));
-const accent = computed(() => configColor("themeColor", configColor("priceColor", "#e93323")));
+const theme = useThemeStore();
+const accent = computed(() => configColor("themeColor", theme.preset.theme));
 const accentStyle = computed(() => ({ backgroundColor: accent.value, color: "#ffffff" }));
-const accentTextStyle = computed(() => ({ color: accent.value }));
+const accentTextStyle = computed(() => ({ color: 'var(--diy-price)' }));
 const couponStyle = computed(() => ({
   borderColor: configColor("couponBgColor", accent.value),
   backgroundColor: configColor("moduleColor", "#ffffff"),
@@ -413,7 +414,7 @@ const cards = computed<CommerceCard[]>(() => {
   if (props.block.name === "pointsMall") return integralItems.value.slice(0, limit.value).map((item) => ({
     id: item.id, kind: "points", title: item.title.slice(0, 100), image: safeImage(item.image),
     price: `${Math.max(0, item.integral)}积分`, oldPrice: Number(item.price) > 0 ? `+ ¥${money(item.price)}` : "",
-    badge: "积分兑", meta: `库存 ${Math.max(0, item.stock)}`, target: "/pages/user/integral",
+    badge: "积分兑", meta: `库存 ${Math.max(0, item.stock)}`, target: `/pages/activity/integralDetail?id=${item.id}`,
   }));
   if (props.block.name === "presale") return presaleItems.value.slice(0, limit.value).map((item) => ({
     id: item.id, kind: "presale", title: item.store_name.slice(0, 100), image: safeImage(item.image),
@@ -498,18 +499,18 @@ watch(() => props.block, () => { void hydrate(); }, { immediate: true });
 .seckill-time { display: inline-flex; min-width: 120rpx; margin-right: 12rpx; padding: 10rpx 14rpx; align-items: center; border-radius: 12rpx; color: #666; background: #f5f5f5; font-size: 20rpx; vertical-align: top; flex-direction: column; }
 .coupon-strip { display: flex; margin: 0 20rpx; gap: 14rpx; overflow-x: auto; }
 .coupon-card { display: flex; min-width: 610rpx; padding: 20rpx; align-items: center; border: 2rpx solid; border-radius: 18rpx; box-sizing: border-box; }
-.coupon-value { display: flex; width: 180rpx; align-items: center; color: #e93323; flex-direction: column; }
+.coupon-value { display: flex; width: 180rpx; align-items: center; color: var(--view-priceColor, #e93323); flex-direction: column; }
 .coupon-number { font-size: 38rpx; font-weight: 700; }
 .coupon-condition, .coupon-scope { margin-top: 4rpx; color: #888; font-size: 19rpx; }
 .coupon-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; }
 .coupon-title { overflow: hidden; color: #333; font-size: 25rpx; text-overflow: ellipsis; white-space: nowrap; }
-.coupon-button { width: 100rpx; margin: 0; padding: 0; border: 0; border-radius: 28rpx; color: #fff; background: #e93323; font-size: 21rpx; line-height: 50rpx; }
+.coupon-button { width: 100rpx; margin: 0; padding: 0; border: 0; border-radius: 28rpx; color: #fff; background: linear-gradient(180deg, var(--diy-button), var(--diy-gradient)); font-size: 21rpx; line-height: 50rpx; }
 .coupon-button::after { border: 0; }
 .coupon-button[disabled] { color: #999; background: #eee; }
 .live-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
 .live-card { position: relative; min-width: 0; }
 .live-image { width: 100%; height: 320rpx; border-radius: 14rpx; background: #f5f5f5; }
-.live-status { position: absolute; top: 10rpx; left: 10rpx; padding: 5rpx 11rpx; border-radius: 16rpx; color: #fff; background: #e93323; font-size: 18rpx; }
+.live-status { position: absolute; top: 10rpx; left: 10rpx; padding: 5rpx 11rpx; border-radius: 16rpx; color: #fff; background: var(--view-theme, #e93323); font-size: 18rpx; }
 .live-anchor { display: flex; margin-top: 8rpx; align-items: center; color: #888; font-size: 20rpx; }
 .live-avatar { width: 36rpx; height: 36rpx; margin-right: 8rpx; border-radius: 50%; }
 </style>

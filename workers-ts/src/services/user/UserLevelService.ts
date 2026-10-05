@@ -123,20 +123,41 @@ export function normalizeLevelActivationFields(
     if (!item || typeof item !== "object") continue;
     const field = item as ActivationField;
     if (typeof field.info === "string") byInfo.set(field.info, field);
-    if (typeof field.param === "string") byParam.set(field.param, field);
+    if (typeof field.param === "string" && field.param !== "") byParam.set(field.param, field);
   }
   const fields: Partial<typeof userTable.$inferInsert> = {};
   const extendInfo = template.map((definition) => {
     const info = typeof definition.info === "string" ? definition.info : "";
     const param = typeof definition.param === "string" ? definition.param : "";
-    const input = byInfo.get(info) ?? byParam.get(param);
-    const value = input?.value ?? "";
+    // Custom fields share param="" and must match their own server-defined
+    // name. Falling back to the empty param would reuse another custom value
+    // and could satisfy a required field that the caller never submitted.
+    const input = byInfo.get(info) ?? (param ? byParam.get(param) : undefined);
+    const value = input?.value === undefined ? "" : input.value;
+    if ((typeof value !== "string" && typeof value !== "number")
+      || (typeof value === "number" && !Number.isFinite(value))) {
+      throw new ValidateException("会员卡资料值须为文本或有限数字");
+    }
     const text = typeof value === "string" ? value.trim() : value;
     if (configFlag(String(definition.required ?? "0")) && (text === "" || text === null)) {
       throw new ValidateException(boundedText(definition.tip || info || "必填信息", 80, "提示"));
     }
     const format = typeof definition.format === "string" ? definition.format : "";
     if (text !== "") {
+      if (format === "date") parseBirthday(text);
+      if (format === "radio") {
+        // The standard sex mapping has always been fixed independently of
+        // optional legacy singlearr metadata; custom radio uses its own list.
+        const choices = param === "sex" ? ["男", "女", "保密"] : definition.singlearr;
+        if (!Array.isArray(choices) || choices.length < 2 || choices.length > 32
+          || choices.some(choice => typeof choice !== "string" || !choice.trim())
+          || new Set(choices).size !== choices.length) throw new ValidateException("单选资料模板无效");
+        // Legacy uniapp submits string indices (radio value="0"/"1").
+        // Also keep exact option labels accepted by the standard sex mapping.
+        const index = /^(0|[1-9]\d*)$/.test(String(text)) ? Number(text) : -1;
+        if (!(Number.isSafeInteger(index) && index >= 0 && index < choices.length)
+          && !(typeof text === "string" && choices.includes(text))) throw new ValidateException(`${info || "单选"}选项错误`);
+      }
       if (format === "phone" && !/^1[3-9]\d{9}$/.test(String(text))) {
         throw new ValidateException("请填写正确的手机号");
       }
@@ -198,7 +219,7 @@ function couponUsable(issue: typeof storeCouponIssue.$inferSelect, now: number):
   const issueWindow = (!issue.startTime && !issue.endTime)
     || Boolean(issue.startTime && issue.endTime
       && issue.startTime.getTime() <= nowMs && issue.endTime.getTime() >= nowMs);
-  const useWindow = issue.day > 0 || Boolean(issue.useEndTime && issue.useEndTime.getTime() >= nowMs);
+  const useWindow = issue.day > 0 || (issue.day === 0 && Boolean(issue.useEndTime && issue.useEndTime.getTime() >= nowMs));
   return issue.status === 1 && issue.isDel === 0
     && (issue.isPermanent === 1 || issue.remainCount > 0)
     && issueWindow && useWindow;

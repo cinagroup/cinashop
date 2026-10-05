@@ -1,0 +1,106 @@
+{
+  "dateUtc": "2026-09-28T05:02:21.638Z",
+  "scope": "Local, unpublished read-only legacy Admin finance commission follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 59,
+      "partial": 116,
+      "missing": 92,
+      "retired": 7
+    },
+    "legacyCrossModuleScreens": {
+      "total": 18,
+      "candidate": 4,
+      "partial": 12,
+      "missing": 1,
+      "retired": 1
+    },
+    "workerRoutes": 1845,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 892,
+      "executableMatched": 871,
+      "unavailable": 21,
+      "actionableMissing": 995,
+      "effectiveExecutableCoveragePercent": 46.2
+    },
+    "adminApi": {
+      "callSites": 429,
+      "pathVariants": 453,
+      "executable": 453,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 76,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "commissionNativePg16": {
+      "files": [
+        "test/admin-commission-read-postgres.test.ts",
+        "test/admin-commission-read-http.test.ts"
+      ],
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "commissionPglite": {
+      "files": 2,
+      "passed": 7,
+      "failed": 0
+    },
+    "commissionFrontendRuntime": {
+      "files": 1,
+      "passed": 5,
+      "failed": 0
+    },
+    "finalStaticAndFrontendSuites": {
+      "files": 11,
+      "passed": 65,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "453 executable variants; 0 unregistered or unresolved",
+    "browserWrite": "not run; no business mutation or production deployment"
+  },
+  "limitations": [
+    "The old six-column full export loops through 1000-row batches and is not implemented; the legacy screen remains partial.",
+    "Old grouped b.add_time is nondeterministic. The new list explicitly uses the most recent matching ledger time.",
+    "Legacy list date predicates use inclusive endpoints, extend an equal-minute range by 24 hours and otherwise stop at the end minute first second; legacy record day ranges also include the next midnight. The new read model intentionally uses complete minute/day exclusive upper bounds.",
+    "List total and detail income have different legacy formulas; the new UI explains both rather than conflating them.",
+    "Real finance history, constrained browser roles, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "b727cbac0ac675e38acb1c61d309a4daf750c5079ea733d89e86c3975171d399",
+    "view/admin-ts/src/api/commissionRecords.ts": "5e94647c615d06e13d96a667a676c0b4f4b8d32344d8dd22a70158a5a9b8c786",
+    "view/admin-ts/src/pages/finance/CommissionRecords.vue": "688427788c8c1319869c82ee1b41da8d8c19635c355be2807c234ac8cef8069a",
+    "view/admin-ts/src/router/index.ts": "ac1e2ade459045efbb0f477f4e01485e831f2624e771dd9c6b35c78b632103d4",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "38e20fdc4fb445df55810e441cd1b65a1dd08ff0feac420a22a3722ef6024eb2",
+    "workers-ts/src/services/admin/AdminCommissionReadService.ts": "a9df948c2e6c7f794ea0f49f45aa320de25f6ee59f2b69d15c896e15f3405deb",
+    "workers-ts/src/controllers/api/v1/AdminCommissionReadController.ts": "7ec9fa1d66a2b006cc667f09eb34a2d4960173d950978ceece4959fae8877a85",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "10291608b84e6c3678a3276a1f1e71e715d7e9e3cb55e64a076783437d703534",
+    "workers-ts/src/routes/adminapi.ts": "c1dcf437ae6a6ce81813e7cd0e7ac7cddae1a411cf73fa2720c6a504469082dc",
+    "workers-ts/src/routes/v1/index.ts": "5931bfb1afcbbf256798d90c76f70b2cc3fa0cf9313a801a4645da9c67439db5",
+    "workers-ts/test/admin-commission-read-postgres.test.ts": "afb2b643a7f582d8f972f4a42eaae04cd6028702d69f7c7f5d9328ab40139b05",
+    "workers-ts/test/admin-commission-read-http.test.ts": "4f8d26f5a2ef8605fc3a5a4818b9cb9838776f69cee670ee213d524f97126c19",
+    "workers-ts/test/admin-commission-records-frontend.test.ts": "c67c445a99fbdc93d0af07e13ba665c2c4cbdeb1e8870914f0ca62b59af160d1",
+    "workers-ts/test/admin-system-log-frontend.test.ts": "100def7eb4fb812d76f436284a1c8a3b685054f0e92d212e7ab77fa963cec206",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "c6e6e1a1cb565423204a2610b4ba41e2d64fcd0de99da6ca952118bbe0e9e5f9",
+    "workers-ts/test/admin-cross-module-frontend-parity.test.ts": "036fc86600d9f817fb070449de9a23d9d33e44e6571af6cb6113564039ba8ab4",
+    "workers-ts/scripts/admin-cross-module-frontend-parity-audit.ts": "aa34bb94bf03397ab4d272e1ac999908292e916845abb9606497b7d26d740020",
+    "workers-ts/docs/admin-commission-read-contract.md": "185f1c1c307c9105987ce08fabfa046d238e132b86906a06a2d592cd786e2aba",
+    "workers-ts/docs/admin-cross-module-route-parity.md": "849819c940e975dae5053f1bfc9f4333c6a43ef62d0f79e04090c6f6aef20be7",
+    "workers-ts/audit/admin-legacy-cross-module-route-parity-commission-followup-20260928.json": "50ec3c0e53359f50cd2d861434ee0ede1336e1d1c17d404c67f54b6f2e7cb843",
+    "workers-ts/audit/route-distribution-commission-followup-20260928.json": "bf9ac2ba4c17f857bdfab2cdde8661fea23a0c3958fe84c986f9d114ea851977",
+    "workers-ts/audit/admin-frontend-inventory-commission-followup-20260928.json": "acb4da995cda2f2330e52dc29b7d77c6850a301e413709164b01e460834496f2",
+    "workers-ts/audit/admin-frontend-api-contracts-commission-followup-20260928.json": "cd563f05a6722d3081176bf3f0737d34e245c01fbef044d91b2fd36315ff7881"
+  }
+}

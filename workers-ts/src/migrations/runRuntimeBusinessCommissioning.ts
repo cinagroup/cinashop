@@ -1,8 +1,10 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier, pricingCatalogReady } from './checkoutPricingLockCatalog';
+import { inspectSeckillTimeReferenceLock } from './seckillTimeReferenceLock';
+import { seckillTimeReferenceLockCatalogReady } from './seckillTimeReferenceLockCatalog';
 import { inspectCheckoutPricingLock } from './checkoutPricingLock';
-import { OFFLINE_STATE_SQL } from './offlineOrderCatalog';
+import { inspectReviewedOfflineGiftCatalog } from './reviewedOfflineGiftCatalog';
 import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
 import { REFUND_SPLIT_STATE_SQL } from './refundOrderSplitCatalog';
 import { inspectAdminRefundOperation } from './runAdminRefundOperation';
@@ -11,13 +13,21 @@ import { runtimeBusinessPrivilegePlan, RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING
 import { runtimeBusinessGrantSql, type RuntimeOwnedSequence } from './runtimeBusinessGrantSql';
 import { installRuntimeAdminBoundaryInTransaction } from './runtimeAdminBoundary';
 import { installRuntimeLockOnlyBoundaryInTransaction } from './runtimeLockOnlyBoundary';
+import { installRuntimeSeckillScheduleLockBoundaryInTransaction } from './runtimeSeckillScheduleLockBoundary';
+import { inspectSeckillParentRuntimeSequence } from './seckillParentRuntimeCatalog';
+import { inspectCouponTemplateCatalog } from './couponTemplateCatalog';
+import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftReceipt';
 import { inspectShippingTemplateCreateReplay } from './runShippingTemplateCreateReplay';
 import { SHIPPING_CREATE_REPLAY_INSTALLATION_SQL } from './shippingTemplateCreateReplayInstallation';
-import { inspectRuntimePurchaseEvidence, lockRuntimePurchaseEvidenceForGrants } from './runtimePurchaseEvidence';
+import { inspectRuntimePurchaseEvidence, inspectRuntimePurchaseGiftEvidence, lockRuntimePurchaseEvidenceForGrants } from './runtimePurchaseEvidence';
+import { inspectSignDayConfigRuntimeCatalog } from './signDayConfigRuntimeCatalog';
+import { installRuntimeSignDayGroupLockBoundaryInTransaction } from './runtimeSignDayGroupLockBoundary';
+import { inspectAgentLevelRuntimeCatalog } from './agentLevelRuntimeCatalog';
+import { installRuntimeAgentLevelCatalogBoundaryInTransaction } from './runtimeAgentLevelCatalogBoundary';
 
 type Query=Pick<DbClient,'execute'>;
 export interface RuntimeCommissionTarget {database:string;maintenance:string;app:string;admin:string;pricingOwner:string}
-export const RUNTIME_COMMISSION_OPERATION='isolated-business-runtime-v2-purchase-evidence';
+export const RUNTIME_COMMISSION_OPERATION='isolated-business-runtime-v5-agent-levels';
 export const RUNTIME_SHIPPING_OPERATION='shipping-replay-schema-0154-v1';
 function validate(target:RuntimeCommissionTarget){
   Object.values(target).forEach(pricingIdentifier);
@@ -72,18 +82,26 @@ async function inspect(tx:Query,target:RuntimeCommissionTarget){
     AND relowner=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${target.maintenance})) AS ready
     FROM pg_catalog.pg_class WHERE relnamespace='public'::regnamespace AND relname='kefu_visitor_uid_seq'`);
   const pricing=await inspectCheckoutPricingLock(tx),[owner]=await tx.execute(sql`SELECT oid::text AS oid FROM pg_catalog.pg_roles WHERE rolname=${target.pricingOwner}`);
-  const [offline]=await tx.execute(sql.raw(OFFLINE_STATE_SQL));
+  const offline=await inspectReviewedOfflineGiftCatalog(tx,{requireOwner:true,
+    maintenance:target.maintenance,runtime:target});
   const [invoice]=await tx.execute(sql.raw(INVOICE_EVIDENCE_STATE_SQL)),[refund]=await tx.execute(sql.raw(REFUND_SPLIT_STATE_SQL));
   const operation=await inspectAdminRefundOperation(tx),creation=await inspectAdminRefundCreation(tx);
   const shippingReplay=await inspectShippingTemplateCreateReplay(tx);
   const purchaseEvidence=await inspectRuntimePurchaseEvidence(tx,target.maintenance);
+  const seckillTimeReferenceLock=await inspectSeckillTimeReferenceLock(tx);
+  const couponTemplates=await inspectCouponTemplateCatalog(tx,target.maintenance);
+  const giftReceipts=await inspectOrderPromotionGiftReceiptCatalog(tx,target.maintenance,target);
+  const giftCancellation=await inspectRuntimePurchaseGiftEvidence(tx,target.maintenance);
+  const signDayConfig=await inspectSignDayConfigRuntimeCatalog(tx,target.maintenance,target);
+  const agentLevels=await inspectAgentLevelRuntimeCatalog(tx,target.maintenance,target);
   return {roles:Array.from(roles),tablesReady:catalog.length===tables.length && catalog.every(r=>r.ordinary===true),
     missingTables:tables.filter(t=>!catalog.some(r=>r.name===t)),
     nonordinaryTables:catalog.filter(r=>r.ordinary!==true).map(r=>({name:r.name,kind:r.kind,owner:r.owner})),
     sequencesReady:sequences.every(r=>r.ordinary===true) && standalone?.ready===true,
-    pricingReady:pricingCatalogReady(pricing) && pricing.ownerOid===owner?.oid,offlineReady:offline?.state==='v1',
+    pricingReady:pricingCatalogReady(pricing) && pricing.ownerOid===owner?.oid,
+    offlineReady:offline.state==='v1-gift-index',
     refundProtocolsReady:invoice?.state==='v2' && refund?.state==='v1' && operation.complete && creation.complete,
-    shippingReplay,purchaseEvidence,
+    shippingReplay,purchaseEvidence,couponTemplateCatalogReady:couponTemplates.ready,promotionGiftCatalogReady:giftReceipts.ready,promotionGiftCancellationReady:giftCancellation.ready,signDayConfigCatalogReady:signDayConfig.ready,agentLevelCatalogReady:agentLevels.ready,seckillTimeReferenceLockReady:seckillTimeReferenceLockCatalogReady(seckillTimeReferenceLock),
     ownedSequences:sequences.map(r=>({name:String(r.name),table:String(r.table)})) satisfies RuntimeOwnedSequence[]};
 }
 /** Separately authorized schema prerequisite only: exact existing external
@@ -114,15 +132,34 @@ export async function installRuntimeBusinessInTransaction(tx:Query,target:Runtim
   const [gate]=await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731625,2) AS locked`);
   if(gate?.locked!==true)throw Error('Runtime commissioning is busy');
   await lockRuntimePurchaseEvidenceForGrants(tx,target.maintenance);
+  // Pin the exact new entities across review and grants. A maintenance DDL
+  // transaction may have acquired its lock before this transaction arrived.
+  if(!(await inspectCouponTemplateCatalog(tx,target.maintenance)).ready)throw Error('Coupon template commissioning exact catalog required');
+  if(!(await inspectOrderPromotionGiftReceiptCatalog(tx,target.maintenance,target)).ready)throw Error('Promotion gift commissioning exact catalog required');
+  await tx.execute(sql.raw('LOCK TABLE ONLY public.user_bill, ONLY public.store_order_promotion_gift_coupon_reward IN SHARE ROW EXCLUSIVE MODE'));
+  if(!(await inspectOrderPromotionGiftReceiptCatalog(tx,target.maintenance,target)).ready)throw Error('Promotion gift commissioning exact catalog required');
+  await tx.execute(sql.raw('LOCK TABLE ONLY public.store_coupon_template, ONLY public.store_coupon_template_issue IN SHARE ROW EXCLUSIVE MODE'));
+  if(!(await inspectCouponTemplateCatalog(tx,target.maintenance)).ready)throw Error('Coupon template commissioning exact catalog required');
+  if(!(await inspectSignDayConfigRuntimeCatalog(tx,target.maintenance,target)).ready)throw Error('Sign-day commissioning exact catalog required');
+  await tx.execute(sql.raw('LOCK TABLE ONLY public.system_group, ONLY public.system_group_data IN SHARE ROW EXCLUSIVE MODE'));
+  if(!(await inspectSignDayConfigRuntimeCatalog(tx,target.maintenance,target)).ready)throw Error('Sign-day commissioning exact catalog required');
   const state=await inspect(tx,target);
   if(state.roles.length!==2 || state.roles.some(r=>r.restricted!==true || r.empty!==true || r.no_definer!==true || r.no_default_grants!==true)
-    || !state.tablesReady || !state.sequencesReady || !state.pricingReady || !state.offlineReady || !state.refundProtocolsReady || !state.shippingReplay.complete || !state.purchaseEvidence.ready)
+    || !state.tablesReady || !state.sequencesReady || !state.pricingReady || !state.offlineReady || !state.refundProtocolsReady || !state.shippingReplay.complete || !state.purchaseEvidence.ready || !state.seckillTimeReferenceLockReady || !state.couponTemplateCatalogReady || !state.promotionGiftCatalogReady || !state.promotionGiftCancellationReady || !state.signDayConfigCatalogReady || !state.agentLevelCatalogReady)
     throw Error('Runtime commissioning preflight refused; inspect existing authority and protocol');
   await installRuntimeAdminBoundaryInTransaction(tx,target.app,target.maintenance);
-  await installRuntimeLockOnlyBoundaryInTransaction(tx,target.app,target.admin,target.maintenance);
+  await installRuntimeLockOnlyBoundaryInTransaction(tx,target.app,target.admin,target.maintenance,'agent-levels');
+  await installRuntimeSeckillScheduleLockBoundaryInTransaction(tx,target);
+  await installRuntimeSignDayGroupLockBoundaryInTransaction(tx,target);
+  await installRuntimeAgentLevelCatalogBoundaryInTransaction(tx,target);
+  if(!(await inspectSeckillParentRuntimeSequence(tx,target.maintenance)).ready)throw Error('Parent runtime serial sequence requires review');
   for(const kind of ['app','admin'] as const)
     for(const statement of runtimeBusinessGrantSql(kind,target[kind],state.ownedSequences))await tx.execute(sql.raw(statement));
   if(!(await inspectRuntimePurchaseEvidence(tx,target.maintenance)).ready)throw Error('Purchase evidence verification failed after grants');
+  if(!(await inspectCouponTemplateCatalog(tx,target.maintenance)).ready)throw Error('Coupon template verification failed after grants');
+  if(!(await inspectOrderPromotionGiftReceiptCatalog(tx,target.maintenance,target)).ready)throw Error('Promotion gift verification failed after grants');
+  if(!(await inspectSignDayConfigRuntimeCatalog(tx,target.maintenance,target)).ready)throw Error('Sign-day verification failed after grants');
+  if(!(await inspectAgentLevelRuntimeCatalog(tx,target.maintenance,target)).ready)throw Error('Distributor verification failed after grants');
   return {operation:RUNTIME_COMMISSION_OPERATION,grantsApplied:true as const,businessValidationRequired:true as const};
 }
 export async function runRuntimeBusinessCommissioning(db:DbClient,target:RuntimeCommissionTarget){

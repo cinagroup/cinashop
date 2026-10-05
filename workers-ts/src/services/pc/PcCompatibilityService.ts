@@ -27,6 +27,7 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { createQrSvgDataUrl } from "@/services/user/MembershipScanService";
 import { V2UserCompatibilityService } from "@/services/user/V2UserCompatibilityService";
 import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
+import { PcBannerReadService } from "@/services/pc/PcBannerReadService";
 
 const PC_PRODUCT_TYPES = [0, 1, 2, 3];
 
@@ -126,8 +127,7 @@ export class PcCompatibilityService {
   }
 
   async banner() {
-    const groups = await this.catalog.groupDataMany(["pc_home_banner"]);
-    return { list: groups.pc_home_banner ?? [] };
+    return new PcBannerReadService(this.container, this.env).banner();
   }
 
   async categoryProducts(uid: number, pageValue: unknown, limitValue: unknown) {

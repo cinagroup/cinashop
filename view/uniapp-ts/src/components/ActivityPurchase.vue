@@ -49,7 +49,7 @@ onUnmounted(() => { generation++; });
 .mask { position: fixed; inset: 0; z-index: 100; background: #0008; display: flex; align-items: flex-end; }
 .sheet { box-sizing: border-box; width: 100%; padding: 28rpx; background: white; border-radius: 24rpx 24rpx 0 0; max-height: 80vh; overflow-y: auto; }
 .sheet button { font-size: 28rpx; margin-top: 16rpx; }
-.active { color: #e93323; border: 2rpx solid #e93323; }
+.active { color: var(--view-theme, #e93323); border: 2rpx solid var(--view-theme, #e93323); }
 .muted { color: #777; font-size: 24rpx; margin: 16rpx 0; }
 .error { color: #b72a1d; }
 </style>

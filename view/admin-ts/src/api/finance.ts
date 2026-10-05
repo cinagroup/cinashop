@@ -1,7 +1,7 @@
 /**
  * 财务模块 API (提现审核)
  */
-import request, { getData } from "@/utils/request";
+import request, { AdminResponseError, getData } from "@/utils/request";
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -185,6 +185,51 @@ export interface SupplierExtractStatistics {
   pending_transfer: string;
   paid: string;
   rejected: string;
+  withdrawable: string;
+}
+
+export interface SupplierExtractSupplier { id: number; supplierName: string }
+
+export interface SupplierExtractQuery {
+  supplier_id?: number | "";
+  start_time?: string;
+  end_time?: string;
+  status?: -1 | 0 | 1;
+  pay_status?: 0 | 1;
+  extract_type?: string;
+  keyword?: string;
+  page: number;
+  limit: number;
+}
+
+function shanghaiWallTime(value: string): number {
+  const match = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/u.exec(value);
+  if (!match) throw new Error("请选择有效的上海时间范围");
+  const [year, month, day, hour, minute, second] = match.slice(1).map(Number);
+  const utc = Date.UTC(year, month - 1, day, hour, minute, second);
+  const check = new Date(utc);
+  if (year < 1970 || year > 2038 || check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day ||
+    check.getUTCHours() !== hour || check.getUTCMinutes() !== minute ||
+    check.getUTCSeconds() !== second || (utc - 8 * 3_600_000) / 1000 < 0 ||
+    (utc - 8 * 3_600_000) / 1000 > 2_147_483_647) {
+    throw new Error("请选择有效的上海时间范围");
+  }
+  return utc;
+}
+
+/** Picker values are Asia/Shanghai wall times, independent of the browser timezone. */
+export function supplierExtractTimeRange(value: string[] | null): { start_time: string; end_time: string } {
+  if (!value || value.length === 0) return { start_time: "", end_time: "" };
+  if (value.length !== 2) throw new Error("请选择完整的上海时间范围");
+  const start = shanghaiWallTime(value[0]);
+  const end = shanghaiWallTime(value[1]);
+  if (end < start) throw new Error("结束时间不得早于开始时间");
+  const endEpoch = (end - 8 * 3_600_000) / 1000;
+  if ((end === start || value[1].endsWith(" 00:00:00")) && endEpoch + 86_400 > 2_147_483_647) {
+    throw new Error("结束时间超出可查询范围");
+  }
+  return { start_time: value[0], end_time: value[1] };
 }
 
 export interface SupplierExtractListResult {
@@ -201,9 +246,10 @@ const previewSupplierExtracts: SupplierExtractItem[] = [
   { id: 2003, supplierId: 3, supplierName: "华南生活馆", contactName: "陈经理", phone: "159****3006", extractType: "weixin", bankCode: "", bankAddress: "", alipayAccount: "", wechat: "south-shop", qrcodeUrl: "https://cdn.example.com/wechat.png", extractPrice: "3500.00", balance: "16800.00", mark: "已复核", supplierMark: "日常提现", status: 1, payStatus: 1, adminId: 1, adminName: "平台管理员", failMsg: "", failTime: 0, voucherImage: "https://cdn.example.com/voucher.png", voucherTitle: "银行转账回单", payTime: 1786245000, addTime: 1786229000 },
 ];
 
-function previewSupplierStatistics(): SupplierExtractStatistics {
+function previewSupplierStatistics(supplierId?: number | ""): SupplierExtractStatistics {
+  const scoped = previewSupplierExtracts.filter((row) => supplierId === undefined || supplierId === "" || row.supplierId === supplierId);
   const sum = (predicate: (row: SupplierExtractItem) => boolean) =>
-    previewSupplierExtracts
+    scoped
       .filter(predicate)
       .reduce((total, row) => total + Number(row.extractPrice), 0)
       .toFixed(2);
@@ -212,30 +258,40 @@ function previewSupplierStatistics(): SupplierExtractStatistics {
     pending_transfer: sum((row) => row.status === 1 && row.payStatus === 0),
     paid: sum((row) => row.status === 1 && row.payStatus === 1),
     rejected: sum((row) => row.status === -1),
+    withdrawable: scoped.reduce((total, row) => total + Number(row.balance), 0).toFixed(2),
   };
 }
 
-export async function apiAdminSupplierExtractList(params: {
-  status?: number;
-  pay_status?: number;
-  extract_type?: string;
-  keyword?: string;
-  page?: number;
-  limit?: number;
-}): Promise<SupplierExtractListResult> {
+export function apiAdminSupplierExtractSuppliers(signal?: AbortSignal): Promise<{ list: SupplierExtractSupplier[] }> {
+  if (previewMode) {
+    return Promise.resolve({ list: previewSupplierExtracts.map((row) => ({ id: row.supplierId, supplierName: row.supplierName })) });
+  }
+  return getData(request.get("/supplier/extract/suppliers", { signal }));
+}
+
+export async function apiAdminSupplierExtractList(params: SupplierExtractQuery, signal?: AbortSignal): Promise<SupplierExtractListResult> {
   if (previewMode) {
     const keyword = params.keyword?.trim().toLowerCase();
-    const list = previewSupplierExtracts.filter((row) =>
+    const dates = params.start_time && params.end_time
+      ? [shanghaiWallTime(params.start_time), shanghaiWallTime(params.end_time)] : null;
+    const rows = previewSupplierExtracts.filter((row) =>
+      (params.supplier_id === undefined || params.supplier_id === "" || row.supplierId === params.supplier_id) &&
+      (!dates || (row.addTime >= (dates[0] - 8 * 3_600_000) / 1000 &&
+        row.addTime <= (dates[1] - 8 * 3_600_000) / 1000 +
+          (dates[0] === dates[1] || params.end_time?.endsWith(" 00:00:00") ? 86_400 : 0))) &&
       (params.status === undefined || row.status === params.status) &&
       (params.pay_status === undefined || row.payStatus === params.pay_status) &&
       (!params.extract_type || row.extractType === params.extract_type) &&
       (!keyword || `${row.id}${row.supplierName}${row.contactName}${row.phone}`.toLowerCase().includes(keyword)),
     );
-    return { list: list.map((row) => ({ ...row })), count: list.length, page: 1, limit: 20, extract_statistics: previewSupplierStatistics() };
+    const start = (params.page - 1) * params.limit;
+    return { list: rows.slice(start, start + params.limit).map((row) => ({ ...row })), count: rows.length,
+      page: params.page, limit: params.limit, extract_statistics: previewSupplierStatistics(params.supplier_id) };
   }
   return getData(
     request.get<SupplierExtractListResult>("/supplier/extract/list", {
-      params: params as Record<string, unknown>,
+      params: { ...params },
+      signal,
     }),
   );
 }
@@ -243,6 +299,7 @@ export async function apiAdminSupplierExtractList(params: {
 export async function apiAdminSupplierExtractReview(
   id: number,
   data: { type: 1 | 0; message?: string },
+  signal?: AbortSignal,
 ): Promise<null> {
   if (previewMode) {
     const row = previewSupplierExtracts.find((item) => item.id === id);
@@ -254,12 +311,13 @@ export async function apiAdminSupplierExtractReview(
     }
     return null;
   }
-  return getData(request.post<null>(`/supplier/extract/verify/${id}`, data));
+  return getData(request.post<null>(`/supplier/extract/verify/${id}`, data, { signal }));
 }
 
 export async function apiAdminSupplierExtractTransfer(
   id: number,
   data: { voucher_title: string; voucher_image: string },
+  signal?: AbortSignal,
 ): Promise<null> {
   if (previewMode) {
     const row = previewSupplierExtracts.find((item) => item.id === id);
@@ -271,5 +329,23 @@ export async function apiAdminSupplierExtractTransfer(
     }
     return null;
   }
-  return getData(request.post<null>(`/supplier/extract/save_transfer/${id}`, data));
+  return getData(request.post<null>(`/supplier/extract/save_transfer/${id}`, data, { signal }));
+}
+
+export async function apiAdminSupplierExtractMark(
+  id: number, mark: string, expectedSupplierMark: string, signal?: AbortSignal,
+): Promise<{ id: number; supplierMark: string }> {
+  if (!Number.isSafeInteger(id) || id <= 0 || !mark.trim() || [...mark].length > 200 ||
+    typeof expectedSupplierMark !== "string") {
+    throw new Error("备注须填写且不能超过 200 字");
+  }
+  if (previewMode) {
+    const row = previewSupplierExtracts.find((item) => item.id === id);
+    if (!row) throw new Error("提现记录不存在");
+    if (row.supplierMark !== expectedSupplierMark) throw new AdminResponseError("备注已被更新", 409);
+    row.supplierMark = mark.trim();
+    return { id, supplierMark: row.supplierMark };
+  }
+  return getData(request.post(`/supplier/extract/mark/${id}`,
+    { mark, expected_supplier_mark: expectedSupplierMark }, { signal }));
 }

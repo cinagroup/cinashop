@@ -5,6 +5,10 @@ import { storeOrderRefundSplit, storeOrderFulfillmentBranch } from '@/models/sch
 import { ValidateException } from '@/utils/errors';
 import { lockOrderSettlement } from './OrderBrokerageService';
 import { planOrderFinancialSplit } from './OrderSplitFinance';
+import { assertOrderPromotionLedger } from './OrderPromotionLedgerSplit';
+import { promotionPaidLabelIds } from './OrderRewardService';
+import { assertFullGiftRefundAdmission } from './OrderPromotionGiftRefund';
+import { assertWholeOrderFullGiftRefundCatalog } from './WholeOrderFullGiftRefundCatalog';
 import { refundSplitDisposition } from './RefundSplitAllocation';
 import { refundOrderSplitFingerprint, type RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 import { prepareRefundInvoice, type RefundInvoiceSnapshot } from './RefundInvoiceAllocation';
@@ -49,10 +53,16 @@ export async function assertAtomicRefundAdmission(tx: DbClient, order: Order, se
         : !((row.splitStatus < 2 && row.splitSurplusNum === row.cartNum) || (row.splitStatus === 2 && row.splitSurplusNum === 0))))) throw invalid();
   const plan = planOrderFinancialSplit(order, rows.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selections);
   if (!plan || typeof plan.selected.payPrice !== 'string') throw invalid();
+  await assertOrderPromotionLedger(tx, order, rows);
+  const fullGift = await assertFullGiftRefundAdmission(tx, order, rows, selections, refundAmount, true);
+  if (fullGift) await assertWholeOrderFullGiftRefundCatalog(tx);
   const disposition = refundSplitDisposition(order.status, rows, [...selections].map(([cartId, cartNum]) => ({ cartId, cartNum })));
   if (disposition === 'whole-order-gift-remainder') throw new ValidateException('仅剩赠品的原子退款尚需赠品库存与权益适配');
   if (disposition === 'split' && order.freightPrice !== '0.00') throw new ValidateException('商家运费的原子退款尚需独立账本适配');
-  if ([order.giveCoupon, order.promotionsGive].some(value => value && !['[]', '{}', 'null'].includes(value))) {
+  const labels = promotionPaidLabelIds(order.promotionsGive);
+  const unversionedPromotionGift = !!order.promotionsGive
+    && !['[]', '{}', 'null'].includes(order.promotionsGive) && labels === null;
+  if (!fullGift && (order.giveCoupon && !['[]', '{}', 'null'].includes(order.giveCoupon) || unversionedPromotionGift)) {
     throw new ValidateException('赠券与促销权益的原子退款尚需归属适配');
   }
   const invoice = await prepareRefundInvoice(tx, order, plan.selected.payPrice, refundAmount);

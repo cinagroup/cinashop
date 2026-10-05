@@ -153,10 +153,13 @@ function issueUsableForGrant(
   now: number,
 ): boolean {
   const nowMs = now * 1000;
+  const withinUseWindow = issue.day > 0
+    || (issue.day === 0 && Boolean(issue.useEndTime && issue.useEndTime.getTime() >= nowMs));
   return issue.status === 1
     && issue.isDel === 0
     && (!issue.startTime || issue.startTime.getTime() <= nowMs)
     && (!issue.endTime || issue.endTime.getTime() >= nowMs)
+    && withinUseWindow
     && (issue.totalCount === 0 || issue.isPermanent === 1 || issue.remainCount > 0);
 }
 
@@ -169,7 +172,7 @@ export async function grantPaidOrderProductCoupons(
   const productRows = await tx
     .select({ productId: storeOrderCartInfo.productId })
     .from(storeOrderCartInfo)
-    .where(eq(storeOrderCartInfo.oid, orderId));
+    .where(and(eq(storeOrderCartInfo.oid, orderId), eq(storeOrderCartInfo.isGift, 0)));
   const productIds = [...new Set(productRows.map((item) => item.productId).filter((id) => id > 0))];
   if (!productIds.length) return 0;
   const links = await tx

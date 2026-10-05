@@ -20,7 +20,7 @@ describe("customer-service product context migration", () => {
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0102\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n?/g, "\n")).toBe(migration.replace(/\r\n?/g, "\n"));
     for (const index of [
       "soci_kefu_order_product",
       "sv_kefu_recent",

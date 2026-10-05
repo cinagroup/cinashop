@@ -1,0 +1,3345 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-10-03",
+  "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
+  "latestGovernanceAndRankingIncrement": {
+    "date": "2026-09-24",
+    "status": "local-partial-candidate-not-deployed",
+    "contracts": [
+      "Public /agreement/:type independently returns the membership or agent agreement in member_explain even when disabled; payVip accepts the exact complete member agreement, never a user agreement alias; the membership home separately hides disabled agreements",
+      "Ranking decorates only the current visible page with server-selected activity IDs and expiry; UniApp validates product, priority, type and time before navigating",
+      "Password, SMS and social identity lookup plus per-request user authentication exclude both is_del and delete_time soft-deletion markers",
+      "Private member and six-digit code responses prohibit storage and referrer disclosure; the QR scan and cashier consumption chain is still missing"
+    ],
+    "verification": {
+      "workerAgreement": {
+        "passed": 3,
+        "failed": 0
+      },
+      "uniAgreement": {
+        "passed": 7,
+        "failed": 0
+      },
+      "rankPostgres": {
+        "passed": 4,
+        "failed": 0
+      },
+      "uniRank": {
+        "passed": 7,
+        "failed": 0
+      },
+      "softDeletedUserSql": {
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    "remaining": "FE-003B/D remain open for account cancellation, member QR and cashier consumption, type-7 purchase, presale limits, real agreement and rank data, native devices, exact Linux CI and release",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "governanceAgreementIncrement": {
+    "date": "2026-09-24",
+    "status": "local-public-read-only-candidate-not-deployed",
+    "mappedRoutes": [
+      {
+        "legacy": "/pages/users/privacy/index",
+        "target": "/pages/user/legalContent",
+        "coverage": "partial_replacement"
+      },
+      {
+        "legacy": "/pages/users/user_agreement_list/index",
+        "target": "/pages/user/agreements",
+        "coverage": "candidate_covered"
+      }
+    ],
+    "contract": "Exact public user/privacy/cancel/supplier agreement keys, sanitized rich text and a three-link old agreement index; missing, payVip or unknown type makes no request because old payVip expects membership member_explain, not the Worker's user agreement alias",
+    "verification": {
+      "governanceRuntime": {
+        "passed": 5,
+        "failed": 0
+      },
+      "workerAgreementContract": {
+        "passed": 6,
+        "failed": 0
+      },
+      "unifiedUniToolchain": {
+        "passed": 738,
+        "failed": 0
+      },
+      "routeLedger": {
+        "passed": 16,
+        "failed": 0
+      },
+      "uniTypecheck": "passed",
+      "uniBuilds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "buildArtifacts": {
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    "remaining": "Account cancellation write, member QR, payVip membership explanation, real published content, devices and release remain open; FE-003B stays unchecked",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "activityLongTailIncrement": {
+    "date": "2026-09-24",
+    "status": "local-read-only-candidate-not-deployed",
+    "directRoutes": [
+      "/pages/columnGoods/rank/index",
+      "/pages/columnGoods/live_list/index"
+    ],
+    "contracts": [
+      "Ranking uses the existing public product/rank endpoint for three legacy tabs and bounded ten-item pages; row click opens product details, but ranked activity purchase identity is absent",
+      "Live list uses existing public wechat/live endpoint for ten-room pages; the page and player navigation are WeChat mini-program-only"
+    ],
+    "verification": {
+      "rankTargetedRuntime": {
+        "passed": 6,
+        "failed": 0
+      },
+      "newcomerLegacyDetailRuntime": {
+        "passed": 12,
+        "failed": 0
+      },
+      "unifiedUniToolchain": {
+        "passed": 733,
+        "failed": 0
+      },
+      "routeLedger": {
+        "passed": 15,
+        "failed": 0
+      },
+      "uniTypecheck": "passed",
+      "uniBuilds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "buildArtifacts": {
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    "remaining": "Real rank and live content, WeChat live-player plugin and native devices, type-7 checkout and presale limits, exact Linux CI and production release remain unverified; FE-003D stays open",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "newcomerIncrement": {
+    "date": "2026-09-24",
+    "status": "local-read-only-candidate-not-deployed",
+    "directRoute": "/pages/activity/new_customer/index",
+    "additionalDetailRoute": "/pages/activity/newcomerDetail",
+    "entryPoints": [
+      "DiyHomeRenderer newVip",
+      "activity catalogue"
+    ],
+    "contract": "Authenticated newcomer info and a 9-item activity list link by newcomer activity ID to a read-only activity detail; no type=7 purchase or ordinary-product checkout fallback",
+    "verification": {
+      "targetedRuntime": {
+        "passed": 10,
+        "failed": 0
+      },
+      "uniToolchain": {
+        "passed": 725,
+        "failed": 0
+      },
+      "uniTypecheck": "passed",
+      "uniBuilds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "buildArtifacts": {
+        "passed": 3,
+        "failed": 0
+      },
+      "browser": "local desktop H5 rendered directory request failure/retry and invalid detail ID; 0 application errors, existing vue-router deprecation warning; no Worker or mobile viewport acceptance"
+    },
+    "remaining": "Type-7 activity SKU purchase/checkout, real login and operational data, native devices, exact CI and release remain open; FE-003D stays unchecked",
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "feedbackWorkIncrement": {
+    "date": "2026-09-24",
+    "status": "local-candidate-partial-not-deployed",
+    "directRoutes": [
+      "/pages/extension/customer_list/feedback",
+      "/pages/work/userInfo/index",
+      "/pages/work/orderList/index",
+      "/pages/work/orderDetail/index",
+      "/pages/work/record/index",
+      "/pages/work/groupInfo/index"
+    ],
+    "verification": {
+      "targetedRuntime": {
+        "passed": 13,
+        "failed": 0
+      },
+      "uniToolchain": {
+        "passed": 725,
+        "failed": 0
+      },
+      "uniTypecheck": "passed",
+      "uniBuilds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "buildArtifacts": {
+        "passed": 3,
+        "failed": 0
+      },
+      "workerRouteParity": {
+        "passed": 13,
+        "failed": 0
+      },
+      "routeLedgerAudit": "passed for six feedback/Work routes at 82 target routes and 20 direct before later increments; current ledger is 88 target, 23 direct, 100 mapped, 28 gaps",
+      "groupMemberNavigation": "passed: explicit userid survives group member to customer, order, order detail and record; ordinary no-hint tabs still recheck SDK target; URL contains no Work token",
+      "chatSwitchFence": "passed: no-hint OAuth callback rechecks SDK before exchange and before activation; five private pages recheck before presenting responses, three pagination paths before requests and responses, group member click before navigation; SDK target itself is never cached"
+    },
+    "browser": {
+      "surface": "local H5 preview with anonymous/synthetic state",
+      "passed": [
+        "Feedback desktop and 390x844 anonymous rendering with login navigation",
+        "Five Work routes at 390px expose a clear missing-SDK state without private data or horizontal overflow"
+      ],
+      "console": "0 application errors; 1 existing vue-router deprecation warning"
+    },
+    "remaining": [
+      "Real Enterprise WeChat SDK, OAuth/signatures and employee-follow relationships are unverified",
+      "No-hint entry, OAuth callback, data response, pagination and product send recheck the current SDK target; background/pagehide clear private state. A visible page with a userid hint cannot guarantee immediate clearing on an otherwise unobserved chat switch",
+      "Authenticated feedback submission, native devices, production data and old-client in-place upgrade remain unverified; FE-003G stays open"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "communityDeepLinkIncrement": {
+    "date": "2026-09-23",
+    "status": "local-candidate-covered-not-deployed",
+    "directRoutes": [
+      "/pages/discover/discoverTopic/index",
+      "/pages/discover/discoverSearch/index",
+      "/pages/discover/discoverVideo/index"
+    ],
+    "additionalAppRoute": "/pages/discover/discoverVideo/app",
+    "queryContracts": [
+      "Topic id/topic_id and hot/new order require an active server topic; no invalid topic falls back to the general feed",
+      "Search keyword/searchVal and optional topic_id are retained in the route when submitting or changing topic",
+      "Video id/start_id, relation_id and legacy content_type=0 mixed feed are retained; an exact id is loaded before later pages",
+      "Old APP-PLUS embedded web-view URL is parsed for validated id/relation_id/content_type only; arbitrary host and token are never used"
+    ],
+    "interaction": [
+      "Topic posting uses an in-page authenticated sheet with topic_id and refresh after success",
+      "Image post details open in-page with comments; video cards open a registered video route",
+      "Offset paging retries the same failed page and discards stale route or identity responses"
+    ],
+    "verification": {
+      "targetedRuntime": {
+        "passed": 9,
+        "failed": 0
+      },
+      "uniToolchain": {
+        "passed": 702,
+        "failed": 0
+      },
+      "uniTypecheck": "passed",
+      "uniBuilds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "buildArtifacts": {
+        "passed": 3,
+        "failed": 0
+      },
+      "workerRouteParity": {
+        "passed": 12,
+        "failed": 0
+      },
+      "routeLedgerAudit": "passed: 151 legacy logical routes, 76 target routes, 14 direct, 98 mapped, 39 gaps"
+    },
+    "browser": {
+      "surface": "local H5 preview with synthetic community data",
+      "passed": [
+        "Topic id=1 direct entry, hot-to-new URL and sort change, image detail/comment overlay, preview topic post and refreshed feed",
+        "Search keyword plus topic direct entry, typed search URL change and refresh restoration, empty state, and all-topic results",
+        "Video id=9003 plus relation_id direct entry and explicit no-media state",
+        "All three pages at 390x844 without horizontal overflow"
+      ],
+      "console": "0 application errors; 2 existing vue-router deprecation warnings"
+    },
+    "remaining": [
+      "Preview video has no playable media; actual video playback, native devices and real API data remain unverified under FE-003J/K",
+      "Old APP-PLUS arbitrary web-view URL loading remains retired under FE-003F"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false
+  },
+  "assistedCashierIncrement": {
+    "date": "2026-09-23",
+    "status": "local-tests-and-three-platform-builds-passed-rendered-browser-unavailable-not-deployed",
+    "route": "/pages/behalf/cashier/index",
+    "legacyProductionDistribution": "Owner confirms existing online WeChat mini-program and App users require in-place upgrade; actual published IDs, native package/signature and highest versions remain unverified",
+    "implemented": [
+      "Admin-scoped order status and minimal detail are reread before any explicit cashier action; no automatic payment on page entry",
+      "Cash settlement requires an explicit administrator confirmation; zero-amount assisted orders follow the old PHP behavior but require an explicit completion confirmation and no QR",
+      "Every assisted payment request includes the confirmed expected_pay_price; backend lock-time validation is tracked separately",
+      "Provider QR content is rendered locally on a quiet-zone integer-pixel canvas with no third-party image host; uncertain outcomes require manual status review",
+      "Page/session hide clears sensitive detail and QR; no refund or cancellation capability added"
+    ],
+    "verification": {
+      "cashierTargeted": {
+        "passed": 15,
+        "failed": 0
+      },
+      "cashLockNativePostgres": {
+        "passed": 39,
+        "failed": 0,
+        "skipped": 0,
+        "fixtureRemaining": 0,
+        "pgCtlStopped": true,
+        "note": "First run 37/39 due two new test lock-observation timeouts; corrected synchronization and reran independently, not summed"
+      },
+      "uniToolchain": {
+        "passed": 693,
+        "failed": 0,
+        "skipped": 0
+      },
+      "uniTypecheck": "passed",
+      "uniBuilds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "buildArtifacts": {
+        "passed": 3,
+        "failed": 0
+      },
+      "targetRegisteredRoutes": 72,
+      "legacyDirectRoutes": 11,
+      "legacyUnmappedOrCrossSurface": 42,
+      "oldLegacyRoutesAccounted": 151,
+      "routeLedgerAudit": "passed"
+    },
+    "browser": {
+      "status": "root-kernel-failed-independent-iab-anonymous-h5-passed",
+      "rootError": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "renderedChecksPassed": 2,
+      "passed": [
+        "Desktop and 390px cashier route render an independent Admin login guard with no payment button",
+        "Record/login navigation reaches the independent Admin login page; mobile has no horizontal overflow"
+      ],
+      "console": "0 errors; 1 existing Vue Router deprecated-import warning",
+      "networkAudit": "Browser safety check rejected CDP Network.enable; external requests not verified",
+      "authenticatedOrPaymentAcceptance": false,
+      "previewStopped": true,
+      "fallbackUsed": false
+    },
+    "remaining": [
+      "Cash and zero-amount lock-time guard passed native PG16 flow 39/39; first run 37/39 due a test lock-observation timeout and was not counted as green",
+      "Provider initiation now persists a one-time intent under the order lock before external contact; uncommitted callback-first evidence, unknown outcomes, real callbacks and retry acceptance remain release blockers",
+      "Real Admin login, H5/mini-program/App rendered and device acceptance, distribution upgrade and production release gate remain open",
+      "Feedback and enterprise Work pages are still missing, so FE-003G remains open"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false,
+    "parentChecklistClosed": false
+  },
+  "assistedDetailIncrement": {
+    "date": "2026-09-23",
+    "status": "local-tests-and-builds-passed-prior-anonymous-browser-final-browser-unavailable-not-deployed",
+    "route": "/pages/behalf/order_detail/index",
+    "implemented": [
+      "Creating-Admin-scoped minimal order and original-item detail under order.assisted; no broad Admin order projection",
+      "Record list no longer returns or displays recipient names, phone numbers, addresses, cart JSON or refund internals",
+      "Root-only detail navigation; split payment roots explicitly label original purchase snapshots, not child fulfillment state",
+      "Exact order ID required for detail and verified payment status responses; legacy prefixed payment lookup cannot silently alias a different displayed order",
+      "Independent memory-only Admin session, hide/unload/session-change clearing and late-response rejection; expiry timer plus onShow recheck clear visible data without a new request, and an old timer cannot clear a new login; no payment, cancel or refund writes"
+    ],
+    "verification": {
+      "uniToolchain": {
+        "passed": 674,
+        "failed": 0,
+        "skipped": 0,
+        "newExpiryCases": 6
+      },
+      "workerStaticNavigationAndPermission": {
+        "passed": 21,
+        "failed": 0,
+        "files": 3
+      },
+      "assistedDetailNativePostgres": {
+        "passed": 33,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 291.11,
+        "isolatedInstance": "finance-postgres-3k0h2F:65245",
+        "fixtureRemaining": 0,
+        "pgCtlStopped": true,
+        "pidAndBootstrapPasswordAbsent": true,
+        "listenerAbsent": true
+      },
+      "assistedPurchaseFlowNativePostgres": {
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0,
+        "seconds": 321.2,
+        "isolatedInstance": "finance-postgres-9oMC0z:63698",
+        "fixtureRemaining": 0,
+        "pgCtlStopped": true,
+        "pidAndBootstrapPasswordAbsent": true,
+        "listenerAbsent": true
+      },
+      "uniTypecheck": "passed",
+      "uniBuildsAndArtifacts": "Final source H5, MP-WEIXIN and APP-PLUS passed; artifacts 3/3; MP has existing nonfatal empty utils/articleRichText chunk",
+      "targetRegisteredRoutes": 71,
+      "legacyDirectRoutes": 10,
+      "note": "The new detail route is not an original PHP manifest route; it does not raise the old direct-route ledger. Historical increment test counts below are snapshots, not additional current-run passes. A transitional strict-ID PG run was 32/33 due one non-reproduced form-upload expiration; a diagnostic rerun was 33/33. Final-source native 33 and 37 are distinct cases in separate clean clusters; neither the failed attempt nor earlier green reruns are added."
+    },
+    "browser": {
+      "surface": "in-app browser, loopback H5 preview only; anonymous smoke ran before expiry-timer edits",
+      "url": "http://127.0.0.1:5174/#/pages/behalf/order_detail/index?orderId=ORDER_1",
+      "passed": [
+        "Rendered anonymous Admin-login guard without application overlay",
+        "Record/login navigation reached the independent Admin login page"
+      ],
+      "console": "No application error; an existing DCloud/vue-router deprecated-import warning remained",
+      "finalSourceRecheck": "IAB unavailable (Browser is not available: iab; browser inventory empty), so no final-source rendered proof; no Playwright fallback",
+      "scope": "No authenticated Admin detail, production API, real buyer data, provider payment or native-device acceptance",
+      "previewPort5175Stopped": true,
+      "port5174": "Observed occupied on later Vite start; no action taken against its process"
+    },
+    "remaining": [
+      "Assisted cashier and real payment/provider acceptance",
+      "Unused/unknown-result image lifecycle",
+      "Full coupon and large-list pagination, staff_id index and deep-offset/query-plan scale audit",
+      "Legacy PHP app record clients require upgrade or a safely versioned summary because the private list no longer returns raw refund/cartInfo",
+      "Real Admin/Redis/Hyperdrive/device acceptance and independently approved deployment"
+    ],
+    "productionTouched": false,
+    "committed": false,
+    "deployed": false,
+    "parentChecklistClosed": false
+  },
+  "assistedCheckoutIncrement": {
+    "date": "2026-09-23",
+    "status": "local-code-tests-builds-passed-rendered-browser-blocked-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "routes": [
+      "/pages/behalf/order_confirm/index"
+    ],
+    "features": [
+      "Scoped complete quote/create through independent Admin session",
+      "Saved/manual city_area addresses and actual pickup stores",
+      "Candidate coupon, integral, complete money breakdown and explicit native confirmation",
+      "Disclosed per-Admin durable frozen intent with read-back before dispatch",
+      "Original-key/payload recovery and server verification before result clearing",
+      "Buyer/cart write guards and immediate invalidation on draft/session replacement"
+    ],
+    "authorization": "Admin-only order.assisted; fresh member selection also requires user.view and product.view. Public city/store directories use neither shopper nor Admin tokens. No automatic payment.",
+    "storage": "Contains unencrypted delivery PII but no authentication tokens/passwords; explicit UI notice and consent before first save. Unknown/corrupt records fail closed. Device storage is not a cross-tab transaction or authorization boundary.",
+    "verification": {
+      "uniToolchain": {
+        "passed": 612,
+        "seconds": 23.3583315,
+        "session": 20601
+      },
+      "runtimeDependencyAndRealBuilds": {
+        "passed": 9,
+        "seconds": 27.1858166,
+        "platforms": [
+          "H5",
+          "MP-WEIXIN",
+          "APP-PLUS"
+        ]
+      },
+      "artifacts": {
+        "passed": 3,
+        "seconds": 0.1093111,
+        "registeredRoutes": 70
+      },
+      "navigation": {
+        "passed": 17,
+        "files": 2,
+        "seconds": 2.94,
+        "startedLocal": "13:03:08"
+      },
+      "typecheck": "passed: UniApp vue-tsc --noEmit",
+      "distinctPassed": 641,
+      "newCases": {
+        "confirmRuntime": 44,
+        "selectionRecovery": 3,
+        "total": 47
+      },
+      "skipped": 0,
+      "failuresAndReruns": [
+        "Initial existing draft adapter had TS1005 (missing closing parenthesis); fixed without relaxing contract",
+        "Partial 88/99-case and intermediate full runs are not added to distinct totals",
+        "Final full runtime/typecheck/three-platform build/artifact checks repeated after postage display and directory-retry edits"
+      ],
+      "buildWarning": "Initial standalone MP build retained existing empty utils/articleRichText chunk warning",
+      "scope": "Real Vue/Pinia/SFC setup/API/request layer with synthetic native lifecycle, HTTP and storage. No new SQL/provider/browser end-to-end proof.",
+      "routeLedgerAudit": "passed: 70 target, 10 direct, 98 mappings, 43 missing/cross-surface; old 151 fully accounted; FE-003G remains open"
+    },
+    "browser": {
+      "classification": "available-invocation-failed",
+      "command": "cua.getState()",
+      "failure": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "renderedPages": 0,
+      "screenshots": 0,
+      "interactions": 0,
+      "fallbackUsed": false,
+      "previewServerStarted": false
+    },
+    "remaining": [
+      "Cashier and assisted required-system-form contract",
+      "Full coupon rules/paging and large address/store/cart catalogues",
+      "Cross-tab atomic coordination and manual resolution of permanently unverifiable journals",
+      "Real Admin login/Redis/Hyperdrive/provider/browser and native-device acceptance",
+      "Current candidate Linux/CI and independently approved release"
+    ],
+    "productionTouched": false,
+    "gitMutation": false,
+    "sourceSha256": {
+      "view/common/assistedCheckout.ts": "3241fed6c14c468542b56f44d9574db5a64d6d9d453f41f88abda6b2a0ca6e60",
+      "view/uniapp-ts/src/api/assistedCheckout.ts": "3cd9c1da9343a4b1dde6fc895ea7b8ec9a07d408e1202b7e0f1f69b1ebd75f9f",
+      "view/uniapp-ts/src/composables/useAssistedCheckout.ts": "abe18725bef89dfa838a33b7cf78bc338c84c5481d633b49eb59730fb7e75e85",
+      "view/uniapp-ts/src/pages/behalf/order_confirm/index.vue": "247e336a2ecc419ecfe565e73586f5f129d69ffdfaa3e9551e20c2062054df70",
+      "view/uniapp-ts/scripts/assisted-checkout-runtime.test.cjs": "1f7d53686297dca47ae237323e382f62f25f291792689c87702e89a9e84d430d",
+      "view/uniapp-ts/scripts/assisted-selection-runtime.test.cjs": "3f0e6a2b7da8dc2a35ced46827cbdb947f308582d6c3364f0260549b6f97aede",
+      "view/uniapp-ts/src/stores/assistedDraft.ts": "4fe89f017dcfa19ce3926c4d8c157c6fc14148583e38a89a7258a0e034367190",
+      "view/uniapp-ts/src/stores/adminSession.ts": "849afa1d7a348312af08fd68aa0fd1d6f9e5c7e1b52c1165a1d247bf0aef7006",
+      "view/uniapp-ts/src/composables/useAssistedShopping.ts": "98c830006129c9e8dc267a80acb44048beda0a1cd11588596d1bea94ed215931",
+      "view/uniapp-ts/src/composables/useAssistedBuyers.ts": "49b5f03832274e266c5b1bdf93aa418984440c80a26f922aca0d6bf1f004863c",
+      "view/uniapp-ts/src/pages/behalf/goods_list/index.vue": "a1becc7681f8097726179a1be58d6bf84e52e1b44b9bb1577062736ab2b3bbe1",
+      "view/uniapp-ts/src/pages/behalf/user_list/index.vue": "8323b1b949699e95182af2f74a5fcd86b483e95293b6f04f0239fbc7de6518b9",
+      "view/uniapp-ts/src/api/assistedSelection.ts": "6f3640b21e9371429ae04cacb1fcc12d74b8fd233c0e913a7552bc2a10fcafdd",
+      "view/uniapp-ts/src/utils/assistedIntent.ts": "54978c80e2935172e62f3a0c1304ffabd179ea539d41dc32240d2c33e7292762",
+      "view/uniapp-ts/src/config/navigation.ts": "d0b0af2d051dab946a43cdac510cc117450b62c66fa5a55886162d6b69fe5120",
+      "view/uniapp-ts/package.json": "92fbefd13fb9d21838c88f4aafeac4f49d105bc7279a150a0bb57831069e8161",
+      "workers-ts/test/uniapp-frontend-parity.test.ts": "2b7a74793205987162c72763f02c6b10c5ead366c9e204e171fb838df07e6a04"
+    }
+  },
+  "assistedSelectionIncrement": {
+    "date": "2026-09-23",
+    "status": "local-code-tests-builds-passed-rendered-browser-blocked-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "routes": [
+      "/pages/behalf/user_list/index",
+      "/pages/behalf/goods_list/index"
+    ],
+    "implemented": [
+      "Separate memory-only Admin login, buyer directory search/paging/retry and active-member selection; guest path requires secure randomness",
+      "Product search and explicit real SKU selection; presale/sold-out products excluded from ordinary assisted-cart selection",
+      "Actor/buyer/guest-scoped cart reads, additive add, absolute quantity update and confirmed exact-row removal via existing endpoints",
+      "Strict bounded response parsing, stale-session/view/SKU rejection, minimum ID-only cross-page draft and customer PII cleared on hide",
+      "Single-flight mutations remain locked across hide, never auto-retry; unknown outcomes require fresh read plus explicit operator acknowledgement",
+      "Profile and record-page entries, runtime route allowlist and three-platform manifest registration; no checkout/payment write added"
+    ],
+    "authorization": "user.view for directory; product.view for catalogue/SKU; order.assisted for cart. Shopper token is never sent and caller-selected adminId/staff_id is never submitted.",
+    "intentionalLimits": [
+      "Directory/selected buyer is not final checkout authorization; server rechecks cart writes",
+      "URL UID alone is insufficient: direct links/reload require a current in-memory selection",
+      "Guest label and mutation-recovery lock are memory-only, lost on application reload or Admin replacement; guest cart is not rediscovered by this UI",
+      "Unsupported secure randomness fails closed (including current App guest path); H5/Weixin device behavior not accepted",
+      "Operator acknowledgement is not proof that a timed-out write stopped; no durable idempotency or cross-tab protocol is claimed",
+      "Up to 200 cart rows and 500 SKU rows parsed, fail closed above limits; existing backend list scalability/pagination is not changed",
+      "Category hierarchy, advanced PHP filters/member badges, confirmation/cashier, order details/payment navigation and full old-page parity remain open"
+    ],
+    "tests": {
+      "uniquePassed": 594,
+      "newCases": 53,
+      "skipped": 0,
+      "uniToolchain": {
+        "passed": 565,
+        "seconds": 19.693,
+        "session": 52000,
+        "newSelectionCases": 52
+      },
+      "runtimeI18n": {
+        "passed": 9,
+        "seconds": 26.6,
+        "session": 52000,
+        "actualTemporaryPlatformBuilds": [
+          "h5",
+          "mp-weixin",
+          "app"
+        ]
+      },
+      "defaultPlatformBuilds": {
+        "passed": [
+          "h5",
+          "mp-weixin",
+          "app"
+        ],
+        "session": 27561
+      },
+      "builtArtifacts": {
+        "passed": 3,
+        "seconds": 0.105,
+        "chunk": "8db832",
+        "h5Strengthening": "Checks all actual built route declarations including the root-page alias, not merely a nonempty entry"
+      },
+      "workerNavigation": {
+        "passed": 17,
+        "seconds": 2.3,
+        "startedLocal": "12:00:48",
+        "newCase": 1
+      },
+      "typecheck": "UniApp vue-tsc passed in final session 52000",
+      "counting": "565 + 9 + 3 + 17 = 594; standalone 50-case development run, earlier 563-case run, repeated builds/tests and previous backend tests not added",
+      "nativeIoBoundary": "Actual Vue/Pinia/composables/request adapters and two real SFC setups; synthetic uni.request, lifecycle, navigation, confirmation and randomness. Not a DOM/browser/backend/database E2E run.",
+      "routeLedgerAudit": "passed: 69 target routes, 9 direct legacy routes, 98 mappings and 44 unmapped/cross-surface; parent FE-003G remains open"
+    },
+    "developmentFailures": [
+      "Artifact check initially found stale 67-route default Weixin/App outputs after temporary i18n builds; rebuilt all default outputs without weakening route assertions",
+      "New H5 artifact assertion first rejected the home page because Uni registers it as root with a page-path alias; verified the built declaration and explicitly checks this root alias while other pages require their exact path"
+    ],
+    "buildWarnings": [
+      "Weixin generated an empty utils/articleRichText chunk; existing non-assistance module, build and complete page-resource checks passed"
+    ],
+    "browser": {
+      "status": "blocked-by-prior-unified-browser-initialization-failure",
+      "error": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "priorAttempts": 2,
+      "newAttempts": 0,
+      "renderedChecksPassed": 0,
+      "screenshots": 0,
+      "fallback": "Existing Playwright fallback authorization remains unanswered; not used",
+      "pendingFlow": "profile -> buyer Admin login -> select buyer/guest -> choose product/SKU -> mutate and reread scoped cart; desktop/mobile rendering, console and native interactions remain unverified"
+    },
+    "sourceSha256": {
+      "view/uniapp-ts/src/api/adminRequest.ts": "2324faee0511c0f3cb04d4ccb06fd89d2bfe1983db345ae369635e5133fb23a7",
+      "view/uniapp-ts/src/api/assistedRecords.ts": "22faf489030c46c06fdb3820015b9333a96a9fe8f96df963bd6645fb410bb827",
+      "view/uniapp-ts/src/api/assistedSelection.ts": "7f2065a1227f12aab480af9fb5da080bcf1d80285a0bdb5b2b464b26bb90f0a0",
+      "view/uniapp-ts/src/stores/assistedDraft.ts": "8b84862db8fefae012e744204eaa2348f022f4dcce38229c60b153c02067d003",
+      "view/uniapp-ts/src/composables/useAssistedBuyers.ts": "def0aeab87bf646573b0d6446d09f51185aecaedc2d293d96df56c645faee338",
+      "view/uniapp-ts/src/composables/useAssistedShopping.ts": "449cf126d341d7fcfa9d2d8edf8f4d323d07fe621571116ff8bee6899625ec06",
+      "view/uniapp-ts/src/pages/behalf/user_list/index.vue": "d79fe9e9334a4852d104279b794e41d3f079952b035148c4b4ec95c457c414e8",
+      "view/uniapp-ts/src/pages/behalf/goods_list/index.vue": "205c852e00c252a160da436d77cbdcb34b9fcb304b90cc3acd33e4f93654862a",
+      "view/uniapp-ts/src/pages/behalf/selection.css": "922ffe13bf2f866d404339fe16151d7b7ed6e6b2e7bd3a3861b6409e5bf1b05e",
+      "view/uniapp-ts/src/pages/behalf/record/index.vue": "1869bbf0c41c4c22a9072f3831bdc146f54c48b93024e6bb87e6b4bb5439def5",
+      "view/uniapp-ts/src/pages/user/index.vue": "728605c53075e4b7c7718aa1863805de9c14ac0399d4c91abdda47aeac294261",
+      "view/uniapp-ts/src/pages.json": "33f211e18f056e0668e2941ef96f10dabadad4d6ebcd1932d6eaa400bc789c2b",
+      "view/uniapp-ts/src/config/navigation.ts": "c760f12c01828815ca55c6cdc687e175cb7bac711fa51c7d9cfb5558c2e2f19d",
+      "view/uniapp-ts/scripts/assisted-selection-runtime.test.cjs": "8d1810c4c9448f61e8287f317684068a430655256e46b0b3acfd9ff9079a357a",
+      "view/uniapp-ts/scripts/uni-store-runtime.cjs": "cab40c911df77c3923c56aefe962e845caf401451278edc39d2a1c474bcd44e2",
+      "view/uniapp-ts/scripts/build-artifacts.test.cjs": "4ea6263236f25abd75bb743f3771cda7612c89b035e80400d435110535e588cf",
+      "view/uniapp-ts/package.json": "08080ca4038893c58c22a9089d96795d0df654fd5bc7293212d5a6892fc7b1b9",
+      "workers-ts/test/uniapp-frontend-parity.test.ts": "cd455e0b2001b70456a28c7d833b49696043d4783ca01593aec0ba5cd1840abc"
+    },
+    "schemaChanged": false,
+    "backendBusinessChanged": false,
+    "runtimePrivilegePlanChanged": false,
+    "productionConnected": false,
+    "committed": false,
+    "deployed": false,
+    "newDatabaseClustersOrBrowserServers": 0,
+    "parentChecklistClosed": false,
+    "remaining": [
+      "Confirm/cashier transaction UI",
+      "Broader PHP category/filter/member display parity",
+      "Browser/device/real login/Redis/provider/Hyperdrive acceptance",
+      "Current candidate Linux/workerd/CI and separately approved release"
+    ]
+  },
+  "assistedUserListReadIncrement": {
+    "date": "2026-09-23",
+    "status": "local-backend-prerequisite-passed-not-ui-parity-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "routes": [
+      "/api/admin/user/list",
+      "/adminapi/user/list"
+    ],
+    "permission": "user.view unchanged; neither user.view nor order.assisted implies the other",
+    "changes": [
+      "Explicit 12-column SQL projection plus four snake_case aliases; no credentials/documents/login metadata/extended JSON",
+      "Bounded query validation before business SQL, deterministic UID descending pages, both deletion markers excluded",
+      "Literal nickname/phone substring or exact UID lookup, intersected with precise uid/phone/group/status filters",
+      "Read-only short transaction, at most 5000ms statement timeout preserving stricter settings, private no-store responses"
+    ],
+    "intentionalDifferences": [
+      "UID exact rather than PHP substring search",
+      "Unsupported filters rejected rather than ignored",
+      "No full legacy advanced filters or derived membership badges"
+    ],
+    "tests": {
+      "uniquePassed": 242,
+      "newCases": 25,
+      "skipped": 0,
+      "localFourFiles": {
+        "passed": 154,
+        "seconds": 22.15,
+        "startedLocal": "11:24:22",
+        "session": 90721
+      },
+      "nativeThreeFiles": {
+        "passed": 110,
+        "seconds": 259.15,
+        "startedLocal": "11:19:49",
+        "session": 88096,
+        "userList": 22,
+        "assistedRuntime": 28,
+        "presaleCheckout": 60
+      },
+      "finalNativeUserList": {
+        "passed": 22,
+        "seconds": 11.29,
+        "startedLocal": "11:25:24",
+        "session": 74977,
+        "superuser": false
+      },
+      "counting": "154 + 110 - 22 shared directory cases = 242. Final 22-case native rerun and earlier failed/intermediate attempts not added. Directory file has 10 SQL and 12 parser cases.",
+      "proof": [
+        "Real Admin JWT/SQL route authorization and independent application/Admin LOGINs",
+        "Unauthorized actors never reach Admin business observer",
+        "Directory reader cannot add assisted cart",
+        "Successful directory read after removing whole-table SELECT and granting only list/filter columns on the disposable reader",
+        "Actual UPDATE rejected with SQLSTATE 25006",
+        "0/250ms caller timeout becomes 5000/250ms only within the transaction",
+        "Synthetic business rows unchanged; request sessions released"
+      ],
+      "typecheck": "Worker unit and runtime passed, session 24037",
+      "runnerSyntax": "passed",
+      "whitespace": "passed"
+    },
+    "developmentFailures": [
+      "First focused two-case contract run failed against old whole-row responses/missing template aliases; first eight-case run passed after implementation",
+      "Expanded local run had 151 pass/2 fail: a transaction spy double-wrapped the PGlite row-array adapter. Replaced with container-boundary proxy; 153 then final 154 cases passed without relaxing assertions"
+    ],
+    "cleanup": {
+      "clusters": [
+        {
+          "name": "finance-postgres-3PU0cd",
+          "port": 64734
+        },
+        {
+          "name": "finance-postgres-svHBd9",
+          "port": 65106
+        }
+      ],
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "independentPgCtlStatusExit": [
+        3,
+        3
+      ],
+      "pidFiles": 0,
+      "passwordFiles": 0,
+      "ownedProcesses": 0,
+      "listeners": 0,
+      "verificationNote": "Initial sandbox read was denied by private ACL and treated as unknown. Elevated read-only inspection confirmed shutdown and zero PostgreSQL processes. Stopped private diagnostic directories retained."
+    },
+    "sourceSha256": {
+      "workers-ts/src/services/admin/AdminUserListService.ts": "6f686f81b07c2e96296d7c81fd6a82e8e455a6cdb3d65e348fcf173baf8537d0",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "3c7561ffd3062894061ad57b42b38f6aee7854d658a4a7816b1b35a9ef5a0908",
+      "workers-ts/test/admin-user-list-postgres.test.ts": "9c7cffb4a03536e5221286e553f40ff8622c0f483e2cf433e0d70a6555950dc2",
+      "workers-ts/test/assisted-purchase-runtime-postgres.test.ts": "2961aa983ce29d3d2607b41d58ef028e0604ee0ced58e68aa42e4fec6fd2ffdf",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "7d33a0ed7805dfa0bca3705a35f4883218917822263fbd7bb39af3f4a77c8389",
+      "workers-ts/test/local-finance-postgres-runner.test.ts": "249dde931151ac5ebf039e718351a6d07c7acdca0dc302f42217f0205fe3869e"
+    },
+    "schemaChanged": false,
+    "runtimePrivilegePlanChanged": false,
+    "frontendChanged": false,
+    "productionConnected": false,
+    "committed": false,
+    "deployed": false,
+    "parentChecklistClosed": false,
+    "remaining": [
+      "Buyer selection/product/cart/confirm/cashier pages",
+      "Derived membership display and unsupported PHP directory filters",
+      "Real login/Redis/provider/Hyperdrive/browser acceptance",
+      "Current candidate Linux/workerd/CI and separately approved release"
+    ]
+  },
+  "assistedRecordIncrement": {
+    "date": "2026-09-23",
+    "status": "local-code-tests-builds-passed-rendered-browser-blocked-not-deployed",
+    "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+    "implemented": [
+      "Direct old record route and shopper-profile entry without requiring shopper login",
+      "Separate memory-only Admin session, real login endpoint contract and order.assisted permission UI",
+      "Actor-scoped list search, status filtering, original-page retry and server payment-status reads",
+      "No-auth Admin/Work expiry no longer clears shopper session; current Admin expiry clears only Admin",
+      "Hide/unload/logout clear displayed PII; late reads, login results and old failures cannot replace a newer Admin generation"
+    ],
+    "notImplemented": [
+      "Other four behalf pages",
+      "Order detail/payment navigation",
+      "Server-side Admin token revocation from this page",
+      "Actual login/Redis/provider/browser-server acceptance"
+    ],
+    "newCases": 25,
+    "tests": {
+      "uniquePassed": 541,
+      "skipped": 0,
+      "uniToolchain": {
+        "passed": 513,
+        "seconds": 21.215,
+        "session": 49750,
+        "newAssistedCases": 24
+      },
+      "builtArtifacts": {
+        "passed": 3
+      },
+      "runtimeI18n": {
+        "passed": 9,
+        "seconds": 29.021,
+        "actualPlatformBuilds": [
+          "h5",
+          "mp-weixin",
+          "app"
+        ]
+      },
+      "workerNavigation": {
+        "passed": 16,
+        "seconds": 2.46,
+        "startedLocal": "11:02:04",
+        "newCase": 1
+      },
+      "counting": "Final toolchain/artifact/i18n/navigation runs only. Earlier 84-case subset, 15-case navigation run and first 22-case failed attempt excluded",
+      "typecheck": "UniApp vue-tsc passed",
+      "threePlatformBuilds": "passed",
+      "routeLedgerAudit": "passed: 67 target routes, 7 direct legacy routes, 98 mappings, 46 unmapped/cross-surface; registration is not full functional parity"
+    },
+    "developmentFailures": [
+      "Initial typecheck referenced a nonexistent floating-navigation component; changed to the actual globally registered DiySuspendedNavigation",
+      "First new runtime run: 21 passed/1 failed; stale login finally released a newer login busy lock. Fixed by matching both view generation and Admin session version, then full rerun passed"
+    ],
+    "browser": {
+      "tool": "mcp__cua_repl unified browser interface",
+      "target": "http://127.0.0.1:54361/#/pages/behalf/record/index",
+      "data": "loopback synthetic API only; no production proxy",
+      "attempts": 2,
+      "recovery": "reset kernel then repeat initial tab creation",
+      "error": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+      "pageOpened": false,
+      "renderedChecksPassed": 0,
+      "screenshots": 0,
+      "fallback": "Permission to use existing local Playwright requested; not used in this increment",
+      "fixtureCleanup": "Exact temporary script and port ownership checked; Ctrl-C/Stop-Process did not stop it, then exact verified PID terminated; no owned process or listener remains. Temporary synthetic fixture script retained outside repository."
+    },
+    "sourceSha256": {
+      "view/uniapp-ts/src/utils/request.ts": "0b63a825bb956ec0dc6e0005d688aff3af8119fcd42e7caada28c1c1734d5673",
+      "view/uniapp-ts/src/stores/adminSession.ts": "a57f7e09e39376cb862900e11c4c434f1cd2c36b8f55000011f39c78e3eed830",
+      "view/uniapp-ts/src/api/assistedRecords.ts": "0d4b803d04255e8f584efc1047032a2135c7baf225758c93659620b988ca4eb4",
+      "view/uniapp-ts/src/composables/useAssistedRecords.ts": "10c8af8d0ed0f7883555b3482803a66dcb09af6eabec979c8a32155340b119c3",
+      "view/uniapp-ts/src/pages/behalf/record/index.vue": "f02172a92a5f8a5d10951a6f32da58926d4f2922b9c5091534333f784d7c15ef",
+      "view/uniapp-ts/scripts/assisted-records-runtime.test.cjs": "63de37b55326ce27f129733170761dedd7efd0f2ebd821604d196de110e10807"
+    },
+    "productionConnected": false,
+    "committed": false,
+    "deployed": false,
+    "parentChecklistClosed": false
+  },
+  "counting": {
+    "legacy": {
+      "pagesTreeVueFiles": 250,
+      "logicalManifestRouteRecords": 151,
+      "platformActiveRouteRecords": {
+        "H5": 151,
+        "MP-WEIXIN": 150,
+        "APP-PLUS": 150
+      },
+      "mainRoutes": 7,
+      "subPackageRoutes": 144,
+      "subPackages": 10,
+      "manifestSha256": "B3F0D0DB6F6E7E1E2C039695712797FBBB0B1146ACC85D304C24BB344E185EB7",
+      "conditionalNotes": [
+        "H5 includes pages/users/alipay_invoke/index",
+        "APP-PLUS selects pages/discover/discoverVideo/app while other builds select index; the route record count is unchanged"
+      ]
+    },
+    "target": {
+      "pagesTreeVueFiles": 98,
+      "logicalManifestRouteRecords": 98,
+      "platformActiveRouteRecords": {
+        "H5": 98,
+        "MP-WEIXIN": 98,
+        "APP-PLUS": 98
+      },
+      "manifestHashNormalization": "LF",
+      "manifestSha256": "3F60B34F556108752039962721850B2D62E59A115F7922D028AC3F739CFC23DF"
+    },
+    "routeLedger": {
+      "directRegistered": 28,
+      "legacyCompatibilityRules": 101,
+      "candidateCoveredRules": 62,
+      "partialReplacementRules": 39,
+      "unmappedOrCrossSurface": 22,
+      "accountedLegacyRoutes": 151
+    },
+    "method": "Use active pages.json records as the denominator. Raw Vue files include embedded components, templates and unrouted files and are never treated as route coverage."
+  },
+  "legacyRouteFamilies": [
+    {
+      "root": "main",
+      "routes": 7
+    },
+    {
+      "root": "pages/users",
+      "routes": 54
+    },
+    {
+      "root": "pages/activity",
+      "routes": 11
+    },
+    {
+      "root": "pages/admin",
+      "routes": 21
+    },
+    {
+      "root": "pages/columnGoods",
+      "routes": 2
+    },
+    {
+      "root": "pages/annex",
+      "routes": 13
+    },
+    {
+      "root": "pages/extension",
+      "routes": 5
+    },
+    {
+      "root": "pages/work",
+      "routes": 5
+    },
+    {
+      "root": "pages/goods",
+      "routes": 21
+    },
+    {
+      "root": "pages/behalf",
+      "routes": 5
+    },
+    {
+      "root": "pages/discover",
+      "routes": 7
+    }
+  ],
+  "directRegisteredLegacyRoutes": [
+    "/pages/columnGoods/rank/index",
+    "/pages/columnGoods/live_list/index",
+    "/pages/activity/new_customer/index",
+    "/pages/discover/discoverTopic/index",
+    "/pages/discover/discoverSearch/index",
+    "/pages/discover/discoverVideo/index",
+    "/pages/extension/customer_list/feedback",
+    "/pages/work/userInfo/index",
+    "/pages/work/orderList/index",
+    "/pages/work/orderDetail/index",
+    "/pages/work/record/index",
+    "/pages/work/groupInfo/index",
+    "/pages/behalf/cashier/index",
+    "/pages/behalf/order_confirm/index",
+    "/pages/behalf/user_list/index",
+    "/pages/behalf/goods_list/index",
+    "/pages/behalf/record/index",
+    "/pages/index/index",
+    "/pages/user/index",
+    "/pages/annex/vip_active/index",
+    "/pages/annex/offline_pay/index",
+    "/pages/annex/offline_result/index",
+    "/pages/activity/goods_combination_status/index",
+    "/pages/users/distributor/apply",
+    "/pages/users/agent/apply",
+    "/pages/users/agent/state",
+    "/pages/users/agent/record",
+    "/pages/users/agent/staff_list"
+  ],
+  "gaps": [
+    {
+      "id": "FE-003B",
+      "title": "User governance and history screens",
+      "status": "missing_actionable",
+      "legacyRoutes": [
+        "/pages/users/user_cancellation/index"
+      ],
+      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate membership agreement rather than the user agreement alias; the public endpoint and page accept disabled records as old PHP did, while the membership home hides them. Account cancellation write and member QR/scan/cashier consumption still lack complete target contracts; deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames, full activity-flow parity, native-device and deployed real-user acceptance remain open."
+    },
+    {
+      "id": "FE-003C",
+      "title": "Distributor and agent self-service",
+      "status": "code_linux_complete_not_deployed",
+      "legacyRoutes": [],
+      "remaining": "Five original paths are directly registered with distinct promoter and division applications, current-status/record reads and owner-scoped staff operations. Purpose-bound one-time SMS replaces the incompatible old code cache. This code scope was merged through PR #11 after its exact-head Linux CI passed, as recorded in MIGRATION_CHECKLIST.md. Real role/data, native devices, old-client in-place upgrades and release acceptance remain under FE-003J/K; the merged code has not been deployed."
+    },
+    {
+      "id": "FE-003D",
+      "title": "Presale, newcomer, live and ranking activities",
+      "status": "local_candidate_partial",
+      "legacyRoutes": [],
+      "remaining": "Presale has local PC/UniApp catalogues, base-SKU type-6 purchase and deferred-fulfillment candidates, while cumulative limits remain closed. Newcomer has a directly registered authenticated read-only gift/list/detail path with exact legacy type routing; type-7 activity SKU purchase and checkout are not connected. Live list and product ranking old routes are directly registered local read-only candidates; ranking now has validated current-page activity IDs and expiry. Real login, operational content, WeChat live-player plugin, native devices and release acceptance remain open; route registration alone does not close FE-003D."
+    },
+    {
+      "id": "FE-003E",
+      "title": "Legacy mobile admin cross-surface replacement",
+      "status": "cross_surface_candidate",
+      "legacyRoutes": [
+        "/pages/admin/user/list",
+        "/pages/admin/user/index",
+        "/pages/admin/goods/index",
+        "/pages/admin/goods/specs",
+        "/pages/admin/order/index",
+        "/pages/admin/orderList/index",
+        "/pages/admin/orderDetail/index",
+        "/pages/admin/delivery/index",
+        "/pages/admin/order_cancellation/index",
+        "/pages/admin/distribution/index",
+        "/pages/admin/distribution/orderDetail/index",
+        "/pages/admin/work/index",
+        "/pages/admin/logistics/index",
+        "/pages/admin/refundOrderList/index",
+        "/pages/admin/refund/index",
+        "/pages/admin/refundOrderDetail/index"
+      ],
+      "remaining": "These privileged operations moved to admin-ts and are intentionally not deep-linked from the customer shell; validate mobile Admin coverage and retirement redirects before closure."
+    },
+    {
+      "id": "FE-003F",
+      "title": "Payment callback, generic webview and membership/payment history",
+      "status": "blocked_external_e2e",
+      "legacyRoutes": [
+        "/pages/users/alipay_invoke/index",
+        "/pages/annex/web_view/index",
+        "/pages/annex/record_list/index",
+        "/pages/goods/cashier/index",
+        "/pages/goods/match_pay/index"
+      ],
+      "remaining": "Offline pay/result now have directly registered pages; registration is not provider-payment acceptance. Payment callbacks and the remaining historical deep links still require real H5/mini-program E2E. The unrestricted legacy webview remains retired pending an allowlist design."
+    },
+    {
+      "id": "FE-003G",
+      "title": "Feedback, enterprise work mode and behalf ordering",
+      "status": "local_candidate_partial",
+      "legacyRoutes": [],
+      "remaining": "All five original behalf routes are directly registered: records, buyer selection, product/cart, confirm and cashier; a new read-only detail route was not an original PHP manifest route. Registration and local synthetic tests do not establish full PHP flow parity. Confirm has scoped quote/create, delivery, candidate coupons, points, authoritative form components, private image upload/preview and an operator-disclosed submission journal. Detail/list are creating-Admin-scoped minimal projections. Cashier requires explicit payment initiation, status/detail checks and a displayed expected amount; zero-price assisted orders require confirmation without QR, and external QR is drawn locally. Cash/zero lock-time amount validation passed native PG16 flow 39/39; a later native PG16 flow 43/43 added a persistent one-time provider intent before external contact. Uncommitted callback-first evidence, unknown outcomes, real callback, authenticated device and retry acceptance remain release blockers. Public list requests without unique paging=cursor now receive an upgrade error; this does not force-upgrade the online old mini-program and App. Owner confirms existing users, but published package identity, signing, version and actual API origin are unverified. Category/advanced filters, large-catalog paging, keyword/status query plans, fresh buyer selection, unused-image lifecycle, cross-tab coordination and real Admin/Redis/Hyperdrive acceptance remain open. Feedback and five Work pages now have local route consumers. Work tokens stay separate from shopper login and in memory. No-hint entry and product send check the current SDK target; background/pagehide clear private state. A visible page with a userid hint cannot guarantee immediate clearing on an otherwise unobserved chat switch. Real Enterprise WeChat SDK/employee authorization, authenticated feedback submission, native devices and deployment are not verified."
+    },
+    {
+      "id": "FE-003H",
+      "title": "Community topic, search and video deep links",
+      "status": "local_candidate_covered",
+      "legacyRoutes": [],
+      "remaining": "The three logical legacy routes now preserve topic id/hot-new order, search keyword/topic filters, and video id/author/content-type state with pagination, retry and stale-response guards. The old APP-PLUS /app web-view URL extracts only validated page state, never loads the embedded host or token; generic unrestricted web-view behavior remains retired under FE-003F. Topic publishing and post detail are available within the deep-link page. Local preview video has no playable media, so real media playback and native-device/production acceptance remain under FE-003J/K."
+    }
+  ],
+  "platformBuildMatrix": [
+    {
+      "platform": "H5",
+      "command": "npm run build:h5",
+      "status": "completed_local_candidate"
+    },
+    {
+      "platform": "MP-WEIXIN",
+      "command": "npm run build:mp-weixin",
+      "status": "completed_local_candidate"
+    },
+    {
+      "platform": "APP-PLUS",
+      "command": "npm run build:app",
+      "status": "completed_local_candidate",
+      "note": "Build succeeds with the existing mixed static/dynamic request.ts chunk warning"
+    }
+  ],
+  "checklist": [
+    {
+      "id": "FE-003A",
+      "done": true,
+      "item": "Recount active manifests, install a registered-route allowlist, map 98 legacy routes and normalize legacy query keys"
+    },
+    {
+      "id": "FE-003B",
+      "done": false,
+      "item": "Restore user governance/history screens"
+    },
+    {
+      "id": "FE-003C",
+      "done": true,
+      "item": "Implement distributor and agent self-service without conflating Supplier roles"
+    },
+    {
+      "id": "FE-003D",
+      "done": false,
+      "item": "Restore or explicitly retire presale, newcomer, live and ranking experiences"
+    },
+    {
+      "id": "FE-003E",
+      "done": false,
+      "item": "Validate legacy mobile-admin replacements on the Admin surface and retirement redirects"
+    },
+    {
+      "id": "FE-003F",
+      "done": false,
+      "item": "Run real payment callback and historical deep-link E2E; retain generic webview retirement unless allowlisted"
+    },
+    {
+      "id": "FE-003G",
+      "done": false,
+      "item": "Restore feedback, enterprise work mode and behalf-ordering flows"
+    },
+    {
+      "id": "FE-003H",
+      "done": true,
+      "item": "Restore query-addressable community topic, search and video deep links"
+    },
+    {
+      "id": "FE-003I",
+      "done": true,
+      "item": "Run local H5, WeChat mini-program and App conditional production builds"
+    },
+    {
+      "id": "FE-003J",
+      "done": false,
+      "item": "Run real-device H5, WeChat mini-program and App smoke tests"
+    },
+    {
+      "id": "FE-003K",
+      "done": false,
+      "item": "Run real customer/operator accounts, provider callbacks and production data E2E before release"
+    }
+  ],
+  "integralDetailFollowup": {
+    "date": "2026-10-01",
+    "status": "local_partial_not_deployed",
+    "previousSnapshot": {
+      "file": "workers-ts/audit/uniapp-frontend-parity.json",
+      "normalizedSha256": "2B767739A81D51015C268D2F5709C30788BE6CAF0B6F343CA3A1A9CB574D766D"
+    },
+    "activityDetailBranches": [
+      {
+        "type": 1,
+        "legacy": "/pages/activity/goods_details/index",
+        "resolved": "/pages/activity/seckillDetail?id=41"
+      },
+      {
+        "type": 3,
+        "legacy": "/pages/activity/goods_details/index",
+        "resolved": "/pages/activity/detail?id=41"
+      },
+      {
+        "type": 4,
+        "legacy": "/pages/activity/goods_details/index",
+        "resolved": "/pages/activity/integralDetail?id=41"
+      },
+      {
+        "type": 6,
+        "legacy": "/pages/activity/goods_details/index",
+        "resolved": "/pages/activity/presaleDetail?id=41"
+      },
+      {
+        "type": 7,
+        "legacy": "/pages/activity/goods_details/index",
+        "resolved": "/pages/activity/newcomerDetail?id=41"
+      }
+    ],
+    "integralIdentity": "Integral type4 id is the activity identity. It is never converted to the underlying product id.",
+    "sourceReferences": {
+      "view/uniapp-ts/src/config/navigation.ts": "15FD366AD9128917CB7959CEB91399AB4D7BDA42D9FD01534CC8AF40DA22F3BE",
+      "view/uniapp-ts/src/pages.json": "0705F1A2F6ED1AAE8C0D2B2583A4EE3A61A9B0666782AD60662C6F1EC8EA26F8",
+      "view/uniapp-ts/src/pages/activity/integralDetail.vue": "AE5C21D27E113C786DDCECD0FAC00BD83156340B549D0EB1F17C37E8ACCBCA20",
+      "view/uniapp-ts/src/pages/user/integral.vue": "84D5659C8FD252DC2E1FD552DEE2409C59DA6CCB0F8864884F890F9E0C37CAEF",
+      "view/uniapp-ts/src/composables/useIntegralPurchase.ts": "F6A667BF3E43C312E5DE9764334D261E04AD9449967F93511508DB7148D4BDFE",
+      "view/common/integralPurchase.ts": "25A9D7A05BA525F4C4A5D0CD6E7822E77902B3BDF0C7F34F15B4AFBA8385239F",
+      "view/uniapp-ts/src/composables/useIntegralCollection.ts": "768ECD35399970251CAD4ED44C55C2ACE208FC81959360200B93CA2F0020A8CC",
+      "view/uniapp-ts/src/composables/useIntegralReferral.ts": "69999604663F6BBD68CFA84C1C557438FC23E4EB8D4FF1B96075E6A9F5EC91DB",
+      "view/uniapp-ts/src/components/IntegralSharePoster.vue": "290C52189DC8B4AB352191934B62BF6B0C99EBF51FC86751CA2D26AB2DFA4032"
+    },
+    "remaining": "The actual integral detail consumes base-product collection, visit referral, APP provider sharing and ordinary URL QR posters. Formal WeChat mini-program codes, native provider/device permissions, production and deployment remain open."
+  },
+  "themeStyleFollowup": {
+    "date": "2026-10-02",
+    "status": "code_candidate_not_deployed",
+    "previousSnapshot": {
+      "file": "workers-ts/audit/uniapp-frontend-parity-product-category-style-followup-20261002.json",
+      "bytes": 97893,
+      "sha256": "02DFC51AEFEA2F2DE2137AF45CED994BE832FEF2C36877CA26283BB35115C263",
+      "normalizedSha256": "02DFC51AEFEA2F2DE2137AF45CED994BE832FEF2C36877CA26283BB35115C263"
+    },
+    "legacyTheme": {
+      "file": "C:/cinagroup/cinashop-php/view/uniapp/App.vue",
+      "normalizedSha256": "C8AC053899436BC7ECE40B5E72896256316E8074F4BFEEAD434F83283906BE6E"
+    },
+    "palette": [
+      {
+        "status": 1,
+        "name": "天空蓝",
+        "tokens": {
+          "--view-theme": "#1DB0FC",
+          "--view-priceColor": "#FD502F",
+          "--view-minorColor": "rgba(58, 139, 236, 0.5)",
+          "--view-minorColorT": "rgba(9, 139, 243, 0.1)",
+          "--view-bntColor": "#22CAFD",
+          "--view-gradient": "#5ACBFF"
+        },
+        "matchesLegacy": true
+      },
+      {
+        "status": 2,
+        "name": "生鲜绿",
+        "tokens": {
+          "--view-theme": "#42CA4D",
+          "--view-priceColor": "#FF7600",
+          "--view-minorColor": "rgba(108, 198, 94, 0.5)",
+          "--view-minorColorT": "rgba(66, 202, 77, 0.1)",
+          "--view-bntColor": "#FE960F",
+          "--view-gradient": "#4DEA4D"
+        },
+        "matchesLegacy": true
+      },
+      {
+        "status": 3,
+        "name": "热情红",
+        "tokens": {
+          "--view-theme": "#e93323",
+          "--view-priceColor": "#e93323",
+          "--view-minorColor": "rgba(233, 51, 35, 0.5)",
+          "--view-minorColorT": "rgba(233, 51, 35, 0.1)",
+          "--view-bntColor": "#FE960F",
+          "--view-gradient": "#FF7931"
+        },
+        "matchesLegacy": true
+      },
+      {
+        "status": 4,
+        "name": "魅力粉",
+        "tokens": {
+          "--view-theme": "#FF448F",
+          "--view-priceColor": "#FF448F",
+          "--view-minorColor": "rgba(255, 68, 143, 0.5)",
+          "--view-minorColorT": "rgba(255, 68, 143, 0.1)",
+          "--view-bntColor": "#282828",
+          "--view-gradient": "#FF67AD"
+        },
+        "matchesLegacy": true
+      },
+      {
+        "status": 5,
+        "name": "活力橙",
+        "tokens": {
+          "--view-theme": "#FE5C2D",
+          "--view-priceColor": "#FE5C2D",
+          "--view-minorColor": "rgba(254, 92, 45, 0.5)",
+          "--view-minorColorT": "rgba(254, 92, 45, 0.1)",
+          "--view-bntColor": "#FDB000",
+          "--view-gradient": "#FF9451"
+        },
+        "matchesLegacy": true
+      },
+      {
+        "status": 6,
+        "name": "高端金",
+        "tokens": {
+          "--view-theme": "#E0A558",
+          "--view-priceColor": "#DA8C18",
+          "--view-minorColor": "rgba(224, 165, 88, 0.5)",
+          "--view-minorColorT": "rgba(224, 165, 88, 0.1)",
+          "--view-bntColor": "#1A1A1A",
+          "--view-gradient": "#FFCD8C"
+        },
+        "matchesLegacy": true
+      }
+    ],
+    "hosts": [
+      {
+        "route": "/pages/activity/bargainDetail",
+        "file": "view/uniapp-ts/src/pages/activity/bargainDetail.vue",
+        "normalizedSha256": "2C94434A16CAA46AEF355ACB7C672F1FD760E8F81B637A928C3A2E472D82AE49",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/detail",
+        "file": "view/uniapp-ts/src/pages/activity/detail.vue",
+        "normalizedSha256": "4F3E60AA8137369434EA0F4E9D8A6BBC5D34DFD440C475490CBA33DC611907F4",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/goods_combination_status/index",
+        "file": "view/uniapp-ts/src/pages/activity/goods_combination_status/index.vue",
+        "normalizedSha256": "2C7C6E205F2432E273EAA1C61A9419F4E53BFBFAAE838A4C70EB001E3007E0C1",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/index",
+        "file": "view/uniapp-ts/src/pages/activity/index.vue",
+        "normalizedSha256": "6C8E33A54B4766A919A12C8B78C247DA5800CE36CBC684AA159B6866F8B7196D",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/integralDetail",
+        "file": "view/uniapp-ts/src/pages/activity/integralDetail.vue",
+        "normalizedSha256": "B23A4C9E924127FAB2122FE4870DA4D697CF321C9A240FB6636FCDE16E0BA340",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/lottery",
+        "file": "view/uniapp-ts/src/pages/activity/lottery.vue",
+        "normalizedSha256": "8FA19F8BAB39B50A45D0401D0E013794C7F2A32558428F5EE56FF46CE78B781B",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/lotteryRecords",
+        "file": "view/uniapp-ts/src/pages/activity/lotteryRecords.vue",
+        "normalizedSha256": "792A432AD4BD5A8093B5218B6FD1D0C41DBE9072C2C0DB46FF1024C8ACBDF83E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/new_customer/index",
+        "file": "view/uniapp-ts/src/pages/activity/new_customer/index.vue",
+        "normalizedSha256": "AD401D45EFA9C56B8776FB4C96439536949715F5E9348B273592414862B5CC92",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/newcomerDetail",
+        "file": "view/uniapp-ts/src/pages/activity/newcomerDetail.vue",
+        "normalizedSha256": "35BF75ACEA346874E675D3E86F7434684AB4F311D9B6FCA515250E26CF599E85",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/presale",
+        "file": "view/uniapp-ts/src/pages/activity/presale.vue",
+        "normalizedSha256": "4D60603B148AE6BD99CCA50024492874073547BCA8C7672C33DE1E509BA2DD74",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/presaleDetail",
+        "file": "view/uniapp-ts/src/pages/activity/presaleDetail.vue",
+        "normalizedSha256": "0F31CB77F102DB4160C614EE6B27D28D45B9F3EE2863B6EB1060DB65B7272488",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/activity/seckillDetail",
+        "file": "view/uniapp-ts/src/pages/activity/seckillDetail.vue",
+        "normalizedSha256": "EC5EDC3EB506B2107303F60061A17F5E29D4A589D97A6AB955731D8C6A3E5611",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/annex/offline_pay/index",
+        "file": "view/uniapp-ts/src/pages/annex/offline_pay/index.vue",
+        "normalizedSha256": "8EDCF9EE84E65426402A6FFA14D09F7E0DE052930DBCA3D2FC0AF48179EC8E50",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/annex/offline_result/index",
+        "file": "view/uniapp-ts/src/pages/annex/offline_result/index.vue",
+        "normalizedSha256": "79DBFB1F34461CF8A8B8D2BEBEDEFCB80BCCFB3AF0986F9360A7932C9B46FE23",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/annex/vip_active/index",
+        "file": "view/uniapp-ts/src/pages/annex/vip_active/index.vue",
+        "normalizedSha256": "E05D2B276AFC47D036973FFB13B96F9EAB86333EBD06544EF8ACA462D38A4B3D",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/article/detail",
+        "file": "view/uniapp-ts/src/pages/article/detail.vue",
+        "normalizedSha256": "73E7165BDA36D891437AE1F362AE40A9990A1FA30FC5741533F433F4AE0FD7D3",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/article/list",
+        "file": "view/uniapp-ts/src/pages/article/list.vue",
+        "normalizedSha256": "ED6FEA97A31C543ECB846C5FDEDCE2C1DBC7684A2DDDC10DBE8AC8D31F942C38",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/auth/login",
+        "file": "view/uniapp-ts/src/pages/auth/login.vue",
+        "normalizedSha256": "48970FCF1D7EA751099E756C8E31AA99EB7095D3C829531220C486F22E045567",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/auth/register",
+        "file": "view/uniapp-ts/src/pages/auth/register.vue",
+        "normalizedSha256": "C6B7705D5E30FEC4699690187ACA5EC06EE828F7F1973CE40D2612B7B36A95A2",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/auth/reset",
+        "file": "view/uniapp-ts/src/pages/auth/reset.vue",
+        "normalizedSha256": "FBB2A06DF9265B7157418545E01EAC74A68BE049BD58666868126B8362B66223",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/auth/scanLogin",
+        "file": "view/uniapp-ts/src/pages/auth/scanLogin.vue",
+        "normalizedSha256": "502DA47D53FDD2D2E9B4527EF1AD85795FC08E8EA6920C1E61119CB97BE4D70B",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/auth/smsChallenge",
+        "file": "view/uniapp-ts/src/pages/auth/smsChallenge.vue",
+        "normalizedSha256": "0D6FAFF1DA8788573D7E89D1A074CD20634322AB79C4928DA2C4504221D9817E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/behalf/cashier/index",
+        "file": "view/uniapp-ts/src/pages/behalf/cashier/index.vue",
+        "normalizedSha256": "B463DED7891F880686DA490EDE1FF5171DD28A9A1D17E2F9F243FAAE36390E05",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/behalf/goods_list/index",
+        "file": "view/uniapp-ts/src/pages/behalf/goods_list/index.vue",
+        "normalizedSha256": "986DF9CF60BE097761EA7E6577D6B838071B6D17BCF8759C6C71538D0E435CAF",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/behalf/order_confirm/index",
+        "file": "view/uniapp-ts/src/pages/behalf/order_confirm/index.vue",
+        "normalizedSha256": "E629553A5DF70EA6540AD3CB074BF66F395475178C1F2C3F52CC2B6B286803B2",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/behalf/order_detail/index",
+        "file": "view/uniapp-ts/src/pages/behalf/order_detail/index.vue",
+        "normalizedSha256": "1A472364B8C1BADE2571425B0FF5537F69D2649969AA5734A69D0D60B8E82ADC",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/behalf/record/index",
+        "file": "view/uniapp-ts/src/pages/behalf/record/index.vue",
+        "normalizedSha256": "A0E14D4B6584D31307DD5F5A25651A54B5F762701BC9F26458EB0DFC203AFB84",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/behalf/user_list/index",
+        "file": "view/uniapp-ts/src/pages/behalf/user_list/index.vue",
+        "normalizedSha256": "B0AF1178E6F42DA96AFC7BA31853E40DD4BCB4D1A49374F1B8832DD98AA13E5F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/cart/index",
+        "file": "view/uniapp-ts/src/pages/cart/index.vue",
+        "normalizedSha256": "633FC72CAC31B98587E274BBC0DA7B91D72481EEED868AAF9734EBCBC72F0B04",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/columnGoods/live_list/index",
+        "file": "view/uniapp-ts/src/pages/columnGoods/live_list/index.vue",
+        "normalizedSha256": "2209FB2254405999E407F86C0C38FD09A2DAEB3363C1A85E274499E743D5463F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/columnGoods/rank/index",
+        "file": "view/uniapp-ts/src/pages/columnGoods/rank/index.vue",
+        "normalizedSha256": "7DC11501B17992554C230EC7EA35A3B9F28AC299EF8174402E210E02A94F79E0",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/common/fabWebView",
+        "file": "view/uniapp-ts/src/pages/common/fabWebView.vue",
+        "normalizedSha256": "C08BAC346B31C5214D9CE1D43A27BAFD4085CB2DEF9177AF42844F210C7CBFA6",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/discover/discoverSearch/index",
+        "file": "view/uniapp-ts/src/pages/discover/discoverSearch/index.vue",
+        "normalizedSha256": "EBD55BE5793292FFD22161EC7E2699E051FD0C62F3CD4310AC76DEE4F46DC6F8",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/discover/discoverTopic/index",
+        "file": "view/uniapp-ts/src/pages/discover/discoverTopic/index.vue",
+        "normalizedSha256": "810A09CCE583AC805652255C921AB7C4BD986D22846B9CC197D1A62419A79E75",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/discover/discoverVideo/app",
+        "file": "view/uniapp-ts/src/pages/discover/discoverVideo/app.vue",
+        "normalizedSha256": "327BBCD65F5DC3A716CDFCF1C176C7C289863898A3B7FE2C52AA21E6D107633E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/discover/discoverVideo/index",
+        "file": "view/uniapp-ts/src/pages/discover/discoverVideo/index.vue",
+        "normalizedSha256": "841CC6CA59DDBA73AD1909B4A1D06CB53B18DDE6B7E983C49F85B2DB4F826727",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/discover/index",
+        "file": "view/uniapp-ts/src/pages/discover/index.vue",
+        "normalizedSha256": "8D2902293EDF545BC003DEB5087C65D1A36203C97E4AD9254E3A2F0B645EC6BF",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/discover/people",
+        "file": "view/uniapp-ts/src/pages/discover/people.vue",
+        "normalizedSha256": "92AC6CED70FF4FDF59A2A0A5248EAA18CA890F046D820CDA1B60F44032A3E50B",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/diy/detail",
+        "file": "view/uniapp-ts/src/pages/diy/detail.vue",
+        "normalizedSha256": "D45FF6FB30410725D15BA9A773540B7BE5540ECACE14F1A307E7DD7FB25A31DF",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/extension/customer_list/feedback",
+        "file": "view/uniapp-ts/src/pages/extension/customer_list/feedback.vue",
+        "normalizedSha256": "B3625EADA0A813242C0E9302845464B9C0E7BF513ABB9B3029201A2D27C163FA",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/cate",
+        "file": "view/uniapp-ts/src/pages/goods/cate.vue",
+        "normalizedSha256": "5CEBBA96266C36FC52E107731AEAD91120E6A3C8A9E2194F939AEFECB373A820",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/commentDetail",
+        "file": "view/uniapp-ts/src/pages/goods/commentDetail.vue",
+        "normalizedSha256": "B92A0AF58ADA1905E3A45646F2C4DE2F2A5F1AC9FFF050F66ECF523144F22F5E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/commentList",
+        "file": "view/uniapp-ts/src/pages/goods/commentList.vue",
+        "normalizedSha256": "2CA628482BBB67F3DFABD53DECD3F717FDBD873A2B67381214C131543869A0B6",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/detail",
+        "file": "view/uniapp-ts/src/pages/goods/detail.vue",
+        "normalizedSha256": "246106B6D5FC4CB1FA74D9AD99BB8A39E0A4AAAD0150B3084FE6F4CF85402224",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/list",
+        "file": "view/uniapp-ts/src/pages/goods/list.vue",
+        "normalizedSha256": "2D512153CC4A82DB8C4F01F31BFE29B99954A8A6075E0D1BD9E6B40D011CD3CC",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/productCommunity",
+        "file": "view/uniapp-ts/src/pages/goods/productCommunity.vue",
+        "normalizedSha256": "C8235CDF52641F86DA8BBC53174C60FFDA9C49F3526A99276547A2A79C0BA036",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/goods/search",
+        "file": "view/uniapp-ts/src/pages/goods/search.vue",
+        "normalizedSha256": "FDCDB67274BCC42E3274D105BA4812D55A6F6B9A5A38332FCCBD5B05213B45D5",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/index/index",
+        "file": "view/uniapp-ts/src/pages/index/index.vue",
+        "normalizedSha256": "707C72F35826008BAC2ABCC6B94363AF7183AAD207A685C8A50DA48128540B5C",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/operator/writeoff",
+        "file": "view/uniapp-ts/src/pages/operator/writeoff.vue",
+        "normalizedSha256": "F92B734C410751B40F3DF14B00ABAA211592FC1A61EAD475CF6B6BB0C4760C1A",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/confirm",
+        "file": "view/uniapp-ts/src/pages/order/confirm.vue",
+        "normalizedSha256": "FED42EEFD45F5844D82E884DB500257815EB121B5F75E36E4B5DF3A9F2BACE79",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/detail",
+        "file": "view/uniapp-ts/src/pages/order/detail.vue",
+        "normalizedSha256": "A4EDECEAC45A64996DBDF14E2D3F098DA73442A7949BF3FBB72131CAB0111747",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/express",
+        "file": "view/uniapp-ts/src/pages/order/express.vue",
+        "normalizedSha256": "62968E8ABA6F152735B0B11B9539788D8509F98574D0E5F4B9C0948ACA522C12",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/list",
+        "file": "view/uniapp-ts/src/pages/order/list.vue",
+        "normalizedSha256": "579535C87645EE3A13F56B4FAE04D54CB8E7682B69311934014129322BDD1069",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/payResult",
+        "file": "view/uniapp-ts/src/pages/order/payResult.vue",
+        "normalizedSha256": "E253E9A5A4D16E95DE18DB2610D106EEB85836165B45B31D162613B12D3F8176",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/refundApply",
+        "file": "view/uniapp-ts/src/pages/order/refundApply.vue",
+        "normalizedSha256": "D3AFE8A70B65A93B9585420FDB3721F4AAE3A3BDE2A4810026E39F14D0245319",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/refundDetail",
+        "file": "view/uniapp-ts/src/pages/order/refundDetail.vue",
+        "normalizedSha256": "AC21914899F93A73EE7FAD296CA3C83B99FEDDC9A38E2125C72BD5A8CDE269E0",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/refundList",
+        "file": "view/uniapp-ts/src/pages/order/refundList.vue",
+        "normalizedSha256": "6D055BE8D4827E0D1C2EB58B5F690F3E9244B144BA53D257D3F6BB17D4C742AB",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/order/reply",
+        "file": "view/uniapp-ts/src/pages/order/reply.vue",
+        "normalizedSha256": "60B0AB16F4B23D1D3C6681C21EECA1DC3F4E78200AC03C9A413457E773903AC4",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/address",
+        "file": "view/uniapp-ts/src/pages/user/address.vue",
+        "normalizedSha256": "E38742D924405041D10F1A302348956DCC1DE5E086FCEAB96436AAFDACA6BC31",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/agreements",
+        "file": "view/uniapp-ts/src/pages/user/agreements.vue",
+        "normalizedSha256": "B4178E590D3253C3759B4D5D627119E451348ECC33B5C6B201D248A78EA4F8EF",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/balanceLogs",
+        "file": "view/uniapp-ts/src/pages/user/balanceLogs.vue",
+        "normalizedSha256": "649558B35AE36DEEF8475E7E5311D6EAA70C3AA04E3461666CBC99787BD3E5C9",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/bank",
+        "file": "view/uniapp-ts/src/pages/user/bank.vue",
+        "normalizedSha256": "2842C6CB8205385F8B65C02CC46A6DB4AB9341468445A8DA8E71D141A77F8F00",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/changePassword",
+        "file": "view/uniapp-ts/src/pages/user/changePassword.vue",
+        "normalizedSha256": "2A1285A99C4FF1BB39B6F477B058762E88D390667A5D56DE254B2B17291170E8",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/collect",
+        "file": "view/uniapp-ts/src/pages/user/collect.vue",
+        "normalizedSha256": "599AEC4360F415B7C8F5F653DAE7A823B5611CE217CC8B5C9D9C2445FAE4E085",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/coupon",
+        "file": "view/uniapp-ts/src/pages/user/coupon.vue",
+        "normalizedSha256": "73EF52EBB21907719A585F0589650C8A755144970F141F0749B0856D9B5C178A",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/couponCenter",
+        "file": "view/uniapp-ts/src/pages/user/couponCenter.vue",
+        "normalizedSha256": "719E9C65C55D1340B17C5EFD54C137566BF044F2E47FF609FD6E7E5563AEFC31",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/couponProducts",
+        "file": "view/uniapp-ts/src/pages/user/couponProducts.vue",
+        "normalizedSha256": "A6C95CBE067589D61D530056553DB8CBC844171F1F515D43A70C8F08268E7B91",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/finance",
+        "file": "view/uniapp-ts/src/pages/user/finance.vue",
+        "normalizedSha256": "4E435C88F84A6D25748768D07FB5F45411BB652CFBEB0F651AACE692286D5E4E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/index",
+        "file": "view/uniapp-ts/src/pages/user/index.vue",
+        "normalizedSha256": "D5805A316264EA97111992C768E4F89FF813974D31318D474381409462A0355F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/integral",
+        "file": "view/uniapp-ts/src/pages/user/integral.vue",
+        "normalizedSha256": "A02F0100EB9EA2C9F556C83C8C24C40F55B272A9187E86C27D7A9DDE180BDA8E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/integralLogs",
+        "file": "view/uniapp-ts/src/pages/user/integralLogs.vue",
+        "normalizedSha256": "927A642ED77815F00D7C5D84ADA233D7DA30247D14ACA569A07BA854A8285812",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/invoice",
+        "file": "view/uniapp-ts/src/pages/user/invoice.vue",
+        "normalizedSha256": "5E6FA13FDFC4886808FE0F7ADC1D1B7A17F4964CFDD64629366536A455B4622C",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/kefu",
+        "file": "view/uniapp-ts/src/pages/user/kefu.vue",
+        "normalizedSha256": "D744A5937127C4A75FBE54C12EE332F49AFAC5BC61F184F28CFF2DF2FDADF892",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/legalContent",
+        "file": "view/uniapp-ts/src/pages/user/legalContent.vue",
+        "normalizedSha256": "D1B3DADCD7A32FADBD4DF8139AC552916DD87B76D1A42A17B9162E174BC0BA0F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/level",
+        "file": "view/uniapp-ts/src/pages/user/level.vue",
+        "normalizedSha256": "F5E0B57F2620C60EC6B2C451668A66A99DB03B5010DA41D071C4AA29367BDA03",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/message",
+        "file": "view/uniapp-ts/src/pages/user/message.vue",
+        "normalizedSha256": "E8A30760512391CB71EF729B93E3E5F4405BEFE4553F4F39810D054FFC833673",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/messageDetail",
+        "file": "view/uniapp-ts/src/pages/user/messageDetail.vue",
+        "normalizedSha256": "ED5610A10F5299236627CA835CFB9A4552DCA162A681FC20240880EF06735F91",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/payPassword",
+        "file": "view/uniapp-ts/src/pages/user/payPassword.vue",
+        "normalizedSha256": "D785EA92EAF954830443737BE5A1FB66170553C946A9892EC5E1B185F09A94B7",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/phone",
+        "file": "view/uniapp-ts/src/pages/user/phone.vue",
+        "normalizedSha256": "7D7DD883E2CA50C9B0344DD23129E0519FBB191561CDBD070E1D23233635D840",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/profile",
+        "file": "view/uniapp-ts/src/pages/user/profile.vue",
+        "normalizedSha256": "771DB6DD295671FA5E6BB828001417D0AB1B487B3A329FFB215F10DCD06FCF0E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/recharge",
+        "file": "view/uniapp-ts/src/pages/user/recharge.vue",
+        "normalizedSha256": "D71253E318781559D6683D98D9D7C003DB7BA1FC83CDEB0E8F5DB795C26AB258",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/sign",
+        "file": "view/uniapp-ts/src/pages/user/sign.vue",
+        "normalizedSha256": "710D235A1506A633707F8B95CFF1FF6C42D5626D047D4EC2BB28EE5E0BB1AEC5",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/spread",
+        "file": "view/uniapp-ts/src/pages/user/spread.vue",
+        "normalizedSha256": "9FCBEB6099F96E4F08ADAEC5E91A8013E2681C273ADE3A2AEBE78653150DCB0D",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/supplierApply",
+        "file": "view/uniapp-ts/src/pages/user/supplierApply.vue",
+        "normalizedSha256": "F6CD70E52E210FA05357E6109FB48C9F37C9986BA067663F54EC21C77464EFF6",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/vipOpen",
+        "file": "view/uniapp-ts/src/pages/user/vipOpen.vue",
+        "normalizedSha256": "10739E76703F434A4455BCAD2575EE55A1172ED97111671FC47F078B1745DA07",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/user/visitHistory",
+        "file": "view/uniapp-ts/src/pages/user/visitHistory.vue",
+        "normalizedSha256": "2F560CFBDD06AE93D6B8D2A0CD330018CCD101C2F49580EDDF9D8D46790FAE2A",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/users/agent/apply",
+        "file": "view/uniapp-ts/src/pages/users/agent/apply.vue",
+        "normalizedSha256": "11EB59A7C259AAD89E6C6CC1B166E0C7B54AA16EBCC89FE84707ADD4A3C49DC1",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/users/agent/record",
+        "file": "view/uniapp-ts/src/pages/users/agent/record.vue",
+        "normalizedSha256": "5A170C7054D1DD3024D38089FCB6A76C985C06B3E595B35EC4F97F51C96F3AD5",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/users/agent/staff_list",
+        "file": "view/uniapp-ts/src/pages/users/agent/staff_list.vue",
+        "normalizedSha256": "E7993B271FDE00496F9988C0A3D30132F2420209638566F8269DB1113AC4CC9F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/users/agent/state",
+        "file": "view/uniapp-ts/src/pages/users/agent/state.vue",
+        "normalizedSha256": "F4A4FA5DBD5F68EFA05F32FE8F4A572655D84AC42B694A42DAEDAB03ED81EB92",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/users/distributor/apply",
+        "file": "view/uniapp-ts/src/pages/users/distributor/apply.vue",
+        "normalizedSha256": "D8C600F9312D4B84B653F0F5EBF1C71AF750B79E2F0DC11A844B42581B4BEF8F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/users/user_distribution_level/index",
+        "file": "view/uniapp-ts/src/pages/users/user_distribution_level/index.vue",
+        "normalizedSha256": "9E99F957E28FB7FC3664B51CB499F898EF6FA0AC72044F06084B0CDC986629D3",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/work/groupInfo/index",
+        "file": "view/uniapp-ts/src/pages/work/groupInfo/index.vue",
+        "normalizedSha256": "C821F8333C10FCD3105FA4109B7C780F3037B28A33BF481A6796DCEA513AEF4E",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/work/orderDetail/index",
+        "file": "view/uniapp-ts/src/pages/work/orderDetail/index.vue",
+        "normalizedSha256": "0A6D40AA18C624BC3DADD5E23E02445906964C2E9E0B97954054A0BA953A5880",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/work/orderList/index",
+        "file": "view/uniapp-ts/src/pages/work/orderList/index.vue",
+        "normalizedSha256": "47B2769BA5B7B975811904B37DDF59A8399BC0D0C854D3C7FD0225BD5279BB29",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/work/record/index",
+        "file": "view/uniapp-ts/src/pages/work/record/index.vue",
+        "normalizedSha256": "8E24058382718081A67DDD6E91C591547DD0BDB7A2C1E3B4B475EB555693CBB2",
+        "host": "ThemePage",
+        "templateCompiled": true
+      },
+      {
+        "route": "/pages/work/userInfo/index",
+        "file": "view/uniapp-ts/src/pages/work/userInfo/index.vue",
+        "normalizedSha256": "17C45EF22E81975B0388F851BE1CB26E42A4B4A65A4EA0AA38051E9AC4620D3F",
+        "host": "ThemePage",
+        "templateCompiled": true
+      }
+    ],
+    "sourceReferences": {
+      "view/common/theme.ts": "7BD38E3B6552D71B73D79DFC6047B25E9F96B21335E17B0C7CEECA5E20BA993D",
+      "view/uniapp-ts/src/components/ThemePage.vue": "C9105BBC13439DF895DFC394CD3FE5FA30886BC11869C29C37991F4E55AACE67",
+      "view/uniapp-ts/src/stores/theme.ts": "034B01103E9E230B5C318E7E273A1D84EA955EAA7FE465F62F231FF7E7B0B652",
+      "view/uniapp-ts/src/api/theme.ts": "D06307FD96B39FAE3B934D3A725DD4333C86B046B7B518B94448E1AF84DE8A30",
+      "view/uniapp-ts/src/utils/diyTheme.ts": "CB43FEFB2B03D909E1F96F4E61DBD0205F5E728726D71767B5EEB523677B093B",
+      "view/uniapp-ts/src/App.vue": "A01F5AA3B76B169D4B10D00CA21DE640E26808F4B1E9E8E54576E85507A9BE05",
+      "view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue": "ECAFDC993F6C5DF2CF867AB692E1E8107CAA085BE25F9CEC9DF1359A8FC4DCA0",
+      "view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue": "9DD557C16275D3CE742F1FA207613CC8B938E66349FAB110CA8EF3893A9000DB",
+      "view/uniapp-ts/src/components/IntegralSharePoster.vue": "2A7A5368411D11467B794055D652546A0FD58C64020CB3C41BE7D48B0717307B"
+    },
+    "scope": "All 96 actual Uniapp page hosts inherit six legacy preset roles in H5, MP and APP. Native tabbar and DIY authored color priority remain distinct from price and business-state colors.",
+    "evidenceBoundary": "Template compilation and exact legacy matrix establish source coverage; actual runtime/build/browser receipts are separate final acceptance inputs. No claim of device, production or PC theme consumption.",
+    "currentSourceRefresh": "Fresh 97 current page hosts and theme source hashes; historical theme execution receipts remain bound to the previous raw dated snapshot, not rerun or relabelled as product-detail execution."
+  },
+  "productCategoryStyleFollowup": {
+    "date": "2026-10-02",
+    "status": "code_candidate_not_deployed",
+    "previousSnapshot": {
+      "file": "workers-ts/audit/uniapp-frontend-parity-product-category-style-followup-20261002.json",
+      "bytes": 97893,
+      "sha256": "02DFC51AEFEA2F2DE2137AF45CED994BE832FEF2C36877CA26283BB35115C263",
+      "normalizedSha256": "02DFC51AEFEA2F2DE2137AF45CED994BE832FEF2C36877CA26283BB35115C263"
+    },
+    "coverage": {
+      "adminScreen": true,
+      "tenLayoutMatrix": true,
+      "sharedStyleAuthority": true,
+      "dedicatedWrite": true,
+      "permissions": true,
+      "genericWriteProtection": true,
+      "recovery": true,
+      "publicTaxonomy": true,
+      "categoryScopes": true,
+      "publishedProducts": true,
+      "safeSkuPurchase": true,
+      "cartRecovery": true,
+      "draftFilters": true,
+      "paginationSort": true,
+      "treeScrollSelection": true,
+      "cartLayoutBoundary": true,
+      "actorLifecycle": true
+    },
+    "gaps": [],
+    "sourceReferences": {
+      "view/common/productCategoryStyle.ts": "73DE1EC7DA735F392E985CBCC65C98E7602785AB3B6AC2BB3A9844C164F4987E",
+      "view/common/productCategoryStyleController.ts": "2A711DACB29A77F23D597D68E4EB84EC865E6EC548B8229F187FA1E26E67A08A",
+      "view/admin-ts/src/pages/setting/ProductCategoryStyle.vue": "57D7EF1ED1016D3D97E48EEDFD40ED24FD7FDA8F6B04823C95E1C619706D2F05",
+      "view/admin-ts/src/pages/setting/ProductCategoryStylePreview.vue": "74725CD866BB9945713B775B817183B34660FB8EF177ACAA0C09C43823A9150F",
+      "view/admin-ts/src/api/productCategoryStyle.ts": "5994928D9D5FEC101B1EC39BE39051CA5C3DB09BE5C6969AE4DF83065A6F9B17",
+      "workers-ts/src/services/admin/AdminProductCategoryStyleInput.ts": "1078DF5E9E173167C1196567B30BA7C434B7C797B7AAA508783CDBEB7F2208CE",
+      "workers-ts/src/services/admin/AdminProductCategoryStyleService.ts": "2C55E31D4A8A38EE329DA3CB256C5CF3343D045D5A1BECC8A57C64AC07985F44",
+      "workers-ts/src/services/content/ProductCategoryStyleReadService.ts": "711960031C909C3E92F9E1958093BE0DD0E0D9392CE715703EB5AD1E3E86E1A1",
+      "workers-ts/src/services/content/V2PublicCompatibilityService.ts": "0A12332F1038E86B274F8D4DFAE43ABED5E6E47399C924D89B0B009FAD2CF4DC",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "3B829AF992C35E2C92FB052009DBCD25436B686DF3FA9FF105722A30AB3F9B76",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "A2E7B9BE701F3F04D9F44BC4DF9893CA2D993056CB05AE5801DFA0D474840743",
+      "workers-ts/src/routes/adminapi.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",
+      "workers-ts/src/routes/v1/index.ts": "991C050859C173C77DF934A1EC063D53BF44F0C38B722A2FDD9BE7C92F230EBD",
+      "workers-ts/src/services/product/StoreCategoryService.ts": "A40FF162CBC98BE5AE82A37FBE4ED5C76C2462DB1140270C80C8194AD0CA29BA",
+      "workers-ts/src/services/product/PublicCategoryPolicy.ts": "E9C1210367D07C9D394823690FDD8C2339FBCD29DDBBF0397D6A5F3AE094D0A2",
+      "workers-ts/src/services/product/StoreProductService.ts": "F2E5FCCF262BF1AE28760C48392465E9C7222B0D612525FB27FEA0AD48354291",
+      "workers-ts/src/dao/product/StoreProductDao.ts": "26078D8582C8B5B2BA3646ED16C2C1FC5613B22E6C0AE7507279BA13ABBA3512",
+      "workers-ts/src/models/searchers/product.ts": "E4D6C1BA48B87675159BBC0F0DB38674BEE9F47C259E0972110313670B12DC61",
+      "workers-ts/src/services/product/OrdinaryProductReadData.ts": "5DDD84F330EC7879A13D51393896ED1E24F35F43955B16D42B1996EFA33FB98F",
+      "workers-ts/src/services/product/PublicProductCardData.ts": "B5DC8E4C19C07696B4FF55189CB6E20E97368FA5531F825CD07D10AE3091B116",
+      "view/common/categoryCatalog.ts": "CF84CBA0693BB5727921E988B27FA03C1A579B170C7A79E3E87E149B72246DC0",
+      "view/uniapp-ts/src/api/product.ts": "436C107D412F1938ADAB484A0F438420C88499086019A38E5B3758AC6B2A9E8F",
+      "view/uniapp-ts/src/api/productDetail.ts": "1EB1131E14CC1AED014E7475F84769101FCF8D4BFD1AB1CC8A3BF94ED5A99F7B",
+      "view/uniapp-ts/src/pages/goods/cate.vue": "5CEBBA96266C36FC52E107731AEAD91120E6A3C8A9E2194F939AEFECB373A820",
+      "view/uniapp-ts/src/pages/goods/list.vue": "2D512153CC4A82DB8C4F01F31BFE29B99954A8A6075E0D1BD9E6B40D011CD3CC",
+      "view/uniapp-ts/src/pages/goods/detail.vue": "246106B6D5FC4CB1FA74D9AD99BB8A39E0A4AAAD0150B3084FE6F4CF85402224",
+      "view/uniapp-ts/src/composables/useCategoryCatalog.ts": "27F72C29CF2BD8B3D591AD5055B5F1228428BE40F5995BC7943AB9E5E59468D7",
+      "view/uniapp-ts/src/composables/useCategoryPurchase.ts": "45E6FF2AC4E662728AA7D2C7CE12EF13E169F8BE66369FA257687A828382AECE",
+      "view/uniapp-ts/src/components/category/CategoryProductCard.vue": "422899C294C740BFEC5D67E8872E58529FC12115EFF947AD5DF6B0D1CACF9F01",
+      "view/uniapp-ts/src/components/category/CategorySkuSelection.vue": "1B47FE44A95FF9F8D98A03F49BA720844020178DBA2393BFE97F6BD9F79430B8",
+      "view/uniapp-ts/src/components/category/CategoryCartSheet.vue": "D1A0B058B0F9593AA18701F3DD7B51CD2DFA463EA64F840DC86CC09A03E35456"
+    },
+    "legacyReferences": [
+      {
+        "file": "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/devise/goodClass.vue",
+        "bytes": 5081,
+        "sha256": "AFF661555EE8569EDC78BEB38253E9103824BBCBDC17000B6937B301D2AC5F34",
+        "normalizedSha256": "AFF661555EE8569EDC78BEB38253E9103824BBCBDC17000B6937B301D2AC5F34"
+      },
+      {
+        "file": "C:/cinagroup/cinashop-php/app/services/diy/DiyServices.php",
+        "bytes": 23740,
+        "sha256": "DCBBD3D089C9BF2F1253EE12139023987D4780362BC391363E8CD542BCE17D00",
+        "normalizedSha256": "DCBBD3D089C9BF2F1253EE12139023987D4780362BC391363E8CD542BCE17D00"
+      },
+      {
+        "file": "C:/cinagroup/cinashop-php/view/uniapp/pages/goods_cate/goods_cate.vue",
+        "bytes": 2369,
+        "sha256": "F7EA02E501478D91CB6E7645AA22E8DB8E3BF8311BAF5A3FDCA8FD7721059517",
+        "normalizedSha256": "F7EA02E501478D91CB6E7645AA22E8DB8E3BF8311BAF5A3FDCA8FD7721059517"
+      },
+      {
+        "file": "C:/cinagroup/cinashop-php/view/uniapp/pages/goods_cate/template/template1.vue",
+        "bytes": 13241,
+        "sha256": "BD1D8C6FCE3BB390CA3985B5DEFB84A166CB4E037C4062A77BA6A48F4E5B13F5",
+        "normalizedSha256": "BD1D8C6FCE3BB390CA3985B5DEFB84A166CB4E037C4062A77BA6A48F4E5B13F5"
+      },
+      {
+        "file": "C:/cinagroup/cinashop-php/view/uniapp/pages/goods_cate/template/template2.vue",
+        "bytes": 28035,
+        "sha256": "31A631CCE159DE9F512BBF0041730775AE96AAF376CD925B9262831F2565E81E",
+        "normalizedSha256": "31A631CCE159DE9F512BBF0041730775AE96AAF376CD925B9262831F2565E81E"
+      },
+      {
+        "file": "C:/cinagroup/cinashop-php/view/uniapp/pages/goods_cate/template/template3.vue",
+        "bytes": 25210,
+        "sha256": "7A2AEAE8420E248250FCDFF51499E78851EACCCC628544E011A99F3E3AB3F4E4",
+        "normalizedSha256": "7A2AEAE8420E248250FCDFF51499E78851EACCCC628544E011A99F3E3AB3F4E4"
+      },
+      {
+        "file": "C:/cinagroup/cinashop-php/view/uniapp/pages/goods_cate/template/template4.vue",
+        "bytes": 17035,
+        "sha256": "A3E0857BA565419D19D57E8E170EAE94F7253E7AAA4B79A324581E9FBD64D742",
+        "normalizedSha256": "A3E0857BA565419D19D57E8E170EAE94F7253E7AAA4B79A324581E9FBD64D742"
+      }
+    ],
+    "settingsAuditor": {
+      "file": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "normalizedSha256": "542A720A789A30EA20F2E70BF7251F0279CA138204D40114C47C965BE5FCD369",
+      "inventoryPreparedByRoot": "workers-ts/audit/admin-frontend-inventory-product-detail-design-followup-20261002.json"
+    },
+    "scope": "Exact 2/0..5 and 3/0..3 layouts, all four actual category templates, three-level scopes, published products and selected active SKU/cart authority, T1 scrolling, T4 draft filters and six mini-carts versus two T4 cart entries.",
+    "routeLedgerBoundary": "Category already had a registered compatibility target; this full consumer repair adds no logical route or candidate rule. 28 direct, 100 rules (62 candidate/38 partial), 23 gaps remain unchanged.",
+    "evidenceBoundary": "This snapshot contains source connections, exact legacy matrix and current template compilation only. Actual SQL/JWT, runtime cases, four-platform builds and synthetic browser results must be independently bound by final acceptance; no production grant, device or release claim."
+  },
+  "productDetailDesignFollowup": {
+    "date": "2026-10-02",
+    "status": "code_candidate_not_deployed",
+    "coverage": {
+      "adminScreen": true,
+      "contract19": true,
+      "editor18": true,
+      "previews9": true,
+      "dedicatedRoutes": true,
+      "permissions1594": true,
+      "sharedSettingsAuthority": true,
+      "mutationProtocol": true,
+      "genericProtection": true,
+      "actorRecovery": true,
+      "ordinarySafeDisplay": true,
+      "displayPriceIsolation": true,
+      "realReplyPreviews": true,
+      "communityLinkedPaging": true,
+      "actualRanks": true,
+      "realPackages": true,
+      "realRecommendations": true,
+      "navigationAndFooter": true,
+      "sharePosterReferral": true,
+      "ordinaryCartLifecycle": true,
+      "activityConsumers": true,
+      "pcSharedApi": true
+    },
+    "gaps": [],
+    "previousSnapshot": {
+      "file": "workers-ts/audit/uniapp-frontend-parity-product-category-style-followup-20261002.json",
+      "bytes": 97893,
+      "sha256": "02DFC51AEFEA2F2DE2137AF45CED994BE832FEF2C36877CA26283BB35115C263",
+      "normalizedSha256": "02DFC51AEFEA2F2DE2137AF45CED994BE832FEF2C36877CA26283BB35115C263"
+    },
+    "sourceReferences": {
+      "view/common/productDetailDesign.ts": "E417DF32D062659B3800F05688A3163EE18C76A544F2273433E7563BD0E5FEC5",
+      "view/common/productDetailDesignController.ts": "9B3A173A179B4ACFA8822B1BB2F91CF80A4555D4BC4C10822F43F80571C7633A",
+      "view/admin-ts/src/pages/setting/ProductDetailDesign.vue": "314337DDFC67D47405EAFA28A2DAA24E01076E57347E7F9830A5A0BC4C89CE9C",
+      "view/admin-ts/src/pages/setting/ProductDetailDesignPreview.vue": "4326D006C869C16A82C7B4749C87E823516DFE9F3672D688BF7134B3242F60FE",
+      "view/admin-ts/src/api/productDetailDesign.ts": "255BFC271B12A83399DAB60CED69C9B8EECCE6D6BCBC5C40BCDFA289952805D6",
+      "view/admin-ts/src/router/index.ts": "C8948CA0F6647DA795256D76ABDB6142F15211ED7FA59E9A1E17F598DC6C7A78",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "3E23391B60F4C9BC4F92E47EFE2E001B5104472010CE9B9CF8C2C630A30FCA9C",
+      "workers-ts/src/routes/adminapi.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",
+      "workers-ts/src/routes/v1/index.ts": "991C050859C173C77DF934A1EC063D53BF44F0C38B722A2FDD9BE7C92F230EBD",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "3B829AF992C35E2C92FB052009DBCD25436B686DF3FA9FF105722A30AB3F9B76",
+      "workers-ts/src/services/content/ProductDetailDesignReadService.ts": "ABA52317ED759D2CD66730C87D0A5A504094A46C7F833E6A3590C368339E33DE",
+      "workers-ts/src/services/content/ThemeReadService.ts": "50564D39FC79B5FDFACD222F2C09D06864E3A0D8FF217D49C6E913E8D9169BA6",
+      "workers-ts/src/services/admin/AdminProductDetailDesignService.ts": "0DBE5470BB83041528F0FD561C3B1299274C69B92BD93FA7FE1441B4D262D2E1",
+      "workers-ts/src/services/admin/AdminProductDetailDesignInput.ts": "430B37A7A6E2764EC7314E371848C4AA145E9808DC719E27BBBAD038249F6048",
+      "workers-ts/src/controllers/api/v1/AdminProductDetailDesignController.ts": "2B3DE391079D8F06AF1D57F59E3A49549D15E62329EC6D0C43EAA0552ABABFBC",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "A2E7B9BE701F3F04D9F44BC4DF9893CA2D993056CB05AE5801DFA0D474840743",
+      "workers-ts/src/services/content/V2PublicCompatibilityService.ts": "0A12332F1038E86B274F8D4DFAE43ABED5E6E47399C924D89B0B009FAD2CF4DC",
+      "workers-ts/src/services/product/ProductDetailDesignData.ts": "E6BEB2D85AFE157C1BAE54BD31CB6B7DC93DE624205E806BEB6C8389226A44F8",
+      "workers-ts/src/services/product/StoreProductService.ts": "F2E5FCCF262BF1AE28760C48392465E9C7222B0D612525FB27FEA0AD48354291",
+      "workers-ts/src/controllers/api/v1/ProductController.ts": "BED59452B5DB09AB015CE2EA44CD337B335D0EA4C3F216F52FE660A80B9A8642",
+      "workers-ts/src/services/product/PublicCatalogService.ts": "0C8961AA588192A03B866E7126B6665A83357E4EE791C0043B322CE6571207F4",
+      "workers-ts/src/services/product/ReplyService.ts": "F29F3CC34149003A80C395D50A0430621009C35D42259E250CD35EE230EA922B",
+      "workers-ts/src/dao/product/ReplyDaos.ts": "61A0C7B93A219A72E1C0D7144EA7F00D76C4F83F90D78D4F9C4A88F8138D3061",
+      "workers-ts/src/services/activity/StoreDiscountService.ts": "F1048151CA90DE6FD5ADA9BB149AAB2BB3AE6A4BC82B67D9E38A143155EB729B",
+      "workers-ts/src/services/order/StoreCartService.ts": "317B6BDD7A546BBA1E33EB75AF626EF2A800901826D204B6670722C003614E8E",
+      "view/common/categoryCatalog.ts": "CF84CBA0693BB5727921E988B27FA03C1A579B170C7A79E3E87E149B72246DC0",
+      "workers-ts/src/services/activity/ActivityService.ts": "D5C9702F787B1EF5818B9DBBB63B74CCD4B04D0870BFE51100A7971D5675F509",
+      "workers-ts/src/services/activity/IntegralProductReadService.ts": "B20D187AED8090D9DCFE9F3FBBA9D7E79620EDAA7D64EAD0789B0FB104CDF454",
+      "workers-ts/src/services/activity/SeckillSkuCatalogService.ts": "4DA7B1F848E64576098A30884A5740037BCF2B2AA0C16C97CA16C29D213C1E9F",
+      "workers-ts/src/services/activity/CombinationSkuCatalogService.ts": "613272D9C4DFE706875BAFE9F05411DD92CB08D486ABE1E700CBD05017D25701",
+      "workers-ts/src/services/activity/PresaleSkuCatalogService.ts": "1F1642C5C26F0EE55DFAD1E7C074ED204E070788E61C31E3B09D9E3A634BF3C6",
+      "workers-ts/src/services/activity/PresaleCatalogSnapshot.ts": "B886B83AB010670412C43C4B28C8CDF5D4C2C0623818E01AD237E8B4D0040584",
+      "workers-ts/src/controllers/api/v1/UserActivityController.ts": "49074FC282B70A5623500D6796D2A93CD56B3736522CB2D198EAFB64CA7CAF28",
+      "view/uniapp-ts/src/api/seckill.ts": "EA5C9C2E3F3723895E7A133A81369379F8E044BDD0D4A225EF86C35D8CBCE0C5",
+      "view/uniapp-ts/src/api/combination.ts": "FFA6B5B18E1EBB05F7FE20AD84CAD3142714F05A80FDE41F46ECC83008FD6C54",
+      "view/uniapp-ts/src/api/presale.ts": "75DDC08C5401B90B3E9ECDF11D6E140E724E8E5F731A950B30FFDDD771FB961E",
+      "view/uniapp-ts/src/composables/useSeckillPurchase.ts": "CAD27A83CC974BE6E813AE826740C0289696E7047C582FD72869670BDD6337FA",
+      "view/uniapp-ts/src/composables/useCombinationPurchase.ts": "4EB9F4E836718C746B9CA04ABC1CE10C37F897110C8166AF9601E7453380B4CE",
+      "view/uniapp-ts/src/composables/usePresalePurchase.ts": "05E08BD5F89087AAE3734723896AB1907D474973A3C39210B879B3E4C295E38A",
+      "view/uniapp-ts/src/composables/useIntegralPurchase.ts": "93618A50F81FE8A0B2C453B3931C23712CDCB76AC5E885F8CEBAEFB73F7FA69F",
+      "workers-ts/src/services/activity/StoreNewcomerService.ts": "F22BC876E6558C462E2D9791E618285941F1E1EC4F63E7A7415EB7CB4F9EBADE",
+      "view/uniapp-ts/src/api/productDetailDesign.ts": "72DFB3CBB58F51CD19173A47B967E38BE3E6DE265C421BAD58038F5DC93879E5",
+      "view/uniapp-ts/src/utils/productDetailDesign.ts": "E1A8A6B47B51CBE82D8F80C8E8EE1A621FC3763478AE31A4D12B22FB6672337F",
+      "view/uniapp-ts/src/api/productDetail.ts": "1EB1131E14CC1AED014E7475F84769101FCF8D4BFD1AB1CC8A3BF94ED5A99F7B",
+      "view/uniapp-ts/src/api/order.ts": "FEED69880A1E3852D613C0896C38B2563E09EB939025E90E210762C91482231D",
+      "view/uniapp-ts/src/api/activity.ts": "C0724336DF519CD02F711D0560DC44781277F504E70A21E5F0CED12D2F66534B",
+      "view/uniapp-ts/src/pages/goods/detail.vue": "246106B6D5FC4CB1FA74D9AD99BB8A39E0A4AAAD0150B3084FE6F4CF85402224",
+      "view/uniapp-ts/src/pages/goods/productCommunity.vue": "C8235CDF52641F86DA8BBC53174C60FFDA9C49F3526A99276547A2A79C0BA036",
+      "view/uniapp-ts/src/components/productDetail/ProductMedia.vue": "C07B92D3688F4F51E29A27FCAD2A6A1CD8F28B557FDF92534DA456339FAC738E",
+      "view/uniapp-ts/src/components/productDetail/ActivityDetailContent.vue": "2315C036F4486A73936B621A62C64346B249A9E08FF3C1325A92536CF39C6223",
+      "view/uniapp-ts/src/components/productDetail/ProductSharePoster.vue": "50C0AD40B43F6DA920FE6BD6855F558E4BC074007E40FA52E73091604C5B0BE6",
+      "view/uniapp-ts/src/components/IntegralSharePoster.vue": "2A7A5368411D11467B794055D652546A0FD58C64020CB3C41BE7D48B0717307B",
+      "view/uniapp-ts/src/utils/ordinaryShare.ts": "204721784C508607F028A6A86BA5F66675C869C56D8F2A90D9B0A6C83C94E09E",
+      "view/uniapp-ts/src/utils/ordinaryWechatShare.ts": "B408B04D6E687CF554173DAFE5D2B552BD716944EDF8F9CB257113F8261B8D62",
+      "view/uniapp-ts/src/composables/useOrdinaryReferral.ts": "BE574CE3181DDDFB7D8F2975908BB4793038AF15527193CB2EEC4E095184633A",
+      "workers-ts/src/services/product/ProductShareCodeService.ts": "4DD5E1E83160F88FC1461ABB54F00EC762B1F737F54AE4317107F30872B665B0",
+      "workers-ts/src/controllers/api/v1/ProductShareCodeController.ts": "35153E88499ECADC3B3CE751BE5F397F3B23E2BB153838FE60910D13BBD5B8A6",
+      "workers-ts/src/services/wechat/OfficialAccountQrcodeService.ts": "9D65D3F3A3B2517E438921EE920F16ADC38298B9011BD92EB98D3BAE233D94C1",
+      "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts": "9B92865AF81CEF857F44E9599235DC64ECC571875AAD9422435199295407C803",
+      "workers-ts/src/services/product/ProductShareScene.ts": "2A3AD5B75DAEB993B05346C42C72B80E3DF9616196C5B40A1B3B79C4E1CE634B",
+      "workers-ts/src/services/wechat/WechatCallbackService.ts": "40ECABE755CF1034D7A9E59B9C8AADD3C9D9B5A07D084A222D58DB3B63B534CA",
+      "view/uniapp-ts/src/composables/useOrdinaryCollection.ts": "66C5457F6FD84CFCF00A4424A9DB7619E52AC67D5DBA54F76F35223E600C613B",
+      "view/uniapp-ts/src/composables/useActivityDetailDesign.ts": "FA9C43B5619C0707BA1AC7CF1D2E87E19E3564A855FF48BBA053BA2DDA271375",
+      "view/uniapp-ts/src/components/productDetail/ActivityDetailMenu.vue": "1436747C343C629F67EAD6CD0DA7F71F60351C62039534D6B98DB2D933FD8717",
+      "view/uniapp-ts/src/pages/activity/seckillDetail.vue": "EC5EDC3EB506B2107303F60061A17F5E29D4A589D97A6AB955731D8C6A3E5611",
+      "view/uniapp-ts/src/pages/activity/detail.vue": "4F3E60AA8137369434EA0F4E9D8A6BBC5D34DFD440C475490CBA33DC611907F4",
+      "view/uniapp-ts/src/pages/activity/bargainDetail.vue": "2C94434A16CAA46AEF355ACB7C672F1FD760E8F81B637A928C3A2E472D82AE49",
+      "view/uniapp-ts/src/pages/activity/presaleDetail.vue": "0F31CB77F102DB4160C614EE6B27D28D45B9F3EE2863B6EB1060DB65B7272488",
+      "view/uniapp-ts/src/pages/activity/integralDetail.vue": "B23A4C9E924127FAB2122FE4870DA4D697CF321C9A240FB6636FCDE16E0BA340",
+      "view/uniapp-ts/src/pages/activity/newcomerDetail.vue": "35BF75ACEA346874E675D3E86F7434684AB4F311D9B6FCA515250E26CF599E85",
+      "view/pc-ts/src/api/product.ts": "B9F4525F090B5ABB3E2FA5BEE8B802F5267C4B105681A5B03E9B0E2C9A628235",
+      "view/uniapp-ts/src/pages.json": "F5B0C0EFBB3B2AF71309C6E4ACE8B27757185E9E8BDC8565964D347341693EC6"
+    },
+    "scope": "Complete nineteen-key nine-module protected editor, current ordinary product consumers, genuine legacy activity subset, safe media, SKU/cart recovery and actual web/official/mini sharing callbacks.",
+    "routeLedgerBoundary": "Adds one current product-linked community page, taking registered current pages to 97. The original 151 legacy ledger remains 28 direct, 100 compatibility rules (62 candidate/38 partial), and 23 gaps. No unfinished parent is closed by this row.",
+    "evidenceBoundary": "Source/template compilation only; runtime/native/provider/build/browser receipts are bound separately. No production grants, live WeChat account, physical-device or release acceptance."
+  },
+  "userCenterDesignFollowup": {
+    "date": "2026-10-03",
+    "status": "code_partial_not_deployed",
+    "coverage": {
+      "adminScreen": true,
+      "sixBlockContract": true,
+      "memberEditor": true,
+      "orderStatisticsEditor": true,
+      "listEditors": true,
+      "previewsSix": true,
+      "assetLinkPicker": true,
+      "dedicatedRoutes": true,
+      "permissions1592": true,
+      "sharedThreeAuthority": true,
+      "atomicMutation": true,
+      "merchantImmutable": true,
+      "genericProtection": true,
+      "actorRecovery": true,
+      "publicProjection": true,
+      "realNineAssets": true,
+      "memberFiveStyles": true,
+      "orderThreeStyles": true,
+      "statisticsTwoStyles": false,
+      "posterCarousel": true,
+      "menuThreeStyles": true,
+      "menuRoleGates": false,
+      "videoCollections": true,
+      "memberCode": true,
+      "userLifecycle": true,
+      "requestDeadline": true
+    },
+    "gaps": [
+      "statisticsTwoStyles",
+      "menuRoleGates"
+    ],
+    "previousSnapshot": {
+      "file": "workers-ts/audit/uniapp-frontend-parity-product-detail-design-followup-20261002.json",
+      "bytes": 109406,
+      "sha256": "E20311095ACA03DF487060797F99E5A84EE7844F15001BCE4ECBB01E4BB09C63"
+    },
+    "sourceReferences": {
+      "view/common/userCenterDesign.ts": {
+        "file": "view/common/userCenterDesign.ts",
+        "bytes": 15969,
+        "sha256": "205F96E2A13F820B54957D904DB3B0AA52F981DA524B48692D751EF180C7966C"
+      },
+      "view/common/userCenterDesignController.ts": {
+        "file": "view/common/userCenterDesignController.ts",
+        "bytes": 22858,
+        "sha256": "0786BFB30C53D499EF3582EC792D979A2E5DD78B2C5DA8D4357D926C4A22C24E"
+      },
+      "view/admin-ts/src/pages/setting/UserCenterDesign.vue": {
+        "file": "view/admin-ts/src/pages/setting/UserCenterDesign.vue",
+        "bytes": 24441,
+        "sha256": "74F5E80E86BA9FBA8BDE71FA4CB2EB608C47A79EB48BCF2B8FB3E3E7C2275E33"
+      },
+      "view/admin-ts/src/pages/setting/UserCenterDesignPreview.vue": {
+        "file": "view/admin-ts/src/pages/setting/UserCenterDesignPreview.vue",
+        "bytes": 7631,
+        "sha256": "0A442FEA1A3C73A3D7247E94BA80CCCF45847720C75960B41E9B8783C3C15381"
+      },
+      "view/admin-ts/src/pages/setting/UserCenterDesignPicker.vue": {
+        "file": "view/admin-ts/src/pages/setting/UserCenterDesignPicker.vue",
+        "bytes": 5727,
+        "sha256": "87DB4BB74EC2C30DFEA251AF33692C363E33369D5CEC8F233A8B265068661602"
+      },
+      "view/admin-ts/src/api/userCenterDesign.ts": {
+        "file": "view/admin-ts/src/api/userCenterDesign.ts",
+        "bytes": 3200,
+        "sha256": "61E7AFB90530E6B38B4873C47A02B731E74AE48417881E3B028B8500CFD9E074"
+      },
+      "view/admin-ts/src/router/index.ts": {
+        "file": "view/admin-ts/src/router/index.ts",
+        "bytes": 23711,
+        "sha256": "B1D89D4E5870CB2C2D3FFD263CC39466C5CC550887B0FDC9355B25C5E54D97D3"
+      },
+      "view/admin-ts/src/layouts/AdminLayout.vue": {
+        "file": "view/admin-ts/src/layouts/AdminLayout.vue",
+        "bytes": 30402,
+        "sha256": "37697F561C153F50ECBEA9962E2E67464BE119527A823D8B33AA529C5D1DF087"
+      },
+      "workers-ts/src/routes/adminapi.ts": {
+        "file": "workers-ts/src/routes/adminapi.ts",
+        "bytes": 91190,
+        "sha256": "132EAEDD36931E335923562FBCFA755AA56F3488F6AA9CA0F9A937F95E1E6687"
+      },
+      "workers-ts/src/routes/v1/index.ts": {
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "bytes": 145274,
+        "sha256": "377FE32FF22F5618E17062487D4A0E9E876979A0776FD6B3B2557307857CA121"
+      },
+      "workers-ts/src/services/admin/AdminPermissionService.ts": {
+        "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "bytes": 52291,
+        "sha256": "B9459174EE8D7BC1A608C8D012448F7B197999106EA0DB0865729E0B1141A85F"
+      },
+      "workers-ts/src/services/admin/AdminUserCenterDesignInput.ts": {
+        "file": "workers-ts/src/services/admin/AdminUserCenterDesignInput.ts",
+        "bytes": 1792,
+        "sha256": "CC66F5533D261783CE81961FEEB90E027DDAB51417F43401CAC4D3EA32F0180A"
+      },
+      "workers-ts/src/services/admin/AdminUserCenterDesignService.ts": {
+        "file": "workers-ts/src/services/admin/AdminUserCenterDesignService.ts",
+        "bytes": 10082,
+        "sha256": "879E440E77A309FB4164ECB0990998F2B7EB37C4BB9FFB1FB9FC1066211499D0"
+      },
+      "workers-ts/src/controllers/api/v1/AdminUserCenterDesignController.ts": {
+        "file": "workers-ts/src/controllers/api/v1/AdminUserCenterDesignController.ts",
+        "bytes": 2526,
+        "sha256": "D552BE4EFEE0E325917E7D3ACF69340DC7625E48A8E166960FAA33CB62565D36"
+      },
+      "workers-ts/src/services/content/UserCenterDesignReadService.ts": {
+        "file": "workers-ts/src/services/content/UserCenterDesignReadService.ts",
+        "bytes": 11350,
+        "sha256": "64220510FE8A7045E819B119AA986E54A1355D2840A1103872738F65D9F6531F"
+      },
+      "workers-ts/src/services/content/UserCenterPublicReadService.ts": {
+        "file": "workers-ts/src/services/content/UserCenterPublicReadService.ts",
+        "bytes": 16169,
+        "sha256": "37C7BC19349FC37BD10FB9B3C65010FBE4D3829F519CF96F5B376286639928F8"
+      },
+      "workers-ts/src/services/admin/AdminUserCenterCatalogService.ts": {
+        "file": "workers-ts/src/services/admin/AdminUserCenterCatalogService.ts",
+        "bytes": 4025,
+        "sha256": "56883B79D6D4DE76880EF3FA617EA6A71C450BDC308B9140217AE3010ACEED99"
+      },
+      "workers-ts/src/services/product/PublicCatalogService.ts": {
+        "file": "workers-ts/src/services/product/PublicCatalogService.ts",
+        "bytes": 31907,
+        "sha256": "8A17B0A9D7B8E411BABD4FBCA909D0FE1BC19CC97BDCA56EA62CEEE02C544B9E"
+      },
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": {
+        "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "bytes": 117507,
+        "sha256": "F77755E78080AC5CA00E9A31005A20F04F45872B96263D771278B489FC09B627"
+      },
+      "workers-ts/src/services/admin/AdminPcBannerService.ts": {
+        "file": "workers-ts/src/services/admin/AdminPcBannerService.ts",
+        "bytes": 19150,
+        "sha256": "28A6201968E25DB0AB8E41C2CDCABD45DB1712E2A88ADC3AD81414C81A23B031"
+      },
+      "workers-ts/src/services/admin/AdminSignDayConfigService.ts": {
+        "file": "workers-ts/src/services/admin/AdminSignDayConfigService.ts",
+        "bytes": 14153,
+        "sha256": "E6D60257ED10CFE83FC41E4EE40315CA23A5CADC323E4659B70B997524023625"
+      },
+      "workers-ts/src/services/admin/AdminRechargeQuotaService.ts": {
+        "file": "workers-ts/src/services/admin/AdminRechargeQuotaService.ts",
+        "bytes": 9291,
+        "sha256": "A36BECE0D49EF772371E16F6804EFF63B5C9804A314DF3D7E93D93FC8D9AD835"
+      },
+      "workers-ts/src/services/user/UserFinanceReadService.ts": {
+        "file": "workers-ts/src/services/user/UserFinanceReadService.ts",
+        "bytes": 25328,
+        "sha256": "3E8605515E1E503EA99B52E70E268B7696C57DBD6B14D0021CF0535236040804"
+      },
+      "workers-ts/src/services/user/UserProfileService.ts": {
+        "file": "workers-ts/src/services/user/UserProfileService.ts",
+        "bytes": 23334,
+        "sha256": "995668FEC37E707CF12940FAF841D6F178F481EC3790F9717C57D79CC1FA4FC8"
+      },
+      "workers-ts/src/controllers/api/v1/UserProfileController.ts": {
+        "file": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+        "bytes": 4267,
+        "sha256": "C461D128F95FD195AB5D76A991D1B0C845ADF66D70F97ADAD33A2322B65F8CF6"
+      },
+      "workers-ts/src/services/order/StoreOrderWriteoffService.ts": {
+        "file": "workers-ts/src/services/order/StoreOrderWriteoffService.ts",
+        "bytes": 31505,
+        "sha256": "536B36AE072B802EE7A720DBA0DA862BBF71399AEBE0726678743EF057E88636"
+      },
+      "workers-ts/src/services/user/UserCollectCompatibilityService.ts": {
+        "file": "workers-ts/src/services/user/UserCollectCompatibilityService.ts",
+        "bytes": 9031,
+        "sha256": "1BC4CB91365D1D1C2676621C762B452D748B695ECE8D5EAD46EB20D81B8F132F"
+      },
+      "workers-ts/src/controllers/api/v1/UserActivityController.ts": {
+        "file": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+        "bytes": 21199,
+        "sha256": "43D73972BE9F778C010DD688D6F4D778B35666FBB25DCF3BDA31D89A0B2AF631"
+      },
+      "view/uniapp-ts/src/pages/user/index.vue": {
+        "file": "view/uniapp-ts/src/pages/user/index.vue",
+        "bytes": 16994,
+        "sha256": "8F1F2645964B1C5EFFDA8AEEA3037D38F820143E1822E25074A84C1BEFC5B367"
+      },
+      "view/uniapp-ts/src/composables/useUserCenter.ts": {
+        "file": "view/uniapp-ts/src/composables/useUserCenter.ts",
+        "bytes": 9348,
+        "sha256": "6EC00C781CC6683E19475DAB3F06E7000A6C0BDC923AF1333AC5647E4FDEFCD9"
+      },
+      "view/uniapp-ts/src/utils/userCenter.ts": {
+        "file": "view/uniapp-ts/src/utils/userCenter.ts",
+        "bytes": 11910,
+        "sha256": "9000125FBB32E5BB0916BE80E02FF9965D6574CC8D640732907A314707449320"
+      },
+      "view/uniapp-ts/src/api/userCenter.ts": {
+        "file": "view/uniapp-ts/src/api/userCenter.ts",
+        "bytes": 2682,
+        "sha256": "799FA3FAB73F519B976497250DE0EC84F5259A748626CE3880B816D5844B1E18"
+      },
+      "view/uniapp-ts/src/components/userCenter/UserCenterMenus.vue": {
+        "file": "view/uniapp-ts/src/components/userCenter/UserCenterMenus.vue",
+        "bytes": 3930,
+        "sha256": "3F5B621408DE45FCDD97D6943B34427FDE408442428092B096D4EAFBC92AE5DA"
+      },
+      "view/uniapp-ts/src/pages/user/collect.vue": {
+        "file": "view/uniapp-ts/src/pages/user/collect.vue",
+        "bytes": 6342,
+        "sha256": "D4EDBECE31559AAB20B3272C422848B366436906F7C2D75154942A969195352E"
+      },
+      "view/uniapp-ts/src/composables/useUserCollections.ts": {
+        "file": "view/uniapp-ts/src/composables/useUserCollections.ts",
+        "bytes": 6137,
+        "sha256": "E72AC33137BDB5C6F2BD673980C60FD22C14BA89CCDEEB150DF128F296B8ABBD"
+      },
+      "view/uniapp-ts/src/pages/user/memberCode.vue": {
+        "file": "view/uniapp-ts/src/pages/user/memberCode.vue",
+        "bytes": 4132,
+        "sha256": "EAAFA3D39A6F8DFE957C13431FDD0B87A53D3C55D70E5FFEAF97E051B2B3B289"
+      },
+      "view/uniapp-ts/src/config/navigation.ts": {
+        "file": "view/uniapp-ts/src/config/navigation.ts",
+        "bytes": 18575,
+        "sha256": "6F2B079E9394EBF7740DA2E671F794B88CDB1C7E3FC39328B975CF58955916F6"
+      },
+      "view/uniapp-ts/src/pages.json": {
+        "file": "view/uniapp-ts/src/pages.json",
+        "bytes": 13549,
+        "sha256": "3C36A8FD3487678B08823ED5F89CB7A29C55C27F032FD40D72D62F84A65C352C"
+      },
+      "view/uniapp-ts/src/pages/order/list.vue": {
+        "file": "view/uniapp-ts/src/pages/order/list.vue",
+        "bytes": 12664,
+        "sha256": "3FA416D061146C6AEB0513C68277909C95094A685378A64EE15BF81643B1BB1E"
+      }
+    },
+    "scope": "Complete six-module personal-centre editor and actual registered consumers; all three authorities, exact 1592 permission, source-bound merchant identity, private/public media, actual nine assets, five member/three order/two statistic styles, carousel, video collection, local payment-code QR and account/request lifecycle.",
+    "routeLedger": {
+      "directRegistered": 28,
+      "legacyCompatibilityRules": 101,
+      "candidateCoveredRules": 62,
+      "partialReplacementRules": 39,
+      "unmappedOrCrossSurface": 22,
+      "accountedLegacyRoutes": 151
+    },
+    "remaining": [
+      "Old merchant work/customer-service/distribution management targets and statistic actions remain incomplete; writeoff authority is not an equivalent management role.",
+      "Local actor-bound payment-code QR does not establish legacy routineUrl/wechatUrl provider parity. Native customer service, external mini-programs, devices, real accounts, production data and release remain separate."
+    ],
+    "evidenceBoundary": "Source/template compilation only. Native/runtime/SQL/JWT/provider/build/browser receipts must be bound independently. Every unfinished checklist parent remains unchanged."
+  },
+  "currentThemeHosts": {
+    "date": "2026-10-03",
+    "hosts": [
+      {
+        "route": "/pages/index/index",
+        "file": "view/uniapp-ts/src/pages/index/index.vue",
+        "bytes": 11859,
+        "sha256": "849D905E071C1D801B7E4BAFD2FB1BE2DB6816C4A8563201BEF88A688A5845B9",
+        "normalizedSha256": "707C72F35826008BAC2ABCC6B94363AF7183AAD207A685C8A50DA48128540B5C",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/productCommunity",
+        "file": "view/uniapp-ts/src/pages/goods/productCommunity.vue",
+        "bytes": 4858,
+        "sha256": "C8235CDF52641F86DA8BBC53174C60FFDA9C49F3526A99276547A2A79C0BA036",
+        "normalizedSha256": "C8235CDF52641F86DA8BBC53174C60FFDA9C49F3526A99276547A2A79C0BA036",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/memberCode",
+        "file": "view/uniapp-ts/src/pages/user/memberCode.vue",
+        "bytes": 4132,
+        "sha256": "EAAFA3D39A6F8DFE957C13431FDD0B87A53D3C55D70E5FFEAF97E051B2B3B289",
+        "normalizedSha256": "EAAFA3D39A6F8DFE957C13431FDD0B87A53D3C55D70E5FFEAF97E051B2B3B289",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/behalf/record/index",
+        "file": "view/uniapp-ts/src/pages/behalf/record/index.vue",
+        "bytes": 7542,
+        "sha256": "A0E14D4B6584D31307DD5F5A25651A54B5F762701BC9F26458EB0DFC203AFB84",
+        "normalizedSha256": "A0E14D4B6584D31307DD5F5A25651A54B5F762701BC9F26458EB0DFC203AFB84",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/behalf/user_list/index",
+        "file": "view/uniapp-ts/src/pages/behalf/user_list/index.vue",
+        "bytes": 4926,
+        "sha256": "B0AF1178E6F42DA96AFC7BA31853E40DD4BCB4D1A49374F1B8832DD98AA13E5F",
+        "normalizedSha256": "B0AF1178E6F42DA96AFC7BA31853E40DD4BCB4D1A49374F1B8832DD98AA13E5F",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/behalf/order_confirm/index",
+        "file": "view/uniapp-ts/src/pages/behalf/order_confirm/index.vue",
+        "bytes": 14286,
+        "sha256": "E629553A5DF70EA6540AD3CB074BF66F395475178C1F2C3F52CC2B6B286803B2",
+        "normalizedSha256": "E629553A5DF70EA6540AD3CB074BF66F395475178C1F2C3F52CC2B6B286803B2",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/behalf/order_detail/index",
+        "file": "view/uniapp-ts/src/pages/behalf/order_detail/index.vue",
+        "bytes": 4741,
+        "sha256": "1A472364B8C1BADE2571425B0FF5537F69D2649969AA5734A69D0D60B8E82ADC",
+        "normalizedSha256": "1A472364B8C1BADE2571425B0FF5537F69D2649969AA5734A69D0D60B8E82ADC",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/behalf/cashier/index",
+        "file": "view/uniapp-ts/src/pages/behalf/cashier/index.vue",
+        "bytes": 6578,
+        "sha256": "B463DED7891F880686DA490EDE1FF5171DD28A9A1D17E2F9F243FAAE36390E05",
+        "normalizedSha256": "B463DED7891F880686DA490EDE1FF5171DD28A9A1D17E2F9F243FAAE36390E05",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/behalf/goods_list/index",
+        "file": "view/uniapp-ts/src/pages/behalf/goods_list/index.vue",
+        "bytes": 6369,
+        "sha256": "986DF9CF60BE097761EA7E6577D6B838071B6D17BCF8759C6C71538D0E435CAF",
+        "normalizedSha256": "986DF9CF60BE097761EA7E6577D6B838071B6D17BCF8759C6C71538D0E435CAF",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/extension/customer_list/feedback",
+        "file": "view/uniapp-ts/src/pages/extension/customer_list/feedback.vue",
+        "bytes": 3598,
+        "sha256": "B3625EADA0A813242C0E9302845464B9C0E7BF513ABB9B3029201A2D27C163FA",
+        "normalizedSha256": "B3625EADA0A813242C0E9302845464B9C0E7BF513ABB9B3029201A2D27C163FA",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/work/userInfo/index",
+        "file": "view/uniapp-ts/src/pages/work/userInfo/index.vue",
+        "bytes": 5123,
+        "sha256": "17C45EF22E81975B0388F851BE1CB26E42A4B4A65A4EA0AA38051E9AC4620D3F",
+        "normalizedSha256": "17C45EF22E81975B0388F851BE1CB26E42A4B4A65A4EA0AA38051E9AC4620D3F",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/work/orderList/index",
+        "file": "view/uniapp-ts/src/pages/work/orderList/index.vue",
+        "bytes": 7489,
+        "sha256": "47B2769BA5B7B975811904B37DDF59A8399BC0D0C854D3C7FD0225BD5279BB29",
+        "normalizedSha256": "47B2769BA5B7B975811904B37DDF59A8399BC0D0C854D3C7FD0225BD5279BB29",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/work/orderDetail/index",
+        "file": "view/uniapp-ts/src/pages/work/orderDetail/index.vue",
+        "bytes": 6262,
+        "sha256": "0A6D40AA18C624BC3DADD5E23E02445906964C2E9E0B97954054A0BA953A5880",
+        "normalizedSha256": "0A6D40AA18C624BC3DADD5E23E02445906964C2E9E0B97954054A0BA953A5880",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/work/record/index",
+        "file": "view/uniapp-ts/src/pages/work/record/index.vue",
+        "bytes": 7002,
+        "sha256": "8E24058382718081A67DDD6E91C591547DD0BDB7A2C1E3B4B475EB555693CBB2",
+        "normalizedSha256": "8E24058382718081A67DDD6E91C591547DD0BDB7A2C1E3B4B475EB555693CBB2",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/work/groupInfo/index",
+        "file": "view/uniapp-ts/src/pages/work/groupInfo/index.vue",
+        "bytes": 7428,
+        "sha256": "C821F8333C10FCD3105FA4109B7C780F3037B28A33BF481A6796DCEA513AEF4E",
+        "normalizedSha256": "C821F8333C10FCD3105FA4109B7C780F3037B28A33BF481A6796DCEA513AEF4E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/cate",
+        "file": "view/uniapp-ts/src/pages/goods/cate.vue",
+        "bytes": 23728,
+        "sha256": "5CEBBA96266C36FC52E107731AEAD91120E6A3C8A9E2194F939AEFECB373A820",
+        "normalizedSha256": "5CEBBA96266C36FC52E107731AEAD91120E6A3C8A9E2194F939AEFECB373A820",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/discover/index",
+        "file": "view/uniapp-ts/src/pages/discover/index.vue",
+        "bytes": 15194,
+        "sha256": "84FB0AD608C5E708D4510D9180D924773F2C442DA3DDA8CAB67C3057FFD94E04",
+        "normalizedSha256": "8D2902293EDF545BC003DEB5087C65D1A36203C97E4AD9254E3A2F0B645EC6BF",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/discover/people",
+        "file": "view/uniapp-ts/src/pages/discover/people.vue",
+        "bytes": 7125,
+        "sha256": "92AC6CED70FF4FDF59A2A0A5248EAA18CA890F046D820CDA1B60F44032A3E50B",
+        "normalizedSha256": "92AC6CED70FF4FDF59A2A0A5248EAA18CA890F046D820CDA1B60F44032A3E50B",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/discover/discoverTopic/index",
+        "file": "view/uniapp-ts/src/pages/discover/discoverTopic/index.vue",
+        "bytes": 767,
+        "sha256": "810A09CCE583AC805652255C921AB7C4BD986D22846B9CC197D1A62419A79E75",
+        "normalizedSha256": "810A09CCE583AC805652255C921AB7C4BD986D22846B9CC197D1A62419A79E75",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/discover/discoverSearch/index",
+        "file": "view/uniapp-ts/src/pages/discover/discoverSearch/index.vue",
+        "bytes": 768,
+        "sha256": "EBD55BE5793292FFD22161EC7E2699E051FD0C62F3CD4310AC76DEE4F46DC6F8",
+        "normalizedSha256": "EBD55BE5793292FFD22161EC7E2699E051FD0C62F3CD4310AC76DEE4F46DC6F8",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/discover/discoverVideo/index",
+        "file": "view/uniapp-ts/src/pages/discover/discoverVideo/index.vue",
+        "bytes": 767,
+        "sha256": "841CC6CA59DDBA73AD1909B4A1D06CB53B18DDE6B7E983C49F85B2DB4F826727",
+        "normalizedSha256": "841CC6CA59DDBA73AD1909B4A1D06CB53B18DDE6B7E983C49F85B2DB4F826727",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/discover/discoverVideo/app",
+        "file": "view/uniapp-ts/src/pages/discover/discoverVideo/app.vue",
+        "bytes": 815,
+        "sha256": "327BBCD65F5DC3A716CDFCF1C176C7C289863898A3B7FE2C52AA21E6D107633E",
+        "normalizedSha256": "327BBCD65F5DC3A716CDFCF1C176C7C289863898A3B7FE2C52AA21E6D107633E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/cart/index",
+        "file": "view/uniapp-ts/src/pages/cart/index.vue",
+        "bytes": 7942,
+        "sha256": "1668526ED72614E8B5CBDAAC52A3C65BD38F0ABD8CBABC161BA4A3C3A29B5A67",
+        "normalizedSha256": "633FC72CAC31B98587E274BBC0DA7B91D72481EEED868AAF9734EBCBC72F0B04",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/index",
+        "file": "view/uniapp-ts/src/pages/user/index.vue",
+        "bytes": 16994,
+        "sha256": "8F1F2645964B1C5EFFDA8AEEA3037D38F820143E1822E25074A84C1BEFC5B367",
+        "normalizedSha256": "8F1F2645964B1C5EFFDA8AEEA3037D38F820143E1822E25074A84C1BEFC5B367",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/couponProducts",
+        "file": "view/uniapp-ts/src/pages/user/couponProducts.vue",
+        "bytes": 7032,
+        "sha256": "A6C95CBE067589D61D530056553DB8CBC844171F1F515D43A70C8F08268E7B91",
+        "normalizedSha256": "A6C95CBE067589D61D530056553DB8CBC844171F1F515D43A70C8F08268E7B91",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/list",
+        "file": "view/uniapp-ts/src/pages/goods/list.vue",
+        "bytes": 9098,
+        "sha256": "250A260DCABB7CFFA1DE6AF916ADBA061D03C8130643E794D1A7F3BD638D66DE",
+        "normalizedSha256": "2D512153CC4A82DB8C4F01F31BFE29B99954A8A6075E0D1BD9E6B40D011CD3CC",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/detail",
+        "file": "view/uniapp-ts/src/pages/goods/detail.vue",
+        "bytes": 57998,
+        "sha256": "7C9F9EAE48E658D0E2141A065FD3A5E582E025DD51A80960AE7A9EADF8ACF029",
+        "normalizedSha256": "246106B6D5FC4CB1FA74D9AD99BB8A39E0A4AAAD0150B3084FE6F4CF85402224",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/presale",
+        "file": "view/uniapp-ts/src/pages/activity/presale.vue",
+        "bytes": 3847,
+        "sha256": "4D60603B148AE6BD99CCA50024492874073547BCA8C7672C33DE1E509BA2DD74",
+        "normalizedSha256": "4D60603B148AE6BD99CCA50024492874073547BCA8C7672C33DE1E509BA2DD74",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/presaleDetail",
+        "file": "view/uniapp-ts/src/pages/activity/presaleDetail.vue",
+        "bytes": 6797,
+        "sha256": "0F31CB77F102DB4160C614EE6B27D28D45B9F3EE2863B6EB1060DB65B7272488",
+        "normalizedSha256": "0F31CB77F102DB4160C614EE6B27D28D45B9F3EE2863B6EB1060DB65B7272488",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/columnGoods/rank/index",
+        "file": "view/uniapp-ts/src/pages/columnGoods/rank/index.vue",
+        "bytes": 5030,
+        "sha256": "7DC11501B17992554C230EC7EA35A3B9F28AC299EF8174402E210E02A94F79E0",
+        "normalizedSha256": "7DC11501B17992554C230EC7EA35A3B9F28AC299EF8174402E210E02A94F79E0",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/columnGoods/live_list/index",
+        "file": "view/uniapp-ts/src/pages/columnGoods/live_list/index.vue",
+        "bytes": 6107,
+        "sha256": "2209FB2254405999E407F86C0C38FD09A2DAEB3363C1A85E274499E743D5463F",
+        "normalizedSha256": "2209FB2254405999E407F86C0C38FD09A2DAEB3363C1A85E274499E743D5463F",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/article/list",
+        "file": "view/uniapp-ts/src/pages/article/list.vue",
+        "bytes": 7979,
+        "sha256": "ED6FEA97A31C543ECB846C5FDEDCE2C1DBC7684A2DDDC10DBE8AC8D31F942C38",
+        "normalizedSha256": "ED6FEA97A31C543ECB846C5FDEDCE2C1DBC7684A2DDDC10DBE8AC8D31F942C38",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/article/detail",
+        "file": "view/uniapp-ts/src/pages/article/detail.vue",
+        "bytes": 7991,
+        "sha256": "73E7165BDA36D891437AE1F362AE40A9990A1FA30FC5741533F433F4AE0FD7D3",
+        "normalizedSha256": "73E7165BDA36D891437AE1F362AE40A9990A1FA30FC5741533F433F4AE0FD7D3",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/diy/detail",
+        "file": "view/uniapp-ts/src/pages/diy/detail.vue",
+        "bytes": 2386,
+        "sha256": "D45FF6FB30410725D15BA9A773540B7BE5540ECACE14F1A307E7DD7FB25A31DF",
+        "normalizedSha256": "D45FF6FB30410725D15BA9A773540B7BE5540ECACE14F1A307E7DD7FB25A31DF",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/auth/login",
+        "file": "view/uniapp-ts/src/pages/auth/login.vue",
+        "bytes": 6142,
+        "sha256": "7F01705C9204260E8E92C96502078BD414B3DD991D4187447FEF94CA1EB92DB2",
+        "normalizedSha256": "48970FCF1D7EA751099E756C8E31AA99EB7095D3C829531220C486F22E045567",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/auth/register",
+        "file": "view/uniapp-ts/src/pages/auth/register.vue",
+        "bytes": 5103,
+        "sha256": "EE175C5CF0C5A38B8C3CD22B7354E89EA86DA40C9349478D3D3AEDFE5450469E",
+        "normalizedSha256": "C6B7705D5E30FEC4699690187ACA5EC06EE828F7F1973CE40D2612B7B36A95A2",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/auth/reset",
+        "file": "view/uniapp-ts/src/pages/auth/reset.vue",
+        "bytes": 5452,
+        "sha256": "FBB2A06DF9265B7157418545E01EAC74A68BE049BD58666868126B8362B66223",
+        "normalizedSha256": "FBB2A06DF9265B7157418545E01EAC74A68BE049BD58666868126B8362B66223",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/auth/smsChallenge",
+        "file": "view/uniapp-ts/src/pages/auth/smsChallenge.vue",
+        "bytes": 2716,
+        "sha256": "0D6FAFF1DA8788573D7E89D1A074CD20634322AB79C4928DA2C4504221D9817E",
+        "normalizedSha256": "0D6FAFF1DA8788573D7E89D1A074CD20634322AB79C4928DA2C4504221D9817E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/auth/scanLogin",
+        "file": "view/uniapp-ts/src/pages/auth/scanLogin.vue",
+        "bytes": 7608,
+        "sha256": "502DA47D53FDD2D2E9B4527EF1AD85795FC08E8EA6920C1E61119CB97BE4D70B",
+        "normalizedSha256": "502DA47D53FDD2D2E9B4527EF1AD85795FC08E8EA6920C1E61119CB97BE4D70B",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/changePassword",
+        "file": "view/uniapp-ts/src/pages/user/changePassword.vue",
+        "bytes": 2511,
+        "sha256": "360A9C442202EFE9F76693DB0C1E54588DD148DB6ACD0810690F44722E7BFF20",
+        "normalizedSha256": "2A1285A99C4FF1BB39B6F477B058762E88D390667A5D56DE254B2B17291170E8",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/phone",
+        "file": "view/uniapp-ts/src/pages/user/phone.vue",
+        "bytes": 6178,
+        "sha256": "7D7DD883E2CA50C9B0344DD23129E0519FBB191561CDBD070E1D23233635D840",
+        "normalizedSha256": "7D7DD883E2CA50C9B0344DD23129E0519FBB191561CDBD070E1D23233635D840",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/confirm",
+        "file": "view/uniapp-ts/src/pages/order/confirm.vue",
+        "bytes": 13471,
+        "sha256": "FED42EEFD45F5844D82E884DB500257815EB121B5F75E36E4B5DF3A9F2BACE79",
+        "normalizedSha256": "FED42EEFD45F5844D82E884DB500257815EB121B5F75E36E4B5DF3A9F2BACE79",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/list",
+        "file": "view/uniapp-ts/src/pages/order/list.vue",
+        "bytes": 12664,
+        "sha256": "3FA416D061146C6AEB0513C68277909C95094A685378A64EE15BF81643B1BB1E",
+        "normalizedSha256": "579535C87645EE3A13F56B4FAE04D54CB8E7682B69311934014129322BDD1069",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/detail",
+        "file": "view/uniapp-ts/src/pages/order/detail.vue",
+        "bytes": 34580,
+        "sha256": "05AD299C63B9DBA10748E28516DFD59C8361464CD741BCC81F005E5902BA896B",
+        "normalizedSha256": "A4EDECEAC45A64996DBDF14E2D3F098DA73442A7949BF3FBB72131CAB0111747",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/express",
+        "file": "view/uniapp-ts/src/pages/order/express.vue",
+        "bytes": 6040,
+        "sha256": "B92386DA658D14823529E8D94CDBABE7E2BAD242AC0F7B280E5BAF2D3A26AFF3",
+        "normalizedSha256": "62968E8ABA6F152735B0B11B9539788D8509F98574D0E5F4B9C0948ACA522C12",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/reply",
+        "file": "view/uniapp-ts/src/pages/order/reply.vue",
+        "bytes": 6473,
+        "sha256": "2AD9142423C50585782E2DE82BB6E211728C70E3FB6D7974AF36A627E0FEAC34",
+        "normalizedSha256": "60B0AB16F4B23D1D3C6681C21EECA1DC3F4E78200AC03C9A413457E773903AC4",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/refundApply",
+        "file": "view/uniapp-ts/src/pages/order/refundApply.vue",
+        "bytes": 12205,
+        "sha256": "6019680AABF46521787921F82E0574AFF979419E197FF4A5481817E77AAA8C4D",
+        "normalizedSha256": "D3AFE8A70B65A93B9585420FDB3721F4AAE3A3BDE2A4810026E39F14D0245319",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/refundList",
+        "file": "view/uniapp-ts/src/pages/order/refundList.vue",
+        "bytes": 3658,
+        "sha256": "5D38CE54B35B7C088209865AA2AEDED5FDD99DC922F302657BBB21F8639302BD",
+        "normalizedSha256": "6D055BE8D4827E0D1C2EB58B5F690F3E9244B144BA53D257D3F6BB17D4C742AB",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/refundDetail",
+        "file": "view/uniapp-ts/src/pages/order/refundDetail.vue",
+        "bytes": 10124,
+        "sha256": "26A108F78247D159BFDE58452663C5734B2ABE1B9BA8A7338623FB36BCED7533",
+        "normalizedSha256": "AC21914899F93A73EE7FAD296CA3C83B99FEDDC9A38E2125C72BD5A8CDE269E0",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/integral",
+        "file": "view/uniapp-ts/src/pages/user/integral.vue",
+        "bytes": 10397,
+        "sha256": "E21F9CDBCAB7134769389FA6F92ED70A21608767A2A82A4B8474B7F6B7E95162",
+        "normalizedSha256": "A02F0100EB9EA2C9F556C83C8C24C40F55B272A9187E86C27D7A9DDE180BDA8E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/sign",
+        "file": "view/uniapp-ts/src/pages/user/sign.vue",
+        "bytes": 3671,
+        "sha256": "54C4571C6E6C43B4DDA251ED83D084F73C331432EEB9CBC01A8178FB9518F3B6",
+        "normalizedSha256": "710D235A1506A633707F8B95CFF1FF6C42D5626D047D4EC2BB28EE5E0BB1AEC5",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/profile",
+        "file": "view/uniapp-ts/src/pages/user/profile.vue",
+        "bytes": 4932,
+        "sha256": "721A7558C5BAFA6B271F9DDFCAC2A8A965ACB3ECB099FC5CFACBF449401302F1",
+        "normalizedSha256": "771DB6DD295671FA5E6BB828001417D0AB1B487B3A329FFB215F10DCD06FCF0E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/agreements",
+        "file": "view/uniapp-ts/src/pages/user/agreements.vue",
+        "bytes": 1213,
+        "sha256": "B4178E590D3253C3759B4D5D627119E451348ECC33B5C6B201D248A78EA4F8EF",
+        "normalizedSha256": "B4178E590D3253C3759B4D5D627119E451348ECC33B5C6B201D248A78EA4F8EF",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/legalContent",
+        "file": "view/uniapp-ts/src/pages/user/legalContent.vue",
+        "bytes": 1369,
+        "sha256": "D1B3DADCD7A32FADBD4DF8139AC552916DD87B76D1A42A17B9162E174BC0BA0F",
+        "normalizedSha256": "D1B3DADCD7A32FADBD4DF8139AC552916DD87B76D1A42A17B9162E174BC0BA0F",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/couponCenter",
+        "file": "view/uniapp-ts/src/pages/user/couponCenter.vue",
+        "bytes": 3427,
+        "sha256": "802F95A66F2779AF323FB58847341169A090AEB7859059BBB6EA73122AADA3A4",
+        "normalizedSha256": "719E9C65C55D1340B17C5EFD54C137566BF044F2E47FF609FD6E7E5563AEFC31",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/messageDetail",
+        "file": "view/uniapp-ts/src/pages/user/messageDetail.vue",
+        "bytes": 1821,
+        "sha256": "3ADD516EC665EA90DC62D28DB52DAF066C330179CFF9DA280D0202BA97673258",
+        "normalizedSha256": "ED5610A10F5299236627CA835CFB9A4552DCA162A681FC20240880EF06735F91",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/integralLogs",
+        "file": "view/uniapp-ts/src/pages/user/integralLogs.vue",
+        "bytes": 4502,
+        "sha256": "F9A3B00D6410A6CE6D1A575FE28C2A967478DF4297051767F8BD1AF4F3B4A2A4",
+        "normalizedSha256": "927A642ED77815F00D7C5D84ADA233D7DA30247D14ACA569A07BA854A8285812",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/kefu",
+        "file": "view/uniapp-ts/src/pages/user/kefu.vue",
+        "bytes": 18839,
+        "sha256": "92B2D4E39FBA4C7B9951266A00EC0AB23A213FCB8C6E573BC52467119BA54EB1",
+        "normalizedSha256": "D744A5937127C4A75FBE54C12EE332F49AFAC5BC61F184F28CFF2DF2FDADF892",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/balanceLogs",
+        "file": "view/uniapp-ts/src/pages/user/balanceLogs.vue",
+        "bytes": 4539,
+        "sha256": "3091442221D0F6DA3ABFDFCA531B19C40DD0A28582CEF062E5569CC1688D0B94",
+        "normalizedSha256": "649558B35AE36DEEF8475E7E5311D6EAA70C3AA04E3461666CBC99787BD3E5C9",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/address",
+        "file": "view/uniapp-ts/src/pages/user/address.vue",
+        "bytes": 11228,
+        "sha256": "932A469CB5B9A768C28B7C38B89B9CAA77C77BB3D8FF3F08D77567687FD1DA49",
+        "normalizedSha256": "E38742D924405041D10F1A302348956DCC1DE5E086FCEAB96436AAFDACA6BC31",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/collect",
+        "file": "view/uniapp-ts/src/pages/user/collect.vue",
+        "bytes": 6342,
+        "sha256": "D4EDBECE31559AAB20B3272C422848B366436906F7C2D75154942A969195352E",
+        "normalizedSha256": "D4EDBECE31559AAB20B3272C422848B366436906F7C2D75154942A969195352E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/visitHistory",
+        "file": "view/uniapp-ts/src/pages/user/visitHistory.vue",
+        "bytes": 9263,
+        "sha256": "2F560CFBDD06AE93D6B8D2A0CD330018CCD101C2F49580EDDF9D8D46790FAE2A",
+        "normalizedSha256": "2F560CFBDD06AE93D6B8D2A0CD330018CCD101C2F49580EDDF9D8D46790FAE2A",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/coupon",
+        "file": "view/uniapp-ts/src/pages/user/coupon.vue",
+        "bytes": 7522,
+        "sha256": "73EF52EBB21907719A585F0589650C8A755144970F141F0749B0856D9B5C178A",
+        "normalizedSha256": "73EF52EBB21907719A585F0589650C8A755144970F141F0749B0856D9B5C178A",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/finance",
+        "file": "view/uniapp-ts/src/pages/user/finance.vue",
+        "bytes": 20127,
+        "sha256": "EAF0F862E7C188C00E3AA6FCA00578F4E3C9F4CE906728C89AFC84B74D03EF32",
+        "normalizedSha256": "4E435C88F84A6D25748768D07FB5F45411BB652CFBEB0F651AACE692286D5E4E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/users/user_distribution_level/index",
+        "file": "view/uniapp-ts/src/pages/users/user_distribution_level/index.vue",
+        "bytes": 12240,
+        "sha256": "9E99F957E28FB7FC3664B51CB499F898EF6FA0AC72044F06084B0CDC986629D3",
+        "normalizedSha256": "9E99F957E28FB7FC3664B51CB499F898EF6FA0AC72044F06084B0CDC986629D3",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/spread",
+        "file": "view/uniapp-ts/src/pages/user/spread.vue",
+        "bytes": 6563,
+        "sha256": "A08B5198B84D54322C25CA61396487B6E5971EF8BAE9850BAE52BA78970B8A47",
+        "normalizedSha256": "9FCBEB6099F96E4F08ADAEC5E91A8013E2681C273ADE3A2AEBE78653150DCB0D",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/users/distributor/apply",
+        "file": "view/uniapp-ts/src/pages/users/distributor/apply.vue",
+        "bytes": 586,
+        "sha256": "702F407C618ECE2FA4649F8B9E4834A36E4BF5E8208D5B2E0F6DBE43CAD7FF36",
+        "normalizedSha256": "D8C600F9312D4B84B653F0F5EBF1C71AF750B79E2F0DC11A844B42581B4BEF8F",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/users/agent/apply",
+        "file": "view/uniapp-ts/src/pages/users/agent/apply.vue",
+        "bytes": 583,
+        "sha256": "307FEBA089C84D6AD2ACDD51236016E175632D3C97E28E3DD4401308688A078F",
+        "normalizedSha256": "11EB59A7C259AAD89E6C6CC1B166E0C7B54AA16EBCC89FE84707ADD4A3C49DC1",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/users/agent/state",
+        "file": "view/uniapp-ts/src/pages/users/agent/state.vue",
+        "bytes": 4477,
+        "sha256": "BDB790A7CB982E2B7578B0EDC10A138842DF79B98EADCF123E8CB8548C1027EA",
+        "normalizedSha256": "F4A4FA5DBD5F68EFA05F32FE8F4A572655D84AC42B694A42DAEDAB03ED81EB92",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/users/agent/record",
+        "file": "view/uniapp-ts/src/pages/users/agent/record.vue",
+        "bytes": 3616,
+        "sha256": "D55EDCA0B137CF1D23F2909EFEA40956956164D8887DA3B7B9C55C1939DBF82F",
+        "normalizedSha256": "5A170C7054D1DD3024D38089FCB6A76C985C06B3E595B35EC4F97F51C96F3AD5",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/users/agent/staff_list",
+        "file": "view/uniapp-ts/src/pages/users/agent/staff_list.vue",
+        "bytes": 7231,
+        "sha256": "55229D1DBB41BE578C6859ED02C4B938066D0A3A9480D52B0564311C42856ADA",
+        "normalizedSha256": "E7993B271FDE00496F9988C0A3D30132F2420209638566F8269DB1113AC4CC9F",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/bank",
+        "file": "view/uniapp-ts/src/pages/user/bank.vue",
+        "bytes": 4315,
+        "sha256": "12A9AD7E09EA05C18BFBB6E7C15504402EFC8F9D1472719E68F13ACDBDE7FAEE",
+        "normalizedSha256": "2842C6CB8205385F8B65C02CC46A6DB4AB9341468445A8DA8E71D141A77F8F00",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/payPassword",
+        "file": "view/uniapp-ts/src/pages/user/payPassword.vue",
+        "bytes": 1956,
+        "sha256": "0CBF0CCD8F241B57B0C5EF893E7D1673DB554D79BF8CE5915D14F0D29DE1427A",
+        "normalizedSha256": "D785EA92EAF954830443737BE5A1FB66170553C946A9892EC5E1B185F09A94B7",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/vipOpen",
+        "file": "view/uniapp-ts/src/pages/user/vipOpen.vue",
+        "bytes": 11052,
+        "sha256": "10739E76703F434A4455BCAD2575EE55A1172ED97111671FC47F078B1745DA07",
+        "normalizedSha256": "10739E76703F434A4455BCAD2575EE55A1172ED97111671FC47F078B1745DA07",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/annex/offline_pay/index",
+        "file": "view/uniapp-ts/src/pages/annex/offline_pay/index.vue",
+        "bytes": 508,
+        "sha256": "337D24B49C482E88CABC31E0D6DC329FE6E5BCF66F3B75C809502A6DC759DEEA",
+        "normalizedSha256": "8EDCF9EE84E65426402A6FFA14D09F7E0DE052930DBCA3D2FC0AF48179EC8E50",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/annex/offline_result/index",
+        "file": "view/uniapp-ts/src/pages/annex/offline_result/index.vue",
+        "bytes": 511,
+        "sha256": "4255CE1B4375F046D28A16CAE908460DB3FBB18EC8B6C334D907A8B93CFED06B",
+        "normalizedSha256": "79DBFB1F34461CF8A8B8D2BEBEDEFCB80BCCFB3AF0986F9360A7932C9B46FE23",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/annex/vip_active/index",
+        "file": "view/uniapp-ts/src/pages/annex/vip_active/index.vue",
+        "bytes": 3043,
+        "sha256": "E05D2B276AFC47D036973FFB13B96F9EAB86333EBD06544EF8ACA462D38A4B3D",
+        "normalizedSha256": "E05D2B276AFC47D036973FFB13B96F9EAB86333EBD06544EF8ACA462D38A4B3D",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/invoice",
+        "file": "view/uniapp-ts/src/pages/user/invoice.vue",
+        "bytes": 6485,
+        "sha256": "5D2AFDD8DCA6FA0B17904EE8F80335BB7B93AF1CB97D10B2C5A055264C1BC5AF",
+        "normalizedSha256": "5E6FA13FDFC4886808FE0F7ADC1D1B7A17F4964CFDD64629366536A455B4622C",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/search",
+        "file": "view/uniapp-ts/src/pages/goods/search.vue",
+        "bytes": 5351,
+        "sha256": "538A8B4E6B0A186B554021EF01156700BE67BF49F20D0AB23EF09F2EDC9108A9",
+        "normalizedSha256": "FDCDB67274BCC42E3274D105BA4812D55A6F6B9A5A38332FCCBD5B05213B45D5",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/commentList",
+        "file": "view/uniapp-ts/src/pages/goods/commentList.vue",
+        "bytes": 6326,
+        "sha256": "40DBDA27B420B26515476BF5E1BC1057A5196B92FED3F673668BBB2F9215C5A9",
+        "normalizedSha256": "2CA628482BBB67F3DFABD53DECD3F717FDBD873A2B67381214C131543869A0B6",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/goods/commentDetail",
+        "file": "view/uniapp-ts/src/pages/goods/commentDetail.vue",
+        "bytes": 12430,
+        "sha256": "B92A0AF58ADA1905E3A45646F2C4DE2F2A5F1AC9FFF050F66ECF523144F22F5E",
+        "normalizedSha256": "B92A0AF58ADA1905E3A45646F2C4DE2F2A5F1AC9FFF050F66ECF523144F22F5E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/index",
+        "file": "view/uniapp-ts/src/pages/activity/index.vue",
+        "bytes": 15539,
+        "sha256": "B0E395DC23E030FCE834898A623507FBDBE39EDBC2FE4B49075B0B4CB524FF10",
+        "normalizedSha256": "6C8E33A54B4766A919A12C8B78C247DA5800CE36CBC684AA159B6866F8B7196D",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/detail",
+        "file": "view/uniapp-ts/src/pages/activity/detail.vue",
+        "bytes": 7649,
+        "sha256": "4F3E60AA8137369434EA0F4E9D8A6BBC5D34DFD440C475490CBA33DC611907F4",
+        "normalizedSha256": "4F3E60AA8137369434EA0F4E9D8A6BBC5D34DFD440C475490CBA33DC611907F4",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/goods_combination_status/index",
+        "file": "view/uniapp-ts/src/pages/activity/goods_combination_status/index.vue",
+        "bytes": 7305,
+        "sha256": "2C7C6E205F2432E273EAA1C61A9419F4E53BFBFAAE838A4C70EB001E3007E0C1",
+        "normalizedSha256": "2C7C6E205F2432E273EAA1C61A9419F4E53BFBFAAE838A4C70EB001E3007E0C1",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/seckillDetail",
+        "file": "view/uniapp-ts/src/pages/activity/seckillDetail.vue",
+        "bytes": 5598,
+        "sha256": "EC5EDC3EB506B2107303F60061A17F5E29D4A589D97A6AB955731D8C6A3E5611",
+        "normalizedSha256": "EC5EDC3EB506B2107303F60061A17F5E29D4A589D97A6AB955731D8C6A3E5611",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/bargainDetail",
+        "file": "view/uniapp-ts/src/pages/activity/bargainDetail.vue",
+        "bytes": 9396,
+        "sha256": "2C94434A16CAA46AEF355ACB7C672F1FD760E8F81B637A928C3A2E472D82AE49",
+        "normalizedSha256": "2C94434A16CAA46AEF355ACB7C672F1FD760E8F81B637A928C3A2E472D82AE49",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/integralDetail",
+        "file": "view/uniapp-ts/src/pages/activity/integralDetail.vue",
+        "bytes": 12147,
+        "sha256": "B23A4C9E924127FAB2122FE4870DA4D697CF321C9A240FB6636FCDE16E0BA340",
+        "normalizedSha256": "B23A4C9E924127FAB2122FE4870DA4D697CF321C9A240FB6636FCDE16E0BA340",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/new_customer/index",
+        "file": "view/uniapp-ts/src/pages/activity/new_customer/index.vue",
+        "bytes": 6749,
+        "sha256": "AD401D45EFA9C56B8776FB4C96439536949715F5E9348B273592414862B5CC92",
+        "normalizedSha256": "AD401D45EFA9C56B8776FB4C96439536949715F5E9348B273592414862B5CC92",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/newcomerDetail",
+        "file": "view/uniapp-ts/src/pages/activity/newcomerDetail.vue",
+        "bytes": 3994,
+        "sha256": "35BF75ACEA346874E675D3E86F7434684AB4F311D9B6FCA515250E26CF599E85",
+        "normalizedSha256": "35BF75ACEA346874E675D3E86F7434684AB4F311D9B6FCA515250E26CF599E85",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/order/payResult",
+        "file": "view/uniapp-ts/src/pages/order/payResult.vue",
+        "bytes": 9872,
+        "sha256": "0A6EF0F242A73F056B02BB447F435C2DA03A8E2988D0DF6D35B53B31AB094AA5",
+        "normalizedSha256": "E253E9A5A4D16E95DE18DB2610D106EEB85836165B45B31D162613B12D3F8176",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/level",
+        "file": "view/uniapp-ts/src/pages/user/level.vue",
+        "bytes": 4194,
+        "sha256": "25CBBFB5C0588BCBE43BD7F3F1FD9FB83E0393147EF578E0F016B055A1C1B35E",
+        "normalizedSha256": "F5E0B57F2620C60EC6B2C451668A66A99DB03B5010DA41D071C4AA29367BDA03",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/recharge",
+        "file": "view/uniapp-ts/src/pages/user/recharge.vue",
+        "bytes": 12620,
+        "sha256": "681A5AFD59ABEC9B543D211866713345E87FC5373FB38D960F9334B86DEF32B0",
+        "normalizedSha256": "D71253E318781559D6683D98D9D7C003DB7BA1FC83CDEB0E8F5DB795C26AB258",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/message",
+        "file": "view/uniapp-ts/src/pages/user/message.vue",
+        "bytes": 2107,
+        "sha256": "5D7BADDDDF807E8715DFD550F11440EF7B6FB48D1E4460129988E7D569245988",
+        "normalizedSha256": "E8A30760512391CB71EF729B93E3E5F4405BEFE4553F4F39810D054FFC833673",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/lottery",
+        "file": "view/uniapp-ts/src/pages/activity/lottery.vue",
+        "bytes": 12302,
+        "sha256": "8FA19F8BAB39B50A45D0401D0E013794C7F2A32558428F5EE56FF46CE78B781B",
+        "normalizedSha256": "8FA19F8BAB39B50A45D0401D0E013794C7F2A32558428F5EE56FF46CE78B781B",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/activity/lotteryRecords",
+        "file": "view/uniapp-ts/src/pages/activity/lotteryRecords.vue",
+        "bytes": 5007,
+        "sha256": "792A432AD4BD5A8093B5218B6FD1D0C41DBE9072C2C0DB46FF1024C8ACBDF83E",
+        "normalizedSha256": "792A432AD4BD5A8093B5218B6FD1D0C41DBE9072C2C0DB46FF1024C8ACBDF83E",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/user/supplierApply",
+        "file": "view/uniapp-ts/src/pages/user/supplierApply.vue",
+        "bytes": 14206,
+        "sha256": "F6CD70E52E210FA05357E6109FB48C9F37C9986BA067663F54EC21C77464EFF6",
+        "normalizedSha256": "F6CD70E52E210FA05357E6109FB48C9F37C9986BA067663F54EC21C77464EFF6",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/operator/writeoff",
+        "file": "view/uniapp-ts/src/pages/operator/writeoff.vue",
+        "bytes": 13669,
+        "sha256": "F92B734C410751B40F3DF14B00ABAA211592FC1A61EAD475CF6B6BB0C4760C1A",
+        "normalizedSha256": "F92B734C410751B40F3DF14B00ABAA211592FC1A61EAD475CF6B6BB0C4760C1A",
+        "templateCompiled": true,
+        "themeHost": true
+      },
+      {
+        "route": "/pages/common/fabWebView",
+        "file": "view/uniapp-ts/src/pages/common/fabWebView.vue",
+        "bytes": 1000,
+        "sha256": "C08BAC346B31C5214D9CE1D43A27BAFD4085CB2DEF9177AF42844F210C7CBFA6",
+        "normalizedSha256": "C08BAC346B31C5214D9CE1D43A27BAFD4085CB2DEF9177AF42844F210C7CBFA6",
+        "templateCompiled": true,
+        "themeHost": true
+      }
+    ],
+    "previousEvidenceBoundary": "Inherited theme/product/category/runtime/build follow-ups retain their original dates and source hashes; no historical receipt is relabelled as current execution."
+  },
+  "productDetailDesignSourceRefresh": {
+    "date": "2026-10-03",
+    "status": "code_candidate_not_deployed",
+    "coverage": {
+      "adminScreen": true,
+      "contract19": true,
+      "editor18": true,
+      "previews9": true,
+      "dedicatedRoutes": true,
+      "permissions1594": true,
+      "sharedSettingsAuthority": true,
+      "mutationProtocol": true,
+      "genericProtection": true,
+      "actorRecovery": true,
+      "ordinarySafeDisplay": true,
+      "displayPriceIsolation": true,
+      "realReplyPreviews": true,
+      "communityLinkedPaging": true,
+      "actualRanks": true,
+      "realPackages": true,
+      "realRecommendations": true,
+      "navigationAndFooter": true,
+      "sharePosterReferral": true,
+      "ordinaryCartLifecycle": true,
+      "activityConsumers": true,
+      "pcSharedApi": true
+    },
+    "evidenceBoundary": "Current source gates only; original product-detail acceptance and independent proof retain their original raw bytes."
+  },
+  "inheritedEvidenceBoundary": "Earlier dated increments, platformBuildMatrix and checklist execution decisions are historical references. This builder refreshes the current manifest/ledger/theme hosts and scoped source gates only; it does not execute builds, runtime or browsers."
+}

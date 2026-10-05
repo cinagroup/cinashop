@@ -1,0 +1,107 @@
+{
+  "dateUtc": "2026-09-28T07:22:17.408Z",
+  "scope": "Local, unpublished legacy Admin supplier order statistics follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 63,
+      "partial": 117,
+      "missing": 87,
+      "retired": 7
+    },
+    "legacySupplierAgentScreens": {
+      "total": 19,
+      "candidate": 5,
+      "partial": 10,
+      "missing": 4,
+      "retired": 0
+    },
+    "workerRoutes": 1887,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 895,
+      "executableMatched": 874,
+      "unavailable": 21,
+      "actionableMissing": 992,
+      "effectiveExecutableCoveragePercent": 46.3
+    },
+    "adminApi": {
+      "callSites": 449,
+      "pathVariants": 473,
+      "executable": 473,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 81,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "supplierOrderStatisticsNativePg16": {
+      "files": [
+        "test/admin-supplier-order-statistics-screen-postgres.test.ts",
+        "test/admin-supplier-order-statistics-screen-http.test.ts"
+      ],
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "supplierOrderStatisticsPglite": {
+      "files": 2,
+      "passed": 12,
+      "failed": 0
+    },
+    "supplierOrderStatisticsFrontendRuntime": {
+      "files": 1,
+      "passed": 6,
+      "failed": 0
+    },
+    "finalStaticFrontendPermissionSuites": {
+      "files": 7,
+      "passed": 39,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "473 executable variants; 0 unregistered or unresolved",
+    "historicalSupplierAgentSnapshots": "base, division-statistics, supplier-bill and supplier-capital byte-equal",
+    "browserWrite": "not run; no production mutation or deployment"
+  },
+  "limitations": [
+    "PHP pid=0 search resolves to pid>=0, so breakdowns include split children and exclude pid=-1 payment parents; summary has no pid filter.",
+    "Header, trend, and supplier table refund amounts use three distinct source columns and their original filters, so block totals need not agree.",
+    "The former four cards were invisible, the initial date was applied after first requests, table paging and supplier filtering were ineffective, and 32-92-day charts dropped unselected days; the new screen corrects these behaviors.",
+    "Dates are capped at 366 Shanghai days, supplier table pages are bounded, and the next-day midnight instant is excluded.",
+    "Real supplier order history and constrained-role browser behavior, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "70ac217371fa2f5122825fb44af5cda4fc1bd55a5a30614626a02e4c88ce36bb",
+    "view/admin-ts/src/api/supplierOrderStatistics.ts": "d8b17d61a8dda693fea16338f5b6f0fdc7b8cfd4986b3cfa6d2b29f68dbf6841",
+    "view/admin-ts/src/pages/supplier/SupplierOrderStatistics.vue": "8c54f21e2116bc71dbe275165476e512fb3dbb855830af22175bf08ef5176c9c",
+    "view/admin-ts/src/api/system.ts": "ebbb0cf67d8cfb7ea2c585df07bd7361138935ef61f9017642eeb1fee279e53a",
+    "view/admin-ts/src/router/index.ts": "0cc4002edf8b5048be8f5b35a1c8a12a223b888de7c5bee1d0414b05b1ead781",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "292eace51ce2c51cc758715c87e84cbb7122ab5a803bcac2222f3a5b0dd1125d",
+    "workers-ts/src/services/admin/AdminSupplierOrderStatisticsScreenService.ts": "8a8e8aae82cfc8c61e907769a868291d1a8dc977d454035bb0204865510ec623",
+    "workers-ts/src/controllers/api/v1/AdminSupplierOrderStatisticsScreenController.ts": "3704b9bbfab56d78b2d0726a4cd9dbc4c4fecac2acaf9b1e52189f34978e1915",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "2e99164c443b0a20621144f103457e401384f6282fc95733cc4be050f918d874",
+    "workers-ts/src/routes/adminapi.ts": "5e2f330d27ccb3a9bd7092fd39fbbd22b5990520c05d6a1b487c278527888306",
+    "workers-ts/test/admin-supplier-order-statistics-screen-postgres.test.ts": "ff5b768289415508375d338015ce261cc3bc4faff1e01ea5aceb89407547ad6e",
+    "workers-ts/test/admin-supplier-order-statistics-screen-http.test.ts": "3086e64c8fc5e251ae745f09040ea77b7db96d688b435f29c963e37200a6a66f",
+    "workers-ts/test/admin-supplier-order-statistics-frontend.test.ts": "fa19993ce95efeb011841ecefebf38fcd020dbc3e47afd2cd612d96670fc5ebc",
+    "workers-ts/test/admin-permission.test.ts": "916411b71d582567c411f2b42f6c0bc01b9b3a99a02f73e2c30a0c64062170bf",
+    "workers-ts/test/admin-supplier-agent-frontend-parity.test.ts": "986e35078517e7f8734a72f4a5587d755b565b07da63e345475583eeca432ce4",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "7a2389ea21cc14e7c0965fa281aee7fbf425c8b1617aaf0eed47208db3fbb2eb",
+    "workers-ts/scripts/admin-supplier-agent-frontend-parity-audit.ts": "2328dd1c3926e98182ffc52457dc17e6d966db1c4f32df0ebb2884f1396a376e",
+    "workers-ts/docs/admin-supplier-order-statistics-contract.md": "555dd5161dc5d9e1515686eae043ed6608639a2e49a132b012ee5456f30a27c5",
+    "workers-ts/docs/admin-supplier-agent-route-parity.md": "f9fd583f2b985d7cba12beae781e6a0bb7da42f0b87b87b7acc2e1eb40bd94d8",
+    "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-order-statistics-followup-20260928.json": "041b3e042686a3ea5a3429d5e5d00e63e9128ab29f4f14aaca2d75263596df54",
+    "workers-ts/audit/route-distribution-supplier-order-statistics-followup-20260928.json": "7aadde89f3333380f210cf0bb9de9b8d286d597864ff8a32df650724e7ea8685",
+    "workers-ts/audit/admin-frontend-inventory-supplier-order-statistics-followup-20260928.json": "941fed449ad1a7cf78338341ed2210ffa82fa74fe77c883c6c015a3c56c3d615",
+    "workers-ts/audit/admin-frontend-api-contracts-supplier-order-statistics-followup-20260928.json": "f36193d628cb86ddd212f271f9c4f550bb159e5e6f88dcfc5e91991425404513"
+  }
+}

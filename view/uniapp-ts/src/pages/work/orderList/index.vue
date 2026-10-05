@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="work-page">
     <!-- #ifdef H5 -->
     <scroll-view scroll-x class="status-bar"><view class="status-row">
@@ -25,9 +26,11 @@
     <!-- #endif -->
     <!-- #ifndef H5 --><view class="notice">企业微信工作台仅支持 H5 侧边栏。</view><!-- #endif -->
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref, watch } from "vue";
 import { onLoad, onReachBottom, onUnload } from "@dcloudio/uni-app";
 import { getWorkOrderList, type WorkOrder } from "@/api/work";
@@ -114,7 +117,7 @@ function open(id: number) {
 <style scoped>
 .work-page { min-height: 100vh; background: #f3f6f9; padding: 16rpx 20rpx 130rpx; box-sizing: border-box; }
 .status-bar { white-space: nowrap; background: #fff; border-radius: 12rpx; }.status-row { display: flex; width: max-content; min-width: 100%; }
-.status { margin: 0; min-width: 122rpx; padding: 0 14rpx; background: #fff; color: #526071; font-size: 25rpx; border-radius: 0; }.status::after { border: 0; }.status.selected { color: #1768c8; font-weight: 700; border-bottom: 4rpx solid #1768c8; }
+.status { margin: 0; min-width: 122rpx; padding: 0 14rpx; background: #fff; color: #526071; font-size: 25rpx; border-radius: 0; }.status::after { border: 0; }.status.selected { color: var(--view-theme, #e93323); font-weight: 700; border-bottom: 4rpx solid var(--view-theme, #e93323); }
 .search { display: flex; gap: 12rpx; margin: 18rpx 0; }.search input { flex: 1; min-width: 0; background: #fff; border-radius: 10rpx; padding: 10rpx 18rpx; }.search button { margin: 0; font-size: 25rpx; }
 .notice, .card { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 18rpx; }.notice { overflow-wrap: anywhere; }.notice button { margin-top: 14rpx; }.error { color: #a72d2d; }
 .card-header { display: flex; justify-content: space-between; gap: 15rpx; font-size: 26rpx; font-weight: 600; overflow-wrap: anywhere; }.state { color: #1768c8; flex-shrink: 0; }

@@ -1,0 +1,108 @@
+{
+  "dateUtc": "2026-09-28T07:57:52.398Z",
+  "scope": "Local, unpublished legacy Admin supplier withdrawal screen follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 64,
+      "partial": 116,
+      "missing": 87,
+      "retired": 7
+    },
+    "legacySupplierAgentScreens": {
+      "total": 19,
+      "candidate": 6,
+      "partial": 9,
+      "missing": 4,
+      "retired": 0
+    },
+    "workerRoutes": 1889,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 895,
+      "executableMatched": 874,
+      "unavailable": 21,
+      "actionableMissing": 992,
+      "effectiveExecutableCoveragePercent": 46.3
+    },
+    "adminApi": {
+      "callSites": 451,
+      "pathVariants": 475,
+      "executable": 475,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 81,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "supplierExtractNativePg16": {
+      "files": [
+        "test/admin-supplier-extract-screen-postgres.test.ts",
+        "test/admin-supplier-extract-screen-http.test.ts",
+        "test/supplier.test.ts"
+      ],
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "supplierExtractPglite": {
+      "files": 3,
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    "supplierExtractFrontendRuntime": {
+      "files": 1,
+      "passed": 7,
+      "failed": 0
+    },
+    "finalStaticParityAndRouteSuites": {
+      "files": 5,
+      "passed": 21,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "475 executable variants; 0 unregistered or unresolved",
+    "historicalSupplierAgentSnapshots": "prior dated files retained without rewrite",
+    "browserWrite": "not run; no production mutation or deployment"
+  },
+  "limitations": [
+    "The legacy all-supplier available amount may omit existing withdrawal reservations by querying supplier_id=0; the new aggregate subtracts all non-rejected reservations.",
+    "Legacy PHP did not populate supplier_extract.balance; old zero values cannot be represented as a trustworthy post-request balance.",
+    "The old dynamic GET transfer form path is not registered as an exact URL; the new native dialog restores page behavior.",
+    "Admin remark writes now require the displayed supplier_mark as a CAS precondition, so unversioned old POST callers must migrate to the new request shape.",
+    "Supplier-side remark edits remain last-writer-wins after an Admin CAS succeeds; Admin CAS rejects supplier changes already committed before the Admin write.",
+    "Explicit Shanghai date ranges are capped at 366 days; omitting dates still reads all history.",
+    "Real supplier financial history, constrained-role browser behavior, real transfer execution, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "e19365588c87526caccec75dbc510c320a0e10baf56f9bb7227007ef6f612662",
+    "view/admin-ts/src/api/finance.ts": "29c5fe7fff45059a8f81d939fb64b019c9b29212fbe7c6d858c5d9ef8b1edf74",
+    "view/admin-ts/src/pages/finance/SupplierExtractList.vue": "95f1aceecba0c9c82baee5e7cca7a288de8b73b368082197482c13b10bccda4b",
+    "workers-ts/src/services/admin/AdminSupplierFinanceService.ts": "6060eea46f36bd2c59ae904c15aff4454f60c3b7e7a19f5aa273e235ce1ff825",
+    "workers-ts/src/controllers/api/v1/AdminSupplierFinanceController.ts": "4305e01c65822d39388aa6a9a3ca8f024ffbf7a0dd2d411f0cef9f6785262740",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "971b5bd8588eb1974d415119b31fecddd7473fb021ca16c552129622426b5e68",
+    "workers-ts/src/routes/adminapi.ts": "4960f46cb8056d738a03369a621ca6a2750ce2191029c2e06e93eeed09bbc428",
+    "workers-ts/test/admin-supplier-extract-screen-postgres.test.ts": "d3df7b99eb9d6a1e50f2e658bee22e8020c97a29daa10c1e956392afc805e7cd",
+    "workers-ts/test/admin-supplier-extract-screen-http.test.ts": "f277cc06bab9d84122361d7d49df90c06af0856a164b5f779eeeefd32b79777a",
+    "workers-ts/test/supplier.test.ts": "999f96dcbc97ee3ada45e7a5341407ee7a34dcdfc5f34c37b48030a2bfdb1f15",
+    "workers-ts/test/admin-supplier-extract-frontend.test.ts": "0d88b3ab74f673105b738925788cd07237b7290a56452818206a027d4d0b4c03",
+    "workers-ts/test/admin-supplier-agent-frontend-parity.test.ts": "2f01cfddbccb7acef7fa4df53b3b0ee5c74b6791cecb2d0175e93ddbf817b0b5",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "7dfd36c0183c8b55fd4ddf7e73a37255e81f6498aa1f93a18a41d7f810d2d443",
+    "workers-ts/scripts/admin-supplier-agent-frontend-parity-audit.ts": "e757193a15ad76b177fe0da335e766e1b6b229517c7ea2df80f173fb8e232ce0",
+    "workers-ts/docs/admin-supplier-extract-contract.md": "22eabe86c940a3c5c382a4d0c2c6b77d8527fa94d5bb1037f44fc298d78f8016",
+    "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "9b7cec2ea8416eff47ad3a1187f0952b38ab516d43921159e2f1e97802d7b30c",
+    "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-cash-followup-20260928.json": "6f34ffb996f65671eaf00a4897de85e5c56716e3862bde9faa5ad79e6adc8f4d",
+    "workers-ts/audit/route-distribution-supplier-cash-followup-20260928.json": "07cfdb63913b02edf78336a95bb2b49cc88c8f0c38cc5e49aeac8da2635d98d4",
+    "workers-ts/audit/admin-frontend-inventory-supplier-cash-followup-20260928.json": "941fed449ad1a7cf78338341ed2210ffa82fa74fe77c883c6c015a3c56c3d615",
+    "workers-ts/audit/admin-frontend-api-contracts-supplier-cash-followup-20260928.json": "0f30857f84d3c56ffd13680843f441e04eae36cbbe135d85d65372e5880b591a"
+  }
+}

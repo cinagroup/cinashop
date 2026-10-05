@@ -1,0 +1,62 @@
+{
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T08:26:41.592Z",
+  "status": "accepted-local-candidate-unpublished",
+  "scope": "Complete remaining three Admin combination read screens; all4screens now local candidate",
+  "validation": {
+    "nativeUniquePassed": 140,
+    "scopeUniquePassed": 105,
+    "regressionUniquePassed": 35,
+    "frontendPassed": 72,
+    "permissionPassed": 26,
+    "ledgerPassed": 92,
+    "workerUnitAndRuntimeTypes": "passed",
+    "adminTypesAndBuild": "passed",
+    "browser": "passed-loopback-memory",
+    "catalog": "Prior9pathbaseline retained, not rerun for read batch"
+  },
+  "routeDistribution": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/route-distribution-20260927.json",
+    "sha256": "326d06d897b56901529a96064d625f2a60821e59863cd190a6769f7d33263d12"
+  },
+  "native": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-native-20260927.json",
+    "sha256": "1e040b3cf9a17ce707ffb68e922bd753ade405b7633e8c383c507b0b00acd184"
+  },
+  "browser": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-browser-20260927.json",
+    "sha256": "097a534448dacdbe65c3ea3e08b9cb22cb8d4cfbe04726a8e95ed84d9f51022c"
+  },
+  "sourceManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-runtime-accepted-snapshot/manifest.json",
+    "sha256": "3947f9f6069c5231219dc454e6f83f1994530d5ed4e03b21d16171420a12cb89"
+  },
+  "distManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-dist-accepted-snapshot/manifest.json",
+    "sha256": "5c5408b329a9822b817163cb6bc43a3d3717d43fc5218ad4516becfbb8f2aade"
+  },
+  "ledgerManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-ledger-accepted-snapshot/manifest.json",
+    "sha256": "8092a9e4fc378c9aaa988085eb063e694cdf9943368bc0bd8e0d2e12548f1931"
+  },
+  "integrity": {
+    "currentReferencesVerified": 45,
+    "sourceArchiveFiles": 35,
+    "distArchiveFiles": 165,
+    "ledgerArchiveFiles": 12
+  },
+  "checklist": {
+    "checked": 246,
+    "open": 158,
+    "total": 404
+  },
+  "remaining": [
+    "Opening/joining success notification contracts.",
+    "Other marketing17partial/16missing screens; independent coupon template versus issue workflows remain separate.",
+    "Complete Linux CI, real roles/configuration/media/R2/provider/devices, publication acceptance and remaining158 checklist items."
+  ],
+  "published": false,
+  "noProductionConnection": true,
+  "noLivePrivilegeChanges": true,
+  "goalStillOpen": true
+}

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="work-page">
     <!-- #ifdef H5 -->
     <view v-if="access.error.value" class="notice" role="alert">
@@ -37,9 +38,11 @@
     <view class="notice">企业微信工作台仅支持 H5 侧边栏。</view>
     <!-- #endif -->
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onLoad, onUnload } from "@dcloudio/uni-app";
 import { getWorkClientInfo, type WorkClientInfo } from "@/api/work";

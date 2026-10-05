@@ -293,6 +293,24 @@ export class ExpressService {
     private readonly fetcher: Fetcher = fetch,
   ) {}
 
+  /** Internal scoped reader: its caller obtains these authoritative rows in a
+   * short read-only transaction. The hook rechecks actor/scope/order facts
+   * before and after external I/O; no customer or Admin identity is fabricated. */
+  async queryScopedOrders(orders:readonly (typeof storeOrder.$inferSelect)[],authorize:()=>Promise<void>,options:{allowUserDeleted?:true}={}):Promise<ExpressQueryResult>{
+    // Only an independently authorized customer-work caller opts into legacy
+    // user-deleted detail tracking. The default manager/customer readers keep
+    // their existing deletion policy, and system deletion is never bypassed.
+    if(!orders.length||orders.length>MAX_SPLIT_PACKAGES||new Set(orders.map(order=>order.id)).size!==orders.length||orders.some(order=>order.id<1||order.isDel&&options.allowUserDeleted!==true||order.isSystemDel))throw new ValidateException('物流订单范围无效');
+    await authorize();
+    const root=orders[0],split=root.pid===-1||root.deliveryType==='split';
+    const shipments=(split?orders.slice(1):orders).filter(order=>order.deliveryType==='express'&&order.deliveryId.trim());
+    if(!split&&root.deliveryType!=='express')throw new ValidateException('该订单不是快递发货，无法查询物流信息');
+    const provider=await this.providerConfig(),packages=await this.trackMany(shipments.map(order=>this.fromOrder(order)),provider);
+    const first=packages[0]??fallbackPackage(this.fromOrder(root),'pending','暂无已发货包裹');
+    await authorize();
+    return this.response(split?{...first,orderId:root.orderId,deliveryStatus:packages.length?'分包发货':first.deliveryStatus,message:packages.length?`共 ${packages.length} 个已发货包裹`:first.message}:first,packages);
+  }
+
   /** 查询订单或 PHP 兼容的退款物流。 */
   async query(uid: number, orderId: string, type = ""): Promise<ExpressQueryResult> {
     const normalizedOrderId = orderId.trim();

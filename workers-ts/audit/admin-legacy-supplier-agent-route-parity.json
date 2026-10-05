@@ -9,9 +9,9 @@
   "summary": {
     "legacyRoutes": 19,
     "reviewed": 19,
-    "candidate": 0,
+    "candidate": 1,
     "partial": 10,
-    "missing": 9,
+    "missing": 8,
     "retired": 0,
     "unreviewed": 0
   },
@@ -331,16 +331,20 @@
         "parentAuth": "true",
         "auth": "['admin-agent-promoter-apply']"
       },
-      "status": "missing",
-      "targetScreens": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/agent/promoter-applications"
+      ],
       "targetApis": [
         "GET /adminapi/promoter/apply/list",
-        "GET /adminapi/promoter/apply/examine/:id/:uid/:status",
+        "POST /adminapi/promoter/apply/examine/:id/:uid/:status",
         "DELETE /adminapi/promoter/apply/del/:id"
       ],
-      "covered": [],
+      "covered": [
+        "独立申请审核屏按状态/姓名/UID/昵称/电话筛选、每页15条ID倒序，展示申请资料、状态、UTC申请/审核时间与拒绝原因；distribution.view只读，distribution.manage可确认通过、填写拒绝原因及软删。新POST审核和带JSON的DELETE提交行版本，锁后拒绝过期材料，重复结果不改时间/日志；申请与资格写入及脱敏管理员日志同事务。"
+      ],
       "remaining": [
-        "旧推广员申请页有列表、材料审阅、通过/拒绝和删除；Worker 已注册申请 API，但新 /agent 没有申请管理 tab 或可执行审核屏。审核接口仍使用 GET；本地候选修复已对该写操作显式要求 distribution.manage，仍需 CI 和真实角色验收。API 注册不能代替旧页面。"
+        "真实申请资料、受限角色及发布后业务仍待验收。旧页重复电话列合并，原images插槽未配置为实际表列，不据此伪称有图片合同；新拒绝原因必填与UTC标识为明确扩展。旧GET审核与无请求体DELETE保留兼容，但没有新UI的行版本确认，跨代旧确认风险仍需协调退流。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/router/modules/agent.js",
@@ -351,8 +355,13 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/agent/PromoterApplications.vue",
+        "view/admin-ts/src/api/promoterApplication.ts",
         "workers-ts/src/controllers/api/v1/PromoterApplicationController.ts",
-        "view/admin-ts/src/pages/agent/AgentList.vue"
+        "workers-ts/src/services/agent/PromoterApplicationService.ts",
+        "workers-ts/test/admin-promoter-application.test.ts",
+        "workers-ts/test/admin-promoter-application-postgres.test.ts",
+        "workers-ts/test/admin-promoter-applications-frontend.test.ts"
       ],
       "targetPermissions": [
         "distribution.view",

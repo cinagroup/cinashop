@@ -8,6 +8,15 @@ import {
 import type { DbClient } from "@/lib/di";
 import { ValidateException } from "@/utils/errors";
 import { hasPendingPinkCancellation } from "@/services/activity/PinkCancellationIntent";
+import { enqueuePinkSuccessNotices } from './PinkSuccessNotice';
+import { validPinkPeople } from './PinkVirtualCompletion';
+
+function combinationAcceptsPayment(combination: typeof storeCombination.$inferSelect, now: Date): boolean {
+  return combination.status === 1 && combination.isShow === 1 && combination.isDel === 0
+    && validPinkPeople(combination.people) && Number.isSafeInteger(combination.effectiveTime) && combination.effectiveTime > 0
+    && (combination.startTime === null || combination.startTime.getTime() <= now.getTime())
+    && (combination.stopTime === null || combination.stopTime.getTime() >= now.getTime());
+}
 
 export interface PinkReservation {
   leaderId: number;
@@ -43,11 +52,12 @@ export async function assertPinkOrderPayable(
 ): Promise<void> {
   if (order.type !== 3) return;
   const combination = await db
-    .select({ id: storeCombination.id })
+    .select()
     .from(storeCombination)
     .where(eq(storeCombination.id, order.activityId))
     .limit(1);
   if (!combination[0]) throw new ValidateException("拼团活动不存在");
+  if (!combinationAcceptsPayment(combination[0], now)) throw new ValidateException('拼团活动已结束或配置无效，请重新确认');
   if (order.pinkId <= 0) return;
   const leaders = await db
     .select({
@@ -182,7 +192,7 @@ export async function reservePinkJoin(
   const activePeople = Number(activeRows[0]?.count ?? 0);
   const reservedPeople = Number(pendingRows[0]?.count ?? 0);
   const requiredPeople = leader.people;
-  if (requiredPeople <= 0) throw new ValidateException("拼团人数配置无效");
+  if (!validPinkPeople(requiredPeople)) throw new ValidateException("拼团人数配置无效");
   if (activePeople + reservedPeople >= requiredPeople) {
     throw new ValidateException("该团名额已满");
   }
@@ -223,7 +233,6 @@ export async function activatePaidPink(
     .for("key share");
   const combination = combinations[0];
   if (!combination) throw new ValidateException("拼团活动不存在");
-  if (combination.people <= 0) throw new ValidateException("拼团人数配置无效");
 
   const users = await tx
     .select({ nickname: user.nickname, avatar: user.avatar })
@@ -232,10 +241,22 @@ export async function activatePaidPink(
     .limit(1);
   const buyer = users[0];
   if (!buyer) throw new ValidateException("拼团用户不存在");
-  const paidAt = new Date(now * 1000);
+  // A close/soft-delete takes an exclusive activity lock. Read wall-clock time
+  // after that KEY SHARE wait, rather than the callback/transaction start time.
+  const [clock] = await tx.select({ milliseconds: sql<string>`floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint` }).from(sql`(values (1)) AS pink_clock(n)`);
+  const activationMilliseconds = Math.max(now * 1000, Number(clock.milliseconds));
+  const activatedAt = Math.floor(activationMilliseconds / 1000);
+  const paidAt = new Date(activationMilliseconds);
+  if (!combinationAcceptsPayment(combination, paidAt)) {
+    if (options.allowGroupReplacement === false) throw new ValidateException('拼团活动已结束或配置无效，请重新确认');
+    // The external provider has already charged the buyer. Commit that paid
+    // evidence into a failed group; scheduled failed-group recovery performs
+    // the existing automatic refund. Never invent an unpaid or successful order.
+    return createPaidPinkLeader(tx, order, combination, buyer, activatedAt, true);
+  }
 
   if (order.pinkId <= 0) {
-    return createPaidPinkLeader(tx, order, combination, buyer, now);
+    return createPaidPinkLeader(tx, order, combination, buyer, activatedAt);
   }
 
   const leaders = await tx
@@ -254,13 +275,11 @@ export async function activatePaidPink(
     legacyOwnLeader
     && !cancelling
     && leader.isRefund === 0
-    && [1, 2].includes(leader.status)
+    && leader.status === 1
     && (leader.stopTime === null || leader.stopTime.getTime() > paidAt.getTime())
   ) {
-    const completed = combination.people <= 1;
-    const stopTime = completed
-      ? paidAt
-      : new Date((now + Math.max(0, combination.effectiveTime) * 3600) * 1000);
+    const completed = false;
+    const stopTime = new Date((activatedAt + combination.effectiveTime * 3600) * 1000);
     await tx
       .update(storePink)
       .set({
@@ -278,7 +297,7 @@ export async function activatePaidPink(
         price: combination.price,
         status: completed ? 2 : 1,
         stopTime,
-        addTime: now,
+        addTime: activatedAt,
       })
       .where(eq(storePink.id, leader.id));
     return { pinkId: leader.id, completed };
@@ -288,6 +307,7 @@ export async function activatePaidPink(
     leader.kId !== 0 ||
     leader.status !== 1 ||
     leader.isRefund !== 0 ||
+    !validPinkPeople(leader.people) ||
     (leader.stopTime !== null && leader.stopTime.getTime() <= paidAt.getTime())
   ) {
     // Payment callbacks can arrive after the selected group expires or its
@@ -298,7 +318,7 @@ export async function activatePaidPink(
     if (options.allowGroupReplacement === false) {
       throw new ValidateException("该拼团已失效或取消处理中，请重新确认");
     }
-    return createPaidPinkLeader(tx, order, combination, buyer, now);
+    return createPaidPinkLeader(tx, order, combination, buyer, activatedAt);
   }
   if (leader.combinationId !== combination.id) throw new ValidateException("拼团信息不匹配");
 
@@ -313,7 +333,10 @@ export async function activatePaidPink(
       ),
     )
     .limit(1);
-  if (duplicate[0]) throw new ValidateException("您已参加该拼团");
+  if (duplicate[0]) {
+    if (options.allowGroupReplacement === false) throw new ValidateException("您已参加该拼团");
+    return createPaidPinkLeader(tx, order, combination, buyer, activatedAt);
+  }
 
   const activeRows = await tx
     .select({ count: sql<number>`COUNT(*)::int` })
@@ -326,8 +349,11 @@ export async function activatePaidPink(
       ),
     );
   const people = Number(activeRows[0]?.count ?? 0) + 1;
-  const requiredPeople = leader.people > 0 ? leader.people : combination.people;
-  if (people > requiredPeople) throw new ValidateException("该团人数已满");
+  const requiredPeople = leader.people;
+  if (people > requiredPeople) {
+    if (options.allowGroupReplacement === false) throw new ValidateException("该团人数已满");
+    return createPaidPinkLeader(tx, order, combination, buyer, activatedAt);
+  }
   const completed = people >= requiredPeople;
   await tx.insert(storePink).values({
     uid: order.uid,
@@ -345,7 +371,7 @@ export async function activatePaidPink(
     price: combination.price,
     status: completed ? 2 : 1,
     stopTime: completed ? paidAt : null,
-    addTime: now,
+    addTime: activatedAt,
   });
   await tx
     .update(storePink)
@@ -359,7 +385,8 @@ export async function activatePaidPink(
     await tx
       .update(storePink)
       .set({ status: 2, stopTime: paidAt })
-      .where(eq(storePink.kId, leader.id));
+      .where(and(eq(storePink.kId, leader.id), eq(storePink.isRefund, 0), eq(storePink.status, 1)));
+    await enqueuePinkSuccessNotices(tx, leader.id, activatedAt);
   }
   return { pinkId: leader.id, completed };
 }
@@ -370,10 +397,11 @@ async function createPaidPinkLeader(
   combination: typeof storeCombination.$inferSelect,
   buyer: { nickname: string; avatar: string },
   now: number,
+  failed = false,
 ): Promise<{ pinkId: number; completed: boolean }> {
   const paidAt = new Date(now * 1000);
   const stopTime = new Date((now + Math.max(0, combination.effectiveTime) * 3600) * 1000);
-  const completed = combination.people <= 1;
+  const completed = false;
   const inserted = await tx
     .insert(storePink)
     .values({
@@ -390,8 +418,8 @@ async function createPaidPinkLeader(
       people: combination.people,
       memberCount: 1,
       price: combination.price,
-      status: completed ? 2 : 1,
-      stopTime: completed ? paidAt : stopTime,
+      status: failed ? 3 : 1,
+      stopTime: failed ? paidAt : stopTime,
       addTime: now,
     })
     .returning({ id: storePink.id });
@@ -410,8 +438,8 @@ export async function reconcileRefundedPink(
   now = Math.floor(Date.now() / 1000),
 ): Promise<void> {
   if (order.type !== 3 || order.pinkId <= 0 || order.refundStatus !== 2) return;
-  // Timeout locks leader -> members. Never hold a member while waiting for its
-  // leader. The refund's inventory boundary already serializes promotion; the
+  // Timeout/refund lock activity -> orders -> leader -> members. Never hold a
+  // member while waiting for its leader. The inventory boundary serializes promotion; the
   // read also handles historical orders pointing directly at a member row.
   const [reference] = await tx.select({ kId: storePink.kId }).from(storePink)
     .where(eq(storePink.id, order.pinkId)).limit(1);
@@ -473,9 +501,8 @@ export async function reconcileRefundedPink(
     .update(storePink)
     .set({ isRefund: participant.id, status: 3, stopTime: endedAt })
     .where(eq(storePink.id, participant.id));
-  if (participant.status === 3 || !members[0]) return;
-
-  const nextLeader = members[0];
+  const nextLeader = members.find(member => member.uid > 0 && member.isVirtual === 0 && [1, 2].includes(member.status));
+  if (participant.status === 3 || !nextLeader) return;
   const nextStatus = participant.status === 2 ? 2 : 1;
   await tx
     .update(storePink)

@@ -1,0 +1,63 @@
+{
+  "dateUtc": "2026-09-28T10:12:19Z",
+  "scope": "Local, unpublished Admin lottery catalog, winning-records and customer feedback screen contracts",
+  "outcome": {
+    "legacyAdminScreens": { "total": 274, "candidate": 70, "partial": 114, "missing": 83, "retired": 7 },
+    "legacyMarketingScreens": { "total": 48, "candidate": 20, "partial": 13, "missing": 15, "retired": 0 },
+    "legacySettingScreens": { "total": 76, "candidate": 18, "partial": 24, "missing": 29, "retired": 5 },
+    "workerRoutes": 1928,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 86,
+    "adminApi": { "callSites": 468, "pathVariants": 492, "executable": 492, "unregistered": 0, "unresolved": 0 },
+    "screenPromotions": [
+      "/admin/marketing/lottery/index: partial->candidate",
+      "/admin/marketing/lottery/recording_list: partial->candidate",
+      "/admin/setting/store_service/feedback: partial->candidate"
+    ],
+    "checklist": { "checked": 246, "open": 158, "total": 404 }
+  },
+  "verification": {
+    "focusedPgliteFrontendPermissionAndParity": { "files": 14, "passed": 83, "failed": 0, "skipped": 0, "maxWorkers": 1 },
+    "nativePostgresql16LotteryServiceAndHttp": { "files": 2, "passed": 7, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "nativePostgresql16FeedbackServiceAndHttp": { "files": 2, "passed": 7, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiStrictAudit": "492 executable variants; 0 unregistered or unresolved",
+    "routeAudit": "1928 Worker registrations; 882 executable legacy-path matches unchanged",
+    "browserAndProduction": "not run; no deployment or production mutation"
+  },
+  "limitations": [
+    "Lottery creation remains partial because new creation of WeChat red packets and an undefined level prize is unsupported.",
+    "The legacy lottery copy button passes query parameters, but its target page comments out their consumption; this batch does not claim copy semantics.",
+    "The new stage and winner-count computations repair documented defects in the PHP implementation and are not byte-equivalent to those erroneous values.",
+    "The records list intentionally redacts user phone, real name, receipt data and tracking numbers; management detail returns existing carrier and tracking number only.",
+    "Feedback uses existing Admin database DML privileges; independent HTTP authorization is tested, but no database-level dedicated function or row-version write guard was added.",
+    "Exact PHP route coverage is unchanged because no old URL aliases were registered.",
+    "Production history, real-role browser flows, actual fulfillment, scale, full Linux CI and post-release acceptance remain open."
+  ],
+  "evidence": [
+    "docs/admin-lottery-feedback-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "audit/admin-legacy-marketing-route-parity-lottery-followup-20260928.json",
+    "audit/admin-legacy-setting-route-parity-feedback-followup-20260928.json",
+    "audit/route-distribution-lottery-feedback-followup-20260928.json",
+    "audit/admin-frontend-inventory-lottery-feedback-followup-20260928.json",
+    "audit/admin-frontend-api-contracts-lottery-feedback-followup-20260928.json",
+    "test/admin-lottery-read-contract.test.ts",
+    "test/admin-lottery-read-http.test.ts",
+    "test/admin-lottery-frontend.test.ts",
+    "test/admin-feedback-service.test.ts",
+    "test/admin-feedback-http.test.ts",
+    "test/admin-feedback-frontend.test.ts",
+    "test/admin-permission.test.ts",
+    "test/admin-all-frontend-parity.test.ts"
+  ]
+}

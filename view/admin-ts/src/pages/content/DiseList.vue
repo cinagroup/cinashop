@@ -45,7 +45,9 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openForm(row)">编辑</el-button>
+            <el-button size="small" :disabled="isFab(row) || isTheme(row)" @click="openForm(row)">编辑</el-button>
+            <p v-if="isFab(row)" class="help">请在「悬浮按钮设置」维护完整配置</p>
+            <p v-if="isTheme(row)" class="help">请在「主题风格」维护完整配置</p>
             <el-tooltip
               :disabled="!row.delete_protected"
               :content="row.delete_protection_reason"
@@ -214,6 +216,8 @@ function prettyJson(value: string): string {
 }
 
 function openForm(row?: DiseRow): void {
+  if (row && isTheme(row)) { ElMessage.warning('主题请在主题风格专用设置页维护'); return; }
+  if (row && isFab(row)) { ElMessage.warning('悬浮按钮请在专用设置页维护'); return; }
   if (row) {
     form.id = row.id;
     form.name = row.name;
@@ -249,6 +253,7 @@ function canonicalJson(value: string): string | null {
 }
 
 async function save(): Promise<void> {
+  if (form.templateName === 'suspended_window') { ElMessage.warning('悬浮按钮不能通过通用装修编辑保存，请使用专用设置页'); return; }
   const name = form.name.trim();
   if (!name) {
     ElMessage.error("请输入名称");
@@ -319,6 +324,9 @@ function typeLabel(type: number): string {
   if (type === 3) return "3 · 系统装修配置";
   return `${type} · 其他`;
 }
+
+function isTheme(row: DiseRow): boolean { return row.template_name === 'color_change'; }
+function isFab(row: DiseRow): boolean { return row.template_name === 'suspended_window'; }
 
 function formatTime(timestamp: number): string {
   if (!timestamp) return "未记录时间";

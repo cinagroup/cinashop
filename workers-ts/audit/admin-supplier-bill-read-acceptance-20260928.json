@@ -1,0 +1,106 @@
+{
+  "dateUtc": "2026-09-28T06:40:40.850Z",
+  "scope": "Local, unpublished legacy Admin supplier bill read follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 61,
+      "partial": 117,
+      "missing": 89,
+      "retired": 7
+    },
+    "legacySupplierAgentScreens": {
+      "total": 19,
+      "candidate": 3,
+      "partial": 10,
+      "missing": 6,
+      "retired": 0
+    },
+    "workerRoutes": 1867,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 895,
+      "executableMatched": 874,
+      "unavailable": 21,
+      "actionableMissing": 992,
+      "effectiveExecutableCoveragePercent": 46.3
+    },
+    "adminApi": {
+      "callSites": 439,
+      "pathVariants": 463,
+      "executable": 463,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 79,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "supplierBillNativePg16": {
+      "files": [
+        "test/admin-supplier-bill-screen-postgres.test.ts",
+        "test/admin-supplier-bill-screen-http.test.ts"
+      ],
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "supplierBillPglite": {
+      "files": 2,
+      "passed": 10,
+      "failed": 0
+    },
+    "supplierBillFrontendRuntime": {
+      "files": 1,
+      "passed": 4,
+      "failed": 0
+    },
+    "finalStaticAndFrontendSuites": {
+      "files": 6,
+      "passed": 22,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "463 executable variants; 0 unregistered or unresolved",
+    "browserWrite": "not run; no business mutation or production deployment"
+  },
+  "limitations": [
+    "The old aggregate selected an arbitrary add_time per group; the new screen displays a stable period key.",
+    "The old export ignored supplier_id and depended on a potentially truncated GROUP_CONCAT id list; the new export recomputes the scoped group and rejects more than 5000 rows or 2 MiB.",
+    "The legacy id-list detail and export URLs were intentionally not registered as incompatible aliases, so exact PHP route coverage is unchanged.",
+    "The new search excludes soft-deleted user identity matches and limits selected endpoints to 366 days before legacy end expansion.",
+    "Real supplier finance history and constrained-role browser behavior, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "730d374f6a9f46ad5e103c745c83d0d300ad247129c182fda188e36914257922",
+    "view/admin-ts/src/api/supplierBill.ts": "7b7074faca18fe5f2154727516fb8dcb84b3957648f0570403cc9a6552e1bf6e",
+    "view/admin-ts/src/pages/supplier/SupplierBills.vue": "8f015d77fbb17dd86f9df37e6e74ace9c820f9f94b216b7d5e763f581495030d",
+    "view/admin-ts/src/api/system.ts": "2af9f0506b5748b4610a951ee2a4407edb6a769ade659f8e88b53929ad803929",
+    "view/admin-ts/src/router/index.ts": "2d9206e5f31a1816172f1f8198ff9d4fb9ff35171e9d2ef788aad8c38ee409f1",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "39a08c0d224e795e0ffffdb5421181bde4cbd62b96c51daa2fb7ff80a45088e4",
+    "workers-ts/src/services/admin/AdminSupplierBillScreenService.ts": "e004eb43e37d961dbd72e17070b18f118553fdaa91091091e90a5f16419c9fe7",
+    "workers-ts/src/controllers/api/v1/AdminSupplierBillScreenController.ts": "6ae370d4018cb93b01ccc5acaac0684de050ca7395d8470467cbaff405509e60",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "423ae8c014eb057ac1e657f2582c78fbaea2008534cef6dffb13fb5429a2de83",
+    "workers-ts/src/routes/adminapi.ts": "b45bc3b6135c3437c7a42923343fa491b4646793e11ed7658a07bf487dcf994e",
+    "workers-ts/src/routes/v1/index.ts": "1e189ea54e0248d2b6b2c340aef7e4b06a54bd3b5b1b489b03d25cfa173a1331",
+    "workers-ts/test/admin-supplier-bill-screen-postgres.test.ts": "c06094b7c361b8eece51fee16b0499475c743286a21a9ad090f21d8428194df0",
+    "workers-ts/test/admin-supplier-bill-screen-http.test.ts": "3cf7799e119df342e8a0634d64626003cec6f96a6b35810860fe2ceb225f9630",
+    "workers-ts/test/admin-supplier-bill-frontend.test.ts": "256daee7850aa876d1f51f9d2a13ad0c50d430cc3811371e3d4248677b43920e",
+    "workers-ts/test/admin-supplier-agent-frontend-parity.test.ts": "5526bab7c9ec02784bdba6e5b619036a5b84afd0da469b788529778cc4f96ad6",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "f5b82af4cc6595353d16638d566cc4da7a82b0c9a9282c4d9f3d4643cd70fc62",
+    "workers-ts/scripts/admin-supplier-agent-frontend-parity-audit.ts": "56aafebb58baba73e5f6b5f722ae9d85fc2027573e58de86a1afd9072e721cdc",
+    "workers-ts/docs/admin-supplier-bill-read-contract.md": "9f7068c4d20bd72471e6f042697af3b43139270c6ba980c808bbd798cb477645",
+    "workers-ts/docs/admin-supplier-agent-route-parity.md": "12fc41ea46089fea0236ff1309b3982ab4bad26deea0ef9e11365517153b18a4",
+    "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-bill-followup-20260928.json": "a1b8c01f3cdc75646b0fafc44f510f476824b69888774ac9114cbd65e7662904",
+    "workers-ts/audit/route-distribution-supplier-bill-followup-20260928.json": "9452bd3f22aeb03e5b87aa5286a6cf73aa7cf2ceaa81ab70750c17decf253569",
+    "workers-ts/audit/admin-frontend-inventory-supplier-bill-followup-20260928.json": "38c780e696c43a68896bd4f458a45bb45fc16e87179c05987b06f51006ae8700",
+    "workers-ts/audit/admin-frontend-api-contracts-supplier-bill-followup-20260928.json": "4a3f9a5886260edb40c473218b112bc6354a35083ecedddf22fced41d1e80868"
+  }
+}

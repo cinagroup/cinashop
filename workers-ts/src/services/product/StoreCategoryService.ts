@@ -1,69 +1,51 @@
-/**
- * 商品分类 Service
- *
- * 对应 PHP app/services/product/category/StoreProductCategoryServices.php
- * 核心方法 getCategory —— 前台分类树, 带 Upstash 缓存。
- */
-import type { Container } from "@/lib/di";
-import type { Env } from "@/env";
-import { cacheGet, cacheSet } from "@/utils/cache";
-import { buildTree } from "@/utils/tree";
-
-const CATEGORY_CACHE_KEY = "category_all_tree";
-const CATEGORY_CACHE_TTL = 3600; // 1 小时
-
+import { and, eq, sql } from 'drizzle-orm';
+import { withTx, type Container } from '@/lib/di';
+import type { Env } from '@/env';
+import { storeProductCategory } from '@/models/schema';
+import { themeDeadlines, themeHash } from '@/services/content/ThemeReadService';
+import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { integralDetailText } from '@/services/activity/IntegralProductDetailData';
+import { ValidateException } from '@/utils/errors';
+import { publicCategoryIdentitySql } from './PublicCategoryPolicy';
+export interface PublicCategoryNode { id: number; pid: number; cate_name: string; pic: string; big_pic: string; children: PublicCategoryNode[] }
+export const PUBLIC_CATEGORY_LIMIT = 3000;
 export class StoreCategoryService {
-  constructor(
-    private readonly container: Container,
-    private readonly env: Env,
-  ) {}
-
-  /**
-   * 前台分类树 (对应 PHP getCategory)
-   *
-   * 缓存策略: Upstash 存完整树 JSON, TTL 1h。
-   * 后台改分类时调 invalidate() 失效。
-   */
-  async getCategory(): Promise<unknown[]> {
-    // 1. 命中缓存
-    const cached = await cacheGet<unknown[]>(CATEGORY_CACHE_KEY, this.env);
-    if (cached) return cached;
-
-    // 2. 取所有 is_show=1 的分类 (扁平)
-    const flat = await this.container.storeProductCategoryDao.getTierList(
-      { isShow: 1 },
-      ["id", "pid", "cateName", "pic", "bigPic"],
-    );
-
-    // 3. 嵌套成树 (对应 PHP get_tree_children)
-    const tree = buildTree(
-      flat.map((f) => ({
-        id: f.id,
-        pid: f.pid,
-        cate_name: f.cateName,
-        pic: f.pic,
-        big_pic: f.bigPic,
-      })),
-    );
-
-    // 4. 回填缓存
-    await cacheSet(CATEGORY_CACHE_KEY, tree, this.env, CATEGORY_CACHE_TTL);
-    return tree;
+  constructor(private readonly container: Container, private readonly env: Env) {}
+  private async snapshot() {
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`); await themeDeadlines(tx);
+      const rows = await tx.select({ id: storeProductCategory.id, pid: storeProductCategory.pid, level: storeProductCategory.level,
+        cateName: storeProductCategory.cateName, pic: storeProductCategory.pic, bigPic: storeProductCategory.bigPic,
+        sort: storeProductCategory.sort, isShow: storeProductCategory.isShow, path: storeProductCategory.path, xmin: sql<string>`xmin::text` })
+        .from(storeProductCategory).where(and(eq(storeProductCategory.type, 0), eq(storeProductCategory.relationId, 0)))
+        .orderBy(sql`${storeProductCategory.sort} DESC`, sql`${storeProductCategory.id} DESC`).limit(PUBLIC_CATEGORY_LIMIT + 1);
+      if (rows.length > PUBLIC_CATEGORY_LIMIT) throw new ValidateException('平台分类超过完整读取容量');
+      const visible = await tx.select({ id: storeProductCategory.id }).from(storeProductCategory).where(publicCategoryIdentitySql('store_product_category')).limit(PUBLIC_CATEGORY_LIMIT + 1);
+      const ids = new Set(visible.map(row => row.id)), safe = rows.filter(row => ids.has(row.id) && integralDetailText(row.cateName, 100));
+      const accepted = new Map<number, typeof safe[number]>();
+      for (let level = 0; level < 3; level++) for (const row of safe) if (row.level === level && (level === 0 || accepted.has(row.pid))) accepted.set(row.id, row);
+      const published = rows.filter(row => accepted.has(row.id));
+      const references = await publicProductPictures(tx, published.flatMap(row => [{ image: row.pic, type: 0, relationId: 0 }, { image: row.bigPic, type: 0, relationId: 0 }]));
+      return { rows: published, references, revision: await themeHash(rows) };
+    });
   }
-
-  /** 失效缓存 (后台改分类后调用) */
-  async invalidate(): Promise<void> {
-    const { cacheDelete } = await import("@/utils/cache");
-    await cacheDelete(CATEGORY_CACHE_KEY, this.env);
+  async getCategory(): Promise<PublicCategoryNode[]> {
+    const snapshot = await this.snapshot(), pictures = await renderProductPictures(this.env?.APP_KEY, snapshot.references);
+    const map = new Map<number, PublicCategoryNode>(), roots: PublicCategoryNode[] = [];
+    snapshot.rows.forEach((row, index) => map.set(row.id, { id: row.id, pid: row.pid, cate_name: row.cateName, pic: pictures[index * 2], big_pic: pictures[index * 2 + 1], children: [] }));
+    for (const row of snapshot.rows) { const node = map.get(row.id)!; if (row.pid) map.get(row.pid)!.children.push(node); else roots.push(node); }
+    return roots;
   }
-
-  /** 分类版本号 (对应 PHP getCategoryVersion, 用于前端缓存键) */
-  async getVersion(): Promise<string> {
-    const svc = new (await import("@/services/system/SystemConfigService")).SystemConfigService(
-      this.container,
-      this.env,
-    );
-    const v = await svc.get("category_version");
-    return v || "init";
+  async getLevelCategory(id: number) {
+    const roots = await this.getCategory(), queue = [...roots];
+    while (queue.length) { const found = queue.shift()!; if (found.id === id) return found.pid === 0 ? roots : findChildren(roots, found.pid); queue.push(...found.children); }
+    return [];
   }
+  /** Compatibility invalidation only; public reads no longer consume or fill
+   * the old unscoped Redis tree cache. */
+  async invalidate() { const { cacheDelete } = await import('@/utils/cache'); await cacheDelete('category_all_tree', this.env); }
+  async getVersion() { return (await this.snapshot()).revision; }
+}
+function findChildren(rows: PublicCategoryNode[], id: number): PublicCategoryNode[] {
+  for (const row of rows) { if (row.id === id) return row.children; const children = findChildren(row.children, id); if (children.length) return children; } return [];
 }

@@ -28,14 +28,14 @@ const previewItems: AttachmentItem[] = [
   { att_id: 30, canonical_url: "/favicon.ico", att_dir: "/favicon.ico", satt_dir: "/favicon.ico", att_size: "2.1 KiB", raw_size: 2140, att_type: "image/x-icon", pid: 0, time: "2026-08-10 09:45:00", real_name: "storefront-reference.ico" },
 ];
 
-export async function apiAttachmentList(params: Record<string, unknown>) {
+export async function apiAttachmentList(params: Record<string, unknown>, signal?: AbortSignal) {
   if (previewMode) return { list: previewItems, count: previewItems.length };
   return getData<{ list: AttachmentItem[]; count: number }>(
-    request.get("/file/file", { params }),
+    request.get("/file/file", { params, signal }),
   );
 }
 
-export async function apiAttachmentUpload(file: File, pid = 0) {
+export async function apiAttachmentUpload(file: File, pid = 0, signal?: AbortSignal) {
   if (previewMode) {
     const previewUrl = URL.createObjectURL(file);
     const item: AttachmentItem = {
@@ -49,7 +49,7 @@ export async function apiAttachmentUpload(file: File, pid = 0) {
   const body = new FormData();
   body.append("file", file);
   body.append("pid", String(pid));
-  return getData<{ att_id: number; src: string; url: string }>(request.post("/file/upload", body));
+  return getData<{ att_id: number; src: string; url: string }>(request.post("/file/upload", body, { signal }));
 }
 
 export async function apiAttachmentDelete(ids: number[]) {
@@ -68,10 +68,10 @@ export async function apiAttachmentDelete(ids: number[]) {
   );
 }
 
-export async function apiAttachmentCategories() {
+export async function apiAttachmentCategories(signal?: AbortSignal) {
   if (previewMode) return { list: [{ id: 1, pid: 0, name: "品牌素材", title: "品牌素材" }] };
   return getData<{ list: AttachmentCategoryItem[] }>(
-    request.get("/file/category", { params: { pid: 0, file_type: 1 } }),
+    request.get("/file/category", { params: { pid: 0, file_type: 1 }, signal }),
   );
 }
 

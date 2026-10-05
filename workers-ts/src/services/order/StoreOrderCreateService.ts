@@ -46,7 +46,7 @@ import {
 } from "@/models/schema";
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
-import { ValidateException, NotFoundException } from "@/utils/errors";
+import { ValidateException, NotFoundException, HttpApiException } from "@/utils/errors";
 import {
   buildOrderBrokerageSnapshot,
   completeOrderReceipt,
@@ -64,6 +64,11 @@ import {
   ShippingConfigurationError,
 } from "@/services/order/ShippingCalculator";
 import { resolveOrderCoupon, eligibleOrderCoupons, type OrderCouponQuery, type OrderCouponPage } from "@/services/activity/OrderCouponService";
+import { quoteOrderPromotions, lockAndRequoteOrderPromotions, type OrderPromotionQuote, type OrderPromotionQuoteLine } from '@/services/activity/OrderPromotionQuoteService';
+import { quoteOrderPromotionGifts, requoteLockedOrderPromotionGifts, reserveOrderPromotionGifts,
+  releaseUnpaidOrderPromotionGifts, type OrderPromotionGiftQuote,
+  type OrderPromotionGiftQuoteInput } from '@/services/activity/OrderPromotionGiftService';
+import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
 import { MEMBER_SAVINGS_VERSION, orderMembershipSavings } from './OrderMembershipSavings';
 import {
   allocateLegacyDiscountCents,
@@ -99,6 +104,7 @@ import {
 } from "@/services/activity/StoreDiscountService";
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { readCheckoutPricingSources, protectCheckoutPricingSources } from './CheckoutPricingSources';
+import { readCheckoutPickupPolicy, lockCheckoutPickupStore } from './CheckoutPickupPolicy';
 import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
@@ -118,6 +124,8 @@ import { assertCheckoutCouponTemplate } from './CheckoutCouponTemplateAuthority'
 import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
 import { verifyUnpaidCancellationLines } from './UnpaidOrderCancellationEvidence';
 import { recordPurchaseOriginEvidence } from './PurchaseOriginEvidence';
+import { cashierSecondCardCreationFacts, authorizeCashierSecondCardCreation, captureCashierSecondCardCreation,
+  assertCashierSecondCardCreationReplay, type CashierSecondCardCreationCapability } from './CashierSecondCardOrigin';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -173,6 +181,8 @@ export interface CreateOrderParams {
 
 /** Infrastructure needed by the real order-creation core. */
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
+  /** Live server capability issued exclusively by the customer cashier adapter. */
+  cashierSecondCardCreation?: CashierSecondCardCreationCapability;
   /** All public service entry points require a server-issued receipt. Pure core fixtures may omit this adapter policy. */
   requireConfirmation?: boolean;
   /** Public checkout always captures. Omission is reserved for isolated core/legacy fixtures, never an HTTP or env option. */
@@ -219,6 +229,12 @@ export interface OrderPricingQuote {
   memberDiscountCents: number;
   levelDiscountCents: number;
   paidMemberDiscountCents: number;
+  promotionSavingsCents: number;
+  giveIntegral: number;
+  giveCoupon: number[];
+  giveCouponInfo: Array<{ id: number; title: string; price: string; minPrice: string }>;
+  promotionsDetail: Array<{ id: number; tierId: number; name: string; threshold: string; repetitions: number }>;
+  giveCartInfo: Array<{ cartId: string; productId: number; skuUnique: string; quantity: number; promotionId: number }>;
   storeFreePostageCents: number;
   isStoreFreePostage: boolean;
   totalNum: number;
@@ -227,7 +243,9 @@ export interface OrderPricingQuote {
     rawUnitPriceCents: number;
     unitPriceCents: number;
     discountCents: number;
-    priceType: "" | "level" | "member";
+    priceType: "" | "level" | "member" | "promotions";
+    totalPriceCents: number;
+    promotion: OrderPromotionQuoteLine | null;
   }>;
 }
 
@@ -433,9 +451,12 @@ export async function cancelStoreOrder(
   await withTx(container, async (tx) => {
     // A pink refund can relink this unpaid order. Take its inventory boundary
     // before the order row, matching create/refund rather than restoring late.
-    const [initial] = await tx.select({ uid: storeOrder.uid, type: storeOrder.type, activityId: storeOrder.activityId })
+    const [initial] = await tx.select({ uid: storeOrder.uid, type: storeOrder.type,
+      activityId: storeOrder.activityId, promotionsGive: storeOrder.promotionsGive })
       .from(storeOrder).where(eq(storeOrder.orderId, orderId)).limit(1);
     if (!initial || initial.uid !== uid) throw new NotFoundException("订单不存在");
+    if (readOrderPromotionGiftIntent(initial.promotionsGive)) await tx.execute(sql`
+      SELECT pg_advisory_xact_lock_shared(hashtext('time_discount_catalog'),hashtext('platform_type_1'))`);
     if (initial?.type === 3) await lockPinkInventory(tx, initial.activityId);
     const orderRows = await tx
       .select()
@@ -445,6 +466,8 @@ export async function cancelStoreOrder(
       .for("update");
     const order = orderRows[0];
     if (!order || order.uid !== uid || order.isSystemDel) throw new NotFoundException("订单不存在");
+    if (order.promotionsGive !== initial.promotionsGive)
+      throw new ValidateException('满送订单权益在取消期间发生变化，请重试');
     if ((initial?.type === 3 || order.type === 3) &&
         (initial?.type !== order.type || initial.activityId !== order.activityId)) {
       throw new ValidateException("拼团订单活动已变化，请重试");
@@ -490,6 +513,7 @@ export async function cancelStoreOrder(
         skuUnique: storeOrderCartInfo.skuUnique, cartNum: storeOrderCartInfo.cartNum, refundNum: storeOrderCartInfo.refundNum,
         splitStatus: storeOrderCartInfo.splitStatus, splitSurplusNum: storeOrderCartInfo.splitSurplusNum,
         surplusNum: storeOrderCartInfo.surplusNum, isWriteoff: storeOrderCartInfo.isWriteoff,
+        isGift: storeOrderCartInfo.isGift,
         cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderCartInfo.cartInfo}) <= 65536 THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
       })
       .from(storeOrderCartInfo)
@@ -556,6 +580,8 @@ export async function cancelStoreOrder(
       )
       .returning({ id: storeOrder.id });
     if (!cancelled.length) throw new ValidateException("订单已被处理");
+
+    await releaseUnpaidOrderPromotionGifts(tx, order);
 
     for (const item of cartInfos) {
       let snapshotSkuId = 0;
@@ -915,6 +941,10 @@ export class StoreOrderCreateService {
   ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {
     const { uid, key, cartIds } = params;
     const assisted = params.assisted;
+    const cashier = cashierSecondCardCreationFacts(runtime.cashierSecondCardCreation);
+    if(cashier && (assisted || uid!==cashier.buyer_uid || key!==cashier.request_key.replaceAll('-','')
+      ||cartIds.length!==1||cartIds[0]!==cashier.cart_ids[0]||params.shippingType!==2||params.storeId!==0
+      ||(params.type??0)!==0||params.manualAddress!==undefined))throw new ValidateException('客户次卡收银来源与下单参数不一致');
     if (!Number.isSafeInteger(uid) || uid < 0) throw new ValidateException("用户参数无效");
     if (assisted) {
       if (!Number.isSafeInteger(assisted.adminId) || assisted.adminId <= 0) {
@@ -929,11 +959,12 @@ export class StoreOrderCreateService {
           !/^[A-Za-z0-9_-]+$/.test(assisted.touristUid)
         )
       ) throw new ValidateException("游客标识无效");
-    } else if (uid === 0) {
+    } else if (uid === 0 && !cashier) {
       throw new ValidateException("游客订单必须通过代客下单创建");
     }
 
-    const assertExistingScope = (order: typeof storeOrder.$inferSelect) => {
+    const assertExistingScope = async (order: typeof storeOrder.$inferSelect,db=c.db) => {
+      if(cashier){await assertCashierSecondCardCreationReplay(db,runtime.cashierSecondCardCreation!,order);return;}
       if (!assisted) return;
       if (order.staffId !== assisted.adminId || order.isChannel !== 2) {
         throw new ValidateException("订单确认标识已被其他代客会话使用");
@@ -944,7 +975,7 @@ export class StoreOrderCreateService {
     if (!options?.preview) {
       const existing = await c.storeOrderDao.findByUnique(uid, key);
       if (existing) {
-        assertExistingScope(existing);
+        await assertExistingScope(existing);
         return { orderId: existing.orderId, key };
       }
     }
@@ -958,7 +989,7 @@ export class StoreOrderCreateService {
     const pickupStoreId = shippingType === 2 ? Number(params.storeId ?? 0) : 0;
     // Legacy coupon selection can precede choosing a pickup store. Normal quote/create still require one.
     const couponPreview = options?.preview === true && options.couponQuery !== undefined;
-    if (shippingType === 2 && (!Number.isSafeInteger(pickupStoreId) || pickupStoreId < (couponPreview ? 0 : 1))) {
+    if (shippingType === 2 && (!Number.isSafeInteger(pickupStoreId) || pickupStoreId < (cashier || couponPreview ? 0 : 1))) {
       throw new ValidateException("请选择有效的自提门店");
     }
 
@@ -970,7 +1001,10 @@ export class StoreOrderCreateService {
     if (carts.length !== cartIds.length) throw new NotFoundException("购物车商品不存在");
     for (const cart of carts) {
       if (cart.uid !== uid) throw new ValidateException("购物车商品不属于当前用户");
-      if (assisted) {
+      if(cashier){
+        if(cart.staffId!==cashier.actor.uid||cart.touristUid!==cashier.tourist_key||cart.productType!==4||cart.type!==0)
+          throw new ValidateException('购物行不属于实际客户次卡收银来源');
+      } else if (assisted) {
         if (
           cart.staffId !== assisted.adminId ||
           cart.touristUid !== (uid === 0 ? assisted.touristUid : "")
@@ -1497,7 +1531,10 @@ export class StoreOrderCreateService {
       throw new ValidateException("不同履约类型商品不能同单购买");
     }
     const orderProductType = productTypes.size === 1 ? [...productTypes][0] : 0;
+    if(cashier && (orderProductType!==4||type!==0||orderItems.length!==1))throw new ValidateException('客户收银仅接受一个真实普通次卡规格');
     assertProductCheckoutShippingType(orderProductType, shippingType);
+    let pickupPolicy = shippingType === 2 && !cashier
+      ? await readCheckoutPickupPolicy(c.db, pickupStoreId, couponPreview) : null;
     if (type === 2 && shippingType === 2) await assertBargainPickupQuote(c, orderItems[0].product, pickupStoreId);
     const deliveryAddress = shippingType === 1 && ![1, 2, 3].includes(orderProductType)
       ? await resolveDeliveryAddress(c.db, { uid, addressId: params.addressId, addressAlias: params.addressAlias,
@@ -1532,6 +1569,33 @@ export class StoreOrderCreateService {
       ? firstOrderAccountEligible(user, firstOrderConfig, preliminaryNow) &&
         !(await hasPaidNonNewcomerOrder(c.db, uid))
       : false;
+    // A single authoritative quote is shared by carts, confirmation and creation.
+    // Partial caps have distinct unit segments; only exact line totals enter finance.
+    const promotionInput = {
+      uid, firstOrderEligible: preliminaryFirstOrderEligible,
+      lines: orderItems.map(item => ({ key: item.cart.id, productId: item.product.id,
+        skuUnique: item.sku.unique, quantity: item.cart.cartNum,
+        rawUnitPriceCents: item.rawUnitPriceCents, memberUnitPriceCents: item.unitPriceCents })),
+    };
+    const promotionQuote: OrderPromotionQuote | null = type === 0
+      ? await quoteOrderPromotions(c, { ...promotionInput, now: preliminaryNow }) : null;
+    if (promotionQuote) {
+      const byCart = new Map(promotionQuote.lines.map(line => [String(line.key), line]));
+      memberDiscountCents = 0; levelDiscountCents = 0; paidMemberDiscountCents = 0;
+      for (const item of orderItems) {
+        item.promotion = byCart.get(String(item.cart.id))!;
+        item.couponEligibleGrossCents = item.promotion.couponEligibleGrossCents;
+        // Keep a display unit amount for legacy readers; every monetary consumer
+        // below uses orderItemGrossCents instead of multiplying this projection.
+        item.unitPriceCents = item.promotion.unitPriceCents ?? Math.floor(item.promotion.totalPriceCents / item.cart.cartNum);
+        item.memberUnitDiscountCents = Math.floor(item.promotion.membershipSavingsCents / item.cart.cartNum);
+        if (!item.promotion.membershipSavingsCents) item.priceType = '';
+        memberDiscountCents += item.promotion.membershipSavingsCents;
+        if (item.priceType === 'member') paidMemberDiscountCents += item.promotion.membershipSavingsCents;
+        if (item.priceType === 'level') levelDiscountCents += item.promotion.membershipSavingsCents;
+      }
+      totalCents = promotionQuote.totalPriceCents;
+    }
     let firstOrderPriceCents = preliminaryFirstOrderEligible
       ? calculateFirstOrderDiscountCents(totalCents, firstOrderConfig)
       : 0;
@@ -1541,10 +1605,28 @@ export class StoreOrderCreateService {
       throw new ValidateException("游客订单不能使用用户优惠券");
     }
     let couponResolution = !user || preliminaryFirstOrderEligible || type !== 0
-      ? { priceCents: 0, row: null, quoteFacts: null, template: null }
+      ? { priceCents: 0, row: null, quoteFacts: null, template: null, lineEligibleCents: null }
       : await resolveOrderCoupon(c, uid, params.couponId, orderItems);
     let couponPriceCents = couponResolution.priceCents;
     let couponRow = couponResolution.row;
+
+    const giftPricePromotions = [...new Map((promotionQuote?.lines ?? []).flatMap(line =>
+      line.promotionAllocations.map(allocation => [allocation.rootId,
+        { id: allocation.rootId, label_id: allocation.labelIds, name: allocation.name }] as const))).values()];
+    const giftInputFor = (firstOrderEligible: boolean): OrderPromotionGiftQuoteInput => {
+      const gross = orderItems.map(orderItemGrossCents);
+      const couponEligible = couponResolution.lineEligibleCents ?? gross;
+      const apportioned = fitCheckoutLineCapacities(
+        allocateLegacyDiscountCents(couponPriceCents, couponEligible), couponEligible);
+      return { uid, firstOrderEligible, shippingType, pricePromotions: giftPricePromotions,
+        lines: orderItems.map((item, index) => ({ key: item.cart.id, productId: item.product.id,
+          skuUnique: item.sku.unique, quantity: item.cart.cartNum,
+          postPromotionGrossCents: gross[index], couponDiscountCents: apportioned[index] })) };
+    };
+    const giftInput = giftInputFor(preliminaryFirstOrderEligible);
+    const giftQuote: OrderPromotionGiftQuote | null = type === 0
+      ? await quoteOrderPromotionGifts(c, giftInput) : null;
+    if (giftQuote) totalNum += giftQuote.totalGiftQuantity;
 
     // 3. 积分抵扣。PHP 的 useIntegral 是布尔开关，具体使用数量必须由
     // 账户余额、兑换比例与系统上限共同决定，客户端不能指定扣多少积分。
@@ -1611,7 +1693,7 @@ export class StoreOrderCreateService {
         const regionIds = expandShippingRegionIds(params.cityId, shippingSnapshot?.cityPath ?? undefined);
         const postageBreakdown = calculateOrderPostageBreakdown(
           orderItems.map(({
-            cart, product, sku, integralActivity, unitPriceCents,
+            cart, product, sku, integralActivity, unitPriceCents, promotion,
             activityFreight, activityPostage, activityTempId,
           }) => ({
             freight: activityFreight ?? integralActivity?.freight ?? product.freight,
@@ -1619,6 +1701,7 @@ export class StoreOrderCreateService {
             tempId: activityTempId ?? integralActivity?.tempId ?? product.tempId,
             quantity: cart.cartNum,
             unitPrice: (unitPriceCents / 100).toFixed(2),
+            subtotalCents: promotion?.totalPriceCents,
             weight: sku.weight,
             volume: sku.volume,
           })),
@@ -1663,7 +1746,9 @@ export class StoreOrderCreateService {
     // Mutable inventory and address-default metadata are deliberately not quote facts.
     const confirmationFingerprint = () => checkoutFingerprint({
       version: 1, uid, adminId: assisted?.adminId ?? 0, touristUid: assisted?.touristUid ?? '',
-      type, shippingType, pickupStoreId, offlinePricing: payType === 'offline',
+      ...(cashier?{customerCashier:{creatorUid:cashier.actor.uid,serviceId:cashier.service_id,scopeKey:cashier.scope_key,
+        requestKey:cashier.request_key,requestHash:cashier.request_hash,touristUid:cashier.tourist_key,mode:'second-card-counter-v1'}}:{}),
+      type, shippingType, pickupStoreId, pickupPolicy, offlinePricing: payType === 'offline',
       couponId: params.couponId ?? 0, wantsIntegral, pinkId: params.pinkId ?? 0,
       bargainActivityId, bargainParticipantId, bargainParticipantQuote, pinkCombinationId,
       bargainConfirmationRules, discountRules: discountPackage?.confirmationRules ?? null,
@@ -1689,6 +1774,7 @@ export class StoreOrderCreateService {
         ...(item.cart.productType === 4 ? { secondCardUnitEntitlements: Math.max(item.sku.writeTimes, 1) } : {}),
         weight: item.sku.weight, volume: item.sku.volume, rawUnitPriceCents: item.rawUnitPriceCents,
         unitPriceCents: item.unitPriceCents, priceType: item.priceType,
+        promotion: item.promotion ?? null,
         memberPriceRules: considersPaidMemberPrice && item.cart.activityId === 0 && item.rawUnitPriceCents > 0
           ? { isVip: item.product.isVip, vipPrice: item.product.isVip === 1 ? item.sku.vipPrice : null } : null,
         giveIntegral: item.activityGiveIntegral ?? item.product.giveIntegral,
@@ -1698,7 +1784,10 @@ export class StoreOrderCreateService {
       })).sort((a, b) => a.cartId - b.cartId),
       rawTotalCents, totalCents, payCents, totalPostageCents, postageCents, postageDiscountCents,
       couponPriceCents, firstOrderPriceCents, deductionCents, usedIntegralPoints, requiredIntegral,
-      memberDiscountCents, levelDiscountCents, paidMemberDiscountCents, totalNum, isStoreFreePostage, gainIntegral,
+      memberDiscountCents, levelDiscountCents, paidMemberDiscountCents,
+      promotionFingerprint: promotionQuote?.materialsFingerprint ?? null,
+      promotionGiftFingerprint: giftQuote?.materialsFingerprint ?? null,
+      totalNum, isStoreFreePostage, gainIntegral,
     });
     if (options?.preview) {
       if (assisted && orderSystemFormId > 0) {
@@ -1729,20 +1818,36 @@ export class StoreOrderCreateService {
         memberDiscountCents,
         levelDiscountCents,
         paidMemberDiscountCents,
+        promotionSavingsCents: promotionQuote?.totalSavingsCents ?? 0,
+        giveIntegral: giftQuote?.totalIntegral ?? 0,
+        giveCoupon: giftQuote?.couponIssueIds ?? [],
+        giveCouponInfo: giftQuote?.intent?.promotions.flatMap(campaign => campaign.coupons.map(coupon => ({
+          id: coupon.issue_id, title: coupon.title, price: coupon.price, minPrice: coupon.min_price,
+        }))) ?? [],
+        promotionsDetail: giftQuote?.intent?.promotions.map(campaign => ({ id: campaign.id,
+          tierId: campaign.tier_id, name: campaign.name, threshold: campaign.threshold,
+          repetitions: campaign.repetitions })) ?? [],
+        giveCartInfo: giftQuote?.intent?.promotions.flatMap(campaign => campaign.products.map(product => ({
+          cartId: product.cart_id, productId: product.product_id, skuUnique: product.unique,
+          quantity: product.quantity, promotionId: campaign.id,
+        }))) ?? [],
         storeFreePostageCents: pricingConfig.storeFreePostageCents,
         isStoreFreePostage,
         totalNum,
-        items: orderItems.map(({ cart, rawUnitPriceCents, unitPriceCents, priceType, memberUnitDiscountCents }) => ({
-          cartId: cart.id,
-          rawUnitPriceCents,
-          unitPriceCents,
-          discountCents: memberUnitDiscountCents,
-          priceType,
+        items: orderItems.map(item => ({
+          cartId: item.cart.id,
+          rawUnitPriceCents: item.rawUnitPriceCents,
+          unitPriceCents: item.unitPriceCents,
+          discountCents: item.memberUnitDiscountCents,
+          priceType: item.promotion?.promotionIds.length ? 'promotions' : item.priceType,
+          totalPriceCents: orderItemGrossCents(item),
+          promotion: item.promotion ?? null,
         })),
       };
     }
 
-    const confirmation = runtime.requireConfirmation || params.quoteToken !== undefined
+    if(cashier&&!cashier.confirmation)throw new OrderQuoteReconfirmRequired(key);
+    const confirmation = cashier ? cashier.confirmation! : runtime.requireConfirmation || params.quoteToken !== undefined
       ? await readCheckoutConfirmation(runtime.CONFIG_KV, { uid, key, adminId: assisted?.adminId, touristUid: assisted?.touristUid }, params.quoteToken)
       : null;
     if (confirmation && assisted && orderSystemFormId > 0) {
@@ -1758,13 +1863,13 @@ export class StoreOrderCreateService {
           orderType: type,
           buyer: user,
           actualProductCents,
-          items: orderItems.map(({ cart, product, sku, unitPriceCents }) => ({
-            grossCents: unitPriceCents * cart.cartNum,
-            costCents: decimalToCents(sku.cost) * cart.cartNum,
-            quantity: cart.cartNum,
-            specified: product.isSub === 1,
-            specifiedOneCents: decimalToCents(sku.brokerage),
-            specifiedTwoCents: decimalToCents(sku.brokerageTwo),
+          items: orderItems.map(item => ({
+            grossCents: orderItemGrossCents(item),
+            costCents: decimalToCents(item.sku.cost) * item.cart.cartNum,
+            quantity: item.cart.cartNum,
+            specified: item.product.isSub === 1,
+            specifiedOneCents: decimalToCents(item.sku.brokerage),
+            specifiedTwoCents: decimalToCents(item.sku.brokerageTwo),
           })),
         })
       : {
@@ -1807,8 +1912,21 @@ export class StoreOrderCreateService {
         .from(storeOrder)
         .where(and(eq(storeOrder.uid, uid), eq(storeOrder.unique, key)))
         .limit(1);
-      if (concurrentExistingRows[0]) assertExistingScope(concurrentExistingRows[0]);
+      if (concurrentExistingRows[0]) await assertExistingScope(concurrentExistingRows[0],tx);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
+      if(cashier)await authorizeCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!);
+
+      if (promotionQuote) {
+        try {
+          await lockAndRequoteOrderPromotions(createContainerFromDb(tx), promotionInput,
+            promotionQuote.materialsFingerprint, giftQuote ?? undefined);
+          if (giftQuote) await requoteLockedOrderPromotionGifts(createContainerFromDb(tx),
+            giftInput, giftQuote.materialsFingerprint);
+        } catch (error) {
+          if (error instanceof HttpApiException && error.httpStatus === 409) throw new OrderQuoteReconfirmRequired(key);
+          throw error;
+        }
+      }
 
       // Before cart claims as well as SKU/group writes: cancellation restores
       // carts and refunds can relink pending orders under this same boundary.
@@ -1848,6 +1966,11 @@ export class StoreOrderCreateService {
           !(await hasPaidNonNewcomerOrder(tx, uid));
 
         if (preliminaryFirstOrderEligible && !finalFirstOrderEligible) {
+          // A lost first-order right may admit a different marketing quote.
+          // Require a fresh confirmation rather than silently buying on new terms.
+          if (promotionQuote && (await quoteOrderPromotions(createContainerFromDb(tx), {
+            ...promotionInput, firstOrderEligible: false,
+          })).totalSavingsCents > 0) throw new OrderQuoteReconfirmRequired(key);
           couponResolution = await resolveOrderCoupon(
             createContainerFromDb(tx),
             uid,
@@ -1857,6 +1980,9 @@ export class StoreOrderCreateService {
           couponPriceCents = couponResolution.priceCents;
           couponRow = couponResolution.row;
           firstOrderPriceCents = 0;
+          if (giftQuote && (await quoteOrderPromotionGifts(createContainerFromDb(tx),
+            giftInputFor(false))).materialsFingerprint !== giftQuote.materialsFingerprint)
+            throw new OrderQuoteReconfirmRequired(key);
         }
         const lockedUsableIntegral = await usableIntegralPoints(
           tx,
@@ -1886,13 +2012,13 @@ export class StoreOrderCreateService {
           orderType: type,
           buyer: lockedUser,
           actualProductCents,
-          items: orderItems.map(({ cart, product, sku, unitPriceCents }) => ({
-            grossCents: unitPriceCents * cart.cartNum,
-            costCents: decimalToCents(sku.cost) * cart.cartNum,
-            quantity: cart.cartNum,
-            specified: product.isSub === 1,
-            specifiedOneCents: decimalToCents(sku.brokerage),
-            specifiedTwoCents: decimalToCents(sku.brokerageTwo),
+          items: orderItems.map(item => ({
+            grossCents: orderItemGrossCents(item),
+            costCents: decimalToCents(item.sku.cost) * item.cart.cartNum,
+            quantity: item.cart.cartNum,
+            specified: item.product.isSub === 1,
+            specifiedOneCents: decimalToCents(item.sku.brokerage),
+            specifiedTwoCents: decimalToCents(item.sku.brokerageTwo),
           })),
         });
         if (finalFirstOrderEligible && firstOrderPriceCents > 0) {
@@ -1906,18 +2032,7 @@ export class StoreOrderCreateService {
       }
       let verifyCode = "";
       if (shippingType === 2) {
-        const stores = await tx
-          .select({ id: systemStore.id })
-          .from(systemStore)
-          .where(and(
-            eq(systemStore.id, pickupStoreId),
-            eq(systemStore.isStore, 1),
-            eq(systemStore.isShow, 1),
-            eq(systemStore.isDel, 0),
-          ))
-          .limit(1)
-          .for("key share");
-        if (!stores[0]) throw new ValidateException("自提门店不存在或已暂停营业");
+        if(!cashier)await lockCheckoutPickupStore(tx, pickupStoreId);
         verifyCode = await generatePickupVerifyCode(tx);
       }
       if (confirmation && assisted && orderSystemFormId > 0) {
@@ -2100,8 +2215,8 @@ export class StoreOrderCreateService {
           and(
             inArray(storeCart.id, cartIds),
             eq(storeCart.uid, uid),
-            eq(storeCart.staffId, assisted?.adminId ?? 0),
-            eq(storeCart.touristUid, assisted && uid === 0 ? assisted.touristUid : ""),
+            eq(storeCart.staffId, cashier?.actor.uid ?? assisted?.adminId ?? 0),
+            eq(storeCart.touristUid, cashier?.tourist_key ?? (assisted && uid === 0 ? assisted.touristUid : "")),
             eq(storeCart.isPay, 0),
             eq(storeCart.isDel, 0),
             eq(storeCart.status, 1),
@@ -2431,7 +2546,10 @@ export class StoreOrderCreateService {
           province: params.province ?? "",
           userAddress: params.userAddress ?? "",
           cartId: cartIds.join(","),
-          totalNum,
+          // The append-only purchase-origin trigger captures purchased lines
+          // before physical gift rows are added. The final order count includes
+          // those gifts, matching fulfillment and the legacy checkout total.
+          totalNum: totalNum - (giftQuote?.totalGiftQuantity ?? 0),
           totalPrice: (totalCents / 100).toFixed(2),
           totalPostage: (totalPostageCents / 100).toFixed(2),
           payPrice: (payCents / 100).toFixed(2),
@@ -2448,7 +2566,7 @@ export class StoreOrderCreateService {
           // Assisted carts were already exact-set validated against assisted.adminId;
           // deriving from the immutable cart set keeps the ordinary order path unchanged.
           staffId: orderStaffId,
-          isChannel: assisted ? 2 : 0,
+          isChannel: assisted || cashier ? 2 : 0,
           merId: orderMerId,
           spreadUid: brokerage.spreadUid,
           spreadTwoUid: brokerage.spreadTwoUid,
@@ -2470,6 +2588,13 @@ export class StoreOrderCreateService {
           // M17: 活动/优惠券字段
           couponId: couponRow?.id ?? 0,
           couponPrice: (couponPriceCents / 100).toFixed(2),
+          promotionsPrice: ((promotionQuote?.totalSavingsCents ?? 0) / 100).toFixed(2),
+          promotionsGive: giftQuote?.intent ? JSON.stringify(giftQuote.intent)
+            : promotionQuote?.totalSavingsCents ? JSON.stringify({ version: 'order-promotion-labels-v1',
+            promotions: promotionQuote.lines.flatMap(line => line.promotionAllocations
+              .map(allocation => ({ id: allocation.rootId, label_id: allocation.labelIds, name: allocation.name }))) }) : null,
+          giveIntegral: giftQuote?.totalIntegral ?? 0,
+          giveCoupon: giftQuote?.couponIssueIds.join(',') || null,
           pinkId: finalPinkId,
           activityId: type === 1
             ? (params.seckillId ?? 0)
@@ -2498,11 +2623,10 @@ export class StoreOrderCreateService {
       }
       await collectOrderSystemForm(tx, preparedSystemForm, uid, order.id, now);
 
-      const itemGrossCents = orderItems.map(({ cart, unitPriceCents }) =>
-        cart.cartNum * unitPriceCents
-      );
+      const itemGrossCents = orderItems.map(orderItemGrossCents);
+      const couponEligibleCents = couponResolution.lineEligibleCents ?? itemGrossCents;
       const couponAllocations = fitCheckoutLineCapacities(
-        allocateLegacyDiscountCents(couponPriceCents, itemGrossCents), itemGrossCents);
+        allocateLegacyDiscountCents(couponPriceCents, couponEligibleCents), couponEligibleCents);
       const afterCouponCents = itemGrossCents.map((amount, index) => amount - couponAllocations[index]);
       const firstOrderAllocations = fitCheckoutLineCapacities(
         allocateLegacyDiscountCents(firstOrderPriceCents, itemGrossCents), afterCouponCents);
@@ -2624,6 +2748,15 @@ export class StoreOrderCreateService {
           id: String(cart.id),
           cart_num: cart.cartNum,
           sum_price: (unitPriceCents / 100).toFixed(2),
+          ...(item.promotion?.promotionIds.length ? {
+            promotion_quote_version: 'order-promotion-quote-v1',
+            promotion_line_price: (lineGrossCents / 100).toFixed(2),
+            promotion_line_savings: (item.promotion.promotionSavingsCents / 100).toFixed(2),
+            promotion_line_member_savings: (item.promotion.membershipSavingsCents / 100).toFixed(2),
+            promotion_discount_quantity: item.promotion.promotionAllocations.find(allocation => allocation.type === 1)?.discountQuantity ?? 0,
+            promotion_allocations: item.promotion.promotionAllocations,
+            promotion_segments: item.promotion.segments,
+          } : {}),
           // PHP-compatible per-unit benefit: splitting quantities copies this
           // unchanged, then readers multiply by each child row's own quantity.
           vip_truePrice: (item.memberUnitDiscountCents / 100).toFixed(2),
@@ -2638,7 +2771,7 @@ export class StoreOrderCreateService {
             ? lineCouponCents / 100 : 0).toFixed(2),
           costPrice: String(activitySku?.cost ?? sku.cost),
           integral: type === 4 ? (activitySku?.integral ?? 0) : 0,
-          promotions_true_price: '0.00',
+          promotions_true_price: ((item.promotion?.promotionSavingsCents ?? 0) / cart.cartNum / 100).toFixed(2),
           raw_postage_price: (rawLinePostageCents[itemIndex] / 100).toFixed(2),
           postage_price: (postageAllocations[itemIndex] / 100).toFixed(2),
           use_integral: String(pointAllocations[itemIndex]),
@@ -2712,7 +2845,9 @@ export class StoreOrderCreateService {
           surplusNum: cart.cartNum,
           splitSurplusNum: cart.cartNum,
           settlePrice: String(activitySku?.settlePrice || sku.settlePrice || product.settlePrice),
-          promotionsId: null,
+          promotionsId: [...new Set([...(item.promotion?.promotionIds ?? []),
+            ...(giftQuote?.intent?.promotions.filter(campaign => campaign.eligible_cart_ids.includes(String(cart.id)))
+              .map(campaign => campaign.id) ?? [])])].join(',') || null,
           writeTimes,
           writeSurplusTimes: writeTimes,
           writeStart: secondCardValidity.writeStart,
@@ -2721,14 +2856,16 @@ export class StoreOrderCreateService {
           unique: crypto.randomUUID().replaceAll("-", ""),
           isSupportRefund: type === 5
             ? (discountPackage?.discount.isSupportRefund ?? 0)
-            : product.isSupportRefund,
+            : type === 3
+              ? combinationConfirmationRules!.isSupportRefund
+              : product.isSupportRefund,
           addTime: now,
         });
+        for (const allocation of item.promotion?.promotionAllocations ?? []) {
+          await tx.insert(storeOrderPromotions).values({ oid: order.id, uid, promotionsId: allocation.rootId,
+            productId: product.id, promotionsPrice: (allocation.savingsCents / 100).toFixed(2), addTime: now });
+        }
       }
-
-      // Persist the PHP "下单后打印" intent atomically with the order and its
-      // cart snapshots. No provider or Queue call is made inside this transaction.
-      await enqueueAutomaticReceiptPrintJobs(tx, [order], "created", now);
 
       // 5d. 积分扣减 + 账单
       if (usedIntegralPoints > 0) {
@@ -2789,6 +2926,26 @@ export class StoreOrderCreateService {
       // missing schema/authority or later rejection must roll back this same transaction.
       if (runtime.requirePurchaseOrigin) await recordPurchaseOriginEvidence(tx, { orderId: order.id, buyerId: uid });
 
+      if (giftQuote) {
+        await reserveOrderPromotionGifts(tx, { quote: giftQuote,
+          orderId: order.id, uid, now, paidMember: activePaidMember });
+        const giftCartIds = giftQuote.intent?.promotions.flatMap(campaign =>
+          campaign.products.map(product => product.cart_id)) ?? [];
+        const physicalCartIds = [...cartIds.map(String), ...giftCartIds].join(',');
+        if (physicalCartIds.length > 2199) throw new ValidateException('满送订单行标识过长');
+        const [physicalOrder] = await tx.update(storeOrder).set({ totalNum, cartId: physicalCartIds })
+          .where(and(eq(storeOrder.id, order.id), eq(storeOrder.paid, 0), eq(storeOrder.status, 0)))
+          .returning({ totalNum: storeOrder.totalNum });
+        if (!physicalOrder || physicalOrder.totalNum !== totalNum)
+          throw new ValidateException('满送赠品订单数量无法完整保存');
+        order.totalNum = totalNum;
+        order.cartId = physicalCartIds;
+      }
+
+      // Persist the PHP "下单后打印" intent after every physical gift row and
+      // the final order quantity are present. This remains in the same commit.
+      await enqueueAutomaticReceiptPrintJobs(tx, [order], "created", now);
+
       if (couponResolution.template) await assertCheckoutCouponTemplate(tx, couponResolution.template);
       const presaleTerms = orderItems[0]?.presale;
       const finalPresaleWindow = presaleTerms ? await protectPresalePrincipal(tx, uid, presaleTerms) : undefined;
@@ -2800,6 +2957,12 @@ export class StoreOrderCreateService {
       // Protect duplicate-winner changes and absent/default keys until commit.
       // Re-read the same semantic projection; never consult KV inside this fence.
       await protectCheckoutPricingSources(tx);
+      if (shippingType === 2 && !cashier) {
+        const currentPickup = await readCheckoutPickupPolicy(tx, pickupStoreId);
+        if (JSON.stringify(currentPickup) !== JSON.stringify(pickupPolicy))
+          throw new ValidateException('自提门店信息已变化，请重新确认');
+        pickupPolicy = currentPickup;
+      }
       if (JSON.stringify(await loadOrderPricingConfig(tx)) !== JSON.stringify(pricingConfig)) {
         throw new ValidateException("订单计价配置或会员权益已变化，请重新确认");
       }
@@ -2818,6 +2981,19 @@ export class StoreOrderCreateService {
           throw new ValidateException("优惠券尚未生效或已过期");
         }
       }
+      const promotionIds = [...new Set([...(promotionQuote?.lines.flatMap(line => line.promotionIds) ?? []),
+        ...(giftQuote?.intent?.promotions.map(campaign => campaign.id) ?? [])])];
+      if (promotionIds.length) {
+        // Catalog/row locks protect the terms; the wall clock is checked after
+        // all business waits, so an activity cannot expire during admission.
+        const live = await tx.select({ id: storePromotions.id }).from(storePromotions).where(and(
+          inArray(storePromotions.id, promotionIds), eq(storePromotions.pid, 0), eq(storePromotions.type, 1),
+          eq(storePromotions.storeId, 0), eq(storePromotions.status, 1), eq(storePromotions.isDel, 0),
+          sql`${storePromotions.startTime} <= floor(extract(epoch from clock_timestamp()))`,
+          sql`${storePromotions.stopTime} >= floor(extract(epoch from clock_timestamp()))`,
+        ));
+        if (live.length !== promotionIds.length) throw new OrderQuoteReconfirmRequired(key);
+      }
       const finalPricingWindow = and(finalActivityWindow, finalMembershipWindow, finalBrokerageWindow, finalPresaleWindow);
       if (finalPricingWindow) {
         // No user/activity table read or new lock here: only the database wall clock
@@ -2829,6 +3005,7 @@ export class StoreOrderCreateService {
           throw new ValidateException("活动时间、会员或分佣资格已变化，请重新确认");
         }
       }
+      if(cashier)await captureCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!,order,await confirmationFingerprint());
       return order;
     });
 
@@ -3318,12 +3495,18 @@ interface OrderItem {
   unitPriceCents: number;
   priceType: "" | "level" | "member";
   memberUnitDiscountCents: number;
+  promotion?: OrderPromotionQuoteLine;
+  couponEligibleGrossCents?: number;
   activityName: string;
   activityImage: string;
   activityFreight: number | null;
   activityPostage: string | null;
   activityTempId: number | null;
   activityGiveIntegral: string | null;
+}
+
+function orderItemGrossCents(item: OrderItem): number {
+  return item.promotion?.totalPriceCents ?? item.unitPriceCents * item.cart.cartNum;
 }
 
 function parseCartSnapshot(value: string | null): unknown {

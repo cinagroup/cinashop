@@ -33,27 +33,67 @@ import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreatio
 import { adminRuntimeAuthMiddleware } from "@/middleware/admin-runtime-auth";
 import { upgradeStaffNotification } from "@/services/notification/StaffNotificationGateway";
 import * as AdminController from "@/controllers/api/v1/AdminController";
+import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
+import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
+import * as AdminSupplierCapitalScreen from "@/controllers/api/v1/AdminSupplierCapitalScreenController";
+import * as AdminSupplierOrderStatisticsScreen from "@/controllers/api/v1/AdminSupplierOrderStatisticsScreenController";
 import * as AdminOrderOutbox from "@/controllers/api/v1/AdminOrderOutboxController";
 import * as AdminOfflineOrder from '@/controllers/api/v1/AdminOfflineOrderController';
 import * as AdminPaymentReconciliation from "@/controllers/api/v1/AdminPaymentReconciliationController";
 import * as AdminNotification from "@/controllers/api/v1/AdminNotificationController";
 import * as AdminDivision from "@/controllers/api/v1/AdminDivisionController";
+import * as AdminDivisionStatisticsScreen from "@/controllers/api/v1/AdminDivisionStatisticsScreenController";
 import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowController";
 import * as AdminIntegralLog from "@/controllers/api/v1/AdminIntegralLogController";
+import * as AdminIntegralCategory from "@/controllers/api/v1/AdminIntegralCategoryController";
+import * as AdminIntegralBatch from "@/controllers/api/v1/AdminIntegralBatchController";
+import * as AdminRechargeQuota from "@/controllers/api/v1/AdminRechargeQuotaController";
+import * as AdminSignDayConfig from "@/controllers/api/v1/AdminSignDayConfigController";
+import * as AdminPcBanner from "@/controllers/api/v1/AdminPcBannerController";
+import * as AdminFabSettings from "@/controllers/api/v1/AdminFabSettingsController";
+import * as AdminThemeSettings from "@/controllers/api/v1/AdminThemeSettingsController";
+import * as AdminProductCategoryStyle from '@/controllers/api/v1/AdminProductCategoryStyleController';
+import * as AdminProductDetailDesign from '@/controllers/api/v1/AdminProductDetailDesignController';
+import * as AdminUserCenterDesign from '@/controllers/api/v1/AdminUserCenterDesignController';
+import * as AdminCityDeliverySettings from '@/controllers/api/v1/AdminCityDeliverySettingsController';
+import * as AdminFabLinkCatalog from "@/controllers/api/v1/AdminFabLinkCatalogController";
+import * as AdminShippingSettings from "@/controllers/api/v1/AdminShippingSettingsController";
+import * as AdminCityDeliveryRecords from "@/controllers/api/v1/AdminCityDeliveryRecordController";
+import * as AdminRechargeOrder from "@/controllers/api/v1/AdminRechargeOrderController";
+import * as AdminCommissionRead from "@/controllers/api/v1/AdminCommissionReadController";
+import * as AdminUserMoneyLedger from "@/controllers/api/v1/AdminUserMoneyLedgerController";
+import * as AdminSeckillTime from "@/controllers/api/v1/AdminSeckillTimeController";
+import * as AdminSeckillActivity from "@/controllers/api/v1/AdminSeckillActivityController";
+import * as AdminCombination from "@/controllers/api/v1/AdminCombinationController";
+import * as AdminCombinationStatistics from "@/controllers/api/v1/AdminCombinationStatisticsController";
 import * as AdminPointStatistic from "@/controllers/api/v1/AdminPointStatisticController";
 import * as AdminCouponRecords from "@/controllers/api/v1/AdminCouponRecordController";
+import * as AdminCouponTemplate from "@/controllers/api/v1/AdminCouponTemplateController";
+import * as AdminCouponIssue from "@/controllers/api/v1/AdminCouponIssueController";
+import * as AdminInvoice from "@/controllers/api/v1/AdminInvoiceController";
 import * as AdminSeckillStatistics from "@/controllers/api/v1/AdminSeckillStatisticsController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
+import * as AdminWriteoffOrderRead from "@/controllers/api/v1/AdminWriteoffOrderReadController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as ProductExperienceController from "@/controllers/api/v1/ProductExperienceController";
 import * as AdminProductWords from "@/controllers/api/v1/AdminProductWordsController";
 import * as CustomerServiceCatalogController from "@/controllers/api/v1/CustomerServiceCatalogController";
 import * as PromoterApplicationController from "@/controllers/api/v1/PromoterApplicationController";
 import * as SupplierApplicationController from "@/controllers/api/v1/SupplierApplicationController";
+import * as AdminSupplierDirectoryController from "@/controllers/api/v1/AdminSupplierDirectoryController";
+import * as AdminSupplierMenuRuleController from "@/controllers/api/v1/AdminSupplierMenuRuleController";
+import * as AdminAgentAgreementController from "@/controllers/api/v1/AdminAgentAgreementController";
 import * as PageNavigationController from "@/controllers/api/v1/PageNavigationController";
 import * as AdminLotteryController from "@/controllers/api/v1/AdminLotteryController";
+import * as AdminActivityFrame from "@/controllers/api/v1/AdminActivityFrameController";
+import * as AdminActivityBackground from "@/controllers/api/v1/AdminActivityBackgroundController";
+import * as AdminTimeDiscount from "@/controllers/api/v1/AdminTimeDiscountController";
+import * as AdminFullDiscount from "@/controllers/api/v1/AdminFullDiscountController";
+import * as AdminNthDiscount from "@/controllers/api/v1/AdminNthDiscountController";
+import * as AdminFullGift from "@/controllers/api/v1/AdminFullGiftController";
 import * as AdminWechatContentController from "@/controllers/api/v1/AdminWechatContentController";
 import * as AdminWechatQrcodeController from "@/controllers/api/v1/AdminWechatQrcodeController";
 import * as AdminLegacyRuntimeController from "@/controllers/api/v1/AdminLegacyRuntimeController";
@@ -63,6 +103,8 @@ import * as AdminEnterpriseWechat from "@/controllers/api/v1/AdminEnterpriseWech
 import * as AdminWechatMemberCard from "@/controllers/api/v1/AdminWechatMemberCardController";
 import * as AdminPaidMembership from "@/controllers/api/v1/AdminPaidMembershipController";
 import * as AdminNewcomer from "@/controllers/api/v1/AdminNewcomerController";
+import * as AdminLevelActivation from '@/controllers/api/v1/AdminLevelActivationController';
+import * as AdminPaidMembershipConfig from '@/controllers/api/v1/AdminPaidMembershipConfigController';
 import * as AdminCommerceSettings from "@/controllers/api/v1/AdminCommerceSettingsController";
 import * as AdminDiscountPackage from "@/controllers/api/v1/AdminDiscountPackageController";
 import * as AdminLegacyContent from "@/controllers/api/v1/AdminLegacyContentController";
@@ -372,6 +414,10 @@ adminapiRoutes.put(
 adminapiRoutes.delete("/merchant/store/del/:id", adminAuth, AdminStore.storeDelete);
 adminapiRoutes.post("/merchant/store/:id", adminAuth, AdminStore.storeSave);
 adminapiRoutes.get("/merchant/store_list", adminAuth, AdminStore.storeOptions);
+adminapiRoutes.get("/merchant/verify_order", adminAuth, AdminWriteoffOrderRead.list);
+adminapiRoutes.get("/merchant/verify_order/stores", adminAuth, AdminWriteoffOrderRead.stores);
+adminapiRoutes.get("/merchant/verify/spread_info/:uid", adminAuth, AdminWriteoffOrderRead.spreadInfo);
+adminapiRoutes.get("/merchant/verify_badge", adminAuth, AdminWriteoffOrderRead.badge);
 adminapiRoutes.get("/merchant/store_staff", adminAuth, AdminStore.staffList);
 adminapiRoutes.get("/merchant/store_staff/create", adminAuth, AdminStore.staffForm);
 adminapiRoutes.get("/merchant/store_staff/:id/edit", adminAuth, AdminStore.staffForm);
@@ -463,7 +509,20 @@ adminapiRoutes.get(
 );
 adminapiRoutes.get("/config/user/register", adminAuth, AdminNewcomer.registerConfig);
 adminapiRoutes.post("/config/user/register", adminAuth, AdminNewcomer.saveRegisterConfig);
+// Ordinary level activation: only the nine-key domain, not the generic config editor.
+adminapiRoutes.get('/config/level-activation/coupons', adminAuth, AdminLevelActivation.coupons);
+adminapiRoutes.get('/config/level-activation', adminAuth, AdminLevelActivation.get);
+adminapiRoutes.post('/config/level-activation', adminAuth, AdminLevelActivation.save);
+adminapiRoutes.get('/config/paid-membership', adminAuth, AdminPaidMembershipConfig.get);
+adminapiRoutes.post('/config/paid-membership', adminAuth, AdminPaidMembershipConfig.save);
 adminapiRoutes.get("/config/commerce", adminAuth, AdminCommerceSettings.settings);
+adminapiRoutes.get("/config/shipping", adminAuth, AdminShippingSettings.settings);
+adminapiRoutes.get("/config/shipping/cities", adminAuth, AdminShippingSettings.cities);
+adminapiRoutes.get("/config/shipping/receipts/:requestId", adminAuth, AdminShippingSettings.receipt);
+adminapiRoutes.post("/config/shipping", adminAuth, AdminShippingSettings.save);
+adminapiRoutes.get("/city_delivery/records", adminAuth, AdminCityDeliveryRecords.records);
+adminapiRoutes.get("/city_delivery/records/:id", adminAuth, AdminCityDeliveryRecords.detail);
+adminapiRoutes.get("/city_delivery/stores", adminAuth, AdminCityDeliveryRecords.stores);
 adminapiRoutes.post("/config/commerce", adminAuth, AdminCommerceSettings.save);
 adminapiRoutes.get("/config/runtime_content", adminAuth, AdminLegacyContent.runtimeContent);
 adminapiRoutes.post("/config/runtime_content", adminAuth, AdminLegacyContent.saveRuntimeContent);
@@ -472,6 +531,11 @@ adminapiRoutes.post("/setting/set_kf_adv", adminAuth, AdminLegacyContent.setKfAd
 adminapiRoutes.get("/setting/get_user_agreement/:type", adminAuth, AdminLegacyContent.getAgreement);
 adminapiRoutes.post("/setting/set_user_agreement/:type", adminAuth, AdminLegacyContent.setAgreement);
 adminapiRoutes.get("/setting/config/:menuName", adminAuth, AdminCrud.adminConfigGet);
+adminapiRoutes.get('/config/city-delivery', adminAuth, AdminCityDeliverySettings.read);
+adminapiRoutes.post('/config/city-delivery/intent', adminAuth, AdminCityDeliverySettings.prepare);
+adminapiRoutes.get('/config/city-delivery/intent/:requestId', adminAuth, AdminCityDeliverySettings.intent);
+adminapiRoutes.post('/config/city-delivery/confirm', adminAuth, AdminCityDeliverySettings.confirm);
+adminapiRoutes.get('/config/city-delivery/request/:requestId', adminAuth, AdminCityDeliverySettings.receipt);
 adminapiRoutes.get("/config_class", adminAuth, AdminCrud.adminConfigTabList);
 adminapiRoutes.get("/config_class/list", adminAuth, AdminCrud.adminConfigTabList);
 adminapiRoutes.post("/config_class", adminAuth, AdminCrud.adminConfigTabSave);
@@ -496,6 +560,28 @@ adminapiRoutes.get("/setting/sign/add_rewards", adminAuth, AdminCrud.adminSignRe
 adminapiRoutes.get("/setting/sign/edit_rewards/:id", adminAuth, AdminCrud.adminSignRewardEdit);
 adminapiRoutes.post("/setting/sign/save_rewards/:id", adminAuth, AdminCrud.adminSignRewardSave);
 adminapiRoutes.delete("/setting/sign/del_rewards/:id", adminAuth, AdminCrud.adminSignRewardDelete);
+adminapiRoutes.get("/agent/levels", adminAuth, AdminDistributorLevels.levelsList);
+adminapiRoutes.get("/agent/levels/request/:requestId", adminAuth, AdminDistributorLevels.levelsReceipt);
+adminapiRoutes.get("/agent/levels/:id", adminAuth, AdminDistributorLevels.levelsDetail);
+adminapiRoutes.post("/agent/levels", adminAuth, AdminDistributorLevels.levelsCreate);
+adminapiRoutes.put("/agent/levels/:id", adminAuth, AdminDistributorLevels.levelsUpdate);
+adminapiRoutes.patch("/agent/levels/:id/status", adminAuth, AdminDistributorLevels.levelsStatus);
+adminapiRoutes.delete("/agent/levels/:id", adminAuth, AdminDistributorLevels.levelsDelete);
+adminapiRoutes.get("/agent/level-tasks", adminAuth, AdminDistributorLevels.tasksList);
+adminapiRoutes.get("/agent/level-tasks/parents", adminAuth, AdminDistributorLevels.tasksParents);
+adminapiRoutes.get("/agent/level-tasks/request/:requestId", adminAuth, AdminDistributorLevels.tasksReceipt);
+adminapiRoutes.get("/agent/level-tasks/:id", adminAuth, AdminDistributorLevels.tasksDetail);
+adminapiRoutes.post("/agent/level-tasks", adminAuth, AdminDistributorLevels.tasksCreate);
+adminapiRoutes.put("/agent/level-tasks/:id", adminAuth, AdminDistributorLevels.tasksUpdate);
+adminapiRoutes.patch("/agent/level-tasks/:id/status", adminAuth, AdminDistributorLevels.tasksStatus);
+adminapiRoutes.delete("/agent/level-tasks/:id", adminAuth, AdminDistributorLevels.tasksDelete);
+adminapiRoutes.get("/agent/level", adminAuth, AdminDistributorLevels.levelsList);
+adminapiRoutes.get("/agent/level/create", adminAuth, AdminDistributorLevels.levelsCreateForm);
+adminapiRoutes.post("/agent/level", adminAuth, AdminDistributorLevels.levelsCreate);
+adminapiRoutes.get("/agent/level/:id/edit", adminAuth, AdminDistributorLevels.levelsDetail);
+adminapiRoutes.put("/agent/level/:id", adminAuth, AdminDistributorLevels.levelsUpdate);
+adminapiRoutes.delete("/agent/level/:id", adminAuth, AdminDistributorLevels.levelsDelete);
+adminapiRoutes.put("/agent/level/set_status/:id/:status", adminAuth, AdminDistributorLevels.legacyLevelsStatus);
 adminapiRoutes.get("/agent/level_task", adminAuth, AdminCrud.adminAgentLevelTaskList);
 adminapiRoutes.get(
   "/agent/level_task/create",
@@ -553,6 +639,56 @@ adminapiRoutes.get("/statistic/balance/get_type", adminAuth, AdminController.adm
 
 // ─── 营销活动管理 (M10) ─────────────────────────────────────
 adminapiRoutes.get("/activity/seckill", adminAuth, AdminCrud.adminSeckillList);
+adminapiRoutes.get("/marketing/integral-categories", adminAuth, AdminIntegralCategory.list);
+adminapiRoutes.get("/marketing/recharge-quotas", adminAuth, AdminRechargeQuota.list);
+adminapiRoutes.get("/marketing/integral-categories/:id", adminAuth, AdminIntegralCategory.detail);
+adminapiRoutes.get("/marketing/recharge-quotas/:id", adminAuth, AdminRechargeQuota.detail);
+adminapiRoutes.post("/marketing/integral-categories", adminAuth, AdminIntegralCategory.create);
+adminapiRoutes.post("/marketing/recharge-quotas", adminAuth, AdminRechargeQuota.create);
+adminapiRoutes.put("/marketing/integral-categories/:id", adminAuth, AdminIntegralCategory.update);
+adminapiRoutes.put("/marketing/recharge-quotas/:id", adminAuth, AdminRechargeQuota.update);
+adminapiRoutes.put("/marketing/integral-categories/:id/status", adminAuth, AdminIntegralCategory.status);
+adminapiRoutes.put("/marketing/recharge-quotas/:id/status", adminAuth, AdminRechargeQuota.status);
+adminapiRoutes.delete("/marketing/integral-categories/:id", adminAuth, AdminIntegralCategory.remove);
+adminapiRoutes.delete("/marketing/recharge-quotas/:id", adminAuth, AdminRechargeQuota.remove);
+
+// Fixed legacy sign_day_num management; real sign rewards remain separate.
+adminapiRoutes.get("/marketing/sign-day-config", adminAuth, AdminSignDayConfig.adminSignDayConfigList);
+adminapiRoutes.get("/marketing/sign-day-config/receipts/:requestId", adminAuth, AdminSignDayConfig.adminSignDayConfigReceipt);
+adminapiRoutes.get("/marketing/sign-day-config/:id", adminAuth, AdminSignDayConfig.adminSignDayConfigDetail);
+adminapiRoutes.post("/marketing/sign-day-config", adminAuth, AdminSignDayConfig.adminSignDayConfigCreate);
+adminapiRoutes.put("/marketing/sign-day-config/:id", adminAuth, AdminSignDayConfig.adminSignDayConfigUpdate);
+adminapiRoutes.patch("/marketing/sign-day-config/:id/status", adminAuth, AdminSignDayConfig.adminSignDayConfigStatus);
+adminapiRoutes.delete("/marketing/sign-day-config/:id", adminAuth, AdminSignDayConfig.adminSignDayConfigDelete);
+
+// Dedicated PC home group editor; generic setting grants cannot authorize it.
+adminapiRoutes.get("/setting/pc-banners", adminAuth, AdminPcBanner.list);
+adminapiRoutes.get("/setting/pc-banners/request/:requestId", adminAuth, AdminPcBanner.receipt);
+adminapiRoutes.get("/setting/pc-banners/:id", adminAuth, AdminPcBanner.detail);
+adminapiRoutes.post("/setting/pc-banners", adminAuth, AdminPcBanner.create);
+adminapiRoutes.put("/setting/pc-banners/:id", adminAuth, AdminPcBanner.update);
+adminapiRoutes.patch("/setting/pc-banners/:id/status", adminAuth, AdminPcBanner.status);
+adminapiRoutes.delete("/setting/pc-banners/:id", adminAuth, AdminPcBanner.remove);
+adminapiRoutes.get("/setting/fab", adminAuth, AdminFabSettings.read);
+adminapiRoutes.get("/setting/theme-style", adminAuth, AdminThemeSettings.read);
+adminapiRoutes.get("/setting/theme-style/request/:requestId", adminAuth, AdminThemeSettings.receipt);
+adminapiRoutes.post("/setting/theme-style", adminAuth, AdminThemeSettings.save);
+adminapiRoutes.get('/config/product-category-style', adminAuth, AdminProductCategoryStyle.read);
+adminapiRoutes.get('/config/product-detail-design', adminAuth, AdminProductDetailDesign.read);
+adminapiRoutes.post('/config/product-detail-design/save', adminAuth, AdminProductDetailDesign.save);
+adminapiRoutes.get('/config/product-detail-design/receipt/:operationId', adminAuth, AdminProductDetailDesign.receipt);
+adminapiRoutes.get('/config/user-center-design', adminAuth, AdminUserCenterDesign.read);
+adminapiRoutes.post('/config/user-center-design/save', adminAuth, AdminUserCenterDesign.save);
+adminapiRoutes.get('/config/user-center-design/receipt/:operationId', adminAuth, AdminUserCenterDesign.receipt);
+adminapiRoutes.get('/config/user-center-design/assets', adminAuth, AdminUserCenterDesign.assets);
+adminapiRoutes.get('/config/user-center-design/link-categories', adminAuth, AdminUserCenterDesign.categories);
+adminapiRoutes.get('/config/user-center-design/link-targets', adminAuth, AdminUserCenterDesign.targets);
+adminapiRoutes.post('/config/product-category-style/save', adminAuth, AdminProductCategoryStyle.save);
+adminapiRoutes.get('/config/product-category-style/receipt/:operationId', adminAuth, AdminProductCategoryStyle.receipt);
+adminapiRoutes.get("/setting/fab/request/:requestId", adminAuth, AdminFabSettings.receipt);
+adminapiRoutes.post("/setting/fab", adminAuth, AdminFabSettings.save);
+adminapiRoutes.get("/setting/fab/link-categories", adminAuth, AdminFabLinkCatalog.categories);
+adminapiRoutes.get("/setting/fab/link-targets", adminAuth, AdminFabLinkCatalog.targets);
 adminapiRoutes.get("/activity/seckill-statistics/:id/head", adminAuth, AdminSeckillStatistics.head);
 adminapiRoutes.get("/activity/seckill-statistics/:id/people", adminAuth, AdminSeckillStatistics.people);
 adminapiRoutes.get("/activity/seckill-statistics/:id/orders", adminAuth, AdminSeckillStatistics.orders);
@@ -560,6 +696,10 @@ adminapiRoutes.get("/activity/combination", adminAuth, AdminCrud.adminCombinatio
 adminapiRoutes.get("/activity/bargain", adminAuth, AdminCrud.adminBargainList);
 adminapiRoutes.get("/activity/bargain/sku-options", adminAuth, AdminCrud.adminBargainSkuOptions);
 adminapiRoutes.get("/activity/integral", adminAuth, AdminCrud.adminIntegralList);
+adminapiRoutes.get("/activity/integral-batch/products", adminAuth, AdminIntegralBatch.products);
+adminapiRoutes.get("/activity/integral-batch/products/:productId", adminAuth, AdminIntegralBatch.product);
+adminapiRoutes.post("/activity/integral-batch", adminAuth, AdminIntegralBatch.create);
+adminapiRoutes.get("/activity/integral-batch/receipts/:requestId", adminAuth, AdminIntegralBatch.receipt);
 adminapiRoutes.post("/activity/status", adminAuth, AdminCrud.adminActivityStatus);
 // PHP-compatible discount-package administration. The legacy status mutation
 // remains available on GET, but the permission resolver classifies it as manage.
@@ -601,6 +741,9 @@ adminapiRoutes.put("/feedback/:id", adminAuth, CustomerServiceCatalogController.
 adminapiRoutes.delete("/feedback/:id", adminAuth, CustomerServiceCatalogController.adminFeedbackDelete);
 adminapiRoutes.get("/wechat/speechcraft", adminAuth, CustomerServiceCatalogController.adminSpeechcraftList);
 adminapiRoutes.get("/wechat/speechcraft/categories", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategories);
+adminapiRoutes.post("/wechat/speechcraft/categories", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategoryCreate);
+adminapiRoutes.put("/wechat/speechcraft/categories/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategoryUpdate);
+adminapiRoutes.delete("/wechat/speechcraft/categories/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategoryDelete);
 adminapiRoutes.post("/wechat/speechcraft", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCreate);
 adminapiRoutes.get("/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftDetail);
 adminapiRoutes.put("/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftUpdate);
@@ -658,6 +801,38 @@ adminapiRoutes.get("/activity/pink/:combinationId", adminAuth, AdminCrud.adminPi
 // ─── 营销细分 (M13) ─────────────────────────────────────────
 adminapiRoutes.get("/activity/bargain_users/:bargainId", adminAuth, AdminCrud.adminBargainUsers);
 adminapiRoutes.get("/activity/seckill_times", adminAuth, AdminCrud.adminSeckillTimes);
+adminapiRoutes.get("/activity/seckill-times", adminAuth, AdminSeckillTime.list);
+adminapiRoutes.get("/activity/seckill-times/:id", adminAuth, AdminSeckillTime.detail);
+adminapiRoutes.post("/activity/seckill-times", adminAuth, AdminSeckillTime.create);
+adminapiRoutes.put("/activity/seckill-times/:id", adminAuth, AdminSeckillTime.update);
+adminapiRoutes.put("/activity/seckill-times/:id/status", adminAuth, AdminSeckillTime.status);
+adminapiRoutes.delete("/activity/seckill-times/:id", adminAuth, AdminSeckillTime.remove);
+adminapiRoutes.get("/activity/seckill-activities", adminAuth, AdminSeckillActivity.list);
+adminapiRoutes.get("/activity/combinations", adminAuth, AdminCombination.list);
+adminapiRoutes.get("/activity/combinations/export", adminAuth, AdminCombinationStatistics.exportManifest);
+adminapiRoutes.get("/activity/combination-groups/head", adminAuth, AdminCombinationStatistics.globalHead);
+adminapiRoutes.get("/activity/combination-groups", adminAuth, AdminCombinationStatistics.groups);
+adminapiRoutes.get("/activity/combination-groups/:groupId/members", adminAuth, AdminCombinationStatistics.members);
+adminapiRoutes.get("/activity/combination-statistics/:id/head", adminAuth, AdminCombinationStatistics.head);
+adminapiRoutes.get("/activity/combination-statistics/:id/groups", adminAuth, AdminCombinationStatistics.activityGroups);
+adminapiRoutes.get("/activity/combination-statistics/:id/groups/:groupId/members", adminAuth, AdminCombinationStatistics.activityMembers);
+adminapiRoutes.get("/activity/combination-statistics/:id/orders", adminAuth, AdminCombinationStatistics.orders);
+adminapiRoutes.get("/activity/combinations/options", adminAuth, AdminCombination.options);
+adminapiRoutes.get("/activity/combinations/products", adminAuth, AdminCombination.products);
+adminapiRoutes.get("/activity/combinations/products/:productId", adminAuth, AdminCombination.product);
+adminapiRoutes.get("/activity/combinations/:id", adminAuth, AdminCombination.detail);
+adminapiRoutes.post("/activity/combinations", adminAuth, AdminCombination.create);
+adminapiRoutes.put("/activity/combinations/:id", adminAuth, AdminCombination.update);
+adminapiRoutes.put("/activity/combinations/:id/status", adminAuth, AdminCombination.status);
+adminapiRoutes.delete("/activity/combinations/:id", adminAuth, AdminCombination.remove);
+adminapiRoutes.get("/activity/seckill-activities/options", adminAuth, AdminSeckillActivity.options);
+adminapiRoutes.get("/activity/seckill-activities/products", adminAuth, AdminSeckillActivity.products);
+adminapiRoutes.get("/activity/seckill-activities/products/:productId", adminAuth, AdminSeckillActivity.product);
+adminapiRoutes.get("/activity/seckill-activities/:id", adminAuth, AdminSeckillActivity.detail);
+adminapiRoutes.post("/activity/seckill-activities", adminAuth, AdminSeckillActivity.create);
+adminapiRoutes.put("/activity/seckill-activities/:id", adminAuth, AdminSeckillActivity.update);
+adminapiRoutes.put("/activity/seckill-activities/:id/status", adminAuth, AdminSeckillActivity.status);
+adminapiRoutes.delete("/activity/seckill-activities/:id", adminAuth, AdminSeckillActivity.remove);
 
 // 客服回复 (M14)
 adminapiRoutes.post("/service/send", adminAuth, AdminController.serviceReply);
@@ -680,10 +855,29 @@ adminapiRoutes.get("/extract/list", adminAuth, AdminCrud.adminExtractList);
 adminapiRoutes.post("/extract/status/:id", adminAuth, AdminCrud.adminExtractStatus);
 
 // ─── 供应商提现审核/转账 ────────────────────────────────────
+adminapiRoutes.get("/supplier/extract/suppliers", adminAuth, AdminSupplierFinance.supplierExtractSuppliers);
 adminapiRoutes.get("/supplier/extract/list", adminAuth, AdminSupplierFinance.supplierExtractList);
 adminapiRoutes.post("/supplier/extract/verify/:id", adminAuth, AdminSupplierFinance.supplierExtractReview);
 adminapiRoutes.post("/supplier/extract/save_transfer/:id", adminAuth, AdminSupplierFinance.supplierExtractTransfer);
 adminapiRoutes.post("/supplier/extract/mark/:id", adminAuth, AdminSupplierFinance.supplierExtractMark);
+
+// Independent read contract for legacy supplier bill / settled bill screens.
+adminapiRoutes.get("/supplier/bill-screen/suppliers", adminAuth, AdminSupplierBillScreen.suppliers);
+adminapiRoutes.get("/supplier/bill-screen/groups", adminAuth, AdminSupplierBillScreen.groups);
+adminapiRoutes.get("/supplier/bill-screen/details", adminAuth, AdminSupplierBillScreen.details);
+adminapiRoutes.get("/supplier/bill-screen/export", adminAuth, AdminSupplierBillScreen.exportBill);
+
+// Independent Admin supplier flowing-water screen, including guarded remarks.
+adminapiRoutes.get("/supplier/capital-screen/suppliers", adminAuth, AdminSupplierCapitalScreen.suppliers);
+adminapiRoutes.get("/supplier/capital-screen/list", adminAuth, AdminSupplierCapitalScreen.list);
+adminapiRoutes.get("/supplier/capital-screen/export", adminAuth, AdminSupplierCapitalScreen.exportCapital);
+adminapiRoutes.put("/supplier/capital-screen/remark/:id", adminAuth, AdminSupplierCapitalScreen.remark);
+adminapiRoutes.get("/supplier/order-statistics-screen/suppliers", adminAuth, AdminSupplierOrderStatisticsScreen.suppliers);
+adminapiRoutes.get("/supplier/order-statistics-screen/summary", adminAuth, AdminSupplierOrderStatisticsScreen.summary);
+adminapiRoutes.get("/supplier/order-statistics-screen/trend", adminAuth, AdminSupplierOrderStatisticsScreen.trend);
+adminapiRoutes.get("/supplier/order-statistics-screen/channel", adminAuth, AdminSupplierOrderStatisticsScreen.channel);
+adminapiRoutes.get("/supplier/order-statistics-screen/type", adminAuth, AdminSupplierOrderStatisticsScreen.type);
+adminapiRoutes.get("/supplier/order-statistics-screen/supplier-table", adminAuth, AdminSupplierOrderStatisticsScreen.supplierTable);
 
 // ─── 财务流水 (M18) ─────────────────────────────────────────
 adminapiRoutes.get("/bill/list", adminAuth, AdminCrud.adminBillList);
@@ -744,11 +938,17 @@ adminapiRoutes.get("/article/product-options", adminAuth, AdminArticle.productOp
 adminapiRoutes.get("/article/attachment-options", adminAuth, AdminArticle.attachmentOptions);
 adminapiRoutes.get("/article/attachment-categories", adminAuth, AdminArticle.attachmentCategories);
 adminapiRoutes.get("/log/list", adminAuth, AdminCrud.adminLogList);
+adminapiRoutes.get("/log/admin-options", adminAuth, AdminCrud.adminLogOptions);
 
 // ─── 分销管理 + 通知模板 + 短信配置 (M24) ─────────────────
 adminapiRoutes.get("/spread/list", adminAuth, AdminCrud.adminSpreadList);
 adminapiRoutes.get("/brokerage/list", adminAuth, AdminCrud.adminBrokerageList);
 adminapiRoutes.get("/promoter/apply/list", adminAuth, PromoterApplicationController.adminList);
+adminapiRoutes.post(
+  "/promoter/apply/examine/:id/:uid/:status",
+  adminAuth,
+  PromoterApplicationController.adminExamine,
+);
 adminapiRoutes.get(
   "/promoter/apply/examine/:id/:uid/:status",
   adminAuth,
@@ -768,6 +968,22 @@ adminapiRoutes.post("/supplier/apply/verify/:id", adminAuth, SupplierApplication
 adminapiRoutes.get("/supplier/apply/mark/form/:id", adminAuth, SupplierApplicationController.adminMarkForm);
 adminapiRoutes.post("/supplier/apply/mark/:id", adminAuth, SupplierApplicationController.adminMark);
 adminapiRoutes.delete("/supplier/apply/del/:id", adminAuth, SupplierApplicationController.adminDelete);
+adminapiRoutes.get("/supplier/supplier", adminAuth, AdminSupplierDirectoryController.list);
+adminapiRoutes.get("/supplier/menu-rules", adminAuth, AdminSupplierMenuRuleController.list);
+adminapiRoutes.post("/supplier/menu-rules", adminAuth, AdminSupplierMenuRuleController.create);
+adminapiRoutes.get("/supplier/menu-rules/catalog", adminAuth, AdminSupplierMenuRuleController.catalog);
+adminapiRoutes.get("/supplier/menu-rules/:id", adminAuth, AdminSupplierMenuRuleController.detail);
+adminapiRoutes.put("/supplier/menu-rules/:id", adminAuth, AdminSupplierMenuRuleController.update);
+adminapiRoutes.put("/supplier/menu-rules/:id/visibility", adminAuth, AdminSupplierMenuRuleController.visibility);
+adminapiRoutes.delete("/supplier/menu-rules/:id", adminAuth, AdminSupplierMenuRuleController.remove);
+adminapiRoutes.post("/supplier/supplier", adminAuth, AdminSupplierDirectoryController.create);
+adminapiRoutes.get("/supplier/supplier/cities", adminAuth, PublicController.city);
+adminapiRoutes.get("/supplier/supplier/:id", adminAuth, AdminSupplierDirectoryController.detail);
+adminapiRoutes.put("/supplier/supplier/:id", adminAuth, AdminSupplierDirectoryController.update);
+adminapiRoutes.put("/supplier/supplier/set_status/:id/:status", adminAuth, AdminSupplierDirectoryController.setStatus);
+adminapiRoutes.delete("/supplier/supplier/:id", adminAuth, AdminSupplierDirectoryController.remove);
+adminapiRoutes.get("/agent/get_agent_agreement", adminAuth, AdminAgentAgreementController.getAgentAgreement);
+adminapiRoutes.post("/agent/set_agent_agreement/:id", adminAuth, AdminAgentAgreementController.setAgentAgreement);
 // 事业部/代理商/员工层级管理与报表
 adminapiRoutes.get("/agent/division/list", adminAuth, AdminDivision.divisionList);
 adminapiRoutes.get("/agent/division/down_list", adminAuth, AdminDivision.divisionList);
@@ -781,6 +997,9 @@ adminapiRoutes.get("/agent/division/order/list", adminAuth, AdminDivision.divisi
 adminapiRoutes.get("/agent/division/option", adminAuth, AdminDivision.divisionOptions);
 adminapiRoutes.get("/agent/division/agent_option/:divisionId", adminAuth, AdminDivision.agentOptions);
 adminapiRoutes.get("/agent/division/statistics", adminAuth, AdminDivision.divisionStatistics);
+adminapiRoutes.get("/agent/division/statistics-screen/summary", adminAuth, AdminDivisionStatisticsScreen.summary);
+adminapiRoutes.get("/agent/division/statistics-screen/trend", adminAuth, AdminDivisionStatisticsScreen.trend);
+adminapiRoutes.get("/agent/division/statistics-screen/ranking", adminAuth, AdminDivisionStatisticsScreen.ranking);
 adminapiRoutes.get("/agent/division/trend", adminAuth, AdminDivision.divisionTrend);
 adminapiRoutes.get("/agent/division/ranking", adminAuth, AdminDivision.divisionRanking);
 adminapiRoutes.get("/agent/division/apply/list", adminAuth, AdminDivision.applicationList);
@@ -849,6 +1068,7 @@ adminapiRoutes.post(
 // ─── Admin 积分日志（独立只读权限）──────────────────────────
 adminapiRoutes.get("/marketing/user-point/logs", adminAuth, AdminIntegralLog.list);
 adminapiRoutes.get("/marketing/user-point/statistics", adminAuth, AdminIntegralLog.statistics);
+adminapiRoutes.get("/marketing/user-point/export", adminAuth, AdminIntegralLog.exportManifest);
 
 // ─── 旧 Admin 积分统计（独立只读权限）──────────────────────
 adminapiRoutes.get("/marketing/point/get_basic", adminAuth, AdminPointStatistic.basic);
@@ -858,6 +1078,108 @@ adminapiRoutes.get("/marketing/point/get_type", adminAuth, AdminPointStatistic.t
 
 // ─── 用户领取记录（独立只读权限）────────────────────────────
 adminapiRoutes.get("/marketing/coupon-records/list", adminAuth, AdminCouponRecords.list);
+
+// Independent template catalog and publication; issue CRUD remains /coupon.
+adminapiRoutes.get("/marketing/coupon-templates", adminAuth, AdminCouponTemplate.list);
+adminapiRoutes.get("/marketing/coupon-templates/options", adminAuth, AdminCouponTemplate.options);
+adminapiRoutes.get("/marketing/coupon-templates/products", adminAuth, AdminCouponTemplate.products);
+adminapiRoutes.get("/marketing/coupon-templates/:id/issues", adminAuth, AdminCouponTemplate.issues);
+adminapiRoutes.get("/marketing/coupon-templates/:id", adminAuth, AdminCouponTemplate.detail);
+adminapiRoutes.post("/marketing/coupon-templates", adminAuth, AdminCouponTemplate.create);
+adminapiRoutes.post("/marketing/coupon-templates/:id/invalidate", adminAuth, AdminCouponTemplate.invalidate);
+adminapiRoutes.delete("/marketing/coupon-templates/:id", adminAuth, AdminCouponTemplate.remove);
+adminapiRoutes.post("/marketing/coupon-template-issues", adminAuth, AdminCouponTemplate.publish);
+
+// Independent issuers: copying creates a new definition, never edits the source.
+adminapiRoutes.get("/order/invoices", adminAuth, AdminInvoice.list);
+adminapiRoutes.get("/finance/recharge-orders", adminAuth, AdminRechargeOrder.list);
+adminapiRoutes.get("/finance/recharge-orders/stats", adminAuth, AdminRechargeOrder.stats);
+adminapiRoutes.get("/finance/recharge-orders/:id", adminAuth, AdminRechargeOrder.detail);
+adminapiRoutes.get("/finance/commissions", adminAuth, AdminCommissionRead.list);
+adminapiRoutes.get("/finance/commissions/:uid/records", adminAuth, AdminCommissionRead.records);
+adminapiRoutes.get("/finance/commissions/:uid", adminAuth, AdminCommissionRead.detail);
+adminapiRoutes.get("/finance/user-money-ledger", adminAuth, AdminUserMoneyLedger.list);
+adminapiRoutes.get("/finance/user-money-ledger/types", adminAuth, AdminUserMoneyLedger.types);
+adminapiRoutes.get("/finance/user-money-ledger/export", adminAuth, AdminUserMoneyLedger.exportManifest);
+adminapiRoutes.get("/order/invoices/:id/order-info", adminAuth, AdminInvoice.orderInfo);
+adminapiRoutes.get("/order/invoices/:id", adminAuth, AdminInvoice.detail);
+adminapiRoutes.post("/order/invoices/:id/process", adminAuth, AdminInvoice.process);
+
+// Platform activity-frame catalog and its product, brand, and label scopes.
+adminapiRoutes.get("/marketing/activity-frame/products", adminAuth, AdminActivityFrame.products);
+adminapiRoutes.get("/marketing/activity-frame/brands", adminAuth, AdminActivityFrame.brands);
+adminapiRoutes.get("/marketing/activity-frame/labels", adminAuth, AdminActivityFrame.labels);
+adminapiRoutes.get("/marketing/activity-frame", adminAuth, AdminActivityFrame.list);
+adminapiRoutes.get("/marketing/activity-frame/:id", adminAuth, AdminActivityFrame.detail);
+adminapiRoutes.post("/marketing/activity-frame", adminAuth, AdminActivityFrame.create);
+adminapiRoutes.put("/marketing/activity-frame/:id", adminAuth, AdminActivityFrame.update);
+adminapiRoutes.patch("/marketing/activity-frame/:id/status", adminAuth, AdminActivityFrame.status);
+adminapiRoutes.delete("/marketing/activity-frame/:id", adminAuth, AdminActivityFrame.remove);
+
+adminapiRoutes.get("/marketing/activity-background/products", adminAuth, AdminActivityBackground.products);
+adminapiRoutes.get("/marketing/activity-background/brands", adminAuth, AdminActivityBackground.brands);
+adminapiRoutes.get("/marketing/activity-background/labels", adminAuth, AdminActivityBackground.labels);
+adminapiRoutes.get("/marketing/activity-background", adminAuth, AdminActivityBackground.list);
+adminapiRoutes.get("/marketing/activity-background/:id", adminAuth, AdminActivityBackground.detail);
+adminapiRoutes.post("/marketing/activity-background", adminAuth, AdminActivityBackground.create);
+adminapiRoutes.put("/marketing/activity-background/:id", adminAuth, AdminActivityBackground.update);
+adminapiRoutes.patch("/marketing/activity-background/:id/status", adminAuth, AdminActivityBackground.status);
+adminapiRoutes.delete("/marketing/activity-background/:id", adminAuth, AdminActivityBackground.remove);
+adminapiRoutes.get("/marketing/time-discounts/products", adminAuth, AdminTimeDiscount.products);
+adminapiRoutes.get("/marketing/time-discounts/brands", adminAuth, AdminTimeDiscount.brands);
+adminapiRoutes.get("/marketing/time-discounts/labels", adminAuth, AdminTimeDiscount.labels);
+adminapiRoutes.get("/marketing/time-discounts/user-labels", adminAuth, AdminTimeDiscount.userLabels);
+adminapiRoutes.get("/marketing/time-discounts", adminAuth, AdminTimeDiscount.list);
+adminapiRoutes.get("/marketing/time-discounts/:id", adminAuth, AdminTimeDiscount.detail);
+adminapiRoutes.post("/marketing/time-discounts", adminAuth, AdminTimeDiscount.create);
+adminapiRoutes.put("/marketing/time-discounts/:id", adminAuth, AdminTimeDiscount.update);
+adminapiRoutes.patch("/marketing/time-discounts/:id/status", adminAuth, AdminTimeDiscount.status);
+adminapiRoutes.delete("/marketing/time-discounts/:id", adminAuth, AdminTimeDiscount.remove);
+
+adminapiRoutes.get("/marketing/full-discounts/products", adminAuth, AdminFullDiscount.products);
+adminapiRoutes.get("/marketing/full-discounts/brands", adminAuth, AdminFullDiscount.brands);
+adminapiRoutes.get("/marketing/full-discounts/labels", adminAuth, AdminFullDiscount.labels);
+adminapiRoutes.get("/marketing/full-discounts/user-labels", adminAuth, AdminFullDiscount.userLabels);
+adminapiRoutes.get("/marketing/full-discounts", adminAuth, AdminFullDiscount.list);
+adminapiRoutes.get("/marketing/full-discounts/:id", adminAuth, AdminFullDiscount.detail);
+adminapiRoutes.post("/marketing/full-discounts", adminAuth, AdminFullDiscount.create);
+adminapiRoutes.put("/marketing/full-discounts/:id", adminAuth, AdminFullDiscount.update);
+adminapiRoutes.patch("/marketing/full-discounts/:id/status", adminAuth, AdminFullDiscount.status);
+adminapiRoutes.delete("/marketing/full-discounts/:id", adminAuth, AdminFullDiscount.remove);
+
+adminapiRoutes.get("/marketing/nth-discounts/products", adminAuth, AdminNthDiscount.products);
+adminapiRoutes.get("/marketing/nth-discounts/brands", adminAuth, AdminNthDiscount.brands);
+adminapiRoutes.get("/marketing/nth-discounts/labels", adminAuth, AdminNthDiscount.labels);
+adminapiRoutes.get("/marketing/nth-discounts/user-labels", adminAuth, AdminNthDiscount.userLabels);
+adminapiRoutes.get("/marketing/nth-discounts", adminAuth, AdminNthDiscount.list);
+adminapiRoutes.get("/marketing/nth-discounts/:id", adminAuth, AdminNthDiscount.detail);
+adminapiRoutes.post("/marketing/nth-discounts", adminAuth, AdminNthDiscount.create);
+adminapiRoutes.put("/marketing/nth-discounts/:id", adminAuth, AdminNthDiscount.update);
+adminapiRoutes.patch("/marketing/nth-discounts/:id/status", adminAuth, AdminNthDiscount.status);
+adminapiRoutes.delete("/marketing/nth-discounts/:id", adminAuth, AdminNthDiscount.remove);
+
+adminapiRoutes.get("/marketing/full-gifts/products", adminAuth, AdminFullGift.products);
+adminapiRoutes.get("/marketing/full-gifts/coupons", adminAuth, AdminFullGift.coupons);
+adminapiRoutes.get("/marketing/full-gifts/brands", adminAuth, AdminFullGift.brands);
+adminapiRoutes.get("/marketing/full-gifts/labels", adminAuth, AdminFullGift.labels);
+adminapiRoutes.get("/marketing/full-gifts/user-labels", adminAuth, AdminFullGift.userLabels);
+adminapiRoutes.get("/marketing/full-gifts", adminAuth, AdminFullGift.list);
+adminapiRoutes.get("/marketing/full-gifts/:id", adminAuth, AdminFullGift.detail);
+adminapiRoutes.post("/marketing/full-gifts", adminAuth, AdminFullGift.create);
+adminapiRoutes.put("/marketing/full-gifts/:id", adminAuth, AdminFullGift.update);
+adminapiRoutes.patch("/marketing/full-gifts/:id/status", adminAuth, AdminFullGift.status);
+adminapiRoutes.delete("/marketing/full-gifts/:id", adminAuth, AdminFullGift.remove);
+
+// Independent issuers: copying creates a new definition, never edits the source.
+adminapiRoutes.get("/marketing/coupon-issues", adminAuth, AdminCouponIssue.list);
+adminapiRoutes.get("/marketing/coupon-issues/options", adminAuth, AdminCouponIssue.options);
+adminapiRoutes.get("/marketing/coupon-issues/products", adminAuth, AdminCouponIssue.products);
+adminapiRoutes.get("/marketing/coupon-issues/:id/claims", adminAuth, AdminCouponIssue.claims);
+adminapiRoutes.get("/marketing/coupon-issues/:id/copy", adminAuth, AdminCouponIssue.copy);
+adminapiRoutes.get("/marketing/coupon-issues/:id", adminAuth, AdminCouponIssue.detail);
+adminapiRoutes.post("/marketing/coupon-issues", adminAuth, AdminCouponIssue.create);
+adminapiRoutes.post("/marketing/coupon-issues/:id/status", adminAuth, AdminCouponIssue.status);
+adminapiRoutes.delete("/marketing/coupon-issues/:id", adminAuth, AdminCouponIssue.remove);
 
 // ─── 未实现端点兜底 (必须最后注册, 否则吞掉后续路由) ─────────
 adminapiRoutes.all("/*", (c) =>

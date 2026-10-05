@@ -1,0 +1,213 @@
+{
+  "dateUtc": "2026-09-30",
+  "scope": "Local, unpublished Admin activity-background screens, shared decorative deletion and public scope consistency",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 77,
+      "partial": 111,
+      "missing": 79,
+      "retired": 7
+    },
+    "legacyMarketingScreens": {
+      "total": 48,
+      "candidate": 25,
+      "partial": 12,
+      "missing": 11,
+      "retired": 0
+    },
+    "workerRoutes": 1978,
+    "workerRouteSurfaces": {
+      "api": 1030,
+      "admin": 673,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "retired": 17,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 91,
+    "adminApi": {
+      "callSites": 499,
+      "pathVariants": 523,
+      "executable": 523,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "screenPromotions": [
+      "/admin/marketing/activity_background: missing->candidate",
+      "/admin/marketing/activity_background/create/:id?: missing->candidate"
+    ],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "finalFocusedWorkerPglite": {
+      "files": 10,
+      "passed": 72,
+      "failed": 0,
+      "skipped": 2,
+      "total": 74,
+      "durationSeconds": 107.8,
+      "maxWorkers": 1
+    },
+    "pgliteFiles": [
+      "test/admin-activity-frame.test.ts",
+      "test/admin-activity-background.test.ts",
+      "test/admin-activity-background-http.test.ts",
+      "test/admin-permission.test.ts",
+      "test/public-product-catalog-promotion-slots.test.ts",
+      "test/public-product-activity-promotion-scope.test.ts",
+      "test/api-public-catalog-migration.test.ts",
+      "test/v2-promotion-compatibility-migration.test.ts",
+      "test/admin-marketing-frontend-parity.test.ts",
+      "test/admin-all-frontend-parity.test.ts"
+    ],
+    "adminFrontendRuntime": {
+      "files": 2,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed; 21.49 seconds",
+    "adminApiStrictAudit": "523 executable variants; 0 unregistered or unresolved",
+    "routeAudit": "1978 Worker registrations; 882 executable legacy-path matches unchanged",
+    "checklistCount": "246 checked; 158 open; 404 total",
+    "nativePostgresql16": {
+      "files": 3,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "allClustersStopped": true,
+      "runs": [
+        {
+          "file": "test/admin-activity-background.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "fixturesRemaining": 0,
+          "clusterStopped": true,
+          "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-GOE4QC"
+        },
+        {
+          "file": "test/admin-activity-background-http.test.ts",
+          "passed": 2,
+          "failed": 0,
+          "fixturesRemaining": 0,
+          "clusterStopped": true,
+          "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-9AvPSW"
+        },
+        {
+          "file": "test/admin-activity-frame.test.ts",
+          "passed": 7,
+          "failed": 0,
+          "fixturesRemaining": 0,
+          "clusterStopped": true,
+          "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-VBBeJV"
+        }
+      ]
+    },
+    "gitDiffCheck": "passed (Git line-ending conversion warnings only)",
+    "published": "no commit, push or deployment; no production mutation"
+  },
+  "browser": {
+    "environment": {
+      "os": "Windows",
+      "browser": "Installed Chrome via bundled Playwright 1.62.1",
+      "browserPlugin": "absent",
+      "fallbackReason": "Browser plugin not available",
+      "url": "http://127.0.0.1:5196/marketing/activity-background",
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "api": "synthetic mocked API; does not establish real backend/production-role browser acceptance"
+    },
+    "checks": {
+      "identity": "passed: page URL/title",
+      "meaningfulContent": "passed: table and full mobile dates",
+      "frameworkOverlay": "absent",
+      "console": "one expected net::ERR_FAILED from intentional unknown-result POST abort; no framework error",
+      "screenshots": "desktop list, selection modal and mobile form inspected",
+      "interaction": "passed"
+    },
+    "observations": [
+      "Edit details and confirmed cross-page selections retain product identity; cancellation preserves initial selection.",
+      "PUT includes UUID/revision and returns to list.",
+      "Status confirmation sends one isolated PATCH and refreshes the list.",
+      "Synthetic read-only session hides create/edit/delete/status controls.",
+      "Permission removal clears stale rows and shows denial.",
+      "Mobile start/end fields are separate full-width rows; deliberately aborted POST blocks repeated save with one POST only."
+    ],
+    "warnings": 0,
+    "failedHttpResponses": 0,
+    "devServerStopped": true,
+    "listenerPort5196": false,
+    "screenshots": [
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/activity-background-list-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/activity-background-scope-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/activity-background-form-mobile.png"
+    ]
+  },
+  "verificationHistory": [
+    "Earlier complete background PGlite batch: 9 files, 66 passed, 2 skipped, before final four scope cases and two real HTTP route cases. Superseded by the final complete 10-file run.",
+    "A parallel partial service run passed 23 tests and skipped 2 native-only cases, but its HTTP file failed alias loading; a concurrent standalone HTTP attempt failed PGlite ArrayBuffer initialization during typecheck memory contention. Neither incomplete run contributes to accepted totals.",
+    "Browser harness initially used unsuitable pagination/switch selectors and omitted the site_config API mock; the latter attempted a GET proxy request rejected with EACCES. Final corrected synthetic runs passed; no production mutation was performed."
+  ],
+  "limitations": [
+    "The two background pages are local candidates; there are no exact aliases for legacy PHP dynamic URLs, and no commit, push or deployment in this batch.",
+    "Scope type 3 exclusion was absent from the old UI and is an explicit extension using is_all=1 and actual eligible parent-product counts.",
+    "Admin pickers, validation and counts use visible approved root products (pid=0); public consumers normalize child product identity to its parent.",
+    "Decorative type 5/6 auxiliary rows must match the root promotion's scope; four positive/negative database cases verify selection, exclusion, brand and label scopes. Types 1–4 retain prior price semantics.",
+    "Deletion soft-deletes the root and same-promotion-type immediate pid children, including store derivatives; other-type children, auxiliary relations and history remain. Grandchildren are not recursively deleted, consistent with the old one-level pid operation.",
+    "Unknown write result protection is in-page only; there is no persistent cross-refresh receipt and manual list inspection cannot prove the original request succeeded.",
+    "Real restricted-role browser journeys, production media/product/activity scale and query plans, rendered product cards, full Linux CI and release acceptance remain open."
+  ],
+  "evidence": [
+    "docs/admin-activity-background-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "docs/admin-marketing-route-parity.md",
+    "audit/admin-legacy-marketing-route-parity-activity-background-followup-20260930.json",
+    "audit/route-distribution-activity-background-followup-20260930.json",
+    "audit/admin-frontend-inventory-activity-background-followup-20260930.json",
+    "audit/admin-frontend-api-contracts-activity-background-followup-20260930.json",
+    "src/services/admin/AdminActivityBackgroundService.ts",
+    "src/services/admin/AdminActivityFrameService.ts",
+    "src/controllers/api/v1/AdminActivityBackgroundController.ts",
+    "src/services/product/PublicCatalogService.ts",
+    "src/services/activity/V2PromotionCompatibilityService.ts",
+    "test/admin-activity-background.test.ts",
+    "test/admin-activity-background-http.test.ts",
+    "test/admin-activity-frame.test.ts",
+    "test/admin-permission.test.ts",
+    "test/public-product-catalog-promotion-slots.test.ts",
+    "test/public-product-activity-promotion-scope.test.ts",
+    "test/admin-all-frontend-parity.test.ts",
+    "../view/admin-ts/src/pages/marketing/ActivityBackgroundList.vue",
+    "../view/admin-ts/src/pages/marketing/ActivityBackgroundForm.vue",
+    "../view/admin-ts/test/activityBackground.test.ts",
+    "../view/admin-ts/test/activityFrame.test.ts"
+  ],
+  "nextOpenMarketingScope": {
+    "missingPricePromotionScreens": 8,
+    "otherMissingScreens": [
+      "Coupon configuration",
+      "Old integral/signIn visual configuration with unconsumed sign_day_num",
+      "Batch integral-product creation"
+    ],
+    "remainingPartialScreens": 12
+  }
+}

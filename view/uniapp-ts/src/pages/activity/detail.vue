@@ -1,11 +1,12 @@
 <template>
+  <ThemePage>
   <view class="combination-detail">
     <view v-if="loading" class="notice">正在加载活动规格与参团资格…</view>
     <view v-if="error" class="error">{{ error }}</view>
     <button v-if="!prepared" size="mini" :disabled="loading || locked" @tap="load">刷新活动与拼团</button>
     <button v-if="!detail && !loading && error && selectedGroup" size="mini" :disabled="locked" @tap="discardGroup">放弃指定团并重新选择</button>
     <view v-if="detail" class="product">
-      <image class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
+      <ProductMedia :images="activityGallery" video="" :picture-config="detail.detailDisplay.data.design.pictureConfig" :dots="detail.detailDisplay.data.design.swiperDot" :active="activityVisible"/><view v-if="!detail.detailDisplay.data.configured" class="notice">当前使用默认活动详情布局</view>
       <view class="info-section">
         <view class="goods-name">{{ detail.title }}</view>
         <view class="notice">{{ open ? '拼团活动进行中' : '活动未开始或已结束，请刷新确认' }}</view>
@@ -36,15 +37,26 @@
         <view class="notice">每笔订单占 1 个团员席位，与购买件数不同。目录不预留库存或席位，支付后才参与拼团；价格和资格由服务端重新校验。</view>
       </view>
     </view>
-    <view class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : selectedGroup ? '参加所选团' : '立即开团' }}</button></view>
+    <ActivityDetailContent v-if="detail" :data="detail.detailDisplay.data" :product-id="detail.product_id" :active="activityVisible"/>
+    <view class="action-bar"><ActivityDetailMenu v-if="detail" :menu="detail.detailDisplay.data.design.menuList" :product-id="detail.product_id" :path="'/pages/activity/detail?id='+detail.combination_id" :title="detail.title" :image="detail.image" :active="activityVisible"/><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : selectedGroup ? '参加所选团' : '立即开团' }}</button></view>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+import ProductMedia from '@/components/productDetail/ProductMedia.vue';
+import ActivityDetailContent from '@/components/productDetail/ActivityDetailContent.vue';
+import ActivityDetailMenu from '@/components/productDetail/ActivityDetailMenu.vue';
+import { useActivityDetailDesign,useActivityDetailShare } from '@/composables/useActivityDetailDesign';
+const {activityVisible}=useActivityDetailDesign(false);
+import {computed} from 'vue';
 import { useCombinationPurchase } from '@/composables/useCombinationPurchase';
 const { detail, selected, quantity, selectedSku, loading, buying, navigating, error, open, locked, canBuy, prepared,
   selectedGroup, groups, selectedGroupAvailable, groupAvailable, choose, chooseGroup, discardGroup, load, purchase } = useCombinationPurchase();
+const activityGallery=computed(()=>detail.value?Array.from(new Set([selectedSku.value?.image||detail.value.image,...detail.value.detailDisplay.images].filter(Boolean))):[]);
+useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/detail?id=${detail.value.combination_id}`,image:selectedSku.value?.image||detail.value.image}:null,()=>activityVisible.value);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 function setQuantity(event: unknown) {
   const payload = event as { detail?: { value?: unknown }; target?: { value?: unknown } };
@@ -71,11 +83,11 @@ function formatDate(value: string | null) {
 .sku, .group { margin-top: 16rpx; font-size: 26rpx; }
 .group { padding: 20rpx; text-align: left; line-height: 1.8; }
 .group text { display: block; }
-.selected { color: #ad261d; border: 2rpx solid #e93323; }
-.price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }
+.selected { color: var(--view-theme, #e93323); border: 2rpx solid var(--view-theme, #e93323); }
+.price { color: var(--view-priceColor, #e93323); margin: 24rpx 0; font-size: 34rpx; }
 .quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; }
 .quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
 .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
-.buy-btn { background: #e93323; color: white; font-size: 30rpx; }
+.buy-btn { background: var(--view-theme, #e93323); color: white; font-size: 30rpx; }
 .buy-btn[disabled] { background: #eee; color: #777; }
 </style>

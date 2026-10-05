@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="detail-page">
     <view v-if="loading && !article" class="state-block">正在加载...</view>
     <view v-else-if="errorMessage && !article" class="state-block">
@@ -58,9 +59,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import { apiArticleDetails, apiArticleLike, type ArticleDetail } from "@/api/article";
@@ -238,7 +241,7 @@ onShow(() => {
 }
 
 .product-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-size: 30rpx;
   font-weight: 700;
 }
@@ -254,7 +257,7 @@ onShow(() => {
   padding: 10rpx 18rpx;
   border-radius: 24rpx;
   color: #fff;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   font-size: 22rpx;
 }
 
@@ -297,8 +300,8 @@ onShow(() => {
 }
 
 .like-action.liked {
-  border-color: #e93323;
-  color: #e93323;
+  border-color: var(--view-theme, #e93323);
+  color: var(--view-theme, #e93323);
   background: #fff5f3;
 }
 
@@ -322,8 +325,8 @@ onShow(() => {
   width: 180rpx;
   margin: 28rpx auto 0;
   padding: 14rpx 0;
-  border: 1rpx solid #e93323;
+  border: 1rpx solid var(--view-theme, #e93323);
   border-radius: 32rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 </style>

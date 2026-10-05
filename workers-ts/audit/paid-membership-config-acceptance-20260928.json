@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "date": "2026-09-28",
+  "status": "local-accepted-unpublished",
+  "scope": "paid membership two-switch Admin configuration, SQL-authoritative business and display consumers, controlled legacy batch writes and corrected recharge page classification",
+  "routes": {
+    "workerRegistered": 1823,
+    "workerDeltaFromLevelActivation": 4,
+    "phpTotal": 1904,
+    "phpExactMatched": 892,
+    "phpExecutableMatched": 871,
+    "phpUnavailableMatched": 21,
+    "phpUnregisteredNonretired": 995,
+    "adminCallSites": 418,
+    "adminPathVariants": 442,
+    "adminExecutableVariants": 442,
+    "adminUnregisteredOrUnresolved": 0,
+    "newAdminBusinessPageRoutes": 73,
+    "legacyAdminScreens": 274,
+    "legacyAdminStatus": { "candidate": 57, "partial": 115, "missing": 95, "retired": 7 },
+    "legacyUserOrderStatus": { "candidate": 2, "partial": 15, "missing": 1, "retired": 0 },
+    "legacyMarketingStatus": { "candidate": 18, "partial": 15, "missing": 15, "retired": 0 },
+    "legacySetupUser": "partial",
+    "checklist": { "checked": 246, "open": 158, "total": 404 }
+  },
+  "validation": {
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminProductionBuild": "passed",
+    "adminInputAndSqlLightweight": { "file": "test/admin-paid-membership-config.test.ts", "passed": 17 },
+    "adminFrontendRuntime": { "file": "test/admin-paid-membership-config-frontend.test.ts", "passed": 37 },
+    "existingAdminUnit": { "file": "test/admin-paid-membership.test.ts", "passed": 6 },
+    "consumerLightweight": {
+      "files": [
+        "test/paid-membership-config-authority.test.ts",
+        "test/order-reward-config-authority.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/order-reward.test.ts",
+        "test/payment-callback-event.test.ts",
+        "test/payment-callback-route.test.ts",
+        "test/payment-readiness.test.ts"
+      ],
+      "passed": 63
+    },
+    "displayProjectionLightweight": { "files": ["test/paid-membership-display-authority.test.ts", "test/user-profile-migration.test.ts", "test/api-public-catalog-migration.test.ts"], "passed": 28, "database": "PGlite column fixture" },
+    "protectedLegacyBatchLightweight": { "file": "test/admin-config-batch-protected.test.ts", "passed": 15 },
+    "userOrderAndAllAdminLedger": { "files": ["test/admin-user-order-frontend-parity.test.ts", "test/admin-all-frontend-parity.test.ts"], "passed": 9 },
+    "nativePostgres": {
+      "runs": [
+        { "files": ["test/admin-paid-membership-config-postgres.test.ts"], "passed": 12, "cluster": ".cache/finance-postgres-lJ90xF", "fixturesRemaining": 0, "stopped": true },
+        { "files": ["test/membership-pricing-policy.test.ts", "test/paid-membership-config-authority.test.ts", "test/order-reward-config-authority.test.ts"], "passed": 55, "cluster": ".cache/finance-postgres-M5qP70", "fixturesRemaining": 0, "stopped": true },
+        { "files": ["test/checkout-pricing-config-authority.test.ts", "test/order-member-economize.test.ts"], "passed": 36, "cluster": ".cache/finance-postgres-Q6S9oy", "fixturesRemaining": 0, "stopped": true },
+        { "files": ["test/admin-config-batch-postgres.test.ts"], "passed": 50, "cluster": ".cache/finance-postgres-CsWYsw", "fixturesRemaining": 0, "stopped": true }
+      ],
+      "uniquePassed": 153,
+      "singleRun": false,
+      "finalPortsListening": 0
+    },
+    "browserQa": {
+      "mode": "built Admin dist and isolated localhost synthetic manager/reader API",
+      "fixture": "test/fixtures/paid-membership-browser-qa.cjs",
+      "observed": [
+        "Admin sidebar exposes paid membership settings and manager can edit both switches.",
+        "Turning off the master switch retains the on value of the price switch in the draft and save preview.",
+        "One synthetic POST followed by GET displayed member_card_status=0 and svip_price_status=1.",
+        "Reader displays both saved values without edit or save controls.",
+        "The final built page rendered both the receipt reward multiplier boundary and SQL-backed profile/menu display wording without a new write."
+      ],
+      "syntheticApiWrites": 1,
+      "productionDataUsed": false
+    },
+    "auditFiles": [
+      "audit/route-distribution-paid-membership-20260928.json",
+      "audit/admin-frontend-inventory-paid-membership-20260928.json",
+      "audit/admin-frontend-api-contracts-paid-membership-20260928.json",
+      "audit/admin-legacy-user-order-route-parity-paid-membership-20260928.json"
+    ]
+  },
+  "excludedAttempts": [
+    "Earlier native Admin files with 9 and 11 passes were superseded by the final complete 12-pass file.",
+    "The first batch/native combined run passed all 50 generic-batch cases but one paid Admin assertion expected HTTP 404 for an unregistered alias; the existing catch-all returns HTTP 200 with business status 501. The paid file was corrected and rerun complete at 12/12, so the earlier partial result is excluded.",
+    "A lightweight PGlite membership-pricing-policy run had 3 create-order failures because that fixture lacks the native store_order_purchase_origin protocol table. The complete unchanged-business-assertion file passed 26/26 under native PostgreSQL and is counted there, not as a PGlite pass."
+  ],
+  "sha256": {
+    "src/services/admin/AdminPaidMembershipConfigInput.ts": "b97229809209aa52bdedbeae10eab2af4cb225f108cfeb3152ec362c9993b0a2",
+    "src/services/admin/AdminPaidMembershipConfigService.ts": "f12b85eba08a25ff41e3d19e55c09be068353db28c88462b10450d00f358a466",
+    "src/controllers/api/v1/AdminPaidMembershipConfigController.ts": "e864486f094835f84bdd5845b4dcd3a7a5f4f4719918cd241c57e31f43a758aa",
+    "src/services/user/PaidMembershipService.ts": "dc0a2f410c2f1ba319f7a28aa85b41d3d376940a1d0498304cdaf9d1a21e8271",
+    "src/services/order/OrderRewardService.ts": "eb2dd312ef234ccaf0459154f77dcb249b80ef5ca31052370cc95577ca62ed5c",
+    "src/services/user/UserProfileService.ts": "fc4fef41fb28876d2245f06b5d01121877d791af43446708f651b60eb3cdf582",
+    "src/services/product/PublicCatalogService.ts": "b7f5031a911c0d1a4ab245193abce1d25124ff99ff5b8272efbd8088b73e32a2",
+    "src/services/system/AdminConfigBatchService.ts": "5ad4a8380f5a153cb74037abd977b648357c4622524b104f9987cd8a44e4065c",
+    "test/admin-paid-membership-config.test.ts": "803d0f15bd64d912fa30e1fe091aaddffc977550939790453da0a84322ae7e40",
+    "test/admin-paid-membership-config-postgres.test.ts": "e85839c320c9765899d237fc0b19cd3a7659d02abf4924b9f6b104b7a6dfb3b2",
+    "test/admin-config-batch-protected.test.ts": "ce3a042e4d1550250a168fc6a29c8b8faa59f5f54184dda4525581da52ac9901",
+    "test/admin-config-batch-postgres.test.ts": "bbc4e2828f9b83e82fede991cdaed4b774d12eddf0feeb57e12bdb5584795003",
+    "test/paid-membership-display-authority.test.ts": "89a7b22a91da94a87664c5f5bd6eba67eb537bb6570b573f4ccc8f91a864c719",
+    "test/user-profile-migration.test.ts": "b78fbdcc7dcee7fded203403842d2e39998f70a5cfd3138ea4ab272101c966f9",
+    "test/api-public-catalog-migration.test.ts": "389c13559eeaf053234b2426b6f6fd8e6bb6cfc1b564288e7aa3ca299add7d37",
+    "test/admin-user-order-frontend-parity.test.ts": "6d36cd2d57d2790c4c0ee1bdc01ba806de428bbb0e9d30ac5ea0bb7e4660900c",
+    "test/admin-all-frontend-parity.test.ts": "8a49f755d7936ce72867a583ab6618c5fec97224d9e0095bbf9d8c859e78a2b2",
+    "scripts/admin-user-order-frontend-parity-audit.ts": "9eaf8869a0f827a8d55df595f429776dfac074668ff772955c0bb437832a2802",
+    "test/admin-paid-membership-config-frontend.test.ts": "df7812745d1f8b17c7328b5684e403208c3ccf10137dc5adbc5310455be52e15",
+    "test/paid-membership-config-authority.test.ts": "cd397d057a736384a1f8cd838165abbb64dfa4200c156b6dafdbcbdfde4f15b4",
+    "test/order-reward-config-authority.test.ts": "00663cc4893f213a6b363d3dc463a953b1e287f9d67ef5d79736cab7e49b3b46",
+    "test/paid-membership-migration.test.ts": "081426bc3e20b03bfd1e176320f507424babcd066973f3847d8ecdf45eff7b8c",
+    "test/membership-pricing-policy.test.ts": "5303b14ad492403a9c565878d5c719216b5c7910426b20fc54fb8bad3149e0ff",
+    "test/fixtures/paid-membership-browser-qa.cjs": "5ad76e69809be284aeb5b2eef6ace9e21fe639c68a2aff4d7df3d600c855b744",
+    "../view/admin-ts/src/api/paidMembershipConfig.ts": "cdd9c13af15eb4216532e18e79a312f01c2e0936fe11a1c44754416c84151c1e",
+    "../view/admin-ts/src/pages/config/PaidMembershipSettings.vue": "3de32142cb2101fdad54e0fd92ce1d159f17c30a65f912ff15f9e27ce7be2764",
+    "audit/route-distribution-paid-membership-20260928.json": "bc1a3d3174014b5281b0d54a2ce68355ea7aba3542bea80ca13de0d52ee7fe8e",
+    "audit/admin-frontend-inventory-paid-membership-20260928.json": "10c6779da00eb94fe9ba9bd3db8de602c2476db44021d81c237ffaa32ebe0a98",
+    "audit/admin-frontend-api-contracts-paid-membership-20260928.json": "da310c559b62a00ccd61fadf16ae0528a737010ed836c8c84410c79222b9d37a",
+    "audit/admin-legacy-user-order-route-parity-paid-membership-20260928.json": "b99956a2c49382fe3ae5226d8137f685fbf8dee96e9be778b14bac41d9575f96"
+  },
+  "limits": [
+    "No production configuration or customer records were used.",
+    "Synthetic local-browser QA does not claim production role/configuration, Linux, device, provider, deployment or publication acceptance.",
+    "The legacy setup_user page and coupon dynamic config alias remain partial and missing respectively; dedicated paths do not increase exact legacy PHP route matches.",
+    "Profile and menu display coverage uses a PGlite column fixture, not native LOGIN, full-schema HTTP or device/browser endpoint testing.",
+    "Already-running operations may complete using values read before a switch was changed; cache invalidation does not mean all generic configuration consumers are instantaneously synchronized."
+  ]
+}

@@ -2,7 +2,7 @@ import { sql, type SQL } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrderRefundSplit } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
-import { readRefundQuantityReservation } from './RefundQuantityReservation';
+import { readRefundQuantityReservation,CUSTOMER_ROW_REFUND_VERSION,refundClaimCartKey } from './RefundQuantityReservation';
 import { refundOrderSplitFingerprint } from './RefundOrderSplitIdentity';
 
 export interface PurchaseQuotaRefundScope { refundId: number; paymentOrderId: number; buyerId: number }
@@ -12,6 +12,8 @@ export interface PurchaseQuotaRefundReceipt {
   supplierId: number; storeId: number;
   sourceOrderId: number; selectedOrderId: number; remainingOrderId: number | null;
   previousRefundId: number; baseBranchId: string | null; disposition: 'whole' | 'split';
+  /** Set only after a real v3 claim or its exact verified predecessor. */
+  rowNamespace?: true;
   lines: Array<{ productId: number; sourceRowId: number; sourceCartId: string; sourceOldCartId: string;
     selectedRowId: number | null; remainingRowId: number | null; selectedNum: number; remainingNum: number }>;
 }
@@ -24,8 +26,8 @@ function object(value: unknown): Record<string, unknown> {
 }
 function string(value: unknown, maximum: number): string { return typeof value === 'string' && value.length <= maximum ? value : invalid(); }
 function money(value: unknown): string { const result = string(value, 13); return /^\d{1,10}\.\d{2}$/.test(result) ? result : invalid(); }
-function cartId(value: unknown): string {
-  const result = string(value, 10); if (!/^[1-9]\d{0,9}$/.test(result)) return invalid(); integer(Number(result), 1); return result;
+function cartId(value: unknown,rowNamespace=false): string {
+  const result = string(value, rowNamespace?128:10);if(rowNamespace){if(!result||result!==result.trim()||/[\u0000-\u001f\u007f]/.test(result))return invalid();return result;}if (!/^[1-9]\d{0,9}$/.test(result)) return invalid(); integer(Number(result), 1); return result;
 }
 function scope(input: PurchaseQuotaRefundScope) {
   integer(input.refundId, 1); integer(input.paymentOrderId, 1); integer(input.buyerId, 1);
@@ -36,7 +38,7 @@ function scope(input: PurchaseQuotaRefundScope) {
  * Callers must separately anchor the original purchase, follow predecessor and
  * fulfillment-branch links, deduplicate refunds, and serialize quota mutations.
  * Never accept this projection from HTTP or subtract live cart.refundNum. */
-export async function verifyPurchaseQuotaRefundReceipt(value: unknown, expected: PurchaseQuotaRefundScope): Promise<PurchaseQuotaRefundReceipt> {
+export async function verifyPurchaseQuotaRefundReceipt(value: unknown, expected: PurchaseQuotaRefundScope, previous?:PurchaseQuotaRefundReceipt): Promise<PurchaseQuotaRefundReceipt> {
   scope(expected);
   const receipt = object(value), evidence = object(receipt.evidence), source = object(evidence.source);
   const frozen = object(evidence.refund), payment = object(evidence.payment);
@@ -68,12 +70,16 @@ export async function verifyPurchaseQuotaRefundReceipt(value: unknown, expected:
   const fingerprint = string(receipt.fingerprint, 64);
   if (!/^[0-9a-f]{64}$/.test(fingerprint) || await refundOrderSplitFingerprint(refund) !== fingerprint) return invalid();
   const claim = readRefundQuantityReservation(refund); if (!claim) return invalid();
+  const inherited=previous?.rowNamespace===true&&previous.refundId===previousRefundId&&previous.remainingOrderId===sourceOrderId&&previous.paymentOrderId===expected.paymentOrderId&&previous.buyerId===expected.buyerId&&previous.storeId===storeId&&previous.supplierId===supplierId;
+  const rowNamespace=claim.version===CUSTOMER_ROW_REFUND_VERSION;
   if (!Array.isArray(evidence.carts) || !evidence.carts.length || evidence.carts.length > 200
     || !Array.isArray(receipt.partitions) || receipt.partitions.length !== evidence.carts.length) return invalid();
   const sourceIds = new Set<number>(), cartIds = new Set<string>();
   const carts = evidence.carts.map(value => {
-    const row = object(value), id = integer(row.id, 1), productId = integer(row.productId, 1), identity = cartId(row.cartId);
-    const quantity = integer(row.cartNum, 1, 32767), oldCartId = row.oldCartId === '' ? '' : cartId(row.oldCartId);
+    const row = object(value), id = integer(row.id, 1), productId = integer(row.productId, 1), identity = cartId(row.cartId,rowNamespace);
+    const prior=inherited?previous!.lines.find(x=>x.remainingRowId===id):undefined;
+    const inheritedOld=!!prior&&identity===(previous!.remainingOrderId===previous!.sourceOrderId?prior.sourceCartId:String(id))&&row.oldCartId===(previous!.remainingOrderId===previous!.sourceOrderId?prior.sourceOldCartId:prior.sourceOldCartId||prior.sourceCartId);
+    const quantity = integer(row.cartNum, 1, 32767), oldCartId = row.oldCartId === '' ? '' : cartId(row.oldCartId,rowNamespace||inheritedOld);
     if (sourceIds.has(id) || cartIds.has(identity) || row.oid !== sourceOrderId || row.uid !== expected.buyerId) return invalid();
     sourceIds.add(id); cartIds.add(identity);
     return { id, productId, cartId: identity, oldCartId, quantity, refundNum: integer(row.refundNum, 0, quantity) };
@@ -81,7 +87,7 @@ export async function verifyPurchaseQuotaRefundReceipt(value: unknown, expected:
   const visited = new Set<number>(), destinationIds = new Set<number>();
   let selectedTotal = 0, remainingTotal = 0;
   const lines = receipt.partitions.map(value => {
-    const part = object(value), sourceRowId = integer(part.sourceRowId, 1), sourceCartId = cartId(part.sourceCartId);
+    const part = object(value), sourceRowId = integer(part.sourceRowId, 1), sourceCartId = cartId(part.sourceCartId,rowNamespace);
     const row = carts.find(row => row.id === sourceRowId);
     const selectedNum = integer(part.selectedNum, 0, 32767), remainingNum = integer(part.remainingNum, 0, 32767);
     if (Object.keys(part).length !== 6 || !row || visited.has(sourceRowId) || row.cartId !== sourceCartId
@@ -100,7 +106,7 @@ export async function verifyPurchaseQuotaRefundReceipt(value: unknown, expected:
       if (remainingRowId !== null && (sourceOrderId === expected.paymentOrderId ? sourceIds.has(remainingRowId) : remainingRowId !== row.id)) return invalid();
     }
     const selection = claim.items.find(item => item.rowId === row.id);
-    if (selectedNum ? !selection || selection.cartId !== Number(row.cartId) || selection.cartNum !== selectedNum
+    if (selectedNum ? !selection || refundClaimCartKey(selection) !== row.cartId || selection.cartNum !== selectedNum
       || selection.totalNum !== row.quantity || selection.beforeRefundNum !== 0 : selection !== undefined) return invalid();
     selectedTotal += selectedNum; remainingTotal += remainingNum;
     return { productId: row.productId, sourceRowId, sourceCartId, sourceOldCartId: row.oldCartId,
@@ -110,7 +116,7 @@ export async function verifyPurchaseQuotaRefundReceipt(value: unknown, expected:
     || claim.items.length !== lines.filter(line => line.selectedNum > 0).length) return invalid();
   return { version: 'purchase-quota-refund-receipt-v1', refundId: expected.refundId, fingerprint, buyerId: expected.buyerId,
     paymentOrderId: expected.paymentOrderId, supplierId, storeId,
-    sourceOrderId, selectedOrderId, remainingOrderId, previousRefundId, baseBranchId, disposition, lines };
+    sourceOrderId, selectedOrderId, remainingOrderId, previousRefundId, baseBranchId, disposition, lines,...(rowNamespace||inherited?{rowNamespace:true as const}:{}) };
 }
 
 async function projections(tx: Pick<DbClient, 'execute'>, predicate: SQL, limit: number) {
@@ -162,6 +168,7 @@ export async function readPurchaseQuotaRefundReceipt(tx: Pick<DbClient, 'execute
   const [row] = await projections(tx, sql`refund_id = ${expected.refundId} AND uid = ${expected.buyerId}
     AND payment_order_id = ${expected.paymentOrderId}`, 1);
   if (!row) return invalid();
+  if(row.previousRefundId){const family=await readPurchaseQuotaRefundFamily(tx,expected),match=family.find(x=>x.refundId===expected.refundId);return match??invalid();}
   return verifyPurchaseQuotaRefundReceipt(row, expected);
 }
 
@@ -173,6 +180,6 @@ export async function readPurchaseQuotaRefundFamily(tx: Pick<DbClient, 'execute'
   const rows = await projections(tx, sql`payment_order_id = ${expected.paymentOrderId}`, 202);
   if (rows.length > 201) return invalid();
   const result: PurchaseQuotaRefundReceipt[] = [];
-  for (const row of rows) result.push(await verifyPurchaseQuotaRefundReceipt(row, { ...expected, refundId: integer(row.refundId, 1) }));
+  for (const row of [...rows].sort((a,b)=>integer(a.refundId,1)-integer(b.refundId,1))) result.push(await verifyPurchaseQuotaRefundReceipt(row, { ...expected, refundId: integer(row.refundId, 1) },result.find(x=>x.refundId===row.previousRefundId)));
   return result;
 }

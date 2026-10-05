@@ -1,0 +1,757 @@
+{
+  "version": 1,
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T12:16:07.227Z",
+  "status": "passed-local-final-source",
+  "published": false,
+  "scope": {
+    "description": "Dedicated issued-coupon Admin list/options/products/detail/copy/claims/create/status/soft-delete contract and ordinary public-claim compatibility; separate relevant consumer, input/permission/wallet, frontend and build evidence.",
+    "logicalRestContracts": 9,
+    "registeredPrefixes": [
+      "/adminapi/marketing/coupon-issues",
+      "/api/admin/marketing/coupon-issues"
+    ],
+    "reads": [
+      "GET collection",
+      "GET options",
+      "GET products",
+      "GET :id",
+      "GET :id/copy",
+      "GET :id/claims"
+    ],
+    "writes": [
+      "POST collection",
+      "POST :id/status",
+      "DELETE :id"
+    ],
+    "accounting": "38 business cases across four complete accepted files are assembled from retained initial 22 and final 16. This was not one 38/38 run. Consumer 225, other checks 50 and frontend 47 are separate scopes.",
+    "noNewDdl": true,
+    "noNewRuntimeGrants": true,
+    "noProductionApplication": true
+  },
+  "acceptedBusinessScope": {
+    "uniqueFiles": 4,
+    "uniqueTests": 38,
+    "failed": 0,
+    "skipped": 0,
+    "retainedInitialFiles": [
+      {
+        "path": "workers-ts/test/admin-coupon-issue.test.ts",
+        "tests": 10,
+        "authority": "Actual SQL under isolated native PostgreSQL runner; business fixture, not HTTP identity proof."
+      },
+      {
+        "path": "workers-ts/test/coupon-issue-manual-claim.test.ts",
+        "tests": 12,
+        "authority": "Actual ordinary-public claim SQL, lifetime-limit evidence, inventory/use-window/list behavior."
+      }
+    ],
+    "retainedInitialTests": 22,
+    "finalCompleteFiles": [
+      {
+        "path": "workers-ts/test/admin-coupon-issue-postgres.test.ts",
+        "tests": 10,
+        "authority": "Full registered schema, exact commissioned Admin/App LOGIN audits and independent native sessions."
+      },
+      {
+        "path": "workers-ts/test/admin-coupon-issue-http.test.ts",
+        "tests": 6,
+        "authority": "Assembled Hono application, actual Admin/API JWT and restricted App/Admin database identities; both route prefixes."
+      }
+    ],
+    "finalTests": 16,
+    "initialLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-native-scope-20260927.log",
+      "relativePath": "coupon-issue-native-scope-20260927.log",
+      "sha256": "27c63186ec939202f14e9a8fd4839ad8ee6ca0d9b18a2426231048ca988446c2",
+      "bytes": 8338,
+      "verifiedStdoutSummary": [
+        "Test Files  2 failed | 2 passed (4)",
+        "Tests  5 failed | 33 passed (38)",
+        "FINANCE_LOCAL_FIXTURES remaining=0",
+        "FINANCE_LOCAL_STOPPED C:\\cinagroup\\cinashop\\.cache\\finance-postgres-qDcXHd"
+      ]
+    },
+    "initialWholeRun": {
+      "exitCode": 1,
+      "files": 4,
+      "tests": 38,
+      "passed": 33,
+      "failed": 5,
+      "durationSeconds": 127.74,
+      "cluster": "finance-postgres-qDcXHd",
+      "port": 55173,
+      "remainingFixtures": 0,
+      "stopped": true
+    },
+    "excludes": [
+      "Entire initial formal 10-case file, including its nine green cases.",
+      "Entire initial HTTP six-case file, including its two green cases.",
+      "No successful subcases from these superseded files are retained."
+    ],
+    "finalLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-native-formal-final-20260927.log",
+      "relativePath": "coupon-issue-native-formal-final-20260927.log",
+      "sha256": "dd35b0dd5f11662fc8bedcc83820839a4b73fa841085ee4e093ad6d044f97182",
+      "bytes": 842,
+      "verifiedStdoutSummary": [
+        "Test Files  2 passed (2)",
+        "Tests  16 passed (16)",
+        "FINANCE_LOCAL_FIXTURES remaining=0",
+        "FINANCE_LOCAL_STOPPED C:\\cinagroup\\cinashop\\.cache\\finance-postgres-mr6LSz"
+      ]
+    },
+    "finalRun": {
+      "exitCode": 0,
+      "files": 2,
+      "tests": 16,
+      "passed": 16,
+      "failed": 0,
+      "durationSeconds": 128.18,
+      "cluster": "finance-postgres-mr6LSz",
+      "port": 54332,
+      "remainingFixtures": 0,
+      "stopped": true
+    },
+    "exitCodeProvenance": "Root observed terminal process results; quiet native log records the test summary and cleanup, not an embedded ExitCode line.",
+    "perFileAcceptanceProvenance": "Root identified the two complete green initial files (10 and 12) and the final complete 10 and 6 files. Quiet native output has no verbose per-file case summary; final source witnesses are separately hashed.",
+    "formalWitnesses": [
+      "Brand-scoped member definition, fractional benefit and complete windows; actual existing App issuer/log INSERT permissions, template/proof restrictions and real proof INSERT 42501.",
+      "Proof-linked issue copy creates a new issuer with cid=0 and no inherited proof, owned coupons, claim history or gifted-product history; source is unchanged.",
+      "Same UUID on independent Admin LOGINs: one issue/scope/audit and original stock definition, exact advisory blocker PID.",
+      "Public claim versus status stop, both lock orders; no partial inventory/history and claim-independent revision remains valid.",
+      "Public claim versus soft delete, both lock orders; preserve owned/reserved wallet, claim/scope and paid-product history.",
+      "Template invalidation first: stale reopen fails, explicit refreshed independent reopen succeeds without restoring source or rewriting proof.",
+      "Independent issuer reopen first: queued template invalidation closes it; proof and inventory survive.",
+      "Real scope-product writer blocks SHARE NOWAIT; refusal commits no issue/audit changes, then retry succeeds.",
+      "Six reads use repeatable-read/read-only; preserve stricter caller deadlines, reject writes and keep count/list stable across independent insertion.",
+      "Invalid actor 0/NaN/int32 overflow commits nothing; withheld sequence USAGE causes actual 42501 and rollback before permission restoration/retry."
+    ],
+    "concurrencyAuthority": "Real SQL executes before each held barrier; independent peer must observe exact blocker PID via pg_blocking_pids. No SQL results, authentication or locks are fabricated.",
+    "budgets": {
+      "writeIsolation": "read committed",
+      "statementTimeoutMs": 5000,
+      "lockTimeoutMs": 2000,
+      "idleInTransactionSessionTimeoutMs": 5000,
+      "scopeLocks": "SHARE NOWAIT",
+      "stricterCallerTimeoutsPreserved": true
+    },
+    "httpAuthority": "Actual HTTP gate, not direct-service invocation, proves coupon.view/coupon.manage/coupon_record.view separation, absent/unknown JWT identities, bounded inputs and authenticated ordinary public claim.",
+    "preservedGrantBoundary": "App already has issuer INSERT and system_log INSERT for trusted application workflows. Direct service construction is not an HTTP authorization boundary. No grant was added or revoked to make a test pass."
+  },
+  "acceptedConsumerRegression": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-consumer-native-final-20260927.log",
+      "relativePath": "coupon-issue-consumer-native-final-20260927.log",
+      "sha256": "ba69b13d8b0a1b06cf97fe981db5008d17f1d64e26c928098078ebc2e7303762",
+      "bytes": 1062,
+      "verifiedStdoutSummary": [
+        "Test Files  7 passed (7)",
+        "Tests  225 passed (225)",
+        "FINANCE_LOCAL_FIXTURES remaining=0",
+        "FINANCE_LOCAL_STOPPED C:\\cinagroup\\cinashop\\.cache\\finance-postgres-G25POz"
+      ]
+    },
+    "exitCode": 0,
+    "uniqueFiles": 7,
+    "uniqueTests": 225,
+    "passed": 225,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 335.4,
+    "files": [
+      {
+        "path": "workers-ts/test/coupon-manual-claim.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      },
+      {
+        "path": "workers-ts/test/checkout-coupon-management.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      },
+      {
+        "path": "workers-ts/test/checkout-coupon-template-authority.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      },
+      {
+        "path": "workers-ts/test/checkout-coupon-relations-authority.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      },
+      {
+        "path": "workers-ts/test/checkout-coupon-item-authority.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      },
+      {
+        "path": "workers-ts/test/coupon-template-catalog.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      },
+      {
+        "path": "workers-ts/test/coupon-issue-migration.test.ts",
+        "tests": null,
+        "countReason": "Quiet whole-file log exposes aggregate only; no per-file count is invented."
+      }
+    ],
+    "authority": "Seven complete files under isolated PG16.15 native runner. Some cases are static registration/ORM/PGlite subcases; 225 does not mean 225 real LOGIN or HTTP probes.",
+    "cluster": "finance-postgres-G25POz",
+    "port": 54237,
+    "remainingFixtures": 0,
+    "stopped": true,
+    "directoryRemoval": "complete-root-independent-cleanup",
+    "purpose": "Restores full financial/catalog consumer validation absent from the incomplete PGlite-only regression; existing guards and default time budgets were retained.",
+    "cleanupEvidence": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-cleanup-20260927.json",
+      "relativePath": "coupon-issue-cleanup-20260927.json",
+      "sha256": "73898623a95281e7ac2a09a2f398a3b9ce4800546520cd5281c59f0e6acdf97d",
+      "bytes": 934
+    }
+  },
+  "acceptedInputPermissionsWallet": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-input-permissions-wallet-final-20260927.log",
+      "relativePath": "coupon-issue-input-permissions-wallet-final-20260927.log",
+      "sha256": "a21d1b9c425001e784adfaafb83f4f2adbe50ef171d2c1c42574a50069329220",
+      "bytes": 8177,
+      "verifiedStdoutSummary": [
+        "Test Files  3 passed (3)",
+        "Tests  50 passed (50)"
+      ]
+    },
+    "exitCode": 0,
+    "files": 3,
+    "tests": 50,
+    "passed": 50,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 17.47,
+    "completeFiles": [
+      {
+        "path": "workers-ts/test/admin-coupon-issue-input.test.ts",
+        "tests": 20
+      },
+      {
+        "path": "workers-ts/test/admin-permission.test.ts",
+        "tests": 13
+      },
+      {
+        "path": "workers-ts/test/pc-coupon-wallet.test.ts",
+        "tests": 17
+      }
+    ],
+    "countAuthority": "Individual test names in real verbose log independently counted: input 20, Admin permission 13, PC wallet 17.",
+    "authority": "Input parsing and wallet contract/state cases are non-native; permission suite includes static route coverage and its local fixture. This is not a 50-case native acceptance run."
+  },
+  "frontendRuntime": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-frontend-runtime-final-20260927.log",
+      "relativePath": "coupon-issue-frontend-runtime-final-20260927.log",
+      "sha256": "071a4f3ef7e7e20eaff4a48b59c7cdfd8c0e4fcde78e21508f3a748c61969dfb",
+      "bytes": 476,
+      "verifiedStdoutSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  47 passed (47)",
+        "ExitCode: 0"
+      ]
+    },
+    "exitCode": 0,
+    "files": 1,
+    "tests": 47,
+    "passed": 47,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 12.54,
+    "file": "workers-ts/test/admin-coupon-issues-frontend.test.ts",
+    "authority": "Actual Vue/Axios page runtime against controlled transport; not database, HTTP-auth or production device proof."
+  },
+  "adminBuild": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-build-final-20260927.log",
+      "relativePath": "coupon-issue-admin-build-final-20260927.log",
+      "sha256": "6b818c2dfa172636e2b480d4dc0affe010c606c7a44e6fba3678bc7cd17402aa",
+      "bytes": 14940,
+      "verifiedStdoutSummary": [
+        "ExitCode: 0"
+      ]
+    },
+    "exitCode": 0,
+    "command": "npm run build",
+    "elapsedMilliseconds": 50231,
+    "viteVersion": "6.4.3",
+    "transformedModules": 2551,
+    "beforeManifest": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-dist-before-final-20260927.manifest.json",
+      "relativePath": "coupon-issue-admin-dist-before-final-20260927.manifest.json",
+      "sha256": "5b9c5835931cd2034872dcee6b4d01a42bd0f3468c36704889f460fe0c29c2d5",
+      "bytes": 22065
+    },
+    "afterManifest": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-dist-after-final-20260927.manifest.json",
+      "relativePath": "coupon-issue-admin-dist-after-final-20260927.manifest.json",
+      "sha256": "5b9c5835931cd2034872dcee6b4d01a42bd0f3468c36704889f460fe0c29c2d5",
+      "bytes": 22065
+    },
+    "exactManifestBytesEqual": true,
+    "manifestFiles": 166,
+    "currentDistFilesVerified": 166,
+    "currentDistMissing": [],
+    "currentDistMismatches": [],
+    "relevantOutputs": [
+      {
+        "path": "C:/cinagroup/cinashop/view/admin-ts/dist/assets/CouponList-kgF06FhD.js",
+        "relativePath": "view/admin-ts/dist/assets/CouponList-kgF06FhD.js",
+        "sha256": "82bdaa10d1ec5d7d813f2b1b5f92d54799fac6de7f9db17619f91f3d80326ff2",
+        "bytes": 49196,
+        "manifestRelativePath": "assets/CouponList-kgF06FhD.js"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/view/admin-ts/dist/assets/CouponList-QgTrw4Zs.css",
+        "relativePath": "view/admin-ts/dist/assets/CouponList-QgTrw4Zs.css",
+        "sha256": "4924071658fb9badb7eb216d9f79e7f9fbbe3c2bb56f8beb0ac70302d50d2299",
+        "bytes": 2248,
+        "manifestRelativePath": "assets/CouponList-QgTrw4Zs.css"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/view/admin-ts/dist/index.html",
+        "relativePath": "view/admin-ts/dist/index.html",
+        "sha256": "ba160e72d22920fe815c5b76239052b23e53944482598f3947adb2b731221747",
+        "bytes": 465,
+        "manifestRelativePath": "index.html"
+      }
+    ],
+    "boundary": "Final local build and manifest consistency only; root owns browser acceptance and its separate artifact."
+  },
+  "types": {
+    "runtime": {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-runtime-types-final-20260927.log",
+        "relativePath": "coupon-issue-runtime-types-final-20260927.log",
+        "sha256": "c2227e3d41f23c38accd1845361307439a1932e6c14908377298d27b41a01849",
+        "bytes": 153
+      },
+      "status": "passed-root-terminal",
+      "exitCode": 0,
+      "command": "npm run typecheck:runtime",
+      "diagnostics": [],
+      "exitCodeProvenance": "Root observed tool terminal exit_code=0 for session 32468; log contains command output without an embedded exit-code line.",
+      "sessionId": 32468
+    },
+    "unit": {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-unit-types-final-20260927.log",
+        "relativePath": "coupon-issue-unit-types-final-20260927.log",
+        "sha256": "eb009fa5230d3127c5a2785569bbc7bcaf08c2e80680639a98adac9c6d52d982",
+        "bytes": 120
+      },
+      "status": "passed-root-terminal",
+      "exitCode": 0,
+      "sessionId": 10749,
+      "command": "npm run typecheck:unit",
+      "diagnostics": [],
+      "exitCodeProvenance": "Root observed tool terminal exit_code=0 for session 10749; log contains command output without an embedded exit-code line."
+    },
+    "combinedFinalTypecheckClaim": true,
+    "executionScope": "Both complete unit and runtime typecheck scripts passed; two terminal process results, not a fabricated single npm run typecheck log."
+  },
+  "history": {
+    "failedInitialNativeScope": {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-native-scope-20260927.log",
+        "relativePath": "coupon-issue-native-scope-20260927.log",
+        "sha256": "27c63186ec939202f14e9a8fd4839ad8ee6ca0d9b18a2426231048ca988446c2",
+        "bytes": 8338,
+        "verifiedStdoutSummary": [
+          "Test Files  2 failed | 2 passed (4)",
+          "Tests  5 failed | 33 passed (38)",
+          "FINANCE_LOCAL_FIXTURES remaining=0",
+          "FINANCE_LOCAL_STOPPED C:\\cinagroup\\cinashop\\.cache\\finance-postgres-qDcXHd"
+        ]
+      },
+      "acceptedWholeRun": false,
+      "formalFailure": "One test incorrectly expected direct App-bound Admin service creation to fail 42501 despite existing trusted App issuer/log INSERT grants. Corrected to assert real template/proof ACL boundaries and actual proof INSERT rejection; HTTP tests own management authorization.",
+      "httpFailures": "Four HTTP failures were absent /api/admin aliases (404) and an overlength API-user password fixture (varchar(32), 22001). Aliases and fixture password were corrected, then both complete files passed 16/16.",
+      "grantsChangedToFixFailures": false
+    },
+    "excludedPGliteRegression": {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-consumer-regression-20260927.log",
+        "relativePath": "coupon-issue-consumer-regression-20260927.log",
+        "sha256": "a5d9eed32764ed471e108f0c510a0018c3e49cec6cf7aaee5542d567540147f0",
+        "bytes": 19063,
+        "verifiedStdoutSummary": [
+          "Test Files  2 failed | 4 passed | 3 skipped (9)",
+          "Tests  22 failed | 74 passed | 159 skipped (255)",
+          "Error: Test timed out in 5000ms."
+        ]
+      },
+      "exitCode": 1,
+      "files": 9,
+      "passedFiles": 4,
+      "failedFiles": 2,
+      "skippedFiles": 3,
+      "tests": 255,
+      "passed": 74,
+      "failed": 22,
+      "skipped": 159,
+      "durationSeconds": 99.35,
+      "acceptedTests": 0,
+      "failureFiles": [
+        "test/checkout-coupon-template-authority.test.ts",
+        "test/coupon-template-catalog.test.ts"
+      ],
+      "observedFailure": "Checkout/template financial authority assertions failed with data:null/real financial purchase-origin SQL prerequisites in the partial fixture. The ORM catalog comparison also hit its default 5000 ms test timeout.",
+      "interpretation": "The partial PGlite run was insufficient for this financial/catalog regression and remains recorded as failed, not converted to success. The later native-runner seven whole files passed all 225 cases; no financial guard, grant or default timeout was relaxed."
+    }
+  },
+  "cleanup": {
+    "provenance": "Runner stdout and final root independent cleanup artifact are preserved. Root performed cleanup; this evidence builder only read the artifacts and copied already hashed source bytes.",
+    "clusters": [
+      {
+        "cluster": "finance-postgres-qDcXHd",
+        "port": 55173,
+        "remainingFixtures": 0,
+        "stopped": true,
+        "directoryRemoved": true,
+        "directoryRemovalProvenance": "Final root independent cleanup artifact: coupon-issue-cleanup-20260927.json"
+      },
+      {
+        "cluster": "finance-postgres-mr6LSz",
+        "port": 54332,
+        "remainingFixtures": 0,
+        "stopped": true,
+        "directoryRemoved": true,
+        "directoryRemovalProvenance": "Final root independent cleanup artifact: coupon-issue-cleanup-20260927.json"
+      },
+      {
+        "cluster": "finance-postgres-G25POz",
+        "port": 54237,
+        "remainingFixtures": 0,
+        "stopped": true,
+        "directoryRemoved": true,
+        "directoryRemovalProvenance": "Final root independent cleanup artifact: coupon-issue-cleanup-20260927.json"
+      }
+    ],
+    "independentPgCtlPortProbe": {
+      "status": "root-reported-complete",
+      "evidence": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-cleanup-20260927.json",
+        "relativePath": "coupon-issue-cleanup-20260927.json",
+        "sha256": "73898623a95281e7ac2a09a2f398a3b9ce4800546520cd5281c59f0e6acdf97d",
+        "bytes": 934
+      },
+      "rawPgCtlOutputEmbedded": false,
+      "scope": "Artifact records all three isolated clusters stopped/removed with zero remaining fixtures; no additional raw native listener or pg_ctl result is invented here."
+    },
+    "finalEvidence": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-cleanup-20260927.json",
+      "relativePath": "coupon-issue-cleanup-20260927.json",
+      "sha256": "73898623a95281e7ac2a09a2f398a3b9ce4800546520cd5281c59f0e6acdf97d",
+      "bytes": 934
+    },
+    "completedAt": "2026-09-27T12:06:49.6064818Z",
+    "browserFixture": {
+      "processExit": 1,
+      "port": 5204,
+      "listenerCount": 0,
+      "exitReason": "Owned fixture interrupted after all UI work; not a test process",
+      "stopped": true,
+      "scope": "Fixture interruption exit 1 is teardown of owned UI server, not a failed test process."
+    },
+    "browserTabs": {
+      "ids": [
+        "13",
+        "14"
+      ],
+      "viewportReset": true,
+      "closed": true,
+      "metricsOverridesCleared": true
+    }
+  },
+  "sourceVerification": {
+    "currentFinalBytesReadAfterRootTerminalHandoff": true,
+    "matchesKnownFrozenServiceSha": true,
+    "matchesKnownFrozenFormalSha": true,
+    "logSourceHashBoundary": "Run logs do not embed source SHA values. Current final source inputs are hashed separately; run/source freeze provenance is root handoff. This file does not claim independent recovery of every historical run input.",
+    "onlyExplicitClosureIncluded": true,
+    "noOldCapsulesRewritten": true,
+    "physicalSnapshotCreated": true,
+    "snapshotSourceCount": 40,
+    "snapshotAllBytesMatchAcceptedInputs": true,
+    "currentPathIsHistoricalReferenceAfterFreeze": true
+  },
+  "sourceInputs": [
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminCouponIssueInput.ts",
+      "relativePath": "workers-ts/src/services/admin/AdminCouponIssueInput.ts",
+      "sha256": "0917278b1e52f94ca65b3041911ec3e49781d519ce7b05a679b6f443e0c544ba",
+      "bytes": 9897
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminCouponIssueService.ts",
+      "relativePath": "workers-ts/src/services/admin/AdminCouponIssueService.ts",
+      "sha256": "495e993ae15e0c4922e1a41ff57ddac18f9a44aeaf2b97d0d4614a3e270a8451",
+      "bytes": 33189
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCouponIssueController.ts",
+      "relativePath": "workers-ts/src/controllers/api/v1/AdminCouponIssueController.ts",
+      "sha256": "f3940b4aad3ecf1425acb736855d4e9bddc78220786f2df55fc35619cd0ef6fd",
+      "bytes": 2057
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "relativePath": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "2b406d042e2c1cca8da8039308ad345c636f34f5b0bfd3b68631a529824075c3",
+      "bytes": 68932
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "relativePath": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "a3bee25b80a8f290b9d30ff75e9e34ea4614b7803910efe24e0d1e5465565b02",
+      "bytes": 122400
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "relativePath": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "ba5bdfea8a2071f4c862140e0f081fa5cc8f54b48900c71fb6cd11de0d1fec09",
+      "bytes": 25190
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/services/activity/ActivityService.ts",
+      "relativePath": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "ee19a542896a86ace939b925ef2ac54d2c92e37ef92f6140370f9a02fdbd1eb8",
+      "bytes": 34338
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/dao/activity/ActivityDaos.ts",
+      "relativePath": "workers-ts/src/dao/activity/ActivityDaos.ts",
+      "sha256": "d4628b4e86b4364721962f88402ece9c3d8f8cd5ebc311805bf1d076251ddc97",
+      "bytes": 9525
+    },
+    {
+      "path": "C:/cinagroup/cinashop/view/admin-ts/src/api/couponIssue.ts",
+      "relativePath": "view/admin-ts/src/api/couponIssue.ts",
+      "sha256": "3543ccefe18d4444721b56661f8e02da1c947bfdc153c1ec9a9fbecc1d3b973c",
+      "bytes": 17775
+    },
+    {
+      "path": "C:/cinagroup/cinashop/view/admin-ts/src/pages/coupon/CouponList.vue",
+      "relativePath": "view/admin-ts/src/pages/coupon/CouponList.vue",
+      "sha256": "670aa2a1846e9b5f333114adf0b1c9526eca4e7a35412d96e083ea6aba1860bd",
+      "bytes": 47773
+    }
+  ],
+  "testInputs": [
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-coupon-issue.test.ts",
+      "relativePath": "workers-ts/test/admin-coupon-issue.test.ts",
+      "sha256": "350b4604e8e2fc4de7f6a8257fc1002ec4cbada1831c7a6777e986c54ce3b750",
+      "bytes": 13068
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/coupon-issue-manual-claim.test.ts",
+      "relativePath": "workers-ts/test/coupon-issue-manual-claim.test.ts",
+      "sha256": "de417b0c172f0087952a755566c6677baea9c01a32de4a41fb19f5364eb11042",
+      "bytes": 6128
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-coupon-issue-postgres.test.ts",
+      "relativePath": "workers-ts/test/admin-coupon-issue-postgres.test.ts",
+      "sha256": "ecc582b19afaffea27141ff5579cf0ee0e8d5deb200905caa8f082e0e4755b3c",
+      "bytes": 30883
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-coupon-issue-http.test.ts",
+      "relativePath": "workers-ts/test/admin-coupon-issue-http.test.ts",
+      "sha256": "75f94f60a03c0c43bf3822f9e529fa47f77202b7253e73d3a49a7d6e0dbab609",
+      "bytes": 13364
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/coupon-manual-claim.test.ts",
+      "relativePath": "workers-ts/test/coupon-manual-claim.test.ts",
+      "sha256": "ec4b4cebfcbbf4af254ef82309e87a5ca103648a0c9a69304f4c017a720d28c7",
+      "bytes": 3638
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-coupon-management.test.ts",
+      "relativePath": "workers-ts/test/checkout-coupon-management.test.ts",
+      "sha256": "d4e98a5bb8e0c974263596f49db9c8272685166775c9569729c0e5e6041950fc",
+      "bytes": 25878
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-coupon-template-authority.test.ts",
+      "relativePath": "workers-ts/test/checkout-coupon-template-authority.test.ts",
+      "sha256": "5f15a270bde442fe583234c741308df7e7f07d3cfe5d4c91226e0365d07dbc02",
+      "bytes": 14058
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-coupon-relations-authority.test.ts",
+      "relativePath": "workers-ts/test/checkout-coupon-relations-authority.test.ts",
+      "sha256": "e678e6716c73c44bec7b7056b065ad95968104fb37c55a16458639ce2cc3de97",
+      "bytes": 18403
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-coupon-item-authority.test.ts",
+      "relativePath": "workers-ts/test/checkout-coupon-item-authority.test.ts",
+      "sha256": "0c5b47d267630186ede07a37885d34965446d99c93c46eae571a6fc154b67b5e",
+      "bytes": 25076
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/coupon-template-catalog.test.ts",
+      "relativePath": "workers-ts/test/coupon-template-catalog.test.ts",
+      "sha256": "c24ff0403a8c9919586d94b7d0dd3e24783faa0c40702484cb64add210c52688",
+      "bytes": 9094
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/coupon-issue-migration.test.ts",
+      "relativePath": "workers-ts/test/coupon-issue-migration.test.ts",
+      "sha256": "5ad386b38d2a684241d28a708ee5fb365c613c07f5be6b860ba8ecaf050886ed",
+      "bytes": 2077
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-coupon-issue-input.test.ts",
+      "relativePath": "workers-ts/test/admin-coupon-issue-input.test.ts",
+      "sha256": "8c39d98d664d25d9f38e28413876b0fc27d34ada09b2c9d73866d05d87aa0a29",
+      "bytes": 3813
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-permission.test.ts",
+      "relativePath": "workers-ts/test/admin-permission.test.ts",
+      "sha256": "916411b71d582567c411f2b42f6c0bc01b9b3a99a02f73e2c30a0c64062170bf",
+      "bytes": 11041
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/pc-coupon-wallet.test.ts",
+      "relativePath": "workers-ts/test/pc-coupon-wallet.test.ts",
+      "sha256": "55a71f99282066204597272a159bf8589f3958ad7b31c8b8b7d74b17e4bf6b38",
+      "bytes": 6340
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-coupon-issues-frontend.test.ts",
+      "relativePath": "workers-ts/test/admin-coupon-issues-frontend.test.ts",
+      "sha256": "b7449000d473c502e6ae16eff769cd5ad003b77a59aeb1e61597705dac6ea586",
+      "bytes": 34662
+    }
+  ],
+  "supportingInputs": [
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/couponIssueFixture.ts",
+      "relativePath": "workers-ts/test/helpers/couponIssueFixture.ts",
+      "sha256": "dae19f74bc99d86c46d5d96fdee92d1de7e669bd4036ac65a04f55adaf405f30",
+      "bytes": 1786
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/couponTemplateFixture.ts",
+      "relativePath": "workers-ts/test/helpers/couponTemplateFixture.ts",
+      "sha256": "8430ed605e616aafda7d8bbb2bf28a9131b00067318877dd7a482ef46917ff10",
+      "bytes": 9218
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "relativePath": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "4b2aab4c41118887c3dc498aef5ae6ffe432cbffd327568dfac4fb917e7ca0e7",
+      "bytes": 11882
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/financePostgres.ts",
+      "relativePath": "workers-ts/test/helpers/financePostgres.ts",
+      "sha256": "abe129b1fe10320fe8726fd02959bca770d2926f677a3374e7a221750ef45562",
+      "bytes": 9441
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/financePeers.ts",
+      "relativePath": "workers-ts/test/helpers/financePeers.ts",
+      "sha256": "e33a957c9e9cbdd71716be56abcbf735ba2c6bfc645eabdef607b2820c15e8bd",
+      "bytes": 5078
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts",
+      "relativePath": "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts",
+      "sha256": "a387b9f23923eb82a8d9ec4441d5de79a42952c8f1e1998e90ca4ed05cee8e0f",
+      "bytes": 2136
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+      "relativePath": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+      "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647",
+      "bytes": 8757
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/scripts/run-local-finance-postgres.mjs",
+      "relativePath": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "3edb9691b9c6877194372e5b0e3f6f99559eb057a5e0b8dcd0f148bd7672a041",
+      "bytes": 25345
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "relativePath": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "2fd10f8361f0e93ed10762fbbcff31420549fede10ae6fb4add4ef432dd999dd",
+      "bytes": 16738
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+      "relativePath": "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+      "sha256": "6b3a102c51cc9057d510d34ca6b0235b4d520c250dab8b43a849b5c9f8306fe4",
+      "bytes": 13416
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "relativePath": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "sha256": "382de6bbf6732780e6647139834150b09a8323ce2771b08b7ce6ca71ffd57036",
+      "bytes": 14403
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/middleware/admin-auth.ts",
+      "relativePath": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "b907a4f85ba58eca05c9f9272947dbefa577911d98eeb24aa4de64c11b05bfaa",
+      "bytes": 3310
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/middleware/admin-runtime-auth.ts",
+      "relativePath": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "6f43ddf32c495887e5908d6991b251c1cfaf9118bcd33e54d788353e2a50ff18",
+      "bytes": 1023
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/lib/di.ts",
+      "relativePath": "workers-ts/src/lib/di.ts",
+      "sha256": "5b9b8b78535f95c3f74a76506fc2e410ae988a3d6d579a97bf1a544578dd6052",
+      "bytes": 10100
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/src/app.ts",
+      "relativePath": "workers-ts/src/app.ts",
+      "sha256": "a7d2143bb052e3dd1372180b65f099c5a1bc347a4a9ce400d4a9448517c659a2",
+      "bytes": 3193
+    }
+  ],
+  "remaining": [
+    "This acceptance covers the dedicated nine REST contracts. Existing generic coupon CRUD compatibility is not newly accepted as an immutable/UUID/audited management boundary.",
+    "Member category 2 definitions can be saved/copied, but real member rights/entitlement acquisition is not completed or claimed by this batch. Newcomer/gift/automatic acquisition channels are not newly validated.",
+    "Ordinary manual public acquisition is restricted to categories 0/1, receive_type=1 and app_type=0. Legacy receive_limit=0 means one lifetime claim with surviving history; positive modern limits retain the existing extension.",
+    "No production database, DDL, grants, provider, R2, Linux device or production release was applied or accepted.",
+    "Real browser acceptance belongs to the separate root browser artifact; controlled frontend runtime/build is not substituted for it."
+  ],
+  "acceptedSourceSnapshot": {
+    "manifest": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-native-accepted-snapshot/manifest.json",
+      "relativePath": "coupon-issue-native-accepted-snapshot/manifest.json",
+      "sha256": "bc452b9f691353172e950671118caf930ab361ad61b7ff1d8f9bce72e097451d",
+      "bytes": 20969
+    },
+    "root": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-native-accepted-snapshot",
+    "files": 40,
+    "groups": {
+      "sourceInputs": 10,
+      "testInputs": 15,
+      "supportingInputs": 15
+    },
+    "missing": [],
+    "mismatch": [],
+    "verifiedArchivedFiles": 40,
+    "historicalLookup": "Each manifest entry binds original relative path and accepted SHA/bytes to its archived bytes. Later current source edits must not be used to replace this accepted snapshot."
+  }
+}

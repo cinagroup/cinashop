@@ -4,6 +4,8 @@ import { PRICING_LOCK_FUNCTION, PRICING_LOCK_KEY, PRICING_OWNER_SETTING,
   pricingCatalogQuery, pricingCatalogReady, pricingIdentifier } from './checkoutPricingLockCatalog';
 import { checkoutPricingLockInstallationSql } from './checkoutPricingLockInstallation';
 import { reviewedOfflinePricingOid, validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
+import { managerScopeLockReadiness } from './runManagerScopeLock';
+import { customerWorkScopeLockReadiness } from './runCustomerWorkScopeLock';
 
 const installationErrors = new Set([
   'Pricing installation requires an explicit safe NOLOGIN owner setting',
@@ -76,7 +78,17 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   validatePricingRuntimeScope(scope);
   pricingIdentifier(schema);
   const state=await inspectCheckoutPricingLock(tx,schema);
-  const offlineOid = scope === 'shared-shop' ? await reviewedOfflinePricingOid(tx, schema) : null;
+  const sharedScope = scope === 'shared-shop' || scope === 'customer-work';
+  const offlineOid = sharedScope ? await reviewedOfflinePricingOid(tx, schema) : null;
+  const managerScope = sharedScope ? await managerScopeLockReadiness(tx,schema) : null;
+  const customerScope = scope === 'customer-work' ? await customerWorkScopeLockReadiness(tx,schema) : null;
+  // Exact catalog, NOLOGIN owner and caller ACL verification precedes OID use.
+  // A matching function name cannot exempt an unknown definer routine.
+  const managerOids = managerScope?.ready ? managerScope.catalog.functionOids : [];
+  // Only this explicit customer scope admits the three exact reviewed lock
+  // capabilities. Catalog, owner, ACL and this LOGIN's EXECUTE must all pass.
+  const customerOids = customerScope?.ready ? customerScope.catalog.functionOids : [];
+  const reviewedOids = [...managerOids,...customerOids];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
@@ -100,11 +112,13 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
       WHERE p.prosecdef AND n.nspname !~ '^pg_' AND n.nspname<>'information_schema'
         AND p.oid::text IS DISTINCT FROM ${state.functionOid}
         AND p.oid::text IS DISTINCT FROM ${offlineOid}
+        AND NOT (p.oid::text IN (SELECT jsonb_array_elements_text(${JSON.stringify(reviewedOids)}::jsonb)))
         AND EXISTS(SELECT 1 FROM authority a WHERE pg_catalog.has_function_privilege(a.oid,p.oid,'EXECUTE'))) AS "noUnreviewedDefinerRoutine",
     (SELECT count(*)=2 AND bool_and(pg_catalog.has_table_privilege(current_user,oid,'SELECT')) FROM relations)
       AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE oid::text=${state.functionOid}
         AND pg_catalog.has_function_privilege(current_user,oid,'EXECUTE')) AS "requiredPrivileges"`);
-  return { ready: pricingCatalogReady(state) && row?.callerSafe===true && row?.requiredPrivileges===true && row?.noUnreviewedDefinerRoutine===true,
+  return { ready: pricingCatalogReady(state) && row?.callerSafe===true && row?.requiredPrivileges===true && row?.noUnreviewedDefinerRoutine===true
+      && (scope!=='customer-work' || customerScope?.ready===true),
     catalogReady: pricingCatalogReady(state), callerSafe: row?.callerSafe===true, requiredPrivileges: row?.requiredPrivileges===true,
     noUnreviewedDefinerRoutine: row?.noUnreviewedDefinerRoutine===true };
 }

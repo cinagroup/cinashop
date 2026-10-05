@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="legal-page">
     <view class="legal-heading">{{ title }}</view>
     <view v-if="loading" class="state">正在加载协议…</view>
@@ -11,9 +12,11 @@
       <rich-text :nodes="content" />
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useGovernanceAgreement } from "@/composables/useGovernanceAgreement";
 
 const { title, content, loading, loaded, error, load } = useGovernanceAgreement();

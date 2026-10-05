@@ -1,12 +1,23 @@
-import type { GoodsDetail, GoodsSku } from "../types/product";
+import type { GoodsDetail, GoodsSku, SkuDisplayPrice } from "../types/product";
 import { quoteMoney } from "../../../common/checkoutQuote";
 import { normalizeSkuMembershipPrice } from "../../../common/skuMembershipPrice";
+import { categoryImage } from '../../../common/categoryCatalog';
+import { parseProductDetailDesignData } from '../utils/productDetailDesign';
 
 function optionalSkuMoney(sku: Record<string, unknown>, snake: string, camel: string): string | null {
   const read = (value: unknown) => value === undefined || value === null || value === "" ? null : quoteMoney(value);
   const a = read(sku[snake]), b = read(sku[camel]);
   if (sku[snake] !== undefined && sku[camel] !== undefined && a !== b) throw new Error("商品规格金额别名不一致");
   return a ?? b;
+}
+function normalizeDisplayQuote(value:unknown,base:string):SkuDisplayPrice|undefined{
+  if(value===undefined)return undefined;if(!value||typeof value!=='object'||Array.isArray(value))throw Error('规格展示报价无效');
+  const row=value as Record<string,unknown>;
+  if(typeof row.enabled!=='boolean'||!['','level','member'].includes(String(row.price_type))||typeof row.level_name!=='string'||[...row.level_name].length>255||/[\u0000-\u001f\u007f]/u.test(row.level_name))throw Error('规格展示报价无效');
+  const price=quoteMoney(row.price),baseMoney=quoteMoney(base),cents=(money:string)=>BigInt(money.replace('.',''));
+  if(cents(price)>cents(baseMoney)||!row.enabled&&(price!==baseMoney||row.price_type!==''))throw Error('规格展示报价不一致');
+  const optional=(value:unknown)=>value===''?'':quoteMoney(value);
+  return{enabled:row.enabled,price,price_type:row.price_type as SkuDisplayPrice['price_type'],level_name:row.level_name,vip_price:optional(row.vip_price),level_price:optional(row.level_price)};
 }
 
 export function normalizeMobileGoods(value: unknown): GoodsDetail {
@@ -29,13 +40,26 @@ export function normalizeMobileGoods(value: unknown): GoodsDetail {
     if (typeof sku.unique !== "string" || !sku.unique.trim() || sku.unique.length > 16 || seen.has(sku.unique)
       || !Number.isSafeInteger(sku.stock) || Number(sku.stock) < 0 || typeof sku.price !== "string" || !/^\d+(?:\.\d{1,2})?$/.test(sku.price)) throw new Error("商品规格价格、库存或标识无效");
     seen.add(sku.unique);
-    return { unique: sku.unique, suk: typeof sku.suk === "string" ? sku.suk : "默认规格", stock: Number(sku.stock), price: quoteMoney(sku.price), ...normalizeSkuMembershipPrice(sku),
-      ot_price: optionalSkuMoney(sku, "ot_price", "otPrice"), vip_price: optionalSkuMoney(sku, "vip_price", "vipPrice") };
+    return { unique: sku.unique, suk: typeof sku.suk === "string" ? sku.suk : "默认规格", image: categoryImage(sku.image), stock: Number(sku.stock), price: quoteMoney(sku.price), ...normalizeSkuMembershipPrice(sku),
+      ot_price: optionalSkuMoney(sku, "ot_price", "otPrice"), vip_price: optionalSkuMoney(sku, "vip_price", "vipPrice"),display_price:normalizeDisplayQuote(sku.display_price,sku.price) };
   });
   const slider = field("slider_image", "sliderImage");
-  return { id: Number(raw.id), stock: Number(raw.stock), price: quoteMoney(raw.price), skus, is_presale_product: presale,
-    store_name: text("store_name", "storeName"), store_info: text("store_info", "storeInfo"), image: text("image"),
-    slider_image: Array.isArray(slider) ? slider.filter((image): image is string => typeof image === "string") : [],
+  if(raw.product_detail_design!==undefined&&skus.some(sku=>!sku.display_price))throw Error('选中规格缺少独立展示报价');
+  const attrs = raw.productAttr ?? [];
+  if (!Array.isArray(attrs) || attrs.length > 10) throw Error('商品规格维度无效');
+  const product_attrs = attrs.map(value => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('商品规格维度无效');
+    const attr = value as Record<string, unknown>, name = attr.attr_name ?? attr.attrName, values = attr.attr_values ?? attr.attrValues;
+    if (typeof name !== 'string' || [...name].length > 255 || /[\u0000-\u001f\u007f]/u.test(name) || !Array.isArray(values) || values.length > 100
+      || values.some(item => typeof item !== 'string' || [...item].length > 255 || /[\u0000-\u001f\u007f]/u.test(item)) || new Set(values).size !== values.length) throw Error('商品规格维度无效');
+    return { name, values: values as string[] };
+  });
+  const spec = number('spec_type', 'specType'), productType = number('product_type', 'productType'), form = number('system_form_id', 'systemFormId');
+  if (!Number.isSafeInteger(spec) || spec < 0 || spec > 1 || !Number.isSafeInteger(productType) || productType < 0 || productType > 4 || !Number.isSafeInteger(form) || form < 0 || form > 2147483647) throw Error('商品购买方式无效');
+  return { id: Number(raw.id), stock: Number(raw.stock), price: quoteMoney(raw.price), skus, is_presale_product: presale, display: parseProductDetailDesignData(raw),
+    product_attrs, spec_type: spec as 0 | 1, product_type: productType, system_form_id: form,
+    store_name: text("store_name", "storeName"), store_info: text("store_info", "storeInfo"), image: categoryImage(text("image")),
+    slider_image: Array.isArray(slider) ? slider.map(categoryImage).filter(Boolean) : [],
     ot_price: text("ot_price", "otPrice"), vip_price: text("vip_price", "vipPrice"), sales: number("sales"), ficti: number("ficti"), fsales: number("fsales"),
     star: text("star"), cart_button: number("cart_button", "cartButton"), is_vip: number("is_vip", "isVip"), is_vip_product: number("is_vip_product", "isVipProduct"),
     unit_name: text("unit_name", "unitName"), min_price: number("min_price"), max_price: number("max_price"), userCollect: raw.userCollect === true || raw.userCollect === 1, uid: number("uid") };

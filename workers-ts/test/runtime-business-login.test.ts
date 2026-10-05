@@ -176,10 +176,10 @@ describe('business profiles with two independent real LOGINs (isolated native ac
       await f.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO "${app.role}"`);
       expect((await auditRuntimeBusinessPrivileges(app.db,'app',names)).failures).toContain('default_grants');
       await f.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM "${app.role}"`);
-      const before=await inspectRuntimeLockOnlyBoundary(f.db,app.role,admin.role,'finance_test');expect(before.ready).toBe(true);
-      expect(await f.db.transaction(tx=>installRuntimeLockOnlyBoundaryInTransaction(tx,app.role,admin.role,'finance_test'))).toMatchObject({applied:false,ready:true});
+      const before=await inspectRuntimeLockOnlyBoundary(f.db,app.role,admin.role,'finance_test','agent-levels');expect(before.ready).toBe(true);
+      expect(await f.db.transaction(tx=>installRuntimeLockOnlyBoundaryInTransaction(tx,app.role,admin.role,'finance_test','agent-levels'))).toMatchObject({applied:false,ready:true});
       await f.exec('ALTER FUNCTION public.cinashop_runtime_lock_only_v1() RESET search_path');
-      await expect(f.db.transaction(tx=>installRuntimeLockOnlyBoundaryInTransaction(tx,app.role,admin.role,'finance_test'))).rejects.toThrow('drift');
+      await expect(f.db.transaction(tx=>installRuntimeLockOnlyBoundaryInTransaction(tx,app.role,admin.role,'finance_test','agent-levels'))).rejects.toThrow('drift');
     });
   },60_000);
 
@@ -322,7 +322,7 @@ describe('business profiles with two independent real LOGINs (isolated native ac
     await emptyProfiles(async(app,admin)=>{
       const before=await identities();
       for(const peer of [app,admin]){
-        expect(await inspectRuntimePurchaseEvidence(peer.db,'finance_test')).toMatchObject({origin:'v1',cancellation:'v1',ready:true});
+        expect(await inspectRuntimePurchaseEvidence(peer.db,'finance_test')).toMatchObject({origin:'v1',cancellation:'gift-v1',ready:true});
         expect((await inspectRuntimePurchaseEvidence(peer.db,peer.role)).ready).toBe(false);
         expect(await peer.exec('SELECT current_user=session_user AND current_user=\''+peer.role+'\' AS same')).toEqual([{same:true}]);
         await expect(peer.db.transaction(tx=>lockRuntimePurchaseEvidenceForGrants(tx,'finance_test'))).rejects.toThrow('requires review');

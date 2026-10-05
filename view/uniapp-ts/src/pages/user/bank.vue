@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="bank-page">
     <view v-if="banks.length" class="bank-list">
       <view class="bank-card" v-for="b in banks" :key="b.id">
@@ -26,8 +27,10 @@
       </view>
     </view>
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, reactive } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 const banks = ref<any[]>([]);
@@ -60,10 +63,10 @@ onShow(load);
 .bank-actions { display: flex; justify-content: flex-end; margin-top: 16rpx; }
 .act { font-size: 24rpx; color: rgba(255,255,255,0.8); }
 .empty { text-align: center; color: #999; padding: 100rpx 0; font-size: 26rpx; }
-.add-btn { position: fixed; bottom: 30rpx; left: 30rpx; right: 30rpx; background: #e93323; color: #fff; text-align: center; padding: 24rpx; border-radius: 44rpx; font-size: 30rpx; padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
+.add-btn { position: fixed; bottom: 30rpx; left: 30rpx; right: 30rpx; background: var(--view-theme, #e93323); color: #fff; text-align: center; padding: 24rpx; border-radius: 44rpx; font-size: 30rpx; padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
 .mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: flex-end; }
 .sheet { background: #fff; width: 100%; border-radius: 24rpx 24rpx 0 0; padding: 30rpx; }
 .sheet-title { font-size: 32rpx; font-weight: 600; text-align: center; margin-bottom: 24rpx; }
 .sheet-input { background: #f7f7f7; border-radius: 12rpx; padding: 20rpx 24rpx; margin-bottom: 20rpx; font-size: 28rpx; }
-.sheet-btn { background: #e93323; color: #fff; text-align: center; padding: 22rpx; border-radius: 40rpx; font-size: 30rpx; }
+.sheet-btn { background: var(--view-theme, #e93323); color: #fff; text-align: center; padding: 22rpx; border-radius: 40rpx; font-size: 30rpx; }
 </style>

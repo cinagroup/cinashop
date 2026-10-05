@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="activation-page">
     <view class="card">
       <text class="kicker">MEMBERSHIP CARD</text>
@@ -11,9 +12,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { apiRedeemMembershipCard } from "@/api/membership";
 

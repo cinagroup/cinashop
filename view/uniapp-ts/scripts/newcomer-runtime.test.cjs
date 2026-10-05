@@ -105,6 +105,8 @@ test('legacy activity deep links route by exact type and activity ID, never to o
       ['id=20&type=1&time_id=2&spid=99', '/pages/activity/seckillDetail?id=20'],
       ['id=30&type=3&pink_id=70', '/pages/activity/detail?id=30&pinkId=70'],
       ['id=40&type=6', '/pages/activity/presaleDetail?id=40'],
+      ['id=41&type=4', '/pages/activity/integralDetail?id=41'],
+      ['id=41&type=4&spid=99', '/pages/activity/integralDetail?id=41&spid=99'],
     ];
     for (const [query, expected] of cases) {
       assert.equal(navigation.resolveRegisteredPageRoute(old, query), expected);
@@ -122,16 +124,21 @@ test('legacy activity deep links fail closed on ambiguous identity, unsupported 
     const diy = r.load(path.resolve(__dirname, '../src/utils/diy.ts'));
     const old = '/pages/activity/goods_details/index';
     for (const query of [
-      '', 'id=81', 'type=7', 'id=81&type=4', 'id=81&type=0', 'id=81&type=77',
+      '', 'id=81', 'type=7', 'id=81&type=0', 'id=81&type=77',
       'id=0&type=7', 'id=081&type=7', 'id=81.0&type=7', 'id=8e1&type=7',
       'id=2147483648&type=7', 'id=81&id=82&type=7', 'id=81&%69d=82&type=7',
       'id=81&type=7&type=1', 'id=81&type=3&pink_id=0',
       'id=81&type=3&pink_id=70&pinkId=71', 'id=81&type=%',
+      'id=41&type=4&spid=0', 'id=41&type=4&spid=99&%73pid=100',
     ]) {
       assert.equal(navigation.resolveRegisteredPageRoute(old, query), '', query);
       assert.equal(diy.normalizeDiyLink(`${old}?${query}`), '', query);
     }
-    diy.openDiyLink(`${old}?id=81&type=4`);
+    for (const query of ['', 'id=0', 'id=041', 'id=41&id=42', 'id=41&%69d=42', 'id=41&spid=0']) {
+      assert.equal(navigation.resolveRegisteredPageRoute('/pages/activity/integralDetail', query), '', query);
+    }
+    assert.equal(navigation.resolveRegisteredPageRoute('/pages/activity/integralDetail', 'id=41&spid=99'), '/pages/activity/integralDetail?id=41&spid=99');
+    diy.openDiyLink(`${old}?id=81&type=77`);
     assert.deepEqual(r.navigations, []);
   } finally { r.stop(); }
 });

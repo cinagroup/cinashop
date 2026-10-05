@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="newcomer-page">
     <view class="hero">
       <view class="eyebrow">NEW MEMBER BENEFITS</view>
@@ -58,15 +59,17 @@
       </view>
     </template>
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useNewcomerGift } from '@/composables/useNewcomerGift';
 const { auth, info, products, loading, error, page, hasMore, navigating, rulesOpen, agreement,
   load, login, openProduct, openWallet, openBalance, openPoints, openGoods, showRules, hideRules } = useNewcomerGift();
 </script>
 <style scoped>
 .newcomer-page { max-width: 1000px; margin: auto; padding: 24rpx 24rpx calc(48rpx + env(safe-area-inset-bottom)); color: #292521; overflow-wrap: anywhere; }
-.hero { position: relative; min-height: 185rpx; border-radius: 22rpx; padding: 34rpx; box-sizing: border-box; color: white; background: linear-gradient(125deg, #a72b24, #ed7442); }
+.hero { position: relative; min-height: 185rpx; border-radius: 22rpx; padding: 34rpx; box-sizing: border-box; color: white; background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931)); }
 .eyebrow { font-size: 20rpx; letter-spacing: 3rpx; opacity: .85; }.title { margin-top: 12rpx; font-size: 46rpx; font-weight: 700; }.subtitle { margin-top: 8rpx; font-size: 24rpx; }
 .rule-button { position: absolute; right: 20rpx; top: 20rpx; margin: 0; font-size: 22rpx; }
 .notice-card,.card { margin-top: 22rpx; padding: 26rpx; border-radius: 18rpx; background: white; }
@@ -75,6 +78,6 @@ const { auth, info, products, loading, error, page, hasMore, navigating, rulesOp
 .coupon { padding: 20rpx; border-radius: 12rpx; background: #fff1ea; font-size: 23rpx; line-height: 1.6; }.coupon-benefit { color: #c3341d; font-size: 34rpx; font-weight: 700; }
 .benefit { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; padding: 18rpx 0; border-bottom: 1rpx solid #eee; }.benefit button { margin: 0; flex: none; }
 .product { display: flex; gap: 18rpx; padding: 20rpx 0; border-bottom: 1rpx solid #eee; }.product-image { width: 145rpx; height: 145rpx; flex: none; border-radius: 12rpx; background: #f4f4f4; }
-.product-content { min-width: 0; flex: 1; }.product-name { font-size: 27rpx; font-weight: 600; }.price { margin-top: 14rpx; font-size: 30rpx; color: #c33320; }.original { font-size: 22rpx; text-decoration: line-through; color: #888; }
+.product-content { min-width: 0; flex: 1; }.product-name { font-size: 27rpx; font-weight: 600; }.price { margin-top: 14rpx; font-size: 30rpx; color: var(--view-priceColor, #e93323); }.original { font-size: 22rpx; text-decoration: line-through; color: #888; }
 .overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; background: #0008; }.rules-card { width: 100%; max-height: 70vh; box-sizing: border-box; padding: 26rpx; border-radius: 22rpx 22rpx 0 0; background: white; }.rules-scroll { max-height: 50vh; }
 </style>

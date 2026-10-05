@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="login-page">
     <view class="login-box">
       <view class="logo">CinaShop</view>
@@ -47,9 +48,11 @@
       </view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onUnmounted, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiLogin, apiMobileLogin, apiRequestCode } from "@/api/auth";
@@ -162,7 +165,7 @@ function goReset() {
   text-align: center;
   font-size: 48rpx;
   font-weight: 700;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .title {
@@ -194,8 +197,8 @@ function goReset() {
 }
 
 .mode-tab.active {
-  color: #e93323;
-  border-bottom: 4rpx solid #e93323;
+  color: var(--view-theme, #e93323);
+  border-bottom: 4rpx solid var(--view-theme, #e93323);
 }
 
 .code-row {
@@ -210,7 +213,7 @@ function goReset() {
 .code-button {
   flex-shrink: 0;
   padding-left: 24rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 25rpx;
 }
 
@@ -219,7 +222,7 @@ function goReset() {
 }
 
 .login-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   padding: 24rpx;
@@ -231,7 +234,7 @@ function goReset() {
 .auth-links {
   display: flex;
   justify-content: space-between;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
   margin-top: 30rpx;
 }

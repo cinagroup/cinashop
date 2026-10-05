@@ -65,13 +65,13 @@ export async function lockKefuConversationOwnership(
   await db.execute(sql`
     SELECT pg_advisory_xact_lock(
       ${KEFU_TRANSFER_LOCK_NAMESPACE},
-      hashtext(${`kefu-transfer:user:${customerUid}`})
+      hashtext(${`kefu-transfer:customer:0:${customerUid}`})
     )
   `);
   await db.execute(sql`
     SELECT pg_advisory_xact_lock(
       ${KEFU_CHAT_LOCK_NAMESPACE},
-      hashtext(${`kefu:${kefuUid}:user:${customerUid}`})
+      hashtext(${`kefu:${kefuUid}:customer:0:${customerUid}`})
     )
   `);
   await assertKefuConversationOwnership(db, kefuUid, customerUid);

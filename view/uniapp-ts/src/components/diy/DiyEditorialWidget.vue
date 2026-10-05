@@ -109,9 +109,10 @@ import {
   isDiyEnabled,
   normalizeDiyLink,
   openDiyLink,
-  safeDiyColor,
   safeDiyImageUrl,
 } from "@/utils/diy";
+import { useThemeStore } from '@/stores/theme';
+import { diyThemeColor, diyThemeVariables } from '@/utils/diyTheme';
 
 interface NewsItem {
   title: string;
@@ -131,6 +132,7 @@ interface HotspotArea {
 }
 
 const props = defineProps<{ block: DiyComponent }>();
+const theme = useThemeStore();
 const followCodeOpen = ref(false);
 const followDismissed = ref(false);
 
@@ -144,9 +146,7 @@ function configValue(key: string): Record<string, unknown> | null {
 }
 
 function configColor(key: string, index: number, fallback: string): string {
-  const colors = configValue(key)?.color;
-  const item = Array.isArray(colors) ? asDiyRecord(colors[index])?.item : undefined;
-  return safeDiyColor(item, fallback);
+  return diyThemeColor(props.block, key, index, fallback, theme.preset);
 }
 
 function textFromInfo(value: unknown, index: number, max: number): string {
@@ -179,6 +179,7 @@ function open(value: unknown): void {
 }
 
 const outerStyle = computed<Record<string, string>>(() => ({
+  ...diyThemeVariables(props.block, theme.preset),
   padding: `${bounded(diyNumber(props.block, "topConfig"), 0, 0, 100) * 2}rpx ${bounded(diyNumber(props.block, "prConfig"), 0, 0, 80) * 2}rpx ${bounded(diyNumber(props.block, "bottomConfig"), 0, 0, 100) * 2}rpx`,
   marginTop: `${bounded(diyNumber(props.block, "mbConfig"), 0, 0, 100) * 2}rpx`,
   backgroundColor: configColor("bottomBgColor", 0, "transparent"),
@@ -325,5 +326,5 @@ function showFollowCode(): void {
 .follow-dialog-title { font-size: 34rpx; font-weight: 700; }
 .follow-dialog-copy, .follow-dialog-tip { margin-top: 12rpx; color: #888; font-size: 23rpx; }
 .follow-code { width: 360rpx; height: 360rpx; max-width: 100%; margin-top: 30rpx; }
-.follow-dialog-close { margin-top: 30rpx; color: #fff; border: 0; background: #e93323; }
+.follow-dialog-close { margin-top: 30rpx; color: #fff; border: 0; background: var(--view-theme, #e93323); }
 </style>

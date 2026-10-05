@@ -45,7 +45,8 @@ describe("read-only combination selection catalogue on disposable SQL", () => {
     const transactions = vi.spyOn(f.db, "transaction").mockImplementation((fn, config) => transaction(async tx => {
       const queries = vi.spyOn(tx, "select");
       try { return await fn(tx); }
-      finally { expect(queries).toHaveBeenCalledTimes(6); queries.mockRestore(); }
+      finally { expect(queries).toHaveBeenCalledTimes(12); // six original financial selection/group reads plus six shared display reads
+        queries.mockRestore(); }
     }, config));
     let result: Awaited<ReturnType<typeof read>>;
     try { result = await read(); expect(transactions).toHaveBeenCalledTimes(1); expect(auth).not.toHaveBeenCalled(); }

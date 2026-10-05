@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="profile-page">
     <!-- 头像 -->
     <view class="avatar-card">
@@ -49,9 +50,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
 
@@ -117,7 +120,7 @@ onMounted(load);
 }
 
 .avatar-card {
-  background: linear-gradient(135deg, #e93323, #ff7a45);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 40rpx 0;
   display: flex;
@@ -213,7 +216,7 @@ onMounted(load);
 }
 
 .save-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 26rpx;
   border-radius: 12rpx;

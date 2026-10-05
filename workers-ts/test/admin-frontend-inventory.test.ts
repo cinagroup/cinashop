@@ -41,7 +41,7 @@ const workerRoot = resolve(testDir, "..");
 const repositoryRoot = resolve(workerRoot, "..");
 const adminRoot = join(repositoryRoot, "view", "admin-ts");
 const report = JSON.parse(
-  readFileSync(join(workerRoot, "audit", "admin-frontend-inventory.json"), "utf8"),
+  readFileSync(join(workerRoot, "audit", "admin-frontend-inventory-product-detail-design-followup-20261002.json"), "utf8"),
 ) as InventoryReport;
 
 function listVueFiles(root: string): string[] {

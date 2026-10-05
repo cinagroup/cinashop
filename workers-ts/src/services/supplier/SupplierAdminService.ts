@@ -15,6 +15,10 @@ const SUPPLIER_ADMIN_TYPE = 4;
 const SUPPLIER_ROLE_TYPE = 4;
 const SUPPLIER_CHILD_LEVEL = 1;
 const ADMIN_LOCK_NAMESPACE = 731_606;
+// Shared with SupplierApplicationService.review and AdminSupplierDirectoryService.
+// Acquire after the supplier/target row locks to match directory update order.
+const ACCOUNT_LOCK_NAMESPACE = 505_607;
+const ACCOUNT_LOCK_KEY = 0;
 const MAX_ROLES = 32;
 
 export interface SupplierAdminActor {
@@ -290,9 +294,7 @@ async function ensureUnique(db: DbClient, input: SupplierAdminInput, excluding =
     .select({ id: systemAdmin.id })
     .from(systemAdmin)
     .where(and(
-      eq(systemAdmin.account, input.account),
-      eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
-      eq(systemAdmin.isDel, 0),
+      sql`lower(${systemAdmin.account}) = lower(${input.account})`,
       excluding > 0 ? ne(systemAdmin.id, excluding) : sql`true`,
     ))
     .limit(1);
@@ -508,6 +510,7 @@ export class SupplierAdminService {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${ADMIN_LOCK_NAMESPACE}, ${SUPPLIER_ADMIN_TYPE})`);
       const granted = await mutationAuthority(tx, supplierId, actor);
       await validateAssignedRoles(tx, supplierId, input.roles, granted);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ACCOUNT_LOCK_NAMESPACE}, ${ACCOUNT_LOCK_KEY})`);
       await ensureUnique(tx, input);
       const inserted = await tx.insert(systemAdmin).values({
         account: input.account,
@@ -539,6 +542,7 @@ export class SupplierAdminService {
       const target = await scopedTarget(tx, supplierId, id, true);
       if (target.id === actor.id) throw new ValidateException("请通过个人设置修改当前账号");
       await validateAssignedRoles(tx, supplierId, input.roles, granted);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ACCOUNT_LOCK_NAMESPACE}, ${ACCOUNT_LOCK_KEY})`);
       await ensureUnique(tx, input, target.id);
       await tx.update(systemAdmin).set({
         account: input.account,

@@ -1,7 +1,11 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
-import { storeProduct, userRelation, video } from "@/models/schema";
+import { withTx,createContainerFromDb,type Container } from "@/lib/di";
+import { themeDeadlines } from "@/services/content/ThemeReadService";
+import { normalizeConfigScalar } from "@/utils/config";
+import { publicProductPictures,renderProductPictures } from "@/services/activity/ProductAssetPolicy";
+import { readDetailVideo } from "@/services/product/ProductDetailDesignData";
+import { storeProduct, userRelation, video, user } from "@/models/schema";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { V2PromotionCompatibilityService } from "@/services/activity/V2PromotionCompatibilityService";
 import { ValidateException } from "@/utils/errors";
@@ -22,6 +26,7 @@ export class UserCollectCompatibilityService {
 
   async list(uid: number, page: number, limit: number, value: string) {
     const selectedCategory = category(value);
+    if(selectedCategory === "video")return this.videoCollection(uid,page,limit);
     const where = and(
       eq(userRelation.uid, uid),
       eq(userRelation.type, "collect"),
@@ -41,9 +46,7 @@ export class UserCollectCompatibilityService {
         .where(where),
     ]);
     const ids = relations.map((row) => row.id);
-    const list = selectedCategory === "video"
-      ? await this.videoList(ids)
-      : await this.productList(uid, ids);
+    const list = await this.productList(uid, ids);
     // PHP counts relation rows even when a referenced object was physically
     // removed; its list similarly omits only a truly missing object.
     return { list, count: counts[0]?.count ?? 0 };
@@ -51,10 +54,15 @@ export class UserCollectCompatibilityService {
 
   private async productList(uid: number, ids: number[]): Promise<Record<string, unknown>[]> {
     if (!ids.length) return [];
-    const [rows, visible] = await Promise.all([
-      this.container.db
+    const snapshot = await withTx(this.container,async tx=>{
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);
+      const[actor]=await tx.select({uid:user.uid}).from(user).where(and(eq(user.uid,uid),eq(user.status,1),eq(user.isDel,0),sql`${user.deleteTime} IS NULL`)).limit(1);if(!actor)throw new ValidateException('请重新登录');
+      const scoped=createContainerFromDb(tx),[rows,visible]=await Promise.all([
+      tx
         .select({
           id: storeProduct.id,
+          type:storeProduct.type,
+          relationId:storeProduct.relationId,
           storeName: storeProduct.storeName,
           price: storeProduct.price,
           isPresaleProduct: storeProduct.isPresaleProduct,
@@ -69,11 +77,15 @@ export class UserCollectCompatibilityService {
         })
         .from(storeProduct)
         .where(inArray(storeProduct.id, ids)),
-      new PublicCatalogService(this.container, this.env).recommend(uid, {
+      new PublicCatalogService(scoped, this.env).recommend(uid, {
         ids,
         limit: ids.length,
       }),
-    ]);
+      ]);
+      const visibleIds=new Set(visible.map(item=>Number(item.id))),pictures=await publicProductPictures(tx,rows.map(row=>({image:visibleIds.has(row.id)&&row.isDel===0&&row.isShow===1?row.image:'',type:row.type,relationId:row.relationId})));
+      return{rows,visible,pictures};
+    });
+    const{rows,visible}=snapshot,images=await renderProductPictures(this.env.APP_KEY,snapshot.pictures),imageById=new Map(rows.map((row,index)=>[row.id,images[index]]));
     const direct = new Map(rows.map((row) => [row.id, row]));
     const decorated = new Map(visible.map((item) => {
       const record = item as Record<string, unknown>;
@@ -101,12 +113,12 @@ export class UserCollectCompatibilityService {
         freight: row.freight,
         ot_price: row.otPrice,
         sales: row.sales,
-        image: row.image,
+        image: imageById.get(id)??'',
         is_del: row.isDel,
         is_show: row.isShow,
         // Correct the PHP `is_del && is_show` typo: either unavailable state
         // should be visible to the client so the relation can be removed.
-        is_fail: row.isDel !== 0 || row.isShow === 0 ? 1 : 0,
+        is_fail: row.isDel !== 0 || row.isShow === 0 || !decorated.has(id) ? 1 : 0,
         activity: row.activity,
         promotions: rich.promotions && typeof rich.promotions === "object"
           ? rich.promotions
@@ -119,37 +131,20 @@ export class UserCollectCompatibilityService {
       .decorateCatalogProducts(list);
   }
 
-  private async videoList(ids: number[]): Promise<Record<string, unknown>[]> {
-    if (!ids.length) return [];
-    const configs = await this.container.systemConfigDao.getValues([
-      "video_func_status",
-      "site_name",
-      "wap_login_logo",
-    ]);
-    if (Number(configs.video_func_status ?? "1") === 0) return [];
-    const rows = await this.container.db
-      .select({
-        id: video.id,
-        image: video.image,
-        description: video.desc,
-        videoUrl: video.videoUrl,
-        likeNum: video.likeNum,
-      })
-      .from(video)
-      .where(inArray(video.id, ids));
-    const byId = new Map(rows.map((row) => [row.id, row]));
-    return ids.flatMap((id) => {
-      const row = byId.get(id);
-      return row ? [{
-        id: row.id,
-        video_id: id,
-        image: row.image,
-        site_name: configs.site_name ?? "",
-        wap_login_logo: configs.wap_login_logo ?? "",
-        desc: row.description,
-        video_url: row.videoUrl,
-        like_num: row.likeNum,
-      }] : [];
-    });
+  private async videoCollection(uid:number,page:number,limit:number){
+    if(!Number.isSafeInteger(uid)||uid<=0||uid>2147483647||!Number.isSafeInteger(page)||page<=0||!Number.isSafeInteger(limit)||limit<=0||limit>100)throw new ValidateException('视频收藏查询无效');
+    const result=await withTx(this.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);
+      const [actor]=await tx.select({uid:user.uid}).from(user).where(and(eq(user.uid,uid),eq(user.status,1),eq(user.isDel,0),sql`${user.deleteTime} IS NULL`)).limit(1);if(!actor)throw new ValidateException('请重新登录');
+      const settings=await createContainerFromDb(tx).systemConfigDao.getValuesWithPresence(['video_func_status','site_name','wap_login_logo']),setting=settings.video_func_status,flag=normalizeConfigScalar(setting.value),enabled=!setting.exists||flag==='1'||flag==='true';
+      const rawSite=normalizeConfigScalar(settings.site_name.value),siteName=typeof rawSite==='string'&&!/[\u0000-\u001f\u007f]/u.test(rawSite)?rawSite.slice(0,200):'';
+      const[logo]=await publicProductPictures(tx,[{image:normalizeConfigScalar(settings.wap_login_logo.value),type:0,relationId:0}]);
+      const where=and(eq(userRelation.uid,uid),eq(userRelation.type,'collect'),eq(userRelation.category,'video'));
+      const relations=await tx.select({id:userRelation.relationId}).from(userRelation).where(where).orderBy(desc(userRelation.addTime),desc(userRelation.id)).limit(limit).offset((page-1)*limit),[count]=await tx.select({count:sql<number>`count(*)::int`}).from(userRelation).where(where),ids=relations.map(row=>row.id);
+      const rows=ids.length?await tx.select().from(video).where(inArray(video.id,ids)):[],byId=new Map(rows.map(row=>[row.id,row]));
+      const pictures=await publicProductPictures(tx,rows.map(row=>({image:row.image,type:row.type,relationId:row.relationId}))),videos=await Promise.all(rows.map(row=>enabled&&row.isShow===1&&row.isVerify===1&&row.isDel===0?readDetailVideo(tx,{type:row.type,relationId:row.relationId,videoOpen:1,videoLink:row.videoUrl}):Promise.resolve('')));
+      return{actor_uid:uid,count:Number(count?.count??0),ids,rows,byId,pictures,videos,enabled,siteName,logo};});
+    const signed=await renderProductPictures(this.env.APP_KEY,[...result.pictures,...result.videos,result.logo]),indexes=new Map(result.rows.map((row,index)=>[row.id,index]));
+    return{actor_uid:uid,count:result.count,list:result.ids.map(id=>{const row=result.byId.get(id),index=indexes.get(id),available=!!row&&result.enabled&&row.isShow===1&&row.isVerify===1&&row.isDel===0&&!!result.videos[index!];
+      return{id,video_id: id,available,is_fail:available?0:1,image:available?signed[index!]:'',desc:available?row!.desc.slice(0,10000):'视频已不可用',video_url:available?signed[result.rows.length+index!]:'',like_num:available?row!.likeNum:0,site_name:result.siteName,wap_login_logo:signed[result.rows.length*2]};})};
   }
 }

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { runtime } = require('./uni-store-runtime.cjs');
-const base = () => ({ id: 70, price: '10.00', stock: 8, isVip: 1, vipPrice: '0.00', otPrice: '99.00',
+const base = () => ({ id: 70, price: '10.00', stock: 8, isVip: 1, vipPrice: '0.00', otPrice: '99.00',cart_button:1,
   attr_value: [
     { unique: 'red001', suk: '红色', price: '10', ot_price: '12.00', vip_price: '9.00', stock: 8 },
     { unique: 'blue001', suk: '蓝色', price: '20', otPrice: '25', vipPrice: '18', stock: 2 },

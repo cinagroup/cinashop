@@ -24,6 +24,7 @@ import {
   supplierFlowingWater,
   user,
 } from "@/models/schema";
+import { readPromotionLineEvidence } from "@/services/order/RefundSplitAllocation";
 import { SUPPLIER_QUEUE_CACHE_TYPE_BY_QUEUE_TYPE } from "@/services/supplier/SupplierQueueHistoryService";
 import { ValidateException } from "@/utils/errors";
 import { readSupplierCarts, supplierReadSnapshot, supplierSnapshotObject } from "./SupplierReadSupport";
@@ -174,12 +175,16 @@ function units(value: unknown, precision = 2): bigint {
   return BigInt(whole) * 10n ** BigInt(precision) + BigInt(fraction.padEnd(precision, "0"));
 }
 function money(cents: bigint) { return `${cents / 100n}.${String(cents % 100n).padStart(2, "0")}`; }
-function cartSnapshot(row: Awaited<ReturnType<typeof readSupplierCarts>>[number]) {
+export function projectSupplierExportCartSnapshot(row: Awaited<ReturnType<typeof readSupplierCarts>>[number]) {
   const cart = row.snapshot ?? {}, product = supplierSnapshotObject(cart.product);
   const legacy = supplierSnapshotObject(cart.productInfo ?? cart.product_info);
   const sku = supplierSnapshotObject(cart.sku), attr = supplierSnapshotObject(legacy?.attrInfo ?? legacy?.attr_info);
   const quantity = row.cartNum === 0 ? Number(cart.cart_num) : row.cartNum;
   if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647) throw new ValidateException("商品快照数量无法读取");
+  const promotion = readPromotionLineEvidence(cart, quantity);
+  if (promotion && cart.cart_num !== quantity && cart.cart_num !== String(quantity)) {
+    throw new ValidateException("商品快照数量与促销金额证据不一致");
+  }
   const price = units(cart.sum_price ?? cart.truePrice ?? cart.true_price ?? sku?.price ?? attr?.price ?? legacy?.price);
   const retailPrice = units(cart.sum_price ?? sku?.price ?? attr?.price ?? legacy?.price ?? cart.truePrice ?? cart.true_price);
   return {
@@ -190,7 +195,8 @@ function cartSnapshot(row: Awaited<ReturnType<typeof readSupplierCarts>>[number]
     code: safeSpreadsheetCell(sku?.code ?? attr?.code ?? "", 500),
     price: money(price), retailPrice: money(retailPrice),
     // PHP's vip_truePrice is a per-unit discount, never the retail sale price.
-    vipCents: units(cart.vip_truePrice ?? cart.vipTruePrice ?? cart.vip_true_price ?? "0", 4) * BigInt(quantity) / 100n,
+    vipCents: promotion ? BigInt(promotion.memberSavingsCents)
+      : units(cart.vip_truePrice ?? cart.vipTruePrice ?? cart.vip_true_price ?? "0", 4) * BigInt(quantity) / 100n,
   };
 }
 
@@ -338,7 +344,7 @@ export class SupplierExportService {
       for (const item of cartRows) { const group = carts.get(item.oid) ?? []; group.push(item); carts.set(item.oid, group); }
 
       const exported: ExportRow[] = orders.map((order) => {
-        const items = (carts.get(order.id) ?? []).map((item) => ({ ...item, snapshot: cartSnapshot(item) }));
+        const items = (carts.get(order.id) ?? []).map((item) => ({ ...item, snapshot: projectSupplierExportCartSnapshot(item) }));
         if (shipping) {
           return {
             id: order.id,

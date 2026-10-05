@@ -1,7 +1,6 @@
 import type { ApiEnvelope } from "@/types/kefu";
-
-export const KEFU_TOKEN_KEY = "cinashop_kefu_token";
-export const KEFU_INFO_KEY = "cinashop_kefu_info";
+import { captureKefuSession, isCurrentKefuSession, expireKefuSession } from "@/services/session";
+export { KEFU_TOKEN_KEY, KEFU_INFO_KEY } from "@/services/session";
 
 const configuredBase = (import.meta.env.VITE_API_BASE ?? "").trim().replace(/\/$/, "");
 
@@ -22,11 +21,11 @@ export function resolveKefuAssetUrl(value: string): string {
   return value.replace(/^\/api\/assets\/(?=[1-9]\d*(?:\?|$))/, "/kefuapi/assets/");
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(path: string, init: RequestInit = {}, allowSessionChange = path === "/kefuapi/user/logout"): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
-  const token = sessionStorage.getItem(KEFU_TOKEN_KEY);
+  const session = captureKefuSession(), token = session.token;
   if (token) headers.set("Authori-zation", `Bearer ${token}`);
   const response = await fetch(apiUrl(path), { ...init, headers, credentials: "include" });
   let envelope: ApiEnvelope<T>;
@@ -35,15 +34,10 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   } catch {
     throw new ApiError("服务返回了无法识别的响应", response.status);
   }
+  if (!allowSessionChange && !isCurrentKefuSession(session)) throw new ApiError("客服身份已变更，请重新加载", 409);
   if (!response.ok || envelope.status !== 200) {
     if ((response.status === 401 || [401, 410000, 410001, 410002].includes(envelope.status))
-      && token && token === sessionStorage.getItem(KEFU_TOKEN_KEY)) {
-      sessionStorage.removeItem(KEFU_TOKEN_KEY);
-      sessionStorage.removeItem(KEFU_INFO_KEY);
-      localStorage.removeItem(KEFU_TOKEN_KEY);
-      localStorage.removeItem(KEFU_INFO_KEY);
-      window.dispatchEvent(new Event("kefu-auth-expired"));
-    }
+      && token) expireKefuSession(session);
     throw new ApiError(envelope.msg || "请求失败", envelope.status || response.status);
   }
   return envelope.data;

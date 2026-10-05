@@ -1,0 +1,450 @@
+{
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T04:46:18.142Z",
+  "status": "Local candidate, unpublished",
+  "scope": "Continue the checklist parent-creation five open interaction contracts and affected public seckill list main-product media, with fresh tests on final sources. No migration, deployment, production grant or provider change.",
+  "completed": [
+    "Platform category cascader and one platform label with bounded validated options and descendant relation filtering.",
+    "Stable cross-page/filter selection, read-all-then-join batch with failure/cancel/identity/cap atomicity.",
+    "Cross-product price/total-quota configuration and removal with consumed floor and historical identities retained.",
+    "Candidate physical product_type and deduplicated category_name.",
+    "Own SKU stable asset reference and owner-validated response-time HMAC preview; no main-image substitution."
+  ],
+  "publicProductMedia": {
+    "implemented": "ActivityService.seckillList signs validated main-product canonical asset references at response time. Platform admin/1 and same active supplier ownership are checked; foreign/malformed/non-raster references rejected, safe legacy image policy preserved. Stored references are unchanged.",
+    "validated": "Six native media tests plus one added actual app LOGIN case and six affected PC purchase tests. Current actual Admin read tests cover categories/labels/relation/attachment under commissioned profile.",
+    "stillOpen": [
+      "Full public product media and all consumers",
+      "Real JWT/production role/configuration",
+      "R2/Provider fetch and deployed behavior",
+      "Linux CI and release acceptance"
+    ]
+  },
+  "native": {
+    "postgres": "16.15",
+    "files": 5,
+    "passed": 65,
+    "failed": 0,
+    "skipped": 0,
+    "deduplicated": true,
+    "cases": [
+      {
+        "path": "workers-ts/test/admin-seckill-activity.test.ts",
+        "sha256": "476330bf9b0928f80398f91bde1347df01c84e2a224b0ddc3b9eb99b1cd5f70e",
+        "passed": 33
+      },
+      {
+        "path": "workers-ts/test/admin-seckill-activity-postgres.test.ts",
+        "sha256": "7fad051ef5ddbe0d383d7451e390c29ba89e3977fb8f463ecdba5877c0405496",
+        "passed": 8
+      },
+      {
+        "path": "workers-ts/test/seckill-runtime-login.test.ts",
+        "sha256": "7f2643cd0fc4b57e56f85a7da877b717219953207614891ad7a5abbd3afa774c",
+        "passed": 12
+      },
+      {
+        "path": "workers-ts/test/seckill-product-media.test.ts",
+        "sha256": "f2179237f3999052ffd12bd7d68a0ba1e7a427d52ec4493578eabedbd12e1f8c",
+        "passed": 6
+      },
+      {
+        "path": "workers-ts/test/pc-seckill-purchase.test.ts",
+        "sha256": "04c6c8847c03ba34be8a8aa474c8d860445546ee971f69b7672b6536e35973cf",
+        "passed": 6
+      }
+    ],
+    "runs": [
+      {
+        "files": 4,
+        "passed": 59,
+        "exit": 0,
+        "durationSeconds": 158.24,
+        "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/admin-seckill-activity.test.ts test/admin-seckill-activity-postgres.test.ts test/seckill-runtime-login.test.ts test/seckill-product-media.test.ts",
+        "log": {
+          "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-native-20260927.log",
+          "sha256": "aada12b93acade4aa1f8e2ced84097d7b447aa4113b37e190e154be27b4fcee8"
+        },
+        "cluster": ".cache/finance-postgres-jL85hx",
+        "port": 51117
+      },
+      {
+        "files": 1,
+        "passed": 6,
+        "exit": 0,
+        "durationSeconds": 6.87,
+        "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/pc-seckill-purchase.test.ts",
+        "log": {
+          "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-pc-native-20260927.log",
+          "sha256": "85edf5ddaeeadcfaad9227bb90b2170832221bbf2a7de09413eb1e705667ebfe"
+        },
+        "cluster": ".cache/finance-postgres-mDE0co",
+        "port": 59401
+      }
+    ],
+    "authority": "Runner uses local schema-maintenance role for fixtures; actual Admin and app assertions separately use commissioned limited LOGINs. No production role is used.",
+    "fixturesRemaining": 0
+  },
+  "frontend": {
+    "files": 3,
+    "passed": 75,
+    "failed": 0,
+    "skipped": 0,
+    "fileCounts": {
+      "parent": 45,
+      "activityList": 8,
+      "seckillTime": 22
+    },
+    "parentNew": 22,
+    "parentPreexisting": 23,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-frontend-runtime-20260927.log",
+      "sha256": "4a07689a74a9488650b5eb455b8fafabc61e598b7475d74aee9d633a60bd3504"
+    },
+    "detail": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-frontend-evidence-20260927.json",
+      "sha256": "ee077f5241360f154695a29fa30576baa58a3f931e10b4784cdab639c4b9bc70"
+    }
+  },
+  "compatibilityUnit": {
+    "files": 1,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node node_modules/vitest/vitest.mjs run test/activity-list-compatibility.test.ts",
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-compatibility-20260927.log",
+      "sha256": "4db384dc88adb1a78e439c09390ca06e64c29a199f146154b78dec37f75151f4"
+    },
+    "countedAsNative": false
+  },
+  "ledger": {
+    "files": 5,
+    "passed": 33,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node node_modules/vitest/vitest.mjs run test/admin-marketing-frontend-parity.test.ts test/admin-all-frontend-parity.test.ts test/admin-frontend-api-audit.test.ts test/admin-frontend-api-contract.test.ts test/uniapp-frontend-parity.test.ts",
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-ledger-20260927.log",
+      "sha256": "652803711263c974bfde34db806c61ae21080f7f9e44493bca71c60de9a07a6a"
+    },
+    "routeSnapshot": {
+      "path": "workers-ts/audit/route-distribution-20260927.json",
+      "sha256": "3a80352dcdfd4e4d89cf7436b6a83e7c62cff7fb7de2be2117b7564773c12e4b"
+    },
+    "marketing": {
+      "path": "workers-ts/audit/admin-legacy-marketing-route-parity.json",
+      "sha256": "daa7927de7f5846310f3777f8741b9a1cda1936ca4370ed51296d12d6c163856"
+    },
+    "apiContracts": {
+      "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "sha256": "46e40965d1a9043a4ce7b1c6f73b6d55dac5d85693b5681e36f2d0f6845206b9"
+    },
+    "counts": {
+      "adminScreens": {
+        "candidate": 50,
+        "partial": 120,
+        "missing": 97,
+        "retired": 7
+      },
+      "marketing": {
+        "candidate": 11,
+        "partial": 21,
+        "missing": 16,
+        "retired": 0
+      },
+      "apiCallSites": 379,
+      "executableApiVariants": 402
+    },
+    "note": "Current explicit five-file 33 test set. Earlier core33 history lacks this file-list mapping; counts are not evidence of the same test selection."
+  },
+  "workerTypes": {
+    "command": "npm run typecheck",
+    "unitAndRuntime": true,
+    "exit": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-worker-types-20260927.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    }
+  },
+  "adminBuild": {
+    "command": "npm run build (vue-tsc -b && vite build)",
+    "exit": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-admin-build-20260927.log",
+      "sha256": "b78471ed309f84ee345279428416d81e3afe48748b33d216d036cb5381eccde8"
+    },
+    "bundle": {
+      "path": "view/admin-ts/dist/assets/SeckillActivities-D-2SDxvu.js",
+      "sha256": "6ed83735934926a64b939844265b896a92f646649a05b63462987859a45d7a53"
+    }
+  },
+  "browser": {
+    "path": "workers-ts/audit/seckill-parent-extras-browser-20260927.json",
+    "sha256": "c3a6a53a9cf7e7803eabe63ae4c1ceb71abc7ecb1b95b4f7026af730f3a9d236"
+  },
+  "sourceInputs": [
+    {
+      "path": "workers-ts/src/services/activity/ProductAssetPolicy.ts",
+      "sha256": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "e83164ab20009c119ef9d670fc763a0d2367501460ca82bf8f917ccd823c6164"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSeckillActivityService.ts",
+      "sha256": "17ced1e73d18ada0e2884ac282b36c6e07ffa32e5f072ae216c998810858c3b8"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSeckillActivityData.ts",
+      "sha256": "be8dea01c676546ed098d99bf274c2e6f2fba4abffdd54fbfb959e9ab46b0dd6"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSeckillActivityInput.ts",
+      "sha256": "14e03ecd923bc7fc817d75cfacfa81848ea2344a857758ab0104067e8bc42990"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminSeckillActivityController.ts",
+      "sha256": "4d7afc756679f785dc33a208bd97486a07ca6ac3791d3c796d580e971b093442"
+    },
+    {
+      "path": "workers-ts/test/helpers/seckillActivityFixture.ts",
+      "sha256": "181ba5e15663eec94690080df12227b0ccc76ea0ad888867afe483e25b07cfab"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "7571d0db5086ef1929a26b6376cb5c7bf83f48441e5086fe15c7fa399b75a9b5"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "45f4b2b0a9fb51a590a0f89422f359b764c6974f6faf01b9f4af19164f4aa339"
+    },
+    {
+      "path": "view/admin-ts/src/api/seckillActivity.ts",
+      "sha256": "6254665fb5db682c998c4baf8316719ef7925538a6bb2a0ff53d099115e32554"
+    },
+    {
+      "path": "view/admin-ts/src/pages/activity/SeckillActivities.vue",
+      "sha256": "c49a3f2cb79f6a0ff9fb25a6e5f37569daff751cef9008fb391703b78e4902f0"
+    },
+    {
+      "path": "view/admin-ts/src/pages/activity/SeckillActivityImagePicker.vue",
+      "sha256": "9d591f8d712f269d018048dcc9ca3d0f67874556a2a7242c731eb6985d1be5e7"
+    },
+    {
+      "path": "workers-ts/scripts/admin-marketing-frontend-parity-audit.ts",
+      "sha256": "4631a4fb8ebf027a7ea2d0e434bdab1d9b55eea95efe9615aeec540dfa6ef878"
+    },
+    {
+      "path": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "sha256": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac"
+    },
+    {
+      "path": "workers-ts/test/admin-seckill-activity.test.ts",
+      "sha256": "476330bf9b0928f80398f91bde1347df01c84e2a224b0ddc3b9eb99b1cd5f70e"
+    },
+    {
+      "path": "workers-ts/test/admin-seckill-activity-postgres.test.ts",
+      "sha256": "7fad051ef5ddbe0d383d7451e390c29ba89e3977fb8f463ecdba5877c0405496"
+    },
+    {
+      "path": "workers-ts/test/seckill-runtime-login.test.ts",
+      "sha256": "7f2643cd0fc4b57e56f85a7da877b717219953207614891ad7a5abbd3afa774c"
+    },
+    {
+      "path": "workers-ts/test/seckill-product-media.test.ts",
+      "sha256": "f2179237f3999052ffd12bd7d68a0ba1e7a427d52ec4493578eabedbd12e1f8c"
+    },
+    {
+      "path": "workers-ts/test/pc-seckill-purchase.test.ts",
+      "sha256": "04c6c8847c03ba34be8a8aa474c8d860445546ee971f69b7672b6536e35973cf"
+    },
+    {
+      "path": "workers-ts/test/admin-seckill-activities-frontend.test.ts",
+      "sha256": "1298dae529fc8ce5e495809742b47fd228cdbf25062f23aff71efce0d816de58"
+    },
+    {
+      "path": "workers-ts/test/admin-activity-list-frontend.test.ts",
+      "sha256": "22b1c52a12bbac51695609fe9a15eb23768011257ff86b6c9ca4ddea43892c2b"
+    },
+    {
+      "path": "workers-ts/test/admin-seckill-times-frontend.test.ts",
+      "sha256": "efec8d673990bd9f51eb44e317508f4ffc0b224ddde855ece8f9cb827b9a4df6"
+    },
+    {
+      "path": "workers-ts/test/activity-list-compatibility.test.ts",
+      "sha256": "9901f9e388d8b06bb03aa55df034b157c7fa00931da5c6e01c34bb76677daea7"
+    },
+    {
+      "path": "workers-ts/test/admin-marketing-frontend-parity.test.ts",
+      "sha256": "72e322760a4b9f598659396609deb70bd732204d91728d1c11f196fe0a8bb107"
+    },
+    {
+      "path": "workers-ts/test/admin-all-frontend-parity.test.ts",
+      "sha256": "25dcab71d1902f16a402a1eec2421ab0d7dea39f98e704abf8567c91854be734"
+    },
+    {
+      "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "sha256": "75b5a6186b679346774121bf7d1b3e756492578cf87bbdcbb3bd73459ba01417"
+    },
+    {
+      "path": "workers-ts/test/admin-frontend-api-contract.test.ts",
+      "sha256": "a2900a9dbedde0c1d2f6a6b9e95718601ed61c1752cf12996373387afcf2fc00"
+    },
+    {
+      "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "sha256": "79b261427f0ffeec8d7ee3fe8bea5ca43f8b8ed23106429484f1da2c8ea90f7c"
+    }
+  ],
+  "cleanup": {
+    "allFourCurrentClustersIndependentlyStopped": true,
+    "clusters": [
+      {
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-Y65W11\\data",
+        "port": 60616,
+        "status": "pg_ctl: no server running",
+        "exit": 3,
+        "listen": 0
+      },
+      {
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-jL85hx\\data",
+        "port": 51117,
+        "status": "pg_ctl: no server running",
+        "exit": 3,
+        "listen": 0
+      },
+      {
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-FNJtF7\\data",
+        "port": 58810,
+        "status": "pg_ctl: no server running",
+        "exit": 3,
+        "listen": 0
+      },
+      {
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-mDE0co\\data",
+        "port": 59401,
+        "status": "pg_ctl: no server running",
+        "exit": 3,
+        "listen": 0
+      }
+    ],
+    "record": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-pg-cleanup-20260927.json",
+      "sha256": "22191f58147316a49381cbb9d78580b51ce8aa24567f6f39d27e77867bba3bf0"
+    },
+    "browserServer": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-qa-cleanup-20260927.json",
+      "sha256": "d1cdf7d891004d17cc474d0de874bcb33bc7ae83906a2543b2d844a6075e1c45"
+    }
+  },
+  "failureHistory": [
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-product-media-stage1-20260927.log",
+        "sha256": "69dbeede77ced79fd85470889e8ee97c51abd36174b746e1a77a7498901112e4"
+      },
+      "reason": "Initial synthetic media fixture R2 prefixes differed from real upload scope; corrected before final native verification.",
+      "acceptedAsFinal": false
+    },
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-product-media-stage2-20260927.log",
+        "sha256": "ff9916ccfb420b1202997b05566685b0ffceb4bfd2e8670a56c8749706aec5c3"
+      },
+      "reason": "Diagnostic lightweight pass predates final platform admin/1 policy correction; superseded by native six.",
+      "acceptedAsFinal": false
+    },
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-native-stage1-20260927.log",
+        "sha256": "24a778889a5b9f0e0d9e8836c965fb2b5671a7be13cfd2660c2c4d24994998fc"
+      },
+      "passed": 58,
+      "failed": 1,
+      "reason": "Added actual app media case lacked fixture APP_KEY; fixture corrected and all four files freshly rerun.",
+      "acceptedAsFinal": false
+    },
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-consumers-stage1-20260927.log",
+        "sha256": "800ae2c9d39c71c23802a4f7e689d957595d96d50225b77f211867e9a365daa0"
+      },
+      "reason": "PC fixtures require schema-maintenance role creation; first ordinary runner attempt failed setup and skipped six. Compatibility two did pass separately.",
+      "acceptedAsFinal": false
+    },
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-consumers-20260927.log",
+        "sha256": "194d6dd8abf6f66c68f8f2908f94a9dc23c53b1c64367505a218da0542dc3ada"
+      },
+      "reason": "Combined schema-maintenance PC and unit compatibility command rejected before startup because unit test is not in exact allowlist. Final PC native and compatibility unit commands kept separate; allowlist was not widened.",
+      "acceptedAsFinal": false
+    },
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-ledger-first-failure-20260927.log",
+        "sha256": "977bd93d2817dc17a4c7629c33663c77c5e9a7a3682cba829b655bb6c62e0eb9"
+      },
+      "reason": "Initial 32/33 left one stale API-source hash/line snapshot; generated exact API audit snapshot and reran explicit five files.",
+      "acceptedAsFinal": false
+    },
+    {
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-ledger-capture-error-20260927.log",
+        "sha256": "984b303f1172c8769b5c4cad5b273415866dba76175a78b96f809d8b6dc56396"
+      },
+      "reason": "Earlier PowerShell Tee capture errored; not used as passing proof.",
+      "acceptedAsFinal": false
+    }
+  ],
+  "history": {
+    "priorCore99": {
+      "path": "workers-ts/audit/seckill-parent-native-20260927.json",
+      "sha256": "9b8eab75b5df75980a7360a81d5e620dcd40f715bec7d2ced870b332a968022b"
+    },
+    "priorBusiness34": {
+      "path": "workers-ts/audit/seckill-parent-business-20260927.json",
+      "sha256": "b2e62aa94b8ec11254e72ac2ab1f15596f7c860939bd1f8992a9f0703aa89f81"
+    },
+    "priorPrivileges24": {
+      "path": "workers-ts/audit/seckill-runtime-privileges-20260927.json",
+      "sha256": "2068c234ea419afa0d42b6081087891f8d15422303fc28cde3abefa01bdb01d2"
+    },
+    "priorBrowser103": {
+      "path": "workers-ts/audit/seckill-parent-browser-20260927.json",
+      "sha256": "eca13e878775fdfe150f0b01d3d3017f83de0ee3dab94b2cc89c00b8edc07287"
+    },
+    "archivedCoreSourceInputs": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-core99-source-snapshot/manifest.json",
+      "sha256": "f377ad1609b79d3d324f8e69261297211f3efb41e8768872b1cfc656cb4cadda"
+    },
+    "archivedSourceFiles": 32,
+    "archivedSourcesMatch": true,
+    "previousRouteSnapshot": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/route-distribution-before-parent-extras-20260927.json",
+      "sha256": "954585c19c8e4102863a137b6b12c3114320d513519cdc315431d291946d1102"
+    },
+    "resolution": "Prior JSONs and logs are historical frozen evidence and are not overwritten or summed into the current 65/75/33/2. For the 32 old tested source hashes resolve originalPath through the archived manifest rather than the now-edited worktree; resolve the old core99 routeSnapshot to previousRouteSnapshot. Current final Vite build replaces old dist output, so old compiled bundle availability is not asserted.",
+    "priorRunnerResolvedCopy": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-core99-runner-20260927.mjs",
+      "sha256": "70aaadbd48682c0456f3435fe5a1e3f1c86ffd598462f8ecaff82f247519e34b"
+    },
+    "priorRunnerResolution": "Remove only the new 43-byte media-test allowlist line from current runner. Independently confirmed reconstruction exactly matches the historical SHA256; original worktree and old JSON are unchanged."
+  },
+  "boundaries": {
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "externalMigrations": 169,
+    "embeddedMigrations": 174,
+    "newNumberedMigration": false,
+    "roleOrGrantChangeInThisBatch": false,
+    "coreMutationTailByteIdenticalToArchivedCore": true,
+    "published": false,
+    "committed": false,
+    "limitation": "Existing migration counts are unchanged historical facts, not fresh full-schema or 235-consumer proof for this batch."
+  }
+}

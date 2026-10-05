@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="agreements-page">
     <navigator class="agreement-link" url="/pages/user/legalContent?type=user">
       <text>用户协议</text><text class="arrow">›</text>
@@ -10,7 +11,11 @@
       <text>注销协议</text><text class="arrow">›</text>
     </navigator>
   </view>
+  </ThemePage>
 </template>
+<script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+</script>
 
 <style scoped>
 .agreements-page { min-height: 100vh; box-sizing: border-box; padding: 24rpx 20rpx; background: #f7f7f7; }

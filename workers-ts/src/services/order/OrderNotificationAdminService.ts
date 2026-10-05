@@ -34,6 +34,7 @@ export const ORDER_NOTIFICATION_MARKS = [
   "user_extract",
   "user_balance_change",
   "kefu_send_extract_application",
+  "order_user_groups_success",
 ] as const;
 
 export type OrderNotificationMark = (typeof ORDER_NOTIFICATION_MARKS)[number];
@@ -71,6 +72,7 @@ const MARK_POLICY: Record<OrderNotificationMark, {
   user_extract: { label: "提现成功", official: true, routine: true },
   user_balance_change: { label: "提现拒绝退回", official: false, routine: true },
   kefu_send_extract_application: { label: "提现申请通知客服", official: false, routine: false },
+  order_user_groups_success: { label: "拼团成团成功", official: false, routine: true },
 };
 
 function positiveInt(value: unknown, label: string, maximum = 2_147_483_647): number {
@@ -239,14 +241,15 @@ export class OrderNotificationAdminService {
   async saveTemplate(input: NotificationTemplateSaveInput) {
     const id = optionalPositiveInt(input.id, "模板ID");
     const type = providerType(input.type);
-    const mark = templateMark(input.mark);
+    const requestedMark = templateMark(input.mark);
+    const mark = requestedMark === 'order_user_groups_success' && type === 'routine' ? '3098' : requestedMark;
     const title = boundedString(input.title, "模板标题", 128, 1);
     const content = boundedString(input.content ?? "", "模板说明", 20_000);
     const tempid = boundedString(input.tempid, "提供商模板ID", 100, 1);
     const example = boundedString(input.example ?? "", "模板示例", 300);
     const status = bit(input.status ?? 1, "模板状态");
     const legacyType = type === "routine" ? 0 : 1;
-    const orderPolicy = MARK_POLICY[mark as OrderNotificationMark];
+    const orderPolicy = MARK_POLICY[requestedMark as OrderNotificationMark];
     if (orderPolicy && type === "wechat" && !orderPolicy.official) {
       throw new ValidateException("该 PHP 通知事件不支持公众号模板");
     }
@@ -332,9 +335,11 @@ export class OrderNotificationAdminService {
         url: row?.url ?? "",
         officialAllowed: MARK_POLICY[mark].official,
         routineAllowed: MARK_POLICY[mark].routine,
-        templateCount: templates.filter((template) => template.mark === mark).length,
+        templateCount: templates.filter((template) => template.mark === mark ||
+          (mark === 'order_user_groups_success' && template.mark === '3098' && template.legacyType === 0)).length,
         enabledTemplateCount: templates
-          .filter((template) => template.mark === mark && template.status === 1).length,
+          .filter((template) => (template.mark === mark ||
+            (mark === 'order_user_groups_success' && template.mark === '3098' && template.legacyType === 0)) && template.status === 1).length,
       };
     });
   }
@@ -445,7 +450,7 @@ export class OrderNotificationAdminService {
       withTx(this.container, (tx) => tx.select({ rows: sql<number>`count(*)::int` })
         .from(systemNotification).where(inArray(systemNotification.mark, [...ORDER_NOTIFICATION_MARKS]))),
       withTx(this.container, (tx) => tx.select({ rows: sql<number>`count(*)::int` })
-        .from(notificationTemplate).where(inArray(notificationTemplate.mark, [...ORDER_NOTIFICATION_MARKS]))),
+        .from(notificationTemplate).where(inArray(notificationTemplate.mark, [...ORDER_NOTIFICATION_MARKS, '3098']))),
       withTx(this.container, (tx) => tx.select({ rows: sql<number>`count(*)::int` })
         .from(wechatUser)),
       this.deliverySummary(),
@@ -496,7 +501,7 @@ export class OrderNotificationAdminService {
       throw new ValidateException("投递渠道无效");
     }
     const eventKey = query.eventKey?.trim();
-    if (eventKey && !/^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(eventKey)) {
+    if (eventKey && !/^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(eventKey)) {
       throw new ValidateException("事件键无效");
     }
     const afterId = query.afterId ?? 0;

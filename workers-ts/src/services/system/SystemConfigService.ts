@@ -9,6 +9,8 @@
  */
 import type { Container } from "@/lib/di";
 import { normalizeConfigScalar } from "@/utils/config";
+import { isCityCredentialKey } from '@/services/delivery/CityDeliverySettingsResolver';
+import { ValidateException } from '@/utils/errors';
 
 const CACHE_TTL = 30 * 60; // 30 分钟
 
@@ -32,6 +34,7 @@ export class SystemConfigService {
    * 优先读 KV 缓存, 未命中读 DB 并回填。
    */
   async get(menuName: string): Promise<string> {
+    if (isCityCredentialKey(menuName)) throw new ValidateException('配送凭据只能由专用运行时解析器读取');
     const cacheKey = `cfg_${menuName}`;
 
     // KV 命中
@@ -53,6 +56,7 @@ export class SystemConfigService {
 
     // 先批量查 KV (KV 不支持批量 get, 循环; 但 KV 读便宜)
     const names = [...new Set(menuNames)];
+    if (names.some(isCityCredentialKey)) throw new ValidateException('配送凭据只能由专用运行时解析器读取');
     const cachedValues = await Promise.all(
       names.map((name) => this.env.CONFIG_KV.get(`cfg_${name}`)),
     );

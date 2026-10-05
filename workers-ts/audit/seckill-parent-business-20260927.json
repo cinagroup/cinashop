@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T03:19:27Z",
+  "state": "accepted_backend_native34_on_frozen_sources_local_candidate_not_released",
+  "scope": {
+    "backend": "Dedicated store_activity type=1 parent management; existing generic activity routes continue to manage child products",
+    "routes": "/adminapi/activity/seckill-activities and /api/admin/activity/seckill-activities",
+    "permissions": ["seckill_activity.view", "seckill_activity.manage"],
+    "operations": ["list", "detail", "slot options", "source product candidates", "source SKU detail", "create", "update in place", "cascade status", "soft delete"],
+    "copy": "Read an existing detail, remove parent/child/SKU identity and revision, then POST a new parent",
+    "bounds": { "slots": 64, "products": 100, "skusPerProduct": 500, "totalSkus": 5000, "parentImageCodepoints": 128 },
+    "sourceOwners": ["type 0 with relation_id=0", "type 1 with relation_id=0", "type 2 with a real active supplier"],
+    "skuAndOrderIdentityPreserved": true,
+    "existingRetirementFieldsAndLogUsed": true,
+    "quotaPolicy": "quota_total is the configured total; net_consumed=quota_show-quota; new remaining=quota_total-net_consumed; stock changes only by the total delta",
+    "inventoryPolicy": "Each active remaining quota must fit its source SKU; their sum must fit current source product stock. Retired remaining amounts remain in historical child accounts but do not occupy the active sales upper bound",
+    "datePolicy": "Asia/Shanghai calendar dates; end day includes the entire day. Create/update reject end_day+86400 < the real transaction clock read after lock waits. Historical read, close and soft delete remain available",
+    "saveStatusPolicy": "Parent and submitted child status are independent; standalone parent status cascades to every associated child without clearing is_del",
+    "writeProtocol": "READ COMMITTED; bounded deadlines; parent advisory 731646/1; fixed parent-to-child reference fence before business row locks; parent/child then slots, activity SKU and fail-fast source/base locks",
+    "mutationJournal": "Actor and UUID scoped atomic system_log journal with normalized SHA256 payload and full graph+xmin revision checks",
+    "liveGrantsApplied": false,
+    "productionAccess": false,
+    "frontendAndDeploymentAcceptedByThisEvidence": false
+  },
+  "native": {
+    "acceptedUniqueFiles": 2,
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0,
+    "selectedFiles": [
+      { "path": "test/admin-seckill-activity.test.ts", "passed": 26, "failed": 0, "skipped": 0 },
+      { "path": "test/admin-seckill-activity-postgres.test.ts", "passed": 8, "failed": 0, "skipped": 0 }
+    ],
+    "caseCountExplanation": "PostgreSQL file has seven independent-backend cases (one UUID case, three it.each append cases, one bounded wait, one source-SKU fail-fast case, one isolation case) plus one real commissioned Admin LOGIN case",
+    "sessionId": 17548,
+    "postgresVersion": "16.15",
+    "host": "127.0.0.1",
+    "port": 52670,
+    "cluster": "finance-postgres-uiI2jY",
+    "database": "cinashop_finance_test",
+    "schemaMaintenance": true,
+    "testRole": "finance_test",
+    "realRestrictedAdminLoginUsed": true,
+    "realAdminProfileCommissioning": "runRuntimeBusinessCommissioning final profile; no fixture grant broadening for parent management",
+    "nativeFixedReferenceCapabilityMocked": false,
+    "externalIOForbiddenInRestrictedRoleCase": true,
+    "fixtureRemaining": 0,
+    "pgCtlStatus": 3,
+    "listeningPorts": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-business-native-20260927-final.log",
+      "sha256": "a583fd224a78f74177b7d866c10180e4e7f901187ec818915cd7a8c80d3bcf14"
+    },
+    "containingBatch": {
+      "overallExit": 1,
+      "files": 3,
+      "passed": 43,
+      "failed": 2,
+      "tests": 45,
+      "seconds": 108.69,
+      "acceptedSubsetFiles": 2,
+      "acceptedSubsetPassed": 34,
+      "excludedFile": "test/seckill-runtime-login.test.ts",
+      "excludedFilePassed": 9,
+      "excludedFileFailed": 2,
+      "excludedFailure": "The full-schema sequence fixture was passed to withFinancePeers, whose finance observer identity/registry guard correctly rejected it before concurrency assertions",
+      "excludedFailureCorrection": "Root used the owning fixture withPeer without weakening identity/registry validation, then separately accepted actual LOGIN 11 in session 55418",
+      "excludedCasesAddedToThisAcceptanceTotal": false
+    },
+    "coverage": [
+      "Both route families and distinct read/manage permission boundary",
+      "Multi-product server-owned snapshots and forged source/child/SKU identity refusal",
+      "Platform canonical media scope and signed previews without external I/O",
+      "Exact UUID replay and atomic audit/rollback",
+      "Full child/SKU+xmin revisions, including child append while waiting on the relation fence",
+      "Consumed quota edits, active aggregate and per-SKU source stock, retirement evidence and no implicit resurrection",
+      "Independent save statuses, standalone cascade and atomic parent/child soft deletion",
+      "Fresh identities on copy and all historical identities retained for refunds",
+      "Invalid and over-cap legacy display, explicit shutdown/archive and product_id=0 retirement repair",
+      "Supplier CRUD and missing, hidden or deleted supplier negative cases",
+      "Shanghai end-day save boundary and explicit date repair",
+      "Bounded parent-before-child/slot waits and source SKU NOWAIT instead of reverse waits",
+      "READ COMMITTED admission guard",
+      "Real restricted Admin supplier-source create, edit, cascade and archive; app parent semantic DML and Admin physical parent DELETE rejected"
+    ]
+  },
+  "history": {
+    "actualAdminSnapshotFailure": {
+      "sessionId": 97667,
+      "overallExit": 1,
+      "overallPassed": 31,
+      "overallFailed": 2,
+      "permissionSubsetPassed": 24,
+      "actualAppPassed": 7,
+      "actualAppFailed": 2,
+      "code": "42501",
+      "failedSQL": "UPDATE store_product_attr_result SET result=?, change_time=? WHERE id=?",
+      "cause": "The exact existing Admin profile grants display-cache INSERT/DELETE, not UPDATE",
+      "repair": "Within the same fenced transaction, delete the exact existing activity type=1 display snapshot and insert its refreshed projection. Retain duplicate-snapshot rejection and every real activity SKU id, unique, suk, sales, quota and order/refund reference",
+      "profileExpandedForRepair": false,
+      "failedRunsCountedAsPassed": false,
+      "cluster": "finance-postgres-IvMP9W",
+      "port": 65053,
+      "fixtureRemaining": 0,
+      "pgCtlStatus": 3,
+      "listeningPorts": 0,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-role-native-20260927.log",
+        "sha256": "09a1eaeba8a4a9bc05239d360faceb7f68f2a4c43cceabbda56a4e5994ec0af3"
+      }
+    },
+    "earlierPGlite": {
+      "sessionId": 91686,
+      "exit": 0,
+      "passed": 26,
+      "seconds": 50.27,
+      "beforeFinalCacheRepair": true,
+      "nativeCapabilityOrSecurityPassClaim": false,
+      "addedToNativeAcceptanceTotal": false
+    },
+    "earlierNativeCountClaimCorrected": "The file was initially described as nine cases; final source and executed batch establish eight. Acceptance is 26+8, not 26+9"
+  },
+  "inputFreeze": {
+    "verification": "Read-only SHA256 recomputation after final native run matched the service, input, data, controller, business/native test and fixture hashes previously frozen for session 17548",
+    "allPreviouslyFrozenOwnedInputsUnchanged": true,
+    "businessSourceEditedWhileWritingEvidence": false,
+    "files": [
+      { "path": "workers-ts/src/services/admin/AdminSeckillActivityService.ts", "sha256": "d52083b3411fefb105694c15c965a07742849bd67668a30ad8e93fe9b394348a" },
+      { "path": "workers-ts/src/services/admin/AdminSeckillActivityData.ts", "sha256": "7bd5993bd40034415879b0de0e960de249826d46962a101242d8770dc2bd2190" },
+      { "path": "workers-ts/src/services/admin/AdminSeckillActivityInput.ts", "sha256": "e5200296ca4663469f5051a2f5d5464ae2c7a9159e61fb7b7ce751c9a92009ba" },
+      { "path": "workers-ts/src/controllers/api/v1/AdminSeckillActivityController.ts", "sha256": "4d7afc756679f785dc33a208bd97486a07ca6ac3791d3c796d580e971b093442" },
+      { "path": "workers-ts/test/admin-seckill-activity.test.ts", "sha256": "74a92c58fa10a5c6f552b0c4b291bdc42706f2fbfd6d2de9cb4e8572e6249147" },
+      { "path": "workers-ts/test/admin-seckill-activity-postgres.test.ts", "sha256": "04a728f9aa7897f53aa039fb1bd91322e947cca0fb9e32f951c085751c17be84" },
+      { "path": "workers-ts/test/helpers/seckillActivityFixture.ts", "sha256": "bac849c661ea7b264046035c95f98c4d0ec20d90e45ad24ee7831712e1bce1f4" }
+    ],
+    "permissionFileObserved": {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "f61509b543e95dbbeb035949fc1af1e6ad1ee4d97640ed0aecefca69745ae92d"
+    }
+  },
+  "typechecks": {
+    "sessionId": 5359,
+    "command": "npm run typecheck",
+    "unitExit": 0,
+    "runtimeExit": 0,
+    "overallExit": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-typecheck-final-20260927.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    }
+  },
+  "independentCleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-permission-cleanup-20260927-first-three.json",
+    "sha256": "0cc355291ab2a9bd1004f18d23a942e321e6dc6d5bcca9e28a99e2651c95b760",
+    "allStopped": true,
+    "readOnlyStatusEvidence": true,
+    "backendCluster": { "name": "finance-postgres-uiI2jY", "port": 52670, "pgCtlExit": 3, "listenCount": 0 }
+  },
+  "relatedEvidence": [
+    "workers-ts/audit/seckill-runtime-privileges-20260927.json",
+    "workers-ts/audit/seckill-parent-native-20260927.json",
+    "workers-ts/audit/seckill-time-reference-lock-20260927.json"
+  ],
+  "remainingAcceptance": [
+    "Frontend/UI route acceptance and checklist promotion are owned by root/frontend",
+    "Production installation, actual Hyperdrive identity audit and deployment are outside this local backend evidence"
+  ]
+}

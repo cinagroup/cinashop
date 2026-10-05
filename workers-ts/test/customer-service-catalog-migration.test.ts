@@ -49,8 +49,8 @@ describe("customer-service feedback and speechcraft migration", () => {
       expect(routes).toContain('/feedback"');
       expect(routes).toContain('/wechat/speechcraft"');
     }
-    expect(requiredAdminPermission("GET", "/adminapi/feedback")).toBe("service.view");
-    expect(requiredAdminPermission("PUT", "/api/admin/wechat/speechcraft/1")).toBe("service.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/feedback")).toBe("feedback.view");
+    expect(requiredAdminPermission("PUT", "/api/admin/wechat/speechcraft/1")).toBe("speechcraft.manage");
   });
 
   it("serializes new reply writes and enforces owner-scoped category and duplicate checks", () => {

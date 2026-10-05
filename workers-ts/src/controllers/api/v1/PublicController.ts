@@ -249,6 +249,8 @@ export async function subscribe(c: C) {
 
 /** GET /api/menu/user — user-centre menu and DIY layout. */
 export async function menuUser(c: C) {
+  c.header('Cache-Control','private, no-store');
+  if(new URL(c.req.url).searchParams.size)throw new ValidateException('个人中心菜单接口不接受查询参数');
   return jsonOk(
     c,
     await new PublicCatalogService(c.get("container"), c.env).menuUser(c.get("uid") ?? 0),
@@ -257,6 +259,8 @@ export async function menuUser(c: C) {
 
 /** GET /api/menu/date — PHP keeps the historical `date` spelling. */
 export async function menuUserData(c: C) {
+  c.header('Cache-Control','private, no-store');
+  if(new URL(c.req.url).searchParams.size)throw new ValidateException('个人中心统计接口不接受查询参数');
   return jsonOk(
     c,
     await new PublicCatalogService(c.get("container"), c.env).menuUserData(c.get("uid") ?? 0),
@@ -309,6 +313,7 @@ export async function storeStatusV2(c: C) {
 
 /** GET /api/v2/diy/color_change/:name — theme and category switches. */
 export async function colorChangeV2(c: C) {
+  c.header("Cache-Control", "no-store");
   try {
     return jsonOk(c, await v2PublicService(c).colorChange(c.req.param("name")));
   } catch (error) {

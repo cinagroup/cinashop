@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="work-page">
     <!-- #ifdef H5 -->
     <view class="tabs"><button :class="{ selected: active === 0 }" @tap="changeTab(0)">购买记录</button><button :class="{ selected: active === 1 }" @tap="changeTab(1)">浏览记录</button></view>
@@ -19,9 +20,11 @@
     <!-- #endif -->
     <!-- #ifndef H5 --><view class="notice">企业微信工作台仅支持 H5 侧边栏。</view><!-- #endif -->
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onLoad, onReachBottom, onUnload } from "@dcloudio/uni-app";
 import { getWorkPurchasedProducts, getWorkVisitedProducts, type WorkProductSummary } from "@/api/work";
@@ -107,9 +110,9 @@ async function push(item: WorkProductSummary) {
 
 <style scoped>
 .work-page { min-height: 100vh; background: #f3f6f9; padding: 16rpx 20rpx 130rpx; box-sizing: border-box; }
-.tabs { display: flex; background: #fff; border-radius: 12rpx; }.tabs button { flex: 1; margin: 0; background: #fff; color: #546173; font-size: 27rpx; }.tabs button::after { border: 0; }.tabs button.selected { color: #1768c8; border-bottom: 4rpx solid #1768c8; }
+.tabs { display: flex; background: #fff; border-radius: 12rpx; }.tabs button { flex: 1; margin: 0; background: #fff; color: #546173; font-size: 27rpx; }.tabs button::after { border: 0; }.tabs button.selected { color: var(--view-theme, #e93323); border-bottom: 4rpx solid var(--view-theme, #e93323); }
 .search { display: flex; gap: 12rpx; margin: 16rpx 0; }.search input { flex: 1; min-width: 0; padding: 10rpx 18rpx; border-radius: 9rpx; background: #fff; }.search button { margin: 0; font-size: 25rpx; }.hint { display: block; color: #6c7787; font-size: 23rpx; margin-bottom: 15rpx; }
 .card, .notice { background: #fff; border-radius: 15rpx; padding: 22rpx; margin-bottom: 16rpx; }.notice { overflow-wrap: anywhere; }.notice button { margin-top: 16rpx; }.error { color: #a72d2d; }
-.product { display: flex; align-items: center; gap: 16rpx; }.photo { width: 100rpx; height: 100rpx; border-radius: 10rpx; flex-shrink: 0; }.info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7rpx; }.name { font-size: 27rpx; overflow-wrap: anywhere; }.muted { font-size: 22rpx; color: #718094; }.price { color: #bd3025; font-weight: 700; }.push { margin: 0; font-size: 24rpx; color: #1768c8; background: #edf5ff; }
+.product { display: flex; align-items: center; gap: 16rpx; }.photo { width: 100rpx; height: 100rpx; border-radius: 10rpx; flex-shrink: 0; }.info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7rpx; }.name { font-size: 27rpx; overflow-wrap: anywhere; }.muted { font-size: 22rpx; color: #718094; }.price { color: var(--view-priceColor, #e93323); font-weight: 700; }.push { margin: 0; font-size: 24rpx; color: var(--view-theme, #e93323); background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); }
 .more, .end { display: block; text-align: center; margin: 22rpx auto; color: #526071; font-size: 25rpx; }
 </style>

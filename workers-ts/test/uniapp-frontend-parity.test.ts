@@ -19,7 +19,7 @@ interface ParityAudit {
   checklist: Array<{ id: string; done: boolean }>;
 }
 
-const parity = JSON.parse(readFileSync("audit/uniapp-frontend-parity.json", "utf8")) as ParityAudit;
+const parity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-product-detail-design-followup-20261002.json", "utf8")) as ParityAudit;
 const pages = JSON.parse(readFileSync("../view/uniapp-ts/src/pages.json", "utf8")) as {
   pages: Array<{ path: string }>;
 };
@@ -32,14 +32,14 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.counting.legacy.pagesTreeVueFiles).toBe(250);
     expect(parity.counting.legacy.logicalManifestRouteRecords).toBe(151);
     expect(parity.counting.legacy.platformActiveRouteRecords).toEqual({ H5: 151, "MP-WEIXIN": 150, "APP-PLUS": 150 });
-    expect(parity.counting.target.pagesTreeVueFiles).toBe(93);
-    expect(parity.counting.target.logicalManifestRouteRecords).toBe(93);
-    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 93, "MP-WEIXIN": 93, "APP-PLUS": 93 });
+    expect(parity.counting.target.pagesTreeVueFiles).toBe(97);
+    expect(parity.counting.target.logicalManifestRouteRecords).toBe(97);
+    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 97, "MP-WEIXIN": 97, "APP-PLUS": 97 });
     expect(parity.counting.routeLedger).toMatchObject({
       directRegistered: 28,
       legacyCompatibilityRules: 100,
-      candidateCoveredRules: 61,
-      partialReplacementRules: 39,
+      candidateCoveredRules: 62,
+      partialReplacementRules: 38,
       unmappedOrCrossSurface: 23,
       accountedLegacyRoutes: 151,
     });
@@ -74,7 +74,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.gaps.map((gap) => gap.id)).toEqual([
       "FE-003B", "FE-003C", "FE-003D", "FE-003E", "FE-003F", "FE-003G", "FE-003H",
     ]);
-    expect(parity.checklist.filter((item) => item.done).map((item) => item.id)).toEqual(["FE-003A", "FE-003H", "FE-003I"]);
+    expect(parity.checklist.filter((item) => item.done).map((item) => item.id)).toEqual(["FE-003A", "FE-003C", "FE-003H", "FE-003I"]);
   });
 
   it("rejects unregistered internal links and preserves only audited legacy aliases", () => {
@@ -110,7 +110,11 @@ describe("UniApp manifest and legacy-navigation parity", () => {
       expect(existsSync(resolve("../view/uniapp-ts/src", `${route.slice(1)}.vue`))).toBe(true);
     }
     expect(parity.gaps.find((gap) => gap.id === "FE-003C")?.legacyRoutes).toEqual([]);
-    expect(parity.checklist.find((item) => item.id === "FE-003C")?.done).toBe(false);
+    expect(parity.gaps.find((gap) => gap.id === "FE-003C")?.status).toBe("code_linux_complete_not_deployed");
+    expect(parity.checklist.find((item) => item.id === "FE-003C")?.done).toBe(true);
+    for (const id of ["FE-003J", "FE-003K"]) {
+      expect(parity.checklist.find((item) => item.id === id)?.done).toBe(false);
+    }
     const api = readFileSync("../view/uniapp-ts/src/api/agentSelfService.ts", "utf8");
     expect(api).toContain('"/user/promoter/apply/info"');
     expect(api).toContain('"/division/agent/apply/info"');

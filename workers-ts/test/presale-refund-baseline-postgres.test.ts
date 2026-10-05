@@ -65,7 +65,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
         cartNum: 1, type: 6, productType: 1, isNew: 1, status: 1 });
     }
     const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
-    if (product.productType === 4) await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
+    if (product.productType === 4) {
+      await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
+      await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
+    }
     const created = await StoreOrderCreateService.createWithRuntime(f.container,
       { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'baseline_presale_checkout' },
       { uid: 11, key: 'baseline-presale', type: 6, cartIds: multiple ? [1, 2] : [1], addressId: 11, userIp: '127.0.0.1', useIntegral: false,

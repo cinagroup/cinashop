@@ -24,6 +24,7 @@ import { memberRight, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefun
 export const runtimeTablePrivileges: Record<string, readonly string[]> = {
   user: ['SELECT', 'UPDATE'], store_cart: ['SELECT', 'UPDATE'],
   store_product: ['SELECT', 'UPDATE'], store_product_attr_value: ['SELECT', 'UPDATE'],
+  store_product_relation: ['SELECT'], store_promotions: ['SELECT'],
   store_order: ['SELECT', 'INSERT', 'UPDATE'],
   store_order_cart_info: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
   store_order_refund: ['SELECT', 'INSERT', 'UPDATE'],
@@ -45,7 +46,7 @@ export const runtimeTablePrivileges: Record<string, readonly string[]> = {
   store_order_refund_split: ['SELECT', 'INSERT'], store_order_fulfillment_branch: ['SELECT', 'INSERT'],
 };
 export const runtimeRowLockTables = ['user_address', 'city_area', 'system_user_level', 'agent_level',
-  'system_supplier', 'user_invoice', 'supplier_transactions', 'order_waybill_job'] as const;
+  'system_supplier', 'user_invoice', 'supplier_transactions', 'order_waybill_job', 'store_promotions'] as const;
 const protectedTables = new Set(['store_order_invoice_evidence', 'store_order_invoice_allocation',
   'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin', 'store_order_purchase_cancellation']);
 export const runtimeSequenceTables = ['store_order', 'store_order_cart_info', 'store_order_refund',
@@ -61,11 +62,11 @@ export async function refundRuntimeFixture() {
     if (!whole.withRuntimeRole) throw Error('Independent runtime LOGIN is required');
     await whole.exec('SET client_min_messages=warning');
     expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({
-      executed: Array.from({ length: 172 }, (_, i) => String(i).padStart(4, '0')), errors: [],
+      executed: Array.from({ length: 178 }, (_, i) => String(i).padStart(4, '0')), errors: [],
     });
     const [catalog] = await whole.db.execute(sql`SELECT count(*)::integer AS tables FROM pg_class
       WHERE relnamespace='public'::regnamespace AND relkind='r'`);
-    expect(catalog.tables).toBe(279);
+    expect(catalog.tables).toBe(282);
     // The fresh migration seeds integral at id=1; the existing quote fixture
     // owns ids 1/2. Relocate that one synthetic default, retaining its content.
     const moved = await whole.db.update(memberRight).set({ id: 3 })
@@ -148,6 +149,6 @@ export async function refundRuntimeFixture() {
         finish: (id: number) => finalizeStoreOrderRefund(container, id),
         invoice: (id: number) => new StoreOrderInvoiceService(container).makeUp(11, id, 1) };
     }
-    return { ...whole, env: f.env, withRuntime, state };
+    return { ...whole, env: f.env, withRuntime, operationsFor: operations, state };
   } catch (error) { await whole.close(); throw error; }
 }

@@ -7,6 +7,7 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
 import { ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { boundedProductShareFetch } from './ProductShareProviderPolicy';
 
 const MAX_API_JSON_BYTES = 64 * 1024;
 const ALLOWED_TYPES = new Set(["reply", "wechatqrcode"]);
@@ -89,6 +90,21 @@ export class OfficialAccountQrcodeService {
     private readonly env: Env,
     private readonly fetcher: typeof fetch = fetch,
   ) {}
+
+  /** Temporary signed product scene; no permanent queue or qrcode-table DML. */
+  async requestTemporaryProduct(scene:string):Promise<string>{
+    if(!/^p:[1-9]\d{0,9}:[1-9]\d{0,9}:\d{1,10}:[a-f\d]{24}$/.test(scene)||new TextEncoder().encode(scene).byteLength>64)throw new ValidateException('商品分享场景无效');
+    const bounded=new OfficialAccountQrcodeService(this.container,this.env,boundedProductShareFetch(this.fetcher));
+    const create=async(token:string)=>{
+      const url=new URL('https://api.weixin.qq.com/cgi-bin/qrcode/create');url.searchParams.set('access_token',token);
+      const response=await bounded.fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expire_seconds:2592000,action_name:'QR_STR_SCENE',action_info:{scene:{scene_str:scene}}})});
+      const data=await readBoundedJson(response),ticket=typeof data.ticket==='string'?data.ticket:'';
+      if(!response.ok||!ticket||ticket.length>255||/[\u0000-\u001f\u007f]/.test(ticket))throw new OfficialAccountApiError(Number(data.errcode??response.status),'生成商品公众号分享码失败');
+      return `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${encodeURIComponent(ticket)}`;
+    };
+    let token=await bounded.getAccessToken();
+    try{return await create(token);}catch(error){if(!(error instanceof OfficialAccountApiError)||!INVALID_TOKEN_CODES.has(error.code))throw error;await cacheDelete(`official_access_token:${await bounded.getAppId()}`,this.env);token=await bounded.getAccessToken(true);return create(token);}
+  }
 
   async status(thirdType: string, thirdId: number) {
     assertTarget(thirdType, thirdId);

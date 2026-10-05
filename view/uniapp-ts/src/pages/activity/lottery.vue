@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="lottery-page">
     <view class="factor-tabs">
       <view v-for="item in factors" :key="item.value" class="factor-tab" :class="{ active: factor === item.value }" @tap="switchFactor(item.value)">{{ item.label }}</view>
@@ -62,9 +63,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, onMounted, reactive, ref } from "vue";
 import { onLoad, onPullDownRefresh } from "@dcloudio/uni-app";
 import { apiLotteryDraw, apiLotteryInfo, apiLotteryReceive, type LotteryInfo, type LotteryPrize } from "@/api/lottery";
@@ -126,7 +129,7 @@ onPullDownRefresh(load);
 .lottery-page { min-height: 100vh; padding: 24rpx; background: linear-gradient(180deg, #fff5ef 0, #f6f7fb 520rpx); box-sizing: border-box; }
 .factor-tabs { display: flex; gap: 10rpx; padding: 8rpx; border-radius: 18rpx; background: rgba(255,255,255,.92); margin-bottom: 20rpx; }
 .factor-tab { flex: 1; text-align: center; padding: 16rpx 4rpx; border-radius: 14rpx; color: #7d6d68; font-size: 24rpx; }
-.factor-tab.active { color: #fff; background: linear-gradient(135deg, #ef4b2f, #ff8a45); box-shadow: 0 8rpx 18rpx rgba(239,75,47,.24); }
+.factor-tab.active { color: #fff; background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931)); box-shadow: 0 8rpx 18rpx rgba(239,75,47,.24); }
 .state-card { padding: 100rpx 30rpx; text-align: center; color: #8a8f9d; background: #fff; border-radius: 24rpx; }
 .empty-state text { display: block; } .state-icon { font-size: 70rpx; margin-bottom: 20rpx; } .state-hint { margin-top: 12rpx; font-size: 22rpx; color: #b0b4bf; }
 .hero { min-height: 320rpx; border-radius: 28rpx; overflow: hidden; background: linear-gradient(135deg, #732413, #e74a2d); background-size: cover; background-position: center; box-shadow: 0 18rpx 40rpx rgba(102,44,28,.2); }
@@ -146,6 +149,6 @@ onPullDownRefresh(load);
 .result-card { width: 100%; max-width: 600rpx; padding: 44rpx 34rpx 34rpx; border-radius: 30rpx; text-align: center; background: linear-gradient(180deg, #fff8ef, #fff); box-sizing: border-box; }
 .result-icon, .result-title, .result-name, .result-prompt { display: block; } .result-icon { font-size: 70rpx; } .result-title { font-size: 38rpx; font-weight: 800; color: #dc4d2e; margin-top: 8rpx; }
 .result-image { width: 160rpx; height: 160rpx; margin-top: 24rpx; border-radius: 24rpx; } .result-name { margin-top: 18rpx; font-size: 30rpx; font-weight: 700; } .result-prompt { margin: 10rpx 0 26rpx; color: #8a8f9c; font-size: 24rpx; }
-.primary-btn { padding: 22rpx; color: #fff; background: linear-gradient(135deg, #ef4b2f, #ff7b40); border-radius: 999rpx; font-size: 28rpx; }
+.primary-btn { padding: 22rpx; color: #fff; background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-theme, #e93323)); border-radius: 999rpx; font-size: 28rpx; }
 .claim-form { display: grid; gap: 14rpx; margin-top: 20rpx; text-align: left; } .claim-input, .claim-textarea { width: 100%; padding: 18rpx; border-radius: 14rpx; background: #f6f7f9; box-sizing: border-box; font-size: 26rpx; } .claim-textarea { height: 120rpx; }
 </style>

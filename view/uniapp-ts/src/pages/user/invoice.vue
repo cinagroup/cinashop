@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="invoice-page">
     <!-- 发票列表 -->
     <view class="inv-card" v-for="inv in list" :key="inv.id">
@@ -37,9 +38,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import {
   apiInvoiceList,
@@ -134,7 +137,7 @@ onMounted(load);
 
 .inv-type {
   font-size: 24rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   background: #fff0f0;
   padding: 6rpx 16rpx;
   border-radius: 8rpx;
@@ -143,7 +146,7 @@ onMounted(load);
 .inv-default {
   font-size: 22rpx;
   color: #fff;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   padding: 4rpx 14rpx;
   border-radius: 8rpx;
 }
@@ -175,7 +178,7 @@ onMounted(load);
 }
 
 .inv-act.danger {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .empty {
@@ -190,7 +193,7 @@ onMounted(load);
   left: 40rpx;
   right: 40rpx;
   bottom: 40rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 44rpx;
@@ -239,7 +242,7 @@ onMounted(load);
 }
 
 .seg-item.active {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
 }
 
@@ -252,7 +255,7 @@ onMounted(load);
 }
 
 .sheet-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 12rpx;

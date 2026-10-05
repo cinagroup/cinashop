@@ -25,6 +25,7 @@ import {
   userRecharge,
   wechatUser,
 } from "@/models/schema";
+import { sanitizePublishedArticleHtml } from "@/services/content/ArticleContentPolicy";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_PAGE_SIZE = 100;
@@ -514,7 +515,7 @@ export class V2UserCompatibilityService {
       )).orderBy(desc(userBrokerage.id)).limit(10),
     ]);
     return {
-      agreement: agreements[0]?.content ?? "",
+      agreement: sanitizePublishedArticleHtml(agreements[0]?.content ?? ""),
       price: priceRows[0]?.total ?? "0.00",
       list: carousel.map((row) => ({ nickname: row.nickname, price: row.price })),
     };

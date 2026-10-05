@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="pay-result">
     <view class="result-icon">{{ success ? "✅" : "📋" }}</view>
     <view class="result-title" role="status">{{ resultTitle }}</view>
@@ -24,9 +25,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiOrderDetail } from "@/api/order";
@@ -203,7 +206,7 @@ onUnload(() => {
 }
 
 .value.price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-weight: 700;
 }
 
@@ -228,8 +231,8 @@ onUnload(() => {
 }
 
 .btn.primary {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
-  border-color: #e93323;
+  border-color: var(--view-theme, #e93323);
 }
 </style>

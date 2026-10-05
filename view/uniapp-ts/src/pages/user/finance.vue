@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="finance-page">
     <!-- 佣金总览 -->
     <view class="balance-card">
@@ -33,6 +34,10 @@
       <view class="action-btn" @tap="openPeople">
         <text class="action-icon">👥</text>
         <text class="action-text">我的推广</text>
+      </view>
+      <view class="action-btn" @tap="openDistributionLevel">
+        <text class="action-icon">🏅</text>
+        <text class="action-text">分销等级</text>
       </view>
     </view>
 
@@ -125,9 +130,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import {
@@ -168,6 +175,7 @@ const showBind = ref(false);
 const showPeople = ref(false);
 const bindUid = ref("");
 const auth = useAuthStore();
+function openDistributionLevel(): void { uni.navigateTo({ url: '/pages/users/user_distribution_level/index' }); }
 const emptyExtract = (): ExtractInput => ({ extract_type: "bank", extract_price: "", real_name: "", extract_number: "", bank_name: "" });
 const extractForm = ref<ExtractInput>(emptyExtract());
 const extractFormEpoch = ref(0);
@@ -375,7 +383,7 @@ onLoad(() => {
 }
 
 .balance-card {
-  background: linear-gradient(135deg, #e93323, #ff7a45);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 40rpx 30rpx;
   color: #fff;
@@ -461,9 +469,9 @@ onLoad(() => {
 }
 
 .tab.active {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-weight: 600;
-  border-bottom: 4rpx solid #e93323;
+  border-bottom: 4rpx solid var(--view-theme, #e93323);
 }
 
 .items {
@@ -544,7 +552,7 @@ onLoad(() => {
 }
 
 .sheet-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 12rpx;
@@ -558,7 +566,7 @@ onLoad(() => {
 .form-hint { color: #666; font-size: 24rpx; line-height: 1.7; margin: 16rpx 0; }
 .method-row { display: flex; gap: 12rpx; flex-wrap: wrap; margin-bottom: 20rpx; }
 .method-row button { margin: 0; }
-.method-row .selected { color: #e93323; border: 1px solid #e93323; }
+.method-row .selected { color: var(--view-theme, #e93323); border: 1px solid var(--view-theme, #e93323); }
 .more-btn { margin: 20rpx 0 0; font-size: 24rpx; background: #fff; color: #666; }
 
 .people-list {

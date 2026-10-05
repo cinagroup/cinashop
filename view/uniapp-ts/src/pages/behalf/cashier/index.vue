@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="cashier-page">
     <view class="eyebrow">管理员 · 代客下单</view><view class="title">订单收银</view>
     <view v-if="!canRead" class="panel notice" role="alert">请登录具有代客下单权限的管理员。商城会员登录不能授权收银。<button @tap="goRecords">前往代客记录／登录</button></view>
@@ -50,9 +51,11 @@
     </template>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import AssistedPaymentQr from '@/components/AssistedPaymentQr.vue';
 import { useAssistedCashier } from '@/composables/useAssistedCashier';
 import type { AssistedPaymentMethod } from '@/api/assistedCashier';
@@ -65,5 +68,5 @@ const methods: Array<{ value: AssistedPaymentMethod; label: string }> = [
 </script>
 
 <style scoped>
-.cashier-page{max-width:860px;min-height:100vh;box-sizing:border-box;margin:auto;padding:36rpx 28rpx 140rpx;background:#f5f6f8;color:#202b3c}.eyebrow{font-size:24rpx;color:#506883}.title{font-size:44rpx;font-weight:700;margin:10rpx 0 28rpx}.session{font-size:26rpx;margin-bottom:24rpx;color:#46546a}.panel{background:#fff;border:1px solid #e5e9ef;border-radius:18rpx;padding:28rpx;margin-bottom:24rpx}.notice{background:#eef4fb;color:#23496b;font-size:27rpx;line-height:1.65;overflow-wrap:anywhere}.notice button{margin:14rpx 0 0}.center{text-align:center;color:#617287}.row,.amount{display:flex;justify-content:space-between;gap:20rpx;align-items:flex-start;margin-bottom:20rpx;font-size:27rpx}.row>text:first-child,.amount>text:first-child{color:#607087;flex:none}.order-no{text-align:right;overflow-wrap:anywhere}.amount{border-top:1px solid #e5e9ef;padding-top:24rpx;font-size:36rpx;font-weight:700}.hint{font-size:25rpx;line-height:1.7;color:#607087;margin-top:16rpx}.section-title{font-size:32rpx;font-weight:600;margin-bottom:18rpx}.methods{display:flex;gap:12rpx;flex-wrap:wrap}.methods button{margin:0;font-size:26rpx;min-width:170rpx}.methods .chosen{background:#244e78;color:#fff}.primary{background:#244e78;color:#fff;margin-top:28rpx;font-size:29rpx}.qr-panel{text-align:center}.qr-panel .hint{margin:18rpx auto;max-width:580rpx}.status-button,.back-button{margin:20rpx 0;font-size:28rpx}.paid{color:#195d38;background:#e8f6ec;font-size:29rpx}button[disabled]{opacity:.65}
+.cashier-page{max-width:860px;min-height:100vh;box-sizing:border-box;margin:auto;padding:36rpx 28rpx 140rpx;background:#f5f6f8;color:#202b3c}.eyebrow{font-size:24rpx;color:#506883}.title{font-size:44rpx;font-weight:700;margin:10rpx 0 28rpx}.session{font-size:26rpx;margin-bottom:24rpx;color:#46546a}.panel{background:#fff;border:1px solid #e5e9ef;border-radius:18rpx;padding:28rpx;margin-bottom:24rpx}.notice{background:#eef4fb;color:#23496b;font-size:27rpx;line-height:1.65;overflow-wrap:anywhere}.notice button{margin:14rpx 0 0}.center{text-align:center;color:#617287}.row,.amount{display:flex;justify-content:space-between;gap:20rpx;align-items:flex-start;margin-bottom:20rpx;font-size:27rpx}.row>text:first-child,.amount>text:first-child{color:#607087;flex:none}.order-no{text-align:right;overflow-wrap:anywhere}.amount{border-top:1px solid #e5e9ef;padding-top:24rpx;font-size:36rpx;font-weight:700}.hint{font-size:25rpx;line-height:1.7;color:#607087;margin-top:16rpx}.section-title{font-size:32rpx;font-weight:600;margin-bottom:18rpx}.methods{display:flex;gap:12rpx;flex-wrap:wrap}.methods button{margin:0;font-size:26rpx;min-width:170rpx}.methods .chosen{background:var(--view-theme, #e93323);color:#fff}.primary{background:var(--view-theme, #e93323);color:#fff;margin-top:28rpx;font-size:29rpx}.qr-panel{text-align:center}.qr-panel .hint{margin:18rpx auto;max-width:580rpx}.status-button,.back-button{margin:20rpx 0;font-size:28rpx}.paid{color:#195d38;background:#e8f6ec;font-size:29rpx}button[disabled]{opacity:.65}
 </style>

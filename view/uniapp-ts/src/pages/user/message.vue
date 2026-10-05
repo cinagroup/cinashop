@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="message-page">
     <view v-if="list.length" class="msg-list">
       <view v-for="m in list" :key="(m as any).id" class="msg-item" @tap="openDetail(m)">
@@ -12,9 +13,11 @@
     <view v-else class="empty">暂无消息</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
 

@@ -35,6 +35,10 @@ export class StoreCouponIssueDao extends BaseDao<typeof storeCouponIssue> {
         sql`${storeCouponIssue.status} = 1
           AND ${storeCouponIssue.isDel} = 0
           AND ${storeCouponIssue.receiveType} = 1
+          AND ${storeCouponIssue.category} IN (0, 1)
+          AND ${storeCouponIssue.appType} = 0
+          AND (${storeCouponIssue.isPermanent} = 1 OR ${storeCouponIssue.remainCount} > 0)
+          AND (${storeCouponIssue.day} > 0 OR (${storeCouponIssue.day} = 0 AND ${storeCouponIssue.useEndTime} >= ${now}))
           AND (${storeCouponIssue.startTime} IS NULL OR ${storeCouponIssue.startTime} <= ${now})
           AND (${storeCouponIssue.endTime} IS NULL OR ${storeCouponIssue.endTime} >= ${now})`,
       )

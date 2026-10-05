@@ -17,6 +17,20 @@ export function registerCartStateTests(context) {
     assert.deepEqual(calls[0].params, { scope: 'cart' });
     cart.toggleChecked(2, true); assert.equal(cart.items[1].checked, false);
   });
+  it('cart selects the exact subtotal when an activity only discounts part of the quantity', async () => {
+    const activity = { key: 1, productId: 70, quantity: 3, unitPriceCents: null, totalPriceCents: 2900,
+      promotionSavingsCents: 100, segments: [
+        { quantity: 1, unitPriceCents: 900, totalPriceCents: 900, promotionIds: [41] },
+        { quantity: 2, unitPriceCents: 1000, totalPriceCents: 2000, promotionIds: [] },
+      ] };
+    const priced = { ...row(), cartNum: 3, productInfo: { ...row().productInfo, price: '10.00' },
+      sumPrice: '30.00', truePrice: '9.66', trueSumPrice: '29.00', priceType: 'promotions', promotion: activity };
+    const { cart } = fixture(config => config.url === '/cart/list' ? { status: 200, data: [priced] } : undefined);
+    await cart.fetchList(); cart.toggleAll(true);
+    assert.equal(cart.items[0].promotion.unitPriceCents, null);
+    assert.equal(cart.items[0].trueSumPrice, '29.00');
+    assert.equal(cart.totalPrice, '29.00');
+  });
   it('cart loading and failure are not an empty successful list; retry preserves explicit selection', async () => {
     let fail = false; const { cart } = fixture(config => fail && config.url === '/cart/list' ? { status: 400, msg: 'offline' } : undefined);
     await cart.fetchList(); cart.toggleChecked(1, true); fail = true;

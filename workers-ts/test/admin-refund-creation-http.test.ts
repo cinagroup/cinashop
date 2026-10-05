@@ -232,7 +232,8 @@ it('never installs missing creation schema from any HTTP endpoint',async()=>{
   for(const endpoint of endpoints)expect(await envelope(await send(endpoint,crypto.randomUUID(),endpoint==='receipt'?{version:protocol}:value)))
     .toMatchObject({status:500,data:null});
   expect(await f.snapshot()).toEqual(before);expect(await f.applications()).toEqual(applications);expect(await operations()).toEqual([]);
-  expect(await f.db.execute(sql`SELECT to_regclass('admin_refund_creation')::text AS name`)).toMatchObject([{name:null}]);
+  const [catalog]=await f.db.execute(sql`SELECT to_regclass('admin_refund_creation')::text AS name`);
+  expect(catalog).toEqual({name:null});
 });
 
 it('a missing financial ledger does not erase the application already committed by execute',async()=>{

@@ -22,11 +22,14 @@ export function assertKefuSequenceAligned(catalog: Catalog, manifest: { entries:
     throw new Error("Duplicate kefu sequence ownership alias");
 }
 
-/** Compare all 227 named sequences and every raw field; never normalize away a difference. */
+/** Current catalog: 223 serial columns + four identities + the explicit kefu sequence.
+ * Historical reconciliation manifests retain their original cohorts. */
+export const CURRENT_SEQUENCE_CATALOG_COUNT = 228;
+/** Compare every current named sequence and raw field; never normalize away a difference. */
 export function assertAllSequencesAligned(reference: Catalog, candidate: Catalog) {
   for (const catalog of [reference, candidate]) {
-    if (catalog.sequences.length !== 227 || new Set(catalog.sequences.map(row => row.key)).size !== 227)
-      throw new Error("Complete sequence cohort changed: expected 227 unique identities");
+    if (catalog.sequences.length !== CURRENT_SEQUENCE_CATALOG_COUNT || new Set(catalog.sequences.map(row => row.key)).size !== CURRENT_SEQUENCE_CATALOG_COUNT)
+      throw new Error(`Complete sequence cohort changed: expected ${CURRENT_SEQUENCE_CATALOG_COUNT} unique identities`);
   }
   const rows = (catalog: Catalog) => catalog.sequences.map(stable).sort();
   if (JSON.stringify(rows(reference)) !== JSON.stringify(rows(candidate)))

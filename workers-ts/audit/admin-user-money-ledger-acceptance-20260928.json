@@ -1,0 +1,57 @@
+{
+  "dateUtc": "2026-09-28",
+  "scope": "Local, unpublished Admin user-money ledger correction and public product promotion-scope follow-up",
+  "outcome": {
+    "legacyAdminScreens": { "total": 274, "candidate": 73, "partial": 111, "missing": 83, "retired": 7 },
+    "legacyCrossModuleScreens": { "total": 18, "candidate": 5, "partial": 11, "missing": 1, "retired": 1 },
+    "workerRoutes": 1942,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 87,
+    "adminApi": { "callSites": 481, "pathVariants": 505, "executable": 505, "unregistered": 0, "unresolved": 0 },
+    "screenPromotions": ["/admin/finance/finance/bill: partial->candidate"],
+    "checklist": { "checked": 246, "open": 158, "total": 404 }
+  },
+  "verification": {
+    "focusedPgliteFrontendPermissionAndParity": { "files": 7, "passed": 41, "failed": 0, "skipped": 0, "maxWorkers": 1 },
+    "nativePostgresql16UserMoneyServiceAndHttp": { "files": 2, "passed": 7, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "nativePostgresql16ProductPromotionScope": { "files": 1, "passed": 2, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiStrictAudit": "505 executable variants; 0 unregistered or unresolved",
+    "routeAudit": "1942 Worker registrations; 882 executable legacy-path matches unchanged",
+    "gitDiffCheck": "passed (Git line-ending conversion warnings only)",
+    "browserAndProduction": "not run; no deployment or production mutation"
+  },
+  "limitations": [
+    "The old funds-record screen uses user_money. Previous new BillList.vue used user_bill, an unrelated ledger; dated audit corrects that earlier classification without overwriting historical snapshots.",
+    "The new export produces bounded Excel-compatible CSV rather than legacy XLSX, and rejects negative source amounts, NaN or invalid pm instead of emitting ambiguous spreadsheet cells.",
+    "The legacy time parser extends a midnight end boundary by one day. The new page uses an explicit inclusive Shanghai minute end; wildcard characters in search are treated literally.",
+    "Product detail now matches five promotion product scopes under the default types used when the legacy DIY switch is enabled; the optional type-5 frame query and DIY visibility switch are not yet wired in ProductController.",
+    "No legacy PHP URL aliases were registered; exact legacy-path coverage is unchanged.",
+    "Production financial history, real restricted-role browser flows, representative export scale and query plans, full Linux CI and post-release acceptance remain open."
+  ],
+  "evidence": [
+    "docs/admin-user-money-ledger-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "docs/admin-cross-module-route-parity.md",
+    "audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+    "audit/route-distribution-user-money-ledger-followup-20260928.json",
+    "audit/admin-frontend-inventory-user-money-ledger-followup-20260928.json",
+    "audit/admin-frontend-api-contracts-user-money-ledger-followup-20260928.json",
+    "test/admin-user-money-ledger-postgres.test.ts",
+    "test/admin-user-money-ledger-http.test.ts",
+    "test/admin-user-money-ledger-frontend.test.ts",
+    "test/public-product-activity-promotion-scope.test.ts",
+    "test/admin-permission.test.ts",
+    "test/admin-cross-module-frontend-parity.test.ts",
+    "test/admin-all-frontend-parity.test.ts"
+  ]
+}

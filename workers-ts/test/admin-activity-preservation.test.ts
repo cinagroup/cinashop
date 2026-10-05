@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import {
@@ -54,11 +54,31 @@ describe('admin activity edits and retirement preserve existing records', () => 
   }
 
   it.each([
-    ['seckill', 501], ['combination', 502], ['integral', 503],
+    ['seckill', 501], ['integral', 503],
   ] as const)('editing %s preserves sales, creation time, and omitted fields', async (type, id) => {
     const before = await row(type, id);
     expect(await request('/activity/save', 'POST', { type, id, storeName: '新名称' })).toMatchObject({ status: 200 });
     expect(await row(type, id)).toEqual({ ...before, storeName: '新名称' });
+  });
+
+  it('rejects abbreviated combination creation, editing, status and deletion before any transaction or DML', async () => {
+    const before = await row('combination', 502);
+    const transaction = vi.spyOn(f.container.db, 'transaction');
+    const insert = vi.spyOn(f.container.db, 'insert');
+    const update = vi.spyOn(f.container.db, 'update');
+    const remove = vi.spyOn(f.container.db, 'delete');
+    try {
+      for (const [path, method, body] of [
+        ['/activity/save', 'POST', { type: 'combination', productId: 70, storeName: '简化创建' }],
+        ['/activity/save', 'POST', { type: 'combination', id: 502, quota: 100 }],
+        ['/activity/status', 'POST', { type: 'combination', id: 502, status: 0 }],
+        ['/activity/del/combination/502', 'DELETE', undefined],
+      ] as const) expect(await request(path, method, body)).toMatchObject({ status: 400, msg: '请使用完整拼团管理接口' });
+      expect(transaction).not.toHaveBeenCalled(); expect(insert).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled(); expect(remove).not.toHaveBeenCalled();
+      expect(await row('combination', 502)).toEqual(before);
+      expect(await request('/activity/combination')).toMatchObject({ status: 200, data: [expect.objectContaining({ id: 502 })] });
+    } finally { transaction.mockRestore(); insert.mockRestore(); update.mockRestore(); remove.mockRestore(); }
   });
 
   it('a seckill form submission without timeId preserves its existing slots and business history', async () => {
@@ -73,7 +93,7 @@ describe('admin activity edits and retirement preserve existing records', () => 
   });
 
   it.each([
-    ['seckill', 501], ['combination', 502], ['integral', 503],
+    ['seckill', 501], ['integral', 503],
   ] as const)('retiring %s marks only isDel, hides it from admin list and preserves the row', async (type, id) => {
     const before = await row(type, id);
     expect(await request(`/activity/del/${type}/${id}`, 'DELETE')).toMatchObject({ status: 200 });
@@ -84,7 +104,7 @@ describe('admin activity edits and retirement preserve existing records', () => 
   });
 
   it.each([
-    ['seckill', 501], ['combination', 502], ['integral', 503],
+    ['seckill', 501], ['integral', 503],
   ] as const)('cannot edit or re-enable retired %s activity', async (type, id) => {
     await request(`/activity/del/${type}/${id}`, 'DELETE');
     const before = await row(type, id);

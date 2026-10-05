@@ -1,0 +1,899 @@
+{
+  "date": "2026-09-27",
+  "status": "passed-local-synthetic-browser",
+  "finalized": true,
+  "root_batch_seal": "Separate source/evidence closure managed by /root; this browser audit is final and will be referenced by hash.",
+  "published": false,
+  "scope": "Actual accepted final Admin dist operated through Root CUA against127.0.0.1:5203 disposable memory fixture. No production, real JWT, PostgreSQL, claim, provider, R2 or external delivery verification.",
+  "attribution": {
+    "browser_operator": "/root",
+    "evidence_collector_and_independent_reviewer": "/root/seckill_time_frontend",
+    "collector_actions": "Read owned GET /__qa/state once, read saved journal/role DOM/fixture source and frozen source/build logs, inspect four screenshots, hash artifacts, and write this evidence. No successful collector CUA operation or business mutation.",
+    "ui_observations": "Scenario and confirmation observations attributed to Root CUA unless explicitly described as independent journal/state/screenshot verification.",
+    "gui_case_count": null,
+    "gui_case_count_note": "No fabricated scenario count; evidence records named observations and precise request totals."
+  },
+  "fixture": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-fixture-20260927.cjs",
+    "bytes": 15303,
+    "sha256": "7b06367f13e04511a3618382daed5b31f0d24ad974e6e7b53b34fd2eff63d816",
+    "bind": "127.0.0.1",
+    "port": 5203,
+    "memory_only": true,
+    "mock_provider_no_real_io": true,
+    "restart": "Owned memory/audit restored from resume file; drop-publish mode changed from socket destruction to HTTP200 truncated JSON before request88.",
+    "resume_snapshot": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-memory-resume-20260927.json",
+      "bytes": 64119,
+      "sha256": "2f3f159237c694f405cfbb2da2cd0061e54d4d052da3bac7a3d9cfc40017659f"
+    }
+  },
+  "requests": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-requests-20260927.json",
+    "bytes": 45058,
+    "sha256": "0d6f1c0d38c949f69bdfa7a3dfae7fe22af76baac4c62939d1d9df1727855f9e",
+    "memory_audit_exact_match": true,
+    "count_scope": "Fixture application API journal only; excludes static assets, QA controls and collector GET /__qa/state. Counts are shared recorded requests, not GUI cases."
+  },
+  "final_memory_snapshot": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-memory-final-20260927.json",
+    "bytes": 80864,
+    "sha256": "12dc56055cde64364cb2274cb07c6819a1a517a4df8c1ea7f61ff9c232d1c7cc",
+    "complete": true,
+    "rows": 126,
+    "issued_rows": 4,
+    "synthetic": true,
+    "real_writes": 0,
+    "remaining_injected_failures": [],
+    "drop_next_publish": false
+  },
+  "role_dom": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-role-dom-20260927.json",
+    "bytes": 7951,
+    "sha256": "e25c694784728e9a058aeb9712e2f77847ac727ae601fd79c35e9fc68e446a56",
+    "snapshot_boundary": "Saved UI excerpts for five restricted roles; reader/manager/mixed excerpts are truncated to1550 characters and cannot alone prove whole-page absence of buttons. Root CUA observed complete settled controls. all role was tested before and restored afterward."
+  },
+  "frozen_source": [
+    {
+      "path": "C:/cinagroup/cinashop/view/admin-ts/src/api/couponTemplate.ts",
+      "sha256": "49b774ec65a8a339ef817cdd8d8eebfcf47911118ba3b7640193798a809bdc8d"
+    },
+    {
+      "path": "C:/cinagroup/cinashop/view/admin-ts/src/pages/marketing/CouponTemplates.vue",
+      "sha256": "2eb8eee92d6f34de2864b690669e54dfaebbc51d8ce71413f7fa2af3d6b0674e"
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-coupon-templates-frontend.test.ts",
+      "sha256": "c2c5298638e96c37e3dd61ab9024a512a32e25834afd0863d273b08df4478577"
+    }
+  ],
+  "accepted_build": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-admin-build-accepted-20260927.log",
+      "bytes": 14276,
+      "sha256": "557afe7e7e25b6be8dcee0658cb4f9b290075ef31f769daaf4ea2a979bb54ba2"
+    },
+    "command": "vue-tsc -b && vite build",
+    "root_reported_exit_code": 0,
+    "collector_did_not_rerun": true,
+    "dist": [
+      {
+        "path": "C:/cinagroup/cinashop/view/admin-ts/dist/index.html",
+        "sha256": "dc7cd458592ee9396ecbfc333d1fcefa37b5449224b5ff04bc0e200276f9a411"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/view/admin-ts/dist/assets/CouponTemplates-UJaRzVh-.js",
+        "sha256": "2afad220e08d3627f52a7807d1ecc00511e00e31e852b1860470db5c3c565cd2"
+      }
+    ]
+  },
+  "frontend_runtime": {
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-frontend-runtime-all-historical-flags-final-20260927.log",
+      "bytes": 228,
+      "sha256": "bfa8b76b84b25114438f44625ff0322cb4b933fe1b99715ea01618ddafbdefb2"
+    },
+    "unique_files": 1,
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0,
+    "root_reported_exit_code": 0,
+    "duration_seconds": 7.15,
+    "collector_did_not_rerun": true
+  },
+  "counts": {
+    "shared_requests": 178,
+    "shared_methods": {
+      "POST": 16,
+      "GET": 161,
+      "DELETE": 1
+    },
+    "template_business_requests": 66,
+    "template_business_methods": {
+      "GET": 56,
+      "POST": 9,
+      "DELETE": 1
+    },
+    "template_reads": 56,
+    "synthetic_business_write_http_requests": 10,
+    "unique_business_write_uuids": 9,
+    "synthetic_creates": 3,
+    "synthetic_publication_http_requests": 5,
+    "synthetic_unique_publications": 4,
+    "synthetic_invalidations": 1,
+    "synthetic_soft_deletes": 1,
+    "background_new_push": 98,
+    "site_config_reads": 7,
+    "synthetic_login_requests": 7,
+    "role_transition_permission_rejections": 2,
+    "injected_get_failures": 5,
+    "delayed_aborted_product_reads": 1,
+    "real_business_writes": 0,
+    "external_messages": 0
+  },
+  "request_histogram": {
+    "POST /adminapi/login": 7,
+    "GET /api/site_config": 7,
+    "GET /adminapi/marketing/coupon-templates": 30,
+    "GET /adminapi/new_push": 98,
+    "GET /adminapi/marketing/coupon-templates/options": 6,
+    "POST /adminapi/marketing/coupon-templates": 3,
+    "GET /adminapi/marketing/coupon-templates/products": 6,
+    "GET /adminapi/marketing/coupon-templates/124": 2,
+    "POST /adminapi/marketing/coupon-template-issues": 5,
+    "GET /adminapi/marketing/coupon-templates/124/issues": 1,
+    "GET /adminapi/marketing/coupon-templates/125": 1,
+    "GET /adminapi/marketing/coupon-templates/126": 4,
+    "GET /adminapi/marketing/coupon-templates/126/issues": 2,
+    "POST /adminapi/marketing/coupon-templates/124/invalidate": 1,
+    "DELETE /adminapi/marketing/coupon-templates/125": 1,
+    "GET /adminapi/marketing/coupon-templates/123": 2,
+    "GET /adminapi/marketing/coupon-templates/123/issues": 2
+  },
+  "business_request_counts_by_role": {
+    "all": 56,
+    "reader": 4,
+    "manager": 2,
+    "publisher": 1,
+    "mixed": 2,
+    "existing": 1
+  },
+  "write_audit": [
+    {
+      "index": 39,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-templates",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "title": "浏览器通用验收",
+        "scope_type": 0,
+        "category_id": 0,
+        "product_ids": [],
+        "coupon_price": "8.50",
+        "use_min_price": "30.00",
+        "valid_days": 7,
+        "sort": 0,
+        "status": 1,
+        "request_id": "f6d261c6-1ff1-431d-9ba1-b120f6dce108"
+      },
+      "result": {
+        "status": 200,
+        "id": 124
+      }
+    },
+    {
+      "index": 50,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-templates",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "title": "浏览器跨页商品验收",
+        "scope_type": 2,
+        "category_id": 0,
+        "product_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "coupon_price": "6.00",
+        "use_min_price": "0.00",
+        "valid_days": 1,
+        "sort": 0,
+        "status": 1,
+        "request_id": "15d2d934-0d90-4f10-9610-af6e4945f756"
+      },
+      "result": {
+        "status": 200,
+        "id": 125
+      }
+    },
+    {
+      "index": 58,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-templates",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "title": "浏览器品类验收",
+        "scope_type": 1,
+        "category_id": 2,
+        "product_ids": [],
+        "coupon_price": "4.00",
+        "use_min_price": "0.00",
+        "valid_days": 1,
+        "sort": 0,
+        "status": 1,
+        "request_id": "13fefedf-15ad-4931-846d-c9eb5e8a119b"
+      },
+      "result": {
+        "status": 200,
+        "id": 126
+      }
+    },
+    {
+      "index": 61,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-template-issues",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "template_id": 124,
+        "revision": "5c0ac277e667bb40bae9355d72579d1943e9b508b12a3cca73aeab0a05d997ca",
+        "receive_type": 1,
+        "status": 1,
+        "is_permanent": 0,
+        "count": 10,
+        "start_time": "2026-09-27T16:00:00.000Z",
+        "end_time": "2026-10-27T16:00:00.000Z",
+        "full_reduction": "0.00",
+        "request_id": "4434ff4c-4bd2-4378-8e4e-2b43a405407f"
+      },
+      "result": {
+        "status": 200,
+        "issue_id": 2001,
+        "template_id": 124
+      }
+    },
+    {
+      "index": 70,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-template-issues",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "template_id": 125,
+        "revision": "a69001a1d3a0e2fa37cdcb24135db8e3a0c9fdc50d15b3a4e9e12e9a1b27a33f",
+        "receive_type": 3,
+        "status": 1,
+        "is_permanent": 1,
+        "count": 0,
+        "start_time": null,
+        "end_time": null,
+        "full_reduction": "100.00",
+        "request_id": "43a68546-bee9-4fc5-9809-5c1dcbe0154b"
+      },
+      "result": {
+        "status": 200,
+        "issue_id": 2002,
+        "template_id": 125
+      }
+    },
+    {
+      "index": 74,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-template-issues",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "template_id": 126,
+        "revision": "8681e19c814a99ce3bb2ffed69f8580e2560d09902e79cde4c7950ac54e89d70",
+        "receive_type": 2,
+        "status": 1,
+        "is_permanent": 0,
+        "count": 1,
+        "start_time": null,
+        "end_time": null,
+        "full_reduction": "0.00",
+        "request_id": "ef7a5902-6150-4947-9dd0-d6a2a1893575"
+      },
+      "result": {
+        "status": "response-dropped-after-memory-commit",
+        "issue_id": 2003,
+        "template_id": 126
+      }
+    },
+    {
+      "index": 75,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-template-issues",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "template_id": 126,
+        "revision": "8681e19c814a99ce3bb2ffed69f8580e2560d09902e79cde4c7950ac54e89d70",
+        "receive_type": 2,
+        "status": 1,
+        "is_permanent": 0,
+        "count": 1,
+        "start_time": null,
+        "end_time": null,
+        "full_reduction": "0.00",
+        "request_id": "ef7a5902-6150-4947-9dd0-d6a2a1893575"
+      },
+      "result": {
+        "status": 200,
+        "issue_id": 2003,
+        "template_id": 126
+      }
+    },
+    {
+      "index": 88,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-template-issues",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "template_id": 126,
+        "revision": "8681e19c814a99ce3bb2ffed69f8580e2560d09902e79cde4c7950ac54e89d70",
+        "receive_type": 1,
+        "status": 1,
+        "is_permanent": 0,
+        "count": 1,
+        "start_time": null,
+        "end_time": null,
+        "full_reduction": "0.00",
+        "request_id": "31761bc7-863c-4a5f-a8d6-8b6be3f25e74"
+      },
+      "result": {
+        "status": "response-truncated-after-memory-commit",
+        "issue_id": 2004,
+        "template_id": 126
+      }
+    },
+    {
+      "index": 96,
+      "method": "POST",
+      "path": "/adminapi/marketing/coupon-templates/124/invalidate",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "revision": "5c0ac277e667bb40bae9355d72579d1943e9b508b12a3cca73aeab0a05d997ca",
+        "request_id": "906e6d8c-c9af-47e0-8161-8763c814e081"
+      },
+      "result": {
+        "status": 200,
+        "id": 124
+      }
+    },
+    {
+      "index": 99,
+      "method": "DELETE",
+      "path": "/adminapi/marketing/coupon-templates/125",
+      "query": "",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "body": {
+        "revision": "a69001a1d3a0e2fa37cdcb24135db8e3a0c9fdc50d15b3a4e9e12e9a1b27a33f",
+        "request_id": "a6e50872-954c-4feb-8865-9ae31847726c"
+      },
+      "result": {
+        "status": 200,
+        "id": 125
+      }
+    }
+  ],
+  "transport_replay": {
+    "request_indices": [
+      74,
+      75
+    ],
+    "uuid": "ef7a5902-6150-4947-9dd0-d6a2a1893575",
+    "exact_body_match": true,
+    "issue_id": 2003,
+    "single_memory_issue": true,
+    "root_observation": "Original socket drop caused transparent browser TCP retry with identical UUID/body. UI did not enter unknown state for this attempt. This evidence does not claim every UUID appears once or that browsers never retry a transport request."
+  },
+  "unknown_write": {
+    "request_index": 88,
+    "uuid": "31761bc7-863c-4a5f-a8d6-8b6be3f25e74",
+    "issue_id_after_memory_commit": 2004,
+    "failure": "HTTP200 truncated JSON after memory commit; API result malformed is treated as unknown, not confirmed absence.",
+    "ui_root_observed": [
+      "Result-unconfirmed banner and retained UUID/intent visible.",
+      "Write controls disabled while pending.",
+      "Automatic and manual reconciliation perform reads only.",
+      "Manual acknowledgement has a second confirmation and itself sends zero writes."
+    ],
+    "journal_readback_indices": [
+      89,
+      90,
+      91,
+      92,
+      93,
+      94
+    ],
+    "readback_methods": [
+      "GET",
+      "GET",
+      "GET",
+      "GET",
+      "GET",
+      "GET"
+    ],
+    "publication_uuid_occurrences": 1,
+    "subsequent_explicit_operations": [
+      96,
+      99
+    ],
+    "boundary": "Acknowledgement clears local pending state after human verification; history lacks request UUID and cannot prove matching intent. Later invalidation/delete are separate explicitly confirmed operations, not an automatic publication retry. No claim of server-backed correlation from history."
+  },
+  "directory_observations": {
+    "initial_active_count": 107,
+    "limit": 15,
+    "initial_page_count": 8,
+    "second_page_target": 8,
+    "initial_page8_ids_root_observed": [
+      18,
+      17
+    ],
+    "page8_request_index": 9,
+    "literal_filter": {
+      "input": "%_",
+      "request_index": 41,
+      "raw_query": "?page=1&limit=15&keyword=%25_&status=1",
+      "count": 1,
+      "id_root_observed": 120
+    },
+    "status_and_reset": "Root exercised effective-status selection and reset; query evidence preserved in journal.",
+    "no_edit_or_reopen": "Template UI exposes create/detail/publication/invalidate/delete, with no edit or restart action."
+  },
+  "create_and_publish_observations": [
+    "Template124: common scope, price8.50, threshold30.00, valid7days.",
+    "Template125: product scope, stable IDs1..30 across two picker pages. Root canceled a temporary current-page change and closed picker; committed30 IDs remained.",
+    "Template126: category2 chosen through actual Cascader.",
+    "Issue2001: ordinary, count10, Shanghai local09/28 00:00 to10/28 00:00 serialized to09/27T16:00:00.000Z and10/27T16:00:00.000Z.",
+    "Issue2002: gift, unlimited, count0, full_reduction100.00; no automatic gift-channel delivery verified.",
+    "Issue2003: newcomer; one issuance despite socket transport replay. No automatic registration configuration or newcomer-only claim verification.",
+    "Issue2004: ordinary; truncated JSON unknown-write flow. GET-only reconciliation and manual acknowledgement observed."
+  ],
+  "confirmation_and_final_state": {
+    "root_observed_cancel_invalidation_and_delete_no_writes": true,
+    "invalidation_request_index": 96,
+    "invalidation_result": "Template124.status=0 and linked issue2001.status=-1. Claimed coupons were not present in this memory fixture, so their preservation is not established by this browser evidence.",
+    "delete_request_index": 99,
+    "delete_result": "Template125.deleted=true, status remains1, and linked issue2002.status remains1.",
+    "created_templates": [
+      {
+        "id": 124,
+        "title": "浏览器通用验收",
+        "scope_type": 0,
+        "category_id": 0,
+        "product_ids": [],
+        "coupon_price": "8.50",
+        "use_min_price": "30.00",
+        "valid_days": 7,
+        "sort": 0,
+        "status": 0,
+        "deleted": false,
+        "add_time": 1790501890,
+        "valid": true,
+        "issues": [],
+        "category_name": "",
+        "issue_count": 1,
+        "revision": "49480c2d32991d8a8866be05892e09136b014a41a21109b52af811067d0c2f58",
+        "product_details_preserved_count": 0
+      },
+      {
+        "id": 125,
+        "title": "浏览器跨页商品验收",
+        "scope_type": 2,
+        "category_id": 0,
+        "product_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "coupon_price": "6.00",
+        "use_min_price": "0.00",
+        "valid_days": 1,
+        "sort": 0,
+        "status": 1,
+        "deleted": true,
+        "add_time": 1790502001,
+        "valid": true,
+        "issues": [],
+        "category_name": "",
+        "issue_count": 1,
+        "revision": "8e04c477cba00dbec63156ef8572d3b443c7f1cf96c52a7856c0e9c7ebfab388",
+        "product_details_preserved_count": 30
+      },
+      {
+        "id": 126,
+        "title": "浏览器品类验收",
+        "scope_type": 1,
+        "category_id": 2,
+        "product_ids": [],
+        "coupon_price": "4.00",
+        "use_min_price": "0.00",
+        "valid_days": 1,
+        "sort": 0,
+        "status": 1,
+        "deleted": false,
+        "add_time": 1790502093,
+        "valid": true,
+        "issues": [],
+        "category_name": "本机茶饮",
+        "issue_count": 2,
+        "revision": "8681e19c814a99ce3bb2ffed69f8580e2560d09902e79cde4c7950ac54e89d70",
+        "product_details_preserved_count": 0
+      }
+    ],
+    "issued_rows": [
+      {
+        "issue_id": 2001,
+        "template_id": 124,
+        "title": "浏览器通用验收",
+        "receive_type": 1,
+        "status": -1,
+        "total_count": 10,
+        "remain_count": 10,
+        "is_permanent": 0,
+        "start_time": "2026-09-27T16:00:00.000Z",
+        "end_time": "2026-10-27T16:00:00.000Z",
+        "issued_at": 1790502120,
+        "source_revision": "5c0ac277e667bb40bae9355d72579d1943e9b508b12a3cca73aeab0a05d997ca"
+      },
+      {
+        "issue_id": 2002,
+        "template_id": 125,
+        "title": "浏览器跨页商品验收",
+        "receive_type": 3,
+        "status": 1,
+        "total_count": 0,
+        "remain_count": 0,
+        "is_permanent": 1,
+        "start_time": null,
+        "end_time": null,
+        "issued_at": 1790502220,
+        "source_revision": "a69001a1d3a0e2fa37cdcb24135db8e3a0c9fdc50d15b3a4e9e12e9a1b27a33f"
+      },
+      {
+        "issue_id": 2003,
+        "template_id": 126,
+        "title": "浏览器品类验收",
+        "receive_type": 2,
+        "status": 1,
+        "total_count": 1,
+        "remain_count": 1,
+        "is_permanent": 0,
+        "start_time": null,
+        "end_time": null,
+        "issued_at": 1790502244,
+        "source_revision": "8681e19c814a99ce3bb2ffed69f8580e2560d09902e79cde4c7950ac54e89d70"
+      },
+      {
+        "issue_id": 2004,
+        "template_id": 126,
+        "title": "浏览器品类验收",
+        "receive_type": 1,
+        "status": 1,
+        "total_count": 1,
+        "remain_count": 1,
+        "is_permanent": 0,
+        "start_time": null,
+        "end_time": null,
+        "issued_at": 1790502581,
+        "source_revision": "8681e19c814a99ce3bb2ffed69f8580e2560d09902e79cde4c7950ac54e89d70"
+      }
+    ]
+  },
+  "permissions": {
+    "synthetic_modes": [
+      "all",
+      "reader",
+      "manager",
+      "publisher",
+      "mixed",
+      "existing"
+    ],
+    "settled_root_observations": {
+      "reader": "Detail only; no create/manage/publication controls.",
+      "manager": "Add/invalidate/delete with detail; no publication.",
+      "publisher": "No template.view: warning, no settled data requests.",
+      "mixed": "Detail/publication with view+issue.manage; no add/invalidate/delete.",
+      "existing": "Legacy issue permissions alone: no template.view, warning, no settled data requests.",
+      "all": "Full local template/publication controls; restored at end."
+    },
+    "transition_rejections": [
+      {
+        "index": 122,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates",
+        "query": "?page=1&limit=15&keyword=&status=1",
+        "role": "publisher",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400011
+        }
+      },
+      {
+        "index": 137,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates",
+        "query": "?page=1&limit=15&keyword=&status=1",
+        "role": "existing",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400011
+        }
+      }
+    ],
+    "transition_boundary": "Two separate token/session storage writes briefly allowed stale-view scheduling during role change; requests122/137 returned400011 without data. Do not claim denied views emitted zero GET over the entire transition or zero permission errors.",
+    "low_permission_business_writes": 0,
+    "menu_boundary": "Fixture returns a template navigation item to every role; browser warning/access checks are tested, not real server menu filtering or JWT authorization. Native/root permission evidence is separate."
+  },
+  "failures_and_cancellation": {
+    "injected_get_failures": [
+      {
+        "index": 151,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates",
+        "query": "?page=1&limit=15&keyword=&status=1",
+        "role": "all",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400
+        }
+      },
+      {
+        "index": 153,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates/options",
+        "query": "",
+        "role": "all",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400
+        }
+      },
+      {
+        "index": 172,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates/products",
+        "query": "?page=1&limit=15&keyword=",
+        "role": "all",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400
+        }
+      },
+      {
+        "index": 174,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates/123",
+        "query": "",
+        "role": "all",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400
+        }
+      },
+      {
+        "index": 177,
+        "method": "GET",
+        "path": "/adminapi/marketing/coupon-templates/123/issues",
+        "query": "?page=1&limit=15",
+        "role": "all",
+        "scope": "synthetic-local-memory",
+        "result": {
+          "status": 400
+        }
+      }
+    ],
+    "retry_success_indices": {
+      "list": 152,
+      "options": 155,
+      "products": 173,
+      "detail": 176,
+      "issues": 178
+    },
+    "root_observed": "Each of list/options/products/detail/issues presented a readable error and retry control. List/options succeeded on reread; detail/history retry succeeded. Product retry returned page1 but Root later canceled it, so no completed post-failure selection is claimed.",
+    "delayed_product": {
+      "index": 156,
+      "method": "GET",
+      "path": "/adminapi/marketing/coupon-templates/products",
+      "query": "?page=1&limit=15&keyword=",
+      "role": "all",
+      "scope": "synthetic-local-memory",
+      "delayed_ms": 2000,
+      "aborted": true
+    },
+    "delayed_product_root_observed": "Picker closed during delayed request, zero choices and zero late writes; editor reopened without stale selection.",
+    "final_warning_error_logs_root_reported": [],
+    "console_boundary": "Final dev.logs warn/error read was empty; intentional transport/query failures occurred earlier. This is not a claim of zero console errors in every phase."
+  },
+  "responsive": {
+    "actual_mobile_method": "Temporary CDP device metrics override; capability viewport setter390 had not affected the existing tab (DOM remained900).",
+    "saved_dom": {
+      "mainScroll": 311,
+      "mainWidth": 311,
+      "rootScroll": 390,
+      "rootWidth": 390,
+      "viewportHeight": 796,
+      "viewportWidth": 390
+    },
+    "page_horizontal_overflow_root_observed": false,
+    "boundary": "Desktop is the saved actual browser canvas; mobile DOM390 is confirmed independently of the scaled gray-padded compositor image. No real phone/device proof and no pristine mobile-photo claim.",
+    "screenshots": [
+      {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-history-20260927.jpg",
+        "bytes": 32867,
+        "sha256": "eafcf7ea9e0ccacb0d536f5add460b4190f7b5eacebdd526172d319b05954d32",
+        "actual_encoding": "image/jpeg",
+        "original_diagnostic_file": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-history-20260927.png",
+        "same_bytes_as_original": true,
+        "extension_note": "Copied byte-for-byte to correct .jpg suffix; original mislabeled .png retained unchanged.",
+        "width": 847,
+        "height": 764,
+        "independently_viewed": true,
+        "observation": "Independently viewed: template124, 8.50/30.00/7-day common scope and issue2001 10/10; Shanghai window09/28 00:00 to10/28 00:00. Image was captured before final invalidation, so its enabled issue label is historical."
+      },
+      {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-unknown-20260927.jpg",
+        "bytes": 41843,
+        "sha256": "9fee983f67079611ab62a91ba6238548d76ed0cc4778a90e767b189d19a77cf8",
+        "actual_encoding": "image/jpeg",
+        "original_diagnostic_file": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-unknown-20260927.png",
+        "same_bytes_as_original": true,
+        "extension_note": "Copied byte-for-byte to correct .jpg suffix; original mislabeled .png retained unchanged.",
+        "width": 847,
+        "height": 764,
+        "independently_viewed": true,
+        "observation": "Independently viewed: publication126 dialog shows operation-result-unconfirmed error and disabled fields/submit. The pending UUID and intent behind this modal are corroborated by Root CUA observation and request88, not fully visible in this screenshot."
+      },
+      {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-mobile-20260927.jpg",
+        "bytes": 8852,
+        "sha256": "d16059fe950155982c0847a0a508e9ec0e55182bfe4b1dd3b48c2a6069a1dcec",
+        "actual_encoding": "image/jpeg",
+        "original_diagnostic_file": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-mobile-20260927.png",
+        "same_bytes_as_original": true,
+        "extension_note": "Copied byte-for-byte to correct .jpg suffix; original mislabeled .png retained unchanged.",
+        "width": 390,
+        "height": 352,
+        "independently_viewed": true,
+        "observation": "Independently viewed: compositor scaling and gray padding. This390x352 JPEG is not a full390x796 device screenshot and does not establish a pristine real-device rendering. Separate saved DOM metrics establish bounded page width."
+      },
+      {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-desktop-20260927.jpg",
+        "bytes": 55490,
+        "sha256": "0d80a78cb564f78d54e69d8d21aa4b41bf9f6203232e19c2f2e4949caeb1bf3c",
+        "actual_encoding": "image/jpeg",
+        "original_diagnostic_file": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-browser-desktop-20260927.png",
+        "same_bytes_as_original": true,
+        "extension_note": "Copied byte-for-byte to correct .jpg suffix; original mislabeled .png retained unchanged.",
+        "width": 847,
+        "height": 764,
+        "independently_viewed": true,
+        "observation": "Independently viewed: readable catalog, filters and action controls; table columns extend inside their local horizontal-scroll region. Screenshot canvas847x764 is not a claimed1280-wide capture."
+      }
+    ]
+  },
+  "cleanup": {
+    "tabs_closed_root_reported": [
+      "11",
+      "12"
+    ],
+    "viewport_reset_root_reported": true,
+    "cdp_metrics_cleared_root_reported": true,
+    "pending_cleanup_server": false,
+    "confirmed": true,
+    "server_port": 5203,
+    "server_stop_owner": "/root",
+    "root_cleanup_record": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-final-cleanup-20260927.json",
+      "bytes": 306,
+      "sha256": "adeb2ec663aa5997b3d671a2f63e6ff92f84c3800c509345ed7e2efa8405b2b7"
+    },
+    "server_listen_zero_independently_verified": true,
+    "independent_listener_check": {
+      "reviewer": "/root/seckill_time_frontend",
+      "method": "netstat -ano -p tcp, exact local port and LISTENING-state match",
+      "owned_ports": [
+        5203,
+        53654,
+        64137,
+        62337,
+        60659,
+        54283,
+        50544,
+        62187
+      ],
+      "remaining_listeners": 0,
+      "permission_boundary": "Get-NetTCPConnection was denied in the default sandbox; read-only netstat succeeded without elevation."
+    },
+    "boundary": "Root stopped the owned server, closed tabs11/12 and restored viewport/CDP metrics. Independent reviewer also read exact8-port netstat with0 listeners. No production or unrelated service stopped."
+  },
+  "independent_review": {
+    "source_report": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-independent-review-20260927.md",
+      "bytes": 12131,
+      "sha256": "8e9c732df0943f4308c4a55a9a27fbcbdc55078804552e9d98fb474d46e4a5e8"
+    },
+    "additional_request_reviewer": "/root/seckill_time_frontend/parent_php_consumer",
+    "additional_request_review": "Independently confirmed178 contiguous unique request indices,66 business requests,10 writes/9 valid v4 UUIDs, exact74/75 replay body,88 truncated result,89–94 GET-only and122/137 read rejection. Ack UI behavior remains attributed to Root, not inferred solely from journal.",
+    "result": "No new blocker in final frozen FE wire after historical receive_type/is_permanent/status smallint read compatibility fix. Screenshot, journal and saved-memory boundaries recorded explicitly; no business source changed during evidence collection."
+  },
+  "open_real_environment_checks": [
+    "Real JWT permission/menu mapping in actual deployment",
+    "Actual PostgreSQL/proof/direct-guard integration evidence kept separate from this memory browser test",
+    "Real consumer claim/registration/gift channel behavior and claimed-coupon preservation",
+    "Provider or production delivery and real phone rendering"
+  ],
+  "evidence_byte_identity_note": "External acceptance file and repository audit copy are written from the same UTF8 bytes. Their SHA is reported outside the file to avoid self-referential hashes."
+}

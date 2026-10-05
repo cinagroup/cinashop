@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="people-page">
     <scroll-view scroll-x class="tabs" :show-scrollbar="false">
       <view class="tabs-row">
@@ -38,9 +39,11 @@
     <view v-else-if="finished && users.length" class="finished">没有更多了</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
 import { onLoad, onReachBottom } from "@dcloudio/uni-app";
 import {
@@ -159,14 +162,14 @@ onReachBottom(() => void load());
 .tabs-row { display: flex; min-width: max-content; padding: 0 20rpx; }
 .tab { position: relative; padding: 28rpx 34rpx 24rpx; color: #777; font-size: 28rpx; white-space: nowrap; }
 .tab.active { color: #222; font-weight: 700; }
-.tab.active::after { content: ""; position: absolute; left: 34rpx; right: 34rpx; bottom: 10rpx; height: 5rpx; border-radius: 3rpx; background: #e93323; }
+.tab.active::after { content: ""; position: absolute; left: 34rpx; right: 34rpx; bottom: 10rpx; height: 5rpx; border-radius: 3rpx; background: var(--view-theme, #e93323); }
 .people-list { display: flex; flex-direction: column; gap: 16rpx; }
 .person-card { display: flex; align-items: center; gap: 20rpx; min-width: 0; padding: 24rpx; border-radius: 18rpx; background: #fff; box-sizing: border-box; }
 .avatar { width: 96rpx; height: 96rpx; flex: 0 0 96rpx; border-radius: 50%; background: #eef0f3; }
 .person-main { flex: 1; min-width: 0; }
 .person-name { overflow: hidden; color: #222; font-size: 29rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .person-stats { margin-top: 12rpx; color: #999; font-size: 23rpx; }
-.follow-button { flex: 0 0 auto; min-width: 132rpx; margin: 0; padding: 0 18rpx; height: 58rpx; line-height: 56rpx; border: 0; border-radius: 30rpx; color: #fff; background: #e93323; font-size: 24rpx; }
+.follow-button { flex: 0 0 auto; min-width: 132rpx; margin: 0; padding: 0 18rpx; height: 58rpx; line-height: 56rpx; border: 0; border-radius: 30rpx; color: #fff; background: var(--view-theme, #e93323); font-size: 24rpx; }
 .follow-button::after { border: 0; }
 .follow-button.following { color: #777; background: #f1f2f4; }
 .empty, .loading, .finished { padding: 120rpx 20rpx; color: #999; text-align: center; font-size: 25rpx; }

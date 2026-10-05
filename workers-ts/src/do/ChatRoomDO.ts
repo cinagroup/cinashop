@@ -288,6 +288,10 @@ export class ChatRoomDO extends DurableObject<Env> {
     const toUid = await this.service().switchConversation(session, data.id ?? data.to_uid);
     const next = { ...session, toUid };
     ws.serializeAttachment(next);
+    if (toUid === 0) {
+      ws.send(JSON.stringify({ type: "mssage_num", data: { uid: 0, is_tourist: session.isTourist, num: 0, recored: {} } }));
+      return;
+    }
     const recipientRole = peerRole(session);
     try {
       await this.env.CHAT_ROOM
@@ -344,11 +348,13 @@ export class ChatRoomDO extends DurableObject<Env> {
       const session = await this.activeDeliverySession(socket, service);
       if (
         !session || session.principalUid !== message.to_uid
-        || session.isTourist !== message.is_tourist
+        || (session.role !== 2 && session.isTourist !== message.is_tourist)
       ) continue;
-      connected += 1;
-      const isViewing = session.toUid === message.uid;
-      if (isViewing) viewing += 1;
+      if (session.role === 2 && !await service.canDeliverConversation(
+        session, message.uid, message.is_tourist, message.recored.id,
+      )) continue;
+      const sameDomain = session.isTourist === message.is_tourist;
+      const isViewing = sameDomain && session.toUid === message.uid;
       try {
         socket.send(JSON.stringify(isViewing
           ? { type: "reply", data: message }
@@ -356,11 +362,16 @@ export class ChatRoomDO extends DurableObject<Env> {
               type: "mssage_num",
               data: {
                 uid: message.uid,
+                message_id: message.id,
                 is_tourist: message.is_tourist,
                 num: message.recored.mssage_num,
-                recored: message.recored,
+                // Cross-domain staff delivery is a list signal, never a chat body.
+                recored: sameDomain ? message.recored : { ...message.recored, message: "" },
               },
             }));
+        // Failed socket delivery cannot authorize the sender to clear unread.
+        connected += 1;
+        if (isViewing) viewing += 1;
       } catch {
         // The hibernation registry will discard closed sockets.
       }
@@ -398,14 +409,21 @@ export class ChatRoomDO extends DurableObject<Env> {
       : 2;
     let delivered = 0;
     const service = this.service();
-    const payload = JSON.stringify(event);
     for (const socket of this.ctx.getWebSockets()) {
       const session = await this.activeDeliverySession(socket, service);
       if (
         !session || session.role !== expectedRole
-        || session.isTourist !== event.data.is_tourist
+        || (session.role !== 2 && session.isTourist !== event.data.is_tourist)
       ) continue;
-      if (event.type === "transfer_out" && session.toUid === event.data.uid) {
+      const sameDomain = session.isTourist === event.data.is_tourist;
+      if (event.type === "transfer" && !await service.canDeliverConversation(
+        session, event.data.recored.to_uid, event.data.is_tourist, event.data.recored.id,
+      )) continue;
+      // A delayed transfer-out must not erase a newer assignment back to this staff member.
+      if (event.type === "transfer_out" && await service.canDeliverConversation(
+        session, event.data.uid, event.data.is_tourist,
+      )) continue;
+      if (event.type === "transfer_out" && sameDomain && session.toUid === event.data.uid) {
         session.toUid = 0;
         socket.serializeAttachment(session);
       } else if (event.type === "to_transfer") {
@@ -413,7 +431,10 @@ export class ChatRoomDO extends DurableObject<Env> {
         socket.serializeAttachment(session);
       }
       try {
-        socket.send(payload);
+        const projected = event.type === "transfer" && !sameDomain
+          ? { ...event, data: { ...event.data, recored: { ...event.data.recored, message: "" } } }
+          : event;
+        socket.send(JSON.stringify(projected));
         delivered += 1;
       } catch {
         // Closed connection.

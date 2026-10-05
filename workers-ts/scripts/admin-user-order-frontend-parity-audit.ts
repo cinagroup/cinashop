@@ -6,8 +6,19 @@ type Status = "candidate" | "partial" | "missing" | "retired";
 type Review = { status: Status; targetScreens: string[]; targetApis: string[]; covered: string[]; remaining: string[]; evidence: string[] };
 type InventoryRoute = { source: string; line: number; path: string; title: string | null; component: string; resolvedComponent: string | null; surface: string };
 const workerRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const inventoryFile = resolve(workerRoot, "audit/admin-frontend-inventory.json");
-const outputFile = resolve(workerRoot, "audit/admin-legacy-user-order-route-parity.json");
+// Pin this review batch to its own navigation snapshot; the prior accepted
+// inventory remains intact for historical acceptance capsules.
+const invoiceFollowupReview = process.argv.includes("--invoice-followup");
+const invoiceAdminReview = invoiceFollowupReview || process.argv.includes("--invoice-admin");
+const paidMembershipReview = invoiceAdminReview || process.argv.includes("--paid-membership");
+const inventoryName = invoiceFollowupReview ? "admin-frontend-inventory-invoice-followup-20260928.json"
+  : invoiceAdminReview ? "admin-frontend-inventory-invoice-admin-20260928.json"
+  : paidMembershipReview ? "admin-frontend-inventory-paid-membership-20260928.json" : "admin-frontend-inventory-20260928.json";
+const outputName = invoiceFollowupReview ? "admin-legacy-user-order-route-parity-invoice-followup-20260928.json"
+  : invoiceAdminReview ? "admin-legacy-user-order-route-parity-invoice-admin-20260928.json"
+  : paidMembershipReview ? "admin-legacy-user-order-route-parity-paid-membership-20260928.json" : "admin-legacy-user-order-route-parity-20260928.json";
+const inventoryFile = resolve(workerRoot, `audit/${inventoryName}`);
+const outputFile = resolve(workerRoot, `audit/${outputName}`);
 const oldRouterHashes: Record<string, string> = {
   "src/router/modules/user.js": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
   "src/router/modules/order.js": "e081f68ac965cc276ba83471482e3658496a3f711e86716c359e965d2b19aefd",
@@ -55,12 +66,16 @@ const screenFiles: Record<string, string> = {
   "/label": "view/admin-ts/src/pages/label/LabelList.vue",
   "/member": "view/admin-ts/src/pages/user/PaidMembership.vue",
   "/config/newcomer": "view/admin-ts/src/pages/config/NewcomerSettings.vue",
+  "/config/level-activation": "view/admin-ts/src/pages/config/LevelActivationSettings.vue",
+  "/config/paid-membership": "view/admin-ts/src/pages/config/PaidMembershipSettings.vue",
 };
 const screenPermissions: Record<string, string> = {
   "/order": "order.view", "/order/:orderId": "order.view", "/order/offline": "order.view",
   "/refund": "refund.view", "/operations/legacy-runtime": "legacy_runtime.view",
   "/user": "user.view", "/user/groups": "user.view", "/level": "level.view", "/label": "label.view",
   "/member": "paid_membership.view", "/config/newcomer": "config.view",
+  "/config/level-activation": "config.view",
+  "/config/paid-membership": "config.view",
 };
 const oldOrderApi = "cinashop-php/view/admin/src/api/order.js";
 const oldUserApi = "cinashop-php/view/admin/src/api/user.js";
@@ -155,11 +170,127 @@ add("/admin/vipuser/grade/agreement", "partial", ["/member"], ["GET /adminapi/me
 ], [
   "旧 WangEditor 富文本所见即所得编辑器未迁移，新页是纯文本域；历史 HTML 的编辑可用性与前台安全呈现需实际核验。",
 ], ["view/admin-ts/src/api/membership.ts"]);
-add("/admin/user/setup_user", "partial", ["/config/newcomer"], ["GET /adminapi/config/user/register", "POST /adminapi/config/user/register"], [
-  "新新人运营页覆盖登录注册方式、新人礼总开关/时效、赠送积分/余额/优惠券及首单优惠。",
+add("/admin/user/setup_user", "partial", ["/config/newcomer", "/config/level-activation"], [
+  "GET /adminapi/config/user/register", "POST /adminapi/config/user/register",
+  "GET /adminapi/config/level-activation", "GET /adminapi/config/level-activation/coupons", "POST /adminapi/config/level-activation",
 ], [
-  "旧同屏还编辑会员等级经验、会员卡激活与奖励、付费会员启用和价格展示；新页没有这些设置，不能把会员运营目录当作开关合同。",
-], ["view/admin-ts/src/api/newcomer.ts", "workers-ts/src/controllers/api/v1/AdminNewcomerController.ts"]);
+  "新人运营页覆盖登录注册方式、新人礼总开关/时效、赠送积分/余额/优惠券及首单优惠。",
+  "普通等级卡激活专页承接 member_func_status、level_activate_status、level_extend_info、level_integral_status、level_give_integral、level_money_status、level_give_money、level_coupon_status、level_give_coupon 九键；member_func_status 控制普通会员功能，不能缩写成仅赠礼开关。",
+  "激活资料从只读 user_extend_info 定义中选择并设置必填；已发行赠券使用独立分页选择器，保留已选历史项与诊断，发行 ID 不等于模板 ID。专用 API 使用 config.view/config.manage，不因旧用户设置菜单或 level.manage 自动授予配置权限。",
+  "配置按全局 sort/id 优先级读写生效行，保留门店、重复低优先行与非九键配置；版本确认、请求幂等和提交后缓存状态属于该激活子域合同，不提供任意配置键编辑。",
+  "本批原生 PostgreSQL16 已按独立 Admin/App LOGIN 验证九键保存、真实激活消费、权限、幂等、冲突、晚失败回滚与负天数赠券；前端构建及受控 API 草稿/选择测试已通过。",
+], [
+  "旧同屏的基础资料定义编辑、member_price_status、order_give_exp/sign_give_exp/invite_user_exp、付费会员启用与价格展示仍未由本激活九键页承接；整个用户设置页保持 partial，普通等级激活不等于 SVIP 权益。",
+  "真实浏览器交互、生产配置与角色、Linux、设备、外部渠道及发布尚未验收。配置变更不追改已激活用户、历史订单或已读取旧策略的在途激活。",
+], ["view/admin-ts/src/api/newcomer.ts", "workers-ts/src/controllers/api/v1/AdminNewcomerController.ts",
+  "view/admin-ts/src/api/levelActivation.ts", "workers-ts/src/controllers/api/v1/AdminLevelActivationController.ts",
+  "workers-ts/src/services/admin/AdminLevelActivationInput.ts", "workers-ts/src/services/admin/AdminLevelActivationService.ts",
+  "workers-ts/src/services/user/UserLevelService.ts", "workers-ts/src/services/user/RegistrationLevelActivation.ts",
+  "workers-ts/test/admin-level-activation-postgres.test.ts", "workers-ts/test/admin-level-activation-http.test.ts",
+  "workers-ts/test/admin-level-activation-frontend.test.ts"]);
+
+if (paidMembershipReview) {
+  screenFiles["/marketing/recharge-options"] = "view/admin-ts/src/pages/marketing/RechargeOptions.vue";
+  screenPermissions["/marketing/recharge-options"] = "recharge_quota.view";
+  reviews["/admin/user/recharge/:id"] = {
+    status: "partial",
+    targetScreens: ["/marketing/recharge-options"],
+    targetApis: [
+      "GET /adminapi/marketing/recharge-quotas", "GET /adminapi/marketing/recharge-quotas/:id",
+      "POST /adminapi/marketing/recharge-quotas", "PUT /adminapi/marketing/recharge-quotas/:id",
+      "PUT /adminapi/marketing/recharge-quotas/:id/status", "DELETE /adminapi/marketing/recharge-quotas/:id",
+    ],
+    covered: [
+      "旧充值路由复用 system/group/list；新充值档位页已承接 user_recharge_quota 组合数据的充值金额、赠送金额、排序、显隐及新增、编辑、删除，按 sort/id 倒序，并非新人赠余额或用户余额调整。",
+      "专用 REST 按 user_recharge_quota 名称解析唯一动态 gid，读写分别要求 recharge_quota.view/manage；写入使用 request_id、revision 和事务审计，套餐选取与充值订单金额快照使用同一事务锁，后续改价、下架或删除不改写已有订单。",
+    ],
+    remaining: [
+      "旧通用页提供显隐筛选和每页20条分页，新页固定读取第1页、最多100条并要求全量结果；尚无状态筛选或翻页控件，历史超过100条会拒绝展示而不是截断为全部。",
+      "旧路由 :id 接受 gid 并按组字段生成动态表头和表单；新页仅管理 user_recharge_quota，不承接任意 gid 或其他组合字段。充值子域已有页面不代表整个旧通用页面完成，故保持 partial。",
+      "真实充值配置与受限角色、完整 Linux CI、实际充值渠道及发布后验收仍待完成。",
+    ],
+    evidence: [
+      "cinashop-php/view/admin/src/pages/system/group/list.vue",
+      "cinashop-php/app/controller/admin/v1/system/config/SystemGroupData.php",
+      "cinashop-php/app/services/system/config/SystemGroupDataServices.php",
+      "cinashop-php/app/dao/system/config/SystemGroupDataDao.php",
+      "cinashop-php/app/services/user/UserRechargeServices.php",
+      "view/admin-ts/src/api/rechargeQuota.ts",
+      "workers-ts/src/controllers/api/v1/AdminRechargeQuotaController.ts",
+      "workers-ts/src/services/admin/AdminRechargeQuotaService.ts",
+      "workers-ts/src/services/payment/RechargeQuotaPolicy.ts",
+      "workers-ts/src/services/user/UserFinanceService.ts",
+      "workers-ts/test/admin-recharge-quota.test.ts",
+      "workers-ts/test/admin-recharge-quota-postgres.test.ts",
+      "workers-ts/test/admin-recharge-options-frontend.test.ts",
+    ],
+  };
+  const setup = reviews["/admin/user/setup_user"];
+  setup.targetScreens.push("/config/paid-membership");
+  setup.targetApis.push("GET /adminapi/config/paid-membership", "POST /adminapi/config/paid-membership");
+  setup.covered.push("付费会员旧tab的启用与会员价两开关由独立配置页承接；保存仅更新两个全局胜出键，消费者仍按各自业务条件解释权限及价格。");
+  setup.remaining = [
+    "旧同屏的基础资料定义编辑和 order_give_exp/sign_give_exp/invite_user_exp 尚未承接；member_price_status 在旧页无启用控件且 Worker 无消费者，仍待退役判断。整个用户设置页保持 partial，付费会员开关不等于已授予 vip_price 权益。",
+    "生产配置与真实角色、Linux、设备、外部渠道及发布尚未验收。配置变更不追改既有会员资格、历史订单或已产生支付义务的订单。",
+  ];
+  setup.evidence.push("view/admin-ts/src/api/paidMembershipConfig.ts", "workers-ts/src/controllers/api/v1/AdminPaidMembershipConfigController.ts");
+}
+
+if (invoiceAdminReview) {
+  screenFiles["/order/invoice"] = "view/admin-ts/src/pages/order/InvoiceManagement.vue";
+  screenPermissions["/order/invoice"] = "invoice.view";
+  reviews["/admin/order/invoice/list"] = {
+    status: "partial",
+    targetScreens: ["/order/invoice"],
+    targetApis: [
+      "GET /adminapi/order/invoices", "GET /adminapi/order/invoices/:id",
+      "POST /adminapi/order/invoices/:id/process",
+    ],
+    covered: [
+      "独立发票页按申请时间、状态与订单/用户/抬头字段分页查询，展示个人及企业发票资料、票面金额和订单摘要；当前页可导出旧八列语义的公式安全 CSV。",
+      "处理接口使用 invoice.view/manage 独立权限、版本和请求键，在事务内重验订单归属、支付、退款、票面净额及开票历史，并原子保存处理结果与审计。",
+    ],
+    remaining: [
+      "旧 chart 请求具备全量状态统计合同（模板未渲染）；同一弹窗内商品、收货、优惠等完整订单信息尚未由 invoice.view 独立提供，order.view 链接不算覆盖。",
+      "旧表格可对发票类型和抬头类型做当前页筛选，新页没有相应控件。",
+      "旧全字段搜索还触及邮箱、地址、银行及用户昵称/手机号；当前专用查询仅覆盖列出的七类字段，不能把旧 all 搜索视为完整迁移。",
+      "安装前没有创建基线的历史 0.00 申请无法证明安全金额，只读待人工核验；真实旧单、角色、税务渠道、退款并发及发布后验收仍待完成。整页保持 partial。",
+    ],
+    evidence: [
+      "cinashop-php/view/admin/src/pages/order/invoice/index.vue",
+      "cinashop-php/app/services/order/StoreOrderInvoiceServices.php",
+      "view/admin-ts/src/api/invoiceManagement.ts",
+      "workers-ts/src/controllers/api/v1/AdminInvoiceController.ts",
+      "workers-ts/src/services/admin/AdminInvoiceService.ts",
+      "workers-ts/test/admin-invoices-frontend.test.ts",
+    ],
+  };
+}
+
+if (invoiceFollowupReview) {
+  const invoice = reviews["/admin/order/invoice/list"];
+  invoice.targetApis.push("GET /adminapi/order/invoices/:id/order-info");
+  invoice.covered.push(
+    "invoice.view 可按申请行 ID 读取经过支付、UID、拆单根单和唯一有效申请复核的订单/收货/商品快照；不放宽通用 order.detail。旧票种与抬头过滤仅作用于当前已加载表格页，维持原页范围。",
+  );
+  invoice.remaining = [
+    "旧 chart 全量状态统计 API 仍未重建，但旧模板未渲染该数字；当前页计数不可冒充全量统计。",
+    "旧 all 搜索包括邮箱、地址、银行及用户昵称/手机号；目前服务端范围更窄，发票页仍为 partial。",
+    "安装前没有创建基线的历史 0.00 申请无法证明安全金额，只读待人工核验；真实旧单、角色、税务渠道、退款并发及发布后验收仍待完成。",
+  ];
+  invoice.evidence.push("workers-ts/test/admin-invoice-postgres.test.ts");
+  const record = reviews["/admin/vipuser/grade/record"];
+  record.status = "candidate";
+  record.covered = [
+    "新会员记录 tab 分页显示已支付购买记录、用户/订单/套餐/金额/渠道/脱敏卡号、购买及到期时间，可按姓名、支付方式、会员类型和上海时间区间筛选。",
+    "卡密和免费类型按旧 code 是否存在区分；免费支付匹配旧订单类型与赠送条件，类型选项从所有启用套餐分页获取。",
+  ];
+  record.remaining = [
+    "历史会员记录、免费/卡密边界与受限角色仍需在生产只读核对；候选表示本地合同覆盖，不表示发布或渠道验收。",
+  ];
+  record.evidence.push("view/admin-ts/src/pages/user/PaidMembership.vue", "workers-ts/src/services/user/AdminPaidMembershipService.ts",
+    "workers-ts/test/admin-paid-membership-record-postgres.test.ts");
+}
 
 const inventory = JSON.parse(readFileSync(inventoryFile, "utf8")) as {
   legacy: { routes: InventoryRoute[]; routeFiles: { file: string; sha256: string }[] };
@@ -190,6 +321,12 @@ for (const action of ["execute/:id", "receipt"]) {
 function evidenceExists(file: string): boolean { return file.startsWith("cinashop-php/") || existsSync(resolve(workerRoot, "..", file)); }
 function apiPermission(api: string): string {
   const [method, path] = api.split(" ");
+  if (invoiceAdminReview && (path === "/adminapi/order/invoices" || path.startsWith("/adminapi/order/invoices/"))) {
+    return `invoice.${method === "GET" ? "view" : "manage"}`;
+  }
+  if (paidMembershipReview && (path === "/adminapi/marketing/recharge-quotas" || path.startsWith("/adminapi/marketing/recharge-quotas/"))) {
+    return `recharge_quota.${method === "GET" ? "view" : "manage"}`;
+  }
   const domain = path.startsWith("/adminapi/order/") ? "order"
     : path.startsWith("/adminapi/refund/") ? "refund"
       : path.startsWith("/adminapi/queue/") ? "legacy_runtime"
@@ -197,7 +334,9 @@ function apiPermission(api: string): string {
           : path.startsWith("/adminapi/user_label/") ? "label"
             : path.startsWith("/adminapi/level/") ? "level"
               : /^\/adminapi\/(member\/|member_|member)/u.test(path) ? "paid_membership"
-                : path.startsWith("/adminapi/config/user/") ? "config" : null;
+                : path.startsWith("/adminapi/config/user/")
+                  || path === "/adminapi/config/level-activation" || path === "/adminapi/config/level-activation/coupons"
+                  || path === "/adminapi/config/paid-membership" ? "config" : null;
   if (!domain) throw new Error(`Unmapped user/order API permission: ${api}`);
   return `${domain}.${method === "GET" ? "view" : "manage"}`;
 }
@@ -227,11 +366,17 @@ const routes = legacyRoutes.map((route) => {
 const statuses: Status[] = ["candidate", "partial", "missing", "retired"];
 const counts = Object.fromEntries(statuses.map((status) => [status, routes.filter((route) => route.status === status).length]));
 const report = {
-  version: 1, generatedFrom: "audit/admin-frontend-inventory.json",
+  version: 1, generatedFrom: `audit/${inventoryName}`,
   methodology: {
     scope: "Only the 12 user.js and 6 order.js surface=page routes in the authoritative 274-page inventory; auxiliary components are excluded.",
     reviewBasis: "Compare each pinned old Vue component, auth and API workflow with the new Admin screen, Worker route, data contract and permission map. Old router/auth/line evidence is a static reviewed snapshot; CI reads only this repository. A shared page, API-only stub or legacy mutation route returning 410 does not establish full parity. Security improvements that remove plaintext card-password retrieval are recorded as intentional differences.",
-    validationBoundary: "Code-only semantic review. No production payment, refund, old card recovery, real-role browser E2E, deployment or publication is claimed. FE-001D remains open.",
+    validationBoundary: invoiceFollowupReview
+      ? "Local code and PostgreSQL evidence only. Historical invoice rows without a creation baseline, broad legacy invoice search, real-role and production invoice/tax E2E, deployment and publication remain open. FE-001D is a code-audit scope, not a feature completion claim."
+      : invoiceAdminReview
+      ? "Local code, PostgreSQL and synthetic browser evidence only. Historical invoice rows without a creation baseline, full invoice-scoped order detail, real-role and production invoice/tax E2E, deployment and publication remain open. FE-001D is a code-audit scope, not a feature completion claim."
+      : paidMembershipReview
+      ? "Code and local tests only. No production payment, refund, old card recovery, real-role browser E2E, deployment or publication is claimed. FE-001D remains open."
+      : "Code-only semantic review. No production payment, refund, old card recovery, real-role browser E2E, deployment or publication is claimed. FE-001D remains open.",
   },
   summary: { legacyRoutes: routes.length, reviewed: routes.length, bySource, ...counts, unreviewed: 0 }, routes,
 };

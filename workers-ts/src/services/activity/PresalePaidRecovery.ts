@@ -3,7 +3,8 @@ import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderRefundSplit, user } from '@/models/schema';
 import type { SupplierAllocationResult } from '@/services/order/OrderSupplierAllocationService';
 import { refundOrderSplitFingerprint } from '@/services/order/RefundOrderSplitIdentity';
-import { readRefundQuantityReservation } from '@/services/order/RefundQuantityReservation';
+import { readRefundQuantityReservation,refundClaimCartKey,CUSTOMER_ROW_REFUND_VERSION } from '@/services/order/RefundQuantityReservation';
+import {readPurchaseQuotaRefundFamily,type PurchaseQuotaRefundReceipt} from '@/services/order/PurchaseQuotaRefundReceipt';
 import { readRefundGenerationMarker } from '@/services/order/RefundGenerationMarker';
 import { parseSecondCardValiditySnapshot } from '@/services/order/SecondCardValidityService';
 import { presaleDispatchBoundary } from './PresaleFulfillmentSnapshot';
@@ -20,7 +21,8 @@ function integer(value: unknown, min = 0): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < min || value > 2147483647) throw invalid();
   return value;
 }
-function cartId(value: unknown): string {
+function cartId(value: unknown,proof?:string): string {
+  if(proof!==undefined&&value===proof&&typeof value==='string'&&value&&value===value.trim()&&Array.from(value).length<=128&&!/[\u0000-\u001f\u007f]/.test(value))return value;
   if (typeof value !== 'string' || !/^[1-9]\d{0,9}$/.test(value) || Number(value) > 2147483647) throw invalid();
   return value;
 }
@@ -38,24 +40,29 @@ export interface PresalePaidRecovery {
   refundIds: ReadonlySet<number>;
 }
 
-async function line(value: unknown, order: Order): Promise<Line> {
+async function line(value: unknown, order: Order,proofs:readonly PurchaseQuotaRefundReceipt[]): Promise<Line> {
   const row = object(value), raw = row.cartInfo;
   const quantity = integer(row.cartNum, 1), productId = integer(row.productId, 1);
   if (quantity > 32767 || row.oid !== order.id || row.uid !== order.uid || row.productType !== order.productType
     || typeof raw !== 'string' || typeof row.skuUnique !== 'string' || !/^[A-Za-z0-9_-]{1,255}$/.test(row.skuUnique)
     || typeof row.oldCartId !== 'string') throw invalid();
-  if (row.oldCartId) cartId(row.oldCartId);
+  const bindings=proofs.filter(x=>x.rowNamespace).flatMap(x=>x.lines.flatMap(part=>[
+    {id:part.sourceRowId,key:part.sourceCartId,old:part.sourceOldCartId},
+    ...(part.selectedRowId===null?[]:[{id:part.selectedRowId,key:x.disposition==='whole'?part.sourceCartId:String(part.selectedRowId),old:x.disposition==='whole'?part.sourceOldCartId:part.sourceOldCartId||part.sourceCartId}]),
+    ...(part.remainingRowId===null?[]:[{id:part.remainingRowId,key:x.remainingOrderId===x.sourceOrderId?part.sourceCartId:String(part.remainingRowId),old:x.remainingOrderId===x.sourceOrderId?part.sourceOldCartId:part.sourceOldCartId||part.sourceCartId}])
+  ])),proof=bindings.find(x=>x.id===row.id&&x.key===row.cartId&&x.old===row.oldCartId);
+  if (row.oldCartId) cartId(row.oldCartId,proof?.old);
   const end = presaleDispatchBoundary(raw, productId);
   const validity = order.productType === 4 ? parseSecondCardValiditySnapshot(raw) : null;
   if (order.productType === 4 && !validity) throw invalid();
   const contract = order.productType === 1 ? await presaleDeliveryContractDigest(raw, productId, row.skuUnique)
     : JSON.stringify([productId, row.skuUnique, order.productType, end, validity]);
-  return { id: integer(row.id, 1), cartId: cartId(row.cartId), oldCartId: row.oldCartId,
+  return { id: integer(row.id, 1), cartId: cartId(row.cartId,proof?.key), oldCartId: row.oldCartId,
     productId, skuUnique: row.skuUnique, quantity, contract };
 }
-async function lines(values: unknown, order: Order): Promise<Map<number, Line>> {
+async function lines(values: unknown, order: Order,proofs:readonly PurchaseQuotaRefundReceipt[]): Promise<Map<number, Line>> {
   if (!Array.isArray(values) || !values.length || values.length > MAX_LINES) throw invalid();
-  const parsed = await Promise.all(values.map(value => line(value, order)));
+  const parsed = await Promise.all(values.map(value => line(value, order,proofs)));
   if (new Set(parsed.map(row => row.id)).size !== parsed.length || new Set(parsed.map(row => row.cartId)).size !== parsed.length) throw invalid();
   return new Map(parsed.map(row => [row.id, row]));
 }
@@ -94,6 +101,8 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
   if (new Set(family.map(order => order.orderId)).size !== family.length || family.some(order => order.uid !== root.uid
     || order.type !== 6 || order.productType !== root.productType || order.paid !== 1 || order.payType !== root.payType
     || order.payTime !== root.payTime || order.supplierAllocationStatus !== 2 || order.isDel || order.isSystemDel)) throw invalid();
+  const namespaceCandidates=await tx.select({storeOrderId:storeOrderRefund.storeOrderId,uid:storeOrderRefund.uid,refundNum:storeOrderRefund.refundNum,cartInfo:sql<string|null>`CASE WHEN octet_length(${storeOrderRefund.cartInfo})<=65536 AND SUM(octet_length(${storeOrderRefund.cartInfo})::bigint) OVER()<=8388608 THEN ${storeOrderRefund.cartInfo} END`}).from(storeOrderRefund).where(inArray(storeOrderRefund.id,history.map(x=>x.refundId))).limit(202);
+  const customerRows=namespaceCandidates.some(x=>readRefundQuantityReservation(x)?.version===CUSTOMER_ROW_REFUND_VERSION),namespaceProofs=customerRows?await readPurchaseQuotaRefundFamily(tx,{paymentOrderId:root.id,buyerId:root.uid}):[];
   const ids = family.map(order => order.id);
   const totalBytes = sql`(SELECT COALESCE(SUM(octet_length(cart_info)::bigint),0) FROM ${storeOrderCartInfo}
     WHERE oid IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)}))`;
@@ -104,7 +113,7 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
     .limit((MAX_ORDERS + 1) * MAX_LINES + 1).for('update', { noWait: true });
   if (carts.length > (MAX_ORDERS + 1) * MAX_LINES || carts.some(row => row.cartInfo === null)) throw invalid();
   const currentLines = new Map<number, Map<number, Line>>();
-  for (const order of family) currentLines.set(order.id, await lines(carts.filter(row => row.oid === order.id), order));
+  for (const order of family) currentLines.set(order.id, await lines(carts.filter(row => row.oid === order.id), order,namespaceProofs));
   const rootLines = currentLines.get(root.id)!;
   if (quantity(rootLines) !== root.totalNum) throw invalid();
   const [buyer] = await tx.select({ uid: user.uid }).from(user).where(eq(user.uid, root.uid)).limit(1).for('update', { noWait: true });
@@ -130,7 +139,7 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
       const snapshot = object(snapshots.find(row => row.refundId === receipt.refundId)?.value), source = object(snapshot.source);
       if (snapshot.version !== 'refund-order-materialization-v1' || ['id','orderId','uid','supplierId','storeId','type','productType','paid','payType','payTime']
         .some(key => source[key] !== object(order)[key])) throw invalid();
-      initialLines = await lines(snapshot.carts, order);
+      initialLines = await lines(snapshot.carts, order,namespaceProofs);
       if (quantity(initialLines) !== source.totalNum) throw invalid();
     }
     nodes.set(order.id, { order, lines: initialLines, marker: null, previous: 0 });
@@ -164,7 +173,7 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
       || await refundOrderSplitFingerprint(refund) !== receipt.fingerprint || !Array.isArray(receipt.partitions)
       || receipt.partitions.length !== node.lines.size) throw invalid();
     const whole = receipt.disposition === 'whole', selected = new Map<number, Line>(), remaining = new Map<number, Line>();
-    const seen = new Set<number>(), claims = new Map<number, { cartId: number; quantity: number; total: number }>();
+    const seen = new Set<number>(), claims = new Map<number, { cartId: string; quantity: number; total: number }>();
     for (const raw of receipt.partitions) {
       const part = object(raw), sourceId = integer(part.sourceRowId, 1), source = node.lines.get(sourceId);
       const take = integer(part.selectedNum), leave = integer(part.remainingNum);
@@ -175,7 +184,7 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
         if (selected.has(id) || (whole ? id !== sourceId : node.lines.has(id))) throw invalid();
         selected.set(id, { ...source, id, quantity: take, cartId: whole ? source.cartId : String(id),
           oldCartId: whole ? source.oldCartId : source.oldCartId || source.cartId });
-        claims.set(sourceId, { cartId: Number(source.cartId), quantity: take, total: source.quantity });
+        claims.set(sourceId, { cartId: source.cartId, quantity: take, total: source.quantity });
       } else if (part.selectedRowId !== null) throw invalid();
       if (leave) {
         const id = integer(part.remainingRowId, 1), reused = receipt.remainingOrderId === node.order.id;
@@ -188,7 +197,7 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
     if (!selected.size || [...selected.keys()].some(id => remaining.has(id)) || !claim || claim.items.length !== claims.size
       || refund.refundNum !== quantity(selected) || claim.items.some(item => {
         const expected = claims.get(item.rowId);
-        return !expected || item.beforeRefundNum !== 0 || item.cartId !== expected.cartId || item.cartNum !== expected.quantity || item.totalNum !== expected.total;
+        return !expected || item.beforeRefundNum !== 0 || refundClaimCartKey(item) !== expected.cartId || item.cartNum !== expected.quantity || item.totalNum !== expected.total;
       })) throw invalid();
     const selectedOrder = orders.get(receipt.selectedOrderId);
     if (!selectedOrder || selectedOrder.refundStatus !== 2 || selectedOrder.refundType !== 6 || selectedOrder.refundPrice !== refund.refundedPrice
@@ -226,7 +235,7 @@ export async function preparePresalePaidRecovery(tx: DbClient, paymentOrderId: n
       if (!claim) throw invalid();
       for (const item of claim.items) {
         const row = actual.get(item.rowId);
-        if (!row || item.beforeRefundNum !== 0 || item.totalNum !== row.quantity || String(item.cartId) !== row.cartId) throw invalid();
+        if (!row || item.beforeRefundNum !== 0 || item.totalNum !== row.quantity || refundClaimCartKey(item) !== row.cartId) throw invalid();
         reserved.set(item.rowId, item.cartNum);
       }
     }

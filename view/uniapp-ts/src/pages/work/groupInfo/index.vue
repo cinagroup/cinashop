@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="work-page">
     <!-- #ifdef H5 -->
     <view v-if="access.error.value || error" class="notice error" role="alert">{{ access.error.value || error }}<button @tap="refresh">重新授权或重试</button></view>
@@ -19,9 +20,11 @@
     <!-- #endif -->
     <!-- #ifndef H5 --><view class="notice">企业微信工作台仅支持 H5 侧边栏。</view><!-- #endif -->
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onLoad, onReachBottom, onUnload } from "@dcloudio/uni-app";
 import { getWorkGroupInfo, getWorkGroupMembers, type WorkGroupInfo, type WorkGroupMember } from "@/api/work";

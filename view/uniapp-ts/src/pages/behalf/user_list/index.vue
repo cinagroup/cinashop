@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="assisted-page">
     <view class="eyebrow">管理员 · 代客下单</view><view class="title">选择买家</view>
     <view class="hint">管理会话与商城会员登录独立，仅在本次应用运行中保留。</view>
@@ -41,8 +42,10 @@
     <view class="hint footer">当前已接入选客、选品、购物车及确认订单；收银、代客系统表单及旧版高级筛选仍在迁移中。</view>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useAssistedBuyers } from '@/composables/useAssistedBuyers';
 const { session, draft, canRead, canSelect, account, password, loginBusy, loginError, keyword, items, loading, loaded,
   error, selectionError, selecting, hasMore, login, logout, load, select, openCart } = useAssistedBuyers();

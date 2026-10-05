@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view class="form-section">
       <view class="form-title">设置支付密码</view>
@@ -8,8 +9,10 @@
       <view class="submit-btn" @tap="save">确认设置</view>
     </view>
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { reactive } from "vue";
 import { http } from "@/utils/request";
 const form = reactive({ password: "", confirm: "" });
@@ -31,5 +34,5 @@ async function save() {
 .form-title { font-size: 32rpx; font-weight: 600; margin-bottom: 30rpx; }
 .form-input { background: #f7f7f7; border-radius: 12rpx; padding: 24rpx; margin-bottom: 20rpx; font-size: 30rpx; letter-spacing: 8rpx; }
 .tips { font-size: 22rpx; color: #999; margin-bottom: 30rpx; }
-.submit-btn { background: #e93323; color: #fff; text-align: center; padding: 24rpx; border-radius: 44rpx; font-size: 30rpx; }
+.submit-btn { background: var(--view-theme, #e93323); color: #fff; text-align: center; padding: 24rpx; border-radius: 44rpx; font-size: 30rpx; }
 </style>

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="refund-list">
     <scroll-view scroll-x class="filters"><view class="filter-row">
       <button v-for="item in refundFilters" :key="item.key" size="mini" :class="{ active: state.filter === item.key }"
@@ -24,8 +25,10 @@
     <view v-else-if="state.ready && list.length" class="count">已加载全部匹配记录</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useRefundRecords } from '@/composables/useRefundRecords';
 import { refundFilters, refundStatus, refundTime } from '../../../../common/refundRecords';
 defineOptions({ inheritAttrs: false });
@@ -34,7 +37,7 @@ const { auth, state, list, search, busy, routeError, navigationError, load, goDe
 <style scoped>
 .refund-list { padding: 20rpx; overflow-wrap: anywhere; }
 .filter-row { display: flex; gap: 12rpx; width: max-content; padding: 12rpx 0; }
-.filter-row button { flex: none; margin: 0; } .filter-row .active { color: #e93323; background: #fff0ed; }
+.filter-row button { flex: none; margin: 0; } .filter-row .active { color: var(--view-theme, #e93323); background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); }
 .tools { display: flex; gap: 16rpx; margin: 16rpx 0; align-items: center; }
 .tools input { flex: 1; min-width: 0; background: white; padding: 16rpx; font-size: 26rpx; }
 .tools button { flex: none; margin: 0; }

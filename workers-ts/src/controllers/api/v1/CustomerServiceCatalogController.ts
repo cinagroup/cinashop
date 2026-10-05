@@ -60,6 +60,23 @@ export async function adminSpeechcraftCategories(c: C) {
   return jsonOk(c, await service(c).speechcraftCategories(0));
 }
 
+export async function adminSpeechcraftCategoryCreate(c: C) {
+  return jsonOk(c, await service(c).saveSpeechcraftCategory(0, 0, await body(c)), "添加分类成功");
+}
+
+export async function adminSpeechcraftCategoryUpdate(c: C) {
+  return jsonOk(
+    c,
+    await service(c).saveSpeechcraftCategory(0, positiveId(c.req.param("id")), await body(c)),
+    "修改分类成功",
+  );
+}
+
+export async function adminSpeechcraftCategoryDelete(c: C) {
+  await service(c).deleteSpeechcraftCategory(0, positiveId(c.req.param("id")));
+  return jsonOk(c, null, "删除分类成功");
+}
+
 export async function adminSpeechcraftDetail(c: C) {
   return jsonOk(c, await service(c).speechcraftDetail(0, positiveId(c.req.param("id"))));
 }

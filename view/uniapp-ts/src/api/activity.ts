@@ -4,6 +4,35 @@
 import { http } from "@/utils/request";
 import type { PageResult } from "@/types/api";
 import type { GoodsItem } from "@/types/product";
+import { integralActivityId, parseIntegralDetail, type IntegralDetail } from '../../../common/integralPurchase';
+import { parseActivityDetailProjection,type ActivityDetailProjection } from './productDetailDesign';
+
+export type { IntegralDetail, IntegralSku } from '../../../common/integralPurchase';
+export type IntegralDisplayDetail=IntegralDetail & {detailDisplay:ActivityDetailProjection};
+export async function apiIntegralDetail(id: number): Promise<IntegralDisplayDetail> {
+  integralActivityId(String(id));
+  const raw=await http.get<unknown>(`/store_integral/detail/${id}`),selection=parseIntegralDetail(raw,id);
+  const content={description:selection.storeInfo.description,ensure:selection.storeInfo.ensure,specs:selection.storeInfo.specs,images:selection.storeInfo.images};
+  return {...selection,detailDisplay:parseActivityDetailProjection(raw,selection.storeInfo.productId,content,1000)};
+}
+export async function apiIntegralCollect(productId: number, collected: boolean): Promise<void> {
+  integralActivityId(String(productId));
+  if (collected) {
+    const result = await http.post<unknown>('/collect/del', { id: [productId], category: 'product' });
+    if (result !== null) throw new Error('取消收藏结果无效，请重新读取商品');
+  } else {
+    const result = await http.post<unknown>('/collect/add', { id: [productId], category: 'product' });
+    if (!result || typeof result !== 'object' || Array.isArray(result) || ![0, 1].includes((result as { count?: number }).count ?? -1)) throw new Error('收藏结果无效，请重新读取商品');
+  }
+}
+export async function apiIntegralCollectState(productId: number): Promise<boolean> {
+  integralActivityId(String(productId));
+  const value = await http.get<unknown>(`/product/detail/${productId}`);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('收藏状态格式错误');
+  const row = value as { id?: unknown; userCollect?: unknown };
+  if (row.id !== productId || ![true, false, 0, 1].includes(row.userCollect as boolean | number)) throw new Error('收藏状态与关联商品不匹配');
+  return row.userCollect === true || row.userCollect === 1;
+}
 
 export interface ActivityPageParams {
   page?: number;

@@ -1,10 +1,11 @@
 <template>
+  <ThemePage>
   <view class="seckill-detail">
     <view v-if="loading" class="notice">正在加载活动规格…</view>
     <view v-if="error" class="error">{{ error }}</view>
     <button v-if="!prepared" size="mini" :disabled="loading || locked" @tap="load">刷新活动与规格</button>
     <view v-if="detail" class="product">
-      <image class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
+      <ProductMedia :images="activityGallery" video="" :picture-config="detail.detailDisplay.data.design.pictureConfig" :dots="detail.detailDisplay.data.design.swiperDot" :active="activityVisible"/><view v-if="!detail.detailDisplay.data.configured" class="notice">当前使用默认活动详情布局</view>
       <view class="info-section">
         <view class="goods-name">{{ detail.title }}</view>
         <view class="notice">{{ open ? detail.schedule.message : detail.schedule.state === 'active' ? '当前场次已变化，请刷新活动' : detail.schedule.message }}</view>
@@ -23,13 +24,24 @@
         <view class="notice">库存和限购余量尚未预留，最终金额及购买资格由服务端重新校验。</view>
       </view>
     </view>
-    <view class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '立即抢购' }}</button></view>
+    <ActivityDetailContent v-if="detail" :data="detail.detailDisplay.data" :product-id="detail.product_id" :active="activityVisible"/>
+    <view class="action-bar"><ActivityDetailMenu v-if="detail" :menu="detail.detailDisplay.data.design.menuList" :product-id="detail.product_id" :path="'/pages/activity/seckillDetail?id='+detail.seckill_id" :title="detail.title" :image="detail.image" :active="activityVisible"/><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '立即抢购' }}</button></view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+import ProductMedia from '@/components/productDetail/ProductMedia.vue';
+import ActivityDetailContent from '@/components/productDetail/ActivityDetailContent.vue';
+import ActivityDetailMenu from '@/components/productDetail/ActivityDetailMenu.vue';
+import { useActivityDetailDesign,useActivityDetailShare } from '@/composables/useActivityDetailDesign';
+const {activityVisible}=useActivityDetailDesign(false);
+import {computed} from 'vue';
 import { useSeckillPurchase } from '@/composables/useSeckillPurchase';
 const { detail, selected, quantity, selectedSku, loading, buying, navigating, error, open, locked, canBuy, prepared, choose, load, purchase } = useSeckillPurchase();
+const activityGallery=computed(()=>detail.value?Array.from(new Set([selectedSku.value?.image||detail.value.image,...detail.value.detailDisplay.images].filter(Boolean))):[]);
+useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/seckillDetail?id=${detail.value.seckill_id}`,image:selectedSku.value?.image||detail.value.image}:null,()=>activityVisible.value);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 function setQuantity(event: unknown) {
   const payload = event as { detail?: { value?: unknown }; target?: { value?: unknown } };
@@ -49,11 +61,11 @@ function setQuantity(event: unknown) {
 .error { padding: 20rpx; color: #a72823; background: #fff0ed; margin-bottom: 20rpx; }
 .section-title { margin-top: 24rpx; font-size: 28rpx; }
 .sku { margin-top: 16rpx; font-size: 26rpx; }
-.sku.selected { color: #ad261d; border: 2rpx solid #e93323; }
-.price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }
+.sku.selected { color: var(--view-theme, #e93323); border: 2rpx solid var(--view-theme, #e93323); }
+.price { color: var(--view-priceColor, #e93323); margin: 24rpx 0; font-size: 34rpx; }
 .quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; }
 .quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
 .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
-.buy-btn { background: #e93323; color: white; font-size: 30rpx; }
+.buy-btn { background: var(--view-theme, #e93323); color: white; font-size: 30rpx; }
 .buy-btn[disabled] { background: #eee; color: #777; }
 </style>

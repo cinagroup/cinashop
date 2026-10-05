@@ -69,7 +69,7 @@ async function markRead() {
 function refreshVisible() { if (!document.hidden) void load(false, true); }
 function expire() { reset(); void router.replace("/login"); }
 watch(unreadOnly, () => { void load(); });
-watch(() => auth.token, () => { reset(); if (!preview && auth.token) void load(); }, { flush: 'sync' });
+watch(() => [auth.token, auth.generation], () => { reset(); if (!preview && auth.token) void load(); }, { flush: 'sync' });
 watch(() => notices.version, () => {
   if (notices.state === 'denied') { reset(); fail(); } else refreshVisible();
 }, { immediate: true });

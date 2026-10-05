@@ -1,0 +1,354 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T03:35:01.346Z",
+  "state": "local_candidate_accepted_on_frozen_inputs_not_released",
+  "scope": {
+    "parentEntity": "store_activity type1",
+    "childEntity": "store_seckill",
+    "slotEntity": "store_seckill_time",
+    "restOperations": 9,
+    "workerRegistrations": 18,
+    "newMigrations": false,
+    "externalMigrations": 169,
+    "embeddedMigrations": 174,
+    "fixtureTables": 279,
+    "productionConnected": false,
+    "liveGrantsApplied": false
+  },
+  "native": {
+    "files": 6,
+    "uniquePassed": 99,
+    "newFiles": 5,
+    "newUniquePassed": 69,
+    "existingLoginRegression": 30,
+    "failed": 0,
+    "skipped": 0,
+    "method": "Per-file accepted results on unchanged inputs; intermediate failed batches are retained and never counted as whole green runs.",
+    "selectedFiles": [
+      {
+        "path": "workers-ts/test/runtime-seckill-schedule-lock.test.ts",
+        "sha256": "36f52bcd5093218d4e796445911e631c9823c5e87d4f388882aa0e3e517a255a",
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "group": "permissions",
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-role-native-20260927.log",
+          "sha256": "09a1eaeba8a4a9bc05239d360faceb7f68f2a4c43cceabbda56a4e5994ec0af3"
+        }
+      },
+      {
+        "path": "workers-ts/test/runtime-seckill-parent-privileges.test.ts",
+        "sha256": "bc042f0268ee1946086c5cc0d8a4cdbbb3a9453ac412bf3c5e156121ee7dddcd",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "group": "permissions",
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-role-native-20260927.log",
+          "sha256": "09a1eaeba8a4a9bc05239d360faceb7f68f2a4c43cceabbda56a4e5994ec0af3"
+        }
+      },
+      {
+        "path": "workers-ts/test/admin-seckill-activity.test.ts",
+        "sha256": "74a92c58fa10a5c6f552b0c4b291bdc42706f2fbfd6d2de9cb4e8572e6249147",
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0,
+        "group": "business",
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-business-native-20260927-final.log",
+          "sha256": "a583fd224a78f74177b7d866c10180e4e7f901187ec818915cd7a8c80d3bcf14"
+        }
+      },
+      {
+        "path": "workers-ts/test/admin-seckill-activity-postgres.test.ts",
+        "sha256": "04a728f9aa7897f53aa039fb1bd91322e947cca0fb9e32f951c085751c17be84",
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0,
+        "group": "business",
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-business-native-20260927-final.log",
+          "sha256": "a583fd224a78f74177b7d866c10180e4e7f901187ec818915cd7a8c80d3bcf14"
+        }
+      },
+      {
+        "path": "workers-ts/test/seckill-runtime-login.test.ts",
+        "sha256": "79d5db92c744a1a2339843dfe3f54213bf83d0af7fba8a99e4e757703cbe42e4",
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "group": "actualLogin",
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-actual-login-20260927-final.log",
+          "sha256": "e13551eaea0d204c27614a9c69059d6499ba49c8da2fef778b61ee946d3eedc5"
+        }
+      },
+      {
+        "path": "workers-ts/test/runtime-business-login.test.ts",
+        "sha256": "67e842a68001b01527fd9d6b87b2473f6dc999fd74cd34b787693664059a3901",
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "group": "existingLogin",
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-existing-login-20260927-final.log",
+          "sha256": "72ba63816492ce8da1672bf6e7a256b652b09f6cef37b7b29cafda781a620b79"
+        }
+      }
+    ],
+    "permissionEvidence": {
+      "path": "workers-ts/audit/seckill-runtime-privileges-20260927.json",
+      "sha256": "2068c234ea419afa0d42b6081087891f8d15422303fc28cde3abefa01bdb01d2"
+    },
+    "businessEvidence": {
+      "path": "workers-ts/audit/seckill-parent-business-20260927.json",
+      "sha256": "b2e62aa94b8ec11254e72ac2ab1f15596f7c860939bd1f8992a9f0703aa89f81"
+    },
+    "actualRestrictedLogin": {
+      "passed": 11,
+      "noSetRole": true,
+      "commissionedExactProfiles": true,
+      "providerIO": false,
+      "syntheticEndUserAndSequenceDO": true,
+      "cases": [
+        "old SELECT-only and each missing lock authority reject42501 without mutation",
+        "Hono confirm/create/idempotent replay/cancel or delete with and without linked parent",
+        "platform and supplier Admincreate→appbuy→totalquota adjust→retire→appcancel preserves identity and inventory",
+        "appbuy races parent close and slot close via independent cart-lock barrier; stale parent revision rejects, closed schedules still permit cancel"
+      ]
+    },
+    "cleanup": {
+      "artifact": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-permission-cleanup-20260927.json",
+        "sha256": "31254002e4d5f9eda41de5d111f3c6d4253d3227ea6c2c9754f8ae48bfbebabc"
+      },
+      "allFourStopped": true,
+      "fixtureRemaining": 0,
+      "historicalThreeSnapshot": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-permission-cleanup-20260927-first-three.json",
+        "sha256": "0cc355291ab2a9bd1004f18d23a942e321e6dc6d5bcca9e28a99e2651c95b760"
+      }
+    }
+  },
+  "inputFreeze": {
+    "verifiedExistingFrozenSourceFiles": [
+      "workers-ts/src/migrations/runtimeSeckillScheduleLockBoundary.ts",
+      "workers-ts/src/migrations/runSeckillScheduleRuntimeUpgrade.ts",
+      "workers-ts/src/migrations/runSeckillParentRuntimeUpgrade.ts",
+      "workers-ts/src/migrations/seckillParentRuntimeCatalog.ts",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+      "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+      "workers-ts/src/migrations/runtimeLockOnlyBoundary.ts",
+      "workers-ts/test/runtime-seckill-schedule-lock.test.ts",
+      "workers-ts/test/runtime-seckill-parent-privileges.test.ts",
+      "workers-ts/test/runtime-business-privilege-plan.test.ts",
+      "workers-ts/src/services/admin/AdminSeckillActivityService.ts",
+      "workers-ts/src/services/admin/AdminSeckillActivityData.ts",
+      "workers-ts/src/services/admin/AdminSeckillActivityInput.ts",
+      "workers-ts/src/controllers/api/v1/AdminSeckillActivityController.ts",
+      "workers-ts/test/admin-seckill-activity.test.ts",
+      "workers-ts/test/admin-seckill-activity-postgres.test.ts",
+      "workers-ts/test/helpers/seckillActivityFixture.ts",
+      "workers-ts/src/services/admin/AdminPermissionService.ts"
+    ],
+    "allPermissionAndBackendHashesMatch": true,
+    "rootAndFrontendInputs": [
+      {
+        "path": "workers-ts/test/seckill-runtime-login.test.ts",
+        "sha256": "79d5db92c744a1a2339843dfe3f54213bf83d0af7fba8a99e4e757703cbe42e4"
+      },
+      {
+        "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+        "sha256": "7571d0db5086ef1929a26b6376cb5c7bf83f48441e5086fe15c7fa399b75a9b5"
+      },
+      {
+        "path": "workers-ts/src/routes/adminapi.ts",
+        "sha256": "5bc8554e15dadd89a47ebbc3b3db177d4968e7cfc30c28559d5f3a6da4280ffd"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "94e3692875e277a090d55b1a3f965ab632506b985a3df97b0f9a3a078fc49c00"
+      },
+      {
+        "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "sha256": "f61509b543e95dbbeb035949fc1af1e6ad1ee4d97640ed0aecefca69745ae92d"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "70aaadbd48682c0456f3435fe5a1e3f1c86ffd598462f8ecaff82f247519e34b"
+      },
+      {
+        "path": "view/admin-ts/src/api/seckillActivity.ts",
+        "sha256": "3d72f31627b08bcfc2188095dd972e026f05efac5ab4f4cc1cf58e8634e5858d"
+      },
+      {
+        "path": "view/admin-ts/src/pages/activity/SeckillActivities.vue",
+        "sha256": "001a0016e923c41c92052df9de1f172c0f935966240253975439c2c2ab01cb5e"
+      },
+      {
+        "path": "view/admin-ts/src/pages/activity/SeckillActivityImagePicker.vue",
+        "sha256": "9d591f8d712f269d018048dcc9ca3d0f67874556a2a7242c731eb6985d1be5e7"
+      },
+      {
+        "path": "view/admin-ts/src/pages/activity/ActivityList.vue",
+        "sha256": "cced675ebcdcdf9c17a8d7bc898d0888ce5cf0d6b3d2f99aa4253f0c016728ca"
+      },
+      {
+        "path": "view/admin-ts/src/router/index.ts",
+        "sha256": "daf3567a6beebec9e3ec5aed02da1db15489cdc54f9a9d88f31cb9d6adf3c8db"
+      },
+      {
+        "path": "view/admin-ts/src/layouts/AdminLayout.vue",
+        "sha256": "259d37e68e927d4be881b8653dfba660da4cdc473229942cb7658dfa8bf202fe"
+      },
+      {
+        "path": "workers-ts/test/admin-seckill-activities-frontend.test.ts",
+        "sha256": "1be46039d413f64eff00b7c69148cad3957c45d3933bee5259c5997b53049554"
+      }
+    ]
+  },
+  "otherValidation": {
+    "frontend": {
+      "new": 23,
+      "existing": 30,
+      "total": 53,
+      "logs": [
+        {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-frontend-runtime-20260927.log",
+          "sha256": "c4c90e8871074e77632be744556c8e343017da62e6c1b7c0e3b9eaf98482a50d"
+        },
+        {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-existing-frontend-regression-20260927.log",
+          "sha256": "945fc1b93ee5d0d868980e27a02373a786d1fecf414d6a54267a592a410de7aa"
+        }
+      ]
+    },
+    "workerTypes": {
+      "exit": 0,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-typecheck-frozen-20260927.log",
+        "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+      }
+    },
+    "adminBuild": {
+      "exit": 0,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-admin-build-20260927.log",
+        "sha256": "27ba1d15c9c4a3e5cf6fd6052588c859f9808fe5fdf3dd9ac4a6cd7e6ac988c2"
+      },
+      "bundle": {
+        "path": "view/admin-ts/dist/assets/SeckillActivities-CTWbxuSh.js",
+        "sha256": "584fa184c1b94d669bfae9d93b6aba30ec8ce301042f3477eca7e697bb1a547d"
+      }
+    },
+    "ledger": {
+      "passed": 33,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-ledger-final-20260927.log",
+        "sha256": "ab4c5730fef5fe27fb910e0ebb91235dc51fd2f058d1303dc30a7afd5cc56453"
+      }
+    },
+    "privilegePlanUnit": {
+      "passed": 9,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-plan-unit-20260927.log",
+        "sha256": "66cef86bf169ca1662576e86cdc5014291a9cc49fd4ce0960544945af05a7cd9"
+      }
+    },
+    "browser": {
+      "path": "workers-ts/audit/seckill-parent-browser-20260927.json",
+      "sha256": "eca13e878775fdfe150f0b01d3d3017f83de0ee3dab94b2cc89c00b8edc07287"
+    }
+  },
+  "history": {
+    "baselineOldActualAppNegativeControl": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-runtime-select-only-repro-20260927-retry.log",
+      "sha256": "3ecd2ac1237e28020ba4ed8f5e60582a736643acc5aa98c3f7cd105ab56fee6c"
+    },
+    "permissionFirstBatch": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-runtime-stage1-native-20260927.log",
+      "sha256": "96d5a1c28d71f22a45313b1d4ab6928bb7e67850992494fb5c8574b74b1cfe11"
+    },
+    "iterations": [
+      {
+        "session": 5935,
+        "totalPass": 10,
+        "totalFail": 12,
+        "reason": "role-name structural metadata validation and invalid trigger-function overload fixture; corrected before accepted24"
+      },
+      {
+        "session": 97667,
+        "totalPass": 31,
+        "totalFail": 2,
+        "acceptedSubset": 24,
+        "reason": "actual Admin cannot UPDATE attr_result display cache; final implementation uses existing DELETE+INSERT authority without grant expansion"
+      },
+      {
+        "session": 17548,
+        "totalPass": 43,
+        "totalFail": 2,
+        "acceptedSubset": 34,
+        "reason": "root two concurrency fixtures opened peers outside FinancePeers registry; replaced with existing f.withPeer, no registry relaxation"
+      },
+      {
+        "session": 55418,
+        "totalPass": 11,
+        "totalFail": 0,
+        "reason": "final actual app11 passed after fixture correction"
+      },
+      {
+        "session": 86454,
+        "totalPass": 30,
+        "totalFail": 0,
+        "reason": "final affected existing normal/presale runtime profile regression"
+      }
+    ],
+    "earlierRawTscOomOrInfrastructureFailuresNotPasses": true,
+    "priorConsumer235NotFreshlyRerunOrAdded": true,
+    "frozenPermissionCleanupAlias": {
+      "referencingEvidence": "workers-ts/audit/seckill-runtime-privileges-20260927.json (logs and independentCleanup)",
+      "recordedName": "seckill-parent-permission-cleanup-20260927.json",
+      "expectedHistoricalSha256": "0cc355291ab2a9bd1004f18d23a942e321e6dc6d5bcca9e28a99e2651c95b760",
+      "preservedHistoricalArtifact": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-permission-cleanup-20260927-first-three.json",
+        "sha256": "0cc355291ab2a9bd1004f18d23a942e321e6dc6d5bcca9e28a99e2651c95b760"
+      },
+      "expandedCurrentArtifact": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-permission-cleanup-20260927.json",
+        "sha256": "31254002e4d5f9eda41de5d111f3c6d4253d3227ea6c2c9754f8ae48bfbebabc"
+      },
+      "explanation": "The permission evidence was frozen before the fourth regression cluster finished. Its two original cleanup references resolve to the byte-preserved first-three snapshot; the original filename now contains the separately accepted fourth cluster as well. Permission source/evidence hashes were not rewritten."
+    }
+  },
+  "routeDistribution": {
+    "path": "workers-ts/audit/route-distribution-20260927.json",
+    "sha256": "954585c19c8e4102863a137b6b12c3114320d513519cdc315431d291946d1102"
+  },
+  "remaining": {
+    "parentList": "candidate",
+    "parentCreate": "partial",
+    "oldUiGaps": [
+      "category/label filters",
+      "cross-page multi-select and single add",
+      "cross-product bulk price/quota/remove",
+      "candidate product type/category columns",
+      "SKU-specific image"
+    ],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "release": [
+      "full Linux CI",
+      "actual deployed roles and configuration",
+      "signed product main images",
+      "real Admin/JWT/Hyperdrive/Provider and production acceptance"
+    ]
+  }
+}

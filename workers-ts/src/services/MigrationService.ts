@@ -86,9 +86,45 @@ import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '@/migrations/purchaseCan
 import { runPurchaseCancellationEvidenceSchema } from '@/migrations/runPurchaseCancellationEvidence';
 import { ASSISTED_ORDER_LIST_INDEX_SQL } from '@/migrations/assistedOrderListIndex';
 import { runAssistedOrderListIndex } from '@/migrations/runAssistedOrderListIndex';
+import { RECHARGE_QUOTA_GROUP_SEED_SQL } from '@/migrations/rechargeQuotaGroupSeed';
+import { runRechargeQuotaGroupSeed } from '@/migrations/runRechargeQuotaGroupSeed';
+import { SECKILL_TIME_REFERENCE_LOCK_INSTALLATION_SQL } from '@/migrations/seckillTimeReferenceLockInstallation';
+import { runSeckillTimeReferenceLockSchema } from '@/migrations/runSeckillTimeReferenceLock';
+import { PINK_SUCCESS_NOTICE_SQL } from '@/migrations/pinkSuccessNotice';
+import { runPinkSuccessNotice } from '@/migrations/runPinkSuccessNotice';
+import { COUPON_TEMPLATE_CATALOG_SQL } from '@/migrations/couponTemplateCatalog';
+import { runCouponTemplateCatalog } from '@/migrations/runCouponTemplateCatalog';
+import { ORDER_PROMOTION_GIFT_RECEIPT_SQL } from '@/migrations/orderPromotionGiftReceipt';
+import { runOrderPromotionGiftReceipt } from '@/migrations/runOrderPromotionGiftReceipt';
+import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from '@/migrations/purchaseCancellationGiftEvidenceInstallation';
+import { runPurchaseCancellationGiftEvidence } from '@/migrations/runPurchaseCancellationGiftEvidence';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  purchaseCancellationGiftEvidenceSqlForVerification(): string {
+    return this.migration_0177();
+  }
+
+  orderPromotionGiftReceiptSqlForVerification(): string {
+    return this.migration_0176();
+  }
+
+  couponTemplateCatalogSqlForVerification(): string {
+    return this.migration_0175();
+  }
+
+  pinkSuccessNoticeSqlForVerification(): string {
+    return this.migration_0174();
+  }
+
+  seckillTimeReferenceLockSqlForVerification(): string {
+    return this.migration_0173();
+  }
+
+  rechargeQuotaGroupSeedSqlForVerification(): string {
+    return this.migration_0172();
+  }
 
   presaleDeliveryOutboxMigrationSqlForVerification(): string {
     return this.migration_0167();
@@ -537,10 +573,46 @@ export class MigrationService {
       this.migration_0169(),
       this.migration_0170(),
       this.migration_0171(),
+      this.migration_0172(),
+      this.migration_0173(),
+      this.migration_0174(),
+      this.migration_0175(),
+      this.migration_0176(),
+      this.migration_0177(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 177) {
+          await runPurchaseCancellationGiftEvidence(this.container.db);
+          executed.push('0177');
+          continue;
+        }
+        if (i === 176) {
+          await runOrderPromotionGiftReceipt(this.container.db);
+          executed.push('0176');
+          continue;
+        }
+        if (i === 175) {
+          await runCouponTemplateCatalog(this.container.db);
+          executed.push('0175');
+          continue;
+        }
+        if (i === 174) {
+          await runPinkSuccessNotice(this.container.db);
+          executed.push('0174');
+          continue;
+        }
+        if (i === 173) {
+          await runSeckillTimeReferenceLockSchema(this.container.db);
+          executed.push('0173');
+          continue;
+        }
+        if (i === 172) {
+          await runRechargeQuotaGroupSeed(this.container.db);
+          executed.push('0172');
+          continue;
+        }
         if (i === 171) {
           await runAssistedOrderListIndex(this.container.db);
           executed.push('0171');
@@ -8739,5 +8811,29 @@ $work_member_resolved_rename_fence$;
 
   private migration_0171(): string {
     return ASSISTED_ORDER_LIST_INDEX_SQL;
+  }
+
+  private migration_0172(): string {
+    return RECHARGE_QUOTA_GROUP_SEED_SQL;
+  }
+
+  private migration_0173(): string {
+    return SECKILL_TIME_REFERENCE_LOCK_INSTALLATION_SQL;
+  }
+
+  private migration_0174(): string {
+    return PINK_SUCCESS_NOTICE_SQL;
+  }
+
+  private migration_0175(): string {
+    return COUPON_TEMPLATE_CATALOG_SQL;
+  }
+
+  private migration_0176(): string {
+    return ORDER_PROMOTION_GIFT_RECEIPT_SQL;
+  }
+
+  private migration_0177(): string {
+    return PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL;
   }
 }

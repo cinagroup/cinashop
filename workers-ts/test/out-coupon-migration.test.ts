@@ -77,7 +77,7 @@ describe("Out API coupon write migration", () => {
     expect(() => normalizeOutCouponRequestKey("coupon-retry-1")).toThrow("UUID v4");
   });
 
-  it("keeps the external and embedded replay DDL exact and content-free", () => {
+  it("keeps external and embedded replay DDL exact with canonical line endings and content-free", () => {
     expect(getTableName(outCouponWriteReplay)).toBe("out_coupon_write_replay");
     expect(Object.keys(getTableColumns(outCouponWriteReplay))).toEqual([
       "id",
@@ -89,11 +89,11 @@ describe("Out API coupon write migration", () => {
       "resultStatus",
       "addTime",
     ]);
-    const migration = readFileSync("migrations/0098_out_coupon_write_replay.sql", "utf8").trim();
+    const migration = readFileSync("migrations/0098_out_coupon_write_replay.sql", "utf8").replace(/\r\n?/g, "\n").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service
       .match(/private migration_0105\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
-      ?.trim();
+      ?.replace(/\r\n?/g, "\n").trim();
     expect(embedded).toBe(migration);
     expect(migration).not.toMatch(/coupon_title|coupon_price|product_id|request_body|response_body/i);
   });

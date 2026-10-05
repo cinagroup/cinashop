@@ -1,17 +1,31 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
-import { runtimeBusinessPrivilegePlan } from './runtimeBusinessPrivilegePlan';
+import { runtimeBusinessPrivilegePlanAtStage, type RuntimeBusinessProfileVersion } from './runtimeBusinessPrivilegePlan';
 import { inspectRuntimeAdminBoundary } from './runtimeAdminBoundary';
 import { inspectRuntimeLockOnlyBoundary } from './runtimeLockOnlyBoundary';
-import { pricingIdentifier } from './checkoutPricingLockCatalog';
+import { pricingIdentifier, pricingCatalogReady } from './checkoutPricingLockCatalog';
+import { inspectCheckoutPricingLock } from './checkoutPricingLock';
+import { reviewedOfflinePricingOid } from './reviewedOfflinePricingCapability';
 import { reviewedRuntimePricingCapabilities } from './reviewedRuntimePricingCapabilities';
-import { inspectRuntimePurchaseEvidence } from './runtimePurchaseEvidence';
+import { inspectRuntimePurchaseEvidence, inspectRuntimePurchaseGiftEvidence } from './runtimePurchaseEvidence';
+import { inspectSeckillTimeReferenceLock } from './seckillTimeReferenceLock';
+import { seckillTimeReferenceLockCatalogReady } from './seckillTimeReferenceLockCatalog';
+import { inspectRuntimeSeckillScheduleLockBoundary, type SeckillScheduleRuntimeNames } from './runtimeSeckillScheduleLockBoundary';
+import { inspectSeckillParentRuntimeSequence } from './seckillParentRuntimeCatalog';
+import { inspectCouponTemplateCatalog } from './couponTemplateCatalog';
+import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftReceipt';
+import { inspectPromotionManagementRuntimeSequences } from './promotionManagementRuntimeCatalog';
+import { inspectAdminSupplierMenuWriteCapability } from './adminSupplierMenuWriteCapability';
+import { inspectSignDayConfigRuntimeCatalog } from './signDayConfigRuntimeCatalog';
+import { inspectRuntimeSignDayGroupLockBoundary } from './runtimeSignDayGroupLockBoundary';
+import { inspectRuntimeAgentLevelCatalogBoundary } from './runtimeAgentLevelCatalogBoundary';
+import { inspectAgentLevelRuntimeCatalog } from './agentLevelRuntimeCatalog';
 
 /** Exact effective ACL comparison for the real connection, not SET ROLE on a
  * maintenance session. Readonly: never grants/revokes/repairs. The result proves
- * the declared profile and its two conditional-write boundaries, NOT complete
+ * the declared profile and its fixed conditional-write boundaries, NOT complete
  * service coverage, HTTP authorization or production commissioning. */
-export type RuntimeAuditStage = 'root'|'setup'|'identity'|'tables'|'columns'|'sequences'|'pricing'|'routines'|'defaults'|'staff'|'locks'|'purchase_evidence';
+export type RuntimeAuditStage = 'root'|'setup'|'identity'|'tables'|'columns'|'sequences'|'pricing'|'routines'|'defaults'|'staff'|'locks'|'schedule_locks'|'coupon_templates'|'purchase_evidence'|'sign_day_config'|'agent_levels';
 export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'admin', names:{app:string;admin:string;maintenance:string}, onStage?:(stage:RuntimeAuditStage)=>void) {
   onStage?.('root');
   if(!Object.hasOwn(db,'$client') || !db.$client)throw Error('Root connection required');
@@ -20,11 +34,29 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
   const identities=[names.app,names.admin,names.maintenance];
   identities.forEach(pricingIdentifier);
   if(new Set(identities).size!==3)throw Error('Distinct identities required');
-  const plan=runtimeBusinessPrivilegePlan(kind),expectedRole=names[kind];
   return db.transaction(async tx=>{
     onStage?.('setup');
     await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
       set_config('idle_in_transaction_session_timeout','5000',true),set_config('search_path','public,pg_temp',true)`);
+    return inspectRuntimeBusinessProfile(tx,kind,names,'current',true,onStage);
+  },{isolationLevel:'repeatable read',accessMode:'read only'});
+}
+
+/** Readonly maintenance comparison for fixed historical forward protocols.
+ * Each stage pins its exact grants and installed boundaries; no caller-supplied
+ * ACL plan or relaxed drift policy.
+ * This does not claim an independently authenticated runtime connection. */
+export async function inspectRuntimeBusinessProfileInTransaction(tx:Pick<DbClient,'execute'>,kind:'app'|'admin',
+  names:SeckillScheduleRuntimeNames, version:RuntimeBusinessProfileVersion) {
+  if(Object.hasOwn(tx,'$client'))throw Error('Profile inspection requires an existing transaction');
+  return inspectRuntimeBusinessProfile(tx,kind,names,version,false);
+}
+
+async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'app'|'admin',names:SeckillScheduleRuntimeNames,
+  version:RuntimeBusinessProfileVersion,verifyConnection:boolean,onStage?:(stage:RuntimeAuditStage)=>void) {
+    const identities=[names.app,names.admin,names.maintenance];identities.forEach(pricingIdentifier);
+    if(new Set(identities).size!==3)throw Error('Distinct identities required');
+    const plan=runtimeBusinessPrivilegePlanAtStage(kind,version),expectedRole=names[kind];
     onStage?.('identity');
     const [identity]=await tx.execute(sql`SELECT current_user AS role,session_user AS session,
       (SELECT r.rolname FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend,
@@ -42,9 +74,9 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
         AND CASE WHEN c.relkind='S' THEN pg_catalog.has_sequence_privilege(r.oid,c.oid,'USAGE,SELECT,UPDATE')
           WHEN c.relkind IN ('r','p','v','m','f') THEN pg_catalog.has_table_privilege(r.oid,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
             OR pg_catalog.has_any_column_privilege(r.oid,c.oid,'SELECT,INSERT,UPDATE,REFERENCES') ELSE false END) AS no_other_schema_data
-      FROM pg_catalog.pg_roles r WHERE rolname=current_user`);
+      FROM pg_catalog.pg_roles r WHERE rolname=${expectedRole}`);
     const failures:string[]=[];
-    if(identity?.role!==expectedRole || identity?.session!==expectedRole || identity?.backend!==expectedRole)failures.push('connection_identity');
+    if(verifyConnection && (identity?.role!==expectedRole || identity?.session!==expectedRole || identity?.backend!==expectedRole))failures.push('connection_identity');
     for(const key of ['version','restricted','login','no_memberships','no_ownership','no_ddl','no_replication_bypass','no_other_schema_data'])
       if(identity?.[key]!==true)failures.push(key);
     onStage?.('tables');
@@ -52,8 +84,8 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
       c.relrowsecurity OR c.relforcerowsecurity OR c.relispartition
         OR EXISTS(SELECT 1 FROM pg_catalog.pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid)
         OR EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite WHERE ev_class=c.oid) AS nonordinary,
-      p.privilege,pg_catalog.has_table_privilege(current_user,c.oid,p.privilege) AS allowed,
-      pg_catalog.has_table_privilege(current_user,c.oid,p.privilege||' WITH GRANT OPTION') AS delegate
+      p.privilege,pg_catalog.has_table_privilege(${expectedRole},c.oid,p.privilege) AS allowed,
+      pg_catalog.has_table_privilege(${expectedRole},c.oid,p.privilege||' WITH GRANT OPTION') AS delegate
       FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
       CROSS JOIN (VALUES('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER')) p(privilege)
       WHERE n.nspname='public' AND c.relkind IN('r','p','v','m','f')`);
@@ -67,8 +99,8 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
     for(const table of Object.keys(plan.tables))if(!present.has(table))failures.push('missing:'+table);
     onStage?.('columns');
     const columns=await tx.execute(sql`SELECT c.relname AS name,a.attname AS column,p.privilege,
-      pg_catalog.has_column_privilege(current_user,c.oid,a.attnum,p.privilege) AS allowed,
-      pg_catalog.has_column_privilege(current_user,c.oid,a.attnum,p.privilege||' WITH GRANT OPTION') AS delegate
+      pg_catalog.has_column_privilege(${expectedRole},c.oid,a.attnum,p.privilege) AS allowed,
+      pg_catalog.has_column_privilege(${expectedRole},c.oid,a.attnum,p.privilege||' WITH GRANT OPTION') AS delegate
       FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
       CROSS JOIN (VALUES('SELECT'),('INSERT'),('UPDATE'),('REFERENCES')) p(privilege)
       WHERE c.relnamespace='public'::regnamespace AND c.relkind IN('r','p','v','m','f')`);
@@ -82,9 +114,9 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
     const sequences=await tx.execute(sql`SELECT s.relname AS name,
       (SELECT t.relname FROM pg_catalog.pg_depend d JOIN pg_catalog.pg_class t ON t.oid=d.refobjid AND t.relnamespace=s.relnamespace
         WHERE d.classid='pg_catalog.pg_class'::regclass AND d.refclassid=d.classid AND d.objid=s.oid AND d.deptype IN('a','i') LIMIT 1) AS parent,
-      pg_catalog.has_sequence_privilege(current_user,s.oid,'USAGE') AS usage,
-      pg_catalog.has_sequence_privilege(current_user,s.oid,'SELECT,UPDATE') AS extras,
-      pg_catalog.has_sequence_privilege(current_user,s.oid,'USAGE WITH GRANT OPTION,SELECT WITH GRANT OPTION,UPDATE WITH GRANT OPTION') AS delegate
+      pg_catalog.has_sequence_privilege(${expectedRole},s.oid,'USAGE') AS usage,
+      pg_catalog.has_sequence_privilege(${expectedRole},s.oid,'SELECT,UPDATE') AS extras,
+      pg_catalog.has_sequence_privilege(${expectedRole},s.oid,'USAGE WITH GRANT OPTION,SELECT WITH GRANT OPTION,UPDATE WITH GRANT OPTION') AS delegate
       FROM pg_catalog.pg_class s WHERE s.relnamespace='public'::regnamespace AND s.relkind='S'`);
     for(const r of sequences){
       const expected=plan.standaloneSequences.includes(String(r.name)) || (plan.tables[String(r.parent)]?.includes('INSERT')??false);
@@ -92,29 +124,88 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
     }
     for(const name of plan.standaloneSequences)if(!sequences.some(r=>r.name===name))failures.push('missing_sequence:'+name);
     onStage?.('pricing');
-    const reviewed=kind==='app'?await reviewedRuntimePricingCapabilities(tx,'public','shared-shop'):{checkout:null,offline:null};
+    let reviewed:{checkout:string|null;offline:string|null}={checkout:null,offline:null};
+    if(kind==='app') {
+      if(verifyConnection) reviewed=await reviewedRuntimePricingCapabilities(tx,'public','shared-shop');
+      else {
+        // The full named-role checks above already reject membership, DDL,
+        // ownership and every extra table/column privilege. Review the exact
+        // two installed pricing OIDs here without impersonating the LOGIN.
+        const catalog=await inspectCheckoutPricingLock(tx),offline=await reviewedOfflinePricingOid(tx,'public');
+        if(pricingCatalogReady(catalog) && catalog.functionOid && offline) {
+          const [allowed]=await tx.execute(sql`SELECT
+            pg_catalog.has_function_privilege(${expectedRole},${catalog.functionOid}::oid,'EXECUTE')
+            AND pg_catalog.has_function_privilege(${expectedRole},${offline}::oid,'EXECUTE') AS ready`);
+          if(allowed?.ready===true)reviewed={checkout:catalog.functionOid,offline};
+        }
+      }
+    }
+    const slotLock = await inspectSeckillTimeReferenceLock(tx);
+    let reviewedSlotLock: string | null = null;
+    if (kind === 'admin' && seckillTimeReferenceLockCatalogReady(slotLock) && slotLock.functionOid) {
+      const [execute] = await tx.execute(sql`SELECT pg_catalog.has_function_privilege(${expectedRole},${slotLock.functionOid}::oid,'EXECUTE') AS allowed`);
+      if (execute?.allowed === true) reviewedSlotLock = slotLock.functionOid;
+    }
+    if (kind === 'admin' && !reviewedSlotLock) failures.push('seckill_time_reference_capability');
+    // Optional, separately installed type-4-only capability. Its exact body,
+    // restricted NOLOGIN owner, table grants and EXECUTE ACL are all reviewed
+    // before its SECURITY DEFINER OID can enter the runtime allowlist.
+    const supplierMenuWrite = await inspectAdminSupplierMenuWriteCapability(tx,names.admin);
+    if (!supplierMenuWrite.absent && !supplierMenuWrite.ready) failures.push('supplier_menu_capability');
+    const reviewedSupplierMenu = kind === 'admin' && supplierMenuWrite.ready
+      ? supplierMenuWrite.functionOid : null;
     onStage?.('routines');
     const [routines]=await tx.execute(sql`SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
       JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE p.prosecdef AND n.nspname NOT LIKE 'pg_%'
-      AND n.nspname<>'information_schema' AND pg_catalog.has_function_privilege(current_user,p.oid,'EXECUTE')
-      AND p.oid::text IS DISTINCT FROM ${reviewed.checkout} AND p.oid::text IS DISTINCT FROM ${reviewed.offline}) AS no_unreviewed_definer,
+      AND n.nspname<>'information_schema' AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE')
+      AND p.oid::text IS DISTINCT FROM ${reviewed.checkout} AND p.oid::text IS DISTINCT FROM ${reviewed.offline}
+      AND p.oid::text IS DISTINCT FROM ${reviewedSlotLock}
+      AND p.oid::text IS DISTINCT FROM ${reviewedSupplierMenu}) AS no_unreviewed_definer,
       NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
-        AND pg_catalog.has_function_privilege(current_user,p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);
+        AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);
     if(routines?.no_unreviewed_definer!==true || routines?.no_delegation!==true)failures.push('routine_authority');
     onStage?.('defaults');
     const [defaults]=await tx.execute(sql`SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_default_acl d
-      CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) a WHERE a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user)
+      CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) a WHERE a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${expectedRole})
         OR (a.grantee=0 AND d.defaclobjtype IN('r','S'))) AS safe`);
     if(defaults?.safe!==true)failures.push('default_grants');
     if(kind==='app' && (!reviewed.checkout || !reviewed.offline))failures.push('pricing_capabilities');
     onStage?.('staff');
     if(!(await inspectRuntimeAdminBoundary(tx,names.app,names.maintenance)).ready)failures.push('staff_boundary');
     onStage?.('locks');
-    if(!(await inspectRuntimeLockOnlyBoundary(tx,names.app,names.admin,names.maintenance)).ready)failures.push('lock_only_boundary');
+    if(!(await inspectRuntimeLockOnlyBoundary(tx,names.app,names.admin,names.maintenance,version==='current'?'agent-levels':version==='pre-agent-levels' || version==='pre-sign-day'?'promotion-gifts':'legacy')).ready)failures.push('lock_only_boundary');
+    onStage?.('schedule_locks');
+    const scheduleBoundary=await inspectRuntimeSeckillScheduleLockBoundary(tx,names);
+    if(version!=='legacy-seckill-schedule'? !scheduleBoundary.ready : !scheduleBoundary.absent || !scheduleBoundary.tablesSafe)
+      failures.push('seckill_schedule_lock_boundary');
+    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts' || version==='pre-coupon-templates') && !(await inspectSeckillParentRuntimeSequence(tx,names.maintenance)).ready)
+      failures.push('seckill_parent_serial_sequence');
+    if(version==='current' || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts') {
+      onStage?.('coupon_templates');
+      if(!(await inspectCouponTemplateCatalog(tx,names.maintenance)).ready)failures.push('coupon_template_catalog');
+    }
+    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectOrderPromotionGiftReceiptCatalog(tx,names.maintenance,names)).ready)
+      failures.push('promotion_gift_receipt_catalog');
+    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectPromotionManagementRuntimeSequences(tx,names.maintenance)).ready)
+      failures.push('promotion_management_serial_sequences');
+    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectRuntimePurchaseGiftEvidence(tx,names.maintenance)).ready)
+      failures.push('promotion_gift_cancellation_protocol');
+    if(version==='current' || version==='pre-agent-levels') {
+      onStage?.('sign_day_config');
+      if(!(await inspectSignDayConfigRuntimeCatalog(tx,names.maintenance,names)).ready)failures.push('sign_day_config_catalog');
+    }
+    const signDayGroupBoundary=await inspectRuntimeSignDayGroupLockBoundary(tx,names);
+    if(version==='current' || version==='pre-agent-levels'? !signDayGroupBoundary.ready : !signDayGroupBoundary.absent || !signDayGroupBoundary.tablesSafe)
+      failures.push('sign_day_group_lock_boundary');
+    onStage?.('agent_levels');
+    const agentBoundary=await inspectRuntimeAgentLevelCatalogBoundary(tx,names);
+    if(version==='current' ? !agentBoundary.ready : !agentBoundary.absent || !agentBoundary.tablesSafe)
+      failures.push('agent_level_catalog_boundary');
+    if(version==='current' && !(await inspectAgentLevelRuntimeCatalog(tx,names.maintenance,names)).ready)
+      failures.push('agent_level_catalog');
     onStage?.('purchase_evidence');
     if(!(await inspectRuntimePurchaseEvidence(tx,names.maintenance)).ready)failures.push('purchase_evidence_protocols');
     const unique=[...new Set(failures)].sort();
     return {ready:unique.length===0,readOnly:true as const,completeServiceCoverageVerified:false as const,kind,
       failures:unique,tableCount:present.size,sequenceCount:sequences.length};
-  },{isolationLevel:'repeatable read',accessMode:'read only'});
 }

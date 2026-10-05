@@ -2,6 +2,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import type { Container } from '@/lib/di';
 import { storeOrder, systemSupplier } from '@/models/schema';
 import { NotFoundException, ValidateException } from '@/utils/errors';
+import { readPromotionLineEvidence } from '@/services/order/RefundSplitAllocation';
 import { parseSupplierSnapshot, readSupplierCarts, supplierReadIdentity, supplierReadSnapshot, supplierSnapshotObject } from './SupplierReadSupport';
 
 const MAX_PICKING_SHEET_ORDERS = 10;
@@ -23,7 +24,8 @@ function minor(value: unknown): bigint {
   return result;
 }
 function money(value: bigint) { return `${value / 100n}.${String(value % 100n).padStart(2, '0')}`; }
-function project(row: PickingSheetCartSource, index: number, record: Record<string, unknown> | null) {
+export function projectPickingSheetCartSnapshot(row: PickingSheetCartSource, index: number,
+  record: Record<string, unknown> | null = parseSupplierSnapshot(row.cartInfo, MAX_PICKING_SNAPSHOT_BYTES)) {
   const snapshot = record ?? {}, product = supplierSnapshotObject(snapshot.product), productInfo = supplierSnapshotObject(snapshot.productInfo);
   const sku = supplierSnapshotObject(snapshot.sku), attrInfo = supplierSnapshotObject(productInfo?.attrInfo);
   // PHP legacy snapshots may carry the quantity when the row was initialized to zero.
@@ -33,19 +35,25 @@ function project(row: PickingSheetCartSource, index: number, record: Record<stri
   }
   const quantity = Number(rawQuantity);
   if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2_147_483_647) throw new ValidateException('商品快照数量错误');
+  const promotion = readPromotionLineEvidence(snapshot, quantity);
+  if (promotion && snapshot.cart_num !== quantity && snapshot.cart_num !== String(quantity)) {
+    throw new ValidateException('商品快照数量与促销金额证据不一致');
+  }
   // Supplier settlement cost is not the customer's sale price. Missing retail
   // evidence must not become a plausible but incorrect printable amount.
   const unitPrice = minor(snapshot.sum_price ?? sku?.price ?? snapshot.truePrice ?? snapshot.true_price);
   return {
     item: { index, product_name: pickingText(product?.storeName ?? productInfo?.store_name, '商品快照', 256),
       sku: pickingText(sku?.suk ?? attrInfo?.suk ?? row.skuUnique, '默认', 255),
-      unit_price: money(unitPrice), quantity, subtotal: money(unitPrice * BigInt(quantity)),
+      unit_price: money(unitPrice), quantity,
+      subtotal: money(promotion ? BigInt(promotion.priceCents) : unitPrice * BigInt(quantity)),
     },
-    vipDiscount: minor(snapshot.vip_truePrice ?? snapshot.vip_true_price ?? '0') * BigInt(quantity),
+    vipDiscount: promotion ? BigInt(promotion.memberSavingsCents)
+      : minor(snapshot.vip_truePrice ?? snapshot.vip_true_price ?? '0') * BigInt(quantity),
   };
 }
 export function projectPickingSheetCartItem(row: PickingSheetCartSource, index: number) {
-  return project(row, index, parseSupplierSnapshot(row.cartInfo, MAX_PICKING_SNAPSHOT_BYTES)).item;
+  return projectPickingSheetCartSnapshot(row, index).item;
 }
 export function normalizeSupplierPickingSheetIds(value: string | undefined): number[] {
   const parts = String(value ?? '').split(',').map(item => item.trim()).filter(Boolean);
@@ -87,7 +95,7 @@ export class SupplierPickingSheetReadService {
         },
         list: ids.map(id => {
           const order = orderById.get(id)!;
-          const projectedCarts = (groups.get(id) ?? []).map((cart, index) => project(cart, index + 1, cart.snapshot));
+          const projectedCarts = (groups.get(id) ?? []).map((cart, index) => projectPickingSheetCartSnapshot(cart, index + 1, cart.snapshot));
           return { id: order.id, order_id: order.orderId, real_name: order.realName, user_phone: order.userPhone,
             user_address: order.userAddress, pay_time: order.payTime, pay_type: order.payType,
             freight_price: order.payPostage, coupon_price: order.couponPrice,

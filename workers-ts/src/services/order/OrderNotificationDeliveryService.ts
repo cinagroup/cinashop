@@ -21,6 +21,7 @@ import {
 } from "@/services/wechat/WechatNotificationProvider";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { customerCityQueuedNoticeIsActive } from './OrderNotificationOutboxService';
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -60,7 +61,7 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel);
 }
 
@@ -346,6 +347,10 @@ export class OrderNotificationDeliveryService {
         return "unknown";
       }
       if (row.status !== "ENQUEUED") return "busy";
+      if(!await customerCityQueuedNoticeIsActive(tx,row.eventKey)){
+        await tx.update(orderNotificationDelivery).set({status:'SKIPPED',leaseToken:'',leaseUntil:0,lastError:'city_attempt_no_longer_active',updateTime:now}).where(eq(orderNotificationDelivery.id,row.id));
+        return 'skipped';
+      }
       const attemptCount = row.attemptCount + 1;
       await tx.update(orderNotificationDelivery).set({
         status: "PROCESSING",

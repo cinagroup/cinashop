@@ -5,6 +5,9 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import { presaleSchedule } from "./PresaleScheduleService";
 import { presalePurchaseLimits } from "./PresalePurchaseLimits";
 import { presaleProductVisibility, readPresaleCatalogAccount, withPresaleCatalogSnapshot } from './PresaleCatalogSnapshot';
+import type { Env } from '@/env';
+import { readActivityDetailDesign, renderActivityDetailDesign } from '@/services/product/ProductDetailDesignData';
+import { publicProductPictures, renderProductPictures } from './ProductAssetPolicy';
 
 const MAX_SKUS = 500;
 function productId(value: unknown): number {
@@ -40,20 +43,24 @@ function images(raw: string, primary: string): string[] {
  * A single read-only snapshot prevents mixing product timing with later SKU edits.
  */
 export class PresaleSkuCatalogService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly env?: Pick<Env,'APP_KEY'>) {}
 
   async read(uid: number, rawId: unknown, now = new Date()) {
     const id = productId(rawId);
     if (!Number.isSafeInteger(uid) || uid < 0 || uid > 2_147_483_647 || !Number.isFinite(now.getTime())) {
       throw new ValidateException("预售规格查询参数无效");
     }
-    return withPresaleCatalogSnapshot(this.container, snapshot => new PresaleSkuCatalogService(snapshot).snapshot(uid, id, now));
+    const result=await withPresaleCatalogSnapshot(this.container, snapshot => new PresaleSkuCatalogService(snapshot,this.env).snapshot(uid, id, now));
+    const display=await renderActivityDetailDesign(this.env?.APP_KEY,result.design);
+    const images=await renderProductPictures(this.env?.APP_KEY,result.selection.skus.map(row=>row.image));
+    return {...result.selection,...display,skus:result.selection.skus.map((row,index)=>({...row,image:images[index]}))};
   }
 
   private async snapshot(uid: number, id: number, now: Date) {
     const account = await readPresaleCatalogAccount(this.container.db, uid);
     const [product] = await this.container.db.select({
       id: storeProduct.id, title: storeProduct.storeName, subtitle: storeProduct.storeInfo,
+      type:storeProduct.type,relationId:storeProduct.relationId,specs:storeProduct.specs,ensureId:storeProduct.ensureId,
       image: storeProduct.image, sliderImage: storeProduct.sliderImage, stock: storeProduct.stock,
       sales: storeProduct.sales, unitName: storeProduct.unitName, productType: storeProduct.productType,
       systemFormId: storeProduct.systemFormId, isPresaleProduct: storeProduct.isPresaleProduct,
@@ -87,10 +94,13 @@ export class PresaleSkuCatalogService {
           purchaseLimits.mode === "per_order" ? purchaseLimits.quantity : 32_767),
         image: imageUrl(row.image) || imageUrl(product.image) };
     });
-    return { version: 1 as const, selection_only: true as const, type: 6 as const, product_id: id,
+    const design=await readActivityDetailDesign(this.container.db,{...product,productId:id,images:JSON.stringify(images(product.sliderImage,product.image))},6,uid);
+    const mediaOwner=product.type===1?{type:0,relationId:0}:{type:product.type,relationId:product.relationId};
+    const pictures=await publicProductPictures(this.container.db,skus.map(row=>({...mediaOwner,image:row.image})));
+    return {design,selection:{ version: 1 as const, selection_only: true as const, type: 6 as const, product_id: id,
       payment_mode: "full" as const, title: product.title, subtitle: product.subtitle,
       image: imageUrl(product.image), images: images(product.sliderImage, product.image),
       sales: integer(product.sales), unit_name: product.unitName, product_type: product.productType,
-      system_form_id: product.systemFormId, purchase_limits: purchaseLimits, schedule, skus };
+      system_form_id: product.systemFormId, purchase_limits: purchaseLimits, schedule, skus:skus.map((row,index)=>({...row,image:pictures[index]})) }};
   }
 }

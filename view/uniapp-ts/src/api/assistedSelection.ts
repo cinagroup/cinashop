@@ -6,7 +6,7 @@ export interface AssistedBuyer { uid: number; name: string; phone: string; avata
 export interface AssistedProduct { id: number; name: string; image: string; price: string; stock: number; presale: boolean }
 export interface AssistedSku { id: number; productId: number; unique: string; label: string; image: string; price: string; stock: number }
 export interface AssistedCartScope { adminId: number; uid: number; touristUid: string }
-export interface AssistedCartRow { id: number; productId: number; productType: number; unique: string; name: string; sku: string; image: string; quantity: number; stock: number; price: string; valid: boolean }
+export interface AssistedCartRow { id: number; productId: number; productType: number; unique: string; name: string; sku: string; image: string; quantity: number; stock: number; price: string; totalPrice: string; nonUniform: boolean; valid: boolean }
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('代客接口响应格式错误');
   return value as Record<string, unknown>;
@@ -23,6 +23,7 @@ function money(value: unknown): string {
   if (typeof value !== 'string' || !/^\d{1,10}\.\d{2}$/.test(value)) throw Error('代客接口金额无效');
   return value;
 }
+const centsText = (value: number) => `${BigInt(value) / 100n}.${String(BigInt(value) % 100n).padStart(2, '0')}`;
 function image(value: unknown): string {
   const url = text(value, 2048);
   if (/[\u0000-\u0020\\]/.test(url)) return '';
@@ -92,8 +93,18 @@ export async function apiAssistedCart(scope: AssistedCartScope): Promise<Assiste
       || Math.abs(rawPrice * 100 - Math.round(rawPrice * 100)) > 0.0001) throw Error('购物车价格无效');
     integer(row.is_valid, 0, 1); integer(product.is_presale_product, 0, 1);
     const quantity = integer(row.cart_num, 1, 32767), stock = integer(row.trueStock);
+    const displayCents = Math.round(rawPrice * 100), totalCents = row.totalPriceCents === undefined
+      ? row.trueSumPrice === undefined ? displayCents * quantity : Math.round(Number(row.trueSumPrice) * 100)
+      : integer(row.totalPriceCents, 0, Number.MAX_SAFE_INTEGER);
+    if (!Number.isSafeInteger(totalCents) || totalCents < 0 || totalCents > Number.MAX_SAFE_INTEGER
+      || row.trueSumPrice !== undefined && (typeof row.trueSumPrice !== 'number' || !Number.isFinite(row.trueSumPrice)
+        || Math.abs(row.trueSumPrice * 100 - totalCents) > .0001)
+      || row.promotion !== undefined && row.promotion !== null && (row.totalPriceCents === undefined
+        || object(row.promotion).totalPriceCents !== totalCents)
+      || (row.promotion === undefined || row.promotion === null) && BigInt(totalCents) !== BigInt(displayCents) * BigInt(quantity)) throw Error('购物车精确金额无效');
+    const nonUniform = row.promotion !== undefined && row.promotion !== null && object(row.promotion).unitPriceCents === null;
     return { id: integer(row.id, 1), productId, productType: integer(product.product_type, 0, 4), unique: key, name: text(product.store_name, 512), sku: text(sku.suk, 512),
-      image: image(sku.image || product.image), quantity, stock, price: rawPrice.toFixed(2),
+      image: image(sku.image || product.image), quantity, stock, price: rawPrice.toFixed(2), totalPrice: centsText(totalCents), nonUniform,
       valid: row.is_valid === 1 && product.is_presale_product === 0 && quantity <= stock };
   }), row => row.id);
 }

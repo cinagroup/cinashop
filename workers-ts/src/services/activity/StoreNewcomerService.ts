@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
-import type { Container, DbClient } from "@/lib/di";
+import {withTx,createContainerFromDb,type Container,type DbClient} from "@/lib/di";
 import type { Env } from "@/env";
 import {
   storeNewcomer,
@@ -31,6 +31,9 @@ import {
 import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { ReplyService } from "@/services/product/ReplyService";
 import { projectOwnedCoupon } from "@/services/activity/UserCouponWalletService";
+import {readActivityDetailDesign,renderActivityDetailDesign,readDetailVideo} from '@/services/product/ProductDetailDesignData';
+import {publicProductPictures,renderProductPictures} from '@/services/activity/ProductAssetPolicy';
+import {themeDeadlines} from '@/services/content/ThemeReadService';
 
 const CONFIG_KEYS = [
   "newcomer_status",
@@ -311,10 +314,13 @@ function registrationCouponUsable(
       && issue.startTime.getTime() <= nowMs
       && issue.endTime.getTime() >= nowMs,
     );
+  const withinUseWindow = issue.day > 0
+    || (issue.day === 0 && Boolean(issue.useEndTime && issue.useEndTime.getTime() >= nowMs));
   return issue.status === 1
     && issue.isDel === 0
     && (issue.remainCount > 0 || issue.isPermanent === 1)
-    && withinIssueWindow;
+    && withinIssueWindow
+    && withinUseWindow;
 }
 
 /**
@@ -615,6 +621,15 @@ export class StoreNewcomerService {
   }
 
   async detail(uid: number, id: number): Promise<Record<string, unknown>> {
+    const snapshot=await withTx(this.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);return new StoreNewcomerService(createContainerFromDb(tx),this.env).detailInSnapshot(uid,id);});
+    const design=await renderActivityDetailDesign(this.env?.APP_KEY,snapshot.design),data=snapshot.data,storeInfo=data.storeInfo;
+    storeInfo.ensure=design.ensure;storeInfo.specs=design.specs;storeInfo.description=design.description;
+    storeInfo.image=design.image;storeInfo.image_base=design.image;storeInfo.small_image=design.image;storeInfo.images=design.images;storeInfo.slider_image=design.images;
+    const values=Object.values(data.productValue),signed=await renderProductPictures(this.env?.APP_KEY,[storeInfo.video_link,...values.map(value=>value.image)]);storeInfo.video_link=signed[0];
+    for(let index=0;index<values.length;index++){values[index].image=signed[index+1];values[index].small_image=signed[index+1];}
+    return {...data,product_detail_design:design.product_detail_design,reply:design.reply,replyChance:design.replyChance,replyCount:design.replyCount};
+  }
+  private async detailInSnapshot(uid:number,id:number){
     const newcomer = await this.getActive(id);
     if (!newcomer) throw new NotFoundException("新人商品已下架或删除");
     const product = await this.container.storeProductDao.getById(newcomer.productId);
@@ -638,8 +653,8 @@ export class StoreNewcomerService {
               eq(storeProductAttrValue.isRetired, 0),
             ),
           )
-          .orderBy(asc(storeProductAttrValue.id)),
-        this.container.storeProductAttrValueDao.getByProductId(newcomer.productId, 0),
+          .orderBy(asc(storeProductAttrValue.id)).limit(501),
+        this.container.db.select().from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId,newcomer.productId),eq(storeProductAttrValue.type,0),eq(storeProductAttrValue.isRetired,0))).orderBy(asc(storeProductAttrValue.id)).limit(501),
         this.container.db
           .select({ description: storeProductDescription.description })
           .from(storeProductDescription)
@@ -703,9 +718,12 @@ export class StoreNewcomerService {
         replyService.replyList(newcomer.productId, 1, 1, uid),
         replyService.replyConfig(newcomer.productId),
       ]);
+    if(activitySkus.length>500||baseSkus.length>500)throw new ValidateException('新人商品规格超过完整读取容量');
     const baseStockBySuk = new Map(baseSkus.map((sku) => [sku.suk, sku.stock]));
     const baseSkuBySuk = new Map(baseSkus.map((sku) => [sku.suk, sku]));
-    const productValue = Object.fromEntries(activitySkus.map((sku) => {
+    const mediaOwner=product.type===1?{type:0,relationId:0}:{type:product.type,relationId:product.relationId};
+    const skuPictures=await publicProductPictures(this.container.db,activitySkus.map(sku=>({...mediaOwner,image:sku.image||baseSkuBySuk.get(sku.suk)?.image||product.image})));
+    const productValue = Object.fromEntries(activitySkus.map((sku,index) => {
       const baseSku = baseSkuBySuk.get(sku.suk);
       const baseStock = baseStockBySuk.get(sku.suk) ?? 0;
       return [sku.suk, {
@@ -720,21 +738,14 @@ export class StoreNewcomerService {
         stock: baseStock,
         sum_stock: sku.sumStock,
         sales: sku.sales,
-        image: sku.image || baseSku?.image || product.image,
-        small_image: sku.image || baseSku?.image || product.image,
-        settle_price: String(sku.settlePrice),
+        image: skuPictures[index],
+        small_image: skuPictures[index],
         integral: sku.integral,
-        cost: String(sku.cost),
-        bar_code: sku.barCode,
         weight: String(sku.weight),
         volume: String(sku.volume),
-        brokerage: String(sku.brokerage),
-        brokerage_two: String(sku.brokerageTwo),
         type: sku.type,
         quota: sku.quota,
         quota_show: sku.quotaShow,
-        code: sku.code,
-        disk_info: sku.diskInfo,
         product_stock: baseStock,
         product_price: String(baseSku?.price ?? "0.00"),
       }];
@@ -773,17 +784,18 @@ export class StoreNewcomerService {
     const storeFuncStatus = parseConfigInteger(configs.store_func_status, 1) ? 1 : 0;
     const sliderImages = parseJsonArray(product.sliderImage);
     const storeInfo = {
-      ...legacy.storeInfo,
+      ...Object.fromEntries(Object.entries(legacy.storeInfo).filter(([key])=>['id','pid','type','product_type','relation_id','image','store_name','store_info','price','vip_price','ot_price','delivery_type','unit_name','sales','stock','is_show','is_del','is_verify','spec_type','system_form_id'].includes(key))),
       id: newcomer.id,
       product_id: newcomer.productId,
       type: product.type,
       relation_id: product.relationId,
       product_type: product.productType,
+      image: product.image,
       title: product.storeName,
       info: product.storeInfo,
       images: sliderImages,
       slider_image: sliderImages,
-      video_link: product.videoOpen ? product.videoLink : "",
+      video_link: await readDetailVideo(this.container.db,product),
       price: String(newcomer.price),
       ot_price: String(product.otPrice),
       sales: product.sales,
@@ -805,7 +817,8 @@ export class StoreNewcomerService {
       unique: activitySkus[0]?.unique ?? "",
       attr_value: Object.values(productValue),
     };
-    return {
+    const design=await readActivityDetailDesign(this.container.db,{id:newcomer.id,productId:product.id,type:newcomer.type,relationId:newcomer.relationId,image:product.image,images:product.sliderImage},7,uid);
+    return {design,data:{
       storeInfo,
       productAttr,
       productValue,
@@ -821,7 +834,7 @@ export class StoreNewcomerService {
       site_name: configs.site_name ?? "",
       share_qrcode: Math.max(0, parseConfigInteger(configs.share_qrcode, 0)),
       product_poster_title: configs.product_poster_title ?? "",
-    };
+    }};
   }
 
   async info(uid: number, giftOnly: boolean): Promise<Record<string, unknown>> {

@@ -1,193 +1,208 @@
 <template>
-  <div class="coupon-page">
-    <div class="page-head">
-      <h2>优惠券管理</h2>
-      <div class="head-right">
-        <el-radio-group v-model="typeFilter" @change="load">
-          <el-radio-button value="all">全部</el-radio-button>
-          <el-radio-button value="1">满减</el-radio-button>
-          <el-radio-button value="2">折扣</el-radio-button>
-        </el-radio-group>
-        <el-button type="primary" @click="openForm()">＋ 新增优惠券</el-button>
+  <div class="coupon-issues">
+    <div class="heading"><div><h2>已发行优惠券</h2><p class="hint">新建或复制为独立发行；已发行券的金额与适用范围保留原定义。</p></div><el-button v-if="canManage" type="primary" :disabled="busy || !!uncertainOperation" @click="openCreate">新增优惠券</el-button></div>
+    <el-alert v-if="!canView" title="没有优惠券查看权限" type="warning" :closable="false" />
+    <template v-else>
+      <div class="filters">
+        <label>优惠类型<el-select v-model="draftDiscount" placeholder="全部类型"><el-option label="全部类型" value="" /><el-option label="满减券" :value="1" /><el-option label="折扣券" :value="2" /></el-select></label>
+        <label>领取方式<el-select v-model="draftReceive" placeholder="全部方式"><el-option label="全部方式" value="" /><el-option v-for="v in [1,2,3,4]" :key="v" :label="receiveLabel(v)" :value="v" /></el-select></label>
+        <label>状态<el-select v-model="draftStatus" placeholder="全部状态"><el-option label="全部状态" value="" /><el-option label="已开启" :value="1" /><el-option label="未开启" :value="0" /><el-option label="已失效" :value="-1" /></el-select></label>
+        <label>名称 / ID<el-input v-model="draftKeyword" maxlength="100" clearable placeholder="名称或完整发行ID" @keyup.enter="search" /></label>
+        <div class="actions"><el-button type="primary" :disabled="busy" @click="search">查询</el-button><el-button :disabled="busy" @click="reset">重置</el-button><el-button :disabled="busy" @click="load()">刷新</el-button></div>
       </div>
-    </div>
+      <el-alert v-if="notice" :title="notice" type="warning" :closable="false" class="notice" />
+      <el-alert v-if="uncertainOperation" title="操作结果待核对，已暂停新的写入" type="warning" :closable="false" class="notice">
+        <p>{{ uncertainOperation.context.title }} · 请求 {{ uncertainOperation.body.request_id }}</p><p>重新读取只核对当前状态，不会重发写入。新建结果可能需要按名称和时间人工核对。</p>
+        <details><summary>保留的原请求及上下文</summary><pre>{{ JSON.stringify(uncertainOperation, null, 2) }}</pre></details>
+        <div class="actions"><el-button :disabled="busy" @click="reconcile()">重新读取核对</el-button><el-button :disabled="busy" @click="acknowledge">结束本地待核对状态</el-button></div>
+      </el-alert>
+      <el-alert v-if="listError" :title="listError" type="error" :closable="false" class="notice"><el-button @click="load()">重试列表</el-button></el-alert>
+      <div v-else class="table-scroll" v-loading="loading">
+        <el-table :data="list" border row-key="id" empty-text="暂无符合条件的发行券">
+          <el-table-column prop="id" label="ID" width="70" /><el-table-column prop="title" label="名称" min-width="170" />
+          <el-table-column label="类型 / 种类" width="125"><template #default="{ row }">{{ discountLabel(row.discount_type) }}<br>{{ categoryLabel(row.category) }}</template></el-table-column>
+          <el-table-column label="面额 / 折扣" min-width="175"><template #default="{ row }">{{ faceLabel(row) }}<div class="hint">使用门槛 ¥{{ row.use_min_price }}</div></template></el-table-column>
+          <el-table-column label="适用范围" min-width="150"><template #default="{ row }">{{ scopeLabel(row) }}</template></el-table-column>
+          <el-table-column label="领取方式" width="125"><template #default="{ row }">{{ receiveLabel(row.receive_type) }}</template></el-table-column>
+          <el-table-column label="领取 / 使用时间（上海）" min-width="270"><template #default="{ row }"><div>领取：{{ rangeLabel(row.start_time, row.end_time) }}</div><div>使用：{{ useLabel(row) }}</div></template></el-table-column>
+          <el-table-column label="发行 / 剩余" min-width="135"><template #default="{ row }">{{ quantityLabel(row) }}</template></el-table-column>
+          <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.status === 1 && !row.deleted ? 'success' : 'info'">{{ statusLabel(row) }}</el-tag><div v-if="!row.valid" class="hint">历史数据待核对</div></template></el-table-column>
+          <el-table-column label="操作" width="225" :fixed="compact ? false : 'right'"><template #default="{ row }"><div class="actions">
+            <el-button link type="primary" :disabled="busy" @click="openDetail(row)">详情</el-button><el-button v-if="canClaims" link type="primary" :disabled="busy" @click="openClaims(row)">领取记录</el-button>
+            <template v-if="canManage"><el-button link type="primary" :disabled="busy || !!uncertainOperation || row.deleted" @click="openCopy(row)">复制</el-button><el-button v-if="[-1,0,1].includes(row.status)" link type="warning" :disabled="busy || !!uncertainOperation || row.deleted" @click="confirmAction(row, 'status')">{{ row.status === 1 ? '停发' : '开启' }}</el-button><el-button v-if="row.status === -1" link :disabled="busy || !!uncertainOperation || row.deleted" @click="confirmAction(row, 'status', 0)">设为未开启</el-button><el-button link type="danger" :disabled="busy || !!uncertainOperation || row.deleted" @click="confirmAction(row, 'delete')">删除</el-button></template>
+          </div></template></el-table-column>
+        </el-table>
+      </div>
+      <el-pagination v-if="ready && !loading && !listError" class="pager" v-model:current-page="page" :page-size="15" :total="count" layout="total, prev, pager, next" :pager-count="5" :disabled="busy" @current-change="load" />
+    </template>
 
-    <el-table :data="filteredList" v-loading="loading" border>
-      <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="couponTitle" label="名称" />
-      <el-table-column label="类型" width="80">
-        <template #default="{ row }">
-          <el-tag :type="row.type === 1 ? 'primary' : 'warning'">
-            {{ row.type === 1 ? "满减" : "折扣" }}
-          </el-tag>
+    <el-dialog v-model="editorVisible" :title="mode === 'view' ? '发行详情' : mode === 'copy' ? '复制为新发行' : '新增优惠券'" width="min(920px, calc(100vw - 24px))" :close-on-click-modal="false" :close-on-press-escape="!writing" :show-close="!writing">
+      <div v-loading="editorLoading">
+        <el-alert v-if="editorError" :title="editorError" type="error" :closable="false" class="notice"><el-button v-if="!detail && detailId" :disabled="busy" @click="readDetail">重新读取</el-button></el-alert>
+        <el-alert v-if="detail && detail.issues.length" :title="detail.issues.join('；')" type="warning" :closable="false" class="notice" />
+        <template v-if="mode === 'view' && detail">
+          <dl class="snapshot">
+            <dt>发行 ID / 名称</dt><dd>#{{ detail.id }} · {{ detail.title }}</dd><dt>优惠 / 门槛</dt><dd>{{ discountLabel(detail.discount_type) }} · {{ faceLabel(detail) }} · 满 ¥{{ detail.use_min_price }}</dd>
+            <dt>种类 / 领取</dt><dd>{{ categoryLabel(detail.category) }} · {{ receiveLabel(detail.receive_type) }}<p class="hint">保存领取方式不代表已配置自动发券或已开通对应领取渠道。</p></dd>
+            <dt>适用范围</dt><dd>{{ scopeLabel(detail) }}<ul v-if="detail.products.length"><li v-for="item in detail.products" :key="item.id">#{{ item.id }} {{ item.store_name }}{{ item.deleted ? '（已删除）' : '' }}</li></ul></dd>
+            <dt>领取时间（上海）</dt><dd>{{ rangeLabel(detail.start_time, detail.end_time) }}</dd><dt>使用时间（上海）</dt><dd>{{ useLabel(detail) }}</dd>
+            <dt>发行 / 剩余</dt><dd>{{ quantityLabel(detail) }}</dd><dt>历史领取限制</dt><dd>{{ detail.receive_limit }}</dd><dt>状态 / 排序</dt><dd>{{ statusLabel(detail) }} / {{ detail.sort }}</dd>
+            <dt>创建时间（上海）</dt><dd>{{ epochLabel(detail.add_time) }}</dd><dt>使用规则</dt><dd class="rule">{{ detail.rule || '未填写' }}</dd>
+            <dt>来源凭证</dt><dd v-if="detail.source_template">模板 #{{ detail.source_template.template_id }}<br>{{ detail.source_template.source_revision }}</dd><dd v-else>无模板来源凭证</dd><dt>历史来源字段</dt><dd>cid {{ detail.cid }} · app_type {{ detail.app_type }}<p class="hint">仅 cid 非零不能证明来源模板。</p></dd>
+          </dl><div class="actions"><el-button v-if="canClaims" @click="openClaims(detail)">查看本次发行领取记录</el-button><el-button v-if="canManage" :disabled="busy || !!uncertainOperation || detail.deleted" @click="openCopy(detail)">复制为新发行</el-button></div>
         </template>
-      </el-table-column>
-      <el-table-column label="面额/折扣" width="110">
-        <template #default="{ row }">
-          {{ row.type === 2 ? `${row.couponPrice}折` : `¥${row.couponPrice}` }}
+        <template v-else-if="mode !== 'view' && !editorLoading">
+          <el-alert v-if="mode === 'copy' && detail && !detail.copy_input" title="此历史发行不能完整复制。请核对诊断；不会截断或放宽原受众范围。" type="warning" :closable="false"><el-button :disabled="busy || !!uncertainOperation" @click="openCreate">明确新建并重新选择全部内容</el-button></el-alert>
+          <template v-if="mode === 'create' || detail?.copy_input">
+            <p v-if="mode === 'copy'" class="hint">来源 #{{ detail?.id }}。复制仅生成新的独立券定义，不继承源模板凭证、赠券自动配置、库存或领取历史；请核对领取方式与受众。</p>
+            <el-alert v-if="optionsError" :title="optionsError" type="error" :closable="false"><el-button :disabled="busy" @click="loadOptions">重试范围选项</el-button></el-alert>
+            <el-form label-width="125px" :disabled="busy || !!uncertainOperation" v-loading="optionsLoading">
+              <el-form-item label="优惠类型"><el-radio-group v-model="form.discount_type" @change="changeDiscount"><el-radio :value="1">满减券</el-radio><el-radio :value="2">折扣券</el-radio></el-radio-group></el-form-item>
+              <el-form-item label="优惠券名称" required><el-input v-model="form.title" maxlength="128" placeholder="最多64个字符" /></el-form-item>
+              <el-form-item :label="form.discount_type === 2 ? '折扣百分数' : '优惠券面额'" required><el-input v-model="form.coupon_price" :inputmode="form.discount_type === 2 ? 'numeric' : 'decimal'" :placeholder="form.discount_type === 2 ? '如85表示8.5折' : '如10.00'"><template #append>{{ form.discount_type === 2 ? '%' : '元' }}</template></el-input><p class="hint">{{ form.discount_type === 2 ? '新输入使用1–100整数百分数；85表示支付原价85%，即8.5折。' : '正数金额，最多两位小数。' }}</p><p v-if="fractionalCopy" class="hint">源券包含小数百分数 {{ detail?.copy_input?.coupon_price }}，可原值保留。旧结算取整数百分数，85.99按85%（8.5折）计算。</p></el-form-item>
+              <el-form-item label="优惠券种类"><el-radio-group v-model="form.category" @change="changeCategory"><el-radio :value="0">普通券</el-radio><el-radio :value="2">会员券</el-radio></el-radio-group></el-form-item>
+              <el-form-item label="领取方式"><el-select v-model="form.receive_type" @change="changeReceive"><el-option v-for="option in receiveOptions" :key="option.value" :value="option.value" :label="option.label" /></el-select><p class="hint">会员、历史新人及历史会员发放只保留用途定义；本页不会创建自动发放配置或证明对应领取渠道可用。</p></el-form-item>
+              <el-form-item label="适用范围"><el-radio-group v-model="form.scope_type" @change="changeScope"><el-radio :value="0">全部商品</el-radio><el-radio :value="1">指定品类</el-radio><el-radio :value="2">指定商品</el-radio><el-radio :value="3">指定品牌</el-radio></el-radio-group></el-form-item>
+              <el-form-item v-if="form.scope_type === 1" label="品类" required><el-cascader v-model="form.category_id" :options="categoryTree" :props="{ checkStrictly: true, emitPath: false }" clearable filterable placeholder="可选择任意层级品类" /></el-form-item>
+              <el-form-item v-if="form.scope_type === 3" label="品牌" required><el-cascader v-model="form.brand_id" :options="brandTree" :props="{ checkStrictly: true, emitPath: false }" clearable filterable placeholder="可选择任意层级品牌" /></el-form-item>
+              <el-form-item v-if="form.scope_type === 2" label="商品" required><el-button :disabled="!options || !!optionsError" @click="openProducts">选择商品（{{ form.product_ids.length }}）</el-button><div class="selected"><el-tag v-for="item in selectedProducts" :key="item.id" closable @close="removeSelected(item.id)">#{{ item.id }} {{ item.store_name }}{{ item.deleted ? '（已删除，请重选）' : '' }}</el-tag></div><p class="hint">跨页完整选择，最多100项，商品ID列表最多500字符。</p></el-form-item>
+              <el-form-item label="使用门槛"><el-radio-group v-model="hasMinimum"><el-radio :value="false">无门槛</el-radio><el-radio :value="true">满额使用</el-radio></el-radio-group><el-input v-if="hasMinimum" v-model="form.use_min_price" inputmode="decimal" placeholder="消费金额"><template #append>元</template></el-input></el-form-item>
+              <el-form-item label="使用有效期"><el-radio-group v-model="useDays"><el-radio :value="true">领券后天数</el-radio><el-radio :value="false">固定使用区间</el-radio></el-radio-group><el-input-number v-if="useDays" v-model="form.valid_days" :min="1" :max="3650" :precision="0" /><div v-else class="dates"><label>开始（上海）<input v-model="useStart" type="datetime-local" step="0.001" :disabled="busy || !!uncertainOperation"></label><label>结束（上海）<input v-model="useEnd" type="datetime-local" step="0.001" :disabled="busy || !!uncertainOperation"></label></div></el-form-item>
+              <el-form-item label="领取时间"><el-radio-group v-model="hasReceiveWindow"><el-radio :value="false">不限制</el-radio><el-radio :value="true">指定区间</el-radio></el-radio-group><div v-if="hasReceiveWindow" class="dates"><label>开始（上海）<input v-model="receiveStart" type="datetime-local" step="0.001" :disabled="busy || !!uncertainOperation"></label><label>结束（上海）<input v-model="receiveEnd" type="datetime-local" step="0.001" :disabled="busy || !!uncertainOperation"></label></div></el-form-item>
+              <el-form-item label="发行数量"><el-radio-group v-model="form.is_permanent" :disabled="form.receive_type === 2"><el-radio :value="1">不限量</el-radio><el-radio :value="0">限量</el-radio></el-radio-group><el-input-number v-if="form.is_permanent === 0" v-model="form.total_count" :min="1" :max="2147483647" :precision="0" /><p v-if="form.receive_type === 2" class="hint">历史新人券必须不限量。</p></el-form-item>
+              <el-form-item label="使用规则"><el-input v-model="form.rule" type="textarea" :rows="4" maxlength="8192" placeholder="最多4096个字符，按纯文本展示" /></el-form-item>
+              <el-form-item label="是否开启"><el-switch v-model="form.status" :active-value="1" :inactive-value="0" /></el-form-item>
+            </el-form>
+          </template>
         </template>
-      </el-table-column>
-      <el-table-column label="门槛" width="100">
-        <template #default="{ row }">满¥{{ row.useMinPrice }}</template>
-      </el-table-column>
-      <el-table-column label="有效天数" width="100" prop="day" />
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'info'">
-            {{ row.status === 1 ? "可用" : "停发" }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openForm(row)">编辑</el-button>
-          <el-button link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">
-            {{ row.status === 1 ? "停发" : "上架" }}
-          </el-button>
-          <el-button link type="danger" @click="del(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      </div>
+      <template #footer><el-button :disabled="writing" @click="closeEditor">关闭</el-button><el-button v-if="mode !== 'view' && (mode === 'create' || detail?.copy_input)" type="primary" :loading="writing" :disabled="busy || editorLoading || optionsLoading || !!optionsError || !options || !!uncertainOperation" @click="save">创建独立发行</el-button></template>
+    </el-dialog>
 
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="showForm" :title="formData.id ? '编辑优惠券' : '新增优惠券'" width="500px">
-      <el-form label-width="90px">
-        <el-form-item label="名称">
-          <el-input v-model="formData.title" placeholder="优惠券名称" />
-        </el-form-item>
-        <el-form-item label="面额">
-          <el-input v-model="formData.coupon_price" placeholder="如 10.00">
-            <template #prepend>¥</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="使用门槛">
-          <el-input v-model="formData.use_min_price" placeholder="如 100.00">
-            <template #prepend>满¥</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="有效天数">
-          <el-input-number v-model="formData.day" :min="1" :max="365" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showForm = false">取消</el-button>
-        <el-button type="primary" @click="save">保存</el-button>
-      </template>
+    <el-dialog v-model="productsVisible" title="选择适用商品" width="min(780px, calc(100vw - 24px))" append-to-body :close-on-click-modal="false">
+      <div class="filters"><el-input v-model="productKeyword" maxlength="100" clearable placeholder="商品名称" @keyup.enter="loadProducts(1)" /><el-button @click="loadProducts(1)">查询</el-button></div>
+      <el-alert v-if="productError" :title="productError" type="error" :closable="false"><el-button @click="loadProducts()">重试商品</el-button></el-alert>
+      <div class="actions"><el-button :disabled="productsLoading || !!productError" @click="selectPage(true)">选择本页</el-button><el-button :disabled="productsLoading || !!productError" @click="selectPage(false)">取消本页</el-button><span>已选 {{ choices.size }}</span></div>
+      <div class="selected"><el-tag v-for="item in [...choices.values()]" :key="item.id" closable @close="unchoose(item.id)">#{{ item.id }} {{ item.store_name }}</el-tag></div>
+      <el-table v-if="!productError" :data="products" v-loading="productsLoading" row-key="id" border><el-table-column label="选择" width="70"><template #default="{ row }"><el-checkbox :model-value="choices.has(row.id)" :disabled="productsLoading" @change="choose(row, Boolean($event))" /></template></el-table-column><el-table-column prop="id" label="ID" width="85" /><el-table-column prop="store_name" label="商品名称" min-width="160" /></el-table>
+      <el-pagination v-if="!productsLoading && !productError" class="pager" v-model:current-page="productPage" :page-size="15" :total="productCount" layout="total, prev, pager, next" :pager-count="5" @current-change="loadProducts" />
+      <template #footer><el-button @click="closeProducts">取消</el-button><el-button type="primary" :disabled="productsLoading || !!productError" @click="applyProducts">确认完整选择</el-button></template>
+    </el-dialog>
+    <el-dialog v-model="claimsVisible" :title="`发行 #${claimsId} 领取记录 · ${claimsTitle}`" width="min(780px, calc(100vw - 24px))" append-to-body :close-on-click-modal="false">
+      <p class="hint">{{ claimsSource === 'owned' ? '来源：会员持券记录' : '来源：普通券领取日志；重复日志按原记录保留' }} · 时间为上海时间</p>
+      <el-alert v-if="claimsError" :title="claimsError" type="error" :closable="false"><el-button @click="loadClaims()">重试领取记录</el-button></el-alert>
+      <el-table v-else :data="claims" v-loading="claimsLoading" row-key="row_key" border><el-table-column label="UID" width="85"><template #default="{ row }">{{ row.uid ?? '缺失' }}</template></el-table-column><el-table-column label="用户" min-width="200"><template #default="{ row }"><img v-if="row.avatar_preview" :src="row.avatar_preview" class="avatar" alt="" loading="lazy">{{ row.nickname || '未记录昵称' }}<el-tag v-if="row.missing_user" type="info">用户缺失</el-tag><el-tag v-else-if="row.deleted_user" type="info">用户已注销</el-tag></template></el-table-column><el-table-column label="领取时间（上海）" width="185"><template #default="{ row }">{{ epochLabel(row.add_time) }}</template></el-table-column></el-table>
+      <el-pagination v-if="!claimsLoading && !claimsError" class="pager" v-model:current-page="claimsPage" :page-size="15" :total="claimsCount" layout="total, prev, pager, next" :pager-count="5" @current-change="loadClaims" />
+      <template #footer><el-button @click="closeClaims">关闭</el-button></template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import {
-  apiAdminCouponList,
-  apiAdminCouponSave,
-  apiAdminCouponStatus,
-  apiAdminCouponDel,
-  type CouponItem,
-} from "@/api/coupon";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { useAuthStore } from '@/stores/auth';
+import { getAdminSession, getToken } from '@/utils/auth';
 
-const list = ref<CouponItem[]>([]);
-const loading = ref(true);
-const showForm = ref(false);
-const typeFilter = ref("all");
-
-const filteredList = computed(() => {
-  if (typeFilter.value === "all") return list.value;
-  return list.value.filter((c) => c.type === Number(typeFilter.value));
-});
-const formData = reactive({
-  id: 0,
-  title: "",
-  coupon_price: "",
-  use_min_price: "",
-  day: 7,
-});
-
-async function load() {
-  loading.value = true;
+import { AdminResponseError } from '@/utils/request';
+import { apiCouponIssues, apiCouponIssueOptions, apiCouponIssueProducts, apiCouponIssueDetail, apiCouponIssueCopy, apiCouponIssueClaims, apiCouponIssueCreate, apiCouponIssueStatus, apiCouponIssueDelete, couponIssueTree, couponIssueUtc, couponIssueLocal, couponIssueMoney, normalizeCouponIssue, type CouponIssueInput, type CouponIssueRow, type CouponIssueOptions, type CouponIssueProduct, type CouponIssueClaim, type CouponIssueCreate, type CouponIssueKey, type CouponIssueQuery } from '@/api/couponIssue';
+type Mode = 'create' | 'copy' | 'view';
+type Stamp = { identity: string; generation: number; stored: string | null };
+type Job = { stamp: Stamp; controller: AbortController };
+type Context = { title: string; sourceId: number; products: { id: number; store_name: string }[] };
+type Mutation = ({ kind: 'create'; body: CouponIssueCreate } | { kind: 'status'; id: number; body: CouponIssueKey & { status: 0 | 1 } } | { kind: 'delete'; id: number; body: CouponIssueKey }) & { context: Context };
+const auth = useAuthStore(), has = (key: string) => !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes(key));
+const canView = computed(() => !!auth.token && auth.token === getToken() && has('coupon.view')), canManage = computed(() => canView.value && has('coupon.manage')), canClaims = computed(() => canView.value && has('coupon_record.view'));
+const identity = computed(() => JSON.stringify([auth.token, auth.userInfo?.id, auth.userInfo?.level, auth.uniqueAuth]));
+const list = ref<CouponIssueRow[]>([]), loading = ref(false), ready = ref(false), listError = ref(''), page = ref(1), count = ref(0), compact = ref(window.innerWidth < 768);
+const draftKeyword = ref(''), draftStatus = ref<CouponIssueQuery['status']>(''), draftDiscount = ref<CouponIssueQuery['discount_type']>(''), draftReceive = ref<CouponIssueQuery['receive_type']>('');
+let filters = { keyword: '', status: '', discount_type: '', receive_type: '' } as Omit<CouponIssueQuery, 'page' | 'limit'>;
+const editorVisible = ref(false), mode = ref<Mode>('create'), editorLoading = ref(false), editorError = ref(''), detailId = ref(0), detail = ref<CouponIssueRow | null>(null);
+const form = ref<CouponIssueInput>(blank()), selectedProducts = ref<CouponIssueProduct[]>([]), hasMinimum = ref(false), useDays = ref(true), hasReceiveWindow = ref(false), useStart = ref(''), useEnd = ref(''), receiveStart = ref(''), receiveEnd = ref('');
+const options = ref<CouponIssueOptions | null>(null), optionsLoading = ref(false), optionsError = ref('');
+const categoryTree = computed(() => couponIssueTree((options.value?.categories ?? []).map(row => ({ ...row, name: row.cate_name })))), brandTree = computed(() => couponIssueTree((options.value?.brands ?? []).map(row => ({ ...row, name: row.brand_name }))));
+const productsVisible = ref(false), productsLoading = ref(false), productError = ref(''), products = ref<CouponIssueProduct[]>([]), productPage = ref(1), productCount = ref(0), productKeyword = ref(''), choices = ref(new Map<number, CouponIssueProduct>());
+const claimsVisible = ref(false), claimsLoading = ref(false), claimsError = ref(''), claims = ref<CouponIssueClaim[]>([]), claimsPage = ref(1), claimsCount = ref(0), claimsId = ref(0), claimsTitle = ref(''), claimsSource = ref('');
+const writing = ref(false), confirming = ref(false), recovering = ref(false), busy = computed(() => writing.value || confirming.value || recovering.value), notice = ref(''), uncertainOperation = ref<Mutation | null>(null);
+const fractionalCopy = computed(() => mode.value === 'copy' && detail.value?.copy_input?.discount_type === 2 && /\.(?!00$)\d+$/u.test(detail.value.copy_input.coupon_price));
+const receiveOptions = computed(() => { const values: number[] = [1]; if (form.value.category === 0) values.push(3); const old = mode.value === 'copy' ? detail.value?.copy_input?.receive_type : undefined; if (old === 4 || old === 2 && form.value.category === 0) values.push(old); return values.map(value => ({ value, label: receiveLabel(value) })); });
+let alive = false, syncing = false, generation = 0, editorGeneration = 0, pickerGeneration = 0, claimsGeneration = 0, confirmGeneration = 0, listVersion = 0, stored = localStorage.getItem('admin_session');
+const jobs = new Map<string, Job>();
+function blank(): CouponIssueInput { return { title: '', discount_type: 1, scope_type: 0, category: 0, category_id: 0, brand_id: 0, product_ids: [], coupon_price: '', use_min_price: '0.00', valid_days: 1, use_start_time: null, use_end_time: null, start_time: null, end_time: null, receive_type: 1, is_permanent: 1, total_count: 1, rule: '', status: 1, sort: 0 }; }
+function stamp(): Stamp { return { identity: identity.value, generation, stored }; }
+function current(value: Stamp) { return alive && value.generation === generation && value.identity === identity.value && auth.token === getToken() && value.stored === localStorage.getItem('admin_session'); }
+function cancel(channel: string) { jobs.get(channel)?.controller.abort(); jobs.delete(channel); }
+function start(channel: string): Job { cancel(channel); const job = { stamp: stamp(), controller: new AbortController() }; jobs.set(channel, job); return job; }
+function valid(channel: string, job: Job) { return jobs.get(channel) === job && current(job.stamp); }
+function finish(channel: string, job: Job) { if (!valid(channel, job)) return false; jobs.delete(channel); return true; }
+function message(reason: unknown) { return reason instanceof Error ? reason.message : '请求失败，请重试'; }
+function editable() { return current(stamp()) && canManage.value && editorVisible.value && mode.value !== 'view' && !busy.value && !uncertainOperation.value && (mode.value === 'create' || !!detail.value?.copy_input); }
+function discountLabel(value: number) { return value === 1 ? '满减券' : value === 2 ? '折扣券' : `未知类型 #${value}`; }
+function categoryLabel(value: number) { return value === 0 || value === 1 ? '普通券' : value === 2 ? '会员券' : `未知种类 #${value}`; }
+function receiveLabel(value: number) { return ({ 1: '手动领取', 2: '新人券（历史用途）', 3: '后台发放', 4: '会员发放（历史用途）' } as Record<number, string>)[value] ?? `未知方式 #${value}`; }
+function statusLabel(row: CouponIssueRow) { return row.deleted ? '已删除' : ({ '-1': '已失效', 0: '未开启', 1: '已开启' } as Record<number, string>)[row.status] ?? `历史状态 #${row.status}`; }
+function faceLabel(row: Pick<CouponIssueRow, 'discount_type' | 'coupon_price'>) { if (row.discount_type !== 2) return `${row.coupon_price} 元`; if (!/^(0|[1-9]\d*)(\.\d{1,2})?$/u.test(row.coupon_price)) return row.coupon_price; const whole = BigInt(row.coupon_price.split('.')[0]); return `${whole / 10n}${whole % 10n ? `.${whole % 10n}` : ''} 折（按 ${whole}% 结算；原值 ${row.coupon_price}%）`; }
+function scopeLabel(row: CouponIssueRow) { return row.scope_type === 0 ? '全部商品' : row.scope_type === 1 ? `品类 #${row.category_id} ${row.category_name}` : row.scope_type === 2 ? `指定 ${row.product_ids.length} 个商品` : row.scope_type === 3 ? `品牌 #${row.brand_id} ${row.brand_name}` : `未知范围 #${row.scope_type}`; }
+function timeLabel(value: string | null) { if (!value) return '未设置'; return /^[+-]/u.test(value) ? new Date(value).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) + '（历史年份）' : couponIssueLocal(value).replace('T', ' '); }
+function rangeLabel(start: string | null, end: string | null) { return !start && !end ? '不限制' : `${timeLabel(start)} 至 ${timeLabel(end)}`; }
+function epochLabel(value: number) { return value > 0 ? timeLabel(new Date(value * 1000).toISOString()) : '未记录'; }
+function useLabel(row: CouponIssueRow) { return row.valid_days > 0 ? `领取后 ${row.valid_days} 天` : rangeLabel(row.use_start_time, row.use_end_time); }
+function quantityLabel(row: CouponIssueRow) { return row.is_permanent === 1 ? '不限量' : `${row.is_permanent === 0 ? '' : `未知标记 #${row.is_permanent} · `}${row.total_count} / ${row.remain_count}`; }
+async function load(target = page.value) { if (!canView.value || !current(stamp()) || !Number.isInteger(target) || target < 1) return; listVersion++; const job = start('list'); page.value = target; loading.value = true; ready.value = false; list.value = []; count.value = 0; listError.value = ''; try { const result = await apiCouponIssues({ ...filters, page: target, limit: 15 }, job.controller.signal); if (!valid('list', job)) return; if (!result.list.length && target > 1) { await load(Math.max(1, Math.min(target - 1, Math.ceil(result.count / 15)))); return; } list.value = result.list; count.value = result.count; ready.value = true; } catch (reason) { if (valid('list', job)) listError.value = message(reason); } finally { if (finish('list', job)) loading.value = false; } }
+function search() { if (busy.value) return; filters = { keyword: draftKeyword.value.trim(), status: draftStatus.value, discount_type: draftDiscount.value, receive_type: draftReceive.value }; void load(1); }
+function reset() { if (busy.value) return; draftKeyword.value = ''; draftStatus.value = ''; draftDiscount.value = draftReceive.value = ''; search(); }
+function closeProducts() { pickerGeneration++; cancel('products'); productsVisible.value = false; productsLoading.value = false; products.value = []; productCount.value = 0; productError.value = ''; choices.value = new Map(); }
+function closeEditor() { if (writing.value) return; editorGeneration++; closeProducts(); cancel('detail'); cancel('options'); editorVisible.value = false; editorLoading.value = optionsLoading.value = false; editorError.value = optionsError.value = ''; detail.value = null; detailId.value = 0; options.value = null; }
+function hydrate(value: CouponIssueInput) { form.value = { ...value, product_ids: [...value.product_ids] }; hasMinimum.value = couponIssueMoney(value.use_min_price) !== '0.00'; useDays.value = value.valid_days > 0; hasReceiveWindow.value = !!(value.start_time || value.end_time); useStart.value = couponIssueLocal(value.use_start_time); useEnd.value = couponIssueLocal(value.use_end_time); receiveStart.value = couponIssueLocal(value.start_time); receiveEnd.value = couponIssueLocal(value.end_time); }
+async function openCreate() { if (!canManage.value || !current(stamp()) || busy.value || uncertainOperation.value) return; closeEditor(); mode.value = 'create'; hydrate(blank()); selectedProducts.value = []; editorVisible.value = true; await loadOptions(); }
+function rowAvailable(row: CouponIssueRow) { return list.value.some(value => value.id === row.id && value.revision === row.revision) || detail.value?.id === row.id && detail.value?.revision === row.revision; }
+async function openDetail(row: CouponIssueRow) { if (!canView.value || !current(stamp()) || busy.value || !rowAvailable(row)) return; const id = row.id; closeEditor(); mode.value = 'view'; detailId.value = id; editorVisible.value = true; await readDetail(); }
+async function openCopy(row: CouponIssueRow) { if (!canManage.value || !current(stamp()) || busy.value || uncertainOperation.value || row.deleted || !rowAvailable(row)) return; const id = row.id; closeEditor(); mode.value = 'copy'; detailId.value = id; hydrate(blank()); selectedProducts.value = []; editorVisible.value = true; await readDetail(); }
+async function readDetail() { if (!editorVisible.value || !detailId.value || !canView.value || busy.value || !current(stamp())) return; const job = start('detail'), serial = editorGeneration, chosenMode = mode.value; editorLoading.value = true; editorError.value = ''; detail.value = null; try { const row = await (chosenMode === 'copy' ? apiCouponIssueCopy : apiCouponIssueDetail)(detailId.value, job.controller.signal); if (!valid('detail', job) || serial !== editorGeneration || chosenMode !== mode.value || !editorVisible.value) return; detail.value = row; if (chosenMode === 'copy' && row.copy_input && !row.deleted) { hydrate(row.copy_input); selectedProducts.value = row.products.map(value => ({ ...value })); await loadOptions(); } else if (chosenMode === 'copy' && row.deleted) editorError.value = '来源已删除，不能复制'; } catch (reason) { if (valid('detail', job) && serial === editorGeneration) editorError.value = message(reason); } finally { if (finish('detail', job) && serial === editorGeneration) editorLoading.value = false; } }
+async function loadOptions() { if (!editable()) return; const job = start('options'), serial = editorGeneration; options.value = null; optionsLoading.value = true; optionsError.value = ''; try { const result = await apiCouponIssueOptions(job.controller.signal); if (valid('options', job) && serial === editorGeneration && editorVisible.value) options.value = result; } catch (reason) { if (valid('options', job) && serial === editorGeneration) optionsError.value = message(reason); } finally { if (finish('options', job) && serial === editorGeneration) optionsLoading.value = false; } }
+function changeDiscount() { if (editable()) form.value.coupon_price = ''; }
+function changeCategory() { if (!editable()) return; if (!receiveOptions.value.some(value => value.value === form.value.receive_type)) form.value.receive_type = 1; changeReceive(); }
+function changeReceive() { if (editable() && form.value.receive_type === 2) { form.value.is_permanent = 1; form.value.total_count = 0; } }
+function changeScope() { if (!editable()) return; form.value.category_id = form.value.brand_id = 0; form.value.product_ids = []; selectedProducts.value = []; closeProducts(); }
+async function openProducts() { if (!editable() || !options.value || optionsError.value || form.value.scope_type !== 2) return; closeProducts(); choices.value = new Map(selectedProducts.value.map(row => [row.id, { ...row }])); productKeyword.value = ''; productsVisible.value = true; await loadProducts(1); }
+async function loadProducts(target = productPage.value) { if (!editable() || !productsVisible.value) return; const job = start('products'), serial = pickerGeneration, editor = editorGeneration; productsLoading.value = true; productPage.value = target; products.value = []; productCount.value = 0; productError.value = ''; try { const result = await apiCouponIssueProducts({ page: target, limit: 15, keyword: productKeyword.value.trim() }, job.controller.signal); if (!valid('products', job) || serial !== pickerGeneration || editor !== editorGeneration || !productsVisible.value) return; products.value = result.list; productCount.value = result.count; } catch (reason) { if (valid('products', job) && serial === pickerGeneration) productError.value = message(reason); } finally { if (finish('products', job) && serial === pickerGeneration) productsLoading.value = false; } }
+function choose(row: CouponIssueProduct, checked: boolean) { if (!editable() || !productsVisible.value || productsLoading.value || productError.value || !products.value.includes(row)) return; const next = new Map(choices.value); if (checked) next.set(row.id, { ...row }); else next.delete(row.id); choices.value = next; }
+function selectPage(checked: boolean) { for (const row of products.value) choose(row, checked); }
+function unchoose(id: number) { if (!editable() || !productsVisible.value) return; const next = new Map(choices.value); next.delete(id); choices.value = next; if (productError.value.includes('完整选择仍保留')) productError.value = ''; }
+function applyProducts() { if (!editable() || !productsVisible.value || productsLoading.value || productError.value) return; const rows = [...choices.value.values()]; if (rows.length > 100 || rows.map(row => row.id).join(',').length > 500) { productError.value = '所选商品超过100项或ID列表超过500字符，完整选择仍保留，请减少后确认'; return; } if (rows.some(row => row.deleted)) { productError.value = '所选商品已删除，请移除后重新选择'; return; } form.value.product_ids = rows.map(row => row.id); selectedProducts.value = rows; closeProducts(); }
+function removeSelected(id: number) { if (!editable()) return; selectedProducts.value = selectedProducts.value.filter(row => row.id !== id); form.value.product_ids = form.value.product_ids.filter(value => value !== id); }
+function closeClaims() { claimsGeneration++; cancel('claims'); claimsVisible.value = false; claimsLoading.value = false; claims.value = []; claimsCount.value = 0; claimsError.value = ''; claimsId.value = 0; claimsTitle.value = claimsSource.value = ''; }
+async function openClaims(row: CouponIssueRow) { if (!canClaims.value || !current(stamp()) || busy.value || !rowAvailable(row)) return; closeClaims(); claimsId.value = row.id; claimsTitle.value = row.title; claimsVisible.value = true; await loadClaims(1); }
+async function loadClaims(target = claimsPage.value) { if (!canClaims.value || !current(stamp()) || !claimsVisible.value) return; const job = start('claims'), serial = claimsGeneration, id = claimsId.value; claimsPage.value = target; claimsLoading.value = true; claims.value = []; claimsCount.value = 0; claimsError.value = ''; try { const result = await apiCouponIssueClaims(id, { page: target, limit: 15 }, job.controller.signal); if (!valid('claims', job) || serial !== claimsGeneration || id !== claimsId.value || !claimsVisible.value) return; claims.value = result.list; claimsCount.value = result.count; claimsSource.value = result.source; } catch (reason) { if (valid('claims', job) && serial === claimsGeneration) claimsError.value = message(reason); } finally { if (finish('claims', job) && serial === claimsGeneration) claimsLoading.value = false; } }
+async function mutate(operation: Mutation, editor?: number) { if (!current(stamp()) || !canManage.value || busy.value || uncertainOperation.value) return; const job = start('write'); writing.value = true; notice.value = ''; const active = () => valid('write', job) && canManage.value && (editor === undefined || editor === editorGeneration && editorVisible.value); try { if (operation.kind === 'create') await apiCouponIssueCreate(operation.body, job.controller.signal); else if (operation.kind === 'status') await apiCouponIssueStatus(operation.id, operation.body, job.controller.signal); else await apiCouponIssueDelete(operation.id, operation.body, job.controller.signal); if (!active()) return; ElMessage.success(operation.kind === 'create' ? '独立发行已创建' : '操作已完成'); writing.value = false; if (editor !== undefined) closeEditor(); await load(); } catch (reason) { if (!active()) return; const rejected = reason instanceof AdminResponseError && [400,403,404,409,422].includes(Number(reason.status)); uncertainOperation.value = rejected ? null : operation; notice.value = `${rejected ? '操作未完成' : '操作结果未确认'}：${message(reason)}`; if (editor !== undefined) editorError.value = notice.value; writing.value = false; await reconcile(operation); } finally { if (finish('write', job)) writing.value = false; } }
+async function save() { if (!editable() || editorLoading.value || optionsLoading.value || optionsError.value || !options.value || detail.value?.deleted) return; try { const value = normalizeCouponIssue({ ...form.value, product_ids: [...form.value.product_ids], use_min_price: hasMinimum.value ? form.value.use_min_price : '0.00', valid_days: useDays.value ? form.value.valid_days : 0, use_start_time: useDays.value ? null : couponIssueUtc(useStart.value), use_end_time: useDays.value ? null : couponIssueUtc(useEnd.value), start_time: hasReceiveWindow.value ? couponIssueUtc(receiveStart.value) : null, end_time: hasReceiveWindow.value ? couponIssueUtc(receiveEnd.value) : null, total_count: form.value.is_permanent ? 0 : form.value.total_count }); if (value.use_end_time && Date.parse(value.use_end_time) <= Date.now()) throw Error('固定使用结束时间已过期，请调整后新建'); if (hasMinimum.value && value.use_min_price === '0.00') throw Error('满额使用门槛必须大于0'); if (value.discount_type === 2 && !value.coupon_price.endsWith('.00') && !(fractionalCopy.value && value.coupon_price === detail.value?.copy_input?.coupon_price)) throw Error('新折扣请填写整数百分数；历史小数仅可原值保留'); if (!receiveOptions.value.some(option => option.value === value.receive_type)) throw Error('该领取方式仅可由相同历史用途复制保留'); if (value.scope_type === 1 && !options.value.categories.some(row => row.id === value.category_id)) throw Error('所选品类不在当前可用范围'); if (value.scope_type === 3 && !options.value.brands.some(row => row.id === value.brand_id)) throw Error('所选品牌不在当前可用范围'); if (value.scope_type === 2 && (selectedProducts.value.length !== value.product_ids.length || value.product_ids.some(id => !selectedProducts.value.some(row => row.id === id && !row.deleted)))) throw Error('请重新选择完整且未删除的商品范围'); const source = mode.value === 'copy' ? detail.value : null; await mutate({ kind: 'create', body: { ...value, source_id: source?.id ?? 0, source_revision: source?.revision ?? null, request_id: crypto.randomUUID() }, context: { title: value.title, sourceId: source?.id ?? 0, products: selectedProducts.value.map(row => ({ id: row.id, store_name: row.store_name })) } }, editorGeneration); } catch (reason) { editorError.value = message(reason); } }
+async function confirmAction(row: CouponIssueRow, kind: 'status' | 'delete', requested?: 0 | 1) { if (!current(stamp()) || !canManage.value || !ready.value || loading.value || busy.value || uncertainOperation.value || !list.value.includes(row) || row.deleted || kind === 'status' && ![-1,0,1].includes(row.status)) return; const value = stamp(), serial = ++confirmGeneration, version = listVersion, id = row.id, revision = row.revision, status: 0 | 1 = requested ?? (row.status === 1 ? 0 : 1), context = { title: row.title, sourceId: id, products: row.products.map(item => ({ id: item.id, store_name: item.store_name })) }; confirming.value = true; try { await ElMessageBox.confirm(kind === 'delete' ? '确认软删除本次发行？保留已领取、占用的优惠券范围、订单及赠券配置；本次发行停止未来发放。' : `${row.status === -1 ? '仅恢复本次独立发行，不恢复源模板。' : ''}确认${status ? '开启' : '停止发放'}「${row.title}」？不会改写已领取券的定义。`, kind === 'delete' ? '删除发行' : '变更发行状态', { type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消' }); } catch { return; } finally { if (serial === confirmGeneration) confirming.value = false; } if (!current(value) || serial !== confirmGeneration || version !== listVersion || !canManage.value || !list.value.some(item => item.id === id && item.revision === revision && !item.deleted)) return; const body = { revision, request_id: crypto.randomUUID() }; await mutate(kind === 'status' ? { kind, id, body: { ...body, status }, context } : { kind, id, body, context }); }
+async function reconcile(operation: Mutation | null = uncertainOperation.value) {
+  if (!current(stamp()) || busy.value) return;
+  const value = stamp(); recovering.value = true;
   try {
-    list.value = await apiAdminCouponList();
-  } finally {
-    loading.value = false;
-  }
+    await load(); if (!current(value) || !operation) return;
+    const id = operation.kind === 'create' ? operation.body.source_id : operation.id; if (!id) return;
+    const job = start('reconcile');
+    try { await apiCouponIssueDetail(id, job.controller.signal); if (valid('reconcile', job)) notice.value += '；已重新读取相关发行详情，请人工核对请求结果。'; }
+    catch (reason) { if (valid('reconcile', job)) notice.value += `；核对读取失败：${message(reason)}`; }
+    finally { finish('reconcile', job); }
+  } finally { if (current(value)) recovering.value = false; }
 }
-
-function openForm(row?: CouponItem) {
-  if (row) {
-    formData.id = row.id;
-    formData.title = row.couponTitle;
-    formData.coupon_price = row.couponPrice;
-    formData.use_min_price = row.useMinPrice;
-    formData.day = row.day;
-  } else {
-    formData.id = 0;
-    formData.title = "";
-    formData.coupon_price = "";
-    formData.use_min_price = "";
-    formData.day = 7;
-  }
-  showForm.value = true;
-}
-
-async function save() {
-  if (!formData.title) return ElMessage.warning("请输入名称");
-  try {
-    await apiAdminCouponSave({
-      id: formData.id || undefined,
-      title: formData.title,
-      coupon_price: formData.coupon_price,
-      use_min_price: formData.use_min_price,
-      day: formData.day,
-    });
-    ElMessage.success(formData.id ? "更新成功" : "创建成功");
-    showForm.value = false;
-    load();
-  } catch (e) {
-    ElMessage.error((e as Error).message || "操作失败");
-  }
-}
-
-async function toggleStatus(row: CouponItem) {
-  try {
-    await apiAdminCouponStatus(row.id, row.status === 1 ? 0 : 1);
-    ElMessage.success("操作成功");
-    load();
-  } catch (e) {
-    ElMessage.error((e as Error).message || "操作失败");
-  }
-}
-
-async function del(row: CouponItem) {
-  try {
-    await ElMessageBox.confirm(`确认删除优惠券「${row.couponTitle}」?`, "确认");
-    await apiAdminCouponDel(row.id);
-    ElMessage.success("已删除");
-    load();
-  } catch {
-    // 取消
-  }
-}
-
-onMounted(load);
+async function acknowledge() { if (!uncertainOperation.value || busy.value || !current(stamp())) return; const value = stamp(), operation = uncertainOperation.value, serial = ++confirmGeneration; confirming.value = true; try { await ElMessageBox.confirm('仅清除本地待核对状态，不证明服务器成功或失败，也不会再次提交。请先人工核对；若换新请求ID再创建，可能产生重复发行。', '结束本地待核对状态', { type: 'warning', confirmButtonText: '已人工核对', cancelButtonText: '取消' }); } catch { return; } finally { if (serial === confirmGeneration) confirming.value = false; } if (current(value) && serial === confirmGeneration && uncertainOperation.value === operation) { uncertainOperation.value = null; notice.value = ''; } }
+function invalidate() { generation++; confirmGeneration++; listVersion++; for (const job of jobs.values()) job.controller.abort(); jobs.clear(); if (confirming.value) ElMessageBox.close(); writing.value = confirming.value = recovering.value = false; closeEditor(); closeClaims(); list.value = []; count.value = 0; ready.value = loading.value = false; listError.value = notice.value = ''; uncertainOperation.value = null; form.value = blank(); selectedProducts.value = []; }
+function syncSession() { syncing = true; invalidate(); const session = getAdminSession(); auth.$patch({ token: getToken() ?? '', userInfo: session?.userInfo ?? null, menus: (session?.menus as typeof auth.menus) ?? [], uniqueAuth: session?.uniqueAuth ?? [] }); stored = localStorage.getItem('admin_session'); syncing = false; page.value = 1; draftKeyword.value = ''; draftStatus.value = ''; draftDiscount.value = draftReceive.value = ''; filters = { keyword: '', status: '', discount_type: '', receive_type: '' }; void load(1); }
+function storage(event: StorageEvent) { if (event.key === null || event.key === 'admin_token' || event.key === 'admin_session') syncSession(); }
+function resize() { compact.value = window.innerWidth < 768; }
+watch(identity, () => { if (alive && !syncing) { invalidate(); void load(1); } }, { flush: 'sync' });
+watch(editorVisible, value => { if (!value) { editorGeneration++; cancel('detail'); cancel('options'); closeProducts(); } }, { flush: 'sync' });
+watch(productsVisible, value => { if (!value) { pickerGeneration++; cancel('products'); productsLoading.value = false; } }, { flush: 'sync' });
+watch(claimsVisible, value => { if (!value) { claimsGeneration++; cancel('claims'); claimsLoading.value = false; claims.value = []; } }, { flush: 'sync' });
+onMounted(() => { alive = true; window.addEventListener('resize', resize); window.addEventListener('storage', storage); window.addEventListener('admin-session-changed', syncSession); window.addEventListener('admin-auth-expired', syncSession); syncSession(); });
+onBeforeUnmount(() => { alive = false; invalidate(); window.removeEventListener('resize', resize); window.removeEventListener('storage', storage); window.removeEventListener('admin-session-changed', syncSession); window.removeEventListener('admin-auth-expired', syncSession); });
 </script>
 
 <style scoped>
-.page-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.head-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.page-head h2 {
-  font-size: 18px;
-  margin: 0;
-}
+.coupon-issues{min-width:0}.heading,.actions,.filters,.selected{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.heading{justify-content:space-between;margin-bottom:16px}.heading h2{margin:0;font-size:20px}.hint{color:#707783;font-size:12px;line-height:1.7;overflow-wrap:anywhere}.filters{margin:14px 0;align-items:end}.filters label{display:grid;gap:6px;flex:1 1 150px;font-size:13px}.filters :deep(.el-input){min-width:0;flex:1 1 170px}.filters :deep(.el-select){width:100%}.table-scroll{max-width:100%;overflow-x:auto}.pager{justify-content:flex-end;margin:18px 0;flex-wrap:wrap}.actions :deep(.el-button + .el-button){margin-left:0}.selected{margin:12px 0}.selected :deep(.el-tag){max-width:100%;white-space:normal;height:auto;min-height:24px;overflow-wrap:anywhere}.notice{margin:12px 0;overflow-wrap:anywhere}.notice pre{white-space:pre-wrap;overflow-wrap:anywhere}.snapshot{display:grid;grid-template-columns:145px minmax(0,1fr);gap:12px;line-height:1.6}.snapshot dd{margin:0;overflow-wrap:anywhere}.snapshot ul{padding-left:20px}.rule{white-space:pre-wrap}.dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px}.dates input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #dcdfe6;border-radius:4px;padding:7px;font:inherit}.avatar{width:36px;height:36px;object-fit:cover;vertical-align:middle;margin-right:8px}:deep(.el-form-item__content){min-width:0}:deep(.el-select),:deep(.el-cascader){max-width:100%}
+@media(max-width:650px){.filters{display:grid;grid-template-columns:minmax(0,1fr)}.dates{grid-template-columns:minmax(0,1fr)}.snapshot{grid-template-columns:100px minmax(0,1fr)}.pager{justify-content:center}:deep(.el-form-item__label){width:110px!important}}
 </style>

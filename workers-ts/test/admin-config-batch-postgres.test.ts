@@ -15,6 +15,8 @@ import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchase
 import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { withFinancePeers, waitForFinanceBlock, type FinancePeer } from './helpers/financePeers';
+import { LEVEL_ACTIVATION_KEYS } from '../src/services/admin/AdminLevelActivationInput';
+import { PAID_MEMBERSHIP_CONFIG_KEYS } from '../src/services/admin/AdminPaidMembershipConfigInput';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 'orm'] as const)('admin config batch through real auth/SQL (%s)', mode => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -76,6 +78,26 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => new Response('config_batch_order') }) } });
   }, 120_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); }, 120_000);
+
+  it.each(['superadmin', 'config-manager'] as const)('rejects all eleven dedicated membership keys before any writes for %s', async profile => {
+    if (profile === 'config-manager') {
+      await f.db.insert(systemRole).values({ id: 1, rules: 'config.manage', status: 1 });
+      await f.db.update(systemAdmin).set({ level: 1, roles: '1' }).where(eq(systemAdmin.id, 1));
+    }
+    const before = await snapshot();
+    for (const key of [...LEVEL_ACTIVATION_KEYS, ...PAID_MEMBERSHIP_CONFIG_KEYS]) {
+      for (const body of [{ [key]: '0' }, { whole_free_shipping: '1', [key]: '1', store_free_postage: '50' }]) {
+        const rejected = await save(body);
+        expect(rejected).toMatchObject({ status: 400, msg: expect.stringContaining('专用接口') });
+        expect(await snapshot()).toEqual(before); expect(deletes).toEqual([]);
+      }
+    }
+    const accepted = await save({ whole_free_shipping: '1', isolated_key: 'still-supported' });
+    expect(accepted.status, accepted.msg).toBe(200);
+    expect(await f.container.systemConfigDao.getValue('whole_free_shipping')).toBe('1');
+    expect(await f.container.systemConfigDao.getValue('isolated_key')).toBe('still-supported');
+    expect(deletes.sort()).toEqual(['cfg_isolated_key', 'cfg_whole_free_shipping']);
+  });
 
   it('does not commit the first value when a later value exceeds the PostgreSQL limit', async () => {
     const before = await snapshot();

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Env } from "@/env";
+import type { UuCityCredentials } from './CityDeliverySettingsResolver';
 import {
   normalizeUuCityDeliveryQuery,
   type VerifiedUuCityDeliveryEvent,
@@ -86,7 +87,7 @@ export function uuApiSignature(biz: string, appKey: string, timestamp: number): 
 }
 
 export class UuCityDeliveryProvider {
-  constructor(private readonly env: Env) {}
+  constructor(private readonly env: Env, private readonly resolve?: () => Promise<UuCityCredentials>) {}
 
   async query(originId: string, observedAt = Math.floor(Date.now() / 1_000))
     : Promise<VerifiedUuCityDeliveryEvent> {
@@ -94,7 +95,7 @@ export class UuCityDeliveryProvider {
     if (!Number.isSafeInteger(observedAt) || observedAt <= 0 || observedAt > 4_102_444_800) {
       throw new Error("uu_observed_at_invalid");
     }
-    const config = this.config();
+    const config = this.resolve ? await this.resolve() : this.config();
     const timestamp = config.timestampUnit === "milliseconds" ? observedAt * 1_000 : observedAt;
     const biz = JSON.stringify({ originId });
     const requestBody = JSON.stringify({

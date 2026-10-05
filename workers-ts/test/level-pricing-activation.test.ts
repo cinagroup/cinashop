@@ -11,7 +11,7 @@ import { orderCreate } from '../src/controllers/api/v1/OrderController';
 import { levelActivate } from '../src/controllers/api/v1/UserLevelController';
 import { storeProduct, storeProductAttr, storeProductAttrValue, storeProductEnsure,
   storeProductRelation, systemUserLevel, systemConfig, user, userRelation, storeCart,
-  storeOrderCartInfo, storeOrderStatus, printDocument } from '../src/models/schema';
+  storeOrderCartInfo, storeOrderStatus, printDocument, storePromotions, storePromotionsAuxiliary } from '../src/models/schema';
 
 describe('level activation authorizes display, cart and order admission', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -21,7 +21,8 @@ describe('level activation authorizes display, cart and order admission', () => 
   const input = { cartIds: [1], addressId: 11, type: 0 };
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeProductAttr, storeProductEnsure, storeProductRelation,
-      systemUserLevel, userRelation, storeOrderCartInfo, storeOrderStatus, printDocument]);
+      systemUserLevel, userRelation, storeOrderCartInfo, storeOrderStatus, printDocument,
+      storePromotions, storePromotionsAuxiliary]);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.setConfig({ member_func_status: '1' });
     await f.db.insert(systemUserLevel).values({ id: 1, name: 'Active level fixture', discount: '80.00', isShow: 1 });

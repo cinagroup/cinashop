@@ -10,7 +10,8 @@ export type NotificationMark =
   | "send_order_refund_no_status"
   | "user_extract"
   | "user_balance_change"
-  | "kefu_send_extract_application";
+  | "kefu_send_extract_application"
+  | "order_user_groups_success";
 export type ProviderTemplateType = "wechat" | "routine";
 export type NotificationDeliveryChannel =
   | "sms"

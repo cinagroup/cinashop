@@ -38,6 +38,7 @@ import {
 import { findRechargeOrderByOrderId } from "@/services/payment/RechargePaymentService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
+import { ProductShareCodeService } from '@/services/product/ProductShareCodeService';
 import { findMembershipOrderByOrderId } from "@/services/user/PaidMembershipService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { WechatAuthService, type OfficialSubscriberProfile } from "./WechatAuthService";
@@ -266,6 +267,10 @@ export class WechatCallbackService {
 
   private async resolveReply(callback: NormalizedWechatCallback): Promise<Record<string, unknown>> {
     if (callback.source !== "official") return { type: "none" };
+    if(['subscribe','scan'].includes(callback.eventType)&&callback.payload.eventKey){
+      const news=await new ProductShareCodeService(this.container,this.env).news(callback.payload.eventKey);
+      if(news)return news;
+    }
     return withTx(this.container, async (tx) => {
       let directReplyId = 0;
       if (callback.payload.ticket) {

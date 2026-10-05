@@ -1,0 +1,554 @@
+{
+  "capturedUTC": "2026-09-27T13:19:13.286Z",
+  "status": "local-native-accepted-not-published",
+  "published": false,
+  "scope": "Fixed-use eligibility at real newcomer registration and paid product gift consumers; no UI/API/schema/runtime-grant changes",
+  "contract": {
+    "predicate": "day > 0 OR (day === 0 AND useEndTime exists AND useEndTime >= operationNowSeconds * 1000)",
+    "futureUseStartAllowed": true,
+    "negativeDayRejected": true,
+    "rollingIgnoresOldFixedEnd": true,
+    "operationTime": "Existing caller-captured whole seconds; locked row state rechecked, no resampling after lock wait",
+    "trustedGiftAuthority": "Configuration or paid-product association; not gated by public manual-claim receiveType/category/appType flags",
+    "stock": "Original differing finite/unlimited interpretations retained"
+  },
+  "reproduction": {
+    "command": {
+      "startedUTC": "2026-09-27T12:52:32.4978163Z",
+      "finishedUTC": "2026-09-27T12:55:49.3858512Z",
+      "exitCode": 1,
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/coupon-gift-use-window-postgres.test.ts",
+      "log": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-red-20260927.log",
+      "sourceBeforeManifest": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-before-source/manifest.json",
+      "testSHA256": "26b27b9aba72c86796a218fec70c249be38d248a3bdfe4d6cc46efda3f2d483f"
+    },
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-red-20260927.log",
+      "bytes": 20970,
+      "sha256": "3e7fe775fe7965b1ab431c39f72d2fabd476eab8c3cbe2ab2fe46fd442c0853d"
+    },
+    "frozenTest": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-red-test-20260927.ts",
+      "bytes": 28176,
+      "sha256": "26b27b9aba72c86796a218fec70c249be38d248a3bdfe4d6cc46efda3f2d483f"
+    },
+    "originalSources": {
+      "manifest": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-before-source/manifest.json",
+        "bytes": 717,
+        "sha256": "1ba50579eec8e6a5ec9eecfc597c9786f7d00878d0685413b7257e705e8edbd3"
+      },
+      "files": [
+        {
+          "relative": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+          "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-before-source/StoreNewcomerService.ts",
+          "bytes": 33057,
+          "sha256": "1c2df201b2bb7af1c6cad76db0e41f8423946a9a5db61454e40ef4ebb4a881ab"
+        },
+        {
+          "relative": "workers-ts/src/services/activity/ProductCouponService.ts",
+          "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-before-source/ProductCouponService.ts",
+          "bytes": 12256,
+          "sha256": "43f02a68ee9cbcccf24a2c1cb1638be9647fe13f10c8001ac9be6070bfe1cf9c"
+        }
+      ]
+    },
+    "tests": {
+      "total": 19,
+      "passed": 11,
+      "failed": 8,
+      "businessFailures": 7,
+      "fixtureFailures": 1,
+      "unhandledErrors": 1
+    },
+    "acceptedTests": 0,
+    "reason": "Entire red file excluded; actual committed cancellation audit and safe observer rejection adapter repaired before final full run"
+  },
+  "revisedAttempt": {
+    "execution": {
+      "startedUTC": "2026-09-27T13:01:15.3692335Z",
+      "finishedUTC": "2026-09-27T13:04:48.1959728Z",
+      "exitCode": 1,
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/coupon-gift-use-window-postgres.test.ts test/registration-level-activation.test.ts test/admin-coupon-template-postgres.test.ts test/coupon-manual-claim.test.ts test/store-order-create-scenario-postgres.test.ts",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-native-final-20260927.log",
+      "sourceRefs": [
+        {
+          "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+          "sha256": "08bc6392db68cce1c1a96f9e7a88808ff5cebbd301eb0d9280eb957b15faf9b2",
+          "bytes": 33214
+        },
+        {
+          "path": "workers-ts/src/services/activity/ProductCouponService.ts",
+          "sha256": "f7f2b61022deba0f950de4fa30bc7b1eda061d90cdbfc450343196ed9f186e23",
+          "bytes": 12413
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "90cd8631a710c81305082cde95ace5007b41be58176041ac16fb5f62e9396fc5",
+          "bytes": 25528
+        },
+        {
+          "path": "workers-ts/test/coupon-gift-use-window-postgres.test.ts",
+          "sha256": "67b3cfd6b7dff20cce67c5973c6bcc8a81d53293329e63b958dda7eec1589284",
+          "bytes": 30710
+        },
+        {
+          "path": "workers-ts/test/registration-level-activation.test.ts",
+          "sha256": "90a082b956187bd918079b8a3df97e08df54eff0fff6b59070a2be8d6d34ed2e",
+          "bytes": 16583
+        },
+        {
+          "path": "workers-ts/test/admin-coupon-template-postgres.test.ts",
+          "sha256": "b8fa90233ef4afef0f29c1fcf711616197ea484824912a0b51aee7c7d98c392e",
+          "bytes": 25827
+        },
+        {
+          "path": "workers-ts/test/coupon-manual-claim.test.ts",
+          "sha256": "ec4b4cebfcbbf4af254ef82309e87a5ca103648a0c9a69304f4c017a720d28c7",
+          "bytes": 3638
+        },
+        {
+          "path": "workers-ts/test/store-order-create-scenario-postgres.test.ts",
+          "sha256": "e2d8aa35caf7b086d62d4381e2b6b4d1c33dc97024de3787a89f173572828925",
+          "bytes": 3694
+        }
+      ]
+    },
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-final-20260927.log",
+      "bytes": 2557,
+      "sha256": "a3947ca543f3d21792d8c3580f3f2b0795386f1fcbba7117ff02b3e9291b17d7"
+    },
+    "frozenTest": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-final-test-20260927.ts",
+      "bytes": 30710,
+      "sha256": "67b3cfd6b7dff20cce67c5973c6bcc8a81d53293329e63b958dda7eec1589284"
+    },
+    "passed": 109,
+    "failed": 1,
+    "total": 110,
+    "unhandledErrors": 0,
+    "newFile": {
+      "passed": 18,
+      "failed": 1,
+      "accepted": 0
+    },
+    "reason": "Ordinary creation/balance payment did not guarantee an existing order-status audit; final test creates and cancels a real unpaid order before using that committed status ID. Entire revised new test file excluded; four other complete files retained."
+  },
+  "native": {
+    "execution": {
+      "startedUTC": "2026-09-27T13:11:23.7607329Z",
+      "finishedUTC": "2026-09-27T13:13:58.0581789Z",
+      "exitCode": 0,
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/coupon-gift-use-window-postgres.test.ts",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-native-accepted-20260927.log",
+      "sourceRefs": [
+        {
+          "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+          "sha256": "08bc6392db68cce1c1a96f9e7a88808ff5cebbd301eb0d9280eb957b15faf9b2",
+          "bytes": 33214
+        },
+        {
+          "path": "workers-ts/src/services/activity/ProductCouponService.ts",
+          "sha256": "f7f2b61022deba0f950de4fa30bc7b1eda061d90cdbfc450343196ed9f186e23",
+          "bytes": 12413
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "90cd8631a710c81305082cde95ace5007b41be58176041ac16fb5f62e9396fc5",
+          "bytes": 25528
+        },
+        {
+          "path": "workers-ts/test/coupon-gift-use-window-postgres.test.ts",
+          "sha256": "1a3b27ed41e74d97fa83874816e8961ce87299b6e5b16dd1bce836fa1d4bb56e",
+          "bytes": 31934
+        }
+      ]
+    },
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-accepted-20260927.log",
+      "bytes": 805,
+      "sha256": "02e38ff8870f75c3fc7c37b5469707cbaef4550a91d85c22d3248343fad1e74e"
+    },
+    "testFiles": 1,
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "fileResults": [
+      {
+        "file": "test/coupon-gift-use-window-postgres.test.ts",
+        "passed": 19,
+        "proof": "Sole requested test file and whole terminal summary"
+      }
+    ],
+    "newUseWindowCases": 19,
+    "regressions": {
+      "execution": {
+        "startedUTC": "2026-09-27T13:01:15.3692335Z",
+        "finishedUTC": "2026-09-27T13:04:48.1959728Z",
+        "exitCode": 1,
+        "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/coupon-gift-use-window-postgres.test.ts test/registration-level-activation.test.ts test/admin-coupon-template-postgres.test.ts test/coupon-manual-claim.test.ts test/store-order-create-scenario-postgres.test.ts",
+        "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-native-final-20260927.log",
+        "sourceRefs": [
+          {
+            "path": "workers-ts/src/services/activity/StoreNewcomerService.ts",
+            "sha256": "08bc6392db68cce1c1a96f9e7a88808ff5cebbd301eb0d9280eb957b15faf9b2",
+            "bytes": 33214
+          },
+          {
+            "path": "workers-ts/src/services/activity/ProductCouponService.ts",
+            "sha256": "f7f2b61022deba0f950de4fa30bc7b1eda061d90cdbfc450343196ed9f186e23",
+            "bytes": 12413
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "90cd8631a710c81305082cde95ace5007b41be58176041ac16fb5f62e9396fc5",
+            "bytes": 25528
+          },
+          {
+            "path": "workers-ts/test/coupon-gift-use-window-postgres.test.ts",
+            "sha256": "67b3cfd6b7dff20cce67c5973c6bcc8a81d53293329e63b958dda7eec1589284",
+            "bytes": 30710
+          },
+          {
+            "path": "workers-ts/test/registration-level-activation.test.ts",
+            "sha256": "90a082b956187bd918079b8a3df97e08df54eff0fff6b59070a2be8d6d34ed2e",
+            "bytes": 16583
+          },
+          {
+            "path": "workers-ts/test/admin-coupon-template-postgres.test.ts",
+            "sha256": "b8fa90233ef4afef0f29c1fcf711616197ea484824912a0b51aee7c7d98c392e",
+            "bytes": 25827
+          },
+          {
+            "path": "workers-ts/test/coupon-manual-claim.test.ts",
+            "sha256": "ec4b4cebfcbbf4af254ef82309e87a5ca103648a0c9a69304f4c017a720d28c7",
+            "bytes": 3638
+          },
+          {
+            "path": "workers-ts/test/store-order-create-scenario-postgres.test.ts",
+            "sha256": "e2d8aa35caf7b086d62d4381e2b6b4d1c33dc97024de3787a89f173572828925",
+            "bytes": 3694
+          }
+        ]
+      },
+      "files": [
+        "workers-ts/test/registration-level-activation.test.ts",
+        "workers-ts/test/admin-coupon-template-postgres.test.ts",
+        "workers-ts/test/coupon-manual-claim.test.ts",
+        "workers-ts/test/store-order-create-scenario-postgres.test.ts"
+      ],
+      "testFiles": 4,
+      "passed": 91,
+      "failed": 0,
+      "skipped": 0,
+      "proof": "Only the revised 19-case file failed; four whole regression files passed in the 109/1 batch, with identical source/test bytes retained. 109 minus 18 revised new-file passes equals 91."
+    },
+    "uniqueAccepted": 110,
+    "composition": "Four complete regression files (91) retained from revised 109/1 batch plus final complete new file (19). Not a single 110/110 execution.",
+    "scopeBoundary": "store-order-create-scenario includes two before-connection guard cases; totals are complete-file results, not all SQL-runtime cases",
+    "pg": "New owned loopback PostgreSQL 16.15; maintenance only creates fixtures. New 19-case suite asserts separate exact commissioned App/Admin non-superuser LOGINs, current_user=session_user and audited privilege profiles. Full existing 176-step/281-table fixture, no new grants."
+  },
+  "compatibility": {
+    "execution": {
+      "startedUTC": "2026-09-27T13:02:27.7939171Z",
+      "compatibilityFinishedUTC": "2026-09-27T13:02:42.8733200Z",
+      "finishedUTC": "2026-09-27T13:02:50.3059367Z",
+      "compatibilityExitCode": 0,
+      "ledgerExitCode": 0,
+      "compatibilityFiles": [
+        "test/newcomer-migration.test.ts",
+        "test/api006-newcomer-compatibility-migration.test.ts",
+        "test/product-coupon-migration.test.ts",
+        "test/order-paid-outbox-queue-consumer.test.ts"
+      ],
+      "ledgerFiles": [
+        "test/route-parity-audit.test.ts",
+        "test/admin-frontend-inventory.test.ts",
+        "test/admin-frontend-api-contract.test.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/admin-content-frontend-parity.test.ts",
+        "test/admin-product-frontend-parity.test.ts",
+        "test/admin-setting-frontend-parity.test.ts",
+        "test/admin-marketing-frontend-parity.test.ts",
+        "test/admin-user-order-frontend-parity.test.ts",
+        "test/admin-supplier-agent-frontend-parity.test.ts",
+        "test/admin-kefu-frontend-parity.test.ts",
+        "test/admin-app-frontend-parity.test.ts",
+        "test/admin-work-frontend-parity.test.ts",
+        "test/admin-system-frontend-parity.test.ts",
+        "test/admin-cross-module-frontend-parity.test.ts",
+        "test/admin-all-frontend-parity.test.ts",
+        "test/uniapp-frontend-parity.test.ts"
+      ],
+      "compatibilityLog": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-compatibility-final-20260927.log",
+      "ledgerLog": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-ledger-final-20260927.log"
+    },
+    "passed": 22,
+    "testFiles": 4,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-compatibility-final-20260927.log",
+      "bytes": 4723,
+      "sha256": "2d2b913da1df9c371a373edaf8dfc1365e0de4a1c0d47c96345e5070a5f3da8b"
+    },
+    "nativeSqlProof": false
+  },
+  "ledger": {
+    "execution": {
+      "startedUTC": "2026-09-27T13:18:55.9163926Z",
+      "finishedUTC": "2026-09-27T13:18:58.7100139Z",
+      "exitCode": 0,
+      "command": "node node_modules/vitest/vitest.mjs run [17 exact files] --reporter=verbose",
+      "files": [
+        "test/route-parity-audit.test.ts",
+        "test/admin-frontend-inventory.test.ts",
+        "test/admin-frontend-api-contract.test.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/admin-content-frontend-parity.test.ts",
+        "test/admin-product-frontend-parity.test.ts",
+        "test/admin-setting-frontend-parity.test.ts",
+        "test/admin-marketing-frontend-parity.test.ts",
+        "test/admin-user-order-frontend-parity.test.ts",
+        "test/admin-supplier-agent-frontend-parity.test.ts",
+        "test/admin-kefu-frontend-parity.test.ts",
+        "test/admin-app-frontend-parity.test.ts",
+        "test/admin-work-frontend-parity.test.ts",
+        "test/admin-system-frontend-parity.test.ts",
+        "test/admin-cross-module-frontend-parity.test.ts",
+        "test/admin-all-frontend-parity.test.ts",
+        "test/uniapp-frontend-parity.test.ts"
+      ],
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-ledger-accepted-20260927.log",
+      "checklistSHA256": "4630031b338f08597dba266d020919ea9dd88b73b9160643b4ffc5e71a78785f",
+      "marketingDocSHA256": "32f12d6c0895deef1220b4ec62cfdd1b78739ebe349cdf4f67ad2811c9e4d124",
+      "giftContractSHA256": "a896ebe4704fafa945e5ef114f7b733904995dd37cb50a16ae6c7a8591bd87e7"
+    },
+    "passed": 95,
+    "testFiles": 17,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-ledger-accepted-20260927.log",
+      "bytes": 16698,
+      "sha256": "f859066d89d39e3e7587cb2bc2dd387eca10b1581da391fd16d44d8e8269b1b1"
+    },
+    "earlierLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-ledger-final-20260927.log",
+      "bytes": 16713,
+      "sha256": "dcfd075d64de675317b9e9ebcaf2e1a5b5fb484d4591c1a9cf4d3b382b37ebf6"
+    },
+    "routeDistribution": {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/route-distribution-20260927.json",
+      "bytes": 1093312,
+      "sha256": "6fa7e34b33173789e642060bb7a1a93856c35ea05e2c06732565377939f700ad"
+    },
+    "workerRoutes": 1813,
+    "frontendCallsites": 413,
+    "frontendVariants": 437,
+    "adminScreens": {
+      "candidate": 57,
+      "partial": 114,
+      "missing": 96,
+      "retired": 7
+    },
+    "marketingScreens": {
+      "candidate": 18,
+      "partial": 15,
+      "missing": 15,
+      "retired": 0
+    },
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "newRoutes": 0,
+    "newCandidates": 0,
+    "closedCheckboxes": 0
+  },
+  "types": {
+    "earlierExecution": {
+      "startedUTC": "2026-09-27T13:02:27.0376059Z",
+      "unitFinishedUTC": "2026-09-27T13:04:37.5951853Z",
+      "finishedUTC": "2026-09-27T13:05:22.4983861Z",
+      "unitExitCode": 0,
+      "runtimeExitCode": 0,
+      "unitCommand": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
+      "runtimeCommand": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+      "unitLog": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-typecheck-unit-20260927.log",
+      "runtimeLog": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-typecheck-runtime-20260927.log"
+    },
+    "finalUnitExecution": {
+      "startedUTC": "2026-09-27T13:11:15.1566615Z",
+      "finishedUTC": "2026-09-27T13:12:22.2206855Z",
+      "exitCode": 0,
+      "command": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-unit-accepted-20260927.log",
+      "testSHA256": "1a3b27ed41e74d97fa83874816e8961ce87299b6e5b16dd1bce836fa1d4bb56e"
+    },
+    "earlierUnitLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-typecheck-unit-20260927.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "unitLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-unit-accepted-20260927.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "runtimeLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-typecheck-runtime-20260927.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "scope": "Final unit compiler rerun after last test change. Runtime compiler excludes test/*.test.ts; its actual earlier pass retains identical runtime inputs."
+  },
+  "witnesses": [
+    "Both real gift entry points: expired, missing end and negative day produce no stock/owned/raw/reward effects",
+    "Both inclusive cutoff seconds; future useStart; rolling old-end; finite, isPermanent and legacy totalCount=0 stock behavior",
+    "Same-phone registration race; last finite coupon races in each flow; duplicate paid-message serialization and replay",
+    "Actual writer-first stop/delete/expiry with pg_blocking_pids witnesses and latest locked rows",
+    "Real paid-before-cutoff/processed-after-cutoff keeps payment and skips fixed gift; rolling starts at processing",
+    "Actual registration late SQL 22001 rolls back account/gift ledgers; actual paid-outbox late SQL 23505 rolls back effects, keeps committed payment and persists FAILED lease separately; safe retry and replay"
+  ],
+  "limits": [
+    "Rollback equality compares 37 state() tables (outbox separately), complete user_money/user_bill rows and four gift tables for designated issuer IDs, not all 281 tables",
+    "Only external token storage mocked; Date.now used for paid processing boundary. No fake native timers/SQL results, no provider/queue/network sends",
+    "Native service/SQL identity verification is not HTTP authentication, SMS, provider payment, real KV configuration, frontend UI, Linux CI or real device acceptance",
+    "Newcomer/product configuration option filtering and ordinary level negative-day eligibility remain separate unfinished work",
+    "Ordinary nine-key level activation configuration, real SVIP entitlement and automatic full-reduction/first-subscribe delivery remain open"
+  ],
+  "sourceSnapshot": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-accepted-snapshot/manifest.json",
+    "bytes": 22543,
+    "sha256": "ffca15267d7974cec13dc6d07684f52fdf0bacad29cbcca4a0a74f99442173e4"
+  },
+  "independentReview": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-independent-review-20260927.md",
+    "bytes": 10375,
+    "sha256": "76bd475f84b5f714ef0061f9e0d3d023409f53fbc57a185700ee049930c90dc0"
+  },
+  "supersededReview": {
+    "evidence": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-independent-review-prior-20260927.md",
+      "bytes": 6630,
+      "sha256": "a3a151a351964f34ff48ed8014e4ab34f5012c8ea32d27f173e405465416548d"
+    },
+    "excludedPremise": "Ordinary checkout/balance payment had a committed order-status record; explicitly corrected in final review"
+  },
+  "cleanup": {
+    "evidence": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-cleanup-20260927.json",
+      "bytes": 1572,
+      "sha256": "3c913b84df3e872d3a40aebb6ec1a85de90896721644cc11ec700788a168d73c"
+    },
+    "capturedUTC": "2026-09-27T13:15:42.0049825Z",
+    "clusters": [
+      {
+        "cluster": "finance-postgres-AzsamQ",
+        "verifiedAbsoluteDataPath": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-AzsamQ\\data",
+        "pgCtlExitCode": 3,
+        "pgCtlOutput": "pg_ctl: no server running",
+        "fixtureRemaining": 0,
+        "dataRemoved": true,
+        "logArchive": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-cluster-logs\\finance-postgres-AzsamQ"
+      },
+      {
+        "cluster": "finance-postgres-jIjpa1",
+        "verifiedAbsoluteDataPath": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-jIjpa1\\data",
+        "pgCtlExitCode": 3,
+        "pgCtlOutput": "pg_ctl: no server running",
+        "fixtureRemaining": 0,
+        "dataRemoved": true,
+        "logArchive": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-cluster-logs\\finance-postgres-jIjpa1"
+      },
+      {
+        "cluster": "finance-postgres-BPDemE",
+        "verifiedAbsoluteDataPath": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-BPDemE\\data",
+        "pgCtlExitCode": 3,
+        "pgCtlOutput": "pg_ctl: no server running",
+        "fixtureRemaining": 0,
+        "dataRemoved": true,
+        "logArchive": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-gift-use-window-cluster-logs\\finance-postgres-BPDemE"
+      }
+    ],
+    "noProductionOrSystemServiceChanges": true,
+    "logsPreserved": true
+  },
+  "protectedHistoricalCapsules": [
+    {
+      "leaf": "coupon-template-native-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-native-20260927.json",
+      "bytes": 28419,
+      "sha256": "6bebc715f9816cbb04f45822d4ddede03d67558425512c0aac3e81cf948ad00d"
+    },
+    {
+      "leaf": "coupon-template-browser-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-browser-20260927.json",
+      "bytes": 33502,
+      "sha256": "18b1bda88d7b7cf0ef739e71b1e23f3c8f34254f921a6907be8f59fa12a21920"
+    },
+    {
+      "leaf": "coupon-template-acceptance-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-acceptance-20260927.json",
+      "bytes": 3975,
+      "sha256": "1cdd40490a4d0cb29b579c8de97523537dd1a56ab83111a142a53789c935b52b"
+    },
+    {
+      "leaf": "combination-read-native-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-native-20260927.json",
+      "bytes": 8061,
+      "sha256": "1e040b3cf9a17ce707ffb68e922bd753ade405b7633e8c383c507b0b00acd184"
+    },
+    {
+      "leaf": "combination-read-browser-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-browser-20260927.json",
+      "bytes": 7423,
+      "sha256": "097a534448dacdbe65c3ea3e08b9cb22cb8d4cfbe04726a8e95ed84d9f51022c"
+    },
+    {
+      "leaf": "combination-read-acceptance-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-acceptance-20260927.json",
+      "bytes": 2652,
+      "sha256": "241d5e5a202fc1e942f9d876fb9d37c0ae53e853c464a29a67b55b36cd32a3f4"
+    },
+    {
+      "leaf": "coupon-issue-native-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-native-20260927.json",
+      "bytes": 35740,
+      "sha256": "b99a4f7725549e1f9d7a022a8af6fd60b47a2cf3c45f0c3033bedecf2dd782ab"
+    },
+    {
+      "leaf": "coupon-issue-browser-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-browser-20260927.json",
+      "bytes": 7168,
+      "sha256": "c49be3900b9177ef2552336236404e27d181bb0f4b708350f69afcf3b303a936"
+    },
+    {
+      "leaf": "coupon-issue-acceptance-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-acceptance-20260927.json",
+      "bytes": 5289,
+      "sha256": "2c22ff8e3fbce2cc989e07be485e48dd043bf49ca506e6a722c74b04588527c6"
+    }
+  ],
+  "preImplementationAnalyses": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-contract-20260927.md",
+      "bytes": 13478,
+      "sha256": "7bcac03d526705215d2a17c1e4a538a19c6097b4aee2a63a0197115a08a8715a"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-config-contract-analysis-20260927.md",
+      "bytes": 25477,
+      "sha256": "ea844280daf5ea4719d8ceb2f9fb68ccded224468c1a10d281c1f31283b00c94"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-config-form-analysis-20260927.md",
+      "bytes": 20496,
+      "sha256": "94ee805c7fa979dc5ab1e8c466514b74159d2f6fd5b713d50c3347a5d5d7be17"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/level-activation-config-design-20260927.md",
+      "bytes": 29956,
+      "sha256": "801af777ab7228240265988aff318de2aeef6ac9826a96b57b760d08236417be"
+    }
+  ]
+}

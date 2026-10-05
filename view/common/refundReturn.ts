@@ -27,10 +27,12 @@ export function returnPreview(value: unknown): ReturnImage {
     || /[\u0000-\u0020\u007f]/.test(row.url + row.src)) throw Error('退货凭证响应无效');
   if (/^\/api\/assets\/[1-9]\d*$/.test(row.url)) {
     const preview = new URL(row.src, 'https://local.invalid');
+    const queryKeys: string[] = [];
+    preview.searchParams.forEach((_value, key) => queryKeys.push(key));
     if (!row.src.startsWith(row.url + '?') || preview.pathname !== row.url
       || !/^[1-9]\d*$/.test(preview.searchParams.get('expires') ?? '')
       || !/^[A-Za-z0-9_-]{43}$/.test(preview.searchParams.get('signature') ?? '')
-      || [...preview.searchParams.keys()].sort().join(',') !== 'expires,signature') throw Error('退货凭证预览签名无效');
+      || queryKeys.sort().join(',') !== 'expires,signature') throw Error('退货凭证预览签名无效');
   } else {
     const url = new URL(row.url);
     if (url.protocol !== 'https:' || url.username || url.password || url.hash || row.src !== row.url || url.pathname.startsWith('/api/assets/')) throw Error('退货凭证链接无效');

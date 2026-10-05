@@ -29,7 +29,8 @@ describe("API-004 promotion compatibility migration", () => {
 
   it("preserves PHP decimal truncation for discount promotion prices", () => {
     expect(legacyPromotionPrice("19.99", "85.99")).toBe(16.99);
-    expect(legacyPromotionPrice("0.01", "99")).toBe(0);
+    expect(legacyPromotionPrice("0.01", "99")).toBe(0.01);
+    expect(legacyPromotionPrice("19.99", "90")).toBe(18.00);
   });
 
   it("requires active platform parent promotions and fails closed on oversized sets", () => {

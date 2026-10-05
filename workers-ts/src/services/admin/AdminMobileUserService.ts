@@ -4,7 +4,6 @@ import {
   desc,
   eq,
   ilike,
-  inArray,
   isNull,
   sql,
 } from "drizzle-orm";
@@ -13,23 +12,18 @@ import { withTx } from "@/lib/di";
 import {
   adminUserWriteReplay,
   legacyCategory,
-  otherOrder,
-  otherOrderStatus,
   storeCouponIssue,
-  storeCouponIssueUser,
   storeCouponUser,
   systemLog,
   systemUserLevel,
   user,
   userAddress,
-  userBill,
   userGroup,
   userLabel,
   userLabelRelation,
-  userLevel,
-  userMoney,
 } from "@/models/schema";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
+import {applyMobileUserState,applyMobileUserFinance,applyMobileUserMembership,applyMobileUserCoupons} from '@/services/user/MobileUserManagementCore';
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_PAGE = 1_000_000;
@@ -44,7 +38,6 @@ const PLATFORM_TYPE = 0;
 const PLATFORM_RELATION_ID = 0;
 
 type UnknownRecord = Record<string, unknown>;
-type UserRow = typeof user.$inferSelect;
 type CouponIssueRow = typeof storeCouponIssue.$inferSelect;
 type CouponUserRow = typeof storeCouponUser.$inferSelect;
 
@@ -135,22 +128,6 @@ function moneyCents(value: unknown): number {
     throw new ValidateException("余额数量错误");
   }
   return result;
-}
-
-function centsFromStored(value: string): number {
-  if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(value)) {
-    throw new ValidateException("用户当前余额异常，请先修复账户数据");
-  }
-  const [whole, fraction = ""] = value.split(".");
-  const result = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
-  if (!Number.isSafeInteger(result) || result < 0 || result > MAX_MONEY_CENTS) {
-    throw new ValidateException("用户当前余额异常，请先修复账户数据");
-  }
-  return result;
-}
-
-function formatMoney(cents: number): string {
-  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
 }
 
 function boundedQueryText(value: unknown, label: string, maximum: number): string {
@@ -387,16 +364,6 @@ async function recordStateAudit(
   });
 }
 
-async function lockedUsers(tx: DbClient, uids: number[]): Promise<UserRow[]> {
-  const rows = await tx.select().from(user).where(and(
-    inArray(user.uid, uids),
-    eq(user.isDel, 0),
-    isNull(user.deleteTime),
-  )).orderBy(asc(user.uid)).for("update");
-  if (rows.length !== uids.length) throw new NotFoundException("部分用户不存在或已删除");
-  return rows;
-}
-
 export class AdminMobileUserService {
   constructor(private readonly container: Container) {}
 
@@ -572,88 +539,8 @@ export class AdminMobileUserService {
       if (await replayed(tx, actor, "finance", key, hash)) {
         return { uid: input.uid, idempotent: true };
       }
-      const account = (await lockedUsers(tx, [input.uid]))[0];
-      const now = Math.floor(Date.now() / 1_000);
-      const linkId = (await outRequestHash({ actor: actor.id, operation: "finance", key })).slice(0, 32);
-      if (input.kind === "money") {
-        const current = centsFromStored(account.nowMoney);
-        const applied = input.status === 1 ? input.moneyCents : Math.min(input.moneyCents, current);
-        const next = input.status === 1 ? current + applied : current - applied;
-        if (!Number.isSafeInteger(next) || next < 0 || next > MAX_MONEY_CENTS) {
-          throw new ValidateException("余额变更后超出数据库范围");
-        }
-        let ledgerId = 0;
-        if (applied > 0) {
-          await tx.update(user).set({ nowMoney: formatMoney(next) }).where(eq(user.uid, input.uid));
-          const ledgers = await tx.insert(userMoney).values({
-            uid: input.uid,
-            linkId,
-            type: input.status === 1 ? "system_add" : "system_sub",
-            title: input.status === 1 ? "系统增加余额" : "系统减少余额",
-            number: formatMoney(applied),
-            balance: formatMoney(next),
-            pm: input.status === 1 ? 1 : 0,
-            mark: `${input.status === 1 ? "系统增加" : "系统减少"}${formatMoney(applied)}余额`,
-            status: 1,
-            addTime: now,
-          }).returning({ id: userMoney.id });
-          ledgerId = ledgers[0]?.id ?? 0;
-        }
-        await recordReplay(tx, actor, "finance", key, hash, subject, {
-          userId: input.uid,
-          targetCount: 1,
-          moneyLedgerId: ledgerId,
-        }, now);
-        return {
-          uid: input.uid,
-          kind: input.kind,
-          applied: `${input.status === 1 ? "" : "-"}${formatMoney(applied)}`,
-          balance: formatMoney(next),
-          ledger_id: ledgerId,
-          idempotent: false,
-        };
-      }
-
-      if (!Number.isSafeInteger(account.integral) || account.integral < 0) {
-        throw new ValidateException("用户当前积分异常，请先修复账户数据");
-      }
-      const applied = input.status === 1 ? input.integral : Math.min(input.integral, account.integral);
-      const next = input.status === 1 ? account.integral + applied : account.integral - applied;
-      if (!Number.isSafeInteger(next) || next < 0 || next > MAX_INTEGER) {
-        throw new ValidateException("积分变更后超出数据库范围");
-      }
-      let ledgerId = 0;
-      if (applied > 0) {
-        await tx.update(user).set({ integral: next }).where(eq(user.uid, input.uid));
-        const ledgers = await tx.insert(userBill).values({
-          uid: input.uid,
-          linkId,
-          pm: input.status === 1 ? 1 : 0,
-          title: input.status === 1 ? "系统增加积分" : "系统减少积分",
-          category: "integral",
-          type: input.status === 1 ? "system_add" : "system_sub",
-          eventKey: input.status === 1 ? "admin_system_add_integral" : "admin_system_sub_integral",
-          number: applied.toFixed(2),
-          balance: next.toFixed(2),
-          mark: `${input.status === 1 ? "系统增加" : "系统减少"}${applied}积分`,
-          addTime: now,
-          status: 1,
-        }).returning({ id: userBill.id });
-        ledgerId = ledgers[0]?.id ?? 0;
-      }
-      await recordReplay(tx, actor, "finance", key, hash, subject, {
-        userId: input.uid,
-        targetCount: 1,
-        integralLedgerId: ledgerId,
-      }, now);
-      return {
-        uid: input.uid,
-        kind: input.kind,
-        applied: input.status === 1 ? applied : -applied,
-        balance: next,
-        ledger_id: ledgerId,
-        idempotent: false,
-      };
+      const linkId = (await outRequestHash({ actor: actor.id, operation: "finance", key })).slice(0,32);
+      return applyMobileUserFinance(tx,input,linkId,async event => recordReplay(tx,actor,"finance",key,hash,subject,event.evidence,event.now));
     });
   }
 
@@ -667,78 +554,7 @@ export class AdminMobileUserService {
     if (input.type === 3) return this.grantCoupon(actor, input, requestKeyValue);
     return withTx(this.container, async (tx) => {
       await transactionLimits(tx);
-      const accounts = await lockedUsers(tx, input.uids);
-      const now = Math.floor(Date.now() / 1_000);
-      if (input.type === 1) {
-        const level = (await tx.select().from(systemUserLevel).where(and(
-          eq(systemUserLevel.id, input.levelId),
-          eq(systemUserLevel.isShow, 1),
-          eq(systemUserLevel.isDel, 0),
-        )).limit(1).for("share"))[0];
-        if (!level) throw new NotFoundException("会员等级不存在或已停用");
-        const account = accounts[0];
-        if (account.level !== input.levelId) {
-          await tx.update(userLevel).set({ status: 0, isDel: 1 }).where(eq(userLevel.uid, account.uid));
-          const existing = await tx.select({ id: userLevel.id }).from(userLevel).where(and(
-            eq(userLevel.uid, account.uid),
-            eq(userLevel.levelId, input.levelId),
-          )).orderBy(asc(userLevel.id)).for("update");
-          const levelData = {
-            grade: level.grade,
-            validTime: 0,
-            isForever: level.isForever,
-            merId: level.merId,
-            status: 1,
-            mark: `管理员设置会员等级：${level.name}`.slice(0, 255),
-            remind: 0,
-            isDel: 0,
-            addTime: now,
-            discount: Math.round(Number(level.discount)),
-          };
-          if (existing[0]) await tx.update(userLevel).set(levelData).where(eq(userLevel.id, existing[0].id));
-          else await tx.insert(userLevel).values({ uid: account.uid, levelId: input.levelId, ...levelData });
-          await tx.update(user).set({
-            level: input.levelId,
-            exp: level.expNum.toFixed(2),
-            levelStatus: 1,
-          }).where(eq(user.uid, account.uid));
-        }
-        await recordStateAudit(tx, actor, "level_replace", input.uids, now);
-        return { changed: account.level === input.levelId ? 0 : 1, idempotent: account.level === input.levelId };
-      }
-      if (input.type === 4) {
-        const group = await tx.select({ id: userGroup.id }).from(userGroup)
-          .where(eq(userGroup.id, input.groupId)).limit(1).for("share");
-        if (!group[0]) throw new NotFoundException("用户分组不存在");
-        await tx.update(user).set({ groupId: input.groupId }).where(inArray(user.uid, input.uids));
-        await recordStateAudit(tx, actor, "group_replace", input.uids, now);
-        return { changed: input.uids.length };
-      }
-
-      if (input.labelIds.length) {
-        const labels = await tx.select({ id: userLabel.id }).from(userLabel).where(and(
-          inArray(userLabel.id, input.labelIds),
-          eq(userLabel.type, PLATFORM_TYPE),
-          eq(userLabel.relationId, PLATFORM_RELATION_ID),
-          eq(userLabel.status, 1),
-        )).orderBy(asc(userLabel.id)).for("share");
-        if (labels.length !== input.labelIds.length) throw new NotFoundException("部分用户标签不存在或已停用");
-      }
-      await tx.delete(userLabelRelation).where(and(
-        inArray(userLabelRelation.uid, input.uids),
-        eq(userLabelRelation.type, PLATFORM_TYPE),
-        eq(userLabelRelation.relationId, PLATFORM_RELATION_ID),
-      ));
-      if (input.labelIds.length) {
-        await tx.insert(userLabelRelation).values(input.uids.flatMap((uid) => input.labelIds.map((labelId) => ({
-          uid,
-          type: PLATFORM_TYPE,
-          relationId: PLATFORM_RELATION_ID,
-          labelId,
-        }))));
-      }
-      await recordStateAudit(tx, actor, "label_replace", input.uids, now);
-      return { changed: input.uids.length, labels: input.labelIds.length };
+      return applyMobileUserState(tx,input,async event => recordStateAudit(tx,actor,event.operation,input.uids,event.now));
     });
   }
 
@@ -755,53 +571,9 @@ export class AdminMobileUserService {
       if (await replayed(tx, actor, "membership", key, hash)) {
         return { uid: input.uids[0], idempotent: true };
       }
-      const account = (await lockedUsers(tx, input.uids))[0];
-      if (account.isEverLevel === 1) throw new ValidateException("永久会员无需调整会员时长");
-      const now = Math.floor(Date.now() / 1_000);
-      const seconds = input.days * 86_400;
-      if (!Number.isSafeInteger(seconds)) throw new ValidateException("会员天数超出支持范围");
-      const base = Math.max(now, account.overdueTime);
-      const overdueTime = input.daysStatus === 1 ? base + seconds : Math.max(now, base - seconds);
-      if (!Number.isSafeInteger(overdueTime) || overdueTime > MAX_INTEGER) {
-        throw new ValidateException("会员有效期超出支持范围");
-      }
-      const isMoneyLevel = overdueTime <= now ? 0 : account.isMoneyLevel > 0 ? account.isMoneyLevel : 3;
-      await tx.update(user).set({ isMoneyLevel, isEverLevel: 0, overdueTime })
-        .where(eq(user.uid, account.uid));
-      const orderHash = await outRequestHash({ actor: actor.id, operation: "membership", key });
-      const orders = await tx.insert(otherOrder).values({
-        uid: account.uid,
-        type: 4,
-        orderId: `ad${orderHash.slice(0, 30)}`,
-        memberType: "0",
-        payType: "admin",
-        paid: 1,
-        payTime: now,
-        isFree: 1,
-        overdueTime,
-        vipDay: input.daysStatus === 1 ? input.days : -input.days,
-        addTime: now,
-        remarks: "管理员调整付费会员时长",
-      }).returning({ id: otherOrder.id });
-      if (!orders[0]) throw new Error("会员调整记录创建失败");
-      await tx.insert(otherOrderStatus).values({
-        oid: orders[0].id,
-        changeType: "admin_adjust",
-        changeMessage: "管理员调整付费会员时长",
-        shopType: 1,
-        changeTime: now,
-      });
-      await recordReplay(tx, actor, "membership", key, hash, subject, {
-        userId: account.uid,
-        targetCount: 1,
-        otherOrderId: orders[0].id,
-      }, now);
-      return {
-        uid: account.uid,
-        overdue_time: overdueTime,
-        order_id: `ad${orderHash.slice(0, 30)}`,
-        idempotent: false,
-      };
+      const orderHash = await outRequestHash({actor:actor.id,operation:"membership",key});
+      const result = await applyMobileUserMembership(tx,input,`ad${orderHash.slice(0,30)}`,async event => recordReplay(tx,actor,"membership",key,hash,subject,event.evidence,event.now));
+      return {uid:result.uid,overdue_time:result.overdue_time,order_id:result.order_id,idempotent:false};
     });
   }
 
@@ -819,62 +591,7 @@ export class AdminMobileUserService {
       if (await replayed(tx, actor, "coupon_grant", key, hash)) {
         return { changed: input.uids.length, coupon_id: input.couponId, idempotent: true };
       }
-      await lockedUsers(tx, input.uids);
-      const issue = (await tx.select().from(storeCouponIssue).where(eq(storeCouponIssue.id, input.couponId))
-        .limit(1).for("update"))[0];
-      if (!issue || issue.isDel !== 0 || issue.status !== 1 || issue.receiveType !== 3) {
-        throw new NotFoundException("可赠送优惠券不存在或已停用");
-      }
-      const now = new Date();
-      if (issue.startTime && issue.startTime > now) throw new ValidateException("优惠券尚未开始发放");
-      if (issue.endTime && issue.endTime < now) throw new ValidateException("优惠券发放已结束");
-      if (issue.day <= 0 && (!issue.useEndTime || issue.useEndTime < now)) {
-        throw new ValidateException("优惠券使用有效期已结束或未配置");
-      }
-      if (!issue.isPermanent && issue.remainCount < input.uids.length) {
-        throw new ValidateException("优惠券库存不足，整批未发放");
-      }
-      const title = issue.couponTitle || issue.title;
-      if (!title || [...title].length > 64) throw new ValidateException("优惠券标题为空或过长，无法发放");
-      const receiveTime = Math.floor(now.getTime() / 1_000);
-      const startTime = issue.day > 0 ? now : issue.useStartTime ?? now;
-      const endTime = issue.day > 0
-        ? new Date(now.getTime() + issue.day * 86_400_000)
-        : issue.useEndTime!;
-      await tx.insert(storeCouponUser).values(input.uids.map((uid) => ({
-        uid,
-        issueCouponId: issue.id,
-        couponTitle: title,
-        couponPrice: issue.couponPrice,
-        useMinPrice: issue.useMinPrice,
-        status: 0,
-        startTime,
-        endTime,
-        type: issue.type,
-        receiveTime,
-        receiveSource: "send",
-        isFail: 0,
-      })));
-      await tx.insert(storeCouponIssueUser).values(input.uids.map((uid) => ({
-        uid,
-        issueCouponId: issue.id,
-        addTime: receiveTime,
-      })));
-      if (!issue.isPermanent) {
-        const updated = await tx.update(storeCouponIssue)
-          .set({ remainCount: sql`${storeCouponIssue.remainCount} - ${input.uids.length}` })
-          .where(and(
-            eq(storeCouponIssue.id, issue.id),
-            sql`${storeCouponIssue.remainCount} >= ${input.uids.length}`,
-          )).returning({ id: storeCouponIssue.id });
-        if (!updated[0]) throw new ValidateException("优惠券库存不足，整批未发放");
-      }
-      await recordReplay(tx, actor, "coupon_grant", key, hash, subject, {
-        userId: input.uids.length === 1 ? input.uids[0] : 0,
-        targetCount: input.uids.length,
-        couponIssueId: issue.id,
-      }, receiveTime);
-      return { changed: input.uids.length, coupon_id: issue.id, idempotent: false };
+      return applyMobileUserCoupons(tx,input,async event => recordReplay(tx,actor,"coupon_grant",key,hash,subject,event.evidence,event.now));
     });
   }
 }

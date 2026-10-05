@@ -1,8 +1,12 @@
 import { and, asc, desc, eq, inArray, like } from "drizzle-orm";
-import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
+import { withTx,createContainerFromDb,type Container } from "@/lib/di";
 import { cityArea, systemDise } from "@/models/schema";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
+import { readCheckoutPickupEnabled } from "@/services/order/CheckoutPickupPolicy";
+import { THEME_TEMPLATE_NAME, ThemeReadService,normalizeDiseTemplateName,themeDeadlines } from "@/services/content/ThemeReadService";
+import { decodeProductCategoryStyle,productCategoryStyleCatalog,projectProductCategoryStyle,publicProductCategoryStyle } from './ProductCategoryStyleReadService';
+import { ProductDetailDesignReadService,publicProductDetailDesign,readProductDetailDesignSnapshot } from './ProductDetailDesignReadService';
+import { sql } from 'drizzle-orm';
 import { parseConfigInteger } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
 
@@ -113,13 +117,16 @@ export class V2PublicCompatibilityService {
 
   constructor(
     private readonly container: Container,
-    env: Env,
+    private readonly configEnv: SystemConfigEnv,
   ) {
-    this.config = new SystemConfigService(container, env);
+    this.config = new SystemConfigService(container, configEnv);
   }
 
   async diy(nameValue: unknown): Promise<unknown> {
     const name = diyTemplateName(nameValue);
+    // This reserved settings identity has a bounded public projection. PHP's
+    // older named raw-DIY escape hatch no longer exports opaque extensions.
+    if(normalizeDiseTemplateName(name)==='product_detail')return publicProductDetailDesign(await new ProductDetailDesignReadService(this.container).read()).value;
     const rows = await this.container.db
       .select({ value: systemDise.value })
       .from(systemDise)
@@ -137,21 +144,25 @@ export class V2PublicCompatibilityService {
   }
 
   async storeStatus(): Promise<{ store_status: number }> {
-    const configs = await this.config.getMany(["store_func_status", "store_self_mention"]);
-    return {
-      store_status: phpConfigBool(configs.store_func_status, true)
-        ? parseConfigInteger(configs.store_self_mention, 0)
-        : 0,
-    };
+    return { store_status: await readCheckoutPickupEnabled(this.container.db) ? 1 : 0 };
   }
 
   async colorChange(nameValue: unknown): Promise<{
     status: number;
     navigation: number;
     product_category_level: number;
+    theme_issues?: string[];
   }> {
     const name = diyTemplateName(nameValue);
     if (!name) throw new ValidateException("页面模板参数错误");
+    if (name === THEME_TEMPLATE_NAME) {
+      const [theme, configs] = await Promise.all([
+        new ThemeReadService(this.container).read(),
+        this.config.getMany(["navigation_open", "product_category_level"]),
+      ]);
+      return { status: theme.status ?? 0, navigation: parseConfigInteger(configs.navigation_open, 0),
+        product_category_level: parseConfigInteger(configs.product_category_level, 0), theme_issues: theme.issues };
+    }
     const [rows, configs] = await Promise.all([
       this.container.db
         .select({ value: systemDise.value })
@@ -169,27 +180,19 @@ export class V2PublicCompatibilityService {
   }
 
   async productDetail(): Promise<{
-    product_detail: Record<string, unknown>;
+    product_detail: ReturnType<typeof publicProductDetailDesign>['value'];
     product_video_status: boolean;
-    product_category: Record<string, unknown>;
+    product_category: ReturnType<typeof publicProductCategoryStyle>;
+    product_detail_design_state: {revision:string;configured:boolean;issues:string[]};
   }> {
-    const [rows, productVideoStatus] = await Promise.all([
-      this.container.db
-        .select({ templateName: systemDise.templateName, value: systemDise.value })
-        .from(systemDise)
-        .where(and(
-          inArray(systemDise.templateName, ["product_detail", "category"]),
-          eq(systemDise.type, 3),
-        ))
-        .orderBy(asc(systemDise.id)),
-      this.config.get("product_video_status"),
-    ]);
-    const firstValue = (templateName: string) => rows.find((row) => row.templateName === templateName)?.value;
-    return {
-      product_detail: mergeLegacyProductDetail(firstValue("product_detail")),
-      product_video_status: phpConfigBool(productVideoStatus),
-      product_category: mergeLegacyProductCategory(firstValue("category")),
-    };
+    return withTx(this.container,async tx=>{
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);
+      const design=publicProductDetailDesign(await readProductDetailDesignSnapshot(tx));
+      const catalog=await productCategoryStyleCatalog(tx),category=projectProductCategoryStyle(catalog);
+      const productVideoStatus=await new SystemConfigService(createContainerFromDb(tx),this.configEnv).get('product_video_status');
+      return {product_detail:design.value,product_detail_design_state:{revision:design.revision,configured:design.configured,issues:design.issues},
+        product_video_status:phpConfigBool(productVideoStatus),product_category:publicProductCategoryStyle(category,category.configured?decodeProductCategoryStyle(catalog.rows[0].value):null)};
+    });
   }
 
   /** Reproduces CityAreaDao::searchCity and its ancestor rows plus one-level children. */

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="level-page">
     <!-- 当前等级 -->
     <view class="level-card">
@@ -41,9 +42,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed, onMounted } from "vue";
 import { http } from "@/utils/request";
 
@@ -96,7 +99,7 @@ onMounted(async () => {
 }
 
 .level-card {
-  background: linear-gradient(135deg, #f5a623, #f76b1c);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 36rpx 30rpx;
   color: #fff;
@@ -145,7 +148,7 @@ onMounted(async () => {
 }
 
 .grade-item.current {
-  border-color: #f5a623;
+  border-color: var(--view-theme, #e93323);
 }
 
 .grade-name {
@@ -163,14 +166,14 @@ onMounted(async () => {
 .grade-current {
   font-size: 22rpx;
   color: #fff;
-  background: #f5a623;
+  background: var(--view-theme, #e93323);
   padding: 6rpx 18rpx;
   border-radius: 20rpx;
 }
 
 .grade-next {
   font-size: 22rpx;
-  color: #f5a623;
+  color: var(--view-theme, #e93323);
 }
 
 .grade-lock {

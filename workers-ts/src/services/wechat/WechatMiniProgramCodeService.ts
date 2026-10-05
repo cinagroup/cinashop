@@ -5,6 +5,7 @@ import { user } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
 import { ValidateException } from "@/utils/errors";
+import { boundedProductShareFetch } from './ProductShareProviderPolicy';
 import { OFFLINE_MINI_PAGE, offlineMiniScanImage } from '@/services/order/OfflineScanCode';
 
 const INVITE_SIGNATURE_TTL_SECONDS = 10 * 60;
@@ -218,6 +219,19 @@ export class WechatMiniProgramCodeService {
     const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
     await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
     return `data:${encoded.contentType};base64,${encoded.base64}`;
+  }
+
+  /** Current registered ordinary detail page, with the authenticated referrer. */
+  async createOrdinaryProductDataUrl(productId:number,uid:number):Promise<string|null>{
+    if(!Number.isSafeInteger(productId)||productId<=0||productId>2147483647||!Number.isSafeInteger(uid)||uid<=0||uid>2147483647)throw new ValidateException('商品分享参数错误');
+    const scene=`id=${productId}&spid=${uid}`;
+    if(new TextEncoder().encode(scene).byteLength>32)throw new ValidateException('商品分享场景过长');
+    const values=await new SystemConfigService(this.container,this.env).getMany(['routine_appId','routine_appsecret']);
+    const appId=values.routine_appId?.trim()??'',secret=values.routine_appsecret?.trim()??'';
+    if(!appId||!secret)return null;
+    const bounded=new WechatMiniProgramCodeService(this.container,this.env,boundedProductShareFetch(this.fetcher));
+    const code=await bounded.fetchWithTokenRefresh(appId,secret,token=>bounded.fetchUnlimitedCode(token,scene,'pages/goods/detail','商品详情'));
+    return `data:${code.contentType};base64,${bytesToBase64(code.bytes)}`;
   }
 
   /** Build the legacy UniApp activity code without persisting a public attachment. */

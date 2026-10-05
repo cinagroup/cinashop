@@ -4,7 +4,7 @@
  * 对应 wrangler.toml 中的 binding, 运行时由 Cloudflare 注入。
  * 这是整个应用唯一的"外部依赖入口", 所有 service 通过此类型访问基础设施。
  */
-export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS" | "OFFLINE_PC_RETURN_ORIGIN" | "OFFLINE_H5_RETURN_ORIGIN"> {
+export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS" | "OFFLINE_PC_RETURN_ORIGIN" | "OFFLINE_H5_RETURN_ORIGIN" | "PUBLIC_H5_ORIGIN"> {
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;
@@ -39,6 +39,8 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   /** Operator-approved storefront origins for independent type=3 return bridges. */
   OFFLINE_PC_RETURN_ORIGIN?: string;
   OFFLINE_H5_RETURN_ORIGIN?: string;
+  /** Canonical public H5 origin for storefront sharing; independent of API/PC hosts. */
+  PUBLIC_H5_ORIGIN?: string;
   /** 阿里云物流市场 AppCode；优先于旧 system_config 中的同名配置。 */
   ALIYUN_EXPRESS_APP_CODE?: string;
   /** Aliyun SMS RPC credentials; secrets must only be injected as Worker secrets. */
@@ -63,6 +65,13 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   DADA_APP_KEY?: string;
   DADA_APP_SECRET?: string;
   DADA_SOURCE_ID?: string;
+  /** Independent 32-byte base64url key for SQL city-delivery credentials and immutable intents. */
+  CITY_DELIVERY_CONFIG_KEY?: string;
+  /** Explicit HTTPS public callback origin, validated before admission. */
+  CUSTOMER_CITY_CALLBACK_ORIGIN?: string;
+  /** Requires reviewed evidence that this commissioned UU V3 integration
+   * returns originId; absence keeps UU create unavailable. */
+  CUSTOMER_CITY_UU_ORIGIN_BINDING_CONTRACT?: 'uu-v3-originId-return-v1';
   /** Independent unguessable UU callback URL token; callback sign rules are not public. */
   UU_CALLBACK_TOKEN?: string;
   /** UU V3 production credentials; inject as Worker secrets, never Queue payloads. */
@@ -85,6 +94,9 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   PC_AUTH_ALLOWED_ORIGINS?: string;
   /** Exact browser origins allowed to bootstrap Kefu QR/OAuth login. No PC fallback. */
   KEFU_AUTH_ALLOWED_ORIGINS?: string;
+  /** Explicit canonical Kefu app origin for role-gated storefront entries.
+   * Must also be present in both Kefu auth and global CORS allowlists. */
+  PUBLIC_KEFU_ORIGIN?: string;
   /** WeChat Open Platform AppSecret. Never store this in system_config. */
   WECHAT_OPEN_APP_SECRET?: string;
   /** Enterprise-level JS-SDK credential. Inject only with `wrangler secret put`. */

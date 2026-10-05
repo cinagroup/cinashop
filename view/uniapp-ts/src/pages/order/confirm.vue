@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="confirm-page">
     <view v-if="loading" class="section">正在加载结算要求…</view>
     <view v-if="error" class="section error">
@@ -43,7 +44,15 @@
           <view class="cart-info">
             <view>{{ item.productInfo?.storeName }}</view><view class="muted">{{ item.productInfo?.suk }} × {{ item.cartNum }}</view>
             <view class="price">{{ ready ? `¥${item.sumPrice}` : '待报价' }}</view>
+            <view v-if="ready && promotionSummary(item.id)" class="muted">{{ promotionSummary(item.id) }}</view>
           </view>
+        </view>
+        <view v-if="ready && quote.result && (quote.result.gifts.products.length || quote.result.gifts.coupons.length || quote.result.gifts.integral)" class="gift-panel">
+          <view class="heading">满送活动赠礼</view>
+          <view class="muted">以下奖励按本次报价展示，支付成功后生效。</view>
+          <view v-for="gift in quote.result.gifts.products" :key="gift.id" class="gift-line">赠品：{{ gift.name }} · {{ gift.suk || gift.unique }} × {{ gift.quantity }}</view>
+          <view v-for="(coupon, index) in quote.result.gifts.coupons" :key="`${coupon.id}-${index}`" class="gift-line">赠券：{{ coupon.title }}（满 ¥{{ coupon.minPrice }} 可用）</view>
+          <view v-if="quote.result.gifts.integral" class="gift-line">赠送积分：{{ quote.result.gifts.integral }}</view>
         </view>
         <view v-if="integralEligible" class="integral-option">
           <text>使用积分抵扣（额度由系统计算）</text>
@@ -75,8 +84,10 @@
         <view v-if="quote.loading">正在获取最新报价，完成前不能提交…</view>
         <view v-if="quote.error" class="error">{{ quote.error }}<button size="mini" :disabled="locked" @tap="refreshQuote(true)">重新获取报价</button></view>
         <template v-if="ready && quote.result">
-          <view class="price-row"><text>商品金额</text><text>¥{{ quote.result.prices.subtotal }}</text></view>
+          <view class="price-row"><text>商品原价</text><text>¥{{ quote.result.prices.subtotal }}</text></view>
           <view class="price-row"><text>会员优惠</text><text>-¥{{ quote.result.prices.memberDiscount }}</text></view>
+          <view v-if="quote.result.prices.promotionDiscount !== '0.00'" class="price-row"><text>活动优惠</text><text>-¥{{ quote.result.prices.promotionDiscount }}</text></view>
+          <view class="price-row"><text>商品小计</text><text>¥{{ quote.result.prices.goodsPayable }}</text></view>
           <view class="price-row"><text>首单优惠</text><text>-¥{{ quote.result.prices.firstOrderDiscount }}</text></view>
           <view class="price-row"><text>优惠券</text><text>-¥{{ quote.result.prices.couponDiscount }}</text></view>
           <view class="price-row"><text>积分抵扣（{{ quote.result.prices.usedIntegral }}积分）</text><text>-¥{{ quote.result.prices.integralDiscount }}</text></view>
@@ -95,17 +106,24 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import SystemFormFields from "@/components/SystemFormFields.vue";
 import { useCheckout } from "@/composables/useCheckout";
+import { cartPromotionSummary } from '../../../../common/cartPrice';
 // Route parameters are validated by useCheckout.onLoad, not DOM attributes.
 defineOptions({ inheritAttrs: false });
 const { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
   allowedShippingTypes, requiresAddress, shippingLoading,
   customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
   coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();
+function promotionSummary(id: number): string {
+  const item = quote.value.result?.items.find(row => row.id === id);
+  return item ? cartPromotionSummary(item) : '';
+}
 function addAddress() { if (!locked.value) uni.navigateTo({ url: "/pages/user/address" }); }
 function integralChange(event: Event) { if (!locked.value) useIntegral.value = (event as unknown as { detail: { value: boolean } }).detail.value === true; }
 </script>
@@ -120,7 +138,7 @@ function integralChange(event: Event) { if (!locked.value) useIntegral.value = (
 .choices { display: flex; flex-wrap: wrap; gap: 14rpx; margin: 14rpx 0; }
 .choices button { margin: 0; }
 button { font-size: 26rpx; white-space: normal; }
-.active { color: #c8271a; background: #fff5f4; border: 2rpx solid #e93323; }
+.active { color: var(--view-theme, #e93323); background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); border: 2rpx solid var(--view-theme, #e93323); }
 .address, .coupon-card { width: 100%; text-align: left; padding: 18rpx; line-height: 1.6; margin-bottom: 16rpx; }
 .coupon-head { display: flex; flex-wrap: wrap; gap: 16rpx; align-items: baseline; }
 input { border: 1rpx solid #ddd; border-radius: 8rpx; padding: 18rpx; margin-top: 18rpx; }
@@ -128,10 +146,13 @@ textarea { box-sizing: border-box; width: 100%; min-height: 100rpx; font-size: 2
 .cart-line { display: flex; gap: 20rpx; padding: 18rpx 0; }
 .cart-image { width: 120rpx; height: 120rpx; border-radius: 8rpx; flex-shrink: 0; }
 .cart-info { flex: 1; min-width: 0; }
-.price { color: #d32c1d; font-weight: 600; }
+.gift-panel { margin: 20rpx 0; padding: 20rpx; border: 2rpx solid #e7dac1; border-radius: 12rpx; background: #fffaf0; }
+.gift-panel .heading { margin-bottom: 0; }
+.gift-line { margin-top: 14rpx; line-height: 1.6; }
+.price { color: var(--view-priceColor, #e93323); font-weight: 600; }
 .price-row, .integral-option { display: flex; justify-content: space-between; align-items: center; gap: 16rpx; padding: 10rpx 0; }
 .price-row > text:last-child { flex-shrink: 0; }
 .submit-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; box-shadow: 0 -2rpx 10rpx #0001; padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 16rpx; z-index: 5; }
-.submit-btn { background: #e93323; color: white; margin: 0; border-radius: 40rpx; font-size: 28rpx; }
+.submit-btn { background: var(--view-theme, #e93323); color: white; margin: 0; border-radius: 40rpx; font-size: 28rpx; }
 .submit-btn[disabled] { background: #eee; color: #999; }
 </style>

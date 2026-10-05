@@ -9,6 +9,8 @@ import { memberRight, otherOrder, paymentReconciliationCase, systemConfig, user,
 import { runOfflineOrder, runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
 import { offlineRuntimeGrantPlan } from '../src/migrations/offlineOrderRuntimeContract';
 import { auditOfflineOrderRuntimePermissions } from '../src/migrations/auditOfflineOrderRuntimePermissions';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
+import { inspectOrderPromotionGiftReceiptCatalog } from '../src/migrations/orderPromotionGiftReceipt';
 import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
 import { seedHistoricalZeroOfflineOrder } from './helpers/offlineLegacyZeroFixture';
 import { paymentQueryFixture, paymentQueryKeys } from './helpers/paymentQueryFixture';
@@ -47,6 +49,12 @@ describe('offline cashier HTTP on actual Workers/auth/isolated PG16', () => {
   async function grants(r: Runtime) {
     await runOfflineOrder(f.db, r.role);
     await f.exec(offlineRuntimeGrantPlan(r.role));
+    // Current ORM includes the gift receipt table. Complete its reviewed 0176
+    // catalog through the real maintenance migration before release auditing;
+    // the restricted cashier LOGIN receives no extra gift or owner privileges.
+    await runOrderPromotionGiftReceipt(f.db);
+    const [maintenance] = await f.exec('SELECT current_user AS role');
+    expect(await inspectOrderPromotionGiftReceiptCatalog(f.db, String(record(maintenance).role))).toMatchObject({ ready: true });
     expect(await auditOfflineOrderRuntimePermissions(r.db)).toMatchObject({ready:true,failures:[]});
   }
   const fixture = <T>(work: (t: {

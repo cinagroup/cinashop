@@ -20,16 +20,18 @@ import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillme
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { reserveOrderCartRowIds } from "@/services/order/OrderCartIdentity";
 import { planOrderFinancialSplit } from "@/services/order/OrderSplitFinance";
+import { assertOrderPromotionLedger, writeOrderPromotionLedger } from "@/services/order/OrderPromotionLedgerSplit";
 import { splitSupplierPendingPayment } from "@/services/supplier/SupplierSplitFinance";
 import { SupplierSplitOrderReadService } from "@/services/supplier/SupplierSplitOrderReadService";
 import { SupplierOperationalReadService } from "@/services/supplier/SupplierOperationalReadService";
 import { captureReturnedPointBills, loadRefundOrderGeneration } from "@/services/order/RefundOrderGeneration";
 import { persistRefundFulfillmentBranches } from "@/services/order/RefundFulfillmentBranch";
+import { assertNoConflictingCustomerCityJob } from '@/services/order/CustomerCityFulfillmentFence';
 import { prepareSplitInvoice, materializeSplitInvoice } from "@/services/order/SplitInvoiceAllocation";
 import type { RefundWriteoffState } from "@/services/order/RefundSplitAllocation";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
-export type SupplierDeliveryType = "express" | "send" | "fictitious";
+export type SupplierDeliveryType = "express" | "send" | "fictitious" | "city_delivery";
 
 export interface SupplierDeliveryInput {
   deliveryType: SupplierDeliveryType;
@@ -62,9 +64,13 @@ export interface FulfillmentWaybillMetadata {
 
 export interface FulfillmentExecutionOptions {
   expectedStoreId?: number;
+  /** Exact actual payment-root store when a physical allocation child differs. */
+  expectedRootStoreId?: number;
   replay?: FulfillmentReplayOptions;
   /** The matching active job is allowed through; every other active job blocks manual fulfillment. */
   waybillJobId?: number;
+  /** Only the matching durable city task may finalize its admitted effect. */
+  cityDeliveryJobId?: number;
   waybillMetadata?: FulfillmentWaybillMetadata;
   /** Runs before settlement/order locks; callers may take their own ownership locks here. */
   authorize?: (tx: DbClient, scope: FulfillmentAuthorizationScope) => Promise<void>;
@@ -577,6 +583,7 @@ async function resolveLockedOrder(
   requestedOrderId: number,
   expectedStoreId?: number,
   authorize?: FulfillmentExecutionOptions["authorize"],
+  expectedRootStoreId?: number,
 ): Promise<{ root: OrderRow; active: OrderRow | null }> {
   const references = await tx
     .select({
@@ -617,7 +624,7 @@ async function resolveLockedOrder(
         fulfillmentRootScope(supplierId, reference.id, rootId, reference.storeId),
         eq(storeOrder.uid, reference.uid),
         eq(storeOrder.isSystemDel, 0),
-        storeScope(expectedStoreId),
+        storeScope(expectedRootStoreId ?? expectedStoreId),
       ),
     )
     .limit(1)
@@ -680,6 +687,7 @@ async function applyDelivery(
   input: SupplierDeliveryInput,
   expectedStoreId?: number,
   waybillMetadata?: FulfillmentWaybillMetadata,
+  cityDeliveryJobId?: number,
 ) {
   const now = Math.floor(Date.now() / 1_000);
   assertDeliverable(order);
@@ -729,6 +737,8 @@ async function applyDelivery(
   const description =
     input.deliveryType === "fictitious"
       ? `虚拟发货：${input.fictitiousContent}`
+      : input.deliveryType === "city_delivery"
+        ? `同城配送已受理：${input.deliveryName} ${input.deliveryId}`
       : input.deliveryType === "send"
         ? `已配送：${input.deliveryName} ${input.deliveryId}`
       : `已发货：${input.deliveryName} ${input.deliveryId}`;
@@ -736,10 +746,15 @@ async function applyDelivery(
     oid: order.id,
     changeType: input.deliveryType === "fictitious"
       ? "delivery_fictitious"
+      : input.deliveryType === "city_delivery"
+        ? "city_delivery_admitted"
       : input.deliveryType === "send"
         ? "delivery"
         : "delivery_goods",
-    changeMessage: description,
+    // The delivery body is persisted in full on the order. Status messages
+    // have a 256-character SQL column and must not roll back a valid 500-
+    // character virtual delivery merely because its audit label is longer.
+    changeMessage: [...description].slice(0, 256).join(""),
     changeTime: now,
   });
   await enqueueOrderDeliveryNoticeEvent(tx, {
@@ -750,6 +765,7 @@ async function applyDelivery(
     deliveryType: input.deliveryType,
     deliveryName: input.deliveryName,
     deliveryId: input.deliveryId,
+    ...(cityDeliveryJobId===undefined?{}:{cityDeliveryJobId}),
   }, now);
 }
 
@@ -782,9 +798,11 @@ export class SupplierFulfillmentService {
         orderId,
         options.expectedStoreId,
         options.authorize,
+        options.expectedRootStoreId,
       );
       const replay = await findFulfillmentReplay(tx, root.id, options.replay);
       if (replay) return replay;
+      await assertNoConflictingCustomerCityJob(tx, root.id, options.cityDeliveryJobId);
       await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
       if (!active) throw new ValidateException("该订单已全部发货");
       await applyDelivery(
@@ -794,6 +812,7 @@ export class SupplierFulfillmentService {
         input,
         options.expectedStoreId,
         options.waybillMetadata,
+        options.cityDeliveryJobId,
       );
       if (root.id !== active.id) {
         await tx.insert(storeOrderStatus).values({
@@ -838,9 +857,11 @@ export class SupplierFulfillmentService {
         orderId,
         options.expectedStoreId,
         options.authorize,
+        options.expectedRootStoreId,
       );
       const replay = await findFulfillmentReplay(tx, root.id, options.replay);
       if (replay) return replay;
+      await assertNoConflictingCustomerCityJob(tx, root.id, options.cityDeliveryJobId);
       await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
       if (!active) throw new ValidateException("该订单已全部发货");
       assertDeliverable(active);
@@ -889,6 +910,7 @@ export class SupplierFulfillmentService {
       // any child/notice write; it cannot fall back to merchandise weighting.
       const generation = await loadRefundOrderGeneration(tx, active, cartRows);
       const financialPlan = planOrderFinancialSplit(active, cartRows, selectedByCartId);
+      const hasPromotionLedger = await assertOrderPromotionLedger(tx, active, cartRows);
       if (selectedQuantity >= totalQuantity) {
         await applyDelivery(
           tx,
@@ -897,6 +919,7 @@ export class SupplierFulfillmentService {
           input,
           options.expectedStoreId,
           options.waybillMetadata,
+          options.cityDeliveryJobId,
         );
         if (root.id !== active.id) {
           await tx.insert(storeOrderStatus).values({
@@ -1041,6 +1064,13 @@ export class SupplierFulfillmentService {
           ),
         ),
       );
+      const promotionCarts = (rows: typeof selectedCartRows) => rows.map((row) => ({
+        productId: row.source.productId, cartNum: row.quantity, cartInfo: row.cartInfo,
+      }));
+      const now = Math.floor(Date.now() / 1000);
+      if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
+        { id: selectedOrderPk, uid: active.uid, promotionsPrice: String(amounts.selected.promotionsPrice) },
+        promotionCarts(selectedCartRows), now);
 
       let remainingOrderPk: number;
       if (firstSplit) {
@@ -1080,6 +1110,9 @@ export class SupplierFulfillmentService {
             ),
           ),
         );
+        if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
+          { id: remainingOrderPk, uid: active.uid, promotionsPrice: String(amounts.remaining.promotionsPrice) },
+          promotionCarts(remainingCartRows), now);
         await tx
           .update(storeOrderCartInfo)
           .set({ splitStatus: 2, splitSurplusNum: 0 })
@@ -1118,9 +1151,11 @@ export class SupplierFulfillmentService {
             ),
           ),
         );
+        if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
+          { id: active.id, uid: active.uid, promotionsPrice: String(amounts.remaining.promotionsPrice) },
+          promotionCarts(remainingCartRows), now, true);
       }
 
-      const now = Math.floor(Date.now() / 1000);
       await materializeSplitInvoice(tx, active, invoice, [selectedOrderPk, remainingOrderPk], 'fulfillment', now);
       await splitSupplierPendingPayment(tx, active, [selectedOrderPk, remainingOrderPk], now);
       await persistRefundFulfillmentBranches(tx, active, cartRows, generation,
@@ -1133,7 +1168,9 @@ export class SupplierFulfillmentService {
       const description =
         input.deliveryType === "fictitious"
           ? `虚拟发货：${input.fictitiousContent}`
-          : input.deliveryType === "send"
+          : input.deliveryType === "city_delivery"
+        ? `同城配送已受理：${input.deliveryName} ${input.deliveryId}`
+      : input.deliveryType === "send"
             ? `已配送：${input.deliveryName} ${input.deliveryId}`
           : `已发货：${input.deliveryName} ${input.deliveryId}`;
       await tx.insert(storeOrderStatus).values([
@@ -1147,7 +1184,9 @@ export class SupplierFulfillmentService {
           oid: selectedOrderPk,
           changeType: input.deliveryType === "fictitious"
             ? "delivery_fictitious"
-            : input.deliveryType === "send"
+            : input.deliveryType === "city_delivery"
+        ? "city_delivery_admitted"
+      : input.deliveryType === "send"
               ? "delivery"
               : "delivery_goods",
           changeMessage: description,
@@ -1176,6 +1215,7 @@ export class SupplierFulfillmentService {
         deliveryType: input.deliveryType,
         deliveryName: input.deliveryName,
         deliveryId: input.deliveryId,
+        ...(options.cityDeliveryJobId===undefined?{}:{cityDeliveryJobId:options.cityDeliveryJobId}),
       }, now);
       const result = {
         split: true,

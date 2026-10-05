@@ -1,0 +1,1526 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-01",
+  "frozen_at": "2026-10-01T05:16:17.367Z",
+  "status": "local_candidate_verified_not_released",
+  "scope": "Complete legacy PC home banner Admin management and actual PC Home consumer; no production DDL, grant, network provider, commit, push or deployment.",
+  "outcome": {
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "workerRoutes": 2110,
+    "adminBusinessPages": 104,
+    "adminApiCalls": 565,
+    "adminApiVariants": 589,
+    "settings": {
+      "legacyRoutes": 76,
+      "reviewed": 76,
+      "candidate": 21,
+      "partial": 24,
+      "missing": 26,
+      "retired": 5,
+      "unreviewed": 0
+    },
+    "legacyAdmin": {
+      "total": 274,
+      "candidate": 87,
+      "partial": 114,
+      "missing": 65,
+      "retired": 8
+    },
+    "phpExecutableMatched": 882,
+    "effectiveCoveragePercent": 46.7,
+    "actionableLegacyUrls": 984,
+    "changedScreen": "/admin/setting/system_group_data/pc/:id: missing -> candidate",
+    "pcShopParent": "partial"
+  },
+  "routeSurfaces": [
+    {
+      "name": "api",
+      "surface": "api",
+      "php": 457,
+      "ts": 1096,
+      "matched": 443,
+      "executableMatched": 437,
+      "unavailable": 6,
+      "missing": 14,
+      "retired": 2,
+      "actionableMissing": 12,
+      "coveragePercent": 96.9,
+      "executableCoveragePercent": 95.6,
+      "effectiveExecutableCoveragePercent": 96
+    },
+    {
+      "name": "admin",
+      "surface": "admin",
+      "php": 1153,
+      "ts": 739,
+      "matched": 238,
+      "executableMatched": 223,
+      "unavailable": 15,
+      "missing": 915,
+      "retired": 0,
+      "actionableMissing": 915,
+      "coveragePercent": 20.6,
+      "executableCoveragePercent": 19.3,
+      "effectiveExecutableCoveragePercent": 19.3
+    },
+    {
+      "name": "supplier",
+      "surface": "supplier",
+      "php": 182,
+      "ts": 164,
+      "matched": 121,
+      "executableMatched": 121,
+      "unavailable": 0,
+      "missing": 61,
+      "retired": 12,
+      "actionableMissing": 49,
+      "coveragePercent": 66.5,
+      "executableCoveragePercent": 66.5,
+      "effectiveExecutableCoveragePercent": 71.2
+    },
+    {
+      "name": "kefu",
+      "surface": "kefu",
+      "php": 63,
+      "ts": 70,
+      "matched": 60,
+      "executableMatched": 60,
+      "unavailable": 0,
+      "missing": 3,
+      "retired": 3,
+      "actionableMissing": 0,
+      "coveragePercent": 95.2,
+      "executableCoveragePercent": 95.2,
+      "effectiveExecutableCoveragePercent": 100
+    },
+    {
+      "name": "out",
+      "surface": "out",
+      "php": 41,
+      "ts": 41,
+      "matched": 41,
+      "executableMatched": 41,
+      "unavailable": 0,
+      "missing": 0,
+      "retired": 0,
+      "actionableMissing": 0,
+      "coveragePercent": 100,
+      "executableCoveragePercent": 100,
+      "effectiveExecutableCoveragePercent": 100
+    },
+    {
+      "name": "erp",
+      "surface": "erp",
+      "php": 8,
+      "ts": 0,
+      "matched": 0,
+      "executableMatched": 0,
+      "unavailable": 0,
+      "missing": 8,
+      "retired": 0,
+      "actionableMissing": 8,
+      "coveragePercent": 0,
+      "executableCoveragePercent": 0,
+      "effectiveExecutableCoveragePercent": 0
+    }
+  ],
+  "implementation": {
+    "identity": "Configuration name pc_home_banner, installation ID66 not authoritative; no fabricated menu ID or PC-shop1036 grant.",
+    "fields": "All legacy dynamic field types plus unknown input fallback; first upload array member; historical uploads string; full required field edits and opaque JSON preservation.",
+    "concurrency": "READ COMMITTED, bounded deadlines, advisory request journal lock, group row SHARE, group_data SHARE ROW EXCLUSIVE, fresh full/xmin collection or row CAS and attachment SHARE.",
+    "recovery": "Atomic actor/UUID/operation/id/canonical hash receipt; only matching actual409 rollback proof releases pending intent; ambiguous outcomes retain original intent per actor.",
+    "public": "SQL status1 sortDESC/idDESC first10 before validation; safe core fields first, bounded optional opaque projection; actual asset provenance/signing and actual PC Home slide/jump."
+  },
+  "verification": {
+    "uniquePassed": 372,
+    "uniqueNativeSqlAndHttp": 27,
+    "uniquePureAndStatic": 345,
+    "newContractTests": 64,
+    "existingRegressionTests": 308,
+    "unselectedExcluded": 22,
+    "classification": {
+      "adminInputPure": 10,
+      "publicDecoderPure": 7,
+      "adminSqlNative": 14,
+      "adminJwtHttpNative": 9,
+      "publicNative": 4,
+      "frontendPure": 20,
+      "compatibilityStatic": 11,
+      "permissionStatic": 2,
+      "existingPcBuildNodeTests": 295
+    },
+    "final": [
+      {
+        "name": "native-final",
+        "log": ".cache/pc-banner-native-final-20261001.log",
+        "metadata": ".cache/pc-banner-native-final-20261001.metadata.json",
+        "passed": 44,
+        "skipped": 0,
+        "kind": "vitest",
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/admin-pc-banner.test.ts",
+          "test/admin-pc-banner-postgres.test.ts",
+          "test/admin-pc-banner-http.test.ts",
+          "test/pc-banner-read.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 44569,
+        "finished_at": "2026-10-01T04:34:49.3277095Z"
+      },
+      {
+        "name": "admin-pure-final",
+        "log": ".cache/pc-banner-admin-pure-final-20261001.log",
+        "metadata": ".cache/pc-banner-admin-pure-final-20261001.metadata.json",
+        "passed": 16,
+        "skipped": 0,
+        "kind": "node",
+        "arguments": [
+          "../../workers-ts/node_modules/tsx/dist/cli.mjs",
+          "--tsconfig",
+          "tsconfig.json",
+          "--test",
+          "test/pcBanner.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 621,
+        "finished_at": "2026-10-01T04:40:30.8157331Z"
+      },
+      {
+        "name": "pc-pure-final",
+        "log": ".cache/pc-banner-pc-pure-final-20261001.log",
+        "metadata": ".cache/pc-banner-pc-pure-final-20261001.metadata.json",
+        "passed": 4,
+        "skipped": 0,
+        "kind": "node",
+        "arguments": [
+          "../../workers-ts/node_modules/tsx/dist/cli.mjs",
+          "--tsconfig",
+          "tsconfig.json",
+          "--test",
+          "test/pcBanner.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 599,
+        "finished_at": "2026-10-01T04:40:33.2197307Z"
+      },
+      {
+        "name": "compatibility-static-final",
+        "log": ".cache/pc-banner-compatibility-static-final-20261001.log",
+        "metadata": ".cache/pc-banner-compatibility-static-final-20261001.metadata.json",
+        "passed": 11,
+        "skipped": 0,
+        "kind": "vitest",
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/pc-compatibility-migration.test.ts",
+          "test/admin-frontend-api-audit.test.ts",
+          "--maxWorkers=1"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 2402,
+        "finished_at": "2026-10-01T04:41:51.5440637Z"
+      },
+      {
+        "name": "permission-static-final",
+        "log": ".cache/pc-banner-permission-static-final-20261001.log",
+        "metadata": ".cache/pc-banner-permission-static-final-20261001.metadata.json",
+        "passed": 2,
+        "skipped": 22,
+        "kind": "vitest",
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/admin-permission.test.ts",
+          "--maxWorkers=1",
+          "-t",
+          "covers every route guarded|publishes a unique view permission"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 4712,
+        "finished_at": "2026-10-01T04:42:23.0929190Z"
+      },
+      {
+        "name": "pc-build-tests-final",
+        "log": ".cache/pc-banner-pc-build-tests-final-20261001.log",
+        "metadata": ".cache/pc-banner-pc-build-tests-final-20261001.metadata.json",
+        "passed": 295,
+        "skipped": 0,
+        "kind": "node",
+        "arguments": [
+          "--test",
+          "test/auth-session.test.mjs",
+          "test/product-image.test.mjs",
+          "test/test-product-media.test.mjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 4442,
+        "finished_at": "2026-10-01T04:23:35.5228155Z"
+      }
+    ],
+    "types": [
+      {
+        "name": "worker-types-final",
+        "log": ".cache/pc-banner-worker-types-final-20261001.log",
+        "metadata": ".cache/pc-banner-worker-types-final-20261001.metadata.json",
+        "passed": 0,
+        "skipped": 0,
+        "kind": "types",
+        "arguments": [
+          "--max-old-space-size=4096",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 77876,
+        "finished_at": "2026-10-01T04:39:39.5982141Z"
+      },
+      {
+        "name": "worker-runtime-types-final",
+        "log": ".cache/pc-banner-worker-runtime-types-final-20261001.log",
+        "metadata": ".cache/pc-banner-worker-runtime-types-final-20261001.metadata.json",
+        "passed": 0,
+        "skipped": 0,
+        "kind": "types",
+        "arguments": [
+          "--max-old-space-size=4096",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 39627,
+        "finished_at": "2026-10-01T04:40:39.0328565Z"
+      },
+      {
+        "name": "admin-types-final",
+        "log": ".cache/pc-banner-admin-types-final-20261001.log",
+        "metadata": ".cache/pc-banner-admin-types-final-20261001.metadata.json",
+        "passed": 0,
+        "skipped": 0,
+        "kind": "types",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 21157,
+        "finished_at": "2026-10-01T04:41:38.5188948Z"
+      },
+      {
+        "name": "pc-types-visual-last",
+        "log": ".cache/pc-banner-pc-types-visual-last-20261001.log",
+        "metadata": ".cache/pc-banner-pc-types-visual-last-20261001.metadata.json",
+        "passed": 0,
+        "skipped": 0,
+        "kind": "types",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 6927,
+        "finished_at": "2026-10-01T05:06:17.5015687Z"
+      }
+    ],
+    "builds": [
+      {
+        "name": "admin-build-final",
+        "log": ".cache/pc-banner-admin-build-final-20261001.log",
+        "metadata": ".cache/pc-banner-admin-build-final-20261001.metadata.json",
+        "passed": 0,
+        "skipped": 0,
+        "kind": "build",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 26703,
+        "finished_at": "2026-10-01T04:42:33.5555515Z"
+      },
+      {
+        "name": "pc-build-visual-last",
+        "log": ".cache/pc-banner-pc-build-visual-last-20261001.log",
+        "metadata": ".cache/pc-banner-pc-build-visual-last-20261001.metadata.json",
+        "passed": 0,
+        "skipped": 0,
+        "kind": "build",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 10684,
+        "finished_at": "2026-10-01T05:06:42.3890060Z"
+      }
+    ],
+    "nativeEnvironment": {
+      "version": "postgres (PostgreSQL) 16.15",
+      "host": "127.0.0.1",
+      "port": 55749,
+      "taskRoot": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-f1fGBs",
+      "schemaMaintenance": true,
+      "tests": [
+        "test/admin-pc-banner.test.ts",
+        "test/admin-pc-banner-postgres.test.ts",
+        "test/admin-pc-banner-http.test.ts",
+        "test/pc-banner-read.test.ts"
+      ]
+    },
+    "browser": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z.json",
+      "log": ".cache/pc-banner-browser-visual-final-20261001.log",
+      "metadata": ".cache/pc-banner-browser-visual-final-20261001.metadata.json",
+      "summary": {
+        "groups": 31,
+        "passed": 31,
+        "failed": 0
+      },
+      "environment": {
+        "adminOrigin": "http://127.0.0.1:62619",
+        "adminEntry": "/setting/pc-banner",
+        "pcOrigin": "http://127.0.0.1:62620",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 1000
+          },
+          {
+            "width": 390,
+            "height": 844
+          }
+        ],
+        "mocks": "Only local API/session fixtures; native SQL/provider evidence remains separate"
+      },
+      "basic_checks": [
+        {
+          "name": "Page identity",
+          "status": "passed"
+        },
+        {
+          "name": "Not blank",
+          "status": "passed"
+        },
+        {
+          "name": "No framework overlay",
+          "status": "passed"
+        },
+        {
+          "name": "Console health",
+          "status": "passed"
+        },
+        {
+          "name": "Screenshot evidence",
+          "status": "passed"
+        },
+        {
+          "name": "Interaction proof",
+          "status": "passed"
+        }
+      ],
+      "cleanup": {
+        "ownedBrowserClosed": true,
+        "ownedStaticServersClosed": true,
+        "addresses": [
+          "http://127.0.0.1:62619",
+          "http://127.0.0.1:62620"
+        ]
+      },
+      "served_dist_hashes": [
+        {
+          "surface": "admin",
+          "path": "/assets/index-bJWwsekN.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\index-bJWwsekN.js",
+          "bytes": 1219433,
+          "sha256": "6ec53278fba3ca0201372fcbb4405c826214f3f9091f9f44efb83c4db904a660"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/AdminLayout-D1Bn--i6.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\AdminLayout-D1Bn--i6.js",
+          "bytes": 33116,
+          "sha256": "fb3dcefcaa3ceff364ee6b00bcb2ac9b778d89f349c361624a92963a121e7819"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/auth-CCsAvGc7.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\auth-CCsAvGc7.js",
+          "bytes": 636,
+          "sha256": "7726d8a0be5aabb43ada5ad8eedbb69f6527207baa7cde2b8e427d0df610bff3"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/auth-2Jk8Jx7L.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\auth-2Jk8Jx7L.js",
+          "bytes": 1402,
+          "sha256": "d535e730989906e729bfcb6eba97336fdf8fbe8726f76dc47e098a86fda348b9"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/request-OxC9ZbtD.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\request-OxC9ZbtD.js",
+          "bytes": 49684,
+          "sha256": "fd28d13b12187c7b8baeab993817df79b27d645846f69ae57d04a27713bf0d6c"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/PcBannerList-C_b7ewkr.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\PcBannerList-C_b7ewkr.js",
+          "bytes": 31985,
+          "sha256": "f7c4221c8ed45ab0af83ce9f0cd06eec061597fa493afef1f1cae9257e45027c"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/SeckillActivityImagePicker-DPSWxeU9.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\SeckillActivityImagePicker-DPSWxeU9.js",
+          "bytes": 6788,
+          "sha256": "b63bf7f8c6ad40e6f390998646c96598faffc816b0aeaf2c858c821d81b8ca99"
+        },
+        {
+          "surface": "admin",
+          "path": "/assets/attachment-Dt6Hutnb.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\attachment-Dt6Hutnb.js",
+          "bytes": 604,
+          "sha256": "77d0b3315d220cd8e9cb3f6ff01cd99ecaf5af397e11c4a2e22c1a4a03d1ab20"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/index-a7-eOSRj.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\index-a7-eOSRj.js",
+          "bytes": 1124629,
+          "sha256": "3716eb35e7b3586f57219cb103d0d9eb1b1a50c2a1eb8cfe914d64b9a45f66a7"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/DefaultLayout-DQKdoSbm.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\DefaultLayout-DQKdoSbm.js",
+          "bytes": 4216,
+          "sha256": "fa40f979df49ead820d7d195d526741e340b4064e50ee1135d7eeb404ccbe095"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/Home-CRK3rE3l.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\Home-CRK3rE3l.js",
+          "bytes": 6530,
+          "sha256": "8a4e258418aaf72888c493e78d1d7d93e7a648a5969ce33f3e5667f1f6d33c54"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/ProductImage-B4tyenOO.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\ProductImage-B4tyenOO.js",
+          "bytes": 961,
+          "sha256": "f099c32849c5a6a1d0e49e2375efea37e2c71704c5317e2b7b819c4923061334"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/product-BbjZgHUg.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\product-BbjZgHUg.js",
+          "bytes": 3450,
+          "sha256": "c0f9dc4ef0ec7b5983d0d1e9d578d76a50ba4685ad535b204c85000b6dadf75c"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/GoodsDetail-BlkWntkb.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\GoodsDetail-BlkWntkb.js",
+          "bytes": 15217,
+          "sha256": "20c15c42b9e485995c787ccde2c616cb2dd92a69b580b39fd0b63cdddd680582"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/user-BQxMZ49b.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\user-BQxMZ49b.js",
+          "bytes": 1120,
+          "sha256": "7ae36d9e9b7de2008c3034260307c4b1fb77786e6ecc7129b590330a3f99f4cc"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/couponWallet-DLb4xfJC.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\couponWallet-DLb4xfJC.js",
+          "bytes": 3624,
+          "sha256": "822b03e7a9f756c1ec9cd2ebca7e0c308160ce696eaadee17b47df48173e711e"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/activity-CMQld8Kk.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\activity-CMQld8Kk.js",
+          "bytes": 10362,
+          "sha256": "cef49b3cc751dace44d7f1182befff4075bc524b5f7e92df6d56b5977ce55025"
+        },
+        {
+          "surface": "pc",
+          "path": "/assets/seckillPurchase-DvQ9smA6.js",
+          "source": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\seckillPurchase-DvQ9smA6.js",
+          "bytes": 3104,
+          "sha256": "7a03540ea79312562d9da988197e7eab61414a1ab763d4c1354d7ec6e729bb48"
+        }
+      ],
+      "screenshots": [
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-desktop.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-full-form.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-pending.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-mobile.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-mobile-editor.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-pc-desktop.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-pc-mobile.png"
+      ]
+    },
+    "cleanups": [
+      {
+        "file": ".cache/pc-banner-public-native-first-cluster-cleanup-20261001.json",
+        "checked_at": "2026-10-01T04:17:07.2993053Z",
+        "name": "public-native-first",
+        "task_root": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-VxPnbJ",
+        "port": 58744,
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-VxPnbJ\\data",
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_status": "pg_ctl: no server running",
+        "query_succeeded": true,
+        "listener_count": 0,
+        "data_removed": true
+      },
+      {
+        "file": ".cache/pc-banner-admin-native-first-cluster-cleanup-20261001.json",
+        "checked_at": "2026-10-01T04:32:18.5483667Z",
+        "name": "admin-native-first",
+        "task_root": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-o7zFjZ",
+        "port": 55713,
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-o7zFjZ\\data",
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_status": "pg_ctl: no server running",
+        "query_succeeded": true,
+        "listener_count": 0,
+        "data_removed": true
+      },
+      {
+        "file": ".cache/pc-banner-native-final-cluster-cleanup-20261001.json",
+        "checked_at": "2026-10-01T04:38:19.9318878Z",
+        "name": "native-final",
+        "task_root": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-f1fGBs",
+        "port": 55749,
+        "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-f1fGBs\\data",
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_status": "pg_ctl: no server running",
+        "query_succeeded": true,
+        "listener_count": 0,
+        "data_removed": true
+      }
+    ],
+    "ownedResources": {
+      "file": ".cache/pc-banner-owned-resources-final-20261001.json",
+      "checked_at": "2026-10-01T05:15:18.6779355Z",
+      "query_succeeded": true,
+      "owned_ports": [
+        58744,
+        55713,
+        55749,
+        63713,
+        63714,
+        64250,
+        64251,
+        62619,
+        62620
+      ],
+      "listeners": [],
+      "postgres_data": [
+        {
+          "root": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-VxPnbJ",
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-VxPnbJ\\data",
+          "exists": false
+        },
+        {
+          "root": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-o7zFjZ",
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-o7zFjZ\\data",
+          "exists": false
+        },
+        {
+          "root": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-f1fGBs",
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-f1fGBs\\data",
+          "exists": false
+        }
+      ],
+      "browser_cleanup": [
+        {
+          "ownedBrowserClosed": true,
+          "ownedStaticServersClosed": true,
+          "addresses": [
+            "http://127.0.0.1:63713",
+            "http://127.0.0.1:63714"
+          ]
+        },
+        {
+          "ownedBrowserClosed": true,
+          "ownedStaticServersClosed": true,
+          "addresses": [
+            "http://127.0.0.1:64250",
+            "http://127.0.0.1:64251"
+          ]
+        },
+        {
+          "ownedBrowserClosed": true,
+          "ownedStaticServersClosed": true,
+          "addresses": [
+            "http://127.0.0.1:62619",
+            "http://127.0.0.1:62620"
+          ]
+        }
+      ]
+    },
+    "attempts": [
+      {
+        "metadata": ".cache/pc-banner-admin-build-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-admin-build-final-20261001.log",
+        "name": "admin-build-final",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 26703,
+        "finished_at": "2026-10-01T04:42:33.5555515Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-admin-build-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-admin-build-first-20261001.log",
+        "name": "admin-build-first",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 38477,
+        "finished_at": "2026-10-01T04:21:04.6005237Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-admin-native-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-admin-native-first-20261001.log",
+        "name": "admin-native-first",
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/admin-pc-banner.test.ts",
+          "test/admin-pc-banner-postgres.test.ts",
+          "test/admin-pc-banner-http.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 44607,
+        "finished_at": "2026-10-01T04:30:39.4710885Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-admin-pure-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-admin-pure-final-20261001.log",
+        "name": "admin-pure-final",
+        "arguments": [
+          "../../workers-ts/node_modules/tsx/dist/cli.mjs",
+          "--tsconfig",
+          "tsconfig.json",
+          "--test",
+          "test/pcBanner.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 621,
+        "finished_at": "2026-10-01T04:40:30.8157331Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-admin-types-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-admin-types-final-20261001.log",
+        "name": "admin-types-final",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 21157,
+        "finished_at": "2026-10-01T04:41:38.5188948Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-admin-types-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-admin-types-first-20261001.log",
+        "name": "admin-types-first",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 27183,
+        "finished_at": "2026-10-01T04:20:17.0600890Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-browser-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-browser-final-20261001.log",
+        "name": "browser-final",
+        "arguments": [
+          "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pc-banner-browser-qa.cjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop",
+        "exit_code": 0,
+        "elapsed_ms": 400398,
+        "finished_at": "2026-10-01T05:02:28.7595365Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-browser-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-browser-first-20261001.log",
+        "name": "browser-first",
+        "arguments": [
+          "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pc-banner-browser-qa.cjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop",
+        "exit_code": 1,
+        "elapsed_ms": 400913,
+        "finished_at": "2026-10-01T04:51:31.7344085Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-browser-visual-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-browser-visual-final-20261001.log",
+        "name": "browser-visual-final",
+        "arguments": [
+          "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pc-banner-browser-qa.cjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop",
+        "exit_code": 0,
+        "elapsed_ms": 426869,
+        "finished_at": "2026-10-01T05:14:19.5048425Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-compatibility-static-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-compatibility-static-final-20261001.log",
+        "name": "compatibility-static-final",
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/pc-compatibility-migration.test.ts",
+          "test/admin-frontend-api-audit.test.ts",
+          "--maxWorkers=1"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 2402,
+        "finished_at": "2026-10-01T04:41:51.5440637Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-native-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-native-final-20261001.log",
+        "name": "native-final",
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/admin-pc-banner.test.ts",
+          "test/admin-pc-banner-postgres.test.ts",
+          "test/admin-pc-banner-http.test.ts",
+          "test/pc-banner-read.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 44569,
+        "finished_at": "2026-10-01T04:34:49.3277095Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-build-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-build-final-20261001.log",
+        "name": "pc-build-final",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 12449,
+        "finished_at": "2026-10-01T04:44:10.3453657Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-build-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-build-first-20261001.log",
+        "name": "pc-build-first",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 14603,
+        "finished_at": "2026-10-01T04:22:41.0554719Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-build-tests-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-build-tests-final-20261001.log",
+        "name": "pc-build-tests-final",
+        "arguments": [
+          "--test",
+          "test/auth-session.test.mjs",
+          "test/product-image.test.mjs",
+          "test/test-product-media.test.mjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 4442,
+        "finished_at": "2026-10-01T04:23:35.5228155Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-build-visual-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-build-visual-final-20261001.log",
+        "name": "pc-build-visual-final",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 9838,
+        "finished_at": "2026-10-01T04:54:52.9531518Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-build-visual-last-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-build-visual-last-20261001.log",
+        "name": "pc-build-visual-last",
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 10684,
+        "finished_at": "2026-10-01T05:06:42.3890060Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-pure-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-pure-final-20261001.log",
+        "name": "pc-pure-final",
+        "arguments": [
+          "../../workers-ts/node_modules/tsx/dist/cli.mjs",
+          "--tsconfig",
+          "tsconfig.json",
+          "--test",
+          "test/pcBanner.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 599,
+        "finished_at": "2026-10-01T04:40:33.2197307Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-types-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-types-final-20261001.log",
+        "name": "pc-types-final",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 7535,
+        "finished_at": "2026-10-01T04:43:45.3435209Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-types-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-types-first-20261001.log",
+        "name": "pc-types-first",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 11593,
+        "finished_at": "2026-10-01T04:21:52.6621734Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-types-visual-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-types-visual-final-20261001.log",
+        "name": "pc-types-visual-final",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 9396,
+        "finished_at": "2026-10-01T04:54:03.4185758Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-pc-types-visual-last-20261001.metadata.json",
+        "log": ".cache/pc-banner-pc-types-visual-last-20261001.log",
+        "name": "pc-types-visual-last",
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/pc-ts",
+        "exit_code": 0,
+        "elapsed_ms": 6927,
+        "finished_at": "2026-10-01T05:06:17.5015687Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-permission-static-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-permission-static-final-20261001.log",
+        "name": "permission-static-final",
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/admin-permission.test.ts",
+          "--maxWorkers=1",
+          "-t",
+          "covers every route guarded|publishes a unique view permission"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 4712,
+        "finished_at": "2026-10-01T04:42:23.0929190Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-public-native-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-public-native-first-20261001.log",
+        "name": "public-native-first",
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/pc-banner-read.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 14525,
+        "finished_at": "2026-10-01T04:15:51.1000636Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-public-read-first-20261001.metadata.json",
+        "log": ".cache/pc-banner-public-read-first-20261001.log",
+        "name": "public-read-first",
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers",
+          "1",
+          "test/pc-banner-read.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 1,
+        "elapsed_ms": 10094,
+        "finished_at": "2026-10-01T04:07:51.7095382Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-worker-runtime-types-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-worker-runtime-types-final-20261001.log",
+        "name": "worker-runtime-types-final",
+        "arguments": [
+          "--max-old-space-size=4096",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 39627,
+        "finished_at": "2026-10-01T04:40:39.0328565Z"
+      },
+      {
+        "metadata": ".cache/pc-banner-worker-types-final-20261001.metadata.json",
+        "log": ".cache/pc-banner-worker-types-final-20261001.log",
+        "name": "worker-types-final",
+        "arguments": [
+          "--max-old-space-size=4096",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 77876,
+        "finished_at": "2026-10-01T04:39:39.5982141Z"
+      }
+    ],
+    "transitions": "First public test attempt had 1 failure/4 pass/3 skip during legacy upload contract correction. No immutable old-code RED snapshot; not claimed as a business regression RED baseline. First browser31 groups:24passed/7failed; corrected five ElementPlus wrapper/page-label locators, one dialog-animation wait and actual mobile long-title carousel indicators. Second full31 passed; root screenshot review found compact indicators wrapped8+2 over caption. CSS now keeps10 in one row and reserves caption spacing; final QA also checks row alignment and actual caption text Range separation. PC type/build rerun for both changes. First native/build and repeated browser passes never add to unique totals.",
+    "whitespaceDiff": "git diff --check plus explicit untracked text whitespace inspection passed"
+  },
+  "boundaries": {
+    "adminHttp": "Actual createApp/adminAuth/JWT/HYPERDRIVE_ADMIN and in-memory app.request responses; vi.mock injects database wiring. Eight real ORM tables/unchanged production ACL intersection and existing lock-only guard; independent app/Admin LOGINs. Not complete282-table commissioning or network HTTPserver.",
+    "publicHttp": "Three owner-fixture actual SQL cases and one independent restricted app LOGIN three-table SELECT slice. Dedicated Hono sets container/uid and registers actual getBanner/asset controllers; HMAC signed GET200/bad404 with localR2 bytes stub. Not fullcreateApp middleware/router/productionnetwork.",
+    "browser": "Actual final dist, local HTTP static servers, mocked API/session; desktop1440x1000 and mobile390x844, bundled Playwright/Chrome because Browser plugin not available. Separate from native auth/SQL evidence.",
+    "oldCloudAudit": "PcCompatibilityAuditWorker fixture updated and included mainTypeScriptcheck; old Cloudflare commissioning/deployed audit was not executed.",
+    "capacity": "Group_data table lock serializes other group writers. Explicit field/JSON/offset/version-index bounds; no production scale acceptance.",
+    "remaining": "PC-shop remaining settings, overall functional/production/provider/Hyperdrive/real-device/scale/release checklist parents remain open."
+  },
+  "evidence": {
+    "previousAcceptance": {
+      "file": "workers-ts/audit/city-delivery-callback-authority-acceptance-20261001.json",
+      "raw_sha256": "f89ad0281b26287b9b36b569e297f34f21e11111e0116d634d48bd2e0a10020c",
+      "baseline": ".cache/pc-banner-baseline-20261001.json",
+      "baselineEntries": 165,
+      "initialMismatches": 0,
+      "unchangedEntries": 150,
+      "changedEntries": 15,
+      "changedPrior": [
+        {
+          "group": "sourceHashes",
+          "file": "MIGRATION_CHECKLIST.md",
+          "previous": "4a64da81630bef62121ed57d5f9cf5f61422d046cd43827dbae1097329b2d67e",
+          "current": "895d9cc31cd1c50a3acafc2c42b30a06cd518d2636731f8add9f6616c39724b2",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/layouts/AdminLayout.vue",
+          "previous": "bdb6727b85d966c64e7a1c6ecb9760e62051c22531f3f92948b1729413c0470b",
+          "current": "1b886a94b185e3bb302b8e10260ee0a76be69a892cb2d72c239d6cd2a8971097",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/router/index.ts",
+          "previous": "c3f459eb2d198056cb1c9eec16aa1cf32928c09aaf83d611367e5a7433517a7c",
+          "current": "753ca0290b68d18f169e74ac917e6d20a1404001df4f8d3ee416e65e91d9a166",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+          "previous": "44cedd85e2e20345f2b9005b4662410bd22a1c69d90f9b9f1d687ea602ca6174",
+          "current": "58b5c1aec2d9ba0cfa279968d0c1ee3d9954ef0d372842cac9f6d6c43773aee6",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+          "previous": "7881a400d5a9dcbc702c897b86a7b86e60260275d29adaa7c8102981af45fd51",
+          "current": "1e0aef9211f0316fb5da67df1064d89f2e57762b743ea13a3572ab1644768c12",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "previous": "a444510c1bfb38daab4f21efd4c37510bf488dc378e9699d9565af3e98d3f1b2",
+          "current": "1b3e154f09e9fbab84bd2dd13e0bb6508b9c29af22d19c7d222bd2701e9fd1c2",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/routes/adminapi.ts",
+          "previous": "7beea957ebf08e76ae322357052d23fe20c23d4de25293f72e067c7f48ad3624",
+          "current": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/routes/v1/index.ts",
+          "previous": "aeac22be06cb81cbd21b7ceac859ac4ed8bf93f81406d9be5727ffd1a672e59e",
+          "current": "9e578690e188eee833fed7d2e72fbdbc0d696e5e8e3515fbe75cfda45e336097",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+          "previous": "e00375cbca5ad3a3a6ce6c5b1b117716ab5f127bb64cf926fea6f97996558ae4",
+          "current": "d34a6c24a2055daf900ebe2bb26b49bc336783a9271c6ca852e7ed6b79d7c3e7",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+          "previous": "cef974c9471329d4b3a317b933c3ff75c867597b54a2be45c2d26af24ab14c47",
+          "current": "5559da1a00f384cb8dfdb38551e854bdaedfb2321b530a355b417ce32a950605",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/router/index.ts",
+          "previous": "c3f459eb2d198056cb1c9eec16aa1cf32928c09aaf83d611367e5a7433517a7c",
+          "current": "753ca0290b68d18f169e74ac917e6d20a1404001df4f8d3ee416e65e91d9a166",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/layouts/AdminLayout.vue",
+          "previous": "bdb6727b85d966c64e7a1c6ecb9760e62051c22531f3f92948b1729413c0470b",
+          "current": "1b886a94b185e3bb302b8e10260ee0a76be69a892cb2d72c239d6cd2a8971097",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+          "previous": "e00375cbca5ad3a3a6ce6c5b1b117716ab5f127bb64cf926fea6f97996558ae4",
+          "current": "d34a6c24a2055daf900ebe2bb26b49bc336783a9271c6ca852e7ed6b79d7c3e7",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+          "previous": "aeac22be06cb81cbd21b7ceac859ac4ed8bf93f81406d9be5727ffd1a672e59e",
+          "current": "9e578690e188eee833fed7d2e72fbdbc0d696e5e8e3515fbe75cfda45e336097",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+          "previous": "7beea957ebf08e76ae322357052d23fe20c23d4de25293f72e067c7f48ad3624",
+          "current": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",
+          "reason": "Declared PC-banner integration or current documentation/audit test reference"
+        }
+      ]
+    },
+    "existingGroupLockGuard": {
+      "manifest": "workers-ts/audit/admin-marketing-config-acceptance-20260930.json",
+      "manifest_raw_sha256": "525257cc59ec307463419ee399b4ed57fa4b9f81c239c810fb09c33f3f170091",
+      "file": "workers-ts/src/migrations/runtimeSignDayGroupLockBoundary.ts",
+      "normalized_sha256": "8a8345b6a65c052ec259c7fc5e416b838ab1c28de88febad60bfe8d9970c706e",
+      "unchanged": true
+    },
+    "reports": [
+      "workers-ts/audit/route-distribution-pc-banner-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-inventory-pc-banner-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-api-contracts-pc-banner-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-setting-route-parity-pc-banner-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-app-route-parity.json",
+      "workers-ts/audit/admin-legacy-content-route-parity.json",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+      "workers-ts/audit/admin-legacy-product-route-parity.json",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-work-route-parity.json"
+    ],
+    "sourceHashAlgorithm": "sha256 UTF8 text after CRLF/CR -> LF",
+    "rawHashAlgorithm": "sha256 exact bytes",
+    "sourceHashes": {
+      "MIGRATION_CHECKLIST.md": "895d9cc31cd1c50a3acafc2c42b30a06cd518d2636731f8add9f6616c39724b2",
+      "view/admin-ts/src/api/cityDeliveryRecords.ts": "3a2d60d3c9c93e199f57d3c94821d508d9ea117f8f0f63858c89f0e88f311a88",
+      "view/admin-ts/src/api/pcBanner.ts": "6e09ed21c0a4d31746d8a366dd99b0922cef88f894a395bac670c206ba997c93",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "1b886a94b185e3bb302b8e10260ee0a76be69a892cb2d72c239d6cd2a8971097",
+      "view/admin-ts/src/pages/setting/CityDeliveryRecords.vue": "a668bbfe75e2c497bb2e9f5397c8c7b518214daf9342b99cbf75c9f704910dc5",
+      "view/admin-ts/src/pages/system/PcBannerList.vue": "fa75ed9d747a4293392dfc920e29b23b79bfc545f67b46189ca1e2c9e09e2221",
+      "view/admin-ts/src/router/index.ts": "753ca0290b68d18f169e74ac917e6d20a1404001df4f8d3ee416e65e91d9a166",
+      "view/admin-ts/test/cityDeliveryRecords.test.ts": "f3321f60605ebc9a3c0b2d37ad8ad53c6491e094dea8e034124719f9264c3248",
+      "view/admin-ts/test/pcBanner.test.ts": "4e5928a9af255428933f0f0676767bcb2a58ad1accb80e66cd5133ef6bbc5488",
+      "view/pc-ts/src/api/pcBanner.ts": "3a9e733e636a6e808debc30b126997e9ee2821b8654e1d461ceaf682cecda0de",
+      "view/pc-ts/src/pages/Home.vue": "d98c8dd79a493d2ebf854ecc93d6c1d36e3fa3e386150e8e183aa9779238eccd",
+      "view/pc-ts/test/auth-session.test.mjs": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f",
+      "view/pc-ts/test/pcBanner.test.ts": "4147f596604bbf3b5e75c536b667a5d640c68d7f61fed1b7bf13c5511dce21c2",
+      "view/pc-ts/test/product-image.test.mjs": "0b3b0a0472d49149ceb31e14bda57249bd8338c6e8215eb7d41b1501cae1d7fd",
+      "view/pc-ts/test/test-product-media.test.mjs": "75b12756db6dd1df4a8184e36b6e93686e760f88f097355ed493707cc4e5ee23",
+      "workers-ts/audit/admin-frontend-api-contracts-city-delivery-records-followup-20261001.json": "d2c6fa6b6d0d901b72b26ae5a6c8278943d8db9220fb2454fbbc8256770c78dd",
+      "workers-ts/audit/admin-frontend-api-contracts-pc-banner-followup-20261001.json": "aefa02efaab91a85847a27d8026c36d2c9f1d4cce2b731c5cd2f3d45efe008f3",
+      "workers-ts/audit/admin-frontend-inventory-city-delivery-records-followup-20261001.json": "bec0208749d9294629e9d9651f9962f6f85c44ac9bded40aea62f587d02fae5b",
+      "workers-ts/audit/admin-frontend-inventory-pc-banner-followup-20261001.json": "13bf9cd589cd896d77c64f3a9a47dcae9f44fce55f6909520f6d4052a9e97960",
+      "workers-ts/audit/admin-legacy-app-route-parity.json": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3",
+      "workers-ts/audit/admin-legacy-content-route-parity.json": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json": "7d069a52a7c2877cad510d9926e76791f6922965910ab02ed664a72366288ea5",
+      "workers-ts/audit/admin-legacy-product-route-parity.json": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be",
+      "workers-ts/audit/admin-legacy-setting-route-parity-pc-banner-followup-20261001.json": "17feb16484d51cec40a54b4dc20f1a24dab0c8b60634850f6635539c009e826f",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438",
+      "workers-ts/audit/admin-legacy-work-route-parity.json": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf",
+      "workers-ts/audit/route-distribution-city-delivery-records-followup-20261001.json": "44df15942f1341da468bbda8e92befcfd9ecfbe503f76066d927348299ce1329",
+      "workers-ts/audit/route-distribution-pc-banner-followup-20261001.json": "19769c1372726811f71e5cc2384c30c25173039260c6525fdd53d422eb3dc014",
+      "workers-ts/docs/admin-city-delivery-cancellation-contract-review-20261001.md": "95479b7c409c5063b0666ef13768b788c37dd26238732e6771c97760a0cd28a6",
+      "workers-ts/docs/admin-city-delivery-records.md": "b4ef1ecc570f611a81b80db763797835b932a64ec64935edda0172bd466cc33e",
+      "workers-ts/docs/admin-city-delivery-settings-contract-review-20261001.md": "c67cd14cee2d6bea9551e3eb830b722b8954516a329ebc5c8477a9d9e18f9422",
+      "workers-ts/docs/admin-pc-home-banner.md": "52d29226dedf3ace89b0c55f282fba596916efec805d6038855e0de31aeaf79c",
+      "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "58b5c1aec2d9ba0cfa279968d0c1ee3d9954ef0d372842cac9f6d6c43773aee6",
+      "workers-ts/docs/city-delivery-callback-authority.md": "d0aca7f0b0dbee1d977e7d2e017cc4d51a5a8d37e322fd737dd311408293d8fb",
+      "workers-ts/migrations/0124_city_delivery_callback_pipeline.sql": "fea0ff0d7d7b1a6bdeb1943102ab67527e98ebc44c9b0626861e74ffd0ebc858",
+      "workers-ts/scripts/admin-frontend-api-audit.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",
+      "workers-ts/scripts/admin-frontend-parity-audit.ts": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0",
+      "workers-ts/scripts/admin-setting-frontend-parity-audit.ts": "1e0aef9211f0316fb5da67df1064d89f2e57762b743ea13a3572ab1644768c12",
+      "workers-ts/scripts/route-parity-audit.ts": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "1b3e154f09e9fbab84bd2dd13e0bb6508b9c29af22d19c7d222bd2701e9fd1c2",
+      "workers-ts/src/app.ts": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773",
+      "workers-ts/src/controllers/api/v1/AdminCityDeliveryRecordController.ts": "c1e3905b6b2d2f36a991c9e34270f40555660a6b5d5383861284d8edc7c37a47",
+      "workers-ts/src/controllers/api/v1/AdminPcBannerController.ts": "ee50350a0351d5d9511e9d128d25a2d7fd029d55f408eac00ce5ee291ee3133f",
+      "workers-ts/src/lib/di.ts": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805",
+      "workers-ts/src/migrations/cityDeliveryCallbackPipeline.ts": "cd046b818d08d43ccf181a9cb1534bf33288e7ac86ce7c8b875291f72f2e4d1b",
+      "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts": "3e03111b9bb719f12999812ef4b04e1e1748e3b162979c7cdb1626db513f490f",
+      "workers-ts/src/migrations/runtimeBusinessGrantSql.ts": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+      "workers-ts/src/models/schema/order_delivery.ts": "eb6c85d55433f98c3c30d566d35e786ce5366ca1b964f6a42193cc80e1ef7751",
+      "workers-ts/src/routes/adminapi.ts": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",
+      "workers-ts/src/routes/v1/index.ts": "9e578690e188eee833fed7d2e72fbdbc0d696e5e8e3515fbe75cfda45e336097",
+      "workers-ts/src/services/admin/AdminCityDeliveryRecordInput.ts": "aeb29329ba5b700467c37567f74ee2dfbe776c54051c0a55666ff9d773c31dd3",
+      "workers-ts/src/services/admin/AdminCityDeliveryRecordService.ts": "95e7ba00063fa0053e7c0c0eda3cf3a192ebef27c9b387c17cb0f26b644d1dc8",
+      "workers-ts/src/services/admin/AdminPcBannerInput.ts": "6aa820c57866d7ed5ecc740bd30ace1166f1bed72b739f97b2b21921bfb00a14",
+      "workers-ts/src/services/admin/AdminPcBannerService.ts": "28a6201968e25db0ab8e41c2cdcabd45db1712e2a88adc3ad81414c81a23b031",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "d34a6c24a2055daf900ebe2bb26b49bc336783a9271c6ca852e7ed6b79d7c3e7",
+      "workers-ts/src/services/delivery/CityDeliveryCallbackService.ts": "ef8b0023ecd89f79ae241ecea143b60c9ccd2b6581866f83e980ccd59cc75cd3",
+      "workers-ts/src/services/delivery/DadaCityDeliveryCallback.ts": "cae32c17ec1172a03dd15726466e4cf3c3196f296efe08d7a24165ad18c6e108",
+      "workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65",
+      "workers-ts/src/services/delivery/UuCityDeliveryCallback.ts": "c26983f988397be0e9eacbaf2161b29733ad479ccffecb0073cac8a6bb409a7f",
+      "workers-ts/src/services/delivery/UuCityDeliveryProvider.ts": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c",
+      "workers-ts/src/services/order/CheckoutPickupPolicy.ts": "4073f9d6f5b5041c4c87bf459dc919d85a11bea1d1f86dc88bfa3b3092e43120",
+      "workers-ts/src/services/order/OrderBrokerageService.ts": "30617b87b46eaa1cae62ff09ce4f35f7706868aecbae0d27f4856e3026ee4d8e",
+      "workers-ts/src/services/order/OrderSupplierAllocationService.ts": "30d9dbd7b752152d0816e163ed4e7179cfc282a498b11ebe2165b46cf4e2debc",
+      "workers-ts/src/services/order/ScheduledMaintenanceService.ts": "33dc4aa4d0eb0fea32648ff152050d1b8c6df5858bbfc4e546b190d4ef9f46d7",
+      "workers-ts/src/services/order/StoreOrderRefundService.ts": "8e398ccd4ebf6e1d222351a8d14a6a0346e3c6ae4ad1dd770ec6ea25c8c87f2e",
+      "workers-ts/src/services/order/StoreOrderWriteoffService.ts": "536b36ae072b802ee7a720dba0da862bbf71399aebe0726678743ef057e88636",
+      "workers-ts/src/services/out/OutApiService.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",
+      "workers-ts/src/services/pc/PcBannerReadService.ts": "e91fae5061ea70f15bc002b5d69901ec3a0288aade1cee749b58b37a399deef4",
+      "workers-ts/src/services/pc/PcCompatibilityService.ts": "99e2e4b9b9d8e048de829afcf65f7bd558904d5559931e89f36090ce57090aeb",
+      "workers-ts/src/services/supplier/SupplierFinanceService.ts": "9a0f84175c3b4b6fe6c366ccc295965f4cc7f0e04854cffbcce6fb6d69b4d8a8",
+      "workers-ts/src/services/supplier/SupplierFulfillmentService.ts": "41d01eb133ce2e0025a97a65c5f7d4fdb65ae3442145d59652d1ba43598ab60c",
+      "workers-ts/src/services/system/SystemConfigService.ts": "7d55ce59379d8406cd846319ff1634c17de94271231660891bcea88638fb17c3",
+      "workers-ts/src/utils/errors.ts": "5505f8fb2c2de21b7e7955541992a56d929dc638143ae9d833729128f84a630c",
+      "workers-ts/src/utils/jwt.ts": "658b42ff9f823d44423cd83d4abee9b19701447269e6700dda375525294995e7",
+      "workers-ts/test/admin-all-frontend-parity.test.ts": "10553065787af2e5763c569cf6148cf4ebfca83d96a70c4c4946a8269ebd1be5",
+      "workers-ts/test/admin-city-delivery-records-http.test.ts": "b1ed6bd3ecd9999d30015479467085c26c30677156451747c4e1cb2e5780458d",
+      "workers-ts/test/admin-city-delivery-records-postgres.test.ts": "1f0ff216c4d771ce08b61926d6daf6f2691ba8e320d2d86c5358bb0a12b4661a",
+      "workers-ts/test/admin-city-delivery-records.test.ts": "e9a6764afae2e2f64c0bcec2831279972afcba4d258cf625597438f5f4219a47",
+      "workers-ts/test/admin-frontend-api-audit.test.ts": "5559da1a00f384cb8dfdb38551e854bdaedfb2321b530a355b417ce32a950605",
+      "workers-ts/test/admin-frontend-api-contract.test.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",
+      "workers-ts/test/admin-frontend-inventory.test.ts": "823206fc1be3892e0fe97ac5d165f7c2078f7ed9ac466f61297e11221865d23f",
+      "workers-ts/test/admin-marketing-frontend-parity.test.ts": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+      "workers-ts/test/admin-pc-banner-http.test.ts": "bbc1c2313d1414694f5be367e389e4074ee3bcc510574d562ac588e371f4930c",
+      "workers-ts/test/admin-pc-banner-postgres.test.ts": "7eda12b68820e3d15a5fc4a2ac3ca7c3c81b776a549861aed0b2c05243dd8bcd",
+      "workers-ts/test/admin-pc-banner.test.ts": "96f485450615460bd971a055ffdde38f1df94341704873b168532e87e5104cd4",
+      "workers-ts/test/admin-permission.test.ts": "ac99f99e35eff400c5b8406ac8b40e008c7f1fb5a5e3e0dcbd9ebdd5a92ad22b",
+      "workers-ts/test/admin-setting-frontend-parity.test.ts": "70c7eb8e7e92923cbef377874b51da444e4ec71da0875edefcd66c311f475e3c",
+      "workers-ts/test/city-delivery-callback-authority-postgres.test.ts": "cafc0886fdae2555af4a7e0b5a0442b4835155b0a0acfa6eaebcddf3e45474e8",
+      "workers-ts/test/city-delivery-callback-watermark-postgres.test.ts": "2b5cf0e3d471307d673d16903d90ed936709ab8193cc7cf4a9b7dd89aa74ab3a",
+      "workers-ts/test/city-delivery-callback.test.ts": "202a7d89d1258aea4a8da90c41adbd0b5e9400732632a986dcbbeb42b9f5af69",
+      "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts": "94d6a78d5832450b1aa8f03c458eac30d172d8c02c41f3cb92b738e4066f82e8",
+      "workers-ts/test/helpers/cityDeliveryCallbackAuthorityFixture.ts": "ef57e8f83a989d6f143a774cd16a1c4b76893cc699f079b316ba00b81d11c915",
+      "workers-ts/test/helpers/cityDeliveryRecordFixture.ts": "6f0b64d6b5220ba0952c7c404030ed422393905221f962ad01691cc6507dc1f9",
+      "workers-ts/test/helpers/financePostgres.ts": "8a7849c2749f5ef2e08543a6185989b27dc3de604193a19dcf847aa6cd0fdfbe",
+      "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33",
+      "workers-ts/test/helpers/pcBannerFixture.ts": "b917c222970e6e40e883efcdc56dbb7046633b1ca742a817ead1846977d2b9fa",
+      "workers-ts/test/helpers/refundRuntimeFixture.ts": "8396b14072dd273c1aed68f094976e7f49466a48149193e55b6a87ff39d7faa8",
+      "workers-ts/test/integration/CityDeliveryCallbackAuditWorker.ts": "a66a6bc866e9449f78408d2428287e3327795083e2f7aaf199bb32c5ce1e09c5",
+      "workers-ts/test/integration/PcCompatibilityAuditWorker.ts": "6f7573ccb0657beb1b77184281e2d734b7312348727a39587d7d443627106225",
+      "workers-ts/test/order-brokerage.test.ts": "a87a8f5812e999e1a7f53099324d96c413f91365ddc23ba1076aa9fc6152f020",
+      "workers-ts/test/order-reward-config-authority.test.ts": "00663cc4893f213a6b363d3dc463a953b1e287f9d67ef5d79736cab7e49b3b46",
+      "workers-ts/test/out-api-migration.test.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",
+      "workers-ts/test/pc-banner-read.test.ts": "3debb01ebdac6d75c45411cfc6f6affd3296ff6b4d6f871751982b008fbe675e",
+      "workers-ts/test/pc-compatibility-migration.test.ts": "ca3b1171e84a52722ed1786df9c5cce23e9d6c559400f29504ee99003d9d92fd",
+      "workers-ts/test/refund-line-compensation.test.ts": "e3aaa0e0e6c62af934be903c498630c89369382934999980dab093912d77cafe",
+      "workers-ts/test/refund-runtime-permissions.test.ts": "8508d407c18691dd1e6d3383f6ff494cc5159062dd28d69772e746061e781417",
+      "workers-ts/test/scheduled-maintenance.test.ts": "444b7edd475c05f119381c32929dde26203e25aed0de9bb376688ff11842ea78",
+      "workers-ts/test/store-order-writeoff-migration.test.ts": "ef79aa4b7168417054063526b4bbbb2ed6c1562318614b0ace3f06c1bd0711de",
+      "workers-ts/test/supplier-split-ledger.test.ts": "82f8fda19d3222e3bcb4a06ed04ddc2563de1c9340a94d0ea520c5f386423121"
+    },
+    "configReferenceHashes": {
+      "C:/cinagroup/cinashop-php/app/controller/admin/v1/system/config/SystemConfig.php": "ce906924896c4b67efab6fd2c370f0a9d128137e325c9305fafd113bf4c26650",
+      "C:/cinagroup/cinashop-php/app/controller/admin/v1/system/config/SystemGroupData.php": "4fb2ebe0b2efb7a8df6c15e614ecbbff4110d73f07be877a8b3c6818df8d06a2",
+      "C:/cinagroup/cinashop-php/app/controller/api/pc/Home.php": "a88f0bb1d8db089b63500f531a00f64c7040d7137ab920e722d07a452a74ee7a",
+      "C:/cinagroup/cinashop-php/app/dao/system/config/SystemGroupDataDao.php": "9bc29e7300c29577d3bccbda03338c6c9d79bf5d43ed7906da2b6af6d293d095",
+      "C:/cinagroup/cinashop-php/app/http/middleware/admin/AdminCkeckRoleMiddleware.php": "61d841ef746d5e8031f9ad4d24bc351c7f742659f8fa0b4d62af8f2ce9e48881",
+      "C:/cinagroup/cinashop-php/app/services/system/SystemRoleServices.php": "9c85f2b36a3584e6fb87fc79a20a819001a13c5e1490a7a20513794cdf7d906d",
+      "C:/cinagroup/cinashop-php/app/services/system/config/SystemConfigServices.php": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "C:/cinagroup/cinashop-php/app/services/system/config/SystemGroupDataServices.php": "976231dbe392188f28835d0e40041f00b02d336956ecf3cb3d6589e64c769ab8",
+      "C:/cinagroup/cinashop-php/app/services/system/config/SystemGroupServices.php": "74ba3716b6edc139585bdadf821490469133719a3834732bddabc3e103afa987",
+      "C:/cinagroup/cinashop-php/crmeb/form/BaseComponent.php": "c81badc49c1c3ed42c33feb76a031d37f3a42b9551f73efcb5f6967bbf06da4f",
+      "C:/cinagroup/cinashop-php/crmeb/form/Build.php": "53303eb66442345713775e2a2268c61bf096e1560db5af8ee025f4c71987101c",
+      "C:/cinagroup/cinashop-php/crmeb/services/DeliverySevices.php": "cc4e94589b9455896721afea36ece39185b9c3abf36507c93d102e4c61772fbe",
+      "C:/cinagroup/cinashop-php/crmeb/services/GroupDataService.php": "b485faa27fa7a15f7bc963ad3db408742dc7987dd3dcc4810cfd0259911e774c",
+      "C:/cinagroup/cinashop-php/public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "C:/cinagroup/cinashop-php/route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "C:/cinagroup/cinashop-php/route/api.php": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",
+      "C:/cinagroup/cinashop-php/view/PC/pages/index.vue": "a5093ef0002fcbbd9fa32ed9bba4c18b862d1cabbb48410e572b6070228cfa71",
+      "C:/cinagroup/cinashop-php/view/admin/src/api/setting.js": "e1f1fe9d8889821e5b9b3ae95dd843168d142620a3fd783868f980474cb011f3",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/fromBuild/inputBuild.vue": "20f7f3c1973172c2737a8ce84dddd99d9edd84e014d9f134d89e4fd6a175175b",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/fromBuild/switchBuild.vue": "c5ec13a15d95359bc46f9c93b18b73fbdd938ba02466dacb5fe6fc0d084909c4",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/fromSubmit/fromSubmit.vue": "c6cb0af8d45f2edd20326c46b90ada9538309146d94de280a8f405efbd1c3e79",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/settingGuide/index.js": "29b74f896b2713f5ada6760339ee8fdaed69de08a86c4a3ca47738ca655afc18",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/cityDelivery/setting.vue": "1e46a01fa2128841e69c7cbf41323bd6abadf5fff205403bfdc6e549debb1980",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/shop/buildData.js": "87ae8d74659a66b8089b6c9e1abb23f278b425cc167ff1eb52fef47311bbe349",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/system/group/list.vue": "208e7db049144cbb599526a1de7a30409f0fcd86b17cb60bb6147c0bb93ec36d",
+      "C:/cinagroup/cinashop-php/view/admin/src/router/modules/setting.js": "e9ce32dba8609dbeef18438a9e9e14d0081844c5c4e783edbc1a374eb1cee554",
+      "C:/cinagroup/cinashop-php/view/admin/src/setting.js": "4523d74b4a297ca11a218c4eadabde154ebda08bf13f35073bde5292073f0cd9",
+      "C:/cinagroup/cinashop/view/admin-ts/src/api/config.ts": "b86da2e5a3ba1d0a439445f97b2e6a9384c6e8e7a165c2363bc2f83c1cbf36fd",
+      "C:/cinagroup/cinashop/view/admin-ts/src/api/shippingSettings.ts": "45fabc52cff7774e67b77f6bcefbf797f8938f77a48268e13a7a1b7a8c8c0525",
+      "C:/cinagroup/cinashop/view/admin-ts/src/layouts/AdminLayout.vue": "1b886a94b185e3bb302b8e10260ee0a76be69a892cb2d72c239d6cd2a8971097",
+      "C:/cinagroup/cinashop/view/admin-ts/src/pages/ConfigList.vue": "5e482764fac8f1be5c5963eb9a418a7f6de4ba07e8ebcf60d0d3e097254185e0",
+      "C:/cinagroup/cinashop/view/admin-ts/src/pages/setting/ShippingSettings.vue": "b0c6187808da755c2eab0a151e11d5d76381880ab263614246af7eb61f161d0c",
+      "C:/cinagroup/cinashop/view/admin-ts/src/router/index.ts": "753ca0290b68d18f169e74ac917e6d20a1404001df4f8d3ee416e65e91d9a166",
+      "C:/cinagroup/cinashop/workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be",
+      "C:/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts": "10d7de2d2225b5390bb6ff137739d46a0f7e4232c61c66c45ee2fa32383f9b7c",
+      "C:/cinagroup/cinashop/workers-ts/src/env.ts": "3c8ddc541b40799095a6208faed59df716b64c3cbac56bd11c6457497f6d5f9e",
+      "C:/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",
+      "C:/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts": "9e578690e188eee833fed7d2e72fbdbc0d696e5e8e3515fbe75cfda45e336097",
+      "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts": "d34a6c24a2055daf900ebe2bb26b49bc336783a9271c6ca852e7ed6b79d7c3e7",
+      "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminShippingSettingsService.ts": "92fa0129cc2d5e219662fd4b6f42b0128ce3d255bdcdd9d8653d57e885c13d50",
+      "C:/cinagroup/cinashop/workers-ts/src/services/delivery/CityDeliveryCallbackService.ts": "ef8b0023ecd89f79ae241ecea143b60c9ccd2b6581866f83e980ccd59cc75cd3",
+      "C:/cinagroup/cinashop/workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65",
+      "C:/cinagroup/cinashop/workers-ts/src/services/delivery/UuCityDeliveryProvider.ts": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c",
+      "C:/cinagroup/cinashop/workers-ts/src/services/store/StoreMobileOrderService.ts": "70f32db448ce04e2439e6966d20553695fd08d0ce6a0f2cd05c9d929c80dd847",
+      "C:/cinagroup/cinashop/workers-ts/src/services/system/AdminConfigBatchService.ts": "eca2696a35c5e94a085cb1320df6c8af49b7977cbf60e5885ffa843cb978f25d",
+      "view/admin-ts/package-lock.json": "18493b7958bca887f3f74bfbbb7b98da9e1be74f0e79c897cb201e039593d011",
+      "view/admin-ts/package.json": "f7f11ff545253a731506eb3e3add1f51ddec0a45048f9a917ec84c607620c06f",
+      "view/admin-ts/tsconfig.json": "b79d75bd11247a2548b891da0dc34262de211ea9f8859eddcc750c5365b1b7a5",
+      "view/admin-ts/vite.config.ts": "467d41f4526557159d7703292e7e9deb12735384702694cad56a8b997a9ce480",
+      "view/pc-ts/package-lock.json": "1d43ce59ccd6e54c1abc814b17e8de88cf4485d286b0c7041ca816cdf9bc3a19",
+      "view/pc-ts/package.json": "d0731cfeede8028fef477c918064d0f7402b8af0f0f2429a997c3b88aec7ed4a",
+      "view/pc-ts/tsconfig.json": "9c3eddb60dabda6e5e60e87b31acb4cfa59d5387c5a955e169dab73ae5c1a3dc",
+      "view/pc-ts/vite.config.ts": "d38029664596dfb6c52d83032c23d4485142576434d4c027c12fb53ffe54fd77",
+      "workers-ts/package-lock.json": "19867eb7eb5600ea76c09afb5bc5284ac6e9da2a65d71e1367f52c693156cd71",
+      "workers-ts/package.json": "b281d90039222f82cf55e341dba13d617d285631c2010db00c20cef1dad50a31",
+      "workers-ts/src/app.ts": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773",
+      "workers-ts/src/controllers/api/v1/PcCompatibilityController.ts": "8b0fea94c29eb2094583505635b1568686bff597a023c39dc406c8441bb13234",
+      "workers-ts/src/controllers/system/AttachmentController.ts": "e84851b05caba9a349d88314486134221637e98a058fec826e618cb051506260",
+      "workers-ts/src/env.ts": "3c8ddc541b40799095a6208faed59df716b64c3cbac56bd11c6457497f6d5f9e",
+      "workers-ts/src/lib/di.ts": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109",
+      "workers-ts/src/middleware/admin-auth.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "workers-ts/src/middleware/admin-runtime-auth.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "workers-ts/src/migrations/runtimeSignDayGroupLockBoundary.ts": "8a8345b6a65c052ec259c7fc5e416b838ab1c28de88febad60bfe8d9970c706e",
+      "workers-ts/src/models/schema/catalog_templates.ts": "15f0a957a31d5fc49f1551bfec24a9ea6f6612d52f70d401c3f03ee16bc7d42b",
+      "workers-ts/src/services/activity/ProductAssetPolicy.ts": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57",
+      "workers-ts/src/services/admin/AdminLevelActivationInput.ts": "d5a6535b45bcb7eb1e9804d160beab159fbeeefafc75f9b9bb02768f1f4a24f9",
+      "workers-ts/src/services/content/ArticleContentPolicy.ts": "f12dd586c498ed30ebbda79fa95047b9f85f772e8a667eb2ed4e6e12db50010e",
+      "workers-ts/src/services/system/AttachmentService.ts": "454cb187c1cfe0007a909930cd21dcd7a26296cb4e87fe62f5d577baf7ed76e6",
+      "workers-ts/src/utils/request-body.ts": "8004bd6c9205ce389e505d280e7a593a76ffc7158a657e0c6d7e792bc2b245cd",
+      "workers-ts/tsconfig.json": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df",
+      "workers-ts/tsconfig.runtime-test.json": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8",
+      "workers-ts/vitest.config.ts": "f38f244038891c9dc0dc58910c8f04326e8ceffa471d3420a40b014a3d45c208"
+    },
+    "rawFileHashes": {
+      "workers-ts/audit/city-delivery-callback-authority-acceptance-20261001.json": "f89ad0281b26287b9b36b569e297f34f21e11111e0116d634d48bd2e0a10020c",
+      "workers-ts/audit/admin-marketing-config-acceptance-20260930.json": "525257cc59ec307463419ee399b4ed57fa4b9f81c239c810fb09c33f3f170091",
+      ".cache/pc-banner-baseline-20261001.json": "11333b566857060577645ef799a904335a8d7232f2af8c18d35d500cb793e304",
+      ".cache/pc-banner-audit-summary-20261001.json": "76384be7e0a2bb62887be556f38fe36261c5c3e594410773f43d3237afa4d962",
+      ".cache/pc-banner-baseline-20261001.cjs": "4dcc70f47018a85597bd20fa91e34cef33fd63be0f68bb8abbc0db523d84feda",
+      ".cache/pc-banner-audits-20261001.cjs": "99aa2eeea9f846a43bc29a8717d0edbe5624a78d3db45b7595c9d388896b14d5",
+      ".cache/run-pc-banner-check-20261001.ps1": "cbc54612a2caded6e04201ce87172ff4be12f71d09816ba025fc45a9502980dc",
+      ".cache/cleanup-pc-banner-cluster-20261001.ps1": "93c5410363d0dcd9a59d2b4e097026990302d7826aa99843732f80b61549cef4",
+      ".cache/freeze-pc-banner-acceptance-20261001.cjs": "e5ebb08ab93612ce28e674feb7d3f5c8909b1b90b2e12d56c9abea996fa2a5ec",
+      ".cache/pc-banner-owned-resources-final-20261001.json": "9751d5ffbf79e6d39751e12dee84b1b10989a480b43211990fb659663205d6cf",
+      ".cache/verify-pc-banner-owned-resources-20261001.ps1": "d71939049e5b891ed3905e32e7d50b8ec12b7d7108a82bfbc28766d6e874b2aa",
+      ".cache/pc-banner-admin-build-final-20261001.log": "939fee501b538ed636a40865ec78c62cc5535e2f53050ba3b06152efcc201271",
+      ".cache/pc-banner-admin-build-final-20261001.metadata.json": "88d65fa5c05a7f295a8641e6a6d919e564900bf7e0ce7c66b29911df558b656f",
+      ".cache/pc-banner-admin-build-first-20261001.log": "7357c12b9aef8672a8c014687cb84b2273acc6601423c3be8264683ee0e758a4",
+      ".cache/pc-banner-admin-build-first-20261001.metadata.json": "0f8c7311864f54589a9fc63393a607b740ac4e8a8da82e1eb6bd241d8492ac3a",
+      ".cache/pc-banner-admin-native-first-20261001.log": "447c74e7d03331efc1a7ba0c732bebab6f1b7a52efe086fedc73dac5d8335859",
+      ".cache/pc-banner-admin-native-first-20261001.metadata.json": "ddb4671677946a1b2993769fc345d5d9c22d5c3388db2b2be418b110acfd4201",
+      ".cache/pc-banner-admin-pure-final-20261001.log": "b32aa8336c65098f4f67add3809a5abed8d2a635e47dbbcf331d5a5919e439c7",
+      ".cache/pc-banner-admin-pure-final-20261001.metadata.json": "32629afcc7241712312bc2ef5d62c666a62894b9650e53a6571ebc8d1f79a79c",
+      ".cache/pc-banner-admin-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-admin-types-final-20261001.metadata.json": "3a028eb7c95770d217de849d0e3992e3a97efc66c13280a5fec38b227e8dbcd9",
+      ".cache/pc-banner-admin-types-first-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-admin-types-first-20261001.metadata.json": "15de7200c7f135209fe8a31394cd6b429963f8beee3ef5190e68c7c2f2c91da2",
+      ".cache/pc-banner-browser-final-20261001.log": "9eb65f8a5b6d640fe4289c7b680091c432104f9c6a3acbefeada9faa3056d53b",
+      ".cache/pc-banner-browser-final-20261001.metadata.json": "dbdc913490d998551f82da0802945ba5229a7fb0d15ca15c6004b331a8f163c9",
+      ".cache/pc-banner-browser-first-20261001.log": "b1e00a3d27e9123c16518b054bad89d9744059d090806135c8d0192aeb735e96",
+      ".cache/pc-banner-browser-first-20261001.metadata.json": "582daa3e898290d9ca15c4f84450234aa3448038849c6bc882f8d8920bd0a112",
+      ".cache/pc-banner-browser-visual-final-20261001.log": "5154af95f67c15e62cb84e0fad55761d97a1ff52a19983ea05e10a604e6e165a",
+      ".cache/pc-banner-browser-visual-final-20261001.metadata.json": "8b3653cd4f03b43c8942208ae2d56229a6c23f1e2133ec9407688578f9b4976d",
+      ".cache/pc-banner-compatibility-static-final-20261001.log": "51640d31698340e015d33060817e771de001e3f1dfa68eae3dd955b3a43a083e",
+      ".cache/pc-banner-compatibility-static-final-20261001.metadata.json": "fc30ddc018d2658913353006986a8a8278060080150ce1c18894a70ea770b169",
+      ".cache/pc-banner-native-final-20261001.log": "142bda863b5d5d8214684d846c81615fa7f0007e5a739e4a8a1084597696bca6",
+      ".cache/pc-banner-native-final-20261001.metadata.json": "b27e6e75ff6e4eeb01473944d8054ea89e2c71d946a976007bb3d8ca8788906b",
+      ".cache/pc-banner-pc-build-final-20261001.log": "583428e26b6d8996c5e18ae77469ae08eac0f584c55afce81baf3937f91f5be7",
+      ".cache/pc-banner-pc-build-final-20261001.metadata.json": "e1c5524e6105d2f6ea10b94e2aa5a764dba9f67af8b5622c0f64724c50c341da",
+      ".cache/pc-banner-pc-build-first-20261001.log": "25c8270c20ab03c297774dd5b85b2accd8504314c0a099fcd80f1978203d8124",
+      ".cache/pc-banner-pc-build-first-20261001.metadata.json": "ee898d446cf3c2f5a11ffb3fc8c1d39c4fb0bbdebf7b1ea1e2721f6a9dcb1334",
+      ".cache/pc-banner-pc-build-tests-final-20261001.log": "167db4f847fac7e515104f672c2bff639b1c704eac8d29d8e50a7c704f123a29",
+      ".cache/pc-banner-pc-build-tests-final-20261001.metadata.json": "928294d6e27cef00595869244a8a7d6dcc39a2a8ef5e8e53b1a10b2f61559888",
+      ".cache/pc-banner-pc-build-visual-final-20261001.log": "a0e11edb0645f93b4df1a3c84da89a984939d95f3a9211d7234497fc67055a1d",
+      ".cache/pc-banner-pc-build-visual-final-20261001.metadata.json": "3c2db960ab509a922b23734251eddf35e22b3e627800644c4c2feaee11877968",
+      ".cache/pc-banner-pc-build-visual-last-20261001.log": "a696ad45e63a5b2f38c7c895b028afefabf0a6602eea2d8a81450667ec70d0ec",
+      ".cache/pc-banner-pc-build-visual-last-20261001.metadata.json": "e005a26ce5d1075ec80398fae11edf182558b5f45cdea54627079b73613f4be8",
+      ".cache/pc-banner-pc-pure-final-20261001.log": "5356a8a05043ff1d9ebb9b23cd413ffc41bbc704db3adb6d553bd672f6878209",
+      ".cache/pc-banner-pc-pure-final-20261001.metadata.json": "dc8f323a12e8febe58467a5fddf8fc8ada56584d3a84fef560b19ce17297089f",
+      ".cache/pc-banner-pc-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-pc-types-final-20261001.metadata.json": "554f7034cd4cf359e64644dcb2d1e1f27d731a3cd7b07258fa51390cd9133c2c",
+      ".cache/pc-banner-pc-types-first-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-pc-types-first-20261001.metadata.json": "8ab8067ac8466ef26930a3a454c0352ca28e4ac0bba4a90fdfd5c73f3e64c158",
+      ".cache/pc-banner-pc-types-visual-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-pc-types-visual-final-20261001.metadata.json": "e7547c29201ad64b91db945f4ad595d943d728f62c30017ff9cb0db3b3fd819a",
+      ".cache/pc-banner-pc-types-visual-last-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-pc-types-visual-last-20261001.metadata.json": "3c8b0c70bc4127d3bb8d346d519c3af0c7ce49297179226b064ee57fe30ebf66",
+      ".cache/pc-banner-permission-static-final-20261001.log": "3e3358fd2495f2e0fbc63302f07ae0c2bc6039e88eb95824c1b6bdff7be81e66",
+      ".cache/pc-banner-permission-static-final-20261001.metadata.json": "8f709a5bd6166e94b2272109d9ee069c724f37a1fada26d9269803fa04143b8f",
+      ".cache/pc-banner-public-native-first-20261001.log": "c7973bfe760bd0e7e46c37298a7169154605ea6b9b502f3519efa193908af5f7",
+      ".cache/pc-banner-public-native-first-20261001.metadata.json": "dc36de6809cfebc06c52fc4d9d91b0fbf4ce6b6ac6912157769acc3c797110ba",
+      ".cache/pc-banner-public-read-first-20261001.log": "a78c7dc1536b550afe0c5354f146a8c0fed8bc5a94d6a1da3ba7e23aca8f476d",
+      ".cache/pc-banner-public-read-first-20261001.metadata.json": "6897a948698e3593f4dbfb27e863273a257d0f85ca9213726c24b1dfce8856a2",
+      ".cache/pc-banner-worker-runtime-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-worker-runtime-types-final-20261001.metadata.json": "2ff77ccc066e90792932462ec236a82ebfecbda2ef732bc32674e420ca952c5e",
+      ".cache/pc-banner-worker-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/pc-banner-worker-types-final-20261001.metadata.json": "2e920e2e48fc324c996f0fe8840b45c05aaa1d004b9e30c7b8b604e074a23948",
+      ".cache/pc-banner-public-native-first-cluster-cleanup-20261001.json": "16b04b1e6d80b919f374a5b6868dcf53b70ed4eaf8d690225654cfdbb4051453",
+      ".cache/pc-banner-admin-native-first-cluster-cleanup-20261001.json": "2c477c8a854aa3bdbeb3a2ae871e6ee0943a8214c8ea875538b1f13a03ba977a",
+      ".cache/pc-banner-native-final-cluster-cleanup-20261001.json": "09bab2f246ad2ce5764f0af21a007fe577a16696e840df30a98d157f4b3174c2",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z.json": "3c43ad101cd8fc9a833acb130dd630b9ff6336abf63deb3b2872191a86dded0f",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa.cjs": "b60d3f7f1f5a47d33d3c10813de78d27a968d3f813fe70690243e2412e270c32",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-first-20261001.cjs": "db25c71962417cbf54976defb7f196237902348c9de2763ce88725d666dde48b",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-second-20261001.cjs": "3c8ded581bea6e080e7266802a720911d500fdb9d321cbe2fd21a1a263aa6865",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-desktop.png": "81143864fd29d7c446bd6842607cb23d7b99f7b8c45810bd52ccbded95625ecf",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-full-form.png": "de1e028806956e9433c962a3f5faa04a6a71ebab98ca3ba7a120081587f34c13",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-pending.png": "0553615e651c8cc48310cac42953567ed3bede086644064a6611a13a28440698",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-mobile.png": "5038bb5220d0b6a371929ebb4382a6c6cd4443d538bc348adcb1c9c9b1a7bfe6",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-mobile-editor.png": "f6a84bd89b34742397fc893a54cccc8903540fade0b0312b540f5016e096cbcb",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-pc-desktop.png": "1e14cbdc0bbf6df96b7147e01f38c2343c46481df27fc288ef756ec41d4efb1d",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-pc-mobile.png": "d43e247bbb8c145bd21291ad6dc597d0f5c5f494acb2126ff0f7ae84b29058ce",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\index-bJWwsekN.js": "6ec53278fba3ca0201372fcbb4405c826214f3f9091f9f44efb83c4db904a660",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\AdminLayout-D1Bn--i6.js": "fb3dcefcaa3ceff364ee6b00bcb2ac9b778d89f349c361624a92963a121e7819",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\auth-CCsAvGc7.js": "7726d8a0be5aabb43ada5ad8eedbb69f6527207baa7cde2b8e427d0df610bff3",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\auth-2Jk8Jx7L.js": "d535e730989906e729bfcb6eba97336fdf8fbe8726f76dc47e098a86fda348b9",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\request-OxC9ZbtD.js": "fd28d13b12187c7b8baeab993817df79b27d645846f69ae57d04a27713bf0d6c",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\PcBannerList-C_b7ewkr.js": "f7c4221c8ed45ab0af83ce9f0cd06eec061597fa493afef1f1cae9257e45027c",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\SeckillActivityImagePicker-DPSWxeU9.js": "b63bf7f8c6ad40e6f390998646c96598faffc816b0aeaf2c858c821d81b8ca99",
+      "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\attachment-Dt6Hutnb.js": "77d0b3315d220cd8e9cb3f6ff01cd99ecaf5af397e11c4a2e22c1a4a03d1ab20",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\index-a7-eOSRj.js": "3716eb35e7b3586f57219cb103d0d9eb1b1a50c2a1eb8cfe914d64b9a45f66a7",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\DefaultLayout-DQKdoSbm.js": "fa40f979df49ead820d7d195d526741e340b4064e50ee1135d7eeb404ccbe095",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\Home-CRK3rE3l.js": "8a4e258418aaf72888c493e78d1d7d93e7a648a5969ce33f3e5667f1f6d33c54",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\ProductImage-B4tyenOO.js": "f099c32849c5a6a1d0e49e2375efea37e2c71704c5317e2b7b819c4923061334",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\product-BbjZgHUg.js": "c0f9dc4ef0ec7b5983d0d1e9d578d76a50ba4685ad535b204c85000b6dadf75c",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\GoodsDetail-BlkWntkb.js": "20c15c42b9e485995c787ccde2c616cb2dd92a69b580b39fd0b63cdddd680582",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\user-BQxMZ49b.js": "7ae36d9e9b7de2008c3034260307c4b1fb77786e6ecc7129b590330a3f99f4cc",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\couponWallet-DLb4xfJC.js": "822b03e7a9f756c1ec9cd2ebca7e0c308160ce696eaadee17b47df48173e711e",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\activity-CMQld8Kk.js": "cef49b3cc751dace44d7f1182befff4075bc524b5f7e92df6d56b5977ce55025",
+      "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\seckillPurchase-DvQ9smA6.js": "7a03540ea79312562d9da988197e7eab61414a1ab763d4c1354d7ec6e729bb48",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-desktop.png": "81143864fd29d7c446bd6842607cb23d7b99f7b8c45810bd52ccbded95625ecf",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-mobile-editor.png": "639f6abf4203ed1d1ddc841b8b2b53d65333853475db66b4a8df8b34dcd125b8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-mobile.png": "5038bb5220d0b6a371929ebb4382a6c6cd4443d538bc348adcb1c9c9b1a7bfe6",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-pending.png": "3ea804976f25e82e8671b7eb1496daa25ef8f7bd89c01191d4e629a7f2a5aa2a",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-2.png": "371e7a134a49e7bbf7dd27e353587c5674852b7beb501d3a767ddd259e0c09f1",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-23.png": "55e60753179c98e94ab06366506dbfcc8ce90f2450e05a956d20c01e29fee30c",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-3.png": "06677548b78d967d4b2fe95e8b1f37923514c225070d14ed336817805dba0103",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-30.png": "f6a84bd89b34742397fc893a54cccc8903540fade0b0312b540f5016e096cbcb",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-4.png": "145594d420e78266ac5462f7f0636c284ec1e5d2d433ac95b6de5d6c4c7d703c",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-5.png": "ff392edddcba4ea9aa24393027aed371475aa675b03cacabf497b94c151435c3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-6.png": "e52788902aedfd2adb821dd293c027f618b221eaf47cf2472c823546b315e716",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-pc-desktop.png": "f46879cefcf676445227925025f4e002c6ea1d90b1ecd8be2a30862899e049c7",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-pc-mobile.png": "853fa046ecacdc7ff94cf6b8ebeaf8b27731a43b0e7b9af46264aaa6578ee401",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z.json": "5071d69aba3220643efc8b13b7db39f015d872850e2c19efb2bb0059974ecc0b",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-desktop.png": "5005e9fef89939f993c40d1152580850a0c8ffaacfcf29807ef24b77dda31b3f",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-full-form.png": "de1e028806956e9433c962a3f5faa04a6a71ebab98ca3ba7a120081587f34c13",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-mobile-editor.png": "f6a84bd89b34742397fc893a54cccc8903540fade0b0312b540f5016e096cbcb",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-mobile.png": "5038bb5220d0b6a371929ebb4382a6c6cd4443d538bc348adcb1c9c9b1a7bfe6",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-pending.png": "cd59d8e895756b17e792b6a5244b1d6c3ca5547804a969d4bd04282c796d51d3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-pc-desktop.png": "6ac1b9a36c27c6a306a212314ff62ad6d505e07071373f7648cb3f9bf2c1f9d3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-pc-mobile.png": "9fa70c9a54d849d6780e637f173f485a50f8f9660b8d1eee75ab3e106bdef345",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z.json": "7bc534e4dca063290934169fa5dcbcd0cdefe55ca84cefedee4b10654fd36c81"
+    }
+  }
+}

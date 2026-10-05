@@ -1,5 +1,8 @@
 <template>
+  <ThemePage>
   <view class="kefu-page">
+    <view v-if="productContext" class="product-context"><image v-if="productContext.image" :src="productContext.image" mode="aspectFill"/><view><view>{{productContext.store_name}}</view><button size="mini" @tap="consultProduct">发送此商品咨询</button></view></view>
+    <view v-if="contextError" class="context-error" role="alert">{{contextError}}<button size="mini" @tap="loadProductContext">重新读取商品</button></view>
     <button class="feedback-link" @tap="openFeedback">客服离线？提交反馈</button>
     <view v-if="kfAdv" class="kf-adv">
       <rich-text :nodes="kfAdv" />
@@ -47,10 +50,16 @@
       <view class="send-btn" @tap="send">发送</view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import ThemePage from '@/components/ThemePage.vue';
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import {onLoad,onShow,onHide} from '@dcloudio/uni-app';
+import {apiGoodsDetail} from '@/api/product';
+import type {GoodsDetail} from '@/types/product';
+import {productDetailId} from '../../../../common/productDetailRoute';
 import { useAuthStore } from "@/stores/auth";
 import { API_BASE, getFormType, http } from "@/utils/request";
 import { apiKfAdv } from "@/api/legacyContent";
@@ -93,6 +102,15 @@ interface DisplayMessage {
 }
 
 const authStore = useAuthStore();
+const productContext=ref<GoodsDetail|null>(null),contextError=ref('');let contextProductId=0,contextVisible=false,contextGeneration=0;
+async function loadProductContext(){if(!contextVisible||disposed||!contextProductId)return;const current=++contextGeneration,owner={version:authStore.sessionVersion,token:authStore.token,uid:authStore.uid};contextError.value='';
+  try{const product=await apiGoodsDetail(contextProductId);if(contextVisible&&!disposed&&current===contextGeneration&&owner.version===authStore.sessionVersion&&owner.token===authStore.token&&owner.uid===authStore.uid)productContext.value=product;}
+  catch{if(contextVisible&&!disposed&&current===contextGeneration)contextError.value='咨询商品暂不可读取，请重新读取';}
+}
+function consultProduct(){if(!contextVisible||disposed||!productContext.value)return;inputText.value=`咨询商品：${productContext.value.store_name}（商品编号 ${productContext.value.id}） /pages/goods/detail?id=${productContext.value.id}`;void send();}
+onLoad(query=>{if(query?.productId===undefined)return;try{contextProductId=productDetailId(query.productId);}catch{contextProductId=0;contextError.value='咨询商品链接无效';}});
+onShow(()=>{contextVisible=true;void loadProductContext();});onHide(()=>{contextVisible=false;contextGeneration++;productContext.value=null;contextError.value='';});
+watch(()=>[authStore.sessionVersion,authStore.token,authStore.uid],()=>{contextGeneration++;productContext.value=null;contextError.value='';Promise.resolve().then(()=>{void loadProductContext();});},{flush:'sync'});
 function openFeedback() { uni.navigateTo({ url: "/pages/extension/customer_list/feedback" }); }
 const messages = ref<DisplayMessage[]>([]);
 const inputText = ref("");
@@ -419,6 +437,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  contextVisible=false;contextGeneration++;productContext.value=null;
   disposed = true;
   socketReady = false;
   if (socket) socket.close({});
@@ -427,6 +446,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.product-context{display:flex;gap:16rpx;background:#fff;padding:20rpx;font-size:26rpx}.product-context image{width:120rpx;height:120rpx;flex-shrink:0}.product-context>view{flex:1}.context-error{color:#a72823;padding:20rpx;font-size:24rpx}
 .kefu-page {
   display: flex;
   flex-direction: column;
@@ -508,7 +528,7 @@ onUnmounted(() => {
 }
 
 .msg-item.mine .bubble {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
 }
 
@@ -570,7 +590,7 @@ onUnmounted(() => {
 }
 
 .send-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 28rpx;
   padding: 14rpx 36rpx;

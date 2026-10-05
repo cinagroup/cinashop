@@ -1,0 +1,62 @@
+{
+  "dateUtc": "2026-09-30",
+  "scope": "Local, unpublished Admin activity-frame screens and public product catalog/detail consumption",
+  "outcome": {
+    "legacyAdminScreens": { "total": 274, "candidate": 75, "partial": 111, "missing": 81, "retired": 7 },
+    "legacyMarketingScreens": { "total": 48, "candidate": 23, "partial": 12, "missing": 13, "retired": 0 },
+    "workerRoutes": 1960,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 89,
+    "adminApi": { "callSites": 490, "pathVariants": 514, "executable": 514, "unregistered": 0, "unresolved": 0 },
+    "screenPromotions": [
+      "/admin/marketing/activity_frame: missing->candidate",
+      "/admin/marketing/activity_frame/create/:id?: missing->candidate"
+    ],
+    "checklist": { "checked": 246, "open": 158, "total": 404 }
+  },
+  "verification": {
+    "focusedWorkerPglite": { "files": 6, "passed": 42, "failed": 0, "skipped": 1 },
+    "postAuditParentProductPgliteRerun": { "files": 1, "passed": 5, "failed": 0, "skipped": 1 },
+    "datedAndHistoricalParity": { "files": 2, "passed": 15, "failed": 0, "skipped": 0 },
+    "adminFrontendRuntime": { "files": 1, "passed": 3, "failed": 0, "skipped": 0 },
+    "nativePostgresql16ActivityFrameServiceAndHttp": { "files": 1, "passed": 6, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "nativePostgresql16CatalogPromotionSlots": { "files": 1, "passed": 3, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "nativePostgresql16AffectedPricingAndCheckout": { "files": 3, "passed": 53, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiStrictAudit": "514 executable variants; 0 unregistered or unresolved",
+    "routeAudit": "1960 Worker registrations; 882 executable legacy-path matches unchanged",
+    "gitDiffCheck": "passed (Git line-ending conversion warnings only)",
+    "browserAndProduction": "not run; no deployment or production mutation"
+  },
+  "limitations": [
+    "The two activity-frame pages are local candidate implementations, not exact aliases for the old dynamic PHP URLs or production-accepted screens.",
+    "The optional type-3 exclusion scope was absent from the old UI. It is an explicit extension that fixes the old helper relation's missing is_all=1 and the old list's hard-coded zero count.",
+    "The public catalog reads promotions for the requested product page directly, avoiding the former global 200-active-promotion cap; native PostgreSQL tests cover more than 200 concurrent activities.",
+    "The Admin product picker, selection validation and participation count use visible, approved root products (pid=0), matching the old picker and the public consumer's parent-product identity.",
+    "Real restricted-role browser journeys, production activity/product scale and query plans, media references, rendered product cards, full Linux CI and post-release acceptance remain open."
+  ],
+  "evidence": [
+    "docs/admin-activity-frame-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "docs/admin-marketing-route-parity.md",
+    "audit/admin-legacy-marketing-route-parity-activity-frame-followup-20260930.json",
+    "audit/route-distribution-activity-frame-followup-20260930.json",
+    "audit/admin-frontend-inventory-activity-frame-followup-20260930.json",
+    "audit/admin-frontend-api-contracts-activity-frame-followup-20260930.json",
+    "test/admin-activity-frame.test.ts",
+    "test/public-product-catalog-promotion-slots.test.ts",
+    "test/public-product-activity-promotion-scope.test.ts",
+    "test/admin-permission.test.ts",
+    "test/admin-all-frontend-parity.test.ts",
+    "view/admin-ts/test/activityFrame.test.ts"
+  ]
+}

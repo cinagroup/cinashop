@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view v-if="loading" class="state">加载中…</view>
     <view v-else-if="errorMessage" class="state error">
@@ -96,9 +97,11 @@
     </template>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import {
@@ -250,13 +253,13 @@ onShow(() => {
 .author-row { display: flex; align-items: center; }
 .avatar, .comment-avatar { flex: none; border-radius: 50%; background: #eee; }
 .avatar { width: 68rpx; height: 68rpx; }
-.fallback { display: flex; align-items: center; justify-content: center; color: #fff; background: #e93323; }
+.fallback { display: flex; align-items: center; justify-content: center; color: #fff; background: var(--view-theme, #e93323); }
 .author-copy { flex: 1; display: flex; flex-direction: column; gap: 5rpx; padding-left: 16rpx; }
 .author-name { display: flex; align-items: center; gap: 10rpx; font-size: 28rpx; color: #333; }
 .level, .vip, .merchant { display: inline-block; padding: 2rpx 8rpx; margin-left: 8rpx; border-radius: 8rpx; font-size: 18rpx; }
 .level { color: #8b5a2b; background: #fff0d9; }
 .vip { color: #fff; background: #222; }
-.merchant { color: #e93323; background: #fff1ef; }
+.merchant { color: var(--view-theme, #e93323); background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); }
 .time { font-size: 22rpx; color: #aaa; }
 .rating-row { display: flex; align-items: center; gap: 20rpx; margin-top: 24rpx; }
 .stars { color: #f5a623; letter-spacing: 3rpx; }
@@ -266,7 +269,7 @@ onShow(() => {
 .review-pic { width: 100%; border-radius: 14rpx; }
 .review-meta { display: flex; justify-content: space-between; margin-top: 24rpx; font-size: 22rpx; color: #999; }
 .meta-actions { display: flex; gap: 26rpx; }
-.active { color: #e93323 !important; }
+.active { color: var(--view-theme, #e93323) !important; }
 .comments-card { padding: 28rpx; }
 .section-title { padding-bottom: 8rpx; font-size: 29rpx; font-weight: 600; color: #333; }
 .comment-row { display: flex; padding: 26rpx 0; border-bottom: 1rpx solid #f1f1f1; }
@@ -277,11 +280,11 @@ onShow(() => {
 .comment-praise { flex: none; font-size: 23rpx; color: #999; }
 .comment-content { margin-top: 14rpx; font-size: 27rpx; color: #333; line-height: 1.6; white-space: pre-wrap; }
 .child-comment { margin-top: 14rpx; padding: 14rpx; border-radius: 10rpx; background: #f7f7f7; font-size: 24rpx; color: #555; }
-.child-name { color: #e93323; }
+.child-name { color: var(--view-theme, #e93323); }
 .empty { padding: 50rpx 0; text-align: center; font-size: 25rpx; color: #aaa; }
 .composer-space { height: 130rpx; }
 .composer { position: fixed; right: 0; bottom: 0; left: 0; display: flex; align-items: flex-end; gap: 16rpx; padding: 18rpx 22rpx; padding-bottom: calc(18rpx + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, .05); }
 .composer-input { flex: 1; min-height: 64rpx; max-height: 180rpx; padding: 15rpx 20rpx; box-sizing: border-box; border-radius: 32rpx; background: #f5f5f5; font-size: 26rpx; line-height: 1.35; }
-.send { margin: 0; color: #fff; border: 0; border-radius: 30rpx; background: #e93323; }
+.send { margin: 0; color: #fff; border: 0; border-radius: 30rpx; background: var(--view-theme, #e93323); }
 .send[disabled] { opacity: .55; }
 </style>

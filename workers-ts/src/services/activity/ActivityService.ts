@@ -21,12 +21,13 @@ import {
   storeOrderCartInfo,
   storeOrderStatus,
   storeProduct,
+  storeProductAttrResult,
   storeProductAttrValue,
   userBill,
   user as userTable,
 } from "@/models/schema";
 import type { Env } from "@/env";
-import { withTx, type Container, type DbClient } from "@/lib/di";
+import { withTx,createContainerFromDb, type Container, type DbClient } from "@/lib/di";
 import type { DB } from "@/dao/BaseDao";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
@@ -38,6 +39,13 @@ import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { renderPublishedArticleMediaReferences } from '@/services/content/ArticleContentPolicy';
 import { readSeckillScheduleSlots, seckillDayStart, seckillScheduleView, seckillSlotMinutes } from "./SeckillScheduleService";
+import { publicSeckillTimePictures, renderSeckillTimePictures } from './SeckillTimeAssetPolicy';
+import { publicProductPictures, renderProductPictures } from './ProductAssetPolicy';
+import { resolveLegacyActivitySkuPair } from './ActivityOrderSkuService';
+import { MEMBER_SAVINGS_VERSION } from '@/services/order/OrderMembershipSavings';
+import { IntegralProductReadService } from './IntegralProductReadService';
+import { readActivityDetailDesign,renderActivityDetailDesign } from '@/services/product/ProductDetailDesignData';
+import { themeDeadlines } from '@/services/content/ThemeReadService';
 
 function normalizeListPage(pageValue: unknown, limitValue: unknown): { page: number; limit: number } {
   const parsedPage = Number(pageValue);
@@ -53,6 +61,12 @@ function normalizeListPage(pageValue: unknown, limitValue: unknown): { page: num
 function progress(quota: number, quotaShow: number): number {
   if (quota <= 0 || quotaShow <= 0) return 100;
   return Math.min(100, Math.max(0, Math.round(((quotaShow - quota) / quotaShow) * 1_000) / 10));
+}
+/** Explicit activity display projection; accounting/codes/forms are never
+ * returned by a detail endpoint simply because its DAO supports whole rows. */
+function safeActivityRow(item:Record<string,unknown>){
+  const keys=['id','type','relationId','productId','productType','storeName','title','info','image','images','price','minPrice','otPrice','unitName','sales','stock','quota','quotaShow','num','onceNum','people','isShow','isDel','status','startTime','stopTime','activityId','deliveryType','specType','brandId','isLimit','limitType','limitNum'];
+  return Object.fromEntries(keys.filter(key=>Object.hasOwn(item,key)).map(key=>[key,item[key]]));
 }
 
 const MAX_INTEGRAL_CATEGORY_ROWS = 1_000;
@@ -153,6 +167,16 @@ export class ActivityService {
         throw new NotFoundException("优惠券不存在或已停发");
       }
 
+      // Public self-claim is a manual-coupon operation. Hidden gift/newcomer
+      // catalogs are not an authority check; callers can submit any issue ID.
+      // Trusted registration/product grants have their own transaction paths.
+      // Member/popup coupons stay closed until genuine entitlement is checked.
+      // Ordinary PHP issuers use category=1; new canonical issuers use 0.
+      // Neither value grants paid membership or a trusted delivery capability.
+      if (issue.receiveType !== 1 || ![0, 1].includes(issue.category) || issue.appType !== 0) {
+        throw new ValidateException("该优惠券不允许手动领取");
+      }
+
       const now = new Date();
       if (issue.startTime && issue.startTime > now) throw new ValidateException("优惠券未开始");
       if (issue.endTime && issue.endTime < now) throw new ValidateException("优惠券已结束");
@@ -165,8 +189,16 @@ export class ActivityService {
         .from(storeCouponUser)
         .where(and(eq(storeCouponUser.uid, uid), eq(storeCouponUser.issueCouponId, issueId)));
       const received = receivedRows[0]?.count ?? 0;
-      if (issue.receiveLimit > 0 && received >= issue.receiveLimit) {
-        throw new ValidateException(`每人限领 ${issue.receiveLimit} 张`);
+      if (issue.receiveLimit < 0) throw new ValidateException('优惠券限领配置无效');
+      // PHP's public controller always passes more=false. A legacy default 0
+      // is not permission for unlimited direct claims. Preserve issue evidence
+      // even if its owned coupon was later removed; do not join duplicate logs.
+      const effectiveLimit = issue.receiveLimit || 1;
+      const [evidence] = issue.receiveLimit === 0 ? await tx
+        .select({ count: sql<number>`COUNT(*)::int` }).from(storeCouponIssueUser)
+        .where(and(eq(storeCouponIssueUser.uid, uid), eq(storeCouponIssueUser.issueCouponId, issueId))) : [];
+      if (received >= effectiveLimit || (issue.receiveLimit === 0 && (evidence?.count ?? 0) > 0)) {
+        throw new ValidateException(`每人限领 ${effectiveLimit} 张`);
       }
 
       if (!issue.isPermanent) {
@@ -184,6 +216,7 @@ export class ActivityService {
         endTime = new Date(now.getTime() + issue.day * 86_400_000);
       } else {
         if (!issue.useEndTime) throw new ValidateException("优惠券固定有效期未配置");
+        if (!Number.isFinite(issue.useEndTime.getTime()) || issue.useEndTime < now) throw new ValidateException("优惠券固定使用期已过期");
         startTime = issue.useStartTime ?? now;
         endTime = issue.useEndTime;
       }
@@ -204,13 +237,11 @@ export class ActivityService {
           isFail: 0,
         })
         .returning();
-      if (issue.category !== 2) {
-        await tx.insert(storeCouponIssueUser).values({
-          uid,
-          issueCouponId: issueId,
-          addTime: Math.floor(now.getTime() / 1000),
-        });
-      }
+      await tx.insert(storeCouponIssueUser).values({
+        uid,
+        issueCouponId: issueId,
+        addTime: Math.floor(now.getTime() / 1000),
+      });
       return couponRows;
     });
 
@@ -245,13 +276,15 @@ export class ActivityService {
         return { item, start: Infinity, end: Infinity };
       }
     }).sort((a, b) => a.start - b.start || a.item.id - b.item.id);
-    const seckillTime = ordered.map(({ item, start, end }) => {
+    const slotPictures = await renderSeckillTimePictures(this.env?.APP_KEY,
+      await publicSeckillTimePictures(this.container.db, ordered.map(({ item }) => item.pic)));
+    const seckillTime = ordered.map(({ item, start, end }, index) => {
       const valid = Number.isFinite(start), active = valid && minute >= start && minute < end;
       const upcoming = valid && minute < start;
       return {
         id: item.id,
         title: item.title,
-        pic: item.pic,
+        pic: slotPictures[index] ?? '',
         describe: item.describe,
         start_time: valid ? format(start) : "",
         end_time: valid ? format(end) : "",
@@ -276,12 +309,14 @@ export class ActivityService {
   async seckillList(timeId: string, pageValue?: unknown, limitValue?: unknown) {
     const { page, limit } = normalizeListPage(pageValue, limitValue);
     const rows = await this.container.storeSeckillDao.getByTimeId(timeId, page, limit);
-    return rows.map((item) => ({
+    const images = await renderProductPictures(this.env?.APP_KEY,
+      await publicProductPictures(this.container.db, rows.map(item => ({ image: item.image, type: item.type, relationId: item.relationId }))));
+    return rows.map((item, index) => ({
       id: item.id,
       product_id: item.productId,
       activity_id: item.activityId,
       title: item.storeName,
-      image: item.image,
+      image: images[index] ?? '',
       price: Number(item.price),
       ot_price: Number(item.otPrice),
       quota: item.quota,
@@ -301,8 +336,12 @@ export class ActivityService {
 
   /** 秒杀详情 */
   async seckillDetail(id: number, now = new Date()) {
+    const result=await withTx(this.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);return new ActivityService(createContainerFromDb(tx),this.env).seckillDetailSnapshot(id,now);});
+    return {...result.item,...await renderActivityDetailDesign(this.env?.APP_KEY,result.design)};
+  }
+  private async seckillDetailSnapshot(id:number,now:Date){
     const item = await this.container.storeSeckillDao.getById(id);
-    if (!item) throw new NotFoundException("秒杀商品不存在");
+    if (!item||item.isDel!==0||item.isShow!==1||item.status!==1) throw new NotFoundException("秒杀商品不存在");
     const activity = item.activityId > 0
       ? (
           await this.container.db
@@ -317,7 +356,7 @@ export class ActivityService {
       ? Math.round(((item.quotaShow - item.quota) / item.quotaShow) * 100)
       : 0;
     const schedule = await readSeckillScheduleSlots(this.container.db, item, activity);
-    return { ...item, activity, percent, schedule: seckillScheduleView(schedule, now) };
+    return {item:{...safeActivityRow(item),activity,percent,schedule:seckillScheduleView(schedule,now)},design:await readActivityDetailDesign(this.container.db,item,1,0)};
   }
 
   // ─── 拼团 ─────────────────────────────────────────────────
@@ -343,9 +382,11 @@ export class ActivityService {
   }
 
   async combinationDetail(id: number) {
-    const item = await this.container.storeCombinationDao.getById(id);
-    if (!item) throw new NotFoundException("拼团商品不存在");
-    return item;
+    const result=await withTx(this.container,async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);
+      const item=await createContainerFromDb(tx).storeCombinationDao.getById(id);
+      if(!item||item.isDel!==0||item.isShow!==1||item.status!==1)throw new NotFoundException('拼团商品不存在');
+      return {item:safeActivityRow(item),design:await readActivityDetailDesign(tx,item,3,0)};});
+    return {...result.item,...await renderActivityDetailDesign(this.env?.APP_KEY,result.design)};
   }
 
   // ─── 砍价 ─────────────────────────────────────────────────
@@ -468,48 +509,7 @@ export class ActivityService {
   }
 
   async integralDetail(id: number) {
-    const item = await this.container.storeIntegralDao.getById(id);
-    if (!item) throw new NotFoundException("积分商品不存在");
-    if (item.status !== 1 || item.isShow !== 1 || item.isDel !== 0) {
-      throw new NotFoundException("积分商品不存在或已下架");
-    }
-
-    const activitySkus = await this.container.storeProductAttrValueDao.getByProductId(id, 4);
-    const skus = await Promise.all(
-      activitySkus.map(async (activitySku) => {
-        const baseSku = item.productId > 0
-          ? await this.container.storeProductAttrValueDao.getBySuk(item.productId, activitySku.suk, 0)
-          : null;
-        const available = Math.max(
-          0,
-          Math.min(
-            activitySku.stock,
-            activitySku.quota,
-            baseSku?.stock ?? 0,
-            item.stock,
-            item.quota,
-          ),
-        );
-        return {
-          id: activitySku.id,
-          unique: activitySku.unique,
-          suk: activitySku.suk,
-          image: activitySku.image || item.image,
-          price: String(activitySku.price),
-          otPrice: String(activitySku.otPrice),
-          integral: activitySku.integral,
-          stock: available,
-        };
-      }),
-    );
-    const availableSkus = skus.filter((sku) => sku.stock > 0);
-    return {
-      storeInfo: item,
-      productAttr: [],
-      productValue: Object.fromEntries(skus.map((sku) => [sku.suk || sku.unique, sku])),
-      skus,
-      saleStock: availableSkus.length > 0 ? 1 : 0,
-    };
+    return new IntegralProductReadService(this.container, this.env).read(id);
   }
 
   /** 积分兑换 (store_integral/exchange/:id): 扣积分 + 建积分订单 + 减库存 */
@@ -542,11 +542,24 @@ export class ActivityService {
       .join("")
       .slice(0, 32);
     const idempotencyKey = `ix:${integralId}:${keyHash}`;
+    const skuUnique = requestedUnique.trim();
+    const assertReplay = async (db: DbClient, existingOrder: Pick<typeof storeOrder.$inferSelect, 'id' | 'type' | 'activityId' | 'totalNum'>) => {
+      if (existingOrder.type !== 4 || existingOrder.activityId !== integralId || existingOrder.totalNum !== num) {
+        throw new ValidateException('幂等键已用于其他兑换请求');
+      }
+      if (skuUnique) {
+        const lines = await db.select({ cartInfo: storeOrderCartInfo.cartInfo }).from(storeOrderCartInfo)
+          .where(eq(storeOrderCartInfo.oid, existingOrder.id)).limit(2);
+        let snapshot: { sku?: { unique?: unknown }; activitySku?: { unique?: unknown } } = {};
+        try { if (lines.length === 1) snapshot = JSON.parse(lines[0].cartInfo ?? '{}'); } catch { /* Replays cannot repair history. */ }
+        if (![snapshot?.sku?.unique, snapshot?.activitySku?.unique].some(value => typeof value === 'string' && value.trimEnd() === skuUnique)) {
+          throw new ValidateException('幂等键已用于其他积分商品规格');
+        }
+      }
+    };
     const existing = await c.storeOrderDao.findByUnique(uid, idempotencyKey);
     if (existing) {
-      if (existing.type !== 4 || existing.activityId !== integralId) {
-        throw new ValidateException("幂等键已用于其他订单");
-      }
+      await assertReplay(c.db, existing);
       return { orderId: existing.orderId };
     }
     if (item.status !== 1 || item.isShow !== 1 || item.isDel !== 0) {
@@ -558,7 +571,7 @@ export class ActivityService {
     }
     // The direct endpoint cannot complete a third-party cash payment. Never
     // mark a cash/postage-bearing order paid and give the goods away.
-    if (Number(item.price) !== 0 || Number(item.postage) !== 0) {
+    if (Number(item.postage) !== 0) {
       throw new ValidateException("积分加现金或运费商品请走统一购物车下单流程");
     }
     // The legacy direct endpoint has no receiver/address contract. Keep it
@@ -569,15 +582,12 @@ export class ActivityService {
       throw new ValidateException("该积分商品请走统一购物车下单流程");
     }
 
-    const skuUnique = requestedUnique.trim();
     const attrConditions = [
       eq(storeProductAttrValue.productId, integralId),
       eq(storeProductAttrValue.type, 4),
-      eq(storeProductAttrValue.isRetired, 0),
     ];
-    if (skuUnique) attrConditions.push(eq(storeProductAttrValue.unique, skuUnique));
 
-    const [user, purchaseRows, initialAttrRows, baseProductRows] = await Promise.all([
+    const [user, purchaseRows, initialAttrRows, baseProductRows, catalogueRows] = await Promise.all([
       c.userDao.findForAuth(uid),
       c.db
         .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
@@ -603,9 +613,17 @@ export class ActivityService {
             .where(eq(storeProduct.id, item.productId))
             .limit(1)
         : Promise.resolve([]),
+      c.db.select({ id: storeProductAttrResult.id }).from(storeProductAttrResult)
+        .where(and(eq(storeProductAttrResult.productId, integralId), eq(storeProductAttrResult.type, 4))).limit(1),
     ]);
     if (!user) throw new NotFoundException("用户不存在");
-    let attrRows = initialAttrRows;
+    // A retired type-4 catalogue cannot downgrade to the legacy base-SKU
+    // fallback. The resolver below separately requires an active exact pair.
+    const modernSku = initialAttrRows.length > 0 || catalogueRows.length > 0;
+    const pair = modernSku ? await resolveLegacyActivitySkuPair(c.db, {
+      activityId: integralId, productId: item.productId, type: 4, unique: skuUnique,
+    }) : null;
+    let attrRows = pair ? [pair.activitySku] : initialAttrRows;
     if (!attrRows.length && item.productId > 0) {
       const fallbackConditions = [
         eq(storeProductAttrValue.productId, item.productId),
@@ -627,22 +645,44 @@ export class ActivityService {
       throw new ValidateException("请选择积分商品规格");
     }
     const attr = attrRows[0] ?? null;
+    const baseSku = pair?.baseSku ?? (attr?.type === 0 ? attr : null);
+    // Cash and points belong to the chosen activity SKU. The root is only the
+    // catalogue summary (the SKU with the smallest points requirement).
+    const unitIntegral = modernSku ? attr!.integral : item.integral;
+    if (Number(modernSku ? attr!.price : item.price) !== 0) {
+      throw new ValidateException("积分加现金或运费商品请走统一购物车下单流程");
+    }
+    if (!Number.isSafeInteger(unitIntegral) || unitIntegral <= 0) {
+      throw new ValidateException("积分商品兑换积分无效");
+    }
     if (skuUnique && !attr) throw new ValidateException("积分商品规格不存在");
     if (attr && (attr.stock < num || (attr.type === 4 && attr.quota < num))) {
       throw new ValidateException("积分商品规格库存不足");
     }
     const baseProduct = baseProductRows[0] ?? null;
     if (item.productId > 0) {
-      if (!baseProduct || baseProduct.isShow !== 1 || baseProduct.isDel !== 0) {
+      if (!baseProduct || baseProduct.isShow !== 1 || baseProduct.isDel !== 0
+        || (modernSku && (baseProduct.isVerify !== 1 || baseProduct.type !== item.type
+          || baseProduct.relationId !== item.relationId || baseProduct.productType !== item.productType))) {
         throw new ValidateException("关联商品已下架");
       }
       if (baseProduct.stock < num) throw new ValidateException("关联商品库存不足");
     }
+    if (modernSku && (!baseSku || baseSku.stock < num || item.quota < num)) {
+      throw new ValidateException("关联商品规格库存或兑换次数不足");
+    }
 
-    const needIntegral = item.integral * num;
+    const needIntegral = unitIntegral * num;
+    if (!Number.isSafeInteger(needIntegral) || needIntegral > 2_147_483_647) {
+      throw new ValidateException("兑换积分超出范围");
+    }
     if (user.integral < needIntegral) {
       throw new ValidateException(`积分不足, 需要 ${needIntegral} 积分`);
     }
+    const unitCost = modernSku ? String(attr!.cost) : '0.00';
+    const totalCostCents = BigInt(unitCost.replace('.', '')) * BigInt(num);
+    if (totalCostCents < 0n || totalCostCents > 999_999_999_999n) throw new ValidateException('兑换成本超出范围');
+    const orderCost = `${totalCostCents / 100n}.${String(totalCostCents % 100n).padStart(2, '0')}`;
 
     // 事务: 扣积分 + 建统一积分订单 + 减活动/SKU/商品库存 + 快照/状态/流水
     const finalOrderId = await this.runInTx(c.db, async (tx) => {
@@ -661,15 +701,41 @@ export class ActivityService {
       if (!lockedUsers.length) throw new NotFoundException("用户不存在");
 
       const existingRows = await tx
-        .select({ orderId: storeOrder.orderId, type: storeOrder.type, activityId: storeOrder.activityId })
+        .select({ id: storeOrder.id, orderId: storeOrder.orderId, type: storeOrder.type, activityId: storeOrder.activityId, totalNum: storeOrder.totalNum })
         .from(storeOrder)
         .where(and(eq(storeOrder.uid, uid), eq(storeOrder.unique, idempotencyKey)))
         .limit(1);
       if (existingRows[0]) {
-        if (existingRows[0].type !== 4 || existingRows[0].activityId !== integralId) {
-          throw new ValidateException("幂等键已用于其他订单");
-        }
+        await assertReplay(tx as unknown as DbClient, existingRows[0]);
         return existingRows[0].orderId;
+      }
+
+      if (modernSku) {
+        // Freeze the quoted rules and both SKU identities before writing. A
+        // stock-only change can still succeed; an Admin price/owner/spec edit
+        // must never turn an earlier points-only quote into a free purchase.
+        const [currentItem] = await tx.select().from(storeIntegral)
+          .where(eq(storeIntegral.id, integralId)).for('update');
+        const [currentProduct] = await tx.select().from(storeProduct)
+          .where(eq(storeProduct.id, item.productId)).for('update');
+        const rules = ['productId', 'productType', 'type', 'relationId', 'postage', 'num', 'onceNum', 'systemFormId'] as const;
+        if (!currentItem || rules.some(key => currentItem[key] !== item[key])
+          || currentItem.status !== 1 || currentItem.isShow !== 1 || currentItem.isDel !== 0
+          || !currentProduct || currentProduct.isShow !== 1 || currentProduct.isDel !== 0
+          || currentProduct.isVerify !== 1 || currentProduct.type !== item.type
+          || currentProduct.relationId !== item.relationId || currentProduct.productType !== item.productType
+          || currentProduct.isSupportRefund !== baseProduct!.isSupportRefund) {
+          throw new ValidateException('积分商品信息已变更，请重新兑换');
+        }
+        const quotedSkus = [attr!, baseSku!].sort((a, b) => a.id - b.id);
+        const quoteKeys = ['productId', 'type', 'unique', 'suk', 'productType', 'isRetired', 'price', 'integral', 'cost', 'settlePrice', 'writeTimes', 'diskInfo', 'image'] as const;
+        for (const quoted of quotedSkus) {
+          const [lockedSku] = await tx.select().from(storeProductAttrValue)
+            .where(eq(storeProductAttrValue.id, quoted.id)).for('update');
+          if (!lockedSku || quoteKeys.some(key => lockedSku[key] !== quoted[key])) {
+            throw new ValidateException('积分商品规格已变更，请重新兑换');
+          }
+        }
       }
 
       const currentPurchaseRows = await tx
@@ -702,6 +768,7 @@ export class ActivityService {
           activityId: integralId,
           orderId,
           uid,
+          storeId: item.type === 1 ? item.relationId : 0,
           supplierId: item.type === 2 ? item.relationId : 0,
           realName: "",
           userPhone: "",
@@ -712,6 +779,7 @@ export class ActivityService {
           totalPostage: "0.00",
           payPrice: "0.00",
           payPostage: "0.00",
+          cost: orderCost,
           payIntegral: needIntegral,
           paid: 1,
           payType: "integral",
@@ -743,7 +811,7 @@ export class ActivityService {
             eq(storeIntegral.isShow, 1),
             eq(storeIntegral.isDel, 0),
             sql`stock >= ${num}`,
-            sql`(quota = 0 OR quota >= ${num})`,
+            modernSku ? sql`quota >= ${num}` : sql`(quota = 0 OR quota >= ${num})`,
           ),
         )
         .returning({ id: storeIntegral.id });
@@ -769,6 +837,16 @@ export class ActivityService {
         if (!attrUpdated.length) throw new ValidateException("积分商品规格库存不足 (并发冲突)");
       }
 
+      if (modernSku && baseSku) {
+        const baseSkuUpdated = await tx.update(storeProductAttrValue).set({
+          stock: sql`stock - ${num}`, sales: sql`sales + ${num}`,
+        }).where(and(eq(storeProductAttrValue.id, baseSku.id),
+          eq(storeProductAttrValue.productId, item.productId), eq(storeProductAttrValue.type, 0),
+          eq(storeProductAttrValue.isRetired, 0), sql`stock >= ${num}`))
+          .returning({ id: storeProductAttrValue.id });
+        if (!baseSkuUpdated.length) throw new ValidateException('关联商品规格库存不足 (并发冲突)');
+      }
+
       if (baseProduct) {
         const productUpdated = await tx
           .update(storeProduct)
@@ -785,7 +863,27 @@ export class ActivityService {
         if (!productUpdated.length) throw new ValidateException("关联商品库存不足 (并发冲突)");
       }
 
-      await tx.insert(storeOrderCartInfo).values({
+      const snapshotSku = modernSku ? baseSku : attr;
+      const cartSnapshot = {
+        ...(modernSku ? {
+          financial_version: 'checkout-line-finance-v1', id: '', cart_num: num,
+          member_savings_version: MEMBER_SAVINGS_VERSION, paid_member: 0, price_type: '',
+          integral: unitIntegral, use_integral: '0', sum_price: '0.00', sum_true_price: '0.00',
+          costPrice: unitCost, vip_truePrice: '0.00', promotions_true_price: '0.00',
+          raw_postage_price: '0.00', postage_price: '0.00', member_postage_price: '0.00',
+          member_coupon_price: '0.00', coupon_price: '0.00', integral_price: '0.00',
+          first_order_price: '0.00', one_brokerage: '0.00', two_brokerage: '0.00',
+          division_staff_brokerage: '0.00', division_agent_brokerage: '0.00', division_brokerage: '0.00',
+          activitySku: { id: attr!.id, unique: attr!.unique.trimEnd(), suk: attr!.suk,
+            price: String(attr!.price), integral: unitIntegral },
+        } : {}),
+        product: { id: item.productId, activityId: integralId, storeName: item.storeName,
+          image: attr?.image || item.image, price: '0.00', integral: unitIntegral, giveIntegral: '0.00' },
+        sku: snapshotSku ? { id: snapshotSku.id, unique: snapshotSku.unique.trimEnd(),
+          suk: snapshotSku.suk, integral: unitIntegral, price: '0.00', write_times: Math.max(snapshotSku.writeTimes, 1),
+          ...(item.productType === 1 ? { disk_info: snapshotSku.diskInfo ?? '' } : {}) } : null,
+      };
+      const [orderLine] = await tx.insert(storeOrderCartInfo).values({
         uid,
         oid: order.id,
         cartId: "0",
@@ -793,28 +891,26 @@ export class ActivityService {
         relationId: item.relationId,
         productId: item.productId,
         productType: item.productType,
-        skuUnique: attr?.unique ?? skuUnique,
+        skuUnique: snapshotSku?.unique.trimEnd() ?? skuUnique,
         cartNum: num,
         surplusNum: num,
         splitSurplusNum: num,
-        settlePrice: "0.00",
-        cartInfo: JSON.stringify({
-          product: {
-            id: item.productId,
-            activityId: integralId,
-            storeName: item.storeName,
-            image: attr?.image || item.image,
-            price: "0.00",
-            integral: item.integral,
-          },
-          sku: attr
-            ? { id: attr.id, unique: attr.unique, suk: attr.suk, integral: attr.integral }
-            : null,
-        }),
+        settlePrice: modernSku ? String(attr!.settlePrice || baseSku!.settlePrice) : '0.00',
+        ...(modernSku ? { writeTimes: Math.max(baseSku!.writeTimes, 1) * num,
+          writeSurplusTimes: Math.max(baseSku!.writeTimes, 1) * num } : {}),
+        cartInfo: JSON.stringify(cartSnapshot),
         unique: random,
-        isSupportRefund: 1,
+        isSupportRefund: baseProduct?.isSupportRefund ?? 1,
         addTime: now,
-      });
+      }).returning({ id: storeOrderCartInfo.id });
+      if (modernSku) {
+        if (!orderLine) throw new Error('积分订单商品创建失败');
+        // Direct checkout has no store_cart row. Use its real order-line id as
+        // the immutable, positive refund selector, without fabricating a cart.
+        cartSnapshot.id = String(orderLine.id);
+        await tx.update(storeOrderCartInfo).set({ cartId: cartSnapshot.id, cartInfo: JSON.stringify(cartSnapshot) })
+          .where(eq(storeOrderCartInfo.id, orderLine.id));
+      }
 
       await tx.insert(storeOrderStatus).values({
         oid: order.id,

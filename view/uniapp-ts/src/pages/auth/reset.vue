@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="reset-page">
     <view class="reset-card">
       <view class="title">找回密码</view>
@@ -26,9 +27,11 @@
       <view class="back-login" @tap="backToLogin">返回登录</view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onUnmounted, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiRequestCode, apiResetPassword } from "@/api/auth";
@@ -112,7 +115,7 @@ onShow(() => {
   min-height: 100vh;
   padding: 100rpx 48rpx;
   box-sizing: border-box;
-  background: linear-gradient(145deg, #fff5f4, #fff);
+  background: linear-gradient(145deg, var(--view-minorColorT, rgba(233, 51, 35, 0.1)), #fff);
 }
 
 .reset-card {
@@ -159,7 +162,7 @@ onShow(() => {
 .code-button {
   flex-shrink: 0;
   padding-left: 22rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 25rpx;
 }
 
@@ -172,7 +175,7 @@ onShow(() => {
   margin-top: 36rpx;
   padding: 24rpx;
   border-radius: 42rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 30rpx;
   text-align: center;
@@ -180,7 +183,7 @@ onShow(() => {
 
 .back-login {
   margin-top: 28rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
   text-align: center;
 }

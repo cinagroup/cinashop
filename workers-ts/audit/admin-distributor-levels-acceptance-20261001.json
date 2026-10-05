@@ -1,0 +1,2736 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-01",
+  "frozen_at": "2026-10-01T08:25:23.531Z",
+  "status": "local_candidate_verified_not_released",
+  "scope": "Full distributor catalog Admin/Uniapp and actual registration/paid upgrade consumer, exact narrow local runtime forward; production and provider acceptance remain open.",
+  "outcome": {
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "workerRoutes": 2154,
+    "adminBusinessPages": 106,
+    "adminApiCalls": 573,
+    "adminApiVariants": 604,
+    "settings": {
+      "legacyRoutes": 76,
+      "reviewed": 76,
+      "candidate": 22,
+      "partial": 24,
+      "missing": 25,
+      "retired": 5,
+      "unreviewed": 0
+    },
+    "legacyAdmin": {
+      "total": 274,
+      "candidate": 88,
+      "partial": 114,
+      "missing": 64,
+      "retired": 8
+    },
+    "routeTotals": {
+      "php": 1904,
+      "ts": 2154,
+      "matched": 910,
+      "executableMatched": 889,
+      "unavailable": 21,
+      "missing": 994,
+      "retired": 17,
+      "actionableMissing": 977,
+      "coveragePercent": 47.8,
+      "executableCoveragePercent": 46.7,
+      "effectiveExecutableCoveragePercent": 47.1
+    },
+    "changedScreen": "/admin/setting/membership_level/index: missing -> candidate"
+  },
+  "routeSurfaces": [
+    {
+      "name": "api",
+      "surface": "api",
+      "php": 457,
+      "ts": 1118,
+      "matched": 443,
+      "executableMatched": 437,
+      "unavailable": 6,
+      "missing": 14,
+      "retired": 2,
+      "actionableMissing": 12,
+      "coveragePercent": 96.9,
+      "executableCoveragePercent": 95.6,
+      "effectiveExecutableCoveragePercent": 96
+    },
+    {
+      "name": "admin",
+      "surface": "admin",
+      "php": 1153,
+      "ts": 761,
+      "matched": 245,
+      "executableMatched": 230,
+      "unavailable": 15,
+      "missing": 908,
+      "retired": 0,
+      "actionableMissing": 908,
+      "coveragePercent": 21.2,
+      "executableCoveragePercent": 19.9,
+      "effectiveExecutableCoveragePercent": 19.9
+    },
+    {
+      "name": "supplier",
+      "surface": "supplier",
+      "php": 182,
+      "ts": 164,
+      "matched": 121,
+      "executableMatched": 121,
+      "unavailable": 0,
+      "missing": 61,
+      "retired": 12,
+      "actionableMissing": 49,
+      "coveragePercent": 66.5,
+      "executableCoveragePercent": 66.5,
+      "effectiveExecutableCoveragePercent": 71.2
+    },
+    {
+      "name": "kefu",
+      "surface": "kefu",
+      "php": 63,
+      "ts": 70,
+      "matched": 60,
+      "executableMatched": 60,
+      "unavailable": 0,
+      "missing": 3,
+      "retired": 3,
+      "actionableMissing": 0,
+      "coveragePercent": 95.2,
+      "executableCoveragePercent": 95.2,
+      "effectiveExecutableCoveragePercent": 100
+    },
+    {
+      "name": "out",
+      "surface": "out",
+      "php": 41,
+      "ts": 41,
+      "matched": 41,
+      "executableMatched": 41,
+      "unavailable": 0,
+      "missing": 0,
+      "retired": 0,
+      "actionableMissing": 0,
+      "coveragePercent": 100,
+      "executableCoveragePercent": 100,
+      "effectiveExecutableCoveragePercent": 100
+    },
+    {
+      "name": "erp",
+      "surface": "erp",
+      "php": 8,
+      "ts": 0,
+      "matched": 0,
+      "executableMatched": 0,
+      "unavailable": 0,
+      "missing": 8,
+      "retired": 0,
+      "actionableMissing": 8,
+      "coveragePercent": 0,
+      "executableCoveragePercent": 0,
+      "effectiveExecutableCoveragePercent": 0
+    }
+  ],
+  "implementation": {
+    "identity": "Separate agent_level and system_user_level; independent agent_level/agent_level_task view/manage, exact legacy972 path/auth dual read only.",
+    "fields": "Seven complete grade fields and five task metrics, gradeASC/idDESC and tasksortDESC/idDESC, immutable completed thresholds, all enabled tasks and preserved status0 duplicates.",
+    "recovery": "Catalog/xmin CAS and actor/globalUUID receipt; actual matching409 or pre-DML400 rejection proof only; preserve draft and reread explicitly with newUUID, ambiguous results keep original intent.",
+    "concurrency": "RC/catalog731624 shared or exclusive statement fences, ascending UID namespace731628, user FORUPDATE NOWAIT; maintenance AX NOWAIT to avoid reversed raw-DML lock cycle.",
+    "upgrades": "No missing-task grants, first incomplete grade stops, gifted rank never downgrades, invalid newly completed tasks fail and roll back all target users. Registration/relationship effects are postcommit best effort; paid event failure remains durable FAILED.",
+    "runtime": "Exact pre-agent-levels to current. Only Admin grade INSERT/sequenceUSAGE/eight semantic UPDATE columns, no tableUPDATE/DELETE/add_time mutation. Two invoker routines/four triggers and fixed global body; preserves all282 tables and all five historical forwards.",
+    "financial": "Paid fixture marks a synthetic payment and invokes actual enqueue/process/checkout; exact goods25+shipping6=supplier31, buyer55, initialbrokerage5 and futurecheckout10. Upgrades and subsequent financial effects are separate transactions."
+  },
+  "verification": {
+    "final": [
+      {
+        "name": "native-final",
+        "log": ".cache/agent-level-native-final-20261001.log",
+        "metadata": ".cache/agent-level-native-final-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 59,
+        "skipped": 0,
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/runtime-agent-level-upgrade.test.ts",
+          "test/admin-distributor-level-postgres.test.ts",
+          "test/admin-distributor-level-http.test.ts",
+          "test/agent-level-consumers-postgres.test.ts",
+          "test/agent-level-events-postgres.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 202758,
+        "finished_at": "2026-10-01T06:55:33.5814675Z",
+        "nativeSqlAndHttp": 59,
+        "pureAndStatic": 0
+      },
+      {
+        "name": "historical-grants-final",
+        "log": ".cache/agent-level-historical-grants-final-20261001.log",
+        "metadata": ".cache/agent-level-historical-grants-final-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 23,
+        "skipped": 0,
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/runtime-sign-day-config-upgrade.test.ts",
+          "test/runtime-promotion-gift-privileges.test.ts",
+          "test/runtime-coupon-template-privileges.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 238821,
+        "finished_at": "2026-10-01T07:01:44.2266754Z",
+        "nativeSqlAndHttp": 23,
+        "pureAndStatic": 0
+      },
+      {
+        "name": "historical-business-final",
+        "log": ".cache/agent-level-historical-business-final-20261001.log",
+        "metadata": ".cache/agent-level-historical-business-final-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 30,
+        "skipped": 0,
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/runtime-business-login.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 227013,
+        "finished_at": "2026-10-01T07:06:48.7381228Z",
+        "nativeSqlAndHttp": 30,
+        "pureAndStatic": 0
+      },
+      {
+        "name": "historical-pages-final-retry1",
+        "log": ".cache/agent-level-historical-pages-final-retry1-20261001.log",
+        "metadata": ".cache/agent-level-historical-pages-final-retry1-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 46,
+        "skipped": 0,
+        "arguments": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+          "test/seckill-runtime-login.test.ts",
+          "test/admin-pc-banner-postgres.test.ts",
+          "test/admin-pc-banner-http.test.ts",
+          "test/pc-banner-read.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 128565,
+        "finished_at": "2026-10-01T07:19:06.5686541Z",
+        "nativeSqlAndHttp": 39,
+        "pureAndStatic": 7
+      },
+      {
+        "name": "backend-pure-final",
+        "log": ".cache/agent-level-backend-pure-final-20261001.log",
+        "metadata": ".cache/agent-level-backend-pure-final-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 32,
+        "skipped": 0,
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers",
+          "1",
+          "--reporter",
+          "verbose",
+          "test/admin-distributor-level.test.ts",
+          "test/agent-level-consumers.test.ts",
+          "test/agent-level-task-migration.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 8062,
+        "finished_at": "2026-10-01T06:55:37.7695270Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 32
+      },
+      {
+        "name": "privilege-plan-worker-gate",
+        "log": ".cache/agent-level-privilege-plan-worker-gate-20261001.log",
+        "metadata": ".cache/agent-level-privilege-plan-worker-gate-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 31,
+        "skipped": 0,
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers",
+          "1",
+          "--reporter",
+          "verbose",
+          "test/runtime-business-privilege-plan.test.ts",
+          "test/runtime-business-worker.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 3492,
+        "finished_at": "2026-10-01T06:27:27.1398464Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 31
+      },
+      {
+        "name": "audit-permission-static-final",
+        "log": ".cache/agent-level-audit-permission-static-final-20261001.log",
+        "metadata": ".cache/agent-level-audit-permission-static-final-20261001.metadata.json",
+        "kind": "vitest",
+        "passed": 10,
+        "skipped": 21,
+        "arguments": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers",
+          "1",
+          "--reporter",
+          "verbose",
+          "test/admin-frontend-api-audit.test.ts",
+          "test/route-parity-audit.test.ts",
+          "test/admin-permission.test.ts",
+          "--testNamePattern",
+          "Admin frontend API registration audit|route parity PHP source handling|covers every route guarded by adminAuth in both compatibility surfaces|keeps route aliases in the same permission domain|publishes a unique view permission for every menu group"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 6117,
+        "finished_at": "2026-10-01T07:39:46.5128231Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 10
+      },
+      {
+        "name": "admin-pure-final",
+        "log": ".cache/agent-level-admin-pure-final-20261001.log",
+        "metadata": ".cache/agent-level-admin-pure-final-20261001.metadata.json",
+        "kind": "node",
+        "passed": 18,
+        "skipped": 0,
+        "arguments": [
+          "workers-ts/node_modules/tsx/dist/cli.mjs",
+          "--tsconfig",
+          "view/admin-ts/tsconfig.json",
+          "--test",
+          "view/admin-ts/test/distributorLevels.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop",
+        "exit_code": 0,
+        "elapsed_ms": 775,
+        "finished_at": "2026-10-01T06:55:30.8515330Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 18
+      },
+      {
+        "name": "admin-previous-regression",
+        "log": ".cache/agent-level-admin-previous-regression-20261001.log",
+        "metadata": ".cache/agent-level-admin-previous-regression-20261001.metadata.json",
+        "kind": "node",
+        "passed": 44,
+        "skipped": 0,
+        "arguments": [
+          "workers-ts/node_modules/tsx/dist/cli.mjs",
+          "--tsconfig",
+          "view/admin-ts/tsconfig.json",
+          "--test",
+          "view/admin-ts/test/pcBanner.test.ts",
+          "view/admin-ts/test/shippingSettings.test.ts",
+          "view/admin-ts/test/cityDeliveryRecords.test.ts"
+        ],
+        "cwd": "C:/cinagroup/cinashop",
+        "exit_code": 0,
+        "elapsed_ms": 1089,
+        "finished_at": "2026-10-01T06:55:32.1551168Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 44
+      },
+      {
+        "name": "uniapp-pure-final",
+        "log": ".cache/agent-level-uniapp-pure-final-20261001.log",
+        "metadata": ".cache/agent-level-uniapp-pure-final-20261001.metadata.json",
+        "kind": "node",
+        "passed": 12,
+        "skipped": 0,
+        "arguments": [
+          "--test",
+          "scripts/distributor-levels-runtime.test.cjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/uniapp-ts",
+        "exit_code": 0,
+        "elapsed_ms": 2410,
+        "finished_at": "2026-10-01T06:55:34.0472428Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 12
+      },
+      {
+        "name": "uniapp-previous-regression",
+        "log": ".cache/agent-level-uniapp-previous-regression-20261001.log",
+        "metadata": ".cache/agent-level-uniapp-previous-regression-20261001.metadata.json",
+        "kind": "node",
+        "passed": 11,
+        "skipped": 0,
+        "arguments": [
+          "--test",
+          "scripts/agent-self-service-runtime.test.cjs"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/uniapp-ts",
+        "exit_code": 0,
+        "elapsed_ms": 1847,
+        "finished_at": "2026-10-01T06:55:36.1883168Z",
+        "nativeSqlAndHttp": 0,
+        "pureAndStatic": 11
+      }
+    ],
+    "types": [
+      {
+        "name": "worker-unit-types-final",
+        "log": ".cache/agent-level-worker-unit-types-final-20261001.log",
+        "metadata": ".cache/agent-level-worker-unit-types-final-20261001.metadata.json",
+        "kind": "types",
+        "passed": 0,
+        "skipped": 0,
+        "arguments": [
+          "--max-old-space-size=4096",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 69026,
+        "finished_at": "2026-10-01T07:21:06.7447124Z"
+      },
+      {
+        "name": "worker-runtime-types-final",
+        "log": ".cache/agent-level-worker-runtime-types-final-20261001.log",
+        "metadata": ".cache/agent-level-worker-runtime-types-final-20261001.metadata.json",
+        "kind": "types",
+        "passed": 0,
+        "skipped": 0,
+        "arguments": [
+          "--max-old-space-size=4096",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "elapsed_ms": 39935,
+        "finished_at": "2026-10-01T07:22:39.6484463Z"
+      },
+      {
+        "name": "admin-types-final",
+        "log": ".cache/agent-level-admin-types-final-20261001.log",
+        "metadata": ".cache/agent-level-admin-types-final-20261001.metadata.json",
+        "kind": "types",
+        "passed": 0,
+        "skipped": 0,
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 21165,
+        "finished_at": "2026-10-01T07:23:45.1824100Z"
+      },
+      {
+        "name": "uniapp-types-final",
+        "log": ".cache/agent-level-uniapp-types-final-20261001.log",
+        "metadata": ".cache/agent-level-uniapp-types-final-20261001.metadata.json",
+        "kind": "types",
+        "passed": 0,
+        "skipped": 0,
+        "arguments": [
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "--noEmit",
+          "-p",
+          "C:/cinagroup/cinashop/view/uniapp-ts/tsconfig.json"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/uniapp-ts",
+        "exit_code": 0,
+        "elapsed_ms": 10555,
+        "finished_at": "2026-10-01T07:24:59.3527518Z"
+      }
+    ],
+    "builds": [
+      {
+        "name": "admin-build-final",
+        "log": ".cache/agent-level-admin-build-final-20261001.log",
+        "metadata": ".cache/agent-level-admin-build-final-20261001.metadata.json",
+        "kind": "build",
+        "passed": 0,
+        "skipped": 0,
+        "arguments": [
+          "node_modules/vite/bin/vite.js",
+          "build",
+          "--outDir",
+          "C:/cinagroup/cinashop/.cache/agent-level-admin-dist-final-20261001"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/admin-ts",
+        "exit_code": 0,
+        "elapsed_ms": 26684,
+        "finished_at": "2026-10-01T07:24:27.2617322Z"
+      },
+      {
+        "name": "uniapp-build-final",
+        "log": ".cache/agent-level-uniapp-build-final-20261001.log",
+        "metadata": ".cache/agent-level-uniapp-build-final-20261001.metadata.json",
+        "kind": "build",
+        "passed": 0,
+        "skipped": 0,
+        "arguments": [
+          "node_modules/@dcloudio/vite-plugin-uni/bin/uni.js",
+          "build",
+          "-p",
+          "h5"
+        ],
+        "cwd": "C:/cinagroup/cinashop/view/uniapp-ts",
+        "exit_code": 0,
+        "elapsed_ms": 32674,
+        "finished_at": "2026-10-01T07:26:33.4451835Z"
+      }
+    ],
+    "uniquePassed": 316,
+    "uniqueNativeSqlAndHttp": 151,
+    "uniquePureAndStatic": 165,
+    "unselectedExcluded": 21,
+    "browser": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001.json",
+      "log": ".cache/agent-level-browser-final-retry2-20261001.log",
+      "metadata": ".cache/agent-level-browser-final-retry2-20261001.metadata.json",
+      "summary": {
+        "groups": 39,
+        "passed": 39,
+        "failed": 0
+      },
+      "basicChecks": 6,
+      "console": {
+        "unexpectedErrors": 0,
+        "allWarnings": 1,
+        "expectedToolchainWarnings": 1,
+        "unexpectedWarnings": 0
+      },
+      "visualReview": "Root visually reviewed final desktop/mobile screenshots consecutively; synthetic local API is separate from real SQL. The exact locked UniH5 vendor deprecation warning remains recorded separately."
+    },
+    "ownedResources": {
+      "checked_at": "2026-10-01T08:22:30.7396767Z",
+      "query_succeeded": true,
+      "owned_ports": [
+        49336,
+        50944,
+        51867,
+        51868,
+        52355,
+        53957,
+        54642,
+        55655,
+        55666,
+        55713,
+        55749,
+        56989,
+        57434,
+        57435,
+        58744,
+        60235,
+        62171,
+        62376,
+        62619,
+        62620,
+        63036,
+        63037,
+        63148,
+        63650,
+        63713,
+        63714,
+        64250,
+        64251
+      ],
+      "listeners": [],
+      "postgres_data": [
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-native-20261001.log",
+          "port": 62376,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-ar2yVj\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-final-native-20261001.log",
+          "port": 56989,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-e6Xnc2\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-historical-business-final-20261001.log",
+          "port": 50944,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-op4XG5\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-historical-grants-final-20261001.log",
+          "port": 49336,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-tAbCtC\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-historical-pages-final-20261001.log",
+          "port": 62171,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-FsFeYv\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-historical-pages-final-retry1-20261001.log",
+          "port": 60235,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-KeNnB2\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-historical-runtime-regression-20261001.log",
+          "port": 55666,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-wlqt76\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-native-final-20261001.log",
+          "port": 63148,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-R7IbgJ\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-native-verified-20261001.log",
+          "port": 52355,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-I0AM4h\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-seckill-diagnosis-20261001.log",
+          "port": 55655,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-J7mlaz\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-upgrade-native-20261001.log",
+          "port": 63650,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-zE5LG2\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-upgrade-native-retry1-20261001.log",
+          "port": 53957,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-VQ7mji\\data",
+          "exists": false
+        },
+        {
+          "log": "C:\\cinagroup\\cinashop\\.cache\\agent-level-upgrade-native-retry2-20261001.log",
+          "port": 54642,
+          "data": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-4eQbRq\\data",
+          "exists": false
+        }
+      ],
+      "browser": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/distributor-levels-browser-qa-final-retry2-20261001.json",
+      "browser_closed": true,
+      "browser_attempts": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001.json",
+          "ports": [
+            57434,
+            57435
+          ],
+          "browser_closed": true
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001.json",
+          "ports": [
+            51867,
+            51868
+          ],
+          "browser_closed": true
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001.json",
+          "ports": [
+            63036,
+            63037
+          ],
+          "browser_closed": true
+        }
+      ]
+    },
+    "attempts": "All earlier failures and repeated passes preserved in raw evidence and excluded from unique counts."
+  },
+  "boundaries": {
+    "database": "Admin11-table and app10-table realLOGIN profile intersections separately from full282 commissioning/paid fixtures; localPG16 only.",
+    "provider": "Synthetic payment marker, token store and browser API; no real payment/provider/Queue/R2/DO-scan acceptance.",
+    "production": "No production grants, migration, credential changes, commit, push or deployment. Hyperdrive, historical catalog review, device E2E and rollout remain open.",
+    "performance": "Global catalog fence and bounded NOWAIT are local correctness proofs; production contention/scale not measured."
+  },
+  "evidence": {
+    "reports": [
+      "workers-ts/audit/route-distribution-distributor-levels-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-inventory-distributor-levels-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-api-contracts-distributor-levels-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-setting-route-parity-distributor-levels-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-app-route-parity.json",
+      "workers-ts/audit/admin-legacy-content-route-parity.json",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+      "workers-ts/audit/admin-legacy-product-route-parity.json",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-work-route-parity.json"
+    ],
+    "sourceHashAlgorithm": "SHA256 UTF8 CRLF/CR normalized toLF",
+    "rawHashAlgorithm": "SHA256 exactbytes",
+    "previousAcceptance": {
+      "file": "workers-ts/audit/admin-pc-home-banner-acceptance-20261001.json",
+      "raw_sha256": "4b93d5c5a6a53c1f880209d41758b56bc826dbaa10c57dd5824007f5a9030656",
+      "baselineFile": ".cache/migration-next-baseline-20261001.json",
+      "baselineEntries": 305,
+      "initialMismatches": 0,
+      "unchangedEntries": 286,
+      "changedEntries": 19,
+      "changedPrior": [
+        {
+          "group": "sourceHashes",
+          "file": "MIGRATION_CHECKLIST.md",
+          "previous": "895d9cc31cd1c50a3acafc2c42b30a06cd518d2636731f8add9f6616c39724b2",
+          "current": "f14c61c49983b94c1d7fab1e68b386882f1f21c91605627af9a2927e5acd6cd4",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/layouts/AdminLayout.vue",
+          "previous": "1b886a94b185e3bb302b8e10260ee0a76be69a892cb2d72c239d6cd2a8971097",
+          "current": "f677ee0aa2170eb043d74afd89e74a7d299a8a6b4c9c3f31fe20ff11005b8bd5",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/router/index.ts",
+          "previous": "753ca0290b68d18f169e74ac917e6d20a1404001df4f8d3ee416e65e91d9a166",
+          "current": "e84cbe874c94eb0b075f2e7448d91956d887cba5f6dea1bd3658f6dff0510abd",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+          "previous": "58b5c1aec2d9ba0cfa279968d0c1ee3d9954ef0d372842cac9f6d6c43773aee6",
+          "current": "6da6cca8f0d08e35afd00fdf8d69c13018202798143a8d6bbf75533e7a3127b1",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+          "previous": "1e0aef9211f0316fb5da67df1064d89f2e57762b743ea13a3572ab1644768c12",
+          "current": "5011f861b44ce97172c2c5f02d4311d4c98061b39da2425849e14f34c94045c5",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "previous": "1b3e154f09e9fbab84bd2dd13e0bb6508b9c29af22d19c7d222bd2701e9fd1c2",
+          "current": "d99f5d74be813bed625b255eea970cbd1f7f87c3939d216639b8c732629eb95e",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+          "previous": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805",
+          "current": "cb14c2b2948ead8633bad69ab030d53dc32fed6df8de2219ee4f45de14c2af18",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+          "previous": "3e03111b9bb719f12999812ef4b04e1e1748e3b162979c7cdb1626db513f490f",
+          "current": "ef06633c9317974ca86d5c172f2dd786982a4841e31063c1e51576eeeced2c7c",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+          "previous": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+          "current": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/routes/adminapi.ts",
+          "previous": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",
+          "current": "fecce445eb7bd7f76cecc714d420a6101ecb9911284600259fff0df7a175cc10",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/routes/v1/index.ts",
+          "previous": "9e578690e188eee833fed7d2e72fbdbc0d696e5e8e3515fbe75cfda45e336097",
+          "current": "edbe7d3a3e6b3fb1ab32b0c5c2dd423792012ead7833e5fe8a2c87d6d2f9b7af",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+          "previous": "d34a6c24a2055daf900ebe2bb26b49bc336783a9271c6ca852e7ed6b79d7c3e7",
+          "current": "45b110c1a6e8674d775479078300f56e484338cbde55cbf16b70186b3f4043c6",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+          "previous": "5559da1a00f384cb8dfdb38551e854bdaedfb2321b530a355b417ce32a950605",
+          "current": "80daf9fdd4e4575453d78b1309e3acab9d93da56b02309dde7d9345f8bb108d0",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/layouts/AdminLayout.vue",
+          "previous": "1b886a94b185e3bb302b8e10260ee0a76be69a892cb2d72c239d6cd2a8971097",
+          "current": "f677ee0aa2170eb043d74afd89e74a7d299a8a6b4c9c3f31fe20ff11005b8bd5",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/router/index.ts",
+          "previous": "753ca0290b68d18f169e74ac917e6d20a1404001df4f8d3ee416e65e91d9a166",
+          "current": "e84cbe874c94eb0b075f2e7448d91956d887cba5f6dea1bd3658f6dff0510abd",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+          "previous": "10d7de2d2225b5390bb6ff137739d46a0f7e4232c61c66c45ee2fa32383f9b7c",
+          "current": "2551188bb991c4294a7a68dd75e2ceb96c200af85dff9d44c9fc4b8dd2ba654b",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+          "previous": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",
+          "current": "fecce445eb7bd7f76cecc714d420a6101ecb9911284600259fff0df7a175cc10",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+          "previous": "9e578690e188eee833fed7d2e72fbdbc0d696e5e8e3515fbe75cfda45e336097",
+          "current": "edbe7d3a3e6b3fb1ab32b0c5c2dd423792012ead7833e5fe8a2c87d6d2f9b7af",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+          "previous": "d34a6c24a2055daf900ebe2bb26b49bc336783a9271c6ca852e7ed6b79d7c3e7",
+          "current": "45b110c1a6e8674d775479078300f56e484338cbde55cbf16b70186b3f4043c6",
+          "reason": "Declared distributor integration, exact role/catalog forward or current checklist/audit reference; historical PC-specific implementation remains unchanged."
+        }
+      ],
+      "unchangedPrior": [
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/api/cityDeliveryRecords.ts",
+          "sha256": "3a2d60d3c9c93e199f57d3c94821d508d9ea117f8f0f63858c89f0e88f311a88"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/api/pcBanner.ts",
+          "sha256": "6e09ed21c0a4d31746d8a366dd99b0922cef88f894a395bac670c206ba997c93"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/pages/setting/CityDeliveryRecords.vue",
+          "sha256": "a668bbfe75e2c497bb2e9f5397c8c7b518214daf9342b99cbf75c9f704910dc5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/src/pages/system/PcBannerList.vue",
+          "sha256": "fa75ed9d747a4293392dfc920e29b23b79bfc545f67b46189ca1e2c9e09e2221"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/test/cityDeliveryRecords.test.ts",
+          "sha256": "f3321f60605ebc9a3c0b2d37ad8ad53c6491e094dea8e034124719f9264c3248"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/admin-ts/test/pcBanner.test.ts",
+          "sha256": "4e5928a9af255428933f0f0676767bcb2a58ad1accb80e66cd5133ef6bbc5488"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/pc-ts/src/api/pcBanner.ts",
+          "sha256": "3a9e733e636a6e808debc30b126997e9ee2821b8654e1d461ceaf682cecda0de"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/pc-ts/src/pages/Home.vue",
+          "sha256": "d98c8dd79a493d2ebf854ecc93d6c1d36e3fa3e386150e8e183aa9779238eccd"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/pc-ts/test/auth-session.test.mjs",
+          "sha256": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/pc-ts/test/pcBanner.test.ts",
+          "sha256": "4147f596604bbf3b5e75c536b667a5d640c68d7f61fed1b7bf13c5511dce21c2"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/pc-ts/test/product-image.test.mjs",
+          "sha256": "0b3b0a0472d49149ceb31e14bda57249bd8338c6e8215eb7d41b1501cae1d7fd"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "view/pc-ts/test/test-product-media.test.mjs",
+          "sha256": "75b12756db6dd1df4a8184e36b6e93686e760f88f097355ed493707cc4e5ee23"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-frontend-api-contracts-city-delivery-records-followup-20261001.json",
+          "sha256": "d2c6fa6b6d0d901b72b26ae5a6c8278943d8db9220fb2454fbbc8256770c78dd"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-frontend-api-contracts-pc-banner-followup-20261001.json",
+          "sha256": "aefa02efaab91a85847a27d8026c36d2c9f1d4cce2b731c5cd2f3d45efe008f3"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-frontend-inventory-city-delivery-records-followup-20261001.json",
+          "sha256": "bec0208749d9294629e9d9651f9962f6f85c44ac9bded40aea62f587d02fae5b"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-frontend-inventory-pc-banner-followup-20261001.json",
+          "sha256": "13bf9cd589cd896d77c64f3a9a47dcae9f44fce55f6909520f6d4052a9e97960"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-app-route-parity.json",
+          "sha256": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-content-route-parity.json",
+          "sha256": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+          "sha256": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+          "sha256": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json",
+          "sha256": "7d069a52a7c2877cad510d9926e76791f6922965910ab02ed664a72366288ea5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-product-route-parity.json",
+          "sha256": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json",
+          "sha256": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-setting-route-parity-pc-banner-followup-20261001.json",
+          "sha256": "17feb16484d51cec40a54b4dc20f1a24dab0c8b60634850f6635539c009e826f"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+          "sha256": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+          "sha256": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+          "sha256": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/admin-legacy-work-route-parity.json",
+          "sha256": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/route-distribution-city-delivery-records-followup-20261001.json",
+          "sha256": "44df15942f1341da468bbda8e92befcfd9ecfbe503f76066d927348299ce1329"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/audit/route-distribution-pc-banner-followup-20261001.json",
+          "sha256": "19769c1372726811f71e5cc2384c30c25173039260c6525fdd53d422eb3dc014"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/admin-city-delivery-cancellation-contract-review-20261001.md",
+          "sha256": "95479b7c409c5063b0666ef13768b788c37dd26238732e6771c97760a0cd28a6"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/admin-city-delivery-records.md",
+          "sha256": "b4ef1ecc570f611a81b80db763797835b932a64ec64935edda0172bd466cc33e"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/admin-city-delivery-settings-contract-review-20261001.md",
+          "sha256": "c67cd14cee2d6bea9551e3eb830b722b8954516a329ebc5c8477a9d9e18f9422"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/admin-pc-home-banner.md",
+          "sha256": "52d29226dedf3ace89b0c55f282fba596916efec805d6038855e0de31aeaf79c"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/docs/city-delivery-callback-authority.md",
+          "sha256": "d0aca7f0b0dbee1d977e7d2e017cc4d51a5a8d37e322fd737dd311408293d8fb"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/migrations/0124_city_delivery_callback_pipeline.sql",
+          "sha256": "fea0ff0d7d7b1a6bdeb1943102ab67527e98ebc44c9b0626861e74ffd0ebc858"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+          "sha256": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/admin-frontend-parity-audit.ts",
+          "sha256": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/scripts/route-parity-audit.ts",
+          "sha256": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/app.ts",
+          "sha256": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/controllers/api/v1/AdminCityDeliveryRecordController.ts",
+          "sha256": "c1e3905b6b2d2f36a991c9e34270f40555660a6b5d5383861284d8edc7c37a47"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/controllers/api/v1/AdminPcBannerController.ts",
+          "sha256": "ee50350a0351d5d9511e9d128d25a2d7fd029d55f408eac00ce5ee291ee3133f"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/lib/di.ts",
+          "sha256": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/migrations/cityDeliveryCallbackPipeline.ts",
+          "sha256": "cd046b818d08d43ccf181a9cb1534bf33288e7ac86ce7c8b875291f72f2e4d1b"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+          "sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/models/schema/order_delivery.ts",
+          "sha256": "eb6c85d55433f98c3c30d566d35e786ce5366ca1b964f6a42193cc80e1ef7751"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/admin/AdminCityDeliveryRecordInput.ts",
+          "sha256": "aeb29329ba5b700467c37567f74ee2dfbe776c54051c0a55666ff9d773c31dd3"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/admin/AdminCityDeliveryRecordService.ts",
+          "sha256": "95e7ba00063fa0053e7c0c0eda3cf3a192ebef27c9b387c17cb0f26b644d1dc8"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/admin/AdminPcBannerInput.ts",
+          "sha256": "6aa820c57866d7ed5ecc740bd30ace1166f1bed72b739f97b2b21921bfb00a14"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/admin/AdminPcBannerService.ts",
+          "sha256": "28a6201968e25db0ab8e41c2cdcabd45db1712e2a88adc3ad81414c81a23b031"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/delivery/CityDeliveryCallbackService.ts",
+          "sha256": "ef8b0023ecd89f79ae241ecea143b60c9ccd2b6581866f83e980ccd59cc75cd3"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/delivery/DadaCityDeliveryCallback.ts",
+          "sha256": "cae32c17ec1172a03dd15726466e4cf3c3196f296efe08d7a24165ad18c6e108"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts",
+          "sha256": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/delivery/UuCityDeliveryCallback.ts",
+          "sha256": "c26983f988397be0e9eacbaf2161b29733ad479ccffecb0073cac8a6bb409a7f"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/delivery/UuCityDeliveryProvider.ts",
+          "sha256": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/order/CheckoutPickupPolicy.ts",
+          "sha256": "4073f9d6f5b5041c4c87bf459dc919d85a11bea1d1f86dc88bfa3b3092e43120"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/order/OrderBrokerageService.ts",
+          "sha256": "30617b87b46eaa1cae62ff09ce4f35f7706868aecbae0d27f4856e3026ee4d8e"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/order/OrderSupplierAllocationService.ts",
+          "sha256": "30d9dbd7b752152d0816e163ed4e7179cfc282a498b11ebe2165b46cf4e2debc"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+          "sha256": "33dc4aa4d0eb0fea32648ff152050d1b8c6df5858bbfc4e546b190d4ef9f46d7"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+          "sha256": "8e398ccd4ebf6e1d222351a8d14a6a0346e3c6ae4ad1dd770ec6ea25c8c87f2e"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/order/StoreOrderWriteoffService.ts",
+          "sha256": "536b36ae072b802ee7a720dba0da862bbf71399aebe0726678743ef057e88636"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/out/OutApiService.ts",
+          "sha256": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/pc/PcBannerReadService.ts",
+          "sha256": "e91fae5061ea70f15bc002b5d69901ec3a0288aade1cee749b58b37a399deef4"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/pc/PcCompatibilityService.ts",
+          "sha256": "99e2e4b9b9d8e048de829afcf65f7bd558904d5559931e89f36090ce57090aeb"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+          "sha256": "9a0f84175c3b4b6fe6c366ccc295965f4cc7f0e04854cffbcce6fb6d69b4d8a8"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+          "sha256": "41d01eb133ce2e0025a97a65c5f7d4fdb65ae3442145d59652d1ba43598ab60c"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/services/system/SystemConfigService.ts",
+          "sha256": "7d55ce59379d8406cd846319ff1634c17de94271231660891bcea88638fb17c3"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/utils/errors.ts",
+          "sha256": "5505f8fb2c2de21b7e7955541992a56d929dc638143ae9d833729128f84a630c"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/src/utils/jwt.ts",
+          "sha256": "658b42ff9f823d44423cd83d4abee9b19701447269e6700dda375525294995e7"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-all-frontend-parity.test.ts",
+          "sha256": "10553065787af2e5763c569cf6148cf4ebfca83d96a70c4c4946a8269ebd1be5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-city-delivery-records-http.test.ts",
+          "sha256": "b1ed6bd3ecd9999d30015479467085c26c30677156451747c4e1cb2e5780458d"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-city-delivery-records-postgres.test.ts",
+          "sha256": "1f0ff216c4d771ce08b61926d6daf6f2691ba8e320d2d86c5358bb0a12b4661a"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-city-delivery-records.test.ts",
+          "sha256": "e9a6764afae2e2f64c0bcec2831279972afcba4d258cf625597438f5f4219a47"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-frontend-api-contract.test.ts",
+          "sha256": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-frontend-inventory.test.ts",
+          "sha256": "823206fc1be3892e0fe97ac5d165f7c2078f7ed9ac466f61297e11221865d23f"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-marketing-frontend-parity.test.ts",
+          "sha256": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-pc-banner-http.test.ts",
+          "sha256": "bbc1c2313d1414694f5be367e389e4074ee3bcc510574d562ac588e371f4930c"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-pc-banner-postgres.test.ts",
+          "sha256": "7eda12b68820e3d15a5fc4a2ac3ca7c3c81b776a549861aed0b2c05243dd8bcd"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-pc-banner.test.ts",
+          "sha256": "96f485450615460bd971a055ffdde38f1df94341704873b168532e87e5104cd4"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-permission.test.ts",
+          "sha256": "ac99f99e35eff400c5b8406ac8b40e008c7f1fb5a5e3e0dcbd9ebdd5a92ad22b"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/admin-setting-frontend-parity.test.ts",
+          "sha256": "70c7eb8e7e92923cbef377874b51da444e4ec71da0875edefcd66c311f475e3c"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/city-delivery-callback-authority-postgres.test.ts",
+          "sha256": "cafc0886fdae2555af4a7e0b5a0442b4835155b0a0acfa6eaebcddf3e45474e8"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/city-delivery-callback-watermark-postgres.test.ts",
+          "sha256": "2b5cf0e3d471307d673d16903d90ed936709ab8193cc7cf4a9b7dd89aa74ab3a"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/city-delivery-callback.test.ts",
+          "sha256": "202a7d89d1258aea4a8da90c41adbd0b5e9400732632a986dcbbeb42b9f5af69"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts",
+          "sha256": "94d6a78d5832450b1aa8f03c458eac30d172d8c02c41f3cb92b738e4066f82e8"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/cityDeliveryCallbackAuthorityFixture.ts",
+          "sha256": "ef57e8f83a989d6f143a774cd16a1c4b76893cc699f079b316ba00b81d11c915"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/cityDeliveryRecordFixture.ts",
+          "sha256": "6f0b64d6b5220ba0952c7c404030ed422393905221f962ad01691cc6507dc1f9"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/financePostgres.ts",
+          "sha256": "8a7849c2749f5ef2e08543a6185989b27dc3de604193a19dcf847aa6cd0fdfbe"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+          "sha256": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/pcBannerFixture.ts",
+          "sha256": "b917c222970e6e40e883efcdc56dbb7046633b1ca742a817ead1846977d2b9fa"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+          "sha256": "8396b14072dd273c1aed68f094976e7f49466a48149193e55b6a87ff39d7faa8"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/integration/CityDeliveryCallbackAuditWorker.ts",
+          "sha256": "a66a6bc866e9449f78408d2428287e3327795083e2f7aaf199bb32c5ce1e09c5"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/integration/PcCompatibilityAuditWorker.ts",
+          "sha256": "6f7573ccb0657beb1b77184281e2d734b7312348727a39587d7d443627106225"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/order-brokerage.test.ts",
+          "sha256": "a87a8f5812e999e1a7f53099324d96c413f91365ddc23ba1076aa9fc6152f020"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/order-reward-config-authority.test.ts",
+          "sha256": "00663cc4893f213a6b363d3dc463a953b1e287f9d67ef5d79736cab7e49b3b46"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/out-api-migration.test.ts",
+          "sha256": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/pc-banner-read.test.ts",
+          "sha256": "3debb01ebdac6d75c45411cfc6f6affd3296ff6b4d6f871751982b008fbe675e"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/pc-compatibility-migration.test.ts",
+          "sha256": "ca3b1171e84a52722ed1786df9c5cce23e9d6c559400f29504ee99003d9d92fd"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/refund-line-compensation.test.ts",
+          "sha256": "e3aaa0e0e6c62af934be903c498630c89369382934999980dab093912d77cafe"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/refund-runtime-permissions.test.ts",
+          "sha256": "8508d407c18691dd1e6d3383f6ff494cc5159062dd28d69772e746061e781417"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/scheduled-maintenance.test.ts",
+          "sha256": "444b7edd475c05f119381c32929dde26203e25aed0de9bb376688ff11842ea78"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/store-order-writeoff-migration.test.ts",
+          "sha256": "ef79aa4b7168417054063526b4bbbb2ed6c1562318614b0ace3f06c1bd0711de"
+        },
+        {
+          "group": "sourceHashes",
+          "file": "workers-ts/test/supplier-split-ledger.test.ts",
+          "sha256": "82f8fda19d3222e3bcb4a06ed04ddc2563de1c9340a94d0ea520c5f386423121"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/controller/admin/v1/system/config/SystemConfig.php",
+          "sha256": "ce906924896c4b67efab6fd2c370f0a9d128137e325c9305fafd113bf4c26650"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/controller/admin/v1/system/config/SystemGroupData.php",
+          "sha256": "4fb2ebe0b2efb7a8df6c15e614ecbbff4110d73f07be877a8b3c6818df8d06a2"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/controller/api/pc/Home.php",
+          "sha256": "a88f0bb1d8db089b63500f531a00f64c7040d7137ab920e722d07a452a74ee7a"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/dao/system/config/SystemGroupDataDao.php",
+          "sha256": "9bc29e7300c29577d3bccbda03338c6c9d79bf5d43ed7906da2b6af6d293d095"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/http/middleware/admin/AdminCkeckRoleMiddleware.php",
+          "sha256": "61d841ef746d5e8031f9ad4d24bc351c7f742659f8fa0b4d62af8f2ce9e48881"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/services/system/SystemRoleServices.php",
+          "sha256": "9c85f2b36a3584e6fb87fc79a20a819001a13c5e1490a7a20513794cdf7d906d"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/services/system/config/SystemConfigServices.php",
+          "sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/services/system/config/SystemGroupDataServices.php",
+          "sha256": "976231dbe392188f28835d0e40041f00b02d336956ecf3cb3d6589e64c769ab8"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/app/services/system/config/SystemGroupServices.php",
+          "sha256": "74ba3716b6edc139585bdadf821490469133719a3834732bddabc3e103afa987"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/crmeb/form/BaseComponent.php",
+          "sha256": "c81badc49c1c3ed42c33feb76a031d37f3a42b9551f73efcb5f6967bbf06da4f"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/crmeb/form/Build.php",
+          "sha256": "53303eb66442345713775e2a2268c61bf096e1560db5af8ee025f4c71987101c"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/crmeb/services/DeliverySevices.php",
+          "sha256": "cc4e94589b9455896721afea36ece39185b9c3abf36507c93d102e4c61772fbe"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/crmeb/services/GroupDataService.php",
+          "sha256": "b485faa27fa7a15f7bc963ad3db408742dc7987dd3dcc4810cfd0259911e774c"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/public/install/crmeb.sql",
+          "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/route/admin.php",
+          "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/route/api.php",
+          "sha256": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/PC/pages/index.vue",
+          "sha256": "a5093ef0002fcbbd9fa32ed9bba4c18b862d1cabbb48410e572b6070228cfa71"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/api/setting.js",
+          "sha256": "e1f1fe9d8889821e5b9b3ae95dd843168d142620a3fd783868f980474cb011f3"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/components/fromBuild/inputBuild.vue",
+          "sha256": "20f7f3c1973172c2737a8ce84dddd99d9edd84e014d9f134d89e4fd6a175175b"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/components/fromBuild/switchBuild.vue",
+          "sha256": "c5ec13a15d95359bc46f9c93b18b73fbdd938ba02466dacb5fe6fc0d084909c4"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/components/fromSubmit/fromSubmit.vue",
+          "sha256": "c6cb0af8d45f2edd20326c46b90ada9538309146d94de280a8f405efbd1c3e79"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/components/settingGuide/index.js",
+          "sha256": "29b74f896b2713f5ada6760339ee8fdaed69de08a86c4a3ca47738ca655afc18"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/cityDelivery/setting.vue",
+          "sha256": "1e46a01fa2128841e69c7cbf41323bd6abadf5fff205403bfdc6e549debb1980"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/shop/buildData.js",
+          "sha256": "87ae8d74659a66b8089b6c9e1abb23f278b425cc167ff1eb52fef47311bbe349"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/pages/system/group/list.vue",
+          "sha256": "208e7db049144cbb599526a1de7a30409f0fcd86b17cb60bb6147c0bb93ec36d"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/router/modules/setting.js",
+          "sha256": "e9ce32dba8609dbeef18438a9e9e14d0081844c5c4e783edbc1a374eb1cee554"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop-php/view/admin/src/setting.js",
+          "sha256": "4523d74b4a297ca11a218c4eadabde154ebda08bf13f35073bde5292073f0cd9"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/api/config.ts",
+          "sha256": "b86da2e5a3ba1d0a439445f97b2e6a9384c6e8e7a165c2363bc2f83c1cbf36fd"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/api/shippingSettings.ts",
+          "sha256": "45fabc52cff7774e67b77f6bcefbf797f8938f77a48268e13a7a1b7a8c8c0525"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/pages/ConfigList.vue",
+          "sha256": "5e482764fac8f1be5c5963eb9a418a7f6de4ba07e8ebcf60d0d3e097254185e0"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/view/admin-ts/src/pages/setting/ShippingSettings.vue",
+          "sha256": "b0c6187808da755c2eab0a151e11d5d76381880ab263614246af7eb61f161d0c"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json",
+          "sha256": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/env.ts",
+          "sha256": "3c8ddc541b40799095a6208faed59df716b64c3cbac56bd11c6457497f6d5f9e"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminShippingSettingsService.ts",
+          "sha256": "92fa0129cc2d5e219662fd4b6f42b0128ce3d255bdcdd9d8653d57e885c13d50"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/delivery/CityDeliveryCallbackService.ts",
+          "sha256": "ef8b0023ecd89f79ae241ecea143b60c9ccd2b6581866f83e980ccd59cc75cd3"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts",
+          "sha256": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/delivery/UuCityDeliveryProvider.ts",
+          "sha256": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/store/StoreMobileOrderService.ts",
+          "sha256": "70f32db448ce04e2439e6966d20553695fd08d0ce6a0f2cd05c9d929c80dd847"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "C:/cinagroup/cinashop/workers-ts/src/services/system/AdminConfigBatchService.ts",
+          "sha256": "eca2696a35c5e94a085cb1320df6c8af49b7977cbf60e5885ffa843cb978f25d"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/admin-ts/package-lock.json",
+          "sha256": "18493b7958bca887f3f74bfbbb7b98da9e1be74f0e79c897cb201e039593d011"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/admin-ts/package.json",
+          "sha256": "f7f11ff545253a731506eb3e3add1f51ddec0a45048f9a917ec84c607620c06f"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/admin-ts/tsconfig.json",
+          "sha256": "b79d75bd11247a2548b891da0dc34262de211ea9f8859eddcc750c5365b1b7a5"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/admin-ts/vite.config.ts",
+          "sha256": "467d41f4526557159d7703292e7e9deb12735384702694cad56a8b997a9ce480"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/pc-ts/package-lock.json",
+          "sha256": "1d43ce59ccd6e54c1abc814b17e8de88cf4485d286b0c7041ca816cdf9bc3a19"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/pc-ts/package.json",
+          "sha256": "d0731cfeede8028fef477c918064d0f7402b8af0f0f2429a997c3b88aec7ed4a"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/pc-ts/tsconfig.json",
+          "sha256": "9c3eddb60dabda6e5e60e87b31acb4cfa59d5387c5a955e169dab73ae5c1a3dc"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "view/pc-ts/vite.config.ts",
+          "sha256": "d38029664596dfb6c52d83032c23d4485142576434d4c027c12fb53ffe54fd77"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/package-lock.json",
+          "sha256": "19867eb7eb5600ea76c09afb5bc5284ac6e9da2a65d71e1367f52c693156cd71"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/package.json",
+          "sha256": "b281d90039222f82cf55e341dba13d617d285631c2010db00c20cef1dad50a31"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/app.ts",
+          "sha256": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/controllers/api/v1/PcCompatibilityController.ts",
+          "sha256": "8b0fea94c29eb2094583505635b1568686bff597a023c39dc406c8441bb13234"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/controllers/system/AttachmentController.ts",
+          "sha256": "e84851b05caba9a349d88314486134221637e98a058fec826e618cb051506260"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/env.ts",
+          "sha256": "3c8ddc541b40799095a6208faed59df716b64c3cbac56bd11c6457497f6d5f9e"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/lib/di.ts",
+          "sha256": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/middleware/admin-auth.ts",
+          "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/middleware/admin-runtime-auth.ts",
+          "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/migrations/runtimeSignDayGroupLockBoundary.ts",
+          "sha256": "8a8345b6a65c052ec259c7fc5e416b838ab1c28de88febad60bfe8d9970c706e"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/models/schema/catalog_templates.ts",
+          "sha256": "15f0a957a31d5fc49f1551bfec24a9ea6f6612d52f70d401c3f03ee16bc7d42b"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/services/activity/ProductAssetPolicy.ts",
+          "sha256": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/services/admin/AdminLevelActivationInput.ts",
+          "sha256": "d5a6535b45bcb7eb1e9804d160beab159fbeeefafc75f9b9bb02768f1f4a24f9"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/services/content/ArticleContentPolicy.ts",
+          "sha256": "f12dd586c498ed30ebbda79fa95047b9f85f772e8a667eb2ed4e6e12db50010e"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/services/system/AttachmentService.ts",
+          "sha256": "454cb187c1cfe0007a909930cd21dcd7a26296cb4e87fe62f5d577baf7ed76e6"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/src/utils/request-body.ts",
+          "sha256": "8004bd6c9205ce389e505d280e7a593a76ffc7158a657e0c6d7e792bc2b245cd"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/tsconfig.json",
+          "sha256": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/tsconfig.runtime-test.json",
+          "sha256": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8"
+        },
+        {
+          "group": "configReferenceHashes",
+          "file": "workers-ts/vitest.config.ts",
+          "sha256": "f38f244038891c9dc0dc58910c8f04326e8ceffa471d3420a40b014a3d45c208"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "workers-ts/audit/city-delivery-callback-authority-acceptance-20261001.json",
+          "sha256": "f89ad0281b26287b9b36b569e297f34f21e11111e0116d634d48bd2e0a10020c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "workers-ts/audit/admin-marketing-config-acceptance-20260930.json",
+          "sha256": "525257cc59ec307463419ee399b4ed57fa4b9f81c239c810fb09c33f3f170091"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-baseline-20261001.json",
+          "sha256": "11333b566857060577645ef799a904335a8d7232f2af8c18d35d500cb793e304"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-audit-summary-20261001.json",
+          "sha256": "76384be7e0a2bb62887be556f38fe36261c5c3e594410773f43d3237afa4d962"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-baseline-20261001.cjs",
+          "sha256": "4dcc70f47018a85597bd20fa91e34cef33fd63be0f68bb8abbc0db523d84feda"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-audits-20261001.cjs",
+          "sha256": "99aa2eeea9f846a43bc29a8717d0edbe5624a78d3db45b7595c9d388896b14d5"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/run-pc-banner-check-20261001.ps1",
+          "sha256": "cbc54612a2caded6e04201ce87172ff4be12f71d09816ba025fc45a9502980dc"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/cleanup-pc-banner-cluster-20261001.ps1",
+          "sha256": "93c5410363d0dcd9a59d2b4e097026990302d7826aa99843732f80b61549cef4"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/freeze-pc-banner-acceptance-20261001.cjs",
+          "sha256": "e5ebb08ab93612ce28e674feb7d3f5c8909b1b90b2e12d56c9abea996fa2a5ec"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-owned-resources-final-20261001.json",
+          "sha256": "9751d5ffbf79e6d39751e12dee84b1b10989a480b43211990fb659663205d6cf"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/verify-pc-banner-owned-resources-20261001.ps1",
+          "sha256": "d71939049e5b891ed3905e32e7d50b8ec12b7d7108a82bfbc28766d6e874b2aa"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-build-final-20261001.log",
+          "sha256": "939fee501b538ed636a40865ec78c62cc5535e2f53050ba3b06152efcc201271"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-build-final-20261001.metadata.json",
+          "sha256": "88d65fa5c05a7f295a8641e6a6d919e564900bf7e0ce7c66b29911df558b656f"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-build-first-20261001.log",
+          "sha256": "7357c12b9aef8672a8c014687cb84b2273acc6601423c3be8264683ee0e758a4"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-build-first-20261001.metadata.json",
+          "sha256": "0f8c7311864f54589a9fc63393a607b740ac4e8a8da82e1eb6bd241d8492ac3a"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-native-first-20261001.log",
+          "sha256": "447c74e7d03331efc1a7ba0c732bebab6f1b7a52efe086fedc73dac5d8335859"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-native-first-20261001.metadata.json",
+          "sha256": "ddb4671677946a1b2993769fc345d5d9c22d5c3388db2b2be418b110acfd4201"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-pure-final-20261001.log",
+          "sha256": "b32aa8336c65098f4f67add3809a5abed8d2a635e47dbbcf331d5a5919e439c7"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-pure-final-20261001.metadata.json",
+          "sha256": "32629afcc7241712312bc2ef5d62c666a62894b9650e53a6571ebc8d1f79a79c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-types-final-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-types-final-20261001.metadata.json",
+          "sha256": "3a028eb7c95770d217de849d0e3992e3a97efc66c13280a5fec38b227e8dbcd9"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-types-first-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-types-first-20261001.metadata.json",
+          "sha256": "15de7200c7f135209fe8a31394cd6b429963f8beee3ef5190e68c7c2f2c91da2"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-browser-final-20261001.log",
+          "sha256": "9eb65f8a5b6d640fe4289c7b680091c432104f9c6a3acbefeada9faa3056d53b"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-browser-final-20261001.metadata.json",
+          "sha256": "dbdc913490d998551f82da0802945ba5229a7fb0d15ca15c6004b331a8f163c9"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-browser-first-20261001.log",
+          "sha256": "b1e00a3d27e9123c16518b054bad89d9744059d090806135c8d0192aeb735e96"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-browser-first-20261001.metadata.json",
+          "sha256": "582daa3e898290d9ca15c4f84450234aa3448038849c6bc882f8d8920bd0a112"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-browser-visual-final-20261001.log",
+          "sha256": "5154af95f67c15e62cb84e0fad55761d97a1ff52a19983ea05e10a604e6e165a"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-browser-visual-final-20261001.metadata.json",
+          "sha256": "8b3653cd4f03b43c8942208ae2d56229a6c23f1e2133ec9407688578f9b4976d"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-compatibility-static-final-20261001.log",
+          "sha256": "51640d31698340e015d33060817e771de001e3f1dfa68eae3dd955b3a43a083e"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-compatibility-static-final-20261001.metadata.json",
+          "sha256": "fc30ddc018d2658913353006986a8a8278060080150ce1c18894a70ea770b169"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-native-final-20261001.log",
+          "sha256": "142bda863b5d5d8214684d846c81615fa7f0007e5a739e4a8a1084597696bca6"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-native-final-20261001.metadata.json",
+          "sha256": "b27e6e75ff6e4eeb01473944d8054ea89e2c71d946a976007bb3d8ca8788906b"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-final-20261001.log",
+          "sha256": "583428e26b6d8996c5e18ae77469ae08eac0f584c55afce81baf3937f91f5be7"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-final-20261001.metadata.json",
+          "sha256": "e1c5524e6105d2f6ea10b94e2aa5a764dba9f67af8b5622c0f64724c50c341da"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-first-20261001.log",
+          "sha256": "25c8270c20ab03c297774dd5b85b2accd8504314c0a099fcd80f1978203d8124"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-first-20261001.metadata.json",
+          "sha256": "ee898d446cf3c2f5a11ffb3fc8c1d39c4fb0bbdebf7b1ea1e2721f6a9dcb1334"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-tests-final-20261001.log",
+          "sha256": "167db4f847fac7e515104f672c2bff639b1c704eac8d29d8e50a7c704f123a29"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-tests-final-20261001.metadata.json",
+          "sha256": "928294d6e27cef00595869244a8a7d6dcc39a2a8ef5e8e53b1a10b2f61559888"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-visual-final-20261001.log",
+          "sha256": "a0e11edb0645f93b4df1a3c84da89a984939d95f3a9211d7234497fc67055a1d"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-visual-final-20261001.metadata.json",
+          "sha256": "3c2db960ab509a922b23734251eddf35e22b3e627800644c4c2feaee11877968"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-visual-last-20261001.log",
+          "sha256": "a696ad45e63a5b2f38c7c895b028afefabf0a6602eea2d8a81450667ec70d0ec"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-build-visual-last-20261001.metadata.json",
+          "sha256": "e005a26ce5d1075ec80398fae11edf182558b5f45cdea54627079b73613f4be8"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-pure-final-20261001.log",
+          "sha256": "5356a8a05043ff1d9ebb9b23cd413ffc41bbc704db3adb6d553bd672f6878209"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-pure-final-20261001.metadata.json",
+          "sha256": "dc8f323a12e8febe58467a5fddf8fc8ada56584d3a84fef560b19ce17297089f"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-final-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-final-20261001.metadata.json",
+          "sha256": "554f7034cd4cf359e64644dcb2d1e1f27d731a3cd7b07258fa51390cd9133c2c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-first-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-first-20261001.metadata.json",
+          "sha256": "8ab8067ac8466ef26930a3a454c0352ca28e4ac0bba4a90fdfd5c73f3e64c158"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-visual-final-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-visual-final-20261001.metadata.json",
+          "sha256": "e7547c29201ad64b91db945f4ad595d943d728f62c30017ff9cb0db3b3fd819a"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-visual-last-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-pc-types-visual-last-20261001.metadata.json",
+          "sha256": "3c8b0c70bc4127d3bb8d346d519c3af0c7ce49297179226b064ee57fe30ebf66"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-permission-static-final-20261001.log",
+          "sha256": "3e3358fd2495f2e0fbc63302f07ae0c2bc6039e88eb95824c1b6bdff7be81e66"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-permission-static-final-20261001.metadata.json",
+          "sha256": "8f709a5bd6166e94b2272109d9ee069c724f37a1fada26d9269803fa04143b8f"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-public-native-first-20261001.log",
+          "sha256": "c7973bfe760bd0e7e46c37298a7169154605ea6b9b502f3519efa193908af5f7"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-public-native-first-20261001.metadata.json",
+          "sha256": "dc36de6809cfebc06c52fc4d9d91b0fbf4ce6b6ac6912157769acc3c797110ba"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-public-read-first-20261001.log",
+          "sha256": "a78c7dc1536b550afe0c5354f146a8c0fed8bc5a94d6a1da3ba7e23aca8f476d"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-public-read-first-20261001.metadata.json",
+          "sha256": "6897a948698e3593f4dbfb27e863273a257d0f85ca9213726c24b1dfce8856a2"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-worker-runtime-types-final-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-worker-runtime-types-final-20261001.metadata.json",
+          "sha256": "2ff77ccc066e90792932462ec236a82ebfecbda2ef732bc32674e420ca952c5e"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-worker-types-final-20261001.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-worker-types-final-20261001.metadata.json",
+          "sha256": "2e920e2e48fc324c996f0fe8840b45c05aaa1d004b9e30c7b8b604e074a23948"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-public-native-first-cluster-cleanup-20261001.json",
+          "sha256": "16b04b1e6d80b919f374a5b6868dcf53b70ed4eaf8d690225654cfdbb4051453"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-admin-native-first-cluster-cleanup-20261001.json",
+          "sha256": "2c477c8a854aa3bdbeb3a2ae871e6ee0943a8214c8ea875538b1f13a03ba977a"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": ".cache/pc-banner-native-final-cluster-cleanup-20261001.json",
+          "sha256": "09bab2f246ad2ce5764f0af21a007fe577a16696e840df30a98d157f4b3174c2"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z.json",
+          "sha256": "3c43ad101cd8fc9a833acb130dd630b9ff6336abf63deb3b2872191a86dded0f"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa.cjs",
+          "sha256": "b60d3f7f1f5a47d33d3c10813de78d27a968d3f813fe70690243e2412e270c32"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-first-20261001.cjs",
+          "sha256": "db25c71962417cbf54976defb7f196237902348c9de2763ce88725d666dde48b"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-second-20261001.cjs",
+          "sha256": "3c8ded581bea6e080e7266802a720911d500fdb9d321cbe2fd21a1a263aa6865"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-desktop.png",
+          "sha256": "81143864fd29d7c446bd6842607cb23d7b99f7b8c45810bd52ccbded95625ecf"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-full-form.png",
+          "sha256": "de1e028806956e9433c962a3f5faa04a6a71ebab98ca3ba7a120081587f34c13"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-pending.png",
+          "sha256": "0553615e651c8cc48310cac42953567ed3bede086644064a6611a13a28440698"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-mobile.png",
+          "sha256": "5038bb5220d0b6a371929ebb4382a6c6cd4443d538bc348adcb1c9c9b1a7bfe6"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-admin-mobile-editor.png",
+          "sha256": "f6a84bd89b34742397fc893a54cccc8903540fade0b0312b540f5016e096cbcb"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-pc-desktop.png",
+          "sha256": "1e14cbdc0bbf6df96b7147e01f38c2343c46481df27fc288ef756ec41d4efb1d"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T05-07-03-280Z-pc-mobile.png",
+          "sha256": "d43e247bbb8c145bd21291ad6dc597d0f5c5f494acb2126ff0f7ae84b29058ce"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\index-bJWwsekN.js",
+          "sha256": "6ec53278fba3ca0201372fcbb4405c826214f3f9091f9f44efb83c4db904a660"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\AdminLayout-D1Bn--i6.js",
+          "sha256": "fb3dcefcaa3ceff364ee6b00bcb2ac9b778d89f349c361624a92963a121e7819"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\auth-CCsAvGc7.js",
+          "sha256": "7726d8a0be5aabb43ada5ad8eedbb69f6527207baa7cde2b8e427d0df610bff3"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\auth-2Jk8Jx7L.js",
+          "sha256": "d535e730989906e729bfcb6eba97336fdf8fbe8726f76dc47e098a86fda348b9"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\request-OxC9ZbtD.js",
+          "sha256": "fd28d13b12187c7b8baeab993817df79b27d645846f69ae57d04a27713bf0d6c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\PcBannerList-C_b7ewkr.js",
+          "sha256": "f7c4221c8ed45ab0af83ce9f0cd06eec061597fa493afef1f1cae9257e45027c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\SeckillActivityImagePicker-DPSWxeU9.js",
+          "sha256": "b63bf7f8c6ad40e6f390998646c96598faffc816b0aeaf2c858c821d81b8ca99"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\admin-ts\\dist\\assets\\attachment-Dt6Hutnb.js",
+          "sha256": "77d0b3315d220cd8e9cb3f6ff01cd99ecaf5af397e11c4a2e22c1a4a03d1ab20"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\index-a7-eOSRj.js",
+          "sha256": "3716eb35e7b3586f57219cb103d0d9eb1b1a50c2a1eb8cfe914d64b9a45f66a7"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\DefaultLayout-DQKdoSbm.js",
+          "sha256": "fa40f979df49ead820d7d195d526741e340b4064e50ee1135d7eeb404ccbe095"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\Home-CRK3rE3l.js",
+          "sha256": "8a4e258418aaf72888c493e78d1d7d93e7a648a5969ce33f3e5667f1f6d33c54"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\ProductImage-B4tyenOO.js",
+          "sha256": "f099c32849c5a6a1d0e49e2375efea37e2c71704c5317e2b7b819c4923061334"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\product-BbjZgHUg.js",
+          "sha256": "c0f9dc4ef0ec7b5983d0d1e9d578d76a50ba4685ad535b204c85000b6dadf75c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\GoodsDetail-BlkWntkb.js",
+          "sha256": "20c15c42b9e485995c787ccde2c616cb2dd92a69b580b39fd0b63cdddd680582"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\user-BQxMZ49b.js",
+          "sha256": "7ae36d9e9b7de2008c3034260307c4b1fb77786e6ecc7129b590330a3f99f4cc"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\couponWallet-DLb4xfJC.js",
+          "sha256": "822b03e7a9f756c1ec9cd2ebca7e0c308160ce696eaadee17b47df48173e711e"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\activity-CMQld8Kk.js",
+          "sha256": "cef49b3cc751dace44d7f1182befff4075bc524b5f7e92df6d56b5977ce55025"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\cinagroup\\cinashop\\view\\pc-ts\\dist\\assets\\seckillPurchase-DvQ9smA6.js",
+          "sha256": "7a03540ea79312562d9da988197e7eab61414a1ab763d4c1354d7ec6e729bb48"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-desktop.png",
+          "sha256": "81143864fd29d7c446bd6842607cb23d7b99f7b8c45810bd52ccbded95625ecf"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-mobile-editor.png",
+          "sha256": "639f6abf4203ed1d1ddc841b8b2b53d65333853475db66b4a8df8b34dcd125b8"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-mobile.png",
+          "sha256": "5038bb5220d0b6a371929ebb4382a6c6cd4443d538bc348adcb1c9c9b1a7bfe6"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-admin-pending.png",
+          "sha256": "3ea804976f25e82e8671b7eb1496daa25ef8f7bd89c01191d4e629a7f2a5aa2a"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-2.png",
+          "sha256": "371e7a134a49e7bbf7dd27e353587c5674852b7beb501d3a767ddd259e0c09f1"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-23.png",
+          "sha256": "55e60753179c98e94ab06366506dbfcc8ce90f2450e05a956d20c01e29fee30c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-3.png",
+          "sha256": "06677548b78d967d4b2fe95e8b1f37923514c225070d14ed336817805dba0103"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-30.png",
+          "sha256": "f6a84bd89b34742397fc893a54cccc8903540fade0b0312b540f5016e096cbcb"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-4.png",
+          "sha256": "145594d420e78266ac5462f7f0636c284ec1e5d2d433ac95b6de5d6c4c7d703c"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-5.png",
+          "sha256": "ff392edddcba4ea9aa24393027aed371475aa675b03cacabf497b94c151435c3"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-failure-6.png",
+          "sha256": "e52788902aedfd2adb821dd293c027f618b221eaf47cf2472c823546b315e716"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-pc-desktop.png",
+          "sha256": "f46879cefcf676445227925025f4e002c6ea1d90b1ecd8be2a30862899e049c7"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z-pc-mobile.png",
+          "sha256": "853fa046ecacdc7ff94cf6b8ebeaf8b27731a43b0e7b9af46264aaa6578ee401"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-44-49-054Z.json",
+          "sha256": "5071d69aba3220643efc8b13b7db39f015d872850e2c19efb2bb0059974ecc0b"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-desktop.png",
+          "sha256": "5005e9fef89939f993c40d1152580850a0c8ffaacfcf29807ef24b77dda31b3f"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-full-form.png",
+          "sha256": "de1e028806956e9433c962a3f5faa04a6a71ebab98ca3ba7a120081587f34c13"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-mobile-editor.png",
+          "sha256": "f6a84bd89b34742397fc893a54cccc8903540fade0b0312b540f5016e096cbcb"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-mobile.png",
+          "sha256": "5038bb5220d0b6a371929ebb4382a6c6cd4443d538bc348adcb1c9c9b1a7bfe6"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-admin-pending.png",
+          "sha256": "cd59d8e895756b17e792b6a5244b1d6c3ca5547804a969d4bd04282c796d51d3"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-pc-desktop.png",
+          "sha256": "6ac1b9a36c27c6a306a212314ff62ad6d505e07071373f7648cb3f9bf2c1f9d3"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z-pc-mobile.png",
+          "sha256": "9fa70c9a54d849d6780e637f173f485a50f8f9660b8d1eee75ab3e106bdef345"
+        },
+        {
+          "group": "rawFileHashes",
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\pc-banner-browser-qa-2026-10-01T04-55-46-088Z.json",
+          "sha256": "7bc534e4dca063290934169fa5dcbcd0cdefe55ca84cefedee4b10654fd36c81"
+        }
+      ]
+    },
+    "sourceHashes": {
+      "MIGRATION_CHECKLIST.md": "f14c61c49983b94c1d7fab1e68b386882f1f21c91605627af9a2927e5acd6cd4",
+      "view/admin-ts/src/api/cityDeliveryRecords.ts": "3a2d60d3c9c93e199f57d3c94821d508d9ea117f8f0f63858c89f0e88f311a88",
+      "view/admin-ts/src/api/distributorLevels.ts": "93ba7a0d4c03563a9e14b09d4a493b865d5b10021f90011e98867764baefa9ac",
+      "view/admin-ts/src/api/pcBanner.ts": "6e09ed21c0a4d31746d8a366dd99b0922cef88f894a395bac670c206ba997c93",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "f677ee0aa2170eb043d74afd89e74a7d299a8a6b4c9c3f31fe20ff11005b8bd5",
+      "view/admin-ts/src/pages/setting/CityDeliveryRecords.vue": "a668bbfe75e2c497bb2e9f5397c8c7b518214daf9342b99cbf75c9f704910dc5",
+      "view/admin-ts/src/pages/setting/DistributorCatalog.vue": "a66fe17df0aecfac83074be47542966a7c71ce7d99b6a42c62c48a78d36b8a30",
+      "view/admin-ts/src/pages/setting/DistributorLevelTasks.vue": "2ed7c3c170011e6942330bb0ab6b291ef44083e8104d190dab45eb28933e0195",
+      "view/admin-ts/src/pages/setting/DistributorLevels.vue": "87c4b544a2583d24be3953d4bd94520d0ba73c601c10ed8a84b56d0a94022d88",
+      "view/admin-ts/src/pages/system/PcBannerList.vue": "fa75ed9d747a4293392dfc920e29b23b79bfc545f67b46189ca1e2c9e09e2221",
+      "view/admin-ts/src/router/index.ts": "e84cbe874c94eb0b075f2e7448d91956d887cba5f6dea1bd3658f6dff0510abd",
+      "view/admin-ts/test/cityDeliveryRecords.test.ts": "f3321f60605ebc9a3c0b2d37ad8ad53c6491e094dea8e034124719f9264c3248",
+      "view/admin-ts/test/distributorLevels.test.ts": "f20a9aa6d69587acd30b242ea3b60aad1f83c3691ffe0f5be8d8a1424c5dc069",
+      "view/admin-ts/test/pcBanner.test.ts": "4e5928a9af255428933f0f0676767bcb2a58ad1accb80e66cd5133ef6bbc5488",
+      "view/pc-ts/src/api/pcBanner.ts": "3a9e733e636a6e808debc30b126997e9ee2821b8654e1d461ceaf682cecda0de",
+      "view/pc-ts/src/pages/Home.vue": "d98c8dd79a493d2ebf854ecc93d6c1d36e3fa3e386150e8e183aa9779238eccd",
+      "view/pc-ts/test/auth-session.test.mjs": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f",
+      "view/pc-ts/test/pcBanner.test.ts": "4147f596604bbf3b5e75c536b667a5d640c68d7f61fed1b7bf13c5511dce21c2",
+      "view/pc-ts/test/product-image.test.mjs": "0b3b0a0472d49149ceb31e14bda57249bd8338c6e8215eb7d41b1501cae1d7fd",
+      "view/pc-ts/test/test-product-media.test.mjs": "75b12756db6dd1df4a8184e36b6e93686e760f88f097355ed493707cc4e5ee23",
+      "view/uniapp-ts/scripts/distributor-levels-runtime.test.cjs": "eaef59eba30649e01129c3df3555cc4834f0915502e735f0ac7cd91d530f584f",
+      "view/uniapp-ts/src/api/distributorLevels.ts": "5cf877a1fcb67679fb34afa72b194035087513c09cc9a1e899f1fc0f34bd8ace",
+      "view/uniapp-ts/src/config/navigation.ts": "5be396ee1567d93fae627caf6442fd8c2330c220d68d7831eb4e02ea07edaca6",
+      "view/uniapp-ts/src/pages.json": "85774639724d8e566c3cebb0f7a75c0116b4e68c14cf5ca8670f0a3d484c4666",
+      "view/uniapp-ts/src/pages/user/finance.vue": "94411a1b3eca9eb812759217e81bffdb03aac33c107df3142981a5f170e55beb",
+      "view/uniapp-ts/src/pages/users/user_distribution_level/index.vue": "94e647ce78f4c668c954e65497c6f16f1b4e08f4d3967a00ef9b0c16d5be9f3f",
+      "workers-ts/audit/admin-frontend-api-contracts-city-delivery-records-followup-20261001.json": "d2c6fa6b6d0d901b72b26ae5a6c8278943d8db9220fb2454fbbc8256770c78dd",
+      "workers-ts/audit/admin-frontend-api-contracts-distributor-levels-followup-20261001.json": "31a0fbae0c8d5fa75268427136df64b3003392a1d318782739e54dfdc128edd0",
+      "workers-ts/audit/admin-frontend-api-contracts-pc-banner-followup-20261001.json": "aefa02efaab91a85847a27d8026c36d2c9f1d4cce2b731c5cd2f3d45efe008f3",
+      "workers-ts/audit/admin-frontend-inventory-city-delivery-records-followup-20261001.json": "bec0208749d9294629e9d9651f9962f6f85c44ac9bded40aea62f587d02fae5b",
+      "workers-ts/audit/admin-frontend-inventory-distributor-levels-followup-20261001.json": "cc8d845532afd9ea8056a4ce664b0bef8b0aaacfe7638912e66dbf78b28599c0",
+      "workers-ts/audit/admin-frontend-inventory-pc-banner-followup-20261001.json": "13bf9cd589cd896d77c64f3a9a47dcae9f44fce55f6909520f6d4052a9e97960",
+      "workers-ts/audit/admin-legacy-app-route-parity.json": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3",
+      "workers-ts/audit/admin-legacy-content-route-parity.json": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json": "7d069a52a7c2877cad510d9926e76791f6922965910ab02ed664a72366288ea5",
+      "workers-ts/audit/admin-legacy-product-route-parity.json": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be",
+      "workers-ts/audit/admin-legacy-setting-route-parity-distributor-levels-followup-20261001.json": "f67d01d074a749e35e77a687196ac193fcaf97d74d4d9b62cca55cef861391e7",
+      "workers-ts/audit/admin-legacy-setting-route-parity-pc-banner-followup-20261001.json": "17feb16484d51cec40a54b4dc20f1a24dab0c8b60634850f6635539c009e826f",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438",
+      "workers-ts/audit/admin-legacy-work-route-parity.json": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf",
+      "workers-ts/audit/route-distribution-city-delivery-records-followup-20261001.json": "44df15942f1341da468bbda8e92befcfd9ecfbe503f76066d927348299ce1329",
+      "workers-ts/audit/route-distribution-distributor-levels-followup-20261001.json": "44ea6008f3cfd7a06fb4fa77bbe66c016edd79a1529439d84a0c9f804f9b4cd3",
+      "workers-ts/audit/route-distribution-pc-banner-followup-20261001.json": "19769c1372726811f71e5cc2384c30c25173039260c6525fdd53d422eb3dc014",
+      "workers-ts/docs/admin-city-delivery-cancellation-contract-review-20261001.md": "95479b7c409c5063b0666ef13768b788c37dd26238732e6771c97760a0cd28a6",
+      "workers-ts/docs/admin-city-delivery-records.md": "b4ef1ecc570f611a81b80db763797835b932a64ec64935edda0172bd466cc33e",
+      "workers-ts/docs/admin-city-delivery-settings-contract-review-20261001.md": "c67cd14cee2d6bea9551e3eb830b722b8954516a329ebc5c8477a9d9e18f9422",
+      "workers-ts/docs/admin-distributor-levels.md": "de2f4390e2d8ac40e75e90fa2865b1e2830272a4d314e5b8baa99e8b5bcef336",
+      "workers-ts/docs/admin-pc-home-banner.md": "52d29226dedf3ace89b0c55f282fba596916efec805d6038855e0de31aeaf79c",
+      "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "6da6cca8f0d08e35afd00fdf8d69c13018202798143a8d6bbf75533e7a3127b1",
+      "workers-ts/docs/city-delivery-callback-authority.md": "d0aca7f0b0dbee1d977e7d2e017cc4d51a5a8d37e322fd737dd311408293d8fb",
+      "workers-ts/migrations/0124_city_delivery_callback_pipeline.sql": "fea0ff0d7d7b1a6bdeb1943102ab67527e98ebc44c9b0626861e74ffd0ebc858",
+      "workers-ts/scripts/admin-frontend-api-audit.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",
+      "workers-ts/scripts/admin-frontend-parity-audit.ts": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0",
+      "workers-ts/scripts/admin-setting-frontend-parity-audit.ts": "5011f861b44ce97172c2c5f02d4311d4c98061b39da2425849e14f34c94045c5",
+      "workers-ts/scripts/route-parity-audit.ts": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "d99f5d74be813bed625b255eea970cbd1f7f87c3939d216639b8c732629eb95e",
+      "workers-ts/src/app.ts": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773",
+      "workers-ts/src/controllers/api/v1/AdminCityDeliveryRecordController.ts": "c1e3905b6b2d2f36a991c9e34270f40555660a6b5d5383861284d8edc7c37a47",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "2551188bb991c4294a7a68dd75e2ceb96c200af85dff9d44c9fc4b8dd2ba654b",
+      "workers-ts/src/controllers/api/v1/AdminDistributorLevelController.ts": "4cff9781de4e2a09a6365e7e32946796d6025ebff9480d37dd43995219b3b892",
+      "workers-ts/src/controllers/api/v1/AdminPcBannerController.ts": "ee50350a0351d5d9511e9d128d25a2d7fd029d55f408eac00ce5ee291ee3133f",
+      "workers-ts/src/controllers/api/v1/AgentLevelController.ts": "d5800a5c1bddb0ca5d62d04dcf5ba48a92aa5393cd7fddb543111bcd5cec03c5",
+      "workers-ts/src/lib/di.ts": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109",
+      "workers-ts/src/migrations/agentLevelRuntimeCatalog.ts": "1e42633f2a1d3b066dceac1754743d7af458dc9260f29333a6a5d25325bb8851",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "cb14c2b2948ead8633bad69ab030d53dc32fed6df8de2219ee4f45de14c2af18",
+      "workers-ts/src/migrations/cityDeliveryCallbackPipeline.ts": "cd046b818d08d43ccf181a9cb1534bf33288e7ac86ce7c8b875291f72f2e4d1b",
+      "workers-ts/src/migrations/runAgentLevelRuntimeUpgrade.ts": "e777ddf44ee6a8fb11698dbe305d3e33d3772526ee3ef4f735332463e0558e4f",
+      "workers-ts/src/migrations/runCouponTemplateRuntimeUpgrade.ts": "57d9b165d28a6f14435f4e7b825aa9f1f1bbbbeba9f112ec6bc14a340fe5520c",
+      "workers-ts/src/migrations/runPromotionGiftRuntimeUpgrade.ts": "28167bc688a2ea83f0aa7a20f0cd48261ce0789fba7f1fa224d5a066eac2ab9f",
+      "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts": "ef06633c9317974ca86d5c172f2dd786982a4841e31063c1e51576eeeced2c7c",
+      "workers-ts/src/migrations/runSeckillParentRuntimeUpgrade.ts": "98b10c19cbc2b3e500ca7678a25ae11679c085135323100794d20cee353e4a26",
+      "workers-ts/src/migrations/runSeckillScheduleRuntimeUpgrade.ts": "bbd1326b94d4c26a8fa53e75078738c9854887c9126f6496dbc13579b4ec612c",
+      "workers-ts/src/migrations/runSignDayConfigRuntimeUpgrade.ts": "8bb3178aba7adf602f94f40d7a9b55fdf272dea7c6fc56900684c880649807f2",
+      "workers-ts/src/migrations/runtimeAgentLevelCatalogBoundary.ts": "8e6379f7c56518671a0485af39c7a907d71b6283c13b30502a669baffe002dff",
+      "workers-ts/src/migrations/runtimeBusinessGrantSql.ts": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "workers-ts/src/migrations/runtimeLockOnlyBoundary.ts": "d113ca3c998a662e4d89686ca15d10f5a2a7de1fbfa2bd8f18a3b5f0ac81cafa",
+      "workers-ts/src/models/schema/order_delivery.ts": "eb6c85d55433f98c3c30d566d35e786ce5366ca1b964f6a42193cc80e1ef7751",
+      "workers-ts/src/routes/adminapi.ts": "fecce445eb7bd7f76cecc714d420a6101ecb9911284600259fff0df7a175cc10",
+      "workers-ts/src/routes/v1/index.ts": "edbe7d3a3e6b3fb1ab32b0c5c2dd423792012ead7833e5fe8a2c87d6d2f9b7af",
+      "workers-ts/src/services/admin/AdminCityDeliveryRecordInput.ts": "aeb29329ba5b700467c37567f74ee2dfbe776c54051c0a55666ff9d773c31dd3",
+      "workers-ts/src/services/admin/AdminCityDeliveryRecordService.ts": "95e7ba00063fa0053e7c0c0eda3cf3a192ebef27c9b387c17cb0f26b644d1dc8",
+      "workers-ts/src/services/admin/AdminDistributorLevelInput.ts": "49f3dc1f3532ddaa571994299ceaa0ef3f24eb5dc19f047c8a4e36b7fa31ebb6",
+      "workers-ts/src/services/admin/AdminDistributorLevelService.ts": "cd0eb1fc9f0c985c9474984d74ba1cf61d4630ea0b1deaf83f38ba21184783fb",
+      "workers-ts/src/services/admin/AdminPcBannerInput.ts": "6aa820c57866d7ed5ecc740bd30ace1166f1bed72b739f97b2b21921bfb00a14",
+      "workers-ts/src/services/admin/AdminPcBannerService.ts": "28a6201968e25db0ab8e41c2cdcabd45db1712e2a88adc3ad81414c81a23b031",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "45b110c1a6e8674d775479078300f56e484338cbde55cbf16b70186b3f4043c6",
+      "workers-ts/src/services/agent/AgentLevelRegistrationEffects.ts": "9c69276739e0dfd385cff1a30a7e50db4082ef218b47d9b56b5081830176f3e8",
+      "workers-ts/src/services/agent/AgentLevelTaskService.ts": "00bccfde7aeb65b7970a6e6fef56f5644f4a835a8517cfd00575554eee337599",
+      "workers-ts/src/services/delivery/CityDeliveryCallbackService.ts": "ef8b0023ecd89f79ae241ecea143b60c9ccd2b6581866f83e980ccd59cc75cd3",
+      "workers-ts/src/services/delivery/DadaCityDeliveryCallback.ts": "cae32c17ec1172a03dd15726466e4cf3c3196f296efe08d7a24165ad18c6e108",
+      "workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65",
+      "workers-ts/src/services/delivery/UuCityDeliveryCallback.ts": "c26983f988397be0e9eacbaf2161b29733ad479ccffecb0073cac8a6bb409a7f",
+      "workers-ts/src/services/delivery/UuCityDeliveryProvider.ts": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c",
+      "workers-ts/src/services/order/CheckoutPickupPolicy.ts": "4073f9d6f5b5041c4c87bf459dc919d85a11bea1d1f86dc88bfa3b3092e43120",
+      "workers-ts/src/services/order/OrderBrokerageService.ts": "30617b87b46eaa1cae62ff09ce4f35f7706868aecbae0d27f4856e3026ee4d8e",
+      "workers-ts/src/services/order/OrderOutboxService.ts": "8a24e022d52fdc6a8dacbfe7d2cf38885a38a746d6365fc55b6563551801b790",
+      "workers-ts/src/services/order/OrderSupplierAllocationService.ts": "30d9dbd7b752152d0816e163ed4e7179cfc282a498b11ebe2165b46cf4e2debc",
+      "workers-ts/src/services/order/ScheduledMaintenanceService.ts": "33dc4aa4d0eb0fea32648ff152050d1b8c6df5858bbfc4e546b190d4ef9f46d7",
+      "workers-ts/src/services/order/StoreOrderRefundService.ts": "8e398ccd4ebf6e1d222351a8d14a6a0346e3c6ae4ad1dd770ec6ea25c8c87f2e",
+      "workers-ts/src/services/order/StoreOrderWriteoffService.ts": "536b36ae072b802ee7a720dba0da862bbf71399aebe0726678743ef057e88636",
+      "workers-ts/src/services/out/OutApiService.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",
+      "workers-ts/src/services/pc/PcBannerReadService.ts": "e91fae5061ea70f15bc002b5d69901ec3a0288aade1cee749b58b37a399deef4",
+      "workers-ts/src/services/pc/PcCompatibilityService.ts": "99e2e4b9b9d8e048de829afcf65f7bd558904d5559931e89f36090ce57090aeb",
+      "workers-ts/src/services/supplier/SupplierFinanceService.ts": "9a0f84175c3b4b6fe6c366ccc295965f4cc7f0e04854cffbcce6fb6d69b4d8a8",
+      "workers-ts/src/services/supplier/SupplierFulfillmentService.ts": "41d01eb133ce2e0025a97a65c5f7d4fdb65ae3442145d59652d1ba43598ab60c",
+      "workers-ts/src/services/system/SystemConfigService.ts": "7d55ce59379d8406cd846319ff1634c17de94271231660891bcea88638fb17c3",
+      "workers-ts/src/services/user/LoginService.ts": "601d88eff53ea35a014ba448d615f06682418d260e60a26dba2e3a6ec87d22ae",
+      "workers-ts/src/services/user/UserFinanceService.ts": "17172097f14713e76d4a172f5471517e9005d424ee1e0dcb7a3355a7cd352d6c",
+      "workers-ts/src/utils/errors.ts": "5505f8fb2c2de21b7e7955541992a56d929dc638143ae9d833729128f84a630c",
+      "workers-ts/src/utils/jwt.ts": "658b42ff9f823d44423cd83d4abee9b19701447269e6700dda375525294995e7",
+      "workers-ts/test/admin-all-frontend-parity.test.ts": "10553065787af2e5763c569cf6148cf4ebfca83d96a70c4c4946a8269ebd1be5",
+      "workers-ts/test/admin-city-delivery-records-http.test.ts": "b1ed6bd3ecd9999d30015479467085c26c30677156451747c4e1cb2e5780458d",
+      "workers-ts/test/admin-city-delivery-records-postgres.test.ts": "1f0ff216c4d771ce08b61926d6daf6f2691ba8e320d2d86c5358bb0a12b4661a",
+      "workers-ts/test/admin-city-delivery-records.test.ts": "e9a6764afae2e2f64c0bcec2831279972afcba4d258cf625597438f5f4219a47",
+      "workers-ts/test/admin-distributor-level-http.test.ts": "2b87b4b2900bda90364e6a3c25013aad7bd8c54b955d3a569fe71deb1dacc843",
+      "workers-ts/test/admin-distributor-level-postgres.test.ts": "7275ca603455c370ddc135f36db01515d7f8099a1ff801139fd5895518fbedf3",
+      "workers-ts/test/admin-distributor-level.test.ts": "4367af5bc3d2d880880ff8318e92f7f851070ad7348f82488ca6799806a75208",
+      "workers-ts/test/admin-frontend-api-audit.test.ts": "80daf9fdd4e4575453d78b1309e3acab9d93da56b02309dde7d9345f8bb108d0",
+      "workers-ts/test/admin-frontend-api-contract.test.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",
+      "workers-ts/test/admin-frontend-inventory.test.ts": "823206fc1be3892e0fe97ac5d165f7c2078f7ed9ac466f61297e11221865d23f",
+      "workers-ts/test/admin-marketing-frontend-parity.test.ts": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+      "workers-ts/test/admin-pc-banner-http.test.ts": "bbc1c2313d1414694f5be367e389e4074ee3bcc510574d562ac588e371f4930c",
+      "workers-ts/test/admin-pc-banner-postgres.test.ts": "7eda12b68820e3d15a5fc4a2ac3ca7c3c81b776a549861aed0b2c05243dd8bcd",
+      "workers-ts/test/admin-pc-banner.test.ts": "96f485450615460bd971a055ffdde38f1df94341704873b168532e87e5104cd4",
+      "workers-ts/test/admin-permission.test.ts": "ac99f99e35eff400c5b8406ac8b40e008c7f1fb5a5e3e0dcbd9ebdd5a92ad22b",
+      "workers-ts/test/admin-setting-frontend-parity.test.ts": "70c7eb8e7e92923cbef377874b51da444e4ec71da0875edefcd66c311f475e3c",
+      "workers-ts/test/agent-level-consumers-postgres.test.ts": "4390325cd035839163f31ef6ae64a2083b54eef1f79fa00a95afc177f9388583",
+      "workers-ts/test/agent-level-consumers.test.ts": "895f177f443540995f354928bd2067623c03807b99a9fac1c2411a34c810909b",
+      "workers-ts/test/agent-level-events-postgres.test.ts": "a63827e9c1b7588f999330f3cdb11ac8f8e177971b53059029fdb36afbad5363",
+      "workers-ts/test/agent-level-task-migration.test.ts": "d9c14a291ce1224d774a8a7b960ab01a0cc26bb4e545089a2ac22c8433bd7211",
+      "workers-ts/test/city-delivery-callback-authority-postgres.test.ts": "cafc0886fdae2555af4a7e0b5a0442b4835155b0a0acfa6eaebcddf3e45474e8",
+      "workers-ts/test/city-delivery-callback-watermark-postgres.test.ts": "2b5cf0e3d471307d673d16903d90ed936709ab8193cc7cf4a9b7dd89aa74ab3a",
+      "workers-ts/test/city-delivery-callback.test.ts": "202a7d89d1258aea4a8da90c41adbd0b5e9400732632a986dcbbeb42b9f5af69",
+      "workers-ts/test/helpers/agentLevelConsumerFixture.ts": "0aa74e2c3dc0f4f44e9174fc6dc1f370845ea220ee956fab046a1ab13bca2175",
+      "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts": "94d6a78d5832450b1aa8f03c458eac30d172d8c02c41f3cb92b738e4066f82e8",
+      "workers-ts/test/helpers/cityDeliveryCallbackAuthorityFixture.ts": "ef57e8f83a989d6f143a774cd16a1c4b76893cc699f079b316ba00b81d11c915",
+      "workers-ts/test/helpers/cityDeliveryRecordFixture.ts": "6f0b64d6b5220ba0952c7c404030ed422393905221f962ad01691cc6507dc1f9",
+      "workers-ts/test/helpers/distributorLevelFixture.ts": "85314eabb84c8f47965eb7002f3f50e0eab8b39ae526e01c14239016f51dc4dd",
+      "workers-ts/test/helpers/financePostgres.ts": "8a7849c2749f5ef2e08543a6185989b27dc3de604193a19dcf847aa6cd0fdfbe",
+      "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33",
+      "workers-ts/test/helpers/pcBannerFixture.ts": "b917c222970e6e40e883efcdc56dbb7046633b1ca742a817ead1846977d2b9fa",
+      "workers-ts/test/helpers/refundRuntimeFixture.ts": "8396b14072dd273c1aed68f094976e7f49466a48149193e55b6a87ff39d7faa8",
+      "workers-ts/test/helpers/runtimeHistoricalProfile.ts": "3c9bbeb0488df650e713154e88b6aee6c303dc2d7d2db8fb241a2eb75039f0cb",
+      "workers-ts/test/integration/CityDeliveryCallbackAuditWorker.ts": "a66a6bc866e9449f78408d2428287e3327795083e2f7aaf199bb32c5ce1e09c5",
+      "workers-ts/test/integration/PcCompatibilityAuditWorker.ts": "6f7573ccb0657beb1b77184281e2d734b7312348727a39587d7d443627106225",
+      "workers-ts/test/order-brokerage.test.ts": "a87a8f5812e999e1a7f53099324d96c413f91365ddc23ba1076aa9fc6152f020",
+      "workers-ts/test/order-reward-config-authority.test.ts": "00663cc4893f213a6b363d3dc463a953b1e287f9d67ef5d79736cab7e49b3b46",
+      "workers-ts/test/out-api-migration.test.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",
+      "workers-ts/test/pc-banner-read.test.ts": "3debb01ebdac6d75c45411cfc6f6affd3296ff6b4d6f871751982b008fbe675e",
+      "workers-ts/test/pc-compatibility-migration.test.ts": "ca3b1171e84a52722ed1786df9c5cce23e9d6c559400f29504ee99003d9d92fd",
+      "workers-ts/test/refund-line-compensation.test.ts": "e3aaa0e0e6c62af934be903c498630c89369382934999980dab093912d77cafe",
+      "workers-ts/test/refund-runtime-permissions.test.ts": "8508d407c18691dd1e6d3383f6ff494cc5159062dd28d69772e746061e781417",
+      "workers-ts/test/runtime-agent-level-upgrade.test.ts": "3e853df8e322f6dd3445da33c6fc24b511e6e52c2d9ba7276b7a068fa1f5b2a0",
+      "workers-ts/test/runtime-business-login.test.ts": "795490a610a6ef255febc4af22d61e011423e0459fd7a18de45714923c829f86",
+      "workers-ts/test/runtime-business-privilege-plan.test.ts": "e9cbece1b90764584829e4553bc25942773d6f15f8e6c4ec0f91ba535ee78540",
+      "workers-ts/test/runtime-business-worker.test.ts": "e76dec3348fb5439f0f36a35ad777a16dc75c6584f9dfed42e7e25c8cf916fe6",
+      "workers-ts/test/runtime-sign-day-config-upgrade.test.ts": "003ead520eca593161b61396aa58e338146952ddba3e810e13133a2ddda32d15",
+      "workers-ts/test/scheduled-maintenance.test.ts": "444b7edd475c05f119381c32929dde26203e25aed0de9bb376688ff11842ea78",
+      "workers-ts/test/seckill-runtime-login.test.ts": "bca34ba6dffe0dfaa7b72a456192aaebb77da26bc33e4d3c2a759e8a90de46bb",
+      "workers-ts/test/store-order-writeoff-migration.test.ts": "ef79aa4b7168417054063526b4bbbb2ed6c1562318614b0ace3f06c1bd0711de",
+      "workers-ts/test/supplier-split-ledger.test.ts": "82f8fda19d3222e3bcb4a06ed04ddc2563de1c9340a94d0ea520c5f386423121"
+    },
+    "configReferenceHashes": {
+      "C:/cinagroup/cinashop-php/app/controller/admin/v1/system/config/SystemConfig.php": "ce906924896c4b67efab6fd2c370f0a9d128137e325c9305fafd113bf4c26650",
+      "C:/cinagroup/cinashop-php/app/controller/admin/v1/system/config/SystemGroupData.php": "4fb2ebe0b2efb7a8df6c15e614ecbbff4110d73f07be877a8b3c6818df8d06a2",
+      "C:/cinagroup/cinashop-php/app/controller/api/pc/Home.php": "a88f0bb1d8db089b63500f531a00f64c7040d7137ab920e722d07a452a74ee7a",
+      "C:/cinagroup/cinashop-php/app/dao/agent/AgentLevelDao.php": "1f1fae4b3a3cff247cb35048c04508a8824e64bd4b3a90a2a47d13ed23cf0851",
+      "C:/cinagroup/cinashop-php/app/dao/agent/AgentLevelTaskDao.php": "43f5acf52716db4e1cd26313217da9464141baff4b495faa726fd7398348dceb",
+      "C:/cinagroup/cinashop-php/app/dao/agent/AgentLevelTaskRecordDao.php": "52af8a9953b5ed6248bf4c1189a38a6b77ddef366077eec94cdbe6f70ef50c90",
+      "C:/cinagroup/cinashop-php/app/dao/system/config/SystemGroupDataDao.php": "9bc29e7300c29577d3bccbda03338c6c9d79bf5d43ed7906da2b6af6d293d095",
+      "C:/cinagroup/cinashop-php/app/http/middleware/admin/AdminCkeckRoleMiddleware.php": "61d841ef746d5e8031f9ad4d24bc351c7f742659f8fa0b4d62af8f2ce9e48881",
+      "C:/cinagroup/cinashop-php/app/jobs/agent/AgentJob.php": "88f7c4cdeea12aac422bff574ec92ffa04662020f7f7e307ac2137bb688ee6cb",
+      "C:/cinagroup/cinashop-php/app/services/agent/AgentLevelServices.php": "e4a56079756cb58a348e9791d193e333ddba16a6814f067fc4df3b16c0d30e80",
+      "C:/cinagroup/cinashop-php/app/services/agent/AgentLevelTaskRecordServices.php": "67252540b8a091e858628e89c7b64f72390660d850e8b3481aa754d7c800c18a",
+      "C:/cinagroup/cinashop-php/app/services/agent/AgentLevelTaskServices.php": "2bfb7f32468b501fa4402d1cf018daaaa383e56b1d130d8e4d47504bbc71f0d3",
+      "C:/cinagroup/cinashop-php/app/services/system/SystemRoleServices.php": "9c85f2b36a3584e6fb87fc79a20a819001a13c5e1490a7a20513794cdf7d906d",
+      "C:/cinagroup/cinashop-php/app/services/system/config/SystemConfigServices.php": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "C:/cinagroup/cinashop-php/app/services/system/config/SystemGroupDataServices.php": "976231dbe392188f28835d0e40041f00b02d336956ecf3cb3d6589e64c769ab8",
+      "C:/cinagroup/cinashop-php/app/services/system/config/SystemGroupServices.php": "74ba3716b6edc139585bdadf821490469133719a3834732bddabc3e103afa987",
+      "C:/cinagroup/cinashop-php/crmeb/form/BaseComponent.php": "c81badc49c1c3ed42c33feb76a031d37f3a42b9551f73efcb5f6967bbf06da4f",
+      "C:/cinagroup/cinashop-php/crmeb/form/Build.php": "53303eb66442345713775e2a2268c61bf096e1560db5af8ee025f4c71987101c",
+      "C:/cinagroup/cinashop-php/crmeb/services/DeliverySevices.php": "cc4e94589b9455896721afea36ece39185b9c3abf36507c93d102e4c61772fbe",
+      "C:/cinagroup/cinashop-php/crmeb/services/GroupDataService.php": "b485faa27fa7a15f7bc963ad3db408742dc7987dd3dcc4810cfd0259911e774c",
+      "C:/cinagroup/cinashop-php/public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "C:/cinagroup/cinashop-php/route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "C:/cinagroup/cinashop-php/route/api.php": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",
+      "C:/cinagroup/cinashop-php/view/PC/pages/index.vue": "a5093ef0002fcbbd9fa32ed9bba4c18b862d1cabbb48410e572b6070228cfa71",
+      "C:/cinagroup/cinashop-php/view/admin/src/api/membershipLevel.js": "9a72e5a6013e23050348fd337551dd8a0a584758e52ca6f09b79c6ebc5ac4de3",
+      "C:/cinagroup/cinashop-php/view/admin/src/api/setting.js": "e1f1fe9d8889821e5b9b3ae95dd843168d142620a3fd783868f980474cb011f3",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/fromBuild/inputBuild.vue": "20f7f3c1973172c2737a8ce84dddd99d9edd84e014d9f134d89e4fd6a175175b",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/fromBuild/switchBuild.vue": "c5ec13a15d95359bc46f9c93b18b73fbdd938ba02466dacb5fe6fc0d084909c4",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/fromSubmit/fromSubmit.vue": "c6cb0af8d45f2edd20326c46b90ada9538309146d94de280a8f405efbd1c3e79",
+      "C:/cinagroup/cinashop-php/view/admin/src/components/settingGuide/index.js": "29b74f896b2713f5ada6760339ee8fdaed69de08a86c4a3ca47738ca655afc18",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/cityDelivery/setting.vue": "1e46a01fa2128841e69c7cbf41323bd6abadf5fff205403bfdc6e549debb1980",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/membershipLevel/index.vue": "a2ed7cfa49b89811bbe3cacd58f1430489c733e2e30fded536244272eb29e219",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/setting/shop/buildData.js": "87ae8d74659a66b8089b6c9e1abb23f278b425cc167ff1eb52fef47311bbe349",
+      "C:/cinagroup/cinashop-php/view/admin/src/pages/system/group/list.vue": "208e7db049144cbb599526a1de7a30409f0fcd86b17cb60bb6147c0bb93ec36d",
+      "C:/cinagroup/cinashop-php/view/admin/src/router/modules/setting.js": "e9ce32dba8609dbeef18438a9e9e14d0081844c5c4e783edbc1a374eb1cee554",
+      "C:/cinagroup/cinashop-php/view/admin/src/setting.js": "4523d74b4a297ca11a218c4eadabde154ebda08bf13f35073bde5292073f0cd9",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/.package-lock.json": "47a176a90fa8c623112eab66b95d94ad8cc2f057ad5f1296a998132fd81e9894",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/@dcloudio/uni-h5/dist/uni-h5.es.js": "cd8bbf03461e0b38f85ac84f2e0d67c0573fc6ceaf6ea7e0acf871e00cc38725",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/@dcloudio/uni-h5/node_modules/vue-router/dist/vue-router.esm-bundler.js": "8c9ff0ee4bf521b91ba0db699b3462c84492c3f96e84ae3f69c070d302f8e1f3",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/@dcloudio/uni-h5/node_modules/vue-router/package.json": "40f70fdb21741d9fda761e4ecd7c38bf5ad283934b6751e51fabca54fb21b4f6",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/@dcloudio/vite-plugin-uni/bin/uni.js": "21f77ebef8b8fecabf91501ffb58a8a2e2dcc53924f3627ce67388192ab2ff76",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/@dcloudio/vite-plugin-uni/dist/configResolved/plugins/resolveId.js": "b38a7318d9ed24427345f4e3aa931b614fdd583cbc04d5744e882d346408f810",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/typescript/bin/tsc": "8d5fa5bd883fec0979fc2004f1fe1d99aef40570155d550eadc0b03b55513bf0",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/node_modules/vue-tsc/bin/vue-tsc.js": "19aa06d047371f2593f78f4b5abb315d9d449300581b2db11e1cb40ea039e145",
+      "C:/cinagroup/cinashop/.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/package-lock.json": "76514925f994782ed3203e3aa4437f5a64250f8cfd1d3209a8e5cb8d253045e0",
+      "C:/cinagroup/cinashop/view/admin-ts/src/api/config.ts": "b86da2e5a3ba1d0a439445f97b2e6a9384c6e8e7a165c2363bc2f83c1cbf36fd",
+      "C:/cinagroup/cinashop/view/admin-ts/src/api/shippingSettings.ts": "45fabc52cff7774e67b77f6bcefbf797f8938f77a48268e13a7a1b7a8c8c0525",
+      "C:/cinagroup/cinashop/view/admin-ts/src/layouts/AdminLayout.vue": "f677ee0aa2170eb043d74afd89e74a7d299a8a6b4c9c3f31fe20ff11005b8bd5",
+      "C:/cinagroup/cinashop/view/admin-ts/src/pages/ConfigList.vue": "5e482764fac8f1be5c5963eb9a418a7f6de4ba07e8ebcf60d0d3e097254185e0",
+      "C:/cinagroup/cinashop/view/admin-ts/src/pages/setting/ShippingSettings.vue": "b0c6187808da755c2eab0a151e11d5d76381880ab263614246af7eb61f161d0c",
+      "C:/cinagroup/cinashop/view/admin-ts/src/router/index.ts": "e84cbe874c94eb0b075f2e7448d91956d887cba5f6dea1bd3658f6dff0510abd",
+      "C:/cinagroup/cinashop/workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be",
+      "C:/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts": "2551188bb991c4294a7a68dd75e2ceb96c200af85dff9d44c9fc4b8dd2ba654b",
+      "C:/cinagroup/cinashop/workers-ts/src/env.ts": "3c8ddc541b40799095a6208faed59df716b64c3cbac56bd11c6457497f6d5f9e",
+      "C:/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts": "fecce445eb7bd7f76cecc714d420a6101ecb9911284600259fff0df7a175cc10",
+      "C:/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts": "edbe7d3a3e6b3fb1ab32b0c5c2dd423792012ead7833e5fe8a2c87d6d2f9b7af",
+      "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts": "45b110c1a6e8674d775479078300f56e484338cbde55cbf16b70186b3f4043c6",
+      "C:/cinagroup/cinashop/workers-ts/src/services/admin/AdminShippingSettingsService.ts": "92fa0129cc2d5e219662fd4b6f42b0128ce3d255bdcdd9d8653d57e885c13d50",
+      "C:/cinagroup/cinashop/workers-ts/src/services/delivery/CityDeliveryCallbackService.ts": "ef8b0023ecd89f79ae241ecea143b60c9ccd2b6581866f83e980ccd59cc75cd3",
+      "C:/cinagroup/cinashop/workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65",
+      "C:/cinagroup/cinashop/workers-ts/src/services/delivery/UuCityDeliveryProvider.ts": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c",
+      "C:/cinagroup/cinashop/workers-ts/src/services/store/StoreMobileOrderService.ts": "70f32db448ce04e2439e6966d20553695fd08d0ce6a0f2cd05c9d929c80dd847",
+      "C:/cinagroup/cinashop/workers-ts/src/services/system/AdminConfigBatchService.ts": "eca2696a35c5e94a085cb1320df6c8af49b7977cbf60e5885ffa843cb978f25d",
+      "view/admin-ts/package-lock.json": "18493b7958bca887f3f74bfbbb7b98da9e1be74f0e79c897cb201e039593d011",
+      "view/admin-ts/package.json": "f7f11ff545253a731506eb3e3add1f51ddec0a45048f9a917ec84c607620c06f",
+      "view/admin-ts/tsconfig.json": "b79d75bd11247a2548b891da0dc34262de211ea9f8859eddcc750c5365b1b7a5",
+      "view/admin-ts/vite.config.ts": "467d41f4526557159d7703292e7e9deb12735384702694cad56a8b997a9ce480",
+      "view/pc-ts/package-lock.json": "1d43ce59ccd6e54c1abc814b17e8de88cf4485d286b0c7041ca816cdf9bc3a19",
+      "view/pc-ts/package.json": "d0731cfeede8028fef477c918064d0f7402b8af0f0f2429a997c3b88aec7ed4a",
+      "view/pc-ts/tsconfig.json": "9c3eddb60dabda6e5e60e87b31acb4cfa59d5387c5a955e169dab73ae5c1a3dc",
+      "view/pc-ts/vite.config.ts": "d38029664596dfb6c52d83032c23d4485142576434d4c027c12fb53ffe54fd77",
+      "view/uniapp-ts/package-lock.json": "76514925f994782ed3203e3aa4437f5a64250f8cfd1d3209a8e5cb8d253045e0",
+      "view/uniapp-ts/package.json": "a83406729771d0299192eabe8077147f93e94467f2c9ed07978e7f0a469ec811",
+      "view/uniapp-ts/tsconfig.json": "feb224591a53e41124446e6bf2e0dfa9abaa62b21188141bc0404049d9655386",
+      "view/uniapp-ts/vite.config.ts": "66d3744c6618d584d9f92a3e7e283d82d0e85463e7ae84f8fb8d9b5b474e0c46",
+      "workers-ts/migrations/0011_order_brokerage_settlement.sql": "697ce849d169860ab8fdf13bba9469ac63f3eddc94ba4073735d1ccffb21ac24",
+      "workers-ts/migrations/0051_agent_level_tasks.sql": "a5f0d8d938777324d8f7390358c48e3c73c63739d2b99d26d26f9033411fdc70",
+      "workers-ts/package-lock.json": "19867eb7eb5600ea76c09afb5bc5284ac6e9da2a65d71e1367f52c693156cd71",
+      "workers-ts/package.json": "b281d90039222f82cf55e341dba13d617d285631c2010db00c20cef1dad50a31",
+      "workers-ts/src/app.ts": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773",
+      "workers-ts/src/controllers/api/v1/PcCompatibilityController.ts": "8b0fea94c29eb2094583505635b1568686bff597a023c39dc406c8441bb13234",
+      "workers-ts/src/controllers/system/AttachmentController.ts": "e84851b05caba9a349d88314486134221637e98a058fec826e618cb051506260",
+      "workers-ts/src/env.ts": "3c8ddc541b40799095a6208faed59df716b64c3cbac56bd11c6457497f6d5f9e",
+      "workers-ts/src/lib/di.ts": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109",
+      "workers-ts/src/middleware/admin-auth.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "workers-ts/src/middleware/admin-runtime-auth.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "workers-ts/src/migrations/runtimeSignDayGroupLockBoundary.ts": "8a8345b6a65c052ec259c7fc5e416b838ab1c28de88febad60bfe8d9970c706e",
+      "workers-ts/src/models/schema/agent_level.ts": "a6ee0d1494f23a35e16ff02c9ddd5cc030ae6efd9762c47a8b1d1da1f96ad20e",
+      "workers-ts/src/models/schema/catalog_templates.ts": "15f0a957a31d5fc49f1551bfec24a9ea6f6612d52f70d401c3f03ee16bc7d42b",
+      "workers-ts/src/services/activity/ProductAssetPolicy.ts": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57",
+      "workers-ts/src/services/admin/AdminLevelActivationInput.ts": "d5a6535b45bcb7eb1e9804d160beab159fbeeefafc75f9b9bb02768f1f4a24f9",
+      "workers-ts/src/services/content/ArticleContentPolicy.ts": "f12dd586c498ed30ebbda79fa95047b9f85f772e8a667eb2ed4e6e12db50010e",
+      "workers-ts/src/services/order/CheckoutBrokerageAuthority.ts": "56ca12add79bcc3aaa47dacbeac318c3b37104531da7d61094747da458d9252b",
+      "workers-ts/src/services/order/OrderBrokerageService.ts": "30617b87b46eaa1cae62ff09ce4f35f7706868aecbae0d27f4856e3026ee4d8e",
+      "workers-ts/src/services/order/StoreOrderCreateService.ts": "3d3aede2a2e54fb8d2fe10a854ec52adf9e43250cce6a5a77d804878a6f58d99",
+      "workers-ts/src/services/supplier/SupplierFinanceService.ts": "9a0f84175c3b4b6fe6c366ccc295965f4cc7f0e04854cffbcce6fb6d69b4d8a8",
+      "workers-ts/src/services/system/AttachmentService.ts": "454cb187c1cfe0007a909930cd21dcd7a26296cb4e87fe62f5d577baf7ed76e6",
+      "workers-ts/src/services/wechat/WechatAuthService.ts": "ea15420f84b57afc6aad88a68172c6420964ad32c0e6545ed22adeee7da6cfa0",
+      "workers-ts/src/utils/config.ts": "2898634b4dfaf6d7ef5f417591ea704f21fd799b9b906e4f6a40ad339689cbe9",
+      "workers-ts/src/utils/errors.ts": "5505f8fb2c2de21b7e7955541992a56d929dc638143ae9d833729128f84a630c",
+      "workers-ts/src/utils/observability.ts": "8127c37f1d1e3744eaacdf9a960a645d6b4ce1c8226769adf1dc843254c3933e",
+      "workers-ts/src/utils/request-body.ts": "8004bd6c9205ce389e505d280e7a593a76ffc7158a657e0c6d7e792bc2b245cd",
+      "workers-ts/test/helpers/financePeers.ts": "51bf74693df51da8d99bc14b5b5625c059b948915ce88b592223fe3f4df632e8",
+      "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33",
+      "workers-ts/test/helpers/refundRuntimeFixture.ts": "8396b14072dd273c1aed68f094976e7f49466a48149193e55b6a87ff39d7faa8",
+      "workers-ts/tsconfig.json": "8f6d36740c91218ae3856c55d26a91ed4dc8944db602e69aec5f043c67fa50df",
+      "workers-ts/tsconfig.runtime-test.json": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8",
+      "workers-ts/vitest.config.ts": "f38f244038891c9dc0dc58910c8f04326e8ceffa471d3420a40b014a3d45c208"
+    },
+    "rawFileHashes": {
+      "workers-ts/audit/admin-pc-home-banner-acceptance-20261001.json": "4b93d5c5a6a53c1f880209d41758b56bc826dbaa10c57dd5824007f5a9030656",
+      ".cache/migration-next-baseline-20261001.json": "6b55a46080351af93716a78b489a3cef73e59fa710898c856d7d5349a5a043ff",
+      ".cache/migration-next-baseline-20261001.cjs": "e68a2faa46e60a946b5a1864029ab182553d7bd07d6ae81e2e6d6a91ac678974",
+      ".cache/agent-level-owned-resources-final-20261001.json": "80e3130e03aa33a74255570143bd3d33c991b58b4001a6cc9014b8178e8aa788",
+      ".cache/freeze-agent-level-acceptance-20261001.cjs": "69bf7bed17f549fe303511bad03373990c90d2a061a2a76811d69bfa1650a82c",
+      ".cache/run-agent-level-check-20261001.ps1": "30f067d6f882182195fc960267ef9249f586d6e062abbb377f43fe3ad5fb3513",
+      ".cache/cleanup-agent-level-cluster-20261001.ps1": "2734c9a42692cda63b71769a1c35336b9f492c03dd66783dfb01058b59f2e921",
+      ".cache/agent-level-acceptance-scope-20261001.cjs": "fd3f957a1d91f8083594e4b336764254907623e6646f2f9b68416acc870ed7f6",
+      ".cache/verify-agent-level-acceptance-20261001.cjs": "7726d55a2a97d0d6ed38d1e7f9b41cb46b695be5917e4e2f59c11a0d68c3efc4",
+      ".cache/verify-agent-level-owned-resources-20261001.ps1": "eff1996fdd4c6337a49901f7762e529c817182a6f24215074149133a4d6ea7a3",
+      ".cache/create-agent-level-catalog-20261001.cjs": "f6f004073e3cbaa2a65650cbc9abb3ece061bd27703a05755139529eb4512f54",
+      ".cache/register-distributor-routes-20261001.cjs": "74dec706cb0bf2709a53416a7cf5f6ef2b7c1e3d237b78383ad6714cb66b420c",
+      ".cache/patch-distributor-legacy-permissions-20261001.cjs": "54fb49d0ae2bca433a3fc40cf11b9dd823830bd92b9cc68fd3c7489f90200162",
+      ".cache/pin-sign-day-historical-tests-20261001.cjs": "dc528fdd36546c2a98e9692d33f712fb156980990d050e4a7c8a87f18f9503e7",
+      ".cache/update-agent-level-worker-operation-20261001.cjs": "61963ebab0f7cb83dca929b03fad53b45b07289946e739fa43bd237d16a7a90e",
+      ".cache/agent-level-admin-build-final-20261001.log": "8fb87dde7cff4152fc6895321885b02a44ef74de8a93948cfa229662ffeefb66",
+      ".cache/agent-level-admin-build-final-20261001.metadata.json": "99340fd92c4ddbf0623c575de1e779a244eff50acea9bd204873427bd5a17a5a",
+      ".cache/agent-level-admin-native-20261001-cluster-cleanup.json": "093d364975260c51b487733da2cac8ee18547b91936931872302820d7b2720e3",
+      ".cache/agent-level-admin-native-20261001.log": "09c170ffdd31a670d54e48c6cc9c41bda16aa219b76185b2abd4c83ebc3cbd16",
+      ".cache/agent-level-admin-previous-regression-20261001.log": "37b2574697b1a3c070132fa207b72aa05f801feafbd97cc75ebafe89868128b0",
+      ".cache/agent-level-admin-previous-regression-20261001.metadata.json": "ef85e866de1924e0ed0ce350316ed2e23b6c42e55b204f1af5d2a6c2cdcc635b",
+      ".cache/agent-level-admin-pure-final-20261001.log": "ff2ff88bc3d7314a0de060dc3c75b882823ca3234dec679598e7800d56e1fbde",
+      ".cache/agent-level-admin-pure-final-20261001.metadata.json": "b75e1a358c9043af019b3565673a7bed21ee31e53aa471ac84bc62f55e3cfc14",
+      ".cache/agent-level-admin-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/agent-level-admin-types-final-20261001.metadata.json": "259a56d2850c7cbc6e6e828cd2acd5e5430d152b76009fa9930c9b3defa49636",
+      ".cache/agent-level-api-audit-probe-20261001.log": "a090f83309b4f0f3600c538cb0620fc777c9bf3e9d989444375103a4d08d4bc0",
+      ".cache/agent-level-audit-permission-static-final-20261001.log": "6663455e3c8bfb5ed1d064ea5ec8b8ee50e1fb5a83431fec440e3fe3253911f4",
+      ".cache/agent-level-audit-permission-static-final-20261001.metadata.json": "697c37895996ee7bbda9416e9e6d482be0e1d66c616f8c0b99b415ca348113ef",
+      ".cache/agent-level-audit-summary-20261001.json": "4e9a12cea25928ee704e8268043bff6ad8461d9c637a879cdd2e97755e9d1c95",
+      ".cache/agent-level-audits-20261001.cjs": "f9ff6d1f9392f31efd3e4f6b7fcd3df91646b76bc62cb29a664996c1e05e2360",
+      ".cache/agent-level-backend-pure-final-20261001.log": "30491dd502bfe9f4a955cec4db9d6ca6ce7ae441729f4bbe5f1d9117141e7d40",
+      ".cache/agent-level-backend-pure-final-20261001.metadata.json": "8a0be4f87e9a5460155fd4595b05ce254b73309f056d3ae028c4ed5f3c43f86d",
+      ".cache/agent-level-browser-attempt-review-20261001.cjs": "48e96c64fe84d5934cae9bc960709d2208eef3c192c977d9aa775ce4b6d13f18",
+      ".cache/agent-level-browser-final-20261001.log": "ded097655ace96e0ace23188cf93dfa00389de2807bec9e2636d68ce67d9a242",
+      ".cache/agent-level-browser-final-20261001.metadata.json": "d70c0ed2496bf19b7b23831b74298f8719e94c148d99dac9440174e90651208e",
+      ".cache/agent-level-browser-final-retry1-20261001.log": "4f422d7cf16a63ee3cc770094bcf5a72f0513c2c0041754a4e44f09c64293033",
+      ".cache/agent-level-browser-final-retry1-20261001.metadata.json": "67ae446ecd0fd5274355a11fd78a12e5739c704caa64538963740bd4a9591f4d",
+      ".cache/agent-level-browser-final-retry2-20261001.log": "60c2b4527333d129da60efd64b54bc2e34392f1cf0df2798ce25d83c6be568e9",
+      ".cache/agent-level-browser-final-retry2-20261001.metadata.json": "fcbdb7c914f7ac2c47dab92953a7a28e020303f79c64c0dee98edb59d20093c1",
+      ".cache/agent-level-browser-harness-review-20261001.json": "5a151ce9970a7e1cb13c8220a47499aef5f335fe672f706e6ff0536ec6df4ff4",
+      ".cache/agent-level-final-browser-review-20261001.cjs": "c7a36a328fb53802667f126f65b85a74484fe720e7f7d6fef159c5e565eb144d",
+      ".cache/agent-level-final-browser-review-20261001.json": "64511bc4ec7e71229c46ebfbe29b41b61b5a626e18afa29d68a883dcc18930d3",
+      ".cache/agent-level-final-native-20261001-cluster-cleanup.json": "afb8ca3e071cfabd8e69a639d32e9c2cc6d608b80a96877ede90ed5b0db07e7a",
+      ".cache/agent-level-final-native-20261001.log": "4110cff8ebfcb7b5d6d04d0469db1f4b69f599c8fc7529ebf5bc27a5cc9089a3",
+      ".cache/agent-level-final-preflight-20261001.cjs": "93a191b25ca9fc330242aa987de7f580f496ca1d06ceede6df9155c22f55ca54",
+      ".cache/agent-level-historical-business-final-20261001-cluster-cleanup.json": "075491d9e862ba33a8c76d99382d046e8331c0e3000cb7e496debf1676f79633",
+      ".cache/agent-level-historical-business-final-20261001.log": "90fb39494c40e5849f51f6bb4f242c60be5d83813e5162e44a96c9c027f30073",
+      ".cache/agent-level-historical-business-final-20261001.metadata.json": "04d0ff7c5eaac7eb0d61feca66457ceacdf7b3010daa8a13bb4b56d34a4e5d65",
+      ".cache/agent-level-historical-grants-final-20261001-cluster-cleanup.json": "cd2b140e041940673388ba035ebe988258ad5755f53ab1dadbafd950e5fbca0d",
+      ".cache/agent-level-historical-grants-final-20261001.log": "59373c5caa7bce8941ae9254aeea7e1f0baed4d8ee4d4560685c682b97763c4a",
+      ".cache/agent-level-historical-grants-final-20261001.metadata.json": "0cb317228893d4887210f4ce4ea035b33c6d7b51be775dd267520a9b68e6e541",
+      ".cache/agent-level-historical-pages-final-20261001-cluster-cleanup.json": "709801401748f5546aa9b530156ae9e4adf765670f27fe11bc187356047c5a10",
+      ".cache/agent-level-historical-pages-final-20261001.log": "c9cb6f19f24d51b5d0e2fde35982ba625d46002d7c60dc204686a0932b0eecc3",
+      ".cache/agent-level-historical-pages-final-20261001.metadata.json": "d9d4c8e260c2e6f76ec717e7c5dbc11ceefeaf4e5045f70fb3ac6a1f53a2ccfe",
+      ".cache/agent-level-historical-pages-final-retry1-20261001-cluster-cleanup.json": "cc8e5271e2df9f81844e76305279975af2820857b15e90299d58583531df3cf1",
+      ".cache/agent-level-historical-pages-final-retry1-20261001.log": "f7842918d3033adbf85ed8e9318671bd6c997cdc64e146381ce5fe6173573afa",
+      ".cache/agent-level-historical-pages-final-retry1-20261001.metadata.json": "03e5bd9812346b99ea0848c6717af08f5d890719a129527883229d89d9b00c9f",
+      ".cache/agent-level-historical-runtime-regression-20261001-cluster-cleanup.json": "3308241227316f88a9ae5877e638386d78a126873e0ad33758f044972ac3aa10",
+      ".cache/agent-level-historical-runtime-regression-20261001.log": "b3344c56607f8dbed81ec22d39316eb644092d6876e5c673d4ca4f881a2519ae",
+      ".cache/agent-level-historical-runtime-regression-20261001.metadata.json": "eff48c19a7bb255da82ea55bf0843d7979bef76486263be3d0d8e2f3dfff805a",
+      ".cache/agent-level-native-final-20261001-cluster-cleanup.json": "373873b5ccf4c24d80d57debf34b283bdcd9a5ae54689b9a1cece1e39093df74",
+      ".cache/agent-level-native-final-20261001.log": "79ff3de0f28a83bc1350689c5ae1fde4860325e490e3ce450a1710249e5b3e50",
+      ".cache/agent-level-native-final-20261001.metadata.json": "93a441eab878f026da8dbbfe88250d27ac85cc207333296be7290511996041ab",
+      ".cache/agent-level-native-verified-20261001-cluster-cleanup.json": "310ca84e082f489da456b8067ccdeb728cc4e7785da860071a8e6202230f1996",
+      ".cache/agent-level-native-verified-20261001.log": "d757458a25e5f6b58ee5e3d57a686696c03ac0146d27ffa1845f98df31b0c6fe",
+      ".cache/agent-level-native-verified-20261001.metadata.json": "0d1bf0e57d9d0794cd0be27e7bca1c6cf9b9396f563281bbeebdc31275159cdd",
+      ".cache/agent-level-privilege-plan-worker-gate-20261001.log": "5478b7c200e2da29ab20ca5f6504923d619d933c61a41922526355aa7f474217",
+      ".cache/agent-level-privilege-plan-worker-gate-20261001.metadata.json": "69ba5e0bdc644200fdf996930c6f09511385166cd1ee1107a729057c5a735b29",
+      ".cache/agent-level-profile-readonly-20261001.ts": "6d1072a5f97d659b51deb6e43c0b63c4be7752a743c58ec0a19987061f404465",
+      ".cache/agent-level-seckill-diagnosis-20261001-cluster-cleanup.json": "e4689048225fefefd86e674a39a71c5c26877e728dda650bee2acb1497e2f6e0",
+      ".cache/agent-level-seckill-diagnosis-20261001.log": "8a8e87686977da2a224ac3ea0e8aae53531bd9744c9d895afb4bc20e4e436f94",
+      ".cache/agent-level-seckill-diagnosis-20261001.metadata.json": "da3a2506fceed3b4142b24f81afd808fb3adba25789101010e53e4c818077bc3",
+      ".cache/agent-level-uniapp-build-final-20261001.log": "f69f8516db90b5bb840864b3f4bc80b26bb8248bd2cc5be31ae553e2cfe222a9",
+      ".cache/agent-level-uniapp-build-final-20261001.metadata.json": "72c6aa3d55b925935d7d99bb492adeadb04067e3416b9fbb7ef2bcc5dddb5e71",
+      ".cache/agent-level-uniapp-previous-regression-20261001.log": "c1fed0dafb311dfb2cc53bff2cbc7411219d6484bec48fea90c9ef52c25bac7f",
+      ".cache/agent-level-uniapp-previous-regression-20261001.metadata.json": "e00a7fed2e4c823042f59ac6d92a4896c4a8328b3c2bea0337ee11546d843a96",
+      ".cache/agent-level-uniapp-pure-final-20261001.log": "d2d61c5f8af1cc84b2dede973f4f8e46ac6a41d95c2cf3f9f89e15e30fbced91",
+      ".cache/agent-level-uniapp-pure-final-20261001.metadata.json": "c9692e78f3b438126a17dea64d73e1b247eb0b40f85ffea0fa32b20f9afcbaae",
+      ".cache/agent-level-uniapp-toolchain-connect-20261001.json": "9922aeb85fb643ec209f2a5720e0ed5ff761e1d82de0736f90f7a41df5df0757",
+      ".cache/agent-level-uniapp-toolchain-link-20261001.ps1": "8353f8ec88dba04b4d6b9ab85b8f52f0d8abc3dc69c4caec74f7b4394011cfc8",
+      ".cache/agent-level-uniapp-toolchain-restore-20261001.json": "cc481c469fa28dd427a7b9d47c5d09891946fde7f8cb8acc86f702d632429831",
+      ".cache/agent-level-uniapp-toolchain-review-20261001.json": "9d4b0aab7daca36db349286af5f3c9db66dae0b09ffbc4bb90225dfa0699ff85",
+      ".cache/agent-level-uniapp-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/agent-level-uniapp-types-final-20261001.metadata.json": "64e034c981bcc81b17f69e9f425e72ca5f73bfc42d0805835204e36dc68a3df0",
+      ".cache/agent-level-unique-count-review-20261001.cjs": "2afb7e0191cc46de89a6dedc71569547f28a9ba5579b7c494e42e2b2e631dfa8",
+      ".cache/agent-level-unique-count-review-20261001.json": "acc9b3779fde403cef8efce62723b03ed38dbbb4ddcc2e7724742ea9223f6e8f",
+      ".cache/agent-level-upgrade-native-20261001-cluster-cleanup.json": "0f99456f2977cf73edf74c41a661e48f3fa0d79cd99f436e744736fa532976a7",
+      ".cache/agent-level-upgrade-native-20261001.log": "f7869fc052c2ea0e1a7a61c8c596835d0a15d5e916f807a309e430597ff7d48e",
+      ".cache/agent-level-upgrade-native-retry1-20261001-cluster-cleanup.json": "dc74be76bbc992c9acfa7c1d3581faa36c61aa36776b9dc9214e9d155b54c80a",
+      ".cache/agent-level-upgrade-native-retry1-20261001.log": "59c1e76d54443c0d0b783f833f5314e3d933fb098ff52def16a9996794dc43ca",
+      ".cache/agent-level-upgrade-native-retry2-20261001-cluster-cleanup.json": "4d70cb8acb4229665eeb980572e49e20a6029d96c023c7c58baf83e1b61ff70d",
+      ".cache/agent-level-upgrade-native-retry2-20261001.log": "9f2883744171a3ea207cb15155761b0ffa2842378bac3147b02287b207533c3c",
+      ".cache/agent-level-worker-runtime-types-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/agent-level-worker-runtime-types-20261001.metadata.json": "540460af1ba1974198a4d0aff5374dd86abd73f63d7822a06f1d004f3dbe2d32",
+      ".cache/agent-level-worker-runtime-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/agent-level-worker-runtime-types-final-20261001.metadata.json": "81e4ebd272974bf4eb542d113a490370f69339b4b552cc99cfa27edc3d859066",
+      ".cache/agent-level-worker-tsc-20261001.log": "2e8307961920e5083763340de5c48eba71a74ca6657570db544a8e7c7437cc59",
+      ".cache/agent-level-worker-unit-types-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/agent-level-worker-unit-types-20261001.metadata.json": "babc03661e35ab1d9faa9d9aadc9f0a54de01dd86753c0d4b6826811652e4896",
+      ".cache/agent-level-worker-unit-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/agent-level-worker-unit-types-final-20261001.metadata.json": "fa3fe940d24ff5e06e22dd772e8d86012028e2d2dcbda458523cca2ddd314b2b",
+      ".cache/distributor-levels-admin-api-static-final-20261001.log": "e534663f9803534d20fc23f12608843cbe3beb3405e9e06264b59929833086f7",
+      ".cache/distributor-levels-admin-api-static-final-20261001.metadata.json": "58cb90d2b4618899bd3e8fe939dff2f25a7e726fc260f5696eacd6fcd9bd31e9",
+      ".cache/distributor-levels-admin-pure-static-final-20261001.log": "c73205980a10f4692c0654c869cb1fb863a07308ba6ce4c703bcdf4f9e15cdb1",
+      ".cache/distributor-levels-admin-pure-static-final-20261001.metadata.json": "e125dc9256b089846bd69839f71213f37a2ceb67b378a97870254d1fbd5dade9",
+      ".cache/distributor-levels-browser-helper-source-versions-20261001.json": "c73f51da177f5fb33f2aace82dbfe6f6593e0e74954ac7dc4283b1b914436b46",
+      ".cache/distributor-levels-browser-helper-source-versions-retry2-20261001.json": "afa8d1149b86f6f61c5a3dd7dd3c4d44b76334346f12597c1dc4620127fa5645",
+      ".cache/distributor-levels-frontend-source-before-admin-dist-override-20261001.json": "7b59d06a98ca17bdd551bee7ad6ad0af46ff672b25bdd9bcd51f93977bbe541c",
+      ".cache/distributor-levels-frontend-source-before-browser-retry1-20261001.json": "e16b51d8116be06441b3fcfada921aa38cb0d4902b402ced02f1513cf4d52c83",
+      ".cache/distributor-levels-frontend-source-before-browser-retry2-20261001.json": "45b903e453d84f8e7964dd0902cda9367f05444db3dfaab6b74f809410837273",
+      ".cache/distributor-levels-frontend-source-before-console-classification-20261001.json": "9d0b43d2dcd00ccbe67f65ee9a8d19956828b9041c9fa04018dffdfada31f95a",
+      ".cache/distributor-levels-frontend-source-before-rejection-orphan-20261001.json": "a66c12c15b6b3f58ac347f142c0c8e3f07359c8e93a29446557aa7d218150420",
+      ".cache/distributor-levels-frontend-source-before-static-endpoints-20261001.json": "6e9abf7891b8f146e62176e90d50300f820822b281061112cefbac7b63f5a98b",
+      ".cache/distributor-levels-frontend-source-freeze-20261001.json": "3af81595566027f7eed36b8f54e9df9fefa989dc6780b802ee507b10cbe37774",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-browser-final-20261001-source.cjs": "e28a371f1a3dcdcdf36d90e020a2e3f2400d9bfdc55d8669f6155292549eca25",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-browser-final-retry1-20261001-source.cjs": "49b66d26eecc6ac29cc8e54caca3345eba758422f3b19645afe8075864522564",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-admin-desktop.png": "b341b5a644bc27acb149ce5ce75714109ae080427457b548fb5859579e596ae8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-admin-mobile-editor.png": "9a3c023c0fc7492419c808de1042f2541f96c3e4f08d4adaff6355af49defa43",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-admin-mobile.png": "981c80cc8deba19bddf4ec320937b0bbbba20d33426467fa8853cbd5f6ebf549",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-admin-pending.png": "2aa63cbad41dd7756aca28c1b53486881e1576dc02ebf21af764404451c59757",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-admin-tasks-mobile.png": "55ff4bf71841c601ac3fbd201467680d78e837324241aa1f6c9e35cecc64345d",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-failure-11.png": "8c978a419319453976027870906c30f7460eaa0a693115f1663ad8a8f6872076",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-failure-12.png": "37ae7f70bd68ca0d92be8387a8278784aaa1fe6c4eb20469898120fd6b1e8e36",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-failure-2.png": "27625d80a10fac1553d63336e607e8982dbd4786bcd6c15ed0f00f851ba5c615",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-failure-24.png": "d2cd29c43901275f24d636c3d84fe178d1be81b7be9d8834c47f922d3010e976",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-failure-27.png": "ec30ab5b67a23b6ee676c8830f116ef7dd8abedb0cc749ae3b18c510a64f92ba",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-failure-35.png": "b97e52cda2a407c62308f70c45f923d2e15a905d8baf17d434731dcadfb6a4f6",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-uniapp-desktop.png": "c3666038b783a54a20c7bde2ee72fda830f0466eae4cebe59e27f7bee5808e76",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-uniapp-gifted.png": "eaf50876836bfadfcb0355e8b9b3c90e9761d7c11d71a65af0979490ab7098c7",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-uniapp-mobile-final.png": "bea49deb5fbc81d1e7f110696af1c7254df57d3b2c954487d5cf3e9c0c367ae3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001-uniapp-mobile.png": "bea49deb5fbc81d1e7f110696af1c7254df57d3b2c954487d5cf3e9c0c367ae3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-20261001.json": "f7927cc99e683e1a4c0fd8e78761d375440ad659c2750c98ee2c39f0a48a4dfb",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-admin-desktop.png": "b341b5a644bc27acb149ce5ce75714109ae080427457b548fb5859579e596ae8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-admin-mobile-editor.png": "9a3c023c0fc7492419c808de1042f2541f96c3e4f08d4adaff6355af49defa43",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-admin-mobile.png": "981c80cc8deba19bddf4ec320937b0bbbba20d33426467fa8853cbd5f6ebf549",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-admin-pending.png": "2aa63cbad41dd7756aca28c1b53486881e1576dc02ebf21af764404451c59757",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-admin-tasks-mobile.png": "55ff4bf71841c601ac3fbd201467680d78e837324241aa1f6c9e35cecc64345d",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-failure-12.png": "14c27a3378a2c075263969d5d97f545b9a5f6080ee9ea9a55d4e527de22fb1c1",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-uniapp-desktop.png": "d514a36860dbf70bfbe28ae24f0b36c15e62ca7ff5c989881a3bc4ee67126eb8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-uniapp-gifted.png": "eaf50876836bfadfcb0355e8b9b3c90e9761d7c11d71a65af0979490ab7098c7",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-uniapp-mobile-final.png": "bea49deb5fbc81d1e7f110696af1c7254df57d3b2c954487d5cf3e9c0c367ae3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001-uniapp-mobile.png": "bea49deb5fbc81d1e7f110696af1c7254df57d3b2c954487d5cf3e9c0c367ae3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry1-20261001.json": "ddf5905bd4815d4cff657c9070d7836d045b3382218c3c0097a8691664e203a8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-admin-desktop.png": "b341b5a644bc27acb149ce5ce75714109ae080427457b548fb5859579e596ae8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-admin-mobile-editor.png": "9a3c023c0fc7492419c808de1042f2541f96c3e4f08d4adaff6355af49defa43",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-admin-mobile.png": "981c80cc8deba19bddf4ec320937b0bbbba20d33426467fa8853cbd5f6ebf549",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-admin-pending.png": "2aa63cbad41dd7756aca28c1b53486881e1576dc02ebf21af764404451c59757",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-admin-tasks-mobile.png": "55ff4bf71841c601ac3fbd201467680d78e837324241aa1f6c9e35cecc64345d",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-uniapp-desktop.png": "c3666038b783a54a20c7bde2ee72fda830f0466eae4cebe59e27f7bee5808e76",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-uniapp-gifted.png": "eaf50876836bfadfcb0355e8b9b3c90e9761d7c11d71a65af0979490ab7098c7",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-uniapp-mobile-final.png": "bea49deb5fbc81d1e7f110696af1c7254df57d3b2c954487d5cf3e9c0c367ae3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001-uniapp-mobile.png": "bea49deb5fbc81d1e7f110696af1c7254df57d3b2c954487d5cf3e9c0c367ae3",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa-final-retry2-20261001.json": "75191a0c32db45acc3d6fa751a94be9d20430529061b0749cb7a74fb5d4b87e8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\distributor-levels-browser-qa.cjs": "c6ff21786347d495e9249101ff8157382b0e138b085bc6d8a4f5a58ba935a780",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\index-v1BumM1h.js": "a24484a77ef0894c6cc4383ef1be2bb773326c1d394e7217e3b1007891c87796",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\AdminLayout-DKtgFSsa.js": "1ec861ffad3d5a24e52064364137b6d8fb85994ec5ced02bf358df5ecf5894c9",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\auth-DIp27vwt.js": "196f09472a92df71470ba1724c81ebe925ee0a8c513be72f509efaff2986df77",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\auth-BYz18Tmd.js": "82a0570e26327e0c4542eabafc85d59be07fe66d5489cac1be2e8ad6b1156158",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\request-BzeDbjbO.js": "df08f748fb857c75bdbb4ec7f48cef1332211beaf83d8a1a4d554ccf26fc6717",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\DistributorCatalog-CRRtuLxo.js": "0228b929926cbbe2184d200cc4f651066db1e6dc18b7f760d5006d99d277aba2",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\DistributorLevels-Cd5Q00NC.js": "4197079267c7b26efda825a7776f5cc7593ed1cbe6da895072375a0e81d9305f",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\SeckillActivityImagePicker-Cku0NFLG.js": "8f33374bb75f1bcdd6fe129a565e8392bb19966975f79f40169566a983022bbc",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\attachment-CMzFVgmJ.js": "01e183400faab12f5ff46772b5fc95fd39ab0f2db94d0ea87c226786774c69ee",
+      "C:\\cinagroup\\cinashop\\.cache\\agent-level-admin-dist-final-20261001\\assets\\DistributorLevelTasks-BJtwTDcF.js": "1b8f66f83c26869f71ebb1062bb873562f669189d36e57db0e24dec7e50ddf0e",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\index-DlPxtm1A.js": "b8c1e2d97c1ba518678c48534c038d3d72d3e7560171ba558b48b6e6eb0c4bd7",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\pages-users-user_distribution_level-index.CIWbd6Gk.js": "45f5ce46fc6796b4effe06736583ad1573fd5cc276dc83613c7923fb88053671",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\pages-user-spread.CsFLyEEI.js": "f9befeff99bdbd7327884457a24934520bf5e63bf04014485daed34820f8fc71",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\pages-goods-list.BLbuDoVn.js": "97f53af86caaf380ab3021cfd6899cd6713bfe263dc5acc22e9e65f71aca8a35",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\product.DlqS_ZPc.js": "516772c01f0425e129dbc68e15a6f6617c2938f69b5218e2b1b75f8309adc818",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\pages-user-finance.CoqUJDGZ.js": "d52ee4cb26026258160564f563698e2925e23090e97260676c1950d529826623",
+      "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\dist\\build\\h5\\assets\\finance.Cb0sWG18.js": "bc0821145ad5395c56fefa85dee2f1b439a7605f2a51cf5f3c3b53c05c7909ea"
+    }
+  }
+}

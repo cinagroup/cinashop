@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <text class="heading">分销与代理申请</text>
     <view v-if="loading" class="card">正在读取申请记录…</view>
@@ -16,9 +17,11 @@
       <button class="secondary" @tap="goApply('agent')">申请代理商</button>
     </template>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiAgentApplication, formatAgentApplicationTime, type AgentApplication, type AgentApplicationKind, type AgentApplicationStatus } from "@/api/agentSelfService";

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="scope-page">
     <view class="heading">券范围商品</view>
     <view v-if="state.loaded" class="summary">{{ state.title }} · {{ scopeLabel }}</view>
@@ -42,8 +43,10 @@
     <view v-else-if="state.loaded && !state.loading && !error && state.list.length" class="notice">本次搜索已读完，目录变化后请刷新。</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useCouponProducts } from "@/composables/useCouponProducts";
 import { computed } from "vue";
 defineOptions({ inheritAttrs: false });
@@ -58,5 +61,5 @@ function changeSort(event: { detail: { value: string | number } }) { void applyS
 .scope-definition { background: white; border-radius: 14rpx; margin: 24rpx 0; padding: 24rpx; line-height: 1.7; }.scope-names { max-height: 400rpx; }.scope-name { margin: 16rpx 0; }
 .notice { color: #666; line-height: 1.7; font-size: 24rpx; margin: 24rpx 0; }.error { color: #b72a1d; margin: 20rpx 0; line-height: 1.7; }
 .scope-grid { display: flex; flex-wrap: wrap; gap: 20rpx; margin: 24rpx 0; }.scope-product { box-sizing: border-box; flex: 1 1 280rpx; max-width: 680rpx; padding: 24rpx; border-radius: 14rpx; background: white; }
-.product-image { width: 100%; height: 230rpx; }.product-title { font-weight: 600; margin: 16rpx 0; }.catalog-price { color: #b72a1d; margin: 16rpx 0; }.scope-product button { margin: 0; }
+.product-image { width: 100%; height: 230rpx; }.product-title { font-weight: 600; margin: 16rpx 0; }.catalog-price { color: var(--view-priceColor, #e93323); margin: 16rpx 0; }.scope-product button { margin: 0; }
 </style>

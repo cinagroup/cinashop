@@ -1,5 +1,16 @@
 <template>
   <div class="home container">
+    <section class="home-banners" aria-label="首页轮播">
+      <div v-if="bannerLoading" class="banner-loading"><el-skeleton :rows="2" animated /></div>
+      <p v-else-if="bannerError" class="banner-notice" role="status">首页轮播暂时无法读取。</p>
+      <el-carousel v-else-if="banners.length" height="clamp(160px, 26vw, 370px)" :interval="5000" :autoplay="banners.length > 1" :arrow="banners.length > 1 ? 'hover' : 'never'" :indicator-position="banners.length > 1 ? '' : 'none'" aria-label="PC 首页轮播图">
+        <el-carousel-item v-for="banner in banners" :key="banner.id">
+          <router-link v-if="bannerLink(banner)?.kind === 'router'" class="banner-card" :to="bannerLink(banner)!.href" :aria-label="banner.title || '查看轮播内容'"><ProductImage :src="banner.image" :alt="banner.title || '首页轮播'" /><span v-if="banner.title" class="banner-title">{{ banner.title }}</span></router-link>
+          <a v-else-if="bannerLink(banner)" class="banner-card" :href="bannerLink(banner)!.href" :aria-label="banner.title || '查看轮播内容'" rel="noopener noreferrer"><ProductImage :src="banner.image" :alt="banner.title || '首页轮播'" /><span v-if="banner.title" class="banner-title">{{ banner.title }}</span></a>
+          <div v-else class="banner-card"><ProductImage :src="banner.image" :alt="banner.title || '首页轮播'" /><span v-if="banner.title" class="banner-title">{{ banner.title }}</span></div>
+        </el-carousel-item>
+      </el-carousel>
+    </section>
     <!-- 营销入口 -->
     <div class="marketing-bar">
       <div class="marketing-item" @click="$router.push('/seckill')">
@@ -59,13 +70,25 @@
 
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
+import { apiPcHomeBanners, resolvePcBannerLink, type PcHomeBanner } from '@/api/pcBanner';
 
 const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
+const banners = ref<PcHomeBanner[]>([]), bannerLoading = ref(true), bannerError = ref(false);
+const bannerAbort = new AbortController();
+let alive = true;
+const bannerLink = (banner: PcHomeBanner) => resolvePcBannerLink(banner.url);
+
+onMounted(async () => {
+  try { const result = await apiPcHomeBanners(bannerAbort.signal); if (alive) banners.value = result; }
+  catch { if (alive) bannerError.value = true; }
+  finally { if (alive) bannerLoading.value = false; }
+});
+onBeforeUnmount(() => { alive = false; bannerAbort.abort(); });
 
 onMounted(async () => {
   try {
@@ -87,6 +110,8 @@ onMounted(async () => {
 .home {
   padding-top: 20px;
 }
+.home-banners{margin-bottom:24px;min-width:0}.banner-card{position:relative;display:block;height:100%;overflow:hidden;background:#f5f5f5;color:#fff;text-decoration:none}.banner-card>.product-media{height:100%;aspect-ratio:auto}.banner-title{position:absolute;right:0;left:0;bottom:0;padding:14px 20px 32px;background:linear-gradient(transparent,rgba(0,0,0,.68));font-size:16px;line-height:1.5;overflow-wrap:anywhere}.banner-loading{padding:20px;background:#fff;min-height:160px}.banner-notice{padding:12px;color:#777;background:#fff;font-size:13px}.home-banners :deep(.el-carousel__indicators--horizontal){display:flex;width:max-content;max-width:100%}
+@media(max-width:600px){.home-banners{margin-bottom:16px}.banner-title{padding:12px 14px 32px;font-size:13px}.home-banners :deep(.el-carousel__button){width:15px}.home-banners :deep(.el-carousel__indicator--horizontal){padding-left:3px;padding-right:3px}}
 
 .marketing-bar {
   display: flex;

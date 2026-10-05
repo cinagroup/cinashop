@@ -3,10 +3,17 @@ import { withTx, type Container } from '@/lib/di';
 import { systemConfig } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
 import { readBoundedUtf8Text } from '@/utils/request-body';
+import { LEVEL_ACTIVATION_KEYS } from '@/services/admin/AdminLevelActivationInput';
+import { PAID_MEMBERSHIP_CONFIG_KEYS } from '@/services/admin/AdminPaidMembershipConfigInput';
 import type { SystemConfigEnv } from './SystemConfigService';
+import { isCityConfigKey } from '@/services/delivery/CityDeliverySettingsResolver';
 
 export const MAX_ADMIN_CONFIG_BODY_BYTES = 128 * 1024;
 const MAX_KEYS = 100;
+const CONTROLLED_CONFIG_ENDPOINTS = new Map<string, string>([
+  ...LEVEL_ACTIVATION_KEYS.map(key => [key, '/config/level-activation'] as const),
+  ...PAID_MEMBERSHIP_CONFIG_KEYS.map(key => [key, '/config/paid-membership'] as const),
+]);
 
 function validText(value: string, limit: number): boolean {
   const characters = Array.from(value);
@@ -34,6 +41,11 @@ export function normalizeAdminConfigBatch(input: unknown): Array<[string, string
     if (!key || key.trim() !== key || !validText(key, 255) || new TextEncoder().encode(`cfg_${key}`).byteLength > 512) {
       throw new ValidateException('配置键名无效');
     }
+    // A generic string batch cannot carry these domains' revision, UUID,
+    // option proofs or atomic audit. Reject the whole request before SQL/KV,
+    // including when a superadmin submits it alongside unrelated settings.
+    const endpoint = isCityConfigKey(key) ? '/config/city-delivery' : CONTROLLED_CONFIG_ENDPOINTS.get(key);
+    if (endpoint) throw new ValidateException(`配置${key}只能通过${endpoint}专用接口保存`);
     if (typeof value !== 'string' || !validText(value, 5000)) {
       throw new ValidateException('配置值必须是最多5000字符的有效字符串');
     }
@@ -42,7 +54,8 @@ export function normalizeAdminConfigBatch(input: unknown): Array<[string, string
 }
 
 /** Existing authenticated compatibility endpoint only; does not re-enable the
- * generic frontend editor or grant permissions. Domain-specific APIs stay preferred.
+ * generic frontend editor or grant permissions. The two controlled membership
+ * domains require their dedicated APIs; other compatibility keys remain valid.
  * The table fence also guards missing keys and duplicate-priority changes made
  * by other writers, not just callers sharing an advisory-lock convention.
  */

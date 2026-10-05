@@ -86,7 +86,7 @@ describe("lottery domain migration", () => {
     const embedded = service.match(
       /private migration_0077\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1]?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     expect(migration).not.toMatch(/FOREIGN KEY\s*\(|REFERENCES\s+"/i);
     const sourceSql = migration.split("-- Worker-only reliability table.")[0];
     expect(sourceSql).not.toMatch(/CREATE UNIQUE INDEX/i);
@@ -139,7 +139,9 @@ describe("lottery domain migration", () => {
     expect(adminRoutes).toContain('adminapiRoutes.post("/lottery/record/deliver"');
     expect(requiredAdminPermission("GET", "/adminapi/lottery/list")).toBe("lottery.view");
     expect(requiredAdminPermission("POST", "/adminapi/lottery/add")).toBe("lottery.manage");
-    expect(requiredAdminPermission("POST", "/adminapi/lottery/record/deliver")).toBe("lottery.manage");
+    expect(requiredAdminPermission("POST", "/adminapi/lottery/record/deliver")).toBe("lottery_record.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/lottery/record/list")).toBe("lottery_record.view");
+    expect(requiredAdminPermission("GET", "/adminapi/lottery/record/detail/:id")).toBe("lottery_record.manage");
 
     const paid = readFileSync("src/services/order/OrderOutboxService.ts", "utf8");
     const reply = readFileSync("src/services/product/ReplyService.ts", "utf8");
@@ -160,7 +162,8 @@ describe("lottery domain migration", () => {
     expect(userController).toContain("const MAX_BODY_BYTES = 8 * 1024");
     expect(adminController).toContain("const MAX_BODY_BYTES = 256 * 1024");
     expect(adminRuntime).not.toContain("user: userTable");
-    expect(adminRuntime).toContain("userPhone: userTable.phone");
+    expect(adminRuntime).not.toContain("userPhone: userTable.phone");
+    expect(adminRuntime).not.toContain("receive_info: parseObject(record.receiveInfo)");
     expect(adminRuntime).toContain("pg_advisory_xact_lock");
   });
 });

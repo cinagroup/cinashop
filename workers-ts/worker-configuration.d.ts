@@ -18,6 +18,7 @@ interface __BaseEnv_WorkerBindings {
 	PC_AUTH_ALLOWED_ORIGINS: "https://cinashop-pc.pages.dev,https://shop.cinaseek.ai";
 	OFFLINE_PC_RETURN_ORIGIN: "https://shop.cinaseek.ai";
 	OFFLINE_H5_RETURN_ORIGIN: "https://cinashop-h5.pages.dev";
+	PUBLIC_H5_ORIGIN: "https://cinashop-h5.pages.dev";
 	AUTH_ALLOWED_ORIGINS: "https://cinashop-admin.pages.dev";
 	KEFU_AUTH_ALLOWED_ORIGINS: "https://cinashop-kefu.pages.dev";
 	TOKEN_BUCKET: DurableObjectNamespace<import("./src/index").TokenBucketDO>;
@@ -38,5 +39,5 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "NODE_ENV" | "INTERNAL_API_URL" | "ORDER_DLQ_NAME" | "OUT_API_LOGIN_LIMIT_PER_MINUTE" | "OUT_API_REFRESH_LIMIT_PER_MINUTE" | "OUT_API_READ_LIMIT_PER_MINUTE" | "OUT_API_WRITE_LIMIT_PER_MINUTE" | "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "OFFLINE_PC_RETURN_ORIGIN" | "OFFLINE_H5_RETURN_ORIGIN" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "NODE_ENV" | "INTERNAL_API_URL" | "ORDER_DLQ_NAME" | "OUT_API_LOGIN_LIMIT_PER_MINUTE" | "OUT_API_REFRESH_LIMIT_PER_MINUTE" | "OUT_API_READ_LIMIT_PER_MINUTE" | "OUT_API_WRITE_LIMIT_PER_MINUTE" | "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "OFFLINE_PC_RETURN_ORIGIN" | "OFFLINE_H5_RETURN_ORIGIN" | "PUBLIC_H5_ORIGIN" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS">> {}
 }

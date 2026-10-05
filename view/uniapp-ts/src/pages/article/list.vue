@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="article-page">
     <swiper
       v-if="banners.length"
@@ -59,9 +60,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onPullDownRefresh, onReachBottom } from "@dcloudio/uni-app";
 import {
@@ -247,7 +250,7 @@ onReachBottom(loadMore);
   width: 36rpx;
   height: 5rpx;
   border-radius: 3rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   content: "";
   transform: translateX(-50%);
 }
@@ -326,8 +329,8 @@ onReachBottom(loadMore);
   width: 180rpx;
   margin: 24rpx auto 0;
   padding: 14rpx 0;
-  border: 1rpx solid #e93323;
+  border: 1rpx solid var(--view-theme, #e93323);
   border-radius: 32rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 </style>

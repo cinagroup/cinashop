@@ -22,8 +22,11 @@ type InventoryRoute = {
 };
 
 const workerRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const inventoryFile = resolve(workerRoot, "audit/admin-frontend-inventory.json");
-const outputFile = resolve(workerRoot, "audit/admin-legacy-system-route-parity.json");
+const logFollowup = process.argv.includes("--log-followup");
+const inventoryName = logFollowup ? "admin-frontend-inventory-read-followup-20260928.json" : "admin-frontend-inventory.json";
+const inventoryFile = resolve(workerRoot, `audit/${inventoryName}`);
+const outputFile = resolve(workerRoot, "audit", logFollowup
+  ? "admin-legacy-system-route-parity-read-followup-20260928.json" : "admin-legacy-system-route-parity.json");
 const oldRouterHashes: Record<string, string> = {
   "src/router/routes.js": "9432b5a0b65c09adaf828dbb7125352eea94c54b444f5197647c59aa40fe13c2",
   "src/router/modules/system.js": "f84e11ebb974799f4cf3da05daa772c9b973c07960ddb6e86fcef823b58cb0ff",
@@ -115,6 +118,20 @@ add("/admin/system/maintain/system_log/index", "partial", ["/system/log"], ["GET
 ], [
   "旧页按时间、管理员、链接和 IP 筛选并显示路径、行为与类型；新页只有固定分页、无筛选，字段及历史 system_log 形状也未完成逐项验收。",
 ], [screenFiles["/system/log"], "workers-ts/src/controllers/api/v1/AdminCrudController.ts"]);
+if (logFollowup) {
+  const log = reviews["/admin/system/maintain/system_log/index"];
+  log.status = "candidate";
+  log.targetApis.push("GET /adminapi/log/admin-options");
+  log.covered = [
+    "独立只读操作日志合同恢复旧创建时间、管理员、链接和 IP 筛选及 ID/名称、路径、行为、类型、IP、时间列，固定20条分页。",
+    "列表与管理员选项都按当前操作人的可见范围交集限制；显式 admin_id 不能扩大权限，双前缀读 API 仅授予 log.view。",
+  ];
+  log.remaining = [
+    "仍需用真实历史 system_log 数据、受限管理员角色和生产规模验收；旧 /admin/system/log 是浏览器 Vuex 事件页，不属于此候选。",
+  ];
+  log.evidence.push("workers-ts/src/services/admin/AdminSystemLogReadService.ts", "workers-ts/test/admin-system-log-postgres.test.ts",
+    "workers-ts/test/admin-system-log-frontend.test.ts");
+}
 add("/admin/system/maintain/system_file/index", "missing", [], [], [], [
   "旧页读取 system/file 的文件路径、校验码与访问/修改时间；新素材目录是业务附件，不提供应用文件完整性校验报告。",
 ]);
@@ -229,11 +246,13 @@ const statuses: Status[] = ["candidate", "partial", "missing", "retired"];
 const counts = Object.fromEntries(statuses.map((status) => [status, routes.filter((route) => route.status === status).length]));
 const report = {
   version: 1,
-  generatedFrom: "audit/admin-frontend-inventory.json",
+  generatedFrom: `audit/${inventoryName}`,
   methodology: {
     scope: "Only the 17 surface=page routes under /admin/system in the authoritative 274-page inventory. /admin/system.User/list.html is auxiliary and excluded; /admin/out* belongs to a different path domain.",
     reviewBasis: "Compare each pinned old Vue component, meta.auth and API workflow with the target Admin router, operation surface, Worker route, data contract and permission map. Old route/auth/line evidence is a static reviewed snapshot; CI reads only this repository. An API-only endpoint or a similarly named page does not establish screen parity. Retired requires evidence that the old page was inert or a mock.",
-    validationBoundary: "Code-only semantic review. No production role, data, browser E2E, backup/restore, destructive maintenance, deployment or publication is claimed. FE-001D remains open.",
+    validationBoundary: logFollowup
+      ? "Local code and PostgreSQL checks only. Real historical log data, constrained roles, production scale, browser E2E, backup/restore, destructive maintenance, deployment and publication remain open. FE-001D remains open."
+      : "Code-only semantic review. No production role, data, browser E2E, backup/restore, destructive maintenance, deployment or publication is claimed. FE-001D remains open.",
   },
   summary: { legacyRoutes: routes.length, reviewed: routes.length, ...counts, unreviewed: 0 },
   routes,

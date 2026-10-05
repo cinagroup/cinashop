@@ -1,0 +1,106 @@
+{
+  "dateUtc": "2026-09-28T06:02:30.674Z",
+  "scope": "Local, unpublished read-only legacy Admin division statistics follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 59,
+      "partial": 117,
+      "missing": 91,
+      "retired": 7
+    },
+    "legacySupplierAgentScreens": {
+      "total": 19,
+      "candidate": 1,
+      "partial": 10,
+      "missing": 8,
+      "retired": 0
+    },
+    "workerRoutes": 1859,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 895,
+      "executableMatched": 874,
+      "unavailable": 21,
+      "actionableMissing": 992,
+      "effectiveExecutableCoveragePercent": 46.3
+    },
+    "adminApi": {
+      "callSites": 435,
+      "pathVariants": 459,
+      "executable": 459,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 78,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "divisionStatisticsNativePg16": {
+      "files": [
+        "test/admin-division-statistics-read-postgres.test.ts",
+        "test/admin-division-statistics-read-http.test.ts"
+      ],
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "divisionStatisticsPglite": {
+      "files": 2,
+      "passed": 12,
+      "failed": 0
+    },
+    "divisionStatisticsFrontendRuntime": {
+      "files": 1,
+      "passed": 5,
+      "failed": 0
+    },
+    "finalStaticAndFrontendSuites": {
+      "files": 16,
+      "passed": 92,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "459 executable variants; 0 unregistered or unresolved",
+    "browserWrite": "not run; no business mutation or production deployment"
+  },
+  "limitations": [
+    "The old restricted ranking can read a different division by treating agent UID as division_id. The new read model intersects with the current admin division, so the legacy screen remains partial.",
+    "The old cross-day date predicate includes the next midnight; the new Shanghai day range excludes it. This can change the visible monthly bucket.",
+    "Old statistics were unbounded; the new read model errors beyond 500 ranking rows or 366 inclusive days.",
+    "Only level 0 can use global scope. An unbound lower-level admin is denied rather than receiving the PHP global view.",
+    "Real division history and constrained-role browser behavior, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "b6d73725e5c9ce2b4f4e34ca3111c2462726cc9bf4f8c1539aed028616182d10",
+    "view/admin-ts/src/api/divisionStatistics.ts": "6610b5568d10a80e37dbc1acaeeb9597f7e18811f6b4915f6cff38a82b6b8daa",
+    "view/admin-ts/src/pages/agent/DivisionStatistics.vue": "cbbebed781e7a45547ca11522a1aef7877d34cd8adf01b6cb8a26b7823617e45",
+    "view/admin-ts/src/api/system.ts": "b2b2b7cb5a75b4fa39d91440e15bb42c4d4a1185824038c6fea5454aa7b980d3",
+    "view/admin-ts/src/router/index.ts": "8199897a16b796bfb310cb6f844279398e4ff948307b56a77739159a1143d48c",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "ffa3aa64382b9113cc2bc92d20a8d37f5a0ece4576c309f643dfdef13d8aaaab",
+    "workers-ts/src/services/admin/AdminDivisionStatisticsScreenService.ts": "e9133e342df5ea40e661e92b9bac61aa1b29bc242430877d1d59206e42e70359",
+    "workers-ts/src/controllers/api/v1/AdminDivisionStatisticsScreenController.ts": "32010fa1aa5985509aadbf1fb7fcaf6fcf9a3c33f830f768d18f289a73b360cb",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "576f77d0be5883b7572b68da3c08b22b170b2c881b1c67f6e93330554481d07b",
+    "workers-ts/src/routes/adminapi.ts": "2208e97c2849df47cb70f662981be84b35da6ee013ff601b9f8f464b20762cdb",
+    "workers-ts/src/routes/v1/index.ts": "4551a06f388fcd8d1b8bd439ae24329518ba96e41ae84cb9186424a8f6bcd899",
+    "workers-ts/test/admin-division-statistics-read-postgres.test.ts": "2baeca1a6e08443e382ba9bcb7662398e6aea6405d00f9ce949a04c08ee70577",
+    "workers-ts/test/admin-division-statistics-read-http.test.ts": "543c1ce94e5783f521e31c28034c723c2a830791a564d0881edee1188c19952f",
+    "workers-ts/test/admin-division-statistics-frontend.test.ts": "a386c35b17ede6c2c98fca176a9b8cc95a81a3e3cfd75edb0ee2eb17fcafe160",
+    "workers-ts/test/admin-supplier-agent-frontend-parity.test.ts": "de6b60dea493e55fa0c250876ea41a4d117687be8aa30be0fff63d837d6897dc",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "b3052263bbfd60d7bf787eab774ff0e6e5ebc70a32b270d73a4c5529edbf72d3",
+    "workers-ts/scripts/admin-supplier-agent-frontend-parity-audit.ts": "08d68d2abf968c8017551394553056220075d18e3d3ac4485fbf90ca7834caa3",
+    "workers-ts/docs/admin-division-statistics-read-contract.md": "12be70a3caf3dda3828d72e835deb8e65a8dc7c8daa29f1e740cbbf01bfc4a7c",
+    "workers-ts/docs/admin-supplier-agent-route-parity.md": "6ccfa67a524be45d603ce517b408e5042d579e5ff78ff94900407ebe0665dd59",
+    "workers-ts/audit/admin-legacy-supplier-agent-route-parity-division-statistics-followup-20260928.json": "8e7eaecb566311cdd7b46d61538dead3c0761212caffae4dccde222ecc0f75ca",
+    "workers-ts/audit/route-distribution-division-statistics-followup-20260928.json": "701cddb80bd250fb9d7fecd4ef3833d62eddd5a2e91e92fc198ae0b8269741cf",
+    "workers-ts/audit/admin-frontend-inventory-division-statistics-followup-20260928.json": "ccf743dc01fc6ed28cdf32551f4f17b7768e62cf33c4c24c169a9a4ac105cab9",
+    "workers-ts/audit/admin-frontend-api-contracts-division-statistics-followup-20260928.json": "906b0b6922193acad8ee1c51bb0b8dbafb71adf95346df460f115a29e78f7339"
+  }
+}
