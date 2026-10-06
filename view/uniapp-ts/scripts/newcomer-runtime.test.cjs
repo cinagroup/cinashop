@@ -9,6 +9,18 @@ const product = id => ({ id, product_id: id + 100, store_name: `新人商品${id
 const list = page => page === 1 ? Array.from({ length: 9 }, (_, i) => product(90 - i)) : [product(81), product(80)];
 const detail = id => ({ storeInfo: { id, product_id: id + 100, title: `新人商品${id}`, image: '/safe.png', price: '9.90', ot_price: '19.90', stock: 4, info: '测试商品' },
   productValue: { 红色: { unique: 'new-sku-1', suk: '红色', price: '9.90', stock: 3, image: '/sku.png' } } });
+const publicDesignUrl = '/api/v2/diy/product_detail';
+function detailRuntime(send) {
+  let r;
+  r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: call => {
+    if (call.url !== publicDesignUrl) return send(call);
+    assert.equal(call.method, 'GET');
+    assert.deepEqual(call.data, {});
+    return { data: { product_detail: r.load(path.resolve(__dirname, '../../common/productDetailDesign.ts')).cloneProductDetailDesign(),
+      product_detail_design_state: { configured: true } } };
+  } });
+  return r;
+}
 function setup(send = call => call.url.endsWith('/info') ? { data: info() } : { data: list(call.data.page) }) {
   return runtime({ feature: 'useNewcomerGift', component: 'pages/activity/new_customer/index.vue', send });
 }
@@ -62,16 +74,18 @@ for (const boundary of ['onHide', 'onUnload', 'identity']) test(`late newcomer r
 });
 
 test('newcomer activity detail selects the exact SKU and enters isolated type-7 checkout with one item', async () => {
-  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: call => ({ data: call.url.endsWith('/cart/add') ? { id: 15, cartNum: 1 } : detail(81) }) });
+  const r = detailRuntime(call => ({ data: call.url.endsWith('/cart/add') ? { id: 15, cartNum: 1 } : detail(81) }));
   try {
     await r.start({ id: '81' });
-    assert.deepEqual(r.calls.map(c => c.url), ['/api/marketing/newcomer/product_detail/81']);
+    assert.deepEqual(r.calls.map(c => c.url), [publicDesignUrl, '/api/marketing/newcomer/product_detail/81']);
+    assert.equal(r.checkout.activityDesignError.value, '');
     assert.equal(r.checkout.detail.value.id, 81); assert.equal(r.checkout.detail.value.skus[0].price, '9.90');
     assert.equal(r.checkout.canBuy.value, false);
     r.checkout.choose('new-sku-1');
     assert.equal(r.checkout.canBuy.value, true);
     await r.checkout.purchase();
-    assert.deepEqual(r.calls[1], { url: '/api/cart/add', data: {
+    assert.equal(r.calls.length, 3);
+    assert.deepEqual(r.calls[2], { url: '/api/cart/add', data: {
       productId: 181, unique: 'new-sku-1', cartNum: 1, type: 7, activityId: 81, new: 1,
     } });
     assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartId=15&type=7&newcomerId=81']);
@@ -82,7 +96,7 @@ test('newcomer activity detail selects the exact SKU and enters isolated type-7 
 test('selected base SKU with zero stock disables type-7 purchase despite positive product stock', async () => {
   const soldOut = detail(81);
   soldOut.productValue.红色.stock = 0;
-  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: () => ({ data: soldOut }) });
+  const r = detailRuntime(() => ({ data: soldOut }));
   try {
     await r.start({ id: '81' });
     r.checkout.choose('new-sku-1');
@@ -90,7 +104,8 @@ test('selected base SKU with zero stock disables type-7 purchase despite positiv
     assert.equal(r.checkout.selectedSku.value.stock, 0);
     assert.equal(r.checkout.canBuy.value, false);
     await r.checkout.purchase();
-    assert.deepEqual(r.calls.map(call => call.url), ['/api/marketing/newcomer/product_detail/81']);
+    assert.deepEqual(r.calls.map(call => call.url), [publicDesignUrl, '/api/marketing/newcomer/product_detail/81']);
+    assert.equal(r.checkout.activityDesignError.value, '');
   } finally { r.stop(); }
 });
 
@@ -174,10 +189,10 @@ test('checkout binds type-7 cart row to the route activity and quote identity', 
 });
 
 test('invalid detail id and mismatched activity response fail closed', async () => {
-  const bad = runtime({ component: 'pages/activity/newcomerDetail.vue', send: () => ({ data: detail(81) }) });
-  try { await bad.start({ id: '81&x=1' }); assert.equal(bad.calls.length, 0); assert.match(bad.checkout.error.value, /链接无效/); } finally { bad.stop(); }
-  const mismatch = runtime({ component: 'pages/activity/newcomerDetail.vue', send: () => ({ data: detail(82) }) });
-  try { await mismatch.start({ id: '81' }); assert.equal(mismatch.checkout.detail.value, null); assert.match(mismatch.checkout.error.value, /响应无效/); } finally { mismatch.stop(); }
+  const bad = detailRuntime(() => { throw new Error('Invalid activity identity must not read or purchase a private product'); });
+  try { await bad.start({ id: '81&x=1' }); assert.deepEqual(bad.calls.map(call => call.url), [publicDesignUrl]); assert.equal(bad.checkout.activityDesignError.value, ''); assert.match(bad.checkout.error.value, /链接无效/); } finally { bad.stop(); }
+  const mismatch = detailRuntime(() => ({ data: detail(82) }));
+  try { await mismatch.start({ id: '81' }); assert.deepEqual(mismatch.calls.map(call => call.url), [publicDesignUrl, '/api/marketing/newcomer/product_detail/81']); assert.equal(mismatch.checkout.detail.value, null); assert.equal(mismatch.checkout.canBuy.value, false); assert.match(mismatch.checkout.error.value, /响应无效/); } finally { mismatch.stop(); }
 });
 
 test('H5 reused detail route clears the old product and rejects duplicate activity IDs', async () => {

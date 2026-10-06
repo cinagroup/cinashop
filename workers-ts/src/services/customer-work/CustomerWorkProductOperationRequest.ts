@@ -2,6 +2,7 @@ import {and,asc,eq,inArray,sql} from 'drizzle-orm';
 import {withTx,type Container,type DbClient} from '@/lib/di';
 import {storeProduct,storeProductAttrValue,storeProductRelation} from '@/models/schema';
 import {lockProductWrite} from '@/services/product/ProductAssociationService';
+import {boundBargainSourceProductChange,lockBargainSourceProductChange} from '@/services/activity/BargainSourceProductLifecycle';
 import {normalizeOutRequestKey,outRequestHash} from '@/services/out/OutIdempotency';
 import {assertCustomerProductOperationCatalog,customerProductOperationReadiness} from '@/migrations/runCustomerProductOperation';
 import {acquireCustomerProductCatalogLock} from '@/migrations/runCustomerProductCatalogLock';
@@ -64,6 +65,9 @@ export class CustomerWorkProductOperationRequest {
  private async rejection(p:PreparedCustomerProductOperation,error:unknown){if(!(error instanceof ValidateException||error instanceof NotFoundException||error instanceof AuthException||error instanceof HttpApiException&&[403,412].includes(error.httpStatus)))return null;return withTx(this.container,async tx=>{const existing=await prior(tx,p);await authorizeCustomerOperationOwner(tx,p.actor);return{receipt:existing??await append(tx,p,0,'rollback-rejected',{code:error instanceof HttpApiException?String(error.httpStatus):String(error.code)}),replayed:Boolean(existing)};});}
  async execute(kind:CustomerProductOperationKind,context:CustomerProductOperationContext,value:unknown,callback:(tx:DbClient,scope:CustomerWorkScope,states:CustomerProductState[],p:PreparedCustomerProductOperation)=>Promise<{changed:number;verified:true}>):Promise<CustomerProductOperationResult>{
   const p=await prepareCustomerProductOperation(kind,context,value);try{return await withTx(this.container,async tx=>{const existing=await prior(tx,p);if(existing){await authorizeCustomerOperationOwner(tx,p.actor);return{receipt:existing,replayed:true};}
+   // Visibility writers enter the bargain lifecycle boundary before product,
+   // SKU, relation or cart locks. Targets are already strictly ascending.
+   if(kind==='set_show'){await boundBargainSourceProductChange(tx);for(const target of p.input.targets)await lockBargainSourceProductChange(tx,target.product_id);}
    await lockCustomerProducts(tx,p.input.targets.map(t=>t.product_id));const scope=await authorizeCustomerProductWrite(tx,p);
    // All four intents use the same full catalog fence, including ancestors and
    // rows which do not exist yet. Caller has no taxonomy DML privilege.

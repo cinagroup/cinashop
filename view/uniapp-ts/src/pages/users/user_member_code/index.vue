@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view class="card">
       <text class="title">会员核销码</text>
@@ -19,9 +20,11 @@
       </template>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import MemberCodeQr from "@/components/MemberCodeQr.vue";
 import { useMemberCode } from "@/composables/useMemberCode";
 

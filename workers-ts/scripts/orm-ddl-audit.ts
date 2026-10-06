@@ -258,7 +258,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           throw Error(`Purchase origin repeat or no-backfill verification differs on ${path}`);
         purchaseOriginVerification[path] = { initial: initialOrigin.state, complete: true, completionPreserved: true, repeatPreserved: true, noBackfill: true };
         const initialCancellation = await inspectPurchaseCancellationEvidence(shippingDb);
-        const expectedCancellation = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
+        const registeredGiftCancellation = path === 'external' || path === 'embedded';
+        const expectedCancellation = registeredGiftCancellation ? 'gift-v1' : 'orm-pending';
         if (initialCancellation.state !== expectedCancellation || !initialCancellation.sourcesReady)
           throw Error(`Purchase cancellation registration differs on ${path}; no automatic repair`);
         const beforeCancellation = await client.unsafe(originIdentityQuery);
@@ -267,7 +268,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         if (JSON.stringify(installedCancellation.filter(row => beforeCancellation.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeCancellation))
           throw Error(`Purchase cancellation completion replaced an existing object on ${path}`);
         await runPurchaseCancellationEvidenceSchema(shippingDb); await runPurchaseCancellationEvidenceSchema(shippingDb);
-        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== 'v1'
+        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== (registeredGiftCancellation ? 'gift-v1' : 'v1')
           || JSON.stringify(installedCancellation) !== JSON.stringify(await client.unsafe(originIdentityQuery))
           || (await client.unsafe('SELECT 1 FROM public.store_order_purchase_cancellation LIMIT 1')).length)
           throw Error(`Purchase cancellation repeat or no-backfill verification differs on ${path}`);

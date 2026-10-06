@@ -82,7 +82,7 @@
         </view>
 
         <button class="execute-button" :loading="executing || confirming" :disabled="selectedQuantity <= 0 || writeUncertain" @tap="execute">
-          确认{{ role === "delivery" ? "送达" : "核销" }}（{{ selectedQuantity }}）
+          确认核销（{{ selectedQuantity }}）
         </button>
         <text class="irreversible">操作不可撤销；部分核销后订单码会立即失效。</text>
       </view>
@@ -214,9 +214,9 @@ function acceptPreview(result: OperatorWriteoffPreview, expected: OperatorMember
 }
 
 function selectRole(value: OperatorRole) {
+  if (value === "delivery" && !hasDeliveryRole.value) return;
   if (value === "delivery") return openDelivery();
   if (value === "staff" && !hasStaffRole.value) return;
-  if (value === "delivery" && !hasDeliveryRole.value) return;
   if (role.value === value) return;
   role.value = value;
   invalidatePrivate(true);
