@@ -1,3 +1,4 @@
+import { resolveRegisteredPageRoute } from '../src/services/content/FabRouteRegistry';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
@@ -193,5 +194,78 @@ describe('personal-home and membership-menu SQL flag authority', () => {
     }
     expect(await state()).toEqual(before);
     expect(get.mock.calls.some(([key]) => key === 'cfg_member_card_status')).toBe(false);
+  });
+
+  it.each([
+    { member: '0', paid: '0', memberEnabled: false, paidEnabled: false },
+    { member: '0', paid: '1', memberEnabled: false, paidEnabled: true },
+    { member: '1', paid: '0', memberEnabled: true, paidEnabled: false },
+    { member: '1', paid: '1', memberEnabled: true, paidEnabled: true },
+  ])('independently authorizes ordinary $member and paid $paid routes in every module', async row => {
+    await setFlag(row.paid);
+    await f.db.insert(systemConfig).values({ menuName: 'member_func_status', value: row.member });
+    const routes = [
+      { name: 'Paid canonical', url: '/pages/user/vipOpen', target: '/pages/user/vipOpen', allowed: row.paidEnabled },
+      { name: 'Paid legacy', url: '/pages/annex/vip_paid/index', target: '/pages/user/vipOpen', allowed: row.paidEnabled },
+      { name: 'Paid legacy query', url: '/pages/annex/vip_paid/index?from=menu', target: '/pages/user/vipOpen?from=menu', allowed: row.paidEnabled },
+      { name: 'Level canonical', url: '/pages/user/level', target: '/pages/user/level', allowed: row.memberEnabled },
+      { name: 'Level legacy', url: '/pages/users/user_vip/index', target: '/pages/user/level', allowed: row.memberEnabled },
+      { name: 'Level legacy query', url: '/pages/users/user_vip/index?from=menu', target: '/pages/user/level?from=menu', allowed: row.memberEnabled },
+      { name: 'Level grade legacy', url: '/pages/annex/vip_grade/index', target: '/pages/user/level', allowed: row.memberEnabled },
+      { name: 'Browse', url: otherUrl, target: otherUrl, allowed: true },
+    ];
+    for (const route of routes) {
+      const [pathname, query = ''] = route.url.split('?');
+      expect(resolveRegisteredPageRoute(pathname!, query)).toBe(route.target);
+    }
+    const fixture = cloneUserCenterDesign();
+    fixture.menu.list = routes.map(route => menuItem('Menu ' + route.name, route.url, 1));
+    fixture.merMenu.list = routes.map(route => menuItem('Merchant ' + route.name, route.url, 2));
+    fixture.poster.list = routes.map(route => ({ sourceId: null, name: 'Poster ' + route.name,
+      pic: '/images/owned-membership.png', url: route.url }));
+    const savedGroups = await f.db.select().from(systemGroupData);
+    const savedDesign = await f.db.select().from(systemDise);
+    try {
+      await f.db.delete(systemGroupData);
+      const menuRows = [...fixture.menu.list, ...fixture.merMenu.list].map((item, index) => ({
+        id: index + 1, gid: 1, status: 1,
+        value: JSON.stringify({ url: { value: item.url }, name: { value: item.name }, pic: item.pic, type: item.type }),
+      }));
+      await f.db.insert(systemGroupData).values([...menuRows,
+        ...fixture.poster.list.map((item, index) => ({ id: menuRows.length + index + 1,
+          gid: 2, status: 1, value: JSON.stringify(item) })),
+      ]);
+      await f.db.update(systemDise).set({ value: JSON.stringify(fixture) }).where(eq(systemDise.id, 1));
+      const stripSource = ({ sourceId: _sourceId, ...item }: typeof fixture.menu.list[number]) => item;
+      const personal = fixture.menu.list.filter((_item, index) => routes[index]!.allowed).map(stripSource);
+      const merchant = fixture.merMenu.list.filter((_item, index) => routes[index]!.allowed).map(stripSource);
+      const poster = fixture.poster.list.filter((_item, index) => routes[index]!.allowed)
+        .map(({ sourceId: _sourceId, ...item }) => item);
+      const before = await state();
+      for (const uid of [11, 0]) {
+        const menu = await catalogue.menuUser(uid);
+        expect(menu.capabilities).toMatchObject({ member: row.memberEnabled, paid_member: row.paidEnabled, balance: true });
+        expect(menu.routine_my_menus).toEqual([...personal, ...merchant]);
+        expect(menu.routine_my_banner).toEqual(poster);
+        expect(menu.diy_data).toEqual({ ...fixture, menu: { ...fixture.menu, list: personal },
+          merMenu: { ...fixture.merMenu, list: merchant }, poster: { ...fixture.poster, list: poster } });
+        expect(JSON.stringify(menu)).not.toContain('sourceId');
+        const designState = menu.user_center_design_state;
+        if (!designState || typeof designState !== 'object' || Array.isArray(designState)
+          || !('issues' in designState) || !Array.isArray(designState.issues)) {
+          throw Error('Independent menu flags require structured design diagnostics');
+        }
+        expect(designState.issues).toEqual([]);
+        expect(await state()).toEqual(before);
+      }
+      expect(get).not.toHaveBeenCalled();
+      expect(put).not.toHaveBeenCalled();
+    } finally {
+      await f.db.delete(systemGroupData);
+      await f.db.insert(systemGroupData).values(savedGroups);
+      for (const item of savedDesign) {
+        await f.db.update(systemDise).set({ value: item.value }).where(eq(systemDise.id, item.id));
+      }
+    }
   });
 });

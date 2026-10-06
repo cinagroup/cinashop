@@ -205,7 +205,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/users/user_distribution_info/index": { target: "/pages/user/finance", coverage: "partial_replacement" },
   "/pages/users/user_cash/index": { target: "/pages/user/finance", coverage: "candidate_covered" },
   "/pages/users/user_cash/status": { target: "/pages/user/finance", coverage: "partial_replacement" },
-  "/pages/users/user_vip/index": { target: "/pages/user/vipOpen", coverage: "candidate_covered" },
+  "/pages/users/user_vip/index": { target: "/pages/user/level", coverage: "candidate_covered" },
   "/pages/users/user_distribution_level/index": { target: "/pages/users/user_distribution_level/index", coverage: "candidate_covered" },
   "/pages/users/user_address_list/index": { target: "/pages/user/address", coverage: "candidate_covered" },
   "/pages/users/user_address/index": { target: "/pages/user/address", coverage: "candidate_covered" },

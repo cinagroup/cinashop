@@ -63,8 +63,7 @@ export class UserCenterPublicReadService{
         if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];
         if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];
         if((original==='/pages/users/user_vip/index'||path==='/pages/user/level')&&!capabilities.member)return[];
-        if(path==='/pages/user/vipOpen'&&!capabilities.member)return[];
-        if(path==='/pages/annex/vip_paid/index'&&!capabilities.paid_member)return[];
+        if(path==='/pages/user/vipOpen'&&!capabilities.paid_member)return[];
         if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];
         if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];
         if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];

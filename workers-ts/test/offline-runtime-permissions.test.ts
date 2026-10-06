@@ -2,7 +2,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { spawnSync } from 'node:child_process';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
-import { runOfflineOrderSchema, runOfflineOrder } from '../src/migrations/runOfflineOrder';
+import { runOfflineOrderSchema, runOfflineOrder, inspectOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
+import { inspectReviewedOfflineGiftCatalog } from '../src/migrations/reviewedOfflineGiftCatalog';
 import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { auditOfflineOrderRuntimePermissions as audit } from '../src/migrations/auditOfflineOrderRuntimePermissions';
 import { offlineRuntimeGrantPlan, OFFLINE_RUNTIME_READ_TABLES, OFFLINE_RUNTIME_INSERT_TABLES,
@@ -20,8 +21,20 @@ describe('offline actual runtime permission envelope PG16', () => {
   const snapshot = () => f.db.execute(sql`SELECT 'relation' AS kind,oid::text,to_jsonb(c)::text AS value FROM pg_class c WHERE relnamespace='public'::regnamespace
     UNION ALL SELECT 'function',oid::text,to_jsonb(p)::text FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
   it('distinguishes protocol-only grants from real connection readiness and never writes or runs pricing',async()=>{
+    // This case explicitly exercises the original v1 commissioning boundary
+    // before the separately reviewed gift upgrade. All other cases retain the
+    // shared current gift-ready setup above. Rebuild one fresh owned database;
+    // never remove the installed points index or invoke the old v1 installer
+    // against a gift catalog. No runtime LOGIN is active during the rebuild.
+    await f.close();
+    f=await sequenceRunnerDatabase();
+    await f.exec(ddl);
+    await runOfflineOrderSchema(f.db,true);
+    expect(await inspectOfflineOrderSchema(f.db)).toEqual({state:'v1'});
     await f.withRuntimeRole!(async r=>{
-      await runOfflineOrder(f.db,r.role);
+      expect(await runOfflineOrder(f.db,r.role)).toEqual({state:'v1',runtimeSafe:true,protocolPrivilegesReady:true});
+      await runOrderPromotionGiftReceipt(f.db);
+      expect((await f.db.transaction(tx=>inspectReviewedOfflineGiftCatalog(tx,{requireOwner:true}))).state).toBe('v1-gift-index');
       expect(await audit(r.db)).toMatchObject({ready:false,checks:{protectedCatalogVerified:true,requiredTablePrivileges:false,requiredSequenceUsage:false}});
       await f.exec(offlineRuntimeGrantPlan(r.role));
       const before=await snapshot();

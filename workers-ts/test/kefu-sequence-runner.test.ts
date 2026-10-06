@@ -87,14 +87,22 @@ describe("standalone sequence transaction execution boundary", () => {
     // columns/CHECKs. The original 1166 basis and its failed projection remain
     // release evidence; this path executes the complete current model with only
     // the independently pinned previous kefu sequence substituted by the audit.
-    // This fixed digest was measured by the successful original nine-path PG16
-    // catalog audit (not learned from this test). It covers every generated
-    // table, column, constraint, index and sequence statement, rejecting extras.
+    // The original nine-path audit measured the complete 1191 current DDL
+    // statements, raw SHA 913f34ec0abf6fe311243a3f0b824ed41241968bbea450fd95ffda18bf52a4df.
+    // Node's namespace key order and Vitest's source export order produce
+    // different statement order (CI raw SHA a1ef244d08ba39c536acff3081267fa29fa8c909c420f513daa91a96344861f2).
+    // Independent full raw batches were proven identical as complete string
+    // multisets. Sort a copy by UTF-16 code units for this fixed digest only:
+    // no filtering, deduplication or text normalization; execution stays in
+    // the generator's original order. Every missing, extra or changed DDL fails.
     const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
-    expect(createHash('sha256').update(currentStatements.join('\n'),'utf8').digest('hex'))
-      .toBe('913f34ec0abf6fe311243a3f0b824ed41241968bbea450fd95ffda18bf52a4df');
-    expect(currentStatements).toHaveLength(1190);
-    expect(fullPath.initialStatements).toBe(currentStatements.length);
+    expect(createHash('sha256').update(JSON.stringify([...currentStatements].sort()),'utf8').digest('hex'))
+      .toBe('446204483beeaac88d9f77ea90d5bd294a885fb24668e05b4ae6cf37c00ff400');
+    expect(currentStatements).toHaveLength(1191);
+    // The independently pinned previous sequence has no owning-column ALTER;
+    // that real predecessor stage has 1190 statements, then the guarded upgrade.
+    expect(fullPath.initialStatements).toBe(1190);
+    expect(fullPath.generatedProposalStatements).toBe(2);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([
       `CREATE UNIQUE INDEX "spav_seckill_active_suk_uq" ON "store_product_attr_value" USING btree ("product_id","suk") ${activeSeckillPredicate}`,
