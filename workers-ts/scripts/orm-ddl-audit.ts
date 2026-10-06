@@ -23,6 +23,7 @@ import { inspectReviewedOfflineGiftCatalog, REVIEWED_OFFLINE_GIFT_CATALOG_SQL } 
 import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { inspectOrderPromotionGiftReceiptCatalog } from '../src/migrations/orderPromotionGiftReceipt';
 import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '../src/migrations/customerCityDelivery';
+import { inspectCustomerWaybillActor, runCustomerWaybillActor } from '../src/migrations/runCustomerWaybillActor';
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
@@ -90,6 +91,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const refundSplitVerification: Record<string, unknown> = {};
   const offlineOrderVerification: Record<string, unknown> = {};
   const customerCityDeliveryVerification: Record<string, unknown> = {};
+  const customerWaybillActorVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
   const seckillTimeReferenceLockVerification: Record<string, unknown> = {};
   const pinkSuccessOutboxVerification: Record<string, unknown> = {};
@@ -270,6 +272,65 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         if (!cityRepeatRefused || JSON.stringify(cityInstalled) !== JSON.stringify(await client.unsafe(cityIdentityQuery)))
           throw Error(`City fresh-only refusal changed object identity on ${path}`);
         customerCityDeliveryVerification[path] = { initial: path === 'embedded' ? 'absent' : 'exact-catalog', explicitInstallation: path === 'embedded', complete: true, existingObjectsPreserved: true, repeatRefused: true, noBackfill: true, rows: cityRowCounts };
+        // Compose the independently reviewed customer actor owner forward only
+        // into exact empty legacy paths. Existing ORM targets must already be ready.
+        const registeredWaybill = path === 'external' || path === 'embedded';
+        const initialWaybill = await inspectCustomerWaybillActor(shippingDb);
+        if (registeredWaybill ? !initialWaybill.legacy || initialWaybill.ready : !initialWaybill.ready || initialWaybill.legacy)
+          throw Error(`Customer waybill registration differs on ${path}; no drift repair`);
+        const waybillCountsSql = "SELECT 'order_waybill_job' AS name,count(*)::int AS count FROM public.order_waybill_job UNION ALL SELECT 'order_waybill_job_action',count(*)::int FROM public.order_waybill_job_action ORDER BY name";
+        const beforeWaybillRows = await client.unsafe(waybillCountsSql);
+        if (beforeWaybillRows.length !== 2 || beforeWaybillRows.some(row => row.count !== 0))
+          throw Error(`Customer waybill audit requires empty targets on ${path}`);
+        const waybillConstraintsSql = "SELECT c.oid::text,t.relname,c.conname FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid WHERE (c.conrelid='public.order_waybill_job'::regclass AND c.conname='owj_actor_ck') OR (c.conrelid='public.order_waybill_job_action'::regclass AND c.conname='owja_actor_ck') ORDER BY t.relname,c.conname";
+        const oldWaybillConstraints = await client.unsafe(waybillConstraintsSql);
+        if (oldWaybillConstraints.length !== 2) throw Error('Customer waybill exact actor constraints unavailable');
+        const beforeWaybillIdentities = await client.unsafe(cityIdentityQuery);
+        const beforeWaybillCatalog = await readCatalog(async query => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        if (registeredWaybill) await runCustomerWaybillActor(shippingDb);
+        const completedWaybill = await inspectCustomerWaybillActor(shippingDb);
+        if (!completedWaybill.ready || completedWaybill.legacy) throw Error(`Customer waybill owner completion differs on ${path}`);
+        const newWaybillConstraints = await client.unsafe(waybillConstraintsSql);
+        const installedWaybillIdentities = await client.unsafe(cityIdentityQuery);
+        const installedWaybillCatalog = await readCatalog(async query => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        const waybillTransition = compareCatalogs(beforeWaybillCatalog, installedWaybillCatalog);
+        if (registeredWaybill) {
+          const expectedWaybillColumns = ['order_waybill_job', 'order_waybill_job_action'].map(table => ({
+            key: table + '.actor_service_id', name: 'actor_service_id', table, type: 'integer', notNull: true,
+            default: '0', identity: '', generated: '', collation: null,
+          }));
+          if (JSON.stringify(waybillTransition.columns.candidateOnly) !== JSON.stringify(expectedWaybillColumns)
+            || waybillTransition.columns.referenceOnly.length || waybillTransition.columns.changed.length || waybillTransition.columns.possibleRenames.length
+            || JSON.stringify(waybillTransition.constraints.changed.map(row => ({ key: row.key, fields: row.fields }))) !== JSON.stringify([
+              { key: 'order_waybill_job.owj_actor_ck', fields: ['definition'] },
+              { key: 'order_waybill_job_action.owja_actor_ck', fields: ['definition'] },
+            ]) || waybillTransition.constraints.referenceOnly.length || waybillTransition.constraints.candidateOnly.length || waybillTransition.constraints.possibleRenames.length
+            || ['tables', 'indexes', 'sequences'].some(kind => Object.values(waybillTransition[kind as 'tables' | 'indexes' | 'sequences']).some(rows => rows.length)))
+            throw Error(`Customer waybill forward changed unrelated catalog fields on ${path}`);
+          const oldConstraintOids = new Set(oldWaybillConstraints.map(row => row.oid));
+          const newConstraintOids = new Set(newWaybillConstraints.map(row => row.oid));
+          if (newWaybillConstraints.length !== 2 || newConstraintOids.size !== 2 || newWaybillConstraints.some(row => oldConstraintOids.has(row.oid))
+            || JSON.stringify(installedWaybillIdentities.filter(row => !(row.kind === 'constraint' && newConstraintOids.has(row.oid))))
+              !== JSON.stringify(beforeWaybillIdentities.filter(row => !(row.kind === 'constraint' && oldConstraintOids.has(row.oid)))))
+            throw Error(`Customer waybill forward replaced an unrelated OID/file/owner/ACL on ${path}`);
+        } else if (catalogKinds.some(kind => Object.values(waybillTransition[kind]).some(rows => rows.length))
+          || JSON.stringify(beforeWaybillIdentities) !== JSON.stringify(installedWaybillIdentities))
+          throw Error(`Ready ORM customer waybill was changed on ${path}`);
+        let waybillRepeatRefused = false;
+        try { await runCustomerWaybillActor(shippingDb); }
+        catch (error) { if (!(error instanceof Error) || error.message !== 'Customer waybill legacy catalog drift or already upgraded') throw error; waybillRepeatRefused = true; }
+        const repeatedWaybill = await inspectCustomerWaybillActor(shippingDb);
+        const repeatedWaybillCatalog = await readCatalog(async query => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        if (!waybillRepeatRefused || !repeatedWaybill.ready || repeatedWaybill.legacy
+          || repeatedWaybill.fingerprint !== completedWaybill.fingerprint
+          || catalogKinds.some(kind => Object.values(compareCatalogs(installedWaybillCatalog, repeatedWaybillCatalog)[kind]).some(rows => rows.length))
+          || JSON.stringify(installedWaybillIdentities) !== JSON.stringify(await client.unsafe(cityIdentityQuery))
+          || JSON.stringify(beforeWaybillRows) !== JSON.stringify(await client.unsafe(waybillCountsSql)))
+          throw Error(`Customer waybill repeat refusal changed catalog/identity/empty rows on ${path}`);
+        customerWaybillActorVerification[path] = { initial: registeredWaybill ? 'exact-legacy' : 'exact-ready', explicitOwnerForward: registeredWaybill,
+          complete: true, beforeFingerprint: initialWaybill.fingerprint, afterFingerprint: completedWaybill.fingerprint,
+          exactTwoColumnsAndActorChecks: registeredWaybill, unrelatedCatalogsPreserved: true, unrelatedOidsFilesOwnerAclPreserved: true,
+          repeatRefused: true, repeatAllCatalogsPreserved: true, noBackfill: true, rows: beforeWaybillRows };
         const initialOrigin = await inspectPurchaseOriginEvidence(shippingDb);
         const expectedOrigin = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
         if (initialOrigin.state !== expectedOrigin || !initialOrigin.sourcesReady)
@@ -577,6 +638,13 @@ if (!registeredOfflineGift) {
     const foreignKeyNameManifest = JSON.parse(await readFile(resolve(root, "audit/orm-foreign-key-name-reconciliation.json"), "utf8"));
     const checkStateManifest = withPinkSuccessOutboxContract(withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8"))));
     const kefuSequenceManifest = JSON.parse(await readFile(resolve(root, "audit/orm-kefu-sequence-reconciliation.json"), "utf8"));
+    // Original complete gates below still throw. Preserve each already-read raw
+    // category difference for diagnosis before a generic gate loses the path.
+    for (const [path, catalog] of Object.entries(catalogs)) {
+      const comparison = compareCatalogs(catalogs.external, catalog);
+      if (catalogKinds.some(kind => Object.values(comparison[kind]).some(rows => rows.length)))
+        console.error(`ORM_DDL_AUDIT_COMPARISON_DIAGNOSTIC ${JSON.stringify({ kind: 'complete-five-category-refusal-witness', path, comparison })}`);
+    }
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
     for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog);
@@ -667,6 +735,7 @@ if (!registeredOfflineGift) {
       refundSplitVerification,
       offlineOrderVerification,
       customerCityDeliveryVerification,
+      customerWaybillActorVerification,
       checkoutPricingLockVerification,
       seckillTimeReferenceLockVerification,
       cleanupRecoveries,

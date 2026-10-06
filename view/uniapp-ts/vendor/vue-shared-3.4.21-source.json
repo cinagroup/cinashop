@@ -1,0 +1,69 @@
+{
+  "source": {
+    "name": "@vue/shared",
+    "version": "3.4.21",
+    "url": "https://registry.npmjs.org/@vue/shared/-/shared-3.4.21.tgz",
+    "integrity": "sha512-PuJe7vDIi6VYSinuEbUIQgMIRZGgM8e4R+G+/dQTk0X1NEdvgvvgv7m+rfmDH1gZzyA1OjjoWskvHlfRNfQf3g=="
+  },
+  "sourceArchiveSha256": "0dcc29894b62e6124cfd9d5e1ddd25981aa0346aeca73ff3b5524a98b6b3ce3f",
+  "fileCount": 8,
+  "normalizedTarHeaderFields": "Only tar size/checksum fields are canonicalized by the existing deterministic archive writer.",
+  "files": [
+    {
+      "name": "LICENSE",
+      "mode": 420,
+      "bytes": 1091,
+      "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+      "canonicalHeaderSha256": "c6f685ceca80814f87f6a62912a5d5c2c9f35c3c5a62d68e7ec59eb20d484a3e"
+    },
+    {
+      "name": "index.js",
+      "mode": 420,
+      "bytes": 177,
+      "sha256": "22aeabedc1f2782f67b05c54df4382d4e52a0e0c384ff02349372e2acd9974ed",
+      "canonicalHeaderSha256": "83a513bb56e91feaafb1a566db5d325279db48247ca846044b8ed99250ddf273"
+    },
+    {
+      "name": "dist/shared.cjs.js",
+      "mode": 420,
+      "bytes": 22249,
+      "sha256": "7d41bd7fb7ddaa5b9b408d61235990205eabfe5736ac279399f0ea5531d9c3fa",
+      "canonicalHeaderSha256": "112a75a44dc29fb058a766296de77153a2c8dd1f2279937cf44db0ce5197946a"
+    },
+    {
+      "name": "dist/shared.cjs.prod.js",
+      "mode": 420,
+      "bytes": 22217,
+      "sha256": "3d611e52ff9c0034f141dae19ba4a9c1f85e2999bb67e6ae307c33cd4c1e4fff",
+      "canonicalHeaderSha256": "226b3f64d1b6c9cba395c2bbf6e0cdbb71e19dd4b793bd012c1bc91165977253"
+    },
+    {
+      "name": "dist/shared.esm-bundler.js",
+      "mode": 420,
+      "bytes": 20762,
+      "sha256": "84052e948a75e01a987b726c7fafa042e0911348c22168252644bf9146f9cef9",
+      "canonicalHeaderSha256": "1431ca56609021327f20e89e7f5dfadfa5383ee8b4e749566de103a3e7fe63e0"
+    },
+    {
+      "name": "package.json",
+      "mode": 420,
+      "bytes": 1082,
+      "sha256": "85a8b32bb4a95752a7f958c7668bd69d656823f6401b76cbbb5921b4144c264c",
+      "canonicalHeaderSha256": "d251a31d43fecaaaa742d0114d980034d2103d19b5fa7ef8565f3d18650ef7b5"
+    },
+    {
+      "name": "README.md",
+      "mode": 420,
+      "bytes": 87,
+      "sha256": "a4be695a372c53520ac6e188605dfbf4163b953907ac1bffe25b775eb38c46ed",
+      "canonicalHeaderSha256": "d965a6c3101132e98a5d4794617a082cf4fe398882aaca2808ff12f26a218ae9"
+    },
+    {
+      "name": "dist/shared.d.ts",
+      "mode": 420,
+      "bytes": 12330,
+      "sha256": "559bc300b4d43b49996eb7a2ce1179b43cd6266f8df7046a33201254340d4e5e",
+      "canonicalHeaderSha256": "23b677629db53a7bce971299f93d53b5964f7de55b03fca470be98ca949d1468"
+    }
+  ]
+}

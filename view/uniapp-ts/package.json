@@ -8,7 +8,7 @@
     "build:mp-weixin": "uni build -p mp-weixin",
     "dev:app": "uni -p app",
     "build:app": "uni build -p app",
-    "test:toolchain": "node --test scripts/agent-self-service-runtime.test.cjs scripts/assisted-cashier-runtime.test.cjs scripts/assisted-checkout-runtime.test.cjs scripts/assisted-selection-runtime.test.cjs scripts/assisted-records-runtime.test.cjs scripts/assisted-detail-runtime.test.cjs scripts/dev-server-security.test.cjs scripts/checkout-runtime.test.cjs scripts/cart-runtime.test.cjs scripts/wallet-runtime.test.cjs scripts/coupon-products-runtime.test.cjs scripts/product-sku-runtime.test.cjs scripts/product-detail-lifecycle.test.cjs scripts/order-detail-lifecycle.test.cjs scripts/order-list-lifecycle.test.cjs scripts/order-pay-result.test.cjs scripts/offline-cashier-runtime.test.cjs scripts/operator-writeoff-runtime.test.cjs scripts/member-code-runtime.test.cjs scripts/refund-apply-lifecycle.test.cjs scripts/refund-records-lifecycle.test.cjs scripts/seckill-runtime.test.cjs scripts/combination-runtime.test.cjs scripts/pink-status-runtime.test.cjs scripts/pink-cancellation-runtime.test.cjs scripts/bargain-runtime.test.cjs scripts/visit-history-runtime.test.cjs scripts/presale-runtime.test.cjs scripts/presale-catalog-runtime.test.cjs scripts/community-deep-links-runtime.test.cjs scripts/feedback-work-runtime.test.cjs scripts/newcomer-runtime.test.cjs scripts/product-rank-runtime.test.cjs scripts/governance-agreements-runtime.test.cjs scripts/vite-safety-package.test.cjs scripts/vite-path-security.test.cjs scripts/vite-windows-path-security.test.cjs scripts/esbuild-server-security.test.cjs scripts/vite-esbuild-compatibility.test.cjs scripts/fab-runtime.test.cjs scripts/integral-purchase-runtime.test.cjs scripts/theme-runtime.test.cjs scripts/category-catalog-runtime.test.cjs scripts/product-detail-design-runtime.test.cjs",
+    "test:toolchain": "node --test scripts/agent-self-service-runtime.test.cjs scripts/assisted-cashier-runtime.test.cjs scripts/assisted-checkout-runtime.test.cjs scripts/assisted-selection-runtime.test.cjs scripts/assisted-records-runtime.test.cjs scripts/assisted-detail-runtime.test.cjs scripts/dev-server-security.test.cjs scripts/checkout-runtime.test.cjs scripts/cart-runtime.test.cjs scripts/wallet-runtime.test.cjs scripts/coupon-products-runtime.test.cjs scripts/product-sku-runtime.test.cjs scripts/product-detail-lifecycle.test.cjs scripts/order-detail-lifecycle.test.cjs scripts/order-list-lifecycle.test.cjs scripts/order-pay-result.test.cjs scripts/offline-cashier-runtime.test.cjs scripts/operator-writeoff-runtime.test.cjs scripts/member-code-runtime.test.cjs scripts/refund-apply-lifecycle.test.cjs scripts/refund-records-lifecycle.test.cjs scripts/seckill-runtime.test.cjs scripts/combination-runtime.test.cjs scripts/pink-status-runtime.test.cjs scripts/pink-cancellation-runtime.test.cjs scripts/bargain-runtime.test.cjs scripts/visit-history-runtime.test.cjs scripts/presale-runtime.test.cjs scripts/presale-catalog-runtime.test.cjs scripts/community-deep-links-runtime.test.cjs scripts/feedback-work-runtime.test.cjs scripts/newcomer-runtime.test.cjs scripts/product-rank-runtime.test.cjs scripts/governance-agreements-runtime.test.cjs scripts/vite-safety-package.test.cjs scripts/vite-path-security.test.cjs scripts/vite-windows-path-security.test.cjs scripts/esbuild-server-security.test.cjs scripts/vite-esbuild-compatibility.test.cjs scripts/fab-runtime.test.cjs scripts/integral-purchase-runtime.test.cjs scripts/theme-runtime.test.cjs scripts/category-catalog-runtime.test.cjs scripts/product-detail-design-runtime.test.cjs scripts/vue-ssr-safety-package.test.cjs",
     "test:build-artifacts": "node --test scripts/build-artifacts.test.cjs",
     "test:runtime-i18n": "node --test scripts/runtime-i18n-audit.test.cjs",
     "test:admzip": "node --test scripts/encrypted-uni-modules-admzip.test.cjs",
@@ -28,8 +28,10 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-4020920240930001",
     "pinia": "2.0.36",
     "qrcode-terminal": "0.12.0",
-    "vue": "^3.4.21",
-    "vue-i18n": "^9.1.9"
+    "vue": "3.4.21",
+    "vue-i18n": "^9.1.9",
+    "@vue/shared": "file:vendor/vue-shared-3.4.21-safety-backport.tgz",
+    "@vue/server-renderer": "file:vendor/vue-server-renderer-3.4.21-safety-backport.tgz"
   },
   "devDependencies": {
     "@dcloudio/types": "^3.4.8",
@@ -48,6 +50,20 @@
     },
     "vite": {
       "esbuild": "0.28.2"
+    },
+    "source-map-js": "1.2.2",
+    "@dcloudio/uni-h5": {
+      "vue": "3.5.42"
+    },
+    "@vue/babel-plugin-jsx": {
+      "@vue/shared": "3.5.42"
+    },
+    "@vue/babel-plugin-resolve-type": {
+      "@vue/compiler-sfc": "3.5.42"
+    },
+    "@vue/language-core": {
+      "@vue/compiler-dom": "3.5.42",
+      "@vue/shared": "3.5.42"
     }
   }
 }

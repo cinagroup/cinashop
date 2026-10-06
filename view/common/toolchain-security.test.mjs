@@ -11,6 +11,51 @@ const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const lock = JSON.parse(readFileSync(resolve("package-lock.json"), "utf8"));
 const require = createRequire(manifestPath);
 
+test("all locked source-map-js copies are the official 1.2.2 security patch", () => {
+  const copies = Object.entries(lock.packages).filter(([path]) => path.endsWith("node_modules/source-map-js"));
+  assert.ok(copies.length > 0);
+  for (const [path, pkg] of copies) {
+    assert.equal(pkg.version, "1.2.2", path);
+    assert.equal(pkg.integrity, "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==", path);
+  }
+});
+
+test("actual source-map-js rejects unsafe indexed offsets and preserves regular source nodes", () => {
+  const probe = function (root) {
+    const assert = require("node:assert/strict"), { SourceMapConsumer, SourceNode } = require(root);
+    const flat = { version: 3, sources: ["a.js"], sourcesContent: ["a"], names: [], mappings: "AAAA" };
+    const indexed = (line, column, map = flat) => ({ version: 3, sections: [{ offset: { line, column }, map }] });
+    for (const value of [-1, Infinity, NaN, "1", 0.5, 9007199254740992]) {
+      assert.throws(() => new SourceMapConsumer(indexed(value, 0)), /non-negative integers/);
+      assert.throws(() => new SourceMapConsumer(indexed(0, value)), /non-negative integers/);
+    }
+    assert.throws(() => new SourceMapConsumer(indexed(10000001, 0)), /must not exceed/);
+    assert.throws(() => new SourceMapConsumer(indexed(6000000, 0, indexed(6000000, 0))), /including offsets of nested sections/);
+    const code = "var x;\n", node = SourceNode.fromStringWithSourceMap(code, new SourceMapConsumer(indexed(10000000, 0)));
+    assert.equal(node.toString(), code); assert.ok(node.children.length < 10);
+    let deep = flat;
+    for (let i = 0; i < 40; i++) deep = indexed(0, 0, deep);
+    const nested = SourceNode.fromStringWithSourceMap(code, new SourceMapConsumer(deep));
+    assert.equal(nested.toString(), code);
+    const sources = {}; nested.walkSourceContents((name, content) => { sources[name] = content; });
+    assert.deepEqual(sources, { "a.js": "a" });
+  };
+  const result = spawnSync(process.execPath, ["-e", "(" + probe.toString() + ")(process.argv[1])", dirname(require.resolve("source-map-js/package.json"))], {
+    encoding: "utf8", timeout: 5000, windowsHide: true,
+  });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test("the actual paired Vue SSR rejects CR attribute keys and retains value escaping", () => {
+  const vueRequire = createRequire(require.resolve("vue/package.json"));
+  assert.equal(vueRequire("vue/package.json").version, "3.5.42");
+  assert.equal(vueRequire("@vue/server-renderer/package.json").version, "3.5.42");
+  const { ssrRenderAttrs } = vueRequire("@vue/server-renderer");
+  assert.equal(ssrRenderAttrs({ id: "safe", ["x\rautofocus\ronfocus"]: "inert-marker" }), ' id="safe"');
+  assert.equal(ssrRenderAttrs({ title: '<&"', id: "safe" }), ' title="&lt;&amp;&quot;" id="safe"');
+});
+
 test("all locked Nano ID copies meet the published 3.x advisory patch level", () => {
   const copies = Object.entries(lock.packages).filter(([path]) => path.endsWith("node_modules/nanoid"));
   assert.ok(copies.length > 0);
