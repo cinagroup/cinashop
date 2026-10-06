@@ -249,9 +249,9 @@ test('active upload authentication failure clears only Admin, never shopper sess
   }finally{r.stop();}
 });
 test('preview renewal checks exact IDs, sends only the scoped ID list and never changes answers',async()=>{
-  const base=server({transform:withForm});const r=await setup({send:call=>call.url.includes('/form_preview/')?{data:[{att_id:41,reference:'/api/assets/41',url:signed()}]}:base(call)});try{
+  const previewUrl=signed();const base=server({transform:withForm});const r=await setup({send:call=>call.url.includes('/form_preview/')?{data:[{att_id:41,reference:'/api/assets/41',url:previewUrl}]}:base(call)});try{
     r.checkout.updateForm(filled(r));const before=JSON.stringify(r.checkout.customForm.value);await r.checkout.refreshPreviews();
-    assert.equal(JSON.stringify(r.checkout.customForm.value),before);assert.equal(r.checkout.previews.value['/api/assets/41'],signed());
+    assert.equal(JSON.stringify(r.checkout.customForm.value),before);assert.equal(r.checkout.previews.value['/api/assets/41'],previewUrl);
     assert.deepEqual(r.calls.at(-1).data,{ids:[41]});assert.equal(writes(r).length,0);
   }finally{r.stop();}
 });
