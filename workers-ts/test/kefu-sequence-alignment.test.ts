@@ -72,7 +72,7 @@ describe("DB-009E5B guarded business sequence alignment", () => {
       expect(runner).toContain(fragment);
   });
 
-  it("binds the current 228-sequence cohort to actual ORM serial, identity and explicit sequence sources", async () => {
+  it("binds the current 231-sequence cohort to actual ORM serial, identity and explicit sequence sources", async () => {
     const { generateDrizzleJson } = await import('drizzle-kit/api');
     const models = await import('../src/models/schema');
     const snapshot = generateDrizzleJson(models) as {
@@ -82,14 +82,27 @@ describe("DB-009E5B guarded business sequence alignment", () => {
     const columns = Object.values(snapshot.tables).flatMap(table => Object.values(table.columns));
     const serials = columns.filter(column => /^(smallserial|serial|bigserial)$/.test(column.type));
     const identities = columns.filter(column => column.identity !== undefined);
-    expect(serials).toHaveLength(223); expect(identities).toHaveLength(4);
+    expect(serials).toHaveLength(226); expect(identities).toHaveLength(4);
     expect(Object.keys(snapshot.sequences)).toEqual(['public.kefu_visitor_uid_seq']);
+    const additions = ['public.customer_city_delivery_attempt', 'public.customer_city_delivery_binding',
+      'public.customer_city_delivery_job', 'public.store_order_promotion_gift_coupon_reward'];
+    const addedSerials = Object.entries(snapshot.tables).filter(([name]) => additions.includes(name))
+      .flatMap(([table, definition]) => Object.entries(definition.columns)
+        .filter(([, column]) => /^(smallserial|serial|bigserial)$/.test(column.type))
+        .map(([column, definition]) => ({ table, column, type: definition.type })))
+      .sort((a, b) => a.table.localeCompare(b.table));
+    expect(addedSerials).toEqual([
+      { table: 'public.customer_city_delivery_attempt', column: 'id', type: 'bigserial' },
+      { table: 'public.customer_city_delivery_job', column: 'id', type: 'bigserial' },
+      { table: 'public.store_order_promotion_gift_coupon_reward', column: 'id', type: 'serial' },
+    ]);
+    expect(serials.length - addedSerials.length).toBe(223);
     expect(snapshot.tables['public.store_coupon_template'].columns.id.type).toBe('serial');
-    expect(CURRENT_SEQUENCE_CATALOG_COUNT).toBe(228);
+    expect(CURRENT_SEQUENCE_CATALOG_COUNT).toBe(231);
     expect(serials.length + identities.length + Object.keys(snapshot.sequences).length).toBe(CURRENT_SEQUENCE_CATALOG_COUNT);
   });
 
-  it("rejects every field, missing/duplicate identities, aliases and contraction of the complete 228-sequence gate", () => {
+  it("rejects every field, missing/duplicate identities, aliases and contraction of the complete 231-sequence gate", () => {
     expect(() => assertKefuSequenceAligned(catalog, manifest)).not.toThrow();
     for (const [key, value] of Object.entries(entry.catalog)) {
       const row = { ...entry.catalog, [key]: typeof value === "boolean" ? !value : String(value) + "_drift" };
@@ -99,8 +112,8 @@ describe("DB-009E5B guarded business sequence alignment", () => {
       expect(() => assertKefuSequenceAligned({ ...catalog, sequences: rows }, manifest)).toThrow();
     for (const entries of [[], [entry, entry], [{ ...entry, previousCatalog: entry.catalog }],
       [{ ...entry, catalog: { ...entry.catalog, type: "bigint" } }]]) expect(() => assertKefuSequenceAligned(catalog, { entries })).toThrow();
-    // Synthetic rows only exercise the comparison guard. Actual all-228 catalog proof is the PG16 nine-path runner.
-    const all = { ...catalog, sequences: [entry.catalog, ...Array.from({ length: 227 }, (_, i) => ({
+    // Synthetic rows only exercise the comparison guard. Actual all-231 catalog proof is the PG16 nine-path runner.
+    const all = { ...catalog, sequences: [entry.catalog, ...Array.from({ length: 230 }, (_, i) => ({
       ...entry.catalog, key: `contract_only_${i}`, name: `contract_only_${i}`, ownedBy: null,
     }))] };
     expect(() => assertAllSequencesAligned(all, { ...all, sequences: [...all.sequences].reverse() })).not.toThrow();

@@ -12,7 +12,7 @@ const table = (key: string): CatalogRow => ({
   forceRowSecurity: false, partition: false, partitionKey: null,
 });
 const synthetic: Catalog = {
-  tables: Array.from({ length: 281 }, (_, i) => table(`comparator_only_${i}`)),
+  tables: Array.from({ length: 285 }, (_, i) => table(`comparator_only_${i}`)),
   columns: [], constraints: [], indexes: [], sequences: [],
 };
 const withRow = (row: CatalogRow): Catalog => ({ ...synthetic, tables: [row, ...synthetic.tables.slice(1)] });
@@ -29,7 +29,7 @@ describe("DB-009F complete table catalog hard gate", () => {
   });
 
   it("refuses empty/contracted/expanded/duplicate cohorts, including identical defects on both sides", () => {
-    expect(TABLE_CATALOG_COUNT).toBe(281);
+    expect(TABLE_CATALOG_COUNT).toBe(285);
     for (const rows of [[], synthetic.tables.slice(1), [...synthetic.tables, table("extra")],
       [synthetic.tables[1], ...synthetic.tables.slice(1)]]) {
       const changed = { ...synthetic, tables: rows };
@@ -75,7 +75,7 @@ describe("DB-009F complete table catalog hard gate", () => {
         query: async statement => (await db.query<CatalogRow>(statement)).rows,
       });
       expect(report).toEqual({
-        fixtureTables: 281,
+        fixtureTables: 285,
         engineDriftRefusals: ["rls-enabled", "rls-forced", "persistence", "kind", "partition-key", "partition-member", "renamed", "missing", "extra"],
         bothComparisonDirectionsRefused: true, tableOnlyChangesInvisibleToOtherCategories: 6,
         allFiveCategoriesRestoredAfterEachRollback: true, temporaryShadowIgnored: true,
@@ -85,6 +85,19 @@ describe("DB-009F complete table catalog hard gate", () => {
         query: async statement => (await db.query<CatalogRow>(statement)).rows })).rejects.toThrow("empty public catalog");
     } finally { await db.close(); }
   }, 60_000);
+
+  it("binds the fixed 285-table cohort to all authored models and four reviewed additions", async () => {
+    const { generateDrizzleJson } = await import('drizzle-kit/api');
+    const models = await import('../src/models/schema');
+    const snapshot = generateDrizzleJson(models) as { tables: Record<string, unknown> };
+    const keys = Object.keys(snapshot.tables).sort();
+    const additions = ['public.customer_city_delivery_attempt', 'public.customer_city_delivery_binding',
+      'public.customer_city_delivery_job', 'public.store_order_promotion_gift_coupon_reward'];
+    expect(keys).toHaveLength(285); expect(new Set(keys).size).toBe(285);
+    expect(keys.filter(key => additions.includes(key))).toEqual(additions);
+    expect(keys.filter(key => !additions.includes(key))).toHaveLength(281);
+    expect(TABLE_CATALOG_COUNT).toBe(keys.length);
+  });
 
   it("wires the hard gate to every collected catalog, retains the nine project paths, and keeps CLI failures nonzero", () => {
     const source = readFileSync(resolve(import.meta.dirname, "../scripts/orm-ddl-audit.ts"), "utf8");
