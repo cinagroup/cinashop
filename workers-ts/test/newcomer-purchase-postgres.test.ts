@@ -186,9 +186,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     const rejected = await request('/api/cart/add', 'POST', addBody);
     expect(rejected.status).toBe(400);
     expect(rejected.msg).toMatch(/基础规格标识重复/);
-    const rows = (await request('/api/cart/list')).data as unknown as Array<{ id: number; isValid: boolean; productInfo: unknown }>;
+    const listed = await request('/api/cart/list');
+    expect(listed.status, listed.msg).toBe(200);
+    const rows = listed.data as unknown as Array<{ id: number; isValid: boolean; productInfo: unknown }>;
+    expect(rows.find(row => row.id === 1)).toMatchObject({ isValid: false, productInfo: null });
     expect(rows.find(row => row.id === cartId)).toMatchObject({ isValid: false, productInfo: null });
     expect((await request(`/api/cart/list?scope=buy&ids=${cartId}`)).status).toBe(400);
+    expect((await request('/api/cart/list?scope=buy&ids=1')).status).toBe(400);
     expect((await request('/api/order/confirm', 'POST', body(cartId))).status).toBe(400);
     expect((await request(`/api/order/create/${first.key}`, 'POST', { ...body(cartId), quoteToken: first.token })).status).toBe(400);
     expect((await f.snapshot()).orders).toHaveLength(0);

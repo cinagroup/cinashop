@@ -540,7 +540,9 @@ export class StoreCartService {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
-      const type7BaseSkus = cart.type === 7
+      // A corrupt ordinary SKU must remain an invalid cart row rather than
+      // enter the promotion quote and reject unrelated cart projection.
+      const baseSkus = cart.type === 7 || (cart.type === 0 && cart.activityId === 0)
         ? await this.container.db.select().from(storeProductAttrValue).where(and(
             eq(storeProductAttrValue.productId, cart.productId),
             eq(storeProductAttrValue.type, 0),
@@ -548,12 +550,12 @@ export class StoreCartService {
             eq(storeProductAttrValue.isRetired, 0),
           )).limit(2)
         : null;
-      if (cart.type === 7 && type7BaseSkus?.length !== 1) {
+      if (baseSkus && (baseSkus.length > 1 || (cart.type === 7 && baseSkus.length !== 1))) {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
-      const sku = type7BaseSkus
-        ? type7BaseSkus[0]
+      const sku = baseSkus
+        ? baseSkus[0] ?? null
         : await this.container.storeProductAttrValueDao.getByUnique(
             cart.productAttrUnique, 0, cart.productId);
       if ((scope || cart.type === 6 || cart.type === 7) && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {

@@ -17,6 +17,10 @@ import { inspectAdminRefundCreation, runAdminRefundCreation } from '../src/migra
 import { inspectInvoiceEvidenceSchema, runInvoiceEvidenceSchema } from '../src/migrations/runInvoiceEvidence';
 import { inspectRefundOrderSplitSchema, runRefundOrderSplitSchema } from '../src/migrations/runRefundOrderSplit';
 import { inspectOfflineOrderSchema, runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
+import { sql } from 'drizzle-orm';
+import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_ORM_CATALOG_VERSIONS } from '../src/migrations/offlineOrderCatalog';
+import { inspectReviewedOfflineGiftCatalog, REVIEWED_OFFLINE_GIFT_CATALOG_SQL } from '../src/migrations/reviewedOfflineGiftCatalog';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
@@ -342,9 +346,32 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           || JSON.stringify(splitIdentities)!==JSON.stringify(await client.unsafe(splitIdentityQuery)))
           throw new Error(`Refund split repeat changed object identity on ${path}`);
         refundSplitVerification[path]={initial:initialSplit.state,complete:true,repeatPreserved:true};
-        const initialOffline = await inspectOfflineOrderSchema(shippingDb);
-        const expectedOffline = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
-        if (initialOffline.state !== expectedOffline) throw new Error(`Offline registration differs on ${path}: ${initialOffline.state}`);
+        const registeredOfflineGift = path === 'external' || path === 'embedded';
+        const initialOffline = registeredOfflineGift
+          ? await shippingDb.transaction(tx => inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' }),
+            { isolationLevel: 'repeatable read', accessMode: 'read only' })
+          : await inspectOfflineOrderSchema(shippingDb);
+        const expectedOffline = registeredOfflineGift ? 'v1-gift-index' : 'orm-pending';
+        if (initialOffline.state !== expectedOffline) {
+          // Read-only metadata witnesses; never learn a new approved shape or repair the target.
+          const fingerprintProjection = "encode(sha256(convert_to(shape::text,'UTF8')),'hex') AS fingerprint";
+          if (OFFLINE_CATALOG_SQL.split(fingerprintProjection).length !== 2
+            || REVIEWED_OFFLINE_GIFT_CATALOG_SQL.split(fingerprintProjection).length !== 2)
+            throw Error('Offline diagnostic projection differs; no automatic repair');
+          const diagnostic = await shippingDb.transaction(async tx => {
+            await tx.execute(sql`SELECT set_config('search_path','public,pg_temp',true),
+              set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true)`);
+            const actualComponents = await tx.execute(sql.raw(OFFLINE_CATALOG_SQL.replace(fingerprintProjection, fingerprintProjection + ',shape')));
+            const normalizedComponents = await tx.execute(sql.raw(REVIEWED_OFFLINE_GIFT_CATALOG_SQL.replace(fingerprintProjection, fingerprintProjection + ',shape')));
+            const reviewed = await inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' });
+            return { actualComponents, normalizedComponents, reviewed,
+              expected: { legacyV1: OFFLINE_CATALOG_VERSIONS.v1, barcodeV1: OFFLINE_BARCODE_CATALOG_VERSIONS.v1,
+                legacyOrm: OFFLINE_ORM_CATALOG_VERSIONS, barcodeOrm: OFFLINE_BARCODE_CATALOG_VERSIONS.orm } };
+          }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+          console.error(`ORM_DDL_AUDIT_DIAGNOSTIC ${JSON.stringify({ kind: 'offline-catalog-refusal', path,
+            expectedState: expectedOffline, actualState: initialOffline.state, ...diagnostic })}`);
+          throw new Error(`Offline registration differs on ${path}: ${initialOffline.state}`);
+        }
         // Preserve every existing public relation/index/sequence OID and file during
         // explicit empty-ORM completion; do not repair missing registered migrations.
         const offlineIdentityQuery = `SELECT 'relation' AS kind,oid::text,relfilenode::text FROM pg_class WHERE relnamespace='public'::regnamespace
@@ -354,11 +381,24 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         const offlineIdentities = await client.unsafe(offlineIdentityQuery);
         if (JSON.stringify(offlineIdentities.filter(row => beforeOffline.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeOffline))
           throw new Error(`Offline completion replaced an existing object on ${path}`);
-        await runOfflineOrderSchema(shippingDb); await runOfflineOrderSchema(shippingDb);
-        if ((await inspectOfflineOrderSchema(shippingDb)).state !== 'v1'
+        if (registeredOfflineGift) {
+          // The frozen legacy installer deliberately rejects the later gift index.
+          // Repeat the exact independently reviewed gift installer only after full readiness.
+          await runOrderPromotionGiftReceipt(shippingDb);
+          await runOrderPromotionGiftReceipt(shippingDb);
+        } else {
+          await runOfflineOrderSchema(shippingDb);
+          await runOfflineOrderSchema(shippingDb);
+        }
+        const repeatedOffline = registeredOfflineGift
+          ? await shippingDb.transaction(tx => inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' }),
+            { isolationLevel: 'repeatable read', accessMode: 'read only' })
+          : await inspectOfflineOrderSchema(shippingDb);
+        if (repeatedOffline.state !== (registeredOfflineGift ? 'v1-gift-index' : 'v1')
           || JSON.stringify(offlineIdentities) !== JSON.stringify(await client.unsafe(offlineIdentityQuery)))
           throw new Error(`Offline repeat changed object identity on ${path}`);
-        offlineOrderVerification[path] = { initial: initialOffline.state, complete: true, completionPreserved: true, repeatPreserved: true };
+        offlineOrderVerification[path] = { initial: initialOffline.state, complete: true, completionPreserved: true, repeatPreserved: true,
+          repeatInstaller: registeredOfflineGift ? 'exact-reviewed-gift-maintenance' : 'legacy-offline-maintenance' };
         const initialPricing = await inspectCheckoutPricingLock(shippingDb);
         const registeredPricing = path === 'external' || path === 'embedded';
         if (registeredPricing ? !pricingCatalogReady(initialPricing) : !initialPricing.absent)

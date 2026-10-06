@@ -300,10 +300,10 @@ describe('independent actual frontend envelope and route consumers', () => {
 // storage, navigation and UniApp network delivery are controlled boundaries.
 // This checks method wiring and late delivery, not DOM or a native device.
 describe('independent actual customer SFC and UserJWT request lifecycle', () => {
-  // Use the existing physical UniApp dependency rehearsal. The main checkout's
-  // empty node_modules is deliberately not installed or replaced for this test.
-  const frontendRequire = createRequire(resolve('../.cache/worktrees/uniapp-dependency-rehearsal-20260925/view/uniapp-ts/package.json'));
-  const vue = frontendRequire('vue') as typeof import('../../view/kefu-ts/node_modules/vue');
+  // Compile with the current locked UniApp Vue/runtime dependencies installed
+  // in this checkout, including a fresh clone used by both CI unit shards.
+  const frontendRequire = createRequire(resolve('../view/uniapp-ts/package.json'));
+  const vue = frontendRequire('vue') as typeof import('../../view/uniapp-ts/node_modules/vue');
   const code = new Map<CustomerWorkPage, string>();
   beforeAll(async () => {
     const compiler = frontendRequire('@vue/compiler-sfc');

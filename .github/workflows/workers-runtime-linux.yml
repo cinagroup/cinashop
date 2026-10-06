@@ -113,6 +113,12 @@ jobs:
       - name: Install locked Supplier dependencies for cross-package unit tests
         run: npm ci --prefix ../view/supplier-ts
 
+      - name: Install locked Kefu dependencies for cross-package unit tests
+        run: npm ci --prefix ../view/kefu-ts
+
+      - name: Install locked Uni dependencies for customer SFC unit tests
+        run: npm ci --prefix ../view/uniapp-ts
+
       - name: Run both TypeScript configurations
         if: matrix.shard == 1
         run: npm run typecheck
