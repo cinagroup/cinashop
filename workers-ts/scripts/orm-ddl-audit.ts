@@ -21,6 +21,8 @@ import { sql } from 'drizzle-orm';
 import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_ORM_CATALOG_VERSIONS } from '../src/migrations/offlineOrderCatalog';
 import { inspectReviewedOfflineGiftCatalog, REVIEWED_OFFLINE_GIFT_CATALOG_SQL } from '../src/migrations/reviewedOfflineGiftCatalog';
 import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
+import { inspectOrderPromotionGiftReceiptCatalog } from '../src/migrations/orderPromotionGiftReceipt';
+import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '../src/migrations/customerCityDelivery';
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
@@ -87,6 +89,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const invoiceEvidenceVerification: Record<string, unknown> = {};
   const refundSplitVerification: Record<string, unknown> = {};
   const offlineOrderVerification: Record<string, unknown> = {};
+  const customerCityDeliveryVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
   const seckillTimeReferenceLockVerification: Record<string, unknown> = {};
   const pinkSuccessOutboxVerification: Record<string, unknown> = {};
@@ -241,6 +244,32 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         // Explicitly prove this protocol on every real construction path, with
         // no repair masking a missing external/embedded registration.
         const shippingDb = drizzle(client);
+// The authored city protocol is explicit owner maintenance, not runAll().
+        // Only the embedded base path may be genuinely absent; registered SQL and
+        // all generated ORM paths must already match the full measured catalog.
+        const cityNames = ['customer_city_delivery_job','customer_city_delivery_attempt','customer_city_delivery_binding'];
+        const cityPresence = await client.unsafe("SELECT name,to_regclass('public.'||name)::text AS relation FROM unnest(ARRAY['customer_city_delivery_job','customer_city_delivery_attempt','customer_city_delivery_binding']) AS name ORDER BY name");
+        if (cityPresence.length !== 3 || cityPresence.some(row => path === 'embedded' ? row.relation !== null : row.relation === null))
+          throw Error(`City explicit registration differs on ${path}; no partial repair`);
+        const cityIdentityQuery = "SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text AS acl FROM pg_class WHERE relnamespace='public'::regnamespace UNION ALL SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace UNION ALL SELECT 'constraint',oid::text,NULL,NULL,NULL FROM pg_constraint WHERE connamespace='public'::regnamespace UNION ALL SELECT 'trigger',oid::text,NULL,NULL,NULL FROM pg_trigger WHERE tgrelid IN(SELECT oid FROM pg_class WHERE relnamespace='public'::regnamespace) ORDER BY kind,oid";
+        const cityBefore = await client.unsafe(cityIdentityQuery);
+        if (path === 'embedded') await installCustomerCityDelivery(shippingDb, { maintenance: true });
+        await assertCustomerCityDeliveryReady(shippingDb, false);
+        const cityInstalled = await client.unsafe(cityIdentityQuery);
+        if (JSON.stringify(cityInstalled.filter(row => cityBefore.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(cityBefore))
+          throw Error(`City explicit installation replaced an existing object on ${path}`);
+        const cityRowCounts = await Promise.all(cityNames.map(async name => {
+          const [row] = await client.unsafe(`SELECT count(*)::int AS count FROM public."${name}"`);
+          return { table: name, count: row.count };
+        }));
+        if (cityRowCounts.some(row => row.count !== 0)) throw Error(`City audit must remain empty on ${path}`);
+        let cityRepeatRefused = false;
+        try { await installCustomerCityDelivery(shippingDb, { maintenance: true }); }
+        catch (error) { if (!(error instanceof Error) || error.message !== 'City fresh PG16 owner installation requires catalog review') throw error; cityRepeatRefused = true; }
+        await assertCustomerCityDeliveryReady(shippingDb, false);
+        if (!cityRepeatRefused || JSON.stringify(cityInstalled) !== JSON.stringify(await client.unsafe(cityIdentityQuery)))
+          throw Error(`City fresh-only refusal changed object identity on ${path}`);
+        customerCityDeliveryVerification[path] = { initial: path === 'embedded' ? 'absent' : 'exact-catalog', explicitInstallation: path === 'embedded', complete: true, existingObjectsPreserved: true, repeatRefused: true, noBackfill: true, rows: cityRowCounts };
         const initialOrigin = await inspectPurchaseOriginEvidence(shippingDb);
         const expectedOrigin = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
         if (initialOrigin.state !== expectedOrigin || !initialOrigin.sourcesReady)
@@ -399,6 +428,25 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           throw new Error(`Offline repeat changed object identity on ${path}`);
         offlineOrderVerification[path] = { initial: initialOffline.state, complete: true, completionPreserved: true, repeatPreserved: true,
           repeatInstaller: registeredOfflineGift ? 'exact-reviewed-gift-maintenance' : 'legacy-offline-maintenance' };
+if (!registeredOfflineGift) {
+          // Preserve the proven legacy empty-ORM completion and both legacy
+          // no-op repeats above before composing the later reviewed gift index.
+          const giftBefore = await inspectOrderPromotionGiftReceiptCatalog(shippingDb, 'finance_test');
+          const [giftState] = await client.unsafe("SELECT to_regclass('public.ub_order_promotion_gift_uq') IS NULL AS missing, NOT EXISTS(SELECT 1 FROM public.user_bill) AND NOT EXISTS(SELECT 1 FROM public.store_order_promotion_gift_coupon_reward) AS empty");
+          if (giftBefore.ready || !giftBefore.catalogReady || !giftBefore.sequenceReady || giftBefore.pointsReady || giftState.missing !== true || giftState.empty !== true)
+            throw Error(`Empty ORM gift completion prerequisites differ on ${path}; no drift repair`);
+          const giftIdentities = await client.unsafe(cityIdentityQuery);
+          await runOrderPromotionGiftReceipt(shippingDb);
+          const giftInstalled = await client.unsafe(cityIdentityQuery);
+          if (JSON.stringify(giftInstalled.filter(row => giftIdentities.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(giftIdentities))
+            throw Error(`Empty ORM gift completion replaced an existing object on ${path}`);
+          await runOrderPromotionGiftReceipt(shippingDb); await runOrderPromotionGiftReceipt(shippingDb);
+          const completedGift = await shippingDb.transaction(tx => inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' }), { isolationLevel: 'repeatable read', accessMode: 'read only' });
+          const [giftEmpty] = await client.unsafe("SELECT NOT EXISTS(SELECT 1 FROM public.user_bill) AND NOT EXISTS(SELECT 1 FROM public.store_order_promotion_gift_coupon_reward) AS empty");
+          if (completedGift.state !== 'v1-gift-index' || !(await inspectOrderPromotionGiftReceiptCatalog(shippingDb, 'finance_test')).ready || giftEmpty.empty !== true || JSON.stringify(giftInstalled) !== JSON.stringify(await client.unsafe(cityIdentityQuery)))
+            throw Error(`Empty ORM gift repeat/full catalog differs on ${path}`);
+          offlineOrderVerification[path] = { ...offlineOrderVerification[path] as Record<string, unknown>, reviewedGiftCompletion: true, giftInitial: 'exact-gift-table-and-sequence-without-points-index', final: completedGift.state, giftExistingObjectsPreserved: true, giftRepeatPreserved: true, giftNoBackfill: true };
+        }
         const initialPricing = await inspectCheckoutPricingLock(shippingDb);
         const registeredPricing = path === 'external' || path === 'embedded';
         if (registeredPricing ? !pricingCatalogReady(initialPricing) : !initialPricing.absent)
@@ -585,7 +633,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: "all nine paths: exact 281 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: `all nine paths: exact ${catalogs.external.tables.length} unique public tables and every raw metadata field; no omissions, additions or aliases waived`, count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -604,7 +652,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       purchaseCancellationVerification,
       fullConstraintCatalogContract: { mode: "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance", count: catalogs.external.constraints.length },
       checkStateUpgradeVerification: { ...checkStateUpgradeVerification, freshCatalogMatched: true },
-      fullSequenceCatalogContract: { mode: "all nine paths: exact 228 named sequences, type, options and ownership; no omissions or aliases waived", count: catalogs.external.sequences.length },
+      fullSequenceCatalogContract: { mode: `all nine paths: exact ${catalogs.external.sequences.length} named sequences, type, options and ownership; no omissions or aliases waived`, count: catalogs.external.sequences.length },
       kefuSequenceContracts: { mode: "all nine paths: exact integer type, bounds and AUTO owning column", keys: kefuSequenceManifest.entries.map((e: { key: string }) => e.key) },
       kefuSequenceUpgradeVerification: { ...kefuSequenceUpgradeVerification, freshCatalogMatched: true },
       missingConstraintUpgradeVerification: { ...missingConstraintUpgradeVerification, freshCatalogMatched: true },
@@ -618,6 +666,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       invoiceEvidenceVerification,
       refundSplitVerification,
       offlineOrderVerification,
+      customerCityDeliveryVerification,
       checkoutPricingLockVerification,
       seckillTimeReferenceLockVerification,
       cleanupRecoveries,
