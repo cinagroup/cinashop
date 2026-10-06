@@ -15,7 +15,26 @@ const navigationExports: Record<string, unknown> = {}, fabExports: Record<string
 const compile = (source: string) => transpileModule(source, { compilerOptions: {
   module: ModuleKind.CommonJS, target: ScriptTarget.ES2022,
 } }).outputText;
-runInNewContext(compile(navigation), { exports: navigationExports });
+const commonSources = new Set(['customerWorkRoute', 'customerWorkWriteoff', 'customerWorkIntent', 'userCenterDesign']);
+const commonExports = new Map<string, Record<string, unknown>>();
+function actualCommonModule(name: string): Record<string, unknown> {
+  if (!commonSources.has(name)) throw Error(`Unexpected navigation pure dependency: ${name}`);
+  const known = commonExports.get(name);
+  if (known) return known;
+  const exports: Record<string, unknown> = {};
+  commonExports.set(name, exports);
+  runInNewContext(compile(readFileSync(resolve(root, `../view/common/${name}.ts`), 'utf8')), {
+    exports, URL, TextEncoder, require: (dependency: string) => {
+      if (!/^\.\/[A-Za-z]+$/.test(dependency)) throw Error(`Unexpected common pure dependency: ${dependency}`);
+      return actualCommonModule(dependency.slice(2));
+    },
+  });
+  return exports;
+}
+runInNewContext(compile(navigation), { exports: navigationExports, URL, require: (name: string) => {
+  if (name !== '../../../common/customerWorkRoute') throw Error(`Unexpected navigation pure dependency: ${name}`);
+  return actualCommonModule('customerWorkRoute');
+} });
 runInNewContext(compile(fabSource), { exports: fabExports, URL, require: (name: string) => {
   if (name !== "@/config/navigation") throw Error(`Unexpected FAB pure dependency: ${name}`);
   return navigationExports;
@@ -202,7 +221,12 @@ describe("DIY-home frontend migration", () => {
     }
     expect(editorial).toContain("normalizeDiyLink");
     expect(editorial).toContain("safeDiyImageUrl");
-    expect(editorial).toContain("safeDiyColor");
+    // Theme adaptation moved authored colour sanitization into its real helper.
+    expect(editorial).toContain("import { diyThemeColor, diyThemeVariables } from '@/utils/diyTheme'");
+    expect(editorial).toContain("return diyThemeColor(props.block, key, index, fallback, theme.preset)");
+    const theme = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyTheme.ts"), "utf8");
+    expect(theme).toContain("import { asDiyRecord, safeDiyColor } from '@/utils/diy'");
+    expect(theme).toContain("return safeDiyColor(value,");
     expect(editorial).not.toContain("v-html");
     expect(editorial).not.toContain("<component");
     expect(editorial).not.toContain("downloadFile");

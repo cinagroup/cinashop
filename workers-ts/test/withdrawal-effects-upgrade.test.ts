@@ -146,7 +146,35 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('DB-007 bounded p
     await exec('DROP TABLE user_extract,capital_flow,order_notification_delivery,store_order_outbox,system_message');
     const api=await import('drizzle-kit/api');
     await exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(models))).join('\n'));
+    const identity=()=>exec(`SELECT 'relation' AS kind,c.oid::text,to_jsonb(c) AS metadata FROM pg_class c
+      WHERE relnamespace='public'::regnamespace UNION ALL
+      SELECT 'constraint',c.oid::text,to_jsonb(c) FROM pg_constraint c WHERE connamespace='public'::regnamespace
+      UNION ALL SELECT 'function',p.oid::text,to_jsonb(p) FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
+    const original=await identity(),before=await inspectWithdrawalEffectsUpgrade(f.db);
+    expect(before.catalog.eventDefinition).toContain("'order.pink.success.notice'::character varying");
+    expect(before).toMatchObject({ supported:true,ready:true,withinBudget:true });
+    const queries:string[]=[];f.db.$client.options.debug=(_c,q)=>{queries.push(q);};
     expect(await runWithdrawalEffectsUpgrade(f.db)).toMatchObject({ applied:false,ready:true,before:{ rows:0 },after:{ rows:0 } });
+    expect(queries.some(q=>/^\s*(ALTER|CREATE|DROP|GRANT|REVOKE)\b/i.test(q))).toBe(false);
+    expect(await identity()).toEqual(original);expect(await inspectWithdrawalEffectsUpgrade(f.db)).toEqual(before);
+  },30_000);
+  it('rejects an unregistered twelfth event without narrowing the current eleven-event CHECK',async()=>{
+    await exec('DROP TABLE user_extract,capital_flow,order_notification_delivery,store_order_outbox,system_message');
+    const api=await import('drizzle-kit/api');
+    await exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(models))).join('\n'));
+    const events=['order.paid','order.delivery.notice','order.refund.refused.notice','order.second_card.advent.notice',
+      'order.second_card.expired.notice','withdrawal.approved.notice','withdrawal.refused.notice','withdrawal.applied.notice',
+      'withdrawal.staff.refresh','order.presale.fulfillment','order.pink.success.notice','unregistered.event'];
+    await exec(`ALTER TABLE store_order_outbox DROP CONSTRAINT soob_event_type_ck;
+      ALTER TABLE store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK(event_type IN (${events.map(event=>"'"+event+"'").join(',')}))`);
+    const before=await inspectWithdrawalEffectsUpgrade(f.db);
+    expect(before).toMatchObject({ supported:false,ready:false,fingerprint:null });
+    const check=await exec("SELECT oid::text,pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'");
+    const queries:string[]=[];f.db.$client.options.debug=(_c,q)=>{queries.push(q);};
+    await expect(runWithdrawalEffectsUpgrade(f.db)).rejects.toThrow('prerequisite drift');
+    expect(queries.some(q=>/^\s*(ALTER|CREATE|DROP|GRANT|REVOKE)\b/i.test(q))).toBe(false);
+    expect(await inspectWithdrawalEffectsUpgrade(f.db)).toEqual(before);
+    expect(await exec("SELECT oid::text,pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'")).toEqual(check);
   },30_000);
   it('keeps shared generated bindings and the fixed production scope explicit',()=>{
     const read=JSON.parse(readFileSync('test/integration/paid-runtime-audit.wrangler.jsonc','utf8'));

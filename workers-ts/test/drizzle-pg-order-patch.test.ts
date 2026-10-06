@@ -20,7 +20,8 @@ describe("DB-008 pinned PostgreSQL generator ordering", () => {
     const blocks = readFileSync(join(root, "../.gitleaks.toml"), "utf8").split("[[allowlists]]")
       .filter((entry) => entry.includes("Public drizzle-kit 0.31.10 API bundle SHA-256 checksums"));
     expect(blocks).toHaveLength(1);
-    const block = blocks[0].replace(/\r\n/g, "\n").trim();
+    const block = blocks[0].replace(/\r\n/g, "\n").split("\n")
+      .filter(line => !/^\s*#/.test(line)).join("\n").trim();
     // Exact configuration guard, not a replacement for the real Gitleaks CI scan.
     expect(block).toBe([
       'description = "Public drizzle-kit 0.31.10 API bundle SHA-256 checksums, verified before patching"',

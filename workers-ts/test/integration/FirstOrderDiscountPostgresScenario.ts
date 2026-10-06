@@ -8,6 +8,7 @@ import {
   storeProduct,
   storeProductAttrValue,
   systemStore,
+  systemConfig,
   user,
 } from "@/models/schema";
 import {
@@ -265,6 +266,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
   await withSchema(db, schemaName, async ({ db: tx }) => {
+    await tx.insert(systemConfig).values(['store_func_status', 'store_self_mention'].map(menuName => ({ menuName, value: '1' })));
     await tx.insert(user).values(ids.users.map((uid, index) => ({
       uid,
       account: `first-order-${uid}`.slice(0, 32),

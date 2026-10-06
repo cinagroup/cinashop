@@ -25,6 +25,8 @@ describe("seckill schedule admission on disposable SQL", () => {
     f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument,
       storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 });
     [initialBaseSku] = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id, 1));
     [initialProduct] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));

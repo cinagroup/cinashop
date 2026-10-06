@@ -312,16 +312,18 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
     });
   }, 60_000);
 
-  it('rolls back if an editor rebinds the product after the form lock but before inventory admission', async () => {
+  it('rolls back if an editor rebinds the product after the fast form read but before locked inventory admission', async () => {
     await scenario(async client => {
       await f.db.insert(systemForm).values({ id: 78, name: 'Rebound local form', value: JSON.stringify(template), status: 1 });
       const { body, quote } = await client.confirm(11), image = await client.upload(quote.orderKey, 11);
       const beforeStock = await f.exec('SELECT stock,sales FROM store_product WHERE id=70');
       const beforeOther = await f.state();
       delete beforeOther.store_product;
-      const original = orderForms.loadOrderSystemFormSubmission;
+      const original = orderForms.loadActiveOrderSystemForm;
       let rebound = false;
-      const hook = vi.spyOn(orderForms, 'loadOrderSystemFormSubmission').mockImplementationOnce(async (...args) => {
+      // Promotion admission now locks the product before the form/submission.
+      // Inject the real committed edit in the still-open fast-read window.
+      const hook = vi.spyOn(orderForms, 'loadActiveOrderSystemForm').mockImplementationOnce(async (...args) => {
         const prepared = await original(...args);
         await f.withPeer(async peer => { await peer.exec('UPDATE store_product SET system_form_id=78 WHERE id=70'); });
         rebound = true;
@@ -342,9 +344,22 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
       const refreshed = await client.post<{ result: Quote }>(`computed/${quote.orderKey}/11`, body);
       expect(refreshed.status, refreshed.msg).toBe(200);
       const currentImage = await client.upload(quote.orderKey, 11);
-      const accepted = await client.post<Created>(`create/${quote.orderKey}/11`, { ...body,
-        quoteToken: refreshed.data.result.quoteToken, customForm: answers(`/api/assets/${currentImage.att_id}`) });
-      expect(accepted.status, accepted.msg).toBe(200);
+      const submission = orderForms.loadOrderSystemFormSubmission;
+      let protectedProduct = false;
+      const locked = vi.spyOn(orderForms, 'loadOrderSystemFormSubmission').mockImplementationOnce(async (...args) => {
+        const prepared = await submission(...args);
+        await f.withPeer(async peer => {
+          await expect(peer.exec('SELECT id FROM store_product WHERE id=70 FOR UPDATE NOWAIT'))
+            .rejects.toMatchObject({ code: '55P03' });
+          protectedProduct = true;
+        });
+        return prepared;
+      });
+      try {
+        const accepted = await client.post<Created>(`create/${quote.orderKey}/11`, { ...body,
+          quoteToken: refreshed.data.result.quoteToken, customForm: answers(`/api/assets/${currentImage.att_id}`) });
+        expect(accepted.status, accepted.msg).toBe(200); expect(protectedProduct).toBe(true);
+      } finally { locked.mockRestore(); }
     });
   }, 60_000);
 

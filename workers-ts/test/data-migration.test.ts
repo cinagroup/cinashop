@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { registeredTableNames, assertRegisteredModelCohort, reviewedExplicitDeclarationTables } from './helpers/registeredCatalogCohort';
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
@@ -74,6 +75,19 @@ afterEach(() => {
 });
 
 describe("MySQL to PostgreSQL schema audit", () => {
+  it('rejects unknown, omitted or aliased registered tables and changed reviewed additions',async()=>{
+    const api=await import('drizzle-kit/api'),models=await import('../src/models/schema');
+    const snapshot=api.generateDrizzleJson(models);assertRegisteredModelCohort(snapshot);
+    for(const mutate of [
+      (value:typeof snapshot)=>{delete value.tables['public.customer_city_delivery_attempt'];},
+      (value:typeof snapshot)=>{value.tables['public.unregistered']=value.tables['public.store_order'];},
+      (value:typeof snapshot)=>{value.tables['private.store_order']=value.tables['public.store_order'];delete value.tables['public.store_order'];},
+      (value:typeof snapshot)=>{delete value.tables['public.store_order_promotion_gift_coupon_reward'].columns.auxiliary_id;},
+      (value:typeof snapshot)=>{value.tables['public.customer_city_delivery_job'].columns.unknown=value.tables['public.customer_city_delivery_job'].columns.id;},
+    ]) {
+      const invalid=structuredClone(snapshot);mutate(invalid);expect(()=>assertRegisteredModelCohort(invalid)).toThrow();
+    }
+  });
   it("parses inline and table-level primary keys without splitting numeric type commas", () => {
     const mysql = parseCreateTables(
       `
@@ -212,7 +226,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(281);
+    expect(report.targetTableCount).toBe(285);
+    expect([...parseCreateTables(externalTargetSql,"postgres").keys()].sort()).toEqual(registeredTableNames("external"));
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
     expect(report.sourceColumnGapTableCount).toBe(0);
@@ -225,6 +240,9 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "city_delivery_callback_outbox",
       "city_delivery_callback_watermark",
       "city_delivery_reconciliation_case",
+      "customer_city_delivery_attempt",
+      "customer_city_delivery_binding",
+      "customer_city_delivery_job",
       "data_migration_checkpoint",
       "data_migration_run",
       "kefu_visitor_session",
@@ -261,6 +279,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "store_order_invoice_evidence",
       "store_order_outbox",
       "store_order_product_coupon_reward",
+      "store_order_promotion_gift_coupon_reward",
       "store_order_purchase_cancellation",
       "store_order_purchase_origin",
       "store_order_refund_payment",
@@ -303,10 +322,16 @@ describe("MySQL to PostgreSQL schema audit", () => {
       report.sharedTables.map((table) => table.table).sort(),
     );
     expect(definitionDrift).toEqual({
-      externalTableCount: 281,
-      workerTableCount: 281,
-      externalOnlyTables: [],
-      workerOnlyTables: [],
+      externalTableCount: 285,
+      // This source-declaration scan includes ten independently installed ledgers.
+      // It is distinct from the 282 tables actually installed by runAll.
+      workerTableCount: 292,
+      externalOnlyTables: [
+        'customer_city_delivery_attempt',
+        'customer_city_delivery_binding',
+        'customer_city_delivery_job',
+      ],
+      workerOnlyTables: reviewedExplicitDeclarationTables(),
       columnDrift: [],
     });
     for (const tableName of [

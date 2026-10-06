@@ -1,3 +1,4 @@
+import { systemStore, systemSupplier } from '../src/models/schema';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
@@ -30,7 +31,7 @@ describe('Admin activity frame store_promotions type=5 contract', () => {
   let service: AdminActivityFrameService;
   let container: Container;
   beforeAll(async () => {
-    fixture = await financePostgres([storePromotions, storePromotionsAuxiliary, storeProduct,
+    fixture = await financePostgres([systemStore, systemSupplier, storePromotions, storePromotionsAuxiliary, storeProduct,
       storeProductRelation, storeProductCategory, storeBrand, storeProductLabel, systemLog,
       storeCouponIssue, storeCouponProduct, storeDiscounts, storeDiscountsProducts, systemDise]);
     container = createContainerFromDb(fixture.db);

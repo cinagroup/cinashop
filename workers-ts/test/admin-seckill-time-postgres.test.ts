@@ -108,6 +108,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Slot edits versu
   beforeEach(async () => {
     f = await seckillTimeReferenceLockFixture({ ...await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, systemLog, printDocument]), format: 'pg16' });
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.insert(storeSeckillTime).values({ id: 101, title: '测试场', startTime: '09:00', endTime: '13:00', pic: '/images/slot.png', describe: '隔离样本', status: 1 });
     const today = Math.floor((Date.now() + 28800000) / 86400000) * 86400 - 28800;

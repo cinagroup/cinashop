@@ -37,6 +37,8 @@ describe("pink inventory, order and member lock ordering", () => {
     }
     await f.exec('CREATE UNIQUE INDEX fixture_pink_outbox_event ON store_order_outbox (event_key)');
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.update(user).set({ nowMoney: "100.00" });
     await f.db.insert(user).values([22, 33, 44].map(uid => ({ uid, nowMoney: "100.00" })));

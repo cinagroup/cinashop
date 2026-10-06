@@ -5,6 +5,7 @@ import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
+import { errorHandler } from '../src/middleware/error';
 import { adminProductUpdate, adminProductSkuRetire, adminProductSkuRestore } from '../src/controllers/api/v1/AdminCrudController';
 import { retireProductSkus, restoreProductSkus } from '../src/controllers/supplier/SupplierController';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
@@ -32,7 +33,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM SKU lif
       c.set('supplierAdminInfo', { id: 1, account: 'isolated', realName: 'isolated', level: 0, roles: '', isPrimary: true });
       await next();
     });
-    result.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    result.onError((e, c) => {
+      const sqlCodes: string[] = []; let cause: unknown = e;
+      for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+        if ('code' in cause && typeof cause.code === 'string') sqlCodes.push(cause.code);
+        if (!('cause' in cause) || cause.cause === cause) break; cause = cause.cause;
+      }
+      return c.json({ status: 400, msg: e.message, data: null, sql_codes: sqlCodes });
+    });
     result.post('/api/order/create/:key', orderCreate);
     result.post('/admin/product/edit/:id', adminProductUpdate);
     result.post('/admin/product/sku/retire', adminProductSkuRetire);
@@ -62,7 +70,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM SKU lif
   afterEach(async () => { await f?.close(); }, 120_000);
   const request = async (application: ReturnType<typeof app>, path: string, body: object) => {
     const r = await application.request(path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(body) }, f.env);
-    return r.json() as Promise<{ status: number; msg: string; data: { orderKey: string; quoteToken: string; changed: number } }>;
+    return r.json() as Promise<{ status: number; msg: string; sql_codes?: string[]; data: { orderKey: string; quoteToken: string; changed: number } }>;
   };
   const confirm = async () => { const r = await request(f.app, '/api/order/confirm', input); expect(r.status, r.msg).toBe(200); return r.data; };
   const buy = (db: DbClient, receipt: Awaited<ReturnType<typeof confirm>>) => request(app(db), `/api/order/create/${receipt.orderKey}`, { ...input, quoteToken: receipt.quoteToken });
@@ -101,24 +109,43 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM SKU lif
         if (row.blockers.includes(buyer.pid)) { retirementBlocked = true; break; }
         await delay(10);
       }
+      // A stricter peer-only bound makes the editor refuse before checkout's
+      // unchanged two-second SKU deadline. Preserve the production HTTP error
+      // handler here; raw SQL errors stay private to this test observation.
+      await editor.exec("SET lock_timeout='750ms'");
+      const editorErrors: Error[] = [], editorApp = app(editor.db);
+      editorApp.onError((error, c) => { editorErrors.push(error); return errorHandler(error, c); });
       let finished = false;
-      const editing = request(app(editor.db), '/admin/product/edit/71', editBody).finally(() => { finished = true; });
-      let reverseWait = false;
-      const deadline = performance.now() + 1_500;
+      const editing = request(editorApp, '/admin/product/edit/71', editBody).finally(() => { finished = true; });
+      let reverseWait = false, productWait = false;
+      const deadline = performance.now() + 3_500;
       while (!finished && performance.now() < deadline) {
         const [row] = await f.db.select({ blockers: sql<number[]>`pg_blocking_pids(${editor.pid}::int)` }).from(sql`(values (1)) as probe(n)`);
         if (row.blockers.includes(retiring.pid)) { reverseWait = true; break; }
+        if (row.blockers.includes(buyer.pid)) productWait = true;
         await delay(10);
       }
-      // In the regression, releasing this gate completes the three-way cycle.
-      // Fixed code refuses retirement A and editor B before gate release.
+      // Checkout now pins both product rows before its SKU wait. Editor B
+      // therefore waits on that product within the source's two-second bound,
+      // while retirement A must release the global identity lock immediately.
       const bothRefusedBeforeRelease = retirementFinished && finished;
       await holder.exec('COMMIT');
       const [e, b, r] = await Promise.all([editing, buying, retirement]);
       expect(bothRefusedBeforeRelease).toBe(true);
       expect(retirementFinished).toBe(true); expect(retirementBlocked).toBe(false);
       expect(reverseWait, JSON.stringify({ e, b, r })).toBe(false);
-      expect(e.status, e.msg).toBe(400); expect(e.msg).toContain('商品库存正在变化');
+      expect(productWait).toBe(true);
+      expect(editorErrors).toHaveLength(1);
+      const privateSqlCodes: string[] = []; let cause: unknown = editorErrors[0];
+      for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+        if ('code' in cause && typeof cause.code === 'string') privateSqlCodes.push(cause.code);
+        if (!('cause' in cause) || cause.cause === cause) break; cause = cause.cause;
+      }
+      expect(privateSqlCodes).toEqual(['55P03']);
+      expect(String(editorErrors[0])).toContain('from "store_product"');
+      expect(e).toEqual({ status: 500, msg: '系统繁忙,请稍后再试', data: null });
+      expect(JSON.stringify(e)).not.toMatch(/select|update|store_product|55P03|Failed query/i);
+      expect(e).not.toHaveProperty('sql_codes');
       expect(b.status, b.msg).toBe(200); expect(r.status).toBe(400); expect(r.msg).toContain('商品库存正在变化');
     });
     const after = await state(); expect(after.orders).toHaveLength(1); expect(after.retirements).toEqual([]); expect(after.audit).toEqual([]);

@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { assertRegisteredModelCohort, REVIEWED_TABLE_ADDITIONS } from './helpers/registeredCatalogCohort';
 import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { sql, type SQL } from "drizzle-orm";
@@ -76,10 +77,16 @@ describe("standalone sequence transaction execution boundary", () => {
       ALTER SEQUENCE public.kefu_visitor_uid_seq AS bigint MINVALUE 1 MAXVALUE 2147483647 CACHE 1;`);
   });
 
-  it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
+  it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", async () => {
     // The complete current ORM includes the two active seckill identity indexes;
     // the audit executes every generated statement, including their exact DDL.
-    expect(fullPath.initialStatements).toBe(1166);
+    const snapshot=api.generateDrizzleJson(models);assertRegisteredModelCohort(snapshot);
+    const historical=structuredClone(snapshot);
+    for(const name of REVIEWED_TABLE_ADDITIONS)delete historical.tables['public.'+name];
+    // The fixed 281-table basis stays independently generated and measured.
+    const oldStatements=await api.generateMigration(api.generateDrizzleJson({}),historical);
+    expect(oldStatements).toHaveLength(1166);
+    expect(fullPath.initialStatements).toBe(1166+24);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([
       `CREATE UNIQUE INDEX "spav_seckill_active_suk_uq" ON "store_product_attr_value" USING btree ("product_id","suk") ${activeSeckillPredicate}`,

@@ -17,6 +17,8 @@ describe('delivery address authority at the actual order core', () => {
     // Only the sequence response is synthetic; controller, core and SQL are real.
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'local-sequence', get: () => ({ fetch: async () => new Response('address_http') }) } });
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
   }, 30_000);
   afterEach(async () => { await f?.close(); });

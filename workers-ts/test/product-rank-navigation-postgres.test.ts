@@ -1,3 +1,5 @@
+import { storePromotions, storePromotionsAuxiliary, storeProductRelation } from "../src/models/schema";
+import { systemStore, systemSupplier } from '../src/models/schema';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -18,7 +20,7 @@ describe("ranked product activity navigation against disposable SQL", () => {
   let f: Awaited<ReturnType<typeof financePostgres>>;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
-    f = await financePostgres([storeActivity, storeBargain, storeBrand, storeCombination, storeProduct,
+    f = await financePostgres([storePromotions, storePromotionsAuxiliary, storeProductRelation, systemStore, systemSupplier, storeActivity, storeBargain, storeBrand, storeCombination, storeProduct,
       storeProductLabel, storeSeckill, storeSeckillTime, user, systemConfig, memberRight]);
     const container = createContainerFromDb(f.db);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();

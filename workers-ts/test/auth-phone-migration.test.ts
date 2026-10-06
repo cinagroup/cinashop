@@ -140,11 +140,15 @@ describe("phone authentication migration", () => {
     const pcRouter = readFileSync("../view/pc-ts/src/router/index.ts", "utf8");
     const uniPages = readFileSync("../view/uniapp-ts/src/pages.json", "utf8");
     const uniUser = readFileSync("../view/uniapp-ts/src/pages/user/index.vue", "utf8");
+    const uniUserController = readFileSync("../view/uniapp-ts/src/composables/useUserCenter.ts", "utf8");
     expect(pcRouter).toContain('path: "forgot-password"');
     expect(pcRouter).toContain('path: "user/phone"');
     expect(uniPages).toContain('"path": "pages/auth/reset"');
     expect(uniPages).toContain('"path": "pages/user/phone"');
-    expect(uniUser).toContain("await apiLogout()");
+    expect(uniUser).toContain("useUserCenter()");
+    expect(uniUser).toContain('@tap="logout"');
+    expect(uniUserController).toContain("await scope.request('/logout','GET',{},true)");
+    expect(uniUserController).toContain("auth.clear()");
   });
 
   it("binds Mini Program phones to the authenticated server-side identity", () => {

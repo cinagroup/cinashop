@@ -4,6 +4,7 @@ import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { adminActivitySave, adminActivityStatus } from '../src/controllers/api/v1/AdminCrudController';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
+import { combinationAdminFixture, combinationInput } from './helpers/combinationAdminFixture';
 import { storeBargain, storeBargainUser, storeBargainUserHelp, storeSeckill, storeCombination, storeIntegral } from '../src/models/schema';
 
 describe('bargain admin edits preserve existing business data', () => {
@@ -137,6 +138,23 @@ describe('bargain admin edits preserve existing business data', () => {
     expect(await snapshot()).toEqual(before);
   });
   it.each(['seckill', 'combination', 'integral'] as const)('keeps valid shared-dispatch %s create/status working', async type => {
+    if (type === 'combination') {
+      const before = await snapshot();
+      expect(await request({ type, productId: 70, storeName: '其他活动', price: '10.00', stock: 9, quota: 9, status: 0 }))
+        .toMatchObject({ status: 400, msg: '请使用完整拼团管理接口' });
+      expect(await snapshot()).toEqual(before);
+      // Complete current management retains UUID/revision and real SKU accounting.
+      const current = await combinationAdminFixture();
+      try {
+        const created = await current.service.mutate('create', 0, combinationInput({ status: 0,
+          skus: [{ id: null, base_unique: 'base0001', enabled: true, price: '10.00', quota_total: 9, image: '/images/red.png' }] }), { id: 1 });
+        const detail = await current.service.detail(created.id);
+        expect((await current.db.select().from(storeCombination))[0]).toMatchObject({ stock: 9, quota: 9, sales: 0, status: 0 });
+        await current.service.mutate('status', created.id, { request_id: crypto.randomUUID(), revision: detail.revision, status: 1 }, { id: 1 });
+        expect((await current.db.select().from(storeCombination))[0]).toMatchObject({ stock: 9, quota: 9, sales: 0, status: 1 });
+      } finally { await current.close(); }
+      return;
+    }
     expect(await request({ type, productId: 70, storeName: '其他活动', price: '10.00', stock: 9, quota: 9, status: 0 })).toMatchObject({ status: 200 });
     const table = { seckill: storeSeckill, combination: storeCombination, integral: storeIntegral }[type];
     const [row] = await f.db.select().from(table);

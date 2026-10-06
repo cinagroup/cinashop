@@ -67,7 +67,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('coupon item scop
     ['brand parent', 3, 'UPDATE store_brand SET pid=3 WHERE id=9', false],
     ['brand ancestors', 3, "UPDATE store_brand SET fid='1,3' WHERE id=9", false],
     ['brand deletion', 3, 'DELETE FROM store_brand WHERE id=9', false],
-    ['equivalent product parent fallback', 2, 'UPDATE store_product SET pid=70 WHERE id=70', true],
+    ['equivalent product parent fallback', 2, 'UPDATE store_product SET pid=0 WHERE id=70', true],
+    ['self-parent is not a valid fallback', 2, 'UPDATE store_product SET pid=70 WHERE id=70', false],
     ['equivalent category encoding', 1, "UPDATE store_product SET cate_id='[9,9,0,-1]' WHERE id=70", true],
     ['equivalent category ancestry', 1, "UPDATE store_product_category SET pid=2,path='[2,1,1]' WHERE id=9", true],
     ['equivalent brand ancestry', 3, "UPDATE store_brand SET pid=2,fid='[2,1,1]' WHERE id=9", true],
@@ -196,7 +197,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('coupon item scop
     const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
     const before = await state();
     await withFinancePeers(f.db, async ([editor, buyer]) => {
-      await editor.exec(`BEGIN; UPDATE store_product SET pid=${equivalent ? 70 : 71} WHERE id=70`);
+      await editor.exec(`BEGIN; UPDATE store_product SET pid=${equivalent ? 0 : 71} WHERE id=70`);
       const buying = outcome(create(buyer.db, receipt.data));
       await waitForFinanceBlock(f.db, buyer.pid, editor.pid);
       await editor.exec('COMMIT');

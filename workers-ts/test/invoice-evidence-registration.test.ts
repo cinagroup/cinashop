@@ -1,3 +1,4 @@
+import { assertRegisteredDatabaseCohort, assertRegisteredModelCohort, assertExternalMigrationCohort } from './helpers/registeredCatalogCohort';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -48,12 +49,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoi
   it.each(['external','embedded','orm'] as const)('complete %s construction proves protection before runtime commissioning',async path=>{
     if(path==='external') {
       const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();
-      expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
+      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
       for(const file of files) await f.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
     } else if(path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 180},(_,i)=>String(i).padStart(4,'0')),errors:[]});
-    } else await generated(allModels);
-    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:281}]);
+    } else { const api=await import('drizzle-kit/api'); assertRegisteredModelCohort(api.generateDrizzleJson(allModels)); await generated(allModels); }
+    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:path==='embedded'?282:285}]);
+    await assertRegisteredDatabaseCohort(f.db,path);
     expect(await inspectInvoiceEvidenceSchema(f.db)).toBe(path==='orm'?'orm-pending':'v2');
     if(path==='orm') await runInvoiceEvidenceSchema(f.db,true);
     await f.db.insert(storeOrderInvoice).values({uid:11,orderId:10,isPay:1,invoiceAmount:'10.00'});

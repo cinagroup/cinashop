@@ -10,6 +10,7 @@ import { runInvoiceEvidence } from '../../src/migrations/runInvoiceEvidence';
 import { runRefundOrderSplit } from '../../src/migrations/runRefundOrderSplit';
 import { runPurchaseOriginEvidence } from '../../src/migrations/runPurchaseOriginEvidence';
 import { runPurchaseCancellationEvidence } from '../../src/migrations/runPurchaseCancellationEvidence';
+import { runtimeBusinessPrivilegePlan } from '../../src/migrations/runtimeBusinessPrivilegePlan';
 import { StoreOrderCreateService } from '../../src/services/order/StoreOrderCreateService';
 import { StoreOrderInvoiceService } from '../../src/services/order/StoreOrderInvoiceService';
 import { applyOrderRefundWithMaterialization, finalizeStoreOrderRefund } from '../../src/services/order/StoreOrderRefundService';
@@ -21,6 +22,7 @@ import { memberRight, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefun
 // Exact service-scenario profile. No ALL/default privileges, no new authority on
 // missing-permission errors. Pricing sources remain SELECT-only; the reviewed
 // fixed function provides locking, with EXECUTE granted explicitly below.
+const paidAgentPlan = runtimeBusinessPrivilegePlan('app');
 export const runtimeTablePrivileges: Record<string, readonly string[]> = {
   user: ['SELECT', 'UPDATE'], store_cart: ['SELECT', 'UPDATE'],
   store_product: ['SELECT', 'UPDATE'], store_product_attr_value: ['SELECT', 'UPDATE'],
@@ -34,6 +36,8 @@ export const runtimeTablePrivileges: Record<string, readonly string[]> = {
   supplier_flowing_water: ['SELECT', 'INSERT', 'UPDATE'], supplier_transactions: ['SELECT', 'INSERT'],
   member_right: ['SELECT'], system_config: ['SELECT'], payment_reconciliation_case: ['SELECT', 'INSERT', 'UPDATE'],
   user_address: ['SELECT'], city_area: ['SELECT'], system_user_level: ['SELECT'], agent_level: ['SELECT'],
+  agent_level_task: paidAgentPlan.tables.agent_level_task,
+  agent_level_task_record: paidAgentPlan.tables.agent_level_task_record,
   system_supplier: ['SELECT'], system_store: ['SELECT'], user_invoice: ['SELECT'],
   shipping_templates: ['SELECT'], shipping_templates_region: ['SELECT'],
   shipping_templates_free: ['SELECT'], shipping_templates_no_delivery: ['SELECT'],
@@ -51,7 +55,7 @@ const protectedTables = new Set(['store_order_invoice_evidence', 'store_order_in
   'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin', 'store_order_purchase_cancellation']);
 export const runtimeSequenceTables = ['store_order', 'store_order_cart_info', 'store_order_refund',
   'store_order_invoice', 'store_order_status', 'store_order_outbox', 'user_bill', 'user_brokerage',
-  'supplier_flowing_water', 'supplier_transactions', 'payment_reconciliation_case'] as const;
+  'supplier_flowing_water', 'supplier_transactions', 'payment_reconciliation_case', 'agent_level_task_record'] as const;
 export const shipping = { deliveryType: 'express', deliveryName: 'Local', deliveryCode: 'local',
   deliveryId: 'NO-SHIPMENT', fictitiousContent: '', deliveryUid: 0 } as const;
 
@@ -60,6 +64,10 @@ export async function refundRuntimeFixture() {
   const whole = await sequenceRunnerDatabase();
   try {
     if (!whole.withRuntimeRole) throw Error('Independent runtime LOGIN is required');
+    // The actual paid outbox now evaluates the registered agent task catalog.
+    // Consume only its reviewed app privileges; fail if that profile expands.
+    expect(paidAgentPlan.tables.agent_level_task).toEqual(['SELECT']);
+    expect(paidAgentPlan.tables.agent_level_task_record).toEqual(['SELECT', 'INSERT']);
     await whole.exec('SET client_min_messages=warning');
     expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({
       executed: Array.from({ length: 180 }, (_, i) => String(i).padStart(4, '0')), errors: [],
@@ -74,6 +82,7 @@ export async function refundRuntimeFixture() {
     expect(moved).toEqual([{ id: 3 }]);
     const f = await createPcCheckoutQuoteFixture([], async () => ({ db: whole.db, exec: whole.exec, close: async () => {} }));
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.setConfig({ integral_ratio_status: '1', integral_ratio: '0.01', integral_max_type: '1', integral_max_num: '100' });
     Object.assign(f.config, { brokerage_func_status: '1', store_brokerage_statu: '1', brokerage_level: '1',
       brokerage_compute_type: '1', store_brokerage_ratio: '10' });

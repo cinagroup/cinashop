@@ -55,6 +55,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink com
     }
     await f.exec('CREATE UNIQUE INDEX fixture_virtual_pink_event ON store_order_outbox(event_key)');
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.update(user).set({ nowMoney: '100.00' });
     await f.db.insert(user).values([22, 33].map(uid => ({ uid, nickname: `真实团员${uid}`, nowMoney: '100.00' })));

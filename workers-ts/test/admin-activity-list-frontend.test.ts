@@ -33,7 +33,8 @@ beforeAll(async () => {
       }));
       builder.onResolve({ filter: /^(element-plus|vue-router)$/ }, ({ path }) => ({ path, namespace: 'fixture' }));
       builder.onLoad({ filter: /.*/, namespace: 'fixture' }, ({ path }) => ({ contents: path === 'vue-router'
-        ? `export function useRouter() { return { push() {} }; }`
+        ? `export function useRouter() { return { push() {} }; }
+          export function useRoute() { return { query: {} }; }`
         : `export const state = { errors: [], successes: [], confirmations: 0 };
           export const ElMessage = { error: value => state.errors.push(value), success: value => state.successes.push(value) };
           export const ElMessageBox = { confirm() { state.confirmations++; return Promise.resolve(); } };`,

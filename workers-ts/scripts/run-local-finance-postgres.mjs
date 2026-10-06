@@ -64,6 +64,9 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    'test/withdrawal-effects-upgrade.test.ts',
+    'test/shipping-template-lifecycle-services.test.ts',
+    'test/uniapp-product-sku-postgres.test.ts',
     'test/customer-financial-catalog-postgres.test.ts',
     'test/customer-writeoff-operation-postgres.test.ts',
     'test/cashier-second-card-origin-postgres.test.ts',

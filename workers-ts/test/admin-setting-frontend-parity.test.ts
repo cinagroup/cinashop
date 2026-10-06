@@ -27,6 +27,8 @@ interface Report {
   routes: ReportRoute[];
 }
 
+// Generators author canonical LF. Normalize only Git checkout CRLF in the six
+// full-ledger comparisons; lone CR and every other byte remain strict.
 function source(file: string): string {
   return readFileSync(file, "utf8");
 }
@@ -47,7 +49,7 @@ function themeAuditGates() {
   return scope.exports as {
     classifyThemeStyleCoverage: (coverage: Record<string, boolean | number>) => ReportRoute["status"];
     hasLegacyThemePresets: (code: string) => boolean;
-    hasRegisteredThemeHost: (page: string, merchantShell: string, deliveryShell?: string) => boolean;
+    hasRegisteredThemeHost: (page: string, merchantShell: string, deliveryShell?: string, customerWorkShell?: string) => boolean;
   };
 }
 
@@ -59,8 +61,8 @@ function expectCurrentThemeHostIncrement(generated: string, historical: string) 
   const registry = JSON.parse(source('../view/uniapp-ts/src/pages.json')) as { pages: {path: string}[]; subPackages?: {root: string; pages: {path: string}[]}[] };
   const paths = [...registry.pages.map(row => row.path), ...(registry.subPackages ?? []).flatMap(group => group.pages.map(row => `${group.root}/${row.path}`))];
   expect(new Set(paths).size).toBe(paths.length);
-  const host = themeAuditGates().hasRegisteredThemeHost, shell = source('../view/uniapp-ts/src/components/merchantOrders/MerchantShell.vue'), deliveryShell = source('../view/uniapp-ts/src/components/deliveryWorkbench/DeliveryShell.vue');
-  expect(paths.filter(path => !host(source(`../view/uniapp-ts/src/${path}.vue`), shell, deliveryShell))).toEqual([]);
+  const host = themeAuditGates().hasRegisteredThemeHost, shell = source('../view/uniapp-ts/src/components/merchantOrders/MerchantShell.vue'), deliveryShell = source('../view/uniapp-ts/src/components/deliveryWorkbench/DeliveryShell.vue'), customerWorkShell = source('../view/uniapp-ts/src/components/customerWork/CustomerWorkShell.vue');
+  expect(paths.filter(path => !host(source(`../view/uniapp-ts/src/${path}.vue`), shell, deliveryShell, customerWorkShell))).toEqual([]);
   expected.themeStyleContract.coverage.registeredPages = paths.length;
   expected.themeStyleContract.coverage.themedPages = paths.length;
   expected.methodology.productionAccess = expected.methodology.productionAccess.replace(/all \d+ registered Uniapp page hosts/, `all ${paths.length} registered Uniapp page hosts`);
@@ -281,7 +283,7 @@ describe("legacy Admin setting route parity audit", () => {
     const generated = execFileSync(process.execPath,
       ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts", "--integral-detail-followup"],
       { cwd: process.cwd(), encoding: "utf8" });
-    expect(generated).toBe(source(file));
+    expect(generated).toBe(source(file).replaceAll('\r\n', '\n'));
     expect(latest.summary).toEqual(prior.summary);
     expect(latest.routes.map(row => row.legacy.path)).toEqual(prior.routes.map(row => row.legacy.path));
     for (let index = 0; index < latest.routes.length; index++) {
@@ -302,7 +304,7 @@ describe("legacy Admin setting route parity audit", () => {
     const generated = execFileSync(process.execPath,
       ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts", "--city-delivery-records-followup"],
       { cwd: process.cwd(), encoding: "utf8" });
-    expect(generated).toBe(source(file));
+    expect(generated).toBe(source(file).replaceAll('\r\n', '\n'));
     expect(latest.generatedFrom).toBe("audit/admin-frontend-inventory-city-delivery-records-followup-20261001.json");
     expect(latest.summary).toMatchObject({ legacyRoutes: 76, reviewed: 76, candidate: 20, partial: 24, missing: 27, retired: 5, unreviewed: 0 });
     expect(latest.routes.map(route => route.legacy.path)).toEqual(prior.routes.map(route => route.legacy.path));
@@ -325,7 +327,7 @@ describe("legacy Admin setting route parity audit", () => {
     const generated = execFileSync(process.execPath,
       ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts", "--shipping-settings-followup"],
       { cwd: process.cwd(), encoding: "utf8" });
-    expect(generated).toBe(source(file));
+    expect(generated).toBe(source(file).replaceAll('\r\n', '\n'));
     expect(latest.summary).toMatchObject({ legacyRoutes: 76, reviewed: 76, candidate: 20, partial: 23, missing: 28, retired: 5, unreviewed: 0 });
     const changed = latest.routes.filter((route, index) => route.status !== prior.routes[index].status);
     expect(changed.map(route => route.legacy.path)).toEqual(["/admin/setting/distribution/deliver"]);
@@ -426,7 +428,7 @@ describe("legacy Admin setting route parity audit", () => {
     const generated = execFileSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts"], {
       cwd: process.cwd(), encoding: "utf8",
     });
-    expect(generated).toBe(source("audit/admin-legacy-setting-route-parity.json"));
+    expect(generated).toBe(source("audit/admin-legacy-setting-route-parity.json").replaceAll("\r\n", "\n"));
   });
 
   it("keeps the writeoff follow-up dated, byte reproducible, and limited to one of 274 screens", () => {
@@ -435,7 +437,7 @@ describe("legacy Admin setting route parity audit", () => {
     const generated = execFileSync(process.execPath,
       ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts", "--writeoff-followup"],
       { cwd: process.cwd(), encoding: "utf8" });
-    expect(generated).toBe(source(file));
+    expect(generated).toBe(source(file).replaceAll('\r\n', '\n'));
     expect(followup.generatedFrom).toBe("audit/admin-frontend-inventory-writeoff-followup-20260928.json");
     expect(followup.summary).toMatchObject({ legacyRoutes: 76, reviewed: 76,
       candidate: 17, partial: 25, missing: 29, retired: 5, unreviewed: 0 });
@@ -582,7 +584,7 @@ describe("legacy Admin setting route parity audit", () => {
     const generated = execFileSync(process.execPath,
       ["node_modules/tsx/dist/cli.mjs", "scripts/admin-setting-frontend-parity-audit.ts", "--feedback-followup"],
       { cwd: process.cwd(), encoding: "utf8" });
-    expect(generated).toBe(source(file));
+    expect(generated).toBe(source(file).replaceAll('\r\n', '\n'));
     expect(latest.generatedFrom).toBe("audit/admin-frontend-inventory.json");
     expect(latest.summary).toMatchObject({ legacyRoutes: 76, reviewed: 76,
       candidate: 18, partial: 24, missing: 29, retired: 5, unreviewed: 0 });

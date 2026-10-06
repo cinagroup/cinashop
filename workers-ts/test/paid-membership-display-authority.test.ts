@@ -6,7 +6,7 @@ import { createContainerFromDb, type Container } from '../src/lib/di';
 import { agentLevel, divisionApply, promoterApply, storeCouponUser, storeOrder, storeOrderRefund,
   storeProductLog, storeService, systemConfig, systemDise, systemGroup, systemGroupData,
   systemMessage, systemUserLevel, user, userBill, userBrokerage, userExtract, userLevel,
-  userMessage, userMoney, userRelation, wechatUser } from '../src/models/schema';
+  userMessage, userMoney, userRelation, wechatUser, systemStore, systemStoreStaff, deliveryService } from '../src/models/schema';
 import { UserProfileService } from '../src/services/user/UserProfileService';
 import { PublicCatalogService } from '../src/services/product/PublicCatalogService';
 import { financePostgres } from './helpers/financePostgres';
@@ -61,7 +61,7 @@ describe('personal-home and membership-menu SQL flag authority', () => {
     f = await financePostgres([agentLevel, divisionApply, promoterApply, storeCouponUser, storeOrder,
       storeOrderRefund, storeProductLog, storeService, systemConfig, systemDise, systemGroup,
       systemGroupData, systemMessage, systemUserLevel, user, userBill, userBrokerage, userExtract,
-      userLevel, userMessage, userMoney, userRelation, wechatUser]);
+      userLevel, userMessage, userMoney, userRelation, wechatUser, systemStore, systemStoreStaff, deliveryService]);
     container = createContainerFromDb(f.db);
     const app = new Hono<{ Bindings: Env }>();
     app.get('/', c => {

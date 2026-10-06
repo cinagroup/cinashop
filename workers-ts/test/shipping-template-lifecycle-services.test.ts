@@ -13,6 +13,7 @@ import { AdminDiscountPackageService } from '../src/services/activity/AdminDisco
 import { lockShippingTemplateBindings, retireShippingTemplate } from '../src/services/product/ShippingTemplateLifecycleService';
 import { ValidateException } from '../src/utils/errors';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
+import { combinationAdminFixture, combinationInput, combinationEdit } from './helpers/combinationAdminFixture';
 
 const refs = ['store_product', 'store_seckill', 'store_bargain', 'store_combination', 'store_integral', 'store_discounts_products'] as const;
 const stateTables = [...refs, 'shipping_templates', 'shipping_templates_region', 'shipping_templates_free', 'shipping_templates_no_delivery',
@@ -153,6 +154,24 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual shipping 
   });
   it.each(['seckill', 'combination', 'integral'])('%s actual legacy editor refuses rebinding a retained template to another source owner', async kind => {
     await bind(`store_${kind}` as typeof refs[number]); const before = await snapshot();
+    if (kind === 'combination') {
+      for (const body of [{ type: kind, id: 1, productId: 200 }, { type: kind, id: 1, productId: 100 }, { type: kind, id: 1, storeName: 'rename only' }]) {
+        expect((await http(f.db, '/activity', body)).body).toMatchObject({ status: 400, msg: '请使用完整拼团管理接口' });
+        expect(await snapshot()).toEqual(before);
+      }
+      const current = await combinationAdminFixture();
+      try {
+        await current.exec("INSERT INTO shipping_templates(id,name,owner_type,relation_id) VALUES(10,'platform',0,0),(20,'other supplier',2,20)");
+        const created = await current.service.mutate('create', 0, combinationInput({ shipping: { delivery_type: [1], freight: 3, postage: '0.00', temp_id: 10 } }), { id: 1 });
+        const detail = await current.service.detail(created.id), saved = await current.snapshot();
+        await expect(current.service.mutate('update', created.id, combinationEdit(detail, { shipping: { delivery_type: [1], freight: 3, postage: '0.00', temp_id: 20 } }), { id: 1 }))
+          .rejects.toThrow('运费模板不属于商品所属方');
+        expect(await current.snapshot()).toEqual(saved);
+        await current.service.mutate('update', created.id, combinationEdit(detail, { title: 'rename only' }), { id: 1 });
+        expect((await current.db.select().from((await import('../src/models/schema')).storeCombination))[0]).toMatchObject({ productId: 101, tempId: 10 });
+      } finally { await current.close(); }
+      return;
+    }
     const r = await http(f.db, '/activity', { type: kind, id: 1, productId: 200 });
     expect(r.body).toMatchObject({ status: 400, msg: '运费模板不属于商品所属方' }); expect(await snapshot()).toEqual(before);
     expect((await http(f.db, '/activity', { type: kind, id: 1, productId: 100 })).body.status).toBe(200);

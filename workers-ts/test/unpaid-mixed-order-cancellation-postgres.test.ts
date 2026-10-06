@@ -215,11 +215,34 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('unpaid mixed-own
               { uid: 11, key: 'local-mixed-next', cartIds: [3, 4], addressId: 11, useIntegral: true, userIp: '127.0.0.1' }));
             await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
             const before = await f.state();
-            await expect(new StoreOrderCreateService(canceller.container, f.env).cancel(11, root.orderId)).rejects.toThrow('积分余额正在更新');
+            // Current promotion admission waits for the SKU before locking user.
+            // Make only the test connection's cancellation wait stricter, so its
+            // real bounded refusal precedes the independent buyer's timeout.
+            await canceller.db.execute(sql`SET lock_timeout='1000ms'`);
+            const cancelling = outcome(new StoreOrderCreateService(canceller.container, f.env).cancel(11, root.orderId));
+            // The original buyer is already queued behind the held tuple. PG
+            // reports it as the cancellation's soft blocker; the buyer-to-holder
+            // proof above remains the other edge of the actual waiting chain.
+            await waitForFinanceBlock(f.db, canceller.pid, buyer.pid);
+            const [waiting] = await f.db.execute<{query:string}>(sql`SELECT query FROM pg_stat_activity WHERE pid=${canceller.pid}`);
+            expect(waiting.query).toContain('update "store_product_attr_value"');
+            const refused = await cancelling; expect(refused.ok).toBe(false);
+            if (refused.ok) throw Error('Cancellation unexpectedly acquired the held SKU');
+            expect(refused.error).toMatchObject({ cause: { code: '55P03' } });
+            expect(String(refused.error)).toContain('store_product_attr_value');
             expect(await f.state()).toEqual(before);
             return { buying };
           });
           expect((await buying).ok).toBe(true);
+          // Retain the original user-NOWAIT admission assertion under an actual
+          // independent user lock, rather than assuming the buyer holds it early.
+          await holder.db.transaction(async tx => {
+            await tx.execute(sql`SELECT uid FROM public."user" WHERE uid=11 FOR UPDATE`);
+            const before = await f.state();
+            await expect(new StoreOrderCreateService(canceller.container, f.env).cancel(11, root.orderId))
+              .rejects.toThrow('积分余额正在更新');
+            expect(await f.state()).toEqual(before);
+          });
           await new StoreOrderCreateService(canceller.container, f.env).cancel(11, root.orderId);
           expect((await f.db.select().from(user).where(eq(user.uid, 11)))[0].integral).toBe(100);
           expect((await f.db.select().from(storeProduct).orderBy(storeProduct.id)).map(row => row.stock)).toEqual([6, 7]);

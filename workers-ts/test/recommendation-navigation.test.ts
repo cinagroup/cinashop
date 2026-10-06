@@ -1,3 +1,6 @@
+import { systemDise, storeProductReply, storeProductReplyComment, userRelation, systemUserLevel, storeProductDescription, storeProductEnsure } from "../src/models/schema";
+import { storeProductRelation, storePromotionsAuxiliary } from "../src/models/schema";
+import { systemStore, systemSupplier } from '../src/models/schema';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -18,7 +21,7 @@ describe("hot recommendation navigation against real disposable SQL", () => {
   let f: Awaited<ReturnType<typeof financePostgres>>, service: RecommendationNavigationService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
-    f = await financePostgres([storeActivity, storeBargain, storeBrand, storeCombination, storeProduct, storeProductAttrValue,
+    f = await financePostgres([systemDise, storeProductReply, storeProductReplyComment, userRelation, systemUserLevel, storeProductDescription, storeProductEnsure, storeProductRelation, storePromotionsAuxiliary, systemStore, systemSupplier, storeActivity, storeBargain, storeBrand, storeCombination, storeProduct, storeProductAttrValue,
       storeProductLabel, storeSeckill, storeSeckillTime, user, systemConfig, memberRight, storePromotions]);
     const container = createContainerFromDb(f.db); service = new RecommendationNavigationService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();

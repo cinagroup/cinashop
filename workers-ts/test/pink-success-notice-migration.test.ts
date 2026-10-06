@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
+import { assertExternalMigrationCohort, composeExplicitCityCatalog, registeredTableNames } from './helpers/registeredCatalogCohort';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { createContainerFromDb } from '@/lib/di';
@@ -220,13 +221,14 @@ async function eventCheck(f: FullFixture) {
 }
 
 describe.runIf(native)('pink notice complete PG16 schema paths', () => {
-  it('forwards all previous 169 external files using only 0168 while preserving every row, existing ACL/OID and other schema contract', async () => {
+  it('forwards all previous 171 external files using only 0168 while preserving every row, existing ACL/OID and other schema contract', async () => {
     const f = await checkoutPricingMigrationDatabase();
     try {
       // This forward intentionally stops at its historical terminal migration.
       const files = migrationFiles().filter(name => name <= '0168_pink_success_notice.sql');
-      expect(files).toHaveLength(170); expect(files.at(-1)).toBe('0168_pink_success_notice.sql');
-      const previous = files.slice(0, -1); expect(previous).toHaveLength(169); expect(previous.at(-1)).toBe('0167_seckill_time_reference_lock.sql');
+      expect(files).toHaveLength(172); expect(files.at(-1)).toBe('0168_pink_success_notice.sql');
+      expect(files).toContain('0166_recharge_quota_group_seed.sql');expect(files).toContain('0167_seckill_time_reference_lock.sql');
+      const previous = files.slice(0, -1); expect(previous).toHaveLength(171); expect(previous.at(-1)).toBe('0167_seckill_time_reference_lock.sql');
       await externalMigrations(f, previous);
       await f.exec(`INSERT INTO public."user"(uid,account,now_money,brokerage_price) VALUES(10,'pink-notice-upgrade-user',123.45,6.78);
         INSERT INTO store_order(id,uid,order_id,total_price,pay_price) VALUES(1,10,'pink-notice-upgrade-order',20.50,20.50);
@@ -265,21 +267,22 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 171 and embedded 176 paths with identical five-category contracts and 281 tables', async () => {
+  it('builds fresh external 176 and embedded 180 paths with explicit city composition and identical five-category contracts for 285 tables', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
       embedded = await checkoutPricingMigrationDatabase();
-      const files = migrationFiles(); expect(files).toHaveLength(171); expect(files.at(-1)).toBe('0169_coupon_template_catalog.sql');
+      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
       await externalMigrations(external, files);
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 176 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 180 }, (_, index) => String(index).padStart(4, '0')));
+      await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await fullCatalog(embedded)).toEqual(await fullCatalog(external));
       for (const f of [external, embedded]) {
         const rows = await businessRows(f), identity = await identitiesAndAcl(f), check = await eventCheck(f), catalog = await fullCatalog(f);
-        expect(Object.keys(rows)).toHaveLength(281);
+        expect(Object.keys(rows)).toEqual(registeredTableNames('external'));
         expect(check).toHaveLength(1); expect(check[0]).toMatchObject({ convalidated: true, definition: PINK_SUCCESS_NOTICE_CHECK_DEFINITION });
         for (const table of ['user', 'store_order', 'store_combination', 'store_pink', 'store_order_outbox']) expect(rows[table]).toEqual([]);
         await runPinkSuccessNotice(f.db);

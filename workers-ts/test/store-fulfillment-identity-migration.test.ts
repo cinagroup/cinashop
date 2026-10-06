@@ -26,8 +26,16 @@ describe("store fulfillment identity migration", () => {
       "area", "street", "detailedAddress", "image", "oblongImage", "latitude", "longitude",
       "bankCode", "bankAddress", "alipayAccount", "alipayQrcodeUrl", "wechat",
       "wechatQrcodeUrl", "validTime", "validRange", "dayTime", "dayStart", "dayEnd",
-      "addTime", "isShow", "isDel", "isStore",
+      "addTime", "isShow", "isDel", "isStore", "cityShopId", "business",
     ]);
+    const store = getTableColumns(systemStore);
+    expect(store.cityShopId).toMatchObject({ name: "city_shop_id", notNull: true, default: "" });
+    expect(store.cityShopId.getSQLType()).toBe("varchar(255)");
+    expect(store.business).toMatchObject({ name: "business", notNull: true, default: 0 });
+    expect(store.business.getSQLType()).toBe("integer");
+    const city = readFileSync("migrations/0173_customer_city_delivery.sql", "utf8");
+    expect(city).toContain("ADD COLUMN IF NOT EXISTS city_shop_id VARCHAR(255) DEFAULT '' NOT NULL");
+    expect(city).toContain("ADD COLUMN IF NOT EXISTS business INTEGER DEFAULT 0 NOT NULL");
     expect(Object.keys(getTableColumns(systemStoreStaff))).toContain("pwd");
     expect(Object.keys(getTableColumns(deliveryService))).toEqual([
       "id", "uid", "type", "relationId", "avatar", "nickname", "phone", "addTime",

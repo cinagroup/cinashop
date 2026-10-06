@@ -63,6 +63,7 @@ describe("parent activity migration", () => {
     expect(source).toContain(".from(storeActivity)");
     expect(source).toContain("eq(storeActivity.id, item.activityId)");
     expect(source).toContain("readSeckillScheduleSlots(this.container.db, item, activity)");
-    expect(source).toContain("return { ...item, activity, percent, schedule: seckillScheduleView(schedule, now) }");
+    expect(source).toContain("item:{...safeActivityRow(item),activity,percent,schedule:seckillScheduleView(schedule,now)}");
+    expect(source).toContain("design:await readActivityDetailDesign(this.container.db,item,1,0)");
   });
 });

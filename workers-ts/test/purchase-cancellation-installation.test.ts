@@ -1,3 +1,4 @@
+import { assertRegisteredModelCohort, assertRegisteredDatabaseCohort } from './helpers/registeredCatalogCohort';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { spawnSync } from 'node:child_process';
@@ -93,11 +94,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('cancellation con
     try {
       const api=await import('drizzle-kit/api'),schema=await import('@/models/schema');
       expect(schema.storeOrderPurchaseCancellation).toBe(storeOrderPurchaseCancellation);
-      expect(Object.keys(api.generateDrizzleJson(schema).tables)).toHaveLength(281);
+      assertRegisteredModelCohort(api.generateDrizzleJson(schema)); expect(Object.keys(api.generateDrizzleJson(schema).tables)).toHaveLength(285);
       await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(schema))).join('\n'));
       const relations=() => whole.exec("SELECT oid::text,relfilenode::text,relacl::text FROM pg_class WHERE relnamespace='public'::regnamespace ORDER BY oid");
       const before=await relations();
-      expect(await whole.exec("SELECT count(*)::integer AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'")).toEqual([{ n:281 }]);
+      expect(await whole.exec("SELECT count(*)::integer AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'")).toEqual([{ n:285 }]);
+      await assertRegisteredDatabaseCohort(whole.db,'orm');
       expect(await inspectPurchaseOriginEvidence(whole.db)).toEqual({ state:'orm-pending',sourcesReady:true });
       expect(await inspectPurchaseCancellationEvidence(whole.db)).toEqual({ state:'orm-pending',sourcesReady:false });
       await expect(completePurchaseCancellationEvidenceOrm(whole.db)).rejects.toThrow(); expect(await relations()).toEqual(before);

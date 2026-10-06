@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
+import { assertExternalMigrationCohort, composeExplicitCityCatalog, registeredTableNames } from './helpers/registeredCatalogCohort';
 import { describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { MigrationService } from '../src/services/MigrationService';
@@ -94,8 +95,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
   it('forwards the full catalog through 0166 using only 0167, preserving every business row, existing ACL and five DDL categories', async () => {
     const f = await checkoutPricingMigrationDatabase();
     try {
-      const list = files().filter(name => name <= file); expect(list).toHaveLength(169); expect(list.at(-1)).toBe(file);
-      const previous = list.slice(0, -1); expect(previous).toHaveLength(168); expect(previous.at(-1)).toBe('0166_recharge_quota_group_seed.sql');
+      const list = files().filter(name => name <= file); expect(list).toHaveLength(171); expect(list.at(-1)).toBe(file);
+      expect(list).toContain('0166_recharge_quota_group_seed.sql');expect(list).toContain('0167_member_barcode_index.sql');
+      const previous = list.slice(0, -1); expect(previous).toHaveLength(170); expect(previous.at(-1)).toBe('0167_member_barcode_index.sql');
       await applyExternal(f, previous);
       await f.exec(`INSERT INTO public."user"(uid,account,now_money,brokerage_price) VALUES(10,'slot-upgrade-user',123.45,6.78);
         INSERT INTO user_recharge(uid,order_id,price,give_price,paid) VALUES(10,'slot-upgrade-recharge',23.45,1.23,0);
@@ -142,23 +144,24 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds the current external 171-file and embedded 176-step catalogs with identical five-category schema and exact independent capability', async () => {
+  it('builds the current external 176-file and embedded 180-step catalogs with explicit city composition and identical five-category schema and exact independent capability', async () => {
     const external = await checkoutPricingMigrationDatabase();
     const embedded = await checkoutPricingMigrationDatabase();
     try {
-      const list = files(); expect(list).toHaveLength(171); expect(list.at(-1)).toBe('0169_coupon_template_catalog.sql');
+      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0173_customer_city_delivery.sql');
       await applyExternal(external, list);
       // The second root connection can expire while the first full catalog is
       // built. Bind explicit owner settings to this actual maintenance session.
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 176 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 180 }, (_, index) => String(index).padStart(4, '0')));
+      await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await catalog(embedded)).toEqual(await catalog(external));
       for (const f of [external, embedded]) {
         await assertCapability(f);
         const rows = await allRows(f);
-        expect(Object.keys(rows)).toHaveLength(281);
+        expect(Object.keys(rows)).toEqual(registeredTableNames('external'));
         for (const name of ['user', 'store_order', 'user_recharge', 'store_activity', 'store_seckill', 'store_seckill_time']) expect(rows[name]).toEqual([]);
         expect(rows.system_group).toHaveLength(1); expect(rows.system_group_data).toEqual([]); expect(rows.system_log).toHaveLength(1);
         const state = await inspectSeckillTimeReferenceLock(f.db), identity = await identities(f);

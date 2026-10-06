@@ -1,3 +1,4 @@
+import { systemStore, systemSupplier } from '../src/models/schema';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -11,7 +12,7 @@ import { financePostgres } from './helpers/financePostgres';
 
 const NOW = new Date('2026-09-26T02:00:00.000Z');
 const SECONDS = NOW.getTime() / 1000;
-const tables = [storeBrand, storeProduct, storeProductLabel, storeProductRelation, storePromotions,
+const tables = [systemStore, systemSupplier, storeBrand, storeProduct, storeProductLabel, storeProductRelation, storePromotions,
   storePromotionsAuxiliary, user, systemConfig, memberRight];
 const frame = (id: number, extra: Partial<typeof storePromotions.$inferInsert> = {}) => ({
   id, promotionsType: 5, name: `Frame ${id}`, image: `/images/frame-${id}.png`,
@@ -51,8 +52,8 @@ describe('hot product frame display against disposable SQL', () => {
     expect(rows.every(row => Array.isArray(row.activity_frame) && row.activity_frame.length === 0)).toBe(true);
     expect(rows[0]).toMatchObject({ price: '12.30', stock: 5,
       recommendation_target: { version: 1, product_id: 173, kind: 'product', id: 173, ends_at: null } });
-    expect(rows[0]).not.toHaveProperty('promotions');
-    expect(rows[0]).not.toHaveProperty('activity_background');
+    expect(rows[0].promotions).toEqual([]);
+    expect(rows[0].activity_background).toEqual([]);
   });
 
   it.each([
@@ -64,10 +65,10 @@ describe('hot product frame display against disposable SQL', () => {
   ])('uses the legacy product scope $mode without changing the hot page', async ({ mode, expected }) => {
     await f.db.insert(storePromotions).values(frame(500, { productPartakeType: mode }));
     await f.db.insert(storePromotionsAuxiliary).values([
-      { promotionsId: 500, productId: 170, brandId: 40, storeLabelId: 50, isAll: 1 },
-      { promotionsId: 500, productId: 172, isAll: 0 },
+      { promotionsId: 500, productPartakeType: mode, productId: 170, brandId: 40, storeLabelId: 50, isAll: 1 },
+      { promotionsId: 500, productPartakeType: mode, productId: 172, isAll: 0 },
       // Gifts are not participating products or scope brands/labels.
-      { promotionsId: 500, type: 3, productId: 173, brandId: 41, storeLabelId: 51 },
+      { promotionsId: 500, productPartakeType: mode, type: 3, productId: 173, brandId: 41, storeLabelId: 51 },
     ]);
     await f.db.insert(storeProductRelation).values([
       { productId: 170, type: 2, relationId: 40 },
@@ -132,7 +133,10 @@ describe('hot product frame display against disposable SQL', () => {
     const snapshot = async () => Promise.all(tables.map(table => f.db.select().from(table)));
     const before = await snapshot(), afterFrames = await request('?page=2&limit=2');
     expect(afterFrames).toEqual(beforeFrames.map(row => ({ ...row,
-      activity_frame: { id: 500, name: 'Frame 500', image: '/images/frame-500.png' } })));
+      activity_frame: { id: 500, name: 'Frame 500', image: '/images/frame-500.png' },
+      promotions: { id: 1200, promotions_type: 1, name: 'Frame 1200', desc: '', title: '',
+        image: '/images/frame-1200.png', product_partake_type: 1, discount: 10, discount_type: 1,
+        start_time: SECONDS, stop_time: SECONDS + 3600 } })));
     expect(await request('?page=3&limit=2')).toEqual([]);
     expect(await snapshot()).toEqual(before);
   });

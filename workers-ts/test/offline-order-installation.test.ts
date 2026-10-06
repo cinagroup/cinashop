@@ -1,3 +1,6 @@
+import { assertRegisteredDatabaseCohort } from './helpers/registeredCatalogCohort';
+import { inspectReviewedOfflineGiftCatalog } from '../src/migrations/reviewedOfflineGiftCatalog';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { offlinePredecessorSchemaSql } from './helpers/offlinePredecessorSchema';
 import { sql } from 'drizzle-orm';
@@ -221,10 +224,20 @@ describe('offline controlled PG16 installation', () => {
         expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(180);
         expect(result.executed.at(-1)).toBe('0179');
       }
-      const rows = await whole.db.execute(sql.raw(OFFLINE_CATALOG_SQL));
-      expect(Object.fromEntries(rows.filter(r => r.present).map(r => [r.name, r.fingerprint]))).toEqual(OFFLINE_BARCODE_CATALOG_VERSIONS.v1);
-      expect(await inspectOfflineOrderSchema(whole.db)).toEqual({ state: 'v1' });
-      await runOfflineOrderSchema(whole.db); expect(await inspectOfflineOrderSchema(whole.db)).toEqual({ state: 'v1' });
+      await assertRegisteredDatabaseCohort(whole.db,path as 'external'|'embedded');
+      const inspected = await whole.db.transaction(tx => inspectReviewedOfflineGiftCatalog(tx,{requireOwner:true}));
+      expect(inspected.state).toBe('v1-gift-index');
+      expect(inspected.rows).toHaveLength(27);
+      expect(inspected.rows.every(r=>r.present&&r.owned&&r.safe)).toBe(true);
+      expect(Object.fromEntries(inspected.rows.map(r => [r.name, r.fingerprint]))).toEqual(OFFLINE_BARCODE_CATALOG_VERSIONS.v1);
+      // The immutable legacy installer must still reject the later gift index.
+      const objects=()=>whole.db.execute(sql`SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text FROM pg_class WHERE relnamespace='public'::regnamespace UNION ALL SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
+      const before=await objects();
+      await expect(runOfflineOrderSchema(whole.db)).rejects.toThrow();
+      expect(await objects()).toEqual(before);
+      await runOrderPromotionGiftReceipt(whole.db);await runOrderPromotionGiftReceipt(whole.db);
+      expect(await objects()).toEqual(before);
+      expect(await whole.db.transaction(tx=>inspectReviewedOfflineGiftCatalog(tx,{requireOwner:true}))).toEqual(inspected);
     } finally { await whole.close(); }
   }, 120000);
 });

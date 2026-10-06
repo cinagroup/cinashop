@@ -215,13 +215,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
         const firstOrder = outcome(create(buyerA.db, firstParams));
         await waitForFinanceBlock(fixture.db, buyerA.pid, holder.pid);
         const secondOrder = outcome(create(buyerB.db, secondParams));
-        // Both checkouts reach the same base SKU UPDATE. The second queues
-        // behind the first; this must not be a pickup-code advisory wait.
+        // Ordinary promotions now lock base SKUs before the inventory UPDATE.
+        // Both orders still queue on the same physical SKU, never a pickup-code lock.
         await waitForFinanceBlock(fixture.db, buyerB.pid, buyerA.pid);
         const [waiting] = await fixture.db.select({ event: sql<string>`wait_event_type`, query: sql<string>`query` })
           .from(sql`pg_stat_activity`).where(sql`pid = ${buyerB.pid}`);
         expect(waiting.event).toBe('Lock');
-        expect(waiting.query).toContain('update "store_product_attr_value"');
+        if (secondParams.type === 0) {
+          expect(waiting.query.toLowerCase()).toContain('select id from "store_product_attr_value"');
+          expect(waiting.query.toLowerCase()).toContain('for update');
+        } else expect(waiting.query).toContain('update "store_product_attr_value"');
         await holder.exec('COMMIT');
         pending = false;
         const [a, b] = await Promise.all([firstOrder, secondOrder]);
