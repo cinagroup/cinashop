@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { cloneUserCenterDesign } from '../../view/common/userCenterDesign';
 import type { Env } from '../src/env';
 import { createContainerFromDb, type Container } from '../src/lib/di';
 import { agentLevel, divisionApply, promoterApply, storeCouponUser, storeOrder, storeOrderRefund,
@@ -20,15 +21,26 @@ describe('personal-home and membership-menu SQL flag authority', () => {
   let profile: UserProfileService;
   let catalogue: PublicCatalogService;
   let cachedFlag = '1';
-  const vipUrl = '/pages/annex/vip_paid/index', otherUrl = '/pages/goods/list';
+  const vipUrl = '/pages/annex/vip_paid/index', otherUrl = '/pages/index/index';
+  const menuItem = (name: string, url: string, type: 1 | 2) => ({ sourceId: null, name,
+    pic: '/images/owned-membership.png', url, type });
+  const design = () => {
+    const value = cloneUserCenterDesign();
+    value.menu.list = [menuItem('Member', vipUrl, 1),
+      menuItem('Balance', '/pages/users/user_money/index', 1), menuItem('Browse', otherUrl, 1)];
+    value.merMenu.list = [menuItem('Merchant member', vipUrl, 2)];
+    value.poster.list = [{ sourceId: null, name: 'Unrelated banner', pic: '/images/owned-banner.png', url: otherUrl }];
+    return value;
+  };
   const get = vi.fn(async (key: string) => key === 'cfg_member_card_status' ? cachedFlag
     : key === 'cfg_balance_func_status' ? '1' : '0');
   const put = vi.fn(async () => undefined);
   const setFlag = async (value: string | null) => {
     await f.db.delete(systemConfig);
     if (value !== null) await f.db.insert(systemConfig).values({ menuName: 'member_card_status', value });
-    // An unrelated switch must retain its existing cache-based interpretation.
-    await f.db.insert(systemConfig).values({ menuName: 'balance_func_status', value: '0' });
+    // personalHome retains its existing KV interpretation; the current menu
+    // independently requires its actual SQL balance authority.
+    await f.db.insert(systemConfig).values({ menuName: 'balance_func_status', value: '1' });
   };
   const state = async () => ({ users: await f.db.select().from(user),
     configs: await f.db.select().from(systemConfig).orderBy(systemConfig.id),
@@ -41,19 +53,27 @@ describe('personal-home and membership-menu SQL flag authority', () => {
         svip_open: personalEnabled, pay_vip_status: true, now_money: '100.00', balance_func_status: 1 });
     }
     const menu = await catalogue.menuUser(uid);
-    const expected = menuEnabled ? [expect.objectContaining({ url: vipUrl }),
-      expect.objectContaining({ url: '/pages/users/user_money/index' }), expect.objectContaining({ url: otherUrl })]
-      : [expect.objectContaining({ url: '/pages/users/user_money/index' }), expect.objectContaining({ url: otherUrl })];
-    expect(menu.routine_my_menus).toEqual(expected);
-    expect(menu.diy_data).toEqual({
-      menu: { list: menuEnabled ? [{ url: vipUrl, name: 'DIY member' }, { url: otherUrl, name: 'DIY browse' }]
-        : [{ url: otherUrl, name: 'DIY browse' }] },
-      merMenu: { list: menuEnabled ? [{ url: vipUrl, name: 'Merchant member' }] : [] },
-    });
-    expect(menu.routine_my_banner).toMatchObject([{ title: 'Unrelated banner' }]);
+    const publicItem = ({ sourceId: _sourceId, ...item }: ReturnType<typeof design>['menu']['list'][number]) => item;
+    const fixture = design();
+    const personal = fixture.menu.list.filter(item => menuEnabled || item.url !== vipUrl).map(publicItem);
+    const merchant = menuEnabled ? fixture.merMenu.list.map(publicItem) : [];
+    const poster = fixture.poster.list.map(({ sourceId: _sourceId, ...item }) => item);
+    expect(menu.capabilities).toMatchObject({ paid_member: menuEnabled, balance: true });
+    expect(menu.routine_my_menus).toEqual([...personal, ...merchant]);
+    expect(menu.diy_data).toEqual({ ...fixture, menu: { ...fixture.menu, list: personal },
+      merMenu: { ...fixture.merMenu, list: merchant }, poster: { ...fixture.poster, list: poster } });
+    expect(menu.routine_my_banner).toEqual(poster);
+    expect(JSON.stringify(menu)).not.toContain('sourceId');
+    const designState = menu.user_center_design_state;
+    if (!designState || typeof designState !== 'object' || Array.isArray(designState)
+      || !('issues' in designState) || !Array.isArray(designState.issues)) {
+      throw new Error('Current membership menu must expose a structured design state and issues array');
+    }
+    expect(designState.issues).not.toContain('user_center_picture_unavailable');
+    expect(designState.issues).not.toContain('user_center_known_fields_invalid');
     expect(await state()).toEqual(before);
     expect(get.mock.calls.some(([key]) => key === 'cfg_member_card_status')).toBe(false);
-    expect(get.mock.calls.some(([key]) => key === 'cfg_balance_func_status')).toBe(true);
+    expect(get.mock.calls.some(([key]) => key === 'cfg_balance_func_status')).toBe(uid !== 0);
     expect(put).not.toHaveBeenCalled();
   };
 
@@ -73,15 +93,14 @@ describe('personal-home and membership-menu SQL flag authority', () => {
     await f.db.insert(user).values({ uid: 11, account: 'local-membership-display', nickname: 'Local member',
       nowMoney: '100.00', isMoneyLevel: 1, overdueTime: Math.floor(Date.now() / 1000) + 86_400 });
     await f.db.insert(systemGroup).values([{ id: 1, configName: 'routine_my_menus' }, { id: 2, configName: 'routine_my_banner' }]);
+    const fixture = design();
     await f.db.insert(systemGroupData).values([
-      { id: 1, gid: 1, status: 1, value: JSON.stringify({ url: { value: vipUrl }, name: { value: 'Member' } }) },
-      { id: 2, gid: 1, status: 1, value: JSON.stringify({ url: '/pages/users/user_money/index', name: 'Balance' }) },
-      { id: 3, gid: 1, status: 1, value: JSON.stringify({ url: otherUrl, name: 'Browse' }) },
-      { id: 4, gid: 2, status: 1, value: JSON.stringify({ title: 'Unrelated banner' }) },
+      ...[...fixture.menu.list, ...fixture.merMenu.list].map((item, index) => ({ id: index + 1, gid: 1, status: 1,
+        value: JSON.stringify({ url: { value: item.url }, name: { value: item.name }, pic: item.pic, type: item.type }) })),
+      { id: 5, gid: 2, status: 1, value: JSON.stringify(fixture.poster.list[0]) },
     ]);
     await f.db.insert(systemDise).values({ id: 1, templateName: 'member', type: 3, status: 1,
-      value: JSON.stringify({ menu: { list: [{ url: vipUrl, name: 'DIY member' }, { url: otherUrl, name: 'DIY browse' }] },
-        merMenu: { list: [{ url: vipUrl, name: 'Merchant member' }] } }) });
+      value: JSON.stringify(fixture) });
   }, 30_000);
   beforeEach(async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External requests forbidden'));
@@ -119,6 +138,7 @@ describe('personal-home and membership-menu SQL flag authority', () => {
       { id: 101, menuName: 'member_card_status', value: '1', sort: 10 },
       { id: 102, menuName: 'member_card_status', value: '0', sort: 10, status: 0 },
       { id: 103, menuName: 'member_card_status', value: '1', sort: 99, isStore: 1 },
+      { id: 104, menuName: 'balance_func_status', value: '1' },
     ]);
     await project(false, false);
     await f.db.update(systemConfig).set({ value: '1' }).where(eq(systemConfig.id, 102));
@@ -135,16 +155,42 @@ describe('personal-home and membership-menu SQL flag authority', () => {
       if (key === 'cfg_member_card_status') throw Error('Membership KV unavailable');
       return key === 'cfg_balance_func_status' ? '1' : '0';
     });
-    try { await project(true, true); }
+    try {
+      await project(true, true);
+      await f.db.update(systemConfig).set({ value: '0' }).where(eq(systemConfig.menuName, 'balance_func_status'));
+      const before = await state(), menu = await catalogue.menuUser(11);
+      expect(menu.capabilities).toMatchObject({ balance: false });
+      const menus = menu.routine_my_menus;
+      if (!Array.isArray(menus)) throw new Error('Current membership menus must be an array');
+      const names = menus.map((item: unknown) => {
+        if (!item || typeof item !== 'object' || Array.isArray(item)
+          || !('name' in item) || typeof item.name !== 'string') {
+          throw new Error('Current membership menu items must expose string names');
+        }
+        return item.name;
+      });
+      expect(menus).toHaveLength(3);
+      expect(names).toEqual(['Member', 'Browse', 'Merchant member']);
+      expect(await profile.personalHome(11)).toMatchObject({ balance_func_status: 1, is_open_member: true });
+      expect(await state()).toEqual(before);
+      expect(get.mock.calls.some(([key]) => key === 'cfg_member_card_status')).toBe(false);
+      expect(put).not.toHaveBeenCalled();
+    }
     finally { get.mockImplementation(async key => key === 'cfg_member_card_status' ? cachedFlag : key === 'cfg_balance_func_status' ? '1' : '0'); }
   });
 
   it('propagates failed SQL authority reads instead of returning old enabled projections', async () => {
     await project(true, true);
     const before = await state();
-    vi.spyOn(container.systemConfigDao, 'getValue').mockRejectedValue(Error('SQL authority unavailable'));
-    await expect(profile.personalHome(11)).rejects.toThrow('SQL authority unavailable');
-    await expect(catalogue.menuUser(11)).rejects.toThrow('SQL authority unavailable');
+    // Rename only this owned fixture table, so both original and freshly scoped
+    // RR DAOs encounter an actual missing SQL authority rather than an old DAO spy.
+    await f.exec('ALTER TABLE system_config RENAME TO owned_unavailable_membership_config');
+    try {
+      await expect(profile.personalHome(11)).rejects.toMatchObject({ cause: { code: '42P01' } });
+      await expect(catalogue.menuUser(11)).rejects.toMatchObject({ cause: { code: '42P01' } });
+    } finally {
+      await f.exec('ALTER TABLE owned_unavailable_membership_config RENAME TO system_config');
+    }
     expect(await state()).toEqual(before);
     expect(get.mock.calls.some(([key]) => key === 'cfg_member_card_status')).toBe(false);
   });

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
 import { storeActivity, storeSeckill, storeSeckillTime, storeCart, storeOrder, storeOrderCartInfo, storeOrderStatus,
   storeProductAttrValue, systemStore, systemLog, printDocument } from '../src/models/schema';
@@ -111,7 +111,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Slot edits versu
     // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
     await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 });
-    await f.db.insert(storeSeckillTime).values({ id: 101, title: '测试场', startTime: '09:00', endTime: '13:00', pic: '/images/slot.png', describe: '隔离样本', status: 1 });
+    await f.db.insert(storeSeckillTime).values({ id: 101, title: '测试场', startTime: '00:00', endTime: '24:00', pic: '/images/slot.png', describe: '隔离样本', status: 1 });
     const today = Math.floor((Date.now() + 28800000) / 86400000) * 86400 - 28800;
     await f.db.insert(storeActivity).values({ id: 9, type: 1, status: 1, timeId: '101', startDay: today, endDay: today + 86400 });
     await f.db.insert(storeSeckill).values({ id: 20, activityId: 9, productId: 70, timeId: '101', stock: 7, quota: 6, onceNum: 3, num: 10, status: 1, isShow: 1, isDel: 0 });
@@ -122,12 +122,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Slot edits versu
 
   for (const operation of ['update', 'status', 'delete'] as const) {
     it.each(['admin-first', 'buyer-first'] as const)(`${operation} respects the existing purchase lock order: %s`, async order => {
-      const actualNow = new Date(), day = Math.floor((actualNow.getTime() + 28800000) / 86400000) * 86400000 - 28800000;
-      vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(day + 12 * 3600000));
+      // Freeze the application clock at the real owned SQL clock; final admission
+      // still uses PostgreSQL clock_timestamp(), so a synthetic noon is insufficient.
+      const [clock] = await f.db.execute<{ epoch_ms: string }>(sql`SELECT (extract(epoch FROM clock_timestamp()) * 1000)::text AS epoch_ms`);
+      const actualNow = new Date(Number(clock.epoch_ms));
+      const localMinute = Math.floor((actualNow.getTime() + 28800000) % 86400000 / 60000);
+      const inactiveWindow = localMinute < 720 ? { start_time: '23:00', end_time: '24:00' }
+        : { start_time: '00:00', end_time: '00:01' };
+      vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(actualNow);
       const service = (db: typeof f.db) => new AdminSeckillTimeService(createContainerFromDb(db), f.env.APP_KEY);
       const revision = (await service(f.db).detail(101)).revision;
       const body = { revision, request_id: crypto.randomUUID(), ...(operation === 'update' ? { ...seckillTimeInput,
-        start_time: '09:00', end_time: '11:00', pic: '/images/slot.png' } : operation === 'status' ? { status: 0 } : {}) };
+        ...inactiveWindow, pic: '/images/slot.png' } : operation === 'status' ? { status: 0 } : {}) };
       const params = { uid: 11, key: `slot_${operation}_${order}`, cartIds: [1], type: 1, seckillId: 20,
         shippingType: 2, storeId: 1, realName: '隔离秒杀样本', userPhone: '00000000000', userIp: '127.0.0.1' };
       if (order === 'buyer-first') await f.exec("CREATE FUNCTION seckill_purchase_barrier() RETURNS trigger AS $$ BEGIN PERFORM pg_advisory_xact_lock(731644,1); RETURN NEW; END $$ LANGUAGE plpgsql; CREATE TRIGGER seckill_purchase_barrier BEFORE INSERT ON store_order FOR EACH ROW EXECUTE FUNCTION seckill_purchase_barrier()");

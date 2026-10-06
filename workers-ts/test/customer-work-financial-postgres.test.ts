@@ -3,7 +3,7 @@ import {asc,eq,sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {customerWorkFinancialFixture} from './helpers/customerWorkFinancialFixture';
 import {createContainerFromDb,withTx,type DbClient} from '../src/lib/di';
-import {storeOrder,storeOrderCartInfo,storeOrderRefund,storeOrderRefundPayment,storeOrderOutbox,storeOrderInvoice,storeProduct,storeProductAttrValue,storeProductVirtual,storeSeckill,storeBargain,storeBargainUser,storeCombination,storeIntegral,storeDiscounts,storeService,systemConfig,user,userBill} from '../src/models/schema';
+import {storeOrder,storeOrderCartInfo,storeOrderRefund,storeOrderRefundPayment,storeOrderOutbox,storeOrderInvoice,storeProduct,storeProductAttrValue,storeProductVirtual,storeSeckill,storeBargain,storeBargainUser,storeCombination,storeIntegral,storeDiscounts,storeService,systemConfig,user,userBill,userBrokerage,supplierFlowingWater,supplierTransactions,storeOrderEconomize,agentLevelTaskRecord,storeOrderStatus} from '../src/models/schema';
 import {storeOrderRefundSplit} from '../src/models/schema/order_refund_split';
 import {CustomerWorkFinancialService} from '../src/services/customer-work/CustomerWorkFinancialService';
 import {authorizeCustomerWorkActor,customerWorkConsistency} from '../src/services/customer-work/CustomerWorkScope';
@@ -48,6 +48,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native ordinary 
  const ledger=()=>f.db.execute(sql`SELECT * FROM public.customer_financial_operation_request ORDER BY actor_uid,request_key`);
  async function corruptOwnedSplit(id:number,patch:Partial<typeof storeOrderRefundSplit.$inferInsert>){await f.maintenanceDb.transaction(async db=>{await db.execute(sql`ALTER TABLE public.store_order_refund_split DISABLE TRIGGER USER`);await db.update(storeOrderRefundSplit).set(patch).where(eq(storeOrderRefundSplit.refundId,id));await db.execute(sql`ALTER TABLE public.store_order_refund_split ENABLE TRIGGER USER`);});}
  const effects=async()=>({orders:await f.db.select().from(storeOrder).orderBy(asc(storeOrder.id)),carts:await f.db.select().from(storeOrderCartInfo).orderBy(asc(storeOrderCartInfo.id)),refunds:await f.db.select().from(storeOrderRefund).orderBy(asc(storeOrderRefund.id)),users:await f.db.select().from(user).orderBy(asc(user.uid)),bills:await f.db.select().from(userBill).orderBy(asc(userBill.id)),outbox:await f.db.select().from(storeOrderOutbox).orderBy(asc(storeOrderOutbox.id)),payments:await f.db.select().from(storeOrderRefundPayment).orderBy(asc(storeOrderRefundPayment.id)),splits:await f.db.select().from(storeOrderRefundSplit).orderBy(asc(storeOrderRefundSplit.refundId)),invoices:await f.db.select().from(storeOrderInvoice).orderBy(asc(storeOrderInvoice.id)),skus:await f.db.select().from(storeProductAttrValue).orderBy(asc(storeProductAttrValue.id)),products:await f.db.select().from(storeProduct).orderBy(asc(storeProduct.id)),seckill:await f.db.select().from(storeSeckill).orderBy(asc(storeSeckill.id)),bargain:await f.db.select().from(storeBargain).orderBy(asc(storeBargain.id)),combination:await f.db.select().from(storeCombination).orderBy(asc(storeCombination.id)),integral:await f.db.select().from(storeIntegral).orderBy(asc(storeIntegral.id)),packages:await f.db.select().from(storeDiscounts).orderBy(asc(storeDiscounts.id))});
+  // Include actual paid-accounting rows as well as all existing financial and
+  // outbox facts when proving retries do not repeat any committed effect.
+  const paidReplayEffects=async()=>({...await effects(),financialReceipts:await ledger(),
+   orderAudit:await f.db.select().from(storeOrderStatus).orderBy(asc(storeOrderStatus.id)),brokerage:await f.db.select().from(userBrokerage).orderBy(asc(userBrokerage.id)),
+   supplierFlows:await f.db.select().from(supplierFlowingWater).orderBy(asc(supplierFlowingWater.id)),
+   supplierTransactions:await f.db.select().from(supplierTransactions).orderBy(asc(supplierTransactions.id)),
+   economize:await f.db.select().from(storeOrderEconomize).orderBy(asc(storeOrderEconomize.id)),
+   agentTasks:await f.db.select().from(agentLevelTaskRecord).orderBy(asc(agentLevelTaskRecord.id))});
  async function input(payload:CustomerJson,id=1):Promise<FinancialInput>{const actual=await order(id),scope=await authorizeCustomerWorkActor(f.db,f.actor()),state=await financialRevisions(f.db,actual);return{version:CUSTOMER_FINANCIAL_VERSION,scope_key:scope.scope_key,order_id:id,expected_order_revision:state.order_revision,expected_financial_revision:state.financial_revision,payload};}
  async function readOrder(id=1){const actual=await order(id);return service.reader.order(f.actor(),id,{order_no:actual.orderId});}
  async function review(id:number){const actual=await refund(id);return service.reader.review(f.actor(),id,{refund_no:actual.orderId});}
@@ -116,19 +124,26 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native ordinary 
   await expect(quotaRead(db=>readPurchaseQuotaPaymentLedger(db,{paymentOrderId:1,buyerId:11}))).rejects.toThrow('累计限购购买与退款归属不一致');
   expect((await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,70)))[0].stock).toBe(11);
   const actual=await f.realPurchase();expect(actual.origin.lines[0].cartId).toMatch(/^[1-9]\d*$/);
+  const paidBefore=await paidReplayEffects();expect(actual.order).toMatchObject({pid:0,paid:1,supplierAllocationStatus:2});
+  expect(await actual.consumer.processMessage(actual.message)).toBe('already-completed');expect(await paidReplayEffects()).toEqual(paidBefore);
   expect(await quotaRead(db=>readPurchaseQuotaPaymentLedger(db,{paymentOrderId:actual.order.id,buyerId:11})))
     .toMatchObject({products:[{productId:70,purchased:2,refunded:0,pending:0,remaining:2}]});
   const next=await create(actual.order.id,[{cart_row_id:actual.line.id,cart_num:1}]),returned=await execute(next.id);
   expect(returned.result.execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});
   expect(await quotaRead(db=>readPurchaseQuotaPaymentLedger(db,{paymentOrderId:actual.order.id,buyerId:11})))
     .toMatchObject({products:[{productId:70,purchased:2,refunded:1,pending:0,remaining:1}]});
-  expect(await actual.consumer.processMessage(actual.message)).toBe('already-completed');
+  expect(await order(actual.order.id)).toMatchObject({pid:-1,type:0});const lateBefore=await paidReplayEffects();
+  await expect(actual.consumer.processMessage(actual.message)).rejects.toThrow('Distributor upgrade requires the actual paid root order');
+  expect(await paidReplayEffects()).toEqual(lateBefore);expect((await service.status(f.actor(),returned.context.request_key)).execution?.verified).toBe(true);
  },60000);
  it('shares the actual one-open-application fence and quantity capacity across mature v1 and customer v3',async()=>{const old=await application(1,1);await expect(quote(1,[{cart_row_id:1,cart_num:1}])).rejects.toThrow('进行中');expect((await f.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.id,1)))[0].refundNum).toBe(1);expect((await service.execute('refund_refuse',ctx(),await decision(old,'refund_refuse'))).receipt?.outcome).toBe('refused');const created=await create(1,[{cart_row_id:1,cart_num:1}]);expect(readRefundQuantityReservation(await refund(created.id))?.items[0].beforeRefundNum).toBe(0);await expect(application(1,1)).rejects.toThrow('进行中');expect((await f.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.id,1)))[0].refundNum).toBe(1);});
  it.each([false,true])('proves mature reservation-v1 completion for whole=%s without inventing a split',async whole=>{const id=await application(1,whole?2:1),completed=await execute(id);expect(completed.result.execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});expect(await f.db.select().from(storeOrderRefundSplit)).toEqual([]);if(!whole){const later=await application(1,1),second=await execute(later);expect(second.result.execution?.completed).toBe(true);expect((await service.status(f.actor(),completed.context.request_key)).execution?.completed).toBe(true);}});
  it('proves an existing materialized-v2 claim through the same ordinary financial execution',async()=>{const id=await application(1,1,true),completed=await execute(id);expect(readRefundQuantityReservation(await refund(id))?.version).toBe('refund-quantity-materialization-v2');expect(completed.result.execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});expect(await f.db.select().from(storeOrderRefundSplit)).toHaveLength(1);});
  it('follows two successor splits and invoice allocations, then quotes and completes the third generation',async()=>{
-  const actual=await f.realPurchase(3);await f.maintenanceDb.insert(storeOrderInvoice).values({orderId:actual.order.id,uid:11,category:'order',invoiceAmount:'15.00',isPay:1,isInvoice:0});
+  const actual=await f.realPurchase(3),paidBefore=await paidReplayEffects();
+  expect(actual.order).toMatchObject({pid:0,paid:1,supplierAllocationStatus:2});
+  expect(await actual.consumer.processMessage(actual.message)).toBe('already-completed');expect(await paidReplayEffects()).toEqual(paidBefore);
+  await f.maintenanceDb.insert(storeOrderInvoice).values({orderId:actual.order.id,uid:11,category:'order',invoiceAmount:'15.00',isPay:1,isInvoice:0});
   const first=await create(actual.order.id,[{cart_row_id:actual.line.id,cart_num:1}]),one=await execute(first.id),
     a=(await f.db.select().from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.refundId,first.id)))[0],
     row=(await f.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,a.remainingOrderId!)))[0],
@@ -139,8 +154,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native ordinary 
   for(const operation of[one,two,three])expect((await service.status(f.actor(),operation.context.request_key)).execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});
   expect(await quotaRead(db=>readPurchaseQuotaPaymentLedger(db,{paymentOrderId:actual.order.id,buyerId:11})))
     .toMatchObject({products:[{productId:70,purchased:3,refunded:3,remaining:0}]});
-  expect(await actual.consumer.processMessage(actual.message)).toBe('already-completed');
- },60000);
+  expect(await order(actual.order.id)).toMatchObject({pid:-1,type:0});const lateBefore=await paidReplayEffects();
+  await expect(actual.consumer.processMessage(actual.message)).rejects.toThrow('Distributor upgrade requires the actual paid root order');
+  expect(await paidReplayEffects()).toEqual(lateBefore);
+  for(const operation of[one,two,three])expect((await service.status(f.actor(),operation.context.request_key)).execution?.verified).toBe(true);
+  },60000);
  it('restores retired SKU quantity while preserving the mature retired product stock policy',async()=>{await f.maintenanceDb.update(storeProductAttrValue).set({isRetired:1}).where(eq(storeProductAttrValue.productId,70));const created=await create(1,[{cart_row_id:1,cart_num:1}]);expect((await execute(created.id)).result.execution?.completed).toBe(true);expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,70)))[0].stock).toBe(10);expect((await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,70)))[0].stock).toBe(11);});
  it.each([1,2,3,4] as const)('proves actual type %s base and activity stock/quota/sales, with one original execution',async type=>{
   const activity=await activityOrder(type),id=type===3?await application(1,1):(await create(1,[{cart_row_id:1,cart_num:1}])).id,completed=await execute(id);expect(completed.result.execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});
@@ -192,19 +210,54 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native ordinary 
   expect((await f.db.select().from(storeIntegral).where(eq(storeIntegral.id,activity.activityId)))[0]).toMatchObject({stock:12,quota:12,sales:0});expect((await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id,activity.skuId)))[0]).toMatchObject({stock:12,quota:12,sales:0});expect((await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id,1)))[0]).toMatchObject({stock:12,sales:0});expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,70)))[0]).toMatchObject({stock:12,sales:0});
   const before=await effects();expect((await service.execute('refund_execute',completed.context,completed.body)).execution?.completed).toBe(true);expect(await effects()).toEqual(before);await corruptOwnedSplit(created.id,{returnedPointBillIds:'[]'});expect((await service.status(f.actor(),completed.context.request_key)).execution).toMatchObject({status:'UNKNOWN',completed:false,verified:false});
  });
+ it('rejects first delayed origin-backed presale paid consumption after refund without inventing prior allocation',async()=>{
+  const actual=await f.realPurchase(2,true,false);expect(actual.order).toMatchObject({type:6,pid:0,paid:1,supplierAllocationStatus:0});
+  expect(actual.paidEvent).toMatchObject({status:'PENDING',attemptCount:0,processedTime:0});
+  const created=await create(actual.order.id,[{cart_row_id:actual.line.id,cart_num:1}]),completed=await execute(created.id);
+  expect(completed.result.execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});
+  const family=await f.db.select().from(storeOrder).where(sql`${storeOrder.id}=${actual.order.id} OR ${storeOrder.pid}=${actual.order.id}`).orderBy(asc(storeOrder.id));
+  expect(family).toHaveLength(3);for(const row of family)expect(row).toMatchObject({uid:11,type:6,productType:1,paid:1,payType:'yue',payTime:actual.order.payTime,supplierAllocationStatus:0});
+  await expect(tx(db=>preparePresalePaidRecovery(db,actual.order.id,actual.order.orderId))).rejects.toThrow('预售付款恢复的数量或子单凭据不一致');
+  const before=await paidReplayEffects(),started=Math.floor(Date.now()/1000);
+  expect(before.outbox.find(row=>row.id===actual.paidEvent.id)).toEqual(actual.paidEvent);
+  await expect(actual.consumer.processMessage(actual.message)).rejects.toThrow('预售付款恢复的数量或子单凭据不一致');
+  const after=await paidReplayEffects(),failed=after.outbox.find(row=>row.id===actual.paidEvent.id)!;
+  expect(failed.updateTime).toBeGreaterThanOrEqual(started);expect(failed.updateTime).toBeLessThanOrEqual(Math.floor(Date.now()/1000));
+  expect(failed.availableTime).toBe(failed.updateTime+30);
+  expect(failed).toEqual({...actual.paidEvent,status:'FAILED',attemptCount:1,leaseUntil:0,leaseToken:'',
+   availableTime:failed.updateTime+30,updateTime:failed.updateTime,lastError:'预售付款恢复的数量或子单凭据不一致'});
+  expect({...after,outbox:after.outbox.map(row=>row.id===failed.id?actual.paidEvent:row)}).toEqual(before);
+  expect(after.outbox.filter(row=>row.eventType===PRESALE_DELIVERY_EVENT)).toEqual([]);
+  const cards=(await f.db.select().from(storeProductVirtual)).filter(row=>actual.virtualIds.includes(row.id));
+  expect(cards.filter(row=>row.uid===11)).toHaveLength(0);expect(cards.filter(row=>row.uid===0)).toHaveLength(2);
+  expect(await quotaRead(db=>readPurchaseQuotaPaymentLedger(db,{paymentOrderId:actual.order.id,buyerId:11})))
+   .toMatchObject({products:[{productId:70,purchased:2,refunded:1,pending:0,remaining:1}]});
+  expect((await service.status(f.actor(),completed.context.request_key)).execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});
+ },60000);
  it('delivers only the actual opaque presale remainder after a completed refund and a late paid-outbox retry',async()=>{
   await presaleOrder();
   const stockBefore=(await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id,1)))[0],productBefore=(await f.db.select().from(storeProduct).where(eq(storeProduct.id,70)))[0];const created=await create(1,[{cart_row_id:1,cart_num:1}]),completed=await execute(created.id);expect(completed.result.execution?.completed).toBe(true);expect((await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id,1)))[0]).toMatchObject({stock:stockBefore.stock+1,sales:Math.max(0,stockBefore.sales-1)});expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,70)))[0]).toMatchObject({stock:productBefore.stock+1,sales:Math.max(0,productBefore.sales-1)});const stockAfter=await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id,1)),productAfter=await f.db.select().from(storeProduct).where(eq(storeProduct.id,70));const recovered=await tx(db=>preparePresalePaidRecovery(db,1,'customer-financial-1'));expect(recovered?.refundIds.has(created.id)).toBe(true);expect(recovered?.activeOrderIds.size).toBe(1);
   const event=await tx(db=>enqueueOrderPaidEvent(db,{id:1,orderId:'customer-financial-1'})),outbox=new OrderOutboxService(f.container,f.env);expect(await outbox.processMessage({action:'processOrderPaidOutbox',outboxId:event.id,eventKey:event.eventKey})).toBe('completed');expect(await outbox.processMessage({action:'processOrderPaidOutbox',outboxId:event.id,eventKey:event.eventKey})).toBe('already-completed');const pending=(await f.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.eventType,PRESALE_DELIVERY_EVENT)))[0];expect(pending).toBeTruthy();expect(await outbox.processMessage({action:'processPresaleDeliveryOutbox',outboxId:pending.id,eventKey:pending.eventKey})).toBe('completed');
   const cards=await f.db.select().from(storeProductVirtual);expect(cards.filter(x=>x.uid===11)).toHaveLength(1);expect(cards.filter(x=>x.uid===0)).toHaveLength(1);await expect(quotaRead(db=>readPurchaseQuotaPaymentLedger(db,{paymentOrderId:1,buyerId:11}))).rejects.toThrow('累计限购购买与退款归属不一致');expect((await service.status(f.actor(),completed.context.request_key)).execution?.completed).toBe(true);expect(await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id,1))).toEqual(stockAfter);expect(await f.db.select().from(storeProduct).where(eq(storeProduct.id,70))).toEqual(productAfter);
   // Independently prove current origin-backed presale through actual checkout,
-  // balance debit and the SAME original paid event delayed until after refund.
-  const actual=await f.realPurchase(2,true,false),next=await create(actual.order.id,[{cart_row_id:actual.line.id,cart_num:1}]),returned=await execute(next.id);
+  // balance debit and the COMPLETE original paid consumer before refund. Its
+  // original delivery event remains delayed to the immutable database boundary.
+  const actual=await f.realPurchase(2,true);
+  const originalDelivery=(await f.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.eventType,PRESALE_DELIVERY_EVENT)))
+   .find(row=>(row.payload as {paymentOrderId?:number}).paymentOrderId===actual.order.id)!;
+  expect(originalDelivery).toBeTruthy();expect(originalDelivery.status).toBe('PENDING');
+  const next=await create(actual.order.id,[{cart_row_id:actual.line.id,cart_num:1}]),returned=await execute(next.id);
+  expect(actual.order).toMatchObject({type:6,paid:1,pid:0,supplierAllocationStatus:2});expect(actual.paidEvent.status).toBe('COMPLETED');
+  const family=await f.db.select().from(storeOrder).where(sql`${storeOrder.id}=${actual.order.id} OR ${storeOrder.pid}=${actual.order.id}`).orderBy(asc(storeOrder.id));
+  expect(family).toHaveLength(3);for(const row of family)expect(row).toMatchObject({uid:11,type:6,productType:1,paid:1,payType:'yue',payTime:actual.order.payTime,supplierAllocationStatus:2});
+  expect((await f.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.id,actual.paidEvent.id)))[0]).toEqual(actual.paidEvent);
+  const currentRecovery=await tx(db=>preparePresalePaidRecovery(db,actual.order.id,actual.order.orderId));
+  expect(currentRecovery?.refundIds.has(next.id)).toBe(true);expect(currentRecovery?.activeOrderIds.size).toBe(1);
   expect(returned.result.execution).toMatchObject({status:'BALANCE_SUCCESS',completed:true,verified:true});
-  expect(await actual.consumer.processMessage(actual.message)).toBe('completed');
-  expect(await actual.consumer.processMessage(actual.message)).toBe('already-completed');
+  const lateBefore=await paidReplayEffects();expect(await actual.consumer.processMessage(actual.message)).toBe('already-completed');
+  expect(await paidReplayEffects()).toEqual(lateBefore);
   const delivery=(await f.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.eventType,PRESALE_DELIVERY_EVENT)))
-    .find(row=>(row.payload as {paymentOrderId?:number}).paymentOrderId===actual.order.id)!;expect(delivery).toBeTruthy();
+    .find(row=>(row.payload as {paymentOrderId?:number}).paymentOrderId===actual.order.id)!;expect(delivery).toBeTruthy();expect(delivery).toEqual(originalDelivery);
   const clockDeadline=Date.now()+45000;let due=false;
   while(Date.now()<clockDeadline){const [clock]=await f.db.execute<{due:boolean}>(sql`SELECT floor(extract(epoch FROM clock_timestamp()))>${actual.endsAt} AS due`);
     if(clock.due){due=true;break;}await new Promise(resolve=>setTimeout(resolve,100));}

@@ -187,7 +187,17 @@ describe('paid membership economize ledger from admitted checkout evidence', () 
       // PHP economize is historical gross savings, not net income after refunds.
       expect(await new PaidMembershipService(r.container, f.env).index(11))
         .toMatchObject({ is_get_free: { user_info: { economize_money: '5.00' } } });
-      expect(await outbox.processMessage(message)).toBe('already-completed'); expect(await ledger()).toEqual(saved);
+      const [archivedRoot] = await f.db.select().from(storeOrder).where(eq(storeOrder.orderId, created.orderId));
+      expect(archivedRoot).toMatchObject({ pid: -1, type: 0, paid: 1 });
+      const beforeLateRetry = await f.state();
+      const [originalPaidEvent] = await f.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.id, message.outboxId));
+      expect(originalPaidEvent.status).toBe('COMPLETED');
+      // The historical savings stay readable; an archived ordinary root cannot
+      // borrow the separately proved presale paid-recovery capability.
+      await expect(outbox.processMessage(message)).rejects.toThrow('Distributor upgrade requires the actual paid root order');
+      expect(await f.state()).toEqual(beforeLateRetry);
+      expect((await f.db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.id, message.outboxId)))[0]).toEqual(originalPaidEvent);
+      expect(await ledger()).toEqual(saved);
       await expect(new StoreOrderCreateService(r.container, f.env).detail(22, source.orderId)).rejects.toThrow('订单不存在');
     });
   }, 60_000);

@@ -2029,9 +2029,17 @@ export class StoreOrderCreateService {
           couponPriceCents = couponResolution.priceCents;
           couponRow = couponResolution.row;
           firstOrderPriceCents = 0;
-          if (giftQuote && (await quoteOrderPromotionGifts(createContainerFromDb(tx),
-            giftInputFor(false))).materialsFingerprint !== giftQuote.materialsFingerprint)
-            throw new OrderQuoteReconfirmRequired(key);
+          if (giftQuote) {
+            const finalGiftQuote = await quoteOrderPromotionGifts(createContainerFromDb(tx), giftInputFor(false));
+            const hasNoGiftEffects = (quote: OrderPromotionGiftQuote) => quote.intent === null
+              && quote.totalGiftQuantity === 0 && quote.totalIntegral === 0
+              && quote.auxiliaryIds.length === 0 && quote.giftProductIds.length === 0
+              && quote.couponIssueIds.length === 0;
+            const effectFreeLegacyQualificationFlip = !confirmation
+              && hasNoGiftEffects(giftQuote) && hasNoGiftEffects(finalGiftQuote);
+            if (finalGiftQuote.materialsFingerprint !== giftQuote.materialsFingerprint
+              && !effectFreeLegacyQualificationFlip) throw new OrderQuoteReconfirmRequired(key);
+          }
         }
         const lockedUsableIntegral = await usableIntegralPoints(
           tx,
@@ -2553,6 +2561,12 @@ export class StoreOrderCreateService {
           throw new ValidateException("积分商品库存不足");
         }
 
+        // Acquire the same product-before-SKU boundary as ordinary checkout.
+        // Keep the existing user -> integral activity order used by integralRedeem.
+        // Quoted-rule, stock and ownership checks stay at their guarded UPDATEs.
+        await tx.select({ id: storeProduct.id }).from(storeProduct)
+          .where(eq(storeProduct.id, item.product.id))
+          .orderBy(asc(storeProduct.id)).for("update");
         const activitySkuUpdated = await tx
           .update(storeProductAttrValue)
           .set({

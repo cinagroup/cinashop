@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
-import { eq, sql } from 'drizzle-orm';
+import { inspect } from 'node:util';
+import { and, eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
@@ -15,6 +16,10 @@ import {
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
+import { OrderQuoteReconfirmRequired } from '../src/services/order/CheckoutConfirmation';
+import { AdminFullGiftService } from '../src/services/admin/AdminFullGiftService';
+import { quoteOrderPromotionGifts } from '../src/services/activity/OrderPromotionGiftService';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 
 const input = { cartIds: [1], addressId: 11, couponId: 0, type: 0 };
 
@@ -85,6 +90,156 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
       printJobs: await fixture.db.select().from(orderPrintJob),
     };
   }
+
+
+  // Snapshot every owned public table and sequence, including the user right,
+  // cart/stock claims, immutable line/origin rows and deferred effect journals.
+  // This is a read-only observer; the only qualification writer below is a
+  // complete StoreOrderCreateService checkout on a distinct physical cart.
+  async function firstOrderAdmissionState() {
+    const [identity] = await fixture.db.execute<{ namespace: string }>(sql`SELECT current_schema() AS namespace`);
+    expect(identity.namespace).toBe('public');
+    const tables = await fixture.db.execute<{ name: string }>(sql`SELECT tablename AS name
+      FROM pg_catalog.pg_tables WHERE schemaname=current_schema() ORDER BY tablename`);
+    const sequences = await fixture.db.execute<{ name: string }>(sql`SELECT sequencename AS name
+      FROM pg_catalog.pg_sequences WHERE schemaname=current_schema() ORDER BY sequencename`);
+    expect(tables.length).toBeGreaterThan(0);
+    expect(sequences.length).toBeGreaterThan(0);
+    const tableRows: Record<string, unknown[]> = {};
+    const sequenceStates: Record<string, unknown[]> = {};
+    for (const { name } of tables) {
+      expect(name).toMatch(/^[a-z_][a-z0-9_]*$/);
+      tableRows[name] = Array.from(await fixture.db.execute(sql`SELECT to_jsonb(t) AS body
+        FROM ${sql.identifier(name)} AS t ORDER BY to_jsonb(t)::text`));
+    }
+    for (const { name } of sequences) {
+      expect(name).toMatch(/^[a-z_][a-z0-9_]*$/);
+      sequenceStates[name] = Array.from(await fixture.db.execute(sql`SELECT last_value, is_called
+        FROM ${sql.identifier(name)}`));
+    }
+    return { tableRows, sequenceStates };
+  }
+
+  it.each(['confirmed receipt', 'legacy integral gift'] as const)(
+    '%s rejects stale first-order admission after an actual other-cart checkout commit', async variant => {
+      // Install the actual owned maintenance gift protocol only in the gift case;
+      // neither checkout path receives installation or repair authority.
+      if (variant === 'legacy integral gift') await runOrderPromotionGiftReceipt(fixture.db);
+      const firstOrderConfig = { newcomer_status: '1', first_order_status: '1',
+        first_order_discount: '90', first_order_discount_limit: '100',
+        newcomer_limit_status: '0', newcomer_limit_time: '0' };
+      for (const [menuName, value] of Object.entries(firstOrderConfig)) {
+        const written = await fixture.db.update(systemConfig).set({ value })
+          .where(and(eq(systemConfig.menuName, menuName), eq(systemConfig.isStore, 0)))
+          .returning({ id: systemConfig.id });
+        if (!written.length) await fixture.db.insert(systemConfig).values({ menuName, value });
+      }
+      Object.assign(fixture.config, firstOrderConfig);
+      const configured = await fixture.db.select().from(systemConfig);
+      for (const [menuName, value] of Object.entries(firstOrderConfig))
+        expect(configured.find(row => row.menuName === menuName && row.isStore === 0)?.value).toBe(value);
+      await fixture.db.update(storeProduct).set({ deliveryType: '1', freight: 1, tempId: 0 });
+      await fixture.db.insert(storeProduct).values({ id: 72, storeName: '独立首单赢家商品', stock: 8,
+        price: '10.00', isShow: 1, isVerify: 1, isVip: 1, deliveryType: '1',
+        freight: 1, tempId: 0, image: '/actual-winner72.png' });
+      await fixture.db.insert(storeProductAttrValue).values({ id: 72, productId: 72,
+        type: 0, unique: 'paid0072', suk: '独立赢家规格', stock: 8,
+        price: '10.00', vipPrice: '9.00' });
+      await fixture.db.insert(storeCart).values({ id: 2, uid: 11, productId: 72,
+        productAttrUnique: 'paid0072', cartNum: 1, isNew: 1, status: 1 });
+      const [initialAccount] = await fixture.db.select({ isFirstOrder: user.isFirstOrder })
+        .from(user).where(eq(user.uid, 11));
+      expect(initialAccount.isFirstOrder).toBe(0);
+
+      let giftRootId: number | undefined;
+      if (variant === 'legacy integral gift') {
+        const shanghai = (hours: number) => {
+          const date = new Date(Date.now() + (hours + 8) * 3_600_000);
+          const pad = (n: number) => String(n).padStart(2, '0');
+          return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} `
+            + `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
+        };
+        giftRootId = (await new AdminFullGiftService(fixture.container).mutate('create', 0, {
+          name: '首单消失后真实积分权益', section_time: [shanghai(-1), shanghai(24)],
+          promotions_cate: 2, threshold_type: 1,
+          promotions: [{ threshold: 10, give_integral: 3, give_coupon_id: [], give_product_id: [] }],
+          is_label: 0, label_id: [], product_partake_type: 2,
+          product_id: [{ product_id: 70, unique: ['qared001'] }],
+          brand_id: [], store_label_id: [], status: 1, sort: 0, request_id: crypto.randomUUID(),
+        }, { id: 9 })).id;
+      }
+      const quoteResponse = await fixture.app.request('/api/order/confirm', {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' },
+        body: JSON.stringify({ ...input, shippingType: 1, useIntegral: false }),
+      }, fixture.env);
+      const quote = await quoteResponse.json() as { status: number; msg: string; data: {
+        orderKey: string; quoteToken: string; priceGroup: { first_order_price: string; pay_price: string };
+        give_integral: number; give_coupon: unknown[];
+      } };
+      expect(quote.status, quote.msg).toBe(200);
+      expect(quote.data.priceGroup.first_order_price).toBe('2.00');
+      expect(quote.data.priceGroup.pay_price).toBe('18.00');
+      expect(quote.data.give_integral).toBe(0);
+      expect(quote.data.give_coupon).toEqual([]);
+
+      const withPeer = owned.withPeer;
+      if (!withPeer) throw new Error('Dedicated PostgreSQL peers required');
+      let winnerState: Awaited<ReturnType<typeof firstOrderAdmissionState>> | undefined;
+      let hookCalls = 0;
+      await withPeer(async loserPeer => withPeer(async winnerPeer => {
+        expect(loserPeer.pid).not.toBe(winnerPeer.pid);
+        const loserParams: CreateOrderParams = { uid: 11, cartIds: [1], addressId: 11,
+          shippingType: 1, type: 0, couponId: 0, useIntegral: false, userIp: '127.0.0.1',
+          key: variant === 'confirmed receipt' ? quote.data.orderKey : 'legacy_gift_after_winner',
+          ...(variant === 'confirmed receipt' ? { quoteToken: quote.data.quoteToken } : {}),
+        };
+        const loser = await outcome(StoreOrderCreateService.createWithRuntime(
+          createContainerFromDb(loserPeer.db), {
+            CONFIG_KV: fixture.env.CONFIG_KV,
+            ...(variant === 'confirmed receipt' ? { requireConfirmation: true } : {}),
+            nextOrderId: async () => {
+              hookCalls++;
+              const winnerId = variant === 'confirmed receipt' ? 'race_confirmed_winner' : 'race_gift_winner';
+              const winner = await StoreOrderCreateService.createWithRuntime(createContainerFromDb(winnerPeer.db),
+                { CONFIG_KV: fixture.env.CONFIG_KV, nextOrderId: async () => winnerId }, {
+                  uid: 11, key: winnerId, cartIds: [2], shippingType: 1,
+                  addressId: 11, type: 0, couponId: 0, useIntegral: false, userIp: '127.0.0.1',
+                });
+              expect(winner.orderId).toBe(winnerId);
+              const [actualWinner] = await fixture.db.select().from(storeOrder)
+                .where(eq(storeOrder.orderId, winnerId));
+              expect(actualWinner).toMatchObject({ uid: 11, paid: 0, firstOrderPrice: '1.00', payPrice: '9.00' });
+              const [accountAfterWinner] = await fixture.db.select({ isFirstOrder: user.isFirstOrder })
+                .from(user).where(eq(user.uid, 11));
+              expect(accountAfterWinner.isFirstOrder).toBe(1);
+              if (variant === 'legacy integral gift') {
+                const eligibleGift = await quoteOrderPromotionGifts(fixture.container, {
+                  uid: 11, firstOrderEligible: false, shippingType: 1, lines: [{
+                    key: 1, productId: 70, skuUnique: 'qared001', quantity: 2,
+                    postPromotionGrossCents: 2000, couponDiscountCents: 0,
+                  }],
+                });
+                expect(eligibleGift.totalIntegral).toBe(6);
+                expect(eligibleGift.intent?.promotions).toMatchObject([{ id: giftRootId,
+                  give_integral: 6, coupons: [], products: [] }]);
+                expect(eligibleGift.totalGiftQuantity).toBe(0);
+              }
+              // The winner's createWithRuntime Promise resolves after its real
+              // transaction COMMIT. No direct qualification UPDATE is used.
+              winnerState = await firstOrderAdmissionState();
+              return variant === 'confirmed receipt' ? 'race_confirmed_loser' : 'race_gift_loser';
+            },
+          }, loserParams));
+        expect(hookCalls).toBe(1);
+        expect(winnerState).toBeDefined();
+        expect(loser.ok).toBe(false);
+        if (!loser.ok) expect(loser.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
+      }));
+      expect(await firstOrderAdmissionState()).toEqual(winnerState);
+      const [unclaimedCart] = await fixture.db.select().from(storeCart).where(eq(storeCart.id, 1));
+      expect(unclaimedCart.isPay).toBe(0);
+      expect(await fixture.db.select().from(storeOrder)).toHaveLength(1);
+    }, 40_000);
 
   it.each([
     ['legacy delete_time only', `UPDATE "user" SET delete_time=clock_timestamp() WHERE uid=11`],
@@ -215,16 +370,21 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
         const firstOrder = outcome(create(buyerA.db, firstParams));
         await waitForFinanceBlock(fixture.db, buyerA.pid, holder.pid);
         const secondOrder = outcome(create(buyerB.db, secondParams));
-        // Ordinary promotions now lock base SKUs before the inventory UPDATE.
-        // Both orders still queue on the same physical SKU, never a pickup-code lock.
+        // Both checkout paths hold the actual product before the shared base SKU.
+        // Prove the second buyer waits for that product owner, not an unrelated lock.
         await waitForFinanceBlock(fixture.db, buyerB.pid, buyerA.pid);
         const [waiting] = await fixture.db.select({ event: sql<string>`wait_event_type`, query: sql<string>`query` })
           .from(sql`pg_stat_activity`).where(sql`pid = ${buyerB.pid}`);
         expect(waiting.event).toBe('Lock');
         if (secondParams.type === 0) {
-          expect(waiting.query.toLowerCase()).toContain('select id from "store_product_attr_value"');
+          expect(waiting.query.toLowerCase()).toContain('select id, pid from "store_product"');
+          expect(waiting.query.toLowerCase()).toContain('where id in');
           expect(waiting.query.toLowerCase()).toContain('for update');
-        } else expect(waiting.query).toContain('update "store_product_attr_value"');
+        } else {
+          expect(waiting.query.toLowerCase()).toContain('select "id" from "store_product"');
+          expect(waiting.query.toLowerCase()).toContain('where "store_product"."id" =');
+          expect(waiting.query.toLowerCase()).toContain('for update');
+        }
         await holder.exec('COMMIT');
         pending = false;
         const [a, b] = await Promise.all([firstOrder, secondOrder]);
@@ -251,7 +411,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
           expect(retry.status, retry.msg).toBe(200);
         } else {
           expect(a).toMatchObject({ ok: true });
-          expect(b).toMatchObject({ ok: true });
+          expect(b, b.ok ? undefined : inspect(b.error, { depth: 8 })).toMatchObject({ ok: true });
         }
       } finally { if (pending) await holder.exec('ROLLBACK'); }
     })));

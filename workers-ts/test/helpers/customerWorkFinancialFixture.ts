@@ -3,6 +3,7 @@ import {getTableConfig} from 'drizzle-orm/pg-core';
 import postgres from 'postgres';
 import {drizzle} from 'drizzle-orm/postgres-js';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {URL as NodeURL} from 'node:url';
 import * as schema from '../../src/models/schema';
 import {createContainerFromDb,withTx,type DbClient} from '../../src/lib/di';
@@ -38,14 +39,20 @@ export async function customerWorkFinancialFixture(){
  try{
   const base=validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL??''),[origin]=await f.db.execute<{database:string;role:string;host:string;port:number;version:number}>(sql`SELECT current_database() AS database,current_user AS role,host(inet_server_addr()) AS host,inet_server_port() AS port,current_setting('server_version_num')::integer AS version`);
   if(origin.role!=='finance_test'||Math.floor(origin.version/10000)!==16||!ownsFinanceFixtureEndpoint(origin.database,'public',base.href,origin.host,origin.port))throw Error('Customer financial fixture requires its actual registered PG16 database');
-  // Reset repeatedly writes this fixture-owned authority table. Keep background
-  // maintenance out of positive-case scheduling; real contention is exercised
-  // separately with an independently authenticated, held maintenance transaction.
-  // This neither changes production parameters nor identifies the old blocker.
+  // Reset repeatedly writes these two fixture-owned authority tables. Keep
+  // background maintenance out of positive-case scheduling; real contention
+  // still uses explicit held maintenance transactions and production NOWAIT.
+  // This fixture-only setting does not identify the historical blocker.
+  type AuthorityScheduling={database:string;role:string;schema:string;table_name:string;table_oid:string;owner:string;kind:string;options:string[]|null};
+  const readAuthorityScheduling=()=>f.db.execute<AuthorityScheduling>(sql`SELECT current_database() AS database,current_user AS role,n.nspname AS schema,c.relname AS table_name,c.oid::text AS table_oid,pg_get_userbyid(c.relowner) AS owner,c.relkind::text AS kind,c.reloptions AS options FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN('store_service','system_config') ORDER BY c.relname`);
+  const readPricingDefinition=async()=>{const rows=await f.db.execute<{function_oid:string;definition:string}>(sql`SELECT p.oid::text AS function_oid,pg_get_functiondef(p.oid) AS definition FROM pg_catalog.pg_proc p WHERE p.oid='public.checkout_lock_pricing_v1()'::regprocedure`);if(rows.length!==1||!/^[1-9]\d*$/.test(rows[0].function_oid)||!rows[0].definition)throw Error('Actual installed checkout pricing lock definition is absent');return{function_oid:rows[0].function_oid,definition_sha256:createHash('sha256').update(rows[0].definition,'utf8').digest('hex')};};
+  const schedulingBefore=await readAuthorityScheduling(),pricingBefore=await readPricingDefinition();
+  if(schedulingBefore.length!==2||schedulingBefore.some((row,index)=>row.database!==origin.database||row.role!==origin.role||row.schema!=='public'||row.owner!==origin.role||row.kind!=='r'||row.table_name!==['store_service','system_config'][index]||!/^[1-9]\d*$/.test(row.table_oid)||(row.options!==null&&JSON.stringify(row.options)!=='["autovacuum_enabled=false"]')))throw Error('Owned financial fixture authority identity/options were not exact');
   await f.exec('ALTER TABLE public.store_service SET (autovacuum_enabled=false)');
-  const [scopeScheduling]=await f.db.execute<{database:string;role:string;table_oid:string;options:string[]}>(sql`SELECT current_database() AS database,current_user AS role,c.oid::text AS table_oid,c.reloptions AS options FROM pg_catalog.pg_class c WHERE c.oid='public.store_service'::regclass`);
-  if(scopeScheduling.database!==origin.database||scopeScheduling.role!==origin.role||!Array.isArray(scopeScheduling.options)||scopeScheduling.options.length!==1||scopeScheduling.options[0]!=='autovacuum_enabled=false')throw Error('Owned financial fixture authority scheduling was not applied');
-  console.log('CUSTOMER_FINANCIAL_FIXTURE_SCOPE_SCHEDULING '+JSON.stringify(scopeScheduling));
+  await f.exec('ALTER TABLE public.system_config SET (autovacuum_enabled=false)');
+  const schedulingAfter=await readAuthorityScheduling(),pricingAfter=await readPricingDefinition();
+  if(schedulingAfter.length!==2||schedulingAfter.some((row,index)=>JSON.stringify({...row,options:schedulingBefore[index].options})!==JSON.stringify(schedulingBefore[index])||JSON.stringify(row.options)!=='["autovacuum_enabled=false"]')||JSON.stringify(pricingAfter)!==JSON.stringify(pricingBefore))throw Error('Owned financial fixture authority scheduling or installed pricing definition changed unexpectedly');
+  console.log('CUSTOMER_FINANCIAL_FIXTURE_AUTHORITY_SCHEDULING '+JSON.stringify({before:schedulingBefore,after:schedulingAfter,pricing_before:pricingBefore,pricing_after:pricingAfter,historical_blocker_identified:false}));
   await f.exec(readFileSync(new NodeURL('../../migrations/0091_electronic_waybill_outbox.sql',import.meta.url),'utf8'));await runCustomerWaybillActor(f.db);await installCustomerCityDelivery(f.db,{maintenance:true});
   // The column fixture supplies only the pre-protocol invoice base. Install
   // its reviewed indexes, then let the real installers create complete protected
@@ -101,7 +108,15 @@ export async function customerWorkFinancialFixture(){
    const [order]=await f.db.select().from(schema.storeOrder).where(sql`${schema.storeOrder.id}=${unpaid.id}`),
     [line]=await f.db.select().from(schema.storeOrderCartInfo).where(sql`${schema.storeOrderCartInfo.oid}=${unpaid.id}`);
    if(!order||order.paid!==1||order.payType!=='yue'||!line)throw Error('Actual payment/readback is inconsistent');
-   return{order,line,origin,payment,consumer,message,endsAt,virtualIds:virtual.map(row=>row.id)};
+    const [paidEvent]=await db.select().from(schema.storeOrderOutbox).where(sql`${schema.storeOrderOutbox.id}=${message.outboxId}`);
+    const payload=paidEvent?.payload as {orderId?:unknown;orderNo?:unknown}|undefined;
+    if(!paidEvent||paidEvent.eventKey!==message.eventKey||paidEvent.eventType!=='order.paid'||paidEvent.aggregateId!==order.id
+      ||!payload||Object.keys(payload).length!==2||payload.orderId!==order.id||payload.orderNo!==order.orderId
+      ||paidEvent.status!==(consumePaid?'COMPLETED':'PENDING')||order.supplierAllocationStatus!==(consumePaid?2:0))
+     throw Error('Actual original paid event/allocation phase was not preserved');
+    console.log('CUSTOMER_FINANCIAL_REAL_PAID_PHASE '+JSON.stringify({order_id:order.id,order_type:order.type,
+     paid:order.paid,supplier_allocation_status:order.supplierAllocationStatus,outbox_id:paidEvent.id,outbox_status:paidEvent.status}));
+    return{order,line,origin,payment,consumer,message,paidEvent,endsAt,virtualIds:virtual.map(x=>x.id)};
   };
   await reset();return{...f,realPurchase,maintenanceDb:f.db,close,reset,db,role,actor,env,container:createContainerFromDb(db),service:()=>new CustomerWorkFinancialService(createContainerFromDb(db),env),withPeer:async<T>(callback:(peer:DbClient,pid:number)=>Promise<T>)=>{const peer=connect();try{const pid=await verify(peer);return await callback(drizzle(peer) as unknown as DbClient,pid);}finally{await peer.end({timeout:5});}},tables};
  }catch(error){await close();throw error;}

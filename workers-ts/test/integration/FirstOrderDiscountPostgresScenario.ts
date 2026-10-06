@@ -503,6 +503,21 @@ async function runConcurrentSingleWinner(
       && discounts.length === 2
       && discounts[0] === "0.00"
       && discounts[1] === "10.00";
+    if (!exactlyOneDiscounted) {
+      const outcomes = settled.map(result => {
+        if (result.status === 'fulfilled') return { status: result.status, orderId: result.value.orderId };
+        const causes: Array<{ name: string; message: string; code: string | null }> = [];
+        let cause: unknown = result.reason;
+        for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+          causes.push({ name: 'name' in cause ? String(cause.name) : '',
+            message: 'message' in cause ? String(cause.message) : '', code: 'code' in cause ? String(cause.code) : null });
+          if (!('cause' in cause) || cause.cause === cause) break;
+          cause = cause.cause;
+        }
+        return { status: result.status, causes };
+      });
+      console.error('OWNED_FIRST_ORDER_CONCURRENT_ACTUAL', JSON.stringify({ successes, discounts, accounts, outcomes }));
+    }
     assertCondition(exactlyOneDiscounted, "concurrent carts did not select exactly one discount winner");
     assertCondition(accounts[0]?.isFirstOrder === 1, "concurrent winner did not consume qualification");
     return {

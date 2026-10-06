@@ -5,12 +5,16 @@ export async function offlinePredecessorSchemaSql() {
   const kit = await import('drizzle-kit/api'), models = await import('../../src/models/schema');
   const offline = new Set(['offlineOrderAdmission', 'offlineOrderPaymentSelection', 'offlineOrderBalance',
     'offlineOrderQueryEvidence', 'offlineOrderCallbackBinding', 'offlineOrderExternalPayment', 'offlineOrderPaymentDispatch',
-    // The legacy offline v1 predecessor predates the separately reviewed 0176 receipt.
+    // This historical stage predates the independently installed gift receipt.
     'storeOrderPromotionGiftCouponReward']);
   const snapshot = kit.generateDrizzleJson(Object.fromEntries(Object.entries(models).filter(([name]) => !offline.has(name))));
-  if (!snapshot.tables['public.user_bill'].indexes.ub_order_promotion_gift_uq)
-    throw Error('Gift receipt predecessor basis changed');
-  delete snapshot.tables['public.user_bill'].indexes.ub_order_promotion_gift_uq;
+  // The current ORM does not declare the shared points index: only the genuine
+  // promotion-gift installer creates it. Do not fabricate an installed catalog
+  // and then remove an index to make it look like the historical predecessor.
+  if (!snapshot.tables['public.user_bill']
+    || Object.hasOwn(snapshot.tables['public.user_bill'].indexes, 'ub_order_promotion_gift_uq')
+    || Object.hasOwn(snapshot.tables, 'public.store_order_promotion_gift_coupon_reward'))
+    throw Error('Unexpected installed gift receipt in historical offline predecessor');
   for (const [table, index] of [['user_money', 'um_offline_balance_uq'], ['user_bill', 'ub_offline_integral_uq'],
     ['payment_reconciliation_case', 'prc_provider_transaction_lookup']]) delete snapshot.tables['public.' + table].indexes[index];
   for (const [table, name] of [['payment_callback_event', 'pce_order_domain_ck'], ['payment_reconciliation_case', 'prc_order_domain_ck']]) {

@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { spawnSync } from 'node:child_process';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { runOfflineOrderSchema, runOfflineOrder } from '../src/migrations/runOfflineOrder';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { auditOfflineOrderRuntimePermissions as audit } from '../src/migrations/auditOfflineOrderRuntimePermissions';
 import { offlineRuntimeGrantPlan, OFFLINE_RUNTIME_READ_TABLES, OFFLINE_RUNTIME_INSERT_TABLES,
   OFFLINE_RUNTIME_UPDATE_TABLES, OFFLINE_RUNTIME_UPDATE_COLUMNS, OFFLINE_RUNTIME_SEQUENCES } from '../src/migrations/offlineOrderRuntimeContract';
@@ -14,7 +15,7 @@ describe('offline actual runtime permission envelope PG16', () => {
     const kit = await import('drizzle-kit/api'), models = await import('../src/models/schema');
     ddl = (await kit.generateMigration(kit.generateDrizzleJson({}),kit.generateDrizzleJson(models))).join('\n');
   },30000);
-  beforeEach(async () => { f=await sequenceRunnerDatabase(); await f.exec(ddl); await runOfflineOrderSchema(f.db,true); },30000);
+  beforeEach(async () => { f=await sequenceRunnerDatabase(); await f.exec(ddl); await runOfflineOrderSchema(f.db,true); await runOrderPromotionGiftReceipt(f.db); },30000);
   afterEach(async () => { await f?.close(); },30000);
   const snapshot = () => f.db.execute(sql`SELECT 'relation' AS kind,oid::text,to_jsonb(c)::text AS value FROM pg_class c WHERE relnamespace='public'::regnamespace
     UNION ALL SELECT 'function',oid::text,to_jsonb(p)::text FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
