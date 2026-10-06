@@ -49,12 +49,28 @@ test("actual source-map-js rejects unsafe indexed offsets and preserves regular 
 
 test("the actual paired Vue SSR rejects CR attribute keys and retains value escaping", () => {
   const vueRequire = createRequire(require.resolve("vue/package.json"));
-  assert.equal(vueRequire("vue/package.json").version, "3.5.42");
-  assert.equal(vueRequire("@vue/server-renderer/package.json").version, "3.5.42");
+  const pairedVersion = manifest.name === "cinashop-uniapp" ? "3.4.21" : "3.5.42";
+  assert.equal(vueRequire("vue/package.json").version, pairedVersion);
+  assert.equal(vueRequire("@vue/server-renderer/package.json").version, pairedVersion);
   const { ssrRenderAttrs } = vueRequire("@vue/server-renderer");
   assert.equal(ssrRenderAttrs({ id: "safe", ["x\rautofocus\ronfocus"]: "inert-marker" }), ' id="safe"');
   assert.equal(ssrRenderAttrs({ title: '<&"', id: "safe" }), ' title="&lt;&amp;&quot;" id="safe"');
 });
+
+if (["cinashop-admin-ts", "cinashop-pc", "cinashop-supplier-ts"].includes(manifest.name)) {
+  test("the actual Element Plus ES utilities resolve the matching root Vue shared module", async () => {
+    assert.equal(manifest.dependencies["@vue/shared"], "3.5.42");
+    const elementRequire = createRequire(require.resolve("element-plus/package.json"));
+    assert.equal(elementRequire("@vue/shared/package.json").version, "3.5.42");
+    const utilities = await import(pathToFileURL(resolve(dirname(elementRequire.resolve("element-plus/package.json")), "es/utils/types.mjs")).href);
+    assert.equal(utilities.isObject({}), true);
+    assert.equal(utilities.isObject(null), false);
+    assert.equal(utilities.isArray([]), true);
+    assert.equal(utilities.isString("control"), true);
+    assert.equal(utilities.isEmpty([]), true);
+    assert.equal(utilities.isEmpty([1]), false);
+  });
+}
 
 test("all locked Nano ID copies meet the published 3.x advisory patch level", () => {
   const copies = Object.entries(lock.packages).filter(([path]) => path.endsWith("node_modules/nanoid"));
