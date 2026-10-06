@@ -49,6 +49,9 @@ export const systemStore = pgTable(
     isShow: smallint("is_show").default(0).notNull(),
     isDel: smallint("is_del").default(0).notNull(),
     isStore: smallint("is_store").default(0).notNull(),
+    /** Source city-delivery station registration; never manufactured by customer dispatch. */
+    cityShopId: varchar("city_shop_id", { length: 255 }).default("").notNull(),
+    business: integer("business").default(0).notNull(),
   },
   (t) => [
     index("system_store_phone").on(t.phone),

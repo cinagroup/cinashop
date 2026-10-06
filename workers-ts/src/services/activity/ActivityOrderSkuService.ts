@@ -3,7 +3,7 @@ import type { DbClient } from "@/lib/di";
 import { storeProductAttrValue } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 
-export type LegacyActivitySkuType = 1 | 2 | 3;
+export type LegacyActivitySkuType = 1 | 2 | 3 | 4;
 
 export interface LegacyActivitySkuPair {
   activitySku: typeof storeProductAttrValue.$inferSelect;
@@ -13,7 +13,7 @@ export interface LegacyActivitySkuPair {
 /**
  * Resolve the PHP activity-SKU identity to the Worker-owned base-SKU identity.
  *
- * Old clients submit store_product_attr_value(type=1/2/3).unique while newer
+ * Old clients submit store_product_attr_value(type=1/2/3/4).unique while newer
  * Worker carts persist the corresponding type=0 unique.  The stable bridge is
  * (activity id, type, suk) -> (base product id, type=0, suk).  Ambiguous legacy
  * rows fail closed instead of silently charging or restoring the wrong SKU.

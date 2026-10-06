@@ -3,6 +3,7 @@ import type { AppVariables, Env } from "@/env";
 import { AdminSupplierFinanceService } from "@/services/admin/AdminSupplierFinanceService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import { readBoundedJsonObject } from "@/utils/request-body";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -11,8 +12,10 @@ function service(c: C) {
 }
 
 function extractId(c: C) {
-  const id = Number(c.req.param("id") ?? 0);
-  if (!Number.isInteger(id) || id <= 0) throw new ValidateException("提现记录ID错误");
+  const raw = c.req.param("id") ?? "";
+  if (!/^[1-9]\d*$/.test(raw)) throw new ValidateException("提现记录ID错误");
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id > 2_147_483_647) throw new ValidateException("提现记录ID错误");
   return id;
 }
 
@@ -23,15 +26,22 @@ function adminId(c: C) {
 }
 
 async function body(c: C): Promise<Record<string, unknown>> {
-  const value = await c.req.json().catch(() => null);
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new ValidateException("请求参数格式错误");
-  }
-  return value as Record<string, unknown>;
+  return readBoundedJsonObject(c.req.raw, 2 * 1024);
+}
+
+function noStore(c: C) {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Pragma", "no-cache");
+}
+
+export async function supplierExtractSuppliers(c: C) {
+  noStore(c);
+  return jsonOk(c, await service(c).suppliers(new URL(c.req.url).searchParams));
 }
 
 export async function supplierExtractList(c: C) {
-  return jsonOk(c, await service(c).list(c.req.query()));
+  noStore(c);
+  return jsonOk(c, await service(c).list(new URL(c.req.url).searchParams));
 }
 
 export async function supplierExtractReview(c: C) {
@@ -45,8 +55,6 @@ export async function supplierExtractTransfer(c: C) {
 }
 
 export async function supplierExtractMark(c: C) {
-  const input = await body(c);
-  if (typeof input.mark !== "string") throw new ValidateException("后台备注格式错误");
-  await service(c).updateMark(extractId(c), input.mark);
-  return jsonOk(c, null, "备注已保存");
+  noStore(c);
+  return jsonOk(c, await service(c).updateMark(extractId(c), adminId(c), await body(c)), "备注已保存");
 }

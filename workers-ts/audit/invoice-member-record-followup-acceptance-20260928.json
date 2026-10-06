@@ -1,0 +1,97 @@
+{
+  "dateUtc": "2026-09-28 03:59:44 UTC",
+  "scope": "Local, unpublished follow-up to Admin invoice and paid membership record route contracts",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 58,
+      "partial": 115,
+      "missing": 94,
+      "retired": 7
+    },
+    "legacyUserOrderScreens": {
+      "total": 18,
+      "candidate": 3,
+      "partial": 15,
+      "missing": 0,
+      "retired": 0
+    },
+    "workerRoutes": 1831,
+    "adminApi": {
+      "callSites": 422,
+      "pathVariants": 446,
+      "executable": 446,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 74,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "invoiceNativePg16": {
+      "files": [
+        "test/admin-invoice-postgres.test.ts",
+        "test/admin-invoice-http.test.ts"
+      ],
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "memberRecordNativePg16": {
+      "files": [
+        "test/admin-paid-membership-record-postgres.test.ts"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "frontendRuntime": {
+      "invoice": 19,
+      "memberRecordAndExistingMembership": 10
+    },
+    "finalStaticSuites": {
+      "files": 7,
+      "passed": 48,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminProductionBuild": "passed",
+    "adminApiAudit": "446 executable variants; 0 unregistered or unresolved",
+    "browserWrite": "not run; no business mutation or production deployment"
+  },
+  "limitations": [
+    "Historical 0.00 invoice requests without a creation baseline remain read-only.",
+    "Legacy broad invoice all-field search and unrendered chart totals remain open; the invoice screen stays partial.",
+    "Membership record is a local candidate pending real historical data, constrained roles and deployment verification.",
+    "Two sandbox pg_ctl starts failed before tests with Windows restricted-token error 87; the final repository runner executed with auto-reviewed escalation and completed."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "a13cf1d6fd5c37aa61e00ae2948c6f21a6cff40a33e26950addd87866bd82dfd",
+    "view/admin-ts/src/api/invoiceManagement.ts": "ee122e974462ef068a4764d1dec6ab098c688e3999a08991ea9e1cef534bd1e1",
+    "view/admin-ts/src/pages/order/InvoiceManagement.vue": "88a40934e5c21498fce236ad127e3760e17791828503f50e2d123189f41009bb",
+    "view/admin-ts/src/api/membership.ts": "6287c57be4f41a1342bde48f973db15dc3b092bd520ebb44bc33955cfdea4e43",
+    "view/admin-ts/src/pages/user/PaidMembership.vue": "07f7df70273bc496d45d2ce1091377bc4fd2bab74ccba6b5070893a44fac020d",
+    "workers-ts/src/services/admin/AdminInvoiceService.ts": "2f0860539e42ad384d44393d5b9164f42dbe04f4e9617ed96eedf9009e53720d",
+    "workers-ts/src/controllers/api/v1/AdminInvoiceController.ts": "7a20d9a5ab060937e38bbf614a88a294e7b68ad6bd2370bdad58078668ec4c9f",
+    "workers-ts/src/routes/adminapi.ts": "2f91f85e951e25c66f6f6e91cc78dda1468d63c61068b96a492d7d1806ce8bf7",
+    "workers-ts/src/services/user/AdminPaidMembershipService.ts": "78b3905c22a41763db989bcaa08e6a04a903360ebedd95c6ee5d83c6243f9d0d",
+    "workers-ts/test/admin-invoice-postgres.test.ts": "b026025fca525296742f06fbcfce629d46f62e02381de2d4b1b56417a4fe7e00",
+    "workers-ts/test/admin-invoice-http.test.ts": "6312c9e245eb32497d7f8f2b8f40b5323a8eb92d6429a3eef55e52ad99a6bbdb",
+    "workers-ts/test/admin-invoices-frontend.test.ts": "0f021183f923704e032e196e137243654d2e911ae343804a5de73bd8aee52ef2",
+    "workers-ts/test/admin-paid-membership-record-postgres.test.ts": "a969c69e831edaf19ecb75b22fe54d5dca6dcd9e0c590f840d3be39517540944",
+    "workers-ts/test/admin-paid-membership-record-frontend.test.ts": "b95bb1fea9e7fc757e37f46803ada0a5b9372b9a72351080129ee69092a9cf19",
+    "workers-ts/scripts/admin-user-order-frontend-parity-audit.ts": "f1a8041d2a9aa26a177e2730803773e56215deee49acc9208891590b8b63c5b5",
+    "workers-ts/test/admin-user-order-frontend-parity.test.ts": "c3e34a2fab08f2b59c214c56fe33a123ed67d58e484bc1c7c902b4dac2e7b9cf",
+    "workers-ts/docs/admin-invoice-management-contract.md": "499a3cfeecd50ce2d4bf86f4b16eca1ce8a83d38346409dfa07d79dabc9d2748",
+    "workers-ts/docs/admin-user-order-route-parity.md": "4e4b76092cd40720b62214c193cb0c9bff49b0e39a3f05a3af4e98c85606af87",
+    "workers-ts/src/routes/v1/index.ts": "d87183deaf816d104e8acd4e4eefb8cd3ff5fca904cd36adf611c18e56bfa5cd"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "date": "2026-09-27",
+  "status": "passed-local-final-source",
+  "published": false,
+  "scope": "Coupon template catalog/create/invalidate/delete/publish, three scopes, explicit schema/ACL upgrade, manual-claim boundary and legacy consumers.",
+  "native": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-native-20260927.json",
+    "sha256": "6bebc715f9816cbb04f45822d4ddede03d67558425512c0aac3e81cf948ad00d"
+  },
+  "browser": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-browser-20260927.json",
+    "sha256": "18b1bda88d7b7cf0ef739e71b1e23f3c8f34254f921a6907be8f59fa12a21920"
+  },
+  "routeDistribution": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/route-distribution-20260927.json",
+    "sha256": "41085ca281340ffbf32aea2c53f941603876af976217c29dab98d621017d4813"
+  },
+  "snapshots": {
+    "runtime": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-runtime-accepted-snapshot/manifest.json",
+      "sha256": "30bca23d6271b09976fb86065b7cccb656f24688eb5e6d2c946d2fabcc9227f2"
+    },
+    "dist": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-dist-accepted-snapshot/manifest.json",
+      "sha256": "9a0fa7397e46907ede423f51f349639eb7bc8f26b22dbe05407f041aa2c383f9"
+    },
+    "ledger": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-ledger-accepted-snapshot/manifest.json",
+      "sha256": "6f6cf82482bcc1bc5a5236b4a8bd99cdbcacb270f60aa26df73bc9e218c1221b"
+    }
+  },
+  "checks": {
+    "businessUniquePassed": 55,
+    "existingConsumerUniquePassed": 381,
+    "schemaBatchPassed": 59,
+    "frontendPassed": 41,
+    "permissionPassed": 28,
+    "ledgerPassed": 93,
+    "ormPaths": 9,
+    "unitTypesPassed": true,
+    "runtimeTypesPassed": true,
+    "adminBuildPassed": true
+  },
+  "cleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-final-cleanup-20260927.json",
+    "sha256": "adeb2ec663aa5997b3d671a2f63e6ff92f84c3800c509345ed7e2efa8405b2b7"
+  },
+  "previousAccepted": {
+    "native": {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-native-20260927.json",
+      "sha256": "1e040b3cf9a17ce707ffb68e922bd753ade405b7633e8c383c507b0b00acd184"
+    },
+    "browser": {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-browser-20260927.json",
+      "sha256": "097a534448dacdbe65c3ea3e08b9cb22cb8d4cfbe04726a8e95ed84d9f51022c"
+    },
+    "acceptance": {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-acceptance-20260927.json",
+      "sha256": "241d5e5a202fc1e942f9d876fb9d37c0ae53e853c464a29a67b55b36cd32a3f4"
+    }
+  },
+  "previousRouteBytes": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-template-pre-ledger-snapshot/route-distribution-20260927.json",
+    "sha256": "326d06d897b56901529a96064d625f2a60821e59863cd190a6769f7d33263d12"
+  },
+  "limitations": [
+    "Local candidate only; no deployment, production schema/grants, real Hyperdrive/provider/device or complete Linux CI acceptance.",
+    "Existing coupon issue screens remain partial, configuration and automatic full-gift/follow/newcomer channel setup remain open.",
+    "Unknown operation recovery uses GET and explicit human review; acknowledgment is not proof of the prior server result and is not persistent across reload/logout.",
+    "Immutable proof freezes source lineage/revision, not all independent edits of an issued coupon through existing management."
+  ],
+  "aggregationRule": "Business38+final17=55 across four complete files. Legacy consumers370+repaired11=381 across23 files; both failed files entirely excluded from initial379. Schema59 includes27 PGlite/static and32native. No single all-native or all-green mega-run claimed."
+}

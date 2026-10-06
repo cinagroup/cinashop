@@ -2,12 +2,14 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { ApiError, apiRequest, websocketUrl } from '@/api/client';
 import { parseInboxPage } from '@/services/inbox';
+import { captureKefuSession } from '@/services/session';
 import { StaffNoticeClient, bindNoticeLifecycle, type NoticeState } from '../../../common/staff-notifications';
 
 /** One notification connection per app, independent of the selected chat and chat online status. */
 export const useNoticeStore = defineStore('staff-notices', () => {
   const state = ref<NoticeState>('idle'), version = ref(0), unread = ref<number | null>(null);
   let token = '', generation = 0, pending: Promise<void> | undefined, repeat = false;
+  let sessionRevision = captureKefuSession().revision;
   let release: (() => void) | undefined, poll: ReturnType<typeof setInterval> | undefined;
   const client = new StaffNoticeClient({
     url: () => websocketUrl('/kefuapi/messages/socket'),
@@ -38,7 +40,10 @@ export const useNoticeStore = defineStore('staff-notices', () => {
     }).finally(() => { if (current === generation) pending = undefined; });
   }
   function setSession(value: string) {
-    if (token === value) return;
+    const revision = captureKefuSession().revision;
+    if (token === value && sessionRevision === revision) return;
+    if (token === value) client.setSession('');
+    sessionRevision = revision;
     invalidate(); token = value; version.value++; client.setSession(value);
     if (value) refresh();
   }

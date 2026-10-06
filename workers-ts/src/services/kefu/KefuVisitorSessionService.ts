@@ -1,11 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
-import { and, asc, eq, inArray, lt, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { withTx, type Container } from "@/lib/di";
 import {
   kefuVisitorSession,
   storeService,
   storeServiceLog,
+  user as userTable,
 } from "@/models/schema";
 import {
   parseCanonicalAttachmentId,
@@ -206,12 +207,14 @@ export class KefuVisitorSessionService {
         online: storeService.online,
       })
       .from(storeService)
+      .innerJoin(userTable, eq(userTable.uid, storeService.uid))
       .where(and(
         eq(storeService.id, session.serviceId),
         eq(storeService.uid, session.kefuUid),
         eq(storeService.isDel, 0),
         eq(storeService.status, 1),
         eq(storeService.accountStatus, 1),
+        eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
       ))
       .limit(2);
     if (services.length !== 1) throw new AuthException("分配客服已失效，请重新连接");
@@ -258,11 +261,13 @@ export class KefuVisitorSessionService {
           online: storeService.online,
         })
         .from(storeService)
+        .innerJoin(userTable, eq(userTable.uid, storeService.uid))
         .where(and(
           eq(storeService.isDel, 0),
           eq(storeService.status, 1),
           eq(storeService.accountStatus, 1),
           eq(storeService.online, 1),
+          eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
           sql`${storeService.uid} > 0`,
         ))
         .orderBy(asc(storeService.id))

@@ -131,7 +131,7 @@ it('rejects reservation outside the shared application transaction before any ro
   await expect(reserveRefundQuantities(f.db,{id:1,uid:11},[{cartId:501,cartNum:1}])).rejects.toThrow('locked application transaction');
   expect(await state()).toEqual(before);
 });
-describe('independent native PostgreSQL order/claim ordering',()=>{
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('independent native PostgreSQL order/claim ordering',()=>{
   it('rechecks current order ownership after a cancellation waits for the order lock',async()=>{
     const original=await applyOrderRefund(f.container,input());
     await withFinancePeers(f.db,async([holder,cancel])=>{

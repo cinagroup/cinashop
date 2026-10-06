@@ -19,6 +19,7 @@ import { storeCart, storeOrder, storeOrderOutbox, storeOrderStatus, storeOrderRe
 // a failed query asks for. Existing refund-profile permissions stay unchanged.
 const tables: Record<string, readonly string[]> = {
   store_product_virtual: ['SELECT'], store_product_coupon: ['SELECT'], luck_lottery: ['SELECT'],
+  agent_level_task: ['SELECT'], agent_level_task_record: ['SELECT'],
 };
 const columns: Record<string, readonly string[]> = {
   store_order_outbox: ['status', 'available_time', 'dispatch_count', 'lease_token', 'lease_until', 'update_time',

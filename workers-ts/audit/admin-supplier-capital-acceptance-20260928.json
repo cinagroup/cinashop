@@ -1,0 +1,104 @@
+{
+  "dateUtc": "2026-09-28T06:58:36.594Z",
+  "scope": "Local, unpublished legacy Admin supplier capital-flow follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 62,
+      "partial": 117,
+      "missing": 88,
+      "retired": 7
+    },
+    "legacySupplierAgentScreens": {
+      "total": 19,
+      "candidate": 4,
+      "partial": 10,
+      "missing": 5,
+      "retired": 0
+    },
+    "workerRoutes": 1875,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 895,
+      "executableMatched": 874,
+      "unavailable": 21,
+      "actionableMissing": 992,
+      "effectiveExecutableCoveragePercent": 46.3
+    },
+    "adminApi": {
+      "callSites": 443,
+      "pathVariants": 467,
+      "executable": 467,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 80,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "supplierCapitalNativePg16": {
+      "files": [
+        "test/admin-supplier-capital-screen-postgres.test.ts",
+        "test/admin-supplier-capital-screen-http.test.ts"
+      ],
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "supplierCapitalPglite": {
+      "files": 2,
+      "passed": 11,
+      "failed": 0
+    },
+    "supplierCapitalFrontendRuntime": {
+      "files": 1,
+      "passed": 6,
+      "failed": 0
+    },
+    "finalStaticAndFrontendSuites": {
+      "files": 6,
+      "passed": 25,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "467 executable variants; 0 unregistered or unresolved",
+    "historicalSupplierAgentSnapshots": "base, division-statistics and supplier-bill byte-equal",
+    "browserWrite": "not run; no production mutation or deployment"
+  },
+  "limitations": [
+    "The original export was unpaged, but the old Vue sent date while PHP accepted data, so dates were not applied; the new export shares list filters and rejects more than 5000 rows or 2 MiB.",
+    "The new query excludes soft-deleted user identity matches and limits selected endpoints to 366 days.",
+    "Known Worker split/refund lineage JSON in the platform remark column is protected against manual edits; normal historic remarks use compare-and-set writes.",
+    "Real supplier finance history and constrained-role browser behavior, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "ee0cee53e9f409248f03ba2cb44efe26e8b29f751f7862d0ef922d9515fc1e4b",
+    "view/admin-ts/src/api/supplierCapital.ts": "fb29d252e87343bd328728a05c5476fd1bf534b64ea1b67a2744650f9a2f6a75",
+    "view/admin-ts/src/pages/supplier/SupplierCapitalFlow.vue": "12301b00e6cd0d1e8587d91b55d59bbd1cb15e78f44627d5752f6ad2a1ddccdd",
+    "view/admin-ts/src/router/index.ts": "1b60fd06f3bc46b58bef7e8e1bfed693cb130a60a4c2d3aa33769050c68f9007",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "6bbadc4b90824e89fb3d6e80f83e9adb6615eaefe481284b7bbd65f241f621e7",
+    "workers-ts/src/services/admin/AdminSupplierCapitalScreenService.ts": "ad66a4ccc1d267c3c8a2e3d780c51b473f76ead89e9d48257229de535aa9f2e5",
+    "workers-ts/src/controllers/api/v1/AdminSupplierCapitalScreenController.ts": "67518ada106055e9c1bb952281c1a9a8acd116f29d7d0d39956b60dd5c57b593",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "9875f7aaf5b5f54ee1a07fe7055f68cd9c4e75733e25563834c5eb184dd7a5c9",
+    "workers-ts/src/routes/adminapi.ts": "b45c91577992afbbd029587ff929667748967d1a2d55b48a1434edf601b369ed",
+    "workers-ts/test/admin-supplier-capital-screen-postgres.test.ts": "1159b5a4e2be8110bc8ac1257979cc2c2d58901f2c9664a83fd59c0ea85ef284",
+    "workers-ts/test/admin-supplier-capital-screen-http.test.ts": "1906e21736767624078dafdef1bf84e32e375abbf24ea8ed0a48d9ec4d3f3a73",
+    "workers-ts/test/admin-supplier-capital-frontend.test.ts": "d7a74e04228028005c2436715470219aef8a43b98a87d36214752c2de1250eea",
+    "workers-ts/test/admin-supplier-agent-frontend-parity.test.ts": "5d1a13257e944df2bff07888e9ae5947d7b706dc09c17557e7c86588de75fc90",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "68b32c72aadb625a22757cdd0eb135986a755707ad8b8bca2f2c109531ec0a60",
+    "workers-ts/scripts/admin-supplier-agent-frontend-parity-audit.ts": "27573ebe45df4f9a38dfcd94ec7028d46030649338360a6e253aef79aff0f7ae",
+    "workers-ts/docs/admin-supplier-capital-contract.md": "6910b12992fc41971f4075a37b795567a7fb9b268c527d41e3205f970e7ec86d",
+    "workers-ts/docs/admin-supplier-agent-route-parity.md": "d13fc67e02a196008e03467c266da4f49e5c1c8525105ffb852b211254fd2f9d",
+    "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-capital-followup-20260928.json": "bf19cfda675bcb6d9323ef4d2fc32d19f8d7d23ff107f28bfb6811b9494a26d3",
+    "workers-ts/audit/route-distribution-supplier-capital-followup-20260928.json": "c0ae9bd55c124f75f14f6e6e3289dc73d8ff2c898999e882f41fcaf11c8012f0",
+    "workers-ts/audit/admin-frontend-inventory-supplier-capital-followup-20260928.json": "1bcc3b79641d65814b0b601a53a269268c6c50fcf141fc511bd6915d569afa31",
+    "workers-ts/audit/admin-frontend-api-contracts-supplier-capital-followup-20260928.json": "9de0e009d994f3f262ab10b7241bced292be9a355eb30f80478b325daba5acc1"
+  }
+}

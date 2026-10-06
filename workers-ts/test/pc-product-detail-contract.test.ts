@@ -3,45 +3,36 @@ import { describe, expect, it, vi } from "vitest";
 import { normalizeGoodsDetail } from "../../view/pc-ts/src/api/productDetail";
 import { pcDetailFixture as fixture } from "./helpers/pcProductDetailFixture";
 import { StoreProductService } from "../src/services/product/StoreProductService";
-import { ProductExperienceService } from "../src/services/product/ProductExperienceService";
-import * as membershipPolicy from "../src/services/user/MembershipPricingPolicy";
+import { financePostgres } from "./helpers/financePostgres";
+import { createContainerFromDb } from "../src/lib/di";
+import { eq } from "drizzle-orm";
+import { storeProduct,storeProductAttr,storeProductAttrValue,storeProductRelation,storeProductEnsure,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemConfig,memberRight,
+  user,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts } from "../src/models/schema";
 
 vi.mock("../src/utils/cache", () => ({ cacheGet: vi.fn(async () => null), cacheSet: vi.fn(async () => {}) }));
 
 describe("FE-002B PC product detail adapter", () => {
-  it("consumes current service outputs and ignores legacy cached details with isolated DAOs", async () => {
+  it("consumes current real SQL service outputs and ignores legacy cached detail", async () => {
     const { cacheGet } = await import("../src/utils/cache");
-    const assurance = vi.spyOn(ProductExperienceService.prototype, "productEnsures").mockResolvedValue([]);
-    // This adapter-only case uses isolated DAOs; SQL policy coverage lives in
-    // membership-pricing-policy.test.ts and the real-PostgreSQL detail suites.
-    const policy = vi.spyOn(membershipPolicy, "readMembershipPricingPolicy").mockResolvedValue({
-      memberFunctionEnabled: true, paidMemberEnabled: true, paidMemberPriceEnabled: true,
-    });
-    const daoProduct = { ...fixture, sliderImage: JSON.stringify(["/test-one.svg"]), deliveryType: "1,2" };
-    const container = {
-      storeProductDao: { getById: vi.fn(async () => daoProduct) },
-      storeProductAttrValueDao: { getByProductId: vi.fn(async () => [
-        { id: 901, unique: "realred1", suk: "红色,大号", price: "19.90", otPrice: "29.90", vipPrice: "17.90", stock: 8, sales: 2, image: "" },
-      ]), getPriceRange: vi.fn(async () => ({ min: 0.1, max: 20 })) },
-    } as unknown as ConstructorParameters<typeof StoreProductService>[0];
+    const database = await financePostgres([storeProduct,storeProductAttr,storeProductAttrValue,storeProductRelation,storeProductEnsure,storeCart,
+      storeBrand,systemStore,systemSupplier,systemAttachment,systemConfig,memberRight,
+      user,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts]);
     try {
-      const service = new StoreProductService(container, {} as ConstructorParameters<typeof StoreProductService>[1]);
-      const wire = await service.getProductDetail(70, 0);
-      expect(wire).not.toHaveProperty("store_name");
-      expect(wire).not.toHaveProperty("cart_button");
-      expect(normalizeGoodsDetail(wire).skus).toEqual([{ unique: "realred1", suk: "红色,大号", price: "19.90",
-        ot_price: "29.90", vip_price: "17.90", stock: 8, image: "", member_price: "19.90", price_type: "", level_name: "" }]);
-      expect(normalizeGoodsDetail(wire)).toMatchObject({ store_name: fixture.storeName,
-        store_info: fixture.storeInfo, price: "99.90", ot_price: "199.00", vip_price: "79.90",
-        slider_image: ["/test-one.svg"], delivery_type: ["1", "2"], cart_button: 1 });
-      vi.mocked(cacheGet).mockResolvedValueOnce({ ...wire, image: "/stale.svg", level_name: "wrong user" });
-      expect(normalizeGoodsDetail(await service.getProductDetail(70, 0))).toEqual(normalizeGoodsDetail(wire));
-      expect(cacheGet).not.toHaveBeenCalled();
-      daoProduct.specType = 1;
-      expect(normalizeGoodsDetail(await service.getProductDetail(70, 0))).toMatchObject({
-        price: "0.1", min_price: 0.1, max_price: 20, spec_type: 1 });
-    } finally { assurance.mockRestore(); policy.mockRestore(); vi.mocked(cacheGet).mockReset(); }
-  });
+      await database.db.insert(memberRight).values({rightType:'vip_price',status:1,number:1});
+      await database.db.insert(storeProduct).values({id:70,storeName:fixture.storeName,storeInfo:fixture.storeInfo,isVerify:1,isShow:1,
+        sliderImage:'["/test-one.svg"]',deliveryType:'1,2',price:'99.90',otPrice:'199.00',vipPrice:'79.90',isVip:1,stock:100});
+      await database.db.insert(storeProductAttrValue).values({id:901,productId:70,unique:'realred1',suk:'红色,大号',price:'19.90',otPrice:'29.90',vipPrice:'17.90',stock:8,sales:2});
+      const service = new StoreProductService(createContainerFromDb(database.db), {} as ConstructorParameters<typeof StoreProductService>[1]);
+      const wire = await service.getProductDetail(70,0);
+      expect(wire).not.toHaveProperty('store_name');expect(wire.cart_button).toBe(1);
+      expect(normalizeGoodsDetail(wire).skus).toEqual([{unique:'realred1',suk:'红色,大号',price:'19.90',ot_price:'29.90',vip_price:'17.90',stock:8,image:'',member_price:'19.90',price_type:'',level_name:''}]);
+      expect(normalizeGoodsDetail(wire)).toMatchObject({store_name:fixture.storeName,store_info:fixture.storeInfo,price:'99.90',ot_price:'199.00',vip_price:'79.90',slider_image:['/test-one.svg'],delivery_type:['1','2'],cart_button:1});
+      vi.mocked(cacheGet).mockResolvedValueOnce({...wire,image:'/stale.svg',level_name:'wrong user'});
+      expect(normalizeGoodsDetail(await service.getProductDetail(70,0))).toEqual(normalizeGoodsDetail(wire));expect(cacheGet).not.toHaveBeenCalled();
+      await database.db.update(storeProduct).set({specType:1}).where(eq(storeProduct.id,70));
+      expect(normalizeGoodsDetail(await service.getProductDetail(70,0))).toMatchObject({price:'19.90',min_price:19.9,max_price:19.9,spec_type:1});
+    } finally { await database.close();vi.mocked(cacheGet).mockReset(); }
+  },30000);
 
   it("maps the observed camelCase/computed detail shape without recalculating money", () => {
     const source = Object.freeze({ ...fixture, sliderImage: ["/test-one.svg", "/test-two.svg"] });

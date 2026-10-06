@@ -59,9 +59,18 @@ describe("pickup-store and writeoff migration", () => {
     expect(refund).toContain("export async function applyOrderRefund(");
     expect(refund).toContain('get("refund_time_available")');
     expect(refund).toContain(
-      "return applyOrderRefund(this.container, params, parseRefundTimeDays(configured))",
+      "return applyOrderRefundFromPublicEntry(this.container, params, parseRefundTimeDays(configured))",
     );
-    expect(refund).toContain("await lockOrderSettlement(tx, candidate.id)");
+    const publicEntry = refund.slice(refund.indexOf("export async function applyOrderRefundFromPublicEntry("),
+      refund.indexOf("export async function applyOrderRefundWithMaterialization("));
+    expect(publicEntry).toContain("return createOrderRefundApplication(container, params,");
+    expect(publicEntry).toContain("{ reuseExisting: false, refundTimeDays, admitWholeOrderFullGifts: true }");
+    const application = refund.slice(refund.indexOf("async function createOrderRefundApplication("),
+      refund.indexOf("export async function applyOrderRefund("));
+    expect(application).toContain("await lockOrderSettlement(tx, candidate.id)");
+    expect(application).toContain("const publicFullGift = Boolean(options.admitWholeOrderFullGifts && readOrderPromotionGiftIntent(order.promotionsGive))");
+    expect(application).toContain("const materializeOrders = Boolean(options.materializeOrders || publicFullGift)");
+    expect(application).toContain("await lockAtomicRefundOrder(tx, order.id)");
     expect(refund).toContain("item.writeTimes > item.writeSurplusTimes");
     expect(refund).toContain("订单已有核销记录，请仅选择未核销商品申请售后");
   });
@@ -98,10 +107,17 @@ describe("pickup-store and writeoff migration", () => {
 
   it("creates pickup orders only for active stores and exposes protected operator routes", () => {
     const create = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
+    const pickup = readFileSync("src/services/order/CheckoutPickupPolicy.ts", "utf8");
     const store = readFileSync("src/services/store/StoreOperationsService.ts", "utf8");
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
     const adminRoutes = readFileSync("src/routes/adminapi.ts", "utf8");
-    expect(create).toContain("eq(systemStore.isStore, 1)");
+    expect(pickup).toContain("eq(systemStore.isStore, 1)");
+    expect(pickup).toContain("eq(systemStore.isShow, 1)");
+    expect(pickup).toContain("eq(systemStore.isDel, 0)");
+    expect(pickup).toContain(".for('share', { noWait: true })");
+    expect(create).toContain("await lockCheckoutPickupStore(tx, pickupStoreId)");
+    expect(create).toContain("await readCheckoutPickupPolicy(c.db, pickupStoreId, couponPreview)");
+    expect(create).toContain("const currentPickup = await readCheckoutPickupPolicy(tx, pickupStoreId)");
     expect(create).toContain("verifyCode = await generatePickupVerifyCode(tx)");
     expect(create).toContain("storeId: pickupStoreId");
     expect(store).toContain("async publicPickupStores()");

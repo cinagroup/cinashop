@@ -49,15 +49,23 @@ function service(c: C): LotteryAdminService {
   return new LotteryAdminService(c.get("container"));
 }
 
+function privateNoStore(c: C): void {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Pragma", "no-cache");
+}
+
 export async function list(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await service(c).list(c.req.query()));
 }
 
 export async function detail(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await service(c).detail(c.req.param("id")));
 }
 
 export async function factorInfo(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await service(c).factorInfo(c.req.param("factor")));
 }
 
@@ -80,14 +88,17 @@ export async function setStatus(c: C) {
 }
 
 export async function records(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await service(c).records(c.req.query()));
 }
 
 export async function activityRecords(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await service(c).records(c.req.query(), c.req.param("id")));
 }
 
 export async function recordDetail(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await service(c).recordDetail(c.req.param("id")));
 }
 

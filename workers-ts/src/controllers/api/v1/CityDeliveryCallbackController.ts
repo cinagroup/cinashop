@@ -54,7 +54,7 @@ export async function cityDeliveryCallback(c: C) {
     const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_CALLBACK_BODY_BYTES);
     verified = route.provider === "dada"
       ? service.verifyDada(rawBody, route.token)
-      : service.verifyUu(rawBody, route.token);
+      : await service.verifyUu(rawBody, route.token);
   } catch (error) {
     emitOperationalEvent("warn", {
       event: "city_delivery_callback_rejected",
@@ -69,7 +69,7 @@ export async function cityDeliveryCallback(c: C) {
 
   try {
     const received = await service.receive(verified);
-    c.executionCtx.waitUntil(service.dispatchById(received.outboxId).catch((error) => {
+    if (!received.historicalReplay) c.executionCtx.waitUntil(service.dispatchById(received.outboxId).catch((error) => {
       emitOperationalEvent("error", {
         event: "city_delivery_callback_dispatch_failed",
         component: "queue",

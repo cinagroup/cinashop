@@ -3,7 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund } from '@/models/schema';
 import { refundOrderSplitFingerprint } from '@/services/order/RefundOrderSplitIdentity';
 import { loadRefundOrderGeneration } from '@/services/order/RefundOrderGeneration';
-import { readRefundQuantityReservation } from '@/services/order/RefundQuantityReservation';
+import { readRefundQuantityReservation,CUSTOMER_ROW_REFUND_VERSION,refundClaimCartKey } from '@/services/order/RefundQuantityReservation';
 import { deliverPaidVirtualOrders } from '@/services/order/VirtualProductDeliveryService';
 import { presaleDeliveryContractDigest, type PresaleDeliveryIntent, type PresaleDeliveryLine } from './PresaleDeliveryIntent';
 import { loadPresaleRefundHistory, verifyPresaleRefundBaseline } from './PresaleRefundBaseline';
@@ -58,15 +58,14 @@ export async function deliverDuePresale(tx: DbClient, intent: PresaleDeliveryInt
       receipt.paymentOrderId !== root.id || !/^[0-9a-f]{64}$/.test(receipt.fingerprint)) throw invalid();
     if (!Array.isArray(receipt.partitions) || receipt.partitions.length !== lines.size) throw invalid();
     const next = new Map<number, PresaleDeliveryLine>(), seen = new Set<number>(), selectedIds = new Set<number>();
-    const cartIds = new Set<string>(), claims = new Map<number, { cartId: number; quantity: number; total: number }>();
+    const cartIds = new Set<string>(), claims = new Map<number, { cartId: string; quantity: number; total: number }>();
     let selectedQuantity = 0;
     for (const value of receipt.partitions) {
       const part = object(value);
       if (Object.keys(part).length !== 6 || ['sourceRowId', 'sourceCartId', 'selectedRowId', 'remainingRowId', 'selectedNum', 'remainingNum']
         .some(key => !Object.hasOwn(part, key))) throw invalid();
       if (!integer(part.sourceRowId, 1) || seen.has(part.sourceRowId) || !integer(part.selectedNum) || !integer(part.remainingNum)
-        || typeof part.sourceCartId !== 'string' || !/^[1-9]\d{0,9}$/.test(part.sourceCartId)
-        || !integer(Number(part.sourceCartId), 1) || cartIds.has(part.sourceCartId)) throw invalid();
+        || typeof part.sourceCartId !== 'string' || !part.sourceCartId || part.sourceCartId!==part.sourceCartId.trim() || Array.from(part.sourceCartId).length>128 || /[\u0000-\u001f\u007f]/.test(part.sourceCartId) || cartIds.has(part.sourceCartId)) throw invalid();
       const line = lines.get(part.sourceRowId);
       if (!line || line.quantity !== part.selectedNum + part.remainingNum ||
         (part.selectedNum ? !integer(part.selectedRowId, 1) : part.selectedRowId !== null)) throw invalid();
@@ -76,7 +75,7 @@ export async function deliverDuePresale(tx: DbClient, intent: PresaleDeliveryInt
         if (!integer(part.selectedRowId, 1) || selectedIds.has(part.selectedRowId)
           || (receipt.disposition === 'whole' && part.selectedRowId !== part.sourceRowId)) throw invalid();
         selectedIds.add(part.selectedRowId);
-        claims.set(part.sourceRowId, { cartId: Number(part.sourceCartId), quantity: part.selectedNum, total: line.quantity });
+        claims.set(part.sourceRowId, { cartId: part.sourceCartId, quantity: part.selectedNum, total: line.quantity });
       }
       if (!part.remainingNum) { if (part.remainingRowId !== null) throw invalid(); continue; }
       if (!integer(part.remainingRowId, 1) || next.has(part.remainingRowId)
@@ -97,9 +96,10 @@ export async function deliverDuePresale(tx: DbClient, intent: PresaleDeliveryInt
     // A matching cash fingerprint alone does not bind a quantity partition to
     // the actual claimed rows, particularly when a whole refund has no remainder.
     const claim = readRefundQuantityReservation(refund);
+    if(claim?.version!==CUSTOMER_ROW_REFUND_VERSION&&[...cartIds].some(x=>!/^[1-9]\d{0,9}$/.test(x)||!integer(Number(x),1)))throw invalid();
     if (!claim || claim.items.length !== claims.size || claim.items.some(item => {
       const expected = claims.get(item.rowId);
-      return !expected || item.beforeRefundNum !== 0 || item.cartId !== expected.cartId
+      return !expected || item.beforeRefundNum !== 0 || refundClaimCartKey(item) !== expected.cartId
         || item.cartNum !== expected.quantity || item.totalNum !== expected.total;
     })) throw invalid();
     if (receipt.disposition === 'whole') {

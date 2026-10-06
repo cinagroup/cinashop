@@ -105,6 +105,10 @@ describe("supplier migration helpers", () => {
       approved: false,
       message: "账户信息不一致",
     });
+    expect(normalizeSupplierExtractReviewInput({ type: '2', message: "旧后台拒绝" })).toEqual({
+      approved: false,
+      message: "旧后台拒绝",
+    });
     expect(() => normalizeSupplierExtractReviewInput({ type: 0 })).toThrow("请填写拒绝原因");
     expect(
       normalizeSupplierTransferInput({
@@ -115,8 +119,9 @@ describe("supplier migration helpers", () => {
       voucherTitle: "招商银行转账回单",
       voucherImage: "https://cdn.example.com/voucher.png",
     });
-    expect(() => normalizeSupplierTransferInput({ voucher_title: "已转账" })).toThrow(
-      "请填写转账凭证地址",
-    );
+    expect(normalizeSupplierTransferInput({ voucher_title: "已转账" })).toEqual({
+      voucherTitle: "已转账",
+      voucherImage: "",
+    });
   });
 });

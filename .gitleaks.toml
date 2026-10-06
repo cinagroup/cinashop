@@ -134,3 +134,617 @@ regexes = [
   '''^\s*"api\.js": "5c39a62e2e5fc1554b8e423b1ffe453ccc975e0ccca0090f0cf3210aeb6c49fc",$''',
   '''^\s*"api\.mjs": "680719eabea08e3e7155c822adcaf9343b3d9b30a9baea935be8de8069bcee4e",$''',
 ]
+
+# 2026-10-06: reviewed exact non-secret staged findings. Default rules remain enabled.
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in view/uniapp-ts/src/utils/deliveryWorkbench.ts"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^view/uniapp-ts/src/utils/deliveryWorkbench\.ts$''',
+]
+regexes = [
+  '''^\s*const storageKey='delivery_pending_intents_v1';\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-city-delivery-records-acceptance-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-city-delivery-records-acceptance-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"\.cache/city-delivery-provider-docs-20261001/uu-api-doc\.js": "f0b55362d65444a765e2e67f26657e6b409fbd9f86e243503f6bbb59a8be6fa2"\s*$''',
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "7beea957ebf08e76ae322357052d23fe20c23d4de25293f72e067c7f48ad3624",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "cef974c9471329d4b3a317b933c3ff75c867597b54a2be45c2d26af24ab14c47",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-commission-read-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-commission-read-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "c1dcf437ae6a6ce81813e7cd0e7ac7cddae1a411cf73fa2720c6a504469082dc",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-distributor-levels-acceptance-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-distributor-levels-acceptance-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"C:/cinagroup/cinashop-php/route/api\.php": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",\s*$''',
+  '''^\s*"C:/cinagroup/cinashop/workers-ts/src/routes/adminapi\.ts": "fecce445eb7bd7f76cecc714d420a6101ecb9911284600259fff0df7a175cc10",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\auth-BYz18Tmd\.js": "82a0570e26327e0c4542eabafc85d59be07fe66d5489cac1be2e8ad6b1156158",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\auth-DIp27vwt\.js": "196f09472a92df71470ba1724c81ebe925ee0a8c513be72f509efaff2986df77",\s*$''',
+  '''^\s*"view/pc-ts/test/auth-session\.test\.mjs": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f",\s*$''',
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-auth\.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-runtime-auth\.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "fecce445eb7bd7f76cecc714d420a6101ecb9911284600259fff0df7a175cc10",\s*$''',
+  '''^\s*"workers-ts/src/services/out/OutApiService\.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",\s*$''',
+  '''^\s*"workers-ts/src/services/wechat/WechatAuthService\.ts": "ea15420f84b57afc6aad88a68172c6420964ad32c0e6545ed22adeee7da6cfa0",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "80daf9fdd4e4575453d78b1309e3acab9d93da56b02309dde7d9345f8bb108d0",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+  '''^\s*"workers-ts/test/out-api-migration\.test\.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-division-statistics-read-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-division-statistics-read-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "2208e97c2849df47cb70f662981be84b35da6ee013ff601b9f8f464b20762cdb",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-fab-settings-acceptance-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-fab-settings-acceptance-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"C:/cinagroup/cinashop-php/route/api\.php": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",\s*$''',
+  '''^\s*"C:/cinagroup/cinashop/workers-ts/src/routes/adminapi\.ts": "ce8acccbe8db7d2aaca37dc0a1753e08d3c6f7b207e762b2414b124e2d7fa99f",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\Combinations-CkeYIxka\.css": "369b2ee5d7cb3b934340be3643251d5061ca7ec02eb3267e8242528954f0f241",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\ExternalApi-B7qt_cbQ\.js": "e7775a8631ae87197b76fda9a48ce55343711fa5ea6576ca7a6e3d7a44d0b191",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\ExternalApi-CUFQ30xK\.css": "599cd403a9f70d1c8cbe66105d40fb13f9ca7867c4816dbdc131f86ba1627e99",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\auth-BYz18Tmd\.js": "82a0570e26327e0c4542eabafc85d59be07fe66d5489cac1be2e8ad6b1156158",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\auth-DIp27vwt\.js": "196f09472a92df71470ba1724c81ebe925ee0a8c513be72f509efaff2986df77",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\Combinations-CkeYIxka\.css": "369b2ee5d7cb3b934340be3643251d5061ca7ec02eb3267e8242528954f0f241",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\ExternalApi-BqEXn1Xi\.js": "619fff24d5449c50b917a082e7f2f25076e22ee03a6b949db6c6d7cee71a49ce",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\ExternalApi-CUFQ30xK\.css": "599cd403a9f70d1c8cbe66105d40fb13f9ca7867c4816dbdc131f86ba1627e99",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\auth-CI9T563r\.js": "c4d5d5b13974c958d95e3b501867c2a954bb2b851321d67b98227e2e87a186b9",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\auth-DVkDWww8\.js": "9ecfbcb17a895225ee20655e392a50e1994d39da1015fc21da864634d16db49c",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\auth\.BUEt6hd8\.js": "a0949629ccee77e2936ae6b4f1dce57e2a11a8db0b6585ab9ee4c92cf987b2d7",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\changePassword-Be1yqwRL\.css": "d01af6550d4e4f3558f3bccd7cb75e5729b5f8d477948e876ef20ae9617ad806",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-auth-login\.C6mrlogq\.js": "b4fea75cf4cdcf2e1c2068a9861fa7f152b75440c3a999fb6365ebd7f7f41c48",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-auth-reset\.J8EE3FbO\.js": "6b8da9872cbacb873a71861bb17ac4a238322fbade9277127c046997229d7629",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-user-changePassword\.CbvvUg2J\.js": "86c6cc7bedcf58ea1b62ceee62111069afc1c39f7ebd2542fec816bf78904bab",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-user-payPassword\.Dcd-5BSZ\.js": "0af2d6923e81b34a54579559298062e8d3028665a67de7b4bcaeb4f056a0f567",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\payPassword-C6dNo0s0\.css": "9d65613455dc4148fd9a632461759deb2c40743672a6a92d7911ebe83db85f41",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\useWorkAccess\.B7UdQaLv\.js": "eab3d1dc6324e26cb7c63bd8fee8d233cada564c2c5cc4a542f6c581343e5d03",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\Combinations-CkeYIxka\.css": "369b2ee5d7cb3b934340be3643251d5061ca7ec02eb3267e8242528954f0f241",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\ExternalApi-BYMybXPo\.js": "763601a3da49f089ca33c32496c8881541e655168757eb68c12d2c0715732e42",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\ExternalApi-CUFQ30xK\.css": "599cd403a9f70d1c8cbe66105d40fb13f9ca7867c4816dbdc131f86ba1627e99",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\auth-2Jk8Jx7L\.js": "d535e730989906e729bfcb6eba97336fdf8fbe8726f76dc47e098a86fda348b9",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\auth-CCsAvGc7\.js": "7726d8a0be5aabb43ada5ad8eedbb69f6527207baa7cde2b8e427d0df610bff3",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\auth\.D7glNUVd\.js": "fd9141bf68fbfe85cdea2946e78f32927f195baa8764e888984a8f4a1164cf5d",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\changePassword-Be1yqwRL\.css": "d01af6550d4e4f3558f3bccd7cb75e5729b5f8d477948e876ef20ae9617ad806",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-auth-login\.C6aVsA6a\.js": "0e684abb4826a745d821a14a6bb864506084a45f8dde5f716efc0085ebb434c7",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-auth-reset\.DNlmRkdE\.js": "b11f1230a137fa67222163e440f5094810726b6feb209b653e30c7829a3b133f",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-user-changePassword\.BhAHuB09\.js": "d054c8aa6146570e49e2bc7864e1b8a1c3fc2f2f608b98d3a59e03dabb846171",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-user-payPassword\.BhZokvo_\.js": "d5c713beb5ccffbaf3da859f614600c36f42ef65e7705a9b56a25089a0f813d8",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\payPassword-C6dNo0s0\.css": "9d65613455dc4148fd9a632461759deb2c40743672a6a92d7911ebe83db85f41",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\useWorkAccess\.DyCg7dHi\.js": "8b131db1092e1e8b4d6bf298b0a5779ade3d90b3cb9b18fa175fc7835fc1e081",\s*$''',
+  '''^\s*"view/pc-ts/test/auth-session\.test\.mjs": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f",\s*$''',
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-auth\.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-runtime-auth\.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "ce8acccbe8db7d2aaca37dc0a1753e08d3c6f7b207e762b2414b124e2d7fa99f",\s*$''',
+  '''^\s*"workers-ts/src/services/out/OutApiService\.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",\s*$''',
+  '''^\s*"workers-ts/src/services/wechat/WechatAuthService\.ts": "ea15420f84b57afc6aad88a68172c6420964ad32c0e6545ed22adeee7da6cfa0",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "29574c15c83dade70e5152b8e23e72c9511848b24032f79bf412e8a920a6d6d5",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+  '''^\s*"workers-ts/test/out-api-migration\.test\.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-fab-settings-acceptance-final-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-fab-settings-acceptance-final-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"C:/cinagroup/cinashop-php/route/api\.php": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",\s*$''',
+  '''^\s*"C:/cinagroup/cinashop/workers-ts/src/routes/adminapi\.ts": "ce8acccbe8db7d2aaca37dc0a1753e08d3c6f7b207e762b2414b124e2d7fa99f",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\Combinations-CkeYIxka\.css": "369b2ee5d7cb3b934340be3643251d5061ca7ec02eb3267e8242528954f0f241",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\ExternalApi-B7qt_cbQ\.js": "e7775a8631ae87197b76fda9a48ce55343711fa5ea6576ca7a6e3d7a44d0b191",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\ExternalApi-CUFQ30xK\.css": "599cd403a9f70d1c8cbe66105d40fb13f9ca7867c4816dbdc131f86ba1627e99",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\auth-BYz18Tmd\.js": "82a0570e26327e0c4542eabafc85d59be07fe66d5489cac1be2e8ad6b1156158",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\agent-level-admin-dist-final-20261001\\\\assets\\\\auth-DIp27vwt\.js": "196f09472a92df71470ba1724c81ebe925ee0a8c513be72f509efaff2986df77",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\Combinations-CkeYIxka\.css": "369b2ee5d7cb3b934340be3643251d5061ca7ec02eb3267e8242528954f0f241",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\ExternalApi-BqEXn1Xi\.js": "619fff24d5449c50b917a082e7f2f25076e22ee03a6b949db6c6d7cee71a49ce",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\ExternalApi-CUFQ30xK\.css": "599cd403a9f70d1c8cbe66105d40fb13f9ca7867c4816dbdc131f86ba1627e99",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\auth-CI9T563r\.js": "c4d5d5b13974c958d95e3b501867c2a954bb2b851321d67b98227e2e87a186b9",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\admin\\\\assets\\\\auth-DVkDWww8\.js": "9ecfbcb17a895225ee20655e392a50e1994d39da1015fc21da864634d16db49c",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\auth\.BUEt6hd8\.js": "a0949629ccee77e2936ae6b4f1dce57e2a11a8db0b6585ab9ee4c92cf987b2d7",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\changePassword-Be1yqwRL\.css": "d01af6550d4e4f3558f3bccd7cb75e5729b5f8d477948e876ef20ae9617ad806",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-auth-login\.C6mrlogq\.js": "b4fea75cf4cdcf2e1c2068a9861fa7f152b75440c3a999fb6365ebd7f7f41c48",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-auth-reset\.J8EE3FbO\.js": "6b8da9872cbacb873a71861bb17ac4a238322fbade9277127c046997229d7629",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-user-changePassword\.CbvvUg2J\.js": "86c6cc7bedcf58ea1b62ceee62111069afc1c39f7ebd2542fec816bf78904bab",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\pages-user-payPassword\.Dcd-5BSZ\.js": "0af2d6923e81b34a54579559298062e8d3028665a67de7b4bcaeb4f056a0f567",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\payPassword-C6dNo0s0\.css": "9d65613455dc4148fd9a632461759deb2c40743672a6a92d7911ebe83db85f41",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\\.cache\\\\fab-builds-20261001\\\\uniapp\\\\h5-viewport-retry1\\\\assets\\\\useWorkAccess\.B7UdQaLv\.js": "eab3d1dc6324e26cb7c63bd8fee8d233cada564c2c5cc4a542f6c581343e5d03",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\Combinations-CkeYIxka\.css": "369b2ee5d7cb3b934340be3643251d5061ca7ec02eb3267e8242528954f0f241",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\ExternalApi-BYMybXPo\.js": "763601a3da49f089ca33c32496c8881541e655168757eb68c12d2c0715732e42",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\ExternalApi-CUFQ30xK\.css": "599cd403a9f70d1c8cbe66105d40fb13f9ca7867c4816dbdc131f86ba1627e99",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\auth-2Jk8Jx7L\.js": "d535e730989906e729bfcb6eba97336fdf8fbe8726f76dc47e098a86fda348b9",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\auth-CCsAvGc7\.js": "7726d8a0be5aabb43ada5ad8eedbb69f6527207baa7cde2b8e427d0df610bff3",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\auth\.D7glNUVd\.js": "fd9141bf68fbfe85cdea2946e78f32927f195baa8764e888984a8f4a1164cf5d",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\changePassword-Be1yqwRL\.css": "d01af6550d4e4f3558f3bccd7cb75e5729b5f8d477948e876ef20ae9617ad806",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-auth-login\.C6aVsA6a\.js": "0e684abb4826a745d821a14a6bb864506084a45f8dde5f716efc0085ebb434c7",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-auth-reset\.DNlmRkdE\.js": "b11f1230a137fa67222163e440f5094810726b6feb209b653e30c7829a3b133f",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-user-changePassword\.BhAHuB09\.js": "d054c8aa6146570e49e2bc7864e1b8a1c3fc2f2f608b98d3a59e03dabb846171",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\pages-user-payPassword\.BhZokvo_\.js": "d5c713beb5ccffbaf3da859f614600c36f42ef65e7705a9b56a25089a0f813d8",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\payPassword-C6dNo0s0\.css": "9d65613455dc4148fd9a632461759deb2c40743672a6a92d7911ebe83db85f41",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\uniapp-ts\\\\dist\\\\build\\\\h5\\\\assets\\\\useWorkAccess\.DyCg7dHi\.js": "8b131db1092e1e8b4d6bf298b0a5779ade3d90b3cb9b18fa175fc7835fc1e081",\s*$''',
+  '''^\s*"view/pc-ts/test/auth-session\.test\.mjs": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f",\s*$''',
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-auth\.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-runtime-auth\.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "ce8acccbe8db7d2aaca37dc0a1753e08d3c6f7b207e762b2414b124e2d7fa99f",\s*$''',
+  '''^\s*"workers-ts/src/services/out/OutApiService\.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",\s*$''',
+  '''^\s*"workers-ts/src/services/wechat/WechatAuthService\.ts": "ea15420f84b57afc6aad88a68172c6420964ad32c0e6545ed22adeee7da6cfa0",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "29574c15c83dade70e5152b8e23e72c9511848b24032f79bf412e8a920a6d6d5",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+  '''^\s*"workers-ts/test/out-api-migration\.test\.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-full-discount-acceptance-20260930.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-full-discount-acceptance-20260930\.json$''',
+]
+regexes = [
+  '''^\s*"src/routes/adminapi\.ts": "533174d23689e8c38f7f4f14e2f24e3f2fe763d151e15895481a4a6940096595",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-full-gift-acceptance-20260930.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-full-gift-acceptance-20260930\.json$''',
+]
+regexes = [
+  '''^\s*"src/routes/adminapi\.ts": "01fcf689aa2ec4e4b2d8faf9d7857672152e1b0be1436ea65ba394deef6227ed",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-full-gift-refund-entry-acceptance-20260930.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-full-gift-refund-entry-acceptance-20260930\.json$''',
+]
+regexes = [
+  '''^\s*"src/routes/adminapi\.ts": "01fcf689aa2ec4e4b2d8faf9d7857672152e1b0be1436ea65ba394deef6227ed",\s*$''',
+  '''^\s*"test/admin-frontend-api-audit\.test\.ts": "75b5a6186b679346774121bf7d1b3e756492578cf87bbdcbb3bd73459ba01417",\s*$''',
+  '''^\s*"test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-integral-batch-acceptance-20260930.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-integral-batch-acceptance-20260930\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "a5e5bf384b983fef5410a77a186fcc1f337c93b6b8b796e95c387713704a01fe",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "52e753b92b233c0a44164e9644277a795bf8980785075d73323b2c7974ebe274",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-invoice-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-invoice-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"src/routes/adminapi\.ts": "1279719eb5241ae3c1539ec806c82ff528d8edcb9cbeb45a6b0204543715f06f",\s*$''',
+  '''^\s*"src/services/out/OutApiService\.ts": "425fdea24b392bb5cd547953da2852d212246e4bda784014015e6c4f849bba4b",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-marketing-config-acceptance-20260930.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-marketing-config-acceptance-20260930\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "daa8a1fbc0a1ee055b349d47640e3199ed80f40b7fcef7681f23da5dcac94dcb",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "32a3c86752a90955a661381c05d9c337ce572648f9a6247e4c89e53ad5d08998",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-nth-discount-acceptance-20260930.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-nth-discount-acceptance-20260930\.json$''',
+]
+regexes = [
+  '''^\s*"src/routes/adminapi\.ts": "8411f5aad0a5aa911f5ba1f543059826d265eac41ea66152286ab874e9f0565f",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-pc-home-banner-acceptance-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-pc-home-banner-acceptance-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"C:/cinagroup/cinashop-php/route/api\.php": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",\s*$''',
+  '''^\s*"C:/cinagroup/cinashop/workers-ts/src/routes/adminapi\.ts": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\auth-2Jk8Jx7L\.js": "d535e730989906e729bfcb6eba97336fdf8fbe8726f76dc47e098a86fda348b9",\s*$''',
+  '''^\s*"C:\\\\cinagroup\\\\cinashop\\\\view\\\\admin-ts\\\\dist\\\\assets\\\\auth-CCsAvGc7\.js": "7726d8a0be5aabb43ada5ad8eedbb69f6527207baa7cde2b8e427d0df610bff3",\s*$''',
+  '''^\s*"view/pc-ts/test/auth-session\.test\.mjs": "a4a8d0f62d28db13d27ac335eb9299d71625a0d88a20a612c71541f9053fed5f",\s*$''',
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-auth\.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-runtime-auth\.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "4027051ae5affde3c59eb4e658823296f10e82a4db3c9e1d75727b99d07e5dd1",\s*$''',
+  '''^\s*"workers-ts/src/services/out/OutApiService\.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "5559da1a00f384cb8dfdb38551e854bdaedfb2321b530a355b417ce32a950605",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+  '''^\s*"workers-ts/test/out-api-migration\.test\.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-read-followup-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-read-followup-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "b83a29fa8ab969d3d267f1dbce0aa34409f01e40f540e9bb8fe7c15b5c9782ff",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-shipping-settings-acceptance-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-shipping-settings-acceptance-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "9f9903cbf67e4b083d15f752d9c3ca292271274ba46fdfa34d2b11d880c3994f",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "f3b07fc6c764dc52424a171d2884fe12a81371cfddaa8bca4b0e4e1bf37bcf71",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-supplier-bill-read-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-supplier-bill-read-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "b45bc3b6135c3437c7a42923343fa491b4646793e11ed7658a07bf487dcf994e",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-supplier-capital-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-supplier-capital-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "b45c91577992afbbd029587ff929667748967d1a2d55b48a1434edf601b369ed",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-supplier-extract-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-supplier-extract-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "4960f46cb8056d738a03369a621ca6a2750ce2191029c2e06e93eeed09bbc428",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-supplier-order-statistics-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-supplier-order-statistics-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "5e2f330d27ccb3a9bd7092fd39fbbd22b5990520c05d6a1b487c278527888306",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/admin-writeoff-order-read-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/admin-writeoff-order-read-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "71ce95628874703cff6f1f0c8d1a6acf59a1121dd7b34e7651d9d4c0c09571b4",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/city-delivery-callback-authority-acceptance-20261001.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/city-delivery-callback-authority-acceptance-20261001\.json$''',
+]
+regexes = [
+  '''^\s*"C:/cinagroup/cinashop/workers-ts/src/routes/adminapi\.ts": "7beea957ebf08e76ae322357052d23fe20c23d4de25293f72e067c7f48ad3624",\s*$''',
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "7beea957ebf08e76ae322357052d23fe20c23d4de25293f72e067c7f48ad3624",\s*$''',
+  '''^\s*"workers-ts/src/services/out/OutApiService\.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "cef974c9471329d4b3a317b933c3ff75c867597b54a2be45c2d26af24ab14c47",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+  '''^\s*"workers-ts/test/out-api-migration\.test\.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/invoice-member-record-followup-acceptance-20260928.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/invoice-member-record-followup-acceptance-20260928\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "2f91f85e951e25c66f6f6e91cc78dda1468d63c61068b96a492d7d1806ce8bf7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-customer-work-financial-followup-20261005.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-customer-work-financial-followup-20261005\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-customer-work-fulfillment-followup-20261004.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-customer-work-fulfillment-followup-20261004\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-customer-work-product-followup-20261004.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-customer-work-product-followup-20261004\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-customer-work-read-followup-20261004.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-customer-work-read-followup-20261004\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-customer-work-user-followup-20261004.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-customer-work-user-followup-20261004\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-delivery-workbench-followup-20261003.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-delivery-workbench-followup-20261003\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-delivery-workbench-followup-final-20261003.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-delivery-workbench-followup-final-20261003\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-merchant-management-followup-20261003.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-merchant-management-followup-20261003\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-merchant-management-followup-final6-20261003.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-merchant-management-followup-final6-20261003\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-product-category-style-followup-20261002.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-product-category-style-followup-20261002\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "053893AAEAFA8BA626B7B9DC93B32C900A4DBA2A024ED49C45E65A29EAEB85F9",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-product-detail-design-followup-20261002.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-product-detail-design-followup-20261002\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/audit/uniapp-frontend-parity-user-center-design-followup-20261003.json"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/uniapp-frontend-parity-user-center-design-followup-20261003\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "83D514802C3046834F9A62FB2D97E454333131A2FB22DA668DAA32F75F230EE6",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/test/cashier-second-card-origin-postgres.test.ts"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/test/cashier-second-card-origin-postgres\.test\.ts$''',
+]
+regexes = [
+  '''^\s*for \(const patch of \[\{ creation_key: '00112233-4455-1677-8899-aabbccddeeff' \}, \{ creation_key: value\.creation_key\.toUpperCase\(\) \},\s*$''',
+  '''^\s*order_id: body\.order_id, actor_uid: body\.creator_uid, service_id: 1, request_key: '11223344-5566-4788-99aa-bbccddeeff00', request_hash: hash\('c'\), scope_key: hash\('a'\),\s*$''',
+  '''^\s*scope_key: hash\('a'\), root_order_id: 11, root_order_no: 'CASHIER_SN', creation_key: '00112233-4455-4677-8899-aabbccddeeff',\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/test/customer-cashier-second-card-postgres.test.ts"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/test/customer-cashier-second-card-postgres\.test\.ts$''',
+]
+regexes = [
+  '''^\s*const\{order\}=await f\.create\(await f\.input\(\{buyer_uid:0,tourist_key:'guest-owned-001'\}\)\);expect\(order\.uid\)\.toBe\(0\);expect\(order\.staffId\)\.toBe\(101\);\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/test/kefu-mobile-independent-contract.test.ts"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/test/kefu-mobile-independent-contract\.test\.ts$''',
+]
+regexes = [
+  '''^\s*tokenKey: "0123456789abcdef0123456789abcdef",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret lines in workers-ts/test/kefu-mobile-workbench-postgres.test.ts"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/test/kefu-mobile-workbench-postgres\.test\.ts$''',
+]
+regexes = [
+  '''^\s*it\('rejects User/Admin tokens, mismatched/revoked buckets and changed passwords instead of substituting staff identity',async\(\)=>run\(async\(\{peer,request,token\}\)=>\{\s*$''',
+]

@@ -1,8 +1,11 @@
 <template>
+  <ThemePage>
   <CommunityDeepLinkFeed v-if="ready" ref="feed" mode="topic" :query="query" />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onReachBottom } from "@dcloudio/uni-app";
 import CommunityDeepLinkFeed from "@/components/community/CommunityDeepLinkFeed.vue";

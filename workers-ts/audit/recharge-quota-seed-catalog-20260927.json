@@ -1,0 +1,180 @@
+{
+  "capturedAt": "2026-09-27T00:53:47.642Z",
+  "sourceRunDate": "2026-09-26",
+  "sourceLog": "../.cache/finance-postgres-yKAJmf/catalog-audit.log",
+  "scope": "Exact table, column, constraint, index and sequence catalogs across nine isolated PG16 paths; does not prove business seed rows or complete runtime permissions.",
+  "currentExternalInputMatched": true,
+  "externalInputSha256": "1b5d3e24d8c46d20e783a145427da71bf37deb6b1479b18dc083a77bb617b4cd",
+  "seedSqlSha256": "17a0d3fd8a7d7bc9c86e98cb12079a9a2afae7187aaac8c2d7c0166c3b294a1b",
+  "serverVersionNum": 160015,
+  "paths": [
+    {
+      "path": "external",
+      "steps": 168
+    },
+    {
+      "path": "embedded",
+      "steps": 173
+    },
+    {
+      "path": "orm",
+      "steps": 1164
+    },
+    {
+      "path": "orm_upgrade",
+      "steps": 1284
+    },
+    {
+      "path": "orm_default_upgrade",
+      "steps": 1165
+    },
+    {
+      "path": "orm_constraints",
+      "steps": 1156
+    },
+    {
+      "path": "orm_fk_names",
+      "steps": 1165
+    },
+    {
+      "path": "orm_checks",
+      "steps": 1158
+    },
+    {
+      "path": "orm_sequences",
+      "steps": 1164
+    }
+  ],
+  "counts": {
+    "external": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "embedded": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm_upgrade": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm_default_upgrade": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm_constraints": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm_fk_names": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm_checks": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    },
+    "orm_sequences": {
+      "tables": 279,
+      "columns": 3885,
+      "constraints": 668,
+      "indexes": 1076,
+      "sequences": 227
+    }
+  },
+  "summary": {
+    "externalVsEmbedded": {
+      "tables": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "columns": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "constraints": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "indexes": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "sequences": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      }
+    },
+    "externalVsOrm": {
+      "tables": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "columns": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "constraints": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "indexes": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "sequences": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      }
+    }
+  },
+  "cleanupConfirmed": true
+}

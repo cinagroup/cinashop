@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="refund-detail">
     <view class="actions"><button size="mini" :disabled="busy" @tap="load()">重新读取详情</button>
       <button size="mini" :disabled="busy" @tap="goList">退款记录</button>
@@ -57,8 +58,10 @@
     </template>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref, watch } from 'vue';
 import { useRefundRecords } from '@/composables/useRefundRecords';
 import { returnEligible } from '../../../../common/refundReturn';

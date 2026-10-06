@@ -2,8 +2,10 @@ import {
   and,
   desc,
   eq,
+  exists,
   ilike,
   inArray,
+  isNull,
   sql,
   type SQL,
 } from "drizzle-orm";
@@ -15,8 +17,10 @@ import {
   storeProductDescription,
   storeProductRelation,
   storeVisit,
+  user as userTable,
 } from "@/models/schema";
 import { assertKefuConversation, parseKefuPageLimit } from "@/services/kefu/KefuCoreService";
+import { ownedKefuConversation } from "@/services/kefu/KefuOwnership";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const CATEGORY_RELATION_TYPE = 1;
@@ -87,6 +91,12 @@ export class KefuProductService {
     };
   }
 
+  private currentCustomerContext(kefuUid: number, uid: number) {
+    return and(ownedKefuConversation(this.container.db, kefuUid, uid),
+      exists(this.container.db.select({ uid: userTable.uid }).from(userTable)
+        .where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0), isNull(userTable.deleteTime)))))!;
+  }
+
   async purchasedProducts(
     kefuUid: number,
     uidValue: unknown,
@@ -100,6 +110,7 @@ export class KefuProductService {
       // catalog instead of restricting it to the customer's purchase history.
       conditions.push(eq(storeProduct.pid, 0), ilike(storeProduct.storeName, `%${storeName}%`));
     } else {
+      conditions.push(this.currentCustomerContext(kefuUid, uid));
       const purchasedProductIds = this.container.db
         .select({ productId: storeOrderCartInfo.productId })
         .from(storeOrderCartInfo)
@@ -123,7 +134,7 @@ export class KefuProductService {
   ) {
     const uid = await this.customerScope(kefuUid, uidValue);
     const { page, limit, storeName } = this.page(query);
-    const conditions: SQL[] = [eq(storeVisit.uid, uid)];
+    const conditions: SQL[] = [eq(storeVisit.uid, uid), this.currentCustomerContext(kefuUid, uid)];
     if (storeName) conditions.push(ilike(storeProduct.storeName, `%${storeName}%`));
     return this.container.db
       .select(productSummary)
@@ -161,7 +172,7 @@ export class KefuProductService {
         eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
         inArray(storeProductRelation.relationId, categoryIds),
       ));
-    const conditions: SQL[] = [inArray(storeProduct.id, candidateIds)];
+    const conditions: SQL[] = [inArray(storeProduct.id, candidateIds), this.currentCustomerContext(kefuUid, uid)];
     if (storeName) conditions.push(ilike(storeProduct.storeName, `%${storeName}%`));
     return this.container.db
       .select({

@@ -6,13 +6,15 @@
         <p>配置活动、8 个奖位与中奖履约；同一参与条件仅允许一个活动启用。</p>
       </div>
       <div class="head-actions">
-        <el-button @click="openAllRecords">中奖记录</el-button>
-        <el-button type="primary" @click="openForm()">＋ 新建抽奖</el-button>
+        <router-link v-if="canRecordView" to="/marketing/lottery-records">中奖记录</router-link>
+        <el-button v-if="canManage" type="primary" :disabled="saving" @click="openForm()">＋ 新建抽奖</el-button>
       </div>
     </div>
 
+    <el-alert v-if="!canView" title="当前账号没有抽奖活动查看权限" type="warning" :closable="false" show-icon />
+    <template v-else>
     <div class="summary-grid">
-      <div class="summary-card"><span>活动总数</span><strong>{{ total }}</strong></div>
+      <div class="summary-card"><span>匹配活动数</span><strong>{{ total }}</strong></div>
       <div class="summary-card"><span>当前页启用</span><strong>{{ enabledCount }}</strong></div>
       <div class="summary-card"><span>当前页进行中</span><strong>{{ runningCount }}</strong></div>
       <div class="summary-card warning"><span>安全策略</span><strong>红包停建</strong></div>
@@ -20,7 +22,7 @@
 
     <el-card shadow="never">
       <div class="filters">
-        <el-input v-model="query.name" clearable placeholder="搜索活动名称" style="width: 220px" @keyup.enter="load" />
+        <el-input v-model="query.name" clearable maxlength="100" placeholder="搜索活动名称或 ID" style="width: 220px" @keyup.enter="search" />
         <el-select v-model="query.factor" clearable placeholder="参与条件" style="width: 180px">
           <el-option v-for="item in factors" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
@@ -28,7 +30,12 @@
           <el-option label="启用" :value="1" />
           <el-option label="停用" :value="0" />
         </el-select>
-        <el-button type="primary" @click="load">查询</el-button>
+        <el-select v-model="query.startStatus" clearable placeholder="活动阶段" style="width: 140px">
+          <el-option label="未开始" :value="0" />
+          <el-option label="进行中" :value="1" />
+          <el-option label="已结束" :value="-1" />
+        </el-select>
+        <el-button type="primary" @click="search">查询</el-button>
         <el-button @click="resetQuery">重置</el-button>
       </div>
 
@@ -45,7 +52,7 @@
           </template>
         </el-table-column>
         <el-table-column label="参与条件" width="150">
-          <template #default="{ row }">{{ factorLabel(row.factor) }} · {{ row.factorNum }}</template>
+          <template #default="{ row }">{{ row.lottery_type || factorLabel(row.factor) }} · {{ row.factorNum }}</template>
         </el-table-column>
         <el-table-column label="活动时间" width="220">
           <template #default="{ row }">
@@ -60,20 +67,23 @@
         <el-table-column label="状态" width="90">
           <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? "启用" : "停用" }}</el-tag></template>
         </el-table-column>
+        <el-table-column prop="lottery_all" label="参与次数" width="100" />
+        <el-table-column prop="lottery_people" label="参与人数" width="100" />
+        <el-table-column prop="lottery_win" label="中奖人数" width="100" />
         <el-table-column label="操作" fixed="right" width="250">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openRecords(row)">记录</el-button>
-            <el-button link type="primary" @click="openForm(row)">编辑</el-button>
-            <el-button link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">{{ row.status === 1 ? "停用" : "启用" }}</el-button>
-            <el-button link type="danger" @click="remove(row)">删除</el-button>
+            <router-link v-if="canRecordView" :to="{ path: '/marketing/lottery-records', query: { lottery_id: String(row.id) } }">记录</router-link>
+            <el-button v-if="canManage" link type="primary" @click="openForm(row)">编辑</el-button>
+            <el-button v-if="canManage" link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">{{ row.status === 1 ? "停用" : "启用" }}</el-button>
+            <el-button v-if="canManage" link type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
       <el-empty v-if="!loading && !list.length" description="暂无抽奖活动" />
-      <div class="pagination"><el-pagination v-model:current-page="query.page" :page-size="query.limit" :total="total" layout="prev, pager, next, total" @current-change="load" /></div>
+      <div class="pagination"><el-pagination :current-page="query.page" :page-size="15" :total="total" :disabled="loading" layout="prev, pager, next, total" @current-change="load" /></div>
     </el-card>
 
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑抽奖活动' : '新建抽奖活动'" width="min(1040px, 94vw)" destroy-on-close>
+    <el-dialog v-if="canManage" v-model="formVisible" :title="form.id ? '编辑抽奖活动' : '新建抽奖活动'" width="min(1040px, 94vw)" destroy-on-close>
       <el-alert title="奖品库存、用户扣款与发奖在一个数据库事务内完成。微信红包和未明确等级的奖品暂不允许新建。" type="info" :closable="false" show-icon />
       <el-tabs v-model="formTab" class="form-tabs">
         <el-tab-pane label="活动设置" name="activity">
@@ -109,48 +119,27 @@
           </el-table>
         </el-tab-pane>
       </el-tabs>
-      <template #footer><el-button @click="formVisible = false">取消</el-button><el-button type="primary" :loading="saving" @click="save">保存活动</el-button></template>
+      <template #footer><el-button @click="formVisible = false">取消</el-button><el-button type="primary" :loading="saving" :disabled="formLoading" @click="save">保存活动</el-button></template>
     </el-dialog>
-
-    <el-drawer v-model="recordsVisible" :title="recordActivity ? `${recordActivity.name} · 中奖记录` : '全部中奖记录'" size="min(900px, 94vw)">
-      <el-table :data="records" v-loading="recordsLoading" border>
-        <el-table-column prop="id" label="记录ID" width="85" />
-        <el-table-column label="用户" min-width="140"><template #default="{ row }"><strong>{{ row.user?.nickname || `UID ${row.uid}` }}</strong><small class="block">UID {{ row.uid }}</small></template></el-table-column>
-        <el-table-column label="奖品" min-width="150"><template #default="{ row }">{{ row.prize?.name || prizeTypeLabel(row.type) }}</template></el-table-column>
-        <el-table-column label="领取" width="90"><template #default="{ row }"><el-tag :type="row.isReceive ? 'success' : 'warning'">{{ row.isReceive ? "已领取" : "待领取" }}</el-tag></template></el-table-column>
-        <el-table-column label="履约" width="95"><template #default="{ row }"><el-tag v-if="row.type === 6" :type="row.isDeliver ? 'success' : 'warning'">{{ row.isDeliver ? "已发货" : "待发货" }}</el-tag><span v-else>自动</span></template></el-table-column>
-        <el-table-column label="时间" width="155"><template #default="{ row }">{{ formatTime(row.addTime) }}</template></el-table-column>
-        <el-table-column label="操作" width="90"><template #default="{ row }"><el-button link type="primary" @click="openDeliver(row)">{{ row.type === 6 ? "发货" : "备注" }}</el-button></template></el-table-column>
-      </el-table>
-      <el-empty v-if="!recordsLoading && !records.length" description="暂无中奖记录" />
-    </el-drawer>
-
-    <el-dialog v-model="deliverVisible" title="中奖履约" width="480px">
-      <el-form :model="deliverForm" label-width="90px">
-        <el-form-item label="快递公司" v-if="deliverRecord?.type === 6"><el-input v-model="deliverForm.deliver_name" /></el-form-item>
-        <el-form-item label="快递单号" v-if="deliverRecord?.type === 6"><el-input v-model="deliverForm.deliver_number" /></el-form-item>
-        <el-form-item label="处理备注"><el-input v-model="deliverForm.mark" type="textarea" :rows="3" /></el-form-item>
-      </el-form>
-      <template #footer><el-button @click="deliverVisible = false">取消</el-button><el-button type="primary" :loading="delivering" @click="submitDeliver">确认</el-button></template>
-    </el-dialog>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useAuthStore } from "@/stores/auth";
+import { getAdminSession, getToken } from "@/utils/auth";
 import {
   apiLotteryAdd,
   apiLotteryDelete,
-  apiLotteryDeliver,
   apiLotteryDetail,
   apiLotteryEdit,
   apiLotteryList,
-  apiLotteryRecords,
   apiLotteryStatus,
   type LotteryActivity,
+  type LotteryListQuery,
   type LotteryPrize,
-  type LotteryRecord,
 } from "@/api/lottery";
 
 const factors = [
@@ -165,20 +154,25 @@ const prizeTypes = [
 const list = ref<LotteryActivity[]>([]);
 const total = ref(0);
 const loading = ref(false);
-const query = reactive<{ page: number; limit: number; name: string; factor?: number; status?: number }>({ page: 1, limit: 20, name: "" });
+const query = reactive<{ page: number; name: string; factor?: number; status?: 0 | 1; startStatus?: -1 | 0 | 1 }>({ page: 1, name: "" });
 const enabledCount = computed(() => list.value.filter((item) => item.status === 1).length);
 const runningCount = computed(() => list.value.filter((item) => item.time_status === 1).length);
+const auth = useAuthStore();
+const has = (permission: string) => !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes(permission));
+const canView = computed(() => !!auth.token && auth.token === getToken() && (has("lottery.view") || has("lottery.manage")));
+const canManage = computed(() => canView.value && has("lottery.manage"));
+const canRecordView = computed(() => canView.value && (has("lottery_record.view") || has("lottery_record.manage")));
+const sessionKey = computed(() => `${auth.token}:${auth.userInfo?.id ?? 0}:${auth.userInfo?.level ?? -1}:${auth.uniqueAuth.join(",")}`);
 const formVisible = ref(false);
 const formTab = ref("activity");
+const formLoading = ref(false);
 const saving = ref(false);
-const recordsVisible = ref(false);
-const recordsLoading = ref(false);
-const records = ref<LotteryRecord[]>([]);
-const recordActivity = ref<LotteryActivity | null>(null);
-const deliverVisible = ref(false);
-const delivering = ref(false);
-const deliverRecord = ref<LotteryRecord | null>(null);
-const deliverForm = reactive({ id: 0, deliver_name: "", deliver_number: "", mark: "" });
+let mounted = false;
+let listGeneration = 0;
+let detailGeneration = 0;
+let listRequest: AbortController | null = null;
+let detailRequest: AbortController | null = null;
+let storedSession = localStorage.getItem("admin_session");
 
 function blankPrize(index: number): LotteryPrize {
   return { type: 1, name: `谢谢参与${index + 1}`, prompt: "再接再厉", image: "/logo.png", chance: index === 0 ? 10 : 0, total: -1, couponId: 0, productId: 0, unique: "", num: "0.00", sort: index, status: 1 };
@@ -190,54 +184,155 @@ const form = reactive(blankForm());
 
 function resetForm() { Object.assign(form, blankForm()); }
 function factorLabel(value: number) { return factors.find((item) => item.value === value)?.label ?? "未知"; }
-function prizeTypeLabel(value: number) { return prizeTypes.find((item) => item.value === value)?.label ?? (value === 4 ? "历史红包" : "未知"); }
 function factorHint(value: number) { return value === 1 ? "每次消耗积分" : value === 2 ? "每次消耗余额（元）" : value === 3 || value === 4 ? "每个事件获得的抽奖次数" : "每位新好友奖励次数"; }
-function formatTime(value: number) { return value ? new Date(value * 1000).toLocaleString("zh-CN", { hour12: false }) : "—"; }
+function formatTime(value: number) { return value ? new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", year: "numeric",
+  month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value * 1000)) : "—"; }
 function timeLabel(value?: number) { return value === 0 ? "未开始" : value === 2 ? "已结束" : "进行中"; }
 function timeTag(value?: number): "info" | "success" | "warning" { return value === 0 ? "info" : value === 2 ? "warning" : "success"; }
 
-async function load() {
+function active(stamp: string): boolean {
+  return mounted && canView.value && sessionKey.value === stamp && storedSessionMatches();
+}
+
+function storedSessionMatches(): boolean {
+  const stored = getAdminSession();
+  const key = `${getToken() ?? ""}:${stored?.userInfo.id ?? 0}:${stored?.userInfo.level ?? -1}:${stored?.uniqueAuth.join(",") ?? ""}`;
+  if (key === sessionKey.value && storedSession === localStorage.getItem("admin_session")) return true;
+  syncSession();
+  return false;
+}
+
+function clearSessionData() {
+  listGeneration++;
+  detailGeneration++;
+  listRequest?.abort();
+  detailRequest?.abort();
+  listRequest = detailRequest = null;
+  list.value = [];
+  total.value = 0;
+  loading.value = false;
+  formVisible.value = false;
+  formLoading.value = false;
+  saving.value = false;
+  resetForm();
+}
+
+function syncSession() {
+  const previous = sessionKey.value;
+  const nextStored = localStorage.getItem("admin_session");
+  const changed = storedSession !== nextStored;
+  storedSession = nextStored;
+  if (changed) clearSessionData();
+  const session = getAdminSession();
+  auth.$patch({ token: getToken() ?? "", userInfo: session?.userInfo ?? null,
+    menus: (session?.menus as typeof auth.menus) ?? [], uniqueAuth: session?.uniqueAuth ?? [] });
+  if (changed && mounted && previous === sessionKey.value && canView.value) void load(1);
+}
+
+function onStorage(event: StorageEvent) {
+  if (event.key === "admin_token" || event.key === "admin_session" || event.key === null) syncSession();
+}
+
+async function load(targetPage = query.page) {
+  if (!mounted || !canView.value || !storedSessionMatches() || !Number.isSafeInteger(targetPage) || targetPage < 1 || targetPage > 10_000) return;
+  const stamp = sessionKey.value;
+  const generation = ++listGeneration;
+  listRequest?.abort();
+  const controller = new AbortController();
+  listRequest = controller;
   loading.value = true;
   try {
-    const result = await apiLotteryList({ page: query.page, limit: query.limit, name: query.name, factor: query.factor, status: query.status });
+    const params: LotteryListQuery = { page: targetPage, limit: 15, name: String(query.name ?? "").trim(),
+      factor: [1, 2, 3, 4, 5].includes(Number(query.factor)) ? query.factor : undefined,
+      status: query.status === 0 || query.status === 1 ? query.status : undefined,
+      start_status: query.startStatus === -1 || query.startStatus === 0 || query.startStatus === 1 ? query.startStatus : undefined };
+    const result = await apiLotteryList(params, controller.signal);
+    if (!active(stamp) || generation !== listGeneration) return;
+    if (!Array.isArray(result.list) || !Number.isSafeInteger(result.count) || result.count < 0 || result.list.length > 15) {
+      throw new Error("抽奖活动分页响应无效");
+    }
     list.value = result.list;
     total.value = result.count;
-  } catch (error) { ElMessage.error((error as Error).message || "加载抽奖活动失败"); }
-  finally { loading.value = false; }
+    query.page = targetPage;
+  } catch (error) { if (active(stamp) && generation === listGeneration && !controller.signal.aborted) ElMessage.error((error as Error).message || "加载抽奖活动失败"); }
+  finally { if (generation === listGeneration) { loading.value = false; listRequest = null; } }
 }
-function resetQuery() { query.name = ""; query.factor = undefined; query.status = undefined; query.page = 1; void load(); }
+function search() { void load(1); }
+function resetQuery() { query.name = ""; query.factor = undefined; query.status = undefined; query.startStatus = undefined; void load(1); }
 async function openForm(row?: LotteryActivity) {
+  if (!mounted || !canManage.value || !storedSessionMatches()) return;
+  detailGeneration++;
+  detailRequest?.abort();
+  detailRequest = null;
+  formLoading.value = false;
   resetForm(); formTab.value = "activity"; formVisible.value = true;
   if (!row) return;
+  const stamp = sessionKey.value;
+  const generation = ++detailGeneration;
+  const controller = new AbortController();
+  detailRequest = controller;
+  formLoading.value = true;
   try {
-    const detail = await apiLotteryDetail(row.id);
+    const detail = await apiLotteryDetail(row.id, controller.signal);
+    if (!active(stamp) || !canManage.value || generation !== detailGeneration || !formVisible.value) return;
     Object.assign(form, detail, {
       userLevel: Array.isArray(detail.userLevel) ? detail.userLevel : [],
       userLabel: Array.isArray(detail.userLabel) ? detail.userLabel : [],
       period: [new Date(detail.startTime * 1000), new Date(detail.endTime * 1000)],
       prize: (detail.prize ?? []).map((item, index) => ({ ...blankPrize(index), ...item })),
     });
-  } catch (error) { ElMessage.error((error as Error).message || "加载活动详情失败"); formVisible.value = false; }
+  } catch (error) { if (active(stamp) && generation === detailGeneration && !controller.signal.aborted) { ElMessage.error((error as Error).message || "加载活动详情失败"); formVisible.value = false; } }
+  finally { if (generation === detailGeneration) { formLoading.value = false; detailRequest = null; } }
 }
 function payload(): Record<string, unknown> {
   return { ...form, period: form.period.map((date) => Math.floor(date.getTime() / 1000)), user_level: form.userLevel, user_label: form.userLabel, factor_num: form.factorNum, attends_user: form.attendsUser, is_svip: form.isSvip, lottery_num_term: form.lotteryNumTerm, lottery_num: form.lotteryNum, total_lottery_num: form.totalLotteryNum, spread_num: form.spreadNum, is_all_record: form.isAllRecord, is_personal_record: form.isPersonalRecord, is_content: form.isContent };
 }
 async function save() {
+  if (!mounted || !canManage.value || !storedSessionMatches() || !formVisible.value || formLoading.value || saving.value) return;
   if (!form.name.trim() || !form.image.trim() || !form.content.trim()) return ElMessage.error("请完整填写活动名称、背景图和规则");
   if (form.prize.length !== 8 || form.prize.some((item) => !item.name.trim() || !item.image.trim())) { formTab.value = "prizes"; return ElMessage.error("请完整配置 8 个奖位"); }
+  const stamp = sessionKey.value;
   saving.value = true;
-  try { form.id ? await apiLotteryEdit(form.id, payload()) : await apiLotteryAdd(payload()); ElMessage.success("抽奖活动已保存"); formVisible.value = false; await load(); }
-  catch (error) { ElMessage.error((error as Error).message || "保存失败"); }
+  try { form.id ? await apiLotteryEdit(form.id, payload()) : await apiLotteryAdd(payload());
+    if (!active(stamp) || !canManage.value) return;
+    ElMessage.success("抽奖活动已保存"); formVisible.value = false; await load(); }
+  catch (error) { if (active(stamp) && canManage.value) ElMessage.error((error as Error).message || "保存失败"); }
   finally { saving.value = false; }
 }
-async function toggleStatus(row: LotteryActivity) { try { await apiLotteryStatus(row.id, row.status === 1 ? 0 : 1); ElMessage.success("状态已更新"); await load(); } catch (error) { ElMessage.error((error as Error).message || "操作失败"); } }
-async function remove(row: LotteryActivity) { try { await ElMessageBox.confirm(`确认删除活动「${row.name}」？历史中奖记录仍会保留。`, "删除确认", { type: "warning" }); await apiLotteryDelete(row.id); ElMessage.success("活动已删除"); await load(); } catch (error) { if (error !== "cancel") ElMessage.error((error as Error).message || "删除失败"); } }
-async function openRecords(row: LotteryActivity) { recordActivity.value = row; recordsVisible.value = true; await loadRecords(row.id); }
-async function openAllRecords() { recordActivity.value = null; recordsVisible.value = true; await loadRecords(); }
-async function loadRecords(activityId?: number) { recordsLoading.value = true; try { records.value = (await apiLotteryRecords({ page: 1, limit: 100 }, activityId)).list; } catch (error) { ElMessage.error((error as Error).message || "加载中奖记录失败"); } finally { recordsLoading.value = false; } }
-function openDeliver(row: LotteryRecord) { deliverRecord.value = row; Object.assign(deliverForm, { id: row.id, deliver_name: row.deliver_info?.deliver_name ?? "", deliver_number: row.deliver_info?.deliver_number ?? "", mark: row.deliver_info?.mark ?? "" }); deliverVisible.value = true; }
-async function submitDeliver() { delivering.value = true; try { await apiLotteryDeliver({ ...deliverForm }); ElMessage.success("履约信息已保存"); deliverVisible.value = false; await loadRecords(recordActivity.value?.id); } catch (error) { ElMessage.error((error as Error).message || "处理失败"); } finally { delivering.value = false; } }
-onMounted(load);
+async function toggleStatus(row: LotteryActivity) {
+  if (!mounted || !canManage.value || !storedSessionMatches() || !list.value.some(item => item.id === row.id)) return;
+  const stamp = sessionKey.value;
+  try { await apiLotteryStatus(row.id, row.status === 1 ? 0 : 1); if (!active(stamp) || !canManage.value) return;
+    ElMessage.success("状态已更新"); await load(); }
+  catch (error) { if (active(stamp) && canManage.value) ElMessage.error((error as Error).message || "操作失败"); }
+}
+async function remove(row: LotteryActivity) {
+  if (!mounted || !canManage.value || !storedSessionMatches() || !list.value.some(item => item.id === row.id)) return;
+  const stamp = sessionKey.value;
+  try { await ElMessageBox.confirm(`确认删除活动「${row.name}」？历史中奖记录仍会保留。`, "删除确认", { type: "warning" });
+    if (!active(stamp) || !canManage.value || !list.value.some(item => item.id === row.id)) return;
+    await apiLotteryDelete(row.id);
+    if (!active(stamp) || !canManage.value) return;
+    ElMessage.success("活动已删除"); await load(); }
+  catch (error) { if (error !== "cancel" && active(stamp) && canManage.value) ElMessage.error((error as Error).message || "删除失败"); }
+}
+watch(sessionKey, () => { clearSessionData(); if (mounted && canView.value) void load(1); });
+onMounted(() => {
+  mounted = true;
+  window.addEventListener("admin-session-changed", syncSession);
+  window.addEventListener("admin-auth-expired", syncSession);
+  window.addEventListener("storage", onStorage);
+  const previous = sessionKey.value;
+  syncSession();
+  if (previous === sessionKey.value && canView.value) void load(1);
+});
+onBeforeUnmount(() => {
+  mounted = false;
+  window.removeEventListener("admin-session-changed", syncSession);
+  window.removeEventListener("admin-auth-expired", syncSession);
+  window.removeEventListener("storage", onStorage);
+  clearSessionData();
+});
 </script>
 
 <style scoped>

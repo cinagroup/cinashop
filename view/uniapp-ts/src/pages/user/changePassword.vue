@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="pwd-page">
     <view class="login-box">
       <view class="title">修改密码</view>
@@ -31,9 +32,11 @@
       <view class="login-btn" @tap="doChange">确认修改</view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { http } from "@/utils/request";
 import { useAuthStore } from "@/stores/auth";
@@ -85,7 +88,7 @@ async function doChange() {
 }
 
 .login-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 40rpx;

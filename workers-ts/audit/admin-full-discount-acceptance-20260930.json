@@ -1,0 +1,305 @@
+{
+  "dateUtc": "2026-09-30",
+  "phase": "locally_verified_unpublished",
+  "scope": "Local unpublished full-discount Admin management and actual ordinary-order pricing; shared original-payment-root statistics and exact snapshot attribution",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 81,
+      "partial": 111,
+      "missing": 75,
+      "retired": 7
+    },
+    "legacyMarketingScreens": {
+      "total": 48,
+      "candidate": 29,
+      "partial": 12,
+      "missing": 7,
+      "retired": 0
+    },
+    "workerRoutes": 2018,
+    "workerRouteSurfaces": {
+      "api": 1050,
+      "admin": 693,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "retired": 17,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 95,
+    "adminApi": {
+      "callSites": 519,
+      "pathVariants": 543,
+      "executable": 543,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "screenPromotions": [
+      "/admin/marketing/discount/full_discount: missing->candidate",
+      "/admin/marketing/discount/add_discount/:id?: missing->candidate"
+    ],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "productionAccepted": false
+  },
+  "contracts": {
+    "management": "Ten REST operations per Admin prefix; independent full_discount.view/manage; exact menu1396/1400 pairing; UUID/revision replay, strict scope and SKU identity",
+    "tiers": "Amount or quantity thresholds; up to100 strictly increasing tiers of fixed-yuan reduction or integer percentage; single-tier looped fixed-yuan reduction; first tier root and same-type platform children only",
+    "pricing": "Real management-created type3 materials consumed by ordinary cart/confirmation/create, coupon overlay, exact line allocation, ledger, paid labels and partitioned split/refund",
+    "catalogConcurrency": "All ordinary promotion administration shares the existing time_discount_catalog/platform_type_1 exclusive/shared advisory protocol; stale confirmation is rejected after waits",
+    "tierIsolation": "Store-derived and different-type child rows do not become type3 tiers or affect their material fingerprint; paid historical type1 store-derived IDs still reserve per-product quota, including deleted derived rows",
+    "statisticsCorrection": "This increment corrects prior TimeDiscount pid=0-only reporting: original paid split roots pid=-1 count once and fulfillment children never add another payment; versioned snapshot fallback validates and attributes exact matching allocations instead of average displayed savings",
+    "paidLabelLimit": "Both TimeDiscount and FullDiscount administration agree with the paid consumer: maximum100 distinct paid labels; saves, activation and frontend reject101 without truncation",
+    "refundCompensationCorrection": "A real exact-promotion refund replay discrepancy is repaired:55.97 paid over3 units refunds18.66+18.66+18.65. Versioned net compensation uses the same remaining segment partition as quote/materialization; coupon-adjusted sequence, cash concessions, frozen points/commission and corrupt-evidence rejection retain strict contracts"
+  },
+  "verification": {
+    "adminPermissionPglite": {
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0
+    },
+    "quoteAndFullCheckoutPglite": {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 3,
+      "skipReason": "Three create/concurrency cases require owned native PostgreSQL capabilities"
+    },
+    "adminFrontendRuntime": {
+      "files": 2,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nativePostgresql16": {
+      "files": 11,
+      "passed": 85,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 42.42,
+      "version": "16.15",
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-UTc09Z",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "tests": [
+        "test/admin-time-discount.test.ts",
+        "test/admin-full-discount.test.ts",
+        "test/admin-full-discount-http.test.ts",
+        "test/admin-time-discount-http.test.ts",
+        "test/admin-permission.test.ts",
+        "test/order-full-discount-checkout.test.ts",
+        "test/order-time-discount-checkout.test.ts",
+        "test/order-promotion-quote.test.ts",
+        "test/order-promotion-split-finance.test.ts",
+        "test/order-promotion-ledger-split.test.ts",
+        "test/order-promotion-paid-labels.test.ts"
+      ],
+      "note": "This accepted run precedes the later two physical full-discount split/refund tests; its evidence remains separately recorded"
+    },
+    "adminServiceAndHttp": {
+      "nativeServiceFiles": 2,
+      "nativeServicePassed": 18,
+      "nativeHttpFiles": 2,
+      "nativeHttpPassed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "sharedPromotionSales": {
+      "status": "passed in both native service files",
+      "cases": [
+        "Original paid roots pid0/-1 counted once; fulfillment children excluded",
+        "Linked same-type historical tiers and authoritative promotion ledger",
+        "Exact matching versioned snapshot allocations; corrupt new evidence fails closed",
+        "Keyset batches of32; more than32 rows and repeat buyers aggregate consistently"
+      ]
+    },
+    "workerUnitTypecheck": "passed after correcting test fixture unitPriceCents inferred type to number|null",
+    "workerRuntimeTypecheck": "passed after final compensation repair",
+    "adminTypecheckAndProductionBuild": {
+      "status": "passed",
+      "command": "npm run build (vue-tsc -b && vite build)",
+      "buildSeconds": 23.28,
+      "log": "../.cache/full-discount-admin-build-final.log"
+    },
+    "adminApiStrictAudit": "543/543 executable variants from519 call sites; 0 unregistered or unresolved",
+    "auditRegression": {
+      "files": 5,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        "test/admin-marketing-frontend-parity.test.ts",
+        "test/admin-all-frontend-parity.test.ts",
+        "test/route-parity-audit.test.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/admin-frontend-api-contract.test.ts"
+      ],
+      "note": "Includes API contract10/10 subset; not extra unique cases",
+      "stdoutOnlyReproductionGuard": "Latest dated FullDiscount report reproduced without rewriting older dated reports"
+    },
+    "gitDiffCheck": "passed; only line-ending conversion warnings",
+    "published": "No commit, push, deployment or production mutation",
+    "adminApiContractRegression": {
+      "files": 2,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "physicalSplitRefundSupplement": {
+      "status": "passed after precise promotion compensation repair",
+      "attempts": [
+        {
+          "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-NrwKIW",
+          "files": 1,
+          "passed": 6,
+          "failed": 1,
+          "skipped": 0,
+          "fixtureSchemasRemaining": 0,
+          "clusterStopped": true,
+          "durationSeconds": 12.74,
+          "failure": "Exact type3 one-of-three refund quotes18.66; completed refund compensation averaged55.97/3 to18.65 and rejected the otherwise valid claim"
+        }
+      ],
+      "finding": "A real production compensation replay disagreement with precise quote/split evidence, not a missing fixture or provider permission",
+      "final": {
+        "files": 4,
+        "passed": 95,
+        "failed": 0,
+        "skipped": 0,
+        "version": "16.15",
+        "durationSeconds": 83.26,
+        "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-h306zH",
+        "fixtureSchemasRemaining": 0,
+        "clusterStopped": true,
+        "tests": [
+          "test/order-full-discount-checkout.test.ts",
+          "test/order-promotion-split-finance.test.ts",
+          "test/refund-line-compensation.test.ts",
+          "test/split-order-line-finance.test.ts"
+        ],
+        "note": "Final four-file run includes real full-discount fulfillment/refund materialization and the compensation repair; overlaps the earlier85-case run, not180 unique cases"
+      },
+      "pgliteCompensationAttempt": {
+        "files": 2,
+        "passed": 14,
+        "failed": 24,
+        "skipped": 2,
+        "reason": "All24 failures occurred at native checkout ownership capability precondition, before compensation assertions; admission guards retained. The affected compensation file passes in final native run",
+        "command": "npm run test:unit -- test/order-promotion-split-finance.test.ts test/refund-line-compensation.test.ts"
+      }
+    },
+    "purePromotionFinance": {
+      "files": 1,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Rechecked after test-only nullable unit-price annotation; runtime values unchanged from native95 acceptance"
+    }
+  },
+  "browser": {
+    "environment": {
+      "os": "Windows",
+      "browser": "Installed Chrome via bundled Playwright",
+      "browserPlugin": "absent",
+      "fallbackReason": "Browser plugin not available",
+      "url": "http://127.0.0.1:5198/marketing/full-discounts",
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "api": "Synthetic API for UI acceptance; real transaction and rule proof comes from isolated database tests"
+    },
+    "checks": {
+      "identityAndContent": "passed; list with rule and statistics columns, two-step full-discount form",
+      "frameworkOverlay": "absent",
+      "console": "Only expected net::ERR_FAILED from deliberately aborted unknown-result POST",
+      "interaction": "passed; amount/quantity/status/name filters, two-tier edit, cross-page SKU selection and cancellation, UUID/revision PUT, confirmed status PATCH, readonly/revoked state, single-tier loop rule",
+      "unknownResult": "One POST only; repeated submission blocked after unknown outcome",
+      "mobileOverflow": "passed; documentWidth=390 and date popper constrained to390px"
+    },
+    "devServerStopped": true,
+    "listenerPort5198": false,
+    "script": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-browser-qa.cjs",
+    "screenshots": [
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-list-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-form-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-sku-picker-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-sku-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-list-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-date-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/full-discount-form-mobile.png"
+    ]
+  },
+  "remaining": [
+    "Actual restricted-role browser acceptance, production statistics reconciliation and scale, immutable Linux CI, Workers runtime/Hyperdrive and release acceptance remain open",
+    "UniApp native typecheck/build is unverified because local @dcloudio/types is missing; its existing runtime regression was validated in the previous increment",
+    "Excluded-SKU scope is an explicit extension; hidden legacy looped-percentage rules are not exposed as a new managed UI capability",
+    "Seven marketing screens remain missing, including full-gift, nth-discount, coupon configuration, sign-in visual configuration and batch integral-product addition",
+    "Historical unversioned promotion evidence retains its legacy fallback; new invalid versioned evidence fails closed"
+  ],
+  "evidence": [
+    "docs/admin-full-discount-route-contract.md",
+    "audit/route-distribution-full-discount-followup-20260930.json",
+    "audit/admin-legacy-marketing-route-parity-full-discount-followup-20260930.json",
+    "audit/admin-frontend-inventory-full-discount-followup-20260930.json",
+    "audit/admin-frontend-api-contracts-full-discount-followup-20260930.json"
+  ],
+  "sourceEvidence": {
+    "normalization": "UTF-8 text with CRLF/CR normalized to LF",
+    "scope": "Final local candidate after compensation repair; preceding run states remain separate evidence",
+    "sha256": {
+      "src/controllers/api/v1/AdminFullDiscountController.ts": "a1594555e684ef72434078aab83d013aae5bdc9546ac74ad8604bb4583d02ba7",
+      "src/services/admin/AdminFullDiscountService.ts": "b3b61af668bc1cb1aab9f097538af9f1e32ef44b07dfc38dfe45102ebbd5bebc",
+      "src/services/admin/AdminTimeDiscountService.ts": "4ea51bf560425c3d40e4f79571cc992429418f9933baf15f97e546e57e84f7a5",
+      "src/services/admin/AdminPromotionSales.ts": "fe0040e771080c3e5f717d389699595c9dc25cd346c3f75c9fac699a8e94fa83",
+      "src/services/admin/AdminPermissionService.ts": "1538a55f997bc8bc06524e29338fbfa30268746dbaacc84a3c3e46fe14187678",
+      "src/routes/v1/index.ts": "6319b0fd35cc751a33a999cf5b7dc198838aaf371e6cde3e821944fb760a7efd",
+      "src/routes/adminapi.ts": "533174d23689e8c38f7f4f14e2f24e3f2fe763d151e15895481a4a6940096595",
+      "src/services/activity/OrderPromotionQuoteService.ts": "29ebb8ef84dc27c9f934cd40524dba320df12530b437b80a5cd901f9e8d95d81",
+      "src/services/order/OrderSplitFinance.ts": "9bc1ba02379a426cd5523fc447132ab207ed144e1bb25604e4abcbd52cd1fcb2",
+      "src/services/order/RefundSplitAllocation.ts": "4464fcd7b3e74626c9f8b339366c70116b188a097bd86160d0e2c3ec1648d440",
+      "src/services/order/RefundOrderMaterialization.ts": "2291061b825dceb5da7778cc7f4d53c89989c42d0845ed179034ab3f42185576",
+      "src/services/order/StoreOrderRefundService.ts": "b79ede4cd5309c34185d07cf39e436f979f5b6780fb92243a121ee7a8b9f77d0",
+      "src/services/order/OrderPromotionLedgerSplit.ts": "1265e2ea40243bb3306003e9cf7e25849e08a11d446171577cd6033dae99fedd",
+      "src/services/order/StoreOrderCreateService.ts": "1c72515dbdeb19deb55d9be5c9f8661fb85107706cb7cee427e95f11c9f50873",
+      "src/services/order/OrderRewardService.ts": "76d69520313ef801acc4b3fd0af192bbb589295ffc7d7c86e5ddd8dd461642cd",
+      "test/admin-full-discount.test.ts": "5f73b8b5b24f464254497fc4a556f9a9948fb131c5103ad6961387688df1f2e2",
+      "test/admin-full-discount-http.test.ts": "c433fe59c4b8b64f3a2c0bd845669329616a7b0c3084623526bf595ef2d1644a",
+      "test/admin-time-discount.test.ts": "930c50b2e0606b8e46482d2ea7dc8a7d4726f0b6067fb79f4660c6c75227f0f8",
+      "test/admin-time-discount-http.test.ts": "e6f1e3a91e8c2049276d32e56ebd30b0cb07979605557bdda6aa01f709e2963c",
+      "test/admin-permission.test.ts": "c6593963804f62a02ba9b3a046e2188722fd222982135444165c2a05536c30a8",
+      "test/order-full-discount-checkout.test.ts": "b38803423f5a160a5680b6b45479032604e98ac2394379876a3dcb148eff78b8",
+      "test/order-time-discount-checkout.test.ts": "b4cef8144fcaab2c40d5a5a2b70dd008bb6b53d4ab496f426a97f4845b4c6ce4",
+      "test/order-promotion-quote.test.ts": "e0a57df7a91bdbdef7124ec645fb65949211d480afa6d2111500d8fe9867e765",
+      "test/order-promotion-split-finance.test.ts": "4b0ab08a75bc3411ad5ccaa006c1fac9ad36338da8b895055471265d4a2a4ca5",
+      "test/order-promotion-ledger-split.test.ts": "f82abb8991dcecc92e3593f7d3a12b74213b64855f5bbd0cd2d38f4e04847357",
+      "test/order-promotion-paid-labels.test.ts": "17f018d37631c71792b93146607bf2d22100a0cedd09960a91ff533b38e48596",
+      "test/refund-line-compensation.test.ts": "e3aaa0e0e6c62af934be903c498630c89369382934999980dab093912d77cafe",
+      "test/split-order-line-finance.test.ts": "fd973a58c1380a2b2f37aafecae5d82c193d8fba5b674ee260efef8fa8a30e56",
+      "test/admin-all-frontend-parity.test.ts": "4dd99d66bb7f37c90421f210729323f70c94553f6d0742af292a6abb8c764242",
+      "scripts/admin-marketing-frontend-parity-audit.ts": "56113026088dd967c502a7e074f49e0f5ffd6a469f26f4161e973d3b9a92c5dd",
+      "scripts/run-local-finance-postgres.mjs": "6c9171d526468733d6ee496528775d37513b560e2fc56faf029aa1c15bff47b9",
+      "../view/admin-ts/src/api/fullDiscount.ts": "4a49ea0475771e0e18fa1baf4ea57533320363590bbc9b505deb6c25d304bcaa",
+      "../view/admin-ts/src/api/timeDiscount.ts": "e8faba1003f09e2094b90abb97f5435628a9089393333bd9bf9bf81759d113f9",
+      "../view/admin-ts/src/pages/marketing/FullDiscountList.vue": "179c98d6ebd90b7b1032d7e83eaef0aa6cce3043d2c7fc0c6562b29b94606ed4",
+      "../view/admin-ts/src/pages/marketing/FullDiscountForm.vue": "53f158b521f09d9c940bab0e4a4a62b7ddda7e76baf5d233ba9eb881e6889728",
+      "../view/admin-ts/src/pages/marketing/TimeDiscountForm.vue": "0bbc4df0621715eaaa5b4ab9b4f91bce8e30434b17d0ae8aaf0f85e0dad60d94",
+      "../view/admin-ts/src/router/index.ts": "536f175dff0bbec75b200fda71153c1c77a2aaf4977ee6e5dca10273e0c7d37c",
+      "../view/admin-ts/src/layouts/AdminLayout.vue": "3e6e25ccaae357fe0c5ac2c3a19108cd795c38866dbea00530eafa1a0b51157f",
+      "../view/admin-ts/test/fullDiscount.test.ts": "3ddb09d80ff3de5c70f4d7fd1262ddc9f207c80e3752d08008c222a14ef0c418",
+      "../view/admin-ts/test/timeDiscount.test.ts": "4fe947eab2566f347e5e6b4ec636e8c7fa340c5ee4385bf09f7a61407cbcb8ca",
+      "docs/admin-full-discount-route-contract.md": "6990d11092647e235123ca1224199303cfd625e9f0812decdb71c97788888b06"
+    }
+  }
+}

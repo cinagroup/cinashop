@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrderRefundSplit } from '@/models/schema/order_refund_split';
 import { ValidateException } from '@/utils/errors';
-import { MATERIALIZED_REFUND_VERSION, readRefundQuantityReservation } from './RefundQuantityReservation';
+import { CUSTOMER_ROW_REFUND_VERSION,isMaterializedRefundClaim,refundClaimCartKey,readRefundQuantityReservation } from './RefundQuantityReservation';
 import { refundOrderSplitFingerprint, type RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 
 export interface RefundReadItem { id: number; cartId: number; name: string; sku: string; image: string; quantity: number | null }
@@ -31,7 +31,9 @@ export async function readMaterializedRefundSnapshot(db: DbClient, refund: Refun
   physicalOrderId: number; items: RefundReadItem[];
 } | null> {
   const claim = readRefundQuantityReservation(refund);
-  if (claim?.version !== MATERIALIZED_REFUND_VERSION || refund.refundType !== 6) return null;
+  if (!isMaterializedRefundClaim(claim) || refund.refundType !== 6) return null;
+  const rowNamespace=claim.version===CUSTOMER_ROW_REFUND_VERSION;
+  const cartKey=(value:unknown)=>typeof value==='string'&&(rowNamespace?!!value&&value===value.trim()&&Array.from(value).length<=128&&!/[\u0000-\u001f\u007f]/.test(value):/^[1-9]\d{0,9}$/.test(value)&&integer(Number(value)));
   if (refund.isCancel || refund.refundedPrice !== refund.refundPrice) throw invalid();
   if (Object.hasOwn(db, '$client')) throw Error('Refund history requires a caller-owned read snapshot');
   const fingerprint = await refundOrderSplitFingerprint(refund);
@@ -99,9 +101,8 @@ export async function readMaterializedRefundSnapshot(db: DbClient, refund: Refun
   for (const raw of row.source_carts) {
     const cart = object(raw);
     if (!integer(cart.id) || sourceCarts.has(cart.id) || cart.uid !== refund.uid || cart.oid !== refund.storeOrderId
-      || !integer(cart.cartNum) || typeof cart.cartId !== 'string' || !/^[1-9]\d{0,9}$/.test(cart.cartId)
-      || !integer(Number(cart.cartId)) || cartIds.has(cart.cartId)) throw invalid();
-    sourceCarts.set(cart.id, cart); cartIds.add(cart.cartId);
+      || !integer(cart.cartNum) || !cartKey(cart.cartId) || cartIds.has(cart.cartId as string)) throw invalid();
+    sourceCarts.set(cart.id, cart); cartIds.add(cart.cartId as string);
   }
   const selected = new Map<number, Record<string, unknown>>(), sources = new Set<number>(), targets = new Set<number>();
   let remainingQuantity = 0;
@@ -109,7 +110,7 @@ export async function readMaterializedRefundSnapshot(db: DbClient, refund: Refun
     const part = object(raw);
     if (Object.keys(part).sort().join(',') !== 'remainingNum,remainingRowId,selectedNum,selectedRowId,sourceCartId,sourceRowId'
       || !integer(part.sourceRowId) || sources.has(part.sourceRowId) || typeof part.sourceCartId !== 'string'
-      || !/^[1-9]\d{0,9}$/.test(part.sourceCartId) || !integer(part.selectedNum, true) || !integer(part.remainingNum, true)
+      || !cartKey(part.sourceCartId) || !integer(part.selectedNum, true) || !integer(part.remainingNum, true)
       || part.selectedNum + part.remainingNum <= 0
       || (part.selectedNum > 0 ? !integer(part.selectedRowId) : part.selectedRowId !== null)
       || (part.remainingNum > 0 ? !integer(part.remainingRowId) : part.remainingRowId !== null)) throw invalid();
@@ -134,9 +135,9 @@ export async function readMaterializedRefundSnapshot(db: DbClient, refund: Refun
   if (new Set(carts.map(cart => cart.id)).size !== carts.length) throw invalid();
   const items = claim.items.map(item => {
     const part = selected.get(item.rowId), cart = carts.find(cart => cart.id === item.rowId);
-    if (!part || !cart || part.sourceCartId !== String(item.cartId) || part.selectedNum !== item.cartNum
+    if (!part || !cart || part.sourceCartId !== refundClaimCartKey(item) || part.selectedNum !== item.cartNum
       || Number(part.selectedNum) + Number(part.remainingNum) !== item.totalNum
-      || cart.cartId !== String(item.cartId) || cart.cartNum !== item.totalNum || cart.uid !== refund.uid
+      || cart.cartId !== refundClaimCartKey(item) || cart.cartNum !== item.totalNum || cart.uid !== refund.uid
       || cart.oid !== refund.storeOrderId || cart.valid !== true) throw invalid();
     return { id: item.rowId, cartId: item.cartId, quantity: item.cartNum,
       name: text(cart.name, '订单商品'), sku: text(cart.sku, ''), image: text(cart.image, '') };

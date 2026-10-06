@@ -1,15 +1,15 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
-import { apiCombinationSelection } from '@/api/combination';
+import { apiCombinationSelection,type CombinationDisplaySelection } from '@/api/combination';
 import { apiCartAdd } from '@/api/order';
 import { RequestError } from '@/utils/request';
 import { combinationId as parseId, combinationOpen, combinationCartInput, combinationCheckoutQuery,
-  combinationGroup, combinationGroupOpen, type CombinationSelection, type CombinationGroup } from '../../../common/combinationPurchase';
+  combinationGroup, combinationGroupOpen, type CombinationGroup } from '../../../common/combinationPurchase';
 
 export function useCombinationPurchase() {
   const auth = useAuthStore(), combinationId = ref(0), selectedGroup = ref(0), visible = ref(false);
-  const detail = shallowRef<CombinationSelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
+  const detail = shallowRef<CombinationDisplaySelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
   const loading = ref(false), buying = ref(false), navigating = ref(false), error = ref(''), prepared = ref<number | null>(null), clock = ref(Date.now());
   let generation = 0, navigationRevision = 0, pageRevision = 0, disposed = false, timer: ReturnType<typeof setInterval> | undefined;
   let loginSelection: { id: number; unique: string; quantity: number; pinkId: number } | null = null;

@@ -1,0 +1,49 @@
+<template>
+  <ThemePage><view class="customer-work-page">
+    <view class="cw-heading"><button @tap="props.manager.back">返回</button><text class="cw-title">{{ props.title }}</text><button :disabled="props.manager.loading.value || props.operations?.busy.value || props.domainBusy" @tap="props.manager.load">刷新</button></view>
+    <view v-if="props.manager.context.value" class="cw-identity"><view class="cw-stack"><text>{{ props.manager.context.value.data.profile.nickname || '手机经营账号' }}</text><text class="cw-muted">全站经营查询</text></view><text class="cw-muted">{{ props.manager.context.value.data.profile.phone }}</text></view>
+    <CustomerWorkRecoveryPanel v-if="props.operations" :operations="props.operations" />
+    <slot name="recovery" />
+    <view v-if="props.manager.error.value" class="cw-empty" data-customer-work="error"><text>{{ props.manager.error.value }}</text><button @tap="props.manager.auth.isLoggedIn ? props.manager.load() : props.manager.login()">{{ props.manager.auth.isLoggedIn ? '重新读取' : '登录' }}</button></view>
+    <view v-else-if="props.manager.loading.value" class="cw-empty">正在读取当前经营数据…</view>
+    <!-- Native picker close animations retain their host while page reads clear all business data. -->
+    <view v-show="props.manager.context.value && !props.manager.loading.value && !props.manager.error.value" class="cw-content"><slot /></view>
+    <view v-if="props.manager.context.value && !props.manager.loading.value && !props.manager.error.value" class="cw-nav">
+      <button v-for="item in nav" :key="item.page" :class="{active:props.active===item.page}" @tap="props.manager.go(item.page)">{{ item.name }}</button>
+    </view>
+  </view></ThemePage>
+</template>
+<script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+import { computed } from 'vue';
+import CustomerWorkRecoveryPanel from './CustomerWorkRecoveryPanel.vue';
+import type { CustomerWorkOperations } from '@/composables/useCustomerWorkOperations';
+import type { CustomerWorkController } from '@/composables/useCustomerWork';
+import type { CustomerWorkPage } from '@/types/customerWork';
+const props=defineProps<{title:string;manager:CustomerWorkController;operations?:CustomerWorkOperations;domainBusy?:boolean;active?:CustomerWorkPage}>();
+const nav=computed<{name:string;page:CustomerWorkPage}[]>(()=>[
+  {name:'工作台',page:'index'},{name:'经营统计',page:'statistics'},{name:'订单',page:'orders'},{name:'售后',page:'refunds'},
+  ...(props.manager.context.value?.data.capabilities.product_management?[{name:'商品',page:'products' as CustomerWorkPage}]:[]),
+  ...(props.manager.context.value?.data.capabilities.user_management?[{name:'用户',page:'users' as CustomerWorkPage}]:[]),
+  ...(props.manager.context.value?.data.capabilities.writeoff_read===true?[{name:'核销',page:'scanning' as CustomerWorkPage}]:[]),
+]);
+</script>
+<style>
+.customer-work-page{min-height:100vh;box-sizing:border-box;max-width:1100px;margin:0 auto;padding:24rpx 24rpx 190rpx;background:#f5f7f6;color:#24352d;font-size:28rpx;word-break:break-word}.customer-work-page :deep(.cw-heading){display:flex;align-items:center;gap:16rpx;margin-bottom:24rpx}.customer-work-page :deep(.cw-title){font-size:36rpx;font-weight:650;flex:1}.customer-work-page :deep(button){margin:0;padding:16rpx 24rpx;line-height:1.4;border:1rpx solid #ccdad1;border-radius:12rpx;color:#28553e;background:#fff;font-size:26rpx}.customer-work-page :deep(button::after){border:none}.customer-work-page :deep(button[disabled]){opacity:.45}.customer-work-page :deep(.cw-identity){display:flex;align-items:center;justify-content:space-between;gap:20rpx;margin-bottom:24rpx;background:#e7eee9;border-radius:16rpx;padding:22rpx}.customer-work-page :deep(.cw-stack){display:flex;flex-direction:column;gap:10rpx;min-width:0}.customer-work-page :deep(.cw-muted){font-size:24rpx;color:#64776b}.customer-work-page :deep(.cw-empty){display:flex;flex-direction:column;align-items:center;gap:24rpx;text-align:center;padding:65rpx 20rpx;background:#fff;border-radius:16rpx}.customer-work-page :deep(.cw-card){padding:26rpx;margin-bottom:24rpx;background:#fff;border:1rpx solid #e1e9e3;border-radius:18rpx;overflow:hidden}.customer-work-page :deep(.cw-subtitle){display:block;font-weight:650;font-size:30rpx;margin-bottom:16rpx}.customer-work-page :deep(.cw-scope){display:block;color:#61746a;font-size:24rpx;margin-bottom:20rpx;line-height:1.6}.customer-work-page :deep(.cw-row){display:flex;justify-content:space-between;align-items:center;gap:20rpx;margin-bottom:14rpx}.customer-work-page :deep(.cw-grid){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18rpx;margin-bottom:24rpx}.customer-work-page :deep(.cw-metric){padding:22rpx 18rpx;background:#fff;border:1rpx solid #e1e9e3;border-radius:14rpx;display:flex;flex-direction:column;gap:12rpx;min-width:0}.customer-work-page :deep(.cw-money){color:#295e43;font-size:38rpx;font-weight:650}.customer-work-page :deep(.cw-tabs),.customer-work-page :deep(.cw-controls){display:flex;gap:14rpx;flex-wrap:wrap;margin-bottom:20rpx}.customer-work-page :deep(.cw-tabs button.active){background:#295e43;color:#fff}.customer-work-page :deep(.cw-controls input){flex:1;min-width:200rpx}.customer-work-page :deep(input){height:88rpx;box-sizing:border-box;border:1rpx solid #d5dfd8;background:#f6f8f6;padding:20rpx;border-radius:10rpx;font-size:28rpx;width:100%}.customer-work-page :deep(picker){padding:18rpx 12rpx;border:1rpx solid #d5dfd8;background:#f6f8f6;border-radius:10rpx;min-width:180rpx}.customer-work-page :deep(.cw-cart){display:flex;gap:18rpx;border-top:1rpx solid #edf1ee;padding:20rpx 0}.customer-work-page :deep(.cw-image){width:110rpx;height:110rpx;flex-shrink:0;border-radius:12rpx;background:#f2f5f3}.customer-work-page :deep(.cw-link){color:#246b43;text-decoration:underline}.customer-work-page :deep(.cw-divider){margin:24rpx 0;border-top:1rpx solid #e3ebe5}.customer-work-page :deep(.cw-images){display:flex;gap:14rpx;flex-wrap:wrap}.customer-work-page :deep(.cw-images image){width:160rpx;height:160rpx;border-radius:12rpx}.customer-work-page :deep(.cw-table-row){display:grid;grid-template-columns:1.2fr 1fr .8fr .8fr;gap:8rpx;padding:18rpx 0;border-bottom:1rpx solid #e8ede9;font-size:25rpx}.customer-work-page :deep(.cw-table-head){font-weight:650}.customer-work-page :deep(.cw-chart){display:flex;gap:14rpx;height:280rpx;align-items:flex-end;overflow-x:auto;padding-top:20rpx}.customer-work-page :deep(.cw-chart-item){min-width:56rpx;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:10rpx}.customer-work-page :deep(.cw-chart-bar){width:75%;background:#4c7e5e;border-radius:8rpx 8rpx 0 0;min-height:2rpx}.customer-work-page :deep(.cw-nav){position:fixed;bottom:0;left:0;right:0;display:flex;gap:10rpx;justify-content:center;padding:18rpx 14rpx calc(18rpx + env(safe-area-inset-bottom));background:#fff;border-top:1rpx solid #d9e4dc;z-index:10}.customer-work-page :deep(.cw-nav button){min-width:140rpx}.customer-work-page :deep(.cw-nav .active){background:#e6f0e8;color:#24563a}.customer-work-page :deep(.cw-full){width:100%;margin-top:20rpx}.customer-work-page :deep(.cw-status){background:#e7f0e8;color:#31563e;border-radius:8rpx;padding:8rpx 12rpx;font-size:24rpx;flex-shrink:0}@media(max-width:600px){.customer-work-page{padding:18rpx 18rpx 180rpx}.customer-work-page :deep(.cw-grid){grid-template-columns:repeat(2,minmax(0,1fr))}.customer-work-page :deep(.cw-title){font-size:32rpx}.customer-work-page :deep(button){padding:15rpx 18rpx}.customer-work-page :deep(.cw-nav){gap:6rpx}.customer-work-page :deep(.cw-nav button){min-width:0;flex:1;padding:16rpx 8rpx}.customer-work-page :deep(.cw-controls){gap:12rpx}.customer-work-page :deep(.cw-table-row){font-size:23rpx}.customer-work-page :deep(.cw-chart-item){min-width:50rpx}}
+</style>
+<style>
+.customer-work-page :deep(.cw-recovery){background:#fff3dc;border:1px solid #e8d2a7;border-radius:14rpx;padding:24rpx;margin:0 0 24rpx;display:flex;flex-direction:column;gap:14rpx;line-height:1.6}
+.customer-work-page :deep(.cw-recovery-row){border-top:1px solid #e8d2a7;padding-top:18rpx;display:flex;flex-direction:column;gap:10rpx}
+.customer-work-page :deep(.cw-request-key){overflow-wrap:anywhere}
+.customer-work-page :deep(.cw-form-field){display:flex;flex-direction:column;gap:14rpx;margin-bottom:24rpx;min-width:0}
+.customer-work-page :deep(textarea){background:#f6f8f6;border:1rpx solid #d5dfd8;border-radius:10rpx;padding:20rpx;box-sizing:border-box;width:100%;min-height:160rpx;font-size:28rpx}
+.customer-work-page :deep(.cw-error){display:block;color:#975022;line-height:1.6;margin-bottom:16rpx}
+.customer-work-page :deep(.cw-grow){flex:1;min-width:0}
+.customer-work-page :deep(.cw-quantity){display:flex;flex-wrap:wrap;align-items:center;gap:14rpx;margin-top:12rpx}
+.customer-work-page :deep(.cw-quantity button){min-width:64rpx}
+.customer-work-page :deep(.cw-dialog){position:fixed;inset:0;z-index:60;background:rgba(15,30,20,.45);display:flex;align-items:center;justify-content:center;padding:24rpx;box-sizing:border-box;overflow:auto}
+.customer-work-page :deep(.cw-dialog-panel){width:100%;max-width:650px;max-height:calc(90vh - env(safe-area-inset-bottom));overflow:auto;padding:30rpx;background:#fff;border-radius:20rpx;box-sizing:border-box}
+.customer-work-page :deep(.cw-dialog-buttons){display:flex;flex-wrap:wrap;justify-content:flex-end;gap:18rpx;margin-top:24rpx}
+@supports(height:100dvh){.customer-work-page :deep(.cw-dialog-panel){max-height:calc(100dvh - 48rpx - env(safe-area-inset-bottom))}}
+@media(max-width:600px){.customer-work-page :deep(.cw-form-field input),.customer-work-page :deep(.cw-form-field textarea){font-size:16px}.customer-work-page :deep(.cw-recovery .cw-controls){display:flex;flex-wrap:wrap}.customer-work-page :deep(.cw-dialog-buttons button){flex:1;min-width:120rpx}}
+</style>

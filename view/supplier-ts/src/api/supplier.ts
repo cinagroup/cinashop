@@ -1,6 +1,7 @@
 import { ApiError, apiRequest } from "./http";
 import { parseSupplierRefundDetail } from '@/utils/refundDetail';
 import { parsePickingSheets } from '@/utils/pickingSheet';
+import type { SupplierProfilePatch } from '@/utils/supplierProfilePatch';
 import type {
   DashboardStats,
   ExpressCompany,
@@ -1334,7 +1335,9 @@ export async function applyExtract(extractType: string, money: string, mark: str
   return apiRequest<null>({ method: "POST", url: "/finance/supplier_extract/cash", data: { extract_type: extractType, money, mark } });
 }
 
-export async function getProfile(): Promise<SupplierProfile> {
+export type SupplierVersionedProfile = SupplierProfile & { revision: string };
+
+export async function getProfile(): Promise<SupplierVersionedProfile> {
   if (previewMode) {
     return {
       id: 1,
@@ -1353,12 +1356,16 @@ export async function getProfile(): Promise<SupplierProfile> {
       is_show: 1,
       mark: "",
       account: "supplier-demo",
+      revision: "0".repeat(64),
     };
   }
-  return apiRequest<SupplierProfile>({ method: "GET", url: "/supplier" });
+  return apiRequest<SupplierVersionedProfile>({ method: "GET", url: "/supplier" });
 }
 
-export async function updateProfile(profile: SupplierProfile) {
+export async function updateProfile(profile: SupplierProfilePatch & { expected_revision: string }) {
+  if (!/^[0-9a-f]{64}$/.test(profile.expected_revision)) {
+    throw new Error("资料版本无效，请刷新页面后重试");
+  }
   if (previewMode) return null;
   return apiRequest<null>({ method: "PUT", url: "/supplier", data: profile });
 }

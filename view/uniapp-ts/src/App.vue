@@ -1,15 +1,22 @@
 <script setup lang="ts">
+import { useThemeStore } from "@/stores/theme";
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 
+const theme = useThemeStore();
 onLaunch(() => {
+  theme.syncPlatform();
+  void theme.refresh();
   console.log("CinaShop App Launch");
 });
 
 onShow(() => {
+  theme.syncPlatform();
+  void theme.refresh();
   console.log("App Show");
 });
 
 onHide(() => {
+  theme.pause();
   console.log("App Hide");
 });
 </script>
@@ -69,7 +76,7 @@ page {
 }
 
 .price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-size: 32rpx;
   font-weight: 600;
 }
@@ -81,7 +88,7 @@ page {
 
 /* 通用按钮 */
 .btn-primary {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   border-radius: 40rpx;
   font-size: 30rpx;

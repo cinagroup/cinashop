@@ -1,5 +1,8 @@
-<template><AgentApplicationForm kind="promoter" :requested-id="requestedId" /></template>
+<template>
+  <ThemePage><AgentApplicationForm kind="promoter" :requested-id="requestedId" />  </ThemePage>
+</template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import AgentApplicationForm from "@/components/AgentApplicationForm.vue";

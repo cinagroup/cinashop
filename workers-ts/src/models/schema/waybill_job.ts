@@ -9,7 +9,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export type OrderWaybillActorType = "admin" | "supplier";
+export type OrderWaybillActorType = "admin" | "supplier" | "customer";
 export type OrderWaybillFulfillmentMode = "whole" | "split";
 export type OrderWaybillJobStatus =
   | "PENDING"
@@ -73,6 +73,7 @@ export const orderWaybillJob = pgTable(
     sentTime: integer("sent_time").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
     updateTime: integer("update_time").default(0).notNull(),
+    actorServiceId: integer("actor_service_id").default(0).notNull(),
   },
   (t) => [
     uniqueIndex("owj_event_key_uq").on(t.eventKey),
@@ -90,7 +91,10 @@ export const orderWaybillJob = pgTable(
     index("owj_expired_provider_lease").on(t.leaseUntil, t.id)
       .where(sql`${t.status} = 'PROCESSING'`),
     check("owj_actor_ck", sql`(
-      ${t.actorType} IN ('admin', 'supplier') AND ${t.actorId} > 0 AND ${t.supplierId} >= 0
+      ${t.actorId} > 0 AND ${t.supplierId} >= 0 AND (
+        (${t.actorType} IN ('admin', 'supplier') AND ${t.actorServiceId} = 0)
+        OR (${t.actorType} = 'customer' AND ${t.actorServiceId} > 0)
+      )
     )`),
     check("owj_mode_ck", sql`${t.fulfillmentMode} IN ('whole', 'split')`),
     check("owj_status_ck", sql`${t.status} IN (
@@ -128,6 +132,7 @@ export const orderWaybillJobAction = pgTable(
     providerReference: varchar("provider_reference", { length: 255 }).default("").notNull(),
     trackingNumber: varchar("tracking_number", { length: 64 }).default("").notNull(),
     addTime: integer("add_time").default(0).notNull(),
+    actorServiceId: integer("actor_service_id").default(0).notNull(),
   },
   (t) => [
     uniqueIndex("owja_request_key_uq").on(t.requestKey),
@@ -137,7 +142,10 @@ export const orderWaybillJobAction = pgTable(
       'APPLY_EXISTING', 'CONFIRM_ISSUED', 'CONFIRM_RETRY', 'CLOSE_NO_RETRY'
     )`),
     check("owja_actor_ck", sql`
-      ${t.actorType} IN ('admin', 'supplier') AND ${t.actorId} > 0 AND ${t.supplierId} >= 0
+      ${t.actorId} > 0 AND ${t.supplierId} >= 0 AND (
+        (${t.actorType} IN ('admin', 'supplier') AND ${t.actorServiceId} = 0)
+        OR (${t.actorType} = 'customer' AND ${t.actorServiceId} > 0)
+      )
     `),
     check("owja_time_ck", sql`${t.addTime} >= 0`),
   ],

@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-10-05",
+  "scope": "Current customer writeoff and cashier source increment; static registration inventory only, frontend/type/mature/full physical acceptance pending",
+  "status": "local_implementation_and_verification_in_progress",
+  "counting": {
+    "legacy": {
+      "pagesTreeVueFiles": 250,
+      "logicalManifestRouteRecords": 151,
+      "platformActiveRouteRecords": {
+        "H5": 151,
+        "MP-WEIXIN": 150,
+        "APP-PLUS": 150
+      },
+      "mainRoutes": 7,
+      "subPackageRoutes": 144,
+      "subPackages": 10,
+      "manifestSha256": "B3F0D0DB6F6E7E1E2C039695712797FBBB0B1146ACC85D304C24BB344E185EB7",
+      "conditionalNotes": [
+        "H5 includes pages/users/alipay_invoke/index",
+        "APP-PLUS selects pages/discover/discoverVideo/app while other builds select index; the route record count is unchanged"
+      ]
+    },
+    "target": {
+      "logicalManifestRouteRecords": 125,
+      "manifestSha256": "01679C81AFA061835E113A1DAA38E1174EBCC296766A0658441863E7B5873637",
+      "manifestHashNormalization": "LF"
+    },
+    "routeLedger": {
+      "directRegistered": 28,
+      "legacyCompatibilityRules": 116,
+      "candidateCoveredRules": 62,
+      "partialReplacementRules": 54,
+      "unmappedOrCrossSurface": 7,
+      "accountedLegacyRoutes": 151
+    }
+  },
+  "directRegisteredLegacyRoutes": [
+    "/pages/columnGoods/rank/index",
+    "/pages/columnGoods/live_list/index",
+    "/pages/activity/new_customer/index",
+    "/pages/discover/discoverTopic/index",
+    "/pages/discover/discoverSearch/index",
+    "/pages/discover/discoverVideo/index",
+    "/pages/extension/customer_list/feedback",
+    "/pages/work/userInfo/index",
+    "/pages/work/orderList/index",
+    "/pages/work/orderDetail/index",
+    "/pages/work/record/index",
+    "/pages/work/groupInfo/index",
+    "/pages/behalf/cashier/index",
+    "/pages/behalf/order_confirm/index",
+    "/pages/behalf/user_list/index",
+    "/pages/behalf/goods_list/index",
+    "/pages/behalf/record/index",
+    "/pages/index/index",
+    "/pages/user/index",
+    "/pages/annex/vip_active/index",
+    "/pages/annex/offline_pay/index",
+    "/pages/annex/offline_result/index",
+    "/pages/activity/goods_combination_status/index",
+    "/pages/users/distributor/apply",
+    "/pages/users/agent/apply",
+    "/pages/users/agent/state",
+    "/pages/users/agent/record",
+    "/pages/users/agent/staff_list"
+  ],
+  "gaps": [
+    {
+      "id": "FE-003B",
+      "title": "User governance and history screens",
+      "status": "missing_actionable",
+      "legacyRoutes": [
+        "/pages/users/user_cancellation/index"
+      ],
+      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate membership agreement rather than the user agreement alias; the public endpoint and page accept disabled records as old PHP did, while the membership home hides them. Account cancellation write and member QR/scan/cashier consumption still lack complete target contracts; deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames, full activity-flow parity, native-device and deployed real-user acceptance remain open."
+    },
+    {
+      "id": "FE-003C",
+      "title": "Distributor and agent self-service",
+      "status": "code_linux_complete_not_deployed",
+      "legacyRoutes": [],
+      "remaining": "Five original paths are directly registered with distinct promoter and division applications, current-status/record reads and owner-scoped staff operations. Purpose-bound one-time SMS replaces the incompatible old code cache. This code scope was merged through PR #11 after its exact-head Linux CI passed, as recorded in MIGRATION_CHECKLIST.md. Real role/data, native devices, old-client in-place upgrades and release acceptance remain under FE-003J/K; the merged code has not been deployed."
+    },
+    {
+      "id": "FE-003D",
+      "title": "Presale, newcomer, live and ranking activities",
+      "status": "local_candidate_partial",
+      "legacyRoutes": [],
+      "remaining": "Presale has local PC/UniApp catalogues, base-SKU type-6 purchase and deferred-fulfillment candidates, while cumulative limits remain closed. Newcomer has a directly registered authenticated read-only gift/list/detail path with exact legacy type routing; type-7 activity SKU purchase and checkout are not connected. Live list and product ranking old routes are directly registered local read-only candidates; ranking now has validated current-page activity IDs and expiry. Real login, operational content, WeChat live-player plugin, native devices and release acceptance remain open; route registration alone does not close FE-003D."
+    },
+    {
+      "id": "FE-003E",
+      "title": "Legacy mobile admin cross-surface replacement",
+      "status": "local_candidate_partial",
+      "legacyRoutes": [
+        "/pages/admin/order_cancellation/index"
+      ],
+      "remaining": "Thirteen actual customer-work pages include product/SKU, fulfillment, the complete mobile user eight-function increment and ordinary-customer seven-kind financial operations. Legacy aliases remain partial replacements; independent writeoff, assisted ordering and full role/device/production commissioning remain open."
+    },
+    {
+      "id": "FE-003F",
+      "title": "Payment callback, generic webview and membership/payment history",
+      "status": "blocked_external_e2e",
+      "legacyRoutes": [
+        "/pages/users/alipay_invoke/index",
+        "/pages/annex/web_view/index",
+        "/pages/annex/record_list/index",
+        "/pages/goods/cashier/index",
+        "/pages/goods/match_pay/index"
+      ],
+      "remaining": "Offline pay/result now have directly registered pages; registration is not provider-payment acceptance. Payment callbacks and the remaining historical deep links still require real H5/mini-program E2E. The unrestricted legacy webview remains retired pending an allowlist design."
+    },
+    {
+      "id": "FE-003G",
+      "title": "Feedback, enterprise work mode and behalf ordering",
+      "status": "local_candidate_partial",
+      "legacyRoutes": [],
+      "remaining": "All five original behalf routes are directly registered: records, buyer selection, product/cart, confirm and cashier; a new read-only detail route was not an original PHP manifest route. Registration and local synthetic tests do not establish full PHP flow parity. Confirm has scoped quote/create, delivery, candidate coupons, points, authoritative form components, private image upload/preview and an operator-disclosed submission journal. Detail/list are creating-Admin-scoped minimal projections. Cashier requires explicit payment initiation, status/detail checks and a displayed expected amount; zero-price assisted orders require confirmation without QR, and external QR is drawn locally. Cash/zero lock-time amount validation passed native PG16 flow 39/39; a later native PG16 flow 43/43 added a persistent one-time provider intent before external contact. Uncommitted callback-first evidence, unknown outcomes, real callback, authenticated device and retry acceptance remain release blockers. Public list requests without unique paging=cursor now receive an upgrade error; this does not force-upgrade the online old mini-program and App. Owner confirms existing users, but published package identity, signing, version and actual API origin are unverified. Category/advanced filters, large-catalog paging, keyword/status query plans, fresh buyer selection, unused-image lifecycle, cross-tab coordination and real Admin/Redis/Hyperdrive acceptance remain open. Feedback and five Work pages now have local route consumers. Work tokens stay separate from shopper login and in memory. No-hint entry and product send check the current SDK target; background/pagehide clear private state. A visible page with a userid hint cannot guarantee immediate clearing on an otherwise unobserved chat switch. Real Enterprise WeChat SDK/employee authorization, authenticated feedback submission, native devices and deployment are not verified."
+    },
+    {
+      "id": "FE-003H",
+      "title": "Community topic, search and video deep links",
+      "status": "local_candidate_covered",
+      "legacyRoutes": [],
+      "remaining": "The three logical legacy routes now preserve topic id/hot-new order, search keyword/topic filters, and video id/author/content-type state with pagination, retry and stale-response guards. The old APP-PLUS /app web-view URL extracts only validated page state, never loads the embedded host or token; generic unrestricted web-view behavior remains retired under FE-003F. Topic publishing and post detail are available within the deep-link page. Local preview video has no playable media, so real media playback and native-device/production acceptance remain under FE-003J/K."
+    }
+  ],
+  "currentBusinessProof": {
+    "catalogCompleteCases": 48,
+    "cashierNativeCurrentCases": 17,
+    "writeoffNativeComplete": false,
+    "workerTypecheckComplete": false,
+    "frontendValidated": false,
+    "fullPhysicalAcceptance": false,
+    "productionReleased": false
+  },
+  "historicalRouteLedgerProvenance": {
+    "file": "workers-ts/audit/uniapp-frontend-parity-customer-work-financial-followup-20261005.json",
+    "inheritedBusinessCredit": 0
+  }
+}

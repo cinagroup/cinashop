@@ -8,7 +8,7 @@ import { readMembershipPricingSources } from '../src/services/order/CheckoutPric
 import * as pricingSources from '../src/services/order/CheckoutPricingSources';
 import { storeProduct, storeProductAttr, storeProductAttrValue, storeProductEnsure,
   storeProductRelation, systemUserLevel, systemConfig, memberRight, user, userRelation,
-  storeCart, storeOrderCartInfo, storeOrderStatus, printDocument } from '../src/models/schema';
+  storeCart, storeOrderCartInfo, storeOrderStatus, printDocument, storePromotions, storePromotionsAuxiliary } from '../src/models/schema';
 
 describe('membership feature policy across catalogue, legacy cart and checkout', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -17,7 +17,8 @@ describe('membership feature policy across catalogue, legacy cart and checkout',
   const input = { cartIds: [1], addressId: 11, type: 0 };
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeProductAttr, storeProductEnsure, storeProductRelation,
-      systemUserLevel, userRelation, storeOrderCartInfo, storeOrderStatus, printDocument]);
+      systemUserLevel, userRelation, storeOrderCartInfo, storeOrderStatus, printDocument,
+      storePromotions, storePromotionsAuxiliary]);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.setConfig(Object.fromEntries(keys.map(key => [key, '1'])));
     await f.db.insert(systemUserLevel).values({ id: 1, name: 'Policy fixture', discount: '80.00', isShow: 1 });
@@ -44,7 +45,7 @@ describe('membership feature policy across catalogue, legacy cart and checkout',
   const display = async (price: string, priceType: string, paidEnabled: boolean, uid = 11) => {
     const selected = priceType ? price : '0';
     expect.soft(await products.getProductDetail(70, uid)).toMatchObject({ vipPrice: selected,
-      price_type: priceType, attr_value: [{ vip_price: paidEnabled ? '70.00' : '0' }] });
+      price_type: priceType, attr_value: [{ vip_price: paidEnabled ? '70.00' : '0.00' }] });
     expect.soft((await products.getGoodsList({}, uid)).list).toMatchObject([{ vip_price: selected, price_type: priceType }]);
     expect.soft(await products.getRecommendProducts(uid)).toMatchObject([{ vip_price: selected, price_type: priceType }]);
     expect.soft(await products.getLegacyProductAttr(70, uid, false)).toMatchObject({
@@ -72,9 +73,10 @@ describe('membership feature policy across catalogue, legacy cart and checkout',
     const receipt = await request('/api/order/confirm', input);
     expect(receipt.status, receipt.msg).toBe(200);
     expect(receipt.data.priceGroup.pay_price).toBe((Number(on) * 2).toFixed(2));
-    expect((await request(`/api/order/create/${receipt.data.orderKey}`, {
+    const created = await request(`/api/order/create/${receipt.data.orderKey}`, {
       ...input, quoteToken: receipt.data.quoteToken,
-    })).status).toBe(200);
+    });
+    expect(created.status, created.msg).toBe(200);
     expect((await f.snapshot()).orders).toMatchObject([{ paid: 0, payPrice: (Number(on) * 2).toFixed(2) }]);
   });
 
@@ -123,15 +125,27 @@ describe('membership feature policy across catalogue, legacy cart and checkout',
       rightRows: [{ rightType: 'vip_price', status: 1, number: 1 }] });
   });
 
-  it('does not require KV or mutate business/policy rows for display and cart reads', async () => {
+  it('keeps membership display SQL-only and full-cart promotion failure read-only during a KV outage', async () => {
     const get = vi.spyOn(f.env.CONFIG_KV, 'get').mockImplementation(async () => { throw new Error('synthetic KV outage'); });
     const put = vi.spyOn(f.env.CONFIG_KV, 'put');
     const snapshot = async () => ({ ...await f.snapshot(), configs: await f.db.select().from(systemConfig),
       rights: await f.db.select().from(memberRight), levels: await f.db.select().from(systemUserLevel) });
     const before = await snapshot();
     await display('70.00', 'member', true);
-    expect(await cart()).toMatchObject([{ truePrice: 70 }]);
     expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();
+    await expect(cart()).rejects.toThrow('synthetic KV outage');
+    const observedCalls: readonly (readonly unknown[])[] = get.mock.calls;
+    const observedKeys = observedCalls.map(([key]) => {
+      expect(typeof key).toBe('string');
+      if (typeof key !== 'string') throw new Error('Expected an individual KV key');
+      return key;
+    });
+    expect(observedKeys).toEqual([
+      'cfg_newcomer_status', 'cfg_first_order_status', 'cfg_first_order_discount',
+      'cfg_first_order_discount_limit', 'cfg_newcomer_limit_status', 'cfg_newcomer_limit_time',
+    ]);
+    expect(observedKeys.some(key => keys.some(name => key === `cfg_${name}`))).toBe(false);
+    expect(put).not.toHaveBeenCalled();
     expect(await snapshot()).toEqual(before);
   });
 

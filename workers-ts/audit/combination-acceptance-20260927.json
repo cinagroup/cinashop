@@ -1,0 +1,76 @@
+{
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T07:09:13.718Z",
+  "status": "accepted-local-candidate-unpublished",
+  "scope": "Combination full form/virtual timeout/success notification/refund purchase snapshot; three remaining screens partial",
+  "validation": {
+    "nativeUniqueFiles": 17,
+    "nativeUniquePassed": 640,
+    "scopeUniquePassed": 155,
+    "regressionUniquePassed": 485,
+    "frontendPassed": 39,
+    "compatibilityPassed": 113,
+    "ledgerPassed": 19,
+    "workerUnitAndRuntimeTypes": "passed",
+    "adminTypesAndBuild": "passed",
+    "catalogNinePaths": "passed-exact-five-categories",
+    "browser": "passed-loopback-memory",
+    "ledgerTests": [
+      "admin-marketing-frontend-parity",
+      "admin-all-frontend-parity",
+      "admin-frontend-api-audit",
+      "admin-frontend-api-contract",
+      "admin-frontend-inventory"
+    ],
+    "ledgerLog": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-ledger-final-20260927.log",
+      "sha256": "c471f2c1b3f6930ae2a53ec96cf8d25c1e59f9568415f171c734d9d6cfa97f50"
+    },
+    "countsRule": "Final distinct files only;7 green135 plus corrected migration20; no additive diagnostic or previous parent batch counts"
+  },
+  "routeDistribution": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/route-distribution-20260927.json",
+    "sha256": "45929070af1f33a7202b3517d5c3d35cc6d834fbc5fac1c79e35540ad93506cc"
+  },
+  "native": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-native-20260927.json",
+    "sha256": "3c04e897bf74442a0f5bf77ccb9f493f85f92319dfa57085a4a8e506d170799f"
+  },
+  "browser": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-browser-20260927.json",
+    "sha256": "389a2eed4d9740c19b462bd17447c4bb4a3deb73b12c9ee608e4cab2b812f397"
+  },
+  "sourceManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-runtime-accepted-snapshot/manifest.json",
+    "sha256": "f2850eaeed0bc2d89bf47d2d5b0b76423aa3266fb3395163687be2b98db518a4"
+  },
+  "distManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-final-dist-snapshot/manifest.json",
+    "sha256": "85e30070f57cb7e7758268dfd201792c1743654df80ea4fe770be009d4642604"
+  },
+  "ledgerManifest": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-ledger-accepted-snapshot/manifest.json",
+    "sha256": "1f128a122e4f4e4107bfddb88cb046f20733a83574c93b8a078359edd5e192a4"
+  },
+  "integrity": {
+    "currentPathHashPairsVerified": 125,
+    "sourceArchiveFilesVerified": 63,
+    "distArchiveFilesVerified": 157,
+    "ledgerArchiveFilesVerified": 12
+  },
+  "checklist": {
+    "checked": 246,
+    "open": 158,
+    "total": 404
+  },
+  "remaining": [
+    "Combination catalog daily/group price and three raw participation counts, statistics entry and complete export.",
+    "Global leader groups15-page/count, date/status filters, two global raw cards and pink.id-based members/linked orders.",
+    "Independent six legacy metric cards and leader/paid-root-order lists under independent read permissions; gross paid amount includes later refunds and deleted historical orders.",
+    "Opening/joining success notifications, full public media/R2, complete Linux CI, real provider/configuration/device and publication acceptance."
+  ],
+  "noProductionConnection": true,
+  "noLivePrivilegeChanges": true,
+  "published": false,
+  "goalStillOpen": true
+}

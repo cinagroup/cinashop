@@ -74,6 +74,7 @@ export interface MembershipRight {
 export interface MembershipRecord {
   id: number;
   uid: number;
+  type: number;
   order_id: string;
   member_type: string;
   member_title: string;
@@ -139,8 +140,8 @@ const previewRights: MembershipRight[] = [
   { id: 2, right_type: "integral", title: "积分倍率", show_title: "双倍积分", image: "", explain: "确认收货后按权益倍率发放积分", content: "退款时按累计目标冲正积分", number: 2, sort: 20, status: 1, add_time: now - 86_400 * 60 },
 ];
 const previewRecords: MembershipRecord[] = [
-  { id: 101, uid: 8100, order_id: "hy202608130001", member_type: "2", member_title: "年度会员", member_plan_type: "year", pay_type: "weixin", pay_price: "168.00", member_price: "168.00", paid: 1, pay_time: now - 3_600, channel_type: "routine", is_free: 0, is_permanent: 0, overdue_time: now + 365 * 86_400, vip_day: 365, add_time: now - 3_800, code_masked: "", username: "林夏", phone: "13800008000" },
-  { id: 100, uid: 8101, order_id: "hy202608120009", member_type: "free", member_title: "卡密激活", member_plan_type: "free", pay_type: "", pay_price: "0.00", member_price: "0.00", paid: 1, pay_time: now - 86_400, channel_type: "h5", is_free: 0, is_permanent: 0, overdue_time: now + 30 * 86_400, vip_day: 30, add_time: now - 86_400, code_masked: "MC00********ABCD", username: "周屿", phone: "13800008001" },
+  { id: 101, uid: 8100, type: 1, order_id: "hy202608130001", member_type: "2", member_title: "年度会员", member_plan_type: "year", pay_type: "weixin", pay_price: "168.00", member_price: "168.00", paid: 1, pay_time: now - 3_600, channel_type: "routine", is_free: 0, is_permanent: 0, overdue_time: now + 365 * 86_400, vip_day: 365, add_time: now - 3_800, code_masked: "", username: "林夏", phone: "13800008000" },
+  { id: 100, uid: 8101, type: 2, order_id: "hy202608120009", member_type: "free", member_title: "卡密激活", member_plan_type: "free", pay_type: "", pay_price: "0.00", member_price: "0.00", paid: 1, pay_time: now - 86_400, channel_type: "h5", is_free: 0, is_permanent: 0, overdue_time: now + 30 * 86_400, vip_day: 30, add_time: now - 86_400, code_masked: "MC00********ABCD", username: "周屿", phone: "13800008001" },
 ];
 let previewAgreement: MembershipAgreement = {
   id: 1,
@@ -234,6 +235,59 @@ export async function apiSetMembershipPlanStatus(id: number, isDel: number) {
   return getData(request.post<{ id: number }>("/member_ship/set_ship_status", { id, is_del: isDel }));
 }
 
+/** The legacy record selector includes every active plan, not only page one. */
+export async function apiMembershipRecordPlanOptions(): Promise<Array<{ value: string; label: string }>> {
+  const limit = 100;
+  const first = await apiMembershipPlans({ page: 1, limit });
+  const count = first.count;
+  if (!Number.isSafeInteger(count) || count < 0 || count > 10_000) throw new Error("会员类型目录超出支持范围");
+  const plans = [...first.list];
+  for (let page = 2; plans.length < count; page++) {
+    const next = await apiMembershipPlans({ page, limit });
+    if (next.count !== count || next.list.length === 0) throw new Error("会员类型目录已变化，请重试");
+    plans.push(...next.list);
+  }
+  if (plans.length !== count || new Set(plans.map((plan) => plan.id)).size !== count) {
+    throw new Error("会员类型目录已变化，请重试");
+  }
+  return plans.map((plan) => ({ value: String(plan.id), label: plan.title }));
+}
+
+export interface MembershipRecordFilterDraft {
+  name: string;
+  member_type: string;
+  pay_type: string;
+  purchase_time: [string, string] | [] | null;
+}
+
+/** Convert a Shanghai wall-clock minute to an epoch second without host-timezone dependence. */
+export function shanghaiMinuteEpoch(value: string): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(value);
+  if (!match) throw new Error("购买时间格式错误");
+  const [year, month, day, hour, minute] = match.slice(1).map(Number);
+  if (year < 1970) throw new Error("购买时间格式错误");
+  const millis = Date.UTC(year, month - 1, day, hour - 8, minute);
+  if (!Number.isFinite(millis) || new Date(millis + 8 * 3_600_000).toISOString().slice(0, 16) !== value.replace(" ", "T")) {
+    throw new Error("购买时间格式错误");
+  }
+  return Math.floor(millis / 1_000);
+}
+
+export function membershipRecordParams(draft: MembershipRecordFilterDraft, page: number) {
+  if (!Number.isSafeInteger(page) || page < 1) throw new Error("页码格式错误");
+  const params: { name: string; member_type: string; pay_type: string; page: number; limit: number;
+    start_time?: number; end_time?: number } = {
+    name: draft.name.trim(), member_type: draft.member_type, pay_type: draft.pay_type, page, limit: 20,
+  };
+  if (draft.purchase_time?.length) {
+    if (draft.purchase_time.length !== 2) throw new Error("请选择完整的购买时间范围");
+    params.start_time = shanghaiMinuteEpoch(draft.purchase_time[0]);
+    params.end_time = shanghaiMinuteEpoch(draft.purchase_time[1]) + 59;
+    if (params.end_time < params.start_time) throw new Error("结束时间不能早于开始时间");
+  }
+  return params;
+}
+
 export async function apiMembershipRights(): Promise<{ list: MembershipRight[]; count: number }> {
   if (previewMode) return { list: previewRights.map((row) => ({ ...row })), count: previewRights.length };
   return getData(request.get<{ list: MembershipRight[]; count: number }>("/member/right"));
@@ -250,7 +304,20 @@ export async function apiSaveMembershipRight(id: number, data: Record<string, un
 }
 
 export async function apiMembershipRecords(params: Record<string, unknown> = {}): Promise<{ list: MembershipRecord[]; count: number }> {
-  if (previewMode) return pageResult(previewRecords.map((row) => ({ ...row })), params);
+  if (previewMode) {
+    const name = String(params.name ?? "").trim().toLowerCase();
+    const memberType = String(params.member_type ?? "");
+    const payType = String(params.pay_type ?? "");
+    const from = Number(params.start_time ?? 0), to = Number(params.end_time ?? Number.MAX_SAFE_INTEGER);
+    return pageResult(previewRecords.filter((row) =>
+      (!name || [row.username, row.phone, row.order_id].some((part) => part.toLowerCase().includes(name)))
+      && (!memberType || (memberType === "card" ? row.member_type === "free" && Boolean(row.code_masked)
+        : memberType === "free" ? row.member_type === "free" && !row.code_masked : row.member_type === memberType))
+      && (!payType || (payType === "free" ? [0, 2, 4].includes(row.type) || row.type === 1 && row.is_free === 1
+        : row.pay_type === payType))
+      && row.add_time >= from && row.add_time <= to,
+    ).map((row) => ({ ...row })), params);
+  }
   return getData(request.get<{ list: MembershipRecord[]; count: number }>("/member/record", { params }));
 }
 

@@ -1,7 +1,6 @@
 import { compare, hash } from "bcryptjs";
 import {
   and,
-  asc,
   count,
   desc,
   eq,
@@ -47,7 +46,7 @@ import {
   type RefundExecutionScope,
 } from "@/services/order/StoreOrderRefundService";
 import { amountToCents } from "@/services/payment/RefundGateway";
-import { currentInvoiceAmount } from '@/services/order/InvoiceOrderLifecycle';
+import { assertInvoiceWriteEvidence, invoiceWriteAmount, lockSingleOrderInvoice } from '@/services/order/InvoiceWriteGuard';
 import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
 import { OutProductService } from "@/services/out/OutProductService";
 import { OutCouponService } from "@/services/out/OutCouponService";
@@ -750,35 +749,6 @@ async function lockPlatformInvoiceOrder(tx: DbClient, orderId: string) {
     throw new ValidateException('开票订单关联已变化，请刷新后重试');
   }
   return order;
-}
-
-async function lockSingleOrderInvoice(tx: DbClient, order: OrderRow) {
-  const rows = await tx.select().from(storeOrderInvoice).where(and(
-    inArray(storeOrderInvoice.orderId, order.pid > 0 ? [order.pid, order.id] : [order.id]),
-    eq(storeOrderInvoice.isDel, 0),
-  )).orderBy(asc(storeOrderInvoice.id)).limit(3).for("update");
-  if (rows.length === 0) throw new ValidateException("订单未提交开票申请");
-  if (rows.length > 1) throw new ValidateException("订单存在重复开票申请，请先完成数据核对");
-  const invoice = rows[0];
-  if (invoice.uid !== order.uid || invoice.orderId !== order.id || invoice.category !== "order") {
-    throw new ValidateException("订单开票申请关联异常，请先完成数据核对");
-  }
-  return invoice;
-}
-
-async function invoiceWriteAmount(tx: DbClient, order: OrderRow): Promise<string> {
-  if (order.pid < 0) throw new ValidateException('请先完成支付主单发票与履约子单归属核对');
-  if (order.supplierAllocationStatus === 1 || order.status < 0 || ![0, 1].includes(order.paid)) {
-    throw new ValidateException('订单当前状态不能修改发票');
-  }
-  return currentInvoiceAmount(tx, order);
-}
-
-function assertInvoiceWriteEvidence(order: OrderRow, invoice: typeof storeOrderInvoice.$inferSelect, amount: string) {
-  if (invoice.isPay !== order.paid || invoice.isRefund !== 0 || invoice.invoiceAmount !== amount
-    || ![-1, 0, 1].includes(invoice.isInvoice)) {
-    throw new ValidateException('订单发票状态或金额证据不一致，请先核对订单');
-  }
 }
 
 function refundDecisionReplayPrefix(accountId: number, requestHash: string): string {

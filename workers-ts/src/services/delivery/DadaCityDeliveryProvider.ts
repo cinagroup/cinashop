@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Env } from "@/env";
+import type { DadaCityCredentials } from './CityDeliverySettingsResolver';
 import {
   normalizeDadaCityDeliveryQuery,
   type VerifiedDadaCityDeliveryEvent,
@@ -79,14 +80,14 @@ export function dadaApiSignature(fields: Record<string, string | number>, secret
 }
 
 export class DadaCityDeliveryProvider {
-  constructor(private readonly env: Env) {}
+  constructor(private readonly env: Env, private readonly resolve?: () => Promise<DadaCityCredentials>) {}
 
   async query(providerOrderId: string, observedAt = Math.floor(Date.now() / 1_000))
     : Promise<VerifiedDadaCityDeliveryEvent> {
     if (!/^[A-Za-z0-9._:-]{1,32}$/.test(providerOrderId)) {
       throw new Error("dada_order_id_invalid");
     }
-    const config = this.config();
+    const config = this.resolve ? await this.resolve() : this.config();
     const fields: Record<string, string | number> = {
       app_key: config.appKey,
       body: JSON.stringify({ order_id: providerOrderId }),

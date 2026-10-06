@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="home">
     <view v-if="showOpenAdv" class="open-adv-mask" @tap="closeOpenAdv">
       <view class="open-adv-card" @tap.stop>
@@ -103,9 +104,11 @@
 
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, onBeforeUnmount, ref, onMounted } from "vue";
 import { onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
@@ -452,6 +455,6 @@ onBeforeUnmount(closeOpenAdv);
   font-weight: 600;
   margin: 20rpx 0;
   padding-left: 16rpx;
-  border-left: 6rpx solid #e93323;
+  border-left: 6rpx solid var(--view-theme, #e93323);
 }
 </style>

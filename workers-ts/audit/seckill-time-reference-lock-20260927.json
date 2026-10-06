@@ -1,0 +1,2400 @@
+{
+  "version": 1,
+  "capturedAtUtc": "2026-09-27T02:11:54.399Z",
+  "task": "seckill-time-reference-lock",
+  "scope": "Candidate code, isolated loopback PostgreSQL 16 tests and maintenance instructions. No production installation or grant.",
+  "state": "accepted_final_column_acl_guard: capability33_backend42_three_schema_paths2_existing_runtime_login30; production_and_actual_app_seckill_purchase_not_accepted",
+  "inventory": {
+    "externalFiles": 169,
+    "externalLast": "0167_seckill_time_reference_lock.sql",
+    "embeddedSteps": 174,
+    "embeddedLast": "0173",
+    "previousExternalThrough0166Files": 168,
+    "addedCapabilityMigrations": 1,
+    "priorSeedExternal0166AndEmbedded0172Unchanged": true
+  },
+  "inputs": {
+    "captureScope": "Exact current bytes at capture, including corrected upgrade fixture; not an immutable pre-run hash of the failed first batch.",
+    "externalAggregateAlgorithm": "SHA256(sorted filename UTF8 followed by file bytes, no normalization)",
+    "externalAggregateSha256": "0bbc9548cf024ccdcc900b4e6b264b5c79f53d5a906120e425c5fcd1f2e982ad",
+    "externalInputs": [
+      {
+        "path": "workers-ts/migrations/0000_init.sql",
+        "sha256": "a5b6521dff3d3761af9071f7ddb525b48f415ca007666d5c54b6fd93cedc9d6f",
+        "bytes": 4330
+      },
+      {
+        "path": "workers-ts/migrations/0001_product.sql",
+        "sha256": "66314bba3d464030a5ac9816a1ac1303654e547aa5e9d9b010456af9254f7100",
+        "bytes": 9083
+      },
+      {
+        "path": "workers-ts/migrations/0002_order.sql",
+        "sha256": "cced84bc702341ae2054db6ef8ee09de7d9b057bc820642325616b1f88479dd9",
+        "bytes": 6677
+      },
+      {
+        "path": "workers-ts/migrations/0003_refund.sql",
+        "sha256": "caa88433d842c632e569e086819c576359abcd6f06f02132844df8c1a161218b",
+        "bytes": 2093
+      },
+      {
+        "path": "workers-ts/migrations/0004_user_activity.sql",
+        "sha256": "0a32d0c456a0c461a1496ebbaae53cf1622514bf70e2d5267a8aaeeef6d88f15",
+        "bytes": 9756
+      },
+      {
+        "path": "workers-ts/migrations/0005_wechat.sql",
+        "sha256": "3172037fed708c96de868b68e71cf77d452f25ff75bd8cc6bf5ca6cf3a001941",
+        "bytes": 1228
+      },
+      {
+        "path": "workers-ts/migrations/0006_admin_kefu.sql",
+        "sha256": "383fec923158eac9e4712bea6088bb16050af7481c08c0b2976faf6e5e0d22c2",
+        "bytes": 3330
+      },
+      {
+        "path": "workers-ts/migrations/0006a_embedded_schema_parity.sql",
+        "sha256": "09b604e2f5965cd3dd557d096414a0d7941a92350e6f73a470cd0320ccd77a13",
+        "bytes": 10311
+      },
+      {
+        "path": "workers-ts/migrations/0007_supplier_core.sql",
+        "sha256": "f0228d769b2846ce849301c1dbdc75598059fccf1c8489c656253a0079cf7e5f",
+        "bytes": 1506
+      },
+      {
+        "path": "workers-ts/migrations/0008_supplier_fulfillment_finance.sql",
+        "sha256": "71221d3e45708db268f1fad888112ea902a92bbf90d0672237fa67146beb9cec",
+        "bytes": 4450
+      },
+      {
+        "path": "workers-ts/migrations/0009_third_party_refund.sql",
+        "sha256": "4d17fad8967ebcb77a844370bfc636c5949c672e91b241567aa396f34ca3f6f4",
+        "bytes": 1709
+      },
+      {
+        "path": "workers-ts/migrations/0010_payment_outbox.sql",
+        "sha256": "6df08e51fc78be147feb13a31d1933226419537f76dc6678b606a15f43664f9d",
+        "bytes": 1924
+      },
+      {
+        "path": "workers-ts/migrations/0011_order_brokerage_settlement.sql",
+        "sha256": "697ce849d169860ab8fdf13bba9469ac63f3eddc94ba4073735d1ccffb21ac24",
+        "bytes": 3563
+      },
+      {
+        "path": "workers-ts/migrations/0012_order_rewards.sql",
+        "sha256": "ed32f5e50dee5641991e33765c739839e63b351990ba008d595bef26bebf08ba",
+        "bytes": 2897
+      },
+      {
+        "path": "workers-ts/migrations/0013_division_brokerage.sql",
+        "sha256": "004e1a8dfc559f118f45575d0eb68889216309748fc82f41a6cb210eb827c187",
+        "bytes": 3770
+      },
+      {
+        "path": "workers-ts/migrations/0014_division_management.sql",
+        "sha256": "1da90f6588ce162a5de074a61920d75c468c9278ea67e8d31b932496e5f5f8bb",
+        "bytes": 2007
+      },
+      {
+        "path": "workers-ts/migrations/0015_admin_menu_acl.sql",
+        "sha256": "8582786f919b689dd10d9643337e95f61f5fc405c810f01019817ffe284137a6",
+        "bytes": 2318
+      },
+      {
+        "path": "workers-ts/migrations/0016_supplier_product_management.sql",
+        "sha256": "32b1e1569c74c45c3a682d20ac6a46cd4500764c5f6c2b6a3f1d24afa1cf2218",
+        "bytes": 2611
+      },
+      {
+        "path": "workers-ts/migrations/0017_supplier_split_fulfillment.sql",
+        "sha256": "047d302bc8108590975066e2d8c353d8fa055905e071b09c48e034863a9fa37d",
+        "bytes": 1440
+      },
+      {
+        "path": "workers-ts/migrations/0018_supplier_order_allocation.sql",
+        "sha256": "905f25b38c8881faf8227835368ec93e1d35af86cde4cdd40e2cead136079a04",
+        "bytes": 996
+      },
+      {
+        "path": "workers-ts/migrations/0019_order_review_integrity.sql",
+        "sha256": "faaef55bc71870bef170513220595717d8b4a55877280c5ff31eabfc68dd79ce",
+        "bytes": 3378
+      },
+      {
+        "path": "workers-ts/migrations/0020_data_migration_control.sql",
+        "sha256": "ad3a6c81ef94229a32828b5e85ac3b89b3410c13a3aa56d3d8ad3d54c333aebe",
+        "bytes": 1701
+      },
+      {
+        "path": "workers-ts/migrations/0021_repository_schema_parity.sql",
+        "sha256": "be5ad9f03417d5e01f6f14c34de2358bb809ed9b86bf1ecae64b31c58fa1cd9a",
+        "bytes": 1659
+      },
+      {
+        "path": "workers-ts/migrations/0022_composite_migration_cursor.sql",
+        "sha256": "334d95a68fa4a847e9876a225cb5ed9e0818739c11f9c7ef35cba11b21cf5f37",
+        "bytes": 169
+      },
+      {
+        "path": "workers-ts/migrations/0023_legacy_column_preservation.sql",
+        "sha256": "c7a7c94136bb7c32966c9849c6a6367e6f54936c4cafe9059e29b10535293542",
+        "bytes": 883
+      },
+      {
+        "path": "workers-ts/migrations/0024_community_seckill_legacy_columns.sql",
+        "sha256": "7f31e831cb826ea0bb3b8c86a189b45da1fe630a086d8772f58ce42e67dcf907",
+        "bytes": 1378
+      },
+      {
+        "path": "workers-ts/migrations/0025_coupon_user_legacy_mapping.sql",
+        "sha256": "6902d57cd7f6f5e13749922b4ab1b64e12a5ced89524169c0080da8381792701",
+        "bytes": 499
+      },
+      {
+        "path": "workers-ts/migrations/0026_system_metadata_legacy_columns.sql",
+        "sha256": "6645ef28f1eaea3362b03362e4f3b1f43ad548ac1af53823b92a22139af83a6a",
+        "bytes": 1627
+      },
+      {
+        "path": "workers-ts/migrations/0027_reply_shipping_legacy_columns.sql",
+        "sha256": "0a54167c10df123f201e50c16ca653445b61aa3fc47b712870fc38b9d950c49b",
+        "bytes": 1077
+      },
+      {
+        "path": "workers-ts/migrations/0028_shipping_region_legacy_mapping.sql",
+        "sha256": "be593893f7d9381b361ce6b8fa797f05209b3fadc92a495d50ef40bca6398ba0",
+        "bytes": 735
+      },
+      {
+        "path": "workers-ts/migrations/0029_user_extract_legacy_columns.sql",
+        "sha256": "06f9ceeb0e58ae2bf74852e1a20e0b55e63cc2e42f30fe9f58d161d006cf2710",
+        "bytes": 1006
+      },
+      {
+        "path": "workers-ts/migrations/0030_order_cart_pink_legacy_columns.sql",
+        "sha256": "9cfc7109297c19c06dc636237f927b7b316121374c7d9e3a3eeed731d03238b1",
+        "bytes": 2695
+      },
+      {
+        "path": "workers-ts/migrations/0031_coupon_issue_legacy_columns.sql",
+        "sha256": "4c5c6d6c51e1faf550ddc93b76114cb3ec8a4294ab5a36f653856f7e36688815",
+        "bytes": 1563
+      },
+      {
+        "path": "workers-ts/migrations/0032_activity_catalog_legacy_columns.sql",
+        "sha256": "735cbeecc4250da50c83a1b26fd8bea5a6b5221d3ecff84a8c1f3c123de7c44a",
+        "bytes": 7825
+      },
+      {
+        "path": "workers-ts/migrations/0033_order_legacy_columns.sql",
+        "sha256": "b2e52b42c84210d9405c4c03e5c66c6657c14e7de3278f5969f3be323ad9eeb2",
+        "bytes": 1810
+      },
+      {
+        "path": "workers-ts/migrations/0034_shipping_exception_rules.sql",
+        "sha256": "8b7131341f4608042b932eebdfb709dc16184f074ab42e3d07dd0afccfa956f0",
+        "bytes": 1223
+      },
+      {
+        "path": "workers-ts/migrations/0035_renamed_legacy_catalog_tables.sql",
+        "sha256": "89b50ebd5b922eebcb3fefa2f7823cb4cdbffb136b36ff61d33acdff4fc6d9e4",
+        "bytes": 2397
+      },
+      {
+        "path": "workers-ts/migrations/0036_shipping_geography.sql",
+        "sha256": "7f4f5cf23ba426e694a7d2f6bcb4c900d80bd68f4eaf4a17ecdb7497c8ea9627",
+        "bytes": 1318
+      },
+      {
+        "path": "workers-ts/migrations/0037_article_taxonomy_content.sql",
+        "sha256": "3566005cc60afe2126d4d24406b2dedb9d1a43aab18e59e26042bb17401696fb",
+        "bytes": 726
+      },
+      {
+        "path": "workers-ts/migrations/0038_legacy_content_notifications.sql",
+        "sha256": "ad9e68b2464dc2540a97523398b1df79d23f60bd8ed8dfbdcf49d6503982e70e",
+        "bytes": 5753
+      },
+      {
+        "path": "workers-ts/migrations/0039_community_relationships.sql",
+        "sha256": "e06b4bd9872bb1dcea35f73987cbe4ba40c10f35faf97ac7a2b71e2f8bdcf005",
+        "bytes": 2006
+      },
+      {
+        "path": "workers-ts/migrations/0040_order_auxiliary_records.sql",
+        "sha256": "1d87372cdc59d2ff63cb7a4847cf6ec06dbab2f0310773e5ba1ca3bfcd595b07",
+        "bytes": 4220
+      },
+      {
+        "path": "workers-ts/migrations/0041_promotion_catalog.sql",
+        "sha256": "e79f19e7dc7f01de65e8c81ff93c390c41c6a72090a83379e96e7382e8ba58a4",
+        "bytes": 2901
+      },
+      {
+        "path": "workers-ts/migrations/0042_activity_catalog.sql",
+        "sha256": "a66bed64ecb486d6f747aad2ab3dd03c2596d68d8b025710e2f7f43e461ee5f6",
+        "bytes": 1579
+      },
+      {
+        "path": "workers-ts/migrations/0043_discount_packages.sql",
+        "sha256": "8edb1652138fadddf0f10e94a021a163fa9c274ce07ea26fa611969d850fb47b",
+        "bytes": 1888
+      },
+      {
+        "path": "workers-ts/migrations/0044_delivery_orders.sql",
+        "sha256": "9d2bbb04f612adcff613865fbcc3fb38a1ee8958cdc475a6caa14249b7c77fa7",
+        "bytes": 1990
+      },
+      {
+        "path": "workers-ts/migrations/0045_finance_ledgers.sql",
+        "sha256": "b909520acef3d9bbfac139413fa6ac2e1926e8dcb7e628571d4328d19759153d",
+        "bytes": 2526
+      },
+      {
+        "path": "workers-ts/migrations/0046_integral_orders.sql",
+        "sha256": "c3e4ea8992abcc3b75a979473d813e0ac18cd9dc124dd53777fa95349e9dcd35",
+        "bytes": 3428
+      },
+      {
+        "path": "workers-ts/migrations/0047_product_metadata_and_system_groups.sql",
+        "sha256": "86918a3a9f365d3f11e6d6340de1ec4e861f02e1f114a387438b81c3d0d81d19",
+        "bytes": 4784
+      },
+      {
+        "path": "workers-ts/migrations/0048_user_segmentation.sql",
+        "sha256": "742560721ddbe0062edf00fb78d18b1da079c94b93abcb121b1b2766f2c12cdb",
+        "bytes": 893
+      },
+      {
+        "path": "workers-ts/migrations/0049_system_forms_and_config_tabs.sql",
+        "sha256": "2f605e3b4cb5d238bcb34d0506d5c39144dafbc91bfd0d54ae556019bd1fab14",
+        "bytes": 2144
+      },
+      {
+        "path": "workers-ts/migrations/0050_system_sign_rewards.sql",
+        "sha256": "d7b61df575e376d307fd222475ab781b82c368a7c0ae8de3831db45b7b4c9ead",
+        "bytes": 610
+      },
+      {
+        "path": "workers-ts/migrations/0051_agent_level_tasks.sql",
+        "sha256": "a5f0d8d938777324d8f7390358c48e3c73c63739d2b99d26d26f9033411fdc70",
+        "bytes": 1428
+      },
+      {
+        "path": "workers-ts/migrations/0052_product_coupon_grants.sql",
+        "sha256": "a97145922eec11558cf6c3b2f61edb77ed607225960129a812b4fd8efa3160b4",
+        "bytes": 530
+      },
+      {
+        "path": "workers-ts/migrations/0053_bargain_user_help.sql",
+        "sha256": "b243f68bdbd395abd375353ba496f3493bc007d2354714a85e0e85b1300bcb97",
+        "bytes": 763
+      },
+      {
+        "path": "workers-ts/migrations/0054_product_assurance_and_visit_analytics.sql",
+        "sha256": "58a6da8b304b05c32782599239dfa8745800b9428f2231a71e59020122d4eeaa",
+        "bytes": 2585
+      },
+      {
+        "path": "workers-ts/migrations/0055_customer_service_feedback_and_speechcraft.sql",
+        "sha256": "d1f8ef05522b5125059b91ac99b5f6d4b20d7ab24e5b45552d785bca0fbaf847",
+        "bytes": 1480
+      },
+      {
+        "path": "workers-ts/migrations/0056_distribution_relationships.sql",
+        "sha256": "2bdc198df2fdbccd879accbc3fbefe87046ac283d2c5ef4dcee46cb80933bee6",
+        "bytes": 2435
+      },
+      {
+        "path": "workers-ts/migrations/0057_user_friend_relationships.sql",
+        "sha256": "4b415a7570281d2166fc7ded943dd81013b02eee2a9bf267b7aab42d2545758b",
+        "bytes": 655
+      },
+      {
+        "path": "workers-ts/migrations/0058_user_search_and_visit.sql",
+        "sha256": "2f33718d4c9f4081d7ae818335d142db5b391ce6e9a0d6a14a8ceb8f773e03d8",
+        "bytes": 1653
+      },
+      {
+        "path": "workers-ts/migrations/0059_store_newcomer.sql",
+        "sha256": "504b3ba38559064ee80b5fc8b154d845ed81ecac96fece39c3c9031b480d2b39",
+        "bytes": 1027
+      },
+      {
+        "path": "workers-ts/migrations/0060_legacy_db_cache.sql",
+        "sha256": "7c6ac4d86b67f672cbede50ea157a5a66f0bd712cb7130aed65725f5ac9cfbb8",
+        "bytes": 443
+      },
+      {
+        "path": "workers-ts/migrations/0061_paid_membership_core.sql",
+        "sha256": "2f8b87934c9aa22cd9dd35400f5b8e37198e44b2551454b589a12f3e98610adf",
+        "bytes": 4268
+      },
+      {
+        "path": "workers-ts/migrations/0062_coupon_relationship_evidence.sql",
+        "sha256": "27148f4a4be2e3162e22b627b9183beec02eba18d4a8b28b70bb8722e2450256",
+        "bytes": 1131
+      },
+      {
+        "path": "workers-ts/migrations/0063_store_fulfillment_identity.sql",
+        "sha256": "0a6efb2606084a12749381ac5d556a06610e313f195aa90774f3af0aabf4bac8",
+        "bytes": 4546
+      },
+      {
+        "path": "workers-ts/migrations/0064_store_legacy_auxiliary.sql",
+        "sha256": "b60bd29255da9ac2c3d7064233775d0cf0bf9d7305df50cb48154898bfd50ccd",
+        "bytes": 3446
+      },
+      {
+        "path": "workers-ts/migrations/0065_print_documents.sql",
+        "sha256": "01ddcc6a2e03c39eece5f2177f4dec6bc8c56634328c3d510fce419f9cddbd41",
+        "bytes": 1765
+      },
+      {
+        "path": "workers-ts/migrations/0066_supplier_onboarding.sql",
+        "sha256": "f0dd4174e3f610be09ba817ac76800cee16f279c1e3bc92af7b86bbe8d28f118",
+        "bytes": 1920
+      },
+      {
+        "path": "workers-ts/migrations/0067_attachment_storage.sql",
+        "sha256": "b014f5530cf716b9ddeb1aadacfb4d4e814f097d8bfd0d55cbce435b32091163",
+        "bytes": 2705
+      },
+      {
+        "path": "workers-ts/migrations/0068_superseded_product_relations.sql",
+        "sha256": "e57ee565771d8bdea5c879c199c83ae1d7e5aa7f9a010f1f65b7fc664f482343",
+        "bytes": 1333
+      },
+      {
+        "path": "workers-ts/migrations/0069_page_navigation.sql",
+        "sha256": "72e4b59c605f5137e27bc1b743692ba01b5e6299e2429f88738a7a495a6ee716",
+        "bytes": 1174
+      },
+      {
+        "path": "workers-ts/migrations/0070_lottery_domain.sql",
+        "sha256": "b996ba4f50106a30daa89bde385dc089bed1be03f53c24bd8cb230d0fb691531",
+        "bytes": 4512
+      },
+      {
+        "path": "workers-ts/migrations/0071_wechat_reply_content.sql",
+        "sha256": "df61d9d22b0a45cbb21213fb77106db941fd7651c82b8803da04fc4d701d70a3",
+        "bytes": 2348
+      },
+      {
+        "path": "workers-ts/migrations/0072_wechat_qrcode.sql",
+        "sha256": "5971b0ac45b17ddb163b7779b751291d2b21f2d029fbfe96587e136fb5d8cf17",
+        "bytes": 2759
+      },
+      {
+        "path": "workers-ts/migrations/0073_legacy_runtime_catalog.sql",
+        "sha256": "9453fc570fe0f0cb087aaec59e9eb0c63e8ceeb5469c3652247357df3105f981",
+        "bytes": 2479
+      },
+      {
+        "path": "workers-ts/migrations/0074_wechat_live_catalog.sql",
+        "sha256": "8a7e263a85129c6cb65fe4293d8cfa82208a0a45ed6c624de8009c128abbda0b",
+        "bytes": 3841
+      },
+      {
+        "path": "workers-ts/migrations/0075_external_api.sql",
+        "sha256": "581260334b177a218ea935c390af8ef900d33085cc0a1189811983f2b184cb1d",
+        "bytes": 2053
+      },
+      {
+        "path": "workers-ts/migrations/0076_enterprise_wechat.sql",
+        "sha256": "510cbac8df0bf728cc7c24dc33e570f0ca11bd69715bf3d9181557e159292767",
+        "bytes": 15766
+      },
+      {
+        "path": "workers-ts/migrations/0077_wechat_member_card.sql",
+        "sha256": "53372371eab1e442bd20023d9343a42f2367e34a06b3953169b509179545e584",
+        "bytes": 3519
+      },
+      {
+        "path": "workers-ts/migrations/0078_fulfillment_lookup_indexes.sql",
+        "sha256": "35543d2e2d8c9c5c8a996157f65cd65792a38f5d118ba59384d5b85df00bcad7",
+        "bytes": 312
+      },
+      {
+        "path": "workers-ts/migrations/0079_pink_refund_reference.sql",
+        "sha256": "03ad54bb76bca145dc11f2dc2f301b5e7d2f7960a8dc5e065f16c4f3a6e35256",
+        "bytes": 315
+      },
+      {
+        "path": "workers-ts/migrations/0080_order_queue_dead_letter.sql",
+        "sha256": "00b978c04018122d74f6f8bad8eb2c246a4a380d4193a0a1aadf1f5fc62b8760",
+        "bytes": 2569
+      },
+      {
+        "path": "workers-ts/migrations/0081_virtual_inventory_export.sql",
+        "sha256": "31dc474f40002d6c1771112d3a14ad444b721c3ea941f2a8ac3ccb74068d6406",
+        "bytes": 1885
+      },
+      {
+        "path": "workers-ts/migrations/0082_payment_checkout_integrity.sql",
+        "sha256": "b2037f86aae18766f84ee4d68397d05ae4b245c6656ee9fd45251f249488c096",
+        "bytes": 505
+      },
+      {
+        "path": "workers-ts/migrations/0083_out_api_audit.sql",
+        "sha256": "cd4f7824747659f5a58527bd09f919301923a6dc8be211787362af24bbebcd7b",
+        "bytes": 1919
+      },
+      {
+        "path": "workers-ts/migrations/0084_order_notification_outbox.sql",
+        "sha256": "8962cd3ca2d01b3b1fb1547af9c5821cb8df6464c98d9139ac2173da1403e1e5",
+        "bytes": 737
+      },
+      {
+        "path": "workers-ts/migrations/0085_external_notification_delivery.sql",
+        "sha256": "08395aa338d9e531089d291c0f45e66461c05fcd71cdcc5a1c19f799dc4b4e4e",
+        "bytes": 3034
+      },
+      {
+        "path": "workers-ts/migrations/0086_notification_delivery_operations.sql",
+        "sha256": "fc1fe45a0d43c9f21cd7eaad45838b7dfca67418710c5299f4587e6e1e45d971",
+        "bytes": 1129
+      },
+      {
+        "path": "workers-ts/migrations/0087_community_social_graph_indexes.sql",
+        "sha256": "baf66a5118b03d9979bf5286397d76300032add8b0150d75db3058f5cb29deb5",
+        "bytes": 530
+      },
+      {
+        "path": "workers-ts/migrations/0088_community_admin_indexes.sql",
+        "sha256": "13a32ff63fe59953fb325cd99abdc57d64a4f71c1139921e4cc09b181b102247",
+        "bytes": 687
+      },
+      {
+        "path": "workers-ts/migrations/0089_community_client_indexes.sql",
+        "sha256": "cc9bd6936c55345e17c9255ae5db181715e110ce2da282dcc38e411b40e00e8a",
+        "bytes": 749
+      },
+      {
+        "path": "workers-ts/migrations/0090_print_job_outbox.sql",
+        "sha256": "26880180de5be119ace39281223f8d09a66f86f65a7a3c27788058793cc89486",
+        "bytes": 4316
+      },
+      {
+        "path": "workers-ts/migrations/0091_electronic_waybill_outbox.sql",
+        "sha256": "fd5b65af08dd0063984e19d524faa71fd66cadbc22ebbc9d2bf2ca17ac8980d0",
+        "bytes": 5010
+      },
+      {
+        "path": "workers-ts/migrations/0092_kefu_core_indexes.sql",
+        "sha256": "ac7e49f5ec3fd98c01602aeda536a8613bfdeb1d43dc147129b0dfcc1d31337f",
+        "bytes": 663
+      },
+      {
+        "path": "workers-ts/migrations/0093_kefu_realtime_indexes.sql",
+        "sha256": "52eff284eac4f61bf1e1ebd552c7fff62a97ecf9f7eb25527d28f0a620c6b247",
+        "bytes": 666
+      },
+      {
+        "path": "workers-ts/migrations/0094_kefu_transfer_audit.sql",
+        "sha256": "872785658cbfdabb59725e285cb07e34f13d0eb645ffd5d8b0ed11076c643347",
+        "bytes": 1208
+      },
+      {
+        "path": "workers-ts/migrations/0095_kefu_product_context_indexes.sql",
+        "sha256": "cf1217d097874567dc06d395b279f1806af50145878ddb46415b0cd0bc0bdfde",
+        "bytes": 555
+      },
+      {
+        "path": "workers-ts/migrations/0096_kefu_order_context_indexes.sql",
+        "sha256": "e11a7ddf0b82b898233b304077c3c20a8c07c646931e5f50974b38bc918f96d0",
+        "bytes": 473
+      },
+      {
+        "path": "workers-ts/migrations/0097_out_product_write_replay.sql",
+        "sha256": "a413c029880c9358973b1eb7775aeaa21c6684c6aeabf46e053745defbd26087",
+        "bytes": 1207
+      },
+      {
+        "path": "workers-ts/migrations/0098_out_coupon_write_replay.sql",
+        "sha256": "01af0a832a8fd920de4419e6b0499a442b4fefe67254d97d9c692b07e294f2b9",
+        "bytes": 1119
+      },
+      {
+        "path": "workers-ts/migrations/0099_out_user_write_replay.sql",
+        "sha256": "ebf914670f44fa7b9d02af3031846ff7142a9ed8c91dd440c99b7bd03dd86e74",
+        "bytes": 2057
+      },
+      {
+        "path": "workers-ts/migrations/0100_order_product_coupon_reward.sql",
+        "sha256": "a44dc4e2f585ef06db1a241c14685f51820187c471b624055763b7e96685935d",
+        "bytes": 1027
+      },
+      {
+        "path": "workers-ts/migrations/0101_activity_compatibility_indexes.sql",
+        "sha256": "c78f93196dee24e3650a20e59d263c3941abded30617c3cd8936db0f000245ff",
+        "bytes": 511
+      },
+      {
+        "path": "workers-ts/migrations/0102_short_video_compatibility.sql",
+        "sha256": "e31f00150279b96fbba9c53a10eb4ccb00464fd80c350a843b13fa3f339852bf",
+        "bytes": 2417
+      },
+      {
+        "path": "workers-ts/migrations/0103_system_config_lookup.sql",
+        "sha256": "a7831901a59a2c35c06eeefd1c017aeabd1133aa600f5850f50ed3fc93515c29",
+        "bytes": 252
+      },
+      {
+        "path": "workers-ts/migrations/0104_kefu_visitor_session.sql",
+        "sha256": "33a2a6c31c909d3cfe32f4c7bb17a24e0bfda38ad277e8da12af91a16f1e97ad",
+        "bytes": 2257
+      },
+      {
+        "path": "workers-ts/migrations/0105_user_center_compatibility_indexes.sql",
+        "sha256": "239faba453c171aca99d3d52df9f064b2b097c0659e7f7334b89833e4ffea2b3",
+        "bytes": 3896
+      },
+      {
+        "path": "workers-ts/migrations/0106_user_relation_play_partial_unique.sql",
+        "sha256": "9e7c4be81b3982df84ae0ab404078d312850c546bc4ee1aae9b7f51ecdf70da4",
+        "bytes": 9281
+      },
+      {
+        "path": "workers-ts/migrations/0107_store_mobile_delivery_index.sql",
+        "sha256": "93779b86921cc896251ec5eb16d5b7168aaa31a5cb8bf700bef36192179e2a12",
+        "bytes": 4123
+      },
+      {
+        "path": "workers-ts/migrations/0108_store_order_refund_lookup_index.sql",
+        "sha256": "6309f5ed6eeef1ba3685a5d16ceae56c18f7ed372aee5360c186a4d0238035f4",
+        "bytes": 3730
+      },
+      {
+        "path": "workers-ts/migrations/0109_work_callback_pipeline.sql",
+        "sha256": "0c203c6a6bd804ae771b273c72aa6d90ff971fd3b46327a9848098adff8835b9",
+        "bytes": 3948
+      },
+      {
+        "path": "workers-ts/migrations/0110_work_callback_follow_projection.sql",
+        "sha256": "0142b7f13ff0b823696432c7a2e5055a20b5b896189c77fc95cc71829da922a7",
+        "bytes": 1926
+      },
+      {
+        "path": "workers-ts/migrations/0111_work_callback_projection_state.sql",
+        "sha256": "dfb527fb94070b7cef7a70620ec2e7188c8bc7b62613e8acb67eb25455ccafb9",
+        "bytes": 8174
+      },
+      {
+        "path": "workers-ts/migrations/0112_work_member_current_projection.sql",
+        "sha256": "7c23c2d77073b66d330fa59a5df6b6c9262dbe49514d9e45a601c9ed058ab6fa",
+        "bytes": 54481
+      },
+      {
+        "path": "workers-ts/migrations/0113_work_member_resolved_rename_fence.sql",
+        "sha256": "a5b438ba7f4b2e9bd07308ce2a21158e0c098a2f699b7b6d2c7294afcfcb438b",
+        "bytes": 14906
+      },
+      {
+        "path": "workers-ts/migrations/0114_work_department_current_projection.sql",
+        "sha256": "a7b999451e055f287ab94b7ae85261b8a962379a0b80d0af35b98eaa64daba96",
+        "bytes": 37024
+      },
+      {
+        "path": "workers-ts/migrations/0115_work_client_current_projection.sql",
+        "sha256": "2b4c4790aa35f1264f0923e297692740e52e35e89f0cda9f15b97abf976b2853",
+        "bytes": 41231
+      },
+      {
+        "path": "workers-ts/migrations/0116_work_group_chat_current_projection.sql",
+        "sha256": "30a88f1daaee16023d0ceb4c517f9796707898e0f47981539b213090fbef5eb4",
+        "bytes": 33513
+      },
+      {
+        "path": "workers-ts/migrations/0117_work_external_tag_current_projection.sql",
+        "sha256": "76b094e41449016704a7184cf96eb1cf8141586cad457309f00e150fb3c482fa",
+        "bytes": 29376
+      },
+      {
+        "path": "workers-ts/migrations/0118_work_contact_action_outbox.sql",
+        "sha256": "b6f620aec207e698e6b532f1d949f320faa7317803773614fb260633f79732cb",
+        "bytes": 12370
+      },
+      {
+        "path": "workers-ts/migrations/0119_admin_mobile_user_replay.sql",
+        "sha256": "d6e41a5ba08cbeb73eef7ba6b0c8914340178f438ecfac6e169b52ad1eefe976",
+        "bytes": 1418
+      },
+      {
+        "path": "workers-ts/migrations/0120_payment_callback_pipeline.sql",
+        "sha256": "cca40ffdc06a59e6ff0dc2d167727a1c9687d0febb92f6e4ad56e6dc37b27c6c",
+        "bytes": 12094
+      },
+      {
+        "path": "workers-ts/migrations/0121_payment_reconciliation.sql",
+        "sha256": "9f87817a18d3496e68dbf26cc369ce6c376fc757c75f11e8f40d221e344d38ec",
+        "bytes": 12880
+      },
+      {
+        "path": "workers-ts/migrations/0122_wechat_callback_pipeline.sql",
+        "sha256": "dd06e95922c3ebf88f1d4c32e261ca8db745efcce6f2099b646c07b1ffd05491",
+        "bytes": 14813
+      },
+      {
+        "path": "workers-ts/migrations/0123_merchant_shipment_callback_pipeline.sql",
+        "sha256": "18446f1ae57c94c79d90497df353246a6f6e7a1f33a79f225908e1eaedf5ec9a",
+        "bytes": 18147
+      },
+      {
+        "path": "workers-ts/migrations/0124_city_delivery_callback_pipeline.sql",
+        "sha256": "fea0ff0d7d7b1a6bdeb1943102ab67527e98ebc44c9b0626861e74ffd0ebc858",
+        "bytes": 17341
+      },
+      {
+        "path": "workers-ts/migrations/0125_product_words_indexes.sql",
+        "sha256": "e9f56ba6354c97a17b4924be04ed7c1f291a0a8227a8b3ae727a36b48f4a1901",
+        "bytes": 473
+      },
+      {
+        "path": "workers-ts/migrations/0126_product_sku_retirement.sql",
+        "sha256": "05733c0c820c1114c50e290a4e765370c35e3dcdf3fc41e9f5dd8a640d133edb",
+        "bytes": 2575
+      },
+      {
+        "path": "workers-ts/migrations/0127_admin_article_indexes.sql",
+        "sha256": "468aaf476a9b00e99c14c4af008d35b3b376d5529ec418bc6a21abcb01273bff",
+        "bytes": 531
+      },
+      {
+        "path": "workers-ts/migrations/0128_system_form_reference_indexes.sql",
+        "sha256": "8933fb9d03add6e19b5922976861b718d1cf1c12644883f70aabc5e5ceb726d4",
+        "bytes": 843
+      },
+      {
+        "path": "workers-ts/migrations/0129_second_card_reminder_indexes.sql",
+        "sha256": "71bc6ace398c3b2e6590071440ac3bfd16481d758c0f8ef26a98817d41c51bd1",
+        "bytes": 1131
+      },
+      {
+        "path": "workers-ts/migrations/0130_user_withdrawal_replay.sql",
+        "sha256": "f18a601ef525bb5a40276e42d3ff14f306d860d9827e803fd281471c58bad2a4",
+        "bytes": 372
+      },
+      {
+        "path": "workers-ts/migrations/0131_withdrawal_effects.sql",
+        "sha256": "ecd9a1b4f28c600d108d7bf804ec8d3dfce67cce8d21d90e99069164f8df4aad",
+        "bytes": 1172
+      },
+      {
+        "path": "workers-ts/migrations/0132_withdrawal_application_notice.sql",
+        "sha256": "d5e336c8c53c5a6d81db2b0e1c72a0783a2e1e9a53e8669fcb0d84666c7ded8b",
+        "bytes": 555
+      },
+      {
+        "path": "workers-ts/migrations/0133_staff_notification_refresh.sql",
+        "sha256": "c959e4aaa3726224d482d58950d194d8bcaa85a4638b0f9d897db4a20f6839af",
+        "bytes": 449
+      },
+      {
+        "path": "workers-ts/migrations/0134_repository_column_width_alignment.sql",
+        "sha256": "9fcd26e9dea4ea65e2a4f3540d26f9ebb0dfb4d71a121b74cf4f775dba7c7275",
+        "bytes": 1736
+      },
+      {
+        "path": "workers-ts/migrations/0135_core_index_alignment.sql",
+        "sha256": "721468af966f4e6e88c464d22434b1cea08d8a32c421edfc1850277dca472312",
+        "bytes": 6637
+      },
+      {
+        "path": "workers-ts/migrations/0136_legacy_query_index_alignment.sql",
+        "sha256": "8dbb72c268cfc314322fa21c08f16f49a09aef51f96caedd1edaee70c1ac57ed",
+        "bytes": 4952
+      },
+      {
+        "path": "workers-ts/migrations/0137_worker_query_index_alignment.sql",
+        "sha256": "e33071f5cffc227a61e365d899254bc48eb2aadb4818cc8ab34d02f985bf28e2",
+        "bytes": 4409
+      },
+      {
+        "path": "workers-ts/migrations/0138_ordinary_index_name_alignment.sql",
+        "sha256": "6d6ead1a2bd89ed525305800eed6a9084c97ed7de3f79d14743fd7c23be057ba",
+        "bytes": 7914
+      },
+      {
+        "path": "workers-ts/migrations/0139_constraint_name_alignment.sql",
+        "sha256": "8b62666ca4d63160edccedec94ad31793c3abe14f8e116709efd452d47488a75",
+        "bytes": 5654
+      },
+      {
+        "path": "workers-ts/migrations/0140_external_duplicate_index_retirement.sql",
+        "sha256": "00ccdd862f2881c85bea1d1d682afc41318d15b1e6e2cc907d8def9a65c2eeb5",
+        "bytes": 5735
+      },
+      {
+        "path": "workers-ts/migrations/0141_column_default_alignment.sql",
+        "sha256": "ff850239432bd663ce42fb41e9b71c7eb948a889e4e475eea69a2af82516016f",
+        "bytes": 3337
+      },
+      {
+        "path": "workers-ts/migrations/0142_missing_constraint_alignment.sql",
+        "sha256": "bb0e6f63e5ccf53dd3e49831aea4601f92124e58ae0ed78dbca6e16a49dc17f0",
+        "bytes": 40073
+      },
+      {
+        "path": "workers-ts/migrations/0143_foreign_key_name_alignment.sql",
+        "sha256": "fd4ac32d92f882d545f299f502cca501b36a724c2a1a3a204724275cf867cbbc",
+        "bytes": 20802
+      },
+      {
+        "path": "workers-ts/migrations/0144_check_state_alignment.sql",
+        "sha256": "c823a3590dfa63ec2c517e733e77d0de874b1f2a8bf255ba120d9259e753000e",
+        "bytes": 20435
+      },
+      {
+        "path": "workers-ts/migrations/0145_kefu_sequence_alignment.sql",
+        "sha256": "94b516638da35940dda058e60a5aa60602f97c0fff628da8688a90abfbff9c19",
+        "bytes": 12783
+      },
+      {
+        "path": "workers-ts/migrations/0146_pink_recovery_index.sql",
+        "sha256": "884fdfb7db639b4858ddf13e75e7bb8f1957c1af8f46308da9bb080b33213760",
+        "bytes": 4716
+      },
+      {
+        "path": "workers-ts/migrations/0147_foreign_key_child_indexes.sql",
+        "sha256": "ee89e80eb98c5a8cd9b66d9703dd8cc0272a9fef644dfd1e7193cb373508a656",
+        "bytes": 4219
+      },
+      {
+        "path": "workers-ts/migrations/0148_work_contact_client_index.sql",
+        "sha256": "f15502d694c9a2dd9d0fb7d9ffe40b8982a14ad3311bc136671c44533b34e69c",
+        "bytes": 3666
+      },
+      {
+        "path": "workers-ts/migrations/0149_bargain_cart_participation.sql",
+        "sha256": "e72822d9c860f55728e0aab4ed993ad9df22cbfc8f1891c29450b51b954198c1",
+        "bytes": 3940
+      },
+      {
+        "path": "workers-ts/migrations/0150_brokerage_paid_order_fence.sql",
+        "sha256": "9a540ca17249bdb600021072c2b32132277019a1402792b540e3a89765304ff8",
+        "bytes": 8267
+      },
+      {
+        "path": "workers-ts/migrations/0151_coupon_product_scope_fence.sql",
+        "sha256": "5ce37fb8805205a0639250698e68fdfcb2a1fb0770438766d035faed29b43604",
+        "bytes": 8101
+      },
+      {
+        "path": "workers-ts/migrations/0152_shipping_lifecycle.sql",
+        "sha256": "4530567e588d09976875ebf27565cbede983c3539873ef9109d1c60c4e203f47",
+        "bytes": 34293
+      },
+      {
+        "path": "workers-ts/migrations/0153_shipping_lifecycle_indexes.sql",
+        "sha256": "f0840230593ab3c539e76dc58213ce6a4179290be6e80dc9bbf4f61ed528d91b",
+        "bytes": 37408
+      },
+      {
+        "path": "workers-ts/migrations/0154_shipping_template_create_replay.sql",
+        "sha256": "ac9806b0d7b2d3c3fe5fec8b92c82977c679e718a243f91b31df01cc20aab2e9",
+        "bytes": 12151
+      },
+      {
+        "path": "workers-ts/migrations/0155_admin_refund_operation.sql",
+        "sha256": "b1b8eb080c03da119cdd6bf94899f7c2d72e7c97dfb65707ada3f1c6eb1c7e75",
+        "bytes": 12881
+      },
+      {
+        "path": "workers-ts/migrations/0156_admin_refund_creation.sql",
+        "sha256": "a423514f93278bb00d61faaf7b9ab9b835d6c26f1e8c78e6f2eec055048af5cf",
+        "bytes": 12045
+      },
+      {
+        "path": "workers-ts/migrations/0157_invoice_evidence.sql",
+        "sha256": "2bd4cded38c15db63bbd6f778e16104c0e6599be283d39ff5be240ae78473733",
+        "bytes": 36860
+      },
+      {
+        "path": "workers-ts/migrations/0158_refund_order_split.sql",
+        "sha256": "6f755031318ac0ce56492f2f1fafd8daf9b28b399609f5b032528f5f490e02b6",
+        "bytes": 47828
+      },
+      {
+        "path": "workers-ts/migrations/0159_offline_order.sql",
+        "sha256": "94782da2ad44f488c14ea02e5b158caed7dc59c1f28596e53c355373c9e05a50",
+        "bytes": 123497
+      },
+      {
+        "path": "workers-ts/migrations/0160_checkout_pricing_lock.sql",
+        "sha256": "9c92e37e96fad6823527169314a94fd5ffe46559785706741ea8978d84ffc3b7",
+        "bytes": 19363
+      },
+      {
+        "path": "workers-ts/migrations/0161_presale_delivery_outbox.sql",
+        "sha256": "5a1100ddfbf41343632e2c0a05e657995ccef06cfaf9dd440dc17943adf3466a",
+        "bytes": 3768
+      },
+      {
+        "path": "workers-ts/migrations/0162_supplier_refund_lookup_indexes.sql",
+        "sha256": "84ed285b63decec34c07ff9cef0f4b4960132a5ea347d18aa12280dbea93ebc0",
+        "bytes": 5422
+      },
+      {
+        "path": "workers-ts/migrations/0163_purchase_origin_evidence.sql",
+        "sha256": "cc75b8c6dba6e4bc7e64f625c752bd63ed5da127bbd165f3586eab84069b27c5",
+        "bytes": 42192
+      },
+      {
+        "path": "workers-ts/migrations/0164_purchase_cancellation_evidence.sql",
+        "sha256": "9265a76348d765c421be6b206ffcda61784533b20d2fbba8b44852dc5a9f3b67",
+        "bytes": 85185
+      },
+      {
+        "path": "workers-ts/migrations/0165_assisted_order_list_index.sql",
+        "sha256": "4c4b2b715d8844419e0e0c6afc06874daa1c02c8a5121b7a697abf52126bb771",
+        "bytes": 5332
+      },
+      {
+        "path": "workers-ts/migrations/0166_recharge_quota_group_seed.sql",
+        "sha256": "17a0d3fd8a7d7bc9c86e98cb12079a9a2afae7187aaac8c2d7c0166c3b294a1b",
+        "bytes": 7844
+      },
+      {
+        "path": "workers-ts/migrations/0167_seckill_time_reference_lock.sql",
+        "sha256": "e06955c6b03f9a9cdef5520e27d1cafc5389c2bd2491dc4580cad42942df4fbb",
+        "bytes": 23506
+      }
+    ],
+    "currentSelectedAggregateAlgorithm": "SHA256(ordered repo-relative path UTF8 followed by file bytes, no normalization)",
+    "currentSelectedAggregateSha256": "855bd56ac676535e9cea8f8defa3a8bc51ff38343f528e226dea21c3479c9d1b",
+    "currentInputs": [
+      {
+        "path": "workers-ts/src/migrations/seckillTimeReferenceLockCatalog.ts",
+        "sha256": "167c9ea7a310a81c45a86359151489e85dc1f58d7148c40f3b57568cfb113a25",
+        "bytes": 7837
+      },
+      {
+        "path": "workers-ts/src/migrations/seckillTimeReferenceLockInstallation.ts",
+        "sha256": "4237f8693786287d8946b1ab8d274048861cba56f41181a48c35e0cf75665301",
+        "bytes": 6115
+      },
+      {
+        "path": "workers-ts/src/migrations/seckillTimeReferenceLock.ts",
+        "sha256": "be1c33ae073908262b9db8395b43954da6cba4b5683aad3a77e3a752887bc0cf",
+        "bytes": 3812
+      },
+      {
+        "path": "workers-ts/src/migrations/runSeckillTimeReferenceLock.ts",
+        "sha256": "c73b5f6e18c913ceb3bcab7e089275aaf8d6e385f19af9dc46b45215c7ad8c25",
+        "bytes": 350
+      },
+      {
+        "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+        "sha256": "cf6998f1894284b4c9caa82e99177a60d537a51774f6e67f8c11779983f50bec",
+        "bytes": 15461
+      },
+      {
+        "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+        "sha256": "0a67d9bd7bf1c3fbaa12204a418ba8393842de22bc1584c01187b04aaa918520",
+        "bytes": 1840
+      },
+      {
+        "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "sha256": "9bf7ee72e67f8eb02892b4b179053abdc122e562280a738d3471b19378e04bad",
+        "bytes": 11012
+      },
+      {
+        "path": "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+        "sha256": "f8a8c6989cb9a2883574fbdf5f4fb1affb0dab831fde51fbfc88083f8759463f",
+        "bytes": 12032
+      },
+      {
+        "path": "workers-ts/src/services/MigrationService.ts",
+        "sha256": "ee4371ba1381495448ee60873b00d530d7fab8e7e270651a0410c744b7832cda",
+        "bytes": 379975
+      },
+      {
+        "path": "workers-ts/scripts/orm-ddl-audit.ts",
+        "sha256": "6ecbcc1bcd6af2aa10936332c76d820f4c699e3224cfa7a59f56047302228718",
+        "bytes": 55332
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "7975f88aa36d37a97967a184baf6a719a7fc61b42a66ca34d5eebd81e7f2c6a5",
+        "bytes": 22775
+      },
+      {
+        "path": "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts",
+        "sha256": "a387b9f23923eb82a8d9ec4441d5de79a42952c8f1e1998e90ca4ed05cee8e0f",
+        "bytes": 2136
+      },
+      {
+        "path": "workers-ts/test/helpers/seckillTimeReferenceLockFixture.ts",
+        "sha256": "5ed62695f906c237b142b8a8ff4cbae292169377555d34e082b0d837d90760a0",
+        "bytes": 3208
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+        "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647",
+        "bytes": 8757
+      },
+      {
+        "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+        "sha256": "7571d0db5086ef1929a26b6376cb5c7bf83f48441e5086fe15c7fa399b75a9b5",
+        "bytes": 11880
+      },
+      {
+        "path": "workers-ts/test/kefu-sequence-registration.test.ts",
+        "sha256": "36169bd82247a4fa823df52ad08f8adeadb6eb657264ed8d1357b99a85df3459",
+        "bytes": 45504
+      },
+      {
+        "path": "workers-ts/test/runtime-business-privilege-plan.test.ts",
+        "sha256": "a7f46ec5bf409460eb0b44648ecf7e2318a17ba190ec452838876d57ec25d438",
+        "bytes": 4781
+      },
+      {
+        "path": "workers-ts/test/seckill-time-reference-lock.test.ts",
+        "sha256": "85e66fc6b4a6f2cd0b00f5234bb230a9cef897448f1e085ba85470aa03be5b7f",
+        "bytes": 17977
+      },
+      {
+        "path": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+        "sha256": "f05f6e4e4d382188310ef335fc8fa5e4b0a428c44c0c1d5ab95a051474783e82",
+        "bytes": 12563
+      },
+      {
+        "path": "workers-ts/test/runtime-business-login.test.ts",
+        "sha256": "67e842a68001b01527fd9d6b87b2473f6dc999fd74cd34b787693664059a3901",
+        "bytes": 29374
+      },
+      {
+        "path": "workers-ts/docs/seckill-time-reference-lock.md",
+        "sha256": "4d7dc031e346fe971522b4f4c61cf4eab4aaae9617aed5c260492677b0fbd6ff",
+        "bytes": 5590
+      }
+    ],
+    "firstNativeBatchImmutableInputHash": null
+  },
+  "completeSchemaPaths": [
+    {
+      "path": "forward0167",
+      "from": "complete 168-file external schema through 0166",
+      "operation": "standalone 0167",
+      "assertions": [
+        "all 279 public table rows unchanged",
+        "existing relation OIDs/owners unchanged",
+        "all pre-existing relation/column/schema/routine ACLs unchanged",
+        "tables/columns/constraints/indexes/sequences catalog unchanged",
+        "exact independent fixed-capability owner/function/ACL",
+        "repeat identity and rows unchanged"
+      ],
+      "status": "passed_final_column_acl_guard",
+      "acceptedRunSessionId": 46442
+    },
+    {
+      "path": "fresh_external169",
+      "from": "empty owned database",
+      "operation": "all 169 sorted external files",
+      "status": "passed_final_column_acl_guard",
+      "acceptedRunSessionId": 46442
+    },
+    {
+      "path": "fresh_embedded174",
+      "from": "empty owned database",
+      "operation": "all 174 embedded steps",
+      "status": "passed_final_column_acl_guard",
+      "acceptedRunSessionId": 46442
+    }
+  ],
+  "firstNativeBatch": {
+    "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/seckill-time-reference-lock.test.ts test/seckill-time-reference-lock-upgrade.test.ts test/runtime-business-login.test.ts",
+    "cwd": "C:/cinagroup/cinashop/workers-ts",
+    "sessionId": 91788,
+    "exitCode": 1,
+    "startedLocal": "2026-09-27 09:41:41 Asia/Singapore",
+    "durationSeconds": 591.52,
+    "postgresVersion": "16.15",
+    "serverVersionNum": 160015,
+    "host": "127.0.0.1",
+    "port": 64329,
+    "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-bn9zyn",
+    "total": {
+      "files": 3,
+      "filesPassed": 1,
+      "filesFailed": 2,
+      "tests": 62,
+      "passed": 59,
+      "failed": 3
+    },
+    "capabilitySuite": {
+      "file": "workers-ts/test/seckill-time-reference-lock.test.ts",
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "nativeBehaviorCases": 29,
+      "externalSqlEqualityCases": 1,
+      "mockedCapability": false,
+      "verified": [
+        "actual restricted independent LOGIN",
+        "direct parent/child EXCLUSIVE lock denied",
+        "fixed no-argument capability permitted for admin",
+        "slot U/D permitted without parent DML",
+        "app/PUBLIC execution denied",
+        "owner SET ROLE and delegation denied",
+        "fixed permanent parent-before-child locks despite pg_temp shadows",
+        "real PID blocker barriers and reads remain available",
+        "commit/rollback lock release",
+        "child timeout releases earlier parent lock",
+        "READ COMMITTED and stricter deadlines",
+        "OID/owner/ACL repeat preservation",
+        "body/path/invoker/overload/RLS/PUBLIC drift refusal",
+        "owner attributes/membership/unrelated column DML/grant-option expansion refusal",
+        "failed install rollback and maintenance fence"
+      ]
+    },
+    "existingRuntimeSuite": {
+      "file": "workers-ts/test/runtime-business-login.test.ts",
+      "tests": 30,
+      "passed": 29,
+      "failed": 1,
+      "failedCase": "runs public confirmation/create and true presale / delete cancellation under the exact app LOGIN",
+      "error": "PostgresError: could not open file \"base/92585/93898\": Invalid argument",
+      "status": "unresolved_pending_revalidation; not counted as pass"
+    },
+    "completeSchemaSuite": {
+      "file": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+      "tests": 2,
+      "passed": 0,
+      "failed": 2,
+      "failures": [
+        {
+          "case": "forward0167",
+          "error": "PostgresError: ACL arrays must be one-dimensional",
+          "correction": "Remove zero-dimensional empty ACL fallback; aclexplode(col.attacl) preserves NULL as no column grants."
+        },
+        {
+          "case": "fresh_external169_and_embedded174",
+          "error": "0166: Pricing installation requires an explicit safe NOLOGIN owner setting",
+          "correction": "Explicitly bind both owner settings on the current maintenance connection before construction and standalone repetition; the second connection can expire while the first catalog builds."
+        }
+      ],
+      "status": "corrected_source_only; no accepted three-path evidence yet"
+    },
+    "cleanup": {
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "runnerReportedFixturesZero": true,
+      "runnerReportedStopped": true,
+      "stoppedTaskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-bn9zyn",
+      "postExitPortQueryHadNoConnections": true,
+      "independentPgCtlReview": {
+        "pgCtlExit": 3,
+        "listening": 0,
+        "cluster": "bn9zyn"
+      }
+    },
+    "guardPhase": "pre-guard-patch"
+  },
+  "unitBatch": {
+    "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts test/kefu-sequence-registration.test.ts test/runtime-business-privilege-plan.test.ts test/seckill-time-reference-lock.test.ts",
+    "sessionId": 67334,
+    "exitCode": 0,
+    "filesPassed": 3,
+    "testsPassed": 91,
+    "nativeCasesSkipped": 29,
+    "nativeSkipIsNotPermissionEvidence": true,
+    "durationSeconds": 39.89,
+    "unitTypecheck": {
+      "command": "npm run typecheck:unit",
+      "sessionId": 55725,
+      "exitCode": 0
+    },
+    "guardPhase": "pre-guard-patch",
+    "countingRule": "Separate pre-guard light unit/orchestration suite; not added to 107 native-environment assertions and not current full-tree unit evidence."
+  },
+  "rejectedRerun": {
+    "executed": false,
+    "reason": "Automatic approval review failed: application network permission was revoked; review could not be completed.",
+    "noSafetyDetermination": true,
+    "noNewClusterStarted": true,
+    "rerunDelegatedToRootNormalApproval": true
+  },
+  "maintenanceDocument": "workers-ts/docs/seckill-time-reference-lock.md",
+  "historicalEvidence": {
+    "oldNinePath168External173EmbeddedCatalogEvidenceUnmodified": true,
+    "currentOrmAuditSourceRegistersNewOwnerAndCapability": true,
+    "currentNinePathOrmAuditRerun": false
+  },
+  "laterValidation": [
+    {
+      "stage": "complete_schema_paths",
+      "guardPhase": "pre-guard-patch",
+      "acceptedForFinalGuardTree": false,
+      "rootSessionId": 38674,
+      "exitCode": 0,
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "covers": [
+        "forward0167 from full 168-file through0166 catalog",
+        "fresh external169",
+        "fresh embedded174"
+      ],
+      "durationSeconds": 38.74,
+      "host": "127.0.0.1",
+      "port": 58310,
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-07gpeG",
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-upgrade-20260927-final.log",
+        "sha256": "c8b67e33bf307df7916a37b6d369d462623e8a093776d83e20a179ccb6b8d2d0",
+        "bytes": 805,
+        "containsFixturesZero": true,
+        "containsStopped": true
+      },
+      "sourceConsistency": {
+        "inputsFrozenDuringRunReportedByRoot": true,
+        "selectedInputSha256": "c586e1d5c74c56d98622c121bd72c5dc3a855cd789983ebe97b5e7a91a4bbb09",
+        "externalAggregateSha256": "acc7bcc4145259c7ad2449a84dc27c4d83b37840ed9618931291a82a0aafd919",
+        "finalColumnGuardPatchedAfterThisRun": true
+      },
+      "cleanup": {
+        "runnerReportedRemainingZero": true,
+        "runnerReportedStopped": true,
+        "independentPgCtlReview": {
+          "pgCtlExit": 3,
+          "listening": 0
+        }
+      }
+    },
+    {
+      "stage": "existing_runtime_login",
+      "guardPhase": "pre-guard-patch",
+      "acceptedForFinalGuardTree": false,
+      "rootSessionId": 79488,
+      "exitCode": 0,
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 248.32,
+      "host": "127.0.0.1",
+      "port": 58402,
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-robJS0",
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-runtime-login-20260927-final.log",
+        "sha256": "5a6dcb9f1da637c03dc801ae672db6c6470d80c9c6ee83e8c6361834918bc59d",
+        "bytes": 796,
+        "containsFixturesZero": true,
+        "containsStopped": true
+      },
+      "sourceConsistency": {
+        "inputsFrozenDuringRunReportedByRoot": true,
+        "selectedInputSha256": "c586e1d5c74c56d98622c121bd72c5dc3a855cd789983ebe97b5e7a91a4bbb09",
+        "finalColumnGuardPatchedAfterThisRun": true
+      },
+      "cleanup": {
+        "runnerReportedRemainingZero": true,
+        "runnerReportedStopped": true,
+        "independentPgCtlReview": {
+          "pgCtlExit": 3,
+          "listening": 0
+        }
+      }
+    },
+    {
+      "stage": "final_capability_and_complete_schema_paths",
+      "guardPhase": "final-column-acl-guard",
+      "acceptedForFinalGuardTree": true,
+      "rootSessionId": 46442,
+      "exitCode": 0,
+      "files": 4,
+      "tests": 77,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 94.01,
+      "suites": [
+        {
+          "file": "workers-ts/test/admin-seckill-time.test.ts",
+          "tests": 28,
+          "scope": "native backend SQL/HTTP/permission business cases"
+        },
+        {
+          "file": "workers-ts/test/admin-seckill-time-postgres.test.ts",
+          "tests": 14,
+          "scope": "actual buying/reference-writer concurrent business transactions; maintenance fixture, not app-profile qualification"
+        },
+        {
+          "file": "workers-ts/test/seckill-time-reference-lock.test.ts",
+          "tests": 33,
+          "nativeBehaviorCases": 32,
+          "externalSqlEqualityCases": 1,
+          "scope": "actual restricted LOGIN; fixed no-argument locking and exact catalog/owner/ACL including three column ACL negative cases"
+        },
+        {
+          "file": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+          "tests": 2,
+          "scope": "all three full-schema paths"
+        }
+      ],
+      "host": "127.0.0.1",
+      "port": 57752,
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-gKyKKo",
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-guard-native-20260927-final.log",
+        "sha256": "7a6dfbd43e1a2d6138ff3c124a153ce62656718e7052ec91040de5f328157cf4",
+        "bytes": 929,
+        "containsFixturesZero": true,
+        "containsStopped": true
+      },
+      "sourceConsistency": {
+        "frozenSelectedInputSha256": "855bd56ac676535e9cea8f8defa3a8bc51ff38343f528e226dea21c3479c9d1b",
+        "externalAggregateSha256": "0bbc9548cf024ccdcc900b4e6b264b5c79f53d5a906120e425c5fcd1f2e982ad",
+        "exactSelectedExecutableInputsStillMatchFrozenHashes": true,
+        "descriptiveDocumentChangedAfterRun": [
+          "workers-ts/docs/seckill-time-reference-lock.md"
+        ]
+      },
+      "cleanup": {
+        "runnerReportedRemainingZero": true,
+        "runnerReportedStopped": true,
+        "independentPgCtlReview": {
+          "pgCtlExit": 3,
+          "listening": 0
+        }
+      }
+    },
+    {
+      "stage": "final_guard_existing_runtime_login",
+      "guardPhase": "final-column-acl-guard",
+      "acceptedForFinalGuardTree": true,
+      "rootSessionId": 8329,
+      "exitCode": 0,
+      "files": 1,
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 253.87,
+      "scope": "Existing ordinary/presale and other fixed business-profile regression; actual app-profile seckill purchase remains outside tested scope.",
+      "host": "127.0.0.1",
+      "port": 50743,
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-BCBHaw",
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-guard-runtime-login-20260927-final.log",
+        "sha256": "67a8c43d6c670672da1775ec953ae9315f72cafecfff38c247a26ef87cd0ea15",
+        "bytes": 796,
+        "containsFixturesZero": true,
+        "containsStopped": true
+      },
+      "sourceConsistency": {
+        "frozenSelectedInputSha256": "855bd56ac676535e9cea8f8defa3a8bc51ff38343f528e226dea21c3479c9d1b",
+        "exactSelectedExecutableInputsStillMatchFrozenHashes": true,
+        "descriptiveDocumentChangedAfterNativeFreeze": [
+          "workers-ts/docs/seckill-time-reference-lock.md"
+        ]
+      },
+      "cleanup": {
+        "runnerReportedRemainingZero": true,
+        "runnerReportedStopped": true,
+        "independentPgCtlReview": {
+          "pgCtlExit": 3,
+          "listening": 0
+        }
+      }
+    }
+  ],
+  "priorInputCaptures": [
+    {
+      "capturedAtUtc": "2026-09-27T01:58:26.126Z",
+      "inputs": {
+        "captureScope": "Exact current bytes at capture, including corrected upgrade fixture; not an immutable pre-run hash of the failed first batch.",
+        "externalAggregateAlgorithm": "SHA256(sorted filename UTF8 followed by file bytes, no normalization)",
+        "externalAggregateSha256": "acc7bcc4145259c7ad2449a84dc27c4d83b37840ed9618931291a82a0aafd919",
+        "externalInputs": [
+          {
+            "path": "workers-ts/migrations/0000_init.sql",
+            "sha256": "a5b6521dff3d3761af9071f7ddb525b48f415ca007666d5c54b6fd93cedc9d6f",
+            "bytes": 4330
+          },
+          {
+            "path": "workers-ts/migrations/0001_product.sql",
+            "sha256": "66314bba3d464030a5ac9816a1ac1303654e547aa5e9d9b010456af9254f7100",
+            "bytes": 9083
+          },
+          {
+            "path": "workers-ts/migrations/0002_order.sql",
+            "sha256": "cced84bc702341ae2054db6ef8ee09de7d9b057bc820642325616b1f88479dd9",
+            "bytes": 6677
+          },
+          {
+            "path": "workers-ts/migrations/0003_refund.sql",
+            "sha256": "caa88433d842c632e569e086819c576359abcd6f06f02132844df8c1a161218b",
+            "bytes": 2093
+          },
+          {
+            "path": "workers-ts/migrations/0004_user_activity.sql",
+            "sha256": "0a32d0c456a0c461a1496ebbaae53cf1622514bf70e2d5267a8aaeeef6d88f15",
+            "bytes": 9756
+          },
+          {
+            "path": "workers-ts/migrations/0005_wechat.sql",
+            "sha256": "3172037fed708c96de868b68e71cf77d452f25ff75bd8cc6bf5ca6cf3a001941",
+            "bytes": 1228
+          },
+          {
+            "path": "workers-ts/migrations/0006_admin_kefu.sql",
+            "sha256": "383fec923158eac9e4712bea6088bb16050af7481c08c0b2976faf6e5e0d22c2",
+            "bytes": 3330
+          },
+          {
+            "path": "workers-ts/migrations/0006a_embedded_schema_parity.sql",
+            "sha256": "09b604e2f5965cd3dd557d096414a0d7941a92350e6f73a470cd0320ccd77a13",
+            "bytes": 10311
+          },
+          {
+            "path": "workers-ts/migrations/0007_supplier_core.sql",
+            "sha256": "f0228d769b2846ce849301c1dbdc75598059fccf1c8489c656253a0079cf7e5f",
+            "bytes": 1506
+          },
+          {
+            "path": "workers-ts/migrations/0008_supplier_fulfillment_finance.sql",
+            "sha256": "71221d3e45708db268f1fad888112ea902a92bbf90d0672237fa67146beb9cec",
+            "bytes": 4450
+          },
+          {
+            "path": "workers-ts/migrations/0009_third_party_refund.sql",
+            "sha256": "4d17fad8967ebcb77a844370bfc636c5949c672e91b241567aa396f34ca3f6f4",
+            "bytes": 1709
+          },
+          {
+            "path": "workers-ts/migrations/0010_payment_outbox.sql",
+            "sha256": "6df08e51fc78be147feb13a31d1933226419537f76dc6678b606a15f43664f9d",
+            "bytes": 1924
+          },
+          {
+            "path": "workers-ts/migrations/0011_order_brokerage_settlement.sql",
+            "sha256": "697ce849d169860ab8fdf13bba9469ac63f3eddc94ba4073735d1ccffb21ac24",
+            "bytes": 3563
+          },
+          {
+            "path": "workers-ts/migrations/0012_order_rewards.sql",
+            "sha256": "ed32f5e50dee5641991e33765c739839e63b351990ba008d595bef26bebf08ba",
+            "bytes": 2897
+          },
+          {
+            "path": "workers-ts/migrations/0013_division_brokerage.sql",
+            "sha256": "004e1a8dfc559f118f45575d0eb68889216309748fc82f41a6cb210eb827c187",
+            "bytes": 3770
+          },
+          {
+            "path": "workers-ts/migrations/0014_division_management.sql",
+            "sha256": "1da90f6588ce162a5de074a61920d75c468c9278ea67e8d31b932496e5f5f8bb",
+            "bytes": 2007
+          },
+          {
+            "path": "workers-ts/migrations/0015_admin_menu_acl.sql",
+            "sha256": "8582786f919b689dd10d9643337e95f61f5fc405c810f01019817ffe284137a6",
+            "bytes": 2318
+          },
+          {
+            "path": "workers-ts/migrations/0016_supplier_product_management.sql",
+            "sha256": "32b1e1569c74c45c3a682d20ac6a46cd4500764c5f6c2b6a3f1d24afa1cf2218",
+            "bytes": 2611
+          },
+          {
+            "path": "workers-ts/migrations/0017_supplier_split_fulfillment.sql",
+            "sha256": "047d302bc8108590975066e2d8c353d8fa055905e071b09c48e034863a9fa37d",
+            "bytes": 1440
+          },
+          {
+            "path": "workers-ts/migrations/0018_supplier_order_allocation.sql",
+            "sha256": "905f25b38c8881faf8227835368ec93e1d35af86cde4cdd40e2cead136079a04",
+            "bytes": 996
+          },
+          {
+            "path": "workers-ts/migrations/0019_order_review_integrity.sql",
+            "sha256": "faaef55bc71870bef170513220595717d8b4a55877280c5ff31eabfc68dd79ce",
+            "bytes": 3378
+          },
+          {
+            "path": "workers-ts/migrations/0020_data_migration_control.sql",
+            "sha256": "ad3a6c81ef94229a32828b5e85ac3b89b3410c13a3aa56d3d8ad3d54c333aebe",
+            "bytes": 1701
+          },
+          {
+            "path": "workers-ts/migrations/0021_repository_schema_parity.sql",
+            "sha256": "be5ad9f03417d5e01f6f14c34de2358bb809ed9b86bf1ecae64b31c58fa1cd9a",
+            "bytes": 1659
+          },
+          {
+            "path": "workers-ts/migrations/0022_composite_migration_cursor.sql",
+            "sha256": "334d95a68fa4a847e9876a225cb5ed9e0818739c11f9c7ef35cba11b21cf5f37",
+            "bytes": 169
+          },
+          {
+            "path": "workers-ts/migrations/0023_legacy_column_preservation.sql",
+            "sha256": "c7a7c94136bb7c32966c9849c6a6367e6f54936c4cafe9059e29b10535293542",
+            "bytes": 883
+          },
+          {
+            "path": "workers-ts/migrations/0024_community_seckill_legacy_columns.sql",
+            "sha256": "7f31e831cb826ea0bb3b8c86a189b45da1fe630a086d8772f58ce42e67dcf907",
+            "bytes": 1378
+          },
+          {
+            "path": "workers-ts/migrations/0025_coupon_user_legacy_mapping.sql",
+            "sha256": "6902d57cd7f6f5e13749922b4ab1b64e12a5ced89524169c0080da8381792701",
+            "bytes": 499
+          },
+          {
+            "path": "workers-ts/migrations/0026_system_metadata_legacy_columns.sql",
+            "sha256": "6645ef28f1eaea3362b03362e4f3b1f43ad548ac1af53823b92a22139af83a6a",
+            "bytes": 1627
+          },
+          {
+            "path": "workers-ts/migrations/0027_reply_shipping_legacy_columns.sql",
+            "sha256": "0a54167c10df123f201e50c16ca653445b61aa3fc47b712870fc38b9d950c49b",
+            "bytes": 1077
+          },
+          {
+            "path": "workers-ts/migrations/0028_shipping_region_legacy_mapping.sql",
+            "sha256": "be593893f7d9381b361ce6b8fa797f05209b3fadc92a495d50ef40bca6398ba0",
+            "bytes": 735
+          },
+          {
+            "path": "workers-ts/migrations/0029_user_extract_legacy_columns.sql",
+            "sha256": "06f9ceeb0e58ae2bf74852e1a20e0b55e63cc2e42f30fe9f58d161d006cf2710",
+            "bytes": 1006
+          },
+          {
+            "path": "workers-ts/migrations/0030_order_cart_pink_legacy_columns.sql",
+            "sha256": "9cfc7109297c19c06dc636237f927b7b316121374c7d9e3a3eeed731d03238b1",
+            "bytes": 2695
+          },
+          {
+            "path": "workers-ts/migrations/0031_coupon_issue_legacy_columns.sql",
+            "sha256": "4c5c6d6c51e1faf550ddc93b76114cb3ec8a4294ab5a36f653856f7e36688815",
+            "bytes": 1563
+          },
+          {
+            "path": "workers-ts/migrations/0032_activity_catalog_legacy_columns.sql",
+            "sha256": "735cbeecc4250da50c83a1b26fd8bea5a6b5221d3ecff84a8c1f3c123de7c44a",
+            "bytes": 7825
+          },
+          {
+            "path": "workers-ts/migrations/0033_order_legacy_columns.sql",
+            "sha256": "b2e52b42c84210d9405c4c03e5c66c6657c14e7de3278f5969f3be323ad9eeb2",
+            "bytes": 1810
+          },
+          {
+            "path": "workers-ts/migrations/0034_shipping_exception_rules.sql",
+            "sha256": "8b7131341f4608042b932eebdfb709dc16184f074ab42e3d07dd0afccfa956f0",
+            "bytes": 1223
+          },
+          {
+            "path": "workers-ts/migrations/0035_renamed_legacy_catalog_tables.sql",
+            "sha256": "89b50ebd5b922eebcb3fefa2f7823cb4cdbffb136b36ff61d33acdff4fc6d9e4",
+            "bytes": 2397
+          },
+          {
+            "path": "workers-ts/migrations/0036_shipping_geography.sql",
+            "sha256": "7f4f5cf23ba426e694a7d2f6bcb4c900d80bd68f4eaf4a17ecdb7497c8ea9627",
+            "bytes": 1318
+          },
+          {
+            "path": "workers-ts/migrations/0037_article_taxonomy_content.sql",
+            "sha256": "3566005cc60afe2126d4d24406b2dedb9d1a43aab18e59e26042bb17401696fb",
+            "bytes": 726
+          },
+          {
+            "path": "workers-ts/migrations/0038_legacy_content_notifications.sql",
+            "sha256": "ad9e68b2464dc2540a97523398b1df79d23f60bd8ed8dfbdcf49d6503982e70e",
+            "bytes": 5753
+          },
+          {
+            "path": "workers-ts/migrations/0039_community_relationships.sql",
+            "sha256": "e06b4bd9872bb1dcea35f73987cbe4ba40c10f35faf97ac7a2b71e2f8bdcf005",
+            "bytes": 2006
+          },
+          {
+            "path": "workers-ts/migrations/0040_order_auxiliary_records.sql",
+            "sha256": "1d87372cdc59d2ff63cb7a4847cf6ec06dbab2f0310773e5ba1ca3bfcd595b07",
+            "bytes": 4220
+          },
+          {
+            "path": "workers-ts/migrations/0041_promotion_catalog.sql",
+            "sha256": "e79f19e7dc7f01de65e8c81ff93c390c41c6a72090a83379e96e7382e8ba58a4",
+            "bytes": 2901
+          },
+          {
+            "path": "workers-ts/migrations/0042_activity_catalog.sql",
+            "sha256": "a66bed64ecb486d6f747aad2ab3dd03c2596d68d8b025710e2f7f43e461ee5f6",
+            "bytes": 1579
+          },
+          {
+            "path": "workers-ts/migrations/0043_discount_packages.sql",
+            "sha256": "8edb1652138fadddf0f10e94a021a163fa9c274ce07ea26fa611969d850fb47b",
+            "bytes": 1888
+          },
+          {
+            "path": "workers-ts/migrations/0044_delivery_orders.sql",
+            "sha256": "9d2bbb04f612adcff613865fbcc3fb38a1ee8958cdc475a6caa14249b7c77fa7",
+            "bytes": 1990
+          },
+          {
+            "path": "workers-ts/migrations/0045_finance_ledgers.sql",
+            "sha256": "b909520acef3d9bbfac139413fa6ac2e1926e8dcb7e628571d4328d19759153d",
+            "bytes": 2526
+          },
+          {
+            "path": "workers-ts/migrations/0046_integral_orders.sql",
+            "sha256": "c3e4ea8992abcc3b75a979473d813e0ac18cd9dc124dd53777fa95349e9dcd35",
+            "bytes": 3428
+          },
+          {
+            "path": "workers-ts/migrations/0047_product_metadata_and_system_groups.sql",
+            "sha256": "86918a3a9f365d3f11e6d6340de1ec4e861f02e1f114a387438b81c3d0d81d19",
+            "bytes": 4784
+          },
+          {
+            "path": "workers-ts/migrations/0048_user_segmentation.sql",
+            "sha256": "742560721ddbe0062edf00fb78d18b1da079c94b93abcb121b1b2766f2c12cdb",
+            "bytes": 893
+          },
+          {
+            "path": "workers-ts/migrations/0049_system_forms_and_config_tabs.sql",
+            "sha256": "2f605e3b4cb5d238bcb34d0506d5c39144dafbc91bfd0d54ae556019bd1fab14",
+            "bytes": 2144
+          },
+          {
+            "path": "workers-ts/migrations/0050_system_sign_rewards.sql",
+            "sha256": "d7b61df575e376d307fd222475ab781b82c368a7c0ae8de3831db45b7b4c9ead",
+            "bytes": 610
+          },
+          {
+            "path": "workers-ts/migrations/0051_agent_level_tasks.sql",
+            "sha256": "a5f0d8d938777324d8f7390358c48e3c73c63739d2b99d26d26f9033411fdc70",
+            "bytes": 1428
+          },
+          {
+            "path": "workers-ts/migrations/0052_product_coupon_grants.sql",
+            "sha256": "a97145922eec11558cf6c3b2f61edb77ed607225960129a812b4fd8efa3160b4",
+            "bytes": 530
+          },
+          {
+            "path": "workers-ts/migrations/0053_bargain_user_help.sql",
+            "sha256": "b243f68bdbd395abd375353ba496f3493bc007d2354714a85e0e85b1300bcb97",
+            "bytes": 763
+          },
+          {
+            "path": "workers-ts/migrations/0054_product_assurance_and_visit_analytics.sql",
+            "sha256": "58a6da8b304b05c32782599239dfa8745800b9428f2231a71e59020122d4eeaa",
+            "bytes": 2585
+          },
+          {
+            "path": "workers-ts/migrations/0055_customer_service_feedback_and_speechcraft.sql",
+            "sha256": "d1f8ef05522b5125059b91ac99b5f6d4b20d7ab24e5b45552d785bca0fbaf847",
+            "bytes": 1480
+          },
+          {
+            "path": "workers-ts/migrations/0056_distribution_relationships.sql",
+            "sha256": "2bdc198df2fdbccd879accbc3fbefe87046ac283d2c5ef4dcee46cb80933bee6",
+            "bytes": 2435
+          },
+          {
+            "path": "workers-ts/migrations/0057_user_friend_relationships.sql",
+            "sha256": "4b415a7570281d2166fc7ded943dd81013b02eee2a9bf267b7aab42d2545758b",
+            "bytes": 655
+          },
+          {
+            "path": "workers-ts/migrations/0058_user_search_and_visit.sql",
+            "sha256": "2f33718d4c9f4081d7ae818335d142db5b391ce6e9a0d6a14a8ceb8f773e03d8",
+            "bytes": 1653
+          },
+          {
+            "path": "workers-ts/migrations/0059_store_newcomer.sql",
+            "sha256": "504b3ba38559064ee80b5fc8b154d845ed81ecac96fece39c3c9031b480d2b39",
+            "bytes": 1027
+          },
+          {
+            "path": "workers-ts/migrations/0060_legacy_db_cache.sql",
+            "sha256": "7c6ac4d86b67f672cbede50ea157a5a66f0bd712cb7130aed65725f5ac9cfbb8",
+            "bytes": 443
+          },
+          {
+            "path": "workers-ts/migrations/0061_paid_membership_core.sql",
+            "sha256": "2f8b87934c9aa22cd9dd35400f5b8e37198e44b2551454b589a12f3e98610adf",
+            "bytes": 4268
+          },
+          {
+            "path": "workers-ts/migrations/0062_coupon_relationship_evidence.sql",
+            "sha256": "27148f4a4be2e3162e22b627b9183beec02eba18d4a8b28b70bb8722e2450256",
+            "bytes": 1131
+          },
+          {
+            "path": "workers-ts/migrations/0063_store_fulfillment_identity.sql",
+            "sha256": "0a6efb2606084a12749381ac5d556a06610e313f195aa90774f3af0aabf4bac8",
+            "bytes": 4546
+          },
+          {
+            "path": "workers-ts/migrations/0064_store_legacy_auxiliary.sql",
+            "sha256": "b60bd29255da9ac2c3d7064233775d0cf0bf9d7305df50cb48154898bfd50ccd",
+            "bytes": 3446
+          },
+          {
+            "path": "workers-ts/migrations/0065_print_documents.sql",
+            "sha256": "01ddcc6a2e03c39eece5f2177f4dec6bc8c56634328c3d510fce419f9cddbd41",
+            "bytes": 1765
+          },
+          {
+            "path": "workers-ts/migrations/0066_supplier_onboarding.sql",
+            "sha256": "f0dd4174e3f610be09ba817ac76800cee16f279c1e3bc92af7b86bbe8d28f118",
+            "bytes": 1920
+          },
+          {
+            "path": "workers-ts/migrations/0067_attachment_storage.sql",
+            "sha256": "b014f5530cf716b9ddeb1aadacfb4d4e814f097d8bfd0d55cbce435b32091163",
+            "bytes": 2705
+          },
+          {
+            "path": "workers-ts/migrations/0068_superseded_product_relations.sql",
+            "sha256": "e57ee565771d8bdea5c879c199c83ae1d7e5aa7f9a010f1f65b7fc664f482343",
+            "bytes": 1333
+          },
+          {
+            "path": "workers-ts/migrations/0069_page_navigation.sql",
+            "sha256": "72e4b59c605f5137e27bc1b743692ba01b5e6299e2429f88738a7a495a6ee716",
+            "bytes": 1174
+          },
+          {
+            "path": "workers-ts/migrations/0070_lottery_domain.sql",
+            "sha256": "b996ba4f50106a30daa89bde385dc089bed1be03f53c24bd8cb230d0fb691531",
+            "bytes": 4512
+          },
+          {
+            "path": "workers-ts/migrations/0071_wechat_reply_content.sql",
+            "sha256": "df61d9d22b0a45cbb21213fb77106db941fd7651c82b8803da04fc4d701d70a3",
+            "bytes": 2348
+          },
+          {
+            "path": "workers-ts/migrations/0072_wechat_qrcode.sql",
+            "sha256": "5971b0ac45b17ddb163b7779b751291d2b21f2d029fbfe96587e136fb5d8cf17",
+            "bytes": 2759
+          },
+          {
+            "path": "workers-ts/migrations/0073_legacy_runtime_catalog.sql",
+            "sha256": "9453fc570fe0f0cb087aaec59e9eb0c63e8ceeb5469c3652247357df3105f981",
+            "bytes": 2479
+          },
+          {
+            "path": "workers-ts/migrations/0074_wechat_live_catalog.sql",
+            "sha256": "8a7e263a85129c6cb65fe4293d8cfa82208a0a45ed6c624de8009c128abbda0b",
+            "bytes": 3841
+          },
+          {
+            "path": "workers-ts/migrations/0075_external_api.sql",
+            "sha256": "581260334b177a218ea935c390af8ef900d33085cc0a1189811983f2b184cb1d",
+            "bytes": 2053
+          },
+          {
+            "path": "workers-ts/migrations/0076_enterprise_wechat.sql",
+            "sha256": "510cbac8df0bf728cc7c24dc33e570f0ca11bd69715bf3d9181557e159292767",
+            "bytes": 15766
+          },
+          {
+            "path": "workers-ts/migrations/0077_wechat_member_card.sql",
+            "sha256": "53372371eab1e442bd20023d9343a42f2367e34a06b3953169b509179545e584",
+            "bytes": 3519
+          },
+          {
+            "path": "workers-ts/migrations/0078_fulfillment_lookup_indexes.sql",
+            "sha256": "35543d2e2d8c9c5c8a996157f65cd65792a38f5d118ba59384d5b85df00bcad7",
+            "bytes": 312
+          },
+          {
+            "path": "workers-ts/migrations/0079_pink_refund_reference.sql",
+            "sha256": "03ad54bb76bca145dc11f2dc2f301b5e7d2f7960a8dc5e065f16c4f3a6e35256",
+            "bytes": 315
+          },
+          {
+            "path": "workers-ts/migrations/0080_order_queue_dead_letter.sql",
+            "sha256": "00b978c04018122d74f6f8bad8eb2c246a4a380d4193a0a1aadf1f5fc62b8760",
+            "bytes": 2569
+          },
+          {
+            "path": "workers-ts/migrations/0081_virtual_inventory_export.sql",
+            "sha256": "31dc474f40002d6c1771112d3a14ad444b721c3ea941f2a8ac3ccb74068d6406",
+            "bytes": 1885
+          },
+          {
+            "path": "workers-ts/migrations/0082_payment_checkout_integrity.sql",
+            "sha256": "b2037f86aae18766f84ee4d68397d05ae4b245c6656ee9fd45251f249488c096",
+            "bytes": 505
+          },
+          {
+            "path": "workers-ts/migrations/0083_out_api_audit.sql",
+            "sha256": "cd4f7824747659f5a58527bd09f919301923a6dc8be211787362af24bbebcd7b",
+            "bytes": 1919
+          },
+          {
+            "path": "workers-ts/migrations/0084_order_notification_outbox.sql",
+            "sha256": "8962cd3ca2d01b3b1fb1547af9c5821cb8df6464c98d9139ac2173da1403e1e5",
+            "bytes": 737
+          },
+          {
+            "path": "workers-ts/migrations/0085_external_notification_delivery.sql",
+            "sha256": "08395aa338d9e531089d291c0f45e66461c05fcd71cdcc5a1c19f799dc4b4e4e",
+            "bytes": 3034
+          },
+          {
+            "path": "workers-ts/migrations/0086_notification_delivery_operations.sql",
+            "sha256": "fc1fe45a0d43c9f21cd7eaad45838b7dfca67418710c5299f4587e6e1e45d971",
+            "bytes": 1129
+          },
+          {
+            "path": "workers-ts/migrations/0087_community_social_graph_indexes.sql",
+            "sha256": "baf66a5118b03d9979bf5286397d76300032add8b0150d75db3058f5cb29deb5",
+            "bytes": 530
+          },
+          {
+            "path": "workers-ts/migrations/0088_community_admin_indexes.sql",
+            "sha256": "13a32ff63fe59953fb325cd99abdc57d64a4f71c1139921e4cc09b181b102247",
+            "bytes": 687
+          },
+          {
+            "path": "workers-ts/migrations/0089_community_client_indexes.sql",
+            "sha256": "cc9bd6936c55345e17c9255ae5db181715e110ce2da282dcc38e411b40e00e8a",
+            "bytes": 749
+          },
+          {
+            "path": "workers-ts/migrations/0090_print_job_outbox.sql",
+            "sha256": "26880180de5be119ace39281223f8d09a66f86f65a7a3c27788058793cc89486",
+            "bytes": 4316
+          },
+          {
+            "path": "workers-ts/migrations/0091_electronic_waybill_outbox.sql",
+            "sha256": "fd5b65af08dd0063984e19d524faa71fd66cadbc22ebbc9d2bf2ca17ac8980d0",
+            "bytes": 5010
+          },
+          {
+            "path": "workers-ts/migrations/0092_kefu_core_indexes.sql",
+            "sha256": "ac7e49f5ec3fd98c01602aeda536a8613bfdeb1d43dc147129b0dfcc1d31337f",
+            "bytes": 663
+          },
+          {
+            "path": "workers-ts/migrations/0093_kefu_realtime_indexes.sql",
+            "sha256": "52eff284eac4f61bf1e1ebd552c7fff62a97ecf9f7eb25527d28f0a620c6b247",
+            "bytes": 666
+          },
+          {
+            "path": "workers-ts/migrations/0094_kefu_transfer_audit.sql",
+            "sha256": "872785658cbfdabb59725e285cb07e34f13d0eb645ffd5d8b0ed11076c643347",
+            "bytes": 1208
+          },
+          {
+            "path": "workers-ts/migrations/0095_kefu_product_context_indexes.sql",
+            "sha256": "cf1217d097874567dc06d395b279f1806af50145878ddb46415b0cd0bc0bdfde",
+            "bytes": 555
+          },
+          {
+            "path": "workers-ts/migrations/0096_kefu_order_context_indexes.sql",
+            "sha256": "e11a7ddf0b82b898233b304077c3c20a8c07c646931e5f50974b38bc918f96d0",
+            "bytes": 473
+          },
+          {
+            "path": "workers-ts/migrations/0097_out_product_write_replay.sql",
+            "sha256": "a413c029880c9358973b1eb7775aeaa21c6684c6aeabf46e053745defbd26087",
+            "bytes": 1207
+          },
+          {
+            "path": "workers-ts/migrations/0098_out_coupon_write_replay.sql",
+            "sha256": "01af0a832a8fd920de4419e6b0499a442b4fefe67254d97d9c692b07e294f2b9",
+            "bytes": 1119
+          },
+          {
+            "path": "workers-ts/migrations/0099_out_user_write_replay.sql",
+            "sha256": "ebf914670f44fa7b9d02af3031846ff7142a9ed8c91dd440c99b7bd03dd86e74",
+            "bytes": 2057
+          },
+          {
+            "path": "workers-ts/migrations/0100_order_product_coupon_reward.sql",
+            "sha256": "a44dc4e2f585ef06db1a241c14685f51820187c471b624055763b7e96685935d",
+            "bytes": 1027
+          },
+          {
+            "path": "workers-ts/migrations/0101_activity_compatibility_indexes.sql",
+            "sha256": "c78f93196dee24e3650a20e59d263c3941abded30617c3cd8936db0f000245ff",
+            "bytes": 511
+          },
+          {
+            "path": "workers-ts/migrations/0102_short_video_compatibility.sql",
+            "sha256": "e31f00150279b96fbba9c53a10eb4ccb00464fd80c350a843b13fa3f339852bf",
+            "bytes": 2417
+          },
+          {
+            "path": "workers-ts/migrations/0103_system_config_lookup.sql",
+            "sha256": "a7831901a59a2c35c06eeefd1c017aeabd1133aa600f5850f50ed3fc93515c29",
+            "bytes": 252
+          },
+          {
+            "path": "workers-ts/migrations/0104_kefu_visitor_session.sql",
+            "sha256": "33a2a6c31c909d3cfe32f4c7bb17a24e0bfda38ad277e8da12af91a16f1e97ad",
+            "bytes": 2257
+          },
+          {
+            "path": "workers-ts/migrations/0105_user_center_compatibility_indexes.sql",
+            "sha256": "239faba453c171aca99d3d52df9f064b2b097c0659e7f7334b89833e4ffea2b3",
+            "bytes": 3896
+          },
+          {
+            "path": "workers-ts/migrations/0106_user_relation_play_partial_unique.sql",
+            "sha256": "9e7c4be81b3982df84ae0ab404078d312850c546bc4ee1aae9b7f51ecdf70da4",
+            "bytes": 9281
+          },
+          {
+            "path": "workers-ts/migrations/0107_store_mobile_delivery_index.sql",
+            "sha256": "93779b86921cc896251ec5eb16d5b7168aaa31a5cb8bf700bef36192179e2a12",
+            "bytes": 4123
+          },
+          {
+            "path": "workers-ts/migrations/0108_store_order_refund_lookup_index.sql",
+            "sha256": "6309f5ed6eeef1ba3685a5d16ceae56c18f7ed372aee5360c186a4d0238035f4",
+            "bytes": 3730
+          },
+          {
+            "path": "workers-ts/migrations/0109_work_callback_pipeline.sql",
+            "sha256": "0c203c6a6bd804ae771b273c72aa6d90ff971fd3b46327a9848098adff8835b9",
+            "bytes": 3948
+          },
+          {
+            "path": "workers-ts/migrations/0110_work_callback_follow_projection.sql",
+            "sha256": "0142b7f13ff0b823696432c7a2e5055a20b5b896189c77fc95cc71829da922a7",
+            "bytes": 1926
+          },
+          {
+            "path": "workers-ts/migrations/0111_work_callback_projection_state.sql",
+            "sha256": "dfb527fb94070b7cef7a70620ec2e7188c8bc7b62613e8acb67eb25455ccafb9",
+            "bytes": 8174
+          },
+          {
+            "path": "workers-ts/migrations/0112_work_member_current_projection.sql",
+            "sha256": "7c23c2d77073b66d330fa59a5df6b6c9262dbe49514d9e45a601c9ed058ab6fa",
+            "bytes": 54481
+          },
+          {
+            "path": "workers-ts/migrations/0113_work_member_resolved_rename_fence.sql",
+            "sha256": "a5b438ba7f4b2e9bd07308ce2a21158e0c098a2f699b7b6d2c7294afcfcb438b",
+            "bytes": 14906
+          },
+          {
+            "path": "workers-ts/migrations/0114_work_department_current_projection.sql",
+            "sha256": "a7b999451e055f287ab94b7ae85261b8a962379a0b80d0af35b98eaa64daba96",
+            "bytes": 37024
+          },
+          {
+            "path": "workers-ts/migrations/0115_work_client_current_projection.sql",
+            "sha256": "2b4c4790aa35f1264f0923e297692740e52e35e89f0cda9f15b97abf976b2853",
+            "bytes": 41231
+          },
+          {
+            "path": "workers-ts/migrations/0116_work_group_chat_current_projection.sql",
+            "sha256": "30a88f1daaee16023d0ceb4c517f9796707898e0f47981539b213090fbef5eb4",
+            "bytes": 33513
+          },
+          {
+            "path": "workers-ts/migrations/0117_work_external_tag_current_projection.sql",
+            "sha256": "76b094e41449016704a7184cf96eb1cf8141586cad457309f00e150fb3c482fa",
+            "bytes": 29376
+          },
+          {
+            "path": "workers-ts/migrations/0118_work_contact_action_outbox.sql",
+            "sha256": "b6f620aec207e698e6b532f1d949f320faa7317803773614fb260633f79732cb",
+            "bytes": 12370
+          },
+          {
+            "path": "workers-ts/migrations/0119_admin_mobile_user_replay.sql",
+            "sha256": "d6e41a5ba08cbeb73eef7ba6b0c8914340178f438ecfac6e169b52ad1eefe976",
+            "bytes": 1418
+          },
+          {
+            "path": "workers-ts/migrations/0120_payment_callback_pipeline.sql",
+            "sha256": "cca40ffdc06a59e6ff0dc2d167727a1c9687d0febb92f6e4ad56e6dc37b27c6c",
+            "bytes": 12094
+          },
+          {
+            "path": "workers-ts/migrations/0121_payment_reconciliation.sql",
+            "sha256": "9f87817a18d3496e68dbf26cc369ce6c376fc757c75f11e8f40d221e344d38ec",
+            "bytes": 12880
+          },
+          {
+            "path": "workers-ts/migrations/0122_wechat_callback_pipeline.sql",
+            "sha256": "dd06e95922c3ebf88f1d4c32e261ca8db745efcce6f2099b646c07b1ffd05491",
+            "bytes": 14813
+          },
+          {
+            "path": "workers-ts/migrations/0123_merchant_shipment_callback_pipeline.sql",
+            "sha256": "18446f1ae57c94c79d90497df353246a6f6e7a1f33a79f225908e1eaedf5ec9a",
+            "bytes": 18147
+          },
+          {
+            "path": "workers-ts/migrations/0124_city_delivery_callback_pipeline.sql",
+            "sha256": "fea0ff0d7d7b1a6bdeb1943102ab67527e98ebc44c9b0626861e74ffd0ebc858",
+            "bytes": 17341
+          },
+          {
+            "path": "workers-ts/migrations/0125_product_words_indexes.sql",
+            "sha256": "e9f56ba6354c97a17b4924be04ed7c1f291a0a8227a8b3ae727a36b48f4a1901",
+            "bytes": 473
+          },
+          {
+            "path": "workers-ts/migrations/0126_product_sku_retirement.sql",
+            "sha256": "05733c0c820c1114c50e290a4e765370c35e3dcdf3fc41e9f5dd8a640d133edb",
+            "bytes": 2575
+          },
+          {
+            "path": "workers-ts/migrations/0127_admin_article_indexes.sql",
+            "sha256": "468aaf476a9b00e99c14c4af008d35b3b376d5529ec418bc6a21abcb01273bff",
+            "bytes": 531
+          },
+          {
+            "path": "workers-ts/migrations/0128_system_form_reference_indexes.sql",
+            "sha256": "8933fb9d03add6e19b5922976861b718d1cf1c12644883f70aabc5e5ceb726d4",
+            "bytes": 843
+          },
+          {
+            "path": "workers-ts/migrations/0129_second_card_reminder_indexes.sql",
+            "sha256": "71bc6ace398c3b2e6590071440ac3bfd16481d758c0f8ef26a98817d41c51bd1",
+            "bytes": 1131
+          },
+          {
+            "path": "workers-ts/migrations/0130_user_withdrawal_replay.sql",
+            "sha256": "f18a601ef525bb5a40276e42d3ff14f306d860d9827e803fd281471c58bad2a4",
+            "bytes": 372
+          },
+          {
+            "path": "workers-ts/migrations/0131_withdrawal_effects.sql",
+            "sha256": "ecd9a1b4f28c600d108d7bf804ec8d3dfce67cce8d21d90e99069164f8df4aad",
+            "bytes": 1172
+          },
+          {
+            "path": "workers-ts/migrations/0132_withdrawal_application_notice.sql",
+            "sha256": "d5e336c8c53c5a6d81db2b0e1c72a0783a2e1e9a53e8669fcb0d84666c7ded8b",
+            "bytes": 555
+          },
+          {
+            "path": "workers-ts/migrations/0133_staff_notification_refresh.sql",
+            "sha256": "c959e4aaa3726224d482d58950d194d8bcaa85a4638b0f9d897db4a20f6839af",
+            "bytes": 449
+          },
+          {
+            "path": "workers-ts/migrations/0134_repository_column_width_alignment.sql",
+            "sha256": "9fcd26e9dea4ea65e2a4f3540d26f9ebb0dfb4d71a121b74cf4f775dba7c7275",
+            "bytes": 1736
+          },
+          {
+            "path": "workers-ts/migrations/0135_core_index_alignment.sql",
+            "sha256": "721468af966f4e6e88c464d22434b1cea08d8a32c421edfc1850277dca472312",
+            "bytes": 6637
+          },
+          {
+            "path": "workers-ts/migrations/0136_legacy_query_index_alignment.sql",
+            "sha256": "8dbb72c268cfc314322fa21c08f16f49a09aef51f96caedd1edaee70c1ac57ed",
+            "bytes": 4952
+          },
+          {
+            "path": "workers-ts/migrations/0137_worker_query_index_alignment.sql",
+            "sha256": "e33071f5cffc227a61e365d899254bc48eb2aadb4818cc8ab34d02f985bf28e2",
+            "bytes": 4409
+          },
+          {
+            "path": "workers-ts/migrations/0138_ordinary_index_name_alignment.sql",
+            "sha256": "6d6ead1a2bd89ed525305800eed6a9084c97ed7de3f79d14743fd7c23be057ba",
+            "bytes": 7914
+          },
+          {
+            "path": "workers-ts/migrations/0139_constraint_name_alignment.sql",
+            "sha256": "8b62666ca4d63160edccedec94ad31793c3abe14f8e116709efd452d47488a75",
+            "bytes": 5654
+          },
+          {
+            "path": "workers-ts/migrations/0140_external_duplicate_index_retirement.sql",
+            "sha256": "00ccdd862f2881c85bea1d1d682afc41318d15b1e6e2cc907d8def9a65c2eeb5",
+            "bytes": 5735
+          },
+          {
+            "path": "workers-ts/migrations/0141_column_default_alignment.sql",
+            "sha256": "ff850239432bd663ce42fb41e9b71c7eb948a889e4e475eea69a2af82516016f",
+            "bytes": 3337
+          },
+          {
+            "path": "workers-ts/migrations/0142_missing_constraint_alignment.sql",
+            "sha256": "bb0e6f63e5ccf53dd3e49831aea4601f92124e58ae0ed78dbca6e16a49dc17f0",
+            "bytes": 40073
+          },
+          {
+            "path": "workers-ts/migrations/0143_foreign_key_name_alignment.sql",
+            "sha256": "fd4ac32d92f882d545f299f502cca501b36a724c2a1a3a204724275cf867cbbc",
+            "bytes": 20802
+          },
+          {
+            "path": "workers-ts/migrations/0144_check_state_alignment.sql",
+            "sha256": "c823a3590dfa63ec2c517e733e77d0de874b1f2a8bf255ba120d9259e753000e",
+            "bytes": 20435
+          },
+          {
+            "path": "workers-ts/migrations/0145_kefu_sequence_alignment.sql",
+            "sha256": "94b516638da35940dda058e60a5aa60602f97c0fff628da8688a90abfbff9c19",
+            "bytes": 12783
+          },
+          {
+            "path": "workers-ts/migrations/0146_pink_recovery_index.sql",
+            "sha256": "884fdfb7db639b4858ddf13e75e7bb8f1957c1af8f46308da9bb080b33213760",
+            "bytes": 4716
+          },
+          {
+            "path": "workers-ts/migrations/0147_foreign_key_child_indexes.sql",
+            "sha256": "ee89e80eb98c5a8cd9b66d9703dd8cc0272a9fef644dfd1e7193cb373508a656",
+            "bytes": 4219
+          },
+          {
+            "path": "workers-ts/migrations/0148_work_contact_client_index.sql",
+            "sha256": "f15502d694c9a2dd9d0fb7d9ffe40b8982a14ad3311bc136671c44533b34e69c",
+            "bytes": 3666
+          },
+          {
+            "path": "workers-ts/migrations/0149_bargain_cart_participation.sql",
+            "sha256": "e72822d9c860f55728e0aab4ed993ad9df22cbfc8f1891c29450b51b954198c1",
+            "bytes": 3940
+          },
+          {
+            "path": "workers-ts/migrations/0150_brokerage_paid_order_fence.sql",
+            "sha256": "9a540ca17249bdb600021072c2b32132277019a1402792b540e3a89765304ff8",
+            "bytes": 8267
+          },
+          {
+            "path": "workers-ts/migrations/0151_coupon_product_scope_fence.sql",
+            "sha256": "5ce37fb8805205a0639250698e68fdfcb2a1fb0770438766d035faed29b43604",
+            "bytes": 8101
+          },
+          {
+            "path": "workers-ts/migrations/0152_shipping_lifecycle.sql",
+            "sha256": "4530567e588d09976875ebf27565cbede983c3539873ef9109d1c60c4e203f47",
+            "bytes": 34293
+          },
+          {
+            "path": "workers-ts/migrations/0153_shipping_lifecycle_indexes.sql",
+            "sha256": "f0840230593ab3c539e76dc58213ce6a4179290be6e80dc9bbf4f61ed528d91b",
+            "bytes": 37408
+          },
+          {
+            "path": "workers-ts/migrations/0154_shipping_template_create_replay.sql",
+            "sha256": "ac9806b0d7b2d3c3fe5fec8b92c82977c679e718a243f91b31df01cc20aab2e9",
+            "bytes": 12151
+          },
+          {
+            "path": "workers-ts/migrations/0155_admin_refund_operation.sql",
+            "sha256": "b1b8eb080c03da119cdd6bf94899f7c2d72e7c97dfb65707ada3f1c6eb1c7e75",
+            "bytes": 12881
+          },
+          {
+            "path": "workers-ts/migrations/0156_admin_refund_creation.sql",
+            "sha256": "a423514f93278bb00d61faaf7b9ab9b835d6c26f1e8c78e6f2eec055048af5cf",
+            "bytes": 12045
+          },
+          {
+            "path": "workers-ts/migrations/0157_invoice_evidence.sql",
+            "sha256": "2bd4cded38c15db63bbd6f778e16104c0e6599be283d39ff5be240ae78473733",
+            "bytes": 36860
+          },
+          {
+            "path": "workers-ts/migrations/0158_refund_order_split.sql",
+            "sha256": "6f755031318ac0ce56492f2f1fafd8daf9b28b399609f5b032528f5f490e02b6",
+            "bytes": 47828
+          },
+          {
+            "path": "workers-ts/migrations/0159_offline_order.sql",
+            "sha256": "94782da2ad44f488c14ea02e5b158caed7dc59c1f28596e53c355373c9e05a50",
+            "bytes": 123497
+          },
+          {
+            "path": "workers-ts/migrations/0160_checkout_pricing_lock.sql",
+            "sha256": "9c92e37e96fad6823527169314a94fd5ffe46559785706741ea8978d84ffc3b7",
+            "bytes": 19363
+          },
+          {
+            "path": "workers-ts/migrations/0161_presale_delivery_outbox.sql",
+            "sha256": "5a1100ddfbf41343632e2c0a05e657995ccef06cfaf9dd440dc17943adf3466a",
+            "bytes": 3768
+          },
+          {
+            "path": "workers-ts/migrations/0162_supplier_refund_lookup_indexes.sql",
+            "sha256": "84ed285b63decec34c07ff9cef0f4b4960132a5ea347d18aa12280dbea93ebc0",
+            "bytes": 5422
+          },
+          {
+            "path": "workers-ts/migrations/0163_purchase_origin_evidence.sql",
+            "sha256": "cc75b8c6dba6e4bc7e64f625c752bd63ed5da127bbd165f3586eab84069b27c5",
+            "bytes": 42192
+          },
+          {
+            "path": "workers-ts/migrations/0164_purchase_cancellation_evidence.sql",
+            "sha256": "9265a76348d765c421be6b206ffcda61784533b20d2fbba8b44852dc5a9f3b67",
+            "bytes": 85185
+          },
+          {
+            "path": "workers-ts/migrations/0165_assisted_order_list_index.sql",
+            "sha256": "4c4b2b715d8844419e0e0c6afc06874daa1c02c8a5121b7a697abf52126bb771",
+            "bytes": 5332
+          },
+          {
+            "path": "workers-ts/migrations/0166_recharge_quota_group_seed.sql",
+            "sha256": "17a0d3fd8a7d7bc9c86e98cb12079a9a2afae7187aaac8c2d7c0166c3b294a1b",
+            "bytes": 7844
+          },
+          {
+            "path": "workers-ts/migrations/0167_seckill_time_reference_lock.sql",
+            "sha256": "30adddd025d67202e4bd921c1f0e26730b46cd4b22dd097b1bca3f330cc7d64c",
+            "bytes": 22084
+          }
+        ],
+        "currentSelectedAggregateAlgorithm": "SHA256(ordered repo-relative path UTF8 followed by file bytes, no normalization)",
+        "currentSelectedAggregateSha256": "c586e1d5c74c56d98622c121bd72c5dc3a855cd789983ebe97b5e7a91a4bbb09",
+        "currentInputs": [
+          {
+            "path": "workers-ts/src/migrations/seckillTimeReferenceLockCatalog.ts",
+            "sha256": "e3f7c32ac3eaef8b64208f80ce3efe5ed74bcfc96c5114326ff3ce921030d3e0",
+            "bytes": 7363
+          },
+          {
+            "path": "workers-ts/src/migrations/seckillTimeReferenceLockInstallation.ts",
+            "sha256": "4237f8693786287d8946b1ab8d274048861cba56f41181a48c35e0cf75665301",
+            "bytes": 6115
+          },
+          {
+            "path": "workers-ts/src/migrations/seckillTimeReferenceLock.ts",
+            "sha256": "be1c33ae073908262b9db8395b43954da6cba4b5683aad3a77e3a752887bc0cf",
+            "bytes": 3812
+          },
+          {
+            "path": "workers-ts/src/migrations/runSeckillTimeReferenceLock.ts",
+            "sha256": "c73b5f6e18c913ceb3bcab7e089275aaf8d6e385f19af9dc46b45215c7ad8c25",
+            "bytes": 350
+          },
+          {
+            "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+            "sha256": "cf6998f1894284b4c9caa82e99177a60d537a51774f6e67f8c11779983f50bec",
+            "bytes": 15461
+          },
+          {
+            "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+            "sha256": "0a67d9bd7bf1c3fbaa12204a418ba8393842de22bc1584c01187b04aaa918520",
+            "bytes": 1840
+          },
+          {
+            "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+            "sha256": "9bf7ee72e67f8eb02892b4b179053abdc122e562280a738d3471b19378e04bad",
+            "bytes": 11012
+          },
+          {
+            "path": "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts",
+            "sha256": "f8a8c6989cb9a2883574fbdf5f4fb1affb0dab831fde51fbfc88083f8759463f",
+            "bytes": 12032
+          },
+          {
+            "path": "workers-ts/src/services/MigrationService.ts",
+            "sha256": "ee4371ba1381495448ee60873b00d530d7fab8e7e270651a0410c744b7832cda",
+            "bytes": 379975
+          },
+          {
+            "path": "workers-ts/scripts/orm-ddl-audit.ts",
+            "sha256": "6ecbcc1bcd6af2aa10936332c76d820f4c699e3224cfa7a59f56047302228718",
+            "bytes": 55332
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "7975f88aa36d37a97967a184baf6a719a7fc61b42a66ca34d5eebd81e7f2c6a5",
+            "bytes": 22775
+          },
+          {
+            "path": "workers-ts/test/helpers/checkoutPricingMigrationDatabase.ts",
+            "sha256": "a387b9f23923eb82a8d9ec4441d5de79a42952c8f1e1998e90ca4ed05cee8e0f",
+            "bytes": 2136
+          },
+          {
+            "path": "workers-ts/test/helpers/seckillTimeReferenceLockFixture.ts",
+            "sha256": "5ed62695f906c237b142b8a8ff4cbae292169377555d34e082b0d837d90760a0",
+            "bytes": 3208
+          },
+          {
+            "path": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+            "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647",
+            "bytes": 8757
+          },
+          {
+            "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+            "sha256": "7571d0db5086ef1929a26b6376cb5c7bf83f48441e5086fe15c7fa399b75a9b5",
+            "bytes": 11880
+          },
+          {
+            "path": "workers-ts/test/kefu-sequence-registration.test.ts",
+            "sha256": "36169bd82247a4fa823df52ad08f8adeadb6eb657264ed8d1357b99a85df3459",
+            "bytes": 45504
+          },
+          {
+            "path": "workers-ts/test/runtime-business-privilege-plan.test.ts",
+            "sha256": "a7f46ec5bf409460eb0b44648ecf7e2318a17ba190ec452838876d57ec25d438",
+            "bytes": 4781
+          },
+          {
+            "path": "workers-ts/test/seckill-time-reference-lock.test.ts",
+            "sha256": "a88291de19a2aad43d1beee4e96a72d993a151baa89174110775b4cbed5e2961",
+            "bytes": 17608
+          },
+          {
+            "path": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+            "sha256": "f05f6e4e4d382188310ef335fc8fa5e4b0a428c44c0c1d5ab95a051474783e82",
+            "bytes": 12563
+          },
+          {
+            "path": "workers-ts/test/runtime-business-login.test.ts",
+            "sha256": "67e842a68001b01527fd9d6b87b2473f6dc999fd74cd34b787693664059a3901",
+            "bytes": 29374
+          },
+          {
+            "path": "workers-ts/docs/seckill-time-reference-lock.md",
+            "sha256": "4d7dc031e346fe971522b4f4c61cf4eab4aaae9617aed5c260492677b0fbd6ff",
+            "bytes": 5590
+          }
+        ],
+        "firstNativeBatchImmutableInputHash": null
+      },
+      "scope": "pre-guard-patch corrected fixture capture; never substituted for original failed run inputs"
+    }
+  ],
+  "ownerColumnAclGuard": {
+    "scope": "Catalog refusal only; fixed function body, lock order and business SQL unchanged.",
+    "rejection": [
+      "column-only INSERT anywhere",
+      "column-only REFERENCES anywhere",
+      "owner grant-option in any user column ACL"
+    ],
+    "addedRealNegativeCases": 3,
+    "finalCapabilitySuiteExpectedTests": 33,
+    "finalCapabilitySuiteExpectedNativeCases": 32,
+    "finalGuardValidationStatus": "passed_33_capability_cases_three_complete_schema_paths_and_existing_runtime_login30"
+  },
+  "remaining": {
+    "finalGuardExistingRuntimeLogin": "Passed final guard 30/30; actual app seckill purchase qualification remains separate and open.",
+    "actualAppProfileSeckillPurchase": "Not covered. The existing profile has only SELECT for parent/slot but FOR SHARE requires UPDATE privilege. This batch does not expand app/parent DML.",
+    "profileAcceptanceScope": "Existing 30-case restricted LOGIN suite covers ordinary/presale business; maintenance-role buying concurrency is not app-profile qualification.",
+    "currentNinePathOrmRerun": "Not run; historical 168/173 evidence retained and not promoted to current 169/174 input hash.",
+    "productionInstallationAndGrants": "Not performed; explicit maintenance prerequisites and real-role/production release remain open."
+  },
+  "finalDocumentation": {
+    "path": "workers-ts/docs/seckill-time-reference-lock.md",
+    "sha256": "78b923783ca5a3fed285c89d60a4ef07f425ae1ec2a8668ce0105526c2c1d9c3",
+    "changedAfterFinalNativeRun": true,
+    "changeScope": "Only explicit existing app-seckill FOR SHARE privilege / acceptance limitation appended; executable source unchanged."
+  },
+  "independentPriorClusterCleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-final-cleanup-20260927.json",
+    "sha256": "9409160e2a561de8ca935d9f60d212a1c144fc24fd5452e77b0a4ee831d906e1",
+    "rows": [
+      {
+        "Cluster": "kQbkhJ",
+        "Port": 54797,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "07gpeG",
+        "Port": 58310,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "robJS0",
+        "Port": 58402,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "sFBUrA",
+        "Port": 54371,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "bn9zyn",
+        "Port": 64329,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      }
+    ],
+    "recordedBy": "root maintenance read-only pg_ctl/port review"
+  },
+  "updatedAtUtc": "2026-09-27T02:20:34.694Z",
+  "independentFinalGuardCleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-final-guard-cleanup-20260927.json",
+    "sha256": "2bfd86dfad05f25b85dc5fc8a30a6296540b75d5dd9fcdad34dd01645ade6b4d",
+    "rows": [
+      {
+        "Cluster": "gKyKKo",
+        "Port": 57752,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      },
+      {
+        "Cluster": "BCBHaw",
+        "Port": 50743,
+        "PgCtlExit": 3,
+        "PgCtlOutput": "pg_ctl: no server running",
+        "Listening": 0
+      }
+    ],
+    "recordedBy": "root maintenance read-only pg_ctl/port review"
+  },
+  "finalTypecheck": {
+    "rootSessionId": 2249,
+    "command": "npm run typecheck",
+    "sequentialUnitAndRuntime": true,
+    "exitCode": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-typecheck-final-20260927.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766",
+      "bytes": 368
+    },
+    "sourceConsistency": {
+      "exactSelectedExecutableInputsStillMatchFrozenHashes": true
+    }
+  },
+  "acceptedCurrentGuardSummary": {
+    "tests": 107,
+    "passed": 107,
+    "failed": 0,
+    "skipped": 0,
+    "files": 5,
+    "components": {
+      "backendBusinessAndConcurrency": 42,
+      "capability": 33,
+      "completeSchemaThreePaths": 2,
+      "existingRuntimeLogin": 30
+    },
+    "capabilityIncludesOneStaticExternalSqlEqualityCase": true,
+    "acceptedExecSessions": [
+      46442,
+      8329
+    ],
+    "allFixturesZeroAndPgCtlStoppedIndependentlyConfirmed": true,
+    "selectedExecutableSourceDrift": [],
+    "finalExternalAggregateSha256": "0bbc9548cf024ccdcc900b4e6b264b5c79f53d5a906120e425c5fcd1f2e982ad",
+    "scope": "Actual PG16 environment execution and the explicit static capability equality case. No production grant or complete app seckill purchase qualification."
+  }
+}

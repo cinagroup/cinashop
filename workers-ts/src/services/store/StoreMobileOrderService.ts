@@ -11,7 +11,6 @@ import {
   storeOrderPromotions,
   storeOrderRefund,
   storePink,
-  storeService,
   systemStore,
   systemStoreStaff,
   user,
@@ -23,15 +22,17 @@ import {
 } from "@/services/kefu/KefuOrderService";
 import {
   StoreOrderWriteoffService,
-  type WriteoffActor,
 } from "@/services/order/StoreOrderWriteoffService";
+import {CustomerWorkWriteoffReadService} from '@/services/customer-work/CustomerWorkWriteoffReadService';
+import {authorizeCustomerWorkActor,type CustomerWorkActor} from '@/services/customer-work/CustomerWorkScope';
+import {freezeCustomerActor} from '@/services/customer-work/CustomerWorkOperationRequest';
 import {
   normalizeSupplierSplitCartInput,
   SupplierFulfillmentService,
   type FulfillmentAuthorizationScope,
   type SupplierDeliveryInput,
 } from "@/services/supplier/SupplierFulfillmentService";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { CityDeliverySettingsResolver } from '@/services/delivery/CityDeliverySettingsResolver';
 import { normalizeConfigScalar } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -190,38 +191,25 @@ export class StoreMobileOrderService {
     return rows[0];
   }
 
-  async resolveWriteoffActor(uidValue: unknown, authValue: unknown): Promise<WriteoffActor> {
+  async resolveWriteoffActor(uidValue: unknown, authValue: unknown, currentActor?:CustomerWorkActor): Promise<{kind:'delivery';uid:number}|{kind:'customer';actor:CustomerWorkActor}> {
     const uid = positiveInteger(uidValue, "用户身份");
     const auth = Number(authValue);
     if (auth === 2) return { kind: "delivery", uid };
-    if (auth !== 1) throw new ValidateException("核销身份类型仅支持客服或配送员");
-    const rows = await this.container.db
-      .select({ id: storeService.id })
-      .from(storeService)
-      .innerJoin(user, eq(user.uid, storeService.uid))
-      .where(and(
-        eq(storeService.uid, uid),
-        eq(storeService.status, 1),
-        eq(storeService.accountStatus, 1),
-        eq(storeService.customer, 1),
-        eq(storeService.isDel, 0),
-        eq(user.status, 1),
-        eq(user.isDel, 0),
-      ))
-      .orderBy(asc(storeService.id))
-      .limit(2);
-    if (!rows.length) throw new NotFoundException("当前账号不是有效客服");
-    if (rows.length !== 1) throw new ValidateException("客服身份存在重复，请先清理历史数据");
-    return { kind: "kefu", kefuId: rows[0].id, kefuUid: uid };
+    if (auth !== 1) throw new ValidateException("核销身份类型仅支持手机订单管理员或配送员");
+    if(!currentActor||currentActor.uid!==uid)throw new ValidateException('手机订单核销必须来自当前真实UserJWT会话');
+    const actor=freezeCustomerActor(currentActor);await authorizeCustomerWorkActor(this.container.db,actor);
+    return {kind:'customer',actor};
   }
 
-  async writeoffInfo(uid: unknown, auth: unknown, lookup: unknown) {
-    const actor = await this.resolveWriteoffActor(uid, auth);
+  async writeoffInfo(uid: unknown, auth: unknown, lookup: unknown, currentActor?:CustomerWorkActor) {
+    const actor = await this.resolveWriteoffActor(uid, auth,currentActor);
+    if(actor.kind==='customer')return new CustomerWorkWriteoffReadService(this.container,this.env).legacySearch(actor.actor,lookup);
     return new StoreOrderWriteoffService(this.container, this.env).legacySearch(actor, lookup);
   }
 
-  async writeoffCartInfo(uid: unknown, auth: unknown, orderId: unknown) {
-    const actor = await this.resolveWriteoffActor(uid, auth);
+  async writeoffCartInfo(uid: unknown, auth: unknown, orderId: unknown,currentActor?:CustomerWorkActor) {
+    const actor = await this.resolveWriteoffActor(uid, auth,currentActor);
+    if(actor.kind==='customer')return new CustomerWorkWriteoffReadService(this.container,this.env).legacyInfo(actor.actor,orderId);
     return new StoreOrderWriteoffService(this.container, this.env).infoByOrderId(actor, orderId);
   }
 
@@ -383,12 +371,7 @@ export class StoreMobileOrderService {
           eq(storeConfig.relationId, staff.storeId),
           inArray(storeConfig.keyName, [...EXPRESS_CONFIG_KEYS]),
         )).orderBy(asc(storeConfig.id)).limit(EXPRESS_CONFIG_KEYS.length + 1),
-      new SystemConfigService(this.container, this.env).getMany([
-        "city_delivery_status",
-        "self_delivery_status",
-        "dada_delivery_status",
-        "uu_delivery_status",
-      ]),
+      new CityDeliverySettingsResolver(this.container, this.env).flags(),
       this.container.db.select({ nickname: user.nickname }).from(user)
         .where(eq(user.uid, orders[0].uid)).limit(1),
     ]);

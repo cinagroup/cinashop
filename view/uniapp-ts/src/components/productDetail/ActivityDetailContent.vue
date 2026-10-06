@@ -1,0 +1,28 @@
+<template><view class="activity-detail-content">
+  <view v-if="data.design.showService.includes(2) && data.ensure.length" class="activity-content-card"><view class="activity-service" @tap="openService"><text>服务保障</text><text>{{data.ensure.map(item=>item.name).join(' · ')}} ›</text></view></view>
+  <view v-if="reviewModule!==false && data.design.showReply" class="activity-content-card activity-replies"><view class="activity-content-heading">商品评价 ({{data.replyCount}})<button size="mini" @tap="comments">全部评价</button></view><view class="activity-content-note">好评 {{data.replyChance}}%</view>
+    <view v-for="reply in data.replies.slice(0,data.design.replyNum)" :key="reply.id" class="activity-reply" @tap="comment(reply.id)"><view>{{reply.nickname || '用户'}} · {{'★'.repeat(reply.product_score)}}</view><view class="activity-reply-text">{{reply.comment || '用户未填写文字评价'}}</view><view class="activity-reply-pictures"><image v-for="image in reply.pics" :key="image" :src="image" mode="aspectFill" @tap.stop="preview(reply.pics,image)"/></view></view>
+    <view v-if="!data.replies.length" class="activity-content-note">暂无商品评价</view>
+  </view>
+  <view v-if="(specsMode==='included' ? data.design.showService.includes(3) : !data.design.showService.includes(3)) && data.specs.length" class="activity-content-card activity-specs"><view class="activity-content-heading">商品参数</view><view v-for="(spec,index) in data.specs" :key="index" class="activity-spec"><text>{{spec.name}}</text><text>{{spec.value}}</text></view></view>
+  <view v-if="data.description" class="activity-content-card activity-richtext"><view class="activity-content-heading">商品详情</view><rich-text :nodes="data.description"/></view>
+  <view v-if="error" class="activity-content-error" role="alert">{{error}}</view>
+  <view v-if="service" class="activity-content-mask" @tap="service=false"><view class="activity-content-sheet" @tap.stop><view class="activity-content-heading">服务保障<button size="mini" @tap="service=false">关闭</button></view><view v-for="ensure in data.ensure" :key="ensure.id" class="activity-ensure"><image v-if="ensure.image" :src="ensure.image" mode="aspectFit"/><view>{{ensure.name}}<view class="activity-content-note">{{ensure.desc}}</view></view></view></view></view>
+</view></template>
+<script setup lang="ts">
+import {ref,watch,onUnmounted} from 'vue';
+import {useAuthStore} from '@/stores/auth';
+import type {DetailDesignData} from '@/api/productDetailDesign';
+const props=withDefaults(defineProps<{data:DetailDesignData;productId:number;active:boolean;reviewModule?:boolean;specsMode?:'included'|'excluded'}>(),{reviewModule:true,specsMode:'excluded'}),auth=useAuthStore(),service=ref(false),error=ref('');let generation=0,disposed=false;
+watch(()=>[props.active,props.data,props.productId,auth.sessionVersion,auth.token,auth.uid],()=>{generation++;service.value=false;error.value='';},{flush:'sync'});
+const ready=()=>props.active&&!disposed&&Number.isSafeInteger(props.productId)&&props.productId>0;
+function openService(){if(ready()&&props.data.design.showService.includes(2)&&props.data.ensure.length)service.value=true;}
+function navigate(url:string){if(!ready())return;const epoch=generation,owner={version:auth.sessionVersion,token:auth.token,uid:auth.uid},same=()=>ready()&&epoch===generation&&owner.version===auth.sessionVersion&&owner.token===auth.token&&owner.uid===auth.uid;
+  const fail=()=>{if(same())error.value='评价页面未打开，请重试';};try{uni.navigateTo({url,fail});}catch{fail();}
+}
+function comments(){if(props.data.design.showReply)navigate(`/pages/goods/commentList?productId=${props.productId}`);}
+function comment(id:number){if(props.data.replies.some(item=>item.id===id))navigate(`/pages/goods/commentDetail?id=${id}`);}
+function preview(images:string[],image:string){if(ready()&&images.includes(image))uni.previewImage({urls:images,current:image});}
+onUnmounted(()=>{disposed=true;generation++;});
+</script>
+<style scoped>.activity-content-card{background:#fff;padding:24rpx;margin:18rpx 0;border-radius:16rpx}.activity-content-heading{font-size:30rpx;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:14rpx;margin-bottom:18rpx}.activity-content-heading button{font-size:23rpx;margin:0}.activity-content-note{font-size:24rpx;color:#777;line-height:1.6;margin-top:12rpx;white-space:pre-wrap}.activity-service{display:flex;justify-content:space-between;gap:20rpx;font-size:26rpx}.activity-service>text:last-child{max-width:70%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#777}.activity-reply{padding:20rpx 0;border-bottom:1rpx solid #eee;font-size:26rpx}.activity-reply-text{white-space:pre-wrap;margin-top:14rpx}.activity-reply-pictures{display:flex;flex-wrap:wrap;gap:12rpx;margin-top:14rpx}.activity-reply-pictures image{width:120rpx;height:120rpx}.activity-spec{display:flex;gap:20rpx;padding:18rpx 0;font-size:26rpx}.activity-spec>text:first-child{width:180rpx;flex-shrink:0;color:#777}.activity-spec>text:last-child{white-space:pre-wrap}.activity-richtext{overflow-wrap:anywhere;overflow-x:auto}.activity-richtext :deep(img){max-width:100%}.activity-content-mask{position:fixed;inset:0;background:#0007;z-index:1100;display:flex;align-items:flex-end}.activity-content-sheet{width:100%;max-height:75vh;overflow-y:auto;background:white;padding:28rpx 24rpx calc(28rpx + env(safe-area-inset-bottom));box-sizing:border-box}.activity-ensure{display:flex;gap:18rpx;margin:24rpx 0;font-size:28rpx}.activity-ensure image{width:54rpx;height:54rpx;flex-shrink:0}.activity-ensure>view{flex:1}.activity-content-error{color:#a72823;font-size:24rpx;padding:18rpx}</style>

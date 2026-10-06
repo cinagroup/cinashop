@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { sequenceRunnerDatabase } from './kefuSequenceRunnerDatabase';
 import { PRICING_OWNER_SETTING } from '../../src/migrations/checkoutPricingLockCatalog';
+import { seckillTimeReferenceLockFixture } from './seckillTimeReferenceLockFixture';
 export type { SequenceRunnerPeer } from './kefuSequenceRunnerDatabase';
 
 /** Explicit full-migration fixture. Provision only a self-owned random NOLOGIN
@@ -29,6 +30,6 @@ export async function checkoutPricingMigrationDatabase() {
     // sequenceRunnerDatabase uses exactly one root connection. This explicit
     // test setting is not copied to any independently authenticated peer.
     await fixture.db.execute(sql`SELECT pg_catalog.set_config(${PRICING_OWNER_SETTING},${pricingOwner},false)`);
-    return { ...fixture, pricingOwner, close };
+    return await seckillTimeReferenceLockFixture({ ...fixture, pricingOwner, close }, false);
   } catch (error) { await close(); throw error; }
 }

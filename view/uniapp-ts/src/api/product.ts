@@ -5,10 +5,14 @@ import { http } from "@/utils/request";
 import type { GoodsItem, GoodsDetail, CategoryNode } from "@/types/product";
 import type { PageResult } from "@/types/api";
 import { normalizeMobileGoods } from "./productDetail";
+import { parseCategoryStyle, parseCategoryTree, parseCategoryProducts } from '../../../common/categoryCatalog';
 
 export interface GoodsListParams {
   keyword?: string;
   cid?: number;
+  sid?: number;
+  tid?: number;
+  is_big?: 0 | 1;
   /** Legacy DIY fixed-product selection. */
   ids?: string;
   /** Legacy DIY multi-category selection. */
@@ -35,4 +39,10 @@ export async function apiGoodsDetail(id: number): Promise<GoodsDetail> {
 
 export function apiCategory(): Promise<CategoryNode[]> {
   return http.get<CategoryNode[]>("/category");
+}
+
+export async function apiCategoryTree() { return parseCategoryTree(await http.get<unknown>('/category')); }
+export async function apiCategoryStyle() { return parseCategoryStyle(await http.get<unknown>('/v2/diy/product_detail')); }
+export async function apiCategoryProducts(params: GoodsListParams) {
+  return parseCategoryProducts(await http.get<unknown>('/products', params as Record<string, unknown>));
 }

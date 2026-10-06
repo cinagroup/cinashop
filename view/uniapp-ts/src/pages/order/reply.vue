@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="reply-page">
     <view v-if="order" class="body">
       <!-- 订单商品 -->
@@ -49,9 +50,11 @@
     </view>
     <view v-else class="empty">订单不存在</view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { apiOrderDetail, apiReplySubmit } from "@/api/order";
@@ -178,7 +181,7 @@ onLoad(async (query) => {
 
 .goods-price {
   font-size: 26rpx;
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-weight: 600;
 }
 
@@ -232,7 +235,7 @@ onLoad(async (query) => {
 }
 
 .submit-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 40rpx;

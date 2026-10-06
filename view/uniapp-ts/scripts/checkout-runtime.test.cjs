@@ -133,13 +133,42 @@ test('ordinary physical checkout still refuses unavailable addresses before quot
 test('actual checkout gates on server quote, requotes delivery and blocks while uploading', async () => {
   const r = runtime({ send: server() }); await r.start();
   assert.equal(r.checkout.ready.value, true); assert.equal(r.checkout.quote.value.result.prices.payable, '21.00');
-  assert.equal(r.checkout.displayItems.value[0].sumPrice, '20.00');
+  assert.equal(r.checkout.displayItems.value[0].sumPrice, '18.00');
+  assert.equal(r.checkout.quote.value.result.prices.subtotal, '20.00');
   assert.deepEqual(r.calls.find(c => c.url === '/api/cart/list').data, { scope: 'buy', ids: '1' });
   r.checkout.uploads.value = 1; assert.equal(r.checkout.canSubmit.value, false);
   r.hooks.onHide(); assert.equal(r.checkout.formLocked.value, false); assert.equal(r.checkout.canSubmit.value, false);
   r.hooks.onShow(); await tick(); assert.equal(r.checkout.uploads.value, 1);
   r.checkout.uploads.value = 0; r.checkout.setShipping(2); assert.equal(r.checkout.canSubmit.value, false); await tick();
   assert.equal(r.checkout.quote.value.result.prices.payable, '18.00'); assert.equal(r.checkout.canSubmit.value, true); r.stop();
+});
+test('partial activity quote uses exact line subtotal and activity savings across confirmation', async () => {
+  const selected = { ...item, cartNum: 3, sumPrice: '30.00', productInfo: { ...item.productInfo, price: '10.00' } };
+  const activity = { key: 1, productId: 70, quantity: 3, unitPriceCents: null, totalPriceCents: 2900,
+    promotionSavingsCents: 100, segments: [
+      { quantity: 1, unitPriceCents: 900, totalPriceCents: 900, promotionIds: [41] },
+      { quantity: 2, unitPriceCents: 1000, totalPriceCents: 2000, promotionIds: [] },
+    ] };
+  const base = server();
+  const r = runtime({ send: async call => {
+    if (call.url === '/api/cart/list') return { data: [selected] };
+    const result = await base(call);
+    if (call.url === '/api/order/confirm' || call.url.startsWith('/api/order/computed/')) {
+      result.data.cartInfo = [{ ...selected, truePrice: '9.66', totalPriceCents: 2900, promotion: activity }];
+      Object.assign(result.data.priceGroup, { sumPrice: '30.00', totalPrice: '29.00', pay_price: '32.00',
+        vipPrice: '0.00', memberPrice: '0.00', promotionSavingsCents: 100 });
+    }
+    return result;
+  } });
+  try {
+    await r.start(); const quote = r.checkout.quote.value.result;
+    assert.equal(r.checkout.ready.value, true);
+    assert.equal(quote.items[0].quotedUnitPrice, '9.66');
+    assert.equal(quote.items[0].quotedTotalPrice, '29.00');
+    assert.equal(r.checkout.displayItems.value[0].sumPrice, '29.00');
+    assert.equal(quote.prices.promotionDiscount, '1.00');
+    assert.equal(quote.prices.goodsPayable, '29.00');
+  } finally { r.stop(); }
 });
 test('unknown result survives reload with identical key/body and does not load another cart or pay', async () => {
   const storage = new Map(); const send = server({ '/api/order/create/checkout_key1': () => ({ transport: 'timeout' }) });

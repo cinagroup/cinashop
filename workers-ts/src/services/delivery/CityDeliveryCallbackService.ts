@@ -28,7 +28,11 @@ import {
   type CityDeliveryCallbackEvent,
   type CityDeliveryReconciliationCase,
 } from "@/models/schema";
-import { completeOrderReceipt } from "@/services/order/OrderBrokerageService";
+import {
+  completeOrderReceiptInTx,
+  loadOrderReceiptSettlementContext,
+  lockOrderSettlement,
+} from "@/services/order/OrderBrokerageService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import {
   cityDeliveryTransition,
@@ -40,11 +44,13 @@ import {
   type VerifiedCityDeliveryEvent,
 } from "./DadaCityDeliveryCallback";
 import { DadaCityDeliveryProvider } from "./DadaCityDeliveryProvider";
+import { customerCityProjectionBinding, finishCustomerCityProjection } from '@/services/customer-work/CustomerCityDeliveryService';
 import {
   uuCityDeliveryState,
   verifyUuCityDeliveryCallback,
 } from "./UuCityDeliveryCallback";
 import { UuCityDeliveryProvider } from "./UuCityDeliveryProvider";
+import { CityDeliverySettingsResolver, citySettingsDeadlines, lockCityConfigForRead, readCityDeliverySettingsInTx } from './CityDeliverySettingsResolver';
 
 const DISPATCH_LEASE_SECONDS = 120;
 const PROCESS_LEASE_SECONDS = 180;
@@ -62,6 +68,8 @@ interface ReceiveResult {
   outboxId: number;
   replayKey: string;
   duplicate: boolean;
+  /** Exact completed callback from a retired account; ACK without redispatch. */
+  historicalReplay?: boolean;
 }
 
 interface ClaimedCallback {
@@ -81,6 +89,44 @@ type ProcessResult =
   | { kind: "deferred"; delaySeconds: number };
 
 class CityDeliveryProjectionConflict extends Error {}
+
+/** Retired-account exception is only an already-committed exact callback.
+ * The canonical hash binds redacted rider/reason fields; query evidence,
+ * mutated payloads and unfinished/conflicted/dead events never qualify. */
+async function completedUuCallbackReplay(tx: DbClient, callback: VerifiedCityDeliveryEvent): Promise<ReceiveResult | null> {
+  if (callback.provider !== 'uu' || callback.source !== 'callback') return null;
+  const events = await tx.select().from(cityDeliveryCallbackEvent).where(and(eq(cityDeliveryCallbackEvent.provider, 'uu'), eq(cityDeliveryCallbackEvent.eventKey, callback.eventKey))).limit(2);
+  if (events.length !== 1) return null;
+  const event = events[0];
+  if (!['APPLIED', 'APPLIED_NOOP', 'SUPERSEDED', 'IGNORED'].includes(event.status) || event.source !== 'callback'
+    || event.payloadHash !== callback.payloadHash || event.subjectKeyHash !== callback.subjectKeyHash || event.clientId !== callback.clientId
+    || event.providerOrderId !== callback.providerOrderId || event.providerStatus !== callback.providerStatus || event.providerUpdateTime !== callback.providerUpdateTime
+    || event.repeatReasonType !== callback.repeatReasonType || event.cancelFrom !== callback.cancelFrom
+    || Object.keys(event.payload).length !== Object.keys(callback.payload).length || Object.keys(callback.payload).some(key => event.payload[key] !== callback.payload[key])) return null;
+  const outboxes = await tx.select({ id: cityDeliveryCallbackOutbox.id, replayKey: cityDeliveryCallbackOutbox.replayKey, status: cityDeliveryCallbackOutbox.status }).from(cityDeliveryCallbackOutbox).where(eq(cityDeliveryCallbackOutbox.eventId, event.id)).limit(2);
+  if (outboxes.length !== 1 || outboxes[0].status !== 'COMPLETED' || outboxes[0].replayKey !== event.replayKey) return null;
+  return { eventId: event.id, outboxId: outboxes[0].id, replayKey: event.replayKey, duplicate: true, historicalReplay: true };
+}
+
+function hasOriginalOrderAuthority(
+  delivery: typeof storeDeliveryOrder.$inferSelect,
+  order: typeof storeOrder.$inferSelect,
+): boolean {
+  if (delivery.oid !== order.id || delivery.uid <= 0 || delivery.uid !== order.uid) return false;
+  // Legacy create() selects the fulfillment store before the supplier.
+  // order.type describes promotions; it is never an ownership discriminator.
+  if (order.storeId > 0) return delivery.type === 1 && delivery.relationId === order.storeId;
+  if (order.storeId !== 0) return false;
+  if (order.supplierId > 0) return delivery.type === 2 && delivery.relationId === order.supplierId;
+  return order.supplierId === 0 && delivery.type === 0 && delivery.relationId === 0;
+}
+
+async function projectionDeadlines(tx: DbClient): Promise<void> {
+  await tx.execute(sql`SELECT
+    set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
+    set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),2000)::text||'ms',true),
+    set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text||'ms',true)`);
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -234,8 +280,9 @@ export class CityDeliveryCallbackService {
     private readonly container: Container,
     private readonly env: Env,
   ) {
-    this.dadaProvider = new DadaCityDeliveryProvider(env);
-    this.uuProvider = new UuCityDeliveryProvider(env);
+    const settings = new CityDeliverySettingsResolver(container, env);
+    this.dadaProvider = new DadaCityDeliveryProvider(env, () => settings.dada());
+    this.uuProvider = new UuCityDeliveryProvider(env, () => settings.uu());
   }
 
   verifyDada(rawBody: string, requestToken: string | undefined): VerifiedCityDeliveryEvent<"dada"> {
@@ -246,11 +293,21 @@ export class CityDeliveryCallbackService {
     });
   }
 
-  verifyUu(rawBody: string, requestToken: string | undefined): VerifiedCityDeliveryEvent<"uu"> {
-    return verifyUuCityDeliveryCallback(rawBody, {
+  async verifyUu(rawBody: string, requestToken: string | undefined): Promise<VerifiedCityDeliveryEvent<"uu">> {
+    let claimedOpenId: unknown;
+    try { claimedOpenId = (JSON.parse(rawBody) as { openId?: unknown }).openId; } catch { throw Error('uu_callback_not_json'); }
+    // Full pure verification authenticates the deployment token before SQL.
+    // Claimed account identity is subsequently checked under the config fence.
+    const candidate = verifyUuCityDeliveryCallback(rawBody, {
       requestToken,
       callbackToken: this.env.UU_CALLBACK_TOKEN,
-      expectedOpenId: this.env.UU_OPEN_ID,
+      expectedOpenId: typeof claimedOpenId === 'string' ? claimedOpenId : undefined,
+    });
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`); await citySettingsDeadlines(tx); await lockCityConfigForRead(tx);
+      const current = await readCityDeliverySettingsInTx(tx, this.env);
+      if (candidate.clientId === current.values.uupt_open_id || await completedUuCallbackReplay(tx, candidate)) return candidate;
+      throw Error('uu_open_id_mismatch');
     });
   }
 
@@ -260,6 +317,19 @@ export class CityDeliveryCallbackService {
   ): Promise<ReceiveResult> {
     const replayKey = crypto.randomUUID();
     return withTx(this.container, async (tx) => {
+      if (callback.provider === 'uu') {
+        // Rotate only after accepted evidence commits, and reject a callback
+        // verified just before another transaction changed the effective account.
+        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+        await citySettingsDeadlines(tx);
+        await lockCityConfigForRead(tx);
+        const current = await readCityDeliverySettingsInTx(tx, this.env);
+        if (callback.clientId !== current.values.uupt_open_id) {
+          const replay = await completedUuCallbackReplay(tx, callback);
+          if (replay) return replay;
+          throw Error('uu_callback_account_changed');
+        }
+      }
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`city-delivery-receive:${callback.eventKey}`}))`);
       const inserted = await tx.insert(cityDeliveryCallbackEvent).values({
         provider: callback.provider,
@@ -465,7 +535,46 @@ export class CityDeliveryCallbackService {
   private async project(claim: ClaimedCallback): Promise<ProjectionResult> {
     const now = Math.floor(Date.now() / 1_000);
     const spec = stateSpec(claim.event);
-    const prepared = await withTx(this.container, async (tx) => {
+    // UNKNOWN is retained as an IGNORED event, never a projection authority.
+    if (spec.state === "UNKNOWN") return "IGNORED";
+    const stationType = claim.event.provider === "dada" ? 1
+      : claim.event.provider === "uu" ? 2 : 0;
+    if (!stationType) throw new CityDeliveryProjectionConflict("city_delivery_provider_invalid");
+
+    // This outside hint only avoids loading receipt configuration for an
+    // already-completed no-op. It never authorizes a write or selects an active
+    // historical attempt. All business identity is read again under SQL locks.
+    const receiptHints = spec.completesOrder ? await this.container.db.select({ oid: storeDeliveryOrder.oid })
+      .from(storeDeliveryOrder).where(and(eq(storeDeliveryOrder.stationType, stationType),
+        eq(storeDeliveryOrder.orderId, claim.event.providerOrderId))).limit(2) : [];
+    const receiptOrders = receiptHints.length === 1 ? await this.container.db.select({ status: storeOrder.status })
+      .from(storeOrder).where(eq(storeOrder.id, receiptHints[0].oid)).limit(1) : [];
+    const receiptContext = receiptOrders[0]?.status === 1
+      ? await loadOrderReceiptSettlementContext(this.container, this.env) : undefined;
+
+    return withTx(this.container, async (tx): Promise<ProjectionResult> => {
+      // Establish each statement's snapshot after a waited delivery fence;
+      // a stricter session default must not hide a just-committed attempt.
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+      await projectionDeadlines(tx);
+      // First business lock. Without an active-attempt binding, a row/advisory
+      // lock cannot prevent another INSERT from making this oid ambiguous.
+      // This bounded fence serializes city projections and blocks delivery DML
+      // until commit. Future dispatch/import writers must also take it first.
+      await tx.execute(sql`LOCK TABLE ${storeDeliveryOrder} IN SHARE ROW EXCLUSIVE MODE`);
+      const deliveryHints = await tx.select().from(storeDeliveryOrder).where(and(
+        eq(storeDeliveryOrder.stationType, stationType),
+        eq(storeDeliveryOrder.orderId, claim.event.providerOrderId),
+      )).orderBy(asc(storeDeliveryOrder.id)).limit(2);
+      const deliveryHint = deliveryHints.length === 1 ? deliveryHints[0] : undefined;
+      const orderHints = deliveryHint ? await tx.select({ id: storeOrder.id, pid: storeOrder.pid })
+        .from(storeOrder).where(eq(storeOrder.id, deliveryHint.oid)).limit(1) : [];
+      const orderHint = orderHints[0];
+      if (orderHint) {
+        const rootId = orderHint.pid > 0 ? orderHint.pid : orderHint.id;
+        await lockOrderSettlement(tx, rootId);
+        if (rootId !== orderHint.id) await lockOrderSettlement(tx, orderHint.id);
+      }
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`city-delivery-subject:${claim.event.subjectKeyHash}`}))`);
       const watermarks = await tx.select().from(cityDeliveryCallbackWatermark).where(and(
         eq(cityDeliveryCallbackWatermark.provider, claim.event.provider),
@@ -480,17 +589,25 @@ export class CityDeliveryCallbackService {
         state: spec,
       });
       if (decision === "ignored") {
-        await upsertWatermark(tx, claim.event, spec, now);
-        return { terminalStatus: "IGNORED" as const };
+        // UNKNOWN remains durable diagnostic evidence in event/outbox only.
+        // A confirmed watermark's state, rank, terminal and event cursor must
+        // never be replaced or advanced by an unrecognized provider status.
+        return "IGNORED";
       }
-      if (decision === "noop") return { terminalStatus: "APPLIED_NOOP" as const };
-      if (decision === "superseded") return { terminalStatus: "SUPERSEDED" as const };
+      if (decision === "superseded") return "SUPERSEDED";
       if (decision === "conflict") throw new CityDeliveryProjectionConflict("city_delivery_state_conflict");
 
-      const stationType = claim.event.provider === "dada" ? 1
-        : claim.event.provider === "uu" ? 2
-          : 0;
-      if (!stationType) throw new CityDeliveryProjectionConflict("city_delivery_provider_invalid");
+      if (deliveryHints.length === 0) throw new Error("city_delivery_order_unmatched");
+      if (deliveryHints.length > 1) throw new CityDeliveryProjectionConflict("city_delivery_order_ambiguous");
+      if (!deliveryHint || !orderHint) throw new Error("city_delivery_store_order_unmatched");
+      const orders = await tx.select().from(storeOrder).where(and(
+        eq(storeOrder.id, deliveryHint.oid),
+        eq(storeOrder.isDel, 0),
+        eq(storeOrder.isSystemDel, 0),
+      )).limit(1).for("update");
+      const order = orders[0];
+      if (!order) throw new Error("city_delivery_store_order_unmatched");
+      if (order.pid !== orderHint.pid) throw new CityDeliveryProjectionConflict("city_delivery_order_identity_changed");
       const deliveries = await tx.select().from(storeDeliveryOrder).where(and(
         eq(storeDeliveryOrder.stationType, stationType),
         eq(storeDeliveryOrder.orderId, claim.event.providerOrderId),
@@ -498,6 +615,23 @@ export class CityDeliveryCallbackService {
       if (deliveries.length === 0) throw new Error("city_delivery_order_unmatched");
       if (deliveries.length > 1) throw new CityDeliveryProjectionConflict("city_delivery_order_ambiguous");
       const delivery = deliveries[0];
+      if (delivery.id !== deliveryHint.id || delivery.oid !== order.id
+        || !hasOriginalOrderAuthority(delivery, order)) {
+        throw new CityDeliveryProjectionConflict("city_delivery_original_order_identity_conflict");
+      }
+      // A new customer shipment names its exact durable admitted attempt. Old
+      // rows retain the strict legacy rule; neither path selects a newest ID.
+      const customerBinding = await customerCityProjectionBinding(tx, delivery, order).catch(error => {
+        if(error instanceof Error && error.message.startsWith('city_'))throw new CityDeliveryProjectionConflict(error.message);
+        throw error;
+      });
+      if (!customerBinding) {
+        const attempts = await tx.select({ id: storeDeliveryOrder.id }).from(storeDeliveryOrder)
+          .where(eq(storeDeliveryOrder.oid, order.id)).orderBy(asc(storeDeliveryOrder.id)).limit(2).for("update");
+        if (attempts.length !== 1 || attempts[0].id !== delivery.id) {
+          throw new CityDeliveryProjectionConflict("city_delivery_active_attempt_unverified");
+        }
+      }
       if (cityDeliverySubjectHash(claim.event.provider as CityDeliveryProvider, delivery.orderId)
         !== claim.event.subjectKeyHash) {
         throw new CityDeliveryProjectionConflict("city_delivery_subject_mismatch");
@@ -511,33 +645,57 @@ export class CityDeliveryCallbackService {
           throw new CityDeliveryProjectionConflict("city_delivery_provider_order_mismatch");
         }
       }
-      const orders = await tx.select().from(storeOrder).where(and(
-        eq(storeOrder.id, delivery.oid),
-        eq(storeOrder.isDel, 0),
-        eq(storeOrder.isSystemDel, 0),
-      )).limit(1).for("update");
-      const order = orders[0];
-      if (!order) throw new Error("city_delivery_store_order_unmatched");
       if (order.paid !== 1) throw new CityDeliveryProjectionConflict("city_delivery_order_unpaid");
+
+      if (decision === "noop") {
+        // A committed watermark can survive an interrupted finishClaim. A
+        // retry still needs current authority before resolving reconciliation;
+        // it must not accept an old attempt after the fulfillment changes.
+        const matchesCurrentState = spec.completesOrder
+          ? order.status === 2 && order.deliveryType === "city_delivery"
+          : spec.cancelsDelivery
+            ? order.status === 0 && order.deliveryType === ""
+            : order.status === 1 && order.deliveryType === "city_delivery";
+        if (!matchesCurrentState) throw new CityDeliveryProjectionConflict("city_delivery_replay_order_state_conflict");
+        return "APPLIED_NOOP";
+      }
 
       if (spec.completesOrder) {
         if (order.status === 2) {
+          if (order.deliveryType !== "city_delivery") {
+            throw new CityDeliveryProjectionConflict("city_delivery_completion_order_state_conflict");
+          }
           await tx.update(storeDeliveryOrder).set({ status: 4, reason: "" })
             .where(eq(storeDeliveryOrder.id, delivery.id));
+          await finishCustomerCityProjection(tx, customerBinding, 'DELIVERED');
           await upsertWatermark(tx, claim.event, spec, now);
-          return { terminalStatus: "APPLIED_NOOP" as const };
+          return "APPLIED_NOOP";
         }
         if (order.status !== 1 || order.deliveryType !== "city_delivery") {
           throw new CityDeliveryProjectionConflict("city_delivery_completion_order_state_conflict");
         }
-        return { orderId: order.id, deliveryId: delivery.id, terminalStatus: undefined };
+        if (!receiptContext) throw new Error("city_delivery_receipt_context_retry");
+        const completed = await completeOrderReceiptInTx(tx, receiptContext, {
+          orderId: order.id,
+          actor: "scheduled",
+          requireSystemVisible: true,
+          requiredDeliveryType: "city_delivery",
+          message: `${claim.event.provider === "uu" ? "UU跑腿" : "达达"}同城配送已送达`,
+        });
+        if (!completed) throw new CityDeliveryProjectionConflict("city_delivery_completion_failed");
+        await tx.update(storeDeliveryOrder).set({ status: 4, reason: "" })
+          .where(eq(storeDeliveryOrder.id, delivery.id));
+        await finishCustomerCityProjection(tx, customerBinding, 'DELIVERED');
+        await upsertWatermark(tx, claim.event, spec, now);
+        return "APPLIED";
       }
 
       if (spec.cancelsDelivery) {
-        if (order.status >= 2) return { terminalStatus: "SUPERSEDED" as const };
+        if (order.status >= 2) return "SUPERSEDED";
         if (order.status === 0 && order.deliveryType === "") {
+          await finishCustomerCityProjection(tx, customerBinding, 'CANCELLED');
           await upsertWatermark(tx, claim.event, spec, now);
-          return { terminalStatus: "APPLIED_NOOP" as const };
+          return "APPLIED_NOOP";
         }
         if (order.status !== 1 || order.deliveryType !== "city_delivery") {
           throw new CityDeliveryProjectionConflict("city_delivery_cancel_order_state_conflict");
@@ -559,12 +717,13 @@ export class CityDeliveryCallbackService {
           changeMessage: "同城配送取消",
           changeTime: now,
         });
+        await finishCustomerCityProjection(tx, customerBinding, 'CANCELLED');
         await upsertWatermark(tx, claim.event, spec, now);
-        return { terminalStatus: "APPLIED" as const };
+        return "APPLIED";
       }
 
       if (order.status !== 1 || order.deliveryType !== "city_delivery") {
-        if (order.status >= 2) return { terminalStatus: "SUPERSEDED" as const };
+        if (order.status >= 2) return "SUPERSEDED";
         throw new CityDeliveryProjectionConflict("city_delivery_order_state_conflict");
       }
       const deliveryUpdate: Partial<typeof storeDeliveryOrder.$inferInsert> = {
@@ -593,28 +752,8 @@ export class CityDeliveryCallbackService {
         });
       }
       await upsertWatermark(tx, claim.event, spec, now);
-      return { terminalStatus: "APPLIED" as const };
+      return "APPLIED";
     });
-
-    if (prepared.terminalStatus) return prepared.terminalStatus;
-    const completed = await completeOrderReceipt(this.container, this.env, {
-      orderId: prepared.orderId,
-      actor: "scheduled",
-      message: `${claim.event.provider === "uu" ? "UU跑腿" : "达达"}同城配送已送达`,
-    });
-    const finalStatus = completed ? "APPLIED" : await withTx(this.container, async (tx) => {
-      const rows = await tx.select({ status: storeOrder.status }).from(storeOrder)
-        .where(eq(storeOrder.id, prepared.orderId)).limit(1).for("key share");
-      if (rows[0]?.status === 2) return "APPLIED_NOOP" as const;
-      throw new CityDeliveryProjectionConflict("city_delivery_completion_failed");
-    });
-    await withTx(this.container, async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`city-delivery-subject:${claim.event.subjectKeyHash}`}))`);
-      await tx.update(storeDeliveryOrder).set({ status: 4, reason: "" })
-        .where(eq(storeDeliveryOrder.id, prepared.deliveryId));
-      await upsertWatermark(tx, claim.event, spec, now);
-    });
-    return finalStatus;
   }
 
   private async fail(claim: ClaimedCallback, error: unknown): Promise<"dead" | { kind: "deferred"; delaySeconds: number }> {

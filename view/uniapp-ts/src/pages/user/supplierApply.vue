@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view class="intro-card">
       <text class="eyebrow">SUPPLIER PROGRAM</text>
@@ -63,9 +64,11 @@
       <view v-if="!applications.length && !canApply" class="empty">暂无申请记录</view>
     </template>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, reactive, ref } from "vue";
 import { onShow, onUnload } from "@dcloudio/uni-app";
 import {
@@ -201,7 +204,7 @@ onUnload(() => { if (timer) clearInterval(timer); });
 
 <style scoped>
 .page { min-height: 100vh; padding: 24rpx; background: #f4f6f5; box-sizing: border-box; }
-.intro-card { display: flex; flex-direction: column; padding: 38rpx 32rpx; border-radius: 24rpx; color: #fff; background: linear-gradient(135deg, #0f3c37, #18776b 68%, #d1a24b); box-shadow: 0 18rpx 45rpx rgba(15,60,55,.18); }
+.intro-card { display: flex; flex-direction: column; padding: 38rpx 32rpx; border-radius: 24rpx; color: #fff; background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931)); box-shadow: 0 18rpx 45rpx rgba(15,60,55,.18); }
 .eyebrow { color: #f4dcae; font-size: 20rpx; font-weight: 700; letter-spacing: 4rpx; }.title { margin-top: 12rpx; font-size: 42rpx; font-weight: 700; }.desc { margin-top: 14rpx; color: rgba(255,255,255,.78); font-size: 25rpx; line-height: 1.7; }
 .application-card,.form-card { margin-top: 24rpx; padding: 28rpx; border-radius: 20rpx; background: #fff; box-shadow: 0 8rpx 24rpx rgba(22,48,45,.05); }.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; }.company { display: block; color: #17332f; font-size: 30rpx; font-weight: 650; }.meta { display: block; margin-top: 8rpx; color: #98a19f; font-size: 22rpx; }.status { padding: 7rpx 16rpx; border-radius: 999rpx; font-size: 22rpx; }.status-0 { color: #93671d; background: #fff4d6; }.status-1 { color: #14705d; background: #e5f6f0; }.status-2 { color: #c7473b; background: #fff0ee; }
 .detail-row { display: flex; justify-content: space-between; gap: 20rpx; margin-top: 22rpx; color: #52615e; font-size: 25rpx; }.detail-row text:first-child { color: #99a3a1; }.notice { margin-top: 22rpx; padding: 18rpx 20rpx; border-radius: 12rpx; font-size: 24rpx; line-height: 1.55; }.notice.neutral { color: #5f674c; background: #f6f7ec; }.notice.danger { color: #a23f37; background: #fff0ee; }.notice.success { color: #176956; background: #eaf7f2; }

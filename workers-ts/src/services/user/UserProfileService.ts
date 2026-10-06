@@ -18,8 +18,8 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { userUnreadMessageCount } from "@/services/message/UserMessageVisibility";
 import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
-import { parseConfigInteger } from "@/utils/config";
-import { cacheGet, cacheSetIfAbsent } from "@/utils/cache";
+import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
+import { cacheGet, cacheSetIfAbsent, getRedis } from "@/utils/cache";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const SHARE_COOLDOWN_SECONDS = 5 * 60;
@@ -79,6 +79,8 @@ export interface UserActivityFlags {
 export interface PaymentCodeStore {
   get(key: string): Promise<string | null>;
   putIfAbsent(key: string, value: string, ttlSeconds: number): Promise<boolean>;
+  /** Actual remaining TTL, never a new ten-minute window for a reused code. */
+  ttl?(key: string): Promise<number>;
 }
 
 /** User-centre compatibility contracts that do not belong to an order mutation. */
@@ -103,6 +105,7 @@ export class UserProfileService {
         if (!env.UPSTASH_REDIS_URL || !env.UPSTASH_REDIS_TOKEN) return false;
         return cacheSetIfAbsent(key, value, env, ttlSeconds);
       },
+      ttl: async key => { const redis=getRedis(env); if(!redis)throw new ValidateException('付款码服务未配置');return redis.ttl(key); },
     };
   }
 
@@ -172,13 +175,16 @@ export class UserProfileService {
     const account = await this.safeAccount(uid);
     const now = Math.floor(Date.now() / 1_000);
     const configKeys = [
-      "member_card_status", "brokerage_func_status", "store_brokerage_statu",
+      "brokerage_func_status", "store_brokerage_statu",
       "store_brokerage_price", "member_func_status", "recharge_switch", "extract_time",
       "balance_func_status", "invoice_func_status", "special_invoice_status",
       "user_extract_bank_status", "user_extract_wechat_status", "user_extract_alipay_status",
       "user_extract_balance_status", "level_activate_status", "video_func_status",
     ];
-    const configs = await this.config.getMany(configKeys);
+    const [configs, memberCardStatus] = await Promise.all([
+      this.config.getMany(configKeys),
+      this.container.systemConfigDao.getValue("member_card_status").then(normalizeConfigScalar),
+    ]);
     const [aggregateRows, orderStatusNum, commission, member, agentRows, statusRows] = await Promise.all([
       this.container.db.execute(sql`
         SELECT
@@ -253,8 +259,8 @@ export class UserProfileService {
 
     return {
       ...account,
-      is_open_member: parseConfigInteger(configs.member_card_status, 0) !== 0,
-      svip_open: parseConfigInteger(configs.member_card_status, 0) !== 0,
+      is_open_member: parseConfigInteger(memberCardStatus, 0) !== 0,
+      svip_open: parseConfigInteger(memberCardStatus, 0) !== 0,
       agent_level_name: agentRows[0]?.name ?? "",
       is_complete: integer(aggregate.is_complete),
       couponCount: integer(aggregate.coupon_count),
@@ -316,6 +322,21 @@ export class UserProfileService {
     const winner = await this.paymentCodes.get(key);
     if (winner && /^\d{6}$/.test(winner)) return winner;
     throw new ValidateException("付款码暂时不可用");
+  }
+
+  async paymentCodeSnapshot(uid:number){
+    const validActor=async()=>{if(!Number.isSafeInteger(uid)||uid<=0||uid>2147483647)throw new ValidateException('用户ID错误');
+      const rows=await this.container.db.select({uid:userTable.uid}).from(userTable).where(and(eq(userTable.uid,uid),eq(userTable.status,1),eq(userTable.isDel,0),sql`${userTable.deleteTime} IS NULL`)).limit(1);
+      if(!rows.length)throw new ValidateException('请重新登录');};
+    await validActor();
+    const key=`user_rand_code${uid}`,code=await this.paymentCode(uid);
+    if(!this.paymentCodes.ttl)throw new ValidateException('付款码有效期不可核验');
+    const observedAt=Math.floor(Date.now()/1000),ttl=await this.paymentCodes.ttl(key),current=await this.paymentCodes.get(key);
+    if(!Number.isSafeInteger(ttl)||ttl<=0||ttl>PAYMENT_CODE_TTL_SECONDS||current!==code)throw new ValidateException('付款码已失效，请刷新');
+    // A disabled/revoked account during provider I/O cannot receive its old code.
+    await validActor();
+    if(observedAt+ttl<=Math.floor(Date.now()/1000))throw new ValidateException('付款码已失效，请刷新');
+    return{code,actor_uid:uid,expires_at:observedAt+ttl};
   }
 
   async recordShare(uid: number, now = Math.floor(Date.now() / 1_000)): Promise<boolean> {

@@ -1,11 +1,35 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { runInNewContext } from "node:vm";
+import { ModuleKind, ScriptTarget, transpileModule } from "typescript";
 import { describe, expect, it } from "vitest";
 
 const root = resolve(import.meta.dirname, "..");
 const client = readFileSync(resolve(root, "../view/uniapp-ts/src/api/diy.ts"), "utf8");
 const loader = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diy.ts"), "utf8");
 const navigation = readFileSync(resolve(root, "../view/uniapp-ts/src/config/navigation.ts"), "utf8");
+const fabSource = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/fab.ts"), "utf8");
+// Execute the actual frontend pure module with its actual navigation registry.
+// No source-function rewrite, frontend-global mock or duplicate policy copy.
+const navigationExports: Record<string, unknown> = {}, fabExports: Record<string, unknown> = {};
+const compile = (source: string) => transpileModule(source, { compilerOptions: {
+  module: ModuleKind.CommonJS, target: ScriptTarget.ES2022,
+} }).outputText;
+runInNewContext(compile(navigation), { exports: navigationExports });
+runInNewContext(compile(fabSource), { exports: fabExports, URL, require: (name: string) => {
+  if (name !== "@/config/navigation") throw Error(`Unexpected FAB pure dependency: ${name}`);
+  return navigationExports;
+} });
+function parseFabConfig(value: unknown): unknown {
+  const parse = fabExports.parseFabConfig;
+  if (typeof parse !== "function") throw Error("Actual FAB parser export missing");
+  return Reflect.apply(parse, undefined, [value]);
+}
+function fabCentre(percent: number, viewport: number, height: number, dragged?: number): unknown {
+  const position = fabExports.fabCentre;
+  if (typeof position !== "function") throw Error("Actual FAB position export missing");
+  return Reflect.apply(position, undefined, [percent, viewport, height, dragged]);
+}
 const renderer = readFileSync(
   resolve(root, "../view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue"),
   "utf8",
@@ -90,7 +114,12 @@ describe("DIY-home frontend migration", () => {
       expect(client).toContain(route);
     }
     expect(client).toContain("Promise<DiyPage | []>");
-    expect(client).toContain("Promise<DiySuspendedConfig>");
+    expect(client).toContain("Promise<DiySuspendedConfig | []>");
+    expect(parseFabConfig([])).toBeNull();
+    expect(parseFabConfig({ is_show: 1, index: 1, shifting: 0,
+      main_ago_image: "/main.png", main_after_image: "", button: [] }))
+      .toEqual({ is_show: 1, index: 1, shifting: 0,
+        main_ago_image: "/main.png", main_after_image: "", button: [] });
   });
 
   it("normalizes only named, visible allowlisted components in timestamp order", () => {
@@ -136,7 +165,22 @@ describe("DIY-home frontend migration", () => {
     expect(microPage).toContain("micro-page");
     expect(pages).toContain('"path": "pages/diy/detail"');
     expect(suspended).toContain("loadDiySuspendedConfig()");
-    expect(suspended).toContain("normalizeDiyLink");
+    expect(suspended).toContain("openFabLink(url)");
+    const child = { img: "/child.png", url: "/pages/index/index" };
+    const base = { is_show: 1, index: 1, shifting: 0, main_ago_image: "/main.png", main_after_image: "", button: [] };
+    for (const index of [1, 2]) expect(parseFabConfig({ ...base, index })).toMatchObject({ index, shifting: 0, button: [] });
+    expect(parseFabConfig({ ...base, index: 3, shifting: 100, main_after_image: "/after.png", button: [child, child, child] }))
+      .toMatchObject({ index: 3, shifting: 100, main_after_image: "/after.png", button: [child, child, child] });
+    expect(parseFabConfig({ ...base, index: 4, main_ago_image: "", button: [child, child, child] }))
+      .toMatchObject({ index: 4, main_ago_image: "", main_after_image: "", button: [child, child, child] });
+    for (const change of [{ is_show: "1" }, { index: 5 }, { shifting: -1 }, { shifting: 101 }, { main_ago_image: "javascript:alert(1)" },
+      { index: 3, main_after_image: "/after.png", button: [child, child] }]) expect(parseFabConfig({ ...base, ...change })).toBeNull();
+    expect(parseFabConfig({ ...base, button: [{ img: "/child.png", url: "javascript:alert(1)" }] }))
+      .toMatchObject({ is_show: 1, button: [{ img: "/child.png", url: "" }] });
+    expect(fabCentre(0, 800, 100)).toBe(50);
+    expect(fabCentre(100, 800, 100)).toBe(750);
+    expect(fabCentre(50, 800, 100)).toBe(400);
+    expect(fabCentre(50, 800, 100, 1000)).toBe(750);
   });
 
   it("mounts suspended navigation on all 38 migrated legacy destination pages", () => {

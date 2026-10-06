@@ -61,7 +61,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('purchase origin 
       const api=await import('drizzle-kit/api'), registered=await import('@/models/schema');
       const proposed=api.generateDrizzleJson(registered);
       expect(registered.storeOrderPurchaseOrigin).toBe(storeOrderPurchaseOrigin);
-      expect(Object.keys(proposed.tables)).toHaveLength(279);
+      expect(Object.keys(proposed.tables)).toHaveLength(281);
       await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),proposed)).join('\n'));
       const objects=() => whole.exec("SELECT oid::text,relfilenode::text,relname FROM pg_class WHERE relnamespace='public'::regnamespace ORDER BY oid");
       const before=await objects();
@@ -70,7 +70,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('purchase origin 
       expect(await objects()).toEqual(before);
       const completed=await whole.db.execute(sql.raw(PURCHASE_ORIGIN_CATALOG_SQL));
       expect(Object.fromEntries(completed.map(row => [String(row.name),row.fingerprint]))).toEqual(PURCHASE_ORIGIN_FINGERPRINTS);
-      expect(await whole.exec("SELECT count(*)::integer AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'")).toEqual([{ n:279 }]);
+      expect(await whole.exec("SELECT count(*)::integer AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'")).toEqual([{ n:281 }]);
       expect(await whole.exec('TABLE public.store_order_purchase_origin')).toEqual([]);
       await runPurchaseOriginEvidenceSchema(whole.db); expect(await objects()).toEqual(before);
     } finally { await whole.close(); }

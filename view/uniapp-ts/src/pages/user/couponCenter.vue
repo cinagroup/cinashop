@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="coupon-center">
     <view v-if="list.length" class="coupon-list">
       <view v-for="c in list" :key="(c as any).id" class="coupon-card">
@@ -19,9 +20,11 @@
     <view v-else class="empty">暂无可用优惠券</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
 
@@ -92,7 +95,7 @@ onMounted(load);
 
 .coupon-left {
   width: 200rpx;
-  background: linear-gradient(135deg, #e93323, #ff7a45);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -138,7 +141,7 @@ onMounted(load);
 
 .receive-btn {
   align-self: flex-end;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 24rpx;
   padding: 10rpx 30rpx;

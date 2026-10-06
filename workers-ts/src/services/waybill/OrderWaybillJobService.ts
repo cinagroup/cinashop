@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm";
 import type { Env, OrderMessage, OrderWaybillJobMessage } from "@/env";
 import type { Container, DbClient } from "@/lib/di";
-import { withTx } from "@/lib/di";
+import { withTx, createContainerFromDb } from "@/lib/di";
 import {
   expressCompany,
   orderWaybillJob,
@@ -21,6 +21,7 @@ import {
   storeOrder,
   storeOrderCartInfo,
   systemConfig,
+  type OrderWaybillJob,
   type OrderWaybillJobActionType,
   type OrderWaybillJobStatus,
 } from "@/models/schema";
@@ -42,6 +43,14 @@ import { normalizeConfigScalar } from "@/utils/config";
 import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+
+import { assertCustomerFulfillmentReady } from '@/services/customer-work/customerFulfillmentAuthority';
+import { acquireCustomerWorkCarrierLock } from '@/migrations/runCustomerWorkScopeLock';
+import { lockCustomerWaybillOrder, authorizeCurrentCustomerWaybill, customerWaybillBindingFromReceipt, customerWaybillCartSnapshotHash, CustomerWaybillRevokedError, assertCustomerWaybillActor, type CustomerWaybillActor, type CustomerWaybillBinding } from './CustomerWaybillAuthority';
+import { readCustomerWorkScope } from '@/services/customer-work/CustomerWorkScope';
+import { isUserCenterPublicImage } from '../../../../view/common/userCenterDesign';
+import { assertCustomerWaybillActorCatalog } from '@/migrations/runCustomerWaybillActor';
+import { assertNoConflictingCustomerCityJob } from '@/services/order/CustomerCityFulfillmentFence';
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -79,7 +88,8 @@ const SUPPLIER_CONFIG_KEYS = [
 
 export type WaybillActor =
   | { actorType: "admin"; actorId: number }
-  | { actorType: "supplier"; actorId: number; supplierId: number };
+  | { actorType: "supplier"; actorId: number; supplierId: number }
+  | CustomerWaybillActor;
 
 export interface CreateWaybillInput extends Record<string, unknown> {
   request_key?: unknown;
@@ -190,6 +200,9 @@ function enabled(value: string | undefined): boolean {
 function projection(row: typeof orderWaybillJob.$inferSelect) {
   return {
     id: row.id,
+    request_key: row.requestKey,
+    request_hash: row.requestHash,
+    service_id: row.actorServiceId,
     event_key: row.eventKey,
     order_id: row.orderId,
     order_no: row.orderNo,
@@ -223,7 +236,16 @@ function projection(row: typeof orderWaybillJob.$inferSelect) {
   };
 }
 
-function assertActor(actor: WaybillActor): void {
+export async function customerWaybillJobRevision(row:typeof orderWaybillJob.$inferSelect) {
+  return sha256(JSON.stringify({version:'customer-waybill-revision-v1',id:row.id,request_hash:row.requestHash,
+    actor_id:row.actorId,service_id:row.actorServiceId,status:row.status,replay_count:row.replayCount,
+    lease_token:row.leaseToken,lease_until:row.leaseUntil,tracking_number:row.trackingNumber,
+    label_url:row.labelUrl,provider_reference:row.providerReference,fulfilled_order_id:row.fulfilledOrderId,
+    remaining_order_id:row.remainingOrderId,update_time:row.updateTime}));
+}
+
+function assertActor(actor: WaybillActor): asserts actor is Exclude<WaybillActor, CustomerWaybillActor> {
+  if (actor.actorType === "customer") throw new ValidateException("手机经营面单必须使用独立用户授权合同");
   if (!Number.isSafeInteger(actor.actorId) || actor.actorId <= 0) throw new Error("waybill actor missing");
   if (actor.actorType === "supplier" && (
     !Number.isSafeInteger(actor.supplierId) || actor.supplierId <= 0
@@ -231,7 +253,7 @@ function assertActor(actor: WaybillActor): void {
 }
 
 function actorCanAccess(actor: WaybillActor, supplierId: number): boolean {
-  return actor.actorType === "admin" || actor.supplierId === supplierId;
+  return actor.actorType === "admin" || (actor.actorType === "supplier" && actor.supplierId === supplierId);
 }
 
 function normalizeCartSelection(input: Record<string, unknown>): SupplierSplitCartInput[] {
@@ -262,7 +284,7 @@ function canonicalRequest(orderReference: string, input: Record<string, unknown>
   };
 }
 
-async function platformConfig(tx: DbClient): Promise<Record<string, string>> {
+async function platformConfig(tx: DbClient,rejectDuplicates=false): Promise<Record<string, string>> {
   const rows = await tx.select({
     key: systemConfig.menuName,
     value: systemConfig.value,
@@ -271,7 +293,10 @@ async function platformConfig(tx: DbClient): Promise<Record<string, string>> {
     inArray(systemConfig.menuName, [...PLATFORM_CONFIG_KEYS]),
   )).orderBy(asc(systemConfig.sort), asc(systemConfig.id));
   const values: Record<string, string> = {};
-  for (const row of rows) values[row.key] = scalar(row.value);
+  for (const row of rows) {
+    if(rejectDuplicates&&Object.hasOwn(values,row.key))throw new ValidateException('平台面单配置重复，请先核对');
+    values[row.key] = scalar(row.value);
+  }
   return values;
 }
 
@@ -475,6 +500,13 @@ async function loadIssueInput(tx: DbClient, job: typeof orderWaybillJob.$inferSe
     .orderBy(asc(storeOrderCartInfo.id)).limit(500);
   const selected = parseSelection(job.cartSelection);
   const selectedById = new Map(selected.map((item) => [item.cartId, item.cartNum]));
+  if(job.actorType === "customer") {
+    if(!selected.length || selectedById.size !== selected.length) throw new WaybillConfigurationError("手机经营面单商品冻结快照无效");
+    const available=new Map(carts.filter(c=>c.splitStatus<2).map(c=>[c.cartId,c.splitSurplusNum>0?c.splitSurplusNum:c.cartNum]));
+    if(selected.some(c=>!available.has(c.cartId)||c.cartNum>available.get(c.cartId)!)
+      ||job.fulfillmentMode === "whole"&&(available.size!==selected.length||selected.some(c=>available.get(c.cartId)!==c.cartNum)))
+      throw new WaybillConfigurationError("手机经营面单原商品范围或数量已变化");
+  }
   const names: string[] = [];
   let count = 0;
   let weight = 0;
@@ -531,24 +563,59 @@ export class OrderWaybillJobService {
   async create(orderReferenceValue: unknown, actor: WaybillActor, input: CreateWaybillInput) {
     assertActor(actor);
     const orderReference = boundedText(orderReferenceValue, "订单标识", 32, 1);
-    const key = uuid4(input.request_key ?? input.requestKey);
+    uuid4(input.request_key ?? input.requestKey);
     const canonical = canonicalRequest(orderReference, input);
     const requestHash = await sha256(JSON.stringify(canonical));
     const cartSelection = canonical.cart_ids as SupplierSplitCartInput[];
     const now = Math.floor(Date.now() / 1_000);
-    const result = await withTx(this.container, async (tx) => {
+    const result = await withTx(this.container, tx => this.createInTransaction(tx,orderReference,actor,input,requestHash,cartSelection,now));
+    try {
+      await this.dispatchPending(1, result.job.event_key, [result.job.id]);
+    } catch {
+      // Durable row is authoritative; scheduled dispatch will retry.
+    }
+    return result;
+  }
+
+  /** Only the customer operation service calls this inside its receipt/order transaction.
+   * Queue dispatch happens after that outer commit, never inside admission. */
+  async createCustomerInTransaction(tx: DbClient, orderReferenceValue: unknown, actor: CustomerWaybillActor, input: CreateWaybillInput, binding: CustomerWaybillBinding) {
+    assertCustomerWaybillActor(actor);
+    await assertCustomerWaybillActorCatalog(tx);
+    const orderReference=boundedText(orderReferenceValue,"订单标识",32,1);
+    if (orderReference !== String(binding.orderId)) throw new ValidateException("手机经营面单必须指定真实发货主键");
+    const canonical=canonicalRequest(orderReference,input),requestHash=await sha256(JSON.stringify(canonical));
+    return this.createInTransaction(tx,orderReference,actor,input,requestHash,canonical.cart_ids as SupplierSplitCartInput[],Math.floor(Date.now()/1000),binding);
+  }
+
+  private async createInTransaction(tx:DbClient,orderReference:string,actor:WaybillActor,input:CreateWaybillInput,requestHash:string,cartSelection:SupplierSplitCartInput[],now:number,binding?:CustomerWaybillBinding) {
+    const key=uuid4(input.request_key ?? input.requestKey);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`waybill-request:${key}`}))`);
       const prior = await tx.select().from(orderWaybillJob)
         .where(eq(orderWaybillJob.requestKey, key)).limit(1);
       if (prior[0]) {
         if (
           prior[0].requestHash !== requestHash || prior[0].actorType !== actor.actorType ||
-          prior[0].actorId !== actor.actorId || !actorCanAccess(actor, prior[0].supplierId)
+          prior[0].actorId !== actor.actorId || (actor.actorType === "customer"
+            ? prior[0].actorServiceId !== actor.serviceId : !actorCanAccess(actor, prior[0].supplierId))
         ) throw new ValidateException("请求键已被不同的电子面单内容使用");
         return { duplicate: true, job: projection(prior[0]) };
       }
 
-      const { root, active } = await resolveActiveOrder(tx, actor, orderReference);
+      const customerOrder = actor.actorType === "customer" && binding
+        ? await lockCustomerWaybillOrder(tx, binding) : null;
+      let frozenCustomerCarts: SupplierSplitCartInput[] | undefined;
+      if (actor.actorType === "customer") {
+        if (!customerOrder) throw new ValidateException("手机经营面单缺少真实订单绑定");
+        await authorizeCurrentCustomerWaybill(tx, actor);
+        await assertNoConflictingCustomerCityJob(tx, customerOrder.root.id);
+        const carts=await assertCustomerFulfillmentReady(tx, customerOrder, "electronic");
+        frozenCustomerCarts=cartSelection.length?cartSelection:carts.filter(c=>c.splitStatus<2)
+          .map(c=>({cartId:c.cartId,cartNum:c.splitSurplusNum>0?c.splitSurplusNum:c.cartNum})).sort((a,b)=>a.cartId.localeCompare(b.cartId));
+      }
+      const { root, active } = customerOrder
+        ? { root: customerOrder.root, active: customerOrder.order }
+        : await resolveActiveOrder(tx, actor, orderReference);
       await assertPresaleDispatchReady(tx, active);
       const activeJobs = await tx.select({ id: orderWaybillJob.id })
         .from(orderWaybillJob).where(and(
@@ -559,7 +626,7 @@ export class OrderWaybillJobService {
 
       const values = actor.actorType === "supplier"
         ? await supplierConfig(tx, actor.supplierId)
-        : await platformConfig(tx);
+        : await platformConfig(tx,actor.actorType==='customer');
       if (!enabled(configValue(values, actor, "open"))) {
         throw new ValidateException("电子面单尚未启用");
       }
@@ -568,6 +635,7 @@ export class OrderWaybillJobService {
         input.carrier_id ?? input.carrierId ?? defaultCarrier,
         "快递公司ID",
       );
+      if (actor.actorType === "customer") await acquireCustomerWorkCarrierLock(tx, carrierId);
       const carriers = await tx.select().from(expressCompany).where(and(
         eq(expressCompany.id, carrierId),
         eq(expressCompany.isShow, 1),
@@ -598,7 +666,7 @@ export class OrderWaybillJobService {
       if (cloudPrinterId && !/^[A-Za-z0-9]{10,50}$/.test(cloudPrinterId)) {
         throw new ValidateException("云打印机编号必须为10到50位数字或字母");
       }
-      const selectionJson = JSON.stringify(cartSelection);
+      const selectionJson = JSON.stringify(frozenCustomerCarts ?? cartSelection);
       if (selectionJson.length > 16_000) throw new ValidateException("拆分商品内容过长");
       const carrierJson = JSON.stringify(snapshot);
       if (carrierJson.length > 2_000) throw new ValidateException("快递公司参数过长");
@@ -613,6 +681,7 @@ export class OrderWaybillJobService {
         storeId: active.storeId,
         actorType: actor.actorType,
         actorId: actor.actorId,
+        actorServiceId: actor.actorType === "customer" ? actor.serviceId : 0,
         fulfillmentMode: cartSelection.length ? "split" : "whole",
         cartSelection: selectionJson,
         carrierId: carrier.id,
@@ -630,13 +699,6 @@ export class OrderWaybillJobService {
         updateTime: now,
       }).returning();
       return { duplicate: false, job: projection(inserted[0]) };
-    });
-    try {
-      await this.dispatchPending(1, result.job.event_key, [result.job.id]);
-    } catch {
-      // Durable row is authoritative; scheduled dispatch will retry.
-    }
-    return result;
   }
 
   async dispatchPending(
@@ -726,10 +788,31 @@ export class OrderWaybillJobService {
         const jobs = await tx.select().from(orderWaybillJob)
           .where(eq(orderWaybillJob.id, claim.id)).limit(1);
         if (!jobs[0]) throw new WaybillConfigurationError("电子面单任务不存在");
-        return { job: jobs[0], input: await loadIssueInput(tx, jobs[0]) };
+        const job=jobs[0];
+        if(job.actorType === "customer") {
+          const binding=await customerWaybillBindingFromReceipt(tx,job),locked=await lockCustomerWaybillOrder(tx,binding);
+          const [current]=await tx.select().from(orderWaybillJob).where(and(eq(orderWaybillJob.id,job.id),eq(orderWaybillJob.status,"PROCESSING"),eq(orderWaybillJob.leaseToken,claim.leaseToken))).limit(1).for("update",{noWait:true});
+          if(!current||current.requestHash!==job.requestHash||current.actorId!==job.actorId||current.actorServiceId!==job.actorServiceId)throw new WaybillConfigurationError("手机经营面单任务租约已变化");
+          await authorizeCurrentCustomerWaybill(tx,{actorType:"customer",actorId:job.actorId,serviceId:job.actorServiceId});
+          const carts=await assertCustomerFulfillmentReady(tx,locked,"electronic",job.id);
+          if(await customerWaybillCartSnapshotHash(carts)!==binding.cartSnapshotHash)throw new WaybillConfigurationError('手机经营面单原商品快照已变化');
+          await assertNoConflictingCustomerCityJob(tx,job.rootOrderId);
+          await acquireCustomerWorkCarrierLock(tx,job.carrierId);
+          const [carrier]=await tx.select().from(expressCompany).where(and(eq(expressCompany.id,job.carrierId),eq(expressCompany.status,1),eq(expressCompany.isShow,1))).limit(1);
+          if(!carrier||carrier.code.trim()!==job.carrierCode||carrier.name.trim()!==job.carrierName||JSON.stringify(carrierSnapshot(carrier))!==job.carrierConfig)
+            throw new WaybillConfigurationError('手机经营面单快递公司已停用或签发配置已变化');
+          const currentConfig=await platformConfig(tx,true);
+          if(!enabled(configValue(currentConfig,{actorType:'customer',actorId:job.actorId,serviceId:job.actorServiceId},'open')))
+            throw new WaybillConfigurationError('手机经营电子面单已停用');
+        }
+        return { job, input: await loadIssueInput(tx, job) };
       });
       payloadHash = await sha256(JSON.stringify(loaded.input));
     } catch (error) {
+      if(error instanceof CustomerWaybillRevokedError) {
+        await this.finalize(claim,"CLOSED",undefined,errorText(error),"",now);
+        return "closed";
+      }
       const retryable = !(error instanceof WaybillConfigurationError || error instanceof ValidateException)
         && claim.attemptCount < MAX_PROVIDER_ATTEMPTS;
       await this.finalize(
@@ -790,6 +873,112 @@ export class OrderWaybillJobService {
       await this.finalize(claim, "UNKNOWN", result, errorText(error), payloadHash, now);
       return "unknown";
     }
+  }
+
+  private async assertCustomerRead(tx:DbClient,actor:CustomerWaybillActor) {
+    assertCustomerWaybillActor(actor);
+    await assertCustomerWaybillActorCatalog(tx);
+    const scope=await readCustomerWorkScope(tx,actor.actorId,false);
+    if(!scope||scope.service_id!==actor.serviceId)throw new NotFoundException('手机经营面单身份已变化');
+  }
+
+  private async assertCustomerJobReadBinding(tx:DbClient,job:OrderWaybillJob) {
+    const binding=await customerWaybillBindingFromReceipt(tx,job);
+    const rows=await tx.select().from(storeOrder).where(inArray(storeOrder.id,[binding.rootOrderId,binding.orderId])).limit(2);
+    const root=rows.find(row=>row.id===binding.rootOrderId),source=rows.find(row=>row.id===binding.orderId);
+    if(!root||!source||root.uid!==binding.uid||source.uid!==binding.uid
+      ||root.storeId!==binding.rootStoreId||root.supplierId!==binding.rootSupplierId
+      ||source.storeId!==binding.storeId||source.supplierId!==binding.supplierId
+      ||![0,-1].includes(root.pid)||(source.id===root.id?![0,-1].includes(source.pid):source.pid!==root.id)
+      ||root.isDel||root.isSystemDel||source.isDel||source.isSystemDel
+      ||root.supplierAllocationStatus===1||source.supplierAllocationStatus===1)
+      throw new NotFoundException('手机经营面单原订单边界已变化');
+    return binding;
+  }
+
+  async readCustomerJobs(tx:DbClient,actor:CustomerWaybillActor,query:WaybillJobListQuery={}) {
+    await this.assertCustomerRead(tx,actor);
+    const conditions:SQL[]=[eq(orderWaybillJob.actorType,'customer'),eq(orderWaybillJob.actorId,actor.actorId),eq(orderWaybillJob.actorServiceId,actor.serviceId)];
+    const orderId=optionalPositiveInt(query.orderId,'订单主键'),afterId=optionalPositiveInt(query.afterId,'游标'),limit=query.limit===undefined?20:positiveInt(query.limit,'每页数量',100);
+    if(!orderId)throw new ValidateException('手机经营面单须指定实际发货订单');
+    const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,orderId)).limit(1);
+    const rootId=order&&order.pid>0?order.pid:orderId;
+    const [root]=orderId===rootId?[order]:await tx.select().from(storeOrder).where(eq(storeOrder.id,rootId)).limit(1);
+    if(!order||!root||order.uid!==root.uid||![0,-1].includes(root.pid)
+      ||(order.id===root.id?![0,-1].includes(order.pid):order.pid!==root.id)
+      ||order.isDel||order.isSystemDel||root.isDel||root.isSystemDel
+      ||order.supplierAllocationStatus===1||root.supplierAllocationStatus===1)
+      throw new NotFoundException('手机经营面单实际订单不存在或归属已变化');
+    conditions.push(eq(orderWaybillJob.rootOrderId,rootId),eq(orderWaybillJob.storeId,order.storeId),eq(orderWaybillJob.supplierId,order.supplierId));if(afterId)conditions.push(lt(orderWaybillJob.id,afterId));
+    if(query.status){const status=query.status.trim().toUpperCase();if(!JOB_STATUSES.has(status as OrderWaybillJobStatus))throw new ValidateException('面单任务状态无效');conditions.push(eq(orderWaybillJob.status,status as OrderWaybillJobStatus));}
+    const rows=await tx.select().from(orderWaybillJob).where(and(...conditions)).orderBy(desc(orderWaybillJob.id)).limit(limit);
+    for(const row of rows){const binding=await this.assertCustomerJobReadBinding(tx,row);if(binding.uid!==order.uid)throw new NotFoundException('手机经营面单客户归属已变化');}
+    return {list:await Promise.all(rows.map(async row=>({...projection(row),job_revision:await customerWaybillJobRevision(row)}))),next_cursor:rows.length===limit?rows.at(-1)!.id:null};
+  }
+
+  async readCustomerJob(tx:DbClient,idValue:unknown,actor:CustomerWaybillActor) {
+    await this.assertCustomerRead(tx,actor);
+    const id=positiveInt(idValue,'面单任务主键'),[row]=await tx.select().from(orderWaybillJob).where(and(eq(orderWaybillJob.id,id),eq(orderWaybillJob.actorType,'customer'),eq(orderWaybillJob.actorId,actor.actorId),eq(orderWaybillJob.actorServiceId,actor.serviceId))).limit(1);
+    if(!row)throw new NotFoundException('手机经营面单任务不存在或不属于当前身份');
+    await this.assertCustomerJobReadBinding(tx,row);
+    return {...projection(row),job_revision:await customerWaybillJobRevision(row)};
+  }
+
+  async readCustomerActions(tx:DbClient,idValue:unknown,actor:CustomerWaybillActor) {
+    const job=await this.readCustomerJob(tx,idValue,actor);
+    return tx.select({id:orderWaybillJobAction.id,job_id:orderWaybillJobAction.jobId,request_key:orderWaybillJobAction.requestKey,
+      action:orderWaybillJobAction.action,previous_status:orderWaybillJobAction.previousStatus,next_status:orderWaybillJobAction.nextStatus,
+      actor_type:orderWaybillJobAction.actorType,actor_id:orderWaybillJobAction.actorId,service_id:orderWaybillJobAction.actorServiceId,
+      supplier_id:orderWaybillJobAction.supplierId,reason:orderWaybillJobAction.reason,provider_reference:orderWaybillJobAction.providerReference,
+      tracking_number:orderWaybillJobAction.trackingNumber,add_time:orderWaybillJobAction.addTime})
+      .from(orderWaybillJobAction).where(eq(orderWaybillJobAction.jobId,job.id)).orderBy(desc(orderWaybillJobAction.id)).limit(100);
+  }
+
+  /** Fresh customer authorization and append-only decision commit together
+   * with the outer operation receipt. No provider call or dispatch in this tx. */
+  async applyCustomerDecisionInTransaction(tx:DbClient,idValue:unknown,actor:CustomerWaybillActor,
+    action:OrderWaybillJobActionType,input:WaybillOperationInput,binding:CustomerWaybillBinding,expectedJobRevision:string) {
+    assertCustomerWaybillActor(actor);
+    const id=positiveInt(idValue,'面单任务主键'),key=uuid4(input.requestKey,'操作请求键'),reason=boundedText(input.reason,'操作原因',500,8);
+    await assertCustomerWaybillActorCatalog(tx);
+    if(!['APPLY_EXISTING','CONFIRM_ISSUED','CONFIRM_RETRY','CLOSE_NO_RETRY'].includes(action)||!/^[a-f0-9]{64}$/.test(expectedJobRevision))throw new ValidateException('面单操作或版本无效');
+    await lockCustomerWaybillOrder(tx,binding,true);
+    await authorizeCurrentCustomerWaybill(tx,actor);
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`waybill-operation:${key}`}))`);
+    const [job]=await tx.select().from(orderWaybillJob).where(eq(orderWaybillJob.id,id)).limit(1).for('update',{noWait:true});
+    if(!job||job.actorType!=='customer'||job.actorId!==actor.actorId||job.actorServiceId!==actor.serviceId
+      ||job.rootOrderId!==binding.rootOrderId||job.orderId!==binding.orderId||job.storeId!==binding.storeId||job.supplierId!==binding.supplierId)
+      throw new NotFoundException('手机经营面单不属于当前身份或原订单');
+    if(await customerWaybillJobRevision(job)!==expectedJobRevision)throw new ValidateException('面单任务已变化，请重新核对后提交');
+    if((await tx.select({id:orderWaybillJobAction.id}).from(orderWaybillJobAction).where(eq(orderWaybillJobAction.requestKey,key)).limit(1))[0])
+      throw new ValidateException('操作请求键已有面单处置记录，请恢复原操作回执');
+    let nextStatus:OrderWaybillJobStatus,tracking=job.trackingNumber,label=job.labelUrl,reference=job.providerReference,
+      fulfilledOrderId=job.fulfilledOrderId,remainingOrderId=job.remainingOrderId;
+    if(action==='APPLY_EXISTING'||action==='CONFIRM_ISSUED') {
+      if(job.status!=='UNKNOWN')throw new ValidateException('只有结果未知的面单可确认已签发');
+      if(action==='APPLY_EXISTING'&&input.trackingNumber!==undefined)throw new ValidateException('应用已有面单不能提交替代单号');
+      tracking=action==='CONFIRM_ISSUED'?boundedText(input.trackingNumber,'快递单号',64,1):tracking;
+      if(!tracking)throw new ValidateException('面单缺少已签发快递单号');
+      if(input.labelUrl!==undefined)label=boundedText(input.labelUrl,'面单图片地址',255);
+      if(label&&!isUserCenterPublicImage(label))throw new ValidateException('面单图片地址无效');
+      if(input.providerReference!==undefined)reference=boundedText(input.providerReference,'提供商引用',255);
+      const fulfillment=await this.applyFulfillment(job,tracking,label,tx);
+      fulfilledOrderId=fulfillment.order_id;remainingOrderId=fulfillment.remaining_order_id??0;nextStatus='SENT';
+    } else {
+      if(!['UNKNOWN','DEAD'].includes(job.status))throw new ValidateException('只有未知或失败的面单可核对重签或关闭');
+      if(input.trackingNumber!==undefined||input.labelUrl!==undefined||input.providerReference!==undefined)throw new ValidateException('重签或关闭不能提交签发信息');
+      if(action==='CONFIRM_RETRY'&&(tracking||job.replayCount>=MAX_MANUAL_REPLAYS))throw new ValidateException(tracking?'任务已有单号，不能重签':'已达到最大人工重签次数');
+      nextStatus=action==='CONFIRM_RETRY'?'RETRYABLE':'CLOSED';
+    }
+    const now=Math.floor(Date.now()/1000),[updated]=await tx.update(orderWaybillJob).set({status:nextStatus,trackingNumber:tracking,labelUrl:label,providerReference:reference,
+      fulfilledOrderId,remainingOrderId,replayCount:action==='CONFIRM_RETRY'?job.replayCount+1:job.replayCount,
+      availableTime:nextStatus==='RETRYABLE'?now:0,leaseUntil:0,leaseToken:'',lastError:nextStatus==='RETRYABLE'?'operator_confirmed_retry':nextStatus==='CLOSED'?'operator_closed_without_retry':'',
+      responseCode:`CUSTOMER_${action}`,sentTime:nextStatus==='SENT'?now:0,updateTime:now})
+      .where(and(eq(orderWaybillJob.id,id),eq(orderWaybillJob.status,job.status))).returning();
+    if(!updated)throw Error('手机经营面单任务状态已变化');
+    await tx.insert(orderWaybillJobAction).values({jobId:id,requestKey:key,action,previousStatus:job.status,nextStatus,
+      actorType:'customer',actorId:actor.actorId,actorServiceId:actor.serviceId,supplierId:job.supplierId,reason,providerReference:reference,trackingNumber:tracking,addTime:now});
+    return {duplicate:false,job:{...projection(updated),job_revision:await customerWaybillJobRevision(updated)}};
   }
 
   async listJobs(actor: WaybillActor, query: WaybillJobListQuery = {}) {
@@ -931,13 +1120,15 @@ export class OrderWaybillJobService {
     job: typeof orderWaybillJob.$inferSelect,
     trackingNumber: string,
     labelUrl: string,
+    callerTx?: DbClient,
   ) {
     if (!trackingNumber) throw new ValidateException("电子面单缺少快递单号");
     if (trackingNumber.length > 64 || /[\u0000-\u001f\u007f]/.test(trackingNumber)) {
       throw new ValidateException("电子面单快递单号无效");
     }
     if (!isVisibleLabel(labelUrl)) throw new ValidateException("电子面单图片地址无效");
-    const fulfillment = new SupplierFulfillmentService(this.container, this.env);
+    if(job.actorType==='customer' && labelUrl && !isUserCenterPublicImage(labelUrl)) throw new ValidateException('电子面单图片地址不是有效公开图片');
+    const fulfillment = new SupplierFulfillmentService(callerTx?createContainerFromDb(callerTx):this.container, this.env);
     const delivery = {
       deliveryType: "express" as const,
       deliveryName: job.carrierName,
@@ -947,6 +1138,19 @@ export class OrderWaybillJobService {
       deliveryUid: 0,
     };
     const options = {
+      ...(job.actorType==='customer'?{
+        expectedStoreId:job.storeId,
+        // The independently admitted receipt supplies the exact root store;
+        // role revocation after provider I/O never discards the issued fact.
+        expectedRootStoreId:(await (callerTx?customerWaybillBindingFromReceipt(callerTx,job):withTx(this.container,tx=>customerWaybillBindingFromReceipt(tx,job)))).rootStoreId,
+        authorize:async(tx:DbClient,scope:{requestedOrderId:number;rootOrderId:number;customerUid:number;supplierId:number})=>{
+          const binding=await customerWaybillBindingFromReceipt(tx,job);
+          await lockCustomerWaybillOrder(tx,binding,true);
+          if(scope.requestedOrderId!==binding.orderId||scope.rootOrderId!==binding.rootOrderId||scope.customerUid!==binding.uid||scope.supplierId!==binding.supplierId)
+            throw new WaybillConfigurationError('手机经营面单签发后的订单边界已变化');
+        },
+        audit:{changeType:'customer_waybill_delivery',changeMessage:JSON.stringify({actor_uid:job.actorId,service_id:job.actorServiceId,job_id:job.id,store_id:job.storeId,supplier_id:job.supplierId})},
+      }:{}),
       replay: {
         accountId: job.id,
         requestHash: job.requestHash,
@@ -978,7 +1182,7 @@ export class OrderWaybillJobService {
 
   private async finalize(
     claim: ClaimedWaybillJob,
-    status: "SENT" | "RETRYABLE" | "UNKNOWN" | "DEAD",
+    status: "SENT" | "RETRYABLE" | "UNKNOWN" | "DEAD" | "CLOSED",
     result: WaybillIssueResult | undefined,
     lastError: string,
     payloadHash: string,

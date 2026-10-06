@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useNoticeStore } from '@/stores/notices';
 const auth = useAuthStore(), notices = useNoticeStore(), route = useRoute(), router = useRouter();
-watch(() => [auth.token, route.path, route.query.preview], () => {
+watch(() => [auth.token, auth.generation, route.path, route.query.preview], () => {
   notices.setSession(route.path === '/login' || (import.meta.env.DEV && route.query.preview === '1') ? '' : auth.token);
 }, { immediate: true, flush: 'sync' });
 function expire() { auth.clearSession(); notices.setSession(''); void router.replace('/login'); }

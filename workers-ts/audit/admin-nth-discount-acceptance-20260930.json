@@ -1,0 +1,227 @@
+{
+  "dateUtc": "2026-09-30",
+  "phase": "locally_verified_unpublished",
+  "scope": "Local unpublished nth-piece discount Admin management, actual ordinary-order pricing and physical split/refund materialization",
+  "productionAccepted": false,
+  "verification": {
+    "adminPermissionPglite": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0
+    },
+    "adminServicePglite": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "Native locking/concurrency capability required"
+    },
+    "adminHttpPglite": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "quoteAndCheckoutPglite": {
+      "files": 2,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 5,
+      "skipReason": "Five real create/split/refund/concurrency cases require owned native PostgreSQL checkout capabilities"
+    },
+    "adminFrontendRuntime": {
+      "files": 1,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nativePostgresql16": {
+      "files": 9,
+      "passed": 86,
+      "failed": 0,
+      "skipped": 0,
+      "version": "16.15",
+      "durationSeconds": 41.63,
+      "taskRoot": "C:/cinagroup/cinashop/.cache/finance-postgres-FJmKCK",
+      "fixtureSchemasRemaining": 0,
+      "clusterStopped": true,
+      "tests": [
+        "test/admin-nth-discount.test.ts",
+        "test/admin-nth-discount-http.test.ts",
+        "test/admin-permission.test.ts",
+        "test/order-nth-discount-quote.test.ts",
+        "test/order-nth-discount-checkout.test.ts",
+        "test/order-promotion-quote.test.ts",
+        "test/order-promotion-split-finance.test.ts",
+        "test/order-full-discount-checkout.test.ts",
+        "test/order-time-discount-checkout.test.ts"
+      ]
+    },
+    "workerUnitTypecheck": "passed after extending shared sales helper parameter union1|2|3; annotation only, runtime values unchanged from native86 run",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": {
+      "status": "passed",
+      "command": "npm run build (vue-tsc -b && vite build)",
+      "buildSeconds": 21.57,
+      "log": "Completed tool terminal output; no separate build log was saved"
+    },
+    "auditRegression": {
+      "files": 5,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Includes API contract10/10 subset; newest Nth plus previous dated reports reproduce with stdout-only without rewriting historical reports"
+    },
+    "adminApiStrictAudit": {
+      "executable": 553,
+      "callSites": 529,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "gitDiffCheck": "passed after normalizing only the edited marketing audit script to LF; canonical source hashes unchanged",
+    "published": "No commit, push, deployment or production mutation"
+  },
+  "remaining": [
+    "Real restricted-role browser acceptance, production statistics reconciliation and scale, immutable Linux CI, Workers runtime/Hyperdrive and publication remain open",
+    "UniApp native typecheck/build remains unverified because local @dcloudio/types is missing",
+    "Excluded-SKU scope and custom0% readback are explicit legacy-hidden input extensions"
+  ],
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 83,
+      "partial": 111,
+      "missing": 73,
+      "retired": 7
+    },
+    "legacyMarketingScreens": {
+      "total": 48,
+      "candidate": 31,
+      "partial": 12,
+      "missing": 5,
+      "retired": 0
+    },
+    "workerRoutes": 2038,
+    "workerRouteSurfaces": {
+      "api": 1060,
+      "admin": 703,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "retired": 17,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 97,
+    "adminApi": {
+      "callSites": 529,
+      "pathVariants": 553,
+      "registered": 553,
+      "executable": 553,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "screenPromotions": [
+      "/admin/marketing/discount/pieces_discount: missing->candidate",
+      "/admin/marketing/discount/add_pieces/:id?: missing->candidate"
+    ],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "productionAccepted": false
+  },
+  "contracts": {
+    "management": "Ten REST operations per Admin prefix; independent nth_discount.view/manage and exact1397/1401 uniqueAuth+menuPath pairing; fixed platform type2 root rule",
+    "rule": "Preset1=(2,50), preset2=(2,0), custom positive integer threshold1..99999999 and integer percent0..100; threshold_type2/discount_type2/promotions_cate1",
+    "pricing": "Aggregate participating quantities across products/SKUs, then discount exactly one cheapest current-price unit once; greater quantities never repeat. Member price, mutual1/3 overlay and coupon5 follow common quote competition",
+    "limits": "No type2 per-user quota capability is exposed. is_limit/limit_num rejected in save; rows write0; historical nonzero state yields selection issues and cannot be activated. Paid tags max100",
+    "catalog": "All three ordinary promotion administrators share the existing time_discount_catalog/platform_type_1 exclusive/shared protocol and re-quote after waiting",
+    "finance": "Actual Admin-authored material enters cart/confirmation/create, exact ledger and paid labels; real fulfillment split and three successive refund materializations preserve exact promotions and cash",
+    "statistics": "Shared exact sales counts original paid pid0/-1 once, excluding fulfillment children; linked type2 ledger first, validated exact versioned fallback, SQL aggregation with32-row keyset snapshot batches",
+    "legacyExtensions": "Excluded-SKU scope and custom0% input/readback are explicit legacy-hidden extensions; legacy day selector gains preserved seconds for existing rows"
+  },
+  "browser": {
+    "environment": {
+      "os": "Windows",
+      "browser": "Installed Chrome via bundled Playwright",
+      "browserPlugin": "absent",
+      "fallbackReason": "Browser plugin not available",
+      "url": "http://127.0.0.1:5199/marketing/nth-discounts",
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "api": "Synthetic API acceptance; native database tests prove actual rule and financial behavior"
+    },
+    "checks": {
+      "identityAndContent": "passed; list and two-step form with rule meaning",
+      "frameworkOverlay": "absent",
+      "console": "No JavaScript or page errors; intentionally failed unknown-result POST is expected",
+      "interaction": "passed17 API requests; rule filter and custom0%, cross-page exact SKU cancel/apply, PUT UUID/revision, confirmed PATCH, readonly and permission revocation, Shanghai end-day23:59:59",
+      "unknownResult": "Single POST only; repeat blocked after unknown response",
+      "mobileOverflow": "passed390px document and constrained date popup",
+      "radioScreenshot": "Three rule options DOM checked=false/false/true, running animations0; desktop screenshot retaken with animations disabled, no production change"
+    },
+    "devServerStopped": true,
+    "listenerPort5199": false,
+    "script": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-browser-qa.cjs",
+    "screenshots": [
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-list-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-form-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-sku-picker-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-sku-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-list-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-date-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/nth-discount-form-mobile.png"
+    ]
+  },
+  "evidence": [
+    "docs/admin-nth-discount-route-contract.md",
+    "audit/route-distribution-nth-discount-followup-20260930.json",
+    "audit/admin-legacy-marketing-route-parity-nth-discount-followup-20260930.json",
+    "audit/admin-frontend-inventory-nth-discount-followup-20260930.json",
+    "audit/admin-frontend-api-contracts-nth-discount-followup-20260930.json"
+  ],
+  "sourceEvidence": {
+    "normalization": "UTF-8 text with CRLF/CR normalized to LF",
+    "scope": "Final local nth candidate; previous dated acceptance evidence remains a separate historical state",
+    "sha256": {
+      "src/controllers/api/v1/AdminNthDiscountController.ts": "df74fb9d602d47cc5f4ebec774837b25860fb4ab76d6b5be0a4421bbb08c3852",
+      "src/services/admin/AdminNthDiscountService.ts": "83bacd23745f44dc642d02c5f3d06a09eaae2a526e3dafb18ef8f3f1ad3bcfe8",
+      "src/services/admin/AdminPromotionSales.ts": "fc6a150a5ca4fc922986074638803c076756116f58967a0adac1dca7dfca994c",
+      "src/services/admin/AdminPermissionService.ts": "6dad9994582533e9688fee6f5c49ccf1cc8893c6102ccf1086ab2d3a919b4a78",
+      "src/routes/v1/index.ts": "effb8d41e79c491d56012221174718f0970077e05d5ea794080bc6ca2bcc0628",
+      "src/routes/adminapi.ts": "8411f5aad0a5aa911f5ba1f543059826d265eac41ea66152286ab874e9f0565f",
+      "src/services/activity/OrderPromotionQuoteService.ts": "29ebb8ef84dc27c9f934cd40524dba320df12530b437b80a5cd901f9e8d95d81",
+      "src/services/order/OrderSplitFinance.ts": "9bc1ba02379a426cd5523fc447132ab207ed144e1bb25604e4abcbd52cd1fcb2",
+      "src/services/order/RefundSplitAllocation.ts": "4464fcd7b3e74626c9f8b339366c70116b188a097bd86160d0e2c3ec1648d440",
+      "src/services/order/RefundOrderMaterialization.ts": "2291061b825dceb5da7778cc7f4d53c89989c42d0845ed179034ab3f42185576",
+      "src/services/order/StoreOrderRefundService.ts": "b79ede4cd5309c34185d07cf39e436f979f5b6780fb92243a121ee7a8b9f77d0",
+      "src/services/order/OrderRewardService.ts": "76d69520313ef801acc4b3fd0af192bbb589295ffc7d7c86e5ddd8dd461642cd",
+      "src/services/order/OrderPromotionLedgerSplit.ts": "1265e2ea40243bb3306003e9cf7e25849e08a11d446171577cd6033dae99fedd",
+      "test/admin-nth-discount.test.ts": "a5aae5d513df2b91ed5d6aa2b8bd3e77cfeaea4c67a34afb5374c262710c9792",
+      "test/admin-nth-discount-http.test.ts": "8f16582416c09f1d48481c9de09b5bbeed844527ff776ec644187fe263e03f87",
+      "test/admin-permission.test.ts": "0d839b1ebcc902a31410f9e8bad4c2195d9bfd421b65fa02040e41e6c042b2cb",
+      "test/order-nth-discount-quote.test.ts": "ec0b7e8522854f11a6058bc8e98503e2e2e541296a718277e1d3335608c1bc5d",
+      "test/order-nth-discount-checkout.test.ts": "79a2dc69e27bc094e8ce44f211aeb23a4f25e3d0abf879b4cfb9a25a1b78d7ca",
+      "test/admin-all-frontend-parity.test.ts": "a47f7858e14738637f73343cd4cae94f11e416840f58a3e7b375c97be15ba426",
+      "scripts/admin-marketing-frontend-parity-audit.ts": "0f6cbc46ad7e3919c45fa9c5026504595c5465bf0e899f8ed9237c1b4d8a9854",
+      "scripts/run-local-finance-postgres.mjs": "1b0c78de4f3714de964717eaad93b9a2604e66ce1c3907faaaf98f33c56e352d",
+      "../view/admin-ts/src/api/nthDiscount.ts": "66676ce1902e1c7e7b3211e06ec0c7fb2d33d854ee409df1fc5fed5157676946",
+      "../view/admin-ts/src/pages/marketing/NthDiscountList.vue": "f548b5749dfc6be5fbe26a6ba5d67310a5c74db1a3d4e36d5eccfa2b7b31e019",
+      "../view/admin-ts/src/pages/marketing/NthDiscountForm.vue": "49cc9ceb97790d63e2168a15a72c15aaf0f7b8c92dd76463882db3f2d3134016",
+      "../view/admin-ts/test/nthDiscount.test.ts": "3f3f8409893f1bb01aab2b05a43704f2c3682a5edf4897a058b8646e1167d7bb",
+      "../view/admin-ts/src/router/index.ts": "26de9276f93ad632452de6401cca2e1cc2d76a67abf35a3b35fab69157c2dea1",
+      "../view/admin-ts/src/layouts/AdminLayout.vue": "e43845d8205a9193d84c7899f4cb494ebba01c48b7f48f2499c77a56456635f6",
+      "docs/admin-nth-discount-route-contract.md": "153978a38d2b7f3021b510a920cd1b55aefa432f4e5365b1502fe908dff3994b"
+    }
+  }
+}

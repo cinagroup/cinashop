@@ -1,15 +1,14 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
-import { apiPresaleSelection } from '@/api/presale';
+import { apiPresaleSelection,type PresaleDisplaySelection } from '@/api/presale';
 import { apiCartAdd } from '@/api/order';
 import { RequestError } from '@/utils/request';
-import { presaleProductId, presaleOpen, presaleCartInput, presaleCheckoutQuery,
-  type PresaleSelection } from '../../../common/presalePurchase';
+import { presaleProductId, presaleOpen, presaleCartInput, presaleCheckoutQuery } from '../../../common/presalePurchase';
 
 export function usePresalePurchase() {
   const auth = useAuthStore(), productId = ref(0), visible = ref(false);
-  const detail = shallowRef<PresaleSelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
+  const detail = shallowRef<PresaleDisplaySelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
   const loading = ref(false), buying = ref(false), navigating = ref(false), error = ref(''), prepared = ref<number | null>(null), clock = ref(Date.now());
   let generation = 0, navigationRevision = 0, pageRevision = 0, visibilityRevision = 0, disposed = false;
   let timer: ReturnType<typeof setInterval> | undefined;

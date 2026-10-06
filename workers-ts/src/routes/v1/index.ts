@@ -13,10 +13,22 @@ import * as LoginController from "@/controllers/api/v1/LoginController";
 import * as AppleAuthController from "@/controllers/api/v1/AppleAuthController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
+import * as ProductShareCode from '@/controllers/api/v1/ProductShareCodeController';
 import * as OrderController from "@/controllers/api/v1/OrderController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as StoreMobileDelivery from "@/controllers/api/v1/StoreMobileDeliveryController";
+import * as DeliveryWorkbenchWriteoff from "@/controllers/api/v1/DeliveryWorkbenchWriteoffController";
 import * as StoreMobileOrder from "@/controllers/api/v1/StoreMobileOrderController";
+import * as StoreManagerOrder from '@/controllers/api/v1/StoreManagerOrderController';
+import * as StoreManagerOrderOperation from '@/controllers/api/v1/StoreManagerOrderOperationController';
+import * as StoreManagerFinancial from '@/controllers/api/v1/StoreManagerFinancialController';
+import * as CustomerWork from '@/controllers/api/v1/CustomerWorkController';
+import * as CustomerWorkFulfillment from '@/controllers/api/v1/CustomerWorkFulfillmentController';
+import * as CustomerWorkProduct from '@/controllers/api/v1/CustomerWorkProductController';
+import * as CustomerWorkUser from '@/controllers/api/v1/CustomerWorkUserController';
+import * as CustomerWorkFinancial from '@/controllers/api/v1/CustomerWorkFinancialController';
+import * as CustomerWorkWriteoff from '@/controllers/api/v1/CustomerWorkWriteoffController';
+import * as CustomerWorkCashier from '@/controllers/api/v1/CustomerWorkCashierController';
 import * as PayController from "@/controllers/api/v1/PayController";
 import * as PaymentCallbackController from "@/controllers/api/v1/PaymentCallbackController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
@@ -41,14 +53,47 @@ import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWech
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
+import * as AdminWriteoffOrderRead from "@/controllers/api/v1/AdminWriteoffOrderReadController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
+import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
+import * as AdminSupplierCapitalScreen from "@/controllers/api/v1/AdminSupplierCapitalScreenController";
+import * as AdminSupplierOrderStatisticsScreen from "@/controllers/api/v1/AdminSupplierOrderStatisticsScreenController";
 import * as AdminOrderOutbox from "@/controllers/api/v1/AdminOrderOutboxController";
 import * as AdminPaymentReconciliation from "@/controllers/api/v1/AdminPaymentReconciliationController";
 import * as AdminNotification from "@/controllers/api/v1/AdminNotificationController";
 import * as AdminDivision from "@/controllers/api/v1/AdminDivisionController";
+import * as AdminDivisionStatisticsScreen from "@/controllers/api/v1/AdminDivisionStatisticsScreenController";
 import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowController";
+import * as AdminIntegralCategory from "@/controllers/api/v1/AdminIntegralCategoryController";
+import * as AdminIntegralBatch from "@/controllers/api/v1/AdminIntegralBatchController";
+import * as AdminIntegralLog from "@/controllers/api/v1/AdminIntegralLogController";
+import * as AdminRechargeQuota from "@/controllers/api/v1/AdminRechargeQuotaController";
+import * as AdminSignDayConfig from "@/controllers/api/v1/AdminSignDayConfigController";
+import * as AdminPcBanner from "@/controllers/api/v1/AdminPcBannerController";
+import * as AdminFabSettings from "@/controllers/api/v1/AdminFabSettingsController";
+import * as AdminThemeSettings from "@/controllers/api/v1/AdminThemeSettingsController";
+import * as AdminProductCategoryStyle from '@/controllers/api/v1/AdminProductCategoryStyleController';
+import * as AdminProductDetailDesign from '@/controllers/api/v1/AdminProductDetailDesignController';
+import * as AdminUserCenterDesign from '@/controllers/api/v1/AdminUserCenterDesignController';
+import * as AdminCityDeliverySettings from '@/controllers/api/v1/AdminCityDeliverySettingsController';
+import * as AdminFabLinkCatalog from "@/controllers/api/v1/AdminFabLinkCatalogController";
+import * as AdminShippingSettings from "@/controllers/api/v1/AdminShippingSettingsController";
+import * as AdminCityDeliveryRecords from "@/controllers/api/v1/AdminCityDeliveryRecordController";
+import * as AdminRechargeOrder from "@/controllers/api/v1/AdminRechargeOrderController";
+import * as AdminCommissionRead from "@/controllers/api/v1/AdminCommissionReadController";
+import * as AdminUserMoneyLedger from "@/controllers/api/v1/AdminUserMoneyLedgerController";
+import * as AdminSeckillTime from "@/controllers/api/v1/AdminSeckillTimeController";
+import * as AdminSeckillActivity from "@/controllers/api/v1/AdminSeckillActivityController";
+import * as AdminCombination from "@/controllers/api/v1/AdminCombinationController";
+import * as AdminCouponTemplate from "@/controllers/api/v1/AdminCouponTemplateController";
+import * as AdminCouponIssue from "@/controllers/api/v1/AdminCouponIssueController";
+import * as AdminInvoice from "@/controllers/api/v1/AdminInvoiceController";
+import * as AdminLevelActivation from '@/controllers/api/v1/AdminLevelActivationController';
+import * as AdminPaidMembershipConfig from '@/controllers/api/v1/AdminPaidMembershipConfigController';
+import * as AdminCombinationStatistics from "@/controllers/api/v1/AdminCombinationStatisticsController";
 import * as DivisionController from "@/controllers/api/v1/DivisionController";
 import * as AgentLevelController from "@/controllers/api/v1/AgentLevelController";
 import * as ProductExperienceController from "@/controllers/api/v1/ProductExperienceController";
@@ -56,6 +101,15 @@ import * as AdminProductWords from "@/controllers/api/v1/AdminProductWordsContro
 import * as CustomerServiceCatalogController from "@/controllers/api/v1/CustomerServiceCatalogController";
 import * as PromoterApplicationController from "@/controllers/api/v1/PromoterApplicationController";
 import * as SupplierApplicationController from "@/controllers/api/v1/SupplierApplicationController";
+import * as AdminSupplierDirectoryController from "@/controllers/api/v1/AdminSupplierDirectoryController";
+import * as AdminSupplierMenuRuleController from "@/controllers/api/v1/AdminSupplierMenuRuleController";
+import * as AdminAgentAgreementController from "@/controllers/api/v1/AdminAgentAgreementController";
+import * as AdminActivityFrame from "@/controllers/api/v1/AdminActivityFrameController";
+import * as AdminActivityBackground from "@/controllers/api/v1/AdminActivityBackgroundController";
+import * as AdminTimeDiscount from "@/controllers/api/v1/AdminTimeDiscountController";
+import * as AdminFullDiscount from "@/controllers/api/v1/AdminFullDiscountController";
+import * as AdminNthDiscount from "@/controllers/api/v1/AdminNthDiscountController";
+import * as AdminFullGift from "@/controllers/api/v1/AdminFullGiftController";
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as NewcomerController from "@/controllers/api/v1/NewcomerController";
 import * as ShortVideoController from "@/controllers/api/v1/ShortVideoController";
@@ -289,6 +343,8 @@ v1Routes.get("/brand", authMiddleware({ force: false }), ProductController.brand
 v1Routes.get("/product/rank/category", authMiddleware({ force: false }), ProductController.rankCategory);
 v1Routes.get("/product/rank/:type", authMiddleware({ force: false }), ProductController.rankList);
 v1Routes.get("/product/detail/recommend/:id", authMiddleware({ force: false }), ProductController.detailRecommend);
+v1Routes.get("/product/:id/community", authMiddleware({ force: false }), ProductController.productCommunity);
+v1Routes.get('/product/code/:id', authMiddleware({ force: true }), ProductShareCode.code);
 v1Routes.get("/product/detail/activity/:id", authMiddleware({ force: false }), ProductController.detailActivity);
 v1Routes.get("/product/detail_content/:id", authMiddleware({ force: false }), ProductController.detailContent);
 v1Routes.get("/groom/list/:type", authMiddleware({ force: false }), ProductController.groomList);
@@ -426,6 +482,18 @@ v1Routes.post(
   authMiddleware({ force: true }),
   OrderController.orderFirstOrderQuote,
 );
+// Explicit delivery scope and account-owned immutable operation recovery.
+v1Routes.get('/delivery/workbench/context', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), StoreMobileDelivery.context);
+v1Routes.get('/delivery/workbench/statistics', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), StoreMobileDelivery.workbenchStatistics);
+v1Routes.get('/delivery/workbench/daily', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), StoreMobileDelivery.daily);
+v1Routes.get('/delivery/workbench/orders', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), StoreMobileDelivery.workbenchOrders);
+v1Routes.get('/delivery/workbench/orders/:id', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), StoreMobileDelivery.orderDetail);
+v1Routes.post('/delivery/workbench/writeoff/info', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), DeliveryWorkbenchWriteoff.info);
+v1Routes.post('/delivery/workbench/writeoff/execute', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), DeliveryWorkbenchWriteoff.execute);
+v1Routes.get('/delivery/workbench/writeoff/records', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), DeliveryWorkbenchWriteoff.records);
+v1Routes.get('/delivery/workbench/operation/:requestKey', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), DeliveryWorkbenchWriteoff.outcome);
+v1Routes.post('/delivery/workbench/operation/abandon', DeliveryWorkbenchWriteoff.privateDeliveryResponse, stationOpenMiddleware(), authMiddleware({force:true}), DeliveryWorkbenchWriteoff.abandon);
+
 v1Routes.get("/store/list", stationOpenMiddleware(), StoreOrderWriteoff.publicPickupStores);
 v1Routes.get("/store/category", stationOpenMiddleware(), ProductController.category);
 v1Routes.get(
@@ -458,6 +526,119 @@ v1Routes.get(
   authMiddleware({ force: true }),
   StoreMobileDelivery.deliveryList,
 );
+// User-token merchant contract. Current manager/store scope is rechecked by
+// every reader and within the durable operation's order locks for every write.
+// Mobile work uses the current UserJWT and the independent customer role.
+// The existing /admin/* AdminJWT and Admin database boundary stays separate.
+v1Routes.use('/mobile/work/*',async(c,next)=>{c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');await next();});
+v1Routes.get('/mobile/work/context',authMiddleware({force:true}),CustomerWork.context);
+v1Routes.get('/mobile/work/overview',authMiddleware({force:true}),CustomerWork.overview);
+v1Routes.get('/mobile/work/statistics',authMiddleware({force:true}),CustomerWork.statistics);
+v1Routes.get('/mobile/work/trend',authMiddleware({force:true}),CustomerWork.trend);
+v1Routes.get('/mobile/work/statistics/orders',authMiddleware({force:true}),CustomerWork.daily);
+v1Routes.get('/mobile/work/orders',authMiddleware({force:true}),CustomerWork.orders);
+v1Routes.get('/mobile/work/orders/:id',authMiddleware({force:true}),CustomerWork.orderDetail);
+v1Routes.get('/mobile/work/refunds',authMiddleware({force:true}),CustomerWork.refunds);
+v1Routes.get('/mobile/work/refunds/:id',authMiddleware({force:true}),CustomerWork.refundDetail);
+v1Routes.get('/mobile/work/orders/:id/logistics',authMiddleware({force:true}),CustomerWork.logistics);
+v1Routes.get('/mobile/work/orders/:id/fulfillment',authMiddleware({force:true}),CustomerWorkFulfillment.fulfillmentBootstrap);
+v1Routes.get('/mobile/work/orders/:id/remark',authMiddleware({force:true}),CustomerWorkFulfillment.remarkTarget);
+v1Routes.get('/mobile/work/fulfillment/carriers',authMiddleware({force:true}),CustomerWorkFulfillment.carriers);
+v1Routes.get('/mobile/work/fulfillment/couriers',authMiddleware({force:true}),CustomerWorkFulfillment.couriers);
+v1Routes.get('/mobile/work/fulfillment/defaults',authMiddleware({force:true}),CustomerWorkFulfillment.defaults);
+v1Routes.get('/mobile/work/fulfillment/templates',authMiddleware({force:true}),CustomerWorkFulfillment.templates);
+v1Routes.get('/mobile/work/fulfillment/waybills',authMiddleware({force:true}),CustomerWorkFulfillment.waybillJobs);
+v1Routes.get('/mobile/work/fulfillment/waybills/:id',authMiddleware({force:true}),CustomerWorkFulfillment.waybillJob);
+v1Routes.get('/mobile/work/fulfillment/waybills/:id/actions',authMiddleware({force:true}),CustomerWorkFulfillment.waybillActions);
+v1Routes.post('/mobile/work/fulfillment/waybills/:id/decisions',authMiddleware({force:true}),CustomerWorkFulfillment.waybillDecision);
+v1Routes.post('/mobile/work/orders/:id/fulfillment',authMiddleware({force:true}),CustomerWorkFulfillment.deliver);
+v1Routes.put('/mobile/work/orders/:id/split-fulfillment',authMiddleware({force:true}),CustomerWorkFulfillment.splitDeliver);
+v1Routes.post('/mobile/work/orders/:id/remark',authMiddleware({force:true}),CustomerWorkFulfillment.saveRemark);
+v1Routes.get('/mobile/work/operations/:key',authMiddleware({force:true}),CustomerWorkFulfillment.operationOutcome);
+v1Routes.post('/mobile/work/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkFulfillment.abandonOperation);
+v1Routes.get('/mobile/work/operations/city-jobs/:id',authMiddleware({force:true}),CustomerWorkFulfillment.cityJobOutcome);
+v1Routes.post('/mobile/work/operations/city-jobs/:id/recover',authMiddleware({force:true}),CustomerWorkFulfillment.cityJobRecover);
+v1Routes.get('/mobile/work/financial/orders/:id',authMiddleware({force:true}),CustomerWorkFinancial.financialOrder);
+v1Routes.get('/mobile/work/financial/refunds/:id',authMiddleware({force:true}),CustomerWorkFinancial.financialRefundReview);
+v1Routes.post('/mobile/work/financial/refund-quote',authMiddleware({force:true}),CustomerWorkFinancial.financialRefundQuote);
+v1Routes.post('/mobile/work/financial/change-price',authMiddleware({force:true}),CustomerWorkFinancial.changePrice);
+v1Routes.post('/mobile/work/financial/confirm-offline',authMiddleware({force:true}),CustomerWorkFinancial.confirmOffline);
+v1Routes.post('/mobile/work/financial/refund-create',authMiddleware({force:true}),CustomerWorkFinancial.refundCreate);
+v1Routes.post('/mobile/work/financial/refund-return',authMiddleware({force:true}),CustomerWorkFinancial.refundReturn);
+v1Routes.post('/mobile/work/financial/refund-refuse',authMiddleware({force:true}),CustomerWorkFinancial.refundRefuse);
+v1Routes.post('/mobile/work/financial/refund-execute',authMiddleware({force:true}),CustomerWorkFinancial.refundExecute);
+v1Routes.post('/mobile/work/financial/refund-remark',authMiddleware({force:true}),CustomerWorkFinancial.refundRemark);
+v1Routes.get('/mobile/work/financial/operations/:key',authMiddleware({force:true}),CustomerWorkFinancial.financialOperationStatus);
+v1Routes.post('/mobile/work/financial/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkFinancial.abandonFinancialOperation);
+v1Routes.post('/mobile/work/writeoff/lookup',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffLookup);
+v1Routes.get('/mobile/work/writeoff/orders/:id',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffOrder);
+v1Routes.get('/mobile/work/writeoff/orders/:id/records',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffRecords);
+v1Routes.post('/mobile/work/writeoff/execute',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffExecute);
+v1Routes.get('/mobile/work/writeoff/operations/:key',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffOperationStatus);
+v1Routes.post('/mobile/work/writeoff/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkWriteoff.abandonWriteoffOperation);
+v1Routes.post('/mobile/work/cashier/second-card/drafts',authMiddleware({force:true}),CustomerWorkCashier.cashierDraft);
+v1Routes.post('/mobile/work/cashier/second-card/quote',authMiddleware({force:true}),CustomerWorkCashier.cashierQuote);
+v1Routes.post('/mobile/work/cashier/second-card/orders',authMiddleware({force:true}),CustomerWorkCashier.cashierCreate);
+v1Routes.post('/mobile/work/cashier/second-card/orders/:id/cash',authMiddleware({force:true}),CustomerWorkCashier.cashierCash);
+v1Routes.get('/mobile/work/cashier/second-card/creations/:key',authMiddleware({force:true}),CustomerWorkCashier.cashierCreationStatus);
+v1Routes.get('/mobile/work/cashier/second-card/payments/:key',authMiddleware({force:true}),CustomerWorkCashier.cashierPaymentStatus);
+// Independent UserJWT/customer capability; product receipts never use Admin IDs.
+v1Routes.get('/mobile/work/products',authMiddleware({force:true}),CustomerWorkProduct.productList);
+v1Routes.get('/mobile/work/products/categories',authMiddleware({force:true}),CustomerWorkProduct.productCategories);
+v1Routes.get('/mobile/work/products/labels',authMiddleware({force:true}),CustomerWorkProduct.productLabels);
+v1Routes.post('/mobile/work/products/show',authMiddleware({force:true}),CustomerWorkProduct.setProductShow);
+v1Routes.post('/mobile/work/products/batch',authMiddleware({force:true}),CustomerWorkProduct.batchProducts);
+v1Routes.get('/mobile/work/products/operations/:key',authMiddleware({force:true}),CustomerWorkProduct.productOperationOutcome);
+v1Routes.post('/mobile/work/products/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkProduct.abandonProductOperation);
+v1Routes.get('/mobile/work/products/:id/skus',authMiddleware({force:true}),CustomerWorkProduct.productSkus);
+v1Routes.post('/mobile/work/products/:id/skus',authMiddleware({force:true}),CustomerWorkProduct.updateProductSkus);
+
+v1Routes.get('/mobile/work/users',authMiddleware({force:true}),CustomerWorkUser.userList);
+v1Routes.get('/mobile/work/users/groups',authMiddleware({force:true}),CustomerWorkUser.userGroups);
+v1Routes.get('/mobile/work/users/levels',authMiddleware({force:true}),CustomerWorkUser.userLevels);
+v1Routes.get('/mobile/work/users/labels',authMiddleware({force:true}),CustomerWorkUser.userLabels);
+v1Routes.get('/mobile/work/users/coupon-grants',authMiddleware({force:true}),CustomerWorkUser.couponGrants);
+v1Routes.post('/mobile/work/users/replace-level',authMiddleware({force:true}),CustomerWorkUser.replaceUserLevel);
+v1Routes.post('/mobile/work/users/replace-group',authMiddleware({force:true}),CustomerWorkUser.replaceUserGroup);
+v1Routes.post('/mobile/work/users/replace-labels',authMiddleware({force:true}),CustomerWorkUser.replaceUserLabels);
+v1Routes.post('/mobile/work/users/grant-coupons',authMiddleware({force:true}),CustomerWorkUser.grantUserCoupons);
+v1Routes.post('/mobile/work/users/adjust-membership',authMiddleware({force:true}),CustomerWorkUser.adjustUserMembership);
+v1Routes.post('/mobile/work/users/adjust-money',authMiddleware({force:true}),CustomerWorkUser.adjustUserMoney);
+v1Routes.post('/mobile/work/users/adjust-integral',authMiddleware({force:true}),CustomerWorkUser.adjustUserIntegral);
+v1Routes.get('/mobile/work/users/operations/:key',authMiddleware({force:true}),CustomerWorkUser.userOperationOutcome);
+v1Routes.post('/mobile/work/users/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkUser.abandonUserOperation);
+v1Routes.get('/mobile/work/users/:uid/coupons',authMiddleware({force:true}),CustomerWorkUser.userCoupons);
+v1Routes.get('/mobile/work/users/:uid',authMiddleware({force:true}),CustomerWorkUser.userDetail);
+
+v1Routes.get('/store/manager/order/context',authMiddleware({force:true}),StoreManagerOrder.context);
+v1Routes.get('/store/manager/context',authMiddleware({force:true}),StoreManagerOrder.context);
+v1Routes.get('/store/manager/order/statistics',authMiddleware({force:true}),StoreManagerOrder.statistics);
+v1Routes.get('/store/manager/order/time',authMiddleware({force:true}),StoreManagerOrder.time);
+v1Routes.get('/store/manager/order/chart',authMiddleware({force:true}),StoreManagerOrder.chart);
+v1Routes.get('/store/manager/order/time/chart',authMiddleware({force:true}),StoreManagerOrder.chart);
+v1Routes.get('/store/manager/order/data',authMiddleware({force:true}),StoreManagerOrder.daily);
+v1Routes.get('/store/manager/order/list',authMiddleware({force:true}),StoreManagerOrder.list);
+v1Routes.get('/store/manager/order/detail/:id',authMiddleware({force:true}),StoreManagerOrder.detail);
+v1Routes.get('/store/manager/order/delivery/gain/:id',authMiddleware({force:true}),StoreManagerOrder.deliveryGain);
+v1Routes.get('/store/manager/order/split_cart_info/:id',authMiddleware({force:true}),StoreManagerOrder.splitCartInfo);
+v1Routes.get('/store/manager/order/delivery/config',authMiddleware({force:true}),StoreManagerOrder.deliveryDefaults);
+v1Routes.get('/store/manager/order/export_all',authMiddleware({force:true}),StoreManagerOrder.carriers);
+v1Routes.get('/store/manager/order/delivery',authMiddleware({force:true}),StoreManagerOrder.deliveryAgents);
+v1Routes.get('/store/manager/order/express/:id',authMiddleware({force:true}),StoreManagerOrder.express);
+v1Routes.post('/store/manager/order/remark',authMiddleware({force:true}),StoreManagerOrderOperation.saveRemark);
+v1Routes.post('/store/manager/order/delivery',authMiddleware({force:true}),StoreManagerOrderOperation.manualDelivery);
+v1Routes.post('/store/manager/order/split_delivery',authMiddleware({force:true}),StoreManagerOrderOperation.splitDelivery);
+v1Routes.get('/store/manager/order/operation/:requestKey',authMiddleware({force:true}),StoreManagerOrderOperation.operationOutcome);
+v1Routes.post('/store/manager/order/operation/abandon/:kind',authMiddleware({force:true}),StoreManagerOrderOperation.abandonOperation);
+v1Routes.post('/store/manager/order/financial/price',authMiddleware({force:true}),StoreManagerFinancial.price);
+v1Routes.post('/store/manager/order/financial/offline',authMiddleware({force:true}),StoreManagerFinancial.offline);
+v1Routes.post('/store/manager/order/financial/refund/quote',authMiddleware({force:true}),StoreManagerFinancial.quote);
+v1Routes.post('/store/manager/order/financial/refund/create',authMiddleware({force:true}),StoreManagerFinancial.create);
+v1Routes.post('/store/manager/order/financial/refund/review',authMiddleware({force:true}),StoreManagerFinancial.review);
+v1Routes.post('/store/manager/order/financial/refund/execute',authMiddleware({force:true}),StoreManagerFinancial.execute);
+v1Routes.post('/store/manager/order/financial/receipt',authMiddleware({force:true}),StoreManagerFinancial.receipt);
+v1Routes.get('/store/manager/order/operation/:requestKey/status',authMiddleware({force:true}),StoreManagerFinancial.receiptStatus);
+v1Routes.post('/store/manager/order/financial/abandon',authMiddleware({force:true}),StoreManagerFinancial.abandon);
 v1Routes.get(
   "/store/refund/detail/:id",
   stationOpenMiddleware(),
@@ -1368,10 +1549,14 @@ v1Routes.put("/admin/feedback/:id", adminAuth, CustomerServiceCatalogController.
 v1Routes.delete("/admin/feedback/:id", adminAuth, CustomerServiceCatalogController.adminFeedbackDelete);
 v1Routes.get("/admin/wechat/speechcraft", adminAuth, CustomerServiceCatalogController.adminSpeechcraftList);
 v1Routes.get("/admin/wechat/speechcraft/categories", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategories);
+v1Routes.post("/admin/wechat/speechcraft/categories", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategoryCreate);
+v1Routes.put("/admin/wechat/speechcraft/categories/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategoryUpdate);
+v1Routes.delete("/admin/wechat/speechcraft/categories/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCategoryDelete);
 v1Routes.post("/admin/wechat/speechcraft", adminAuth, CustomerServiceCatalogController.adminSpeechcraftCreate);
 v1Routes.get("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftDetail);
 v1Routes.put("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftUpdate);
 v1Routes.delete("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftDelete);
+v1Routes.get("/admin/marketing/user-point/export", adminAuth, AdminIntegralLog.exportManifest);
 v1Routes.get("/admin/wechat/reply", adminAuth, AdminWechatContentController.reservedReply);
 v1Routes.get("/admin/wechat/code_reply/:id", adminAuth, AdminWechatQrcodeController.replyCodeStatus);
 v1Routes.post("/admin/wechat/code_reply/:id/provision", adminAuth, AdminWechatQrcodeController.provisionReplyCode);
@@ -1564,6 +1749,10 @@ v1Routes.put(
 v1Routes.delete("/admin/merchant/store/del/:id", adminAuth, AdminStore.storeDelete);
 v1Routes.post("/admin/merchant/store/:id", adminAuth, AdminStore.storeSave);
 v1Routes.get("/admin/merchant/store_list", adminAuth, AdminStore.storeOptions);
+v1Routes.get("/admin/merchant/verify_order", adminAuth, AdminWriteoffOrderRead.list);
+v1Routes.get("/admin/merchant/verify_order/stores", adminAuth, AdminWriteoffOrderRead.stores);
+v1Routes.get("/admin/merchant/verify/spread_info/:uid", adminAuth, AdminWriteoffOrderRead.spreadInfo);
+v1Routes.get("/admin/merchant/verify_badge", adminAuth, AdminWriteoffOrderRead.badge);
 v1Routes.get("/admin/merchant/store_staff", adminAuth, AdminStore.staffList);
 v1Routes.get("/admin/merchant/store_staff/create", adminAuth, AdminStore.staffForm);
 v1Routes.get("/admin/merchant/store_staff/:id/edit", adminAuth, AdminStore.staffForm);
@@ -1611,7 +1800,38 @@ v1Routes.post("/admin/refund/refuse/:id", privateRefundOperationResponse, adminA
 
 // 系统配置
 v1Routes.get("/admin/config/list", adminAuth, AdminCrud.adminConfigList);
+v1Routes.get('/admin/config/city-delivery', adminAuth, AdminCityDeliverySettings.read);
+v1Routes.post('/admin/config/city-delivery/intent', adminAuth, AdminCityDeliverySettings.prepare);
+v1Routes.get('/admin/config/city-delivery/intent/:requestId', adminAuth, AdminCityDeliverySettings.intent);
+v1Routes.post('/admin/config/city-delivery/confirm', adminAuth, AdminCityDeliverySettings.confirm);
+v1Routes.get('/admin/config/city-delivery/request/:requestId', adminAuth, AdminCityDeliverySettings.receipt);
 v1Routes.post("/admin/config/save", adminAuth, AdminCrud.adminConfigSave);
+// Register the nine-key level domain before the generic :menuName route.
+v1Routes.get('/admin/config/level-activation/coupons', adminAuth, AdminLevelActivation.coupons);
+v1Routes.get('/admin/config/level-activation', adminAuth, AdminLevelActivation.get);
+v1Routes.post('/admin/config/level-activation', adminAuth, AdminLevelActivation.save);
+v1Routes.get('/admin/config/paid-membership', adminAuth, AdminPaidMembershipConfig.get);
+v1Routes.post('/admin/config/paid-membership', adminAuth, AdminPaidMembershipConfig.save);
+// Fixed shipping contract precedes the inherited single-key config parameter.
+v1Routes.get("/admin/config/shipping", adminAuth, AdminShippingSettings.settings);
+v1Routes.get("/admin/config/shipping/cities", adminAuth, AdminShippingSettings.cities);
+v1Routes.get("/admin/config/shipping/receipts/:requestId", adminAuth, AdminShippingSettings.receipt);
+v1Routes.post("/admin/config/shipping", adminAuth, AdminShippingSettings.save);
+v1Routes.get("/admin/city_delivery/records", adminAuth, AdminCityDeliveryRecords.records);
+v1Routes.get("/admin/city_delivery/records/:id", adminAuth, AdminCityDeliveryRecords.detail);
+v1Routes.get("/admin/city_delivery/stores", adminAuth, AdminCityDeliveryRecords.stores);
+v1Routes.get('/admin/config/product-category-style', adminAuth, AdminProductCategoryStyle.read);
+v1Routes.get('/admin/config/product-detail-design', adminAuth, AdminProductDetailDesign.read);
+v1Routes.post('/admin/config/product-detail-design/save', adminAuth, AdminProductDetailDesign.save);
+v1Routes.get('/admin/config/product-detail-design/receipt/:operationId', adminAuth, AdminProductDetailDesign.receipt);
+v1Routes.get('/admin/config/user-center-design', adminAuth, AdminUserCenterDesign.read);
+v1Routes.post('/admin/config/user-center-design/save', adminAuth, AdminUserCenterDesign.save);
+v1Routes.get('/admin/config/user-center-design/receipt/:operationId', adminAuth, AdminUserCenterDesign.receipt);
+v1Routes.get('/admin/config/user-center-design/assets', adminAuth, AdminUserCenterDesign.assets);
+v1Routes.get('/admin/config/user-center-design/link-categories', adminAuth, AdminUserCenterDesign.categories);
+v1Routes.get('/admin/config/user-center-design/link-targets', adminAuth, AdminUserCenterDesign.targets);
+v1Routes.post('/admin/config/product-category-style/save', adminAuth, AdminProductCategoryStyle.save);
+v1Routes.get('/admin/config/product-category-style/receipt/:operationId', adminAuth, AdminProductCategoryStyle.receipt);
 v1Routes.get("/admin/config/:menuName", adminAuth, AdminCrud.adminConfigGet);
 v1Routes.get("/admin/config_class", adminAuth, AdminCrud.adminConfigTabList);
 v1Routes.get("/admin/config_class/list", adminAuth, AdminCrud.adminConfigTabList);
@@ -1637,6 +1857,28 @@ v1Routes.get("/admin/setting/sign/add_rewards", adminAuth, AdminCrud.adminSignRe
 v1Routes.get("/admin/setting/sign/edit_rewards/:id", adminAuth, AdminCrud.adminSignRewardEdit);
 v1Routes.post("/admin/setting/sign/save_rewards/:id", adminAuth, AdminCrud.adminSignRewardSave);
 v1Routes.delete("/admin/setting/sign/del_rewards/:id", adminAuth, AdminCrud.adminSignRewardDelete);
+v1Routes.get("/admin/agent/levels", adminAuth, AdminDistributorLevels.levelsList);
+v1Routes.get("/admin/agent/levels/request/:requestId", adminAuth, AdminDistributorLevels.levelsReceipt);
+v1Routes.get("/admin/agent/levels/:id", adminAuth, AdminDistributorLevels.levelsDetail);
+v1Routes.post("/admin/agent/levels", adminAuth, AdminDistributorLevels.levelsCreate);
+v1Routes.put("/admin/agent/levels/:id", adminAuth, AdminDistributorLevels.levelsUpdate);
+v1Routes.patch("/admin/agent/levels/:id/status", adminAuth, AdminDistributorLevels.levelsStatus);
+v1Routes.delete("/admin/agent/levels/:id", adminAuth, AdminDistributorLevels.levelsDelete);
+v1Routes.get("/admin/agent/level-tasks", adminAuth, AdminDistributorLevels.tasksList);
+v1Routes.get("/admin/agent/level-tasks/parents", adminAuth, AdminDistributorLevels.tasksParents);
+v1Routes.get("/admin/agent/level-tasks/request/:requestId", adminAuth, AdminDistributorLevels.tasksReceipt);
+v1Routes.get("/admin/agent/level-tasks/:id", adminAuth, AdminDistributorLevels.tasksDetail);
+v1Routes.post("/admin/agent/level-tasks", adminAuth, AdminDistributorLevels.tasksCreate);
+v1Routes.put("/admin/agent/level-tasks/:id", adminAuth, AdminDistributorLevels.tasksUpdate);
+v1Routes.patch("/admin/agent/level-tasks/:id/status", adminAuth, AdminDistributorLevels.tasksStatus);
+v1Routes.delete("/admin/agent/level-tasks/:id", adminAuth, AdminDistributorLevels.tasksDelete);
+v1Routes.get("/admin/agent/level", adminAuth, AdminDistributorLevels.levelsList);
+v1Routes.get("/admin/agent/level/create", adminAuth, AdminDistributorLevels.levelsCreateForm);
+v1Routes.post("/admin/agent/level", adminAuth, AdminDistributorLevels.levelsCreate);
+v1Routes.get("/admin/agent/level/:id/edit", adminAuth, AdminDistributorLevels.levelsDetail);
+v1Routes.put("/admin/agent/level/:id", adminAuth, AdminDistributorLevels.levelsUpdate);
+v1Routes.delete("/admin/agent/level/:id", adminAuth, AdminDistributorLevels.levelsDelete);
+v1Routes.put("/admin/agent/level/set_status/:id/:status", adminAuth, AdminDistributorLevels.legacyLevelsStatus);
 v1Routes.get("/admin/agent/level_task", adminAuth, AdminCrud.adminAgentLevelTaskList);
 v1Routes.get(
   "/admin/agent/level_task/create",
@@ -1694,10 +1936,50 @@ v1Routes.get("/admin/statistic/balance/get_type", adminAuth, AdminController.adm
 
 // ─── Admin 营销活动管理 (M10) ─────────────────────────────────
 v1Routes.get("/admin/activity/seckill", adminAuth, AdminCrud.adminSeckillList);
+v1Routes.get("/admin/marketing/integral-categories", adminAuth, AdminIntegralCategory.list);
+v1Routes.get("/admin/marketing/recharge-quotas", adminAuth, AdminRechargeQuota.list);
+v1Routes.get("/admin/marketing/integral-categories/:id", adminAuth, AdminIntegralCategory.detail);
+v1Routes.get("/admin/marketing/recharge-quotas/:id", adminAuth, AdminRechargeQuota.detail);
+v1Routes.post("/admin/marketing/integral-categories", adminAuth, AdminIntegralCategory.create);
+v1Routes.post("/admin/marketing/recharge-quotas", adminAuth, AdminRechargeQuota.create);
+v1Routes.put("/admin/marketing/integral-categories/:id", adminAuth, AdminIntegralCategory.update);
+v1Routes.put("/admin/marketing/recharge-quotas/:id", adminAuth, AdminRechargeQuota.update);
+v1Routes.put("/admin/marketing/integral-categories/:id/status", adminAuth, AdminIntegralCategory.status);
+v1Routes.put("/admin/marketing/recharge-quotas/:id/status", adminAuth, AdminRechargeQuota.status);
+v1Routes.delete("/admin/marketing/integral-categories/:id", adminAuth, AdminIntegralCategory.remove);
+v1Routes.delete("/admin/marketing/recharge-quotas/:id", adminAuth, AdminRechargeQuota.remove);
+
+v1Routes.get("/admin/marketing/sign-day-config", adminAuth, AdminSignDayConfig.adminSignDayConfigList);
+v1Routes.get("/admin/marketing/sign-day-config/receipts/:requestId", adminAuth, AdminSignDayConfig.adminSignDayConfigReceipt);
+v1Routes.get("/admin/marketing/sign-day-config/:id", adminAuth, AdminSignDayConfig.adminSignDayConfigDetail);
+v1Routes.post("/admin/marketing/sign-day-config", adminAuth, AdminSignDayConfig.adminSignDayConfigCreate);
+v1Routes.put("/admin/marketing/sign-day-config/:id", adminAuth, AdminSignDayConfig.adminSignDayConfigUpdate);
+v1Routes.patch("/admin/marketing/sign-day-config/:id/status", adminAuth, AdminSignDayConfig.adminSignDayConfigStatus);
+v1Routes.delete("/admin/marketing/sign-day-config/:id", adminAuth, AdminSignDayConfig.adminSignDayConfigDelete);
+
+v1Routes.get("/admin/setting/pc-banners", adminAuth, AdminPcBanner.list);
+v1Routes.get("/admin/setting/pc-banners/request/:requestId", adminAuth, AdminPcBanner.receipt);
+v1Routes.get("/admin/setting/pc-banners/:id", adminAuth, AdminPcBanner.detail);
+v1Routes.post("/admin/setting/pc-banners", adminAuth, AdminPcBanner.create);
+v1Routes.put("/admin/setting/pc-banners/:id", adminAuth, AdminPcBanner.update);
+v1Routes.patch("/admin/setting/pc-banners/:id/status", adminAuth, AdminPcBanner.status);
+v1Routes.delete("/admin/setting/pc-banners/:id", adminAuth, AdminPcBanner.remove);
+v1Routes.get("/admin/setting/fab", adminAuth, AdminFabSettings.read);
+v1Routes.get("/admin/setting/theme-style", adminAuth, AdminThemeSettings.read);
+v1Routes.get("/admin/setting/theme-style/request/:requestId", adminAuth, AdminThemeSettings.receipt);
+v1Routes.post("/admin/setting/theme-style", adminAuth, AdminThemeSettings.save);
+v1Routes.get("/admin/setting/fab/request/:requestId", adminAuth, AdminFabSettings.receipt);
+v1Routes.post("/admin/setting/fab", adminAuth, AdminFabSettings.save);
+v1Routes.get("/admin/setting/fab/link-categories", adminAuth, AdminFabLinkCatalog.categories);
+v1Routes.get("/admin/setting/fab/link-targets", adminAuth, AdminFabLinkCatalog.targets);
 v1Routes.get("/admin/activity/combination", adminAuth, AdminCrud.adminCombinationList);
 v1Routes.get("/admin/activity/bargain", adminAuth, AdminCrud.adminBargainList);
 v1Routes.get("/admin/activity/bargain/sku-options", adminAuth, AdminCrud.adminBargainSkuOptions);
 v1Routes.get("/admin/activity/integral", adminAuth, AdminCrud.adminIntegralList);
+v1Routes.get("/admin/activity/integral-batch/products", adminAuth, AdminIntegralBatch.products);
+v1Routes.get("/admin/activity/integral-batch/products/:productId", adminAuth, AdminIntegralBatch.product);
+v1Routes.post("/admin/activity/integral-batch", adminAuth, AdminIntegralBatch.create);
+v1Routes.get("/admin/activity/integral-batch/receipts/:requestId", adminAuth, AdminIntegralBatch.receipt);
 v1Routes.post("/admin/activity/status", adminAuth, AdminCrud.adminActivityStatus);
 v1Routes.get("/admin/lottery/list", adminAuth, AdminLotteryController.list);
 v1Routes.get("/admin/lottery/detail/:id", adminAuth, AdminLotteryController.detail);
@@ -1763,10 +2045,48 @@ v1Routes.post("/admin/waybill/jobs/:id/close", adminAuth, WaybillJobController.a
 // 提现审核 (M17)
 v1Routes.get("/admin/extract/list", adminAuth, AdminCrud.adminExtractList);
 v1Routes.post("/admin/extract/status/:id", adminAuth, AdminCrud.adminExtractStatus);
+v1Routes.get("/admin/supplier/extract/suppliers", adminAuth, AdminSupplierFinance.supplierExtractSuppliers);
+v1Routes.get("/admin/supplier/apply/list", adminAuth, SupplierApplicationController.adminList);
+v1Routes.get("/admin/supplier/apply/info/:id", adminAuth, SupplierApplicationController.adminDetail);
+v1Routes.get("/admin/supplier/apply/verify/form/:id", adminAuth, SupplierApplicationController.adminReviewForm);
+v1Routes.post("/admin/supplier/apply/verify/:id", adminAuth, SupplierApplicationController.adminReview);
+v1Routes.get("/admin/supplier/apply/mark/form/:id", adminAuth, SupplierApplicationController.adminMarkForm);
+v1Routes.post("/admin/supplier/apply/mark/:id", adminAuth, SupplierApplicationController.adminMark);
+v1Routes.delete("/admin/supplier/apply/del/:id", adminAuth, SupplierApplicationController.adminDelete);
+v1Routes.get("/admin/supplier/supplier", adminAuth, AdminSupplierDirectoryController.list);
+v1Routes.get("/admin/supplier/menu-rules", adminAuth, AdminSupplierMenuRuleController.list);
+v1Routes.post("/admin/supplier/menu-rules", adminAuth, AdminSupplierMenuRuleController.create);
+v1Routes.get("/admin/supplier/menu-rules/catalog", adminAuth, AdminSupplierMenuRuleController.catalog);
+v1Routes.get("/admin/supplier/menu-rules/:id", adminAuth, AdminSupplierMenuRuleController.detail);
+v1Routes.put("/admin/supplier/menu-rules/:id", adminAuth, AdminSupplierMenuRuleController.update);
+v1Routes.put("/admin/supplier/menu-rules/:id/visibility", adminAuth, AdminSupplierMenuRuleController.visibility);
+v1Routes.delete("/admin/supplier/menu-rules/:id", adminAuth, AdminSupplierMenuRuleController.remove);
+v1Routes.post("/admin/supplier/supplier", adminAuth, AdminSupplierDirectoryController.create);
+v1Routes.get("/admin/supplier/supplier/cities", adminAuth, PublicController.city);
+v1Routes.get("/admin/supplier/supplier/:id", adminAuth, AdminSupplierDirectoryController.detail);
+v1Routes.put("/admin/supplier/supplier/:id", adminAuth, AdminSupplierDirectoryController.update);
+v1Routes.put("/admin/supplier/supplier/set_status/:id/:status", adminAuth, AdminSupplierDirectoryController.setStatus);
+v1Routes.delete("/admin/supplier/supplier/:id", adminAuth, AdminSupplierDirectoryController.remove);
+v1Routes.get("/admin/agent/get_agent_agreement", adminAuth, AdminAgentAgreementController.getAgentAgreement);
+v1Routes.post("/admin/agent/set_agent_agreement/:id", adminAuth, AdminAgentAgreementController.setAgentAgreement);
 v1Routes.get("/admin/supplier/extract/list", adminAuth, AdminSupplierFinance.supplierExtractList);
 v1Routes.post("/admin/supplier/extract/verify/:id", adminAuth, AdminSupplierFinance.supplierExtractReview);
 v1Routes.post("/admin/supplier/extract/save_transfer/:id", adminAuth, AdminSupplierFinance.supplierExtractTransfer);
 v1Routes.post("/admin/supplier/extract/mark/:id", adminAuth, AdminSupplierFinance.supplierExtractMark);
+v1Routes.get("/admin/supplier/bill-screen/suppliers", adminAuth, AdminSupplierBillScreen.suppliers);
+v1Routes.get("/admin/supplier/bill-screen/groups", adminAuth, AdminSupplierBillScreen.groups);
+v1Routes.get("/admin/supplier/bill-screen/details", adminAuth, AdminSupplierBillScreen.details);
+v1Routes.get("/admin/supplier/bill-screen/export", adminAuth, AdminSupplierBillScreen.exportBill);
+v1Routes.get("/admin/supplier/capital-screen/suppliers", adminAuth, AdminSupplierCapitalScreen.suppliers);
+v1Routes.get("/admin/supplier/capital-screen/list", adminAuth, AdminSupplierCapitalScreen.list);
+v1Routes.get("/admin/supplier/capital-screen/export", adminAuth, AdminSupplierCapitalScreen.exportCapital);
+v1Routes.put("/admin/supplier/capital-screen/remark/:id", adminAuth, AdminSupplierCapitalScreen.remark);
+v1Routes.get("/admin/supplier/order-statistics-screen/suppliers", adminAuth, AdminSupplierOrderStatisticsScreen.suppliers);
+v1Routes.get("/admin/supplier/order-statistics-screen/summary", adminAuth, AdminSupplierOrderStatisticsScreen.summary);
+v1Routes.get("/admin/supplier/order-statistics-screen/trend", adminAuth, AdminSupplierOrderStatisticsScreen.trend);
+v1Routes.get("/admin/supplier/order-statistics-screen/channel", adminAuth, AdminSupplierOrderStatisticsScreen.channel);
+v1Routes.get("/admin/supplier/order-statistics-screen/type", adminAuth, AdminSupplierOrderStatisticsScreen.type);
+v1Routes.get("/admin/supplier/order-statistics-screen/supplier-table", adminAuth, AdminSupplierOrderStatisticsScreen.supplierTable);
 
 // ─── Admin 营销详情 (M12) ─────────────────────────────────────
 v1Routes.get("/admin/activity/pink/:combinationId", adminAuth, AdminCrud.adminPinkList);
@@ -1774,6 +2094,132 @@ v1Routes.get("/admin/activity/pink/:combinationId", adminAuth, AdminCrud.adminPi
 // ─── Admin 营销细分 (M13) ─────────────────────────────────────
 v1Routes.get("/admin/activity/bargain_users/:bargainId", adminAuth, AdminCrud.adminBargainUsers);
 v1Routes.get("/admin/activity/seckill_times", adminAuth, AdminCrud.adminSeckillTimes);
+v1Routes.get("/admin/activity/seckill-times", adminAuth, AdminSeckillTime.list);
+v1Routes.get("/admin/activity/seckill-times/:id", adminAuth, AdminSeckillTime.detail);
+v1Routes.post("/admin/activity/seckill-times", adminAuth, AdminSeckillTime.create);
+v1Routes.put("/admin/activity/seckill-times/:id", adminAuth, AdminSeckillTime.update);
+v1Routes.put("/admin/activity/seckill-times/:id/status", adminAuth, AdminSeckillTime.status);
+v1Routes.delete("/admin/activity/seckill-times/:id", adminAuth, AdminSeckillTime.remove);
+v1Routes.get("/admin/activity/seckill-activities", adminAuth, AdminSeckillActivity.list);
+v1Routes.get("/admin/activity/combinations", adminAuth, AdminCombination.list);
+v1Routes.get("/admin/activity/combinations/export", adminAuth, AdminCombinationStatistics.exportManifest);
+v1Routes.get("/admin/activity/combination-groups/head", adminAuth, AdminCombinationStatistics.globalHead);
+v1Routes.get("/admin/activity/combination-groups", adminAuth, AdminCombinationStatistics.groups);
+v1Routes.get("/admin/activity/combination-groups/:groupId/members", adminAuth, AdminCombinationStatistics.members);
+v1Routes.get("/admin/activity/combination-statistics/:id/head", adminAuth, AdminCombinationStatistics.head);
+v1Routes.get("/admin/activity/combination-statistics/:id/groups", adminAuth, AdminCombinationStatistics.activityGroups);
+v1Routes.get("/admin/activity/combination-statistics/:id/groups/:groupId/members", adminAuth, AdminCombinationStatistics.activityMembers);
+v1Routes.get("/admin/activity/combination-statistics/:id/orders", adminAuth, AdminCombinationStatistics.orders);
+v1Routes.get("/admin/activity/combinations/options", adminAuth, AdminCombination.options);
+v1Routes.get("/admin/activity/combinations/products", adminAuth, AdminCombination.products);
+v1Routes.get("/admin/activity/combinations/products/:productId", adminAuth, AdminCombination.product);
+v1Routes.get("/admin/activity/combinations/:id", adminAuth, AdminCombination.detail);
+v1Routes.post("/admin/activity/combinations", adminAuth, AdminCombination.create);
+v1Routes.put("/admin/activity/combinations/:id", adminAuth, AdminCombination.update);
+v1Routes.put("/admin/activity/combinations/:id/status", adminAuth, AdminCombination.status);
+v1Routes.delete("/admin/activity/combinations/:id", adminAuth, AdminCombination.remove);
+
+v1Routes.get("/admin/marketing/coupon-templates", adminAuth, AdminCouponTemplate.list);
+v1Routes.get("/admin/marketing/coupon-templates/options", adminAuth, AdminCouponTemplate.options);
+v1Routes.get("/admin/marketing/coupon-templates/products", adminAuth, AdminCouponTemplate.products);
+v1Routes.get("/admin/marketing/coupon-templates/:id/issues", adminAuth, AdminCouponTemplate.issues);
+v1Routes.get("/admin/marketing/coupon-templates/:id", adminAuth, AdminCouponTemplate.detail);
+v1Routes.post("/admin/marketing/coupon-templates", adminAuth, AdminCouponTemplate.create);
+v1Routes.post("/admin/marketing/coupon-templates/:id/invalidate", adminAuth, AdminCouponTemplate.invalidate);
+v1Routes.delete("/admin/marketing/coupon-templates/:id", adminAuth, AdminCouponTemplate.remove);
+v1Routes.post("/admin/marketing/coupon-template-issues", adminAuth, AdminCouponTemplate.publish);
+v1Routes.get("/admin/marketing/activity-frame/products", adminAuth, AdminActivityFrame.products);
+v1Routes.get("/admin/marketing/activity-frame/brands", adminAuth, AdminActivityFrame.brands);
+v1Routes.get("/admin/marketing/activity-frame/labels", adminAuth, AdminActivityFrame.labels);
+v1Routes.get("/admin/marketing/activity-frame", adminAuth, AdminActivityFrame.list);
+v1Routes.get("/admin/marketing/activity-frame/:id", adminAuth, AdminActivityFrame.detail);
+v1Routes.post("/admin/marketing/activity-frame", adminAuth, AdminActivityFrame.create);
+v1Routes.put("/admin/marketing/activity-frame/:id", adminAuth, AdminActivityFrame.update);
+v1Routes.patch("/admin/marketing/activity-frame/:id/status", adminAuth, AdminActivityFrame.status);
+v1Routes.delete("/admin/marketing/activity-frame/:id", adminAuth, AdminActivityFrame.remove);
+v1Routes.get("/admin/marketing/activity-background/products", adminAuth, AdminActivityBackground.products);
+v1Routes.get("/admin/marketing/activity-background/brands", adminAuth, AdminActivityBackground.brands);
+v1Routes.get("/admin/marketing/activity-background/labels", adminAuth, AdminActivityBackground.labels);
+v1Routes.get("/admin/marketing/activity-background", adminAuth, AdminActivityBackground.list);
+v1Routes.get("/admin/marketing/activity-background/:id", adminAuth, AdminActivityBackground.detail);
+v1Routes.post("/admin/marketing/activity-background", adminAuth, AdminActivityBackground.create);
+v1Routes.put("/admin/marketing/activity-background/:id", adminAuth, AdminActivityBackground.update);
+v1Routes.patch("/admin/marketing/activity-background/:id/status", adminAuth, AdminActivityBackground.status);
+v1Routes.delete("/admin/marketing/activity-background/:id", adminAuth, AdminActivityBackground.remove);
+v1Routes.get("/admin/marketing/time-discounts/products", adminAuth, AdminTimeDiscount.products);
+v1Routes.get("/admin/marketing/time-discounts/brands", adminAuth, AdminTimeDiscount.brands);
+v1Routes.get("/admin/marketing/time-discounts/labels", adminAuth, AdminTimeDiscount.labels);
+v1Routes.get("/admin/marketing/time-discounts/user-labels", adminAuth, AdminTimeDiscount.userLabels);
+v1Routes.get("/admin/marketing/time-discounts", adminAuth, AdminTimeDiscount.list);
+v1Routes.get("/admin/marketing/time-discounts/:id", adminAuth, AdminTimeDiscount.detail);
+v1Routes.post("/admin/marketing/time-discounts", adminAuth, AdminTimeDiscount.create);
+v1Routes.put("/admin/marketing/time-discounts/:id", adminAuth, AdminTimeDiscount.update);
+v1Routes.patch("/admin/marketing/time-discounts/:id/status", adminAuth, AdminTimeDiscount.status);
+v1Routes.delete("/admin/marketing/time-discounts/:id", adminAuth, AdminTimeDiscount.remove);
+
+v1Routes.get("/admin/marketing/full-discounts/products", adminAuth, AdminFullDiscount.products);
+v1Routes.get("/admin/marketing/full-discounts/brands", adminAuth, AdminFullDiscount.brands);
+v1Routes.get("/admin/marketing/full-discounts/labels", adminAuth, AdminFullDiscount.labels);
+v1Routes.get("/admin/marketing/full-discounts/user-labels", adminAuth, AdminFullDiscount.userLabels);
+v1Routes.get("/admin/marketing/full-discounts", adminAuth, AdminFullDiscount.list);
+v1Routes.get("/admin/marketing/full-discounts/:id", adminAuth, AdminFullDiscount.detail);
+v1Routes.post("/admin/marketing/full-discounts", adminAuth, AdminFullDiscount.create);
+v1Routes.put("/admin/marketing/full-discounts/:id", adminAuth, AdminFullDiscount.update);
+v1Routes.patch("/admin/marketing/full-discounts/:id/status", adminAuth, AdminFullDiscount.status);
+v1Routes.delete("/admin/marketing/full-discounts/:id", adminAuth, AdminFullDiscount.remove);
+
+v1Routes.get("/admin/marketing/nth-discounts/products", adminAuth, AdminNthDiscount.products);
+v1Routes.get("/admin/marketing/nth-discounts/brands", adminAuth, AdminNthDiscount.brands);
+v1Routes.get("/admin/marketing/nth-discounts/labels", adminAuth, AdminNthDiscount.labels);
+v1Routes.get("/admin/marketing/nth-discounts/user-labels", adminAuth, AdminNthDiscount.userLabels);
+v1Routes.get("/admin/marketing/nth-discounts", adminAuth, AdminNthDiscount.list);
+v1Routes.get("/admin/marketing/nth-discounts/:id", adminAuth, AdminNthDiscount.detail);
+v1Routes.post("/admin/marketing/nth-discounts", adminAuth, AdminNthDiscount.create);
+v1Routes.put("/admin/marketing/nth-discounts/:id", adminAuth, AdminNthDiscount.update);
+v1Routes.patch("/admin/marketing/nth-discounts/:id/status", adminAuth, AdminNthDiscount.status);
+v1Routes.delete("/admin/marketing/nth-discounts/:id", adminAuth, AdminNthDiscount.remove);
+
+v1Routes.get("/admin/marketing/full-gifts/products", adminAuth, AdminFullGift.products);
+v1Routes.get("/admin/marketing/full-gifts/coupons", adminAuth, AdminFullGift.coupons);
+v1Routes.get("/admin/marketing/full-gifts/brands", adminAuth, AdminFullGift.brands);
+v1Routes.get("/admin/marketing/full-gifts/labels", adminAuth, AdminFullGift.labels);
+v1Routes.get("/admin/marketing/full-gifts/user-labels", adminAuth, AdminFullGift.userLabels);
+v1Routes.get("/admin/marketing/full-gifts", adminAuth, AdminFullGift.list);
+v1Routes.get("/admin/marketing/full-gifts/:id", adminAuth, AdminFullGift.detail);
+v1Routes.post("/admin/marketing/full-gifts", adminAuth, AdminFullGift.create);
+v1Routes.put("/admin/marketing/full-gifts/:id", adminAuth, AdminFullGift.update);
+v1Routes.patch("/admin/marketing/full-gifts/:id/status", adminAuth, AdminFullGift.status);
+v1Routes.delete("/admin/marketing/full-gifts/:id", adminAuth, AdminFullGift.remove);
+v1Routes.get("/admin/marketing/coupon-issues", adminAuth, AdminCouponIssue.list);
+v1Routes.get("/admin/order/invoices", adminAuth, AdminInvoice.list);
+v1Routes.get("/admin/finance/recharge-orders", adminAuth, AdminRechargeOrder.list);
+v1Routes.get("/admin/finance/recharge-orders/stats", adminAuth, AdminRechargeOrder.stats);
+v1Routes.get("/admin/finance/recharge-orders/:id", adminAuth, AdminRechargeOrder.detail);
+v1Routes.get("/admin/finance/commissions", adminAuth, AdminCommissionRead.list);
+v1Routes.get("/admin/finance/commissions/:uid/records", adminAuth, AdminCommissionRead.records);
+v1Routes.get("/admin/finance/commissions/:uid", adminAuth, AdminCommissionRead.detail);
+v1Routes.get("/admin/finance/user-money-ledger", adminAuth, AdminUserMoneyLedger.list);
+v1Routes.get("/admin/finance/user-money-ledger/types", adminAuth, AdminUserMoneyLedger.types);
+v1Routes.get("/admin/finance/user-money-ledger/export", adminAuth, AdminUserMoneyLedger.exportManifest);
+v1Routes.get("/admin/order/invoices/:id/order-info", adminAuth, AdminInvoice.orderInfo);
+v1Routes.get("/admin/order/invoices/:id", adminAuth, AdminInvoice.detail);
+v1Routes.post("/admin/order/invoices/:id/process", adminAuth, AdminInvoice.process);
+v1Routes.get("/admin/marketing/coupon-issues/options", adminAuth, AdminCouponIssue.options);
+v1Routes.get("/admin/marketing/coupon-issues/products", adminAuth, AdminCouponIssue.products);
+v1Routes.get("/admin/marketing/coupon-issues/:id/claims", adminAuth, AdminCouponIssue.claims);
+v1Routes.get("/admin/marketing/coupon-issues/:id/copy", adminAuth, AdminCouponIssue.copy);
+v1Routes.get("/admin/marketing/coupon-issues/:id", adminAuth, AdminCouponIssue.detail);
+v1Routes.post("/admin/marketing/coupon-issues", adminAuth, AdminCouponIssue.create);
+v1Routes.post("/admin/marketing/coupon-issues/:id/status", adminAuth, AdminCouponIssue.status);
+v1Routes.delete("/admin/marketing/coupon-issues/:id", adminAuth, AdminCouponIssue.remove);
+v1Routes.get("/admin/activity/seckill-activities/options", adminAuth, AdminSeckillActivity.options);
+v1Routes.get("/admin/activity/seckill-activities/products", adminAuth, AdminSeckillActivity.products);
+v1Routes.get("/admin/activity/seckill-activities/products/:productId", adminAuth, AdminSeckillActivity.product);
+v1Routes.get("/admin/activity/seckill-activities/:id", adminAuth, AdminSeckillActivity.detail);
+v1Routes.post("/admin/activity/seckill-activities", adminAuth, AdminSeckillActivity.create);
+v1Routes.put("/admin/activity/seckill-activities/:id", adminAuth, AdminSeckillActivity.update);
+v1Routes.put("/admin/activity/seckill-activities/:id/status", adminAuth, AdminSeckillActivity.status);
+v1Routes.delete("/admin/activity/seckill-activities/:id", adminAuth, AdminSeckillActivity.remove);
 
 // ─── 用户积分明细 (M13) ───────────────────────────────────────
 v1Routes.get("/user/integral_logs", authMiddleware({ force: true }), UserFinanceController.integralLogs);
@@ -1839,11 +2285,17 @@ v1Routes.get("/admin/article/product-options", adminAuth, AdminArticle.productOp
 v1Routes.get("/admin/article/attachment-options", adminAuth, AdminArticle.attachmentOptions);
 v1Routes.get("/admin/article/attachment-categories", adminAuth, AdminArticle.attachmentCategories);
 v1Routes.get("/admin/log/list", adminAuth, AdminCrud.adminLogList);
+v1Routes.get("/admin/log/admin-options", adminAuth, AdminCrud.adminLogOptions);
 
 // 分销管理 + 通知模板 + 短信配置 (M24)
 v1Routes.get("/admin/spread/list", adminAuth, AdminCrud.adminSpreadList);
 v1Routes.get("/admin/brokerage/list", adminAuth, AdminCrud.adminBrokerageList);
 v1Routes.get("/admin/promoter/apply/list", adminAuth, PromoterApplicationController.adminList);
+v1Routes.post(
+  "/admin/promoter/apply/examine/:id/:uid/:status",
+  adminAuth,
+  PromoterApplicationController.adminExamine,
+);
 v1Routes.get(
   "/admin/promoter/apply/examine/:id/:uid/:status",
   adminAuth,
@@ -1878,6 +2330,9 @@ v1Routes.get("/admin/agent/division/order/list", adminAuth, AdminDivision.divisi
 v1Routes.get("/admin/agent/division/option", adminAuth, AdminDivision.divisionOptions);
 v1Routes.get("/admin/agent/division/agent_option/:divisionId", adminAuth, AdminDivision.agentOptions);
 v1Routes.get("/admin/agent/division/statistics", adminAuth, AdminDivision.divisionStatistics);
+v1Routes.get("/admin/agent/division/statistics-screen/summary", adminAuth, AdminDivisionStatisticsScreen.summary);
+v1Routes.get("/admin/agent/division/statistics-screen/trend", adminAuth, AdminDivisionStatisticsScreen.trend);
+v1Routes.get("/admin/agent/division/statistics-screen/ranking", adminAuth, AdminDivisionStatisticsScreen.ranking);
 v1Routes.get("/admin/agent/division/trend", adminAuth, AdminDivision.divisionTrend);
 v1Routes.get("/admin/agent/division/ranking", adminAuth, AdminDivision.divisionRanking);
 v1Routes.get("/admin/agent/division/apply/list", adminAuth, AdminDivision.applicationList);

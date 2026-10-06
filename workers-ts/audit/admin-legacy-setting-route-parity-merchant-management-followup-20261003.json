@@ -1,0 +1,2542 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory-merchant-management-followup-20261003.json",
+  "methodology": {
+    "scope": "Legacy Admin business-page routes under /admin/setting.",
+    "status": {
+      "candidate": "Local code and UI evidence cover the reviewed legacy workflow; production verification may remain.",
+      "partial": "A useful subset exists, but material legacy workflow or channel coverage is absent.",
+      "missing": "Reviewed route has no viable target replacement.",
+      "retired": "Reviewed legacy route is intentionally not migrated because it is broken, duplicated, or obsolete.",
+      "unreviewed": "Inventory only; no semantic parity conclusion has been made."
+    },
+    "reviewBasis": "For all 76 routes, compare the legacy component and API with the new Admin router, page, Worker route and consumer. A useful API-only subset may be partial; a read-only lookup is not proof of parity. A business screen with no viable Admin replacement is missing. Retired requires evidence of a broken or inert old screen. This batch is a code-only audit and does not assert production parity.",
+    "productionAccess": "Current source-only follow-up connects actual two-style statistic taps to unique current manager store scope, period/chart/daily readers and complete order selectors. Old work/customer-service/distribution roles, electronic waybill and city/provider operations remain partial. Independent current SQL/JWT, finance, runtime/build/browser receipts are required; no deployment is inferred."
+  },
+  "themeStyleContract": {
+    "status": "partial",
+    "coverage": {
+      "adminScreen": true,
+      "sixPresetTokens": true,
+      "registeredPages": 104,
+      "themedPages": 98,
+      "consumerStyles": true,
+      "lifecycle": true,
+      "diy": true,
+      "commonRead": true,
+      "dedicatedWrite": true,
+      "permissions": true,
+      "genericWriteProtection": true,
+      "recovery": true
+    },
+    "gaps": [
+      "实际注册104页中仅98页具有共同主题宿主，完整合同要求当前注册页全部覆盖"
+    ]
+  },
+  "cityDeliverySettingsContract": {
+    "status": "candidate",
+    "coverage": {
+      "adminScreen": true,
+      "tenKeys": true,
+      "conditionalFlags": true,
+      "secretIntents": true,
+      "encryptedStorage": true,
+      "commonResolver": true,
+      "providerQueries": true,
+      "callbackIdentity": true,
+      "pickerConsumer": true,
+      "permissions": true,
+      "genericWriteProtection": true,
+      "atomicConfirm": true,
+      "recovery": true,
+      "safeProjection": true
+    },
+    "gaps": []
+  },
+  "productCategoryStyleContract": {
+    "status": "candidate",
+    "coverage": {
+      "adminScreen": true,
+      "tenLayoutMatrix": true,
+      "sharedStyleAuthority": true,
+      "dedicatedWrite": true,
+      "permissions": true,
+      "genericWriteProtection": true,
+      "recovery": true,
+      "publicTaxonomy": true,
+      "categoryScopes": true,
+      "publishedProducts": true,
+      "safeSkuPurchase": true,
+      "cartRecovery": true,
+      "draftFilters": true,
+      "paginationSort": true,
+      "treeScrollSelection": true,
+      "cartLayoutBoundary": true,
+      "actorLifecycle": true
+    },
+    "gaps": [],
+    "evidenceBoundary": "Source-only connected coverage; actual runtime/browser/native receipts are not inferred from file existence or test declarations."
+  },
+  "productDetailDesignContract": {
+    "status": "candidate",
+    "coverage": {
+      "adminScreen": true,
+      "contract19": true,
+      "editor18": true,
+      "previews9": true,
+      "dedicatedRoutes": true,
+      "permissions1594": true,
+      "sharedSettingsAuthority": true,
+      "mutationProtocol": true,
+      "genericProtection": true,
+      "actorRecovery": true,
+      "ordinarySafeDisplay": true,
+      "displayPriceIsolation": true,
+      "realReplyPreviews": true,
+      "communityLinkedPaging": true,
+      "actualRanks": true,
+      "realPackages": true,
+      "realRecommendations": true,
+      "navigationAndFooter": true,
+      "sharePosterReferral": true,
+      "ordinaryCartLifecycle": true,
+      "activityConsumers": true,
+      "pcSharedApi": true
+    },
+    "gaps": [],
+    "evidenceBoundary": "Source-only; real execution and live-account/device acceptance must be bound separately."
+  },
+  "userCenterDesignContract": {
+    "status": "partial",
+    "coverage": {
+      "adminScreen": true,
+      "sixBlockContract": true,
+      "memberEditor": true,
+      "orderStatisticsEditor": true,
+      "listEditors": true,
+      "previewsSix": true,
+      "assetLinkPicker": true,
+      "dedicatedRoutes": true,
+      "permissions1592": true,
+      "sharedThreeAuthority": true,
+      "atomicMutation": true,
+      "merchantImmutable": true,
+      "genericProtection": true,
+      "actorRecovery": true,
+      "publicProjection": true,
+      "realNineAssets": true,
+      "memberFiveStyles": true,
+      "orderThreeStyles": true,
+      "statisticsTwoStyles": true,
+      "posterCarousel": true,
+      "menuThreeStyles": true,
+      "menuRoleGates": false,
+      "videoCollections": true,
+      "memberCode": true,
+      "userLifecycle": true,
+      "requestDeadline": true
+    },
+    "gaps": [
+      "个人中心合同尚缺少实际连接：menuRoleGates"
+    ],
+    "evidenceBoundary": "Source-only scoped calls and actual template attributes. Independent runtime/build/browser/SQL and provider evidence is not inferred."
+  },
+  "summary": {
+    "legacyRoutes": 76,
+    "reviewed": 76,
+    "candidate": 25,
+    "partial": 26,
+    "missing": 20,
+    "retired": 5,
+    "unreviewed": 0
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/setting/system/create",
+        "title": "系统表单",
+        "component": "@/pages/setting/systemForm/create",
+        "source": "src/router/routes.js:89"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/forms（新增/编辑表单）"
+      ],
+      "targetApis": [
+        "GET /adminapi/form/index",
+        "GET /adminapi/form/info/:id",
+        "POST /adminapi/form/save/:id",
+        "POST /adminapi/form/update_name/:id",
+        "GET|PUT /adminapi/form/set_show/:id/:is_show",
+        "DELETE /adminapi/form/del/:id",
+        "GET /adminapi/form/data/:id"
+      ],
+      "covered": [
+        "系统表单定义、组件白名单、提交数据校验和订单不可变快照已迁移",
+        "后台 CRUD、启停、数据列表及商品选择接口已迁移",
+        "新版 Admin 提供10类受控组件、拖拽/按钮排序、字段设置和用户端预览",
+        "兼容旧编辑器按时间戳键保存的对象形状，并按时间戳恢复组件顺序",
+        "保存时拒绝未知组件、重复ID、重复/越界选项及无效默认值"
+      ],
+      "remaining": [
+        "需在获批窗口对生产历史模板形状及真实商品下单做只读/端到端核验"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/SystemForms.vue",
+        "cinashop-php/view/admin/src/store/modules/admin/modules/mobildConfig.js:26",
+        "cinashop-php/view/admin/src/pages/setting/systemForm/create.vue:667",
+        "workers-ts/src/services/system/SystemMetadataService.ts",
+        "workers-ts/src/services/order/OrderSystemFormService.ts",
+        "workers-ts/test/system-form-migration.test.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config",
+        "title": "系统设置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:27"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config",
+        "/config/commerce",
+        "/config/newcomer",
+        "/config/runtime-content"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce",
+        "GET|POST /adminapi/config/user/register",
+        "GET|POST /adminapi/config/runtime_content"
+      ],
+      "covered": [
+        "以字段白名单拆分商城运行、新人运营与客户端内容三类专用设置",
+        "服务端 config.view/config.manage 权限隔离",
+        "通用配置页不读取整表或返回支付、微信及第三方凭据"
+      ],
+      "remaining": [
+        "旧动态配置分类仍有大量业务域未逐项迁移",
+        "通用配置分类和任意键编辑器因越权覆盖与凭据泄露风险保持停用"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/ConfigList.vue",
+        "view/admin-ts/src/pages/config/CommerceSettings.vue",
+        "view/admin-ts/src/pages/config/NewcomerSettings.vue",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/base",
+        "title": "基础设置",
+        "component": "@/pages/setting/shop/base",
+        "source": "src/router/modules/setting.js:36"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/commerce（基础设置）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce",
+        "GET /api/site_config",
+        "GET /api/share"
+      ],
+      "covered": [
+        "站点开关、名称、HTTPS 地址、联系电话和备案号",
+        "四类品牌图片、登录轮播图、favicon、悬浮菜单、短视频、商品列表视频和海报标题",
+        "素材中心选择/上传后只保存稳定R2引用，公开消费时生成短期签名",
+        "Admin登录页消费轮播图与登录LOGO，Admin和PC动态应用favicon与站点品牌",
+        "微信分享三字段由新版/api/share提供，并由UniApp首页分享钩子及PC元信息消费",
+        "管理员登录使用4 KiB正文上限、来源/账号双层Durable Object限流和统一失败响应",
+        "固定12位新管理员密码/bcrypt cost 12、响应安全头及字段白名单取代旧可编辑过滤开关",
+        "HTTPS/站内素材路径校验、短事务、回读、审计与配置缓存失效"
+      ],
+      "remaining": [
+        "需在发布后用生产历史素材引用、真实微信分享与限流响应做只读/端到端验收"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/CommerceSettings.vue",
+        "view/admin-ts/src/pages/Login.vue",
+        "view/pc-ts/src/layouts/DefaultLayout.vue",
+        "view/uniapp-ts/src/pages/index/index.vue",
+        "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+        "workers-ts/src/services/system/PublicBrandingService.ts",
+        "workers-ts/src/middleware/admin-login-security.ts",
+        "workers-ts/src/middleware/security-headers.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/product",
+        "title": "商品设置",
+        "component": "@/pages/setting/shop/product",
+        "source": "src/router/modules/setting.js:45"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/commerce（商品与交易）",
+        "/product"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce",
+        "GET /adminapi/product/list?status=5"
+      ],
+      "covered": [
+        "警戒库存阈值读写",
+        "阈值变更时同步重算商品和普通 SKU 的 is_police，并同步 is_sold",
+        "原商品 status=5 库存预警筛选契约保持可执行"
+      ],
+      "remaining": [
+        "需在获批窗口对生产商品量验证 5 秒事务上限"
+      ],
+      "evidence": [
+        "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+        "workers-ts/src/models/searchers/product.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/document",
+        "title": "打印机设置",
+        "component": "@/pages/setting/document",
+        "source": "src/router/modules/setting.js:54"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/print"
+      ],
+      "targetApis": [
+        "GET /adminapi/print/list",
+        "GET /adminapi/print/form/:id",
+        "POST /adminapi/print/save/:id",
+        "POST|PUT /adminapi/print/set_status/:id/:status",
+        "DELETE /adminapi/print/del/:id"
+      ],
+      "covered": [
+        "名称关键词和打印平台筛选",
+        "15 条分页",
+        "新增、编辑、启停、删除和就绪状态",
+        "平台作用域 supplier_id=0 与供应商作用域隔离",
+        "提供商密钥只写不回显"
+      ],
+      "remaining": [
+        "需在获批窗口对生产 Hyperdrive 做只读数据形状核验"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/PrintOperations.vue",
+        "workers-ts/src/services/system/PrintDocumentManagementService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/document/config",
+        "title": "单据设置",
+        "component": "@/pages/setting/document/config",
+        "source": "src/router/modules/setting.js:63"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [
+        "确认旧页面是误复制的商品规格代码，不是可工作的单据设置"
+      ],
+      "remaining": [],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/document/config.vue:82",
+        "cinashop-php/view/admin/src/pages/setting/document/config.vue:192",
+        "cinashop-php/view/admin/src/pages/setting/document/config.vue:202",
+        "cinashop-php/view/admin/src/pages/setting/document/config.vue:215"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/document/content",
+        "title": "小票配置",
+        "component": "@/pages/setting/document/content",
+        "source": "src/router/modules/setting.js:72"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/print（打印内容弹窗）"
+      ],
+      "targetApis": [
+        "GET /adminapi/print/content/:id",
+        "POST /adminapi/print/save_content/:id"
+      ],
+      "covered": [
+        "标题、配送、备注、商品、运费、优惠、支付、订单、自定义内容开关",
+        "规格编码依赖商品明细",
+        "二维码站内路径和 50 字底部提示",
+        "小票实时预览"
+      ],
+      "remaining": [
+        "需用真实打印机做物理小票版式验收"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/PrintOperations.vue",
+        "workers-ts/src/services/system/PrintDocumentManagementService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/trade",
+        "title": "交易设置",
+        "component": "@/pages/setting/shop/trade",
+        "source": "src/router/modules/setting.js:81"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/commerce（商品与交易）",
+        "/refund",
+        "UniApp /pages/order/refundDetail"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce",
+        "GET /adminapi/refund/detail/:id",
+        "GET /api/order/refund/detail/:id"
+      ],
+      "covered": [
+        "7 类未支付/临期小时、自动收货、自动评价和售后期限",
+        "退货理由及退货收货人、电话、地址兼容字段",
+        "订单取消策略、定时维护、售后期限和退货理由已消费对应配置",
+        "次卡按上海时区扫描临期与过期窗口，经Queue、事务外箱及幂等投递发送短信和站内信",
+        "次卡提醒沿用旧is_advent_sms/is_expire_sms标志及reminder_brink_death/expiration_reminder通知标识",
+        "售后详情按门店、供应商、平台顺序解析退货收件信息，并在新版Admin和UniApp状态4/5展示"
+      ],
+      "remaining": [
+        "生产当前无次卡行、提醒配置及两类通知模板，无法验证真实临期/过期投递与失败重试",
+        "生产3条有效售后均为平台范围但没有状态4/5，且平台退货姓名、电话、地址均未配置",
+        "需配置生产通知/退货信息，并用真实短信、Queue、平台/门店/供应商售后及受限角色完成E2E"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/CommerceSettings.vue",
+        "view/admin-ts/src/pages/refund/RefundList.vue",
+        "view/uniapp-ts/src/pages/order/refundDetail.vue",
+        "workers-ts/src/services/payment/OrderPaymentPolicy.ts",
+        "workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+        "workers-ts/src/services/order/SecondCardReminderService.ts",
+        "workers-ts/src/services/order/OrderNotificationOutboxService.ts",
+        "workers-ts/src/services/order/RefundReturnContactService.ts",
+        "workers-ts/src/services/order/StoreOrderRefundService.ts",
+        "workers-ts/migrations/0129_second_card_reminder_indexes.sql",
+        "workers-ts/test/integration/SecondCardReminderAuditWorker.ts",
+        "workers-ts/test/second-card-reminder-migration.test.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/pay",
+        "title": "支付设置",
+        "component": "@/pages/setting/shop/pay",
+        "source": "src/router/modules/setting.js:90"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/commerce（支付设置）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce"
+      ],
+      "covered": [
+        "余额功能、余额支付、微信、支付宝和线下支付业务开关",
+        "同时展示数据库开关与当前 Worker Secret 组合后的实际可用状态",
+        "商户号与商户API证书序列号作为受格式约束的非密钥字段进入Admin白名单",
+        "公众号/H5/PC、小程序与App按各自AppID单独就绪，并共享一套APIv3商户凭据",
+        "小程序使用标准 /v3/pay/transactions/jsapi；旧独立小程序商户号分支明确退休",
+        "页面、响应和操作日志均不包含支付私钥、证书或 API Key"
+      ],
+      "remaining": [
+        "生产支付公开配置、三种AppID及全部微信部署Secret当前均未配置",
+        "生产5条site_url含2种值，仍需DB-003运营确认后统一",
+        "需配置真实商户并完成三profile下单、支付/退款回调和受限角色E2E"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/CommerceSettings.vue",
+        "workers-ts/src/services/payment/PaymentReadinessService.ts",
+        "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+        "workers-ts/src/services/wechat/WechatPayService.ts",
+        "workers-ts/test/payment-readiness.test.ts",
+        "workers-ts/test/integration/PaymentPublicConfigAuditWorker.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/agreemant",
+        "title": "政策协议",
+        "component": "@/pages/setting/shop/agreemant",
+        "source": "src/router/modules/setting.js:99"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/runtime-content（政策与入驻协议）"
+      ],
+      "targetApis": [
+        "GET /adminapi/setting/get_user_agreement/:type",
+        "POST /adminapi/setting/set_user_agreement/:type",
+        "GET|POST /adminapi/config/runtime_content"
+      ],
+      "covered": [
+        "隐私、用户、注销、供应商入驻和代理商入驻五类协议",
+        "兼容旧 user_agreement/:type 公共读取契约",
+        "Admin 不执行或 v-html 预览协议 HTML"
+      ],
+      "remaining": [
+        "需在获批窗口对生产 legacy_cache 五类键做只读形状核验"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/RuntimeContent.vue",
+        "workers-ts/src/services/system/LegacyContentService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/division",
+        "title": "事业部设置",
+        "component": "@/pages/setting/shop/division",
+        "source": "src/router/modules/setting.js:108"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/commerce（事业部）",
+        "/division"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce",
+        "GET /adminapi/agent/division/list",
+        "GET /adminapi/agent/division/apply/list"
+      ],
+      "covered": [
+        "事业部团队和代理商自助申请两个旧开关",
+        "关闭团队时禁止保存开启的申请开关",
+        "客户端入口按两个开关和当前用户事业部身份共同判定",
+        "事业部成员、代理商、员工、分佣与申请审核使用独立管理页"
+      ],
+      "remaining": [
+        "需在获批窗口对生产开关与已有事业部角色做只读一致性核验"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/CommerceSettings.vue",
+        "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+        "workers-ts/src/services/product/PublicCatalogService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/third_party",
+        "title": "身份管理",
+        "component": "@/pages/setting/third_party/index",
+        "source": "src/router/modules/setting.js:117"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧页按 third 类型加载第三方身份配置动态表单；新版无对应受控管理页或字段合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/third_party/index.vue",
+        "cinashop-php/view/admin/src/pages/setting/shop/buildData.js",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/distribution/deliver",
+        "title": "发货设置",
+        "component": "@/pages/setting/distribution/deliver",
+        "source": "src/router/modules/setting.js:126"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/shipping"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/shipping",
+        "GET /adminapi/config/shipping/cities",
+        "GET /adminapi/config/shipping/receipts/:requestId"
+      ],
+      "covered": [
+        "完整旧发货设置四键：全场包邮、按分精度门槛、线下支付包邮及到店自提；关闭保留门槛和提货点",
+        "维护最大ID未删除默认提货点的名称、手机号、真实省市区/可选街道、详细地址、营业时间和坐标；开启显式启用该行，首次保存才新增",
+        "独立shipping_settings.view/manage，旧1359精确路径/auth只授查看；原子配置/提货点版本及UUID回执，未知结果刷新后先查且真实404才主动原样重试",
+        "真实邮费SQL计价保持折后券积分前阈值及线下/会员优先序；所有自提报价和建单消费SQL双开关，绑定提货点资料并用共享锁和末端重验拒绝漂移"
+      ],
+      "remaining": [
+        "仅本地未发布候选；生产角色、Hyperdrive、地图provider定位、真机、历史区域/提货点及规模争用和正式发布仍待验收；同城配送配置与记录及整个设置/下单父项继续开放"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/distribution/deliver.vue",
+        "cinashop-php/app/services/system/config/SystemConfigServices.php:1747",
+        "cinashop-php/app/services/store/SystemStoreServices.php:270",
+        "view/admin-ts/src/pages/setting/ShippingSettings.vue",
+        "view/admin-ts/src/api/shippingSettings.ts",
+        "workers-ts/src/services/admin/AdminShippingSettingsService.ts",
+        "workers-ts/src/services/order/CheckoutPickupPolicy.ts",
+        "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "workers-ts/docs/admin-shipping-settings.md",
+        "workers-ts/audit/admin-shipping-settings-acceptance-20261001.json"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_role/index",
+        "title": "身份管理",
+        "component": "@/pages/setting/systemRole/index",
+        "source": "src/router/modules/setting.js:135"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/system（角色权限）"
+      ],
+      "targetApis": [
+        "GET /adminapi/system_role/list",
+        "POST /adminapi/system_role/save",
+        "DELETE /adminapi/system_role/del/:id",
+        "GET /adminapi/system_menus/tree"
+      ],
+      "covered": [
+        "新版可列出、新增、编辑、删除角色并选择已有权限树节点"
+      ],
+      "remaining": [
+        "旧页的角色状态切换、筛选和完整权限规则管理尚无对应操作；需验证历史角色权限映射"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/systemRole/index.vue",
+        "view/admin-ts/src/pages/system/SystemList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_admin/index",
+        "title": "管理员列表",
+        "component": "@/pages/setting/systemAdmin/index",
+        "source": "src/router/modules/setting.js:144"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/system（管理员）"
+      ],
+      "targetApis": [
+        "GET /adminapi/system_admin/list",
+        "POST /adminapi/system_admin/save"
+      ],
+      "covered": [
+        "新版可列出、新增、编辑管理员及角色关联，并以受控密码字段保存"
+      ],
+      "remaining": [
+        "旧页账号启停和筛选未在新版页面提供；真实主管理员及受限角色仍需端到端核验"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/systemAdmin/index.vue",
+        "view/admin-ts/src/pages/system/SystemList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_menus/index",
+        "title": "权限规则",
+        "component": "@/pages/setting/systemMenus/index",
+        "source": "src/router/modules/setting.js:153"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/system_menus/tree"
+      ],
+      "covered": [],
+      "remaining": [
+        "新版权限树仅供角色授权读取，缺旧页菜单规则列表、新增、编辑与显隐操作"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/systemMenus/index.vue",
+        "view/admin-ts/src/pages/system/SystemList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/notification/index",
+        "title": "消息管理",
+        "component": "@/pages/setting/notification/index",
+        "source": "src/router/modules/setting.js:162"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/notification"
+      ],
+      "targetApis": [
+        "GET /adminapi/notification/order-config",
+        "GET /adminapi/notification/list",
+        "GET /adminapi/notification/deliveries"
+      ],
+      "covered": [
+        "四类订单通知渠道矩阵、提供商模板目录与持久投递台账"
+      ],
+      "remaining": [
+        "旧 system_notification type=1 会员消息目录",
+        "旧 system_notification type=2 平台消息目录",
+        "短信、公众号、模板消息和企业微信渠道总览"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/NotificationList.vue",
+        "workers-ts/src/services/order/OrderNotificationAdminService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/notification/notificationEdit",
+        "title": "消息编辑",
+        "component": "@/pages/setting/notification/notificationEdit",
+        "source": "src/router/modules/setting.js:171"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/notification"
+      ],
+      "targetApis": [
+        "PUT /adminapi/notification/order-config/:mark",
+        "POST /adminapi/notification/save"
+      ],
+      "covered": [
+        "四类订单通知的站内、短信、微信开关编辑"
+      ],
+      "remaining": [
+        "按旧消息目录逐项编辑",
+        "企业微信渠道编辑",
+        "远端模板同步的安全替代流程"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/NotificationList.vue",
+        "workers-ts/src/services/order/OrderNotificationAdminService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config/:type?/:tab_id?",
+        "title": "应用设置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:180"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config",
+        "/config/commerce",
+        "/config/newcomer",
+        "/config/runtime-content"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce",
+        "GET|POST /adminapi/config/user/register",
+        "GET|POST /adminapi/config/runtime_content"
+      ],
+      "covered": [
+        "新版以白名单页面承接商城、新人和客户端内容中的部分旧动态配置"
+      ],
+      "remaining": [
+        "旧应用设置按 type/tab 加载的其他分类及动态提交动作未逐字段承接，不能把受限配置入口等同原任意表单"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "view/admin-ts/src/pages/ConfigList.vue",
+        "view/admin-ts/src/pages/config/CommerceSettings.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config/payment/:type?/:tab_id?",
+        "title": "支付配置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:189"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config/commerce（支付设置）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/commerce"
+      ],
+      "covered": [
+        "新版承接支付开关、公开商户号和证书序列号，运行时凭据经 Secret 提供"
+      ],
+      "remaining": [
+        "旧动态支付配置的每个 tab 与渠道字段尚未一一确认；密钥类字段不得移入 Admin 表单"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "view/admin-ts/src/pages/config/CommerceSettings.vue",
+        "workers-ts/src/services/system/AdminCommerceSettingsService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/membership_level/index",
+        "title": "分销等级",
+        "component": "@/pages/setting/membershipLevel/index",
+        "source": "src/router/modules/setting.js:211"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/distributor-levels",
+        "/setting/distributor-levels/tasks/:levelId?",
+        "Uniapp /pages/users/user_distribution_level/index"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/agent/levels",
+        "GET|PUT|DELETE /adminapi/agent/levels/:id",
+        "PATCH /adminapi/agent/levels/:id/status",
+        "GET /adminapi/agent/levels/request/:requestId",
+        "GET|POST /adminapi/agent/level-tasks",
+        "GET|PUT|DELETE /adminapi/agent/level-tasks/:id",
+        "GET /adminapi/agent/level-tasks/parents",
+        "PATCH /adminapi/agent/level-tasks/:id/status",
+        "GET /adminapi/agent/level-tasks/request/:requestId",
+        "GET /api/agent/level_list",
+        "GET /api/agent/level_task_list"
+      ],
+      "covered": [
+        "独立分销等级七字段、平台背景素材、真实佣金基础比例/上浮、grade ASC/id DESC列表、分页筛选、编辑显隐与保留用户等级和完成证据的级联软删除",
+        "任务五指标、严格阈值与启用等级同类型递增、完成记录保护、is_must历史值只读和全部有效任务完成语义；任务自己的筛选分页刷新",
+        "独立agent_level与agent_level_task权限、972精确旧菜单双查看和任务单独最小父选择器，旧管理API全部委托版本/UUID合同且无无版本写旁路",
+        "actor绑定UUID回执、完整目录CAS和匹配HTTP409/领域校验HTTP400回滚证明；孤儿任务可独立确认软删除，原始写入/任务完成采用真实语句触发器并发fence，维护入口只授予Admin窄列和INSERT",
+        "Uniapp真实独立进度入口、赠予等级完成语义与不降级、平台图签名；注册/绑定后自动评估及持久付款后置任务重试，实际佣金消费者继续读取分销等级"
+      ],
+      "remaining": [
+        "需维护发布窗口安装精确权限forward，并以生产历史等级/任务/素材、真实注册支付、Hyperdrive和设备完成E2E；本机合成支付不是provider验收"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/membershipLevel/index.vue",
+        "cinashop-php/app/services/agent/AgentLevelServices.php",
+        "cinashop-php/app/services/agent/AgentLevelTaskServices.php",
+        "view/admin-ts/src/pages/setting/DistributorCatalog.vue",
+        "view/uniapp-ts/src/pages/users/user_distribution_level/index.vue",
+        "workers-ts/src/services/admin/AdminDistributorLevelService.ts",
+        "workers-ts/src/services/agent/AgentLevelTaskService.ts",
+        "workers-ts/src/services/agent/AgentLevelRegistrationEffects.ts",
+        "workers-ts/src/migrations/runAgentLevelRuntimeUpgrade.ts",
+        "workers-ts/docs/admin-distributor-levels.md"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config_message/:type?/:tab_id?",
+        "title": "短信开关",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:220"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/notification"
+      ],
+      "targetApis": [
+        "GET /adminapi/notification/order-config",
+        "PUT /adminapi/notification/order-config/:mark"
+      ],
+      "covered": [
+        "新版可配置已迁移订单通知的站内、短信及微信渠道"
+      ],
+      "remaining": [
+        "旧短信开关动态分类和会员/平台通知目录未全部迁移"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "view/admin-ts/src/pages/setting/NotificationList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config_logistics/:type?/:tab_id?",
+        "title": "物流配置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:229"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/shipping",
+        "/express",
+        "/setting/waybill"
+      ],
+      "targetApis": [
+        "GET /adminapi/shipping_template/list",
+        "GET /adminapi/express/list"
+      ],
+      "covered": [
+        "运费模板、快递公司与电子面单有专用页面"
+      ],
+      "remaining": [
+        "旧物流配置动态字段及发货参数未按 tab 逐项承接"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "view/admin-ts/src/pages/shipping/ShippingTemplates.vue",
+        "view/admin-ts/src/pages/express/ExpressList.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/sms/sms_config/index",
+        "title": "一号通账户",
+        "component": "@/pages/setting/smsConfig/index",
+        "source": "src/router/modules/setting.js:238"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/notification（提供商就绪状态）"
+      ],
+      "targetApis": [
+        "GET /adminapi/sms/config"
+      ],
+      "covered": [
+        "新版展示短信提供商是否已由 Worker Secret 配齐，并有订单短信模板管理"
+      ],
+      "remaining": [
+        "旧页通过第三方 iframe 接收并提交一号通 accessKey/secretKey；新版没有一号通账户配置或迁移流程，不能将其视作已退休"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/smsConfig/index.vue",
+        "view/admin-ts/src/pages/setting/NotificationList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/index/:id",
+        "title": "首页导航按钮",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:259"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首页导航按钮使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/slide/:id",
+        "title": "首页幻灯片",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:268"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首页幻灯片使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/sign/:id",
+        "title": "签到天数配置",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:277"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "/marketing/sign-day-config已有同名固定签到天数组专用管理；旧动态group_data入口映射与扩展metadata全合同尚未独立验收，保留missing，勿重复称专用编辑器不存在；此组不是实际签到奖励配置"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "view/admin-ts/src/pages/marketing/SignDayConfig.vue",
+        "workers-ts/src/services/admin/AdminSignDayConfigService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/order/:id",
+        "title": "订单详情动态图",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:286"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧订单详情动态图使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/user/:id",
+        "title": "个人中心菜单",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:295"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧个人中心菜单使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/new/:id",
+        "title": "首页滚动新闻",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:304"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首页滚动新闻使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/search/:id",
+        "title": "热门搜索",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:313"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧热门搜索使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/hot/:id",
+        "title": "热门榜单推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:322"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧热门榜单推荐使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/new_product/:id",
+        "title": "首发新品推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:331"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首发新品推荐使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/promotion/:id",
+        "title": "促销单品推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:340"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧促销单品推荐使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/poster/:id",
+        "title": "个人中心分销海报",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:349"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧个人中心分销海报使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/best/:id",
+        "title": "精品推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:358"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧精品推荐使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/activity/:id",
+        "title": "首页活动区域图片",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:367"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首页活动区域图片使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/system/:id",
+        "title": "首页配置",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:376"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首页配置使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/hot_money/:id",
+        "title": "首页超值爆款",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:385"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧首页超值爆款使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data",
+        "title": "数据配置",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:394"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧数据配置目录使用 group_data 动态表头、列表、新增、编辑和启停；新版没有该组数据的 Admin 编辑页或同等写入合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/list.vue:196",
+        "cinashop-php/view/admin/src/api/system.js:142",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_store/index",
+        "title": "门店设置",
+        "component": "@/pages/setting/systemStore/index",
+        "source": "src/router/modules/setting.js:403"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/store（门店管理）"
+      ],
+      "targetApis": [
+        "GET /adminapi/merchant/store"
+      ],
+      "covered": [
+        "新版可管理门店实体、营业/自提状态和配送人员"
+      ],
+      "remaining": [
+        "旧门店设置动态表单的键配置、定位服务参数和开关未全部对应；门店列表不能替代设置表单"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/systemStore/index.vue",
+        "view/admin-ts/src/pages/operations/StoreOperations.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/freight/express/index",
+        "title": "物流公司",
+        "component": "@/pages/setting/freight/index",
+        "source": "src/router/modules/setting.js:412"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/express"
+      ],
+      "targetApis": [
+        "GET /adminapi/express/list",
+        "POST /adminapi/express/save",
+        "DELETE /adminapi/express/del/:id"
+      ],
+      "covered": [
+        "新版快递公司支持列表、新增、编辑、显隐字段和删除"
+      ],
+      "remaining": [
+        "旧页的一键同步快递公司动作没有新版 Admin 操作或 Worker 路由"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/freight/index.vue:186",
+        "view/admin-ts/src/pages/express/ExpressList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/store_service/index",
+        "title": "客服管理",
+        "component": "@/pages/setting/storeService/index",
+        "source": "src/router/modules/setting.js:421"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/kefu"
+      ],
+      "targetApis": [
+        "GET /adminapi/service/sessions",
+        "GET /adminapi/service/chat",
+        "POST /adminapi/service/send"
+      ],
+      "covered": [
+        "新版可浏览客服会话并回复用户"
+      ],
+      "remaining": [
+        "旧页客服人员列表、添加、编辑、状态和会话记录筛选未在新版页面实现"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/storeService/index.vue",
+        "view/admin-ts/src/pages/kefu/KefuList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/store_service/speechcraft",
+        "title": "客服话术",
+        "component": "@/pages/setting/storeService/speechcraft",
+        "source": "src/router/modules/setting.js:430"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/kefu/speechcraft"
+      ],
+      "targetApis": [
+        "GET /adminapi/wechat/speechcraft",
+        "GET /adminapi/wechat/speechcraft/:id",
+        "POST /adminapi/wechat/speechcraft",
+        "PUT /adminapi/wechat/speechcraft/:id",
+        "DELETE /adminapi/wechat/speechcraft/:id",
+        "GET /adminapi/wechat/speechcraft/categories",
+        "POST /adminapi/wechat/speechcraft/categories",
+        "PUT /adminapi/wechat/speechcraft/categories/:id",
+        "DELETE /adminapi/wechat/speechcraft/categories/:id"
+      ],
+      "covered": [
+        "独立话术页恢复平台 kefu_id=0 的全部/分类/未分类筛选、默认10条分页、详情及话术和分类增改删；另提供标题模糊与内容精确搜索。分类使用 owner_id=0/type=0/group=1，删除后保留历史话术并标识已删除分类，不静默改写旧行。只读与管理分别由 speechcraft.view/manage 授权，客服会话权限不代授。"
+      ],
+      "remaining": [
+        "仅本地候选；生产历史分类和孤儿话术、受限角色、客服端读取及发布后操作仍待验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/storeService/speechcraft.vue",
+        "cinashop-php/app/controller/admin/v1/message/service/StoreServiceSpeechcraft.php",
+        "cinashop-php/app/controller/admin/v1/message/service/StoreServiceSpeechcraftCate.php",
+        "view/admin-ts/src/pages/kefu/Speechcraft.vue",
+        "view/admin-ts/src/api/speechcraft.ts",
+        "workers-ts/src/services/message/CustomerServiceCatalogService.ts",
+        "workers-ts/src/controllers/api/v1/CustomerServiceCatalogController.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/test/admin-speechcraft-service.test.ts",
+        "workers-ts/test/admin-speechcraft-http.test.ts",
+        "workers-ts/test/admin-speechcraft-frontend.test.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "view/admin-ts/src/router/index.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/store_service/feedback",
+        "title": "用户留言",
+        "component": "@/pages/setting/storeService/feedback",
+        "source": "src/router/modules/setting.js:439"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/kefu/feedback"
+      ],
+      "targetApis": [
+        "GET /adminapi/feedback",
+        "GET /adminapi/feedback/:id",
+        "PUT /adminapi/feedback/:id",
+        "DELETE /adminapi/feedback/:id"
+      ],
+      "covered": [
+        "独立反馈页恢复姓名/手机号/内容关键词、时间及处理状态筛选、15条分页、处理备注和确认删除；只读与管理分别由 feedback.view/manage 授权，客服会话权限不代授。"
+      ],
+      "remaining": [
+        "仅本地候选；生产历史反馈、手机号查询口径、受限角色和发布后处理流程仍待验收。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/storeService/feedback.vue",
+        "view/admin-ts/src/pages/kefu/Feedback.vue",
+        "view/admin-ts/src/api/feedback.ts",
+        "workers-ts/src/services/message/CustomerServiceCatalogService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "view/admin-ts/src/router/index.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/freight/city/list",
+        "title": "城市数据",
+        "component": "@/pages/setting/cityDada/index",
+        "source": "src/router/modules/setting.js:448"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [
+        "GET /adminapi/shipping_template/city_list"
+      ],
+      "covered": [],
+      "remaining": [
+        "新版只向运费编辑器提供只读城市候选，缺旧城市树新增、编辑和清缓存管理"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/cityDada/index.vue",
+        "view/admin-ts/src/pages/shipping/ShippingTemplateEditor.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/freight/shipping_templates/list",
+        "title": "运费模板",
+        "component": "@/pages/setting/shippingTemplates/index",
+        "source": "src/router/modules/setting.js:457"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/shipping"
+      ],
+      "targetApis": [
+        "GET /adminapi/shipping_template/list",
+        "GET /adminapi/shipping_template/:id/edit",
+        "POST /adminapi/shipping_template/save",
+        "DELETE /adminapi/shipping_template/del/:id"
+      ],
+      "covered": [
+        "新版支持模板搜索、分页、添加、完整地区计费/包邮/禁配编辑及受保护删除"
+      ],
+      "remaining": [
+        "需对生产历史模板地区层级、引用保护和受限角色完成验收"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/shippingTemplates/index.vue",
+        "view/admin-ts/src/pages/shipping/ShippingTemplates.vue",
+        "view/admin-ts/src/pages/shipping/ShippingTemplateEditor.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_store/list",
+        "title": "提货点",
+        "component": "@/pages/setting/storeList/index",
+        "source": "src/router/modules/setting.js:466"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/operations/store（门店）"
+      ],
+      "targetApis": [
+        "GET /adminapi/merchant/store",
+        "POST /adminapi/merchant/store/:id"
+      ],
+      "covered": [
+        "新版门店支持关键词/状态筛选、分页、新增、编辑、营业/自提状态及回收恢复"
+      ],
+      "remaining": [
+        "需以生产历史门店和受限角色核对地址、经纬度、可见性与回收关系"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/storeList/index.vue",
+        "view/admin-ts/src/pages/operations/StoreOperations.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_store_staff/index",
+        "title": "核销员",
+        "component": "@/pages/setting/clerkList/index",
+        "source": "src/router/modules/setting.js:475"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/operations/store（店员与核销）"
+      ],
+      "targetApis": [
+        "GET /adminapi/merchant/store_staff",
+        "POST /adminapi/merchant/store_staff/save/:id",
+        "DELETE /adminapi/merchant/store_staff/del/:id"
+      ],
+      "covered": [
+        "新版店员支持门店/关键词筛选、分页、增改、核销资格、启停和删除"
+      ],
+      "remaining": [
+        "需以生产关联用户、门店和受限角色验证核销资格"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/clerkList/index.vue",
+        "view/admin-ts/src/pages/operations/StoreOperations.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_verify_order/index",
+        "title": "核销订单",
+        "component": "@/pages/setting/verifyOrder/index",
+        "source": "src/router/modules/setting.js:484"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/operations/writeoff-orders"
+      ],
+      "targetApis": [
+        "GET /adminapi/merchant/verify_order",
+        "GET /adminapi/merchant/verify_order/stores",
+        "GET /adminapi/merchant/verify/spread_info/:uid"
+      ],
+      "covered": [
+        "独立只读核销订单页与双前缀 Worker 合同承接旧列表、门店选项和推荐人详情；列表按旧 status=6 订单范围读取，提供日期、字段、门店筛选和分页。"
+      ],
+      "remaining": [
+        "旧推荐人弹窗直接展示身份证 card_id，新受限详情有意不返回该敏感字段，故不能算完整旧屏合同。",
+        "旧自定义日期使用含结束日次日 00:00:00 的闭区间；新查询收紧为结束日之后的排他上界，该边界存在有意差异。",
+        "新门店选项最多 500 条、列表偏移最多 10000；旧接口无同样显式上限，规模边界需以历史数据核对。",
+        "仍需真实历史订单、受限角色浏览器和生产规模核对；当前仅是本地只读覆盖。"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/verifyOrder/index.vue",
+        "cinashop-php/view/admin/src/components/referrerInfo/index.vue",
+        "cinashop-php/app/controller/admin/v1/merchant/SystemVerifyOrder.php",
+        "cinashop-php/app/dao/order/StoreOrderDao.php",
+        "view/admin-ts/src/pages/operations/WriteoffOrders.vue",
+        "view/admin-ts/src/api/writeoffOrders.ts",
+        "workers-ts/src/services/admin/AdminWriteoffOrderReadService.ts",
+        "workers-ts/src/controllers/api/v1/AdminWriteoffOrderReadController.ts",
+        "view/admin-ts/src/router/index.ts",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/special",
+        "title": "专题页设计",
+        "component": "@/pages/setting/special/list",
+        "source": "src/router/modules/setting.js:502"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/dise"
+      ],
+      "targetApis": [
+        "GET /adminapi/dise/list",
+        "POST /adminapi/dise/save"
+      ],
+      "covered": [
+        "新版可查看和编辑已有 DIY 页面原始 JSON"
+      ],
+      "remaining": [
+        "旧专题页 type=2 创建与图形设计流程未恢复；新版新增固定为停用的 type=1 首页"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/special/list.vue",
+        "view/admin-ts/src/pages/content/DiseList.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/links",
+        "title": "页面链接",
+        "component": "@/pages/setting/devise/links",
+        "source": "src/router/modules/setting.js:520"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config/runtime-content（UniApp 页面路径表）"
+      ],
+      "targetApis": [
+        "GET /adminapi/diy/get_url"
+      ],
+      "covered": [
+        "新版可只读查看页面名称、路径和参数"
+      ],
+      "remaining": [
+        "旧页生成的示例地址与一键复制按钮未恢复"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/links.vue",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/template",
+        "title": "模板",
+        "component": "@/pages/setting/devise/template",
+        "source": "src/router/modules/setting.js:529"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/dise"
+      ],
+      "targetApis": [
+        "GET /adminapi/dise/list",
+        "POST /adminapi/dise/save"
+      ],
+      "covered": [
+        "新版可读写已有 DIY 页的原始 value JSON"
+      ],
+      "remaining": [
+        "旧 iframe 预览、组件右侧配置和视觉交互编辑器未恢复"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/template.vue",
+        "view/admin-ts/src/pages/content/DiseList.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/kf_adv",
+        "title": "客服页面广告",
+        "component": "@/pages/system/group/kfAdv",
+        "source": "src/router/modules/setting.js:538"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/runtime-content（客服页面内容）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/runtime_content",
+        "GET /adminapi/setting/get_kf_adv",
+        "POST /adminapi/setting/set_kf_adv"
+      ],
+      "covered": [
+        "新版读写同一客服 HTML 内容，并保留旧读取/保存别名"
+      ],
+      "remaining": [
+        "需核验生产历史 HTML 与客户端展示；新版采用原始 HTML 文本编辑"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/kfAdv.vue",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue",
+        "workers-ts/src/services/system/LegacyContentService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/userAgreement/index",
+        "title": "隐私协议",
+        "component": "@/pages/setting/userAgreement/index.vue",
+        "source": "src/router/modules/setting.js:547"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/runtime-content（隐私协议）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/runtime_content",
+        "GET /adminapi/setting/get_user_agreement/:type"
+      ],
+      "covered": [
+        "新版可编辑隐私协议 HTML 并通过旧公共协议合同读取"
+      ],
+      "remaining": [
+        "旧页面请求 type=undefined 是旧缺参错误；需核对生产 privacy 历史内容与客户端读取"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/userAgreement/index.vue",
+        "cinashop-php/view/admin/src/api/system.js:519",
+        "cinashop-php/app/controller/admin/v1/system/config/SystemGroupData.php:388",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue",
+        "workers-ts/src/services/system/LegacyContentService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/pc/:id",
+        "title": "PC主页轮播",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:556"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/pc-banner",
+        "PC商城首页"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/setting/pc-banners",
+        "GET|PUT|DELETE /adminapi/setting/pc-banners/:id",
+        "PATCH /adminapi/setting/pc-banners/:id/status",
+        "GET /adminapi/setting/pc-banners/request/:requestId",
+        "GET /api/pc/get_banner"
+      ],
+      "covered": [
+        "固定按pc_home_banner配置名定位，支持全部旧动态metadata字段、分页和显隐筛选、新增编辑排序显隐删除以及平台素材选择；管理条数没有10条上限",
+        "普通JSON保留未知根键及字段包装附加属性，损坏行明确诊断且只能显隐或删除，损坏metadata阻止写入；只读不初始化，首次新增在同一事务建组",
+        "独立pc_home_banner.view/manage，组与行版本CAS、actor绑定UUID回执以及提交结果恢复，使用既有正式运行权限而无需DDL或扩大grant",
+        "PC首页实际轮播按sort DESC/id DESC取旧前10窗口，平台图片按真实归属解析和签名，安全跳转及桌面窄屏交互完成本地验证"
+      ],
+      "remaining": [
+        "需发布窗口核对生产历史metadata、图片对象及Hyperdrive规模；PC商城其他LOGO/客服/批量拖拽父页仍为partial"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/router/modules/setting.js:557",
+        "cinashop-php/app/services/system/config/SystemGroupDataServices.php:174",
+        "cinashop-php/view/PC/pages/index.vue:10",
+        "view/admin-ts/src/pages/system/PcBannerList.vue",
+        "view/admin-ts/src/api/pcBanner.ts",
+        "view/pc-ts/src/pages/Home.vue",
+        "workers-ts/src/services/admin/AdminPcBannerService.ts",
+        "workers-ts/src/services/pc/PcBannerReadService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config_member_right/:type?/:tab_id?",
+        "title": "会员权益",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:565"
+      },
+      "status": "missing",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "旧会员权益按动态配置 tab 编辑；新版付费会员业务页没有对应权益配置管理"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/setSystem/index.vue",
+        "view/admin-ts/src/pages/user/PaidMembership.vue",
+        "view/admin-ts/src/router/index.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/delivery_service/index",
+        "title": "配送员列表",
+        "component": "@/pages/setting/deliveryService/index",
+        "source": "src/router/modules/setting.js:574"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/operations/store（配送员）"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/delivery/index",
+        "POST /adminapi/order/delivery/save",
+        "PUT /adminapi/order/delivery/update/:id",
+        "DELETE /adminapi/order/delivery/del/:id"
+      ],
+      "covered": [
+        "新版配送员支持关键词筛选、分页、新增、编辑、启停和删除，并供订单发货选择"
+      ],
+      "remaining": [
+        "需以生产配送员身份、受限角色和真实配送订单验证"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/deliveryService/index.vue",
+        "view/admin-ts/src/pages/operations/StoreOperations.vue",
+        "view/admin-ts/src/pages/order/OrderList.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/city/delivery/setting",
+        "title": "配送设置",
+        "component": "@/pages/setting/cityDelivery/setting",
+        "source": "src/router/modules/setting.js:583"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/city-delivery-settings"
+      ],
+      "targetApis": [
+        "GET /adminapi/config/city-delivery",
+        "POST /adminapi/config/city-delivery/intent",
+        "GET /adminapi/config/city-delivery/intent/:requestId",
+        "POST /adminapi/config/city-delivery/confirm",
+        "GET /adminapi/config/city-delivery/request/:requestId"
+      ],
+      "covered": [
+        "独立同城配送设置页已接入只读与锁定编辑状态",
+        "共同SQL配送配置读取已具有有界候选、sort/id winner和快照诊断",
+        "专用prepare/confirm/receipt路由与配置确认事务、在途轮换保护已接入",
+        "旧city_deliver完整四开关与六凭据专用管理，保留dada_app_sercret历史键和空历史值诊断；旧页只定义此十键",
+        "总开关与自主/达达/UU方式条件显示，关闭开关保留凭据动作和输入；发货选择器沿总开关且相应方式的真实共同投影",
+        "六凭据显式keep/replace/clear；专用密钥AES-GCM服务器意图和HMAC证明，本设置snapshot/intent/receipt只给配置状态/动作，浏览器仅保存非敏感恢复记录；明确清除阻止Env回落",
+        "SQL有界winner/别名/重复与Env兼容来源共同权威，真实达达/UU query及UU回调身份同步消费；UU验签和receive在专用共享advisory域锁后fresh重核身份，与专用配置管理排他域互斥，不要求App配置写权限",
+        "prepare不改变有效配置，confirm在有界统一锁序后fresh CAS，阻止在途attempt/event/outbox/reconciliation凭据变更；确认DML和UUID回执原子提交，通用配置写入/读取/日志旁路封闭",
+        "独立city_delivery_settings.view/manage，1490精确旧path/auth只授查看，不由315共享save_basics空鉴权或通用config借得管理",
+        "管理员与请求generation隔离，未知准备/确认读取原intent与receipt，只有匹配400/409回滚证明释放，保持原请求幂等重试"
+      ],
+      "remaining": [
+        "既有UU回调event.client_id继续保存openId业务身份验签证据，本批没有迁移为摘要，不声称全部数据库零明文身份；新设置/准备意图的密文与状态投影保持独立范围",
+        "UU配置读者使用合作运行时共享advisory域锁，不取得配置表SHARE锁；外部maintenance或直连SQL若不遵循此域协议，必须停流并协调轮换，本批不宣称保护非合作写入者",
+        "本地SQL/JWT、受控provider fetch、类型/构建和合成浏览器不证明生产密钥/角色迁移、真实provider账号或正式发布；配送记录取消/收费/未知外部提交仍沿独立partial合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/cityDelivery/setting.vue",
+        "cinashop-php/app/services/system/config/SystemConfigServices.php:1798",
+        "cinashop-php/public/install/crmeb.sql:8009",
+        "cinashop-php/public/install/crmeb.sql:8251",
+        "cinashop-php/public/install/crmeb.sql:9549",
+        "cinashop-php/crmeb/services/DeliverySevices.php:35",
+        "cinashop-php/app/common/controller/Order.php:596",
+        "view/common/cityDeliverySettings.ts",
+        "view/admin-ts/src/pages/setting/CityDeliverySettings.vue",
+        "view/admin-ts/src/pages/setting/cityDeliverySettingsController.ts",
+        "view/admin-ts/src/api/cityDeliverySettings.ts",
+        "workers-ts/src/services/admin/AdminCityDeliverySettingsInput.ts",
+        "workers-ts/src/services/admin/AdminCityDeliverySettingsService.ts",
+        "workers-ts/src/services/delivery/CityDeliverySecretCodec.ts",
+        "workers-ts/src/services/delivery/CityDeliverySettingsResolver.ts",
+        "workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts",
+        "workers-ts/src/services/delivery/UuCityDeliveryProvider.ts",
+        "workers-ts/src/services/delivery/CityDeliveryCallbackService.ts",
+        "workers-ts/src/services/store/StoreMobileOrderService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/system/AdminConfigBatchService.ts",
+        "workers-ts/src/services/admin/AdminSystemLogReadService.ts",
+        "workers-ts/src/services/system/SystemConfigService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/routes/v1/index.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/city/delivery/record",
+        "title": "配送记录",
+        "component": "@/pages/setting/cityDelivery/record",
+        "source": "src/router/modules/setting.js:592"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/city-delivery-records"
+      ],
+      "targetApis": [
+        "GET /adminapi/city_delivery/records",
+        "GET /adminapi/city_delivery/records/:id",
+        "GET /adminapi/city_delivery/stores"
+      ],
+      "covered": [
+        "本地配送记录恢复真实时间、门店、平台、状态、配送/原订单号筛选及稳定分页；count与list在同一有界只读快照，literal关键词不继承旧空搜索器或无筛选count错误",
+        "按平台/门店/供应商owner类型精确关联，保留隐藏或删除主体、孤儿记录及多次发单；原单仅在旧owner优先规则及uid一致时投影，不因ID碰巧相等串接",
+        "明确状态0及历史1/未知值诊断，按原始米换算公里，金额保留十进制字符串，创建时间取真实add_time；详情为本地记录快照且排除核销码/密钥/配送商原始payload",
+        "独立city_delivery_record.view，旧1491精确路径/auth只映射查看；账号或权限变化丢弃迟到结果，错误保留并标识旧快照，桌面及窄屏可操作"
+      ],
+      "remaining": [
+        "完整旧页取消发单仍未承接；取消费用证据、未知外部提交恢复、取消/完成回调竞争及原订单恢复需要独立持久协议和真实配送商规范，不以只读列表或通用查询接口代替",
+        "配送商实时详情/取消理由、发单与商户账户联调、独立生产角色/Hyperdrive、历史资料和规模验收及发布继续开放；本批只读基础为partial，整体设置/履约父项不关闭"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/cityDelivery/record.vue",
+        "cinashop-php/app/services/order/StoreDeliveryOrderServices.php",
+        "view/admin-ts/src/pages/setting/CityDeliveryRecords.vue",
+        "view/admin-ts/src/api/cityDeliveryRecords.ts",
+        "workers-ts/src/services/admin/AdminCityDeliveryRecordService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCityDeliveryRecordController.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/models/schema/order_delivery.ts",
+        "workers-ts/docs/admin-city-delivery-records.md",
+        "workers-ts/audit/admin-city-delivery-records-acceptance-20261001.json"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/index",
+        "title": "门店",
+        "component": "@/pages/platform/index/index",
+        "source": "src/router/modules/setting.js:602"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/dashboard",
+        "/operations/store"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/list",
+        "GET /adminapi/merchant/store"
+      ],
+      "covered": [
+        "新版有真实业务总览和门店管理；旧首页自身的泛用订单/用户图表有 API 调用"
+      ],
+      "remaining": [
+        "旧门店卡片读取初始化的 extractStatistics，未见加载；新版也无对应门店维度首页统计合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/platform/index/index.vue",
+        "view/admin-ts/src/pages/Dashboard.vue",
+        "view/admin-ts/src/pages/operations/StoreOperations.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/list/index",
+        "title": "门店列表",
+        "component": "@/pages/platform/list/index",
+        "source": "src/router/modules/setting.js:611"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [
+        "旧门店列表页写死示例 orderList，挂载和查询动作为空，操作链接无处理器"
+      ],
+      "remaining": [],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/platform/list/index.vue:100",
+        "cinashop-php/view/admin/src/pages/platform/list/index.vue:105",
+        "cinashop-php/view/admin/src/router/modules/setting.js"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/order/index",
+        "title": "门店订单",
+        "component": "@/pages/platform/order/index",
+        "source": "src/router/modules/setting.js:620"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [
+        "旧门店订单页使用固定示例订单，挂载/搜索为空且真实 getList 已注释"
+      ],
+      "remaining": [],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/platform/order/index.vue:195",
+        "cinashop-php/view/admin/src/pages/platform/order/index.vue:250",
+        "cinashop-php/view/admin/src/router/modules/setting.js"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/bill/index",
+        "title": "账单记录",
+        "component": "@/pages/platform/bill/index",
+        "source": "src/router/modules/setting.js:629"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [
+        "旧账单记录页使用固定示例数据且真实 getList 已注释"
+      ],
+      "remaining": [],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/platform/bill/index.vue:149",
+        "cinashop-php/view/admin/src/pages/platform/bill/index.vue:155",
+        "cinashop-php/view/admin/src/router/modules/setting.js"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/setting/index",
+        "title": "财务设置",
+        "component": "@/pages/platform/setting/index",
+        "source": "src/router/modules/setting.js:638"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [
+        "旧财务设置页 save() 为空实现，不存在可保存的设置合同"
+      ],
+      "remaining": [],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/platform/setting/index.vue:88",
+        "cinashop-php/view/admin/src/pages/platform/setting/index.vue:89",
+        "cinashop-php/view/admin/src/router/modules/setting.js"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/storage",
+        "title": "存储设置",
+        "component": "@/pages/setting/storage/index",
+        "source": "src/router/modules/setting.js:647"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/assets"
+      ],
+      "targetApis": [
+        "GET /adminapi/config/storage",
+        "GET /adminapi/config/storage/config"
+      ],
+      "covered": [
+        "新版素材中心可管理 R2 资产，Worker 可只读报告存储状态"
+      ],
+      "remaining": [
+        "旧本地/云存储供应商切换、同步和凭据写入操作未在新版 Admin 迁移；生产配置需独立核验"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/storage/index.vue",
+        "view/admin-ts/src/pages/system/AttachmentLibrary.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_form",
+        "title": "系统表单",
+        "component": "@/pages/setting/systemForm/index",
+        "source": "src/router/modules/setting.js:656"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/forms"
+      ],
+      "targetApis": [
+        "GET /adminapi/form/index",
+        "GET /adminapi/form/info/:id",
+        "POST /adminapi/form/save/:id",
+        "GET|PUT /adminapi/form/set_show/:id/:is_show",
+        "DELETE /adminapi/form/del/:id"
+      ],
+      "covered": [
+        "名称/状态筛选、15条分页、新增、编辑、启停和删除",
+        "列表不加载完整模板JSON，详情按需读取且所有响应禁止缓存",
+        "停用和删除前检查仍关联的商品、秒杀、拼团、砍价和积分商品",
+        "写入使用短事务、固定锁、精确回读和不含表单内容的管理员审计"
+      ],
+      "remaining": [
+        "需用生产历史引用关系验证停用/删除保护"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/SystemForms.vue",
+        "workers-ts/src/services/system/SystemMetadataService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/migrations/0128_system_form_reference_indexes.sql"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_form/data",
+        "title": "表单详情",
+        "component": "@/pages/setting/systemForm/details",
+        "source": "src/router/modules/setting.js:665"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/config/forms（提交数据抽屉）"
+      ],
+      "targetApis": [
+        "GET /adminapi/form/data/:id"
+      ],
+      "covered": [
+        "按用户、来源、关联ID和提交时间筛选并20条分页",
+        "模板字段逐项安全文本展示，不执行HTML或加载外部图片",
+        "最多5000条的CSV导出并防止公式注入",
+        "含手机号的响应设置 private, no-store"
+      ],
+      "remaining": [
+        "需对生产提交量、历史异常JSON和受限角色做只读验收"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/config/SystemForms.vue",
+        "workers-ts/src/services/system/SystemMetadataService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/devise",
+        "title": "店铺装修",
+        "component": "@/pages/setting/devise/list",
+        "source": "src/router/modules/settingPage.js:27"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/content/dise"
+      ],
+      "targetApis": [
+        "GET /adminapi/dise/list",
+        "POST /adminapi/dise/save"
+      ],
+      "covered": [
+        "新版可列出、新增并编辑原始 DIY JSON，且保留独立旧版 content"
+      ],
+      "remaining": [
+        "旧店铺装修页面的模板选择、实时预览和可视组件编辑器没有对应实现"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/list.vue",
+        "cinashop-php/view/admin/src/pages/setting/devise/template.vue",
+        "view/admin-ts/src/pages/content/DiseList.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/home",
+        "title": "个人中心",
+        "component": "@/pages/setting/devise/users",
+        "source": "src/router/modules/settingPage.js:36"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/user-center-design",
+        "Uniapp /pages/user/index",
+        "Uniapp /pages/user/collect",
+        "Uniapp /pages/user/memberCode"
+      ],
+      "targetApis": [
+        "GET /adminapi/config/user-center-design",
+        "POST /adminapi/config/user-center-design/save",
+        "GET /adminapi/config/user-center-design/receipt/:operationId",
+        "GET /adminapi/config/user-center-design/assets",
+        "GET /adminapi/config/user-center-design/link-targets",
+        "GET /api/menu/user",
+        "GET /api/menu/date",
+        "GET /api/collect/user",
+        "POST /api/collect/del",
+        "GET /api/user/rand_code"
+      ],
+      "covered": [
+        "完整会员/订单/统计/广告/我的服务/商家管理六模块与全部合法样式、显示、标题、资产、列表字段编辑/预览；空列表合法，历史视频资产4与隐藏字段保留",
+        "真实平台素材和注册页面链接选择、双Admin前缀专用读/保存/actor回执；1592精确旧path/auth仅授view，manage独立明确授权",
+        "member+routine_my_banner+routine_my_menus共同只读快照、锁后collection CAS与原子UUID回执；保留opaque与隐藏行，merchant source/长度/URL/type锁内固定；通用DIY保护，账号隔离原意图恢复",
+        "public严格去sourceId并按角色过滤/安全图片同序签名；真实当前用户九资产、消息、五会员风格与佣金/会员能力消费",
+        "三订单风格、五实际计数和到期重读；真实广告轮播与两菜单三布局；商品/视频收藏分页、取消、失效状态与实际视频播放",
+        "本地会员付款码真实账号与TTL校验、实际QR、过期清除；login/logout/session/可见生命周期隔离与可中止请求期限"
+      ],
+      "remaining": [
+        "个人中心合同尚缺少实际连接：menuRoleGates",
+        "旧客服订单工作台、客服端与配送管理目标尚无等价实际入口；核销角色/API不等价管理角色。运营统计真实数值与样式已接，旧管理入口未完成，维持partial",
+        "本地会员码为当前账号有界付款码QR；MP/微信H5旧routineUrl/wechatUrl provider行为、真实原生客服/外部小程序/真机与生产账号仍开放",
+        "通用system_group/system_group_data CRUD原本没有注册，当前仅独立固定group writer；不将不存在的入口计为已修复合同",
+        "Source gate与真实SQL/JWT、运行时、构建、浏览器和受控provider证据分别验收；生产DDL/grants/数据迁移/部署未由源码推导，未完成父项保持开放"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/users.vue",
+        "cinashop-php/app/services/diy/DiyServices.php",
+        "cinashop-php/app/controller/api/v1/PublicController.php",
+        "cinashop-php/view/uniapp/pages/user/index.vue",
+        "workers-ts/docs/user-center-design-contract-review-20261003.md",
+        "view/common/userCenterDesign.ts",
+        "view/common/userCenterDesignController.ts",
+        "view/admin-ts/src/pages/setting/UserCenterDesign.vue",
+        "view/admin-ts/src/pages/setting/UserCenterDesignPreview.vue",
+        "view/admin-ts/src/pages/setting/UserCenterDesignPicker.vue",
+        "view/admin-ts/src/api/userCenterDesign.ts",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/layouts/AdminLayout.vue",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/admin/AdminUserCenterDesignInput.ts",
+        "workers-ts/src/services/admin/AdminUserCenterDesignService.ts",
+        "workers-ts/src/controllers/api/v1/AdminUserCenterDesignController.ts",
+        "workers-ts/src/services/content/UserCenterDesignReadService.ts",
+        "workers-ts/src/services/content/UserCenterPublicReadService.ts",
+        "workers-ts/src/services/admin/AdminUserCenterCatalogService.ts",
+        "workers-ts/src/services/product/PublicCatalogService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/services/admin/AdminPcBannerService.ts",
+        "workers-ts/src/services/admin/AdminSignDayConfigService.ts",
+        "workers-ts/src/services/admin/AdminRechargeQuotaService.ts",
+        "workers-ts/src/services/user/UserFinanceReadService.ts",
+        "workers-ts/src/services/user/UserProfileService.ts",
+        "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+        "workers-ts/src/services/order/StoreOrderWriteoffService.ts",
+        "workers-ts/src/services/user/UserCollectCompatibilityService.ts",
+        "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+        "view/uniapp-ts/src/pages/user/index.vue",
+        "view/uniapp-ts/src/composables/useUserCenter.ts",
+        "view/uniapp-ts/src/utils/userCenter.ts",
+        "view/uniapp-ts/src/api/userCenter.ts",
+        "view/uniapp-ts/src/components/userCenter/UserCenterMenus.vue",
+        "view/uniapp-ts/src/pages/user/collect.vue",
+        "view/uniapp-ts/src/composables/useUserCollections.ts",
+        "view/uniapp-ts/src/pages/user/memberCode.vue",
+        "view/uniapp-ts/src/config/navigation.ts",
+        "view/uniapp-ts/src/pages.json",
+        "view/uniapp-ts/src/pages/order/list.vue",
+        "workers-ts/src/services/store/StoreManagerOrderStatisticsService.ts",
+        "workers-ts/src/services/store/StoreManagerScope.ts",
+        "workers-ts/src/services/store/StoreManagerOrderInput.ts",
+        "workers-ts/src/controllers/api/v1/StoreManagerOrderController.ts",
+        "view/uniapp-ts/src/composables/useMerchantOrders.ts",
+        "view/uniapp-ts/src/pages/merchant/statistics.vue",
+        "view/uniapp-ts/src/pages/merchant/orders.vue",
+        "view/uniapp-ts/src/api/merchantOrders.ts",
+        "view/uniapp-ts/src/utils/merchantOrders.ts",
+        "workers-ts/src/services/content/FabRouteRegistry.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/product_category",
+        "title": "商品分类",
+        "component": "@/pages/setting/devise/goodClass",
+        "source": "src/router/modules/settingPage.js:45"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/product-category-style",
+        "Uniapp /pages/goods/cate（十种实际布局）"
+      ],
+      "targetApis": [
+        "GET /adminapi/config/product-category-style",
+        "POST /adminapi/config/product-category-style/save",
+        "GET /adminapi/config/product-category-style/receipt/:operationId",
+        "GET /api/v2/diy/product_detail",
+        "GET /api/category",
+        "GET /api/products",
+        "GET /api/product/detail/:id",
+        "既有真实cart与checkout接口"
+      ],
+      "covered": [
+        "旧二级六种、三级四种样式全部预览/选择/保存，四套实际模板按准确序号消费；切换分类等级从样式0开始，缺行服务器默认保持2/1",
+        "固定category/type3共同有界读取与诊断，严格矩阵、锁后fresh CAS、保留未知扩展和行生命周期；仅POST首次初始化、原子UUID回执",
+        "独立查看/管理域，旧1593精确path/auth仅查看；通用DIY保存/删除不能绕过，actor隔离原请求恢复及匹配400/409回滚证明",
+        "真实三层平台分类与cid/sid/tid父子商品关联，隐藏父级/孤儿/外部归属/未审核商品不可公开，图片按持久归属验证与新鲜签名",
+        "商品列表连接真实SKU详情和cart权威，安全报价/库存/规格/购物车数量与清空/同cart结算；未知加购按actor持久保留，不把重新读列表当成功证明",
+        "分类导航/更多、T4三层筛选草稿应用重置与展开，实际分页/销量价格排序/大小图，T1滚动联动及cate_selected定位",
+        "仅六种T2/T3布局mini-cart、两种T4独立购物车入口；分类/产品/SKU/cart的账号与可见generation隔离，迟到响应不污染新身份"
+      ],
+      "remaining": [
+        "source gate与实际本地SQL/JWT、runtime、四端build和合成浏览器材料分别验收；源代码齐全不声称这些执行已通过，更不证明生产角色、Hyperdrive规模、真机或正式发布",
+        "该旧布局由Uniapp消费，无旧PC十布局消费证据；保留当前购物车/checkout正式权威，不把示例Admin预览或商品列表金额当购买报价"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/goodClass.vue:64",
+        "cinashop-php/public/install/crmeb.sql:9620",
+        "cinashop-php/app/services/diy/DiyServices.php:588",
+        "cinashop-php/view/uniapp/pages/goods_cate/goods_cate.vue:26",
+        "cinashop-php/view/uniapp/pages/goods_cate/template1.vue",
+        "cinashop-php/view/uniapp/pages/goods_cate/template2.vue",
+        "cinashop-php/view/uniapp/pages/goods_cate/template3.vue",
+        "cinashop-php/view/uniapp/pages/goods_cate/template4.vue",
+        "view/common/productCategoryStyle.ts",
+        "view/common/productCategoryStyleController.ts",
+        "view/admin-ts/src/pages/setting/ProductCategoryStyle.vue",
+        "view/admin-ts/src/pages/setting/ProductCategoryStylePreview.vue",
+        "view/admin-ts/src/api/productCategoryStyle.ts",
+        "workers-ts/src/services/admin/AdminProductCategoryStyleInput.ts",
+        "workers-ts/src/services/admin/AdminProductCategoryStyleService.ts",
+        "workers-ts/src/services/content/ProductCategoryStyleReadService.ts",
+        "workers-ts/src/services/content/V2PublicCompatibilityService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/src/services/product/StoreCategoryService.ts",
+        "workers-ts/src/services/product/PublicCategoryPolicy.ts",
+        "workers-ts/src/services/product/StoreProductService.ts",
+        "workers-ts/src/dao/product/StoreProductDao.ts",
+        "workers-ts/src/models/searchers/product.ts",
+        "workers-ts/src/services/product/OrdinaryProductReadData.ts",
+        "workers-ts/src/services/product/PublicProductCardData.ts",
+        "view/common/categoryCatalog.ts",
+        "view/uniapp-ts/src/api/product.ts",
+        "view/uniapp-ts/src/api/productDetail.ts",
+        "view/uniapp-ts/src/pages/goods/cate.vue",
+        "view/uniapp-ts/src/pages/goods/list.vue",
+        "view/uniapp-ts/src/pages/goods/detail.vue",
+        "view/uniapp-ts/src/composables/useCategoryCatalog.ts",
+        "view/uniapp-ts/src/composables/useCategoryPurchase.ts",
+        "view/uniapp-ts/src/components/category/CategoryProductCard.vue",
+        "view/uniapp-ts/src/components/category/CategorySkuSelection.vue",
+        "view/uniapp-ts/src/components/category/CategoryCartSheet.vue"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/product_detail",
+        "title": "商品详情",
+        "component": "@/pages/setting/devise/newGoods",
+        "source": "src/router/modules/settingPage.js:54"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/product-detail-design",
+        "Uniapp /pages/goods/detail"
+      ],
+      "targetApis": [
+        "GET /adminapi/config/product-detail-design",
+        "POST /adminapi/config/product-detail-design/save",
+        "GET /adminapi/config/product-detail-design/receipt/:operationId",
+        "GET /api/v2/diy/product_detail",
+        "GET /api/product/detail/:id",
+        "GET /api/product/:id/community",
+        "GET /api/product/code/:id",
+        "既有真实cart与checkout接口"
+      ],
+      "covered": [
+        "完整十九字段、九模块编辑与真实预览；只读showPrice及历史隐藏ordinal按原顺序保留，空导航/底栏及最大数量合法",
+        "固定product_detail/type3有界共同读取、损坏诊断；fresh CAS与actor UUID原子回执，保留私有扩展及行生命周期，通用读写删除旁路封闭",
+        "独立view/manage及精确1594旧菜单仅查看；未知提交锁住原意图，真实匹配400/409和原404收据明确恢复",
+        "普通详情同RR公开安全投影、独立展示会员价、真实评价与关联晒单分页；持久资产归属核验、正文安全过滤并在SQL后签名",
+        "真实销量/好评/收藏排行、有效搭配套餐和推荐商品按配置数量消费，无示例金额或虚构名次",
+        "导航和底栏动作、网页/公众号/小程序分享及推荐人、收藏和客服真实连接；隐藏加购仍可真实SKU立即购买，未知cart按账号恢复",
+        "秒杀/拼团/积分沿旧反向参数子集，预售沿普通正向参数，实际SKU接口承接同一展示快照；PC沿共同普通商品API，其UI不记作完整DIY布局"
+      ],
+      "remaining": [
+        "Source gate与实际SQL/JWT、受控provider、运行时、构建和浏览器材料分别验收；尚需生产历史配置/资产、真实微信账号、MP/APP真机和正式发布验证，不能用源代码齐全代替这些检查",
+        "剩余checklist父项沿原范围保持未完成；本批没有执行生产DDL、grants、部署或外部账号操作"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/newGoods.vue",
+        "cinashop-php/view/uniapp/pages/goods_details/index.vue",
+        "cinashop-php/view/uniapp/pages/activity/goods_details/index.vue",
+        "view/common/productDetailDesign.ts",
+        "view/common/productDetailDesignController.ts",
+        "view/admin-ts/src/pages/setting/ProductDetailDesign.vue",
+        "view/admin-ts/src/pages/setting/ProductDetailDesignPreview.vue",
+        "view/admin-ts/src/api/productDetailDesign.ts",
+        "view/admin-ts/src/router/index.ts",
+        "view/admin-ts/src/layouts/AdminLayout.vue",
+        "workers-ts/src/routes/adminapi.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/content/ProductDetailDesignReadService.ts",
+        "workers-ts/src/services/content/ThemeReadService.ts",
+        "workers-ts/src/services/admin/AdminProductDetailDesignService.ts",
+        "workers-ts/src/services/admin/AdminProductDetailDesignInput.ts",
+        "workers-ts/src/controllers/api/v1/AdminProductDetailDesignController.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/services/content/V2PublicCompatibilityService.ts",
+        "workers-ts/src/services/product/ProductDetailDesignData.ts",
+        "workers-ts/src/services/product/StoreProductService.ts",
+        "workers-ts/src/controllers/api/v1/ProductController.ts",
+        "workers-ts/src/services/product/PublicCatalogService.ts",
+        "workers-ts/src/services/product/ReplyService.ts",
+        "workers-ts/src/dao/product/ReplyDaos.ts",
+        "workers-ts/src/services/activity/StoreDiscountService.ts",
+        "workers-ts/src/services/order/StoreCartService.ts",
+        "view/common/categoryCatalog.ts",
+        "workers-ts/src/services/activity/ActivityService.ts",
+        "workers-ts/src/services/activity/IntegralProductReadService.ts",
+        "workers-ts/src/services/activity/SeckillSkuCatalogService.ts",
+        "workers-ts/src/services/activity/CombinationSkuCatalogService.ts",
+        "workers-ts/src/services/activity/PresaleSkuCatalogService.ts",
+        "workers-ts/src/services/activity/PresaleCatalogSnapshot.ts",
+        "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+        "view/uniapp-ts/src/api/seckill.ts",
+        "view/uniapp-ts/src/api/combination.ts",
+        "view/uniapp-ts/src/api/presale.ts",
+        "view/uniapp-ts/src/composables/useSeckillPurchase.ts",
+        "view/uniapp-ts/src/composables/useCombinationPurchase.ts",
+        "view/uniapp-ts/src/composables/usePresalePurchase.ts",
+        "view/uniapp-ts/src/composables/useIntegralPurchase.ts",
+        "workers-ts/src/services/activity/StoreNewcomerService.ts",
+        "view/uniapp-ts/src/api/productDetailDesign.ts",
+        "view/uniapp-ts/src/utils/productDetailDesign.ts",
+        "view/uniapp-ts/src/api/productDetail.ts",
+        "view/uniapp-ts/src/api/order.ts",
+        "view/uniapp-ts/src/api/activity.ts",
+        "view/uniapp-ts/src/pages/goods/detail.vue",
+        "view/uniapp-ts/src/pages/goods/productCommunity.vue",
+        "view/uniapp-ts/src/components/productDetail/ProductMedia.vue",
+        "view/uniapp-ts/src/components/productDetail/ActivityDetailContent.vue",
+        "view/uniapp-ts/src/components/productDetail/ProductSharePoster.vue",
+        "view/uniapp-ts/src/components/IntegralSharePoster.vue",
+        "view/uniapp-ts/src/utils/ordinaryShare.ts",
+        "view/uniapp-ts/src/utils/ordinaryWechatShare.ts",
+        "view/uniapp-ts/src/composables/useOrdinaryReferral.ts",
+        "workers-ts/src/services/product/ProductShareCodeService.ts",
+        "workers-ts/src/controllers/api/v1/ProductShareCodeController.ts",
+        "workers-ts/src/services/wechat/OfficialAccountQrcodeService.ts",
+        "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+        "workers-ts/src/services/product/ProductShareScene.ts",
+        "workers-ts/src/services/wechat/WechatCallbackService.ts",
+        "view/uniapp-ts/src/composables/useOrdinaryCollection.ts",
+        "view/uniapp-ts/src/composables/useActivityDetailDesign.ts",
+        "view/uniapp-ts/src/components/productDetail/ActivityDetailMenu.vue",
+        "view/uniapp-ts/src/pages/activity/seckillDetail.vue",
+        "view/uniapp-ts/src/pages/activity/detail.vue",
+        "view/uniapp-ts/src/pages/activity/bargainDetail.vue",
+        "view/uniapp-ts/src/pages/activity/presaleDetail.vue",
+        "view/uniapp-ts/src/pages/activity/integralDetail.vue",
+        "view/uniapp-ts/src/pages/activity/newcomerDetail.vue",
+        "view/pc-ts/src/api/product.ts",
+        "view/uniapp-ts/src/pages.json"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/theme_style",
+        "title": "主题风格",
+        "component": "@/pages/setting/themeStyle/index",
+        "source": "src/router/modules/settingPage.js:63"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/theme-style",
+        "Uniapp实际96页与DIY消费者"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/setting/theme-style",
+        "GET /adminapi/setting/theme-style/request/:requestId",
+        "GET /api/v2/diy/color_change/color_change"
+      ],
+      "covered": [
+        "专用六选一管理与六色预览，编辑服从查看/管理权限与锁定状态",
+        "六种预设保留旧theme/priceColor/minorColor/minorColorT/bntColor/gradient精准六token，不以单个主色替代",
+        "DIY默认品牌角色跟随主题，toneConfig自定义颜色优先保留，布局/内容/业务状态色没有被统一替换",
+        "公开color_change保留status/navigation/product_category_level，签到读取共同SQL权威，缺行/重复/身份/值异常保留诊断",
+        "固定color_change/type3专用写入，RC与有界目录锁后fresh CAS，仅POST首次初始化；保留行status/isShow和未知元数据，通用DIY保存删除不能绕过",
+        "独立theme_settings.view/manage；1035/1075精确旧path/auth只授查看，现代明确管理授权不借PC1036、genericdise或空鉴权API",
+        "管理员隔离的UUID原子回执、匹配400/409证明、未知提交恢复与原请求原样重试"
+      ],
+      "remaining": [
+        "实际注册104页中仅98页具有共同主题宿主，完整合同要求当前注册页全部覆盖",
+        "本地SQL、JWT、类型、四端构建和合成浏览器不等于生产角色迁移、Hyperdrive规模、真机或正式发布；旧PC没有六色主题消费证据，不扩大本合同"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/themeStyle/index.vue",
+        "cinashop-php/view/uniapp/App.vue:250",
+        "view/admin-ts/src/pages/setting/ThemeSettings.vue",
+        "view/admin-ts/src/pages/setting/ThemePreview.vue",
+        "view/admin-ts/src/pages/setting/themeSettingsController.ts",
+        "view/admin-ts/src/api/themeSettings.ts",
+        "view/common/theme.ts",
+        "view/uniapp-ts/src/pages.json",
+        "view/uniapp-ts/src/App.vue",
+        "view/uniapp-ts/src/pages/goods/detail.vue",
+        "view/uniapp-ts/src/pages/user/index.vue",
+        "view/uniapp-ts/src/components/ThemePage.vue",
+        "view/uniapp-ts/src/stores/theme.ts",
+        "view/uniapp-ts/src/utils/diyTheme.ts",
+        "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+        "workers-ts/src/services/content/ThemeReadService.ts",
+        "workers-ts/src/services/admin/AdminThemeSettingsService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_visualization_data",
+        "title": "开屏广告",
+        "component": "@/pages/system/group/visualization",
+        "source": "src/router/modules/settingPage.js:72"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config/runtime-content（开屏广告）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/runtime_content",
+        "GET /adminapi/diy/open_adv/info",
+        "POST /adminapi/diy/open_adv/add"
+      ],
+      "covered": [
+        "新版覆盖启用、图片/视频、时长、间隔、图片跳转和说明字段"
+      ],
+      "remaining": [
+        "旧拖拽排序、实时轮播预览、素材选择和页面链接选择器尚未恢复；需验证历史素材"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/visualization.vue",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue",
+        "workers-ts/src/routes/adminapi.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pc_group_data",
+        "title": "PC商城",
+        "component": "@/pages/system/group/pc",
+        "source": "src/router/modules/settingPage.js:81"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/config/runtime-content（客服 HTML）"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/config/runtime_content"
+      ],
+      "covered": [
+        "旧 PC 配置中的客服 HTML 可由新版客户端内容页编辑"
+      ],
+      "remaining": [
+        "pc_home_banner已由独立专用页完整承接并在本台账独立candidate；PC Logo与其余完整首页配置仍未对应，PC商城整屏保持partial"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/system/group/pc.vue",
+        "view/admin-ts/src/pages/config/RuntimeContent.vue",
+        "workers-ts/src/services/system/AdminCommerceSettingsService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/fab",
+        "title": "悬浮按钮",
+        "component": "@/pages/setting/devise/fab",
+        "source": "src/router/modules/settingPage.js:90"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/fab",
+        "Uniapp 首页悬浮按钮"
+      ],
+      "targetApis": [
+        "GET|POST /adminapi/setting/fab",
+        "GET /adminapi/setting/fab/request/:requestId",
+        "GET /adminapi/setting/fab/link-categories",
+        "GET /adminapi/setting/fab/link-targets",
+        "GET /api/diy/get_suspended"
+      ],
+      "covered": [
+        "六键配置、0至100位置、四样式与前后图片条件、样式一二0至5项及三四3至5项、有序素材和链接编辑，历史扩展属性按明确原按钮合并",
+        "独立fab_settings查看管理权限、旧1612精确页面path/auth只映射查看；通用dise保存检查已锁行，拒绝专用配置绕过",
+        "全集版本、管理员与UUID原子回执，匹配真正409及写入前400回滚证明；缺行GET不初始化，重复/模糊身份/不可安全合并历史配置明确诊断",
+        "实际基础/个人/分销/营销及商品、分类、活动、文章、预售、专题链接选择，必要资料投影、搜索分页与不可执行目标诊断",
+        "公开共同读取、平台素材签名、四种布局开合拖动及滚动收起；安全外链H5真实打开及MP/APP专页，跨小程序保留并按平台明确可用性",
+        "积分商品旧type4链接保留真实活动身份，接入独立详情和共同SKU/数量选择，库存与现金积分沿服务器购物车和统一结算消费；售罄可查看详情，不能用普通商品页替代"
+      ],
+      "remaining": [
+        "微信正式小程序码、原生微信提供商真机调起及相册权限、真实多端推荐和分享体验仍须验收；普通网页二维码及积分详情来访绑定不能代替这些合同",
+        "本地SQL、类型、构建和合成浏览器不替代生产角色、Hyperdrive、规模、真机、外部网页域名配置和发布验收"
+      ],
+      "evidence": [
+        "cinashop-php/view/admin/src/pages/setting/devise/fab.vue",
+        "cinashop-php/view/admin/src/components/linkaddress/index.vue",
+        "view/admin-ts/src/pages/setting/FabSettings.vue",
+        "view/admin-ts/src/api/fabSettings.ts",
+        "view/uniapp-ts/src/components/diy/DiySuspendedNavigation.vue",
+        "view/uniapp-ts/src/utils/fab.ts",
+        "workers-ts/src/services/admin/AdminFabSettingsService.ts",
+        "workers-ts/src/services/content/FabReadService.ts",
+        "workers-ts/src/services/admin/AdminFabLinkCatalogService.ts",
+        "workers-ts/docs/admin-fab-settings.md",
+        "view/uniapp-ts/src/pages/activity/integralDetail.vue",
+        "view/uniapp-ts/src/composables/useIntegralPurchase.ts",
+        "view/common/integralPurchase.ts",
+        "workers-ts/src/services/activity/IntegralProductReadService.ts"
+      ]
+    }
+  ]
+}

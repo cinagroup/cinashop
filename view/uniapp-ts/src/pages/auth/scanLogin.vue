@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="scan-page">
     <view class="scan-card">
       <view class="shield">✓</view>
@@ -43,9 +44,11 @@
     </view>
     <view class="security-note">站点和设备来自发起请求，只用于人工核对，并不能证明对方身份。仅在你刚刚主动发起登录时确认；二维码不会要求密码或验证码。</view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import {
@@ -182,6 +185,6 @@ onShow(() => {
 .approve { color: #fff; background: #e94432; }
 .reject { color: #646d72; background: #f1f3f4; }
 .approved-box { margin-top: 34rpx; padding: 28rpx; border-radius: 16rpx; color: #177447; background: #edf9f2; font-size: 27rpx; line-height: 1.65; text-align: center; }
-.approved-box.rejected { color: #a33b31; background: #fff0ed; }
+.approved-box.rejected { color: #a33b31; background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); }
 .security-note { padding: 28rpx 26rpx 0; color: #969da2; font-size: 23rpx; line-height: 1.65; text-align: center; }
 </style>

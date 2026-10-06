@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <web-view
     v-if="challengeUrl"
     :src="challengeUrl"
@@ -6,9 +7,11 @@
     @error="handleLoadError"
   />
   <view v-else class="error-page">人机验证链接无效，请返回重试。</view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { confirmPendingSmsChallenge } from "@/utils/smsChallenge";

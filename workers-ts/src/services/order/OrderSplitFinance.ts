@@ -1,8 +1,8 @@
 import type { storeOrder, storeOrderCartInfo, storeOrderRefund } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
 import { allocateRefundLineTotal, allocateRefundSplitPayment, partitionRefundCartSnapshot, partitionRefundWriteoff,
-  REFUND_SPLIT_LINE_FIELDS, type RefundWriteoffState } from './RefundSplitAllocation';
-import { readRefundQuantityReservation } from './RefundQuantityReservation';
+  readPromotionLineEvidence, REFUND_SPLIT_LINE_FIELDS, type RefundWriteoffState } from './RefundSplitAllocation';
+import { readRefundQuantityReservation,refundClaimCartKey } from './RefundQuantityReservation';
 import type { RefundEarnedIncomeCompensation } from './RefundEarnedIncome';
 import { readRefundGenerationMarker } from './RefundGenerationMarker';
 import { orderMembershipSavings } from './OrderMembershipSavings';
@@ -64,6 +64,12 @@ function readLine(source: Cart, info: Record<string, unknown>): Line {
   }
   integer(source.cartNum);
   for (const field of [...REFUND_SPLIT_LINE_FIELDS, 'raw_postage_price', 'sum_price', 'costPrice', 'promotions_true_price']) money(info[field]);
+  const promotion = readPromotionLineEvidence(info, source.cartNum);
+  if (promotion) {
+    const booked = new Set(String(source.promotionsId ?? '').split(',').map(Number));
+    if (promotion.allocations.some((item) => !booked.has(item.promotionId))
+      || (source.isGift === 1 && (promotion.priceCents !== 0 || promotion.savingsCents !== 0))) throw invalid();
+  }
   points(info.use_integral); integer(Number(points(info.integral)), true);
   const unitWriteTimes = Number(points(object(info.sku).write_times)); integer(unitWriteTimes);
   // A fractional per-unit gift grant must be rounded once at its original line,
@@ -83,10 +89,11 @@ function aggregate(lines: Line[]): Amounts {
     const quantity = integer(source.cartNum); result.totalNum += quantity;
     if (source.isGift) continue;
     for (const key of Object.keys(mapped) as (keyof typeof mapped)[]) result[key] += money(info[mapped[key]]);
-    result.totalPrice += money(info.sum_price) * quantity;
+    const promotion = readPromotionLineEvidence(info, source.cartNum);
+    result.totalPrice += promotion ? BigInt(promotion.priceCents) : money(info.sum_price) * quantity;
     result.cost += money(info.costPrice) * quantity;
     result.payPrice += money(info.sum_true_price) + money(info.postage_price);
-    result.promotionsPrice += money(info.promotions_true_price) * quantity;
+    result.promotionsPrice += promotion ? BigInt(promotion.savingsCents) : money(info.promotions_true_price) * quantity;
     result.payIntegral += integer(Number(info.integral), true) * quantity;
     result.useIntegral += points(info.use_integral) * 100n;
     result.gainIntegral += points(info.gain_integral) * 100n;
@@ -187,7 +194,11 @@ export function quoteOrderRefundLineFinance(
   // parse/copy up to 200 full product snapshots for every completed claim.
   const cash = new Map(originals.map(({ source, info }) => {
     partitionRefundWriteoff(source, 0, Number(object(info.sku).write_times));
-    return [source.cartId, { quantity: source.cartNum, net: decimal(money(info.sum_true_price)), postage: decimal(money(info.postage_price)) }];
+    return [source.cartId, { quantity: source.cartNum,
+      net: decimal(money(info.sum_true_price)), postage: decimal(money(info.postage_price)),
+      // Replaying completed claims must use the same segment ownership as
+      // physical split. A capped 18+18+19 line cannot quote one unit as 18.33.
+      promotionSnapshot: readPromotionLineEvidence(info, source.cartNum) ? JSON.stringify(info) : null }];
   }));
   let remainingPayment = money(order.payPrice), refundedPayment = 0n;
   const take = (selected: ReadonlyMap<string, number>): bigint => {
@@ -198,11 +209,19 @@ export function quoteOrderRefundLineFinance(
       integer(quantity);
       const line = cash.get(id);
       if (!line || quantity > line.quantity) throw invalid();
-      const net = allocateRefundLineTotal(line.net, line.quantity, quantity);
+      const promotionPart = line.promotionSnapshot
+        ? partitionRefundCartSnapshot(line.promotionSnapshot, line.quantity, quantity, false) : null;
+      const net = promotionPart ? {
+        selected: String(object(parse(promotionPart.selected)).sum_true_price),
+        remaining: promotionPart.remaining
+          ? String(object(parse(promotionPart.remaining)).sum_true_price) : '0.00',
+      } : allocateRefundLineTotal(line.net, line.quantity, quantity);
+      if (money(net.selected) + money(net.remaining) !== money(line.net)) throw invalid();
       const postage = allocateRefundLineTotal(line.postage, line.quantity, quantity);
       selectedRaw += money(net.selected) + money(postage.selected);
       if (quantity === line.quantity) cash.delete(id);
-      else cash.set(id, { quantity: line.quantity - quantity, net: net.remaining, postage: postage.remaining });
+      else cash.set(id, { quantity: line.quantity - quantity, net: net.remaining,
+        postage: postage.remaining, promotionSnapshot: promotionPart?.remaining ?? null });
     }
     const allocated = cash.size === 0 ? remainingPayment
       : money(allocateRefundSplitPayment(decimal(remainingPayment), decimal(raw), decimal(selectedRaw)).selected);
@@ -221,7 +240,7 @@ export function quoteOrderRefundLineFinance(
     if (!claim) throw invalid();
     const selected = new Map<string, number>();
     for (const item of claim.items) {
-      const id = String(item.cartId), row = byId.get(id), prior = consumed.get(id) ?? 0;
+      const id = refundClaimCartKey(item), row = byId.get(id), prior = consumed.get(id) ?? 0;
       if (!row || item.rowId !== row.id || item.totalNum !== row.cartNum || item.beforeRefundNum !== prior) throw invalid();
       selected.set(id, item.cartNum); consumed.set(id, prior + item.cartNum);
     }
@@ -266,8 +285,8 @@ export function targetLineCompensation(income: number, basis: RefundCompensation
 }
 
 /** Compensation for completed claims, before physical child materialization.
- * Keeps original ledger/operation/payment identities and replays only compact
- * immutable line totals. Additional held quantities may belong to an open
+ * Keeps original ledger/operation/payment identities and replays frozen line
+ * totals and versioned promotion segments. Additional held quantities may belong to an open
  * application at receipt; they must never increase completed compensation. */
 export function planCompletedRefundLineCompensation(
   order: Order, rows: Cart[], completed: Array<typeof storeOrderRefund.$inferSelect>,
@@ -281,7 +300,10 @@ export function planCompletedRefundLineCompensation(
   const lines = new Map(originals.map(({ source, info }) => {
     partitionRefundWriteoff(source, 0, Number(object(info.sku).write_times));
     const totals = Object.fromEntries(compensationFields.map(field => [field, String(info[field])])) as Record<CompensationField, string>;
-    return [source.cartId, { quantity: source.cartNum, integral: Number(points(info.integral)), totals }];
+    return [source.cartId, { quantity: source.cartNum, integral: Number(points(info.integral)), totals,
+      // Cash compensation must consume the same exact promotion segments as
+      // refund quote and physical split. Retain each remainder for later claims.
+      promotionSnapshot: readPromotionLineEvidence(info, source.cartNum) ? JSON.stringify(info) : null }];
   }));
   let remainingPayment = money(order.payPrice), refundedPayment = 0n, paidIntegral = 0n, previousId = 0;
   for (const refund of [...completed].sort((a, b) => a.id - b.id)) {
@@ -295,16 +317,25 @@ export function planCompletedRefundLineCompensation(
     const raw = [...lines.values()].reduce((sum, line) => sum + money(line.totals.sum_true_price) + money(line.totals.postage_price), 0n);
     let selectedRaw = 0n;
     for (const item of claim.items) {
-      const id = String(item.cartId), row = byId.get(id), line = lines.get(id), prior = consumed.get(id) ?? 0;
+      const id = refundClaimCartKey(item), row = byId.get(id), line = lines.get(id), prior = consumed.get(id) ?? 0;
       if (!row || !line || item.rowId !== row.id || item.totalNum !== row.cartNum || item.beforeRefundNum !== prior
         || item.cartNum > line.quantity) throw invalid();
+      const promotionPart = line.promotionSnapshot
+        ? partitionRefundCartSnapshot(line.promotionSnapshot, line.quantity, item.cartNum, false) : null;
       for (const field of compensationFields) {
         const integral = field === 'use_integral' || field === 'gain_integral';
-        const parts = allocateRefundLineTotal(line.totals[field], line.quantity, item.cartNum, integral ? 0 : 2);
+        const parts = field === 'sum_true_price' && promotionPart ? {
+          selected: String(object(parse(promotionPart.selected)).sum_true_price),
+          remaining: promotionPart.remaining
+            ? String(object(parse(promotionPart.remaining)).sum_true_price) : '0.00',
+        } : allocateRefundLineTotal(line.totals[field], line.quantity, item.cartNum, integral ? 0 : 2);
+        if (field === 'sum_true_price' && promotionPart
+          && money(parts.selected) + money(parts.remaining) !== money(line.totals[field])) throw invalid();
         accumulated[field] += integral ? points(parts.selected) : money(parts.selected);
         if (field === 'sum_true_price' || field === 'postage_price') selectedRaw += money(parts.selected);
         line.totals[field] = parts.remaining;
       }
+      line.promotionSnapshot = promotionPart?.remaining ?? null;
       paidIntegral += BigInt(line.integral) * BigInt(item.cartNum);
       line.quantity -= item.cartNum;
       if (line.quantity === 0) lines.delete(id);

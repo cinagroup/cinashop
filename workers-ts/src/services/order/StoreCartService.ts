@@ -27,6 +27,8 @@ import {
   type DiscountPackageSelectionInput,
 } from "@/services/activity/StoreDiscountService";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
+import { quoteOrderPromotions, type OrderPromotionInputLine } from '@/services/activity/OrderPromotionQuoteService';
+import { quoteOrderPromotionGifts } from '@/services/activity/OrderPromotionGiftService';
 import {
   calculateMemberUnitPriceCents,
   isPaidMembershipActive,
@@ -107,6 +109,52 @@ export class StoreCartService {
     private readonly container: Container,
     private readonly env?: Env,
   ) {}
+
+  private async applyPromotions(uid: number, lines: OrderPromotionInputLine[], result: Record<string, unknown>[], legacy = false) {
+    if (!lines.length) return;
+    // SQL remains the source when the cart service is used without Worker bindings.
+    const configEnv = this.env ?? { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };
+    const firstOrder = uid > 0
+      ? await quoteFirstOrderDiscount(this.container, configEnv, uid, lines.reduce((sum, line) => sum + line.memberUnitPriceCents * line.quantity, 0))
+      : { eligible: false };
+    const quote = await quoteOrderPromotions(this.container, { uid, lines, firstOrderEligible: firstOrder.eligible });
+    const byId = new Map(quote.lines.map(line => [String(line.key), line]));
+    for (const item of result) {
+      const line = byId.get(String(item.id));
+      if (!line) continue;
+      const displayUnit = line.unitPriceCents ?? Math.floor(line.totalPriceCents / line.quantity);
+      item.truePrice = legacy ? displayUnit / 100 : centsToDecimal(displayUnit);
+      item.trueSumPrice = legacy ? line.totalPriceCents / 100 : centsToDecimal(line.totalPriceCents);
+      item.promotion = line;
+      if (line.promotionIds.length) {
+        item[legacy ? 'price_type' : 'priceType'] = 'promotions';
+        item.promotions_true_price = line.promotionSavingsCents / line.quantity / 100;
+        item.promotions_id = line.promotionIds.join(',');
+        item.vip_truePrice = line.membershipSavingsCents / line.quantity / 100;
+      }
+    }
+    // A cart has no chosen coupon or delivery method. Expose the currently
+    // applicable benefit as a read-only preview; confirmation prices it again
+    // with the selected coupon/shipping and binds the final quote token.
+    const giftQuote = await quoteOrderPromotionGifts(this.container, {
+      uid, firstOrderEligible: firstOrder.eligible,
+      lines: lines.map(line => ({ key: line.key, productId: line.productId,
+        skuUnique: line.skuUnique, quantity: line.quantity,
+        postPromotionGrossCents: byId.get(String(line.key))?.totalPriceCents
+          ?? line.memberUnitPriceCents * line.quantity, couponDiscountCents: 0 })),
+    });
+    for (const item of result) {
+      const campaigns = giftQuote.intent?.promotions.filter(campaign =>
+        campaign.eligible_cart_ids.includes(String(item.id))) ?? [];
+      if (campaigns.length) item.giftPromotion = campaigns.map(campaign => ({ id: campaign.id,
+        tierId: campaign.tier_id, name: campaign.name, repetitions: campaign.repetitions,
+        giveIntegral: campaign.give_integral,
+        giveCoupon: campaign.coupons.map(coupon => ({ id: coupon.issue_id,
+          title: coupon.title, price: coupon.price })),
+        giveCartInfo: campaign.products.map(product => ({ cartId: product.cart_id,
+          productId: product.product_id, quantity: product.quantity })) }));
+    }
+  }
 
   private async cartPricing(uid: number): Promise<{
     levelDiscountPercent: number;
@@ -479,6 +527,7 @@ export class StoreCartService {
     }
 
     const result = [];
+    const promotionLines: OrderPromotionInputLine[] = [];
     let pricing: Awaited<ReturnType<StoreCartService['cartPricing']>> | undefined;
     let newcomerEligible: Promise<boolean> | undefined;
     for (const cart of carts) {
@@ -724,6 +773,10 @@ export class StoreCartService {
         if (priceType === 'level') levelName = pricing.levelName;
       }
       const lineCents = unitCents * cart.cartNum;
+      if (cart.type === 0 && cart.activityId === 0 && sku && cart.cartNum > 0) promotionLines.push({
+        key: cart.id, productId: product.id, skuUnique: sku.unique, quantity: cart.cartNum,
+        rawUnitPriceCents: rawCents, memberUnitPriceCents: unitCents,
+      });
       if (!Number.isSafeInteger(lineCents) || lineCents < 0) throw new ValidateException('购物车金额超出安全范围');
       result.push({
         truePrice: centsToDecimal(unitCents),
@@ -759,8 +812,10 @@ export class StoreCartService {
         throw new ValidateException("立即购买商品或规格已失效，请重新选择");
       }
       const byId = new Map(result.map((item) => [item.id, item]));
+      await this.applyPromotions(uid, promotionLines, result);
       return scope.ids.map((id) => byId.get(id)!);
     }
+    await this.applyPromotions(uid, promotionLines, result);
     return result;
   }
 
@@ -817,6 +872,7 @@ export class StoreCartService {
     const pricing = await this.cartPricing(uid);
 
     const result: Record<string, unknown>[] = [];
+    const promotionLines: OrderPromotionInputLine[] = [];
     for (const cart of carts) {
       const product = productById.get(cart.productId);
       if (!product) continue;
@@ -834,6 +890,10 @@ export class StoreCartService {
         productPaidMemberPriceEnabled: product.isVip === 1,
       });
       const price = quoted.unitPriceCents / 100;
+      if (productValid && sku && cart.status === 1 && cart.cartNum > 0) promotionLines.push({
+        key: cart.id, productId: product.id, skuUnique: sku.unique, quantity: cart.cartNum,
+        rawUnitPriceCents: rawPriceCents, memberUnitPriceCents: quoted.unitPriceCents,
+      });
       const stock = sku?.stock ?? product.stock;
       const attrInfo = {
         id: sku?.id ?? 0,
@@ -902,6 +962,7 @@ export class StoreCartService {
         },
       });
     }
+    await this.applyPromotions(uid, promotionLines, result, true);
     return result;
   }
 

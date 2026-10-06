@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="feedback-page">
     <view class="intro">
       <text class="title">客服暂时离线</text>
@@ -17,9 +18,11 @@
       <button class="primary" :disabled="submitting" @tap="submit">{{ submitting ? "正在提交…" : "提交反馈" }}</button>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
@@ -82,6 +85,6 @@ async function submit() {
 .panel { margin: -22rpx 24rpx 24rpx; padding: 32rpx; border-radius: 18rpx; background: #fff; display: flex; flex-direction: column; gap: 24rpx; box-sizing: border-box; }
 .heading { font-size: 32rpx; font-weight: 600; }
 input, textarea { width: 100%; background: #f5f6f8; border-radius: 12rpx; padding: 18rpx 20rpx; box-sizing: border-box; font-size: 28rpx; }
-textarea { height: 260rpx; }.primary { width: 100%; background: #2768ca; color: #fff; border-radius: 44rpx; margin: 16rpx 0 0; }
+textarea { height: 260rpx; }.primary { width: 100%; background: var(--view-theme, #e93323); color: #fff; border-radius: 44rpx; margin: 16rpx 0 0; }
 .primary[disabled] { opacity: .55; }.error { color: #a72d2d; font-size: 26rpx; overflow-wrap: anywhere; }
 </style>

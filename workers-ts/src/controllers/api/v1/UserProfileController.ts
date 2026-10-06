@@ -55,7 +55,8 @@ export async function userInfo(c: C) {
 /** GET /api/user/rand_code — cryptographically secure, ten-minute payment code. */
 export async function randCode(c: C) {
   privateCodeResponse(c);
-  return response(c, async () => ({ code: await service(c).paymentCode(uid(c)) }));
+  if(new URL(c.req.url).searchParams.size)throw new ValidateException('会员码接口不接受查询参数');
+  return response(c, () => service(c).paymentCodeSnapshot(uid(c)));
 }
 
 /** POST /api/user/bar_code — allocate once, then read the same stable member code. */

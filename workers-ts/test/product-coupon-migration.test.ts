@@ -113,7 +113,10 @@ describe("product coupon migration", () => {
     expect(grants).toContain("linkByIssue");
     expect(grants).toContain("storeOrderProductCouponReward");
     expect(receive).toContain('.for("update")');
-    expect(receive).toContain("received >= issue.receiveLimit");
+    expect(receive).toContain("const effectiveLimit = issue.receiveLimit || 1");
+    expect(receive).toContain("received >= effectiveLimit");
+    expect(receive).toContain("from(storeCouponIssueUser)");
+    expect(receive).toContain("(issue.receiveLimit === 0 && (evidence?.count ?? 0) > 0)");
     expect(receive).not.toContain("storeCouponUserDao.countReceived");
     expect(admin).toContain("couponType: scopeType");
     expect(admin).toContain("totalCount - claimedCount");

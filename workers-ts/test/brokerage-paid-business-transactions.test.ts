@@ -264,6 +264,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
       await f.db.insert(user).values([22, 33].map(uid => ({ uid, nowMoney: '100.00' })));
       await f.db.update(storeProduct).set({ isShow: 1, isVerify: 1, price: '10.00' });
       await f.db.insert(models.systemStore).values({ id: 1, name: 'isolated pickup', isShow: 1, isStore: 1 });
+      // These four cases exercise a real pickup creation. SQL configuration is
+      // the admission authority; the unrelated KV stub deliberately returns 0.
+      await f.db.insert(models.systemConfig).values([
+        { menuName: 'store_func_status', value: '1', isStore: 0, sort: 0 },
+        { menuName: 'store_self_mention', value: '1', isStore: 0, sort: 0 },
+      ]);
       await f.db.insert(models.storeCombination).values({ id: 30, productId: 70, people: 6, effectiveTime: 24,
         stock: 20, quota: 20, onceNum: 3, num: 20, price: '6.25' });
       await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 30, type: 3, unique: 'pink-sku',

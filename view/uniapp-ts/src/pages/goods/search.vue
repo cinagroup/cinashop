@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="search-page">
     <!-- 搜索框 -->
     <view class="search-bar">
@@ -50,9 +51,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onLoad } from "@dcloudio/uni-app";
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
@@ -159,7 +162,7 @@ onMounted(() => {
 }
 
 .search-btn {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 28rpx;
 }
 
@@ -232,7 +235,7 @@ onMounted(() => {
 
 .goods-price {
   font-size: 28rpx;
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-weight: 600;
 }
 </style>

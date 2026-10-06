@@ -1,6 +1,6 @@
 /** Disposable SQL fixture for the actual confirmation/quote service. No order-create or payment route is mounted. */
 import { Hono } from "hono";
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { financePostgres } from "./financePostgres";
 import { checkoutPricingFixture } from './checkoutPricingFixture';
 import { purchaseOriginCheckoutFixture } from './purchaseOriginCheckoutFixture';
@@ -11,6 +11,10 @@ import { StoreCartService } from "../../src/services/order/StoreCartService";
 import {
   user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
   memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore,
+  storePromotions, storePromotionsAuxiliary, storeProductRelation, storeOrderCartInfo,
+  storeProductAttr, storeBrand, systemSupplier, systemAttachment,
+  systemDise, storeProductDescription, storeProductEnsure, storeProductReply, userRelation,
+  community, communityRelevance, storeDiscounts, storeDiscountsProducts,
 } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
 
@@ -20,7 +24,11 @@ type QuoteFixtureDatabase = Pick<Awaited<ReturnType<typeof financePostgres>>, 'd
 export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
   createDatabase: (tables: PgTable[]) => Promise<QuoteFixtureDatabase> = tables => financePostgres(tables, { namespace: 'public' })) {
   let fixture = await createDatabase([...new Set([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
-    memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore, ...extraTables])]);
+    memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore,
+    storePromotions, storePromotionsAuxiliary, storeProductRelation, storeOrderCartInfo,
+    storeProductAttr, storeBrand, systemSupplier, systemAttachment,
+    systemDise, storeProductDescription, storeProductEnsure, storeProductReply, userRelation,
+    community, communityRelevance, storeDiscounts, storeDiscountsProducts, ...extraTables])]);
   // Native checkout tests explicitly commission the real protocol. PGlite can
   // still exercise read-only quotes, but cannot certify/create a PG16 checkout.
   try {
@@ -31,10 +39,11 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
   } catch (error) { await fixture.close(); throw error; }
   const container = createContainerFromDb(fixture.db);
   const cache = new Map<string, string>();
-  const pricingKeys = ['member_func_status', 'member_card_status', 'svip_price_status', 'integral_ratio_status',
+  const pricingKeys = ['store_func_status', 'store_self_mention', 'member_func_status', 'member_card_status', 'svip_price_status', 'integral_ratio_status',
     'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage'];
   const config: Record<string, string> = {
     ...Object.fromEntries(pricingKeys.map(key => [key, '0'])),
+    store_func_status: "1", store_self_mention: "1",
     member_card_status: "1", svip_price_status: "1", integral_ratio_status: "1", integral_ratio: "0.01", integral_max_type: "1", integral_max_num: "50",
     newcomer_status: "1", first_order_status: "1", first_order_discount: "90", first_order_discount_limit: "100", newcomer_limit_status: "0",
   };
@@ -80,7 +89,8 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
       { id: 101, name: '测试甲区', path: '/901/902/', parentId: 902 },
       { id: 102, name: '测试乙区', path: '/901/903/', parentId: 903 },
     ]);
-    await fixture.db.insert(systemStore).values({ id: 1, name: "隔离自提门店", address: "本地测试地址", isShow: 1, isDel: 0 });
+    await fixture.db.execute(sql`INSERT INTO public.system_store (id, name, address, is_store, is_show, is_del)
+      VALUES (1, '隔离自提门店', '本地测试地址', 1, 1, 0)`);
   } catch (error) { await fixture.close(); throw error; }
   const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
   app.use("*", async (c, next) => {

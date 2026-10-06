@@ -133,7 +133,7 @@ const adminInsert = names(`
   out_account page_link payment_reconciliation_action print_document store_bargain store_brand store_combination
   store_coupon_issue store_coupon_product store_discounts store_discounts_products store_integral store_newcomer
   store_product_ensure store_product_label store_product_rule store_product_specs store_product_unit store_product_words
-  store_seckill store_seckill_time store_service store_service_speechcraft system_article system_config system_config_tab
+  store_activity store_seckill store_seckill_time store_service store_service_speechcraft system_article system_config system_config_tab
   system_dise system_form system_notification system_sign_reward system_store system_store_staff system_user_level
   user_group user_label wechat_key wechat_news_category wechat_qrcode wechat_qrcode_cate wechat_reply
 `);
@@ -141,13 +141,13 @@ const adminUpdate = names(`
   agent_level_task agreement article_category article_content category community_topic express_company live_anchor live_goods live_room
   luck_lottery luck_prize member_card member_card_batch member_right member_ship notification_template out_account
   print_document store_brand store_discounts store_discounts_products store_newcomer store_product_ensure store_product_label
-  store_product_rule store_product_unit store_product_words store_service_speechcraft system_article system_config
+  store_product_rule store_product_unit store_product_words store_activity store_seckill_time store_service_speechcraft system_article system_config
   system_config_tab system_dise system_form system_notification system_sign_reward system_store system_store_staff
   system_user_level user_group user_label wechat_news_category wechat_qrcode_cate wechat_reply
 `);
 const adminDelete = names(`
   category express_company live_room_goods page_link store_coupon_product store_discounts_products store_product_attr_value store_product_ensure
-  store_seckill store_combination store_integral
+  store_seckill store_seckill_time store_combination store_integral
   store_product_label store_product_rule store_product_specs store_service_speechcraft system_config_tab system_sign_reward
   user_group user_label wechat_key wechat_news_category wechat_reply
 `);
@@ -158,16 +158,60 @@ export interface RuntimePrivilegePlan {
   functions: readonly string[];
   standaloneSequences: readonly string[];
 }
-export function runtimeBusinessPrivilegePlan(kind: 'app'|'admin'): RuntimePrivilegePlan {
+export type RuntimeBusinessProfileVersion='legacy-seckill-schedule'|'seckill-schedule'|'pre-coupon-templates'|'pre-full-gifts'|'pre-sign-day'|'pre-agent-levels'|'current';
+export function runtimeBusinessPrivilegePlan(kind:'app'|'admin'):RuntimePrivilegePlan {
+  return runtimeBusinessPrivilegePlanAtStage(kind,'current');
+}
+/** Fixed historical stages for independently authorized forwards.
+ * Never accept caller-provided objects, operations or arbitrary grant plans. */
+export function runtimeBusinessPrivilegePlanAtStage(kind: 'app'|'admin',version:RuntimeBusinessProfileVersion): RuntimePrivilegePlan {
   if (kind !== 'app' && kind !== 'admin') throw Error('Explicit runtime profile required');
+  if(!['legacy-seckill-schedule','seckill-schedule','pre-coupon-templates','pre-full-gifts','pre-sign-day','pre-agent-levels','current'].includes(version))throw Error('Fixed runtime profile stage required');
   const insert=unique(sharedInsert,[...OFFLINE_TABLES],kind==='admin'?adminInsert:[...RUNTIME_PURCHASE_EVIDENCE_TABLES]);
   const update=unique(sharedUpdate,RUNTIME_TABLE_LOCK_UPDATE,kind==='admin'?adminUpdate:[]);
   const remove=unique(sharedDelete,kind==='admin'?adminDelete:[]);
   const read=unique(sharedRead,insert,update,remove,Object.keys(sharedColumns),kind==='admin'?['system_timer','queue_list','queue_auxiliary']:[]);
-  const result:RuntimePrivilegePlan={tables:{},updateColumns:{...sharedColumns},functions:[],standaloneSequences:['kefu_visitor_uid_seq']};
+  const result:RuntimePrivilegePlan={tables:{},updateColumns:{...sharedColumns,
+    ...(kind==='app'?{store_activity:['id'],store_seckill_time:['id']}:{}),
+  },functions:[],standaloneSequences:['kefu_visitor_uid_seq']};
   for(const table of read){pricingIdentifier(table);result.tables[table]=['SELECT',
     ...(insert.includes(table)?['INSERT' as const]:[]),...(update.includes(table)?['UPDATE' as const]:[]),...(remove.includes(table)?['DELETE' as const]:[])];}
   for(const table of update) delete result.updateColumns[table];
-  result.functions=kind==='app'?['checkout_lock_pricing_v1()','ooa_lock_pricing()']:[];
+  if(kind==='app' && version==='legacy-seckill-schedule') {
+    delete result.updateColumns.store_activity;delete result.updateColumns.store_seckill_time;
+  }
+  if(kind==='admin' && (version==='legacy-seckill-schedule' || version==='seckill-schedule'))result.tables.store_activity=['SELECT'];
+  if(kind==='admin' && (version==='current' || version==='pre-agent-levels' || version==='pre-sign-day')) {
+    // Reviewed promotion management: platform/type boundaries remain in each
+    // Admin service. Scope auxiliary rows are replaced; consumed gift pools are
+    // retained and retired. Fixed historical commissioning plans stay frozen.
+    result.tables.store_promotions=['SELECT','INSERT','UPDATE'];
+    result.tables.store_promotions_auxiliary=['SELECT','INSERT','UPDATE','DELETE'];
+    delete result.updateColumns.store_promotions;
+    delete result.updateColumns.store_promotions_auxiliary;
+  }
+  if(kind==='admin' && (version==='current' || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts')) {
+    result.tables.store_coupon_template=['SELECT','INSERT'];
+    result.updateColumns.store_coupon_template=['status','is_del'];
+    result.tables.store_coupon_template_issue=['SELECT','INSERT'];
+  }
+  if(version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') {
+    result.tables.store_order_promotion_gift_coupon_reward=kind==='app'?['SELECT','INSERT']:['SELECT'];
+  }
+  if(kind==='admin' && (version==='current' || version==='pre-agent-levels')) {
+    // Fixed group initialization and FOR SHARE row locks. The child DELETE
+    // grant also authorizes its real SHARE ROW EXCLUSIVE table lock.
+    result.tables.system_group=['SELECT','INSERT'];
+    result.updateColumns.system_group=['id'];
+    result.tables.system_group_data=['SELECT','INSERT','DELETE'];
+    result.updateColumns.system_group_data=['value','sort','status'];
+  }
+  if(kind==='admin' && version==='current') {
+    // Distributor catalog editing is independently commissioned. No table
+    // UPDATE, hard DELETE, application editing or add_time mutation is granted.
+    result.tables.agent_level=['SELECT','INSERT'];
+    result.updateColumns.agent_level=['id','name','image','color','one_brokerage','two_brokerage','grade','status','is_del'];
+  }
+  result.functions=kind==='app'?['checkout_lock_pricing_v1()','ooa_lock_pricing()']:['admin_lock_seckill_time_references_v1()'];
   return result;
 }

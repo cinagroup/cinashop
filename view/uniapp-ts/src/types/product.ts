@@ -1,4 +1,5 @@
 import type { SkuMembershipPrice } from "../../../common/skuMembershipPrice";
+import type { DetailDesignData } from './productDetailDesign';
 
 /** 商品类型 (与后端对齐) */
 
@@ -18,9 +19,16 @@ export interface GoodsItem {
   star: string;
 }
 
-export interface GoodsSku extends SkuMembershipPrice { unique: string; suk: string; price: string; ot_price: string | null; vip_price: string | null; stock: number }
+export interface SkuDisplayPrice {enabled:boolean;price:string;price_type:''|'level'|'member';level_name:string;vip_price:string;level_price:string}
+export interface GoodsSku extends SkuMembershipPrice { unique: string; suk: string; price: string; ot_price: string | null; vip_price: string | null; stock: number; image?: string;display_price?:SkuDisplayPrice }
+export interface GoodsAttribute { name: string; values: string[] }
 
 export interface GoodsDetail {
+  display?: DetailDesignData;
+  product_attrs?: GoodsAttribute[];
+  spec_type?: 0 | 1;
+  product_type?: number;
+  system_form_id?: number;
   is_presale_product: 0 | 1;
   skus: GoodsSku[];
   id: number;
@@ -51,5 +59,6 @@ export interface CategoryNode {
   pid: number;
   cate_name: string;
   pic: string;
+  big_pic?: string;
   children: CategoryNode[];
 }

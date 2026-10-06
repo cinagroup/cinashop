@@ -5,7 +5,9 @@ import { basename, dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { assertAllConstraintsAligned, assertCheckStatesAligned } from "../scripts/data-migration/check-state-contracts";
-import { PRESALE_OUTBOX_CHECK_KEY, PRESALE_OUTBOX_CHECK_DEFINITION, PRESALE_OUTBOX_MODEL_DECLARATION, withPresaleOutboxContract } from "../scripts/data-migration/presale-outbox-contract";
+import { PRESALE_OUTBOX_CHECK_KEY, PRESALE_OUTBOX_CHECK_DEFINITION, withPresaleOutboxContract } from "../scripts/data-migration/presale-outbox-contract";
+import { PINK_SUCCESS_OUTBOX_MODEL_DECLARATION, withPinkSuccessOutboxContract } from '../scripts/data-migration/pink-success-outbox-contract';
+import { PINK_SUCCESS_NOTICE_CHECK_DEFINITION } from '../src/migrations/pinkSuccessNotice';
 import { CHECK_STATE_ALIGNMENT_SQL as sql } from "../src/migrations/checkStateAlignment";
 import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
 
@@ -27,7 +29,7 @@ describe("DB-009E4 nine exact CHECK states",()=>{
     expect(manifest.entries).toHaveLength(9);
     expect(manifest.entries.filter(e=>!e.catalog.validated)).toHaveLength(8);
     for(const e of manifest.entries) {
-      assertModelDeclaration(read(e.model.file),String(e.catalog.table),e.key===PRESALE_OUTBOX_CHECK_KEY?PRESALE_OUTBOX_MODEL_DECLARATION:e.model.declaration);
+      assertModelDeclaration(read(e.model.file),String(e.catalog.table),e.key===PRESALE_OUTBOX_CHECK_KEY?PINK_SUCCESS_OUTBOX_MODEL_DECLARATION:e.model.declaration);
       for(const field of e.fieldDeclarations)assertModelDeclaration(read(e.model.file),String(e.catalog.table),field);
       expect(e.snapshot.notValid===true).toBe(!e.catalog.validated);
       expect(e.previousSnapshot.notValid).toBeUndefined();
@@ -61,8 +63,21 @@ describe("DB-009E4 nine exact CHECK states",()=>{
     const alias={...currentCatalog,constraints:[...currentCatalog.constraints,{...manifest.entries.find(e=>e.key===PRESALE_OUTBOX_CHECK_KEY)!.catalog,key:"store_order_outbox.old_alias",name:"old_alias"}]};
     expect(()=>assertAllConstraintsAligned(currentCatalog,alias)).toThrow();
     const runner=read("scripts/orm-ddl-audit.ts");
-    expect(runner.indexOf("presaleBefore[0].definition !== PRESALE_OUTBOX_CHECK_DEFINITION")).toBeLessThan(runner.indexOf("await runPresaleDeliveryOutbox(shippingDb)"));
+    expect(runner.indexOf("presaleBefore[0].definition !== PINK_SUCCESS_NOTICE_CHECK_DEFINITION")).toBeGreaterThan(0);
+    expect(runner.indexOf("presaleBefore[0].definition !== PINK_SUCCESS_NOTICE_CHECK_DEFINITION")).toBeLessThan(runner.indexOf("await runPinkSuccessNotice(shippingDb)"));
     expect(runner).toContain("withPresaleOutboxContract(JSON.parse");
+  });
+  it('overlays the new eleven-event contract after the preserved ten-event stage and refuses an unrecognized prerequisite', () => {
+    const previous = withPresaleOutboxContract(manifest), before = structuredClone(previous);
+    const current = withPinkSuccessOutboxContract(previous);
+    expect(previous).toEqual(before);
+    for (const entry of current.entries) expect(entry).toEqual(entry.key === PRESALE_OUTBOX_CHECK_KEY
+      ? { ...before.entries.find(e => e.key === entry.key)!, catalog: { ...before.entries.find(e => e.key === entry.key)!.catalog, definition: PINK_SUCCESS_NOTICE_CHECK_DEFINITION } }
+      : before.entries.find(e => e.key === entry.key));
+    expect(() => withPinkSuccessOutboxContract(manifest)).toThrow('exact prior');
+    expect(() => withPinkSuccessOutboxContract(current)).toThrow('exact prior');
+    expect(() => withPinkSuccessOutboxContract({ entries: [] })).toThrow('exact prior');
+    expect(() => withPinkSuccessOutboxContract({ entries: [...previous.entries, previous.entries.find(e => e.key === PRESALE_OUTBOX_CHECK_KEY)!] })).toThrow('exact prior');
   });
   it("mirrors reviewed replacements, all-before-mutation preflight, dependency and comment contract",()=>{
     expect(read("migrations/0144_check_state_alignment.sql").trim()).toBe(sql.trim());

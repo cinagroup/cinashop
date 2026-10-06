@@ -119,6 +119,7 @@ export async function lockOrderSettlementUsers(
     "uid" | "spreadUid" | "spreadTwoUid" | "divisionId" | "divisionAgentId" | "divisionStaffId"
   >,
   earnedOrderId?: number,
+  additionalUserIds: readonly number[] = [],
 ): Promise<void> {
   // Historical income recipients can differ from the current child's
   // attribution. Include them BEFORE taking any user lock, in the same order.
@@ -130,6 +131,7 @@ export async function lockOrderSettlementUsers(
   }
   const userIds = [...new Set([
     ...historical.map(row => row.uid),
+    ...additionalUserIds,
     order.uid,
     order.spreadUid,
     order.spreadTwoUid,
@@ -820,60 +822,76 @@ export async function settleCompletedOrderInTx(
   });
 }
 
+export interface OrderReceiptInput {
+  orderId: number;
+  actor: "user" | "supplier" | "scheduled";
+  actorId?: number;
+  expectedStoreId?: number;
+  requireSystemVisible?: boolean;
+  /** A caller projecting a delivery snapshot must retain its delivery mode. */
+  requiredDeliveryType?: "city_delivery";
+  message: string;
+  frozenDays?: number;
+}
+
+/** Reuse the complete receipt eligibility and settlement in a caller-owned
+ * transaction. Load the context before taking business locks; the caller must
+ * use the same order settlement lock order before locking delivery evidence. */
+export async function completeOrderReceiptInTx(
+  tx: DbClient,
+  settlementContext: OrderReceiptSettlementContext,
+  input: OrderReceiptInput,
+): Promise<typeof storeOrder.$inferSelect | null> {
+  await lockOrderSettlement(tx, input.orderId);
+  const conditions: SQL[] = [
+    eq(storeOrder.id, input.orderId),
+    eq(storeOrder.paid, 1),
+    eq(storeOrder.status, 1),
+    sql`${storeOrder.pid} <> -1`,
+    sql`${storeOrder.supplierAllocationStatus} <> 1`,
+    ne(storeOrder.shippingType, 2),
+    ne(storeOrder.deliveryType, "send"),
+    inArray(storeOrder.refundStatus, [0, 3]),
+  ];
+  if (input.actor === "user") {
+    conditions.push(eq(storeOrder.uid, input.actorId ?? 0), eq(storeOrder.isDel, 0));
+  } else if (input.actor === "supplier") {
+    conditions.push(eq(storeOrder.supplierId, input.actorId ?? 0), eq(storeOrder.isSystemDel, 0));
+  } else {
+    conditions.push(eq(storeOrder.isDel, 0));
+  }
+  if (input.expectedStoreId !== undefined) {
+    conditions.push(eq(storeOrder.storeId, input.expectedStoreId));
+  }
+  if (input.requireSystemVisible) {
+    conditions.push(eq(storeOrder.isSystemDel, 0));
+  }
+  if (input.requiredDeliveryType !== undefined) {
+    conditions.push(eq(storeOrder.deliveryType, input.requiredDeliveryType));
+  }
+  const updated = await tx
+    .update(storeOrder)
+    .set({ status: 2 })
+    .where(and(...conditions))
+    .returning();
+  const order = updated[0];
+  if (!order) return null;
+  const now = Math.floor(Date.now() / 1000);
+  await settleCompletedOrderInTx(tx, order, settlementContext, now, input.message);
+  return order;
+}
+
 export async function completeOrderReceipt(
   container: Container,
   env: SystemConfigEnv,
-  input: {
-    orderId: number;
-    actor: "user" | "supplier" | "scheduled";
-    actorId?: number;
-    expectedStoreId?: number;
-    requireSystemVisible?: boolean;
-    message: string;
-    frozenDays?: number;
-  },
+  input: OrderReceiptInput,
 ): Promise<boolean> {
   const settlementContext = await loadOrderReceiptSettlementContext(
     container,
     env,
     input.frozenDays,
   );
-  return withTx(container, async (tx) => {
-    await lockOrderSettlement(tx, input.orderId);
-    const conditions: SQL[] = [
-      eq(storeOrder.id, input.orderId),
-      eq(storeOrder.paid, 1),
-      eq(storeOrder.status, 1),
-      sql`${storeOrder.pid} <> -1`,
-      sql`${storeOrder.supplierAllocationStatus} <> 1`,
-      ne(storeOrder.shippingType, 2),
-      ne(storeOrder.deliveryType, "send"),
-      inArray(storeOrder.refundStatus, [0, 3]),
-    ];
-    if (input.actor === "user") {
-      conditions.push(eq(storeOrder.uid, input.actorId ?? 0), eq(storeOrder.isDel, 0));
-    } else if (input.actor === "supplier") {
-      conditions.push(eq(storeOrder.supplierId, input.actorId ?? 0), eq(storeOrder.isSystemDel, 0));
-    } else {
-      conditions.push(eq(storeOrder.isDel, 0));
-    }
-    if (input.expectedStoreId !== undefined) {
-      conditions.push(eq(storeOrder.storeId, input.expectedStoreId));
-    }
-    if (input.requireSystemVisible) {
-      conditions.push(eq(storeOrder.isSystemDel, 0));
-    }
-    const updated = await tx
-      .update(storeOrder)
-      .set({ status: 2 })
-      .where(and(...conditions))
-      .returning();
-    const order = updated[0];
-    if (!order) return false;
-    const now = Math.floor(Date.now() / 1000);
-    await settleCompletedOrderInTx(tx, order, settlementContext, now, input.message);
-    return true;
-  });
+  return withTx(container, async tx => Boolean(await completeOrderReceiptInTx(tx, settlementContext, input)));
 }
 
 async function loadUser(container: Container, uid: number) {

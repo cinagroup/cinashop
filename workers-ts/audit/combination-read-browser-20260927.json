@@ -1,0 +1,129 @@
+{
+  "date": "2026-09-27",
+  "status": "passed-local-synthetic-browser",
+  "published": false,
+  "scope": "Actual final Admin dist through CUA, loopback disposable memory fixture; no real authentication, DB, provider, R2 or production",
+  "fixture": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-browser-fixture-20260927.cjs",
+    "sha256": "8b3c382e09f58afc77dde88c31a17051bd8681c6ed354c84bef15209479a7e8f"
+  },
+  "requests": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-browser-fixture-20260927-requests.json",
+    "sha256": "41dd939bc44af232cb31d70ea53a0b28432e07293f3eb01f1d6d6571768fa555"
+  },
+  "counts": {
+    "sharedRequests": 192,
+    "activityReads": 69,
+    "backgroundPolls": 94,
+    "transitionalPermissionRejections": 9,
+    "syntheticActivityWrites": 0,
+    "realBusinessWrites": 0,
+    "externalMessages": 0
+  },
+  "requestHistogram": {
+    "POST /adminapi/login": 7,
+    "GET /api/site_config": 17,
+    "GET /adminapi/activity/combinations": 9,
+    "GET /adminapi/new_push": 94,
+    "GET /adminapi/activity/combinations/export": 10,
+    "GET /adminapi/activity/combination-groups/head": 7,
+    "GET /adminapi/activity/combination-groups": 8,
+    "GET /adminapi/activity/combination-groups/201/members": 2,
+    "POST /__qa/fail/global-head": 1,
+    "GET /adminapi/activity/combination-statistics/1/head": 11,
+    "GET /adminapi/activity/combination-statistics/1/groups": 7,
+    "GET /adminapi/activity/combination-statistics/1/groups/201/members": 1,
+    "GET /adminapi/activity/combination-statistics/1/orders": 10,
+    "POST /__qa/fail/stat-orders": 1,
+    "POST /__qa/fail/stat-head": 1,
+    "POST /__qa/change/export-next": 1,
+    "POST /__qa/delay/export-next": 1,
+    "GET /adminapi/activity/combination-groups/216/members": 1,
+    "GET /adminapi/activity/combination-statistics/16/head": 1,
+    "GET /adminapi/activity/combination-statistics/16/groups": 1,
+    "GET /adminapi/activity/combination-statistics/1/groups/216/members": 1
+  },
+  "observations": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-browser-observations-20260927.json",
+    "sha256": "be158d0105e34cc8073e67a83a26f18a36771e50ddf857ecdc7cd0b7b4bdc16b"
+  },
+  "generatedCsv": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-browser-generated-20260927.csv",
+    "sha256": "95c738baedc9a4b906ce55443379c9cde987f3cd26c25026adc013c1d81bd1cb",
+    "bytes": 94543,
+    "records": 1005,
+    "columns": 11,
+    "bom": "efbbbf",
+    "uniqueIds": 1005,
+    "sortVerified": true,
+    "formulaEscaped": true,
+    "quotesAndEmbeddedNewlineVerified": true,
+    "downloadBoundary": "Actual generated Blob arrayBuffer captured through temporary forwarding URL.createObjectURL observer; OS download completion/path not confirmed"
+  },
+  "scenarios": [
+    "Catalog and group/member second pages remain selected; no loading-induced page clamp.",
+    "Global two raw cards independent of filters; literal %_ and Shanghai day select pending-expired216 without settlement.",
+    "Six cards31/16/16/5/gross284.00/pay16, scoped groups and paid-root order second pages; status0 empty, activity16 all-zero/empty.",
+    "Global/statistic head failures and order-list failure independently retry without discarding other successful regions.",
+    "Six synthetic role modes and cross-tab account change invalidation; transitional stale-permission GETs are rejected400011 without data, settled denied views show warning; independent order permission hides detail links.",
+    "Complete two-page1005 CSV, page2 snapshot mismatch and delayed page2 cancellation both create zero Blob.",
+    "390 DOM page widths390, dialog366 bounded within viewport, table overflow confined locally; error/warn empty on both owned tabs."
+  ],
+  "screenshots": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-catalog-desktop-20260927.png",
+      "sha256": "ed4df0d054eac9581e3269ad0482eb8fb4e2426320adb588d4bf4831b05e2cab"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-groups-desktop-20260927.png",
+      "sha256": "28c19aa08d0307aa01cb7f4ea2770df5949602a76d0e5b1c9576ccab30b37808"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-members-page2-20260927.png",
+      "sha256": "a9463a8b527812d787918ebe00007610602e78432ba5d701feea768760cfc834"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-statistics-desktop-20260927.png",
+      "sha256": "ad9fda4bb06e29f416e1c32649b68df34bc179be26e8ceb195e73dbb7d67637c"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-export-snapshot-rejected-20260927.png",
+      "sha256": "ce45ca68f2d3503d853cb5f58b4abbfd915154beb9259f8666dd26b14aab56de"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-catalog-mobile-20260927.png",
+      "sha256": "d2552f8752be9095f4226dd4d753326653305aa62fe1d76f956eec261d8008c2"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-groups-mobile-20260927.png",
+      "sha256": "9fe18fd48c758008dd3b8a074146a1f87be0ebfa62dbc6d59262ca8bab747200"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-statistics-mobile-20260927.png",
+      "sha256": "aa796bb7609cff48b8fdfb362f25441305c81d4e8970d78001ec1652a3ad3078"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-members-mobile-20260927.png",
+      "sha256": "e985020b08f63b021bbd28dde52ac7e039b0dae65b16fe37bd59c44a6370cb09"
+    }
+  ],
+  "finalDist": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-read-dist-accepted-snapshot/manifest.json",
+    "sha256": "5c5408b329a9822b817163cb6bc43a3d3717d43fc5218ad4516becfbb8f2aade"
+  },
+  "cleanup": {
+    "ownTabsClosed": true,
+    "observerRestored": true,
+    "viewportReset": true,
+    "serverPort": 5202,
+    "stoppedBy": "Ctrl+C owned exec session 74896",
+    "listeners": 0,
+    "observedAt": "2026-09-27T08:20:12.5483460Z"
+  },
+  "limitations": [
+    "Mobile compositor screenshot has scaled page/grey surround; DOM viewport acceptance is not real device proof.",
+    "Synthetic fixture provides all menu paths for navigation to every role; server menu correctness is covered separately by native permission tests, not these fixture menus.",
+    "Actual order-detail navigation contract is covered by frontend runtime tests; order-detail body is not exercised in this fixture.",
+    "Cross-tab token and session storage are separate writes; transition can issue stale-permission GETs, all nine observed attempts rejected400011. No unauthorized data was returned. Complete Linux CI, real configuration/roles/media/provider/devices and publication remain open."
+  ]
+}

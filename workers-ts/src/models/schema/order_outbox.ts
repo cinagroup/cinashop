@@ -22,14 +22,23 @@ export interface OrderPaidOutboxPayload {
   orderNo: string;
 }
 
+export interface OrderPinkSuccessNoticeOutboxPayload {
+  orderId: number;
+  orderNo: string;
+  userId: number;
+  pinkId: number;
+  people: number;
+}
+
 export interface OrderDeliveryNoticeOutboxPayload {
   orderId: number;
   orderNo: string;
   userId: number;
-  deliveryType: "express" | "send" | "fictitious";
+  deliveryType: "express" | "send" | "fictitious" | "city_delivery";
   deliveryName: string;
   deliveryId: string;
   userAddress: string;
+  cityDeliveryJobId?: number;
 }
 
 export interface OrderRefundRefusedNoticeOutboxPayload {
@@ -71,6 +80,7 @@ export interface WithdrawalApplicationOutboxPayload {
 
 export type OrderOutboxPayload =
   | OrderPaidOutboxPayload
+  | OrderPinkSuccessNoticeOutboxPayload
   | PresaleDeliveryIntent
   | OrderDeliveryNoticeOutboxPayload
   | OrderRefundRefusedNoticeOutboxPayload
@@ -113,7 +123,8 @@ export const storeOrderOutbox = pgTable(
       'withdrawal.refused.notice',
       'withdrawal.applied.notice',
       'withdrawal.staff.refresh',
-      'order.presale.fulfillment'
+      'order.presale.fulfillment',
+      'order.pink.success.notice'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),
     index("soob_aggregate").on(t.aggregateType, t.aggregateId),

@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
+import { withTx, type Container } from "@/lib/di";
 import {
   storeOrder,
   storeOrderCartInfo,
@@ -10,6 +10,8 @@ import {
   storeCouponUser,
   storeOrderWriteoff,
   storeProduct,
+  storeProductAttrValue,
+  storeCart,
   systemStore,
 } from "@/models/schema";
 import { CheckoutCashierService } from "@/services/payment/CheckoutCashierService";
@@ -21,6 +23,7 @@ import { issueCheckoutConfirmation } from './CheckoutConfirmation';
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readBargainShippingSelection } from '@/services/activity/BargainShippingSelection';
+import { readCheckoutPickupEnabled } from './CheckoutPickupPolicy';
 
 const CHECKOUT_TTL_SECONDS = 30 * 60;
 const LEGACY_ALIPAY_TTL_SECONDS = 5 * 60;
@@ -277,42 +280,51 @@ export class LegacyOrderCompatibilityService {
   }
 
   async checkShipping(uid: number, cartIds: number[], bargainOnly = false) {
-    const carts = await this.container.storeCartDao.getByIds(cartIds);
-    if (bargainOnly || carts.some(cart => cart.type === 2)) return readBargainShippingSelection(this.container, this.env, uid, cartIds);
-    if (
-      carts.length !== cartIds.length ||
-      carts.some((cart) => cart.uid !== uid || cart.isPay !== 0 || cart.isDel !== 0 || cart.status !== 1)
-    ) {
-      throw new ValidateException("获取购物车信息失败");
-    }
-    const productIds = [...new Set(carts.map((cart) => cart.productId))];
-    const products = await this.container.db
-      .select({ id: storeProduct.id, deliveryType: storeProduct.deliveryType })
-      .from(storeProduct)
-      .where(inArray(storeProduct.id, productIds));
-    if (products.length !== productIds.length) throw new ValidateException("获取商品配送方式失败");
-    const available = new Set<number>();
-    for (const product of products) {
-      const methods = product.deliveryType
-        .split(",")
-        .map(Number)
-        .filter((item) => [1, 2, 3].includes(item));
-      for (const method of methods.length ? methods : [1, 2, 3]) available.add(method);
-    }
-    const config = await new SystemConfigService(this.container, this.env).get("store_self_mention");
-    if (config === "0") available.delete(2);
-    if (available.has(2)) {
-      const stores = await this.container.db
-        .select({ id: systemStore.id })
-        .from(systemStore)
-        .where(and(eq(systemStore.isShow, 1), eq(systemStore.isDel, 0)))
-        .limit(1);
-      if (!stores.length) available.delete(2);
-    }
-    const methods = [...available].sort();
-    const type = methods.length === 1 ? (methods[0] === 2 ? 2 : 1) :
-      methods.length === 2 && !methods.includes(2) ? 1 : 0;
-    return { type, methods };
+    if (bargainOnly) return readBargainShippingSelection(this.container, this.env, uid, cartIds);
+    // This is an advisory catalog, never checkout authorization. Keep carts,
+    // product methods, global flags and eligible stores in one bounded snapshot.
+    const selection = await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await tx.execute(sql.raw(`SELECT
+        set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+      const carts = await tx.select().from(storeCart).where(inArray(storeCart.id, cartIds));
+      if (carts.some(cart => cart.type === 2)) return null;
+      if (
+        carts.length !== cartIds.length ||
+        carts.some((cart) => cart.uid !== uid || cart.isPay !== 0 || cart.isDel !== 0 || cart.status !== 1)
+      ) {
+        throw new ValidateException("获取购物车信息失败");
+      }
+      const productIds = [...new Set(carts.map((cart) => cart.productId))];
+      const products = await tx
+        .select({ id: storeProduct.id, deliveryType: storeProduct.deliveryType })
+        .from(storeProduct)
+        .where(inArray(storeProduct.id, productIds));
+      if (products.length !== productIds.length) throw new ValidateException("获取商品配送方式失败");
+      const available = new Set<number>();
+      for (const product of products) {
+        const methods = product.deliveryType
+          .split(",")
+          .map(Number)
+          .filter((item) => [1, 2, 3].includes(item));
+        for (const method of methods.length ? methods : [1, 2, 3]) available.add(method);
+      }
+      if (!await readCheckoutPickupEnabled(tx)) available.delete(2);
+      if (available.has(2)) {
+        const stores = await tx
+          .select({ id: systemStore.id })
+          .from(systemStore)
+          .where(and(eq(systemStore.isStore, 1), eq(systemStore.isShow, 1), eq(systemStore.isDel, 0)))
+          .limit(1);
+        if (!stores.length) available.delete(2);
+      }
+      const methods = [...available].sort();
+      const type = methods.length === 1 ? (methods[0] === 2 ? 2 : 1) :
+        methods.length === 2 && !methods.includes(2) ? 1 : 0;
+      return { type, methods };
+    });
+    return selection ?? readBargainShippingSelection(this.container, this.env, uid, cartIds);
   }
 
   async checkoutPreview(
@@ -368,10 +380,39 @@ export class LegacyOrderCompatibilityService {
       if (!item) throw new ValidateException("结算商品报价不完整");
       const quantity = Number(row.cart_num ?? row.cartNum ?? 0);
       row.truePrice = (item.unitPriceCents / 100).toFixed(2);
+      row.trueSumPrice = (item.totalPriceCents / 100).toFixed(2);
+      row.totalPriceCents = item.totalPriceCents;
+      row.promotion = item.promotion;
       row.vip_truePrice = (item.discountCents / 100).toFixed(2);
       row.price_type = item.priceType;
       row.sumPrice = (item.rawUnitPriceCents * quantity / 100).toFixed(2);
     }
+    const giftProductIds = [...new Set(quote.giveCartInfo.map(gift => gift.productId))];
+    const [giftProducts, giftSkus] = await Promise.all([
+      giftProductIds.length ? this.container.db.select({ id: storeProduct.id,
+        storeName: storeProduct.storeName, image: storeProduct.image,
+        unitName: storeProduct.unitName, productType: storeProduct.productType })
+        .from(storeProduct).where(inArray(storeProduct.id, giftProductIds)) : [],
+      giftProductIds.length ? this.container.db.select({ productId: storeProductAttrValue.productId,
+        unique: storeProductAttrValue.unique, suk: storeProductAttrValue.suk })
+        .from(storeProductAttrValue).where(inArray(storeProductAttrValue.productId, giftProductIds)) : [],
+    ]);
+    const giftProductById = new Map(giftProducts.map(product => [product.id, product]));
+    const giftRows = quote.giveCartInfo.map(gift => {
+      const product = giftProductById.get(gift.productId);
+      const sku = giftSkus.find(value => value.productId === gift.productId
+        && value.unique.trimEnd() === gift.skuUnique);
+      if (!product || !sku) throw new ValidateException('满送赠品展示材料已变化，请重新确认');
+      return { id: gift.cartId, cartId: gift.cartId, productId: gift.productId,
+        product_id: gift.productId, cartNum: gift.quantity, cart_num: gift.quantity,
+        isGift: 1, is_gift: 1, promotions_id: gift.promotionId,
+        truePrice: '0.00', trueSumPrice: '0.00', sumPrice: '0.00',
+        productInfo: { id: product.id, storeName: product.storeName,
+          store_name: product.storeName, image: product.image, unitName: product.unitName,
+          unit_name: product.unitName, productType: product.productType, price: '0.00',
+          attrInfo: { product_id: product.id, unique: gift.skuUnique, suk: sku.suk,
+            price: '0.00', image: product.image } } };
+    });
     const key = options.existingKey ?? await this.rememberCheckout(uid, cartIds);
     const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV, { uid, key }, quote.confirmationFingerprint);
     const money = (cents: number) => (cents / 100).toFixed(2);
@@ -387,6 +428,8 @@ export class LegacyOrderCompatibilityService {
       vipPrice: money(quote.memberDiscountCents),
       levelPrice: money(quote.levelDiscountCents),
       memberPrice: money(quote.paidMemberDiscountCents),
+      promotionsPrice: money(quote.promotionSavingsCents),
+      promotions_price: money(quote.promotionSavingsCents),
       couponPrice: money(quote.couponPriceCents),
       coupon_price: money(quote.couponPriceCents),
       deduction_price: money(quote.deductionCents),
@@ -401,7 +444,7 @@ export class LegacyOrderCompatibilityService {
     return {
       addressInfo: legacyAddress(quote.deliveryAddress ?? (options.shippingType === 2 ? address : null)),
       upgrade_addr: false,
-      cartInfo: rows,
+      cartInfo: [...rows, ...giftRows],
       custom_form: [],
       product_type: Math.max(0, ...rows.map((item) => Number(record(item.productInfo).productType ?? 0))),
       userInfo: {
@@ -418,9 +461,9 @@ export class LegacyOrderCompatibilityService {
       orderKey: key,
       quoteToken,
       priceGroup,
-      give_coupon: [],
-      give_integral: 0,
-      promotions_detail: [],
+      give_coupon: quote.giveCouponInfo,
+      give_integral: quote.giveIntegral,
+      promotions_detail: quote.promotionsDetail,
       seckill_id: 0,
       methods: readiness,
       yue_pay_status: readiness.yue.enabled ? 1 : 2,

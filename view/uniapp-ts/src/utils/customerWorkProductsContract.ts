@@ -1,0 +1,79 @@
+import { customerWorkCanonicalJson,customerWorkSha256 } from '../../../common/customerWorkIntent';
+import { customerWorkRecord,customerWorkImage } from './customerWork';
+import { customerWorkInteger,customerWorkHash,customerWorkText,customerWorkUuid } from './customerWorkFulfillmentContract';
+import type { CustomerWorkProductEnvelope,CustomerWorkProductMeta,CustomerWorkProduct,CustomerWorkProductSku,CustomerWorkProductList,CustomerWorkProductCategories,CustomerWorkProductLabels,CustomerWorkProductSkus,CustomerWorkProductKind,CustomerWorkProductBody,CustomerWorkProductIntent,CustomerWorkProductReceipt,CustomerWorkProductSkuUpdate,CustomerWorkProductCategory } from '../types/customerWorkProducts';
+export { customerWorkCanonicalJson,customerWorkUuid };
+export const CUSTOMER_WORK_PRODUCT_VERSION='customer-work-product-operation-v1' as const;
+export const CUSTOMER_WORK_PRODUCT_KINDS:CustomerWorkProductKind[]=['set_show','replace_categories','replace_labels','update_skus'];
+const keys=(value:Record<string,unknown>,names:string[])=>Object.keys(value).sort().join(',')===[...names].sort().join(',');
+const id=(value:unknown):value is number=>customerWorkInteger(value,1);
+const ids=(value:unknown,max=100,min=0):value is number[]=>Array.isArray(value)&&value.length>=min&&value.length<=max&&value.every(id)&&new Set(value).size===value.length;
+const sortedIds=(value:unknown,max=100,min=0):value is number[]=>ids(value,max,min)&&value.every((entry,index)=>index===0||entry>value[index-1]!);
+const readIds=(value:unknown):value is number[]=>sortedIds(value,Number.POSITIVE_INFINITY);
+const readText=(value:unknown,max:number):value is string=>customerWorkText(value,Number.POSITIVE_INFINITY)&&Array.from(value).length<=max;
+export const customerWorkProductMoney=(value:unknown):value is string=>typeof value==='string'&&/^(0|[1-9]\d{0,9})\.\d{2}$/u.test(value);
+function assert(value:unknown,message:string):asserts value{if(!value)throw Error(message);}
+export function customerWorkProductDecimal(value:string):string{const input=value.trim();assert(/^\d{1,10}(?:\.\d{1,2})?$/u.test(input),'价格需为不超过两位小数的非负金额');const [whole,fraction='']=input.split('.');const result=`${whole!.replace(/^0+(?=\d)/u,'')}.${fraction.padEnd(2,'0')}`;assert(customerWorkProductMoney(result),'价格超出允许范围');return result;}
+export function customerWorkProductStock(value:string):number{assert(/^(0|[1-9]\d{0,9})$/u.test(value),'库存需为非负整数');const result=Number(value);assert(customerWorkInteger(result),'库存超出允许范围');return result;}
+export function isCustomerWorkProductMeta(value:unknown):value is CustomerWorkProductMeta{return customerWorkRecord(value)&&customerWorkRecord(value.scopes)&&keys(value.scopes,['products','taxonomy','inventory'])&&value.scopes.products==='global'&&value.scopes.taxonomy==='platform'&&value.scopes.inventory==='active_base_skus'&&customerWorkHash(value.catalog_revision)&&customerWorkRecord(value.readiness)&&keys(value.readiness,['writes','reason'])&&typeof value.readiness.writes==='boolean'&&customerWorkText(value.readiness.reason,1000);}
+export function isCustomerWorkProductSku(value:unknown):value is CustomerWorkProductSku{return customerWorkRecord(value)&&keys(value,['id','product_id','unique','suk','price','cost','ot_price','stock','sum_stock','sales','bar_code','image','stock_editable'])&&id(value.id)&&id(value.product_id)&&readText(value.unique,8)&&!/[\u0000-\u001f\u007f]/u.test(value.unique)&&readText(value.suk,512)&&['price','cost','ot_price'].every(key=>customerWorkProductMoney(value[key]))&&['stock','sum_stock','sales'].every(key=>customerWorkInteger(value[key]))&&readText(value.bar_code,50)&&customerWorkImage(value.image)&&typeof value.stock_editable==='boolean';}
+export function isCustomerWorkProduct(value:unknown):value is CustomerWorkProduct{
+ if(!customerWorkRecord(value)||!keys(value,['id','type','relation_id','pid','product_type','store_name','image','plate_name','spec_type','price','cost','ot_price','stock','branch_stock','sales','branch_sales','is_show','is_verify','is_police','is_sold','cate_id','cate_name','store_label_id','sku_count','attr_value','product_revision','actions','sku_policy'])||!id(value.id)||![0,1,2].includes(value.type as number)||!customerWorkInteger(value.relation_id)||!customerWorkInteger(value.pid)||![0,1,2,3,4].includes(value.product_type as number)||!readText(value.store_name,256)||!customerWorkImage(value.image)||!customerWorkText(value.plate_name,Number.POSITIVE_INFINITY)||![0,1].includes(value.spec_type as number)||!['price','cost','ot_price'].every(key=>customerWorkProductMoney(value[key]))||!['stock','branch_stock','sales','branch_sales','sku_count'].every(key=>customerWorkInteger(value[key]))||value.stock!==value.branch_stock||value.sales!==value.branch_sales||![0,1].includes(value.is_show as number)||![-2,-1,0,1].includes(value.is_verify as number)||![0,1].includes(value.is_police as number)||![0,1].includes(value.is_sold as number)||!readIds(value.cate_id)||!readIds(value.store_label_id)||!customerWorkText(value.cate_name,Number.POSITIVE_INFINITY)||!customerWorkHash(value.product_revision)||!customerWorkRecord(value.actions)||!keys(value.actions,['show','hide','categories','labels','skus'])||!Object.values(value.actions).every(flag=>typeof flag==='boolean')||!customerWorkText(value.sku_policy,1000))return false;
+ if(value.spec_type===0&&value.sku_count===1&&value.attr_value!==null)return isCustomerWorkProductSku(value.attr_value)&&value.attr_value.product_id===value.id&&value.attr_value.unique.length>0;
+ return value.attr_value===null&&(value.spec_type===1||value.actions.skus===false);
+}
+export function isCustomerWorkProductList(value:unknown):value is CustomerWorkProductList{return isCustomerWorkProductMeta(value)&&customerWorkRecord(value)&&Array.isArray(value.list)&&value.list.length<=100&&value.list.every(isCustomerWorkProduct)&&new Set(value.list.map(row=>row.id)).size===value.list.length&&customerWorkInteger(value.count)&&id(value.page)&&id(value.limit)&&value.limit<=100&&value.list.length<=value.limit&&typeof value.has_more==='boolean';}
+export function isCustomerWorkProductCategories(value:unknown):value is CustomerWorkProductCategories{
+ if(!isCustomerWorkProductMeta(value)||!customerWorkRecord(value)||!Array.isArray(value.categories))return false;
+ const seen=new Set<number>(),pending:{node:unknown;parent:number|null}[]=value.categories.map(node=>({node,parent:null}));
+ while(pending.length){const {node,parent}=pending.pop()!;if(!customerWorkRecord(node)||!id(node.id)||seen.has(node.id)||!customerWorkInteger(node.pid)||parent!==null&&node.pid!==parent||!readText(node.cate_name,100)||!customerWorkImage(node.pic)||!customerWorkImage(node.big_pic)||!Array.isArray(node.children))return false;seen.add(node.id);for(const child of node.children)pending.push({node:child,parent:node.id});}
+ return true;
+}
+export function customerWorkProductCategoryRows(nodes:CustomerWorkProductCategory[]):{id:number;name:string;depth:number}[]{const rows:{id:number;name:string;depth:number}[]=[],seen=new Set<number>(),pending=nodes.map(node=>({node,parent:'',depth:0})).reverse();while(pending.length){const {node,parent,depth}=pending.pop()!;assert(!seen.has(node.id),'分类目录包含重复标识');seen.add(node.id);const name=parent?`${parent} / ${node.cate_name}`:node.cate_name;rows.push({id:node.id,name,depth});for(let index=node.children.length-1;index>=0;index--)pending.push({node:node.children[index]!,parent:name,depth:depth+1});}return rows;}
+export function isCustomerWorkProductLabels(value:unknown):value is CustomerWorkProductLabels{
+ if(!isCustomerWorkProductMeta(value)||!customerWorkRecord(value)||!Array.isArray(value.labels))return false;
+ const groupIds=new Set<number>(),labelIds=new Set<number>();
+ return value.labels.every(group=>{if(!customerWorkRecord(group)||!id(group.id)||groupIds.has(group.id)||!readText(group.label_name,255)||!Array.isArray(group.children))return false;groupIds.add(group.id);return group.children.every(label=>{if(!customerWorkRecord(label)||!id(label.id)||labelIds.has(label.id)||!readText(label.label_name,255)||!['color','bg_color','border_color'].every(key=>readText(label[key],32))||!customerWorkImage(label.icon))return false;labelIds.add(label.id);return true;});});
+}
+export function isCustomerWorkProductSkus(value:unknown):value is CustomerWorkProductSkus{
+ if(!isCustomerWorkProductMeta(value)||!customerWorkRecord(value)||!isCustomerWorkProduct(value.product)||!Array.isArray(value.skus)||!value.skus.every(isCustomerWorkProductSku))return false;
+ const product=value.product,skus=value.skus;if(skus.some(row=>row.product_id!==product.id)||new Set(skus.map(row=>row.id)).size!==skus.length||product.sku_count!==skus.length)return false;
+ if(product.actions.skus&&(skus.some(row=>!row.unique)||new Set(skus.map(row=>row.unique)).size!==skus.length))return false;
+ const stock=skus.reduce((sum,row)=>sum+row.stock,0);return customerWorkInteger(stock)&&stock===product.stock&&(product.attr_value===null||skus.some(row=>customerWorkCanonicalJson(row)===customerWorkCanonicalJson(product.attr_value)));
+}
+export function parseCustomerWorkProductEnvelope<T>(value:unknown,actorUid:number,guard:(data:unknown)=>data is T,authority?:{scope_key:string;principal:{service_id:number}},consistencyKey?:string):CustomerWorkProductEnvelope<T>{
+ assert(customerWorkRecord(value)&&value.version==='customer-work-product-read-v1'&&value.actor_uid===actorUid&&customerWorkRecord(value.principal)&&value.principal.kind==='customer-order-manager'&&id(value.principal.service_id)&&value.principal.scope==='global'&&customerWorkHash(value.scope_key)&&customerWorkHash(value.consistency_key)&&guard(value.data),'商品响应与当前客服身份不匹配，请重新读取');
+ if(authority)assert(value.scope_key===authority.scope_key&&value.principal.service_id===authority.principal.service_id,'商品管理权限已变化，请重新读取');
+ if(consistencyKey)assert(value.consistency_key===consistencyKey,'商品或分类标签已变化，请重新读取');
+ return value as unknown as CustomerWorkProductEnvelope<T>;
+}
+export function customerWorkProductEndpoint(kind:CustomerWorkProductKind,productIds:number[]):string{assert(ids(productIds,100,1),'请选择1至100个有效商品');return kind==='set_show'?'/mobile/work/products/show':kind==='update_skus'?(assert(productIds.length===1,'规格编辑必须对应一个商品'),`/mobile/work/products/${productIds[0]}/skus`):'/mobile/work/products/batch';}
+export function customerWorkProductIntentHash(actor_uid:number,kind:string,input:CustomerWorkProductBody):string{return customerWorkSha256(customerWorkCanonicalJson({version:CUSTOMER_WORK_PRODUCT_VERSION,actor_uid,kind,input}));}
+export function isCustomerWorkProductBody(value:unknown,kind:CustomerWorkProductKind):value is CustomerWorkProductBody{
+ if(!customerWorkRecord(value)||!keys(value,['version','scope_key','targets','expected_catalog_revision','payload'])||value.version!==CUSTOMER_WORK_PRODUCT_VERSION||!customerWorkHash(value.scope_key)||!customerWorkHash(value.expected_catalog_revision)||!Array.isArray(value.targets)||!value.targets.length||value.targets.length>100||!customerWorkRecord(value.payload))return false;
+ let prior=0;for(const target of value.targets){if(!customerWorkRecord(target)||!keys(target,['product_id','expected_product_revision'])||!id(target.product_id)||target.product_id<=prior||!customerWorkHash(target.expected_product_revision))return false;prior=target.product_id;}
+ const p=value.payload;
+ if(kind==='set_show')return keys(p,['is_show'])&&[0,1].includes(p.is_show as number);
+ if(kind==='replace_categories')return keys(p,['cate_id'])&&sortedIds(p.cate_id,50,1)&&p.cate_id.join(',').length<=64;
+ if(kind==='replace_labels')return keys(p,['store_label_id'])&&sortedIds(p.store_label_id,50);
+ if(kind!=='update_skus'||value.targets.length!==1||!keys(p,['attr_value'])||!Array.isArray(p.attr_value)||!p.attr_value.length||p.attr_value.length>500)return false;
+ const seen=new Set<string>();return p.attr_value.every(row=>{if(!customerWorkRecord(row)||!keys(row,['unique','price','cost','ot_price','stock'])||!customerWorkText(row.unique,8)||!row.unique||row.unique!==row.unique.trim()||/[\u0000-\u001f\u007f]/u.test(row.unique)||seen.has(row.unique)||!['price','cost','ot_price'].every(key=>customerWorkProductMoney(row[key]))||!customerWorkInteger(row.stock))return false;seen.add(row.unique);return true;});
+}
+export function isCustomerWorkProductIntent(value:unknown):value is CustomerWorkProductIntent{
+ if(!customerWorkRecord(value)||!keys(value,['version','actor_uid','service_id','scope_key','kind','request_key','request_hash','body','endpoint','method','created_at'])||value.version!=='customer-work-product-pending-v1'||!id(value.actor_uid)||!id(value.service_id)||!customerWorkHash(value.scope_key)||!CUSTOMER_WORK_PRODUCT_KINDS.includes(value.kind as CustomerWorkProductKind)||!customerWorkUuid(value.request_key)||!customerWorkHash(value.request_hash)||!isCustomerWorkProductBody(value.body,value.kind as CustomerWorkProductKind)||value.body.scope_key!==value.scope_key||value.method!=='POST'||!customerWorkInteger(value.created_at))return false;
+ return value.endpoint===customerWorkProductEndpoint(value.kind as CustomerWorkProductKind,value.body.targets.map(row=>row.product_id))&&value.request_hash===customerWorkProductIntentHash(value.actor_uid,value.kind as string,value.body);
+}
+export function parseCustomerWorkProductReceipt(value:unknown,intent:CustomerWorkProductIntent):CustomerWorkProductReceipt{
+ assert(customerWorkRecord(value)&&keys(value,['version','actor_uid','service_id','request_key','request_hash','kind','product_ids','outcome','evidence'])&&value.version===CUSTOMER_WORK_PRODUCT_VERSION&&value.actor_uid===intent.actor_uid&&value.request_key===intent.request_key&&value.request_hash===intent.request_hash&&value.kind===intent.kind&&ids(value.product_ids,100,1)&&customerWorkCanonicalJson(value.product_ids)===customerWorkCanonicalJson(intent.body.targets.map(row=>row.product_id))&&customerWorkRecord(value.evidence),'原商品操作回执不匹配，仍需核对原结果');
+ const terminal=['rollback-rejected','abandoned'].includes(String(value.outcome));
+ assert(value.service_id===intent.service_id||terminal&&value.service_id===0,'原商品操作身份不匹配');
+ if(value.outcome==='products-updated'||value.outcome==='skus-updated'){const expected=intent.kind==='update_skus'?(intent.body.payload.attr_value as CustomerWorkProductSkuUpdate[]).length:intent.body.targets.length;assert(id(value.service_id)&&value.outcome===(intent.kind==='update_skus'?'skus-updated':'products-updated')&&keys(value.evidence,['changed','verified'])&&value.evidence.changed===expected&&expected>0&&value.evidence.verified===true,'原商品成功证据不匹配');}
+ else if(value.outcome==='rollback-rejected')assert(keys(value.evidence,['code'])&&customerWorkText(value.evidence.code,100)&&!!value.evidence.code,'原商品拒绝回执无效');
+ else assert(value.outcome==='abandoned'&&keys(value.evidence,[]),'原商品操作状态无效');
+ return value as unknown as CustomerWorkProductReceipt;
+}
+export function customerWorkProductSkuUpdates(rows:CustomerWorkProductSku[],drafts:Record<string,{price:string;cost:string;ot_price:string;stock:string}>,only?:number[]):CustomerWorkProductSkuUpdate[]{
+ const chosen=only?new Set(only):null;if(only)assert(ids(only,500,1)&&only.every(rowId=>rows.some(row=>row.id===rowId)),'请选择真实商品规格');
+ const updates=rows.filter(row=>!chosen||chosen.has(row.id)).map(row=>{const draft=drafts[row.unique];assert(!!draft,'规格编辑草稿已失效');const stock=customerWorkProductStock(draft.stock);assert(row.stock_editable||stock===row.stock,'此规格库存由专用功能维护');return{unique:row.unique,price:customerWorkProductDecimal(draft.price),cost:customerWorkProductDecimal(draft.cost),ot_price:customerWorkProductDecimal(draft.ot_price),stock};});
+ const byUnique=new Map(updates.map(row=>[row.unique,row]));assert(customerWorkInteger(rows.reduce((sum,row)=>sum+(byUnique.get(row.unique)?.stock??row.stock),0)),'商品合计库存超出允许范围');return updates;
+}

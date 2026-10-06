@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="order-list">
     <!-- 状态 tab -->
     <view class="tabs">
@@ -55,9 +56,11 @@
     </view>
     <view v-else-if="list.ready && !orders.length && !list.loading" class="empty">暂无订单</view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, reactive, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiOrderList, apiOrderDelete } from "@/api/order";
@@ -230,7 +233,7 @@ onUnload(() => {
 }
 
 .tab.active {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-weight: 600;
 }
@@ -263,7 +266,7 @@ onUnload(() => {
 }
 
 .order-status {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
 }
 
@@ -303,13 +306,13 @@ onUnload(() => {
 }
 
 .order-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-size: 30rpx;
   font-weight: 600;
 }
 
 .pay-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   border-radius: 32rpx;
   padding: 10rpx 36rpx;

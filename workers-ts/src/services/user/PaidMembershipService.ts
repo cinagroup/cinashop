@@ -24,7 +24,7 @@ import {
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
 import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import { signAlipayParams, type AlipayParams } from "@/utils/alipay";
-import { parseConfigInteger } from "@/utils/config";
+import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readVisibleAgreement } from "@/services/user/PublicAgreementService";
 
@@ -481,7 +481,8 @@ export class PaidMembershipService {
     }
     const channel = normalizeMemberChannel(input.from ?? "weixin");
     if (!channel) throw new ValidateException("非法渠道");
-    const enabled = await new SystemConfigService(this.container, this.env).get("member_card_status");
+    // New purchases use the committed global SQL winner, never a stale KV flag.
+    const enabled = normalizeConfigScalar(await this.container.systemConfigDao.getValue("member_card_status"));
     if (parseConfigInteger(enabled, 1) !== 1) {
       throw new ValidateException("付费会员功能暂未开启");
     }
@@ -668,7 +669,7 @@ export class PaidMembershipService {
 
   async index(uid: number): Promise<Record<string, unknown>> {
     const now = Math.floor(Date.now() / 1000);
-    const [users, rights, agreements, plans, freeRecords, economizeRows, config, coupons] =
+    const [users, rights, agreements, plans, freeRecords, economizeRows, config, coupons, memberCardStatus] =
       await Promise.all([
         this.container.db
           .select({
@@ -713,15 +714,15 @@ export class PaidMembershipService {
           .from(storeOrderEconomize)
           .where(eq(storeOrderEconomize.uid, uid)),
         new SystemConfigService(this.container, this.env).getMany([
-          "member_card_status",
           "site_name",
         ]),
         this.memberCoupons(uid, 1, 4),
+        this.container.systemConfigDao.getValue("member_card_status").then(normalizeConfigScalar),
       ]);
 
     const account = users[0];
     if (!account) throw new NotFoundException("用户不存在");
-    const enabled = parseConfigInteger(config.member_card_status, 1) === 1;
+    const enabled = parseConfigInteger(memberCardStatus, 1) === 1;
 
     const memberTypes = enabled
       ? plans.map((plan) => {
@@ -842,7 +843,7 @@ export class PaidMembershipService {
     }
     if (!channel) throw new ValidateException("非法渠道");
 
-    const enabled = await new SystemConfigService(this.container, this.env).get("member_card_status");
+    const enabled = normalizeConfigScalar(await this.container.systemConfigDao.getValue("member_card_status"));
     if (parseConfigInteger(enabled, 1) !== 1) {
       throw new ValidateException("会员功能暂未开启");
     }

@@ -322,6 +322,7 @@ function alipayProviderTime(value: unknown): number {
 
 /** POST /api/order/refund/apply/:id  申请退款 */
 export async function refundApply(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const orderId = c.req.param("id");
@@ -431,6 +432,7 @@ export async function refundDetail(c: C) {
 
 /** POST /api/order/refund/verify — legacy apply-by-order-number alias. */
 export async function refundVerify(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;

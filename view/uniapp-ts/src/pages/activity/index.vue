@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="activity-page">
     <button @tap="goPresale">预售专区 · 查看全款预售</button>
     <button @tap="goNewcomer">新人礼 · 查看专享福利</button>
@@ -113,9 +114,11 @@
     </view>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { apiSeckillCatalogIndex, apiSeckillCatalogPage } from '@/api/seckill';
@@ -268,7 +271,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
 }
 
 .tab.active {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-weight: 600;
 }
@@ -290,7 +293,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
 }
 
 .slot.active {
-  border-color: #e93323;
+  border-color: var(--view-theme, #e93323);
 }
 
 .slot-time {
@@ -307,7 +310,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
 }
 
 .slot.active .slot-status {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .goods-list {
@@ -342,7 +345,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
 
 .price {
   font-size: 32rpx;
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-weight: 700;
 }
 
@@ -353,7 +356,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
 }
 
 .go-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 24rpx;
   padding: 12rpx 28rpx;
@@ -370,7 +373,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
 
 .my-link {
   text-align: center;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 26rpx;
   margin-top: 20rpx;
   padding: 20rpx;

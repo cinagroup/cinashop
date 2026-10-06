@@ -46,7 +46,7 @@ function literalLike(value: string): string {
 export class AdminIntegralLogService {
   constructor(private readonly container: Container) {}
 
-  private filters(query: AdminIntegralLogQuery): SQL {
+  filterPredicate(query: AdminIntegralLogQuery): SQL {
     const conditions: SQL[] = [eq(userBill.category, "integral")];
     if (query.start) conditions.push(gte(userBill.addTime, query.start));
     if (query.stop) conditions.push(lte(userBill.addTime, query.stop));
@@ -66,7 +66,7 @@ export class AdminIntegralLogService {
   }
 
   async list(query: AdminIntegralLogQuery) {
-    const where = this.filters(query);
+    const where = this.filterPredicate(query);
     const [rows, totals] = await Promise.all([
       this.container.db.select({
         id: userBill.id,
@@ -96,7 +96,7 @@ export class AdminIntegralLogService {
       sign_count: sql<string>`COUNT(*) FILTER (WHERE ${userBill.type} = 'sign')::text`,
       sign_integral: sql<string>`TRUNC(COALESCE(SUM(${userBill.number}) FILTER (WHERE ${userBill.type} = 'sign'), 0))::text`,
       used_integral: sql<string>`TRUNC(COALESCE(SUM(${userBill.number}) FILTER (WHERE ${userBill.pm} = 0), 0))::text`,
-    }).from(userBill).leftJoin(userTable, eq(userTable.uid, userBill.uid)).where(this.filters(query));
+    }).from(userBill).leftJoin(userTable, eq(userTable.uid, userBill.uid)).where(this.filterPredicate(query));
     return rows[0] ?? { total_integral: "0", sign_count: "0", sign_integral: "0", used_integral: "0" };
   }
 }

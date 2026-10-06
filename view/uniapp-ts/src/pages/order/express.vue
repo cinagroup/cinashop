@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="express-page">
     <view v-if="result && displayResult" class="body">
       <scroll-view v-if="result.packages.length > 1" class="package-list" scroll-x>
@@ -63,9 +64,11 @@
     <view v-else class="empty">{{ loading ? '查询中...' : '未找到物流信息' }}</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { apiOrderExpress } from "@/api/order";
@@ -134,9 +137,9 @@ onLoad(async (query) => {
 }
 
 .package-chip.active {
-  border-color: #e93323;
-  color: #e93323;
-  background: #fff5f4;
+  border-color: var(--view-theme, #e93323);
+  color: var(--view-theme, #e93323);
+  background: var(--view-minorColorT, rgba(233, 51, 35, 0.1));
 }
 
 .tracking-notice {
@@ -181,7 +184,7 @@ onLoad(async (query) => {
 }
 
 .status-tag.exception {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   background: #fff2f0;
 }
 
@@ -219,7 +222,7 @@ onLoad(async (query) => {
 }
 
 .trace-dot.active {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
 }
 
 .trace-line {
@@ -240,7 +243,7 @@ onLoad(async (query) => {
 .trace-status {
   font-size: 26rpx;
   font-weight: 600;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .trace-text {

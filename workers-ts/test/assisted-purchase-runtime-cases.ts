@@ -153,7 +153,9 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   }
   async function confirm(client:Awaited<ReturnType<typeof http>>,uid:number,delivery:'saved'|'manual'|'pickup'|'virtual'=uid?'saved':'manual'){
     if(delivery==='virtual')await f.exec('UPDATE store_product SET product_type=2 WHERE id=70; UPDATE user_address SET is_del=1 WHERE uid=11');
-    if(delivery==='pickup')await f.exec('UPDATE system_store SET is_store=1 WHERE id=1');
+    if(delivery==='pickup')await f.exec(`UPDATE system_store SET is_store=1 WHERE id=1;
+      INSERT INTO system_config(menu_name,value,is_store,sort) VALUES
+        ('store_func_status','1',0,2147483647),('store_self_mention','1',0,2147483647)`);
     const added=await client.post<{cartId:number}>('cart/add/'+uid,{productId:70,uniqueId:'qared001',cartNum:2,new:1,tourist_uid:'local_guest_a'});
     expect(added.status,added.msg).toBe(200);
     const body={cartId:[added.data.cartId],new:1,tourist_uid:'local_guest_a',useIntegral:true,payType:'weixin',
@@ -662,7 +664,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   it.each([11,0])('finishes uid=%i assisted cash payment and durable effects exactly once',async uid=>{
     await profiles(async(app,admin)=>{
       const client=await http(app,admin),{body,quote}=await confirm(client,uid);
-      await f.exec(`INSERT INTO store_coupon_issue(id,coupon_type,type,coupon_price) VALUES(700,0,1,1);
+      await f.exec(`INSERT INTO store_coupon_issue(id,coupon_type,type,coupon_price,day,status) VALUES(700,0,1,1,1,1);
         INSERT INTO store_product_coupon(product_id,issue_coupon_id) VALUES(70,700);
         INSERT INTO luck_lottery(factor,factor_num,start_time,end_time,status) VALUES(3,2,0,2147483647,1)`);
       const created=await client.post<Created>(`create/${quote.orderKey}/${uid}`,{...body,quoteToken:quote.quoteToken});

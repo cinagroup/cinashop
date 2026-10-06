@@ -9,9 +9,9 @@
   "summary": {
     "legacyRoutes": 48,
     "reviewed": 48,
-    "candidate": 6,
-    "partial": 22,
-    "missing": 20,
+    "candidate": 18,
+    "partial": 15,
+    "missing": 15,
     "retired": 0,
     "unreviewed": 0
   },
@@ -31,14 +31,15 @@
         "/coupon",
         "/activity",
         "/marketing/lottery",
-        "/content/wechat-qrcode"
+        "/content/wechat-qrcode",
+        "/marketing/recharge-options"
       ],
       "targetApis": [],
       "covered": [
-        "新 Admin 菜单可进入优惠券、活动、抽奖和公众号渠道码。"
+        "新 Admin 菜单可进入优惠券、活动、抽奖、公众号渠道码和充值金额配置。"
       ],
       "remaining": [
-        "旧营销宫格的促销、积分分类/签到、充值及活动边框/背景等目的地仍缺；没有同等的营销总览。"
+        "旧营销宫格的促销、签到视觉配置及活动边框/背景等目的地仍缺；没有同等的营销总览。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/home/index.vue",
@@ -50,6 +51,7 @@
         "view/admin-ts/src/pages/activity/ActivityList.vue",
         "view/admin-ts/src/pages/activity/LotteryList.vue",
         "view/admin-ts/src/pages/content/WechatQrcode.vue",
+        "view/admin-ts/src/pages/marketing/RechargeOptions.vue",
         "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
         "view/admin-ts/src/layouts/AdminLayout.vue"
       ],
@@ -57,7 +59,8 @@
         "coupon.view / coupon.manage",
         "activity.view / activity.manage",
         "lottery.view / lottery.manage",
-        "wechat_qrcode.view / wechat_qrcode.manage"
+        "wechat_qrcode.view / wechat_qrcode.manage",
+        "recharge_quota.view / recharge_quota.manage"
       ]
     },
     {
@@ -70,21 +73,27 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_combination']"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
-        "/activity"
+        "/activity/combinations"
       ],
       "targetApis": [
-        "GET /adminapi/activity/combination",
-        "POST /adminapi/activity/save",
-        "POST /adminapi/activity/status",
-        "DELETE /adminapi/activity/del/:type/:id"
+        "GET /adminapi/activity/combinations",
+        "GET /adminapi/activity/combinations/options",
+        "GET /adminapi/activity/combinations/products",
+        "GET /adminapi/activity/combinations/products/:productId",
+        "GET /adminapi/activity/combinations/:id",
+        "POST /adminapi/activity/combinations",
+        "PUT /adminapi/activity/combinations/:id",
+        "PUT /adminapi/activity/combinations/:id/status",
+        "DELETE /adminapi/activity/combinations/:id",
+        "GET /adminapi/activity/combinations/export"
       ],
       "covered": [
-        "拼团 tab 可列出活动并进入新增、编辑、启停和删除。"
+        "独立拼团目录默认15条，名称/ID、phase和status分开筛选，排除is_del=1并按sort DESC,id DESC；已有详情/编辑/复制/启停/软删合同保持。price取活动主行，ot_price取当前基础商品store_product.ot_price，基础商品缺失仍保留行且划线价为空，不混SKU的ot_price。people仍是成团配置人数；count_people为k_id=0团长原始记录数，count_people_all为全部pink记录含退款/虚拟行，count_people_pink为k_id=0且status=2。新增combination_export.view独立导出，同筛选/排序，旧11列key不变，人数标题明确为开团数/参与记录数；CSV为UTF-8 BOM、完整引用和公式保护，结束时间为Asia/Shanghai。每页最多1000条，全集最多100000行/16MiB、单响应4MiB；每页同一RR READ ONLY事务内精确count与全量cells/当前基础价/pink计数/sort/xmin的SHA-256 snapshot和总CSV字节核算，后续页必须校验相同快照。全部页完成且最终行数/字节数一致才生成本地文件，取消、失败或数据变化不下载部分文件。仅导出角色可使用导出而不读取目录，团记录与统计按各自权限独立跳转。"
       ],
       "remaining": [
-        "新目录无分页/旧筛选，BaseDao 因未收到 page 而实际无界查询；详情、复制和专门统计仍缺。"
+        "仅完成本地只读候选；生产真实角色/配置、公共媒体/R2与真实设备、完整Linux CI及发布后流程仍需验收。三个独立view权限不由combination.manage或activity.manage代授，订单详情还需order.view。本批不新增schema或grants，不宣称支付、退款、虚拟补员或通知消费者因只读屏而闭合；旧泛型团数组接口不计逐屏等价，合成验收不等于生产验收。 新导出为浏览器本地CSV，保持旧11列操作语义而非Excel二进制格式；phase/status分离保持新合同，不把隐藏项强制归为日期已结束。目录只读新增价格/计数，不改既有创建、SKU快照、额度或历史写身份。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCombination/index.vue",
@@ -92,13 +101,39 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/activity/ActivityList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
-        "workers-ts/src/dao/BaseDao.ts",
-        "cinashop-php/app/controller/admin/v1/marketing/combination/StoreCombination.php"
+        "view/admin-ts/src/pages/activity/Combinations.vue",
+        "view/admin-ts/src/api/combination.ts",
+        "view/admin-ts/src/pages/activity/CombinationImagePicker.vue",
+        "workers-ts/src/controllers/api/v1/AdminCombinationController.ts",
+        "workers-ts/src/services/admin/AdminCombinationService.ts",
+        "workers-ts/src/services/admin/AdminCombinationInput.ts",
+        "workers-ts/src/services/admin/AdminCombinationData.ts",
+        "workers-ts/src/services/admin/AdminCombinationMediaPolicy.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/test/admin-combinations-frontend.test.ts",
+        "workers-ts/test/admin-combination.test.ts",
+        "workers-ts/test/admin-combination-postgres.test.ts",
+        "workers-ts/test/admin-combination-http.test.ts",
+        "workers-ts/test/pink-virtual-timeout-postgres.test.ts",
+        "workers-ts/test/pink-success-notice-postgres.test.ts",
+        "workers-ts/test/combination-refund-policy-postgres.test.ts",
+        "workers-ts/test/pink-success-notice-migration.test.ts",
+        "workers-ts/audit/combination-browser-20260927.json",
+        "workers-ts/audit/combination-native-20260927.json",
+        "cinashop-php/app/controller/admin/v1/marketing/combination/StoreCombination.php",
+        "view/admin-ts/src/api/combinationStatistics.ts",
+        "view/admin-ts/src/utils/combinationCsv.ts",
+        "workers-ts/src/controllers/api/v1/AdminCombinationStatisticsController.ts",
+        "workers-ts/src/services/admin/AdminCombinationExportService.ts",
+        "workers-ts/test/admin-combination-export.test.ts",
+        "workers-ts/test/admin-combination-statistics-http.test.ts",
+        "workers-ts/test/admin-combination-statistics-postgres.test.ts",
+        "workers-ts/test/admin-combination-statistics-frontend.test.ts",
+        "cinashop-php/app/services/other/export/ExportServices.php"
       ],
       "targetPermissions": [
-        "activity.view / activity.manage"
+        "combination.view / combination.manage",
+        "combination_export.view"
       ]
     },
     {
@@ -111,18 +146,20 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_combination-combina_list']"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
-        "/activity"
+        "/activity/combination-groups"
       ],
       "targetApis": [
-        "GET /adminapi/activity/pink/:combinationId"
+        "GET /adminapi/activity/combination-groups/head",
+        "GET /adminapi/activity/combination-groups",
+        "GET /adminapi/activity/combination-groups/:groupId/members"
       ],
       "covered": [
-        "拼团 tab 的团列表弹窗能读取指定活动的团记录。"
+        "独立全局团目录使用combination_group.view；两卡分别为COUNT(全部pink)与COUNT(k_id=0 AND status=2)，不随列表筛选变化。团列表仅k_id=0，上海日历半开日期范围、团状态、昵称/UID/关联手机号/活动查询，默认15条且独立count，按add_time DESC,id DESC稳定分页。参与记录、当前非退款且uid>0非虚拟记录、虚拟补员分别展示，不冒充付款资格。过期raw status=1仅标pending待结算，GET不执行到期结算或提前推断成败。成员按pink团长ID、同活动且所选团长OR未退款子行分页；退款旧团长、虚拟uid0、注销/缺用户、软删/缺活动和历史cid=0均保留issues，固定活动scope仍须正ID且不得跨活动。订单关联须type3/activity/uid/pink关系及已填写双身份键同时一致，重复匹配、无效关系或删除订单禁用详情；使用业务order_id而非数据库id/key跳转且另验order.view。旧团长晋升后不合并新团，无法证明的replacement为空；头像不签名私有媒体。"
       ],
       "remaining": [
-        "旧独立团列表的查询、订单关联和完整状态操作仍缺。"
+        "仅完成本地只读候选；生产真实角色/配置、公共媒体/R2与真实设备、完整Linux CI及发布后流程仍需验收。三个独立view权限不由combination.manage或activity.manage代授，订单详情还需order.view。本批不新增schema或grants，不宣称支付、退款、虚拟补员或通知消费者因只读屏而闭合；旧泛型团数组接口不计逐屏等价，合成验收不等于生产验收。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCombination/combinaList.vue",
@@ -130,11 +167,27 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/activity/ActivityList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+        "view/admin-ts/src/pages/activity/CombinationGroups.vue",
+        "view/admin-ts/src/api/combinationStatistics.ts",
+        "view/admin-ts/src/pages/activity/combinationReadSession.ts",
+        "view/admin-ts/src/pages/activity/CombinationGroupTable.vue",
+        "view/admin-ts/src/pages/activity/CombinationMembers.vue",
+        "workers-ts/src/controllers/api/v1/AdminCombinationStatisticsController.ts",
+        "workers-ts/src/services/admin/AdminCombinationStatisticsService.ts",
+        "workers-ts/src/services/admin/AdminCombinationStatisticsInput.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/test/admin-combination-statistics.test.ts",
+        "workers-ts/test/admin-combination-statistics-postgres.test.ts",
+        "workers-ts/test/admin-combination-statistics-http.test.ts",
+        "workers-ts/test/admin-combination-statistics-frontend.test.ts",
+        "cinashop-php/app/controller/admin/v1/marketing/combination/StoreCombination.php",
+        "cinashop-php/app/services/activity/combination/StoreCombinationServices.php",
+        "cinashop-php/app/services/activity/combination/StorePinkServices.php",
+        "cinashop-php/app/dao/activity/combination/StorePinkDao.php",
+        "cinashop-php/app/dao/order/StoreOrderDao.php"
       ],
       "targetPermissions": [
-        "activity.view / activity.manage"
+        "combination_group.view"
       ]
     },
     {
@@ -147,18 +200,26 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_combination-create']"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
-        "/activity"
+        "/activity/combinations"
       ],
       "targetApis": [
-        "POST /adminapi/activity/save"
+        "GET /adminapi/activity/combinations",
+        "GET /adminapi/activity/combinations/options",
+        "GET /adminapi/activity/combinations/products",
+        "GET /adminapi/activity/combinations/products/:productId",
+        "GET /adminapi/activity/combinations/:id",
+        "POST /adminapi/activity/combinations",
+        "PUT /adminapi/activity/combinations/:id",
+        "PUT /adminapi/activity/combinations/:id/status",
+        "DELETE /adminapi/activity/combinations/:id"
       ],
       "covered": [
-        "聚合表单可保存拼团商品、价格、库存、人数和状态等基础字段。"
+        "专用完整单来源创建/原位编辑/复制流程，分类含子类和平台单标签筛选，完整source成功后原子替换草稿；编辑与复制锁定来源，复制清活动/SKU身份和已消耗量，按配置总额度预填。名称/简介/单位、多图最多10张、上海起止时间、时效/限购/成团人数/虚拟阈值、分享热门推荐/退款、配送/邮费及所属方模板、SKU图片/拼团价/总额度和只读成本/日常价/库存/重量/体积/编码、富文本与HTML源码齐全。历史SKU身份/退役保持，总额度不能低于已消耗，批量更新先完整验证再原子写草稿；gallery沿attachment独立权限。UUID/revision、会话ABA/迟到取消和未知结果仅GET重读。"
       ],
       "remaining": [
-        "旧活动起止时间、SKU/限购/分享配置和 copy 参数未恢复；完整前端表单提交仍需并发库存/额度边界验收。"
+        "本机原生受限角色与实际装配HTTP及生命周期去重155项、既有回归485项、前端39项和CUA合成浏览器已分别验收；155项来自7文件135项通过与修订迁移20项独立终态，旧失败迁移批次不重复计数。虚拟到期成团、成团成功通知、退款/物流/买方配置快照有独立原生证据，开团/参团成功通知不在该证据范围；富文本DOM清理、签名还原与390宽布局有实际浏览器证据。真实配置/角色/provider、完整公共媒体/R2验收、真实设备、完整Linux CI及发布仍开放；合成验收不等于生产验收。全局团记录、独立统计与目录导出由独立只读合同承接，本条不扩充旧生命周期证据。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCombination/create.vue",
@@ -166,11 +227,29 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/activity/ActivityList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+        "view/admin-ts/src/pages/activity/Combinations.vue",
+        "view/admin-ts/src/api/combination.ts",
+        "view/admin-ts/src/pages/activity/CombinationImagePicker.vue",
+        "workers-ts/src/controllers/api/v1/AdminCombinationController.ts",
+        "workers-ts/src/services/admin/AdminCombinationService.ts",
+        "workers-ts/src/services/admin/AdminCombinationInput.ts",
+        "workers-ts/src/services/admin/AdminCombinationData.ts",
+        "workers-ts/src/services/admin/AdminCombinationMediaPolicy.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/test/admin-combinations-frontend.test.ts",
+        "workers-ts/test/admin-combination.test.ts",
+        "workers-ts/test/admin-combination-postgres.test.ts",
+        "workers-ts/test/admin-combination-http.test.ts",
+        "workers-ts/test/pink-virtual-timeout-postgres.test.ts",
+        "workers-ts/test/pink-success-notice-postgres.test.ts",
+        "workers-ts/test/combination-refund-policy-postgres.test.ts",
+        "workers-ts/test/pink-success-notice-migration.test.ts",
+        "workers-ts/audit/combination-browser-20260927.json",
+        "workers-ts/audit/combination-native-20260927.json",
+        "cinashop-php/app/controller/admin/v1/marketing/combination/StoreCombination.php"
       ],
       "targetPermissions": [
-        "activity.view / activity.manage"
+        "combination.view / combination.manage"
       ]
     },
     {
@@ -183,18 +262,21 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "not declared in route"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
-        "/activity"
+        "/activity/combination-statistics/:id?"
       ],
       "targetApis": [
-        "GET /adminapi/activity/pink/:combinationId"
+        "GET /adminapi/activity/combination-statistics/:id/head",
+        "GET /adminapi/activity/combination-statistics/:id/groups",
+        "GET /adminapi/activity/combination-statistics/:id/groups/:groupId/members",
+        "GET /adminapi/activity/combination-statistics/:id/orders"
       ],
       "covered": [
-        "可在团列表弹窗读取一部分参与团记录。"
+        "独立可选活动ID统计页使用combination_statistics.view，缺ID时提供选择入口，坏ID/不存在活动拒绝，软删活动保留历史。PHP六卡精确保持：people_count=COUNT(DISTINCT pink.uid)含uid0，spread_count=COUNT(DISTINCT uid WHERE k_id>0)是参团不同UID而非推广归因；start_count为k_id=0原始团长数，success_count再限status=2；pay_price为type=3 AND paid=1 AND pid IN(0,-1)的活动订单SUM(pay_price)十进制字符串，pay_count按同集合DISTINCT uid。支付毛额含后续退款和已删除主单，排除未支付/拆单子单，不能用pink/cart/refund多表联接放大金额。参与团/活动订单两个页签各自15条分页，list/count同完整谓词，状态/名称/手机号/UID/地址/商品与活动搜索使用EXISTS防放大；订单status=0恒为空以保持paid roots。团状态保留raw并将过期1标pending；独立活动scoped成员路由校验活动ID、双订单身份与历史issues，虚拟/删除/缺失订单不得伪造详情链接。汇总、列表、成员可分别失败重试，会话ABA/迟到响应失效；每个响应为有界RR READ ONLY快照、5/2/5秒事务局部期限和private no-store，不触发任何交易消费者。"
       ],
       "remaining": [
-        "旧 statistics/head、list、order 三组统计、订单维度和图表没有等价页面/API。"
+        "仅完成本地只读候选；生产真实角色/配置、公共媒体/R2与真实设备、完整Linux CI及发布后流程仍需验收。三个独立view权限不由combination.manage或activity.manage代授，订单详情还需order.view。本批不新增schema或grants，不宣称支付、退款、虚拟补员或通知消费者因只读屏而闭合；旧泛型团数组接口不计逐屏等价，合成验收不等于生产验收。 旧源码没有独立图表控件，本页恢复六卡/两页签/成员与订单语义，不以新增图表充抵合同；各响应独立读取，不声称跨汇总与列表请求共享数据库快照。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCombination/statistics.vue",
@@ -202,11 +284,27 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/activity/ActivityList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+        "view/admin-ts/src/pages/activity/CombinationStatistics.vue",
+        "view/admin-ts/src/api/combinationStatistics.ts",
+        "view/admin-ts/src/pages/activity/combinationReadSession.ts",
+        "view/admin-ts/src/pages/activity/CombinationGroupTable.vue",
+        "view/admin-ts/src/pages/activity/CombinationMembers.vue",
+        "workers-ts/src/controllers/api/v1/AdminCombinationStatisticsController.ts",
+        "workers-ts/src/services/admin/AdminCombinationStatisticsService.ts",
+        "workers-ts/src/services/admin/AdminCombinationStatisticsInput.ts",
+        "workers-ts/src/routes/v1/index.ts",
+        "workers-ts/test/admin-combination-statistics.test.ts",
+        "workers-ts/test/admin-combination-statistics-postgres.test.ts",
+        "workers-ts/test/admin-combination-statistics-http.test.ts",
+        "workers-ts/test/admin-combination-statistics-frontend.test.ts",
+        "cinashop-php/app/controller/admin/v1/marketing/combination/StoreCombination.php",
+        "cinashop-php/app/services/activity/combination/StoreCombinationServices.php",
+        "cinashop-php/app/services/activity/combination/StorePinkServices.php",
+        "cinashop-php/app/dao/activity/combination/StorePinkDao.php",
+        "cinashop-php/app/dao/order/StoreOrderDao.php"
       ],
       "targetPermissions": [
-        "activity.view / activity.manage"
+        "combination_statistics.view"
       ]
     },
     {
@@ -219,12 +317,26 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_coupon']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/coupon-templates"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/coupon-templates",
+        "GET /adminapi/marketing/coupon-templates/options",
+        "GET /adminapi/marketing/coupon-templates/products",
+        "GET /adminapi/marketing/coupon-templates/:id/issues",
+        "GET /adminapi/marketing/coupon-templates/:id",
+        "POST /adminapi/marketing/coupon-templates",
+        "POST /adminapi/marketing/coupon-templates/:id/invalidate",
+        "DELETE /adminapi/marketing/coupon-templates/:id",
+        "POST /adminapi/marketing/coupon-template-issues"
+      ],
+      "covered": [
+        "独立模板目录恢复名称/精确ID与状态筛选、默认15条分页、sort DESC,id DESC和is_del=0，展示范围/面额/门槛/领后有效天数/排序/状态。模板仅创建、立即失效、删除和发布，无编辑/重新启用；旧image字段是商品选择对象，不是素材封面。通用、单品类、指定商品三范围独立校验，分类含完整祖先可见性，选品跨页保留且最多100项/500字符，应用去重校验并排序成规范CSV，创建/发布持范围锁重验。新增store_coupon_template与store_coupon_template_issue两实体；proof关联是归属权威，issue.cid仅兼容，不认领历史孤儿cid；商品关系coupon_id只写新issue.id。发布复制金额/天数/范围到独立发行，普通receive_type=1、新人=2、赠送=3，限量正数或不限量0，领用窗口成对UTC并由上海输入转换，每人限领1。新模板普通手动券为receive_type=1/category=0/app_type=0；本批公共手领取消仅category0限制，另兼容已证明的历史普通category=1，仍拒绝会员/受限渠道及非手领用途；立即失效仅将proof关联发行status=-1，删除仅模板is_del=1，保留已领/已占券、范围与订单。五读取为有界REPEATABLE READ READ ONLY及5/2/5秒期限，private no-store；写入READ COMMITTED、源行锁、revision、actor+UUID+内容摘要与原子审计，发布重放复核proof.sourceRevision。发布同时要求coupon_template_issue.manage和coupon_template.view；仅发布角色稳定页面显示无查看权限；换号过渡GET仍由服务器拒绝并丢弃旧上下文响应。会话ABA/跨tab与迟到响应失效；未知写保留原UUID/body并阻止新写，只GET核对后经人工确认解除。"
+      ],
       "remaining": [
-        "旧页管理 store_coupon 模板并可发券；新 /coupon 读写 store_coupon_issue 发行实例，不管理模板实体。"
+        "本机业务55项唯一通过、旧消费者381项唯一通过，均按完整文件替换去重而非单批全绿；结构批59含27项PGlite/静态和32项原生，九路径281表/228序列及零结构差异，页面41、权限28、台账93、类型/构建和最终dist合成浏览器均通过。旧允许面额0/有效日0，新严格面额>0且有效日1..3650；默认状态为有效，旧列表默认全部。DB约束范围形状/正int32/容量，CSV规范排序去重由应用保证。proof.sourceRevision固定来源，不禁止既有发行管理独立编辑；不把新模板页抵作旧发行列表/编辑页或优惠券配置页。新人仍需register_give_coupon等配置，赠送仍需明确渠道；用途flag/full_reduction不代表自动满赠或关注投递闭合。未知结果人工确认仅清本地状态，不是服务端回执，错误确认后新UUID可能重复发行，刷新/退出不保存恢复队列。两表外部0169/内嵌0175与显式窄权限升级不自动应用线上，不认领旧store_coupon或任意cid。完整Linux CI、真实配置/角色、真实设备/渠道与发布继续开放。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCoupon/index.vue",
@@ -232,10 +344,38 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/coupon/CouponList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+        "view/admin-ts/src/pages/marketing/CouponTemplates.vue",
+        "cinashop-php/app/controller/admin/v1/marketing/coupon/StoreCoupon.php",
+        "cinashop-php/app/services/activity/coupon/StoreCouponServices.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponDao.php",
+        "view/admin-ts/src/api/couponTemplate.ts",
+        "workers-ts/src/controllers/api/v1/AdminCouponTemplateController.ts",
+        "workers-ts/src/services/admin/AdminCouponTemplateInput.ts",
+        "workers-ts/src/services/admin/AdminCouponTemplateService.ts",
+        "workers-ts/src/models/schema/coupon_templates.ts",
+        "workers-ts/src/migrations/couponTemplateCatalog.ts",
+        "workers-ts/migrations/0169_coupon_template_catalog.sql",
+        "workers-ts/src/migrations/runCouponTemplateRuntimeUpgrade.ts",
+        "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+        "workers-ts/src/services/activity/ActivityService.ts",
+        "workers-ts/src/services/activity/StoreNewcomerService.ts",
+        "workers-ts/src/services/activity/ProductCouponService.ts",
+        "workers-ts/src/services/order/CheckoutCouponTemplateAuthority.ts",
+        "workers-ts/test/admin-coupon-template.test.ts",
+        "workers-ts/test/admin-coupon-template-postgres.test.ts",
+        "workers-ts/test/admin-coupon-template-http.test.ts",
+        "workers-ts/test/coupon-manual-claim.test.ts",
+        "workers-ts/test/coupon-template-catalog.test.ts",
+        "workers-ts/test/runtime-coupon-template-privileges.test.ts",
+        "workers-ts/test/admin-coupon-templates-frontend.test.ts",
+        "workers-ts/docs/admin-coupon-template-contract.md",
+        "workers-ts/audit/coupon-template-native-20260927.json",
+        "workers-ts/audit/coupon-template-browser-20260927.json"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "coupon_template.view / coupon_template.manage",
+        "coupon_template_issue.manage + coupon_template.view"
+      ]
     },
     {
       "legacy": {
@@ -247,21 +387,23 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_coupon_issue']"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
         "/coupon"
       ],
       "targetApis": [
-        "GET /adminapi/coupon/list",
-        "POST /adminapi/coupon/save",
-        "POST /adminapi/coupon/status/:id",
-        "DELETE /adminapi/coupon/del/:id"
+        "GET /adminapi/marketing/coupon-issues",
+        "GET /adminapi/marketing/coupon-issues/:id",
+        "GET /adminapi/marketing/coupon-issues/:id/copy",
+        "GET /adminapi/marketing/coupon-issues/:id/claims",
+        "POST /adminapi/marketing/coupon-issues/:id/status",
+        "DELETE /adminapi/marketing/coupon-issues/:id"
       ],
       "covered": [
-        "新页可列出已发行优惠券并做基础编辑、停发和删除。"
+        "专用发行目录以is_del=0过滤、id DESC排序、15条分页和同快照独立count恢复名称/精确ID、优惠类型、领取方式与状态筛选；UI默认全部，API省略状态仍默认1，名称中的%/_作为literal搜索。列表超过100条可继续分页，limit<=100/offset<=10000超界明确拒绝。六种读取采用有界REPEATABLE READ READ ONLY、5/2/5秒期限与private no-store，读取失败独立重试。金额/折扣、四范围、普通/会员、领取与使用时间、发行/剩余、规则、排序和proof来源详情明确；历史长标题、未知smallint、异常定义与扩展年份可诊断展示，不要求每条可复制。仅coupon.view不能写；领取记录另需coupon_record.view，精确issue_id且普通券读取store_coupon_issue_user、会员category=2读取store_coupon_user，禁止两表互join，保留重复、null/负UID、缺失及注销用户，头像只允许公共预览。未删除发行允许status=-1独立改0/1，确认说明不恢复源模板；开启校验真实历史定义与范围。软删除只写isDel=1/status=-1，保留scope、store_product_coupon赠券配置、proof、已领/已占券、计数与订单，未来发放由isDel拒绝。revision排除remainCount/xmin/领取历史，但绑定经济字段、范围与proof；READ COMMITTED、发行行锁、actor+UUID+内容指纹和原子system_log回执防重复执行，范围SHARE NOWAIT避免反向锁等待，不持发行锁等待源模板。会话ABA/跨tab/确认与迟到响应失效，未知写保留原UUID/body/商品集合，只GET核对且人工ack不再写入。"
       ],
       "remaining": [
-        "旧领取方式、数量、范围、复制和领取日志入口仍缺；新列表未过滤 is_del，软删后仍显示历史发行券。"
+        "本机新增原生四文件38项唯一通过，保留service10/manual12并采用最终完整formal10/HTTP6；既有消费者原生七文件225项、输入/权限/wallet三文件50项与前端47项分别计账，Admin构建及最终166文件dist合成浏览器已通过，不冒充单批原生总数。旧安装和运行权限沿用，本批无新DDL/grants。旧generic经济编辑仅保留兼容与checkout回归，不是旧绑定页编辑合同；优惠券配置页仍missing。会员真实权益与领取渠道、新人注册配置、赠送/自动满赠/关注投递仍须独立验收，保存用途不等于消费者闭合。源模板proof只证明来源，不禁止独立发行启停；app_type非0不支持直接复制，须核对后明确独立新建。未知结果恢复仅GET与人工核对，确认只清本地状态不证明服务端成功/失败，换新UUID可能重复发行，刷新/退出不保存恢复队列。浏览器使用合成API和角色，导航菜单不代替真实servermenu授权；完整Linux CI、真实配置/角色、真实设备/provider与部署发布继续开放。旧模板native/browser/acceptance及其源码、dist、台账capsule保持原字节，不以本批覆盖旧证据。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCouponIssue/index.vue",
@@ -270,11 +412,33 @@
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
         "view/admin-ts/src/pages/coupon/CouponList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
-        "cinashop-php/app/services/activity/coupon/StoreCouponIssueServices.php"
+        "cinashop-php/app/controller/admin/v1/marketing/coupon/StoreCouponIssue.php",
+        "cinashop-php/app/services/activity/coupon/StoreCouponIssueServices.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponIssueDao.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponIssueUserDao.php",
+        "cinashop-php/app/services/activity/coupon/StoreCouponUserServices.php",
+        "view/admin-ts/src/api/couponIssue.ts",
+        "workers-ts/src/controllers/api/v1/AdminCouponIssueController.ts",
+        "workers-ts/src/services/admin/AdminCouponIssueInput.ts",
+        "workers-ts/src/services/admin/AdminCouponIssueService.ts",
+        "workers-ts/src/services/admin/AdminCouponTemplateService.ts",
+        "workers-ts/src/services/activity/ActivityService.ts",
+        "workers-ts/src/services/activity/ProductCouponService.ts",
+        "workers-ts/src/services/order/CheckoutCouponTemplateAuthority.ts",
+        "workers-ts/test/admin-coupon-issue-input.test.ts",
+        "workers-ts/test/admin-coupon-issue.test.ts",
+        "workers-ts/test/admin-coupon-issue-postgres.test.ts",
+        "workers-ts/test/admin-coupon-issue-http.test.ts",
+        "workers-ts/test/coupon-manual-claim.test.ts",
+        "workers-ts/test/admin-permission.test.ts",
+        "workers-ts/test/admin-coupon-issues-frontend.test.ts",
+        "workers-ts/test/checkout-coupon-management.test.ts",
+        "workers-ts/audit/coupon-issue-native-20260927.json",
+        "workers-ts/audit/coupon-issue-browser-20260927.json"
       ],
       "targetPermissions": [
-        "coupon.view / coupon.manage"
+        "coupon.view / coupon.manage",
+        "coupon_record.view"
       ]
     },
     {
@@ -287,18 +451,21 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['admin-marketing-store_coupon_issue-create']"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
         "/coupon"
       ],
       "targetApis": [
-        "POST /adminapi/coupon/save"
+        "GET /adminapi/marketing/coupon-issues/options",
+        "GET /adminapi/marketing/coupon-issues/products",
+        "GET /adminapi/marketing/coupon-issues/:id/copy",
+        "POST /adminapi/marketing/coupon-issues"
       ],
       "covered": [
-        "新表单可编辑发行券名称、面额、门槛和有效天数。"
+        "旧绑定表单恢复为新建与复制为独立发行，无原位经济编辑。面额/折扣、标题、普通category=0/会员category=2、手领/后台发、通用/品类/商品/品牌四范围、门槛、领后1..3650天或固定使用区间、领取窗口、限量正数/不限量0、纯文本规则与启用齐全；sort随复制保留，新建默认0而不虚构旧排序控件。新输入折扣使用1..100整数百分数，85表示8.5折；历史小数可原值复制并明确85.99按85%结算，API仍保留真实十进制合同。新人2/会员发放4仅在相应历史复制用途保留，新人强制不限量，不宣称自动发放已配置。上海日期转换精确UTC，两组起止成对且结束晚于开始。分类与品牌完整可见祖先有界校验、品牌限storeId0；商品跨页完整选择最多100项/CSV500字符，5000项选项上限拒截断，缺失/隐藏/删除或歧义范围不得悄悄复制。copy_input仅提供可完整表达的定义，历史category1映射普通0、status=-1草稿为0；app_type非0返回copy_input=null及明确诊断，POST复制也拒绝降级受众。source_id/source_revision绑定同事务源行锁与版本，复制草稿可明确修改，新发行cid=0/appType=0/receiveLimit=1、无proof/赠送flags，库存从新发行量初始化，不继承旧身份、来源凭证、自动配置、已消耗库存或领取历史。普通手动领取receive_type=1/app_type=0，兼容已证明的历史普通category=1并保留新普通0；会员2、受限appType及receive_type=0/2/3/4仍不能通过公共手领。"
       ],
       "remaining": [
-        "旧普通/会员券、手领/后台发、商品/品类/品牌范围、数量和使用期字段未在 Admin 表单暴露；Worker 接受部分字段不等于页面覆盖。"
+        "本机新增原生四文件38项唯一通过，保留service10/manual12并采用最终完整formal10/HTTP6；既有消费者原生七文件225项、输入/权限/wallet三文件50项与前端47项分别计账，Admin构建及最终166文件dist合成浏览器已通过，不冒充单批原生总数。旧安装和运行权限沿用，本批无新DDL/grants。旧generic经济编辑仅保留兼容与checkout回归，不是旧绑定页编辑合同；优惠券配置页仍missing。会员真实权益与领取渠道、新人注册配置、赠送/自动满赠/关注投递仍须独立验收，保存用途不等于消费者闭合。源模板proof只证明来源，不禁止独立发行启停；app_type非0不支持直接复制，须核对后明确独立新建。未知结果恢复仅GET与人工核对，确认只清本地状态不证明服务端成功/失败，换新UUID可能重复发行，刷新/退出不保存恢复队列。浏览器使用合成API和角色，导航菜单不代替真实servermenu授权；完整Linux CI、真实配置/角色、真实设备/provider与部署发布继续开放。旧模板native/browser/acceptance及其源码、dist、台账capsule保持原字节，不以本批覆盖旧证据。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCouponIssue/create.vue",
@@ -306,7 +473,30 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/coupon/CouponList.vue"
+        "view/admin-ts/src/pages/coupon/CouponList.vue",
+        "cinashop-php/app/controller/admin/v1/marketing/coupon/StoreCouponIssue.php",
+        "cinashop-php/app/services/activity/coupon/StoreCouponIssueServices.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponIssueDao.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponIssueUserDao.php",
+        "cinashop-php/app/services/activity/coupon/StoreCouponUserServices.php",
+        "view/admin-ts/src/api/couponIssue.ts",
+        "workers-ts/src/controllers/api/v1/AdminCouponIssueController.ts",
+        "workers-ts/src/services/admin/AdminCouponIssueInput.ts",
+        "workers-ts/src/services/admin/AdminCouponIssueService.ts",
+        "workers-ts/src/services/admin/AdminCouponTemplateService.ts",
+        "workers-ts/src/services/activity/ActivityService.ts",
+        "workers-ts/src/services/activity/ProductCouponService.ts",
+        "workers-ts/src/services/order/CheckoutCouponTemplateAuthority.ts",
+        "workers-ts/test/admin-coupon-issue-input.test.ts",
+        "workers-ts/test/admin-coupon-issue.test.ts",
+        "workers-ts/test/admin-coupon-issue-postgres.test.ts",
+        "workers-ts/test/admin-coupon-issue-http.test.ts",
+        "workers-ts/test/coupon-manual-claim.test.ts",
+        "workers-ts/test/admin-permission.test.ts",
+        "workers-ts/test/admin-coupon-issues-frontend.test.ts",
+        "workers-ts/test/checkout-coupon-management.test.ts",
+        "workers-ts/audit/coupon-issue-native-20260927.json",
+        "workers-ts/audit/coupon-issue-browser-20260927.json"
       ],
       "targetPermissions": [
         "coupon.view / coupon.manage"
@@ -607,10 +797,10 @@
         "DELETE /adminapi/activity/del/:type/:id"
       ],
       "covered": [
-        "砍价 tab 可列活动、编辑、启停和删除。"
+        "砍价 tab 可按名称和启停状态筛选、每页20条浏览并显示总数，超过100条可继续翻页；只读角色可浏览，管理角色可编辑、启停和删除。"
       ],
       "remaining": [
-        "新目录固定前100条且无分页/旧筛选，超过100条会静默漏项；活动配置和参与统计仍需专门对照。"
+        "旧活动时间状态筛选、复制和导出尚未补齐，活动配置和参与统计仍需专门对照；旧默认每页15条，新目录20条。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeBargain/index.vue",
@@ -620,7 +810,8 @@
         "workers-ts/src/services/admin/AdminPermissionService.ts",
         "view/admin-ts/src/pages/activity/ActivityList.vue",
         "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
-        "workers-ts/src/dao/BaseDao.ts"
+        "workers-ts/src/services/admin/AdminActivityListService.ts",
+        "workers-ts/test/admin-activity-list.test.ts"
       ],
       "targetPermissions": [
         "activity.view / activity.manage"
@@ -756,10 +947,10 @@
         "DELETE /adminapi/activity/del/:type/:id"
       ],
       "covered": [
-        "秒杀 tab 可列活动并做基础编辑、状态和删除。"
+        "秒杀 tab 可按名称和启停状态筛选、每页20条浏览并显示总数，按 sort/id 倒序；管理角色可做基础编辑、状态和删除，统计由独立权限进入。"
       ],
       "remaining": [
-        "新目录无分页/旧筛选，BaseDao 因未收到 page 而实际无界查询；旧时段关系和统计仍缺，新建未选择时段时默认 timeId='1'。"
+        "旧活动时间状态筛选、复制、导出和时段关系仍未完整恢复，新建未选择时段时默认 timeId='1'；旧默认每页15条，新目录20条，名称查询不等同旧全部搜索口径。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeSeckill/index.vue",
@@ -769,7 +960,8 @@
         "workers-ts/src/services/admin/AdminPermissionService.ts",
         "view/admin-ts/src/pages/activity/ActivityList.vue",
         "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
-        "workers-ts/src/dao/BaseDao.ts",
+        "workers-ts/src/services/admin/AdminActivityListService.ts",
+        "workers-ts/test/admin-activity-list.test.ts",
         "cinashop-php/app/controller/admin/v1/marketing/seckill/StoreSeckill.php"
       ],
       "targetPermissions": [
@@ -786,23 +978,44 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-seckill_list']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [
-        "GET /adminapi/activity/seckill_times"
+      "status": "candidate",
+      "targetScreens": [
+        "/activity/seckill-activities"
       ],
-      "covered": [],
+      "targetApis": [
+        "GET /adminapi/activity/seckill-activities",
+        "GET /adminapi/activity/seckill-activities/options",
+        "GET /adminapi/activity/seckill-activities/products",
+        "GET /adminapi/activity/seckill-activities/products/:productId",
+        "GET /adminapi/activity/seckill-activities/:id",
+        "POST /adminapi/activity/seckill-activities",
+        "PUT /adminapi/activity/seckill-activities/:id",
+        "PUT /adminapi/activity/seckill-activities/:id/status",
+        "DELETE /adminapi/activity/seckill-activities/:id"
+      ],
+      "covered": [
+        "独立 store_activity(type=1) 父目录恢复名称/精确ID、日期阶段、开启状态及15条分页；展示日期、多场次、参与商品数并进入详情、原位编辑和复制预填。显式启停原子级联全部子商品并提示重开行为，删除原子软删除父/子；独立权限、revision/request_id和审计保持订单/SKU身份。受限app排期行锁和Admin父写权限分别经固定维护forward及真实LOGIN验收。"
+      ],
       "remaining": [
-        "旧屏管理含日期、场次、参与商品数、状态与复制的秒杀活动；新时段只读接口及商品 tab 没有这个独立活动目录。"
+        "本地候选未发布；真实配置/角色、完整Linux CI及发布后流程仍待验收。完整创建页已补分类/标签选品、跨页多选、跨商品批量及SKU图片，独立create条目列为本地candidate；父控制器可收取的适用门店不是旧页已提供控件。旧重复PHP动态API不因此恢复。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeSeckill/list.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/activity/SeckillActivities.vue",
+        "workers-ts/docs/admin-seckill-parent-contract.md",
+        "workers-ts/src/services/admin/AdminSeckillActivityService.ts",
+        "workers-ts/test/admin-seckill-activity.test.ts",
+        "workers-ts/test/admin-seckill-activity-postgres.test.ts",
+        "workers-ts/test/seckill-runtime-login.test.ts",
+        "workers-ts/docs/seckill-runtime-privileges.md"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "seckill_activity.view / seckill_activity.manage"
+      ]
     },
     {
       "legacy": {
@@ -814,12 +1027,23 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_seckill-data']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/activity/seckill-times"
+      ],
+      "targetApis": [
+        "GET /adminapi/activity/seckill-times",
+        "GET /adminapi/activity/seckill-times/:id",
+        "POST /adminapi/activity/seckill-times",
+        "PUT /adminapi/activity/seckill-times/:id",
+        "PUT /adminapi/activity/seckill-times/:id/status",
+        "DELETE /adminapi/activity/seckill-times/:id"
+      ],
+      "covered": [
+        "独立页管理 store_seckill_time 的标题、起止时间、平台图片、描述和显隐，提供名称/状态查询、20条分页与添加编辑删除；独立权限、revision/request_id及原子审计保护写入。兼容旧HHmm读取，新写HH:mm，上海日内时段允许相邻端点，重叠检查包含隐藏项；删除同时保护未结束父/子ID引用及旧父活动时间对，包含结束当天、未来和隐藏引用。损坏时段可逐项修为合法隐藏，再启用；图库保持独立附件权限，保存稳定引用并签名展示。"
+      ],
       "remaining": [
-        "旧 seckill_data 页管理秒杀幻灯片、描述与启停；新 seckill_times 仅是时段读取，不能代替这块内容配置。"
+        "仅完成本地候选；真实角色、素材配置、全量Linux CI及发布后流程仍待验收。旧动态表单URL不因此恢复；父活动目录和已补齐五项旧交互的完整创建页由独立父页面承接，分别列为本地candidate。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeSeckill/config.vue",
@@ -827,9 +1051,17 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+        "view/admin-ts/src/pages/activity/SeckillTimes.vue",
+        "cinashop-php/app/services/activity/seckill/StoreSeckillTimeServices.php",
+        "cinashop-php/app/dao/activity/seckill/StoreSeckillTimeDao.php",
+        "workers-ts/src/services/admin/AdminSeckillTimeService.ts",
+        "workers-ts/src/controllers/api/v1/AdminSeckillTimeController.ts",
+        "workers-ts/src/services/activity/SeckillScheduleService.ts",
+        "workers-ts/src/models/schema/activity.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "seckill_time.view / seckill_time.manage"
+      ]
     },
     {
       "legacy": {
@@ -841,18 +1073,26 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_seckill-create']"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
-        "/activity"
+        "/activity/seckill-activities"
       ],
       "targetApis": [
-        "POST /adminapi/activity/save"
+        "GET /adminapi/activity/seckill-activities",
+        "GET /adminapi/activity/seckill-activities/options",
+        "GET /adminapi/activity/seckill-activities/products",
+        "GET /adminapi/activity/seckill-activities/products/:productId",
+        "GET /adminapi/activity/seckill-activities/:id",
+        "POST /adminapi/activity/seckill-activities",
+        "PUT /adminapi/activity/seckill-activities/:id",
+        "PUT /adminapi/activity/seckill-activities/:id/status",
+        "DELETE /adminapi/activity/seckill-activities/:id"
       ],
       "covered": [
-        "聚合表单可保存秒杀商品、价格、库存和限购等基础值。"
+        "独立双页签表单恢复上海日期、多场次、限购、氛围图、多个商品和SKU参与/价格/总额度，成本价和划线价只读；服务端继承来源及配送，原位编辑保留子/SKU身份、销量和已消耗额度。复制先读取当前剩余额度预填，再POST新身份；退休移除保留订单/退款引用。分类级联含子分类与商品标签筛选、跨页多选一次添加、跨商品批量价格/总额度与确认移除、选品商品类型/分类列及SKU自身图片均已恢复；逐源权威详情读齐后原子加入本地表单，批量设置先整批校验已消耗额度下限，移除保持历史身份且不复活退休规格。分类列以所属方范围内去重名称展示，与旧父/子路径格式的显示差异单独记录。图片保留稳定引用，按来源或已存子商品所属平台/供应商校验后签名预览；同一图片策略补公开秒杀列表主图签名，仅证明该列表响应。真实Admin/app购买、编辑、关闭及取消恢复均经原生验证。"
       ],
       "remaining": [
-        "旧 SKU、活动时间、场次选择/复制及图文配置未恢复；新建未传 timeId 时默认 '1'，完整表单提交仍需并发库存/额度验收。"
+        "本地候选未发布；真实配置/角色、生产素材、完整Linux CI及发布验收继续开放。公开秒杀列表主图的本地签名不等于详情、订单快照及完整商品媒体合同验收，旧动态表单API未注册。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeSeckill/create.vue",
@@ -860,11 +1100,22 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/activity/ActivityList.vue",
-        "workers-ts/src/controllers/api/v1/AdminCrudController.ts"
+        "view/admin-ts/src/pages/activity/SeckillActivities.vue",
+        "workers-ts/docs/admin-seckill-parent-contract.md",
+        "workers-ts/src/services/admin/AdminSeckillActivityService.ts",
+        "workers-ts/src/services/admin/AdminSeckillActivityData.ts",
+        "workers-ts/src/services/admin/AdminSeckillActivityInput.ts",
+        "workers-ts/src/services/activity/ProductAssetPolicy.ts",
+        "workers-ts/src/services/activity/ActivityService.ts",
+        "workers-ts/test/admin-seckill-activity.test.ts",
+        "workers-ts/test/admin-seckill-activity-postgres.test.ts",
+        "workers-ts/test/admin-seckill-activities-frontend.test.ts",
+        "workers-ts/test/seckill-product-media.test.ts",
+        "workers-ts/test/seckill-runtime-login.test.ts",
+        "view/admin-ts/src/api/seckillActivity.ts"
       ],
       "targetPermissions": [
-        "activity.view / activity.manage"
+        "seckill_activity.view / seckill_activity.manage"
       ]
     },
     {
@@ -962,7 +1213,7 @@
       "targetApis": [],
       "covered": [],
       "remaining": [
-        "旧积分签到视觉和 group_data 配置没有新 Admin 编辑页。"
+        "旧积分签到视觉和 sign_day_num 组合数据配置没有新 Admin 编辑页；旧 PHP 与 Worker 当前签到消费者均读取 sign_mode、基础积分及 system_sign_reward，不消费这组旧7天配置，不能把现有签到奖励页当成等价替代。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/signIn/index.vue",
@@ -1024,21 +1275,42 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-integral-classify']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/integral-categories"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/integral-categories",
+        "GET /adminapi/marketing/integral-categories/:id",
+        "POST /adminapi/marketing/integral-categories",
+        "PUT /adminapi/marketing/integral-categories/:id",
+        "PUT /adminapi/marketing/integral-categories/:id/status",
+        "DELETE /adminapi/marketing/integral-categories/:id"
+      ],
+      "covered": [
+        "独立权限页管理 category 表 group=5 的平面积分区间，保留名称/ID和显隐筛选、15条分页、名称/最低积分/最高积分/状态/排序、添加编辑显隐删除；新写合同使用request_id和材料revision，事务内审计及组内串行校验防止同名和闭区间重叠。公开消费者仍输出label/value=min-max，无商品分类ID绑定。"
+      ],
       "remaining": [
-        "旧积分分类新增、编辑和显隐没有新 Admin 管理页。"
+        "仅本地候选，生产范围数据与真实受限角色、完整Linux CI及发布后商城过滤仍待验；新REST不声称恢复旧7条动态表单API。相交判断补齐旧PHP漏掉的完全包围范围，隐藏项同样参与冲突校验；可见项上限1000保护现有公开消费者。名称以PostgreSQL lower判重，常见大小写同名拒绝，但不声称完整复刻MySQL utf8mb4_unicode_ci的重音/Unicode折叠规则。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/integralClassify/index.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/IntegralCategories.vue",
+        "cinashop-php/app/controller/admin/v1/marketing/integral/StoreIntegralCategory.php",
+        "cinashop-php/app/services/activity/integral/StoreIntegralCategoryServices.php",
+        "workers-ts/src/services/activity/ActivityService.ts",
+        "workers-ts/src/services/admin/AdminIntegralCategoryService.ts",
+        "workers-ts/test/admin-integral-category.test.ts",
+        "workers-ts/test/admin-integral-category-postgres.test.ts",
+        "workers-ts/test/admin-integral-categories-frontend.test.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "integral_category.view / integral_category.manage"
+      ]
     },
     {
       "legacy": {
@@ -1050,21 +1322,47 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-balance_recharge']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/recharge-options"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/recharge-quotas",
+        "GET /adminapi/marketing/recharge-quotas/:id",
+        "POST /adminapi/marketing/recharge-quotas",
+        "PUT /adminapi/marketing/recharge-quotas/:id",
+        "PUT /adminapi/marketing/recharge-quotas/:id/status",
+        "DELETE /adminapi/marketing/recharge-quotas/:id"
+      ],
+      "covered": [
+        "独立权限页按 user_recharge_quota 动态解析组合组，恢复金额、赠送金额、排序、显隐四字段及添加编辑删除和启用档位预览，按sort/id倒序。新写合同使用request_id和revision、事务内审计及组内锁；套餐选择和订单金额快照同事务，后台更价/下架/删除不改变既有充值订单。正式外部0166/内嵌0172仅在缺组时初始化空元数据与一条迁移审计，保留已有唯一组及业务行，拒绝重复组或新gid认领孤儿档位。"
+      ],
       "remaining": [
-        "旧充值金额 group_data 列表/编辑没有新 Admin 页面；支付充值能力不代表运营配置页。"
+        "仅本地候选，已有数据库须通过维护连接单独执行固定forward runner，不能重跑全量runAll；真实档位配置/受限角色、完整Linux CI及实际充值渠道验收仍待完成。新REST不恢复任意group_data动态表单。总20条仅限制新增，修复旧满20也禁止编辑的行为；金额0.01至100000元沿用Worker购买上限，赠送0至99999999.99元。预览采用新Admin样式，不复刻旧主题手机图或承诺旧固定充值政策文案；旁边setup_recharge辅助设置不属于此页。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/recharge/index.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/RechargeOptions.vue",
+        "cinashop-php/app/services/user/UserRechargeServices.php",
+        "workers-ts/src/services/user/UserFinanceService.ts",
+        "workers-ts/src/services/admin/AdminRechargeQuotaService.ts",
+        "workers-ts/src/services/payment/RechargeQuotaPolicy.ts",
+        "workers-ts/migrations/0166_recharge_quota_group_seed.sql",
+        "workers-ts/src/migrations/runRechargeQuotaGroupSeed.ts",
+        "workers-ts/test/recharge-quota-group-seed.test.ts",
+        "workers-ts/test/recharge-quota-seed-flow.test.ts",
+        "workers-ts/test/recharge-quota-seed-upgrade.test.ts",
+        "workers-ts/test/admin-recharge-quota.test.ts",
+        "workers-ts/test/admin-recharge-quota-postgres.test.ts",
+        "workers-ts/test/admin-recharge-options-frontend.test.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "recharge_quota.view / recharge_quota.manage"
+      ]
     },
     {
       "legacy": {
@@ -1287,10 +1585,10 @@
         "DELETE /adminapi/activity/del/:type/:id"
       ],
       "covered": [
-        "积分商城 tab 可列积分商品并做基础编辑、启停和删除。"
+        "积分商城 tab 可按名称和启停状态筛选、每页20条浏览并显示总数，按 sort/id 倒序；管理角色可做基础编辑、启停和删除。"
       ],
       "remaining": [
-        "新目录无分页/旧筛选，BaseDao 因未收到 page 而实际无界查询；复制和旧商品字段仍缺。"
+        "旧全部筛选、复制和旧商品字段仍缺；旧默认每页15条，新目录20条，名称查询不等同旧全部搜索口径。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeIntegral/index.vue",
@@ -1300,7 +1598,8 @@
         "workers-ts/src/services/admin/AdminPermissionService.ts",
         "view/admin-ts/src/pages/activity/ActivityList.vue",
         "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
-        "workers-ts/src/dao/BaseDao.ts",
+        "workers-ts/src/services/admin/AdminActivityListService.ts",
+        "workers-ts/test/admin-activity-list.test.ts",
         "cinashop-php/app/controller/admin/v1/marketing/integral/StoreIntegral.php"
       ],
       "targetPermissions": [

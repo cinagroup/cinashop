@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { AdminIntegralLogService, parseAdminIntegralLogQuery } from "@/services/admin/AdminIntegralLogService";
+import { AdminIntegralLogExportService } from "@/services/admin/AdminIntegralLogExportService";
 import { jsonOk } from "@/utils/json";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -22,4 +23,10 @@ export async function statistics(c: C) {
   privateNoStore(c);
   const query = parseAdminIntegralLogQuery(c.req.query());
   return jsonOk(c, await new AdminIntegralLogService(c.get("container")).statistics(query));
+}
+
+/** GET /adminapi/marketing/user-point/export — independently authorized, complete bounded export manifest. */
+export async function exportManifest(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await new AdminIntegralLogExportService(c.get("container")).manifest(new URL(c.req.url).searchParams));
 }

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view class="card">
       <text class="title">{{ kind === "promoter" ? "分销员申请状态" : "代理商申请状态" }}</text>
@@ -19,9 +20,11 @@
       </template>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiAgentApplication, formatAgentApplicationTime, type AgentApplication, type AgentApplicationKind, type AgentApplicationStatus } from "@/api/agentSelfService";

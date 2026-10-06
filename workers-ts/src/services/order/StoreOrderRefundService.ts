@@ -63,12 +63,16 @@ import { assertVirtualProductRefundPolicy } from "@/services/order/VirtualProduc
 import { lockBargainInventory } from "@/services/activity/BargainInventoryLocks";
 import { readBargainOrderParticipation } from "@/services/activity/BargainOrderSnapshot";
 import { assertRefundQuantitiesHeld, releaseRefundQuantities, reserveRefundQuantities,
-  readRefundQuantityReservation, MATERIALIZED_REFUND_VERSION } from './RefundQuantityReservation';
+  readRefundQuantityReservation, MATERIALIZED_REFUND_VERSION,CUSTOMER_ROW_REFUND_VERSION,refundClaimCartKey,isMaterializedRefundClaim } from './RefundQuantityReservation';
 import { quoteOrderRefundLineFinance } from './OrderSplitFinance';
 import { loadRefundLineCompensation } from './RefundLineCompensation';
 import { currentGenerationRefunds, loadRefundOrderGeneration } from './RefundOrderGeneration';
+import { assertCashierZeroRefundOrigin, assertCashierZeroRefundRequest, authorizeCashierZeroRefund,
+  type CashierZeroRefundCapability } from './CashierSecondCardOrigin';
 import { assertAtomicRefundAdmission, assertAtomicRefundCompleted, lockAtomicRefundOrder } from './RefundAtomicMaterialization';
 import { materializeCompletedRefundOrder } from './RefundOrderMaterialization';
+import { assertFullGiftRefundAdmission, reverseWholeOrderPromotionGiftPoints } from './OrderPromotionGiftRefund';
+import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -98,6 +102,9 @@ export interface RefundExecutionScope {
   expectedRefundedAmountCents?: number;
   requireSystemVisible?: boolean;
   requirePaid?: boolean;
+  /** Customer work alone accepts 255 Unicode code points; legacy callers keep
+   * their existing UTF-16 limit. This server policy requires locked authority. */
+  reasonCodePoints?: boolean;
   /** Idempotent privileged actor evidence recorded before provider I/O. */
   executionAudit?: RefundDecisionAudit;
   /**
@@ -133,7 +140,11 @@ export interface ApplyOrderRefundInput {
   refundExplain: string;
   refundImg?: string;
   applyType: number;
-  privilegedActor?: "admin";
+  /** Server-only business policy. Authentication remains the caller's locked
+   * authorizeApplication callback; a store manager is never a system_admin. */
+  privilegedActor?: "admin" | "store-manager" | "customer-work";
+  /** Trusted customer policy, never forwarded from public HTTP payloads. */
+  selectorNamespace?: 'row';
   cartIds?: number[];
   cartSelections?: Array<{ cartId: number; cartNum: number }>;
   /** Privileged callers can require the server-side quote to match exactly. */
@@ -170,6 +181,7 @@ export interface RefundDecisionAudit {
 interface RefundCartSelection {
   cartId: number;
   cartNum?: number;
+  rowOnly?: true;
 }
 
 interface RefundApplicationOptions {
@@ -178,6 +190,10 @@ interface RefundApplicationOptions {
   quoteOnly?: boolean;
   /** Server-only candidate admission, persisted in the reservation version. */
   materializeOrders?: true;
+  /** Fixed customer/Admin entry policy, never taken from request or config. */
+  admitWholeOrderFullGifts?: true;
+  /** Live server object, only admitted by the dedicated internal creator. */
+  cashierZeroRefund?: CashierZeroRefundCapability;
 }
 
 /** Internal read result, not an HTTP response: order/cart rows may contain
@@ -441,7 +457,7 @@ async function lockRefundExecutionSnapshot(
   const refund = refunds[0];
   if (!refund) throw new NotFoundException("退款记录不存在");
   const claim = readRefundQuantityReservation(refund);
-  if (claim?.version === MATERIALIZED_REFUND_VERSION && refund.refundType !== 6) {
+  if (isMaterializedRefundClaim(claim) && refund.refundType !== 6) {
     await lockAtomicRefundOrder(tx, refund.storeOrderId);
   }
   await lockOrderSettlement(tx, refund.storeOrderId);
@@ -460,11 +476,18 @@ async function lockRefundExecutionSnapshot(
       await assertRefundQuantitiesHeld(tx, refund);
     }
     await loadRefundOrderGeneration(tx, order);
-    if (requireMaterializationAdmission && claim?.version === MATERIALIZED_REFUND_VERSION) {
-      await assertAtomicRefundAdmission(tx, order, new Map(claim.items.map(item => [String(item.cartId), item.cartNum])), true, refund.refundPrice);
+    if (requireMaterializationAdmission && readOrderPromotionGiftIntent(order.promotionsGive)) {
+      const giftRows = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
+        .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
+      await assertFullGiftRefundAdmission(tx, order, giftRows,
+        new Map(claim?.items.map(item => [refundClaimCartKey(item), item.cartNum]) ?? []),
+        refund.refundPrice, isMaterializedRefundClaim(claim));
+    }
+    if (requireMaterializationAdmission && isMaterializedRefundClaim(claim)) {
+      await assertAtomicRefundAdmission(tx, order, new Map(claim.items.map(item => [refundClaimCartKey(item), item.cartNum])), true, refund.refundPrice);
     }
     await assertPersistedVirtualProductRefundPolicy(tx, order, refund);
-  } else if (claim?.version === MATERIALIZED_REFUND_VERSION) {
+  } else if (isMaterializedRefundClaim(claim)) {
     await assertAtomicRefundCompleted(tx, refund);
   }
   return { refund, order };
@@ -485,7 +508,7 @@ async function assertPersistedVirtualProductRefundPolicy(
   const selected = selections.length
     ? selections.map((selection) => {
         const matches = carts.filter((cart) =>
-          cart.id === selection.cartId || Number(cart.cartId) === selection.cartId);
+          selection.rowOnly?cart.id===selection.cartId:cart.id === selection.cartId || Number(cart.cartId) === selection.cartId);
         if (matches.length !== 1) throw new ValidateException("退款商品快照无法唯一定位");
         return matches[0];
       })
@@ -534,7 +557,7 @@ export async function finalizeStoreOrderRefund(
     // Distinct refund rows can complete concurrently. The order lock makes the
     // cumulative amount check and all proportional compensation deterministic.
     const claim = readRefundQuantityReservation(refund);
-    const materializeOrders = claim?.version === MATERIALIZED_REFUND_VERSION;
+    const materializeOrders = claim?.version === MATERIALIZED_REFUND_VERSION || claim?.version === CUSTOMER_ROW_REFUND_VERSION;
     const pendingMaterialization = materializeOrders && refund.refundType !== 6;
     const pinkOrdersLocked = pendingMaterialization ? false : await lockPinkRefundOrders(tx, refund.storeOrderId);
     if (pendingMaterialization) await lockAtomicRefundOrder(tx, refund.storeOrderId);
@@ -560,6 +583,12 @@ export async function finalizeStoreOrderRefund(
       throw new ValidateException("售后状态不允许完成退款");
     }
     const quantitiesAlreadyReserved = await assertRefundQuantitiesHeld(tx, refund);
+    if (readOrderPromotionGiftIntent(order.promotionsGive)) {
+      const giftRows = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
+        .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
+      await assertFullGiftRefundAdmission(tx, order, giftRows,
+        new Map(claim?.items.map(item => [refundClaimCartKey(item), item.cartNum]) ?? []), refund.refundPrice, materializeOrders);
+    }
     await assertPersistedVirtualProductRefundPolicy(tx, order, refund);
 
     const refundCents = amountToCents(refund.refundPrice);
@@ -610,13 +639,20 @@ export async function finalizeStoreOrderRefund(
     }
     const pureIntegralOrder = paidCents === 0 && order.type === 4 && order.payIntegral > 0;
 
+    const zeroCashierQuantityReturn=materializeOrders&&paidCents===0&&order.payType==='cash';
+    if(zeroCashierQuantityReturn){
+      const zeroRows=await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id))
+        .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
+      await assertCashierZeroRefundOrigin(tx,order,zeroRows,true);
+    }
+
     // Validate the locked claim against every line before activity/user locks
     // and financial writes. Keep the original refund/payment/ledger identities.
     const lineCompensation = await loadRefundLineCompensation(tx, order.id, {
       order: { ...order, refundPrice: centsToDecimal(cumulativeCents) }, refund,
     });
     const invoiceSnapshot = materializeOrders ? await assertAtomicRefundAdmission(tx, order,
-      new Map(claim.items.map(item => [String(item.cartId), item.cartNum])), true, refund.refundPrice) : undefined;
+      new Map(claim.items.map(item => [refundClaimCartKey(item), item.cartNum])), true, refund.refundPrice) : undefined;
 
     // Seckill create/cancel serialize inventory on the child activity. Take that
     // lock BEFORE settlement users as well as SKU writes, not inside late stock
@@ -647,7 +683,7 @@ export async function finalizeStoreOrderRefund(
     if (!updated[0]) return "already-completed";
 
     await lockOrderSettlementUsers(tx, order, lineCompensation?.earnedIncome?.orderId);
-    const fullyRefunded = pureIntegralOrder
+    const fullyRefunded = pureIntegralOrder || zeroCashierQuantityReturn
       ? cumulativeNum >= order.totalNum
       : cumulativeCents >= paidCents;
     await tx
@@ -668,6 +704,7 @@ export async function finalizeStoreOrderRefund(
       .set({ isRefund: 1 })
       .where(eq(storeOrderInvoice.orderId, order.id));
     await reverseOrderRewards(tx, order, cumulativeCents, now, cumulativeNum, lineCompensation);
+    await reverseWholeOrderPromotionGiftPoints(tx, order, now);
     await reverseOrderBrokerage(tx, order, cumulativeCents, now, lineCompensation);
 
     const finalizedSelections = parseRefundCartSelections(refund.cartInfo);
@@ -781,9 +818,12 @@ async function createOrderRefundApplication(
   options: RefundApplicationOptions,
 ): Promise<{ refundId: number } | OrderRefundApplicationQuote> {
   const { uid, orderId } = params;
+  if ((params.privilegedActor === 'store-manager' || params.privilegedActor === 'customer-work') && !params.authorizeApplication) {
+    throw new ValidateException('门店主动退款必须提供真实锁内管理身份授权');
+  }
   if (
     ![1, 2].includes(params.applyType) &&
-    !(params.applyType === 4 && params.privilegedActor === "admin")
+    !(params.applyType === 4 && (params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work"))
   ) {
     throw new ValidateException("退款申请类型无效");
   }
@@ -796,11 +836,11 @@ async function createOrderRefundApplication(
     throw Error('Quote preparation cannot replay or write a refund application');
   }
   if (requestedRefundAmountCents !== undefined && (
-    params.privilegedActor !== 'admin' || params.applyType !== 4 || !params.authorizeApplication
+    !['admin','store-manager','customer-work'].includes(params.privilegedActor ?? '') || params.applyType !== 4 || !params.authorizeApplication
     || !Number.isSafeInteger(requestedRefundAmountCents) || requestedRefundAmountCents < 0
   )) throw new ValidateException('主动退款金额必须经过锁内管理员授权');
-  if (!refundReason || refundReason.length > 255) throw new ValidateException("请填写有效的退款原因");
-  if (refundExplain.length > 255 || refundImg.length > 8_192) {
+  if (!refundReason || (params.privilegedActor === 'customer-work' ? Array.from(refundReason).length : refundReason.length) > 255) throw new ValidateException("请填写有效的退款原因");
+  if ((params.privilegedActor === 'customer-work' ? Array.from(refundExplain).length : refundExplain.length) > 255 || refundImg.length > 8_192) {
     throw new ValidateException("退款说明或凭证信息过长");
   }
   if (applicationOrderId && (
@@ -829,7 +869,21 @@ async function createOrderRefundApplication(
     if (order.supplierAllocationStatus === 1) {
       throw new ValidateException("订单正在按供应商分配，请稍后刷新");
     }
-    if (order.pid === -1 && !options.materializeOrders) throw new ValidateException("请从拆分后的履约子单申请售后");
+    const publicFullGift = Boolean(options.admitWholeOrderFullGifts && readOrderPromotionGiftIntent(order.promotionsGive));
+    const materializeOrders = Boolean(options.materializeOrders || publicFullGift);
+    if (publicFullGift) {
+      // This bounded branch keeps the original physical order/cart identities.
+      // Refuse a child before attempting its different payment-root lock graph.
+      if (order.pid !== 0 || order.type !== 0 || order.status !== 0
+        || ![1, 4].includes(params.applyType)) {
+        throw new ValidateException('满送售后目前仅支持未发货、未拆分订单的全额整单退款');
+      }
+      if (!['yue', 'weixin', 'alipay'].includes(order.payType)) {
+        throw new ValidateException('该满送订单支付方式暂不支持当前退款入口');
+      }
+      await lockAtomicRefundOrder(tx, order.id);
+    }
+    if (order.pid === -1 && !materializeOrders) throw new ValidateException("请从拆分后的履约子单申请售后");
     const refundTimeDays = params.resolveRefundTimeDays
       ? await params.resolveRefundTimeDays(tx) : options.refundTimeDays;
     let receivedAt: number | null = null;
@@ -869,11 +923,11 @@ async function createOrderRefundApplication(
       const replay = replayRows[0];
       if (replay) {
         if (params.requireNewApplication) throw new ValidateException('退款创建回执与业务记录不一致，请人工核对');
-        if (options.materializeOrders) {
+        if (materializeOrders) {
           const claim = readRefundQuantityReservation(replay);
           const selected = params.cartSelections ?? [];
           const matched = new Set<number>();
-          if (claim?.version !== MATERIALIZED_REFUND_VERSION || selected.length !== claim.items.length
+          if (!isMaterializedRefundClaim(claim) || selected.length !== claim.items.length
             || selected.some(item => {
               const row = claim.items.find(row => row.cartId === item.cartId || row.rowId === item.cartId);
               if (!row || matched.has(row.rowId) || row.cartNum !== item.cartNum) return true;
@@ -905,6 +959,13 @@ async function createOrderRefundApplication(
     await params.authorizeApplication?.(tx, order);
     const cartInfos = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
       .orderBy(asc(storeOrderCartInfo.id)).for('update');
+    if(options.cashierZeroRefund)await authorizeCashierZeroRefund(tx,options.cashierZeroRefund,order,cartInfos);
+    const zeroCashierQuantityReturn=Boolean(options.cashierZeroRefund);
+    const customerRows=params.selectorNamespace==='row';
+    if(customerRows&&(params.privilegedActor!=='customer-work'||!params.authorizeApplication))throw new ValidateException('真实行退款选择策略缺少经营授权');
+    if(params.privilegedActor==='customer-work'&&!customerRows)throw new ValidateException('经营退款必须使用真实行标识');
+    const canonicalCart=(cart:typeof cartInfos[number])=>customerRows?cart.id:Number(cart.cartId);
+    const financialCartKey=(id:number)=>customerRows?cartInfos.find(x=>x.id===id)!.cartId:String(id);
     if (!cartInfos.length) throw new Error("订单缺少商品快照，不能安全申请退款");
     const generation = await loadRefundOrderGeneration(tx, order, cartInfos);
     const currentRefunds = await currentGenerationRefunds(previousRefunds, generation);
@@ -926,7 +987,7 @@ async function createOrderRefundApplication(
       return next;
     }, 0);
     const remainingCents = Math.max(0, paidCents - alreadyRefundedCents);
-    if (remainingCents <= 0 && !pureIntegralOrder) {
+    if (remainingCents <= 0 && !pureIntegralOrder && !zeroCashierQuantityReturn) {
       throw new ValidateException("订单支付金额已全部退款");
     }
 
@@ -940,7 +1001,7 @@ async function createOrderRefundApplication(
     const cartByIdentifier = new Map<number, typeof cartInfos[number]>();
     for (const cart of cartInfos) {
       const legacyId = Number(cart.cartId);
-      for (const identifier of [cart.id, legacyId]) {
+      for (const identifier of customerRows?[cart.id]:[cart.id, legacyId]) {
         if (!Number.isSafeInteger(identifier) || identifier <= 0) continue;
         const existing = cartByIdentifier.get(identifier);
         if (existing && existing.id !== cart.id) {
@@ -959,9 +1020,9 @@ async function createOrderRefundApplication(
       }
       let remaining = item.refundNum;
       for (const selection of selections) {
-        const cart = cartByIdentifier.get(selection.cartId);
+        const cart = selection.rowOnly?cartInfos.find(x=>x.id===selection.cartId):cartByIdentifier.get(selection.cartId);
         if (!cart) throw new ValidateException("历史退款商品快照无法定位");
-        const canonicalId = Number(cart.cartId);
+        const canonicalId = canonicalCart(cart);
         if (!Number.isSafeInteger(canonicalId) || canonicalId <= 0) {
           throw new ValidateException("历史退款商品标识无效");
         }
@@ -978,7 +1039,7 @@ async function createOrderRefundApplication(
       throw new ValidateException("历史整单退款已完成，不能再次申请退款");
     }
     const pricingLines = cartInfos.map((cart) => {
-      const cartId = Number(cart.cartId);
+      const cartId = canonicalCart(cart);
       if (!Number.isSafeInteger(cartId) || cartId <= 0) {
         throw new ValidateException("订单退款商品标识无效");
       }
@@ -1008,7 +1069,7 @@ async function createOrderRefundApplication(
         }
         const cart = cartByIdentifier.get(selection.cartId);
         if (!cart) throw new ValidateException("退款商品不属于当前订单");
-        const canonicalId = Number(cart.cartId);
+        const canonicalId = canonicalCart(cart);
         if (!Number.isSafeInteger(canonicalId) || canonicalId <= 0) {
           throw new ValidateException("退款商品标识无效");
         }
@@ -1062,12 +1123,12 @@ async function createOrderRefundApplication(
             );
     } else if (completedQuantities.size > 0) {
       const remainingCartInfos = cartInfos.filter(
-        (item) => (completedQuantities.get(Number(item.cartId)) ?? 0) < item.cartNum,
+        (item) => (completedQuantities.get(canonicalCart(item)) ?? 0) < item.cartNum,
       );
       if (remainingCartInfos.some((item) => item.isSupportRefund !== 1)) {
         throw new ValidateException("剩余商品不支持退款");
       }
-      refundCartIds = remainingCartInfos.map((item) => Number(item.cartId));
+      refundCartIds = remainingCartInfos.map(canonicalCart);
       if (
         refundCartIds.some((id) => !Number.isSafeInteger(id) || id <= 0)
         || new Set(refundCartIds).size !== refundCartIds.length
@@ -1075,8 +1136,8 @@ async function createOrderRefundApplication(
         throw new ValidateException("历史退款商品快照不完整，不能安全补齐剩余退款");
       }
       refundCartSnapshot = remainingCartInfos.map((item) => ({
-        cartId: Number(item.cartId),
-        cartNum: item.cartNum - (completedQuantities.get(Number(item.cartId)) ?? 0),
+        cartId: canonicalCart(item),
+        cartNum: item.cartNum - (completedQuantities.get(canonicalCart(item)) ?? 0),
       }));
       refundNum = refundCartSnapshot.reduce<number>(
         (sum, item) => sum + (typeof item === "number" ? 0 : item.cartNum),
@@ -1086,7 +1147,7 @@ async function createOrderRefundApplication(
       // allocation. Do not transfer the unrefunded difference to other goods.
       refundCents = pureIntegralOrder ? 0 : options.reuseExisting ? remainingCents : Math.min(remainingCents,
         calculateAuthoritativeRefundCents(paidCents,pricingLines,completedQuantities,
-          remainingCartInfos.map(item=>({cartId:Number(item.cartId),cartNum:item.cartNum-(completedQuantities.get(Number(item.cartId))??0)}))));
+          remainingCartInfos.map(item=>({cartId:canonicalCart(item),cartNum:item.cartNum-(completedQuantities.get(canonicalCart(item))??0)}))));
     } else {
       if (cartInfos.some((item) => item.isSupportRefund !== 1)) {
         throw new ValidateException("订单包含不支持退款的商品");
@@ -1095,7 +1156,7 @@ async function createOrderRefundApplication(
         throw new ValidateException("订单已有核销记录，请仅选择未核销商品申请售后");
       }
       refundCartSnapshot = cartInfos.map((item) => {
-        const cartId = Number(item.cartId);
+        const cartId = canonicalCart(item);
         if (!Number.isSafeInteger(cartId) || cartId <= 0) {
           throw new ValidateException("订单退款商品标识无效");
         }
@@ -1105,8 +1166,8 @@ async function createOrderRefundApplication(
     }
     const lineQuote = quoteOrderRefundLineFinance(order, cartInfos, completedRefunds,
       new Map(refundCartSnapshot.map(item => typeof item === 'number'
-        ? [String(item), cartByIdentifier.get(item)!.cartNum - (completedQuantities.get(item) ?? 0)]
-        : [String(item.cartId), item.cartNum])));
+        ? [financialCartKey(item), cartByIdentifier.get(item)!.cartNum - (completedQuantities.get(item) ?? 0)]
+        : [financialCartKey(item.cartId), item.cartNum])));
     if (lineQuote !== null && !(options.reuseExisting && refundNum === remainingQuantity)) {
       // New evidence must reconcile even for whole/zero-cash quotes. Preserve
       // mandatory automatic full-refund recovery as an explicit exception;
@@ -1122,9 +1183,9 @@ async function createOrderRefundApplication(
     });
     await assertVirtualProductRefundPolicy(tx, order, refundPolicyCarts, {
       applyType: params.applyType,
-      allowIrreversibleSecretRefund: params.privilegedActor === "admin",
+      allowIrreversibleSecretRefund: params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work",
     });
-    if (refundNum <= 0 || (!pureIntegralOrder && refundCents <= 0)) {
+    if (refundNum <= 0 || (!pureIntegralOrder && !zeroCashierQuantityReturn && refundCents <= 0)) {
       throw new ValidateException("没有可退款的商品或金额");
     }
     if (
@@ -1134,6 +1195,20 @@ async function createOrderRefundApplication(
       throw new ValidateException("退款金额与服务端可退金额不一致");
     }
     if (options.quoteOnly || params.authorizePreparedApplication) {
+      await assertFullGiftRefundAdmission(tx, order, cartInfos,
+        new Map(refundCartSnapshot.map(item => typeof item === 'number'
+          ? [financialCartKey(item), cartByIdentifier.get(item)!.cartNum - (completedQuantities.get(item) ?? 0)]
+          : [financialCartKey(item.cartId), item.cartNum])), centsToDecimal(refundCents),
+        materializeOrders);
+      // Quotation must prove the same durable execution contract as creation,
+      // including the invoice/schema and already-completed-claim boundaries.
+      if (materializeOrders) {
+        if (completedRefunds.length) throw new ValidateException('已有退款尚未实体归属，不能切换为原子拆单');
+        await assertAtomicRefundAdmission(tx, order,
+          new Map(refundCartSnapshot.map(item => typeof item === 'number'
+            ? [financialCartKey(item), cartByIdentifier.get(item)!.cartNum - (completedQuantities.get(item) ?? 0)]
+            : [financialCartKey(item.cartId), item.cartNum])), false, centsToDecimal(refundCents), cartInfos);
+      }
       const quote: OrderRefundApplicationQuote = {
         order, carts: cartInfos, previousRefunds, refundTimeDays, receivedAt,
         refundNum, quotedPrice: centsToDecimal(refundCents),
@@ -1145,7 +1220,7 @@ async function createOrderRefundApplication(
       await params.authorizePreparedApplication?.(tx, quote);
     }
     if (requestedRefundAmountCents !== undefined) {
-      if (requestedRefundAmountCents > refundCents || (!pureIntegralOrder && requestedRefundAmountCents === 0)) {
+      if (requestedRefundAmountCents > refundCents || (!pureIntegralOrder && !zeroCashierQuantityReturn && requestedRefundAmountCents === 0)) {
         throw new ValidateException('主动退款金额必须大于零且不超过所选商品可退金额');
       }
       refundCents = requestedRefundAmountCents;
@@ -1155,12 +1230,15 @@ async function createOrderRefundApplication(
     const reservedSelections = refundCartSnapshot.map(item => typeof item === 'number'
       ? { cartId: item, cartNum: cartByIdentifier.get(item)!.cartNum - (completedQuantities.get(item) ?? 0) }
       : { ...item });
-    if (options.materializeOrders) {
+    await assertFullGiftRefundAdmission(tx, order, cartInfos,
+      new Map(reservedSelections.map(item => [financialCartKey(item.cartId), item.cartNum])), refundPrice,
+      materializeOrders);
+    if (materializeOrders) {
       if (completedRefunds.length) throw new ValidateException('已有退款尚未实体归属，不能切换为原子拆单');
-      await assertAtomicRefundAdmission(tx, order, new Map(reservedSelections.map(item => [String(item.cartId), item.cartNum])), false, refundPrice, cartInfos);
+      await assertAtomicRefundAdmission(tx, order, new Map(reservedSelections.map(item => [financialCartKey(item.cartId), item.cartNum])), false, refundPrice, cartInfos);
     }
-    const cartInfo = await reserveRefundQuantities(tx, order, reservedSelections,
-      options.materializeOrders ? MATERIALIZED_REFUND_VERSION : undefined);
+    const cartInfo = await reserveRefundQuantities(tx, order, customerRows?reservedSelections.map(x=>({...x,sourceCartId:financialCartKey(x.cartId)})):reservedSelections,
+      customerRows?CUSTOMER_ROW_REFUND_VERSION:materializeOrders ? MATERIALIZED_REFUND_VERSION : undefined);
 
     const now = Math.floor(Date.now() / 1000);
     const inserted = await tx
@@ -1216,6 +1294,16 @@ export async function applyOrderRefund(
   return createOrderRefundApplication(container, params, { reuseExisting: false, refundTimeDays });
 }
 
+/** Reviewed local customer/Admin entry. Only a locked, versioned full-gift
+ * original order selects the whole-order v2 contract; other orders retain v1.
+ * No client flag or runtime configuration can activate broad physical splits. */
+export async function applyOrderRefundFromPublicEntry(
+  container: Container, params: ApplyOrderRefundInput, refundTimeDays = 0,
+): Promise<{ refundId: number }> {
+  return createOrderRefundApplication(container, params,
+    { reuseExisting: false, refundTimeDays, admitWholeOrderFullGifts: true });
+}
+
 /** Explicit server-only candidate creator. NOT mounted by any HTTP route or
  * chosen from request/config data. Guarded schema installation and reader
  * rollout must precede caller activation. Once admitted, the durable v2 claim
@@ -1227,22 +1315,46 @@ export async function applyOrderRefundWithMaterialization(
   return createOrderRefundApplication(container, params, { reuseExisting: false, refundTimeDays, materializeOrders: true });
 }
 
+/** Internal zero cash quantity return. Ordinary/public refund entry retains its
+ * existing amount and provider rules; no serialized flag selects this policy. */
+export async function applyCashierZeroRefundWithMaterialization(container:Container,params:ApplyOrderRefundInput,
+  capability:CashierZeroRefundCapability,refundTimeDays=0):Promise<{refundId:number}>{
+  assertCashierZeroRefundRequest(capability,params.uid,params.orderId);
+  if(params.privilegedActor!=='customer-work'||params.selectorNamespace!=='row'||params.applyType!==4
+    ||!params.authorizeApplication||!params.cartSelections?.length||params.requestedRefundAmountCents!==0
+    ||params.expectedRefundAmountCents!==0)throw new ValidateException('零元次卡退回必须绑定真实经营授权、商品数量和零金额');
+  return createOrderRefundApplication(container,params,{reuseExisting:false,refundTimeDays,materializeOrders:true,cashierZeroRefund:capability});
+}
+
 /** Executes the SAME locked eligibility/quantity/price preparation as creation,
  * but returns before every INSERT/UPDATE. No temporary application, sequence
  * allocation, rollback-as-quote, operation key or audit event is manufactured. */
 export async function quoteOrderRefundApplication(
   container: Container,
-  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays'>,
+  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays'>,
   refundTimeDays: number,
 ): Promise<OrderRefundApplicationQuote> {
   return createOrderRefundApplication(container, {
     uid: params.uid, orderId: params.orderId, applyType: params.applyType,
-    privilegedActor: params.privilegedActor, cartSelections: params.cartSelections,
+    privilegedActor: params.privilegedActor, selectorNamespace:params.selectorNamespace, cartSelections: params.cartSelections,
     authorizeApplication: params.authorizeApplication,
     resolveRefundTimeDays: params.resolveRefundTimeDays,
     // Required only by shared input validation; never persisted or exposed.
     refundReason: 'Quote preparation only', refundExplain: '',
-  }, { reuseExisting: false, refundTimeDays, quoteOnly: true });
+  }, { reuseExisting: false, refundTimeDays, quoteOnly: true, admitWholeOrderFullGifts: true });
+}
+
+/** Server-only manager quotation for the reviewed physical refund generation.
+ * Admission uses the same catalog, invoice, promotion and quantity checks as
+ * the materialized creator. Ordinary customer entry remains unchanged. */
+export async function quoteOrderRefundWithMaterialization(
+  container: Container,
+  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays'>,
+  refundTimeDays: number,
+): Promise<OrderRefundApplicationQuote> {
+  return createOrderRefundApplication(container, {
+    ...params, refundReason: 'Manager materialization quote only', refundExplain: '',
+  }, { reuseExisting: false, refundTimeDays, quoteOnly: true, materializeOrders: true });
 }
 
 /**
@@ -1363,7 +1475,7 @@ export class StoreOrderRefundService {
   async applyRefund(params: ApplyOrderRefundInput): Promise<{ refundId: number }> {
     const configured = await new SystemConfigService(this.container, this.env)
       .get("refund_time_available");
-    return applyOrderRefund(this.container, params, parseRefundTimeDays(configured));
+    return applyOrderRefundFromPublicEntry(this.container, params, parseRefundTimeDays(configured));
   }
 
   /**
@@ -1896,8 +2008,9 @@ export class StoreOrderRefundService {
       throw new ValidateException("退款记录 ID 无效");
     }
     const reason = refuseReason.trim();
-    if (!reason || reason.length > 255) throw new ValidateException("请输入有效的拒绝原因");
     const scope = normalizeRefundExecutionScope(scopeInput);
+    if (scope?.reasonCodePoints && !scope.authorizeLockedDecision) throw new ValidateException("退款原因策略缺少实际授权");
+    if (!reason || (scope?.reasonCodePoints ? Array.from(reason).length : reason.length) > 255) throw new ValidateException("请输入有效的拒绝原因");
     const audit = normalizeRefundDecisionAudit(auditInput, {
       changeType: "refund_n",
       changeMessage: `管理员拒绝退款：${reason}`.slice(0, 256),
@@ -2238,7 +2351,7 @@ async function restoreRefundStock(
   const selected = requestedSelections.length
     ? requestedSelections.map((selection) => {
         const matches = cartInfos.filter((item) =>
-          item.id === selection.cartId || Number(item.cartId) === selection.cartId);
+          selection.rowOnly?item.id===selection.cartId:item.id === selection.cartId || Number(item.cartId) === selection.cartId);
         if (matches.length !== 1) throw new ValidateException("退款商品快照无法唯一定位");
         return { row: matches[0], requestedNum: selection.cartNum };
       })
@@ -2398,6 +2511,10 @@ async function restoreRefundStock(
 
 function parseRefundCartSelections(value: string | null): RefundCartSelection[] {
   if (!value) return [];
+  // A modern immutable claim already proves the physical row and opaque key.
+  // Resolve every version by that row, never by the public legacy alias graph.
+  let raw:unknown;try{raw=JSON.parse(value);}catch{if(value.includes('quantityReservation'))throw new ValidateException('退款商品数量预占记录不一致，请人工核对');raw=null;}
+  if(raw&&typeof raw==='object'&&!Array.isArray(raw)&&Object.hasOwn(raw,'quantityReservation')){const reservation=(raw as {quantityReservation:unknown}).quantityReservation;if(!reservation||typeof reservation!=='object'||Array.isArray(reservation))throw new ValidateException('退款商品数量预占记录不一致，请人工核对');const r=reservation as {orderId:number;uid:number;items:Array<{cartNum:number}>};if(!Array.isArray(r.items))throw new ValidateException('退款商品数量预占记录不一致，请人工核对');const claim=readRefundQuantityReservation({storeOrderId:r.orderId,uid:r.uid,refundNum:r.items.reduce((sum,x)=>sum+x.cartNum,0),cartInfo:value});if(!claim)throw new ValidateException('退款商品数量预占记录不一致，请人工核对');return claim.items.map(x=>({cartId:x.rowId,cartNum:x.cartNum,rowOnly:true}));}
   try {
     const parsed = JSON.parse(value) as unknown;
     const values = Array.isArray(parsed)

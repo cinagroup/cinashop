@@ -1,0 +1,168 @@
+{
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T06:57:57.734Z",
+  "status": "passed-local-synthetic-browser",
+  "scope": "Actual final Vite app DOM through CUA, loopback memory API only; no production, real JWT, DB, R2 or provider",
+  "screen": "/activity/combinations",
+  "fixture": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-browser-fixture-20260927.cjs",
+    "sha256": "dada298f893f3b5cef8f6fd7e7764fe73654c49b9d02b5eb83c39b9db2fb66c8"
+  },
+  "requests": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-browser-fixture-20260927-requests.json",
+    "sha256": "23ac7c4ab3a27e91be3516290a3dde4295f98fe018894ce79a90527dc22ea296"
+  },
+  "counts": {
+    "sharedRequests": 190,
+    "syntheticCombinationWrites": 6,
+    "lostWriteResponses": 1,
+    "realBusinessWrites": 0,
+    "externalMessages": 0
+  },
+  "requestHistogram": {
+    "POST /adminapi/login": 4,
+    "GET /api/site_config": 8,
+    "GET /adminapi/activity/combinations": 31,
+    "GET /adminapi/new_push": 109,
+    "GET /adminapi/activity/combinations/1": 3,
+    "GET /adminapi/activity/combinations/options": 6,
+    "GET /adminapi/file/category": 2,
+    "GET /adminapi/file/file": 3,
+    "PUT /adminapi/activity/combinations/1": 1,
+    "POST /adminapi/activity/combinations": 2,
+    "GET /adminapi/activity/combinations/products": 13,
+    "GET /adminapi/activity/combinations/products/518": 1,
+    "GET /adminapi/activity/combinations/products/502": 2,
+    "GET /adminapi/activity/combinations/products/503": 1,
+    "PUT /adminapi/activity/combinations/3/status": 1,
+    "PUT /adminapi/activity/combinations/17/status": 1,
+    "DELETE /adminapi/activity/combinations/17": 1,
+    "GET /adminapi/activity/combinations/18": 1
+  },
+  "writes": [
+    {
+      "index": 30,
+      "method": "PUT",
+      "path": "/adminapi/activity/combinations/1",
+      "title": "合成拼团 01",
+      "responseLost": false
+    },
+    {
+      "index": 38,
+      "method": "POST",
+      "path": "/adminapi/activity/combinations",
+      "title": "CUA复制完整拼团",
+      "responseLost": false
+    },
+    {
+      "index": 124,
+      "method": "POST",
+      "path": "/adminapi/activity/combinations",
+      "title": "CUA虚拟来源拼团",
+      "responseLost": true
+    },
+    {
+      "index": 133,
+      "method": "PUT",
+      "path": "/adminapi/activity/combinations/3/status",
+      "title": null,
+      "responseLost": false
+    },
+    {
+      "index": 140,
+      "method": "PUT",
+      "path": "/adminapi/activity/combinations/17/status",
+      "title": null,
+      "responseLost": false
+    },
+    {
+      "index": 145,
+      "method": "DELETE",
+      "path": "/adminapi/activity/combinations/17",
+      "title": null,
+      "responseLost": false
+    }
+  ],
+  "observations": [
+    "Reader page15, next page and complete readonly detail including retired SKU; no creation/edit/copy/status/delete controls.",
+    "Batch quota below consumed rejected the whole draft change; active SKU prices remained 5.00 and 7.50. Valid 6.25/20 batch preserved active IDs10/11 and retired12.",
+    "Gallery selected6 on page1 and21 on page2; cross-page selection persisted; write30 stable images1/4/6/21 and canonical rich image/link5 without preview signature/data-reference.",
+    "Copy source101 immutable; new activity17/new SKU identities, consumed0, configured quota40 rather than remaining36; retired SKU excluded.",
+    "Source paging18 candidates, 15 per page. Source518 retained after502 full-detail failure; retry loaded502 and only supplier7 template. Parent category10 and hidden label22 returned9 candidates; label21/keyword503 returned one virtual product.",
+    "Virtual source503 inherited fixed postage0.00 readonly and was not blocked by positive ordinary-postage rule; canonical nonordinary save delivery_type2 is native evidence, not this memory fixture readback.",
+    "One POST created18 while response was truncated. Save disabled and unknown-result notice appeared. GET reconciliation/search returned one row with consumed0; no POST replay.",
+    "Ended activity3 enabled after cancel/confirm and remained ended; edit disabled. Invalid16 blocked before any status write.",
+    "Close17 confirmation explains early group expiry/settlement/refund; DELETE confirmation explains removing list entry and continuing existing orders. Cancel did not write; confirmed soft DELETE removed17 from search.",
+    "Injected list failure was consumed by control tab navigation; that tab displayed disabled create and Retry list. UI retry restored the list.",
+    "Manager-noasset retained configuration editing but all gallery controls disabled, zero attachment API requests in that actor interval.",
+    "Actual CDP DOM width390, document clientWidth/scrollWidth390, source/gallery/form dialogs bounded to390. Desktop screenshot1280x850. Mobile screenshot compositor scales app with grey surrounding area; this is not device proof.",
+    "Final error/warn console observations empty on both owned tabs; CDP and viewport overrides reset, own tabs closed, server interrupted and Listen5201=0."
+  ],
+  "screenshots": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-rich-desktop-20260927.png",
+      "sha256": "7d7ce34fe81bed719dd2808b8997144735c207ece5fc91c09f7a8fd62a9cbe17"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-created-desktop-20260927.png",
+      "sha256": "4d8b0076d82cec28590f45131581537afe7652dbe8f04cfc0c33a5948399d62d"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-form-mobile-20260927.png",
+      "sha256": "2d7a80be77690de6ce1e988a2a3b9eb00de0cb9aa3726779003733cf236918d4"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-gallery-mobile-20260927.png",
+      "sha256": "c61198381296ec51b546a0dac28383e7a0fd3a601d21a4d9d82d6ea27b7eaecf"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-source-mobile-20260927.png",
+      "sha256": "565a719ceb2e4519e66c0197278ca19cc55606f8bc6adcb2e9ce35b93960e626"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-unknown-write-mobile-20260927.png",
+      "sha256": "256c4e0554636fdd3a18c3f25ecc366aca534ed6315b3f022368d82482c65936"
+    }
+  ],
+  "build": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-admin-build-frozen-final-20260927.log",
+    "sha256": "ad8601e0b719972d9eab7796d476b189158d5e571007f01676fff741071dcff7"
+  },
+  "frontendSources": [
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "view/admin-ts/src/api/combination.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\api\\combination.ts",
+      "sha256": "1ecc8cd7aa04540151c870b7cc4825d6de02cb623bbea6529dc56eb4d089b401"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "view/admin-ts/src/pages/activity/Combinations.vue",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\pages\\activity\\Combinations.vue",
+      "sha256": "ecb599cd2f1df87acd7969c2bbdd2e301b4f3e0c3d3b0f0feefea9614ae40d64"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "view/admin-ts/src/pages/activity/CombinationImagePicker.vue",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\pages\\activity\\CombinationImagePicker.vue",
+      "sha256": "ff78dd680d05da45f1d5f7b6113bdccf24b976055a4b9c97903a9324498c623b"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "workers-ts/test/admin-combinations-frontend.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-combinations-frontend.test.ts",
+      "sha256": "894856839eece072e9eb6be1997cfbd9d549c29ef27e932b9c9bb3683a7f6c9e"
+    }
+  ],
+  "limitations": [
+    "Complete Linux CI, real role/configuration/media/R2/provider and real devices remain open.",
+    "Global group list, independent six-card statistics and export remain partial.",
+    "Background new_push polling is counted in shared requests; no request is represented as production work."
+  ],
+  "cleanup": {
+    "ownTabsClosed": true,
+    "viewportOverridesReset": true,
+    "serverPort": 5201,
+    "listeners": 0
+  }
+}

@@ -1,0 +1,396 @@
+{
+  "version": 1,
+  "dateUtc": "2026-09-30",
+  "frozenAtUtc": "2026-09-30T13:44:49.784Z",
+  "phase": "locally_verified_candidate_unpublished",
+  "status": "candidate",
+  "productionAccepted": false,
+  "published": false,
+  "scope": "Fixed legacy sign_day_num Admin management, exact independent runtime guard/grant forward, and targeted orphan coupon-config alias retirement.",
+  "outcome": {
+    "workerRoutes": 2082,
+    "workerRouteFileSurfaces": {
+      "api": 1082,
+      "admin": 725,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "surfaceCountingBoundary": "By source route file: v1 Admin aliases belong to API file surface; API file totals do not mean public authorization. Both new Admin prefixes add seven each.",
+    "legacyPhpRoutes": {
+      "php": 1904,
+      "ts": 2082,
+      "matched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "missing": 1001,
+      "retired": 17,
+      "actionableMissing": 984,
+      "coveragePercent": 47.4,
+      "executableCoveragePercent": 46.3,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 101,
+    "adminApi": {
+      "callSites": 551,
+      "pathVariants": 575,
+      "registered": 575,
+      "executable": 575,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "legacyMarketingScreens": {
+      "legacyRoutes": 48,
+      "reviewed": 48,
+      "candidate": 33,
+      "partial": 14,
+      "missing": 0,
+      "retired": 1,
+      "unreviewed": 0
+    },
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 85,
+      "partial": 113,
+      "missing": 68,
+      "retired": 8
+    },
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "screenClassificationChanges": [
+      {
+        "path": "/admin/marketing/integral/signIn",
+        "from": "missing",
+        "to": "candidate",
+        "target": "/marketing/sign-day-config"
+      },
+      {
+        "path": "/admin/marketing/coupon/system_config/:type?/:tab_id?",
+        "from": "missing",
+        "to": "retired",
+        "target": null,
+        "scope": "orphan alias only; settings entities remain open"
+      }
+    ]
+  },
+  "contracts": {
+    "legacy": "Free-text day, positive sign_num, sort/status/CRUD; seven rows includes hidden. Unknown parseable JSON fields preserved, malformed values diagnosed; historical excess remains repairable. Fixed config_name, never hardcoded gid55. GET never seeds, explicit first POST initializes fixed metadata and one user row.",
+    "rewards": "Legacy PHP and Worker actual sign algorithms do not read this display group. sign_mode/base points/experience/system_sign_reward remain separate. Six CSS themes are management preview only; no storefront reward or static-image equivalence claim.",
+    "authority": "Independent sign_day_config.view/manage; exact legacy154 auth/path grants only view. Generic config/coupon/group permissions refuse. Actual dual-prefix JWT and per-request dedicated Admin binding, private no-store, no app fallback.",
+    "runtime": "pre-sign-day freezes former current. Admin group SELECT/INSERT + UPDATE(id); child SELECT/INSERT/DELETE + UPDATE(value,sort,status); two serial USAGE only. A new exact maintenance-owned SECURITY INVOKER function and one BEFORE UPDATE guard refuse Admin group/PK semantic edits and extra UPDATE triggers. Guard and fixed grants install atomically; no broad privilege, business schema/row change, HTTP repair or sequence reset. Old forwards retain old final stages; fresh commissioning v4 requires exact protocol.",
+    "concurrency": "Bounded RC writes: UUID gate -> fixed group FOR SHARE or unique config_name INSERT ON CONFLICT DO NOTHING -> child table SHARE ROW EXCLUSIVE -> reread/CAS/cap. Read RR read-only. Stricter deadlines retained. Uncooperative writers, group metadata race, missing-group conflict, atomic receipt rollback covered.",
+    "recovery": "Actor-bound immutable UUID/body/canonical UTF8 SHA256 before write. Unknown result persists per actor in sessionStorage and closes editor so receipt controls are accessible. Receipt GET only; only actual HTTP404 permits explicit identical retry. body404, malformed/duplicate receipt, wrong hash and account changes do not unlock new writes.",
+    "orphanAlias": "Full SQL parser: tab26 has29 rows/28 active; bare alias defaults root1/tab26 via generic config APIs, no dedicated coupon tab/menu or source inbound link. Four real gifting coupon keys already consumed by dedicated Newcomer/LevelActivation domains. Static orphan evidence does not exclude production custom navigation.",
+    "remainingSettings": [
+      "verify_expire_time",
+      "store_user_avatar",
+      "whole_free_shipping",
+      "system_secure_type",
+      "system_password_length",
+      "system_password_type",
+      "system_login_error_num",
+      "system_login_lock_time"
+    ]
+  },
+  "verification": {
+    "native": {
+      "batches": [
+        {
+          "log": ".cache/sign-day-native-final-accepted-20260930.log",
+          "files": 5,
+          "passed": 30,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 122.34,
+          "tests": [
+            "test/admin-sign-day-config.test.ts",
+            "test/admin-sign-day-config-postgres.test.ts",
+            "test/admin-sign-day-config-http.test.ts",
+            "test/runtime-sign-day-config-privileges.test.ts",
+            "test/runtime-sign-day-config-upgrade.test.ts"
+          ],
+          "cluster": ".cache/finance-postgres-yhEEmV",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        },
+        {
+          "log": ".cache/sign-day-native-historical-accepted-20260930.log",
+          "files": 3,
+          "passed": 23,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 206.17,
+          "tests": [
+            "test/runtime-promotion-gift-privileges.test.ts",
+            "test/runtime-coupon-template-privileges.test.ts",
+            "test/runtime-seckill-parent-privileges.test.ts"
+          ],
+          "cluster": ".cache/finance-postgres-TxPEDA",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        },
+        {
+          "log": ".cache/sign-day-native-schedule-accepted-20260930.log",
+          "files": 1,
+          "passed": 17,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 63.97,
+          "tests": [
+            "test/runtime-seckill-schedule-lock.test.ts"
+          ],
+          "cluster": ".cache/finance-postgres-Gk1gvS",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        },
+        {
+          "log": ".cache/sign-day-native-commissioning-accepted-20260930.log",
+          "files": 1,
+          "passed": 30,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 237.96,
+          "tests": [
+            "test/runtime-business-login.test.ts"
+          ],
+          "cluster": ".cache/finance-postgres-TDjIv7",
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterStoppedCheck": true
+        }
+      ],
+      "uniqueFiles": 10,
+      "uniquePassed": 100,
+      "failed": 0,
+      "skipped": 0,
+      "boundary": "Fresh owned PostgreSQL16.15. Sign HTTP/ACL uses exact seven-table production slice with real guard; upgrade/historical/commissioning tests use full178 migrations/282 tables and independent non-owner LOGINs. These are local synthetic acceptance, not production Hyperdrive/roles."
+    },
+    "auditAndMaintenance": {
+      "files": 7,
+      "passed": 57,
+      "failed": 0,
+      "log": ".cache/sign-day-audit-accepted-20260930.log",
+      "scope": "Five route/inventory/API/274-screen/historical-ledger checks plus fixed privilege plan and current maintenance operation authorization, including refusal of v1/v2/v3 tokens."
+    },
+    "frontendUnit": {
+      "passed": 11,
+      "failed": 0,
+      "log": ".cache/sign-day-frontend-final-20260930.log"
+    },
+    "typechecks": {
+      "passed": true,
+      "logs": [
+        ".cache/sign-day-worker-types-frozen-20260930.log",
+        ".cache/sign-day-worker-runtime-types-frozen-20260930.log",
+        ".cache/sign-day-admin-typecheck-final-20260930.log"
+      ]
+    },
+    "adminBuild": {
+      "passed": true,
+      "durationSeconds": 27.25,
+      "log": ".cache/sign-day-admin-build-final-20260930.log"
+    },
+    "browser": {
+      "passed": true,
+      "functionalGroups": 15,
+      "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-browser-qa.json",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "driver": "regular Playwright + local Chrome headless",
+      "availability": "Absent",
+      "reason": "Browser plugin not available",
+      "boundary": "Synthetic API/session with actual rebuilt Vue UI. Does not prove native SQL/JWT/real role/browser-provider behavior.",
+      "screenshots": [
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-pending-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-mobile.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-mobile-preview.png"
+      ]
+    },
+    "scopedDiffCheck": {
+      "passed": true,
+      "includesUntrackedSources": true
+    },
+    "attempts": [
+      {
+        "log": ".cache/sign-day-native-first-20260930.log",
+        "accepted": false,
+        "executedCases": 0,
+        "reason": "Strict runner paths reject backslashes; forward-slash explicit paths used."
+      },
+      {
+        "log": ".cache/sign-day-native-final-20260930.log",
+        "accepted": false,
+        "passed": 17,
+        "failed": 4,
+        "reason": "Missing Admin group/data grants made HTTP writes refuse; incorrect app system_log denial assumption corrected without changing existing app grants."
+      },
+      {
+        "log": ".cache/sign-day-native-accepted-20260930.log",
+        "accepted": false,
+        "superseded": true,
+        "passed": 23,
+        "reason": "Before exact PK guard. Superseded by final30-case run; not added to unique counts."
+      },
+      {
+        "log": ".cache/sign-day-worker-types-first-20260930.log",
+        "accepted": false,
+        "reason": "Nullable theme and synthetic Env test typing fixed."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-browser-qa-first.json",
+        "accepted": false,
+        "passed": 9,
+        "failed": 6,
+        "reason": "Three harness assumptions corrected; real unknown-write modal obstruction fixed and rebuilt; final15/15 has no cancel workaround."
+      },
+      {
+        "log": ".cache/sign-day-native-broad-timeout-20260930.log",
+        "accepted": false,
+        "assertionResultsAvailable": false,
+        "reason": "Ten-file batch exceeded fixed600s ceiling. One synthetic fixture remained before stop; stopped owned cluster data removed after independent status3. Final complete files split across four disjoint accepted runs."
+      }
+    ]
+  },
+  "remaining": [
+    "Unpublished local candidate; no commit, push or deployment. Existing unrelated dirty changes preserved.",
+    "Marketing14 partial, global113 partial/68 missing and Checklist158 open remain. Zero marketing missing refers only to reviewed48-screen classification.",
+    "Eight real settings contracts above remain open; generic config API is not dedicated UI/consumer completion. store_user_avatar single-field closure would not complete the old routine-download screen.",
+    "Production role/provider/Hyperdrive, Linux CI, production scale, true-role browser E2E and global release acceptance remain open.",
+    "Historical snapshots remain frozen historical evidence, not current shared-source hash claims. SessionStorage cannot recover after closing/clearing browser storage."
+  ],
+  "evidence": {
+    "logs": [
+      ".cache/sign-day-native-final-accepted-20260930.log",
+      ".cache/sign-day-native-historical-accepted-20260930.log",
+      ".cache/sign-day-native-schedule-accepted-20260930.log",
+      ".cache/sign-day-native-commissioning-accepted-20260930.log",
+      ".cache/sign-day-audit-accepted-20260930.log",
+      ".cache/sign-day-frontend-final-20260930.log",
+      ".cache/sign-day-worker-types-frozen-20260930.log",
+      ".cache/sign-day-worker-runtime-types-frozen-20260930.log",
+      ".cache/sign-day-admin-typecheck-final-20260930.log",
+      ".cache/sign-day-admin-build-final-20260930.log"
+    ],
+    "reports": [
+      "workers-ts/audit/route-distribution-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-frontend-inventory-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-frontend-api-contracts-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-app-route-parity.json",
+      "workers-ts/audit/admin-legacy-content-route-parity.json",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+      "workers-ts/audit/admin-legacy-product-route-parity.json",
+      "workers-ts/audit/admin-legacy-setting-route-parity-speechcraft-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-work-route-parity.json"
+    ],
+    "sourceHashAlgorithm": "SHA256 UTF-8 with CRLF/CR normalized to LF",
+    "sourceHashCount": 64,
+    "sourceHashes": {
+      "MIGRATION_CHECKLIST.md": "9dbc8aeacb46590fa0335f43e6640ba400a280f40a887d95ee3297fc35e5e3f4",
+      "view/admin-ts/src/api/signDayConfig.ts": "2a34ce2fda28c26fd67e9f2a4db87417162e12b6ccd979294c0283ec679ecff3",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "efccf4dab5033ae1f7cfa24a9b4017582390b6762254a5e932566511c5ba376f",
+      "view/admin-ts/src/pages/marketing/SignDayConfig.vue": "2b75c4adc8c08646ea8fc4a5ae5722ab1d3e5ef04a3737787f982fccf0b8a5ef",
+      "view/admin-ts/src/router/index.ts": "f2d76ecedd957594094a732b13be3ce2040fdc5d0fb9739176a1f7aaecacc0eb",
+      "view/admin-ts/test/signDayConfig.test.ts": "451befdacf429055b3a8b4da9f1198984f8b73b8d47bf2c6a6ff1486d8b236bc",
+      "workers-ts/audit/admin-frontend-api-contracts-marketing-config-followup-20260930.json": "d0276c0e5d8873e28d13cf442d1885deb9bd88de05c79239597135271056e386",
+      "workers-ts/audit/admin-frontend-inventory-marketing-config-followup-20260930.json": "eef59f0b8d2f8ef4a8ff502338770eb4ccecc92840d00a507a82030b29b587e8",
+      "workers-ts/audit/admin-legacy-app-route-parity.json": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3",
+      "workers-ts/audit/admin-legacy-content-route-parity.json": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json": "7d069a52a7c2877cad510d9926e76791f6922965910ab02ed664a72366288ea5",
+      "workers-ts/audit/admin-legacy-product-route-parity.json": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "workers-ts/audit/admin-legacy-setting-route-parity-speechcraft-followup-20260928.json": "9a0cc8c064c1c81b3dbcffa9ff4358dfab9cbf309af2f4b3e86ae1e863575347",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438",
+      "workers-ts/audit/admin-legacy-work-route-parity.json": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf",
+      "workers-ts/audit/route-distribution-marketing-config-followup-20260930.json": "1bc443b5ab3978a2599a1e49c378d78218a29627ee8510534215697053bef947",
+      "workers-ts/docs/admin-marketing-config-legacy-source-20260930.md": "fa9dbe6066db2531e562041282598b34af1f95ebe8e1ae180d6130c977a03601",
+      "workers-ts/docs/admin-sign-day-config.md": "3a67cc9f4cafe3949194bfea286e71bacd218be5c9f502cb17ee4aa6ecd8aa1a",
+      "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "6f9c6b13dd19c306a7321fb565c99eb4a8bbff2ae8bfec4d403ee1664f75505c",
+      "workers-ts/scripts/admin-frontend-api-audit.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",
+      "workers-ts/scripts/admin-frontend-parity-audit.ts": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0",
+      "workers-ts/scripts/admin-marketing-frontend-parity-audit.ts": "346fdf77fd6f86c9474a14fe7d0594540e2314af8ed4db592674bc0795e4b3ea",
+      "workers-ts/scripts/route-parity-audit.ts": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "1e903ae4ba857f2d175b0c8b3991900f7e984a99cf317117dfc4ceca67c374a6",
+      "workers-ts/src/controllers/api/v1/AdminSignDayConfigController.ts": "fa18190038e2c097e64ae04e608393de796782ead14d2954ad516eb70d78d3af",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805",
+      "workers-ts/src/migrations/runCouponTemplateRuntimeUpgrade.ts": "c62b6fc9af9ba7b44b0e7987eac0635bc61b64c8544c90a369a8590bb84b4211",
+      "workers-ts/src/migrations/runPromotionGiftRuntimeUpgrade.ts": "7db146fe447e38d94f9854dc85942ccb3ff67d10d4a85f843fb03d92487580dc",
+      "workers-ts/src/migrations/runRuntimeBusinessCommissioning.ts": "3e03111b9bb719f12999812ef4b04e1e1748e3b162979c7cdb1626db513f490f",
+      "workers-ts/src/migrations/runSeckillParentRuntimeUpgrade.ts": "99328a87180bd43ebc4e7e09bf8960e52623b8662d9e05de32588f4f77d43078",
+      "workers-ts/src/migrations/runSeckillScheduleRuntimeUpgrade.ts": "1822a9901dbbd4589e93a85edcb5ad78bf8a03f31763cbf0aedefea0e49f3822",
+      "workers-ts/src/migrations/runSignDayConfigRuntimeUpgrade.ts": "cf910526658d39e9b0afce4d212363ec07f3b8373cacdc81210ce63c4b462afb",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+      "workers-ts/src/migrations/runtimeSignDayGroupLockBoundary.ts": "8a8345b6a65c052ec259c7fc5e416b838ab1c28de88febad60bfe8d9970c706e",
+      "workers-ts/src/migrations/signDayConfigRuntimeCatalog.ts": "c298cdd7b4ee1551ac1205c90d61e27fdcf386634cc3464a29ffeae40c75290e",
+      "workers-ts/src/routes/adminapi.ts": "daa8a1fbc0a1ee055b349d47640e3199ed80f40b7fcef7681f23da5dcac94dcb",
+      "workers-ts/src/routes/v1/index.ts": "2784619141b3f4093db77c6a99e26429169e2e388f61606b94851e1b4555da3f",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "0d26209b601524875baf9e0765ade80dfb9b60be1e35b9b425631ecca14fc444",
+      "workers-ts/src/services/admin/AdminSignDayConfigInput.ts": "23c5608634208e6edff59d427daa0364bd56478e018981a7aed5d239c151d9ce",
+      "workers-ts/src/services/admin/AdminSignDayConfigService.ts": "f83df87f67d5fc291cbdb15bd541e127bd3da348b2121a88007380bdeebe4fb7",
+      "workers-ts/test/admin-all-frontend-parity.test.ts": "c65dba8775b088a8406e67e9f2da767d4063c0624f4c30162b38c8b75d75094e",
+      "workers-ts/test/admin-frontend-api-audit.test.ts": "32a3c86752a90955a661381c05d9c337ce572648f9a6247e4c89e53ad5d08998",
+      "workers-ts/test/admin-frontend-api-contract.test.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",
+      "workers-ts/test/admin-frontend-inventory.test.ts": "2d25dafc050532cb9ad1b7b173732832135b208a90feab4e03cf2de1a3484352",
+      "workers-ts/test/admin-marketing-frontend-parity.test.ts": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+      "workers-ts/test/admin-sign-day-config-http.test.ts": "938b1c51cf2a0e137bbc940e52239480dc302cc9738ab46c433185e9f8de015e",
+      "workers-ts/test/admin-sign-day-config-postgres.test.ts": "f3338be9425f5d8b35f025b5336948b1a89c4d4adbf2e5d919909cf009e9c437",
+      "workers-ts/test/admin-sign-day-config.test.ts": "c2fca1724c58efe775f8fa231e797b7694b7b1348aef929c215969f71287c23d",
+      "workers-ts/test/helpers/runtimeHistoricalProfile.ts": "540d911c26a7358572c94bf4256cc880e9d8a899f1cec7215453e656670901bc",
+      "workers-ts/test/helpers/signDayConfigFixture.ts": "593a45a18c7cbbf7ed9f03421359f91b6cb4c10b0e1604797028806aaef88f6d",
+      "workers-ts/test/helpers/signDayRuntimeFixture.ts": "cfa273f4556b601c1ea6f93be09356e6b370a91a7303b79ee93cc4fb9e9a3555",
+      "workers-ts/test/runtime-business-login.test.ts": "6fd74cbe7da7cd00bfd7652d80286009fa36e350f8a3b61b927e7d517ca93b89",
+      "workers-ts/test/runtime-business-privilege-plan.test.ts": "d65c0cf5e9556a8ae3d3fd84d996405ef70c8b9d84094d6bdfeecf0826e89898",
+      "workers-ts/test/runtime-business-worker.test.ts": "8b994ba7eda3b86988808e7244fc366f3e9658056a765509ad0f6fa84a187590",
+      "workers-ts/test/runtime-coupon-template-privileges.test.ts": "36f53e8e2d6f44f19ebdd677a5159807f606ee1efed5107dd29192d300216933",
+      "workers-ts/test/runtime-promotion-gift-privileges.test.ts": "b4659da736fd7a26d0f673fef1cf9b5c385656749bd945ca52ecf62c684f44d0",
+      "workers-ts/test/runtime-seckill-parent-privileges.test.ts": "e4102ca220863752a72af70b9da37e0cebbdd31e4ab37d3c2db6cb74465ac086",
+      "workers-ts/test/runtime-seckill-schedule-lock.test.ts": "5005b426e69e6ee1f0a8e9cb2ea3964eeb9397974915afb4db2bdf7c5c7dc1ac",
+      "workers-ts/test/runtime-sign-day-config-privileges.test.ts": "d6e3a49acdb8ad83a3305ea4d15c4f80aadb14a4eb304a71e1ca131ddaf13267",
+      "workers-ts/test/runtime-sign-day-config-upgrade.test.ts": "b1faff9b212c345aea33de3513c4ad9674bfa9ccc88f4704748f071d73c91cde"
+    },
+    "logHashes": {
+      ".cache/sign-day-native-final-accepted-20260930.log": "9a8c2f7491fe0b8ff5bf81bb52fd59ad638a69af417ef1ab5c110321f5096db5",
+      ".cache/sign-day-native-historical-accepted-20260930.log": "d97e5e250efa6538abe03bc9844a47408d58d14f00f00411de916a0184f9fbe2",
+      ".cache/sign-day-native-schedule-accepted-20260930.log": "a020eb0d347afd82edf2bae10501d9d09f5d495de99cc1cd89edc01411ad59c6",
+      ".cache/sign-day-native-commissioning-accepted-20260930.log": "6e9db1fdf4d77f5278b7de7a8b46256651d9235e9a1044e68b69dfe7f5d97541",
+      ".cache/sign-day-audit-accepted-20260930.log": "271ce567db23b2d18ece3db9de48009c0a769f6fd84571aca5be72c8281ce1f1",
+      ".cache/sign-day-frontend-final-20260930.log": "d57d758bdf0df41d3db87f0ed820c7fabe86f5fd68df6f5e7f57b7d3fa8ba001",
+      ".cache/sign-day-worker-types-frozen-20260930.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/sign-day-worker-runtime-types-frozen-20260930.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/sign-day-admin-typecheck-final-20260930.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/sign-day-admin-build-final-20260930.log": "7163dee296a06410c6f288929dc75ceb3215219b3fead8fd1b420a0dc9d0f99d"
+    },
+    "browserArtifactHashes": {
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-browser-qa.json": "eab940063892a32fbd93e15565d23328bbd82e34ffba87becf4aa150635fe3a8",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-browser-qa.cjs": "304d62e905b69540acaf50f31780bcca926d1b31b521dcf4dcb51148c23726e9",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-desktop.png": "71dacb5edadb78ca97e323d940bd30cbb4305f5c75634280cc5377fc48ac9251",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-pending-desktop.png": "199b30138fb29020f2cfff8a969afe84df6a999591a28b96ed4f2f5b9628087c",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-mobile.png": "565a4aa671f5790f140788de246067daaea2cb79e34c67889352cb5eb52c2fc8",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/sign-day-mobile-preview.png": "04856e74833d0163e912929c9ed727b32b8ecd97006032fe17ecbd7717064db4"
+    }
+  }
+}

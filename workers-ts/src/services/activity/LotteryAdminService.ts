@@ -3,9 +3,12 @@ import {
   asc,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
+  lte,
   ne,
+  or,
   sql,
   type SQL,
 } from "drizzle-orm";
@@ -122,9 +125,69 @@ function parseObject(value: string | null): Record<string, unknown> {
   }
 }
 
-function positivePage(value: unknown, fallback: number): number {
+function queryInteger(value: string | undefined, label: string, fallback: number, minimum: number, maximum: number): number {
+  if (value === undefined || value === "") return fallback;
+  if (!/^-?\d+$/u.test(value)) throw new ValidateException(`${label}无效`);
   const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) throw new ValidateException(`${label}无效`);
+  return parsed;
+}
+
+function optionalQueryInteger(value: string | undefined, label: string, minimum: number, maximum: number): number | undefined {
+  return value === undefined || value === "" ? undefined : queryInteger(value, label, 0, minimum, maximum);
+}
+
+function searchPattern(value: string | undefined, label: string): string | undefined {
+  const term = value?.trim() ?? "";
+  if (!term) return undefined;
+  if (term.length > 100 || /[\u0000-\u001f\u007f]/u.test(term)) throw new ValidateException(`${label}无效`);
+  return `%${term.replace(/[\\%_]/gu, "\\$&")}%`;
+}
+
+function recordView(row: {
+  record: typeof luckLotteryRecord.$inferSelect;
+  activity: typeof luckLottery.$inferSelect | null;
+  prize: typeof luckPrize.$inferSelect | null;
+  userUid: number | null;
+  userNickname: string | null;
+  userDeleted: Date | null;
+}, includeDelivery = false) {
+  const { record, activity, prize } = row;
+  const snapshot = parseObject(record.prizeInfo);
+  const delivery = parseObject(record.deliverInfo);
+  const historicalPrize = Object.keys(snapshot).length ? snapshot : prize;
+  const displayPrize = historicalPrize ? {
+    id: typeof historicalPrize.id === "number" ? historicalPrize.id : record.prizeId,
+    type: typeof historicalPrize.type === "number" ? historicalPrize.type : record.type,
+    name: typeof historicalPrize.name === "string" ? historicalPrize.name : "",
+    image: typeof historicalPrize.image === "string" ? historicalPrize.image : "",
+    prompt: typeof historicalPrize.prompt === "string" ? historicalPrize.prompt : "",
+    type_name: typeof snapshot.type_name === "string" ? snapshot.type_name : "",
+  } : null;
+  return {
+    id: record.id,
+    uid: record.uid,
+    lotteryId: record.lotteryId,
+    prizeId: record.prizeId,
+    type: record.type,
+    isReceive: record.isReceive,
+    isDeliver: record.isDeliver,
+    receiveTime: record.receiveTime,
+    deliverTime: record.deliverTime,
+    addTime: record.addTime,
+    lottery: activity ? { id: activity.id, name: activity.name, factor: activity.factor } : null,
+    prize: displayPrize,
+    user: row.userUid === null
+      ? { uid: record.uid, nickname: "用户已注销", is_deleted: true }
+      : { uid: row.userUid, nickname: row.userNickname ?? "", is_deleted: row.userDeleted !== null },
+    deliver_info: {
+      mark: typeof delivery.mark === "string" ? delivery.mark : "",
+      ...(includeDelivery ? {
+        deliver_name: typeof delivery.deliver_name === "string" ? delivery.deliver_name : "",
+        deliver_number: typeof delivery.deliver_number === "string" ? delivery.deliver_number : "",
+      } : {}),
+    },
+  };
 }
 
 export function normalizeLotteryInput(input: Record<string, unknown>): NormalizedLotteryInput {
@@ -296,35 +359,76 @@ export class LotteryAdminService {
   constructor(private readonly container: Container) {}
 
   async list(query: Record<string, string | undefined>) {
-    const page = positivePage(query.page, 1);
-    const limit = Math.min(100, positivePage(query.limit, 20));
+    const page = queryInteger(query.page, "页码", 1, 1, 10_000);
+    const limit = queryInteger(query.limit, "每页数量", 15, 1, 100);
+    const phase = optionalQueryInteger(query.start_status, "活动阶段", -1, 1);
+    const factor = optionalQueryInteger(query.factor, "抽奖类型", 1, 5);
+    const status = optionalQueryInteger(query.status, "上架状态", 0, 1);
+    const pattern = searchPattern(query.name ?? query.store_name, "抽奖搜索词");
+    const now = Math.floor(Date.now() / 1000);
     const conditions: SQL[] = [eq(luckLottery.isDel, 0)];
-    if (query.name?.trim()) conditions.push(ilike(luckLottery.name, `%${query.name.trim()}%`));
-    const factor = Number(query.factor ?? 0);
-    if (Number.isSafeInteger(factor) && factor > 0) conditions.push(eq(luckLottery.factor, factor));
-    const status = Number(query.status);
-    if (status === 0 || status === 1) conditions.push(eq(luckLottery.status, status));
-    const [rows, counts] = await Promise.all([
-      this.container.db
+    if (pattern) conditions.push(or(
+      sql`${luckLottery.id}::text ILIKE ${pattern} ESCAPE '\\'`,
+      ilike(luckLottery.name, pattern),
+      ilike(luckLottery.desc, pattern),
+      ilike(luckLottery.content, pattern),
+    )!);
+    if (factor !== undefined) conditions.push(eq(luckLottery.factor, factor));
+    if (status !== undefined) conditions.push(eq(luckLottery.status, status));
+    if (phase === 0) conditions.push(and(eq(luckLottery.status, 1), sql`${luckLottery.startTime} > ${now}`)!);
+    if (phase === 1) conditions.push(and(
+      eq(luckLottery.status, 1),
+      lte(luckLottery.startTime, now),
+      or(eq(luckLottery.endTime, 0), gte(luckLottery.endTime, now)),
+    )!);
+    // The PHP condition also counted 0/0 timeless campaigns as ended. Keep
+    // these campaigns in the running stage only, matching their displayed state.
+    if (phase === -1) conditions.push(or(
+      eq(luckLottery.status, 0),
+      and(sql`${luckLottery.endTime} > 0`, sql`${luckLottery.endTime} < ${now}`),
+    )!);
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY`);
+      const rows = await tx
         .select()
         .from(luckLottery)
         .where(and(...conditions))
-        .orderBy(desc(luckLottery.sort), desc(luckLottery.id))
+        .orderBy(desc(luckLottery.addTime), desc(luckLottery.id))
         .limit(limit)
-        .offset((page - 1) * limit),
-      this.container.db
+        .offset((page - 1) * limit);
+      const counts = await tx
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(luckLottery)
-        .where(and(...conditions)),
-    ]);
-    const now = Math.floor(Date.now() / 1000);
-    return {
-      list: rows.map((row) => ({
-        ...activityView(row),
-        time_status: now < row.startTime ? 0 : now > row.endTime ? 2 : 1,
-      })),
-      count: counts[0]?.count ?? 0,
-    };
+        .where(and(...conditions));
+      const activityIds = rows.map((row) => row.id);
+      const metrics = activityIds.length ? await tx.select({
+        lotteryId: luckLotteryRecord.lotteryId,
+        lottery_all: sql<number>`COUNT(*)::int`,
+        lottery_people: sql<number>`COUNT(DISTINCT ${luckLotteryRecord.uid})::int`,
+        lottery_win: sql<number>`COUNT(DISTINCT ${luckLotteryRecord.uid}) FILTER (WHERE ${luckLotteryRecord.type} > 1)::int`,
+      }).from(luckLotteryRecord).where(inArray(luckLotteryRecord.lotteryId, activityIds)).groupBy(luckLotteryRecord.lotteryId) : [];
+      const metricsById = new Map(metrics.map((metric) => [metric.lotteryId, metric]));
+      const labels: Record<number, string> = { 1: "积分", 2: "余额", 3: "下单支付成功", 4: "订单评价", 5: "关注公众号" };
+      return {
+        list: rows.map((row) => {
+          const stage = row.status === 0 || (row.endTime !== 0 && now > row.endTime)
+            ? 2 : row.startTime !== 0 && now < row.startTime ? 0 : 1;
+          const metric = metricsById.get(row.id);
+          return {
+            ...activityView(row),
+            time_status: stage,
+            lottery_status: stage === 0 ? "未开始" : stage === 1 ? "进行中" : "已结束",
+            lottery_type: labels[row.factor] ?? "",
+            lottery_all: metric?.lottery_all ?? 0,
+            lottery_people: metric?.lottery_people ?? 0,
+            lottery_win: metric?.lottery_win ?? 0,
+          };
+        }),
+        count: counts[0]?.count ?? 0,
+        page,
+        limit,
+      };
+    });
   }
 
   async detail(idValue: unknown) {
@@ -420,60 +524,75 @@ export class LotteryAdminService {
   }
 
   async records(query: Record<string, string | undefined>, lotteryIdValue?: unknown) {
-    const page = positivePage(query.page, 1);
-    const limit = Math.min(100, positivePage(query.limit, 20));
+    const page = queryInteger(query.page, "页码", 1, 1, 10_000);
+    const limit = queryInteger(query.limit, "每页数量", 15, 1, 100);
+    const pathId = lotteryIdValue === undefined ? undefined : integer(lotteryIdValue, "活动", { min: 1, max: 2_147_483_647 });
+    const queryId = optionalQueryInteger(query.lottery_id, "活动ID", 0, 2_147_483_647);
+    if (pathId !== undefined && queryId !== undefined && queryId !== 0 && pathId !== queryId) {
+      throw new ValidateException("活动ID与路径不一致");
+    }
+    const lotteryId = pathId ?? queryId;
+    const uid = optionalQueryInteger(query.uid, "用户ID", 0, 2_147_483_647);
+    const factor = optionalQueryInteger(query.factor, "活动类型", 0, 5);
+    const prizeType = optionalQueryInteger(query.type, "奖品类型", 0, 9);
+    const isReceive = optionalQueryInteger(query.is_receive, "领取状态", 0, 1);
+    const isDeliver = optionalQueryInteger(query.is_deliver, "处理状态", 0, 1);
+    const startTime = optionalQueryInteger(query.start_time, "开始时间", 0, 2_147_483_647);
+    const endTime = optionalQueryInteger(query.end_time, "结束时间", 0, 2_147_483_647);
+    if (startTime !== undefined && endTime !== undefined && startTime > endTime) throw new ValidateException("时间范围无效");
+    const keyword = searchPattern(query.keyword, "搜索词");
     const conditions: SQL[] = [ne(luckLotteryRecord.type, 1)];
-    const lotteryId = lotteryIdValue ? integer(lotteryIdValue, "活动", { min: 1, max: 2_147_483_647 }) : Number(query.lottery_id ?? 0);
-    if (Number.isSafeInteger(lotteryId) && lotteryId > 0) conditions.push(eq(luckLotteryRecord.lotteryId, lotteryId));
-    const uid = Number(query.uid ?? 0);
-    if (Number.isSafeInteger(uid) && uid > 0) conditions.push(eq(luckLotteryRecord.uid, uid));
-    const factor = Number(query.factor ?? 0);
-    if (Number.isSafeInteger(factor) && factor > 0) conditions.push(eq(luckLottery.factor, factor));
-    const [rows, counts] = await Promise.all([
-      this.container.db
+    if (lotteryId) conditions.push(eq(luckLotteryRecord.lotteryId, lotteryId));
+    if (uid) conditions.push(eq(luckLotteryRecord.uid, uid));
+    if (factor) conditions.push(eq(luckLottery.factor, factor));
+    if (prizeType) conditions.push(eq(luckLotteryRecord.type, prizeType));
+    if (isReceive !== undefined) conditions.push(eq(luckLotteryRecord.isReceive, isReceive));
+    if (isDeliver !== undefined) conditions.push(eq(luckLotteryRecord.isDeliver, isDeliver));
+    if (startTime) conditions.push(gte(luckLotteryRecord.addTime, startTime));
+    if (endTime) conditions.push(lte(luckLotteryRecord.addTime, endTime));
+    if (keyword) conditions.push(or(
+      sql`${luckLotteryRecord.id}::text ILIKE ${keyword} ESCAPE '\\'`,
+      sql`${luckLotteryRecord.uid}::text ILIKE ${keyword} ESCAPE '\\'`,
+      sql`${luckLotteryRecord.lotteryId}::text ILIKE ${keyword} ESCAPE '\\'`,
+      sql`${luckLotteryRecord.prizeId}::text ILIKE ${keyword} ESCAPE '\\'`,
+      ilike(userTable.account, keyword),
+      ilike(userTable.nickname, keyword),
+      ilike(userTable.realName, keyword),
+      ilike(userTable.phone, keyword),
+      ilike(luckLottery.name, keyword),
+      ilike(luckLottery.desc, keyword),
+      ilike(luckLottery.content, keyword),
+      ilike(luckPrize.name, keyword),
+      ilike(luckPrize.prompt, keyword),
+    )!);
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY`);
+      const rows = await tx
         .select({
           record: luckLotteryRecord,
           activity: luckLottery,
           prize: luckPrize,
           userUid: userTable.uid,
           userNickname: userTable.nickname,
-          userRealName: userTable.realName,
-          userPhone: userTable.phone,
-          userAvatar: userTable.avatar,
+          userDeleted: userTable.deleteTime,
         })
         .from(luckLotteryRecord)
         .leftJoin(luckLottery, eq(luckLottery.id, luckLotteryRecord.lotteryId))
         .leftJoin(luckPrize, eq(luckPrize.id, luckLotteryRecord.prizeId))
         .leftJoin(userTable, eq(userTable.uid, luckLotteryRecord.uid))
         .where(and(...conditions))
-        .orderBy(desc(luckLotteryRecord.id))
+        .orderBy(desc(luckLotteryRecord.addTime), desc(luckLotteryRecord.id))
         .limit(limit)
-        .offset((page - 1) * limit),
-      this.container.db
+        .offset((page - 1) * limit);
+      const counts = await tx
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(luckLotteryRecord)
         .leftJoin(luckLottery, eq(luckLottery.id, luckLotteryRecord.lotteryId))
-        .where(and(...conditions)),
-    ]);
-    return {
-      list: rows.map(({ record, activity, prize, userUid, userNickname, userRealName, userPhone, userAvatar }) => ({
-        ...record,
-        lottery: activity,
-        prize: Object.keys(parseObject(record.prizeInfo)).length ? parseObject(record.prizeInfo) : prize,
-        user: userUid === null
-          ? { uid: 0, nickname: "用户已注销", realName: "用户已注销", phone: "", avatar: "" }
-          : {
-              uid: userUid,
-              nickname: userNickname ?? "",
-              realName: userRealName ?? "",
-              phone: userPhone ?? "",
-              avatar: userAvatar ?? "",
-            },
-        receive_info: parseObject(record.receiveInfo),
-        deliver_info: parseObject(record.deliverInfo),
-      })),
-      count: counts[0]?.count ?? 0,
-    };
+        .leftJoin(luckPrize, eq(luckPrize.id, luckLotteryRecord.prizeId))
+        .leftJoin(userTable, eq(userTable.uid, luckLotteryRecord.uid))
+        .where(and(...conditions));
+      return { list: rows.map((row) => recordView(row)), count: counts[0]?.count ?? 0, page, limit };
+    });
   }
 
   async recordDetail(idValue: unknown) {
@@ -485,9 +604,7 @@ export class LotteryAdminService {
         prize: luckPrize,
         userUid: userTable.uid,
         userNickname: userTable.nickname,
-        userRealName: userTable.realName,
-        userPhone: userTable.phone,
-        userAvatar: userTable.avatar,
+        userDeleted: userTable.deleteTime,
       })
       .from(luckLotteryRecord)
       .leftJoin(luckLottery, eq(luckLottery.id, luckLotteryRecord.lotteryId))
@@ -497,22 +614,7 @@ export class LotteryAdminService {
       .limit(1);
     const row = rows[0];
     if (!row) throw new NotFoundException("中奖记录不存在");
-    return {
-      ...row.record,
-      lottery: row.activity,
-      prize: Object.keys(parseObject(row.record.prizeInfo)).length ? parseObject(row.record.prizeInfo) : row.prize,
-      user: row.userUid === null
-        ? { uid: 0, nickname: "用户已注销", realName: "用户已注销", phone: "", avatar: "" }
-        : {
-            uid: row.userUid,
-            nickname: row.userNickname ?? "",
-            realName: row.userRealName ?? "",
-            phone: row.userPhone ?? "",
-            avatar: row.userAvatar ?? "",
-          },
-      receive_info: parseObject(row.record.receiveInfo),
-      deliver_info: parseObject(row.record.deliverInfo),
-    };
+    return recordView(row, true);
   }
 
   async deliver(input: Record<string, unknown>, idValue?: unknown): Promise<void> {

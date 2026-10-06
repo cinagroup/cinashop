@@ -5,8 +5,9 @@ import { storeOrderRefundSplit } from '@/models/schema/order_refund_split';
 import { ValidateException } from '@/utils/errors';
 import { amountToCents } from '@/services/payment/RefundGateway';
 import { lockOrderSettlement } from './OrderBrokerageService';
-import { readRefundQuantityReservation } from './RefundQuantityReservation';
+import { readRefundQuantityReservation,refundClaimCartKey } from './RefundQuantityReservation';
 import { planCompletedRefundLineCompensation, planOrderFinancialSplit } from './OrderSplitFinance';
+import { assertOrderPromotionLedger, writeOrderPromotionLedger } from './OrderPromotionLedgerSplit';
 import { refundSplitDisposition, type RefundWriteoffState } from './RefundSplitAllocation';
 import { reserveOrderCartRowIds } from './OrderCartIdentity';
 import { reserveChildOrderIds } from '@/services/supplier/SupplierFulfillmentService';
@@ -92,6 +93,7 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
     || (root.storeId !== source.storeId && root.supplierAllocationStatus !== 2)) throw invalid();
   const carts = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, source.id))
     .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
+  const hasPromotionLedger = await assertOrderPromotionLedger(tx, source, carts);
   const priorGeneration = await loadRefundOrderGeneration(tx, source, carts);
   const other = await tx.select({ id: storeOrderRefund.id }).from(storeOrderRefund)
     .leftJoin(storeOrderRefundSplit, eq(storeOrderRefundSplit.refundId, storeOrderRefund.id)).where(and(
@@ -102,7 +104,7 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
   const compensation = planCompletedRefundLineCompensation(source, carts, [refund]);
   if (!compensation || cents(source.backIntegral) !== compensation.usedIntegral * 100) throw invalid();
   const claim = readRefundQuantityReservation(refund)!;
-  const selected = new Map(claim.items.map(item => [String(item.cartId), item.cartNum]));
+  const selected = new Map(claim.items.map(item => [refundClaimCartKey(item), item.cartNum]));
   // Only the proven current claim may be removed from the planning view. This
   // is not a repair of arbitrary counters or a fallback for legacy evidence.
   if (carts.some(row => row.refundNum !== (selected.get(row.cartId) ?? 0)
@@ -172,9 +174,20 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
       mappings.push({ sourceRowId: row.id, sourceCartId: row.cartId, selectedRowId, remainingRowId,
         selectedNum: quantity, remainingNum: row.cartNum - quantity });
     }
+    const promotionCarts = (rows: readonly typeof storeOrderCartInfo.$inferInsert[]) => rows.map(row => {
+      // The insert model permits defaults, but a cloned paid cart must carry
+      // these source values explicitly before its promotion ledger is copied.
+      if (typeof row.productId !== 'number' || typeof row.cartNum !== 'number'
+        || row.cartInfo === undefined || row.cartInfo !== null && typeof row.cartInfo !== 'string') throw invalid();
+      return { productId: row.productId, cartNum: row.cartNum, cartInfo: row.cartInfo };
+    });
     await tx.insert(storeOrderCartInfo).values(selectedRows);
+    if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
+      { id: selectedOrderId, uid: source.uid, promotionsPrice: String(plan.selected.promotionsPrice) }, promotionCarts(selectedRows), now);
     if (firstSplit) {
       await tx.insert(storeOrderCartInfo).values(remainingRows);
+      if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
+        { id: remainingOrderId, uid: source.uid, promotionsPrice: String(plan.remaining.promotionsPrice) }, promotionCarts(remainingRows), now);
       await tx.update(storeOrderCartInfo).set({ splitStatus: 2, splitSurplusNum: 0 }).where(eq(storeOrderCartInfo.oid, source.id));
       await tx.update(storeOrder).set({ pid: -1 }).where(eq(storeOrder.id, source.id));
     } else {
@@ -182,6 +195,8 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
       const removedIds = carts.filter(row => !kept.has(row.id)).map(row => row.id);
       if (removedIds.length) await tx.delete(storeOrderCartInfo).where(and(eq(storeOrderCartInfo.oid, source.id), inArray(storeOrderCartInfo.id, removedIds)));
       for (const row of remainingRows) await tx.update(storeOrderCartInfo).set(row).where(and(eq(storeOrderCartInfo.id, row.id!), eq(storeOrderCartInfo.oid, source.id)));
+      if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
+        { id: source.id, uid: source.uid, promotionsPrice: String(plan.remaining.promotionsPrice) }, promotionCarts(remainingRows), now, true);
     }
     await tx.update(storeOrder).set({ cartId: selectedRows.map(row => row.cartId).join(',') }).where(eq(storeOrder.id, selectedOrderId));
     await tx.update(storeOrder).set({ cartId: remainingRows.map(row => row.cartId).join(',') }).where(eq(storeOrder.id, remainingOrderId));

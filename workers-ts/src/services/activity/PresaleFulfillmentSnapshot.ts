@@ -62,16 +62,35 @@ export function presaleDispatchBoundary(raw: string | null, productId: number): 
  */
 export async function assertPresaleDispatchReady(tx: DbClient, order: { id: number; type: number },
   action: '发货' | '核销' = '发货'): Promise<void> {
+  return checkPresaleDispatchReady(tx, order, action, true);
+}
+
+/** Read capability is advisory and belongs to the caller's immutable snapshot.
+ * It must never acquire a row lock or replace the locked dispatch check. */
+export async function readPresaleDispatchReadiness(tx: DbClient, order: { id: number; type: number },
+  action: '发货' | '核销' = '发货'): Promise<void> {
+  if (order.type !== 6) return;
+  if (Object.hasOwn(tx, '$client')) throw new Error('Presale readiness requires a caller-owned transaction');
+  const [settings] = await tx.execute<{ isolation: string; read_only: string }>(sql`SELECT
+    current_setting('transaction_isolation') AS isolation,current_setting('transaction_read_only') AS read_only`);
+  if (settings?.isolation !== 'repeatable read' || settings.read_only !== 'on')
+    throw new Error('Presale readiness requires a repeatable-read readonly snapshot');
+  return checkPresaleDispatchReady(tx, order, action, false);
+}
+
+async function checkPresaleDispatchReady(tx: DbClient, order: { id: number; type: number },
+  action: '发货' | '核销', lock: boolean): Promise<void> {
   if (order.type !== 6) return;
   if (Object.hasOwn(tx, '$client')) throw new Error('Presale dispatch requires a caller-owned transaction');
   if (!integer(order.id, 1)) throw invalid();
   let latestEnd = 0;
   try {
-    const rows = await tx.select({ productId: storeOrderCartInfo.productId,
+    const query = tx.select({ productId: storeOrderCartInfo.productId,
       cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderCartInfo.cartInfo}) <= ${MAX_SNAPSHOT_BYTES}
         THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
     }).from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
-      .orderBy(asc(storeOrderCartInfo.id)).limit(MAX_LINES + 1).for('share', { noWait: true });
+      .orderBy(asc(storeOrderCartInfo.id)).limit(MAX_LINES + 1);
+    const rows = await (lock ? query.for('share', { noWait: true }) : query);
     if (!rows.length || rows.length > MAX_LINES) throw invalid();
     for (const row of rows) latestEnd = Math.max(latestEnd, presaleDispatchBoundary(row.cartInfo, row.productId));
   } catch (error) {

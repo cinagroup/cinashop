@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <text class="heading">我的员工</text>
     <view class="search"><input v-model="keyword" placeholder="昵称、手机号或 UID" @confirm="search" /><button @tap="search">搜索</button></view>
@@ -20,9 +21,11 @@
       <view class="actions"><button :disabled="writing" @tap="savePercent">确认修改</button><button @tap="editing = null">取消</button></view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiAgentStaff, apiAgentStaffPercent, apiRemoveAgentStaff, type AgentStaff } from "@/api/agentSelfService";

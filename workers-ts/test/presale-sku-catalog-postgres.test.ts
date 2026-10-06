@@ -3,7 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import type { AppVariables, Env } from "../src/env";
 import { createContainerFromDb } from "../src/lib/di";
-import { storeProduct, storeProductAttrValue, storeCart, storeOrder, user } from "../src/models/schema";
+import { storeProduct, storeProductAttrValue, storeCart, storeOrder, user, systemDise, storeProductDescription, storeProductRelation, storeProductEnsure, storeProductReply, userRelation, systemAttachment, systemStore, systemSupplier } from "../src/models/schema";
 import { PresaleSkuCatalogService } from "../src/services/activity/PresaleSkuCatalogService";
 import { detail, presaleList } from "../src/controllers/api/v1/ProductController";
 import { PublicCatalogService } from "../src/services/product/PublicCatalogService";
@@ -16,7 +16,7 @@ describe("presale selection view with real disposable SQL", () => {
   let f: Awaited<ReturnType<typeof financePostgres>>, service: PresaleSkuCatalogService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
-    f = await financePostgres([storeProduct, storeProductAttrValue, storeCart, storeOrder, user]);
+    f = await financePostgres([storeProduct, storeProductAttrValue, storeCart, storeOrder, user, systemDise, storeProductDescription, storeProductRelation, storeProductEnsure, storeProductReply, userRelation, systemAttachment, systemStore, systemSupplier]);
     const container = createContainerFromDb(f.db); service = new PresaleSkuCatalogService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     // Synthetic principal only: production middleware/JWT/Hyperdrive are not exercised here.
@@ -111,7 +111,7 @@ describe("presale selection view with real disposable SQL", () => {
       const queries = vi.spyOn(tx, "select");
       try {
         const result = await fn(tx);
-        expect(queries).toHaveBeenCalledTimes(3); // principal + product/SKU, or principal + list/count
+        expect(queries).toHaveBeenCalledTimes(view === "sku" ? 9 : 3); // SKU adds six bounded shared display reads; list retains its three original queries
         observed.push(...await tx.execute(sql`SELECT current_setting('transaction_isolation') AS isolation,
           current_setting('transaction_read_only') AS readonly, current_setting('statement_timeout') AS deadline,
           current_setting('idle_in_transaction_session_timeout') AS idle`));

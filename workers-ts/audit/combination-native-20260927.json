@@ -1,0 +1,912 @@
+{
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-27T07:00:44.415Z",
+  "status": "passed-local-final-source",
+  "published": false,
+  "scope": {
+    "files": [
+      {
+        "file": "test/admin-combination.test.ts",
+        "passed": 28,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination.test.ts",
+        "sha256": "1fd653c105843a62fc9114ea86fbc7e17a9d0d7dcfcb1bf0df72f9ce1ea519c3"
+      },
+      {
+        "file": "test/admin-combination-postgres.test.ts",
+        "passed": 11,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-postgres.test.ts",
+        "sha256": "1e60760a2c7027af6f258a108444085863d8f41ebf93546c1c47576a87bc7293"
+      },
+      {
+        "file": "test/admin-combination-http.test.ts",
+        "passed": 7,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combination-http.test.ts",
+        "sha256": "24c5890f4f7e5a0649cc3725f217bee5274a8adac5d83ced41ee012ab41dc31d"
+      },
+      {
+        "file": "test/combination-refund-policy-postgres.test.ts",
+        "passed": 4,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/combination-refund-policy-postgres.test.ts",
+        "sha256": "fbe999e65ecd05c2f9c478b2420a4aa922fa84191c1b6e10f02c5b15f1b605da"
+      },
+      {
+        "file": "test/pink-virtual-timeout-postgres.test.ts",
+        "passed": 41,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-virtual-timeout-postgres.test.ts",
+        "sha256": "9b59a24e7768b95db481f03dce4d98609fd0ac774ababf995177aed755c47e24"
+      },
+      {
+        "file": "test/pink-success-notice-postgres.test.ts",
+        "passed": 18,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-success-notice-postgres.test.ts",
+        "sha256": "7ecdbe4de284d46b0e9070b89def444d07e833e072e543566271e82c4dffe4b0"
+      },
+      {
+        "file": "test/admin-activity-preservation.test.ts",
+        "passed": 26,
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-activity-preservation.test.ts",
+        "sha256": "6d72e157af07db43737b7c40fdb56892ad76d067793a4bd39ccfd009fbcbeca5"
+      }
+    ],
+    "greenFiles": 7,
+    "greenPassed": 135,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-native-frozen-final-20260927.log",
+      "sha256": "ad7c8c309a05b210f2d82de10753fd82260f429725947419971681b09527eb2b"
+    },
+    "aggregateExitCode": 1,
+    "excludedFile": "test/pink-success-notice-migration.test.ts",
+    "excludedReason": "Two C collation fixture expected-string assertions failed before apply; all20 from that file excluded from final count until separate corrected run.",
+    "finalMigration": {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/pink-success-notice-migration.test.ts",
+      "sha256": "eadec07399bf89ed54d6f32ee63fd571c4989b09ae5333fc09febbc06967c42b",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "log": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-migration-20-final-20260927.log",
+        "sha256": "da046589132fa75f5e69d2f23f0eb7b844bd0befb0e6a01472590e012700ed8a"
+      },
+      "revision": "Only test assertion updated to PostgreSQL16 native per-element casts for C collation; runtime SQL unchanged. Strict drift rejection and entire row/catalog preservation assertions retained."
+    }
+  },
+  "aggregation": {
+    "nativeUniqueFiles": 17,
+    "nativeUniquePassed": 640,
+    "scopeUniqueFiles": 8,
+    "scopeUniquePassed": 155,
+    "regressionUniqueFiles": 9,
+    "regressionUniquePassed": 485,
+    "frontendPassed": 39,
+    "compatibilityUniqueFiles": 5,
+    "compatibilityUniquePassed": 113,
+    "skip": 0,
+    "rule": "No additive diagnostic counts. Seven complete green files (135) from a batch with two migration assertion failures plus one independently corrected green20 migration file =155 distinct scope cases. Add nine distinct regression files485 =640. Not represented as one 155/155 run."
+  },
+  "regression": {
+    "passed": 485,
+    "files": 9,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-native-regression-20260927.log",
+      "sha256": "e23f5bfe0afd31015a4bb4f17b96718e30ea503c711bdff0cc8527e17b6e8752"
+    },
+    "tests": [
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/combination-sku-catalog-postgres.test.ts",
+        "sha256": "01e476102bdad4cb8981c7738e1e7edafe455e458dfb584e7053cb1f3dbc7c30"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-refund-lock-order-postgres.test.ts",
+        "sha256": "6df65468b165f25c0776a1ca8254fc433ef0a9c7a329d95510ef80d98cf4bf6b"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-cancellation-payment-admission-postgres.test.ts",
+        "sha256": "e93961c1bfcdd4977cb03c89d1c19083138b3c7fb4001f395e2dd5823a8ca621"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-cancellation-authorization-postgres.test.ts",
+        "sha256": "d6e334f8f8f681674c82cec86007ba095534c8fe7e572c43330c6330ef3b543b"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-cancellation-status-postgres.test.ts",
+        "sha256": "577719ba4883315a1f0fd163cb4a427f3bff7f0dc29d50d72d23334b20586363"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-cancellation-refund-recovery-postgres.test.ts",
+        "sha256": "9f7d1c358a311a27bc6073cbb5cdeeeb571cfec0f51663eb7456d860329e4e8b"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/pink-cancellation-background-postgres.test.ts",
+        "sha256": "06ebcb103ff98f87117c208a541a99c2f24338dd8e12c3be5c267d8f39f319bf"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/legacy-pink-status-postgres.test.ts",
+        "sha256": "92473cdbaf206a6ac63c965318f9d4cd220131744ec80abdc82ec0c2fe9b4129"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-confirmation-rules.test.ts",
+        "sha256": "08f2257390c701fb255ba415a7e2c0b47d58b6f031dc9e036da20fb949d62a6f"
+      }
+    ]
+  },
+  "frontend": {
+    "passed": 39,
+    "failed": 0,
+    "skipped": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-frontend-runtime-20260927-copylocked-final.log",
+      "sha256": "19dc8cdafe48bea1a72a60e63fe3f3ce5b66867ccbff6abe2b2ec6aa8dab03fc"
+    },
+    "test": {
+      "path": "C:/cinagroup/cinashop/workers-ts/test/admin-combinations-frontend.test.ts",
+      "sha256": "894856839eece072e9eb6be1997cfbd9d549c29ef27e932b9c9bb3683a7f6c9e"
+    },
+    "finalRuntimeChange": "After39 runtime tests, only ended-activity explanatory text changed; frozen final types/build and CUA use that page."
+  },
+  "compatibility": {
+    "passed": 113,
+    "files": 5,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "log": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-compatibility-frozen-final-20260927.log",
+      "sha256": "8a532bdf34b3363f95d6891db6103ce0bc96f426196a157a8fba0d3864a44819"
+    },
+    "testFiles": [
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/kefu-sequence-registration.test.ts",
+        "sha256": "badc789826707d20690b8af7a53d05fe521e184f1d9d7f59b54d6f21c5964fbb",
+        "passed": 85
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/check-state-alignment.test.ts",
+        "sha256": "743cf13d8901bf9bfa063624198d6984ab3e3552bf96d61daf2485489feb4d31",
+        "passed": 7
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/order-notification-outbox.test.ts",
+        "sha256": "e9ae49bcb984f80458cd969a5d17ab717485e36bf2e5abaf44e06322da053bb7",
+        "passed": 5
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/order-notification-delivery.test.ts",
+        "sha256": "07f2c8311aa4cf52bcf296309f641468a40fe69f277f7481e7ec912854381ae2",
+        "passed": 7
+      },
+      {
+        "path": "C:/cinagroup/cinashop/workers-ts/test/admin-activity-list-frontend.test.ts",
+        "sha256": "dc283f0d0316eda0e0265af79dfc0732d7c50fdb45eb5a92cebfc28492a7fc12",
+        "passed": 9
+      }
+    ]
+  },
+  "catalog": {
+    "exitCode": 0,
+    "logs": [
+      {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-orm-final-20260927.log",
+        "sha256": "7cb6a564f13157898bed86df8b3fb3481acc2247f441d3e4bd3ff3a8ec16e956"
+      },
+      {
+        "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-catalog-audit-final-20260927.log",
+        "sha256": "00d99218e14965e2513a28a9b6d18205cae81c243f0009e32702ff6e5a6f3db1"
+      }
+    ],
+    "fullSummary": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-catalog-summary-final-20260927.json",
+      "sha256": "a4dd650a785dd0b42f94be2cfb764388d28e0616ce0c81624732e38bb4608f93"
+    },
+    "serverVersionNum": 160015,
+    "externalInputSha256": "6b6721181a6ad9f5edd77113148ce9655ed576a0753eba1875ef871e057d7962",
+    "generatedSqlSha256": "64992573c2b17537ed4ed234efe615118415ccc3fe5d99842e78fe3383200db3",
+    "paths": [
+      {
+        "path": "external",
+        "steps": 170
+      },
+      {
+        "path": "embedded",
+        "steps": 175
+      },
+      {
+        "path": "orm",
+        "steps": 1164
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1284
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1165
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1156
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1165
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1158
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1164
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 279,
+        "columns": 3885,
+        "constraints": 668,
+        "indexes": 1076,
+        "sequences": 227
+      }
+    },
+    "diff": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "pinkSuccessOutboxVerification": {
+      "external": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "embedded": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_upgrade": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_default_upgrade": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_constraints": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_fk_names": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_checks": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_sequences": {
+        "initialRegistered": true,
+        "exactElevenEvents": true,
+        "repeatPreserved": true
+      }
+    },
+    "emptyTableGate": {
+      "fixtureTables": 279,
+      "engineDriftRefusals": [
+        "rls-enabled",
+        "rls-forced",
+        "persistence",
+        "kind",
+        "partition-key",
+        "partition-member",
+        "renamed",
+        "missing",
+        "extra"
+      ],
+      "bothComparisonDirectionsRefused": true,
+      "tableOnlyChangesInvisibleToOtherCategories": 6,
+      "allFiveCategoriesRestoredAfterEachRollback": true,
+      "temporaryShadowIgnored": true,
+      "scope": "Self-created fixture metadata only; no policy authorization or production equivalence claim"
+    },
+    "boundaries": "Five catalog categories exactly enforced; historical nine-CHECK drift suite remains historical and separate from new20 migration tests. Full functions/triggers/policies/privileges/provider equivalence is not implied."
+  },
+  "roleAndHttpBoundaries": [
+    "Formal175/279 schema actually commissioned restricted Admin/app LOGIN roles; assembled createApp Hono/JWT/controller/db exercised both9-route prefixes. Only createContainer selects the local commissioned connection; no grant/SQL/service/controller mocks.",
+    "HTTP seven cases separately verify view/manage and unrelated activity.manage, read/write contracts, UUID/revision, actor audit and soft delete.",
+    "Refund four cases exercise real restricted Admin and app confirmation/create/wallet/refund purchase snapshots.",
+    "Virtual members have uid/order0; no provider/order/bill/inventory effects. Success outbox immutable five-field payload, second eligibility check before system/channel enqueue; configured SMS provider substituted explicitly in native tests."
+  ],
+  "cleanup": [
+    {
+      "cluster": "EFOCHa",
+      "port": 50256,
+      "fixtureDatabasesAndRoles": 0,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    },
+    {
+      "cluster": "ucSy2l",
+      "port": 53761,
+      "fixtureDatabasesAndRoles": 0,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    },
+    {
+      "cluster": "ihYkjr",
+      "port": 57168,
+      "fixtureDatabasesAndRoles": 0,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    },
+    {
+      "cluster": "PA6sXz",
+      "port": 56244,
+      "fixtureDatabasesAndRoles": 0,
+      "pgCtlStatusExit": 3,
+      "listeners": 0
+    }
+  ],
+  "earlierDiagnostics": {
+    "final144BeforeCollation": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-native-final-20260927.log",
+      "sha256": "d503651e9350385277abd5c6391116656744e3203897ac7dafb7d75015d30d96"
+    },
+    "failedBatch": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-native-diagnostic-20260927.log",
+      "sha256": "fe4752c30f52945fef800727ec6aad84bdfa4c557f3b7b7ca378b79213301030"
+    },
+    "virtualSecondAttempt": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/pink-virtual-diagnostic-2-20260927.log",
+      "sha256": "7fccea850581637572e86806ac59638ae93f0df1c24f478f557fe2ed675098eb"
+    },
+    "rule": "Earlier failed/partial runs not counted; initial gM8fUa retained20 synthetic fixture databases in a stopped diagnostic cluster due to a teardown issue. It is not described as fixture-zero. Later final clusters independently stopped and cleared."
+  },
+  "sourceClosure": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-runtime-accepted-snapshot/manifest.json",
+    "sha256": "f2850eaeed0bc2d89bf47d2d5b0b76423aa3266fb3395163687be2b98db518a4"
+  },
+  "finalDist": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-final-dist-snapshot/manifest.json",
+    "sha256": "85e30070f57cb7e7758268dfd201792c1743654df80ea4fe770be009d4642604"
+  },
+  "ownedSources": [
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/src/services/admin/AdminCombinationService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\admin\\AdminCombinationService.ts",
+      "sha256": "43f5b4626ba29fcc01373d4a84607c09ffc2882bd027a5cdab060d77505dd2e1"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/src/services/admin/AdminCombinationInput.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\admin\\AdminCombinationInput.ts",
+      "sha256": "bd628334822ccffb2b494f39be0e2d138ee3f1db8e9de71900e386a4dfea3315"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/src/services/admin/AdminCombinationData.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\admin\\AdminCombinationData.ts",
+      "sha256": "4f9a0ee1dfd151278f73f71f1406adafbbfe97f67dc6ecdaceb3bc4387dc2078"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/src/services/admin/AdminCombinationMediaPolicy.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\admin\\AdminCombinationMediaPolicy.ts",
+      "sha256": "3f94fe1575e075685f318365f29ac141ec6ea12ed8153936625cc6c455fb2dcd"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/test/admin-combination.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-combination.test.ts",
+      "sha256": "1fd653c105843a62fc9114ea86fbc7e17a9d0d7dcfcb1bf0df72f9ce1ea519c3"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/test/admin-combination-postgres.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-combination-postgres.test.ts",
+      "sha256": "1e60760a2c7027af6f258a108444085863d8f41ebf93546c1c47576a87bc7293"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/test/helpers/combinationAdminFixture.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\helpers\\combinationAdminFixture.ts",
+      "sha256": "01faf23b0ad6dffe10324514d361ebb156b6aa1ea04c7f68a5091c5093169bbb"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/test/combination-refund-policy-postgres.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\combination-refund-policy-postgres.test.ts",
+      "sha256": "fbe999e65ecd05c2f9c478b2420a4aa922fa84191c1b6e10f02c5b15f1b605da"
+    },
+    {
+      "owner": "/root/seckill_time_backend",
+      "path": "workers-ts/test/admin-combination-http.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-combination-http.test.ts",
+      "sha256": "24c5890f4f7e5a0649cc3725f217bee5274a8adac5d83ced41ee012ab41dc31d"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "view/admin-ts/src/api/combination.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\api\\combination.ts",
+      "sha256": "1ecc8cd7aa04540151c870b7cc4825d6de02cb623bbea6529dc56eb4d089b401"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "view/admin-ts/src/pages/activity/Combinations.vue",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\pages\\activity\\Combinations.vue",
+      "sha256": "ecb599cd2f1df87acd7969c2bbdd2e301b4f3e0c3d3b0f0feefea9614ae40d64"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "view/admin-ts/src/pages/activity/CombinationImagePicker.vue",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\pages\\activity\\CombinationImagePicker.vue",
+      "sha256": "ff78dd680d05da45f1d5f7b6113bdccf24b976055a4b9c97903a9324498c623b"
+    },
+    {
+      "owner": "/root/seckill_time_frontend",
+      "path": "workers-ts/test/admin-combinations-frontend.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-combinations-frontend.test.ts",
+      "sha256": "894856839eece072e9eb6be1997cfbd9d549c29ef27e932b9c9bb3683a7f6c9e"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/src/services/activity/PinkLifecycleService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\activity\\PinkLifecycleService.ts",
+      "sha256": "de24054b9f819416924c48c71e20102f1b74aef4b8b7707e199399c92da98035"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/src/services/activity/PinkTimeoutService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\activity\\PinkTimeoutService.ts",
+      "sha256": "dcff9a392134cc64482290dbc70f1bf17c656138aa7195fb7920a0d514bf0cda"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/src/services/activity/PinkVirtualCompletion.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\activity\\PinkVirtualCompletion.ts",
+      "sha256": "ba87bbb6d62eb434c5f3052b7d1e660404a959f8c155fcd9360c2f1a3eeba1d5"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/test/pink-virtual-timeout-postgres.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\pink-virtual-timeout-postgres.test.ts",
+      "sha256": "9b59a24e7768b95db481f03dce4d98609fd0ac774ababf995177aed755c47e24"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/test/pink-cancellation-payment-admission-postgres.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\pink-cancellation-payment-admission-postgres.test.ts",
+      "sha256": "e93961c1bfcdd4977cb03c89d1c19083138b3c7fb4001f395e2dd5823a8ca621"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/test/pink-refund-lock-order-postgres.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\pink-refund-lock-order-postgres.test.ts",
+      "sha256": "6df65468b165f25c0776a1ca8254fc433ef0a9c7a329d95510ef80d98cf4bf6b"
+    },
+    {
+      "owner": "/root/seckill_time_contract",
+      "path": "workers-ts/test/pink-success-notice-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\pink-success-notice-migration.test.ts",
+      "sha256": "eadec07399bf89ed54d6f32ee63fd571c4989b09ae5333fc09febbc06967c42b"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/controllers/api/v1/AdminCombinationController.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\controllers\\api\\v1\\AdminCombinationController.ts",
+      "sha256": "e5537046f6c5d4c2defd57209bfa24bb79d2504b1fa9304da4f382d379796c9b"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\controllers\\api\\v1\\AdminCrudController.ts",
+      "sha256": "0c582875f1e876a87db543aeae2a85a974388150c81082e0a5f38f93d6aafb3c"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\admin\\AdminPermissionService.ts",
+      "sha256": "269c084dca253220cd201987de4fa053d5be66a3108cb2b8d27be9e5c2c231e4"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\routes\\adminapi.ts",
+      "sha256": "5a41c3491a2325cd1158d65132631ceadfd932cababf15583a01adb4b36a1464"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\routes\\v1\\index.ts",
+      "sha256": "de3ab5eb2890c54c321d0dc03bcaedb9e97dcf4656d69b70d827c8d433582eb1"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/activity/PinkSuccessNotice.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\activity\\PinkSuccessNotice.ts",
+      "sha256": "f11f145e4c74ce2d03fb8a9c241fdaa4278203e4e0a778eea0f3a318327817c5"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/models/schema/order_outbox.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\models\\schema\\order_outbox.ts",
+      "sha256": "3b573879bc3efa3320ade309e2e22116baac0c4b72e6962018622a4a130e6a23"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/order/OrderNotificationAdminService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\order\\OrderNotificationAdminService.ts",
+      "sha256": "65a39b05c615f478d07bf104fdcba835c1567e0c93e8a2970b4765a090430d89"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/order/OrderNotificationOutboxService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\order\\OrderNotificationOutboxService.ts",
+      "sha256": "cd651d47ed85c8c7fe4e6608e4c082e63a57cbbe5fc97ed123b3619212b7621f"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/order/OrderNotificationDeliveryService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\order\\OrderNotificationDeliveryService.ts",
+      "sha256": "6056b615503b202cb45deb183eb34cb8e643c1ca28a9fb04c4e891228b075269"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\order\\OrderOutboxService.ts",
+      "sha256": "9877cbeb92c44d2ed84fe1528f981927d7c7b5fc58cbf9098bab1e81ca3b451f"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\order\\StoreOrderCreateService.ts",
+      "sha256": "489475156e5d28d7d61c8a81b3a6e84e1a6935e750bb8ebb55bca91c99a0160d"
+    },
+    {
+      "owner": "/root",
+      "path": "view/admin-ts/src/api/notifications.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\api\\notifications.ts",
+      "sha256": "6bae3453e03f6abcafacfa72670f71af421baff9e553527d6fcfecea9fbdee49"
+    },
+    {
+      "owner": "/root",
+      "path": "view/admin-ts/src/layouts/AdminLayout.vue",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\layouts\\AdminLayout.vue",
+      "sha256": "0c46d6ac78d29b162f3829f3e550a4d83c394889e0373fcf460523a42c8c8a5d"
+    },
+    {
+      "owner": "/root",
+      "path": "view/admin-ts/src/router/index.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\router\\index.ts",
+      "sha256": "950160e92d30fe4d7942b72a1f3e9d0c57c4f3d0f0dec6680b1acda8366eed51"
+    },
+    {
+      "owner": "/root",
+      "path": "view/admin-ts/src/pages/activity/ActivityList.vue",
+      "absolutePath": "C:\\cinagroup\\cinashop\\view\\admin-ts\\src\\pages\\activity\\ActivityList.vue",
+      "sha256": "0694b8383d3c95bcefa38ddec94289dd90177f2f4a02357b9e30200e33deaacf"
+    },
+    {
+      "owner": "/root (column preflight patch also authorized to /root/seckill_time_contract)",
+      "path": "workers-ts/src/migrations/pinkSuccessNotice.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\migrations\\pinkSuccessNotice.ts",
+      "sha256": "57133ef4aec61d4fae7f39724fe9d06f04a167743ba52b8f63df41f5ed1d4a52"
+    },
+    {
+      "owner": "/root (column preflight patch also authorized to /root/seckill_time_contract)",
+      "path": "workers-ts/src/migrations/runPinkSuccessNotice.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\migrations\\runPinkSuccessNotice.ts",
+      "sha256": "74a5e3c98c2513203837f8549803916d3d0b46a36b4a12b4ca30c1e8bea94b8c"
+    },
+    {
+      "owner": "/root (column preflight patch also authorized to /root/seckill_time_contract)",
+      "path": "workers-ts/src/services/MigrationService.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\src\\services\\MigrationService.ts",
+      "sha256": "8ece05c88bea4854ebc6039e6e2fe3be080f86c586e3935dca7c6ff40c785ea2"
+    },
+    {
+      "owner": "/root (column preflight patch also authorized to /root/seckill_time_contract)",
+      "path": "workers-ts/migrations/0168_pink_success_notice.sql",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\migrations\\0168_pink_success_notice.sql",
+      "sha256": "09dc63ae1f4d8532ccf9cd6299db3dda3fca1be32580c305822b22e06c3ea848"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/scripts/data-migration/pink-success-outbox-contract.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\scripts\\data-migration\\pink-success-outbox-contract.ts",
+      "sha256": "ecb6952234766a42cbf07df6433d7dbcdaf1f4fe7031307c0797877192b46cef"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/scripts/orm-ddl-audit.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\scripts\\orm-ddl-audit.ts",
+      "sha256": "1f95534ce87ffc18ebc53bfb450a65ae4af5c55ad5ffaaac29b28808667c3009"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/helpers/checkStateAudit.cjs",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\helpers\\checkStateAudit.cjs",
+      "sha256": "b207bf4bdcf2f83d2f0793f7dc9e12c3a6c2c90d6e5f8637740a3b74e175e30c"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/check-state-alignment.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\check-state-alignment.test.ts",
+      "sha256": "743cf13d8901bf9bfa063624198d6984ab3e3552bf96d61daf2485489feb4d31"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/pink-success-notice-postgres.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\pink-success-notice-postgres.test.ts",
+      "sha256": "7ecdbe4de284d46b0e9070b89def444d07e833e072e543566271e82c4dffe4b0"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/kefu-sequence-registration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\kefu-sequence-registration.test.ts",
+      "sha256": "badc789826707d20690b8af7a53d05fe521e184f1d9d7f59b54d6f21c5964fbb"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/admin-activity-preservation.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-activity-preservation.test.ts",
+      "sha256": "6d72e157af07db43737b7c40fdb56892ad76d067793a4bd39ccfd009fbcbeca5"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/admin-activity-list-frontend.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-activity-list-frontend.test.ts",
+      "sha256": "dc283f0d0316eda0e0265af79dfc0732d7c50fdb45eb5a92cebfc28492a7fc12"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\helpers\\refundRuntimeFixture.ts",
+      "sha256": "6bac83ffaee3b2085954f95b24034f8171af66bbbf37e54673d4f5e5e84609e1"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/admin-refund-creation-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-refund-creation-migration.test.ts",
+      "sha256": "c01966e9172cd35318f9f46dcfcd67b8651a91e7e4030f7f99beff94ff635cb2"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/admin-refund-operation-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\admin-refund-operation-migration.test.ts",
+      "sha256": "9da84bc1003c9d38f8b16e2c2ef8a41a457083b13cab2e48e3fe2a979c7c0ec7"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/brokerage-paid-order-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\brokerage-paid-order-migration.test.ts",
+      "sha256": "d955a07a87436ac0175ad09f7b2ec9a0c40fb99a38bac7916fc54e35dd9324a0"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/coupon-product-scope-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\coupon-product-scope-migration.test.ts",
+      "sha256": "40753ac69843695b79ac3cec8824ffc162e0c228ec46347573a35fac5061b9ad"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/invoice-evidence-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\invoice-evidence-migration.test.ts",
+      "sha256": "ceab9b6052319f37704f039cfb42f9cbd3df6f62c6079b242c40b721ea34395a"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/invoice-evidence-registration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\invoice-evidence-registration.test.ts",
+      "sha256": "796b665507083c758d9e722fc905baffb20baf2a99f76380afaa9b4fefa7c8cf"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/offline-order-installation.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\offline-order-installation.test.ts",
+      "sha256": "9b8a21b42a7fd064c013d7a9285bde9f8834c3bd257be282e6c781dacb34b817"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/refund-split-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\refund-split-migration.test.ts",
+      "sha256": "ca1ac19b8145be52f5c2a7cc871d375078758dcb6fa7c9bdd692810856ca3cd7"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/shipping-lifecycle-indexes.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\shipping-lifecycle-indexes.test.ts",
+      "sha256": "dbb0521b6fa8dd4bdd2517d26b4d0208bb157ea5ab3fe32ea637a2e4ebc51dab"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/shipping-lifecycle-interactions.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\shipping-lifecycle-interactions.test.ts",
+      "sha256": "f4397b1d74528786e99c1d1d2996926301e28c6ccc35ca4fc4a797e9833f4ea1"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/shipping-lifecycle-migration.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\shipping-lifecycle-migration.test.ts",
+      "sha256": "59524650d04eb14aa1d0929b586ba252ca460011b6bb816d77db5a5ffdce91ca"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/recharge-quota-seed-upgrade.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\recharge-quota-seed-upgrade.test.ts",
+      "sha256": "0319585152b3946318d0e7a1b6f317529526c25db61dafb50377ee35e740c308"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\test\\seckill-time-reference-lock-upgrade.test.ts",
+      "sha256": "a611b911f6aa0e57314938e77efe04a34bb51e17cf1f9b3299c5e4461cd705ce"
+    },
+    {
+      "owner": "/root",
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "absolutePath": "C:\\cinagroup\\cinashop\\workers-ts\\scripts\\run-local-finance-postgres.mjs",
+      "sha256": "5bdfb4410003e4c88710952d985d74f2ee2c1a4cac606c73b8150bc5d2073816"
+    }
+  ],
+  "historicalEvidenceReview": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-historical-evidence-review-20260927.json",
+    "sha256": "cf26951dc6c2abb9aae0e0b201f79991af4620bdff6c704b717839ae18ce18e7"
+  },
+  "checks": {
+    "workerTypes": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-worker-types-frozen-final-20260927.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    "adminTypesAndProductionBuild": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-admin-build-frozen-final-20260927.log",
+      "sha256": "ad8601e0b719972d9eab7796d476b189158d5e571007f01676fff741071dcff7"
+    },
+    "workerTypesAfterLedger": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/combination-worker-types-ledger-final-20260927.log",
+      "sha256": "d58e3ba1b8617aa080f5415e1c80a9d59fa63506e6713803eebefcbed82e1114"
+    }
+  },
+  "browser": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-browser-20260927.json",
+    "sha256": "389a2eed4d9740c19b462bd17447c4bb4a3deb73b12c9ee608e4cab2b812f397"
+  },
+  "limitations": [
+    "Complete Linux CI and production provider/media/configuration/device acceptance still open; no commit/push/deploy or live grants.",
+    "Only full-group success notice restored, not opening/joining success notifications. Purchase snapshot title deliberately differs from old PHP current activity title. No third eligibility check between channel-row creation and physical provider delivery.",
+    "Legacy combination catalog prices/statistics/export, global group list and independent statistics remain partial."
+  ],
+  "noProductionConnection": true,
+  "noLivePrivilegeChange": true
+}

@@ -1,0 +1,121 @@
+{
+  "generatedAt": "2026-09-27T03:35:01.346Z",
+  "scope": "Final built Admin via CUA and disposable loopback synthetic memory API; not database, real Admin/JWT, R2 or Provider acceptance.",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 850,
+      "pageScrollWidth": 1280
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "pageScrollWidth": 390
+    }
+  ],
+  "passed": [
+    "reader has detail and paging, no mutation controls; read-only tabs and SKU fields",
+    "15-row parent pagination and literal name/exact ID filtering",
+    "manager platform gallery selects stable canonical image and multiple slots including hidden",
+    "source candidate page2 and SKU details; per-product price/quota input; create confirmed once",
+    "edit retains original child200 and SKU300/301 identities in request",
+    "copy prefills then creates distinct parent/child/SKU identities with user-controlled dates",
+    "cascade close cancellation submits nothing; confirm and reopen warning/readback",
+    "delete confirmation explains soft deletion and historical order/refund identities",
+    "missing historical date and slot99 remain visible until explicit repair/save/readback",
+    "unknown truncated response shows readback-only notice; one PUT followed by GET and closed row",
+    "failed list clears stale controls and retry restores count32",
+    "manager without attachment permission has disabled gallery and explanatory label",
+    "desktop and mobile have no page horizontal overflow; SKU table has local horizontal scroll"
+  ],
+  "console": {
+    "warn": 0,
+    "error": 0,
+    "artifact": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-browser-console-20260927.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "requests": {
+    "artifact": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-qa-requests.json",
+      "sha256": "2ef189969202df7d2a948d715f653a8bf50962638717a50597e4ec819217a459"
+    },
+    "total": 103,
+    "methodCounts": {
+      "GET": 95,
+      "POST": 2,
+      "PUT": 5,
+      "DELETE": 1
+    },
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/adminapi/activity/seckill-activities",
+        "request_id": "607b7857-5934-4a1d-9d8c-5d0cf7abd387"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/activity/seckill-activities/32",
+        "request_id": "81ae6d9e-41c4-4219-bc6e-016fd838829b"
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/activity/seckill-activities",
+        "request_id": "d16be84f-a0d1-4fe9-bf8e-2e368cf7ce02"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/activity/seckill-activities/33/status",
+        "request_id": "05225ba5-9c94-497f-aae1-f94358629cb6"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/activity/seckill-activities/33/status",
+        "request_id": "af990461-e696-43b9-b6d4-e5112dade27e"
+      },
+      {
+        "method": "DELETE",
+        "path": "/adminapi/activity/seckill-activities/33",
+        "request_id": "277fdf24-75aa-46a9-b289-e65c9b1b3135"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/activity/seckill-activities/2/status",
+        "request_id": "802c0ae8-67f3-4937-b11d-820f9e76e611"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/activity/seckill-activities/31",
+        "request_id": "fe0c3471-aef1-4b9e-902c-98ac5cd1c666"
+      }
+    ],
+    "allWriteUuidsUnique": true
+  },
+  "screenshots": [
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-desktop.jpg",
+      "sha256": "a63aefbf6bbf496e53752242a6dc3d9e41023f0cc1f74c23ac1a88af130f3531"
+    },
+    {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-mobile.jpg",
+      "sha256": "e8651c5cbeb868cbbe1cb795ad6e9796027d93a7eaaaf603e7fe17bf19e7261c"
+    }
+  ],
+  "fixture": {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\seckill-parent-qa-server.cjs",
+    "sha256": "d508f6ac0b00668189e436a1302324ab903971543896e3a1dfe99362f549bf7f"
+  },
+  "cleanup": {
+    "tabClosed": true,
+    "viewportReset": true,
+    "serverStopped": true,
+    "port": 5199,
+    "listening": false,
+    "process": "43942 ended by Ctrl+C; independent exact Get-NetTCPConnection Listen count0"
+  },
+  "limitations": [
+    "Synthetic API does not implement full backend validation; native cases establish actual role and transaction behavior.",
+    "No real asset upload, signed production image, actual identity, payment/provider or deployed workflow is claimed."
+  ]
+}

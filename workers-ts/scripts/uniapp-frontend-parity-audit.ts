@@ -27,7 +27,27 @@ const legacyManifestPath = resolve(
   process.env.LEGACY_UNIAPP_MANIFEST ?? resolve(repoRoot, "../cinashop-php/view/uniapp/pages.json"),
 );
 const targetManifestPath = resolve(repoRoot, "view/uniapp-ts/src/pages.json");
-const auditPath = resolve(repoRoot, "workers-ts/audit/uniapp-frontend-parity.json");
+const auditPath = resolve(repoRoot, process.argv.includes("--customer-work-writeoff-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json"
+  : process.argv.includes("--customer-work-financial-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-work-financial-followup-20261005.json"
+  : process.argv.includes("--customer-work-user-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-work-user-followup-20261004.json"
+  : process.argv.includes("--customer-work-product-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-work-product-followup-20261004.json"
+  : process.argv.includes("--customer-work-fulfillment-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-work-fulfillment-followup-20261004.json"
+  : process.argv.includes("--customer-work-read-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-work-read-followup-20261004.json"
+  : process.argv.includes("--merchant-management-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-merchant-management-followup-20261003.json"
+  : process.argv.includes("--user-center-design-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-user-center-design-followup-20261003.json"
+  : process.argv.includes("--product-detail-design-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-product-detail-design-followup-20261002.json"
+  : process.argv.includes("--product-category-style-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-product-category-style-followup-20261002.json"
+  : "workers-ts/audit/uniapp-frontend-parity-theme-style-followup-20261001.json");
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex").toUpperCase();

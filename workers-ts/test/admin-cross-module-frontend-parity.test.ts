@@ -123,4 +123,57 @@ describe("legacy Admin cross-module route semantic audit", () => {
     });
     expect(generated).toBe(source("audit/admin-legacy-cross-module-route-parity.json"));
   });
+
+  it("reconciles the dated commission follow-up without changing earlier route judgments", () => {
+    const previous = JSON.parse(source("audit/admin-legacy-cross-module-route-parity-recharge-followup-20260928.json")) as {
+      routes: Route[];
+    };
+    const file = "audit/admin-legacy-cross-module-route-parity-commission-followup-20260928.json";
+    const followup = JSON.parse(source(file)) as { summary: Record<string, number>; routes: Route[] };
+    expect(followup.routes.map(route => route.legacy.path)).toEqual(previous.routes.map(route => route.legacy.path));
+    const changes = followup.routes.flatMap((route, index) => route.status === previous.routes[index].status ? [] : [route.legacy.path]);
+    expect(changes).toEqual(["/admin/finance/finance/commission"]);
+    const commission = followup.routes.find(route => route.legacy.path === changes[0]);
+    expect(commission).toMatchObject({ status: "partial", targetScreens: ["/finance/commissions"],
+      targetPermissions: ["commission.view"] });
+    expect(commission?.targetApis).toEqual([
+      "GET /adminapi/finance/commissions",
+      "GET /adminapi/finance/commissions/:uid",
+      "GET /adminapi/finance/commissions/:uid/records",
+    ]);
+    expect(commission?.remaining.join(" ")).toMatch(/导出.*不确定/u);
+    expect(followup.summary).toEqual({ legacyRoutes: 18, reviewed: 18, candidate: 4,
+      partial: 12, missing: 1, retired: 1, unreviewed: 0 });
+    const regenerated = execFileSync(process.execPath,
+      ["node_modules/tsx/dist/cli.mjs", "scripts/admin-cross-module-frontend-parity-audit.ts", "--commission-followup"],
+      { cwd: process.cwd(), encoding: "utf8" });
+    expect(regenerated).toBe(source(file));
+  });
+
+  it("corrects the funds-record source table and reconciles its dated contract", () => {
+    const previous = JSON.parse(source("audit/admin-legacy-cross-module-route-parity-commission-followup-20260928.json")) as {
+      routes: Route[];
+    };
+    const file = "audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json";
+    const followup = JSON.parse(source(file)) as { summary: Record<string, number>; routes: Route[] };
+    expect(followup.routes.map(route => route.legacy.path)).toEqual(previous.routes.map(route => route.legacy.path));
+    const changes = followup.routes.flatMap((route, index) => route.status === previous.routes[index].status ? [] : [route.legacy.path]);
+    expect(changes).toEqual(["/admin/finance/finance/bill"]);
+    const bill = followup.routes.find(route => route.legacy.path === changes[0]);
+    expect(bill).toMatchObject({ status: "candidate", targetScreens: ["/finance/bill"],
+      targetPermissions: ["bill.view"] });
+    expect(bill?.covered.join(" ")).toMatch(/user_money.*六列.*bill\.export/u);
+    expect(bill?.targetApis).toEqual([
+      "GET /adminapi/finance/user-money-ledger",
+      "GET /adminapi/finance/user-money-ledger/types",
+      "GET /adminapi/finance/user-money-ledger/export",
+    ]);
+    expect(bill?.remaining.join(" ")).toMatch(/XLSX.*CSV.*真实受限角色/u);
+    expect(followup.summary).toEqual({ legacyRoutes: 18, reviewed: 18, candidate: 5,
+      partial: 11, missing: 1, retired: 1, unreviewed: 0 });
+    const regenerated = execFileSync(process.execPath,
+      ["node_modules/tsx/dist/cli.mjs", "scripts/admin-cross-module-frontend-parity-audit.ts", "--user-money-ledger-followup"],
+      { cwd: process.cwd(), encoding: "utf8" });
+    expect(regenerated).toBe(source(file));
+  });
 });

@@ -8,7 +8,8 @@ import { UserLevelService } from '../src/services/user/UserLevelService';
 import { StoreProductService } from '../src/services/product/StoreProductService';
 import { adminLevelSave, adminLevelDel } from '../src/controllers/api/v1/AdminCrudController';
 import { storeProduct, storeProductAttrValue, storeProductRelation, storeProductEnsure,
-  systemUserLevel, user, userRelation, systemConfig, memberRight } from '../src/models/schema';
+  systemUserLevel, user, userRelation, systemConfig, memberRight, storePromotions,
+  storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts } from '../src/models/schema';
 
 describe('level definitions follow database authority after admin edits', () => {
   let f: Awaited<ReturnType<typeof financePostgres>>;
@@ -30,7 +31,8 @@ describe('level definitions follow database authority after admin edits', () => 
   } } as Env;
   beforeAll(async () => {
     f = await financePostgres([systemUserLevel, user, userRelation, storeProduct,
-      storeProductAttrValue, storeProductRelation, storeProductEnsure, systemConfig, memberRight]);
+      storeProductAttrValue, storeProductRelation, storeProductEnsure, systemConfig, memberRight,
+      storePromotions, storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts]);
     container = createContainerFromDb(f.db);
     levels = new UserLevelService(container, env);
     products = new StoreProductService(container, env);

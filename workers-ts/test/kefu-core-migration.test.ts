@@ -207,7 +207,7 @@ describe("dedicated customer-service migration", () => {
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0099\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     for (const index of [
       "ss_active_online",
       "ssl_chat_history",
@@ -224,7 +224,16 @@ describe("dedicated customer-service migration", () => {
     const segmentation = readFileSync("src/services/user/UserSegmentationService.ts", "utf8");
     expect(core).toContain("eq(storeServiceRecord.userId, kefuUid)");
     expect(core).toContain("eq(storeServiceRecord.toUid, peerUid)");
-    expect(core).toContain("await this.assertConversation(kefuUid, uid, 0)");
+    expect(core).toContain("return withTx(this.container, async (tx) =>");
+    expect(core).toContain("await lockKefuConversationOwnership(tx, kefuUid, uid)");
+    expect(core).toContain("const container = createContainerFromDb(tx)");
+    expect(core).toContain("await assertKefuConversation(container, kefuUid, uid, 0)");
+    const ownership = readFileSync("src/services/kefu/KefuOwnership.ts", "utf8");
+    expect(ownership).toContain("kefu-transfer:customer:0:${customerUid}");
+    expect(ownership).toContain("kefu:${kefuUid}:customer:0:${customerUid}");
+    expect(ownership.indexOf("${KEFU_TRANSFER_LOCK_NAMESPACE}")).toBeLessThan(
+      ownership.indexOf("${KEFU_CHAT_LOCK_NAMESPACE}"),
+    );
     expect(core).toContain("Historical messages are not an ownership grant");
     expect(core).toContain(".userLabelOptions(uid)");
     expect(segmentation).toContain("disabled: selectedIds.has(label.id)");

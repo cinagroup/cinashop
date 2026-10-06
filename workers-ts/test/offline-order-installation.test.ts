@@ -218,8 +218,8 @@ describe('offline controlled PG16 installation', () => {
       } else {
         await whole.exec('SET client_min_messages=warning');
         const result = await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(174);
-        expect(result.executed.at(-1)).toBe('0173');
+        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(180);
+        expect(result.executed.at(-1)).toBe('0179');
       }
       const rows = await whole.db.execute(sql.raw(OFFLINE_CATALOG_SQL));
       expect(Object.fromEntries(rows.filter(r => r.present).map(r => [r.name, r.fingerprint]))).toEqual(OFFLINE_BARCODE_CATALOG_VERSIONS.v1);

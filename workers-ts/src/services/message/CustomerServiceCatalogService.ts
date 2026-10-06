@@ -3,7 +3,10 @@ import {
   asc,
   desc,
   eq,
+  gte,
   ilike,
+  lt,
+  lte,
   ne,
   sql,
   type SQL,
@@ -19,6 +22,52 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const SPEECHCRAFT_LOCK_NAMESPACE = 731_616;
 const MAX_PAGE_SIZE = 100;
+const FEEDBACK_MAX_OFFSET = 10_000;
+
+export interface FeedbackTimeRange { start: number; end: number; inclusiveEnd: boolean }
+
+function shanghaiFeedbackDay(raw: string): number {
+  const match = /^(\d{4})\/(\d{2})\/(\d{2})$/u.exec(raw);
+  if (!match) throw new ValidateException("留言日期格式错误");
+  const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+  const utc = Date.UTC(year, month - 1, day);
+  const actual = new Date(utc);
+  if (year < 1970 || year > 2038 || actual.getUTCFullYear() !== year ||
+    actual.getUTCMonth() + 1 !== month || actual.getUTCDate() !== day) {
+    throw new ValidateException("留言日期无效");
+  }
+  const result = Math.floor(utc / 1_000) - 8 * 3_600;
+  if (result < 0 || result > 2_147_483_647) throw new ValidateException("留言日期超出范围");
+  return result;
+}
+
+/** PHP ModelTrait::searchTimeAttr on feedback.add_time, with its inclusive custom end. */
+export function feedbackTimeRange(raw: string, now = Math.floor(Date.now() / 1_000)): FeedbackTimeRange | null {
+  if (!raw) return null;
+  if (!Number.isSafeInteger(now) || now < 0 || now > 2_147_483_647) {
+    throw new ValidateException("留言当前时间无效");
+  }
+  if (raw === "lately7" || raw === "lately30") {
+    return { start: Math.max(0, now - (raw === "lately7" ? 7 : 30) * 86_400), end: now, inclusiveEnd: true };
+  }
+  const local = new Date((now + 8 * 3_600) * 1_000);
+  const year = local.getUTCFullYear(), month = local.getUTCMonth() + 1;
+  const today = Math.floor(Date.UTC(year, month - 1, local.getUTCDate()) / 1_000) - 8 * 3_600;
+  if (raw === "today") return { start: today, end: today + 86_400, inclusiveEnd: false };
+  if (raw === "yesterday") return { start: today - 86_400, end: today, inclusiveEnd: false };
+  if (raw === "month") return { start: Math.floor(Date.UTC(year, month - 1, 1) / 1_000) - 8 * 3_600,
+    end: Math.floor(Date.UTC(year, month, 1) / 1_000) - 8 * 3_600, inclusiveEnd: false };
+  if (raw === "year") return { start: Math.floor(Date.UTC(year, 0, 1) / 1_000) - 8 * 3_600,
+    end: Math.floor(Date.UTC(year + 1, 0, 1) / 1_000) - 8 * 3_600, inclusiveEnd: false };
+  const match = /^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/u.exec(raw);
+  if (!match) throw new ValidateException("留言日期筛选无效");
+  const start = shanghaiFeedbackDay(match[1]);
+  const end = shanghaiFeedbackDay(match[2]) + 86_400;
+  if (end <= start || end > 2_147_483_647 || end - start > 366 * 86_400) {
+    throw new ValidateException("留言日期范围无效");
+  }
+  return { start, end, inclusiveEnd: true };
+}
 
 function inputRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -39,6 +88,7 @@ function inputText(
   }
   const result = value.trim();
   if (required && !result) throw new ValidateException(`请填写${label}`);
+  if (result.includes("\u0000")) throw new ValidateException(`${label}包含无效字符`);
   if (result.length > maximum) throw new ValidateException(`${label}不能超过${maximum}个字符`);
   return result;
 }
@@ -106,10 +156,15 @@ export class CustomerServiceCatalogService {
 
   async feedbackList(query: Record<string, string>) {
     const { page, limit } = pageValues(query);
+    const offset = (page - 1) * limit;
+    if (offset > FEEDBACK_MAX_OFFSET) throw new ValidateException("留言分页超出范围");
     const conditions: SQL[] = [];
     const title = query.title?.trim();
     if (title) {
-      const pattern = `%${title}%`;
+      if ([...title].length > 100 || /[\u0000-\u001f\u007f]/u.test(title)) {
+        throw new ValidateException("留言搜索词无效");
+      }
+      const pattern = `%${title.replace(/[\\%_]/gu, "\\$&")}%`;
       conditions.push(sql`(
         ${storeServiceFeedback.relaName} ILIKE ${pattern}
         OR ${storeServiceFeedback.phone} ILIKE ${pattern}
@@ -122,6 +177,9 @@ export class CustomerServiceCatalogService {
       if (status !== 0 && status !== 1) throw new ValidateException("状态只能是0或1");
       conditions.push(eq(storeServiceFeedback.status, status));
     }
+    const time = feedbackTimeRange(query.time ?? "");
+    if (time) conditions.push(gte(storeServiceFeedback.addTime, time.start),
+      time.inclusiveEnd ? lte(storeServiceFeedback.addTime, time.end) : lt(storeServiceFeedback.addTime, time.end));
     const where = conditions.length ? and(...conditions) : undefined;
     const [rows, countRows] = await Promise.all([
       this.container.db
@@ -130,7 +188,7 @@ export class CustomerServiceCatalogService {
         .where(where)
         .orderBy(desc(storeServiceFeedback.id))
         .limit(limit)
-        .offset((page - 1) * limit),
+        .offset(offset),
       this.container.db
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(storeServiceFeedback)
@@ -162,7 +220,8 @@ export class CustomerServiceCatalogService {
     if (body.make !== undefined) changes.make = inputText(body.make, "备注", 255, false);
     if (body.status !== undefined) {
       const status = nonNegativeInteger(body.status, "状态");
-      if (status !== 0 && status !== 1) throw new ValidateException("状态只能是0或1");
+      // The old edit form can only mark an unprocessed message as processed.
+      if (status !== 1) throw new ValidateException("留言只能标记为已处理");
       changes.status = status;
     }
     if (!Object.keys(changes).length) throw new ValidateException("没有可修改的字段");
@@ -184,11 +243,23 @@ export class CustomerServiceCatalogService {
 
   async speechcraftList(kefuId: number, query: Record<string, string>) {
     const { page, limit } = pageValues(query);
+    const offset = (page - 1) * limit;
     const conditions: SQL[] = [eq(storeServiceSpeechcraft.kefuId, kefuId)];
     const title = query.title?.trim();
-    if (title) conditions.push(ilike(storeServiceSpeechcraft.title, `%${title}%`));
+    if (title) {
+      if ([...title].length > 100 || /[\u0000-\u001f\u007f]/u.test(title)) {
+        throw new ValidateException("话术搜索词无效");
+      }
+      conditions.push(ilike(storeServiceSpeechcraft.title,
+        `%${title.replace(/[\\%_]/gu, "\\$&")}%`));
+    }
     const message = query.message?.trim();
-    if (message) conditions.push(eq(storeServiceSpeechcraft.message, message));
+    if (message) {
+      if ([...message].length > 255 || /[\u0000-\u001f\u007f]/u.test(message)) {
+        throw new ValidateException("话术内容搜索词无效");
+      }
+      conditions.push(eq(storeServiceSpeechcraft.message, message));
+    }
     if (query.cate_id !== undefined && query.cate_id !== "") {
       conditions.push(eq(storeServiceSpeechcraft.cateId, nonNegativeInteger(query.cate_id, "分类ID")));
     }
@@ -200,7 +271,7 @@ export class CustomerServiceCatalogService {
         .where(where)
         .orderBy(desc(storeServiceSpeechcraft.sort), asc(storeServiceSpeechcraft.id))
         .limit(limit)
-        .offset((page - 1) * limit),
+        .offset(offset),
       this.container.db
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(storeServiceSpeechcraft)
@@ -230,14 +301,16 @@ export class CustomerServiceCatalogService {
     const sort = nonNegativeInteger(body.sort, "排序");
     return withTx(this.container, async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${SPEECHCRAFT_LOCK_NAMESPACE}, ${kefuId})`);
+      let existingCategoryId: number | undefined;
       if (id > 0) {
         const existing = await tx
-          .select({ id: storeServiceSpeechcraft.id })
+          .select({ id: storeServiceSpeechcraft.id, cateId: storeServiceSpeechcraft.cateId })
           .from(storeServiceSpeechcraft)
           .where(and(eq(storeServiceSpeechcraft.id, id), eq(storeServiceSpeechcraft.kefuId, kefuId)))
           .limit(1)
           .for("update");
         if (!existing[0]) throw new NotFoundException("话术不存在");
+        existingCategoryId = existing[0].cateId;
       }
       if (cateId > 0) {
         const category = await tx
@@ -250,7 +323,11 @@ export class CustomerServiceCatalogService {
             eq(legacyCategory.group, 1),
           ))
           .limit(1);
-        if (!category[0]) throw new ValidateException("话术分类不存在");
+        // A deleted legacy category may still be referenced by a historical
+        // phrase. Its unchanged reference can be edited without rewriting it.
+        if (!category[0] && existingCategoryId !== cateId) {
+          throw new ValidateException("话术分类不存在");
+        }
       }
       const duplicate = await tx
         .select({ id: storeServiceSpeechcraft.id })
@@ -294,12 +371,12 @@ export class CustomerServiceCatalogService {
         eq(legacyCategory.type, 0),
         eq(legacyCategory.group, 1),
       ))
-      .orderBy(desc(legacyCategory.sort), asc(legacyCategory.id));
+      .orderBy(desc(legacyCategory.sort), desc(legacyCategory.id));
     return rows;
   }
 
   async saveSpeechcraftCategory(kefuId: number, id: number, input: unknown) {
-    if (!Number.isSafeInteger(kefuId) || kefuId <= 0) {
+    if (!Number.isSafeInteger(kefuId) || kefuId < 0) {
       throw new ValidateException("客服ID错误");
     }
     if (!Number.isSafeInteger(id) || id < 0) throw new ValidateException("分类ID错误");
@@ -358,11 +435,12 @@ export class CustomerServiceCatalogService {
   }
 
   async deleteSpeechcraftCategory(kefuId: number, id: number) {
-    if (!Number.isSafeInteger(kefuId) || kefuId <= 0) {
+    if (!Number.isSafeInteger(kefuId) || kefuId < 0) {
       throw new ValidateException("客服ID错误");
     }
     if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("分类ID错误");
     return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${SPEECHCRAFT_LOCK_NAMESPACE}, ${kefuId})`);
       const category = await tx
         .select({ id: legacyCategory.id })
         .from(legacyCategory)
@@ -375,15 +453,20 @@ export class CustomerServiceCatalogService {
         .limit(1)
         .for("update");
       if (!category[0]) throw new NotFoundException("话术分类不存在");
-      const used = await tx
-        .select({ id: storeServiceSpeechcraft.id })
-        .from(storeServiceSpeechcraft)
-        .where(and(
-          eq(storeServiceSpeechcraft.kefuId, kefuId),
-          eq(storeServiceSpeechcraft.cateId, id),
-        ))
-        .limit(1);
-      if (used[0]) throw new ValidateException("该分类仍有话术，不能删除");
+      const phrasesInCategory = and(
+        eq(storeServiceSpeechcraft.kefuId, kefuId),
+        eq(storeServiceSpeechcraft.cateId, id),
+      );
+      if (kefuId !== 0) {
+        const used = await tx
+          .select({ id: storeServiceSpeechcraft.id })
+          .from(storeServiceSpeechcraft)
+          .where(phrasesInCategory)
+          .limit(1);
+        if (used[0]) throw new ValidateException("该分类仍有话术，不能删除");
+      }
+      // Platform Admin historically leaves phrases' cate_id intact on delete.
+      // Their old category is visible as missing in the new Admin page.
       await tx.delete(legacyCategory).where(eq(legacyCategory.id, id));
     });
   }

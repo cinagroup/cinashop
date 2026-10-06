@@ -1,4 +1,4 @@
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
@@ -6,6 +6,7 @@ import {
   storeService,
   storeServiceRecord,
   storeServiceTransfer,
+  user as userTable,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -104,12 +105,14 @@ async function targetProfile(db: DbClient, targetUid: number) {
       online: storeService.online,
     })
     .from(storeService)
+    .innerJoin(userTable, eq(userTable.uid, storeService.uid))
     .where(and(
       eq(storeService.uid, targetUid),
       eq(storeService.isDel, 0),
       eq(storeService.status, 1),
       eq(storeService.accountStatus, 1),
       eq(storeService.online, 1),
+      eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
     ))
     .limit(2)
     .for("update");
@@ -193,12 +196,14 @@ export class KefuTransferService {
       const sourceServices = await tx
         .select({ id: storeService.id, uid: storeService.uid, nickname: storeService.nickname, avatar: storeService.avatar })
         .from(storeService)
+        .innerJoin(userTable, eq(userTable.uid, storeService.uid))
         .where(and(
           eq(storeService.id, fromServiceId),
           eq(storeService.uid, fromKefuUid),
           eq(storeService.isDel, 0),
           eq(storeService.status, 1),
           eq(storeService.accountStatus, 1),
+          eq(userTable.status, 1), eq(userTable.isDel, 0), isNull(userTable.deleteTime),
         ))
         .limit(2)
         .for("update");

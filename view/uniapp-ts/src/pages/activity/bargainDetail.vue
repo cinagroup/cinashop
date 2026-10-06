@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="bargain-detail">
     <view class="heading">{{ mine ? '我的砍价' : '砍价详情' }}</view>
     <view v-if="loading" class="notice">正在加载砍价…</view>
@@ -22,10 +23,7 @@
       </view>
     </view>
     <view v-else-if="detail" class="product">
-      <image v-if="selectedSku || !detail.content?.images.length" class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
-      <swiper v-else class="gallery" indicator-dots :autoplay="false">
-        <swiper-item v-for="(image,index) in detail.content?.images" :key="index"><image class="goods-img" :src="image" mode="aspectFit" /></swiper-item>
-      </swiper>
+<ProductMedia :images="selectedSku?.image ? [selectedSku.image] : detail.content?.images?.length ? detail.content.images : detail.image ? [detail.image] : []" video="" :picture-config="activityDesign.pictureConfig" :dots="activityDesign.swiperDot" :active="activityVisible"/><view v-if="activityDesignError" class="notice">{{activityDesignError}}<button size="mini" @tap="reloadActivityDesign">重试展示设置</button></view>
       <view class="info-section">
         <view class="heading">{{ detail.title }}</view>
         <view v-if="detail.content?.info" class="notice">{{ detail.content.info }}</view>
@@ -54,17 +52,24 @@
         <view v-if="safeDescription" class="activity-description"><view class="heading">活动描述</view><rich-text :nodes="safeDescription" /></view>
       </view>
     </view>
-    <view v-if="!mine" class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '购买所选砍价规格' }}</button></view>
+    <view v-if="!mine" class="action-bar"><ActivityDetailMenu v-if="detail" :menu="activityDesign.menuList" :product-id="detail.product_id" :path="`/pages/activity/bargainDetail?bargain_id=${detail.bargain_id}`" :title="detail.title" :image="selectedSku?.image || detail.image" :active="activityVisible"/><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '购买所选砍价规格' }}</button></view>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+import ProductMedia from '@/components/productDetail/ProductMedia.vue';
+import ActivityDetailMenu from '@/components/productDetail/ActivityDetailMenu.vue';
+import { useActivityDetailDesign,useActivityDetailShare } from '@/composables/useActivityDetailDesign';
+const {activityDesign,activityDesignError,activityVisible,reloadActivityDesign}=useActivityDetailDesign();
 import { useBargainPurchase } from '@/composables/useBargainPurchase';
 import { computed } from 'vue';
 import { sanitizeArticleRichText } from '@/utils/articleRichText';
 const { mine, records, page, loggedIn, detail, selected, quantity, selectedSku, loading, buying, navigating, error, prepared,
   open, locked, canBuy, canStart, canHelp, choose, load, login, goMine, chooseRecord, purchase, startBargain, helpSelf } = useBargainPurchase();
+useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/bargainDetail?bargain_id=${detail.value.bargain_id}`,image:selectedSku.value?.image||detail.value.image}:null,()=>activityVisible.value&&!mine.value);
 const safeDescription=computed(()=>sanitizeArticleRichText(detail.value?.content?.description ?? ''));
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 function statusText(status: number) { return ({ 1: '砍价中', 2: '已关闭', 3: '待复核资格', 4: '已使用' } as Record<number, string>)[status] || '未知'; }
@@ -85,15 +90,15 @@ function setQuantity(event: unknown) {
 .gallery {height:440rpx;}.activity-description {overflow-wrap:anywhere;overflow-x:auto;margin-top:24rpx;}
 .notice { margin: 18rpx 0; font-size: 25rpx; color: #666; line-height: 1.6; }
 .error { padding: 20rpx; color: #a72823; background: #fff0ed; margin-bottom: 20rpx; }
-.price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }
+.price { color: var(--view-priceColor, #e93323); margin: 24rpx 0; font-size: 34rpx; }
 .sku { margin-top: 16rpx; font-size: 26rpx; }
-.selected { color: #ad261d; border: 2rpx solid #e93323; }
+.selected { color: var(--view-theme, #e93323); border: 2rpx solid var(--view-theme, #e93323); }
 .progress { height: 14rpx; background: #ffe9e5; border-radius: 8rpx; overflow: hidden; }
-.progress > view { height: 100%; background: #e93323; }
+.progress > view { height: 100%; background: var(--view-theme, #e93323); }
 .quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; margin-top: 24rpx; }
 .quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
 .pagination { display: flex; align-items: center; gap: 16rpx; padding: 20rpx 0; font-size: 24rpx; }
 .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
-.buy-btn { background: #e93323; color: white; font-size: 30rpx; }
+.buy-btn { background: var(--view-theme, #e93323); color: white; font-size: 30rpx; }
 .buy-btn[disabled] { background: #eee; color: #777; }
 </style>

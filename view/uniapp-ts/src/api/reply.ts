@@ -1,32 +1,12 @@
 import { http } from "@/utils/request";
+export type {ProductReviewListItem} from '@/types/productDetailDesign';
+import type {ProductReviewListItem} from '@/types/productDetailDesign';
 
 export interface ReplyStats {
   total: number;
   avgScore: string;
   goodRate: number;
   picsCount: number;
-}
-
-export interface ProductReviewListItem {
-  id: number;
-  product_id: number;
-  uid: number;
-  nickname: string;
-  avatar: string;
-  comment: string;
-  suk: string;
-  sku: string;
-  product_score: number;
-  service_score: number;
-  delivery_score: number;
-  star: number;
-  pics: string[];
-  merchant_reply: string;
-  merchant_reply_content: string;
-  merchant_reply_time: string;
-  add_time: string;
-  praise: number;
-  is_praise: boolean;
 }
 
 export interface ReplyCommentUser {

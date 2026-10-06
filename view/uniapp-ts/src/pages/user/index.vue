@@ -1,317 +1,77 @@
 <template>
-  <view class="user-page">
-    <!-- 用户信息卡 -->
-    <view class="user-card" @tap="goLogin">
-      <view class="avatar">👤</view>
-      <view class="user-info">
-        <template v-if="authStore.isLoggedIn">
-          <view class="nickname">用户</view>
-          <view class="uid">UID: {{ authStore.uid }}</view>
-        </template>
-        <template v-else>
-          <view class="nickname">点击登录</view>
-          <view class="uid">登录后体验完整功能</view>
-        </template>
-      </view>
-    </view>
-
-    <!-- 订单入口 -->
-    <view class="menu-section">
-      <view class="menu-title">我的订单</view>
-      <view class="order-entry">
-        <view class="entry-item" @tap="goOrders()">
-          <text class="entry-icon">📦</text>
-          <text class="entry-text">全部</text>
+  <ThemePage>
+    <view class="user-page">
+      <view v-if="loading" class="state-card">正在加载个人中心...</view>
+      <view v-if="error" class="state-card error" role="alert"><text>{{ error }}</text><button @tap="load">重新加载</button></view>
+      <template v-if="snapshot">
+        <view v-if="diagnostics.length" class="diagnostic" role="status">部分个人中心内容暂不可用，已显示当前可用内容。<text v-for="message in diagnostics" :key="message" class="diagnostic-detail">{{ message }}</text></view>
+        <view class="member-card" :class="`member-style-${design.member.style}`" data-module="member">
+          <view class="identity">
+            <view class="avatar-wrap" role="button" aria-label="个人资料" @tap="go('/pages/user/profile')">
+              <image v-if="media(profile?.avatar)&&!avatarFailed" class="avatar" :src="media(profile?.avatar)" mode="aspectFill" @error="avatarFailed=true" />
+              <view v-else class="avatar avatar-letter">{{ profile?.nickname.slice(0,1) || '访' }}</view>
+              <text v-if="profile?.pay_vip_status" class="vip-mark">VIP</text>
+            </view>
+            <view class="identity-text" @tap="!auth.isLoggedIn && login()">
+              <view class="nickname">{{ profile?.nickname || (auth.isLoggedIn ? '未设置昵称' : '点击登录') }}</view>
+              <view v-if="auth.isLoggedIn" class="account-line">
+                <text v-if="design.member.per_show_type===1">UID: {{ profile?.uid }}</text>
+                <text v-else-if="profile?.phone">{{ profile.phone }}</text>
+                <text v-else class="bind-phone" @tap.stop="go('/pages/user/phone')">绑定手机号</text>
+              </view>
+              <view v-else class="account-line">登录后查看资产与订单</view>
+            </view>
+          </view>
+          <view class="header-actions">
+            <view role="button" aria-label="会员码" @tap="go('/pages/user/memberCode')"><text class="action-symbol">▦</text><text>会员码</text></view>
+            <view role="button" aria-label="账户设置" @tap="go('/pages/user/profile')"><text class="action-symbol">⚙</text><text>设置</text></view>
+            <view role="button" aria-label="消息中心" @tap="go('/pages/user/message')"><text class="action-symbol">信</text><text>消息</text><text v-if="profile?.service_num" class="message-badge">{{ profile.service_num>99?'99+':profile.service_num }}</text></view>
+          </view>
+          <view v-if="properties.length" class="property-row">
+            <view v-for="item in properties" :key="item.id" class="property-item" role="button" :aria-label="item.label" @tap="openProperty(item.id)"><text class="property-value">{{ item.value }}</text><text class="property-label">{{ item.label }}</text></view>
+          </view>
+          <view v-if="design.member.style===1" class="member-links">
+            <view v-if="snapshot.menu.capabilities.member" @tap="go('/pages/user/level')"><text>{{ profile?.level_name || '会员等级' }}</text><text class="link-description">查看等级与权益 ›</text></view>
+            <view @tap="go('/pages/user/integral')"><text>积分商城</text><text class="link-description">查看积分兑换 ›</text></view>
+          </view>
+          <view v-if="design.member.style===2 && snapshot.menu.capabilities.member" class="level-card" @tap="go('/pages/user/level')"><text>{{ profile?.level_name || '会员等级' }}</text><text>{{ profile?.vip_discount!=='' && profile?.vip_discount!==undefined ? `${Number(profile.vip_discount)/10}折 · ` : '' }}查看会员权益 ›</text></view>
+          <view v-if="design.member.style===3 && snapshot.menu.capabilities.paid_member" class="paid-card" @tap="go('/pages/user/vipOpen')"><text>{{ profile?.pay_vip_status ? 'SVIP会员权益' : '开通SVIP会员' }}</text><text>{{ profile?.pay_vip_status ? '查看权益' : '查看开通详情' }} ›</text></view>
+          <view v-if="design.member.style===4 && snapshot.menu.capabilities.promotion && commission" class="commission-card">
+            <view class="withdraw-row"><view><text class="commission-label">可提现（元）</text><text class="withdraw-amount">{{ profile?.commissionCount }}</text></view><button size="mini" @tap="go('/pages/user/finance')">立即提现</button></view>
+            <view class="commission-summary"><view><text>{{ commission.brokerage_price }}</text><text>累计佣金</text></view><view><text>{{ commission.number }}</text><text>推荐人数</text></view><view><text>{{ commission.order_num }}</text><text>推荐订单</text></view></view>
+          </view>
         </view>
-        <view class="entry-item" @tap="goOrders(0)">
-          <text class="entry-icon">💰</text>
-          <text class="entry-text">待付款</text>
+        <view class="section order-card" :class="`order-style-${design.order.style}`" data-module="order">
+          <view class="section-title"><text>订单中心</text><text class="all-orders" @tap="go('/pages/order/list')">查看全部 {{ snapshot.menu.orderStatusNum.order_count ? `(${snapshot.menu.orderStatusNum.order_count})` : '' }} ›</text></view>
+          <view class="order-entries"><view v-for="item in orderEntries" :key="item.name" class="order-entry" role="button" :aria-label="item.name" @tap="go(item.url)"><text class="order-symbol">{{ item.symbol }}</text><text class="order-label">{{ item.name }}</text><text v-if="item.count>0" class="order-badge">{{ item.count>99?'99+':item.count }}</text></view></view>
+          <view v-if="pendingOrder" class="pending-order" @tap="go(`/pages/order/detail?orderId=${encodeURIComponent(pendingOrder.order_id)}`)"><image v-if="media(pendingOrder.img)" class="pending-image" :src="media(pendingOrder.img)" mode="aspectFill" /><view class="pending-info"><text>等待付款 · ¥{{ pendingOrder.pay_price }}</text><text class="pending-title">{{ pendingOrder.store_name }}</text><text class="deadline">还剩 {{ countdown }} 自动关闭</text></view><text class="pay-label">去支付 ›</text></view>
         </view>
-        <view class="entry-item" @tap="goOrders(1)">
-          <text class="entry-icon">🚚</text>
-          <text class="entry-text">待收货</text>
-        </view>
-      </view>
+        <view v-if="merchantStats && design.orderStatic.is_show" class="section operation-stats" :class="`stats-style-${design.orderStatic.style}`" data-module="orderStatic"><view class="section-title">运营统计 <text class="all-orders">授权门店汇总</text></view><view class="stat-grid"><view data-merchant-target="statistics-price" @tap="openMerchant('statistics')"><text class="stat-amount">{{ merchantStats.price }}</text><text>支付订单金额 ›</text></view><view data-merchant-target="statistics-count" @tap="openMerchant('statistics')"><text class="stat-amount">{{ merchantStats.num }}</text><text>支付订单数 ›</text></view><view data-merchant-target="unshipped" @tap="openMerchant('unshipped')"><text class="stat-amount">{{ merchantStats.consignment }}</text><text>待发货订单数 ›</text></view></view></view>
+        <view v-if="design.poster.is_show && design.poster.list.length" class="poster" data-module="poster"><swiper :indicator-dots="design.poster.list.length>1" :autoplay="true" :circular="true" :interval="3000" :duration="500" indicator-color="rgba(255,255,255,.5)" indicator-active-color="#fff"><swiper-item v-for="(item,index) in design.poster.list" :key="index"><view class="poster-item" role="button" :aria-label="item.name" @tap="openMenu('poster',index)"><image v-if="media(item.pic)&&!posterFailed.has(index)" :src="media(item.pic)" mode="aspectFill" @error="markPosterFailed(index)" /><view v-else class="poster-unavailable">{{ item.name }} · 图片暂不可用</view></view></swiper-item></swiper></view>
+        <UserCenterMenus :key="`${snapshot.menu.actor_uid}:${snapshot.menu.user_center_design_state.revision}:menu`" :block="design.menu" module="menu" :contact-type="snapshot.menu.routine_contact_type" @open="index=>openMenu('menu',index)" />
+        <UserCenterMenus v-if="snapshot.menu.capabilities.merchant || snapshot.menu.capabilities.writeoff || snapshot.menu.capabilities.deliveryWorkBench || snapshot.menu.capabilities.kefu || snapshot.menu.capabilities.work" :key="`${snapshot.menu.actor_uid}:${snapshot.menu.user_center_design_state.revision}:mer`" :block="design.merMenu" module="merMenu" :contact-type="snapshot.menu.routine_contact_type" @open="index=>openMenu('merMenu',index)" />
+        <view v-if="navigationError" class="diagnostic" role="alert">{{ navigationError }}</view>
+        <view class="account-tools section"><view class="section-title" role="button" aria-label="账户与快捷入口" @tap="toolsOpen=!toolsOpen"><text>账户与快捷入口</text><text>{{ toolsOpen?'收起':'展开' }} ›</text></view><view v-if="toolsOpen" class="tool-items"><view v-for="item in shortcuts" :key="item.url" @tap="go(item.url)"><text>{{ item.name }}</text><text>›</text></view><view @tap="go('/pages/users/user_member_code/index')"><text>会员核销码</text><text>›</text></view><view v-if="snapshot.menu.capabilities.writeoff" @tap="openOperator"><text>履约核销</text><text>›</text></view><template v-if="admin.authenticated && admin.canAssist"><view @tap="goAdmin('/pages/behalf/record/index')"><text>代客下单记录</text><text>›</text></view><view @tap="goAdmin('/pages/behalf/user_list/index')"><text>代客选客与选品</text><text>›</text></view></template></view></view>
+      </template>
+      <button v-if="auth.isLoggedIn" class="logout" @tap="logout">退出登录</button>
     </view>
-
-    <!-- 功能菜单 -->
-    <view class="menu-section">
-      <view class="menu-item" @tap="goAdminRecords"><text>代客下单记录（管理员）</text><text class="arrow">›</text></view>
-      <view class="menu-item" @tap="goAdminBuyers"><text>代客选客与选品（管理员）</text><text class="arrow">›</text></view>
-      <view class="menu-item" @tap="go('/pages/annex/offline_pay/index')"><text>¥ 线下消费收银</text><text class="arrow">›</text></view>
-      <view class="menu-item" @tap="go('/pages/user/profile')">
-        <text>👤 个人资料</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/changePassword')">
-        <text>🔒 修改密码</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/phone')">
-        <text>📱 手机号管理</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/address')">
-        <text>📍 收货地址</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/collect')">
-        <text>⭐ 我的收藏</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/visitHistory')">
-        <text>👣 我的足迹</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/users/user_member_code/index')">
-        <text>会员核销码</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/coupon')">
-        <text>🎫 我的优惠券</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/couponCenter')">
-        <text>🎁 领券中心</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/finance')">
-        <text>💸 分销中心</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/users/agent/record')">
-        <text>📋 分销与代理申请</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/supplierApply')">
-        <text>🏪 供应商入驻</text>
-        <text class="arrow">›</text>
-      </view>
-      <view v-if="operatorProfile?.can_writeoff" class="menu-item operator-entry" @tap="goOperator">
-        <text>✅ 履约核销</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/invoice')">
-        <text>🧾 我的发票</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/level')">
-        <text>🏅 会员等级</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/vipOpen')">
-        <text>👑 付费会员</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/recharge')">
-        <text>💳 余额充值</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/integral')">
-        <text>🎁 积分商城</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/sign')">
-        <text>✍️ 每日签到</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/message')">
-        <text>📮 消息中心</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/user/kefu')">
-        <text>💬 在线客服</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/extension/customer_list/feedback')">
-        <text>✉️ 意见反馈</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/goods/search')">
-        <text>🔍 商品搜索</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/activity/index')">
-        <text>🎯 营销活动</text>
-        <text class="arrow">›</text>
-      </view>
-      <view class="menu-item" @tap="go('/pages/activity/lottery')">
-        <text>🎲 幸运抽奖</text>
-        <text class="arrow">›</text>
-      </view>
-    </view>
-
-    <!-- 退出登录 -->
-    <view v-if="authStore.isLoggedIn" class="logout-btn" @tap="logout">退出登录</view>
-  </view>
+  </ThemePage>
 </template>
-
 <script setup lang="ts">
-import { ref } from "vue";
-import { onShow } from "@dcloudio/uni-app";
-import { useAuthStore } from "@/stores/auth";
-import { apiLogout } from "@/api/auth";
-import { apiWriteoffOperatorProfile, type WriteoffOperatorProfile } from "@/api/order";
-
-const authStore = useAuthStore();
-const operatorProfile = ref<WriteoffOperatorProfile | null>(null);
-
-function goLogin() {
-  if (!authStore.isLoggedIn) {
-    uni.navigateTo({ url: "/pages/auth/login" });
-  }
-}
-
-function goAdminRecords() { uni.navigateTo({ url: '/pages/behalf/record/index' }); }
-function goAdminBuyers() { uni.navigateTo({ url: '/pages/behalf/user_list/index' }); }
-
-function goOrders(type?: number) {
-  uni.navigateTo({ url: `/pages/order/list${type !== undefined ? `?type=${type}` : ""}` });
-}
-
-function go(url: string) {
-  if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
-  uni.navigateTo({ url });
-}
-
-function goOperator() {
-  const role = operatorProfile.value?.staff_stores.length ? "staff" : "delivery";
-  go(`/pages/operator/writeoff?role=${role}`);
-}
-
-async function logout() {
-  let serverRevoked = true;
-  try {
-    await apiLogout();
-  } catch {
-    serverRevoked = false;
-  }
-  authStore.clear();
-  if (serverRevoked) {
-    uni.showToast({ title: "已退出登录", icon: "success" });
-  } else {
-    uni.showModal({
-      title: "本机已退出",
-      content: "服务器会话撤销未确认，旧会话可能持续到过期。如需立即失效，请修改密码或联系管理员。",
-      showCancel: false,
-    });
-  }
-}
-
-onShow(async () => {
-  if (!authStore.isLoggedIn) {
-    operatorProfile.value = null;
-    return;
-  }
-  try {
-    operatorProfile.value = await apiWriteoffOperatorProfile();
-  } catch {
-    operatorProfile.value = null;
-  }
-});
+import ThemePage from '@/components/ThemePage.vue';
+import UserCenterMenus from '@/components/userCenter/UserCenterMenus.vue';
+import { computed,ref,watch } from 'vue';
+import { useUserCenter } from '@/composables/useUserCenter';
+import { userCenterMedia as media,userCenterIssueText } from '@/utils/userCenter';
+const {auth,admin,snapshot,loading,error,navigationError,properties,pendingOrder,countdown,orderEntries,toolsOpen,shortcuts,load,login,go,openMenu,openProperty,openOperator,openMerchant,logout,goAdmin}=useUserCenter();
+const design=computed(()=>snapshot.value!.menu.diy_data),profile=computed(()=>snapshot.value?.menu.profile);
+const diagnostics=computed(()=>[...new Set((snapshot.value?.menu.user_center_design_state.issues??[]).map(userCenterIssueText))]);
+const commission=computed(()=>{const value=snapshot.value?.stats.commission;return value&&!Array.isArray(value)?value:null;});
+const merchantStats=computed(()=>{const value=snapshot.value?.stats.order;return value?.user_order?value:null;});
+const avatarFailed=ref(false),posterFailed=ref(new Set<number>());
+function markPosterFailed(index:number){posterFailed.value=new Set([...posterFailed.value,index]);}
+watch(snapshot,()=>{avatarFailed.value=false;posterFailed.value=new Set();});
 </script>
-
 <style scoped>
-.user-page {
-  padding: 20rpx;
-}
-
-.user-card {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #e93323, #ff7a45);
-  border-radius: 16rpx;
-  padding: 40rpx 30rpx;
-  color: #fff;
-  margin-bottom: 20rpx;
-}
-
-.avatar {
-  width: 100rpx;
-  height: 100rpx;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 50rpx;
-  margin-right: 24rpx;
-}
-
-.nickname {
-  font-size: 34rpx;
-  font-weight: 600;
-}
-
-.uid {
-  font-size: 24rpx;
-  opacity: 0.85;
-  margin-top: 6rpx;
-}
-
-.menu-section {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 20rpx;
-}
-
-.menu-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 20rpx;
-}
-
-.order-entry {
-  display: flex;
-  justify-content: space-around;
-}
-
-.entry-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.entry-icon {
-  font-size: 44rpx;
-}
-
-.entry-text {
-  font-size: 24rpx;
-  margin-top: 8rpx;
-  color: #555;
-}
-
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx 10rpx;
-  border-bottom: 1rpx solid #f5f5f5;
-  font-size: 28rpx;
-}
-
-.menu-item:last-child {
-  border-bottom: none;
-}
-
-.operator-entry {
-  color: #c6281c;
-  font-weight: 600;
-}
-
-.arrow {
-  color: #999;
-  font-size: 32rpx;
-}
-
-.logout-btn {
-  background: #fff;
-  color: #e93323;
-  text-align: center;
-  padding: 24rpx;
-  border-radius: 12rpx;
-  font-size: 28rpx;
-}
+.user-page{padding:24rpx;max-width:1100rpx;margin:auto;color:#282828}.state-card{padding:48rpx 28rpx;background:#fff;border-radius:24rpx;text-align:center;color:#777;font-size:28rpx}.state-card button{margin-top:24rpx;font-size:28rpx}.error{color:#a82f25}.diagnostic{padding:22rpx 26rpx;border-radius:18rpx;background:#fff4e5;color:#8a5c23;font-size:24rpx;line-height:1.6;margin-bottom:24rpx}.diagnostic-detail{display:block;font-size:20rpx;overflow-wrap:anywhere}.member-card{position:relative;border-radius:28rpx;background:linear-gradient(130deg,var(--view-theme,#e93323),var(--view-gradient,#ff7931));padding:36rpx 30rpx;color:white;overflow:hidden}.identity{display:flex;align-items:center;gap:22rpx}.avatar-wrap{position:relative;flex-shrink:0}.avatar{width:100rpx;height:100rpx;border-radius:50%;border:4rpx solid rgba(255,255,255,.5);box-sizing:border-box}.avatar-letter{display:flex;align-items:center;justify-content:center;background:#fff2e9;color:var(--view-theme,#e93323);font-size:44rpx;font-weight:600}.vip-mark{position:absolute;bottom:0;right:-6rpx;color:#765200;background:#ffe39e;padding:2rpx 6rpx;border-radius:10rpx;font-size:18rpx}.identity-text{min-width:0;flex:1}.nickname{font-size:34rpx;font-weight:600;overflow-wrap:anywhere}.account-line{font-size:24rpx;opacity:.86;margin-top:10rpx}.bind-phone{border-radius:24rpx;background:rgba(255,255,255,.2);padding:4rpx 14rpx}.header-actions{display:flex;gap:26rpx;justify-content:flex-end;margin:28rpx 0 0;font-size:21rpx}.header-actions>view{position:relative;display:flex;align-items:center;gap:7rpx}.action-symbol{font-size:29rpx}.message-badge{position:absolute;top:-13rpx;right:-13rpx;font-size:18rpx;border-radius:20rpx;background:white;color:var(--view-theme,#e93323);padding:0 5rpx}.property-row{display:flex;justify-content:space-around;gap:10rpx;margin:32rpx -10rpx 4rpx}.property-item{flex:1;min-width:0;display:flex;align-items:center;flex-direction:column;gap:10rpx;text-align:center}.property-value{font-size:34rpx;font-weight:600;overflow-wrap:anywhere}.property-label{font-size:22rpx}.member-links{display:flex;gap:18rpx;margin-top:32rpx}.member-links>view{flex:1;border-radius:18rpx;background:rgba(255,255,255,.14);padding:20rpx;font-size:27rpx}.link-description{display:block;font-size:21rpx;margin-top:8rpx;opacity:.88}.member-style-2{background:#fff;color:#282828}.member-style-2 .property-row{border-top:1rpx solid #f1f1f1;padding-top:28rpx}.level-card{display:flex;justify-content:space-between;gap:20rpx;border-radius:18rpx;background:#fff1dc;padding:22rpx;margin-top:26rpx;color:#76542c;font-size:25rpx}.member-style-3{background:linear-gradient(140deg,#fff4de,#ffffff);color:#3b3020}.paid-card{display:flex;justify-content:space-between;gap:24rpx;background:linear-gradient(120deg,#272f3c,#171b23);color:#ffe1a0;border-radius:18rpx;padding:30rpx 24rpx;margin-top:28rpx;font-size:27rpx}.member-style-4{background:#fff;color:#282828}.commission-card{background:#fff5ef;margin:28rpx -4rpx -4rpx;border-radius:20rpx;padding:24rpx}.withdraw-row{display:flex;align-items:center;justify-content:space-between}.withdraw-row>view{display:flex;flex-direction:column;gap:12rpx}.commission-label{font-size:24rpx;color:#777}.withdraw-amount{font-size:42rpx;font-weight:600}.withdraw-row button{font-size:24rpx;background:var(--view-theme,#e93323);color:#fff;margin:0;border-radius:40rpx}.commission-summary{display:flex;gap:18rpx;margin-top:28rpx;justify-content:space-between}.commission-summary>view{display:flex;flex:1;flex-direction:column;gap:10rpx;text-align:center;font-size:26rpx}.commission-summary>view text:last-child{font-size:22rpx;color:#777}.member-style-5{background:#fff;color:#282828;padding-top:40rpx}.member-style-5 .identity{align-items:flex-start}.member-style-5 .property-row{background:#fff8f3;margin:28rpx -30rpx -36rpx;padding:26rpx 20rpx}.section{background:#fff;border-radius:24rpx;padding:28rpx;margin-top:24rpx}.section-title{display:flex;justify-content:space-between;align-items:center;font-size:30rpx;font-weight:600;gap:20rpx}.all-orders{font-weight:400;font-size:24rpx;color:#888}.order-entries{display:flex;justify-content:space-between;margin-top:32rpx;gap:8rpx}.order-entry{position:relative;display:flex;align-items:center;flex-direction:column;gap:18rpx;flex:1;min-width:0}.order-symbol{display:flex;align-items:center;justify-content:center;width:52rpx;height:48rpx;border:2rpx solid #777;border-radius:12rpx;color:#555;font-size:27rpx;box-sizing:border-box}.order-label{font-size:23rpx;white-space:nowrap}.order-badge{position:absolute;top:-12rpx;right:10rpx;border-radius:30rpx;min-width:28rpx;text-align:center;font-size:19rpx;padding:1rpx 4rpx;background:var(--view-theme,#e93323);color:#fff}.order-style-2 .order-symbol{color:var(--view-theme,#e93323);border-color:var(--view-theme,#e93323);background:#fff4ef}.order-style-3 .order-symbol{background:#f5f5f5;border:0}.pending-order{display:flex;align-items:center;gap:18rpx;padding:18rpx;background:#f6f6f6;border-radius:18rpx;margin-top:32rpx}.pending-image{width:84rpx;height:84rpx;border-radius:12rpx;flex-shrink:0}.pending-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:6rpx;font-size:24rpx}.pending-title{font-size:22rpx;color:#777;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.deadline{font-size:21rpx;color:#777}.pay-label{font-size:23rpx;color:var(--view-theme,#e93323);white-space:nowrap}.stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18rpx;margin-top:26rpx}.stat-grid>view{display:flex;flex-direction:column;gap:18rpx;background:#fff3ec;padding:24rpx 15rpx;border-radius:16rpx;font-size:21rpx;color:#777}.stat-grid>view:nth-child(2){background:#f0f7ff}.stat-grid>view:nth-child(3){background:#eff8f3}.stat-amount{font-size:31rpx;color:#333;font-weight:600;overflow-wrap:anywhere}.stats-style-2 .stat-grid>view{background:none;text-align:center;padding:18rpx 4rpx;border-right:1rpx solid #eee;border-radius:0}.stats-style-2 .stat-grid>view:last-child{border:0}.poster{height:200rpx;margin-top:24rpx;border-radius:24rpx;overflow:hidden}.poster swiper,.poster-item,.poster image{width:100%;height:100%}.poster-unavailable{display:flex;align-items:center;justify-content:center;height:100%;background:#f6f6f6;color:#777;font-size:25rpx;padding:20rpx;box-sizing:border-box}.account-tools .section-title text:last-child{color:#777;font-size:24rpx;font-weight:400}.tool-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 26rpx;margin-top:18rpx}.tool-items>view{display:flex;justify-content:space-between;gap:12rpx;font-size:25rpx;padding:22rpx 0;border-bottom:1rpx solid #f1f1f1}.tool-items>view text:last-child{color:#aaa}.logout{background:#fff;color:var(--view-theme,#e93323);font-size:28rpx;border-radius:24rpx;padding:4rpx;margin-top:24rpx}.logout::after{border:0}
 </style>

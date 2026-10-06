@@ -1,10 +1,11 @@
 <template>
+  <ThemePage>
   <view class="presale-detail">
     <view v-if="loading" class="notice" role="status">正在加载预售规格与购买规则…</view>
     <view v-if="error" class="error" role="alert">{{ error }}</view>
     <button v-if="!prepared" size="mini" :disabled="loading || locked" @tap="load">刷新预售商品</button>
     <view v-if="detail" class="product">
-      <image v-if="selectedSku?.image || detail.image" class="goods-img" :src="selectedSku?.image || detail.image" mode="aspectFit" />
+      <ProductMedia :images="activityGallery" video="" :picture-config="detail.detailDisplay.data.design.pictureConfig" :dots="detail.detailDisplay.data.design.swiperDot" :active="activityVisible"/><view v-if="!detail.detailDisplay.data.configured" class="notice">当前使用默认活动详情布局</view>
       <view class="info-section">
         <view class="goods-name">{{ detail.title }}</view>
         <view class="notice">{{ detail.subtitle }}</view>
@@ -29,14 +30,25 @@
         <view v-if="prepared" class="notice" role="status">购买记录已创建，继续结算不会重复加购。</view>
       </view>
     </view>
-    <view class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '立即预订' }}</button></view>
+    <ActivityDetailContent v-if="detail" :data="detail.detailDisplay.data" :product-id="detail.product_id" :active="activityVisible" specs-mode="included"/>
+    <view class="action-bar"><ActivityDetailMenu v-if="detail" :menu="detail.detailDisplay.data.design.menuList" :product-id="detail.product_id" :path="'/pages/activity/presaleDetail?id='+detail.product_id" :title="detail.title" :image="detail.image" :active="activityVisible"/><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '立即预订' }}</button></view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
+import ProductMedia from '@/components/productDetail/ProductMedia.vue';
+import ActivityDetailContent from '@/components/productDetail/ActivityDetailContent.vue';
+import ActivityDetailMenu from '@/components/productDetail/ActivityDetailMenu.vue';
+import { useActivityDetailDesign,useActivityDetailShare } from '@/composables/useActivityDetailDesign';
+const {activityVisible}=useActivityDetailDesign(false);
+import {computed} from 'vue';
 import { usePresalePurchase } from '@/composables/usePresalePurchase';
 const { detail, selected, quantity, selectedSku, loading, buying, navigating, error, open, locked, canBuy, prepared,
   choose, load, purchase } = usePresalePurchase();
+const activityGallery=computed(()=>detail.value?Array.from(new Set([selectedSku.value?.image||detail.value.image,...detail.value.detailDisplay.images].filter(Boolean))):[]);
+useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/presaleDetail?id=${detail.value.product_id}`,image:selectedSku.value?.image||detail.value.image}:null,()=>activityVisible.value);
 function setQuantity(event: unknown) {
   if (locked.value || loading.value) return;
   const payload = event as { detail?: { value?: unknown }; target?: { value?: unknown } };
@@ -59,11 +71,11 @@ function formatDate(seconds: number) {
 .error { padding: 20rpx; color: #a72823; background: #fff0ed; margin-bottom: 20rpx; }
 .section-title { margin-top: 24rpx; font-size: 28rpx; }
 .sku { margin-top: 16rpx; font-size: 26rpx; white-space: normal; overflow-wrap: anywhere; }
-.selected { color: #ad261d; border: 2rpx solid #e93323; }
-.price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }
+.selected { color: var(--view-theme, #e93323); border: 2rpx solid var(--view-theme, #e93323); }
+.price { color: var(--view-priceColor, #e93323); margin: 24rpx 0; font-size: 34rpx; }
 .quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; }
 .quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
 .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
-.buy-btn { background: #e93323; color: white; font-size: 30rpx; }
+.buy-btn { background: var(--view-theme, #e93323); color: white; font-size: 30rpx; }
 .buy-btn[disabled] { background: #eee; color: #777; }
 </style>

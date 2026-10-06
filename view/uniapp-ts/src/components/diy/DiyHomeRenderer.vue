@@ -1,6 +1,7 @@
 <template>
   <view class="diy-renderer">
     <template v-for="(block, index) in components" :key="blockKey(block, index)">
+      <view class="diy-theme-block" :style="blockThemeStyle(block)">
       <view
         v-if="block.name === 'headerSerch'"
         class="diy-search"
@@ -220,6 +221,7 @@
           <text>{{ item.label }}</text>
         </view>
       </view>
+      </view>
     </template>
   </view>
 </template>
@@ -257,6 +259,8 @@ import {
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
 import DiyCommerceWidget from "./DiyCommerceWidget.vue";
+import { useThemeStore } from '@/stores/theme';
+import { diyThemeVariables } from '@/utils/diyTheme';
 
 interface MenuItem {
   image: string;
@@ -270,6 +274,8 @@ const props = withDefaults(defineProps<{
 }>(), {
   microPage: false,
 });
+const theme = useThemeStore();
+function blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }
 
 const productLists = ref<Record<number, GoodsItem[]>>({});
 const articles = ref<ArticleListItem[]>([]);
@@ -529,13 +535,13 @@ watch(() => props.components, () => { void hydrate(); }, { immediate: true });
 .diy-section-title { display: block; margin-bottom: 20rpx; font-size: 31rpx; font-weight: 600; color: #222; }
 .diy-rank-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12rpx; }
 .diy-rank-heading .diy-section-title { min-width: 0; }
-.diy-rank-more { flex-shrink: 0; color: #b84831; font-size: 23rpx; padding: 6rpx 0; }
+.diy-rank-more { flex-shrink: 0; color: var(--view-theme, #e93323); font-size: 23rpx; padding: 6rpx 0; }
 .diy-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
 .diy-product-card { min-width: 0; overflow: hidden; border: 1rpx solid #eee; border-radius: 14rpx; }
 .diy-product-image { width: 100%; height: 280rpx; background: #f5f5f5; }
 .diy-product-name { display: -webkit-box; height: 72rpx; margin: 14rpx 14rpx 4rpx; overflow: hidden; font-size: 25rpx; line-height: 36rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .diy-price-row { display: flex; align-items: center; justify-content: space-between; padding: 8rpx 14rpx 16rpx; }
-.diy-price { color: #e93323; font-size: 27rpx; font-weight: 600; }
+.diy-price { color: var(--view-priceColor, #e93323); font-size: 27rpx; font-weight: 600; }
 .diy-sales, .diy-article-meta, .diy-user-meta, .diy-sign-copy { color: #999; font-size: 21rpx; }
 .diy-article { display: flex; gap: 18rpx; padding: 18rpx 0; border-bottom: 1rpx solid #eee; }
 .diy-article:last-child { border-bottom: 0; }
@@ -548,14 +554,14 @@ watch(() => props.components, () => { void hydrate(); }, { immediate: true });
 .diy-rank-product, .diy-video-preview { position: relative; display: inline-flex; width: 210rpx; margin-right: 18rpx; vertical-align: top; flex-direction: column; }
 .diy-rank-image, .diy-video-poster { width: 210rpx; height: 210rpx; border-radius: 12rpx; background: #f5f5f5; }
 .diy-rank-name { margin: 10rpx 0 6rpx; overflow: hidden; font-size: 23rpx; text-overflow: ellipsis; white-space: nowrap; }
-.diy-rank-number { position: absolute; z-index: 1; top: 8rpx; left: 8rpx; width: 40rpx; height: 40rpx; border-radius: 50%; color: #fff; background: #e93323; font-size: 22rpx; line-height: 40rpx; text-align: center; }
+.diy-rank-number { position: absolute; z-index: 1; top: 8rpx; left: 8rpx; width: 40rpx; height: 40rpx; border-radius: 50%; color: #fff; background: var(--view-theme, #e93323); font-size: 22rpx; line-height: 40rpx; text-align: center; }
 .diy-newcomer { background: linear-gradient(135deg, #fff7f1, #fff); }
-.diy-newcomer-points, .diy-newcomer-coupon { display: block; margin-bottom: 18rpx; color: #e05b2a; font-size: 25rpx; }
+.diy-newcomer-points, .diy-newcomer-coupon { display: block; margin-bottom: 18rpx; color: var(--view-priceColor, #e93323); font-size: 25rpx; }
 .diy-sign { display: flex; flex-direction: column; gap: 18rpx; }
 .diy-sign-days { display: flex; gap: 8rpx; }
 .diy-sign-day { flex: 1; padding: 10rpx 0; border-radius: 10rpx; color: #888; background: #f5f5f5; font-size: 18rpx; text-align: center; }
-.diy-sign-day.signed { color: #fff; background: #ef8a65; }
-.diy-sign-day.today { box-shadow: inset 0 0 0 2rpx #e93323; }
+.diy-sign-day.signed { color: #fff; background: var(--view-theme, #e93323); }
+.diy-sign-day.today { box-shadow: inset 0 0 0 2rpx var(--view-theme, #e93323); }
 .diy-user-card { display: flex; align-items: center; gap: 18rpx; }
 .diy-avatar { display: flex; width: 92rpx; height: 92rpx; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: #f2f2f2; }
 .diy-avatar-placeholder { color: #aaa; font-size: 30rpx; }

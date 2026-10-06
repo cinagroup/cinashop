@@ -78,16 +78,23 @@
         <el-tab-pane label="会员记录" name="records">
           <div class="record-filter">
             <el-input v-model="recordQuery.name" clearable placeholder="昵称 / 手机 / 订单号" @keyup.enter="resetRecords" />
-            <el-select v-model="recordQuery.pay_type" clearable placeholder="全部支付方式"><el-option label="微信" value="weixin" /><el-option label="余额" value="yue" /><el-option label="支付宝" value="alipay" /></el-select>
+            <el-select v-model="recordQuery.member_type" clearable filterable placeholder="全部会员类型" :loading="recordPlanLoading">
+              <el-option v-for="option in recordPlanOptions" :key="option.value" :label="option.label" :value="option.value" />
+              <el-option label="卡密激活" value="card" />
+            </el-select>
+            <el-select v-model="recordQuery.pay_type" clearable placeholder="全部支付方式"><el-option label="免费" value="free" /><el-option label="微信" value="weixin" /><el-option label="支付宝" value="alipay" /><el-option label="余额" value="yue" /></el-select>
+            <el-date-picker v-model="recordQuery.purchase_time" type="datetimerange" value-format="YYYY-MM-DD HH:mm" format="YYYY-MM-DD HH:mm" range-separator="至" start-placeholder="购买开始" end-placeholder="购买结束" clearable />
             <el-button type="primary" @click="resetRecords">查询</el-button>
           </div>
+          <el-alert v-if="recordPlanError" :title="recordPlanError" type="error" show-icon :closable="false" class="record-plan-error"><el-button link type="primary" @click="loadRecordPlanOptions">重新加载会员类型</el-button></el-alert>
           <el-table :data="records" v-loading="recordLoading" stripe row-key="id" empty-text="暂无已支付会员记录">
             <el-table-column label="用户" min-width="170"><template #default="{ row }"><strong>{{ row.username || `UID ${row.uid}` }}</strong><div class="sub">{{ row.phone || '未留手机号' }}</div></template></el-table-column>
             <el-table-column label="订单 / 套餐" min-width="220"><template #default="{ row }"><span class="mono">{{ row.order_id }}</span><div class="sub">{{ row.member_title }} · {{ row.vip_day === -1 ? '永久' : `${row.vip_day} 天` }}</div></template></el-table-column>
             <el-table-column label="金额" width="110"><template #default="{ row }">¥{{ row.pay_price }}</template></el-table-column>
-            <el-table-column label="渠道" width="120"><template #default="{ row }">{{ row.pay_type || '卡密/免费' }}</template></el-table-column>
+            <el-table-column label="支付方式" width="120"><template #default="{ row }">{{ recordPayLabel(row) }}</template></el-table-column>
             <el-table-column label="卡号" width="175"><template #default="{ row }"><span class="mono">{{ row.code_masked || '—' }}</span></template></el-table-column>
             <el-table-column label="支付时间" width="170"><template #default="{ row }">{{ formatTime(row.pay_time) }}</template></el-table-column>
+            <el-table-column label="到期时间" width="170"><template #default="{ row }">{{ recordExpiryLabel(row) }}</template></el-table-column>
           </el-table>
           <div class="pager"><el-pagination v-model:current-page="recordPage" :page-size="20" layout="prev, pager, next, total" :total="recordCount" @current-change="loadRecords" /></div>
         </el-tab-pane>
@@ -187,6 +194,7 @@ import {
   apiMembershipBatches,
   apiMembershipCards,
   apiMembershipPlans,
+  apiMembershipRecordPlanOptions,
   apiMembershipRecords,
   apiMembershipRights,
   apiSaveMembershipAgreement,
@@ -201,8 +209,10 @@ import {
   type MembershipCard,
   type MembershipPlan,
   type MembershipRecord,
+  type MembershipRecordFilterDraft,
   type MembershipRight,
   type MembershipScan,
+  membershipRecordParams,
 } from "@/api/membership";
 
 type TabName = "plans" | "batches" | "rights" | "records" | "agreement";
@@ -221,10 +231,13 @@ const batchPage = ref(1);
 const batchCount = ref(0);
 const recordPage = ref(1);
 const recordCount = ref(0);
+const recordPlanOptions = ref<Array<{ value: string; label: string }>>([]);
+const recordPlanLoading = ref(false);
+const recordPlanError = ref("");
 const cardPage = ref(1);
 const cardCount = ref(0);
 const selectedBatch = ref<MembershipBatch | null>(null);
-const recordQuery = reactive({ name: "", pay_type: "" });
+const recordQuery = reactive<MembershipRecordFilterDraft>({ name: "", member_type: "", pay_type: "", purchase_time: [] });
 const cardQuery = reactive<{ card_number: string; is_use: "" | number }>({ card_number: "", is_use: "" });
 
 const activePlanCount = computed(() => plans.value.filter((row) => row.is_del === 0).length);
@@ -259,12 +272,22 @@ function formatTime(value: number) {
   if (!value) return "—";
   return new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value * 1000));
 }
+function recordPayLabel(row: MembershipRecord): string {
+  if (row.type === 2) return "卡密领取";
+  if (row.type === 0 || row.type === 1 && row.is_free === 1) return "免费领取";
+  return (({ yue: "余额", weixin: "微信", alipay: "支付宝", admin: "后台赠送" } as Record<string, string>)[row.pay_type] ?? row.pay_type) || "—";
+}
+function recordExpiryLabel(row: MembershipRecord): string {
+  return row.is_permanent === 1 || row.member_type === "ever" || row.member_plan_type === "ever"
+    ? "永久" : formatTime(row.overdue_time);
+}
 function planTypeLabel(type: string) { return planTypes.find((item) => item.value === type)?.label ?? type; }
 
 async function loadPlans() { planLoading.value = true; try { const result = await apiMembershipPlans({ limit: 100 }); plans.value = result.list; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员套餐加载失败"); } finally { planLoading.value = false; } }
 async function loadBatches() { batchLoading.value = true; try { const result = await apiMembershipBatches({ page: batchPage.value, limit: 20 }); batches.value = result.list; batchCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员卡批次加载失败"); } finally { batchLoading.value = false; } }
 async function loadRights() { rightLoading.value = true; try { const result = await apiMembershipRights(); rights.value = result.list; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员权益加载失败"); } finally { rightLoading.value = false; } }
-async function loadRecords() { recordLoading.value = true; try { const result = await apiMembershipRecords({ ...recordQuery, page: recordPage.value, limit: 20 }); records.value = result.list; recordCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员记录加载失败"); } finally { recordLoading.value = false; } }
+async function loadRecordPlanOptions() { recordPlanLoading.value = true; recordPlanError.value = ""; try { recordPlanOptions.value = await apiMembershipRecordPlanOptions(); } catch (error) { recordPlanOptions.value = []; recordPlanError.value = error instanceof Error ? error.message : "会员类型目录加载失败"; } finally { recordPlanLoading.value = false; } }
+async function loadRecords() { recordLoading.value = true; try { const result = await apiMembershipRecords(membershipRecordParams(recordQuery, recordPage.value)); records.value = result.list; recordCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员记录加载失败"); } finally { recordLoading.value = false; } }
 async function loadAgreement() { try { const result = await apiMembershipAgreement(); if (result) Object.assign(agreement, { id: result.id, title: result.title, content: result.content ?? "", status: result.status, sort: result.sort }); } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员协议加载失败"); } }
 async function loadCards() { if (!selectedBatch.value) return; cardLoading.value = true; try { const result = await apiMembershipCards(selectedBatch.value.id, { ...cardQuery, page: cardPage.value, limit: 20 }); cards.value = result.list; cardCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员卡加载失败"); } finally { cardLoading.value = false; } }
 
@@ -273,7 +296,7 @@ function loadTab(name: string | number) {
   if (tab === "plans") void loadPlans();
   if (tab === "batches") void loadBatches();
   if (tab === "rights") void loadRights();
-  if (tab === "records") void loadRecords();
+  if (tab === "records") { void loadRecordPlanOptions(); void loadRecords(); }
   if (tab === "agreement") void loadAgreement();
 }
 function refreshActive() { loadTab(activeTab.value); }
@@ -356,7 +379,7 @@ async function saveAgreement() {
   try { await apiSaveMembershipAgreement({ ...agreement }); ElMessage.success("会员协议已保存"); } catch (error) { ElMessage.error(error instanceof Error ? error.message : "保存失败"); } finally { agreementSaving.value = false; }
 }
 
-onMounted(async () => { await Promise.all([loadPlans(), loadBatches(), loadRecords()]); });
+onMounted(async () => { await Promise.all([loadPlans(), loadBatches(), loadRecordPlanOptions(), loadRecords()]); });
 </script>
 
 <style scoped>
@@ -383,13 +406,17 @@ onMounted(async () => { await Promise.all([loadPlans(), loadBatches(), loadRecor
 .line-through { text-decoration: line-through; }
 .pager { display: flex; justify-content: flex-end; padding-top: 18px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
-.record-filter, .card-filter { display: grid; grid-template-columns: minmax(220px, 1fr) 180px auto; gap: 10px; margin-bottom: 18px; }
+.record-filter { display: grid; grid-template-columns: minmax(180px, 1fr) 180px 150px minmax(300px, 1.4fr) auto; gap: 10px; margin-bottom: 18px; }
+.record-filter :deep(.el-date-editor) { width: 100%; min-width: 0; }
+.record-plan-error { margin-bottom: 12px; }
+.card-filter { display: grid; grid-template-columns: minmax(220px, 1fr) 180px auto; gap: 10px; margin-bottom: 18px; }
 .agreement-form { max-width: 820px; padding: 12px 4px; }
 .agreement-actions, .issued-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .issued-actions { margin: 16px 0 12px; }
 @media (max-width: 900px) {
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .hero { padding: 22px; }
+  .record-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
   .membership-page { gap: 14px; }

@@ -90,7 +90,7 @@ describe("checkout payment migration", () => {
 
     const finance = readFileSync("src/services/user/UserFinanceService.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/UserMessageController.ts", "utf8");
-    expect(finance).toContain('eq(systemGroup.configName, "user_recharge_quota")');
+    expect(finance).toContain('rechargeQuotaGroup(tx, true)');
     expect(finance).toContain("priceCents = decimalToCents(quota.price)");
     expect(finance).toContain("givePrice: centsToDecimal(givePriceCents)");
     expect(finance).toContain("let minRechargeCents = 1");

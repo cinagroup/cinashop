@@ -174,7 +174,7 @@ describe("customer-service realtime migration", () => {
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0100\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     for (const index of [
       "ss_active_uid",
       "ssr_kefu_inbox",

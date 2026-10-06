@@ -5,6 +5,7 @@ import {
   gt,
   ilike,
   inArray,
+  ne,
   or,
   sql,
   type SQL,
@@ -713,9 +714,24 @@ export class AdminPaidMembershipService {
     const limit = Math.min(100, positivePage(query.limit, 20));
     const conditions: SQL[] = [inArray(otherOrder.type, [0, 1, 2, 4]), eq(otherOrder.paid, 1)];
     const memberType = typeof query.member_type === "string" ? query.member_type.trim() : "";
-    if (memberType) conditions.push(eq(otherOrder.memberType, memberType));
+    // The legacy selector uses plan IDs plus a synthetic "card" option. Card
+    // and free activations share member_type=free and differ by stored code.
+    if (memberType === "card") {
+      conditions.push(eq(otherOrder.memberType, "free"), ne(otherOrder.code, ""));
+    } else if (memberType === "free") {
+      conditions.push(eq(otherOrder.memberType, "free"), eq(otherOrder.code, ""));
+    } else if (memberType) {
+      conditions.push(eq(otherOrder.memberType, memberType));
+    }
     const payType = typeof query.pay_type === "string" ? query.pay_type.trim() : "";
-    if (payType) conditions.push(eq(otherOrder.payType, payType));
+    if (payType === "free") {
+      conditions.push(or(
+        inArray(otherOrder.type, [0, 2, 4]),
+        and(eq(otherOrder.type, 1), eq(otherOrder.isFree, 1)),
+      )!);
+    } else if (payType) {
+      conditions.push(eq(otherOrder.payType, payType));
+    }
     const keyword = typeof query.name === "string" ? query.name.trim() : "";
     if (keyword) {
       conditions.push(
@@ -759,6 +775,7 @@ export class AdminPaidMembershipService {
         return {
           id: order.id,
           uid: order.uid,
+          type: order.type,
           order_id: order.orderId,
           member_type: order.memberType,
           member_title: plan?.title ?? legacyType.get(order.type) ?? order.memberType,

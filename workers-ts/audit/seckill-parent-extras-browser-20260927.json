@@ -1,0 +1,135 @@
+{
+  "date": "2026-09-27",
+  "status": "Local synthetic browser verification; unpublished",
+  "scope": "Current final Admin build in Codex in-app browser against a disposable loopback memory fixture on port 5200. No production API/database/provider or real JWT/R2 is exercised.",
+  "sources": [
+    {
+      "path": "view/admin-ts/src/api/seckillActivity.ts",
+      "sha256": "6254665fb5db682c998c4baf8316719ef7925538a6bb2a0ff53d099115e32554"
+    },
+    {
+      "path": "view/admin-ts/src/pages/activity/SeckillActivities.vue",
+      "sha256": "c49a3f2cb79f6a0ff9fb25a6e5f37569daff751cef9008fb391703b78e4902f0"
+    }
+  ],
+  "buildBundle": {
+    "path": "view/admin-ts/dist/assets/SeckillActivities-D-2SDxvu.js",
+    "sha256": "6ed83735934926a64b939844265b896a92f646649a05b63462987859a45d7a53"
+  },
+  "fixture": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-qa-server.cjs",
+    "sha256": "89946c138287393437d97a939c3a5e0d41daeeb23f9e4fce9abd35ea1a536f53"
+  },
+  "requestLog": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-qa-requests.json",
+    "sha256": "7f70a82cc1da5579442dd041354a038ebd419a73521efe3f53181a44b6ea4932"
+  },
+  "requests": {
+    "total": 114,
+    "methods": {
+      "GET": 112,
+      "POST": 1,
+      "PUT": 1
+    },
+    "parentApiTotal": 32,
+    "parentApiMethods": {
+      "GET": 30,
+      "POST": 1,
+      "PUT": 1
+    },
+    "backgroundNewPush": 79,
+    "siteConfig": 3,
+    "readonlyToolReadbacksIncluded": 2,
+    "browserOnlyTotal": 112,
+    "browserOnlyParentApiTotal": 30,
+    "description": "Full shared fixture log includes two root read-only HTTP detail readbacks for parents 32 and 1; do not label all 114 as CUA requests. Background polling reflects a long tooling stall.",
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/adminapi/activity/seckill-activities",
+        "request_id": "2ff15ff7-f967-4222-8335-950459d02919"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/activity/seckill-activities/1",
+        "request_id": "350fcc39-6130-40d8-9e0d-5a059017912e"
+      }
+    ],
+    "realBusinessWrites": 0
+  },
+  "observedFlows": [
+    "Manager loads the final titled page without framework overlays; picker shows physical product type and category columns.",
+    "Select product 518 on page two and 501 on page one; both selected chips remain across category 10 and single hidden/disabled label 22 filters.",
+    "Read 501 then injected failing 518; failed batch retains both choices and adds zero products. Retry reads both successfully and joins two products/four SKUs in one UI update.",
+    "Bulk configure both products at price 4.25 and total quota 12; four SKUs update. Bulk remove cancellation preserves both products.",
+    "Actual SKU red/blue previews differ from the main image; red SKU zoom viewer opens. POST creates parent 32, detail readback and edit show both products and values.",
+    "Historical parent 1 with consumed quantity 2 rejects bulk total quota 1 without changing any price; total 7 and price 4.10 apply.",
+    "Confirmed removal of historical product 101 retains child 100 and SKU IDs 200/201, retires/disables them; confirmed removal of new unsaved product 518 drops only the draft. PUT retains unique sk000200/sk000201 and total 7/consumed 2/remaining 5.",
+    "Compact actual DOM is 390 by 844: document width 390, dialog width 366, body width 334. Controls wrap and tables scroll locally; no document horizontal overflow."
+  ],
+  "historicalReadback": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-historical-after.json",
+    "sha256": "c897050423c8769b8374659fcda07d096eeadaf7f12bee22f0a7ca9ae78c1855"
+  },
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 850,
+      "documentWidth": 1280
+    },
+    "compact": {
+      "width": 390,
+      "height": 844,
+      "documentWidth": 390,
+      "dialogWidth": 366,
+      "dialogBodyWidth": 334
+    },
+    "deviceEmulation": "CDP viewport was reset after verification. Compact DOM/layout is verified; the in-app captured mobile compositor frame contains gray padding/scaling and is not a claim of perfect mobile screenshot output."
+  },
+  "console": {
+    "checkedTabs": [
+      4,
+      6
+    ],
+    "error": 0,
+    "warn": 0
+  },
+  "screenshots": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-desktop.png",
+      "sha256": "e0e0237a8e55177809b424047f8f2800e3f14af7d601beb3db09f1011b2b7d4d"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-picker.png",
+      "sha256": "5cda0a9de6b86426a662ba92d862656381c621cf6298ee5dab311812d443e030"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-sku-preview.png",
+      "sha256": "63d00b048cd3f5cfba8799753e9c98e914a854a79666d8af7ea084b8a1b720c5"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-mobile.png",
+      "sha256": "e96025aa889f9a966e24d61c5a9cc47d51c83f7a0a5b8fb36aff385f19aae2b7"
+    }
+  ],
+  "cleanup": {
+    "serverPort": 5200,
+    "listenerCount": 0,
+    "record": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-parent-extras-qa-cleanup-20260927.json",
+      "sha256": "d1cdf7d891004d17cc474d0de874bcb33bc7ae83906a2543b2d844a6075e1c45"
+    },
+    "finalTabsClosed": [
+      4,
+      5,
+      6
+    ],
+    "browserViewportAndCdpMetricsReset": true,
+    "failedInitialTab": "Unmarked initial tab 3 became an internal error page after a Vite rebuild temporarily removed index.html. The fixture was restarted against the final build before accepted verification; the failed tab is left for automatic unmarked-tab cleanup."
+  },
+  "limits": [
+    "Memory-fixture writes verify UI DTO/state behavior, not PostgreSQL transactions, permission profiles, real JWTs, R2 fetches or inventory side effects.",
+    "The earlier core browser 103-request proof remains a separate historical artifact; it is not added to this batch.",
+    "No deployment, user communication, provider call or production mutation occurred."
+  ]
+}

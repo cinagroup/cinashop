@@ -1,0 +1,131 @@
+{
+  "generatedAt": "2026-09-27T01:39:39.048Z",
+  "scope": "Actual final built Admin via CUA with disposable loopback synthetic API; no DB, R2, production/provider or external requests.",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 850
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "passed": [
+    "page identity, images, no error overlay, no page horizontal overflow",
+    "reader pagination and literal title filter without write controls",
+    "manager create via gallery stable canonical, invalid start/end blocked, native minute inputs and 24:00",
+    "visibility cancel and confirmation",
+    "unknown partial response persisted once and read back via GET, no automatic rewrite",
+    "failed list cleared stale rows and retry restored data",
+    "invalid legacy time visible and repaired hidden",
+    "occupied delete refused with record retained; unoccupied delete removed row",
+    "synthetic local PNG selected through browser file chooser and POST /file/upload",
+    "manager without attachment permission has disabled gallery control"
+  ],
+  "console": {
+    "warn": 0,
+    "error": 0
+  },
+  "cleanup": {
+    "tabClosed": true,
+    "viewportReset": true,
+    "serverStopped": true,
+    "port": 5198,
+    "listening": false
+  },
+  "phases": [
+    {
+      "name": "seckill-time-qa-requests-phase1.json",
+      "sha256": "7df01458f3ee69692d8c9e948ac8e3b40287cf3454f22cf509f4a227cccf62f0",
+      "counts": {
+        "GET": 54,
+        "POST": 1,
+        "PUT": 3,
+        "DELETE": 1
+      }
+    },
+    {
+      "name": "seckill-time-qa-requests.json",
+      "sha256": "84259cfd9e57d076e0f1ffeac3807f1b8f332c1bd29fb7fbd1a5a101fbc18956",
+      "counts": {
+        "GET": 20,
+        "POST": 1,
+        "DELETE": 2
+      }
+    }
+  ],
+  "slotWrites": [
+    {
+      "method": "POST",
+      "path": "/adminapi/activity/seckill-times",
+      "request_id": "407b0b8c-4e82-46c6-ae04-e0852a345253"
+    },
+    {
+      "method": "PUT",
+      "path": "/adminapi/activity/seckill-times/44/status",
+      "request_id": "73284d02-916f-4363-8633-fbfeac34270a"
+    },
+    {
+      "method": "PUT",
+      "path": "/adminapi/activity/seckill-times/44",
+      "request_id": "97ae8669-d077-4365-a88c-d3b3c4acdb1d"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/activity/seckill-times/1",
+      "request_id": "3ba772f0-aaa4-400c-ac9f-c7adfa30b5de"
+    },
+    {
+      "method": "PUT",
+      "path": "/adminapi/activity/seckill-times/43",
+      "request_id": "c3098944-5866-48ed-a98c-764596338bcf"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/activity/seckill-times/1",
+      "request_id": "ed06777f-3c7b-4e91-adc2-5dd941e660e1"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/activity/seckill-times/43",
+      "request_id": "6573c520-b030-4819-83ab-316d5427ef2d"
+    }
+  ],
+  "maximumSameRequestIdWriteCount": 1,
+  "screenshots": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-desktop.jpg",
+      "sha256": "ec07e30d59f67d3072a85178190b6fcdaefadde3a71b9ed3f3ff7a58a7706ddf"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-mobile.jpg",
+      "sha256": "64d34420504d3fedce84aaf03d451f2f7957cf1c5f2b94e3b36aac69fd5ffc5e"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-mobile-form.jpg",
+      "sha256": "864ba832410735a0231554da16f2c5141b4e535fe6a5151d6bd3d02dc932f3f9"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-unknown.jpg",
+      "sha256": "74f323a2ebfa1550060af1c9e2dbf4beb0430bfaeafccd06f230c9f12f94773d"
+    }
+  ],
+  "inputs": {
+    "view/admin-ts/src/pages/activity/SeckillTimes.vue": "2bb0fd4fa3df2871f821ff927e8e5259acdabeaa56aadf9ed9cd74a92bb91165",
+    "view/admin-ts/src/api/seckillTime.ts": "99b74210ec16ca9a534c14496df96a96cfc22748345936680a5047639b2ef0ef",
+    "view/admin-ts/src/api/attachment.ts": "7133ac29cd54e4c8a08437dd8118e3854824e7b566f7039775add0404fb8b738",
+    "view/admin-ts/src/pages/activity/ActivityList.vue": "b831a2b15e594162c871f55e7da990816a9aa0b03d76513b8437942c4cdabdf2",
+    "view/admin-ts/src/router/index.ts": "5e14db21e02868008551d35f2de55792c9d38b237012fff3b3feba020b3894cc",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "146ee1763ca8ebab0b5f069cacaa653dbddef06b07030aa802bff9e1ec367b30"
+  },
+  "fixture": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/seckill-time-qa-server.cjs",
+    "sha256": "13d610d6f3a45e2433c964e227174a88e3f37c5fe797b04aafe68862bde9b510",
+    "notes": [
+      "Fixture category response was corrected from [] to {list:[]}; phase 1 preserved before restart. No product code changed for this fixture correction.",
+      "Initial chooser attempt selected an ambiguous nested upload button; retried observed inner visible button with caught event wait.",
+      "Element Plus checkbox/switch internal inputs were covered by visible wrappers; visible label/wrapper clicks confirmed successful state."
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "dateUtc": "2026-09-28",
+  "scope": "Local, unpublished Admin speechcraft and integral-log export screen contracts",
+  "outcome": {
+    "legacyAdminScreens": { "total": 274, "candidate": 72, "partial": 112, "missing": 83, "retired": 7 },
+    "legacyMarketingScreens": { "total": 48, "candidate": 21, "partial": 12, "missing": 15, "retired": 0 },
+    "legacySettingScreens": { "total": 76, "candidate": 19, "partial": 23, "missing": 29, "retired": 5 },
+    "workerRoutes": 1936,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 87,
+    "adminApi": { "callSites": 478, "pathVariants": 502, "executable": 502, "unregistered": 0, "unresolved": 0 },
+    "screenPromotions": [
+      "/admin/setting/store_service/speechcraft: partial->candidate",
+      "/admin/marketing/user_point/index: partial->candidate"
+    ],
+    "checklist": { "checked": 246, "open": 158, "total": 404 }
+  },
+  "verification": {
+    "focusedPgliteFrontendPermissionAndParity": { "files": 12, "passed": 84, "failed": 0, "skipped": 0, "maxWorkers": 1 },
+    "nativePostgresql16SpeechcraftServiceAndHttp": { "files": 2, "passed": 7, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "nativePostgresql16IntegralExportServiceAndHttp": { "files": 2, "passed": 7, "failed": 0, "fixturesRemaining": 0, "clusterStopped": true },
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiStrictAudit": "502 executable variants; 0 unregistered or unresolved",
+    "routeAudit": "1936 Worker registrations; 882 executable legacy-path matches unchanged",
+    "gitDiffCheck": "passed (Git line-ending conversion warnings only)",
+    "browserAndProduction": "not run; no deployment or production mutation"
+  },
+  "limitations": [
+    "The new integral-log export produces bounded Excel-compatible CSV rather than the legacy XLSX file; it is not format-identical.",
+    "The export recomputes a whole-result fingerprint for each page. Production scale, query plans and timeout settings need validation with representative data.",
+    "The legacy speechcraft category delete leaves existing phrases' cate_id orphaned; the new page preserves and labels that historical relation.",
+    "No legacy PHP URL aliases were registered; exact legacy-path coverage is unchanged.",
+    "Production history, real restricted-role browser flows, customer-service client behavior, full Linux CI and post-release acceptance remain open."
+  ],
+  "evidence": [
+    "docs/admin-speechcraft-user-point-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "docs/admin-setting-route-parity.md",
+    "docs/admin-marketing-route-parity.md",
+    "audit/admin-legacy-setting-route-parity-speechcraft-followup-20260928.json",
+    "audit/admin-legacy-marketing-route-parity-user-point-followup-20260928.json",
+    "audit/route-distribution-speechcraft-user-point-followup-20260928.json",
+    "audit/admin-frontend-inventory-speechcraft-user-point-followup-20260928.json",
+    "audit/admin-frontend-api-contracts-speechcraft-user-point-followup-20260928.json",
+    "test/admin-speechcraft-service.test.ts",
+    "test/admin-speechcraft-http.test.ts",
+    "test/admin-speechcraft-frontend.test.ts",
+    "test/admin-integral-log-export.test.ts",
+    "test/admin-integral-log-export-http.test.ts",
+    "test/admin-integral-log-frontend.test.ts",
+    "test/admin-permission.test.ts",
+    "test/admin-all-frontend-parity.test.ts"
+  ]
+}

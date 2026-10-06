@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ValidateException } from '@/utils/errors';
 import { readRefundGenerationMarker, type RefundGenerationMarker } from './RefundGenerationMarker';
-import { readRefundQuantityReservation } from './RefundQuantityReservation';
+import { readRefundQuantityReservation,refundClaimCartKey } from './RefundQuantityReservation';
 import { refundOrderSplitFingerprint } from './RefundOrderSplitIdentity';
 import { readPurchaseQuotaRefundFamily, type PurchaseQuotaRefundReceipt } from './PurchaseQuotaRefundReceipt';
 import { readPurchaseOriginEvidence, verifyPurchaseOriginEvidence, type PurchaseOriginEvidence } from './PurchaseOriginEvidence';
@@ -37,7 +37,8 @@ function object(value: unknown): Record<string, unknown> {
 function integer(value: unknown, min = 0, max = 2147483647): number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max ? value : invalid();
 }
-function cartId(value: unknown): string {
+function cartId(value: unknown,proof?:string): string {
+  if(proof!==undefined&&value===proof&&typeof value==='string'&&value&&value===value.trim()&&Array.from(value).length<=128&&!/[\u0000-\u001f\u007f]/.test(value))return value;
   if (typeof value !== 'string' || !/^[1-9]\d{0,9}$/.test(value)) return invalid();
   integer(Number(value), 1); return value;
 }
@@ -120,7 +121,12 @@ export async function verifyPurchaseQuotaPaymentLedger(input: PurchaseQuotaPayme
     const r = object(value), info = object(r.snapshot), oid = integer(r.oid, 1), order = orders.get(oid);
     if (!order || r.uid !== expected.buyerId || info.valid !== true) return invalid();
     const marker = info.marker === null ? null : readRefundGenerationMarker(info.marker);
-    const line: Cart = { id: integer(r.id, 1), oid, cartId: cartId(r.cartId), oldCartId: r.oldCartId === '' ? '' : cartId(r.oldCartId),
+    const identity=integer(r.id,1),bindings=receipts.filter(x=>x.rowNamespace).flatMap(x=>x.lines.flatMap(line=>[
+      {id:line.sourceRowId,key:line.sourceCartId,old:line.sourceOldCartId},
+      ...(line.selectedRowId===null?[]:[{id:line.selectedRowId,key:x.disposition==='whole'?line.sourceCartId:String(line.selectedRowId),old:x.disposition==='whole'?line.sourceOldCartId:line.sourceOldCartId||line.sourceCartId}]),
+      ...(line.remainingRowId===null?[]:[{id:line.remainingRowId,key:x.remainingOrderId===x.sourceOrderId?line.sourceCartId:String(line.remainingRowId),old:x.remainingOrderId===x.sourceOrderId?line.sourceOldCartId:line.sourceOldCartId||line.sourceCartId}])
+    ])),proof=bindings.find(x=>x.id===identity&&x.key===r.cartId&&x.old===r.oldCartId);
+    const line: Cart = { id: identity, oid, cartId: cartId(r.cartId,proof?.key), oldCartId: r.oldCartId === '' ? '' : cartId(r.oldCartId,proof?.old),
       productId: integer(r.productId, 1), quantity: integer(r.cartNum, 1, 32767), origin: 0,
       refundNum: integer(r.refundNum, 0, 32767), splitStatus: integer(r.splitStatus, 0, 2),
       splitSurplusNum: integer(r.splitSurplusNum, 0, 32767), marker };
@@ -290,7 +296,7 @@ export async function verifyPurchaseQuotaPaymentLedger(input: PurchaseQuotaPayme
       pendingOrders.add(orderId);
       for (const item of claim.items) {
         const line = node.lines.get(item.rowId);
-        if (!line || item.beforeRefundNum !== 0 || line.cartId !== String(item.cartId) || line.quantity !== item.totalNum) return invalid();
+        if (!line || item.beforeRefundNum !== 0 || line.cartId !== refundClaimCartKey(item) || line.quantity !== item.totalNum) return invalid();
         reserved.set(line.id, item.cartNum);
       }
     }

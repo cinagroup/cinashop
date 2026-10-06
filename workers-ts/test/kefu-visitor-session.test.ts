@@ -27,7 +27,7 @@ describe("signed customer-service visitor sessions", () => {
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")
       .match(/private migration_0111\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     expect(migration).toContain('START WITH 1000000000');
     expect(migration).toContain('"token_hash" VARCHAR(64) NOT NULL UNIQUE');
     expect(migration).not.toContain('"ip"');

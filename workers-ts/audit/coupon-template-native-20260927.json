@@ -1,0 +1,698 @@
+{
+  "version": 1,
+  "date": "2026-09-27",
+  "status": "passed-local-final-source",
+  "scope": "Coupon template creation/publication/lifecycle, direct manual-claim authority, source/issue snapshot provenance, restricted runtime roles, relevant legacy consumers, and exact local nine-path schema catalogs",
+  "independentReview": {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-native-review-20260927.json",
+    "relativePath": "coupon-template-native-review-20260927.json",
+    "sha256": "ea45c2e49d5fa34b6df5c02c3294b1241455a10906f3c879f22fd77fbfef1f05",
+    "bytes": 28209
+  },
+  "acceptedBusinessScope": {
+    "uniqueFiles": 4,
+    "uniqueTests": 55,
+    "failed": 0,
+    "skipped": 0,
+    "retainedInitialFiles": [
+      {
+        "path": "workers-ts/test/admin-coupon-template.test.ts",
+        "tests": 30
+      },
+      {
+        "path": "workers-ts/test/coupon-manual-claim.test.ts",
+        "tests": 8
+      }
+    ],
+    "retainedInitialTests": 38,
+    "finalCompleteFiles": [
+      {
+        "tests": 9,
+        "path": "workers-ts/test/admin-coupon-template-postgres.test.ts",
+        "authority": "Real commissioned Admin/App LOGIN and independent PostgreSQL sessions"
+      },
+      {
+        "tests": 8,
+        "path": "workers-ts/test/admin-coupon-template-http.test.ts",
+        "authority": "Assembled createApp/Admin and real API JWT with restricted App LOGIN"
+      }
+    ],
+    "finalTests": 17,
+    "initialLog": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-native-scope-20260927.log",
+      "relativePath": "coupon-template-native-scope-20260927.log",
+      "sha256": "58d965b6e33fdc16518485d576e8b9fd63abe3f3e9aacb504e0d835e16045329",
+      "bytes": 2787
+    },
+    "initialWholeRun": {
+      "exitCode": 1,
+      "remainingFixtures": 0,
+      "cluster": "finance-postgres-lCnn9u",
+      "tests": 52,
+      "stopped": true,
+      "port": 64137,
+      "failed": 1,
+      "passed": 51,
+      "files": 4
+    },
+    "excludes": [
+      "The entire initial formal file: 7 tests, including six green cases",
+      "The entire initial HTTP file: 7 tests, superseded by final same-file 8",
+      "No mixing successful subcases from either superseded file"
+    ],
+    "finalLog": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-native-final-20260927.log",
+      "relativePath": "coupon-template-native-final-20260927.log",
+      "sha256": "8a5946c0865b68f9ab3b22167b50f33b7cc68899ee3622bbc9cb087e29b6a521",
+      "bytes": 848
+    },
+    "finalRun": {
+      "exitCode": 0,
+      "skipped": 0,
+      "remainingFixtures": 0,
+      "cluster": "finance-postgres-W7Xhmf",
+      "tests": 17,
+      "stopped": true,
+      "port": 60659,
+      "failed": 0,
+      "passed": 17,
+      "exitCodeEvidence": "Parent observed exit0; success summary and runner no-failure/finally path independently reviewed",
+      "files": 2
+    },
+    "executionClaim": "A local native-runner-backed 55-case acceptance set, which also contains pure input assertions; not a claim that each case executes native SQL"
+  },
+  "acceptedConsumerRegression": {
+    "uniqueFiles": 23,
+    "uniqueTests": 381,
+    "failed": 0,
+    "skipped": 0,
+    "mixNativeAndStatic": true,
+    "partialNativeRunLog": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-existing-consumers-final-20260927.log",
+      "relativePath": "coupon-template-existing-consumers-final-20260927.log",
+      "sha256": "54cfff5c2745d5751db84b2a9ad1ebf95d5f51c6d3ca43ea770e39f2f1aac0ef",
+      "bytes": 10327
+    },
+    "partialRun": {
+      "exitCode": 1,
+      "remainingFixtures": 0,
+      "failedCases": 2,
+      "passedCases": 379,
+      "stopped": true,
+      "completeGreenFiles": 21,
+      "port": 62187,
+      "cluster": "finance-postgres-t79v3N",
+      "failedFiles": 2,
+      "totalCases": 381,
+      "durationSeconds": 433.46,
+      "files": 23
+    },
+    "retainedCompleteFiles": [
+      "test/checkout-coupon-management.test.ts",
+      "test/checkout-coupon-item-authority.test.ts",
+      "test/checkout-coupon-relations-authority.test.ts",
+      "test/checkout-coupon-template-authority.test.ts",
+      "test/coupon-product-scope-fence.test.ts",
+      "test/coupon-product-scope-migration.test.ts",
+      "test/order-coupon-picker.test.ts",
+      "test/coupon-scope-products-postgres.test.ts",
+      "test/coupon-scope-search-postgres.test.ts",
+      "test/coupon-wallet-filters-postgres.test.ts",
+      "test/pc-coupon-wallet-postgres.test.ts",
+      "test/pc-order-coupon-postgres.test.ts",
+      "test/store-order-create-scenario-postgres.test.ts",
+      "test/runtime-business-login.test.ts",
+      "test/coupon-issue-migration.test.ts",
+      "test/coupon-migration.test.ts",
+      "test/coupon-relationship-migration.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/newcomer-migration.test.ts",
+      "test/api006-newcomer-compatibility-migration.test.ts",
+      "test/v2-coupon-compatibility-migration.test.ts"
+    ],
+    "retainedCompleteFilesCount": 21,
+    "retainedTests": 370,
+    "entireExcludedFiles": [
+      {
+        "tests": 6,
+        "priorGreenCasesExcluded": 5,
+        "path": "workers-ts/test/out-coupon-migration.test.ts"
+      },
+      {
+        "tests": 5,
+        "priorGreenCasesExcluded": 4,
+        "path": "workers-ts/test/out-user-migration.test.ts"
+      }
+    ],
+    "repairedCompleteFiles": [
+      {
+        "path": "workers-ts/test/out-coupon-migration.test.ts",
+        "passed": 6,
+        "failed": 0,
+        "execution": "Node unit/static source contracts; no PostgreSQL started for this repair"
+      },
+      {
+        "path": "workers-ts/test/out-user-migration.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "execution": "Node unit/static source contracts; no PostgreSQL started for this repair"
+      }
+    ],
+    "repairedTests": 11,
+    "repairExitCode": 0,
+    "repairLog": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-consumer-lineending-repaired-20260927.log",
+      "relativePath": "coupon-template-consumer-lineending-repaired-20260927.log",
+      "sha256": "474bede9c094c18debcb38e97e9fde110e85cdc353171d4f41d57d44730ec645",
+      "bytes": 2417
+    },
+    "repairJson": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-consumer-lineending-repaired-results-20260927.json",
+      "relativePath": "coupon-template-consumer-lineending-repaired-results-20260927.json",
+      "sha256": "1e363fd4e15c4c94611ba6283506fd9b233b2886545215533c25f82690f1f145",
+      "bytes": 4651
+    },
+    "repairSourceRecord": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-consumer-lineending-repair-20260927.json",
+      "relativePath": "coupon-template-consumer-lineending-repair-20260927.json",
+      "sha256": "a96ac24da158273eafabfeb01eb59c4858218f1bf3236e5272042f614a2bedd3",
+      "bytes": 692
+    },
+    "repairScope": "Only CRLF/CR to LF in the two extracted/read SQL-source strings and explanatory test titles; exact toBe comparison, existing boundary trim, all SQL statements and historical DDL retained",
+    "aggregateFormula": "381 = (381 initial total - 11 entire failed-file cases) + 11 complete fresh repaired-file cases; not one 381/381 native run",
+    "nativeBackedSelectedFiles": [
+      "test/checkout-coupon-management.test.ts",
+      "test/checkout-coupon-item-authority.test.ts",
+      "test/checkout-coupon-relations-authority.test.ts",
+      "test/checkout-coupon-template-authority.test.ts",
+      "test/coupon-product-scope-fence.test.ts",
+      "test/coupon-product-scope-migration.test.ts",
+      "test/order-coupon-picker.test.ts",
+      "test/coupon-scope-products-postgres.test.ts",
+      "test/coupon-scope-search-postgres.test.ts",
+      "test/coupon-wallet-filters-postgres.test.ts",
+      "test/pc-coupon-wallet-postgres.test.ts",
+      "test/pc-order-coupon-postgres.test.ts",
+      "test/store-order-create-scenario-postgres.test.ts",
+      "test/runtime-business-login.test.ts"
+    ],
+    "nativeBackedSelectedFileCount": 14,
+    "lightSelectedFiles": [
+      "test/coupon-issue-migration.test.ts",
+      "test/coupon-migration.test.ts",
+      "test/coupon-relationship-migration.test.ts",
+      "test/product-coupon-migration.test.ts",
+      "test/out-coupon-migration.test.ts",
+      "test/newcomer-migration.test.ts",
+      "test/api006-newcomer-compatibility-migration.test.ts",
+      "test/v2-coupon-compatibility-migration.test.ts",
+      "test/out-user-migration.test.ts"
+    ],
+    "lightSelectedFileCount": 9,
+    "preclusterRejectedAttempt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-existing-consumers-20260927.log",
+      "relativePath": "coupon-template-existing-consumers-20260927.log",
+      "sha256": "6339b96703421da8ab0eb5a5a68c261da5be11c5b45dc408d19c12292fc7223d",
+      "bytes": 661
+    },
+    "preclusterRejectionCreatedCluster": false,
+    "minimalSelectionHistoricalInputManifest": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-regression-minimal-files-20260927.json",
+      "relativePath": "coupon-template-regression-minimal-files-20260927.json",
+      "sha256": "c68a6e8709cb5b2c7c015c32134b1c367d4c2d777dfc05f262c3921e044b4b99",
+      "bytes": 11419
+    },
+    "historicalSelectionManifestTwoOriginalTestHashesSupersededByRepair": true
+  },
+  "mixedSchemaAcceptance": {
+    "log": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-native-schema-20260927.log",
+      "relativePath": "coupon-template-native-schema-20260927.log",
+      "sha256": "e2d9e3604926876e741e037cf23b9c020a1da43c716f5be59923ac5eeab17a42",
+      "bytes": 944
+    },
+    "files": 4,
+    "tests": 59,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "cluster": "finance-postgres-VRauaf",
+    "port": 62337,
+    "remainingFixtures": 0,
+    "stopped": true,
+    "filesBreakdown": [
+      {
+        "tests": 28,
+        "explicitPgliteOrStaticCases": 27,
+        "nativeOrmCases": 1,
+        "path": "workers-ts/test/coupon-template-catalog.test.ts"
+      },
+      {
+        "tests": 9,
+        "path": "workers-ts/test/runtime-coupon-template-privileges.test.ts",
+        "nativeBackedCases": 9
+      },
+      {
+        "tests": 20,
+        "path": "workers-ts/test/pink-success-notice-migration.test.ts",
+        "nativeBackedCases": 20
+      },
+      {
+        "tests": 2,
+        "path": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+        "nativeBackedCases": 2
+      }
+    ],
+    "explicitPgliteOrStaticCases": 27,
+    "nativeBackedSuiteCases": 32,
+    "claim": "59 mixed checks = 27 explicit PGlite/static + 32 native-backed suite checks; native-backed suites can contain static assertions, so this is not 59 native SQL checks",
+    "historicalEarlierReview": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-schema-review-20260927.json",
+      "relativePath": "coupon-template-schema-review-20260927.json",
+      "sha256": "77f293c8d3956996ad157eb5a9fea30e0b77b302127b5d2194a1cedab31e4734",
+      "bytes": 6537
+    },
+    "earlierPendingNinePathAndInitialHttp45StatementSuperseded": true
+  },
+  "acceptedNinePathCatalog": {
+    "acceptedLog": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-orm-nine-paths-accepted-20260927.log",
+      "relativePath": "coupon-template-orm-nine-paths-accepted-20260927.log",
+      "sha256": "9f6227f3adf0eab9db116b78e3a04fa8267b6938250d6ce2c117d66f89c52e82",
+      "bytes": 7892
+    },
+    "fullStdout": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-orm-nine-paths-full-20260927.log",
+      "relativePath": "coupon-template-orm-nine-paths-full-20260927.log",
+      "sha256": "786c0fc29185802aa0aa5a48ec9e1607d374c71ddab239e02c3776f137790e0b",
+      "bytes": 102251
+    },
+    "fullReport": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-orm-nine-paths-report-20260927.json",
+      "relativePath": "coupon-template-orm-nine-paths-report-20260927.json",
+      "sha256": "0c0da666102d4bebd2551dc51026dce6dbc93eb779cf19305bd89b277b1066a4",
+      "bytes": 85036
+    },
+    "cluster": "finance-postgres-HbfXOd",
+    "port": 53654,
+    "serverVersionNum": 160015,
+    "remainingFixtures": 0,
+    "stopped": true,
+    "cleanupConfirmed": true,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 171
+      },
+      {
+        "path": "embedded",
+        "steps": 176
+      },
+      {
+        "path": "orm",
+        "steps": 1170
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1290
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1171
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1162
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1171
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1164
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1170
+      }
+    ],
+    "pathCount": 9,
+    "countsEveryPath": {
+      "tables": 281,
+      "columns": 3901,
+      "constraints": 679,
+      "indexes": 1080,
+      "sequences": 228
+    },
+    "allReportedDiffCategoriesZero": true,
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "couponTemplateCatalogVerification": {
+      "external": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "embedded": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm_upgrade": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm_default_upgrade": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm_constraints": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm_fk_names": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm_checks": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      },
+      "orm_sequences": {
+        "initialRegistered": true,
+        "twoTables": true,
+        "noSeed": true,
+        "repeatPreserved": true
+      }
+    },
+    "allNineInitialRegisteredTwoTablesNoSeedAndRepeatPreserved": true,
+    "tableGateIsAnAdditionalEmptyFixtureNotATenthFullProjectPath": true,
+    "externalInputSqlFiles": 171,
+    "externalInputSha256": "0f89b1690e8665502fcf4cbd590ca0f2afa65dfa6e6d280909cdb55df28b9404",
+    "generatedSqlStatements": 1170,
+    "generatedSqlSha256": "7795639ffb7f986b3656e7bc85ae7caedc7d7b8dc8961a8a8a1466b569782833",
+    "currentStaticInputRecheck": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-orm-current-source-hashes-20260927.log",
+      "relativePath": "coupon-template-orm-current-source-hashes-20260927.log",
+      "sha256": "57413bf5db3f8d26792ff6cf48d10b6025529867a9d17160f36cdc6bf6c8d323",
+      "bytes": 318
+    },
+    "currentExternalAndGeneratedInputsMatchAccepted": true,
+    "mode": "enforced exact five-category catalog; broader runtime equivalence remains unaudited",
+    "strictCatalogCategories": [
+      "tables",
+      "columns",
+      "constraints",
+      "indexes",
+      "sequences"
+    ],
+    "broaderRuntimeEquivalenceClaimed": false,
+    "productionAccessed": false,
+    "priorAllowlistRejectedLogs": [
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-orm-nine-paths-20260927.log",
+        "relativePath": "coupon-template-orm-nine-paths-20260927.log",
+        "sha256": "17f19626598a9de0c4bfd1579c82bdc78d075318dd8f457000d4440b24ce43dd",
+        "bytes": 666
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-orm-nine-paths-final-20260927.log",
+        "relativePath": "coupon-template-orm-nine-paths-final-20260927.log",
+        "sha256": "34f7c962576383db1385828b489e17737958c9babb7753d2c72d9891cff32848",
+        "bytes": 666
+      }
+    ],
+    "priorRejectedLogsCounted": false
+  },
+  "finalTypechecks": {
+    "unit": {
+      "exitCode": 0,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-final-unit-all-inputs-20260927.log",
+        "relativePath": "coupon-template-final-unit-all-inputs-20260927.log",
+        "sha256": "b4f5bbc21e981cf47fc8c1509a480525e1c1b643c8d2abda62063a7b3346520d",
+        "bytes": 141
+      },
+      "command": "npm run typecheck:unit",
+      "afterBothLineEndingTestRepairs": true
+    },
+    "runtime": {
+      "exitCode": 0,
+      "runtimeSourceUnchanged": true,
+      "command": "npm run typecheck:runtime",
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-final-typecheck-runtime-20260927.log",
+        "relativePath": "coupon-template-final-typecheck-runtime-20260927.log",
+        "sha256": "ba1d53eaa2619ba06283fec332fa291f51c1476d615cb177a8106ae978b26c11",
+        "bytes": 184
+      },
+      "notRepeatedAfterTestOnlyRepairs": true
+    },
+    "priorAttemptAndAcceptedRecordsPreserved": [
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-final-typecheck-attempt-20260927.json",
+        "relativePath": "coupon-template-final-typecheck-attempt-20260927.json",
+        "sha256": "504b117eabd8dfed0d2d32977d2c72818d149f8cae64267a55ea4d7455c37ee6",
+        "bytes": 1588
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-final-typecheck-accepted-20260927.json",
+        "relativePath": "coupon-template-final-typecheck-accepted-20260927.json",
+        "sha256": "9ddd4050df174ed4b3f74a13902ed6ab191ce9a3e64f8367e21ab9365c87ed30",
+        "bytes": 2293
+      }
+    ]
+  },
+  "frontendAndPermissionLedger": {
+    "frontend": {
+      "tests": 41,
+      "files": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-frontend-runtime-all-historical-flags-final-20260927.log",
+        "relativePath": "coupon-template-frontend-runtime-all-historical-flags-final-20260927.log",
+        "sha256": "bfa8b76b84b25114438f44625ff0322cb4b933fe1b99715ea01618ddafbdefb2",
+        "bytes": 228
+      }
+    },
+    "adminBuild": {
+      "command": "vue-tsc -b && vite build",
+      "completed": true,
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-admin-build-accepted-20260927.log",
+        "relativePath": "coupon-template-admin-build-accepted-20260927.log",
+        "sha256": "557afe7e7e25b6be8dcee0658cb4f9b290075ef31f769daaf4ea2a979bb54ba2",
+        "bytes": 14276
+      }
+    },
+    "permissions": {
+      "tests": 28,
+      "files": 2,
+      "exitCode": 0,
+      "command": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-permissions-command-20260927.json",
+        "relativePath": "coupon-template-permissions-command-20260927.json",
+        "sha256": "59f6af98bdfee137fbb7fa1de4fa93b1c756c1ac4535e9372ce88d46da2cdbb9",
+        "bytes": 768
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-permissions-20260927.log",
+        "relativePath": "coupon-template-permissions-20260927.log",
+        "sha256": "c447b64937d77228f86ddb826bcbc4c941b6e1558b092297b4b10d4bdc23b99f",
+        "bytes": 5314
+      }
+    },
+    "ledger": {
+      "tests": 93,
+      "files": 17,
+      "exitCode": 0,
+      "command": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-ledger-tests-command-20260927.json",
+        "relativePath": "coupon-template-ledger-tests-command-20260927.json",
+        "sha256": "abaac7fab34ea90926540504fcfd3188b19995a13a1e973990b0e70e3945573e",
+        "bytes": 2261
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-ledger-tests-20260927.log",
+        "relativePath": "coupon-template-ledger-tests-20260927.log",
+        "sha256": "a6e7ddf790fc9cc74c13ab419fccd198b9b32d056f5b696a080a17328a8f6b00",
+        "bytes": 16333
+      }
+    }
+  },
+  "frozenSnapshots": [
+    {
+      "manifest": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-runtime-accepted-snapshot\\manifest.json",
+        "relativePath": "coupon-template-runtime-accepted-snapshot/manifest.json",
+        "sha256": "30bca23d6271b09976fb86065b7cccb656f24688eb5e6d2c946d2fabcc9227f2",
+        "bytes": 68128
+      },
+      "files": 175,
+      "bytes": 3097845,
+      "allCurrentAndCopiedHashesMatch": true,
+      "standaloneCompleteCheckout": false
+    },
+    {
+      "manifest": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-dist-accepted-snapshot\\manifest.json",
+        "relativePath": "coupon-template-dist-accepted-snapshot/manifest.json",
+        "sha256": "9a0fa7397e46907ede423f51f349639eb7bc8f26b22dbe05407f041aa2c383f9",
+        "bytes": 57397
+      },
+      "files": 167,
+      "bytes": 4032773,
+      "allCurrentAndCopiedHashesMatch": true,
+      "standaloneCompleteCheckout": false
+    }
+  ],
+  "frozenCriticalSources": [
+    {
+      "path": "workers-ts/src/services/admin/AdminCouponTemplateInput.ts",
+      "sha256": "6c8e7bbf21c89e57a023bc553dca779e80f9fb3de769c1de7f86aa9ca5028888"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminCouponTemplateService.ts",
+      "sha256": "48e4e362040a8dd8d9e4e70224568c12f16b59d91e1875dae5a207210554fa99"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "770023477ae78527e4c8a9badb9f3b5c71a5a3ea773d3a2128bc843c47262a79"
+    },
+    {
+      "path": "workers-ts/test/admin-coupon-template-postgres.test.ts",
+      "sha256": "b8fa90233ef4afef0f29c1fcf711616197ea484824912a0b51aee7c7d98c392e"
+    },
+    {
+      "path": "workers-ts/test/admin-coupon-template-http.test.ts",
+      "sha256": "12959f80e6c59cae999d4d6fdb4e83662ea987afeb65f40c4abad505ef092f6b"
+    },
+    {
+      "path": "workers-ts/test/out-coupon-migration.test.ts",
+      "sha256": "b31d4bd3113cfa3706ff2fb664eca5e447303c14c658165727ed0d1a5e738a5d"
+    },
+    {
+      "path": "workers-ts/test/out-user-migration.test.ts",
+      "sha256": "ca4b34a475db5f76470f2a10a61138158582f5ef62dd83d471297cda77de229b"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "435c5e592d2038cf3b863b30b94da7f71f86d19a1a62698d7b2afaa18e6dcc28"
+    }
+  ],
+  "freshGateReview": {
+    "candidate281": true,
+    "files": 9,
+    "currentHashesStillMatch": true,
+    "record": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\coupon-template-fresh-gates-revision-20260927.json",
+      "relativePath": "coupon-template-fresh-gates-revision-20260927.json",
+      "sha256": "bec96304c5dafcbd9b1f5b3c250c0f60a5995e4a9d853529e14f373ff0b25d51",
+      "bytes": 6212
+    },
+    "fixedHistoricalFramesAndProduction263Preserved": true
+  },
+  "deduplication": {
+    "priorAcceptedCombinationArtifactsTouched": false,
+    "priorFull47_1339HistoryNotRerunOrAdded": true,
+    "noGrandTotalAcrossSchemaFrontendPermissionLedgerCatalogProduced": true,
+    "business55AndConsumer381AreSeparateNamedSets": true,
+    "earlier39UnitCasesNotAdded": "30 backend + 8 manual claim repeated by native-runner accepted files; the old coupon-migration case is covered by selected consumer regression"
+  },
+  "boundaries": [
+    "Evidence is for disposable loopback PostgreSQL 16 fixtures and current local source/build, not production deployment",
+    "Existing independent Admin issuance-edit entry points remain; template definitions alone are immutable",
+    "Publication does not alter newcomer registration configuration or create automatic full-gift/follow consumers",
+    "Only source/test repair was the authorized two test line-ending comparisons; no DDL, ACL or business changes were made for that repair",
+    "Runner STOPPED/zero-fixture evidence is verified; independent current port probing and latest disposable-data removal are not claimed",
+    "The new scoped source capsule excludes unfrozen docs/ledgers and is not a full repository or full external-DDL archive"
+  ],
+  "productionDeployed": false,
+  "productionDatabaseAccessed": false,
+  "priorAcceptedSnapshotsModified": false
+}

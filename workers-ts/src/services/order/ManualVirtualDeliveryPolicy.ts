@@ -1,6 +1,6 @@
 import { ValidateException } from "@/utils/errors";
 
-export type ManualOrderDeliveryType = "express" | "send" | "fictitious";
+export type ManualOrderDeliveryType = "express" | "send" | "fictitious" | "city_delivery";
 
 const PHYSICAL_PRODUCT_TYPE = 0;
 const CARD_PRODUCT_TYPE = 1;

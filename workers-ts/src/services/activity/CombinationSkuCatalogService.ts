@@ -3,6 +3,10 @@ import { createContainerFromDb, withTx, type Container } from "@/lib/di";
 import { storeCombination, storeOrder, storePink, storeProduct, storeProductAttrValue } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { pendingPinkCancellationExists } from "./PinkCancellationIntent";
+import type { Env } from '@/env';
+import { themeDeadlines } from '@/services/content/ThemeReadService';
+import { readActivityDetailDesign, renderActivityDetailDesign } from '@/services/product/ProductDetailDesignData';
+import { publicProductPictures, renderProductPictures } from './ProductAssetPolicy';
 
 const MAX_SKUS = 500;
 const MAX_GROUPS = 5;
@@ -44,7 +48,7 @@ function validDate(value: Date | null): boolean {
  * Checkout must recheck mutable data under its existing transactional locks.
  */
 export class CombinationSkuCatalogService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly env?: Pick<Env,'APP_KEY'>) {}
 
   async read(uid: number, rawId: unknown, rawPinkId?: unknown, now = new Date()) {
     const combinationId = id(rawId, "拼团活动");
@@ -52,16 +56,22 @@ export class CombinationSkuCatalogService {
     if (!Number.isSafeInteger(uid) || uid < 0 || !Number.isFinite(now.getTime())) {
       throw new ValidateException("拼团规格查询参数无效");
     }
-    return withTx(this.container, async tx => {
+    const result=await withTx(this.container, async tx => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
-      return new CombinationSkuCatalogService(createContainerFromDb(tx)).snapshot(uid, combinationId, pinkId, now);
+      await themeDeadlines(tx);
+      return new CombinationSkuCatalogService(createContainerFromDb(tx),this.env).snapshot(uid, combinationId, pinkId, now);
     });
+    const display=await renderActivityDetailDesign(this.env?.APP_KEY,result.design);
+    const images=await renderProductPictures(this.env?.APP_KEY,result.selection.skus.map(row=>row.image));
+    return {...result.selection,...display,skus:result.selection.skus.map((row,index)=>({...row,image:images[index]}))};
   }
 
   private async snapshot(uid: number, combinationId: number, pinkId: number, now: Date) {
     const current = uid > 0 ? await this.container.userDao.findForAuth(uid) : null;
     if (uid > 0 && (!current || current.status !== 1)) throw new ValidateException("请重新登录");
     const [entry] = await this.container.db.select({
+      id:storeCombination.id,type:storeCombination.type,relationId:storeCombination.relationId,
+      images:storeCombination.images,specs:storeCombination.specs,ensureId:storeCombination.ensureId,
       productId: storeCombination.productId, title: storeCombination.storeName, image: storeCombination.image,
       people: storeCombination.people, stock: storeCombination.stock, quota: storeCombination.quota,
       onceNum: storeCombination.onceNum, totalNum: storeCombination.num,
@@ -120,14 +130,17 @@ export class CombinationSkuCatalogService {
         image: imageUrl(row.image) || imageUrl(entry.image) || imageUrl(entry.productImage),
         stock: available, max_quantity: Math.min(available, entry.onceNum, entry.totalNum, 32_767) };
     });
-    return { selection_only: true as const, type: 3 as const, combination_id: combinationId, product_id: entry.productId,
+    const design=await readActivityDetailDesign(this.container.db,entry,3,uid);
+    const mediaOwner=entry.type===1?{type:0,relationId:0}:{type:entry.type,relationId:entry.relationId};
+    const pictures=await publicProductPictures(this.container.db,skus.map(row=>({...mediaOwner,image:row.image})));
+    return {design,selection:{ selection_only: true as const, type: 3 as const, combination_id: combinationId, product_id: entry.productId,
       title: entry.title, image: imageUrl(entry.image) || imageUrl(entry.productImage), people: entry.people,
       once_limit: entry.onceNum, total_limit: entry.totalNum,
       start_time: entry.startTime?.toISOString() ?? null, stop_time: entry.stopTime?.toISOString() ?? null,
       // Combination uses the existing inclusive timestamp endpoint, not seckill's whole-day rule.
       date_window: entry.startTime && entry.startTime > now ? "future" as const
         : entry.stopTime && entry.stopTime < now ? "ended" as const : "active" as const,
-      skus, ...groupData };
+      skus:skus.map((row,index)=>({...row,image:pictures[index]})), ...groupData }};
   }
 
   private async groups(uid: number, combinationId: number, pinkId: number, now: Date) {

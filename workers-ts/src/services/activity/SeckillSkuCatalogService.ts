@@ -1,8 +1,12 @@
-import { and, asc, eq } from "drizzle-orm";
-import type { Container } from "@/lib/di";
+import { and, asc, eq, sql } from "drizzle-orm";
+import { createContainerFromDb, withTx, type Container } from "@/lib/di";
+import type { Env } from '@/env';
 import { storeActivity, storeProduct, storeProductAttrValue, storeSeckill } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readSeckillScheduleSlots, seckillDateEnd, seckillScheduleView } from "./SeckillScheduleService";
+import { themeDeadlines } from '@/services/content/ThemeReadService';
+import { readActivityDetailDesign, renderActivityDetailDesign } from '@/services/product/ProductDetailDesignData';
+import { publicProductPictures, renderProductPictures } from './ProductAssetPolicy';
 
 const MAX_SKUS = 500;
 
@@ -39,13 +43,24 @@ function money(value: string): string {
  * (base product id, type=0, suk). Checkout must re-read every mutable condition.
  */
 export class SeckillSkuCatalogService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly env?: Pick<Env,'APP_KEY'>) {}
 
   async read(uid: number, rawId: unknown, now = new Date()) {
     const id = seckillSkuId(rawId);
     if (!Number.isSafeInteger(uid) || uid < 0 || !Number.isFinite(now.getTime())) {
       throw new ValidateException("秒杀规格查询参数无效");
     }
+    const result=await withTx(this.container,async tx=>{
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await themeDeadlines(tx);
+      return new SeckillSkuCatalogService(createContainerFromDb(tx),this.env).snapshot(uid,id,now);
+    });
+    const display=await renderActivityDetailDesign(this.env?.APP_KEY,result.design);
+    const images=await renderProductPictures(this.env?.APP_KEY,result.selection.skus.map(row=>row.image));
+    return {...result.selection,...display,skus:result.selection.skus.map((row,index)=>({...row,image:images[index]}))};
+  }
+
+  private async snapshot(uid:number,id:number,now:Date){
     // Visibility derives from the verified request principal, never a query UID/VIP flag.
     const current = uid > 0 ? await this.container.userDao.findForAuth(uid) : null;
     if (uid > 0 && (!current || current.status !== 1)) throw new ValidateException("请重新登录");
@@ -55,6 +70,8 @@ export class SeckillSkuCatalogService {
       quota: storeSeckill.quota, onceNum: storeSeckill.onceNum, totalNum: storeSeckill.num,
       startTime: storeSeckill.startTime, stopTime: storeSeckill.stopTime,
       timeId: storeSeckill.timeId,
+      type:storeSeckill.type,relationId:storeSeckill.relationId,images:storeSeckill.images,
+      specs:storeSeckill.specs,ensureId:storeSeckill.ensureId,
       parent: { id: storeActivity.id, type: storeActivity.type, status: storeActivity.status, isDel: storeActivity.isDel,
         startDay: storeActivity.startDay, endDay: storeActivity.endDay, timeId: storeActivity.timeId },
       productStock: storeProduct.stock, productImage: storeProduct.image,
@@ -113,7 +130,10 @@ export class SeckillSkuCatalogService {
         max_quantity: Math.min(available, entry.onceNum, entry.totalNum, 32_767),
         image: imageUrl(row.image) || imageUrl(entry.image) || imageUrl(entry.productImage) };
     });
-    return { selection_only: true as const, type: 1 as const, seckill_id: id, product_id: entry.productId,
+    const design=await readActivityDetailDesign(this.container.db,entry,1,uid);
+    const mediaOwner=entry.type===1?{type:0,relationId:0}:{type:entry.type,relationId:entry.relationId};
+    const pictures=await publicProductPictures(this.container.db,skus.map(row=>({...mediaOwner,image:row.image})));
+    return {design,selection:{ selection_only: true as const, type: 1 as const, seckill_id: id, product_id: entry.productId,
       parent_activity_id: entry.parentId, title: entry.title, image: imageUrl(entry.image) || imageUrl(entry.productImage),
       once_limit: entry.onceNum, total_limit: entry.totalNum,
       // Date-window state is deliberately not the time-slot/parent schedule or per-user remaining limit.
@@ -121,6 +141,6 @@ export class SeckillSkuCatalogService {
         : now.getTime() >= seckillDateEnd(entry.stopTime) ? "ended" as const : "active" as const,
       schedule: seckillScheduleView(schedule, now),
       start_time: entry.startTime?.toISOString() ?? null, stop_time: entry.stopTime?.toISOString() ?? null,
-      skus };
+      skus:skus.map((row,index)=>({...row,image:pictures[index]})) }};
   }
 }

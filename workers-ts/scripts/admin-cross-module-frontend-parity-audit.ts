@@ -7,8 +7,22 @@ type InventoryRoute = { source: string; line: number; path: string; title: strin
 type Review = { status: Status; targetScreens: string[]; targetApis: string[]; covered: string[]; remaining: string[]; evidence: string[] };
 const workerRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = resolve(workerRoot, "..");
-const inventoryFile = resolve(workerRoot, "audit/admin-frontend-inventory.json");
-const outputFile = resolve(workerRoot, "audit/admin-legacy-cross-module-route-parity.json");
+const userMoneyFollowup = process.argv.includes("--user-money-ledger-followup");
+const commissionFollowup = userMoneyFollowup || process.argv.includes("--commission-followup");
+const rechargeFollowup = commissionFollowup || process.argv.includes("--recharge-followup");
+const inventoryName = userMoneyFollowup
+  ? "admin-frontend-inventory-user-money-ledger-followup-20260928.json"
+  : commissionFollowup
+  ? "admin-frontend-inventory-commission-followup-20260928.json"
+  : rechargeFollowup ? "admin-frontend-inventory-read-followup-20260928.json" : "admin-frontend-inventory.json";
+const outputName = userMoneyFollowup
+  ? "admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json"
+  : commissionFollowup
+  ? "admin-legacy-cross-module-route-parity-commission-followup-20260928.json"
+  : rechargeFollowup ? "admin-legacy-cross-module-route-parity-recharge-followup-20260928.json"
+    : "admin-legacy-cross-module-route-parity.json";
+const inventoryFile = resolve(workerRoot, `audit/${inventoryName}`);
+const outputFile = resolve(workerRoot, `audit/${outputName}`);
 const targetRouter = "view/admin-ts/src/router/index.ts";
 const targetApis = "workers-ts/src/routes/adminapi.ts";
 const permissionRules = "workers-ts/src/services/admin/AdminPermissionService.ts";
@@ -61,6 +75,8 @@ const screens: Record<string, { file: string; marker: string; permission: string
   "/finance/extract": { file: "view/admin-ts/src/pages/finance/ExtractList.vue", marker: 'path: "finance/extract"', permission: "extract.view/extract.manage" },
   "/finance/bill": { file: "view/admin-ts/src/pages/finance/BillList.vue", marker: 'path: "finance/bill"', permission: "bill.view" },
   "/finance/capital-flow": { file: "view/admin-ts/src/pages/finance/CapitalFlowList.vue", marker: 'path: "finance/capital-flow"', permission: "capital_flow.view/capital_flow.manage" },
+  "/finance/recharges": { file: "view/admin-ts/src/pages/finance/RechargeOrders.vue", marker: 'path: "finance/recharges"', permission: "recharge_order.view" },
+  "/finance/commissions": { file: "view/admin-ts/src/pages/finance/CommissionRecords.vue", marker: 'path: "finance/commissions"', permission: "commission.view" },
   "/statistic": { file: "view/admin-ts/src/pages/statistic/Dashboard.vue", marker: 'path: "statistic"', permission: "statistic.view" },
 };
 const reviews: Record<string, Review> = {};
@@ -100,16 +116,41 @@ add("/admin/finance/user_extract/index", "partial", ["/finance/extract"], ["GET 
   "新提现审核页可按状态列出申请，并按 extract.manage 通过或拒绝。",
   "旧日期/提现方式/账号筛选、统计卡、收款二维码、编辑收款资料、备注及无效状态动作未在新页等量呈现。",
   ["view/admin-ts/src/api/finance.ts"]);
-add("/admin/finance/user_recharge/index", "missing", [], ["GET /adminapi/bill/list"], "",
-  "旧充值订单目录含已付/未付、充值单号、充值统计、退款和删除；新资金流水仅列已入账 user_bill，不能展示未付充值单或做充值退款。",
-  ["view/admin-ts/src/pages/finance/BillList.vue", "workers-ts/src/controllers/api/v1/AdminCrudController.ts"]);
-add("/admin/finance/finance/bill", "partial", ["/finance/bill"], ["GET /adminapi/bill/list"],
-  "新资金流水页分页列出 user_bill，显示用户、类型、收支金额、余额和备注。",
-  "旧昵称/ID、时间、业务类型筛选及导出缺失；新页只筛收入/支出。",
-  ["view/admin-ts/src/api/finance.ts", "workers-ts/src/controllers/api/v1/AdminCrudController.ts"]);
-add("/admin/finance/finance/commission", "missing", [], ["GET /adminapi/bill/list"], "",
-  "旧页按用户汇总总佣金、账户佣金、提现到账佣金，并有用户明细和导出；新 user_bill 流水不是按用户聚合的佣金账本页面。",
-  ["view/admin-ts/src/pages/finance/BillList.vue"]);
+if (rechargeFollowup) {
+  add("/admin/finance/user_recharge/index", "partial", ["/finance/recharges"],
+    ["GET /adminapi/finance/recharge-orders", "GET /adminapi/finance/recharge-orders/stats", "GET /adminapi/finance/recharge-orders/:id"],
+    "独立充值订单页按 user_recharge 读取已付及未付订单，提供上海创建时间、支付状态、昵称/手机/UID/订单号筛选、20 条分页、已付本金与已记录退款等统计及只读详情；列表保留异常记录供核对，读取要求 recharge_order.view。",
+    "旧页的充值退款、未付单删除和导出未迁移；真实角色浏览器与生产历史数据的筛选、金额和退款口径仍需验收，因此只读覆盖保持 partial。",
+    ["view/admin-ts/src/pages/finance/RechargeOrders.vue", "view/admin-ts/src/api/rechargeOrders.ts", "workers-ts/src/services/admin/AdminRechargeOrderService.ts", "workers-ts/src/controllers/api/v1/AdminRechargeOrderController.ts"]);
+} else {
+  add("/admin/finance/user_recharge/index", "missing", [], ["GET /adminapi/bill/list"], "",
+    "旧充值订单目录含已付/未付、充值单号、充值统计、退款和删除；新资金流水仅列已入账 user_bill，不能展示未付充值单或做充值退款。",
+    ["view/admin-ts/src/pages/finance/BillList.vue", "workers-ts/src/controllers/api/v1/AdminCrudController.ts"]);
+}
+if (userMoneyFollowup) {
+  add("/admin/finance/finance/bill", "candidate", ["/finance/bill"],
+    ["GET /adminapi/finance/user-money-ledger", "GET /adminapi/finance/user-money-ledger/types", "GET /adminapi/finance/user-money-ledger/export"],
+    "资金记录页改从旧表 user_money 读取，恢复昵称/用户ID、资金类型、上海时间筛选和每页20条分页；类型目录从同一账本产生。导出沿用旧会员ID、昵称、金额、类型、备注、创建时间六列，独立 bill.export，旧页面与列表/类型数字规则只映射 bill.view。",
+    "旧 XLSX 导出改为 Excel 可打开的有界 CSV；负源金额/NaN/异常 pm 拒绝整份导出，列表仍可审阅。旧 PHP 在结束值恰为午夜时会自动多包含一天，新页采用明确上海时间终点；包含 LIKE 通配符的搜索词改按字面匹配。旧 URL 没有精确兼容别名。需以真实受限角色和代表性资金数据核对筛选、金额、导出规模及发布后行为，本地候选不等于生产验收。",
+    ["view/admin-ts/src/api/userMoneyLedger.ts", "workers-ts/src/controllers/api/v1/AdminUserMoneyLedgerController.ts",
+      "workers-ts/src/services/admin/AdminUserMoneyLedgerService.ts", "workers-ts/src/services/admin/AdminUserMoneyLedgerExportService.ts"]);
+} else {
+  add("/admin/finance/finance/bill", "partial", ["/finance/bill"], ["GET /adminapi/bill/list"],
+    "新资金流水页分页列出 user_bill，显示用户、类型、收支金额、余额和备注。",
+    "旧昵称/ID、时间、业务类型筛选及导出缺失；新页只筛收入/支出。",
+    ["view/admin-ts/src/api/finance.ts", "workers-ts/src/controllers/api/v1/AdminCrudController.ts"]);
+}
+if (commissionFollowup) {
+  add("/admin/finance/finance/commission", "partial", ["/finance/commissions"],
+    ["GET /adminapi/finance/commissions", "GET /adminapi/finance/commissions/:uid", "GET /adminapi/finance/commissions/:uid/records"],
+    "独立只读佣金记录页按用户与佣金流水提供昵称/账号/ID、上海时间和账户佣金范围筛选、20 条分页、当前账户佣金加审核中/已通过提现额汇总、用户详情及佣金明细；需 commission.view。",
+    "旧导出全页循环仍缺；旧 GROUP BY u.uid 直接投 b.add_time 不确定，新页以最新匹配流水时间显式定义；旧列表同分钟日期扩为24小时、不同分钟只到结束分钟首秒，旧明细结束日还包含次日零点，新页改用完整分钟/整日排他上界；“提现到账”旧列实际包含审核中与手续费，真实角色和历史金额口径待验，故保持 partial。",
+    ["view/admin-ts/src/pages/finance/CommissionRecords.vue", "view/admin-ts/src/api/commissionRecords.ts", "workers-ts/src/services/admin/AdminCommissionReadService.ts", "workers-ts/src/controllers/api/v1/AdminCommissionReadController.ts"]);
+} else {
+  add("/admin/finance/finance/commission", "missing", [], ["GET /adminapi/bill/list"], "",
+    "旧页按用户汇总总佣金、账户佣金、提现到账佣金，并有用户明细和导出；新 user_bill 流水不是按用户聚合的佣金账本页面。",
+    ["view/admin-ts/src/pages/finance/BillList.vue"]);
+}
 add("/admin/login", "partial", ["/login"], ["POST /adminapi/login"],
   "新管理端有账号密码登录、动态品牌素材和限流。",
   "旧页的短信登录、忘记密码/手机号重置和图形/拼图校验分支未由新登录屏承接。",
@@ -160,6 +201,19 @@ for (const path of Object.keys(behaviorLines)) if (!pathSet.has(path)) throw new
 const routerText = readFileSync(resolve(repositoryRoot, targetRouter), "utf8");
 const apiText = readFileSync(resolve(repositoryRoot, targetApis), "utf8");
 const registeredApis = new Set([...apiText.matchAll(/adminapiRoutes\.(get|post|put|delete)\(\s*"([^"]+)"/gu)].map((match) => `${match[1].toUpperCase()} /adminapi${match[2]}`));
+if (userMoneyFollowup) {
+  const requiredEvidence: Array<[string, string[]]> = [
+    ["workers-ts/src/services/admin/AdminUserMoneyLedgerService.ts", ["USER_MONEY_LEDGER_EXCLUDED_TYPES", ".from(userMoney)", "FROM user_money"]],
+    ["workers-ts/src/services/admin/AdminUserMoneyLedgerExportService.ts", ["USER_MONEY_EXPORT_HEADER", "WITH filtered AS MATERIALIZED", "FROM user_money"]],
+    ["workers-ts/src/services/admin/AdminPermissionService.ts", ["bill.export", "finance-finance-bill", "export/userfinance"]],
+    ["view/admin-ts/src/api/userMoneyLedger.ts", ["/finance/user-money-ledger", "csv_bytes", "snapshot"]],
+    ["view/admin-ts/src/pages/finance/BillList.vue", ["apiUserMoneyLedger", "bill.export", "collectUserMoneyExport"]],
+  ];
+  for (const [file, markers] of requiredEvidence) {
+    const contents = readFileSync(resolve(repositoryRoot, file), "utf8");
+    for (const marker of markers) if (!contents.includes(marker)) throw new Error(`Incomplete user-money ledger evidence: ${file} lacks ${marker}`);
+  }
+}
 function evidenceExists(file: string): boolean {
   if (file.startsWith("cinashop-php/")) return true;
   return existsSync(resolve(repositoryRoot, file));
@@ -190,7 +244,7 @@ const statuses: Status[] = ["candidate", "partial", "missing", "retired"];
 const counts = Object.fromEntries(statuses.map((status) => [status, routes.filter((route) => route.status === status).length]));
 const report = {
   version: 1,
-  generatedFrom: "audit/admin-frontend-inventory.json",
+  generatedFrom: `audit/${inventoryName}`,
   methodology: {
     scope: "The 18 as-yet-unreviewed surface=page routes from routes.js (2), statistic.js (6), finance.js (4), echarts.js (2), only /admin/login from frameOut.js (1), index.js (1), and system.js (2). Three other routes.js pages already belong to the setting/system ledgers; Kefu frameOut pages belong to the kefu ledger.",
     reviewBasis: "Compare behavior-bearing old Vue components and APIs against actual target Admin screens, registered Worker APIs, data entities and permissions. Static old auth and component lines are pinned to seven router hashes; generation requires only this repository. An API-only route or similarly named screen does not establish parity. Empty or hard-coded demo screens are retired only with source evidence.",

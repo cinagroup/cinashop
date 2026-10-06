@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="cart-page">
     <view v-if="cartStore.loading" class="empty" role="status">正在读取购物车报价…</view>
     <view v-else-if="cartStore.error" class="empty" role="alert"><view>{{ cartStore.error }}</view><button @tap="reload">重新读取购物车</button><button v-if="!auth.isLoggedIn" @tap="login">去登录</button></view>
@@ -17,7 +18,12 @@
           <view class="cart-name">{{ item.productInfo?.storeName ?? '商品已失效' }}</view>
           <view>{{ item.productInfo?.suk }}</view>
           <view class="cart-bottom">
-            <view v-if="item.isValid"><text class="cart-price">¥{{ cartUnitPrice(item) }}</text><view class="price-label">{{ cartPriceLabel(item) }}</view></view><text v-else>已失效</text>
+            <view v-if="item.isValid">
+              <text class="cart-price">¥{{ item.promotion?.unitPriceCents === null ? cartLinePrice(item) : cartUnitPrice(item) }}</text>
+              <view class="price-label">{{ cartPriceLabel(item) }}</view>
+              <view class="line-total">本商品合计 ¥{{ cartLinePrice(item) }}</view>
+              <view v-if="cartPromotionSummary(item)" class="promotion-parts">{{ cartPromotionSummary(item) }}</view>
+            </view><text v-else>已失效</text>
             <view v-if="item.isValid" class="num-control">
               <button class="num-btn" :disabled="blocked || item.cartNum <= 1" @tap="changeNum(item, -1)">-</button>
               <text class="num">{{ item.cartNum }}</text>
@@ -44,14 +50,16 @@
       <button class="checkout-btn" :disabled="blocked || !cartStore.checkedItems.length" @tap="goCheckout">去结算</button>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref, watch } from "vue";
 import { onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { useCartStore } from "@/stores/cart";
 import { useAuthStore } from '@/stores/auth';
-import { cartUnitPrice, cartPriceLabel, type CartDisplayItem } from '../../../../common/cartPrice';
+import { cartUnitPrice, cartLinePrice, cartPriceLabel, cartPromotionSummary, type CartDisplayItem } from '../../../../common/cartPrice';
 
 const cartStore = useCartStore();
 const auth = useAuthStore(), visible = ref(false);
@@ -130,8 +138,8 @@ onUnload(() => { disposed = true; visible.value = false; cartStore.cancelPending
 }
 
 .check.checked {
-  background: #e93323;
-  border-color: #e93323;
+  background: var(--view-theme, #e93323);
+  border-color: var(--view-theme, #e93323);
 }
 
 .cart-image {
@@ -162,7 +170,7 @@ onUnload(() => { disposed = true; visible.value = false; cartStore.cancelPending
 }
 
 .cart-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-size: 30rpx;
   font-weight: 600;
 }
@@ -216,7 +224,7 @@ onUnload(() => { disposed = true; visible.value = false; cartStore.cancelPending
 }
 
 .total-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-size: 36rpx;
   font-weight: 700;
 }
@@ -224,12 +232,14 @@ onUnload(() => { disposed = true; visible.value = false; cartStore.cancelPending
 .checkout-btn {
   line-height: 1.5;
   margin: 0;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   border-radius: 40rpx;
   padding: 16rpx 50rpx;
   font-size: 28rpx;
 }
 .price-label { color: #9b5717; font-size: 22rpx; }
+.line-total { color: #535763; font-size: 22rpx; margin-top: 4rpx; }
+.promotion-parts { color: #9b5717; font-size: 21rpx; margin-top: 4rpx; line-height: 1.45; }
 .estimate-note { color: #666; font-size: 22rpx; padding: 16rpx 0; }
 </style>

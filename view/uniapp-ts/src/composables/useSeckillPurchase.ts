@@ -1,14 +1,14 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
-import { apiSeckillSelection } from '@/api/seckill';
+import { apiSeckillSelection,type SeckillDisplaySelection } from '@/api/seckill';
 import { apiCartAdd } from '@/api/order';
 import { RequestError } from '@/utils/request';
-import { seckillId as parseId, seckillOpen, seckillCartInput, type SeckillSelection } from '../../../common/seckillPurchase';
+import { seckillId as parseId, seckillOpen, seckillCartInput } from '../../../common/seckillPurchase';
 
 export function useSeckillPurchase() {
   const auth = useAuthStore(), seckillId = ref(0), visible = ref(false);
-  const detail = shallowRef<SeckillSelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
+  const detail = shallowRef<SeckillDisplaySelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
   const loading = ref(false), buying = ref(false), navigating = ref(false), error = ref(''), prepared = ref<number | null>(null), clock = ref(Date.now());
   let generation = 0, navigationRevision = 0, disposed = false, timer: ReturnType<typeof setInterval> | undefined;
   let loginSelection: { id: number; unique: string; quantity: number } | null = null;

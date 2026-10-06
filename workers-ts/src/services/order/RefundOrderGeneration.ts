@@ -7,6 +7,7 @@ import { refundOrderSplitFingerprint } from './RefundOrderSplitIdentity';
 import { captureRefundEarnedIncomeScope, readRefundEarnedIncomeScope, type RefundEarnedIncomeScope } from './RefundEarnedIncome';
 import { readRefundGenerationMarker } from './RefundGenerationMarker';
 import { loadRefundFulfillmentBranch, validateBranchCarts } from './RefundFulfillmentBranch';
+import {readRefundQuantityReservation,CUSTOMER_ROW_REFUND_VERSION,refundClaimCartKey} from './RefundQuantityReservation';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -119,6 +120,12 @@ export async function loadRefundOrderGeneration(tx: DbClient, order: Order, supp
     validateBranchCarts(baseline.partitions, rows);
   } else {
     if (!Array.isArray(latest.partitions) || latest.partitions.length > 200) throw invalid();
+    const applications=await tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id,latest.refundId)).limit(2);
+    const claim=applications.length===1?readRefundQuantityReservation(applications[0]):null,customerRows=claim?.version===CUSTOMER_ROW_REFUND_VERSION;
+    if(customerRows){if(applications[0].refundType!==6||applications[0].isCancel||applications[0].isDel||await refundOrderSplitFingerprint(applications[0])!==latest.fingerprint)throw invalid();
+    const frozen=await tx.select({carts:sql<unknown>`CASE WHEN octet_length(${storeOrderRefundSplit.sourceSnapshot})<=16777216 THEN (SELECT jsonb_agg(jsonb_build_object('id',x->'id','cartId',x->'cartId')) FROM jsonb_array_elements(${storeOrderRefundSplit.sourceSnapshot}::jsonb->'carts') x) END`}).from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.refundId,latest.refundId)).limit(1);
+    if(!Array.isArray(frozen[0]?.carts)||frozen[0].carts.length!==latest.partitions.length)throw invalid();const originals=new Map<number,string>();for(const raw of frozen[0].carts){const row=object(raw),id=integer(row.id);if(originals.has(id)||typeof row.cartId!=='string')throw invalid();originals.set(id,row.cartId);}
+    for(const raw of latest.partitions){const part=object(raw),sourceId=integer(part.sourceRowId);if(originals.get(sourceId)!==part.sourceCartId)throw invalid();const selected=integer(part.selectedNum,true),item=claim!.items.find(x=>x.rowId===sourceId);if(selected? !item||refundClaimCartKey(item)!==part.sourceCartId||item.cartNum!==selected :!!item)throw invalid();}}
     const expected = new Map<number, { quantity: number; cartId: string }>();
     for (const value of latest.partitions) {
       const part = object(value), quantity = integer(part.remainingNum, true);
@@ -126,7 +133,8 @@ export async function loadRefundOrderGeneration(tx: DbClient, order: Order, supp
       const rowId = integer(part.remainingRowId);
       if (expected.has(rowId)) throw invalid();
       const cartId = latest.sourceOrderId === order.id ? part.sourceCartId : String(rowId);
-      if (typeof cartId !== 'string' || !/^[1-9]\d{0,9}$/.test(cartId)) throw invalid();
+      if(customerRows){if(typeof cartId!=='string'||!cartId||cartId!==cartId.trim()||Array.from(cartId).length>128||/[\u0000-\u001f\u007f]/.test(cartId))throw invalid();}
+      else if(typeof cartId!=='string'||!/^[1-9]\d{0,9}$/.test(cartId)||Number(cartId)>2147483647)throw invalid();
       expected.set(rowId, { quantity, cartId });
     }
     if (expected.size !== rows.length || rows.some(row => expected.get(row.id)?.quantity !== row.cartNum

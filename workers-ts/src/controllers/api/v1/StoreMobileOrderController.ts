@@ -3,6 +3,7 @@ import type { AppVariables, Env } from "@/env";
 import { StoreMobileOrderService } from "@/services/store/StoreMobileOrderService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import {customerWorkActor} from './CustomerWorkController';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -45,7 +46,7 @@ export async function writeoffInfo(c: C) {
   const query = c.req.query();
   return jsonOk(
     c,
-    await service(c).writeoffInfo(uid(c), c.req.param("type"), query.verify_code ?? query.code),
+    await service(c).writeoffInfo(uid(c), c.req.param("type"), query.verify_code ?? query.code,Number(c.req.param('type'))===1?customerWorkActor(c):undefined),
   );
 }
 
@@ -53,7 +54,7 @@ export async function writeoffInfo(c: C) {
 export async function cartInfo(c: C) {
   privateResponse(c);
   const body = await requestBody(c);
-  return jsonOk(c, await service(c).writeoffCartInfo(uid(c), body.auth, body.oid));
+  return jsonOk(c, await service(c).writeoffCartInfo(uid(c), body.auth, body.oid,Number(body.auth)===1?customerWorkActor(c):undefined));
 }
 
 /** GET /api/store/order/delivery_info/:orderId */

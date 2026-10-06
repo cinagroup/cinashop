@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="assisted-page">
     <view class="eyebrow">管理员 · 代客下单</view><view class="title">选品与购物车</view>
     <view v-if="draft.checkoutLock" class="notice">本机有待核验订单，不能修改购物车或另建新单。<button @tap="recoverCheckout">恢复原订单结果</button></view>
@@ -43,8 +44,10 @@
     </template>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { useAssistedShopping } from '@/composables/useAssistedShopping';
 const { session, draft, canUse, blocked, keyword, products, loading, loaded, error, hasMore, selected, skus, skuKey, quantity,
   skuLoading, skuError, chosenSku, maxQuantity, cart, cartLoading, cartLoaded, cartError, note, reviewRead, confirming,

@@ -90,7 +90,7 @@ describe("paid membership core migration", () => {
     expect(service).toContain("eq(memberCard.useUid, 0)");
     expect(service).toContain("eq(memberCard.useTime, 0)");
     expect(service).toContain('changeType: "card_redeem"');
-    expect(service).toContain("parseConfigInteger(config.member_card_status, 1)");
+    expect(service).toContain("parseConfigInteger(memberCardStatus, 1)");
     expect(service).toContain("parseConfigInteger(enabled, 1)");
     expect(controller).not.toContain("card_password");
     expect(service).toContain("createMembershipOrder");

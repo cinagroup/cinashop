@@ -10,11 +10,12 @@ import { assistedObject as object, assistedInteger as integer, assistedText as t
 
 export interface AssistedQuote {
   key: string; token: string; owner: AssistedOwner; cartIds: number[]; options: AssistedOptions;
-  items: Array<{ id: number; name: string; sku: string; quantity: number; price: string; productType: number }>;
+  items: Array<{ id: number; name: string; sku: string; quantity: number; price: string; totalPrice: string;
+    nonUniform: boolean; promotionSummary: string; productType: number }>;
   address: (AssistedAddress & { id: number }) | null; addressRequired: boolean; formId: number;
   form: SystemFormInfo | null;
   integralEnabled: boolean; points: number; usedPoints: number; remainingPoints: number;
-  amounts: Record<'original' | 'products' | 'membership' | 'coupon' | 'firstOrder' | 'points' | 'originalPostage' | 'postageDiscount' | 'postage' | 'payable', string>;
+  amounts: Record<'original' | 'products' | 'membership' | 'promotion' | 'coupon' | 'firstOrder' | 'points' | 'originalPostage' | 'postageDiscount' | 'postage' | 'payable', string>;
 }
 export interface AssistedSavedAddress extends AssistedAddress { id: number; isDefault: boolean }
 export interface AssistedStore { id: number; name: string; address: string }
@@ -27,6 +28,33 @@ function list(value: unknown, max: number) {
 function unique<T extends { id: number }>(items: T[]) {
   if (new Set(items.map(row => row.id)).size !== items.length) throw Error('结算目录包含重复项');
   return items;
+}
+const centsText = (value: number) => `${BigInt(value) / 100n}.${String(BigInt(value) % 100n).padStart(2, '0')}`;
+function pricedLine(row: Record<string, unknown>, id: number, productId: number, quantity: number, unitCents: number) {
+  const total = row.totalPriceCents === undefined ? row.trueSumPrice === undefined ? unitCents * quantity
+    : Math.round(Number(row.trueSumPrice) * 100) : integer(row.totalPriceCents, 0, Number.MAX_SAFE_INTEGER);
+  if (!Number.isSafeInteger(total) || total < 0 || row.trueSumPrice !== undefined
+    && (typeof row.trueSumPrice !== 'number' || !Number.isFinite(row.trueSumPrice) || Math.abs(row.trueSumPrice * 100 - total) > .0001)) throw Error('报价商品精确金额无效');
+  if (row.promotion === undefined || row.promotion === null) {
+    if (BigInt(total) !== BigInt(unitCents) * BigInt(quantity)) throw Error('报价商品单价与总额不一致');
+    return { totalPrice: centsText(total), nonUniform: false, promotionSummary: '' };
+  }
+  const promotion = object(row.promotion);
+  if (row.totalPriceCents === undefined || String(promotion.key) !== String(id) || promotion.productId !== productId
+    || promotion.quantity !== quantity || promotion.totalPriceCents !== total || !Array.isArray(promotion.segments)
+    || !promotion.segments.length || promotion.segments.length > 100
+    || promotion.unitPriceCents !== null && BigInt(integer(promotion.unitPriceCents, 0, Number.MAX_SAFE_INTEGER)) * BigInt(quantity) !== BigInt(total)) throw Error('报价商品活动金额无效');
+  let count = 0, sum = 0n;
+  const parts = promotion.segments.map(value => {
+    const segment = object(value), number = integer(segment.quantity, 1, quantity), cents = integer(segment.totalPriceCents, 0, Number.MAX_SAFE_INTEGER);
+    if (!Array.isArray(segment.promotionIds) || segment.promotionIds.some(value => !Number.isSafeInteger(value) || value <= 0)
+      || segment.unitPriceCents !== null && BigInt(integer(segment.unitPriceCents, 0, Number.MAX_SAFE_INTEGER)) * BigInt(number) !== BigInt(cents)) throw Error('报价商品活动分段无效');
+    count += number; sum += BigInt(cents);
+    return `${segment.promotionIds.length ? '活动' : '其余'} ${number} 件 ¥${centsText(cents)}`;
+  });
+  if (count !== quantity || sum !== BigInt(total) || unitCents !== (promotion.unitPriceCents ?? Math.floor(total / quantity))) throw Error('报价商品活动分段合计不一致');
+  return { totalPrice: centsText(total), nonUniform: promotion.unitPriceCents === null,
+    promotionSummary: parts.length > 1 ? parts.join('，') : '' };
 }
 function own(scope: AssistedOwner) {
   const owner = assistedOwner(scope), session = useAdminSession();
@@ -55,8 +83,10 @@ function parseQuote(value: unknown, scope: AssistedOwner, ids: number[], input: 
       || row.product_id !== product.id || sku.product_id !== product.id || sku.unique !== row.product_attr_unique || product.is_presale_product !== 0) throw Error('报价商品范围无效');
     const p = row.truePrice;
     if (typeof p !== 'number' || !Number.isFinite(p) || p < 0 || p > 9_999_999_999.99 || Math.abs(p*100-Math.round(p*100)) > .0001) throw Error('报价单价无效');
-    return { id, name: text(product.store_name,512), sku: text(sku.suk,512), quantity: integer(row.cart_num,1,32767),
-      productType: integer(product.product_type,0,4), price: p.toFixed(2) };
+    const quantity = integer(row.cart_num,1,32767);
+    return { id, name: text(product.store_name,512), sku: text(sku.suk,512), quantity,
+      productType: integer(product.product_type,0,4), price: p.toFixed(2),
+      ...pricedLine(row, id, integer(product.id,1), quantity, Math.round(p * 100)) };
   }));
   if (items.length !== ids.length || !items.length || new Set(items.map(item=>item.productType)).size !== 1) throw Error('报价商品不完整');
   const requiresAddress = input.shipping_type === 1 && ![1,2,3].includes(items[0].productType);
@@ -75,7 +105,8 @@ function parseQuote(value: unknown, scope: AssistedOwner, ids: number[], input: 
   return { key, token: assistedKey(raw.quoteToken), owner, cartIds: [...ids], options: structuredOptions(input), items,
     address, addressRequired: requiresAddress, formId, form, integralEnabled: raw.integral_ratio_status === 1,
     points: integer(account.integral), usedPoints: integer(group.usedIntegral), remainingPoints: integer(group.SurplusIntegral),
-    amounts: { original: money(group.sumPrice), products: money(group.totalPrice), membership: money(group.vipPrice), coupon: money(group.couponPrice),
+    amounts: { original: money(group.sumPrice), products: money(group.totalPrice), membership: money(group.vipPrice),
+      promotion: money(group.promotionsPrice ?? '0.00'), coupon: money(group.couponPrice),
       firstOrder: money(group.firstOrderPrice), points: money(group.deduction_price), originalPostage: money(group.total_postage),
       postageDiscount: money(group.storePostageDiscount), postage: money(group.pay_postage), payable: money(group.pay_price) } };
 }

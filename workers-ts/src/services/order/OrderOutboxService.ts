@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm";
 import {
   storeCouponUser,
+  storeOrder,
   storeOrderOutbox,
   storeOrderStatus,
   user,
@@ -37,6 +38,7 @@ import {
   ORDER_REFUND_REFUSED_NOTICE_EVENT,
   ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT,
   ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT,
+  ORDER_PINK_SUCCESS_NOTICE_EVENT,
   processOrderNotificationOutboxEvent,
 } from "@/services/order/OrderNotificationOutboxService";
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
@@ -45,11 +47,14 @@ import { WITHDRAWAL_APPLICATION_EVENT, processWithdrawalApplication } from "@/se
 import { deliverStaffRefresh, type StaffPublisher } from "@/services/notification/StaffNotificationDeliveryService";
 import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
 import { recordPaidOrderMembershipSavings } from './OrderMembershipSavings';
+import { grantPaidPromotionLabels } from './OrderRewardService';
+import { grantPaidOrderPromotionGifts } from '@/services/activity/OrderPromotionGiftService';
 import { enqueuePresaleDeliveryIntent, preparePresaleDeliveryClaim, PRESALE_DELIVERY_EVENT,
   readPresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import { deliverDuePresale } from '@/services/activity/PresaleDeliveryResolver';
 import { preparePresalePaidRecovery } from '@/services/activity/PresalePaidRecovery';
 import { assertPresaleSupplierRefundProof } from '@/services/activity/PresaleSupplierRefundProof';
+import { upgradeAgentLevelsForUser } from '@/services/agent/AgentLevelTaskService';
 
 type OutboxMessage = OrderPaidOutboxMessage | OrderNotificationOutboxMessage | PresaleDeliveryOutboxMessage;
 
@@ -131,7 +136,7 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
   );
 }
 
@@ -149,6 +154,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === WITHDRAWAL_APPLICATION_EVENT
     || eventType === STAFF_REFRESH_EVENT
     || eventType === ORDER_DELIVERY_NOTICE_EVENT
+    || eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
@@ -364,14 +370,50 @@ export class OrderOutboxService {
     "completed" | "already-completed" | "busy" | "dead" | "deferred"
   > {
     const claim = await this.claimForProcessing(message);
-    if (typeof claim === "string") return claim;
+    if (typeof claim === "string") {
+      if(claim==='already-completed' && isOrderPaidOutboxMessage(message)) {
+        const [event]=await this.container.db.select().from(storeOrderOutbox)
+          .where(and(eq(storeOrderOutbox.id,message.outboxId),eq(storeOrderOutbox.eventKey,message.eventKey),
+            eq(storeOrderOutbox.eventType,ORDER_PAID_EVENT),eq(storeOrderOutbox.status,'COMPLETED'))).limit(1);
+        if(!event)throw Error('Completed payment outbox identity changed');
+        await this.upgradePaidBuyer(event.aggregateId,event.payload);
+      }
+      return claim;
+    }
 
     try {
+      // The payment itself is durable already. Evaluate outside any order/user
+      // transaction and before marking this durable event COMPLETED, so a
+      // failure follows the original FAILED/retry path without repeating any
+      // financial effect or changing the event's immutable identity/payload.
+      if(claim.eventType===ORDER_PAID_EVENT)await this.upgradePaidBuyer(claim.aggregateId,claim.payload);
       return await this.runClaimedEvent(claim) ?? "completed";
     } catch (error) {
       await this.recordFailure(claim, error);
       throw error;
     }
+  }
+
+  private async upgradePaidBuyer(aggregateId:number,payload:OrderOutboxPayload):Promise<void> {
+    assertOrderPaidPayload(payload,aggregateId);
+    const [order]=await this.container.db.select({id:storeOrder.id,uid:storeOrder.uid,orderNo:storeOrder.orderId,
+      paid:storeOrder.paid,pid:storeOrder.pid,type:storeOrder.type}).from(storeOrder).where(eq(storeOrder.id,aggregateId)).limit(1);
+    if(!order || order.orderNo!==payload.orderNo || order.paid!==1 || ![0,-1].includes(order.pid))
+      throw Error('Distributor upgrade requires the actual paid root order');
+    if(order.pid===-1) {
+      // A refund can archive the original paid presale root before its paid
+      // message arrives. Require the retained root quantities, immutable refund
+      // partitions and every successor generation; pid=-1 alone is no proof.
+      if(order.type!==6)throw Error('Distributor upgrade requires the actual paid root order');
+      const proven=await withTx(this.container,async tx=> {
+        const recovery=await preparePresalePaidRecovery(tx,aggregateId,payload.orderNo);
+        const root=recovery?.allocation.paymentOrder;
+        return !!root && root.id===order.id && root.uid===order.uid && root.pid===-1
+          && root.orderId===payload.orderNo && root.paid===1;
+      });
+      if(!proven)throw Error('Distributor upgrade requires the actual paid root order');
+    }
+    if(order.uid>0)await upgradeAgentLevelsForUser(this.container,order.uid);
   }
 
   async replay(id: number): Promise<void> {
@@ -606,6 +648,8 @@ export class OrderOutboxService {
           await recordSupplierPayment(tx, fulfillmentOrder, now);
         }
 
+        await grantPaidOrderPromotionGifts(tx, order, now);
+        await grantPaidPromotionLabels(tx, order);
         if (!assistedGuest) await this.incrementBuyerPayCount(tx, order);
         await tx.insert(storeOrderStatus).values({
           oid: order.id,

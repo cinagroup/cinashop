@@ -26,6 +26,8 @@ import {
 import { StoreMobileOrderService } from "@/services/store/StoreMobileOrderService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { INVOICE_EVIDENCE_SQL } from "@/migrations/invoiceEvidence";
+import {StoreOrderWriteoffService} from '@/services/order/StoreOrderWriteoffService';
+import {md5} from '@/utils/jwt';
 
 export const STORE_MOBILE_ORDER_SCHEMA_PREFIX = "codex_store_mobile_order_";
 export const STORE_MOBILE_ORDER_TABLES = [
@@ -37,6 +39,7 @@ export const STORE_MOBILE_ORDER_TABLES = [
   "store_service_record",
   "store_order",
   "store_order_cart_info",
+  "store_order_writeoff",
   "store_order_invoice",
   "store_order_refund",
   "store_order_status",
@@ -59,6 +62,7 @@ const PRIMARY_KEYS: Record<(typeof STORE_MOBILE_ORDER_TABLES)[number], string> =
   store_service_record: "id",
   store_order: "id",
   store_order_cart_info: "id",
+  store_order_writeoff: "id",
   store_order_invoice: "id",
   store_order_refund: "id",
   store_order_status: "id",
@@ -77,6 +81,7 @@ const IDS = {
   deliveryUid: 1_829_000_002,
   customerUid: 1_829_000_003,
   kefuUid: 1_829_000_004,
+  workUid: 1_829_000_005,
   store: 1_829_000_101,
   foreignStore: 1_829_000_102,
   staff: 1_829_000_201,
@@ -84,6 +89,7 @@ const IDS = {
   platformDelivery: 1_829_000_211,
   storeDelivery: 1_829_000_212,
   kefu: 1_829_000_221,
+  workService:1_829_000_223,
   conversation: 1_829_000_222,
   detailOrder: 1_829_000_301,
   refundOrder: 1_829_000_302,
@@ -126,6 +132,7 @@ export interface StoreMobileOrderScenarioReport {
     store_idor_closed: boolean;
     delivery_writeoff_contract: boolean;
     kefu_conversation_bound: boolean;
+    customer_chat_zero_global: boolean;
     auth_zero_rejected: boolean;
     split_delivery_committed: boolean;
     split_audit_and_outbox: boolean;
@@ -278,6 +285,22 @@ async function withSchema<T>(
   });
 }
 
+async function withScopedSession<T>(
+  db: DbClient,
+  schemaName: string,
+  callback: (container: Container) => Promise<T>,
+): Promise<T> {
+  invariant(schemaName.startsWith(STORE_MOBILE_ORDER_SCHEMA_PREFIX), "runtime schema prefix guard failed");
+  const schema = identifier(schemaName);
+  // The runtime has one connection and a schema-only startup search path.
+  // Keep service calls at the top level so each service owns its transaction.
+  await db.execute(sql.raw(`SET search_path TO ${schema}, pg_temp`));
+  await db.execute(sql.raw("SET TIME ZONE 'UTC'"));
+  await db.execute(sql.raw("SET lock_timeout = '5s'"));
+  await db.execute(sql.raw("SET statement_timeout = '45s'"));
+  return callback(createContainerFromDb(db));
+}
+
 function cartSnapshot(name: string, price: string) {
   return JSON.stringify({
     truePrice: price,
@@ -300,6 +323,7 @@ async function seed(container: Container) {
       barCode: "store-b-user-code", status: 1, isDel: 0,
     },
     { uid: IDS.kefuUid, account: "store-b-kefu", nickname: "审计客服", status: 1, isDel: 0 },
+    {uid:IDS.workUid,account:'store-b-work',nickname:'手机订单管理',pwd:'owned-store-work-password',status:1,isDel:0},
   ]);
   await container.db.insert(systemStore).values([
     {
@@ -347,6 +371,7 @@ async function seed(container: Container) {
     addTime: now,
     updateTime: now,
   });
+  await container.db.insert(storeService).values({id:IDS.workService,uid:IDS.workUid,account:'store-b-work',customer:1,status:0,accountStatus:1,isDel:0});
   await container.db.insert(systemConfig).values([
     { menuName: "city_delivery_status", value: "1", status: 1 },
     { menuName: "self_delivery_status", value: "1", status: 1 },
@@ -518,16 +543,17 @@ async function dropSchema(db: DbClient, schemaName: string): Promise<void> {
 export async function runStoreMobileOrderCompatibilityScenario(
   connectionString: string,
 ): Promise<StoreMobileOrderScenarioReport> {
+  const schemaName = makeSchemaName();
   const admin = createDbFromConnectionString(connectionString, 2, {
     applicationName: "cinashop_store_mobile_order_isolated_admin",
   });
   const runtime = createDbFromConnectionString(connectionString, 1, {
+    searchPath: schemaName,
     applicationName: "cinashop_store_mobile_order_isolated_runtime",
   });
   const lockDb = createDbFromConnectionString(connectionString, 1, {
     applicationName: "cinashop_store_mobile_order_isolated_lock",
   });
-  const schemaName = makeSchemaName();
   let before!: PublicFingerprint;
   let temporarySchemasBefore = -1;
   let schemaCreated = false;
@@ -553,7 +579,7 @@ export async function runStoreMobileOrderCompatibilityScenario(
       schemaCreated = true;
       await withSchema(runtime, schemaName, seed);
 
-      const base = await withSchema(runtime, schemaName, async (container) => {
+      const base = await withScopedSession(runtime, schemaName, async (container) => {
         const env = auditEnv();
         const service = new StoreMobileOrderService(container, env);
         const resolution = await container.db.execute(sql.raw(`
@@ -567,6 +593,9 @@ export async function runStoreMobileOrderCompatibilityScenario(
           ? resolution
           : (resolution as { rows?: Array<Record<string, unknown>> }).rows ?? [];
         const resolved = resolutionRows[0] as Record<string, unknown> | undefined;
+        invariant(resolved?.configured_path === `${schemaName}, pg_temp`
+          && resolved.current_schema === schemaName
+          && resolved.resolved_schema === schemaName, "runtime schema isolation guard failed");
         const detail = await service.orderDetail(IDS.clerkUid, IDS.detailOrder);
         const refund = await service.refundDetail(IDS.clerkUid, IDS.refund);
         const delivery = await service.deliveryInfo(IDS.clerkUid, "store-b-detail");
@@ -585,17 +614,20 @@ export async function runStoreMobileOrderCompatibilityScenario(
           2,
           IDS.deliveryWriteoffOrder,
         );
-        const kefuLookup = await service.writeoffInfo(IDS.kefuUid, 1, "223344556677");
+        const workActor={uid:IDS.workUid,auth_version:md5('owned-store-work-password'),expires_at:Math.floor(Date.now()/1000)+3600};
+        const customerLookup=await service.writeoffInfo(IDS.workUid,1,'223344556677',workActor);
+        const kefuLookup = await new StoreOrderWriteoffService(container,env).legacySearch({kind:'kefu',kefuId:IDS.kefu,kefuUid:IDS.kefuUid}, "223344556677");
         await container.db.delete(storeServiceRecord).where(eq(storeServiceRecord.id, IDS.conversation));
         const conversationDenied = await expectError(
-          () => service.writeoffInfo(IDS.kefuUid, 1, "223344556677"),
+          () => new StoreOrderWriteoffService(container,env).legacySearch({kind:'kefu',kefuId:IDS.kefu,kefuUid:IDS.kefuUid}, "223344556677"),
           NotFoundException,
           "不属于当前会话",
         );
+        const customerAfter=await service.writeoffCartInfo(IDS.workUid,1,IDS.kefuWriteoffOrder,workActor);
         const authZeroRejected = await expectError(
           () => service.writeoffCartInfo(IDS.kefuUid, 0, IDS.kefuWriteoffOrder),
           ValidateException,
-          "仅支持客服或配送员",
+          "仅支持手机订单管理员或配送员",
         );
         const split = await service.splitDelivery(IDS.clerkUid, IDS.splitOrder, {
           type: 1,
@@ -665,6 +697,7 @@ export async function runStoreMobileOrderCompatibilityScenario(
             && deliveryLookup[0]?.id === IDS.deliveryWriteoffOrder
             && deliveryCart.cart_info[0]?.surplus_num === 1,
           kefuConversationBound: kefuLookup.length === 1 && conversationDenied,
+          customerChatZeroGlobal:customerLookup.length===1&&customerLookup[0]?.id===IDS.kefuWriteoffOrder&&customerAfter.id===IDS.kefuWriteoffOrder&&customerAfter.actor_kind==='customer',
           authZeroRejected,
           splitDeliveryCommitted: split.split === true
             && root[0]?.pid === -1
@@ -682,13 +715,14 @@ export async function runStoreMobileOrderCompatibilityScenario(
 
       assertions = {
         passed: 0,
-        total: 12,
+        total: 13,
         order_detail_contract: base.orderDetailContract,
         refund_detail_contract: base.refundDetailContract,
         delivery_info_contract: base.deliveryInfoContract,
         store_idor_closed: base.storeIdorClosed,
         delivery_writeoff_contract: base.deliveryWriteoffContract,
         kefu_conversation_bound: base.kefuConversationBound,
+        customer_chat_zero_global:base.customerChatZeroGlobal,
         auth_zero_rejected: base.authZeroRejected,
         split_delivery_committed: base.splitDeliveryCommitted,
         split_audit_and_outbox: base.splitAuditAndOutbox,

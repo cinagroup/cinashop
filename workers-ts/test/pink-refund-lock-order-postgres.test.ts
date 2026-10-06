@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
 import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { withFinancePeers, waitForFinanceBlock, outcome, type FinancePeer } from "./helpers/financePeers";
 import { createContainerFromDb, type Container } from "../src/lib/di";
@@ -30,6 +31,10 @@ describe("pink inventory, order and member lock ordering", () => {
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderCartInfo, storeOrderRefund,
       storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, storeOrderStatus, userBrokerage, printDocument]);
+    const dialect = new PgDialect();
+    for (const check of getTableConfig(storeOrderOutbox).checks) {
+      await f.exec(`ALTER TABLE store_order_outbox ADD CONSTRAINT "${check.name}" CHECK (${dialect.sqlToQuery(check.value).sql})`);
+    }
     await f.exec('CREATE UNIQUE INDEX fixture_pink_outbox_event ON store_order_outbox (event_key)');
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(systemStore).set({ isStore: 1 });

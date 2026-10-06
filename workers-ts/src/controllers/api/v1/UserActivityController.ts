@@ -8,6 +8,7 @@ import { UserCenterService } from "@/services/user/UserCenterService";
 import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibilityService";
 import { UserCollectCompatibilityService } from "@/services/user/UserCollectCompatibilityService";
 import { ActivityService } from "@/services/activity/ActivityService";
+import { integralDetailId } from '@/services/activity/IntegralProductDetailData';
 import { SeckillSkuCatalogService } from "@/services/activity/SeckillSkuCatalogService";
 import { CombinationSkuCatalogService } from "@/services/activity/CombinationSkuCatalogService";
 import { BargainSkuCatalogService } from "@/services/activity/BargainSkuCatalogService";
@@ -443,7 +444,7 @@ export async function myCouponCounts(c: C) {
 // ─── 营销活动: 秒杀/拼团/砍价/积分 ─────────────────────────
 
 export async function seckillIndex(c: C) {
-  const svc = new ActivityService(c.get("container"));
+  const svc = new ActivityService(c.get("container"), c.env);
   return jsonOk(c, await svc.seckillTimes());
 }
 
@@ -457,7 +458,7 @@ export async function discountList(c: C) {
 }
 
 export async function seckillList(c: C) {
-  const svc = new ActivityService(c.get("container"));
+  const svc = new ActivityService(c.get("container"), c.env);
   // 路由 /seckill/list/:time 是路径参数
   const timeId = c.req.param("time") ?? "";
   return jsonOk(c, await svc.seckillList(timeId, c.req.query("page"), c.req.query("limit")));
@@ -468,7 +469,7 @@ export async function seckillDetail(c: C) {
   if (view !== undefined) {
     privateNoStore(c);
     if (view !== "skus") throw new ValidateException("秒杀详情视图无效");
-    return jsonOk(c, await new SeckillSkuCatalogService(c.get("container")).read(c.get("uid") ?? 0, c.req.param("id")));
+    return jsonOk(c, await new SeckillSkuCatalogService(c.get("container"),c.env).read(c.get("uid") ?? 0, c.req.param("id")));
   }
   const svc = new ActivityService(c.get("container"));
   return jsonOk(c, await svc.seckillDetail(Number(c.req.param("id"))));
@@ -485,7 +486,7 @@ export async function combinationDetail(c: C) {
     privateNoStore(c);
     if (view !== "skus" || c.req.queries("view")?.length !== 1) throw new ValidateException("拼团详情视图无效");
     if (pinkId !== undefined && c.req.queries("pink_id")?.length !== 1) throw new ValidateException("拼团团长ID无效");
-    return jsonOk(c, await new CombinationSkuCatalogService(c.get("container")).read(
+    return jsonOk(c, await new CombinationSkuCatalogService(c.get("container"),c.env).read(
       c.get("uid") ?? 0, c.req.param("id"), pinkId,
     ));
   }
@@ -541,8 +542,9 @@ export async function integralCategories(c: C) {
 }
 
 export async function integralDetail(c: C) {
-  const svc = new ActivityService(c.get("container"));
-  return jsonOk(c, await svc.integralDetail(Number(c.req.param("id"))));
+  privateNoStore(c);
+  const svc = new ActivityService(c.get("container"), c.env);
+  return jsonOk(c, await svc.integralDetail(integralDetailId(c.req.param("id"))));
 }
 
 /** POST /api/store_integral/exchange/:id — 积分兑换 */

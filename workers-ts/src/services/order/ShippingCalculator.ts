@@ -7,6 +7,8 @@ export interface ShippingItemInput {
   tempId: number;
   quantity: number;
   unitPrice: string | number;
+  /** Exact line subtotal for mixed promotion unit segments. */
+  subtotalCents?: number;
   weight: string | number;
   volume: string | number;
 }
@@ -316,7 +318,10 @@ export function calculateOrderPostageBreakdown(
       throw new ShippingConfigurationError(`运费模板 ${templateId} 的计费方式无效`);
     }
     const itemMeasurement = checkedMultiply(unitMeasurement, item.quantity, "计费数量");
-    const itemSubtotalCents = checkedMultiply(
+    if (item.subtotalCents !== undefined && (!Number.isSafeInteger(item.subtotalCents) || item.subtotalCents < 0)) {
+      throw new ShippingConfigurationError('模板商品小计无效');
+    }
+    const itemSubtotalCents = item.subtotalCents ?? checkedMultiply(
       decimalToCents(item.unitPrice),
       item.quantity,
       "模板商品小计",

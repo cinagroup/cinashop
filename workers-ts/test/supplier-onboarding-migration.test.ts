@@ -49,7 +49,7 @@ describe("supplier onboarding migration and security boundary", () => {
     const migration = readFileSync("migrations/0066_supplier_onboarding.sql", "utf8").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(/private migration_0073\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
     expect(migration).not.toMatch(/CREATE UNIQUE INDEX|FOREIGN KEY\s*\(|REFERENCES\s+"/i);
     expect(migration).toContain('"images" VARCHAR(2000)');
     expect(migration).toContain('"phone" CHAR(11)');

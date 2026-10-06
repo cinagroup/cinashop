@@ -20,6 +20,8 @@ import {
 import { ValidateException } from "@/utils/errors";
 import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
 import { withTx } from "@/lib/di";
+import { lockDiseCatalogForMutation, normalizeDiseTemplateName, themeDeadlines,DISE_TEMPLATE_TRIM_CHARACTERS } from "@/services/content/ThemeReadService";
+import { isCityCredentialKey, isCityConfigKey } from '@/services/delivery/CityDeliverySettingsResolver';
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
 import {
   platformMetadataOwner,
@@ -32,7 +34,7 @@ import {
 } from "@/services/system/SystemMetadataService";
 import { SystemSignRewardService } from "@/services/system/SystemSignRewardService";
 import { AdminConfigBatchService, readAdminConfigBatch } from "@/services/system/AdminConfigBatchService";
-import { AgentLevelTaskService } from "@/services/agent/AgentLevelTaskService";
+import * as distributorLevels from './AdminDistributorLevelController';
 import {
   calculateCouponDiscountCents,
   parseCouponScopeIds,
@@ -53,7 +55,9 @@ import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDel
 import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 import { AdminRefundReadService, adminRefundId } from "@/services/admin/AdminRefundReadService";
 import { AdminOrderReadService } from "@/services/admin/AdminOrderReadService";
+import { AdminSystemLogReadService } from "@/services/admin/AdminSystemLogReadService";
 import { listAdminUsers } from "@/services/admin/AdminUserListService";
+import { listAdminActivities } from "@/services/admin/AdminActivityListService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
 import {
@@ -801,7 +805,7 @@ export async function adminConfigList(c: C) {
   const list = await container.systemConfigDao.selectList({
     where: { isStore: 0 },
   });
-  return jsonOk(c, list);
+  return jsonOk(c, list.filter(row => !isCityCredentialKey(row.menuName)));
 }
 
 /** POST /api/admin/config/save — 保存配置 (批量) */
@@ -952,43 +956,13 @@ export async function adminSignRewardDelete(c: C) {
   return jsonOk(c, null, "删除成功");
 }
 
-function agentLevelTasks(c: C) {
-  return new AgentLevelTaskService(c.get("container"));
-}
-
-export async function adminAgentLevelTaskList(c: C) {
-  return jsonOk(c, await agentLevelTasks(c).adminList(c.req.query()));
-}
-
-export async function adminAgentLevelTaskCreateForm(c: C) {
-  return jsonOk(c, await agentLevelTasks(c).form(0, c.req.query("level_id")));
-}
-
-export async function adminAgentLevelTaskEditForm(c: C) {
-  return jsonOk(c, await agentLevelTasks(c).form(metadataId(c), undefined));
-}
-
-export async function adminAgentLevelTaskCreate(c: C) {
-  return jsonOk(c, await agentLevelTasks(c).save(0, await metadataBody(c)), "添加等级任务成功");
-}
-
-export async function adminAgentLevelTaskUpdate(c: C) {
-  return jsonOk(
-    c,
-    await agentLevelTasks(c).save(metadataId(c), await metadataBody(c)),
-    "修改成功",
-  );
-}
-
-export async function adminAgentLevelTaskDelete(c: C) {
-  await agentLevelTasks(c).delete(metadataId(c));
-  return jsonOk(c, null, "删除成功");
-}
-
-export async function adminAgentLevelTaskStatus(c: C) {
-  await agentLevelTasks(c).setStatus(metadataId(c), c.req.param("status"));
-  return jsonOk(c, null, "设置成功");
-}
+export const adminAgentLevelTaskList = distributorLevels.legacyTasksList;
+export const adminAgentLevelTaskCreateForm = distributorLevels.tasksCreateForm;
+export const adminAgentLevelTaskEditForm = distributorLevels.tasksDetail;
+export const adminAgentLevelTaskCreate = distributorLevels.tasksCreate;
+export const adminAgentLevelTaskUpdate = distributorLevels.tasksUpdate;
+export const adminAgentLevelTaskDelete = distributorLevels.tasksDelete;
+export const adminAgentLevelTaskStatus = distributorLevels.tasksStatus;
 
 // ═══════════════════════════════════════════════════════════
 // 退款审核
@@ -1284,31 +1258,26 @@ export async function adminCouponDel(c: C) {
 
 /** GET /api/admin/activity/seckill — 秒杀活动列表 */
 export async function adminSeckillList(c: C) {
-  const container = c.get("container");
-  const list = await container.storeSeckillDao.selectList({ where: { isDel: 0 }, limit: 100 });
-  return jsonOk(c, list);
+  privateNoStore(c);
+  return jsonOk(c, await listAdminActivities(c.get("container"), "seckill", new URL(c.req.url).searchParams));
 }
 
 /** GET /api/admin/activity/combination — 拼团活动列表 */
 export async function adminCombinationList(c: C) {
-  const container = c.get("container");
-  const list = await container.storeCombinationDao.selectList({ where: { isDel: 0 }, limit: 100 });
-  return jsonOk(c, list);
+  privateNoStore(c);
+  return jsonOk(c, await listAdminActivities(c.get("container"), "combination", new URL(c.req.url).searchParams));
 }
 
 /** GET /api/admin/activity/bargain — 砍价活动列表 */
 export async function adminBargainList(c: C) {
   privateNoStore(c);
-  const container = c.get("container");
-  const list = await container.storeBargainDao.selectList({ where: { isDel: 0 }, page: 1, limit: 100 });
-  return jsonOk(c, list);
+  return jsonOk(c, await listAdminActivities(c.get("container"), "bargain", new URL(c.req.url).searchParams));
 }
 
 /** GET /api/admin/activity/integral — 积分商品列表 */
 export async function adminIntegralList(c: C) {
-  const container = c.get("container");
-  const list = await container.storeIntegralDao.selectList({ where: { isDel: 0 }, limit: 100 });
-  return jsonOk(c, list);
+  privateNoStore(c);
+  return jsonOk(c, await listAdminActivities(c.get("container"), "integral", new URL(c.req.url).searchParams));
 }
 
 /** POST /api/admin/activity/status — 活动上下架 (通用) */
@@ -1327,11 +1296,12 @@ export async function adminActivityStatus(c: C) {
   const { type, id, status } = body;
   if (!Number.isInteger(id) || id <= 0 || id > 2_147_483_647 || (status !== 0 && status !== 1)) return jsonFail(c, "参数错误");
   if (type !== "seckill" && type !== "combination" && type !== "integral") return jsonFail(c, "未知活动类型");
+  if (type === 'combination') return jsonFail(c, '请使用完整拼团管理接口');
   const schema = await import("@/models/schema");
   const table = { seckill: schema.storeSeckill, combination: schema.storeCombination,
     integral: schema.storeIntegral }[type];
   const { and, eq } = await import("drizzle-orm");
-  const updated = await c.get("container").db.update(table).set({ status })
+  const updated = await c.get("container").db.update(table).set({ status, ...(type === "integral" ? { isShow: status } : {}) })
     .where(and(eq(table.id, id), eq(table.isDel, 0))).returning({ id: table.id });
   if (!updated.length) return jsonFail(c, "活动不存在");
   return jsonOk(c, null, "操作成功");
@@ -2056,6 +2026,7 @@ export async function adminExpressDel(c: C) {
 export async function adminActivitySave(c: C) {
   privateNoStore(c);
   const input = await readBoundedJsonObject(c.req.raw, 64 * 1024);
+  if (input.type === 'combination') return jsonFail(c, '请使用完整拼团管理接口');
   if (input.type === "bargain") {
     privateNoStore(c);
     const id = await saveBargain(c.get("container"), input);
@@ -2106,6 +2077,9 @@ export async function adminActivitySave(c: C) {
   if (body.quota !== undefined && (!Number.isSafeInteger(body.quota) || body.quota < 0 || body.quota > 2_147_483_647)) {
     return jsonFail(c, "活动额度错误");
   }
+  if (body.type === "integral" && body.status !== undefined && body.status !== 0 && body.status !== 1) {
+    return jsonFail(c, "积分商品状态须为0或1");
+  }
 
   return withTx(container, async tx => {
     const activityTables = { seckill: schema.storeSeckill, combination: schema.storeCombination, integral: schema.storeIntegral };
@@ -2153,25 +2127,16 @@ export async function adminActivitySave(c: C) {
         num: body.num ?? 2, sales: 0, addTime: now }).returning({ id: schema.storeSeckill.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
-    if (body.type === "combination") {
-      if (body.id !== undefined) {
-        const patch = { ...updateCommon, ...(body.people === undefined ? {} : { people: body.people }) };
-        if (Object.keys(patch).length) await tx.update(schema.storeCombination).set(patch).where(eq(schema.storeCombination.id, body.id));
-        return jsonOk(c, { id: body.id }, "更新成功");
-      }
-      const row = await tx.insert(schema.storeCombination).values({ ...createCommon, people: body.people ?? 2,
-        sales: 0, addTime: now }).returning({ id: schema.storeCombination.id });
-      return jsonOk(c, { id: row[0].id }, "创建成功");
-    }
     if (body.type === "integral") {
       if (body.id !== undefined) {
         const patch = { ...updateCommon,
           ...(body.integral === undefined ? {} : { integral: body.integral }),
+          ...(body.status === undefined ? {} : { isShow: body.status }),
           ...(body.num === undefined ? {} : { num: body.num }) };
         if (Object.keys(patch).length) await tx.update(schema.storeIntegral).set(patch).where(eq(schema.storeIntegral.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await tx.insert(schema.storeIntegral).values({ ...createCommon, integral: body.integral ?? 100,
+      const row = await tx.insert(schema.storeIntegral).values({ ...createCommon, isShow: body.status ?? 1, integral: body.integral ?? 100,
         num: body.num ?? 1, sales: 0, addTime: now }).returning({ id: schema.storeIntegral.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
@@ -2183,13 +2148,14 @@ export async function adminActivitySave(c: C) {
 export async function adminActivityDel(c: C) {
   privateNoStore(c);
   const type = c.req.param("type") as "seckill" | "combination" | "bargain" | "integral";
+  if (type === 'combination') return jsonFail(c, '请使用完整拼团管理接口');
   const rawId = c.req.param("id") ?? "";
   const container = c.get("container");
   if (type === "bargain") {
     await retireBargain(container, rawId);
     return jsonOk(c, null, "删除成功");
   }
-  if (type !== "seckill" && type !== "combination" && type !== "integral") return jsonFail(c, "未知活动类型");
+  if (type !== "seckill" && type !== "integral") return jsonFail(c, "未知活动类型");
   if (!/^[1-9]\d{0,9}$/.test(rawId) || Number(rawId) > 2_147_483_647) return jsonFail(c, "活动ID错误");
   const id = Number(rawId);
   const { eq } = await import("drizzle-orm");
@@ -2453,9 +2419,13 @@ export function parseAdminDiseSaveInput(raw: unknown): AdminDiseSaveInput {
 export function adminDiseDeletionProtectionReason(
   row: AdminDiseDeletionCandidate,
 ): string | null {
-  const templateName = row.templateName.trim().toLowerCase();
+  const templateName = normalizeDiseTemplateName(row.templateName);
   if (row.id === 1 || templateName === "default") return "默认页面不能删除";
   if (templateName === "suspended_window") return "悬浮配置不能删除";
+  if (templateName === "color_change") return "主题配置不能通过通用页面接口删除";
+  if (templateName === "category") return "商品分类样式不能通过通用页面接口删除";
+  if (templateName === "product_detail") return "商品详情设计不能通过通用页面接口删除";
+  if (templateName === "member") return "个人中心设计不能通过通用页面接口删除";
   if (row.status === 1 && row.type === 1 && row.isDiy === 1) return "启用中的首页不能删除";
   return null;
 }
@@ -2484,7 +2454,7 @@ async function readAdminDiseSaveInput(c: C): Promise<AdminDiseSaveInput> {
 export async function adminDiseList(c: C) {
   c.header("Cache-Control", "private, no-store");
   const container = c.get("container");
-  const { desc, eq } = await import("drizzle-orm");
+  const { desc, eq,and,sql } = await import("drizzle-orm");
   const { systemDise } = await import("@/models/schema");
   const rows = await container.db
     .select({
@@ -2503,10 +2473,10 @@ export async function adminDiseList(c: C) {
       updateTime: systemDise.updateTime,
     })
     .from(systemDise)
-    .where(eq(systemDise.isDel, 0))
+    .where(and(eq(systemDise.isDel, 0),sql`lower(btrim(${systemDise.templateName},${DISE_TEMPLATE_TRIM_CHARACTERS})) NOT IN ('product_detail','member')`))
     .orderBy(desc(systemDise.id))
     .limit(100);
-  return jsonOk(c, rows.map((row) => {
+  return jsonOk(c, rows.filter(row=>!['product_detail','member'].includes(normalizeDiseTemplateName(row.templateName))).map((row) => {
     const reason = adminDiseDeletionProtectionReason(row);
     return {
       id: row.id,
@@ -2537,6 +2507,9 @@ export async function adminDiseSave(c: C) {
   const { systemDise } = await import("@/models/schema");
   const now = Math.floor(Date.now() / 1000);
   const result = await withTx(container, async (tx) => {
+    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+    await themeDeadlines(tx);
+    await lockDiseCatalogForMutation(tx);
     const version = newAdminDiseVersion();
     if (body.mode === "create") {
       const inserted = await tx.insert(systemDise).values({
@@ -2562,12 +2535,18 @@ export async function adminDiseSave(c: C) {
     }
 
     const existing = (await tx
-      .select({ id: systemDise.id, value: systemDise.value })
+      .select({ id: systemDise.id, value: systemDise.value, templateName: systemDise.templateName, type: systemDise.type })
       .from(systemDise)
       .where(and(eq(systemDise.id, body.id), eq(systemDise.isDel, 0)))
       .limit(1)
       .for("update"))[0];
     if (!existing) throw new ValidateException("页面不存在或已删除");
+    // Type 3 is the reserved legacy visual-settings domain, not a generic DIY
+    // page. A mistyped FAB identity is also protected; generic writes cannot
+    // bypass the dedicated domain's actor-bound UUID and compare-and-swap.
+    if (existing.type === 3 || ["suspended_window", "color_change", "category", "product_detail", "member"].includes(normalizeDiseTemplateName(existing.templateName))) {
+      throw new ValidateException("专用可视化配置不能通过通用页面接口修改，请使用对应设置页");
+    }
     // A metadata-only update must not reactivate or re-version a row whose
     // persisted DIY contract is already corrupt.
     if (body.value === undefined) normalizeAdminDiseJson(existing.value);
@@ -2605,6 +2584,9 @@ export async function adminDiseDel(c: C) {
   const { systemDise } = await import("@/models/schema");
   const now = Math.floor(Date.now() / 1000);
   await withTx(container, async (tx) => {
+    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+    await themeDeadlines(tx);
+    await lockDiseCatalogForMutation(tx);
     const row = (await tx.select({
       id: systemDise.id,
       status: systemDise.status,
@@ -2637,18 +2619,18 @@ export async function adminDiseDel(c: C) {
 
 /** GET /api/admin/log/list — 操作日志 */
 export async function adminLogList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const page = Number(c.req.query("page") ?? 1);
-  const limit = Number(c.req.query("limit") ?? 20);
-  const offset = (page - 1) * limit;
-  const rows = await container.db.execute(sql`
-    SELECT * FROM "system_log" ORDER BY "id" DESC LIMIT ${limit} OFFSET ${offset}
-  `);
-  const countRows = await container.db.execute(sql`SELECT COUNT(*)::int AS c FROM "system_log"`);
-  const arr = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
-  const carr = Array.isArray(countRows) ? countRows : (countRows as { rows?: unknown[] }).rows ?? [];
-  return jsonOk(c, { list: arr, total: (carr[0] as { c?: number })?.c ?? 0 });
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
+  const data = await new AdminSystemLogReadService(c.get("container"))
+    .list(new URL(c.req.url).searchParams, actor.level);
+  return jsonOk(c, data);
+}
+
+/** GET /api/admin/log/admin-options — old search_admin's restricted id/name projection. */
+export async function adminLogOptions(c: C) {
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
+  return jsonOk(c, await new AdminSystemLogReadService(c.get("container")).adminOptions(actor.level));
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2793,6 +2775,9 @@ export async function adminSmsConfig(c: C) {
 /** POST /api/admin/sms/config — 短信配置保存 */
 export async function adminSmsConfigSave(c: C) {
   const body = await c.req.json().catch(() => ({}));
+  // This legacy handler accepts arbitrary keys. Reject the entire controlled
+  // domain before its first SQL write, including a mixed ordinary batch.
+  if (Object.keys(body ?? {}).some(isCityConfigKey)) throw new ValidateException('同城配送配置只能通过专用版本化接口保存');
   const container = c.get("container");
   const { eq } = await import("drizzle-orm");
   const { systemConfig } = await import("@/models/schema");

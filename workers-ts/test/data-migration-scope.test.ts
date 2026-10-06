@@ -56,8 +56,9 @@ describe("fresh-system data migration scope", () => {
       extraTables: [],
     }));
     expect(scope.candidateSchemaWork).toEqual(expect.objectContaining({
-      candidateTables: 279,
-      addedSinceHistoricalBaseline: ["shipping_template_create_replay", "admin_refund_operation", "admin_refund_creation", "store_order_invoice_evidence", "store_order_invoice_allocation", "store_order_refund_split", "store_order_fulfillment_branch", "offline_order_admission", "offline_order_payment_selection", "offline_order_balance", "offline_order_query_evidence", "offline_order_callback_binding", "offline_order_external_payment", "offline_order_payment_dispatch", "store_order_purchase_origin", "store_order_purchase_cancellation"],
+      reviewedAt: "2026-09-27",
+      candidateTables: 281,
+      addedSinceHistoricalBaseline: ["shipping_template_create_replay", "admin_refund_operation", "admin_refund_creation", "store_order_invoice_evidence", "store_order_invoice_allocation", "store_order_refund_split", "store_order_fulfillment_branch", "offline_order_admission", "offline_order_payment_selection", "offline_order_balance", "offline_order_query_evidence", "offline_order_callback_binding", "offline_order_external_payment", "offline_order_payment_dispatch", "store_order_purchase_origin", "store_order_purchase_cancellation", "store_coupon_template", "store_coupon_template_issue"],
       deploymentStatus: "not_deployed",
     }));
     expect(scope.candidateSchemaWork.candidateTables).toBe(

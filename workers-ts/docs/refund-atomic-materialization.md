@@ -2,7 +2,12 @@
 
 Schema follow-up: [refund split installation and registration](refund-split-installation.md)
 adds the controlled maintenance/ORM completion path and numbered registries.
-The public v2 creator and the remaining business/release gates are not activated.
+The broad public v2 creator and remaining business/release gates are not activated.
+2026-09-30: the [bounded full-gift whole-order entry](full-gift-refund-entry.md)
+now selects v2 only for an exact original, undelivered, unsplit full-gift refund.
+It preserves physical identities and verifies paid completion and the fixed
+catalog/privileges. Ordinary orders retain v1; the historical broad candidate
+and release boundaries below are unchanged.
 
 Latest invoice increment: [unissued application allocation](refund-invoice-allocation.md).
 Supported pending/rejected applications now follow actual atomic refunds;

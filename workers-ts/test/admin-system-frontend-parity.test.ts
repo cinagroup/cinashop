@@ -105,4 +105,19 @@ describe("legacy Admin system route semantic audit", () => {
     });
     expect(generated).toBe(source("audit/admin-legacy-system-route-parity.json"));
   });
+
+  it("keeps the browser Vuex log missing while promoting only the server operation log", () => {
+    const current = JSON.parse(source("audit/admin-legacy-system-route-parity-read-followup-20260928.json")) as typeof report;
+    expect(current.summary).toMatchObject({ legacyRoutes: 17, candidate: 1, partial: 3, missing: 12, retired: 1 });
+    const byPath = new Map(current.routes.map((route) => [route.legacy.path, route]));
+    expect(byPath.get("/admin/system/log")?.status).toBe("missing");
+    const log = byPath.get("/admin/system/maintain/system_log/index");
+    expect(log?.status).toBe("candidate");
+    expect(log?.targetApis).toContain("GET /adminapi/log/admin-options");
+    expect(log?.covered.join(" ")).toMatch(/admin_id.*log\.view/u);
+    const generated = execFileSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/admin-system-frontend-parity-audit.ts", "--log-followup"], {
+      cwd: process.cwd(), encoding: "utf8",
+    });
+    expect(generated).toBe(source("audit/admin-legacy-system-route-parity-read-followup-20260928.json"));
+  });
 });

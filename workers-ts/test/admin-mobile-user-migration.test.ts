@@ -149,18 +149,27 @@ describe("embedded admin mobile user migration", () => {
 
   it("keeps irreversible writes locked, idempotent, atomic, and auditable", () => {
     const service = readFileSync("src/services/admin/AdminMobileUserService.ts", "utf8");
+    const core = readFileSync("src/services/user/MobileUserManagementCore.ts", "utf8");
     expect(service).toContain("normalizeOutRequestKey(requestKeyValue)");
     expect(service).toContain("pg_advisory_xact_lock");
     expect(service).toContain("await tx.insert(adminUserWriteReplay).values");
     expect(service).toContain("type: AUDIT_TYPE");
-    expect(service).toContain('orderBy(asc(user.uid)).for("update")');
-    expect(service).toContain('type: input.status === 1 ? "system_add" : "system_sub"');
-    expect(service).toContain('eventKey: input.status === 1 ? "admin_system_add_integral"');
-    expect(service).toContain('throw new ValidateException("优惠券库存不足，整批未发放")');
-    expect(service).toContain("await recordReplay(tx, actor, \"coupon_grant\", key, hash, subject, {");
-    expect(service).toContain('receiveSource: "send"');
-    expect(service).toContain("await tx.insert(otherOrderStatus).values");
-    expect(service).toContain("Math.min(input.integral, account.integral)");
+    // The mature mutations share the caller's transaction; Admin retains its
+    // own authority, audit and replay rather than entering the customer API.
+    for (const operation of ["State", "Finance", "Membership", "Coupons"]) {
+      expect(service).toContain(`applyMobileUser${operation}(tx,input,`);
+    }
+    for (const operation of ["finance", "membership", "coupon_grant"]) {
+      expect(service).toContain(`recordReplay(tx,actor,"${operation}",key,hash,subject,event.evidence,event.now)`);
+    }
+    expect(service).not.toContain("authorityRealm:");
+    expect(core).toContain('orderBy(asc(user.uid)).for("update")');
+    expect(core).toContain('type: input.status === 1 ? "system_add" : "system_sub"');
+    expect(core).toContain('"admin_system_add_integral" : "admin_system_sub_integral"');
+    expect(core).toContain('throw new ValidateException("优惠券库存不足，整批未发放")');
+    expect(core).toContain('receiveSource: "send"');
+    expect(core).toContain("await tx.insert(otherOrderStatus).values");
+    expect(core).toContain("Math.min(input.integral, account.integral)");
   });
 
   it("ships the exact idempotent replay DDL with a database unique fence", () => {

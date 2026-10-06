@@ -20,11 +20,18 @@ import { inspectOfflineOrderSchema, runOfflineOrderSchema } from '../src/migrati
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
-import { runPresaleDeliveryOutbox } from '../src/migrations/runPresaleDeliveryOutbox';
+import { inspectSeckillTimeReferenceLock } from '../src/migrations/seckillTimeReferenceLock';
+import { seckillTimeReferenceLockCatalogReady, SECKILL_TIME_REFERENCE_OWNER_SETTING } from '../src/migrations/seckillTimeReferenceLockCatalog';
+import { runSeckillTimeReferenceLockSchema } from '../src/migrations/runSeckillTimeReferenceLock';
+import { runPinkSuccessNotice } from '../src/migrations/runPinkSuccessNotice';
+import { PINK_SUCCESS_NOTICE_CHECK_DEFINITION } from '../src/migrations/pinkSuccessNotice';
+import { inspectCouponTemplateCatalog } from '../src/migrations/couponTemplateCatalog';
+import { runCouponTemplateCatalog } from '../src/migrations/runCouponTemplateCatalog';
 import { runSupplierRefundLookupIndexes } from '../src/migrations/runSupplierRefundLookupIndexes';
 import { inspectPurchaseOriginEvidence, runPurchaseOriginEvidenceSchema, completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
 import { inspectPurchaseCancellationEvidence, runPurchaseCancellationEvidenceSchema, completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
-import { PRESALE_OUTBOX_CHECK_DEFINITION, withPresaleOutboxContract } from './data-migration/presale-outbox-contract';
+import { withPresaleOutboxContract } from './data-migration/presale-outbox-contract';
+import { withPinkSuccessOutboxContract } from './data-migration/pink-success-outbox-contract';
 import { dropOwnedAuditDatabase } from './data-migration/drop-owned-audit-database';
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
@@ -77,7 +84,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const refundSplitVerification: Record<string, unknown> = {};
   const offlineOrderVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
-  const presaleOutboxVerification: Record<string, unknown> = {};
+  const seckillTimeReferenceLockVerification: Record<string, unknown> = {};
+  const pinkSuccessOutboxVerification: Record<string, unknown> = {};
+  const couponTemplateCatalogVerification: Record<string, unknown> = {};
   const supplierRefundLookupVerification: Record<string, unknown> = {};
   const purchaseOriginVerification: Record<string, unknown> = {};
   const purchaseCancellationVerification: Record<string, unknown> = {};
@@ -128,6 +137,11 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         await control.unsafe(`CREATE ROLE "${pricingOwner}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`);
         pricingOwners.push(pricingOwner);
         await client`SELECT pg_catalog.set_config('cinashop.checkout_pricing_owner',${pricingOwner},false)`;
+        const referenceOwner = `cinashop_runtime_${randomUUID().replaceAll('-', '')}`;
+        if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(referenceOwner)) throw Error('Invalid owned seckill reference role');
+        await control.unsafe(`CREATE ROLE "${referenceOwner}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`);
+        pricingOwners.push(referenceOwner);
+        await client`SELECT pg_catalog.set_config(${SECKILL_TIME_REFERENCE_OWNER_SETTING},${referenceOwner},false)`;
         if (path === "external") {
           for (let index = 0; index < migrationNames.length; index++) {
             if (migrationNames[index] === "0140_external_duplicate_index_retirement.sql") {
@@ -277,12 +291,24 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         const presaleIdentityQuery = `SELECT c.oid::text,to_jsonb(c) AS metadata,pg_get_constraintdef(c.oid) AS definition
           FROM pg_constraint c WHERE c.conrelid='public.store_order_outbox'::regclass AND c.conname='soob_event_type_ck'`;
         const presaleBefore = await client.unsafe(presaleIdentityQuery);
-        if (presaleBefore.length !== 1 || presaleBefore[0].definition !== PRESALE_OUTBOX_CHECK_DEFINITION)
-          throw new Error(`Presale event registration differs on ${path}; no automatic repair`);
-        await runPresaleDeliveryOutbox(shippingDb); await runPresaleDeliveryOutbox(shippingDb);
+        if (presaleBefore.length !== 1 || presaleBefore[0].definition !== PINK_SUCCESS_NOTICE_CHECK_DEFINITION)
+          throw new Error(`Pink success event registration differs on ${path}; no automatic repair`);
+        await runPinkSuccessNotice(shippingDb); await runPinkSuccessNotice(shippingDb);
         if (JSON.stringify(presaleBefore) !== JSON.stringify(await client.unsafe(presaleIdentityQuery)))
-          throw new Error(`Presale event repeat changed identity on ${path}`);
-        presaleOutboxVerification[path] = { initialRegistered: true, exactTenEvents: true, repeatPreserved: true };
+          throw new Error(`Pink success event repeat changed identity on ${path}`);
+        pinkSuccessOutboxVerification[path] = { initialRegistered: true, exactElevenEvents: true, repeatPreserved: true };
+        if (!(await inspectCouponTemplateCatalog(shippingDb)).ready)
+          throw Error(`Coupon template catalog not registered on ${path}; no automatic repair`);
+        const couponTemplateIdentities = () => client.unsafe(`SELECT c.oid::text,c.relfilenode::text,c.relname,c.relowner::text,c.relacl::text
+          FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND (c.relname IN ('store_coupon_template','store_coupon_template_issue','store_coupon_template_id_seq')
+          OR c.oid IN(SELECT indexrelid FROM pg_index WHERE indrelid IN('public.store_coupon_template'::regclass,'public.store_coupon_template_issue'::regclass))) ORDER BY c.relname`);
+        const couponTemplateBefore = await couponTemplateIdentities();
+        await runCouponTemplateCatalog(shippingDb); await runCouponTemplateCatalog(shippingDb);
+        if (!(await inspectCouponTemplateCatalog(shippingDb)).ready
+          || JSON.stringify(couponTemplateBefore) !== JSON.stringify(await couponTemplateIdentities())
+          || (await client.unsafe('SELECT 1 FROM public.store_coupon_template UNION ALL SELECT 1 FROM public.store_coupon_template_issue LIMIT 1')).length)
+          throw Error(`Coupon template repeat or no-seed verification differs on ${path}`);
+        couponTemplateCatalogVerification[path] = { initialRegistered: true, twoTables: true, noSeed: true, repeatPreserved: true };
         const initialInvoice=await inspectInvoiceEvidenceSchema(shippingDb);
         const expectedInvoice=path==='external' || path==='embedded' ? 'v2' : 'orm-pending';
         if(initialInvoice!==expectedInvoice) throw new Error(`Invoice protection registration differs on ${path}`);
@@ -346,6 +372,20 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           || JSON.stringify(installedPricing)!==JSON.stringify(await client.unsafe(offlineIdentityQuery)))
           throw Error(`Pricing repeat changed object identity on ${path}`);
         checkoutPricingLockVerification[path] = { initial: initialPricing.absent ? 'absent' : 'v1', complete: true, installationPreserved: true, repeatPreserved: true };
+        const initialReference = await inspectSeckillTimeReferenceLock(shippingDb);
+        const registeredReference = path === 'external' || path === 'embedded';
+        if (registeredReference ? !seckillTimeReferenceLockCatalogReady(initialReference) : !initialReference.absent)
+          throw Error(`Seckill time reference capability registration differs on ${path}`);
+        const beforeReference = await client.unsafe(offlineIdentityQuery);
+        if (!registeredReference) await runSeckillTimeReferenceLockSchema(shippingDb);
+        const installedReference = await client.unsafe(offlineIdentityQuery);
+        if (JSON.stringify(installedReference.filter(row => beforeReference.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeReference))
+          throw Error(`Seckill time reference installation replaced an existing object on ${path}`);
+        await runSeckillTimeReferenceLockSchema(shippingDb); await runSeckillTimeReferenceLockSchema(shippingDb);
+        if (!seckillTimeReferenceLockCatalogReady(await inspectSeckillTimeReferenceLock(shippingDb))
+          || JSON.stringify(installedReference) !== JSON.stringify(await client.unsafe(offlineIdentityQuery)))
+          throw Error(`Seckill time reference repeat changed object identity on ${path}`);
+        seckillTimeReferenceLockVerification[path] = { initial: initialReference.absent ? 'absent' : 'v1', complete: true, installationPreserved: true, repeatPreserved: true };
         const initialCreation = await inspectAdminRefundCreation(shippingDb);
         if (!initialCreation.complete) throw new Error(`Admin refund creation registration differs on ${path}`);
         const creationOidQuery = "SELECT oid,relfilenode FROM pg_class WHERE oid='public.admin_refund_creation'::regclass OR oid IN (SELECT indexrelid FROM pg_index WHERE indrelid='public.admin_refund_creation'::regclass) ORDER BY oid";
@@ -446,7 +486,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
     const missingConstraintManifest = JSON.parse(await readFile(resolve(root, "audit/orm-missing-constraint-reconciliation.json"), "utf8"));
     const foreignKeyNameManifest = JSON.parse(await readFile(resolve(root, "audit/orm-foreign-key-name-reconciliation.json"), "utf8"));
-    const checkStateManifest = withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8")));
+    const checkStateManifest = withPinkSuccessOutboxContract(withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8"))));
     const kefuSequenceManifest = JSON.parse(await readFile(resolve(root, "audit/orm-kefu-sequence-reconciliation.json"), "utf8"));
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
@@ -504,7 +544,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: "all nine paths: exact 279 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: "all nine paths: exact 281 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -515,14 +555,15 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       missingConstraintContracts: { mode: "all nine paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived", keys: missingConstraintManifest.entries.map((e: { key: string }) => e.key) },
       foreignKeyNameContracts: { mode: "all nine paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases", keys: foreignKeyNameManifest.entries.map((e: { key: string }) => e.key), oldKeys: foreignKeyNameManifest.entries.map((e: { previousKey: string }) => e.previousKey) },
       foreignKeyNameUpgradeVerification: { ...foreignKeyNameUpgradeVerification, freshCatalogMatched: true },
-      checkStateContracts: { mode: "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated ten-event list after standalone 0161; immutable 0144 history independently verified; no normalized waiver", keys: checkStateManifest.entries.map((e: { key: string }) => e.key) },
-      presaleOutboxVerification,
+      checkStateContracts: { mode: "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated eleven-event list after standalone 0168; immutable 0144 history independently verified; no normalized waiver", keys: checkStateManifest.entries.map((e: { key: string }) => e.key) },
+      pinkSuccessOutboxVerification,
+      couponTemplateCatalogVerification,
       supplierRefundLookupVerification,
       purchaseOriginVerification,
       purchaseCancellationVerification,
       fullConstraintCatalogContract: { mode: "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance", count: catalogs.external.constraints.length },
       checkStateUpgradeVerification: { ...checkStateUpgradeVerification, freshCatalogMatched: true },
-      fullSequenceCatalogContract: { mode: "all nine paths: exact 227 named sequences, type, options and ownership; no omissions or aliases waived", count: catalogs.external.sequences.length },
+      fullSequenceCatalogContract: { mode: "all nine paths: exact 228 named sequences, type, options and ownership; no omissions or aliases waived", count: catalogs.external.sequences.length },
       kefuSequenceContracts: { mode: "all nine paths: exact integer type, bounds and AUTO owning column", keys: kefuSequenceManifest.entries.map((e: { key: string }) => e.key) },
       kefuSequenceUpgradeVerification: { ...kefuSequenceUpgradeVerification, freshCatalogMatched: true },
       missingConstraintUpgradeVerification: { ...missingConstraintUpgradeVerification, freshCatalogMatched: true },
@@ -537,6 +578,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       refundSplitVerification,
       offlineOrderVerification,
       checkoutPricingLockVerification,
+      seckillTimeReferenceLockVerification,
       cleanupRecoveries,
       externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },

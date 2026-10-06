@@ -93,11 +93,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('cancellation con
     try {
       const api=await import('drizzle-kit/api'),schema=await import('@/models/schema');
       expect(schema.storeOrderPurchaseCancellation).toBe(storeOrderPurchaseCancellation);
-      expect(Object.keys(api.generateDrizzleJson(schema).tables)).toHaveLength(279);
+      expect(Object.keys(api.generateDrizzleJson(schema).tables)).toHaveLength(281);
       await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(schema))).join('\n'));
       const relations=() => whole.exec("SELECT oid::text,relfilenode::text,relacl::text FROM pg_class WHERE relnamespace='public'::regnamespace ORDER BY oid");
       const before=await relations();
-      expect(await whole.exec("SELECT count(*)::integer AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'")).toEqual([{ n:279 }]);
+      expect(await whole.exec("SELECT count(*)::integer AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'")).toEqual([{ n:281 }]);
       expect(await inspectPurchaseOriginEvidence(whole.db)).toEqual({ state:'orm-pending',sourcesReady:true });
       expect(await inspectPurchaseCancellationEvidence(whole.db)).toEqual({ state:'orm-pending',sourcesReady:false });
       await expect(completePurchaseCancellationEvidenceOrm(whole.db)).rejects.toThrow(); expect(await relations()).toEqual(before);

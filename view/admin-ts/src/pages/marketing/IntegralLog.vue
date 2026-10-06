@@ -7,7 +7,11 @@
             <strong>积分日志</strong>
             <p class="hint">按会员、流水类型和时间查看积分变动。</p>
           </div>
-          <el-button v-if="canView" :loading="listLoading || statLoading" @click="refresh">刷新</el-button>
+          <div class="heading-actions">
+            <el-button v-if="canExport" type="primary" :disabled="listLoading || statLoading || exporting" :loading="exporting" @click="exportCsv">导出全部筛选结果（CSV）</el-button>
+            <el-button v-if="exporting" @click="cancelExport(true)">取消导出</el-button>
+            <el-button v-if="canView" :loading="listLoading || statLoading" @click="refresh">刷新</el-button>
+          </div>
         </div>
       </template>
       <el-alert v-if="!canView" title="当前账号没有积分日志查看权限" type="warning" :closable="false" show-icon />
@@ -30,6 +34,9 @@
             <el-button :disabled="listLoading || statLoading" @click="reset">重置</el-button>
           </div>
         </div>
+
+        <el-alert v-if="exportError" :title="exportError" type="error" :closable="false" show-icon class="notice" />
+        <p v-if="exporting" class="export-progress" role="status">正在导出 {{ exportRead }} / {{ exportTotal }} 条，文件完成后下载。</p>
 
         <el-alert v-if="statError" :title="statError" type="error" :closable="false" show-icon class="notice">
           <template #default><el-button link type="primary" @click="loadStats">重试统计</el-button></template>
@@ -80,11 +87,14 @@ import {
   type IntegralLogRow,
   type IntegralLogStats,
 } from "@/api/integralLog";
+import { collectIntegralLogExport, downloadIntegralLogCsv } from "@/api/integralLogExport";
 
 const PAGE_SIZE = 15;
 const auth = useAuthStore();
 const canView = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
   (auth.userInfo.level === 0 || auth.uniqueAuth.includes("integral_log.view")));
+const canExport = computed(() => canView.value &&
+  (auth.userInfo?.level === 0 || auth.uniqueAuth.includes("integral_log.export")));
 const sessionKey = computed(() => `${auth.token}:${auth.userInfo?.id ?? 0}:${auth.uniqueAuth.join(",")}`);
 const draftKeyword = ref("");
 const draftType = ref("");
@@ -98,6 +108,10 @@ const listError = ref("");
 const stats = ref<IntegralLogStats | null>(null);
 const statLoading = ref(false);
 const statError = ref("");
+const exporting = ref(false);
+const exportRead = ref(0);
+const exportTotal = ref(0);
+const exportError = ref("");
 const cards = computed(() => [
   { label: "总积分(个)", value: stats.value?.total_integral ?? "—" },
   { label: "客户签到次数(次)", value: stats.value?.sign_count ?? "—" },
@@ -109,12 +123,15 @@ let listGeneration = 0;
 let statGeneration = 0;
 let listAbort: AbortController | null = null;
 let statAbort: AbortController | null = null;
+let exportGeneration = 0;
+let exportAbort: AbortController | null = null;
 
 function active(stamp: string): boolean {
   return mounted && canView.value && sessionKey.value === stamp && auth.token === getToken();
 }
 
 function discard() {
+  cancelExport();
   listGeneration++;
   statGeneration++;
   listAbort?.abort();
@@ -128,6 +145,42 @@ function discard() {
   statLoading.value = false;
   listError.value = "";
   statError.value = "";
+}
+
+function cancelExport(notify = false): void {
+  exportGeneration++;
+  exportAbort?.abort();
+  exportAbort = null;
+  exporting.value = false;
+  exportRead.value = 0;
+  exportTotal.value = 0;
+  exportError.value = notify ? "导出已取消，没有生成文件。" : "";
+}
+
+async function exportCsv(): Promise<void> {
+  if (!mounted || !canExport.value || exporting.value) return;
+  cancelExport();
+  const generation = exportGeneration;
+  const stamp = sessionKey.value;
+  const storedSession = localStorage.getItem("admin_session");
+  const controller = new AbortController();
+  exportAbort = controller;
+  exporting.value = true;
+  const current = () => active(stamp) && canExport.value && generation === exportGeneration &&
+    !controller.signal.aborted && storedSession === localStorage.getItem("admin_session");
+  try {
+    const result = await collectIntegralLogExport({ ...filters.value }, controller.signal, (read, total) => {
+      if (current()) { exportRead.value = read; exportTotal.value = total; }
+    });
+    if (current()) downloadIntegralLogCsv(result.csv, result.filename);
+  } catch (error) {
+    if (current()) exportError.value = error instanceof Error ? error.message : "积分导出失败，没有生成文件";
+  } finally {
+    if (generation === exportGeneration) {
+      exportAbort = null;
+      exporting.value = false;
+    }
+  }
 }
 
 async function loadList(targetPage = page.value): Promise<void> {
@@ -199,12 +252,14 @@ function search() {
   let range: { start?: number; stop?: number };
   try { range = capitalFlowRange(draftRange.value); }
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "时间范围无效"); return; }
+  cancelExport();
   filters.value = { keyword: draftKeyword.value.trim(), type, ...range };
   void loadList(1);
   void loadStats();
 }
 
 function reset() {
+  cancelExport();
   draftKeyword.value = "";
   draftType.value = "";
   draftRange.value = null;
@@ -246,8 +301,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .integral-log { min-width: 0; }
-.heading, .filters { display: flex; gap: 12px; flex-wrap: wrap; }
+.heading, .heading-actions, .filters { display: flex; gap: 12px; flex-wrap: wrap; }
 .heading { align-items: center; justify-content: space-between; }
+.heading-actions { align-items: center; }
 .hint { margin: 4px 0 0; color: #737985; font-size: 12px; }
 .filters { align-items: end; margin-bottom: 18px; }
 .filter-field { display: flex; flex: 1 1 210px; flex-direction: column; gap: 6px; min-width: 0; font-size: 13px; }
@@ -256,6 +312,7 @@ onBeforeUnmount(() => {
 .filter-field :deep(.el-input), .filter-field :deep(.el-date-editor) { width: 100%; }
 .filter-actions { display: flex; gap: 8px; }
 .notice { margin-bottom: 14px; }
+.export-progress { margin: 0 0 14px; color: #57606c; font-size: 13px; }
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
 .stat-card { min-width: 0; padding: 14px 16px; border: 1px solid #e8ebf0; border-radius: 6px; background: #fafbfd; display: flex; flex-direction: column; gap: 6px; }
 .stat-label { color: #737985; font-size: 12px; }

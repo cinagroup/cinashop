@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import type { Container } from "@/lib/di";
 import { agreement } from "@/models/schema";
+import { sanitizePublishedArticleHtml } from "@/services/content/ArticleContentPolicy";
 import { ValidateException } from "@/utils/errors";
 
 /** The legacy agreement table has two public document types: member and agent. */
@@ -44,7 +45,10 @@ export async function readAgreementByType(
     .limit(1);
   const row = rows[0];
   if (!row || row.type !== type) return [];
-  return { ...row, type };
+  // The PHP v2 invite page renders type=2 with v-html. Historical agreement
+  // markup is not trusted merely because it was stored before migration.
+  return { ...row, type,
+    content: type === 2 ? sanitizePublishedArticleHtml(row.content ?? "") : row.content };
 }
 
 /** The paid membership home hides disabled agreements after reading by type. */

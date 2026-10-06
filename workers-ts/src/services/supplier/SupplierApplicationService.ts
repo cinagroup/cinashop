@@ -1,11 +1,13 @@
 import { hash } from "bcryptjs";
-import { and, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, gte, ilike, inArray, lt, ne, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   systemAdmin,
   systemAttachment,
+  systemMessage,
+  systemNotification,
   systemSupplier,
   systemUserApply,
   user,
@@ -16,13 +18,17 @@ import {
   parseCanonicalAttachmentId,
   R2_IMAGE_TYPE,
 } from "@/services/system/AttachmentService";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { HttpApiException, NotFoundException, ValidateException } from "@/utils/errors";
 
 const SUPPLIER_APPLICATION_TYPE = 2;
 const SUPPLIER_ADMIN_TYPE = 4;
 const APPLICATION_LOCK_NAMESPACE = 505_607;
 const APPLICATION_REVIEW_LOCK_NAMESPACE = 505_608;
 const ACCOUNT_LOCK_KEY = 0;
+// xmin changes on every UPDATE, including identical material within a second.
+// Only the hash is sent to clients; transaction IDs and PII stay server-side.
+const applicationColumns = { ...getTableColumns(systemUserApply), rowVersion: sql<string>`xmin::text` };
+type ApplicationRow = typeof systemUserApply.$inferSelect & { rowVersion: string };
 
 function positiveId(value: unknown, label = "ID"): number {
   const id = Number(value);
@@ -97,14 +103,69 @@ function nowEpoch(): number {
   return Math.floor(Date.now() / 1000);
 }
 
+function shanghaiSecond(value: string, label: string): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
+  if (!match) throw new ValidateException(`${label}须为YYYY-MM-DD HH:mm:ss`);
+  const [year, month, day, hour, minute, second] = match.slice(1).map(Number);
+  const utc = Date.UTC(year, month - 1, day, hour, minute, second);
+  const date = new Date(utc);
+  if (year < 1970 || year > 2038 || date.getUTCFullYear() !== year ||
+    date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day ||
+    date.getUTCHours() !== hour || date.getUTCMinutes() !== minute ||
+    date.getUTCSeconds() !== second) throw new ValidateException(`${label}无效`);
+  const epoch = Math.floor(utc / 1000) - 8 * 3600;
+  if (epoch < 0 || epoch > 2_147_483_647) throw new ValidateException(`${label}超出时间范围`);
+  return epoch;
+}
+
+async function applicationVersion(row: ApplicationRow): Promise<string> {
+  const snapshot = [row.id, row.type, row.relationId, row.uid, row.phone, row.systemName,
+    row.name, row.images, row.mark, row.status, row.failMsg, row.isDel, row.statusTime, row.addTime, row.rowVersion];
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(snapshot)));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function expectedVersion(value: unknown): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value)) {
+    throw new ValidateException("请刷新申请记录后重试");
+  }
+  return value;
+}
+
+async function assertVersion(row: ApplicationRow, expected: string): Promise<void> {
+  if (await applicationVersion(row) !== expected) {
+    throw new HttpApiException("申请已更新，请刷新后重试", 409, 409);
+  }
+}
+
 function statusLabel(status: number): string {
   return status === 1 ? "已通过" : status === 2 ? "已拒绝" : "待审核";
 }
 
+async function recordReviewNotice(tx: DbClient,
+  application: ApplicationRow, status: 1 | 2, reason: string, now: number) {
+  const mark = status === 1 ? "supplier_verify_success" : "supplier_verify_fail";
+  const configs = await tx.select({ isSystem: systemNotification.isSystem })
+    .from(systemNotification).where(eq(systemNotification.mark, mark)).limit(2);
+  if (configs.length > 1) throw new ValidateException("供应商审核通知配置重复");
+  if (configs[0]?.isSystem !== 1) return;
+  const title = status === 1 ? "供应商入驻申请已通过" : "供应商入驻申请未通过";
+  const htmlEntities: Record<string, string> = {
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  };
+  const safeReason = reason.replace(/[&<>"']/g, (character) => htmlEntities[character]);
+  const content = status === 1
+    ? "您的供应商入驻申请已通过。请在商城申请记录中通过短信验证设置供应商登录密码。"
+    : `您的供应商入驻申请未通过。请在申请记录中查看审核原因：${safeReason}`;
+  await tx.insert(systemMessage).values({ eventKey: `supplier.application.review:${application.id}:${application.rowVersion}:${status}`,
+    mark, title, content, userId: application.uid, type: 1, look: 0, status: 1, isDel: 0, addTime: now });
+}
+
 function publicApplication(
-  row: typeof systemUserApply.$inferSelect,
+  row: ApplicationRow,
   images: string[],
   imageReferences: string[],
+  version: string,
   account = "",
   active = false,
 ) {
@@ -124,6 +185,7 @@ function publicApplication(
     fail_msg: row.failMsg,
     status_time: row.statusTime,
     add_time: row.addTime,
+    version,
     account,
     activation_required: row.status === 1 && !active,
     activated: row.status === 1 && active,
@@ -152,7 +214,7 @@ export class SupplierApplicationService {
       eq(systemUserApply.isDel, 0),
     );
     const [rows, totals] = await Promise.all([
-      this.container.db.select().from(systemUserApply).where(where)
+      this.container.db.select(applicationColumns).from(systemUserApply).where(where)
         .orderBy(desc(systemUserApply.id)).limit(limit).offset((page - 1) * limit),
       this.container.db.select({ count: sql<number>`count(*)::int` })
         .from(systemUserApply).where(where),
@@ -166,7 +228,7 @@ export class SupplierApplicationService {
 
   async userDetail(uid: number, idValue: unknown) {
     const id = positiveId(idValue, "申请ID");
-    const rows = await this.container.db.select().from(systemUserApply).where(and(
+    const rows = await this.container.db.select(applicationColumns).from(systemUserApply).where(and(
       eq(systemUserApply.id, id),
       eq(systemUserApply.uid, uid),
       eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
@@ -264,6 +326,7 @@ export class SupplierApplicationService {
           status: 0,
           failMsg: "",
           statusTime: 0,
+          addTime: now,
         }).where(and(
           eq(systemUserApply.id, id),
           eq(systemUserApply.uid, uid),
@@ -352,7 +415,7 @@ export class SupplierApplicationService {
 
   async adminList(query: Record<string, string>) {
     const page = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
-    const limit = Math.max(1, Math.min(100, Number.parseInt(query.limit ?? "15", 10) || 15));
+    const limit = Math.max(1, Math.min(100, Number.parseInt(query.limit ?? "20", 10) || 20));
     const conditions = [
       eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
       eq(systemUserApply.isDel, 0),
@@ -362,17 +425,34 @@ export class SupplierApplicationService {
       if (![0, 1, 2].includes(status)) throw new ValidateException("审核状态错误");
       conditions.push(eq(systemUserApply.status, status));
     }
-    const keyword = (query.keyword ?? "").trim().slice(0, 80);
+    const startRaw = query.start_time ?? "";
+    const endRaw = query.end_time ?? "";
+    if (Boolean(startRaw) !== Boolean(endRaw)) throw new ValidateException("申请时间须成对填写");
+    if (startRaw && endRaw) {
+      const start = shanghaiSecond(startRaw, "开始时间");
+      const end = shanghaiSecond(endRaw, "结束时间");
+      if (end < start) throw new ValidateException("结束时间不能早于开始时间");
+      conditions.push(gte(systemUserApply.addTime, start), lt(systemUserApply.addTime, end + 1));
+    }
+    const keyword = (query.keyword ?? "").trim();
+    if ([...keyword].length > 80 || /[\u0000-\u001f\u007f]/.test(keyword)) {
+      throw new ValidateException("申请搜索词无效");
+    }
     if (keyword) {
+      const pattern = `%${keyword.replace(/[\\%_]/g, "\\$&")}%`;
       conditions.push(or(
-        ilike(systemUserApply.systemName, `%${keyword}%`),
-        ilike(systemUserApply.name, `%${keyword}%`),
-        ilike(systemUserApply.phone, `%${keyword}%`),
+        sql`${systemUserApply.id}::text ILIKE ${pattern}`,
+        sql`${systemUserApply.uid}::text ILIKE ${pattern}`,
+        ilike(systemUserApply.systemName, pattern),
+        ilike(systemUserApply.name, pattern),
+        ilike(systemUserApply.phone, pattern),
+        ilike(systemUserApply.failMsg, pattern),
+        ilike(systemUserApply.mark, pattern),
       )!);
     }
     const where = and(...conditions)!;
     const [rows, totals] = await Promise.all([
-      this.container.db.select().from(systemUserApply).where(where)
+      this.container.db.select(applicationColumns).from(systemUserApply).where(where)
         .orderBy(desc(systemUserApply.id)).limit(limit).offset((page - 1) * limit),
       this.container.db.select({ count: sql<number>`count(*)::int` })
         .from(systemUserApply).where(where),
@@ -386,7 +466,7 @@ export class SupplierApplicationService {
 
   async adminDetail(idValue: unknown) {
     const id = positiveId(idValue, "申请ID");
-    const rows = await this.container.db.select().from(systemUserApply).where(and(
+    const rows = await this.container.db.select(applicationColumns).from(systemUserApply).where(and(
       eq(systemUserApply.id, id),
       eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
       eq(systemUserApply.isDel, 0),
@@ -397,6 +477,7 @@ export class SupplierApplicationService {
 
   async review(idValue: unknown, input: Record<string, unknown>) {
     const id = positiveId(idValue, "申请ID");
+    const version = expectedVersion(input.expected_version);
     const status = Number(input.status);
     if (status !== 1 && status !== 2) throw new ValidateException("审核状态错误");
     const failMsg = status === 2 ? text(input.fail_msg ?? input.failMsg, "拒绝原因", 2, 255) : "";
@@ -404,21 +485,32 @@ export class SupplierApplicationService {
       ? await hash(crypto.randomUUID() + crypto.randomUUID(), 12)
       : "";
 
+    // Read the immutable applicant ID before acquiring locks. Submit holds the
+    // applicant advisory lock before the application row, so review must too.
+    const preview = await this.container.db.select({ uid: systemUserApply.uid })
+      .from(systemUserApply).where(and(
+        eq(systemUserApply.id, id),
+        eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
+        eq(systemUserApply.isDel, 0),
+      )).limit(1);
+    if (!preview[0]) throw new NotFoundException("申请不存在");
+
     return withTx(this.container, async (tx) => {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(${APPLICATION_REVIEW_LOCK_NAMESPACE}, ${id})`,
       );
-      const rows = await tx.select().from(systemUserApply).where(and(
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(${APPLICATION_LOCK_NAMESPACE}, ${preview[0].uid})`,
+      );
+      const rows = await tx.select(applicationColumns).from(systemUserApply).where(and(
         eq(systemUserApply.id, id),
         eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
         eq(systemUserApply.isDel, 0),
       )).for("update").limit(1);
       const application = rows[0];
       if (!application) throw new NotFoundException("申请不存在");
+      await assertVersion(application, version);
       if (application.status !== 0) throw new ValidateException("该申请已经审核，不能重复操作");
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${APPLICATION_LOCK_NAMESPACE}, ${application.uid})`,
-      );
       const approved = await tx.select({ id: systemUserApply.id }).from(systemUserApply).where(and(
         eq(systemUserApply.uid, application.uid),
         eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
@@ -431,6 +523,7 @@ export class SupplierApplicationService {
       if (status === 2) {
         await tx.update(systemUserApply).set({ status: 2, failMsg, statusTime: now })
           .where(eq(systemUserApply.id, id));
+        await recordReviewNotice(tx, application, 2, failMsg, now);
         return { id, status: 2 };
       }
 
@@ -474,33 +567,41 @@ export class SupplierApplicationService {
         statusTime: now,
         relationId: supplierId,
       }).where(eq(systemUserApply.id, id));
+      await recordReviewNotice(tx, application, 1, "", now);
       return { id, status: 1, account, activation_required: true };
     });
   }
 
-  async mark(idValue: unknown, markValue: unknown) {
+  async mark(idValue: unknown, markValue: unknown, versionValue: unknown) {
     const id = positiveId(idValue, "申请ID");
+    const version = expectedVersion(versionValue);
     const mark = typeof markValue === "string" ? markValue.trim() : "";
     if ([...mark].length > 255) throw new ValidateException("备注不能超过255个字符");
-    const updated = await this.container.db.update(systemUserApply).set({ mark }).where(and(
-      eq(systemUserApply.id, id),
-      eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
-      eq(systemUserApply.isDel, 0),
-    )).returning({ id: systemUserApply.id });
-    if (!updated[0]) throw new NotFoundException("申请不存在");
-    return { id, mark };
+    return withTx(this.container, async (tx) => {
+      const rows = await tx.select(applicationColumns).from(systemUserApply).where(and(
+        eq(systemUserApply.id, id),
+        eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
+        eq(systemUserApply.isDel, 0),
+      )).for("update").limit(1);
+      if (!rows[0]) throw new NotFoundException("申请不存在");
+      await assertVersion(rows[0], version);
+      await tx.update(systemUserApply).set({ mark }).where(eq(systemUserApply.id, id));
+      return { id, mark };
+    });
   }
 
-  async delete(idValue: unknown) {
+  async delete(idValue: unknown, versionValue: unknown) {
     const id = positiveId(idValue, "申请ID");
+    const version = expectedVersion(versionValue);
     return withTx(this.container, async (tx) => {
-      const rows = await tx.select({ status: systemUserApply.status }).from(systemUserApply)
+      const rows = await tx.select(applicationColumns).from(systemUserApply)
         .where(and(
           eq(systemUserApply.id, id),
           eq(systemUserApply.type, SUPPLIER_APPLICATION_TYPE),
           eq(systemUserApply.isDel, 0),
         )).for("update").limit(1);
       if (!rows[0]) throw new NotFoundException("申请不存在");
+      await assertVersion(rows[0], version);
       if (rows[0].status === 1) throw new ValidateException("已创建供应商身份的申请不能删除");
       await tx.update(systemUserApply).set({ isDel: 1 }).where(eq(systemUserApply.id, id));
       return { id };
@@ -531,14 +632,14 @@ export class SupplierApplicationService {
   }
 
   private async publicApplications(
-    rows: Array<typeof systemUserApply.$inferSelect>,
+    rows: ApplicationRow[],
     identities: Map<number, { account: string; active: boolean }>,
   ) {
     return Promise.all(rows.map(async (row) => {
       const references = parseImages(row.images);
       const images = await this.attachments.signReferences(references);
       const identity = identities.get(row.relationId);
-      return publicApplication(row, images, references, identity?.account, identity?.active);
+      return publicApplication(row, images, references, await applicationVersion(row), identity?.account, identity?.active);
     }));
   }
 }

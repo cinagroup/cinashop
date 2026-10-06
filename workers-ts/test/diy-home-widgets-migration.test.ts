@@ -458,9 +458,11 @@ describe("DIY-HOME-WIDGETS migration gates", () => {
       expect(rank).toContain('throw new ValidateException("排行榜数量参数错误")');
       expect(serviceSource).toContain("vipRights[0]?.status === 1");
       expect(serviceSource).toContain("legacyConfigEnabledWithPresence(configs.svip_price_status)");
-      expect(suspended).toContain("if (!saved) return result");
-      expect(suspended).toContain("for (const key of Object.keys(result))");
-      expect(suspended).toContain("if (Object.hasOwn(saved, key))");
+      // Admin and public consumers share one identity, parser and media policy.
+      // Its real duplicate/corrupt, signed-media and public HTTP boundaries are
+      // exercised by fab-read-postgres.test.ts, rather than the old merge loop.
+      expect(serviceSource).toContain('import { FabReadService } from "./FabReadService"');
+      expect(suspended).toContain("return new FabReadService(this.container, this.env).read()");
     });
 
     it("keeps the PHP rank projection's sort and presale-day fields", () => {

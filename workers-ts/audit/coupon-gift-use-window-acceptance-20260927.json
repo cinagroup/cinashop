@@ -1,0 +1,164 @@
+{
+  "acceptedUTC": "2026-09-27T13:29:14.737Z",
+  "status": "local-accepted-not-published",
+  "published": false,
+  "scope": "Two existing trusted coupon gift consumers now enforce PHP fixed-use eligibility; no new page/API/DDL/role grants",
+  "native": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-gift-use-window-native-20260927.json",
+    "bytes": 28039,
+    "sha256": "b33668016908b4001f2db5a36156682cc63aae9598dd2b4cf5584d624fbd2d44"
+  },
+  "independentIntegrityReview": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-final-integrity-review-20260927.json",
+    "bytes": 98042,
+    "sha256": "bbe95ea3c1cac3f957ecbf1ac7e1f97816958d3fb208b4564bf4b9f2af63d21b"
+  },
+  "sourceSnapshot": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-accepted-snapshot/manifest.json",
+    "bytes": 22543,
+    "sha256": "ffca15267d7974cec13dc6d07684f52fdf0bacad29cbcca4a0a74f99442173e4"
+  },
+  "ledgerSnapshot": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-ledger-accepted-snapshot/manifest.json",
+    "bytes": 3262,
+    "sha256": "ee5d790b8a73ef12f1613314513f27c4a38ee0d33b590c2c16ce7ad4c76c41e0"
+  },
+  "executionEvidence": [
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-red-command-20260927.json",
+      "bytes": 691,
+      "sha256": "ad375c725100b41a89879bfd0858536ca45e982189ffcffe0ae425f787efde0a"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-final-command-20260927.json",
+      "bytes": 2198,
+      "sha256": "3dca5c282f5f899fd13559d2b8ba1abeed6faeb300701433c344af962ce9ca95"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-native-accepted-command-20260927.json",
+      "bytes": 1259,
+      "sha256": "ccb870e78536425f76efcc0c5c2279e16abe9955e802789bacfe9a3fc4f66d40"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-types-command-20260927.json",
+      "bytes": 752,
+      "sha256": "c88e266bc9e643926380b55523dda50835779c67584c68cda6e203a42d67163a"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-unit-accepted-command-20260927.json",
+      "bytes": 452,
+      "sha256": "9bf17d2dc82fad6ca1700084df96074850a39a71f58f8d057022bf1c6a641a12"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-static-command-20260927.json",
+      "bytes": 1655,
+      "sha256": "4dbcb36c9b5944e33e4e5c0a5afac0d71166213d48db2e24dd0642ce0f7a333f"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-ledger-accepted-command-20260927.json",
+      "bytes": 1507,
+      "sha256": "6efb770254ff10dbb1d18434cf1c9b498b570b084a9632c04c34a9b2ab6e3818"
+    },
+    {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-gift-use-window-cleanup-20260927.json",
+      "bytes": 1572,
+      "sha256": "3c913b84df3e872d3a40aebb6ec1a85de90896721644cc11ec700788a168d73c"
+    }
+  ],
+  "tests": {
+    "nativeUnique": 110,
+    "composition": "4 whole regression files 91 from prior 109/1 execution plus final whole new file 19; not one 110/110 batch",
+    "compatibility": 22,
+    "ledger": 95,
+    "types": {
+      "finalUnit": 0,
+      "runtime": 0
+    },
+    "allFinalAcceptedScopesHaveZeroSkipped": true
+  },
+  "routes": {
+    "worker": 1813,
+    "adminCallsites": 413,
+    "adminVariants": 437,
+    "adminScreens": "57 candidate / 114 partial / 96 missing / 7 retired",
+    "marketingScreens": "18 candidate / 15 partial / 15 missing / 0 retired",
+    "newCandidates": 0
+  },
+  "checklist": {
+    "checked": 246,
+    "open": 158,
+    "total": 404,
+    "newlyClosed": 0
+  },
+  "historicalCapsulesUnchanged": [
+    {
+      "leaf": "coupon-template-native-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-native-20260927.json",
+      "bytes": 28419,
+      "sha256": "6bebc715f9816cbb04f45822d4ddede03d67558425512c0aac3e81cf948ad00d"
+    },
+    {
+      "leaf": "coupon-template-browser-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-browser-20260927.json",
+      "bytes": 33502,
+      "sha256": "18b1bda88d7b7cf0ef739e71b1e23f3c8f34254f921a6907be8f59fa12a21920"
+    },
+    {
+      "leaf": "coupon-template-acceptance-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-acceptance-20260927.json",
+      "bytes": 3975,
+      "sha256": "1cdd40490a4d0cb29b579c8de97523537dd1a56ab83111a142a53789c935b52b"
+    },
+    {
+      "leaf": "combination-read-native-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-native-20260927.json",
+      "bytes": 8061,
+      "sha256": "1e040b3cf9a17ce707ffb68e922bd753ade405b7633e8c383c507b0b00acd184"
+    },
+    {
+      "leaf": "combination-read-browser-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-browser-20260927.json",
+      "bytes": 7423,
+      "sha256": "097a534448dacdbe65c3ea3e08b9cb22cb8d4cfbe04726a8e95ed84d9f51022c"
+    },
+    {
+      "leaf": "combination-read-acceptance-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-acceptance-20260927.json",
+      "bytes": 2652,
+      "sha256": "241d5e5a202fc1e942f9d876fb9d37c0ae53e853c464a29a67b55b36cd32a3f4"
+    },
+    {
+      "leaf": "coupon-issue-native-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-native-20260927.json",
+      "bytes": 35740,
+      "sha256": "b99a4f7725549e1f9d7a022a8af6fd60b47a2cf3c45f0c3033bedecf2dd782ab"
+    },
+    {
+      "leaf": "coupon-issue-browser-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-browser-20260927.json",
+      "bytes": 7168,
+      "sha256": "c49be3900b9177ef2552336236404e27d181bb0f4b708350f69afcf3b303a936"
+    },
+    {
+      "leaf": "coupon-issue-acceptance-20260927.json",
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-acceptance-20260927.json",
+      "bytes": 5289,
+      "sha256": "2c22ff8e3fbce2cc989e07be485e48dd043bf49ca506e6a722c74b04588527c6"
+    }
+  ],
+  "operationBoundaries": [
+    "Eligibility uses existing captured whole operation second, not resampled after locks",
+    "Fixed future start remains eligible, rolling days ignore legacy fixed cutoff",
+    "Payment commits before outbox; late SQL failure rolls back outbox effects while payment and separate FAILED lease remain",
+    "Rollback comparisons concern listed business tables and designated gift rows, not all 281 tables"
+  ],
+  "unfinished": [
+    "Ordinary nine-key level activation configuration and actual save-to-activation flow",
+    "Newcomer/product option expiry filtering and ordinary-level negative day gate",
+    "Real member/SVIP entitlement and automatic full-reduction/first-subscribe delivery",
+    "Real configuration/role/provider/device, complete Linux CI and publishing"
+  ],
+  "committed": false,
+  "pushed": false,
+  "deployed": false
+}

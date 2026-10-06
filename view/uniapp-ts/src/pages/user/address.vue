@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="page">
     <view v-if="addresses.length" class="addr-list">
       <view class="addr-card" v-for="addr in addresses" :key="addr.id">
@@ -90,9 +91,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, reactive, computed } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import {
@@ -296,7 +299,7 @@ onShow(load);
 }
 
 .default-tag {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 20rpx;
   border-radius: 6rpx;
@@ -324,7 +327,7 @@ onShow(load);
 }
 
 .act.danger {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .empty {
@@ -339,7 +342,7 @@ onShow(load);
   bottom: 30rpx;
   left: 30rpx;
   right: 30rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   padding: 24rpx;
@@ -383,7 +386,7 @@ onShow(load);
 }
 
 .sheet-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   padding: 22rpx;
@@ -440,8 +443,8 @@ onShow(load);
 }
 
 .region-opt.active {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-weight: 600;
-  background: #fff5f4;
+  background: var(--view-minorColorT, rgba(233, 51, 35, 0.1));
 }
 </style>

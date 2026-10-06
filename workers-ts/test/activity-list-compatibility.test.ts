@@ -40,6 +40,8 @@ describe("legacy activity-list compatibility", () => {
       id: 11,
       productId: 101,
       activityId: 201,
+      type: 1,
+      relationId: 0,
       storeName: "秒杀商品",
       image: "/seckill.png",
       price: "8.00",

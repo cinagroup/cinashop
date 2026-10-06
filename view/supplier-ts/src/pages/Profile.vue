@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { isAxiosError } from "axios";
 import { useRouter } from "vue-router";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
-import { getProfile, updatePassword, updateProfile } from "@/api/supplier";
+import { getProfile, updatePassword, updateProfile, type SupplierVersionedProfile } from "@/api/supplier";
+import { ApiError } from "@/api/http";
 import { useAuthStore } from "@/stores/auth";
-import type { SupplierProfile } from "@/types";
+import { supplierProfilePatch } from "@/utils/supplierProfilePatch";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -13,7 +15,8 @@ const saving = ref(false);
 const changingPassword = ref(false);
 const formRef = ref<FormInstance>();
 const passwordFormRef = ref<FormInstance>();
-const form = ref<SupplierProfile | null>(null);
+const form = ref<SupplierVersionedProfile | null>(null);
+const loadedProfile = ref<SupplierVersionedProfile | null>(null);
 const passwordForm = ref({ pwd: "", new_pwd: "", conf_pwd: "" });
 const rules: FormRules = {
   supplier_name: [{ required: true, message: "请输入供应商名称", trigger: "blur" }],
@@ -42,7 +45,9 @@ const passwordRules: FormRules = {
 async function load() {
   loading.value = true;
   try {
-    form.value = await getProfile();
+    const profile = await getProfile();
+    form.value = { ...profile };
+    loadedProfile.value = { ...profile };
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "资料加载失败");
   } finally {
@@ -51,14 +56,30 @@ async function load() {
 }
 
 async function save() {
-  if (!form.value) return;
+  if (!form.value || !loadedProfile.value) return;
   await formRef.value?.validate();
+  const patch = supplierProfilePatch(loadedProfile.value, form.value);
+  if (!Object.keys(patch).length) {
+    ElMessage.info("资料未变化");
+    return;
+  }
   saving.value = true;
   try {
-    await updateProfile(form.value);
-    ElMessage.success("供应商资料已保存");
+    await updateProfile({ ...patch, expected_revision: loadedProfile.value.revision });
+    loadedProfile.value = { ...loadedProfile.value, ...patch };
+    try {
+      const latest = await getProfile();
+      form.value = { ...latest };
+      loadedProfile.value = { ...latest };
+      ElMessage.success("供应商资料已保存");
+    } catch {
+      ElMessage.warning("资料已提交，请刷新页面核对最新内容");
+    }
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "保存失败");
+    if ((error instanceof ApiError && error.status === 409) ||
+      (isAxiosError(error) && error.response?.status === 409)) {
+      ElMessage.warning("资料已变更，当前输入已保留，请刷新页面核对后重试");
+    } else ElMessage.error(error instanceof Error ? error.message : "保存失败");
   } finally {
     saving.value = false;
   }

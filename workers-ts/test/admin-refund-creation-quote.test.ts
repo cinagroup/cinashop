@@ -3,7 +3,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import { createApp } from '../src/app';
 import { createContainerFromDb, withTx, type Container } from '../src/lib/di';
 import { adminRefundEvidenceFixture } from './helpers/adminRefundEvidenceFixture';
-import { systemAdmin, systemRole, systemConfig, storeOrderCartInfo, storeOrderStatus } from '../src/models/schema';
+import { systemAdmin, systemRole, systemConfig, storeOrder, storeOrderCartInfo, storeOrderStatus,
+  storeOrderPromotionGiftCouponReward } from '../src/models/schema';
 import { quoteAdminRefundCreation } from '../src/services/admin/AdminRefundCreationQuoteService';
 import { createAdminRefundApplication, lookupAdminRefundCreation } from '../src/services/admin/AdminRefundCreationService';
 import { ADMIN_REFUND_CREATION_SQL } from '../src/migrations/adminRefundCreation';
@@ -32,7 +33,7 @@ const setWindow=async(value:string)=>{
   if(!rows.length)await f.db.insert(systemConfig).values({menuName:'refund_time_available',value});
 };
 beforeEach(async()=>{
-  f=await adminRefundEvidenceFixture();wiring.container=f.container;
+  f=await adminRefundEvidenceFixture(undefined,[storeOrderPromotionGiftCouponReward]);wiring.container=f.container;
   await setWindow('0');
   await f.db.update(systemAdmin).set({level:1,roles:'1'}).where(eq(systemAdmin.id,100));
   await f.db.update(systemRole).set({rules:'refund.manage'}).where(eq(systemRole.id,1));
@@ -69,6 +70,18 @@ it('uses the same whole/partial allocation and stable source fingerprint, not a 
   await f.exec(ADMIN_REFUND_CREATION_SQL);
   expect(await createAdminRefundApplication(f.container,actor(),crypto.randomUUID(),creationInput(partial))).toMatchObject({replayed:false,receipt:{outcome:'created'}});
   await expect(quote()).rejects.toThrow('进行中');
+});
+it('refuses a full-gift quote whose original payment rewards have not completed',async()=>{
+  await f.db.update(storeOrder).set({giveIntegral:20,promotionsGive:JSON.stringify({
+    version:'order-promotion-gifts-v1',price_promotions:[],promotions:[{id:61,tier_id:62,
+      name:'满送赠积分',label_id:[],eligible_cart_ids:['501'],threshold_type:2,threshold:'1.00',
+      repetitions:1,give_integral:20,coupons:[],products:[]}],
+  })}).where(eq(storeOrder.id,1));
+  const before=await snapshot();
+  await expect(quote({...input(),mode:'remaining',items:[]})).rejects.toThrow('付款赠积分尚未完成');
+  const response=await send({...input(),mode:'remaining',items:[]});noStore(response);
+  expect(await response.json()).toMatchObject({status:400,msg:expect.stringContaining('付款赠积分尚未完成')});
+  expect(await snapshot()).toEqual(before);
 });
 it('enforces manage permission and current actor scope, including no-store errors',async()=>{
   const before=await snapshot();

@@ -54,6 +54,7 @@ import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibil
 import { parseConfigInteger } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
 import { parseLegacyDiyJson } from "./V2PublicCompatibilityService";
+import { FabReadService } from "./FabReadService";
 
 const MAX_PAGE = 1_000_000;
 const MAX_PAGE_SIZE = 100;
@@ -61,15 +62,6 @@ const MAX_PAGE_OFFSET = 10_000;
 const MAX_VIDEO_PAGE_SIZE = 10;
 const MAX_RANK_SIZE = 20;
 const MAX_ACTIVE_COUPONS = 1_000;
-
-const SUSPENDED_DEFAULT = {
-  is_show: 1,
-  index: 1,
-  shifting: 1,
-  main_ago_image: "",
-  main_after_image: "",
-  button: Array.from({ length: 4 }, () => ({ img: "", url: "" })),
-};
 
 type DiyComponent = Record<string, unknown>;
 
@@ -795,19 +787,6 @@ export class DiyHomeCompatibilityService {
   }
 
   async suspended() {
-    const rows = await this.container.db.select({ value: systemDise.value }).from(systemDise).where(and(
-      eq(systemDise.templateName, "suspended_window"),
-      eq(systemDise.type, 3),
-    )).limit(1);
-    const result: Record<string, unknown> = {
-      ...SUSPENDED_DEFAULT,
-      button: SUSPENDED_DEFAULT.button.map((item) => ({ ...item })),
-    };
-    const saved = record(parseLegacyDiyJson(rows[0]?.value));
-    if (!saved) return result;
-    for (const key of Object.keys(result)) {
-      if (Object.hasOwn(saved, key)) result[key] = saved[key];
-    }
-    return result;
+    return new FabReadService(this.container, this.env).read();
   }
 }

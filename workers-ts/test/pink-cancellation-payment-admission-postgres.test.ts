@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
+import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
 import { financePostgres } from "./helpers/financePostgres";
 import { withFinancePeers, waitForFinanceBlock, outcome } from "./helpers/financePeers";
 import { createContainerFromDb, withTx } from "../src/lib/di";
@@ -14,6 +15,10 @@ describe("durable pink cancellation intent gates payment admission", () => {
   beforeEach(async () => {
     f = await financePostgres([storeCombination, storePink, storeOrder, storeOrderCartInfo, storeOrderRefund,
       storeOrderInvoice, storeOrderOutbox, storeProductAttrValue, user, userBill]);
+    const dialect = new PgDialect();
+    for (const check of getTableConfig(storeOrderOutbox).checks) {
+      await f.exec(`ALTER TABLE store_order_outbox ADD CONSTRAINT "${check.name}" CHECK (${dialect.sqlToQuery(check.value).sql})`);
+    }
     await f.exec('CREATE UNIQUE INDEX fixture_outbox_event ON store_order_outbox (event_key)');
     await f.db.insert(user).values([{ uid: 11 }, { uid: 22, nowMoney: "20.00" }]);
     await f.db.insert(storeCombination).values({ id: 30, productId: 70, people: 4, effectiveTime: 24, price: "6.25" });

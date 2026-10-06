@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="vip-page">
     <view class="vip-banner">
       <text class="vip-kicker">CINASHOP MEMBERSHIP</text>
@@ -53,9 +54,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import {

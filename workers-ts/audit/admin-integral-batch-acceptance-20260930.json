@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "dateUtc": "2026-09-30",
+  "phase": "locally_verified_candidate_unpublished",
+  "status": "candidate",
+  "productionAccepted": false,
+  "published": false,
+  "scope": "True Admin multi-product / multi-SKU integral creation and selected-SKU direct/unified consumers; bounded local checklist increment",
+  "outcome": {
+    "workerRoutes": 2068,
+    "workerRouteSurfaces": {
+      "api": 1075,
+      "admin": 718,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "php": 1904,
+      "ts": 2068,
+      "matched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "missing": 1001,
+      "retired": 17,
+      "actionableMissing": 984,
+      "coveragePercent": 47.4,
+      "executableCoveragePercent": 46.3,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 100,
+    "adminApi": {
+      "callSites": 544,
+      "pathVariants": 568,
+      "registered": 568,
+      "executable": 568,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "legacyMarketingScreens": {
+      "legacyRoutes": 48,
+      "reviewed": 48,
+      "candidate": 32,
+      "partial": 14,
+      "missing": 2,
+      "retired": 0,
+      "unreviewed": 0
+    },
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 84,
+      "partial": 113,
+      "missing": 70,
+      "retired": 7
+    },
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "screenClassificationChanges": [
+      {
+        "path": "/admin/marketing/store_integral/add_store_integral",
+        "from": "missing",
+        "to": "candidate",
+        "target": "/activity/integral-batch"
+      }
+    ]
+  },
+  "contracts": {
+    "source": "Old saveBatchData -> saveData -> validateProductAttr(type4), including no zero cash+points. New roots retain real platform/store/supplier base IDs and valid owner replicas; source metadata/media/shipping checked under locks.",
+    "limits": "1..100 products, 1..500 SKU per product, 1000 total; 768000-byte bounded POST, 128-codepoint image target, positive quota bounded by source SKU/root inventory, no client-edited read-only metadata.",
+    "cloning": "Whole graph in one transaction, new independent root and global 8-character type4 identities, rebuilt attrs/results/descriptions, zero creation-time source stock reservation. Root display price comes from same minimum-integral SKU.",
+    "permissions": "Independent integral_batch.view/manage; exact old933 paired page path/auth or935 exact POST bulk API maps, not shared931 single-create auth. Real per-request Admin binding and JWT; all four endpoints under both prefixes private no-store.",
+    "recovery": "Global UUID actor binding; normalized fixed-key binary-SKU/numeric-product ordered payload SHA256, full immutable system_log root/item receipts. Actor-owned GET actual404 on absence; no grants/DDL/identity repair. Same actor/body replay survives later source changes, collisions refuse.",
+    "frontend": "Across-page staged selection/cancel/remove, selected-SKU edits, per-owner/invalid-source display, exact quote hash and actor-scoped pending storage. Unknown POST freezes draft/new requests, reload resumes receipt read; only absent receipt permits original UUID/body retry. Permission/session changes invalidate callbacks.",
+    "consumers": "Chosen type4 SKU controls cash/points; unified cash checkout plus once-only cancel/refund restores both roots/SKUs. Direct non-shipping pure-points types1/2 use positive selected points, dual SKU/root debit, locked rules/quote/refund policy, disk_info and versioned finance, real order-line ID refund selector. Modern retired/deleted catalog cannot downgrade to legacy base fallback. Quantity/SKU-key changes refuse without writes.",
+    "legacy": "Current Worker >0 limits keep new num/once_num0 unlimited; old PHP zero-limit bug is explicit, not copied. Existing single-create/copy/full-search partial rows remain open."
+  },
+  "verification": {
+    "native": {
+      "files": 4,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 84.25,
+      "tests": [
+        "test/admin-integral-batch.test.ts",
+        "test/admin-integral-batch-http.test.ts",
+        "test/admin-integral-batch-postgres.test.ts",
+        "test/runtime-integral-batch-privileges.test.ts"
+      ],
+      "suiteCases": {
+        "business": 30,
+        "http": 28,
+        "consumersAndConcurrency": 16,
+        "runtimePrivileges": 3
+      },
+      "host": "Fresh owned PostgreSQL16.15 cluster, independent PG connections and restricted runtime LOGINs, no external fetch",
+      "cluster": ".cache/finance-postgres-th3gLJ",
+      "remainingFixtures": 0,
+      "stopped": true,
+      "dataRemovedAfterStoppedCheck": true,
+      "runtimeBoundary": "18 required tables use the exact production runtimeBusinessPrivilegePlan slice with real serial/column ACLs and separate Admin/app LOGINs. This is a bounded slice, not full 178-step commissioning or production/Hyperdrive acceptance.",
+      "coverage": "Actual registered dual-prefix JWT/role admission, exact933/935 positive and931/generic negatives; source-owner replicas; metadata and images; final-group/journal actual SQL failures roll back; same/different actor UUID races and source row-lock conflict; real cart/HTTP quote/order/pay/points/cancel/refund and direct type1/type2 SKU paths; replay/balance/inventory guards; app SQL42501 denial and revoked Admin system_log INSERT full rollback without ACL/catalog repair."
+    },
+    "auditAndCompatibility": {
+      "files": 7,
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 11.91,
+      "tests": [
+        "test/admin-marketing-frontend-parity.test.ts",
+        "test/admin-all-frontend-parity.test.ts",
+        "test/admin-frontend-inventory.test.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/admin-frontend-api-contract.test.ts",
+        "test/api006-activity-compatibility-migration.test.ts",
+        "test/integral-order-migration.test.ts"
+      ],
+      "coverage": "Current dated inventory/API matches source, eleven disjoint ledgers with six latest follow-ups reconcile 274 screens and all historical marketing flags reproduce; old integral/API006 contracts and real568 executable frontend variants."
+    },
+    "frontendUnit": {
+      "passed": 10,
+      "failed": 0,
+      "command": "node ../../workers-ts/node_modules/tsx/dist/cli.mjs --tsconfig tsconfig.json --test test/integralBatch.test.ts"
+    },
+    "typechecks": {
+      "unitAndScripts": {
+        "passed": true,
+        "command": "node --max-old-space-size=6144 node_modules/typescript/bin/tsc --noEmit"
+      },
+      "workerRuntime": {
+        "passed": true,
+        "command": "node --max-old-space-size=6144 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+      },
+      "admin": {
+        "passed": true,
+        "command": "node node_modules/vue-tsc/bin/vue-tsc.js -b --pretty false"
+      }
+    },
+    "adminBuild": {
+      "passed": true,
+      "durationSeconds": 27.3,
+      "command": "node node_modules/vite/bin/vite.js build"
+    },
+    "browser": {
+      "passed": true,
+      "reason": "Browser plugin not available",
+      "driver": "regular Playwright + local Chrome",
+      "viewportDesktop": {
+        "width": 1440,
+        "height": 1000
+      },
+      "viewportMobile": {
+        "width": 390,
+        "height": 844
+      },
+      "functionalGroups": 7,
+      "observations": [
+        "Desktop identity, meaningful content and no framework overlay",
+        "Cross-page staged selection, invalid-source disabled and cancel leaves draft unchanged",
+        {
+          "selectedCheckbox": {
+            "html": "<label data-v-4690613a=\"\" class=\"el-checkbox is-checked\" aria-label=\"选择规格 红色\" for=\"el-id-2058-30\"><span class=\"el-checkbox__input is-checked\"><input class=\"el-checkbox__original\" type=\"checkbox\" id=\"el-id-2058-30\"><span class=\"el-checkbox__inner\"></span></span><!--v-if--></label>",
+            "background": "rgb(64, 158, 255)",
+            "checkedVariable": "#409eff",
+            "rules": []
+          }
+        },
+        "Selected SKU edits serialize correctly; unknown success freezes new batches, reload restores pending UUID and receipt recovers without another POST",
+        "404 recovery permits only the immutable original request; identical payload and UUID confirmed at adapter",
+        {
+          "mobile": {
+            "viewport": 390,
+            "document": 390,
+            "body": 390
+          },
+          "result": "Page fits mobile viewport; wide SKU table scrolls locally"
+        },
+        "Removing a product removes all SKU drafts and prevents empty submission",
+        "Permission change clears stale draft; read-only can inspect sources but has no mutation controls"
+      ],
+      "unexpectedConsoleErrors": 0,
+      "warnings": 0,
+      "expectedFaultConsole": "Two deliberately aborted POST requests and one actual404 recovery response produce expected browser network console errors; all other errors are rejected.",
+      "boundary": "synthetic API and session; native HTTP/JWT/PostgreSQL is verified separately",
+      "temporaryVitePort": 5198,
+      "temporaryViteStopped": true,
+      "evidence": [
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/integral-batch-empty-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/integral-batch-draft-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/integral-batch-draft-mobile.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/integral-batch-browser-qa.json"
+      ]
+    },
+    "syntaxAndWhitespace": {
+      "passed": true,
+      "checks": [
+        "AST/esbuild for new backend/test files",
+        "node --check scripts/run-local-finance-postgres.mjs",
+        "git diff --check selected tracked scope"
+      ]
+    },
+    "attempts": [
+      {
+        "cluster": ".cache/finance-postgres-CaeuNv",
+        "executedCases": 0,
+        "outcome": "Sandbox restricted Windows token blocked pg_ctl; no tests ran; safe isolated escalation used. Initdb cache retained because its Windows ACL disallowed later cleanup."
+      },
+      {
+        "cluster": ".cache/finance-postgres-EyGx6a",
+        "cases": 71,
+        "passed": 58,
+        "failed": 13,
+        "fixes": "Real independent Admin binding missing in HTTP fixture; lawful R2 imageType/upload keys; correct quote.priceGroup points field; direct membership finance metadata."
+      },
+      {
+        "cluster": ".cache/finance-postgres-bZpM7A",
+        "cases": 76,
+        "passed": 72,
+        "failed": 4,
+        "fixes": "Production parser now rejects signed-image reference rewriting; three refund assertions corrected to the actual dedicated order_integral_refund rather than ordinary price-deduction points ledger."
+      },
+      {
+        "cases": 77,
+        "passed": 77,
+        "failed": 0,
+        "cluster": ".cache/finance-postgres-th3gLJ",
+        "outcome": "Complete final four-file run; earlier overlapping attempts are not added to unique count."
+      },
+      {
+        "auditCases": 40,
+        "passed": 38,
+        "failed": 2,
+        "fixes": "Two current source drift tests moved from frozen historical defaults to the new dated inventory/API snapshot; final40/40."
+      },
+      {
+        "typecheck": "unit",
+        "fixes": "Three unused test imports removed; complete unit/scripts and runtime typechecks then passed."
+      },
+      {
+        "browser": "first driver attempt",
+        "fixes": "Element Plus visually rendered checkbox wrapper used for user click; hidden native input is not directly clickable. Final native checked state and painted selected state verified."
+      }
+    ]
+  },
+  "remaining": [
+    "No commit, push, deployment, publication or production acceptance; existing dirty unrelated workspace changes preserved.",
+    "Real production role/browser, provider and Hyperdrive, Linux CI, production scale and UniApp native validation remain open.",
+    "Marketing still missing coupon dynamic config and old seven-day sign combination. Single integral edit/copy/full search remains partial; full-gift partial/split/shipped/return/gift-remainder refund remains partial.",
+    "Checklist246 checked /158 open remains unchanged; global project continuation is not complete.",
+    "Historical dated reports and prior acceptance snapshots are preserved as past evidence; shared source hashes in those earlier snapshots are not current-source claims."
+  ],
+  "evidence": {
+    "logs": [
+      ".cache/integral-batch-native-final-20260930.log",
+      ".cache/integral-batch-audit-final-20260930.log",
+      ".cache/integral-batch-frontend-final-20260930.log",
+      ".cache/integral-batch-admin-build-20260930.log"
+    ],
+    "reports": [
+      "workers-ts/audit/admin-frontend-api-contracts-integral-batch-followup-20260930.json",
+      "workers-ts/audit/admin-frontend-inventory-integral-batch-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-app-route-parity.json",
+      "workers-ts/audit/admin-legacy-content-route-parity.json",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-integral-batch-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-product-route-parity.json",
+      "workers-ts/audit/admin-legacy-setting-route-parity-speechcraft-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-work-route-parity.json",
+      "workers-ts/audit/route-distribution-integral-batch-followup-20260930.json",
+      "workers-ts/audit/route-parity-integral-batch-followup-20260930.json"
+    ],
+    "sourceHashAlgorithm": "SHA256 UTF-8 source with CRLF/CR normalized to LF",
+    "sourceHashCount": 56,
+    "sourceHashes": {
+      "MIGRATION_CHECKLIST.md": "5c6cd922995ef91a16bf20bc9c01688e985c0475d4f222d70ad285894e05137f",
+      "view/admin-ts/src/api/integralBatch.ts": "05c8123cead1f37b910c8c2a32ed7e7c4a3658db51a0b20b861a034176fefb44",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "d47957b12187a53d67129bef7acf82847bc389d8ddbeef9abacbfa8ec744172a",
+      "view/admin-ts/src/pages/activity/ActivityList.vue": "23a1ce979f51e63eaf418de0cbfda334a9c9bcf6cb333bd4250aafc6dc1901b4",
+      "view/admin-ts/src/pages/activity/IntegralBatch.vue": "6cf3d89854a45cbe556d8d46b4b15616493ba6f340a42a6641bf2d017bb9df04",
+      "view/admin-ts/src/pages/activity/SeckillActivityImagePicker.vue": "80c8df8e82015884acfcb791bdfdda9df1603e232d99aeaba64085cd6f8bea8a",
+      "view/admin-ts/src/router/index.ts": "6688ff33ecf80541a20c0112c46d9a1778c0757e6dc7553b80a381ab6c19d887",
+      "view/admin-ts/test/integralBatch.test.ts": "0719ab699c514ba4d4e1fc2ce2026c2a3aabb1943e09b4f465799d9cc3f0f001",
+      "workers-ts/audit/admin-frontend-api-contracts-integral-batch-followup-20260930.json": "7cbe9a544ef6e54b3126cc90ef8d5fee0cc527f2e565eee32c8728d506dca03f",
+      "workers-ts/audit/admin-frontend-inventory-integral-batch-followup-20260930.json": "bb4c6f3018e8947b5b7c0f9f1b4e1343820f806f44231a3640b0e53cd845f195",
+      "workers-ts/audit/admin-legacy-app-route-parity.json": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3",
+      "workers-ts/audit/admin-legacy-content-route-parity.json": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-integral-batch-followup-20260930.json": "e36a784f436f5f867cbf87312175b52e5deb9ff4281c5ff9546a120efad3bce6",
+      "workers-ts/audit/admin-legacy-product-route-parity.json": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "workers-ts/audit/admin-legacy-setting-route-parity-speechcraft-followup-20260928.json": "9a0cc8c064c1c81b3dbcffa9ff4358dfab9cbf309af2f4b3e86ae1e863575347",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438",
+      "workers-ts/audit/admin-legacy-work-route-parity.json": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf",
+      "workers-ts/audit/route-distribution-integral-batch-followup-20260930.json": "19d93f755512c117f8a96c00f304dc03bd5144a5c0d02de5c848fe1df6d1b368",
+      "workers-ts/audit/route-parity-integral-batch-followup-20260930.json": "a59198cbdddaef9e344c7ffcc87d32cb4dcb7e9089176d7d2399c2395a904242",
+      "workers-ts/docs/admin-integral-batch.md": "397dfadb5e7b65fbfd482e4ff8b71c3aee057f36899b38c477d5a5d8db9004e5",
+      "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "11f12fb1aa60d84bfbfe9fe0847b2fa0cb0668ba60d692737dcaf95f4c8ba74d",
+      "workers-ts/scripts/admin-frontend-api-audit.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",
+      "workers-ts/scripts/admin-frontend-parity-audit.ts": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0",
+      "workers-ts/scripts/admin-marketing-frontend-parity-audit.ts": "71b775467e909c659c705d751f0444fe5d8c12d080e45f17fa87df8d08c523ed",
+      "workers-ts/scripts/route-parity-audit.ts": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "3157414fe874550c3717cb0d2a014405dbd2051b3abc0f0add5e430a9167ce40",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts": "10d7de2d2225b5390bb6ff137739d46a0f7e4232c61c66c45ee2fa32383f9b7c",
+      "workers-ts/src/controllers/api/v1/AdminIntegralBatchController.ts": "21229dd1e2647f37712a64c83f2d1772def5c4e253905523dcaa480624024c5d",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "25189eb2f68b5ce5e56df4f070c3340ca440dcb4a7ced9908d2311caf4c8d912",
+      "workers-ts/src/routes/adminapi.ts": "a5e5bf384b983fef5410a77a186fcc1f337c93b6b8b796e95c387713704a01fe",
+      "workers-ts/src/routes/v1/index.ts": "0a8a9322afa30a9269d70d538a35756c2b5971938742e537d0ed054e26d6a28c",
+      "workers-ts/src/services/activity/ActivityOrderSkuService.ts": "178d95d9ead62c8efcee8f10c7f9154eac44c5a9478692fefc59162196a3ff40",
+      "workers-ts/src/services/activity/ActivityService.ts": "9501a8f5f594cb57ac7065e08d5f7227a4724d3aadcd60375bc756d934f2e441",
+      "workers-ts/src/services/admin/AdminIntegralBatchData.ts": "2b8ba2f1669286200de03996446fb84da99673a8257b56ee13eda9d73b39b6a3",
+      "workers-ts/src/services/admin/AdminIntegralBatchService.ts": "fde5040fc786e68d995d9d095aaca798f9872bd07ed507087cb45360b69b5430",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "cd7d2e6c6da59ecbe3c5cba0b9e1df158ff8e6618233fdd082dce80170e74001",
+      "workers-ts/src/services/order/OrderMembershipSavings.ts": "74f472b9fbd2ab7885575fd289391dfc7ed8f6c8d1bd14656f72f2b5b689bad6",
+      "workers-ts/src/services/order/OrderRewardService.ts": "6f59c831cebbc7f0cc424d0864d2099bb7a21a93b82cc64795961eeaed2e1b35",
+      "workers-ts/src/services/order/OrderSplitFinance.ts": "9bc1ba02379a426cd5523fc447132ab207ed144e1bb25604e4abcbd52cd1fcb2",
+      "workers-ts/test/admin-all-frontend-parity.test.ts": "abdbefe59afb7cf9a7acfc0297a7d919245e52d69983235f86a661f8e5e3afd0",
+      "workers-ts/test/admin-frontend-api-audit.test.ts": "52e753b92b233c0a44164e9644277a795bf8980785075d73323b2c7974ebe274",
+      "workers-ts/test/admin-frontend-inventory.test.ts": "f9ce2a3d7516d6314fc1e907e48b86e624784abe7eb599d744716d2e0acb1b61",
+      "workers-ts/test/admin-integral-batch-http.test.ts": "f7c3a7b7afddbae01dbc5094a57ccffc35f3eccb160f7af19099ed65bae2445c",
+      "workers-ts/test/admin-integral-batch-postgres.test.ts": "8bf7083ee9f053bb7c2491e2d730cfaadd1a609b789a504611455c52c37b7f57",
+      "workers-ts/test/admin-integral-batch.test.ts": "fb5515334cecdfe3dc6ed4dc072d8da02b1743286fa3bd2d3ace2d48d6f45500",
+      "workers-ts/test/helpers/financePeers.ts": "51bf74693df51da8d99bc14b5b5625c059b948915ce88b592223fe3f4df632e8",
+      "workers-ts/test/helpers/financePostgres.ts": "8a7849c2749f5ef2e08543a6185989b27dc3de604193a19dcf847aa6cd0fdfbe",
+      "workers-ts/test/helpers/integralBatchFixture.ts": "b9521be29b92ec403169db840212af71d65e35ee4f6fa4b7ef6f9450d3bc63c4",
+      "workers-ts/test/helpers/integralBatchRuntimeFixture.ts": "933e1319e1b7b401996fa638875623b84c1f2e3efb65322841af113d12fecf33",
+      "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33",
+      "workers-ts/test/helpers/pcCheckoutQuoteFixture.ts": "1b74974fc0ddb6fef106bc12717c223ec69cdb50d1e252293b8df8692aa7f8ce",
+      "workers-ts/test/runtime-integral-batch-privileges.test.ts": "877122a2033bf5f23261a3e713adcbb6c8f7876f0a1bcd12264530e55b7a39ee"
+    }
+  }
+}

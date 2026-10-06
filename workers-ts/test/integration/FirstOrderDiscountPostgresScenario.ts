@@ -37,6 +37,9 @@ const CLONED_TABLES = [
   "user_bill",
   "store_product",
   "store_product_attr_value",
+  "store_product_relation",
+  "store_promotions",
+  "store_promotions_auxiliary",
   "store_coupon_issue",
   "store_coupon_user",
   "system_config",
@@ -280,10 +283,10 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       isDel: 0,
     });
     await tx.insert(storeProduct).values([
-      { id: ids.capped.productId, storeName: "capped", price: "100.00", stock: 10, isShow: 1, isDel: 0 },
-      { id: ids.disqualified.productId, storeName: "disqualified", price: "100.00", stock: 5, isShow: 1, isDel: 0 },
-      { id: ids.concurrent.productId, storeName: "concurrent", price: "100.00", stock: 4, isShow: 1, isDel: 0 },
-      { id: ids.rollback.productId, storeName: "rollback", price: "100.00", stock: 0, isShow: 1, isDel: 0 },
+      { id: ids.capped.productId, storeName: "capped", price: "100.00", stock: 10, isShow: 1, isDel: 0, isVerify: 1 },
+      { id: ids.disqualified.productId, storeName: "disqualified", price: "100.00", stock: 5, isShow: 1, isDel: 0, isVerify: 1 },
+      { id: ids.concurrent.productId, storeName: "concurrent", price: "100.00", stock: 4, isShow: 1, isDel: 0, isVerify: 1 },
+      { id: ids.rollback.productId, storeName: "rollback", price: "100.00", stock: 0, isShow: 1, isDel: 0, isVerify: 1 },
     ]);
     await tx.insert(storeProductAttrValue).values([
       { id: ids.capped.skuId, productId: ids.capped.productId, unique: ids.capped.unique,

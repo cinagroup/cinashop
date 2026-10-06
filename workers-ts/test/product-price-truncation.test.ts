@@ -7,7 +7,7 @@ import { orderCreate } from '../src/controllers/api/v1/OrderController';
 import { centsToDecimal, decimalToCents } from '../src/services/order/OrderBrokerageService';
 import { systemUserLevel, storeProduct, storeProductAttrValue, storeProductRelation,
   storeProductEnsure, userRelation, user, storeCart, storeOrderCartInfo,
-  storeOrderStatus, printDocument } from '../src/models/schema';
+  storeOrderStatus, printDocument, storePromotions, storePromotionsAuxiliary } from '../src/models/schema';
 import bcmathCases from './fixtures/member-price-bcmath.json';
 
 // Actual service/DAO and confirm/create controllers on an owned real-PG fixture.
@@ -17,7 +17,8 @@ describe('PHP-truncated level price from catalogue through persisted order', () 
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([systemUserLevel, storeProductRelation,
-      storeProductEnsure, userRelation, storeOrderCartInfo, storeOrderStatus, printDocument]);
+      storeProductEnsure, userRelation, storeOrderCartInfo, storeOrderStatus, printDocument,
+      storePromotions, storePromotionsAuxiliary]);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.setConfig({ member_func_status: '1', member_card_status: '1', svip_price_status: '1' });
     await f.db.insert(systemUserLevel).values({ id: 1, name: 'Precision fixture', isShow: 1, discount: '88.00' });

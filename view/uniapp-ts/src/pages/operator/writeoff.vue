@@ -1,6 +1,9 @@
 <template>
+  <ThemePage>
   <view class="operator-page">
-    <view v-if="loadingProfile" class="state-card">正在核验履约身份…</view>
+    <view v-if="legacyAuto" class="state-card" data-writeoff-legacy="identity-choice"><text class="state-title">选择当前实际核销身份</text><text>历史身份提示不能授予核销权限。普通客户与配送员分别进入独立工作台，再核对订单和次数。</text><text v-if="legacyLoading">正在读取当前账号资格…</text><text v-if="legacyError" class="warning">{{ legacyError }}</text><button v-if="legacyCustomer" :disabled="legacyLoading" @tap="chooseLegacy('customer')">普通客户核销</button><button v-if="legacyDelivery" :disabled="legacyLoading" @tap="chooseLegacy('delivery')">配送送达</button><text v-if="!legacyLoading&&!legacyCustomer&&!legacyDelivery&&!legacyError">当前账号没有可用的普通客户或配送资格。</text><button :disabled="legacyLoading" @tap="loadLegacy">重新读取资格</button></view>
+    <view v-else-if="role==='delivery'" class="state-card" data-delivery="legacy-redirect"><text class="state-title">配送送达工作台</text><text>请选择实际平台或门店配送身份后，再核对商品与数量。</text><button @tap="openDelivery">进入配送工作台</button></view>
+    <view v-else-if="loadingProfile" class="state-card">正在核验履约身份…</view>
 
     <view v-else-if="!profile?.can_writeoff" class="state-card denied">
       <text class="state-title">当前账号没有核销权限</text>
@@ -11,13 +14,12 @@
     <template v-else>
       <view v-if="hasBothRoles" class="role-tabs">
         <view :class="['role-tab', { active: role === 'staff' }]" @tap="selectRole('staff')">门店核销</view>
-        <view :class="['role-tab', { active: role === 'delivery' }]" @tap="selectRole('delivery')">配送送达</view>
+        <view class="role-tab" @tap="selectRole('delivery')">配送送达</view>
       </view>
 
       <view class="identity-card">
-        <text class="identity-title">{{ role === "delivery" ? "平台配送员" : "门店核销员" }}</text>
-        <text v-if="role === 'delivery'">{{ profile.delivery?.nickname || "配送员" }}</text>
-        <text v-else>{{ staffStoreNames }}</text>
+        <text class="identity-title">门店核销员</text>
+        <text>{{ staffStoreNames }}</text>
       </view>
 
       <view class="scan-card">
@@ -52,7 +54,7 @@
             <text class="section-title">订单 {{ previewOrder.order_id }}</text>
             <text class="customer">{{ previewOrder.real_name }} · {{ previewOrder.user_phone }}</text>
           </view>
-          <text class="mode-tag">{{ role === "delivery" ? "送达" : "到店" }}</text>
+          <text class="mode-tag">到店</text>
         </view>
 
         <view
@@ -87,11 +89,18 @@
       <view v-if="writeUncertain" class="state-card warning">核销结果尚待确认，请重新查单后再操作。</view>
     </template>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { onHide, onLoad, onShow, onUnload } from "@dcloudio/uni-app";
+import ThemePage from '@/components/ThemePage.vue';
+import { computed, ref,watch } from "vue";
+import { onLoad, onShow,onHide,onUnload } from "@dcloudio/uni-app";
+import {createUserCenterRequests,type UserCenterRequests} from '@/api/userCenter';
+import {parseUserCenterMenu} from '@/utils/userCenter';
+import {customerWorkRoute} from '@/utils/customerWork';
+import type {CustomerWorkPage} from '@/types/customerWork';
+import {parseCustomerWriteoffLegacyChoice} from '@/utils/customerWorkWriteoff';
 import {
   apiOperatorWriteoff,
   apiOperatorWriteoffInfo,
@@ -128,6 +137,10 @@ let pendingCodeSession = -1;
 let visible = false;
 let generation = 0;
 let profileRequestId = 0;
+const legacyAuto=ref(false),legacyLoading=ref(false),legacyError=ref(''),legacyCustomer=ref(false),legacyDelivery=ref(false),legacyAuth=auth;let legacyQuery:Record<string,string>={},legacyVisible=false,legacyDisposed=false,legacyEpoch=0,legacyScope:UserCenterRequests|null=null;
+function clearLegacy(){legacyEpoch++;legacyScope?.abort();legacyScope=null;legacyCustomer.value=false;legacyDelivery.value=false;legacyLoading.value=false;legacyError.value='';profile.value=null;code.value='';pendingCode='';invalidatePrivate(true);}
+async function loadLegacy(){if(!legacyAuto.value||!legacyVisible||legacyDisposed||legacyQuery.entry!=='legacy-auto')return;clearLegacy();if(!legacyAuth.isLoggedIn){legacyError.value='请登录后读取当前核销资格';return;}const epoch=legacyEpoch,scope=createUserCenterRequests(()=>legacyAuto.value&&legacyVisible&&!legacyDisposed&&legacyEpoch===epoch);legacyScope=scope;legacyLoading.value=true;try{const menu=parseUserCenterMenu(await scope.request('menu/user','GET',{},true),scope.owner.uid);if(!scope.active())return;legacyCustomer.value=menu.capabilities.work===true;legacyDelivery.value=menu.capabilities.deliveryWorkBench===true;}catch(failure){if(scope.active())legacyError.value=failure instanceof Error&&/[\u3400-\u9fff]/u.test(failure.message)?failure.message:'当前核销资格暂无法核对，请重新读取';}finally{if(scope.active())legacyLoading.value=false;scope.abort();if(legacyScope===scope)legacyScope=null;}}
+function chooseLegacy(kind:'customer'|'delivery'){if(!legacyAuto.value||!legacyVisible||legacyDisposed||legacyLoading.value||!legacyAuth.isLoggedIn||(kind==='customer'?!legacyCustomer.value:!legacyDelivery.value))return;try{let url='/pages/delivery/scanning';if(kind==='customer'){const page=(legacyQuery.next??'scanning') as CustomerWorkPage;url=page==='scanning'?customerWorkRoute('scanning',legacyQuery.code?{namespace:'auto',value:legacyQuery.code}:{}):customerWorkRoute(page,{legacyOrderId:legacyQuery.legacyOrderId!});}uni.navigateTo({url,fail:()=>{if(legacyVisible)legacyError.value='所选工作台暂时无法打开，请重新读取资格';}});}catch{legacyError.value='历史核销入口无效，请重新进入工作台';}}
 
 const hasStaffRole = computed(() => (profile.value?.staff_stores.length ?? 0) > 0);
 const hasDeliveryRole = computed(() => Boolean(profile.value?.delivery));
@@ -181,7 +194,7 @@ function invalidatePrivate(clearCode = false) {
 }
 
 function current(generationAtStart: number, session: number, selectedRole: OperatorRole, scanCode: string) {
-  return visible && auth.isLoggedIn && auth.sessionVersion === session
+  return visible && !legacyAuto.value && !deliveryMode() && auth.isLoggedIn && auth.sessionVersion === session
     && generation === generationAtStart && role.value === selectedRole && code.value === scanCode;
 }
 
@@ -201,6 +214,7 @@ function acceptPreview(result: OperatorWriteoffPreview, expected: OperatorMember
 }
 
 function selectRole(value: OperatorRole) {
+  if (value === "delivery") return openDelivery();
   if (value === "staff" && !hasStaffRole.value) return;
   if (value === "delivery" && !hasDeliveryRole.value) return;
   if (role.value === value) return;
@@ -209,6 +223,8 @@ function selectRole(value: OperatorRole) {
 }
 
 async function loadProfile() {
+  if (legacyAuto.value || !visible) return;
+  if (deliveryMode()) return openDelivery();
   invalidatePrivate(true);
   const requestId = ++profileRequestId;
   const session = auth.sessionVersion;
@@ -226,6 +242,7 @@ async function loadProfile() {
     else if (requestedRole === "staff" && hasStaffRole.value) role.value = "staff";
     else if (!hasStaffRole.value && hasDeliveryRole.value) role.value = "delivery";
     else role.value = "staff";
+    if (deliveryMode()) return openDelivery();
     if (!result.can_writeoff || pendingCodeSession !== session) pendingCode = "";
     if (pendingCode) {
       code.value = pendingCode;
@@ -245,6 +262,7 @@ async function loadProfile() {
 }
 
 function scan() {
+  if (deliveryMode()) return openDelivery();
   if (!visible || !profile.value?.can_writeoff || executing.value || confirming.value) return;
   const session = auth.sessionVersion, selectedRole = role.value, ownGeneration = generation;
   uni.scanCode({
@@ -266,6 +284,7 @@ function scan() {
 }
 
 async function preview() {
+  if (deliveryMode()) return openDelivery();
   if (!visible || !profile.value?.can_writeoff || loadingPreview.value || executing.value || confirming.value) return;
   const parsed = parseOperatorScanCode(code.value, operatorScanSiteOrigins());
   if (!parsed) return toast("请输入有效的订单码或会员码");
@@ -359,6 +378,7 @@ function confirmExecute(): Promise<boolean> {
 }
 
 async function execute() {
+  if (deliveryMode()) return openDelivery();
   if (!visible || !previewOrder.value || !previewKind.value || selectedQuantity.value <= 0
     || executing.value || confirming.value || writeUncertain.value) return;
   const preview = previewOrder.value, kind = previewKind.value, selectedRole = role.value;
@@ -403,6 +423,11 @@ async function execute() {
 }
 
 onLoad((query) => {
+  if(query?.entry!==undefined){legacyAuto.value=true;try{let input:string|Record<string,unknown>=query;
+   // #ifdef H5
+   if(typeof window!=='undefined'){const hash=window.location.hash.replace(/^#/u,''),at=hash.indexOf('?');if(hash.slice(0,at)==='/pages/operator/writeoff')input=hash.slice(at+1);}
+   // #endif
+   legacyQuery=parseCustomerWriteoffLegacyChoice(input);}catch(failure){legacyError.value=failure instanceof Error?failure.message:'历史核销入口无效';legacyQuery={};}return;}
   requestedRole = query?.role === "delivery" ? "delivery" : query?.role === "staff" ? "staff" : null;
   pendingCode = (parseOperatorScene(query?.scene)
     ?? parseOperatorScanCode(query?.code, operatorScanSiteOrigins()))?.code ?? "";
@@ -410,13 +435,20 @@ onLoad((query) => {
 });
 
 onShow(() => {
+  legacyVisible = true;
+  if (legacyAuto.value) {
+    if (legacyQuery.entry === "legacy-auto") void loadLegacy();
+    else legacyError.value = "历史核销入口无效，请重新进入工作台";
+    return;
+  }
   visible = true;
+  if (deliveryMode()) return openDelivery();
   if (pendingCodeSession !== auth.sessionVersion) pendingCode = "";
   void loadProfile();
 });
 
-onHide(() => { visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
-onUnload(() => { visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
+onHide(() => { legacyVisible = false; if (legacyAuto.value) { clearLegacy(); delete legacyQuery.code; } visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
+onUnload(() => { legacyVisible = false; legacyDisposed = true; if (legacyAuto.value) { clearLegacy(); legacyQuery = {}; } visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
 watch(code, () => invalidatePrivate(), { flush: "sync" });
 watch(() => auth.sessionVersion, () => {
   pendingCode = "";
@@ -426,10 +458,22 @@ watch(() => auth.sessionVersion, () => {
   // setLogin increments the epoch before updating token/uid. Reload after the
   // action completes so the request binds to the replacement credentials.
   const session = auth.sessionVersion;
-  if (visible) queueMicrotask(() => {
+  if (legacyAuto.value) {
+    clearLegacy(); delete legacyQuery.code;
+    if (legacyVisible && legacyQuery.entry === "legacy-auto") queueMicrotask(() => { if (legacyVisible && auth.sessionVersion === session) void loadLegacy(); });
+  } else if (visible) queueMicrotask(() => {
     if (visible && auth.sessionVersion === session) void loadProfile();
   });
 }, { flush: "sync" });
+/** Delivery always enters its independent scoped, durable workflow; the staff APIs stay here. */
+function deliveryMode() { return role.value === "delivery" || requestedRole === "delivery"; }
+function openDelivery() {
+  if (!visible || legacyAuto.value) return;
+  role.value = "delivery"; requestedRole = "delivery"; pendingCode = "";
+  profileRequestId++; profile.value = null; invalidatePrivate(true); loadingProfile.value = false;
+  const target = { url: "/pages/delivery/scanning", fail: () => { if (visible) toast("配送工作台暂时无法打开，请重试"); } };
+  if (typeof uni.redirectTo === "function") uni.redirectTo(target); else uni.navigateTo(target);
+}
 </script>
 
 <style scoped>
@@ -440,23 +484,23 @@ watch(() => auth.sessionVersion, () => {
 .warning { color: #d94838; }
 .role-tabs { display: flex; padding: 8rpx; margin-bottom: 20rpx; border-radius: 18rpx; background: #e8eaf0; }
 .role-tab { flex: 1; padding: 18rpx; border-radius: 14rpx; text-align: center; color: #666; }
-.role-tab.active { background: #fff; color: #e93323; font-weight: 650; box-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.06); }
+.role-tab.active { background: #fff; color: var(--view-theme, #e93323); font-weight: 650; box-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.06); }
 .identity-card { gap: 8rpx; color: #666; }
 .code-input { height: 92rpx; padding: 0 22rpx; border: 2rpx solid #dcdfe6; border-radius: 14rpx; font-size: 42rpx; letter-spacing: 8rpx; box-sizing: border-box; }
 .scan-actions { display: flex; gap: 18rpx; }
 .scan-actions button { flex: 1; margin: 0; font-size: 28rpx; }
 .candidate-row { display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 22rpx; text-align: left; background: #f7f8fa; color: #333; font-size: 26rpx; }
-.primary-button, .execute-button { background: #e93323; color: #fff; }
-.secondary-button { background: #fff; color: #e93323; border: 2rpx solid #e93323; }
+.primary-button, .execute-button { background: var(--view-theme, #e93323); color: #fff; }
+.secondary-button { background: #fff; color: var(--view-theme, #e93323); border: 2rpx solid var(--view-theme, #e93323); }
 .preview-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8rpx; }
 .preview-head > view { display: flex; flex-direction: column; gap: 8rpx; }
 .customer, .cart-meta, .irreversible { font-size: 24rpx; color: #777; }
-.mode-tag { padding: 8rpx 16rpx; border-radius: 999rpx; background: #fff1ef; color: #e93323; font-size: 24rpx; }
+.mode-tag { padding: 8rpx 16rpx; border-radius: 999rpx; background: var(--view-minorColorT, rgba(233, 51, 35, 0.1)); color: var(--view-theme, #e93323); font-size: 24rpx; }
 .cart-line { padding: 24rpx 0; border-top: 1rpx solid #eee; }
 .cart-line.disabled { opacity: 0.5; }
 .cart-main { display: flex; align-items: center; gap: 18rpx; }
 .check { width: 38rpx; height: 38rpx; border: 2rpx solid #bbb; border-radius: 50%; text-align: center; line-height: 36rpx; color: #fff; }
-.check.checked { border-color: #e93323; background: #e93323; }
+.check.checked { border-color: var(--view-theme, #e93323); background: var(--view-theme, #e93323); }
 .cart-copy { display: flex; flex: 1; flex-direction: column; gap: 8rpx; min-width: 0; }
 .cart-name { overflow: hidden; font-size: 28rpx; text-overflow: ellipsis; white-space: nowrap; }
 .quantity { display: flex; align-items: center; justify-content: flex-end; margin-top: 16rpx; }

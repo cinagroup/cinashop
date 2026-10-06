@@ -596,9 +596,9 @@
     {
       "id": "FE-003C",
       "title": "Distributor and agent self-service",
-      "status": "local_candidate_pending_ci",
+      "status": "code_linux_complete_not_deployed",
       "legacyRoutes": [],
-      "remaining": "Five original paths are directly registered with distinct promoter and division applications, current-status/record reads and owner-scoped staff operations. Purpose-bound one-time SMS replaces the incompatible old code cache. Real role/data, native device and release checks remain under FE-003J/K; this item stays unchecked until its exact-head Linux CI succeeds."
+      "remaining": "Five original paths are directly registered with distinct promoter and division applications, current-status/record reads and owner-scoped staff operations. Purpose-bound one-time SMS replaces the incompatible old code cache. This code scope was merged through PR #11 after its exact-head Linux CI passed, as recorded in MIGRATION_CHECKLIST.md. Real role/data, native devices, old-client in-place upgrades and release acceptance remain under FE-003J/K; the merged code has not been deployed."
     },
     {
       "id": "FE-003D",
@@ -667,7 +667,7 @@
   "checklist": [
     { "id": "FE-003A", "done": true, "item": "Recount active manifests, install a registered-route allowlist, map 98 legacy routes and normalize legacy query keys" },
     { "id": "FE-003B", "done": false, "item": "Restore user governance/history screens" },
-    { "id": "FE-003C", "done": false, "item": "Implement distributor and agent self-service without conflating Supplier roles" },
+    { "id": "FE-003C", "done": true, "item": "Implement distributor and agent self-service without conflating Supplier roles" },
     { "id": "FE-003D", "done": false, "item": "Restore or explicitly retire presale, newcomer, live and ranking experiences" },
     { "id": "FE-003E", "done": false, "item": "Validate legacy mobile-admin replacements on the Admin surface and retirement redirects" },
     { "id": "FE-003F", "done": false, "item": "Run real payment callback and historical deep-link E2E; retain generic webview retirement unless allowlisted" },

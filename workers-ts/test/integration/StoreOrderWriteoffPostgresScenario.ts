@@ -51,6 +51,7 @@ const CLONED_TABLES = [
   "store_product_attr",
   "store_product_attr_result",
   "store_product_attr_value",
+  "store_product_stock_record",
   "system_log",
 ] as const;
 
@@ -65,6 +66,7 @@ const LOCAL_SEQUENCE_TABLES = [
   "store_product_attr",
   "store_product_attr_result",
   "store_product_attr_value",
+  "store_product_stock_record",
   "system_log",
 ] as const;
 
@@ -108,6 +110,7 @@ interface PublicSnapshot {
   products: number;
   product_skus: number;
   product_rules: number;
+  product_stock_records: number;
   system_logs: number;
   refund_sequence: string | null;
   writeoff_sequence: string | null;
@@ -116,6 +119,7 @@ interface PublicSnapshot {
   product_sequence: string | null;
   product_sku_sequence: string | null;
   product_rule_sequence: string | null;
+  product_stock_record_sequence: string | null;
   system_log_sequence: string | null;
 }
 
@@ -256,6 +260,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
       (SELECT count(*)::integer FROM public.store_product) AS products,
       (SELECT count(*)::integer FROM public.store_product_attr_value) AS product_skus,
       (SELECT count(*)::integer FROM public.store_product_rule) AS product_rules,
+      (SELECT count(*)::integer FROM public.store_product_stock_record) AS product_stock_records,
       (SELECT count(*)::integer FROM public.system_log) AS system_logs,
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'store_order_refund_id_seq') AS refund_sequence,
@@ -271,6 +276,8 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
         WHERE schemaname = 'public' AND sequencename = 'store_product_attr_value_id_seq') AS product_sku_sequence,
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'store_product_rule_id_seq') AS product_rule_sequence,
+      (SELECT last_value::text FROM pg_sequences
+        WHERE schemaname = 'public' AND sequencename = 'store_product_stock_record_id_seq') AS product_stock_record_sequence,
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'system_log_id_seq') AS system_log_sequence
   `;

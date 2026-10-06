@@ -1,5 +1,6 @@
 import { KEFU_TOKEN_KEY, websocketUrl } from "@/api/client";
 import type { ChatMessage, RealtimeEvent, SessionRecord } from "@/types/kefu";
+import { captureKefuSession, isCurrentKefuSession, expireKefuSession } from "@/services/session";
 
 export interface RealtimeCallbacks {
   onEvent(event: RealtimeEvent): void;
@@ -13,12 +14,14 @@ export function kefuSocketPath(toUid: number, isTourist: 0 | 1): string {
 }
 
 export function upsertMessage(list: ChatMessage[], message: ChatMessage): ChatMessage[] {
-  if (list.some((item) => item.id === message.id)) return list;
+  const old = list.find((item) => item.id === message.id);
+  if (old) return old.type === 0 && message.type === 1 ? list.map(item => item.id === message.id ? { ...item, type: 1 } : item) : list;
   return [...list, message].sort((a, b) => a.id - b.id);
 }
 
 export function sessionMessagePreview(message: string, messageType: number): string {
-  return messageType === 3 ? "[图片]" : message;
+  const labels: Record<number, string> = { 2: "[表情]", 3: "[图片]", 5: "[商品]", 6: "[订单]", 7: "[售后订单]" };
+  return labels[messageType] ?? (message || "[新消息]");
 }
 
 export function updateSessionFromMessage(
@@ -32,13 +35,15 @@ export function updateSessionFromMessage(
   );
   if (index < 0) return sessions;
   const next = [...sessions];
-  const current = next[index];
+  const current = next[index] as SessionRecord & { latestMessageId?: number };
+  if (message.add_time < current.update_time || (message.add_time === current.update_time && current.latestMessageId && message.id <= current.latestMessageId)) return sessions;
   next[index] = {
     ...current,
     message: sessionMessagePreview(message.msn, message.msn_type),
     message_type: message.msn_type,
     update_time: message.add_time,
-  };
+    latestMessageId: message.id,
+  } as SessionRecord;
   const [updated] = next.splice(index, 1);
   next.unshift(updated);
   return next;
@@ -66,6 +71,7 @@ export class KefuRealtimeClient {
     }
     const token = sessionStorage.getItem(KEFU_TOKEN_KEY);
     if (!token) throw new Error("客服登录状态无效");
+    const identity = captureKefuSession();
     this.manuallyClosed = false;
     this.callbacks.onState("connecting");
     const connectedToUid = this.currentToUid;
@@ -76,7 +82,7 @@ export class KefuRealtimeClient {
     ]);
     this.socket = socket;
     socket.addEventListener("open", () => {
-      if (this.socket !== socket) return;
+      if (this.socket !== socket || !isCurrentKefuSession(identity)) return;
       this.callbacks.onState("open");
       this.heartbeat = window.setInterval(() => this.send("ping", {}), 25_000);
       if (
@@ -88,6 +94,7 @@ export class KefuRealtimeClient {
       }
     });
     socket.addEventListener("message", (event) => {
+      if (this.socket !== socket || !isCurrentKefuSession(identity)) return;
       try {
         const parsed = JSON.parse(String(event.data)) as RealtimeEvent;
         this.callbacks.onEvent(parsed);
@@ -95,13 +102,16 @@ export class KefuRealtimeClient {
         this.callbacks.onEvent({ type: "err_tip", data: { msg: "收到无法识别的实时消息" } });
       }
     });
-    socket.addEventListener("close", () => {
-      if (this.socket !== socket) return;
+    socket.addEventListener("close", (event) => {
+      if (this.socket !== socket || !isCurrentKefuSession(identity)) return;
       this.socket = null;
       this.stopHeartbeat();
       this.callbacks.onState("closed");
+      if (event.code === 4001 || event.code === 4401) { expireKefuSession(identity); return; }
       if (!this.manuallyClosed) {
-        this.reconnectTimer = window.setTimeout(() => this.connect(), 2_500);
+        this.reconnectTimer = window.setTimeout(() => {
+          if (!this.manuallyClosed && isCurrentKefuSession(identity)) this.connect();
+        }, 2_500);
       }
     });
   }

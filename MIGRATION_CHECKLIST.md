@@ -1,5 +1,112 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 当前增量：普通 customer 扫码、分次核销与真实次卡收银来源（2026-10-05，验证进行中，未发布）
+
+两条原始审计 CLI 本轮实际退出0：Worker **2321／PHP1904**，旧URL可执行精确匹配890，可行动缺口976，有效覆盖47.2%；Uni **125页**，151旧逻辑路由仍为28直连／116兼容／7缺口，兼容62候选／54部分。新增12条独立UserJWT合同及4个核销页，已修复实际审计发现的页面注册表漏项。Admin的908条缺口仍占976条约93%，独立经营接口不抵扣旧Admin合同。
+
+已实现扫码命名空间、实体订单回读、分次核销／记录、原UUID恢复，以及真实次卡创建／现金支付／不可变来源台账。首单配置在代客报价事务外读取，事务内复用同一只读快照，修复真实KV读取占用业务事务的问题；全部原断言保持。当前完整输入的核销32／32、收银17／17、目录61／61、成交价格31、自提24、代客流程49、表单40、成熟核销164、结算78、四个完整场景导出4和普通回归322均实际通过，共822项（包含4个场景导出，不把全部项目称为SQL效果）；两套原Worker类型检查均通过。独立invoker边界允许真实促销FOR UPDATE并拒绝直接修改。最新21源的Uni runtime224项、原五类型／三平台构建、125页主题及15项编译语义通过；实际浏览器90／90、扩展QA6／6，16故障／8迟到／3撤权及全部11类unexpected为空。前端producer05实际生成producer01／handoff01收据；准备阶段不计物理验收。独立完整物理验收结果以本轮新主报告及proof实际收据为准，本文不预填其通过。完整Windows workerd实际执行0项业务断言、21个启动错误，原生异常0xc0000005的环境门槛仍开放；本轮未发布，原失败和被替代执行均保留，旧财务通过不计当前信用。
+
+Checklist **404总项／246完成／158开放**的原标题和复选状态保持。完整五个代客页、手机角色、个人中心25/26、menuRoleGates=false、普通现金退款、游客退款、生产授权／provider／设备／Linux／Hyperdrive／容量及发布仍开放。详见[本轮验证进度](workers-ts/docs/customer-work-writeoff-validation-20261005.md)、[路由合同](workers-ts/docs/customer-work-writeoff-contract-audit-20261005.md)、[次卡来源](workers-ts/docs/customer-cashier-second-card-origin-20261005.md)、[实际路由分布](workers-ts/audit/route-distribution-customer-work-writeoff-followup-20261005.json)。下方保留既有批次历史。
+
+## 当前增量：普通 customer 手机订单财务七类操作（2026-10-05，本地代码与测试已验证，未发布）
+
+原两条 CLI 实际输出：Worker 2309／旧 PHP 1904，旧 URL 可执行精确匹配 890／可行动缺口 976，有效覆盖 47.2%。Uni 121实际页；151旧逻辑路由为28直连／116兼容／7缺口，兼容62候选／54部分。
+
+历史退款原因／说明和备注按原长度合同读取TAB/LF/CR，保留原字节并局部换行显示；其它控制字符、孤立代理项及所有新写入和电话／快递标识仍受原严格校验。普通 UserJWT 当前唯一有效 customer 服务记录承接订单调价、线下收款、退款申请、同意退货、拒绝退款、资金退款和退款备注七类。四个既有订单/售后页追加操作，一个新主动退款页承接旧入口；旧手机角色及别名继续部分替换。创建申请与执行资金分别保存原UUID/fullintent；真实完成证明约束UNKNOWN与原请求恢复，普通customer身份不借Admin。当前 Worker 唯一 991 项：金融主文件 70、五组21个完整成熟 SQL 文件 583、独立目录 16、12个完整普通回归文件 322。各值从真实 stdout 计数，失败、跳过及旧执行不计入。Uni runtime 177 项、原标准窄类型与完整类型及 H5/微信/App 五 CLI 全部退出0；三平台 1237 文件包含 sibling .nvue；121真实主题宿主／13个customer-work页，10编译语义、62实际编译浏览器组与单列QA6通过。两套原标准 Worker 类型使用显式最终计划绑定的实际完整执行。
+
+63声明owner的真实before链保留；所有失败和被替代执行不计当前通过。最终递归物理验收仍以独立最终proof收据为准，本段不预填其通过或hash数量。
+
+Checklist **404总项／246完成／158开放**原标题及全部复选行保持。下一批为独立普通 customer 扫码、分次核销与核销记录；五个代客页的购物车、下单、支付与记录；完整手机角色、个人中心25/26及 menuRoleGates=false；生产模式与授权、真实 provider/设备、Linux/Hyperdrive、容量和发布仍开放。店长、配送、客服等独立资格不能推导全站 customer。详见[财务验证](workers-ts/docs/customer-work-financial-validation-20261005.md)、[合同审查](workers-ts/docs/customer-work-financial-contract-audit-20261005.md)、[实际分布](workers-ts/audit/route-distribution-customer-work-financial-followup-20261005.json)；下方完整保留此前各批历史。
+
+
+## 当前增量：手机经营用户两页八函数七类写入（2026-10-04，本地验证完成，未发布）
+
+实际Worker **2297／PHP1904**，本批新增16条独立UserJWT合同；旧URL可执行890／可行动缺口976，有效覆盖47.2%。API1236／ADMIN786／SUPPLIER164／KEFU70／OUT41／ERP0；Admin908缺口约93%。Uni **120页**；151旧逻辑为28直连／116兼容／7缺口，兼容62候选／54部分。
+
+已接入用户列表／详情、完整分组／平台标签／等级、手动优惠券、会员时长、余额和积分；普通customer身份、真实事务效果回读、目录fence及原UUID恢复约束七种操作。显示提示使用中文并对未知码安全回退，账号／资格变化清空PII与草稿。当前唯一Worker **211项**（93真实SQL：64用户＋22读链＋7成熟Admin域，另10目录并发＋108回归）、Uni **126项**（78原读／履约／商品＋48用户）、两套原标准Worker及Uni完整类型均通过。三平台 **1217文件**（H5 306／小程序 772／App 137／sibling .nvue 2）、120真实页主题宿主、6编译语义、37浏览器组及单列QA6通过；旧通过不计为本轮，原失败与原字节均保留。最终递归物理核验以独立执行收据实际结果为准。
+
+两条旧用户别名仍partial；完整17管理＋5代客旧页／43个admin.js及辅助合同、个人中心25/26、menuRoleGates=false仍开放。Checklist **246完成／158开放／404总项**原标题与勾选保持。下一阶段依次承接订单调价／线下支付／退款处理、独立扫码／分次核销、代客购物车到下单／支付／记录，并补齐完整角色及生产commissioning；非合作关系rawSQL最终回读→提交间隙、provider／设备／Linux/Hyperdrive／容量／发布仍开放。详见[用户验证](workers-ts/docs/customer-work-user-validation-20261004.md)、[合同审计](workers-ts/docs/customer-work-user-contract-audit-20261004.md)、[本批验收](workers-ts/audit/customer-work-users-acceptance-final-20261004.json)；下方保留历史。
+
+
+## 当前增量：手机经营商品/SKU两页七函数（2026-10-04，本地验证完成，未发布）
+
+实际Worker **2281／PHP1904**，新增9条独立UserJWT合同；旧URL可执行890／可行动缺口976，有效覆盖47.2%。API1220／Admin786／Supplier164／Kefu70／Out41／ERP0；Admin908缺口约93%。Uni **118页**；151旧逻辑仍28直连／114兼容／9缺口，兼容62候选／52部分。
+
+已实现商品五状态搜索／分页／真实库存销量、上下架、平台分类标签替换、单规格与多规格部分批量编辑，以及本人原UUID恢复／放弃。普通customer身份、独立read版本、全实体xmin、目录fence、账户锁和成熟事务审计共同复核；实际大目录／Unicode读取移除了误用写上限的拒读。Worker当前唯一 **215项**、Uni **78项**、完整标准类型、三平台 **1173文件**、118页主题宿主、6编译语义、20浏览器组与单列QA6通过；原失败和历史输入保留，最终物理核验以独立收据为准。
+
+两条goods别名及完整手机角色仍partial、个人中心25/26、menuRoleGates=false；Checklist **246完成／158开放／404总项**原标题与勾选保持。下一批是用户列表／详情、分组／平台标签／等级／优惠券／会员时长／余额／积分；完整财务代客、独立核销、非合作rawSQL残余间隙、生产角色／provider／设备／Linux/Hyperdrive／容量／发布仍开放。详见[商品验证](workers-ts/docs/customer-work-product-validation-20261004.md)、[合同审计](workers-ts/docs/customer-work-product-contract-audit-20261004.md)、[当前分布](workers-ts/audit/route-distribution-customer-work-product-followup-20261004.json)、[本批验收](workers-ts/audit/customer-work-product-acceptance-final-20261004.json)；下方保留历史。
+
+
+## 当前增量：手机经营履约写链（2026-10-04，本地部分承接已验证，未发布）
+
+实际路由为 **Worker 2272／PHP 1904**，新增 17 条独立 UserJWT 合同；旧 URL 可执行 890／可行动缺口 976，有效覆盖 47.2%。API 1211／Admin 786／Supplier 164／Kefu 70／Out 41／ERP 0，Admin 的 908 条缺口占约 93%。Uni **116 页**；151 旧逻辑仍 28 直连／112 兼容／11 缺口，兼容 62 候选／50 部分。
+
+已完成原实体备注、手动／配送员／虚拟／拆单发货、独立 customer 面单 actor 及四类恢复、耐久同城派送／查询／回调、定时补偿和第八个 customer-work/delivery 页。原 UUID、原意图、真实归属、金额守恒及未知结果禁止盲重签共同约束操作。取消后新任务使用独立通知编号；真实并发验证后补齐发货与备注的账户事务锁。
+
+当前输入 Worker 唯一 **159 项**（65 履约读写＋27 同城＋2 PG16 目录＋65 回归）与 Uni **42 项**通过；标准完整 Worker unit/runtime 与 Uni 类型、三平台 1141 文件构建、6 编译语义、20 浏览器组及 QA6 通过，失败与被替代执行原字节保留。最终递归字节核验以独立收据实际结果为准。完整手机角色仍 partial、个人中心 25/26、menuRoleGates=false；Checklist **246 完成／158 开放／404 总项**原标题与勾选保持。下一批为商品/SKU、用户与优惠券；完整财务代客、UU origin/重量、真实 provider、生产授权、设备、Linux/Hyperdrive、容量及发布仍开放。详见[履约验证](workers-ts/docs/customer-work-fulfillment-validation-20261004.md)、[新鲜路由分布](workers-ts/audit/route-distribution-customer-work-fulfillment-followup-20261004.json)、[本批验收](workers-ts/audit/customer-work-fulfillment-acceptance-final2-20261004.json)；下方保留历史。
+
+## 当前增量：手机经营 customer 七页读链（2026-10-04，本地部分承接，未发布）
+
+已新增工作台、统计、订单、订单详情、退款、退款详情和物流七个真实页面，以及十个独立 UserJWT/App 只读接口。当前有效用户及唯一启用的 customer=1 手机订单管理身份决定全站权限，聊天 status=0 仍有效；店长、客服聊天、配送、核销和 AdminJWT 不替代该资格。七个旧手机入口严格映射，门店经营入口继续按自己的范围授权。个人中心广告、个人菜单和商家菜单均按真实目标门控，撤权及账号变化清空旧数据。
+
+最新实际分布为 **Worker2255／PHP1904，旧URL可执行890／可行动缺口976，有效覆盖47.2%**。API1194／Admin786／Supplier164／Kefu70／Out41／ERP0。Uni **115** 注册页；151旧逻辑路由为 **28直连／112兼容／11缺口**，兼容62候选／50部分。完整手机角色仍partial，个人中心仍25/26、menuRoleGates=false；Checklist **246完成／158开放／404总项**原标题、勾选和父项保持。
+
+本批Worker唯一143项通过（46原生PostgreSQL／SQL-HTTP、97独立运行时／源码合同）；其中门店边界仅复验1个明确选择的用例，其余34个未选择项不计通过。Uni实际运行时58项、115页主题宿主、完整Uni类型及H5／微信小程序／App构建通过，最终编译浏览器20组和单列QA6通过。选择器刷新导致实际原生picker关闭报错已修复并重新三端构建；所有失败、被替代执行、60个历史目录／17742文件及本批两套三平台产物均保留。
+
+销售总量与趋势遵守旧Model真实pid>=0口径，平台状态计数单独限制平台自营；待核销排除负支付头为明确修正。旧getFrontTime缺失，上海半开窗口明确作为修正。完整优惠／赠品／虚拟交付详情、发货备注、商品用户、财务代客及独立核销合同继续开放；provider、真机、生产授权、Hyperdrive、规模和发布仍待验收。
+
+详见[手机经营读链验证](workers-ts/docs/customer-work-read-validation-20261004.md)、[独立合同审计](workers-ts/docs/customer-work-read-contract-audit-20261004.md)、[日期路由分布](workers-ts/audit/route-distribution-customer-work-read-followup-20261004.json)、[本批冻结验收](workers-ts/audit/customer-work-read-acceptance-final3-20261004.json)。本批没有生产DDL、提交、推送或部署；下方保留历史。
+
+## 当前增量：客服移动工作台、角色入口与当前会话归属（2026-10-03，本地部分承接，未发布）
+
+个人中心按真实有效客服身份发布独立工作台入口；明确 canonical HTTPS origin 同时匹配两份 allowlist，登录与用户／后台 token 分离。四个旧 mobile_list／mobile_chat 别名进入真实列表和聊天，注册客户／游客分域；在线、查看／未读、历史游标、5/6/7 富消息、跨账号异步失效及手机布局已接通。转接与客户上下文共享 transfer→chat 锁；投递复核当前归属，迟到旧通知不恢复已移出会话，同秒摘要和未读按实际消息版本处理。私人商品行为复核客户软删除，公开商品边界保持。
+
+本批重新核对 Worker2245／PHP1904，可执行旧路径890、可行动URL缺口976、有效覆盖47.2%；API11／Admin908／Supplier49／Kefu0／Out0／ERP8，Admin约93%。客服URL无缺口不代表完整页面与角色合同。Uni仍108注册页，个人中心仍25/26 partial，menuRoleGates仍false，旧work/customer工作台与完整话术管理继续开放。Checklist **246完成／158开放／404总项**的原标题、勾选与父项保持。
+
+普通LOGIN真实数据库、独立DO／SFC方法、客服编译浏览器、Uni三平台构建及两端类型分层验证；Windows workerd启动崩溃在业务断言前发生，执行0项，不计通过。所有修前失败与被替代结果、继承298946条记录和46个历史输出目录／16543文件保留。正式origin、Cloudflare transport、provider、设备、Hyperdrive与生产发布仍开放。
+
+详见[客服工作台合同与验证](workers-ts/docs/kefu-mobile-workbench-validation-20261003.md)、[本批冻结验收](workers-ts/audit/kefu-mobile-workbench-acceptance-20261003.json)。本批没有生产DDL、授权、提交、推送或部署；下方保留各批历史。
+
+## 当前增量：配送工作台与送达核销四页（2026-10-03，本地部分承接，未发布）
+
+已接入配送工作台、真实订单详情、扫码和扫码详情四页及十个独立 UserJWT 接口。当前账号／有效配送身份／明确平台或门店范围限制读取与写入；旧status2/9选择器、上海完整日期、实际数量／窗口、成交价格及真实结算合同已补齐。原UUID、不可变原始意图与只追加收据约束未知结果恢复；部分送达换码，最后数量复用成熟结算，同事务失败整笔回滚。旧配送核销入口转入严格新合同；预售只读预览的实际行锁错误和跨尺寸日期控件外露均已修复并实际重验。
+
+最新实际分布为 **Worker2245／PHP1904，可执行旧路径890／可行动URL缺口976，有效覆盖47.2%**。Admin112业务页的598调用／629变体全部可执行；Uni108真实注册页保留原104页与首页顺序，151旧逻辑路由为28直连／109兼容／14缺口，兼容63候选／46部分。四个配送旧入口保持partial；个人中心仍25/26 partial，完整工作台／客服角色未完成，menuRoleGates仍false。Checklist **246完成／158开放／404总项**的既有标题、勾选及父项保持不变。
+
+当前最终Worker **242项唯一通过**（110原生PostgreSQL／SQL-HTTP、132其它运行时／源码合同；190业务回归加52审计），Uni运行时129通过（旧90加配送39）、三套类型、新鲜H5／MP-WEIXIN／APP构建1069文件、编译核验6项及实际H5浏览器20组通过。QA6单列，历史通过／跳过／浏览器重跑不累加。197039条入批记录与40个历史输出目录／13336文件保留；53份本批源／文档拥有前后字节或缺席证据，测试集群和预览资源已核实关闭，Uni临时依赖恢复普通空目录及原锁文件。真机、外部服务、生产目录／ACL、Hyperdrive、规模及发布仍开放。
+
+首份配送独立验收实际退出1，遗漏恢复后的五份构建专用 package.json 映射；真实原副本及物理目标字节一致，失败 master/reader/proof 原样保留。Final2 只补原始构建输入的严格绑定；运行时九份别名及应用、用例计数不变。
+
+Final2 最后查询唯一受限测试身份目录 TB19cz 时真实返回4／Permission denied，其他20目录返回3；总验收失败及其 master/reader/proof 保留。Final3 将两个原合法上下文的独立实际状态3查询绑定，普通身份重查20目录，并复核当前端口及全局进程，不更改ACL或将4算作关闭。
+
+详见[配送合同与验证](workers-ts/docs/delivery-workbench-validation-20261003.md)、[当前日期分布](workers-ts/audit/route-distribution-delivery-workbench-followup-final-20261003.json)、[本批冻结验收](workers-ts/audit/delivery-workbench-acceptance-final3-20261003.json)。本批未执行生产DDL、授权、提交、推送或部署；下方保留各批历史。
+
+## 当前增量：商家经营统计与订单管理六页（2026-10-03，本地部分候选，未发布）
+
+个人中心的两种商家统计样式现已连接真实门店经营统计、订单列表、订单详情、发货、退款及物流六个注册页面。新增29个独立 UserJWT 商家接口，以当前有效账号、店长身份和唯一门店范围读取业务数据；多门店必须显式选择，失效身份及跨门店请求拒绝。备注、改价、线下收款、手动／拆单发货及退款复用成熟业务事务；原始 UUID、请求原文摘要、只追加收据和原发起人状态恢复共同约束重试。真实 PostgreSQL 覆盖部分退款的数量预留、结算后父子订单物化、金额／库存守恒与同事务回滚。电子面单、第三方同城配送、完整工作台／客服／配送角色目标、真实支付 provider 和设备验收继续开放。
+
+当前日期审计为 **Worker2235 / PHP1904；精确匹配911，其中可执行890、不可用21；可行动URL缺口976，有效可执行覆盖47.2%**。各面旧URL缺口为 API11、Admin908、Supplier49、Kefu0、Out0、ERP8；本批新增安全商家接口未借用 AdminJWT 的旧URL合同计分。后台112个真实业务页面的598调用／629变体均注册且可执行。Settings76条为26候选／25部分／20缺失／5退役，全部后台274条为92／115／59／8。Uni104个真实注册页面保留原98页并新增6页；151个旧逻辑路由为28直连／107兼容／16缺口，兼容项63候选／44部分。严格源码审计确认104页实际 ThemePage 宿主链。
+
+个人中心由24/26推进至 **25/26 partial**：statisticsTwoStyles 为 true，menuRoleGates 仍为 false。六个商家目标页及其旧入口已接入，物流只读为候选，其余商家合同仍保留部分状态；不能据此关闭完整角色合同或整个父项。Checklist **246完成／158开放／404总项**的所有标题和勾选状态保持不变。
+
+本批精确去重 **1011项 Worker 用例通过**：346项真实原生 PostgreSQL／SQL-HTTP、22项嵌入 SQL、643项其它运行时／源合同／受控检查，33个测试文件，无失败或跳过。备注／发货39项中38项为真实SQL，另1项为纯请求解析合同，已分别归类。另有 Uni 实际 SFC/controller 运行时90/90、三套类型检查、H5／MP-WEIXIN／APP三个新鲜构建（1025个文件，含App两个 .nvue 附属产物）、6项编译产物核验及实际编译 H5 浏览器20/20组通过；标准六项浏览器QA重复核验不累加为业务用例。桌面1440×1000及移动390×844均无横向溢出，11个实际输入控件高度至少22px。受控HTTP浏览器证明客户端交互，不代替真实SQL、provider或真机验收。
+
+从41802条入批记录逐项核对已声明改动；61份本批源／文档拥有原始前后字节或新文件缺席证据，原master/proof、失败及被替代尝试、33个历史构建目录／9236文件完整保留。32个真实启动的本批 PostgreSQL 集群已停止，另一个启动失败且目录不可访问的尝试只保留实际失败及关闭端口证据，不冒称状态码3；9个记录的预览端口已关闭。Uni临时依赖连接已恢复为原普通空目录，锁文件未变。旧20项Windows workerd启动崩溃仍未进入业务断言，不计入本批通过数；早期两次金融开发运行仅有原始工具记录，未补造完整命名空间日志。
+
+详见[本批验证](workers-ts/docs/merchant-management-validation-20261003.md)、[本批冻结验收](workers-ts/audit/merchant-management-acceptance-final3-20261003.json)；本批未执行生产DDL、授权或发布，下方保留既有历史。
+
+## 当前增量：待发货统计的旧筛选合同纠错（2026-10-03，本地修复，未发布）
+
+旧 get_date 的 status=1 是 DAO 筛选器：已支付、原始状态 **0/4**、退款状态 **0/3**、配送方式 **1/3**，排除用户及系统删除订单，商家订单只计 **pid=0/-1**。上批查询把原始状态1误计为待发货；本批用共享状态谓词修正，并与个人待发货计数复用。当前有效店长及明确有效门店集合继续限定统计范围；支付金额与订单总数口径不变。原始状态1保留为必须不计的真实数据库反例。
+
+当前后端 **485 项独立用例通过**（226 项原生 PostgreSQL/SQL-HTTP，259 项其它运行时/单元/嵌入 SQL）；双类型及完整源/mutant三套 **295/295** 通过。真实 SQL 覆盖16个正向组合、各状态/支付/退款/配送/删除/父子与跨门店反例、失效/重复身份及 HTTP/只读一致性；不把组合数累加为独立用例。旧20项 workerd HTTP 因 Windows启动崩溃未进入业务断言，本次仅统计修复未重复执行，仍待可运行环境复验。
+
+注册路由与前端源未变，日期分布仍为 Worker2206、PHP1904、可执行890、可行动URL缺口976、有效覆盖47.2%；个人中心仍24/26 partial，statisticsTwoStyles/menuRoleGates保留false，checklist246完成/158开放/404不变。旧商家经营概览、管理订单列表/详情与发货操作，客服/工作台/配送目标页及真实provider/设备/生产发布继续开放。配送旧status2/9也须另批对照DAO selector，不能凭原始状态补UI。
+
+原首批 master/proof及所有 producer 字节副本完整保留；本批从36824条当前入批摘要开始，逐项分类改动，保护33个历史构建目录/9236文件。客户端14份源码、H5/MP/App962份产物、原后台与客户端浏览器22+26组报告均保持原始字节；本批新增浏览器执行0、构建0，原受控HTTP截图不证明这次SQL修复。当前4个自建PG集群已停止且端口关闭，诊断数据保留。
+
+详见[本批验证](workers-ts/docs/user-center-consignment-validation-20261003.md)、[新冻结验收](workers-ts/audit/user-center-consignment-acceptance-20261003.json)；下方保留首批及既有历史。
+
 审计起点：`main@55f2652`（2026-08-28）；本文件保留各阶段审计历史，最新状态以上方日期增量为准，旧阶段的“未部署/尚未验证”不自动代表当前状态。PHP 源码仍是功能合同和201表结构参考，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。2026-09-04 项目所有者确认本部署是全新系统，不承接旧 PHP 站真实历史数据，因此源 MySQL复制、逐行对账和旧对象迁移按“不适用”关闭。2026-09-21 已发布基线为 `main@7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b`；生产业务/后台已切至独立受限 Hyperdrive，旧 `9748c294e21c49a99579c9cef70102e0` 仅保留维护用途，未绑定回主站。实际客户、provider、完整业务覆盖及正式生产验收仍按开放项推进；当前工作区新增代码仅为未发布的本地候选。
 
 ## 审计结论
@@ -13,6 +120,463 @@ TEST-004D2 Vite／esbuild 安全回移增量（2026-09-27，完整补丁方案�
 FE-003B 本人会员核销码展示增量（2026-09-27，本地候选／未发布）：原 `/pages/users/user_member_code/index` 直接注册并接个人中心入口，仅本人显式点击后读取主线 `POST /api/user/bar_code`；文本与 UTF-8 裸码二维码一致，供已登录操作员在履约核销页内扫码查单、预览和核销。不请求付款六码，隐藏／卸载／登出／会话更换立即清除，迟到请求与画布回调不可恢复私有码，异常响应及绘制失败／超时可重试。运行时19/19、类型检查、路由审计18/18通过；H5合成实页1280×900与320×844的实际画布模块无错位，数字码及32字符中文码均由独立解码器还原，无横向溢出或应用错误。目标94页、原路径直达29、兼容100、剩余缺口22，旧端151路由仍唯一归档。最终三端构建和产物3/3通过，当前候选仍须自身Linux CI；微信小程序码／公众号Ticket、真实相机和角色、收银付款消费、注销及发布验收仍开放；FE-003B及247／157／404不变，详见[会员码恢复合同](workers-ts/docs/member-code-recovery.md)。
 
 FE-003B 足迹推荐促销边框增量（2026-09-26，代码／Linux CI 完成，未发布）：`/product/hot` 在既有分页结果上批量补旧 `activity_frame` 的 id/name/image，只选有效的平台父活动 type=5，沿用全场／指定／排除／品牌／标签范围和最新优先规则；不调整金额、顺序或导航。UniApp 在主图成功后叠加等尺寸边框，图框失败保留主图，主图失败隐藏边框；可选字段降级、安全图片 URL、255 字活动名、刷新／换身份／迟到图片事件均有运行时回归。新增图框 SQL 13 项；关联分页与导航原生 PostgreSQL 16 共29/29，默认 PGlite 37/37，UniApp 实际 API／页面／组件／编译事件回归52/52、Worker双类型与UniApp类型通过。H5隔离合成数据在1280×900与390×844验证边框、失败降级、滚动分页、刷新及点击精确商品导航；无横向溢出或应用错误，保留一条DCloud既有Vue Router导入警告。精确头Linux CI及经批准合入见上方；真实渠道验收仍开放，FE-003B及247／157／404保持不变。
+
+### 当前增量：个人中心六模块、视频收藏与真实会员码（2026-10-03，本地部分完成／未发布）
+
+旧 `/admin/setting/pages/home` 已接独立 `/setting/user-center-design`。会员头部、订单、运营统计、广告轮播、服务菜单和商家菜单六模块可完整编辑、保存和预览；五种会员风格、九项真实资产、三种订单风格、两种统计风格及三种菜单风格接入实际客户端。历史 ID4 视频收藏恢复真实列表、分页、取消和安全视频入口；会员码显示当前账号真实六位码、本地 QR、实际到期时间及默认隐藏余额。
+
+后台与公开端共同读取 `member,type3`、`routine_my_banner` 和 `routine_my_menus`。只读快照不初始化，显式空列表有效；保存用完整集合 revision、独立 view/manage、actor/UUID 回执及同一事务。三份共享数据不一致时清楚诊断并显式确认，额外旧共享项停用且原值保留。商家项只能改名称、图片和顺序，固定 URL 与角色身份不能被编辑赋权。两次公开读取同时核对 actor、revision 和 `consistency_key`，配置或角色改变时拒绝拼接旧资料。未知写回执按原账号保留完整意图，只有原回执或匹配的写前证明解除，不自动重发。
+
+日期快照 `user-center-design-followup-20261003`：Worker **2206**，旧 PHP **1904** 条路径，**890** 可执行精确匹配、**976** 可行动 URL 缺口，有效覆盖 **47.2%**。Admin **112 业务页、598 调用点／629 变体**全部注册且可执行。设置 76 屏 **26 候选／25 部分／20 缺失／5 退役**；全 Admin 274 屏 **92／115／59／8**。本批个人中心 missing→partial，既有完整候选逐项保留。Uniapp **98 实际页**，151 旧路由 **28 直接、101 兼容、22 缺口**；兼容 62 候选／39 部分。Checklist **246／158／404** 保持。
+
+当前输入的 Admin 运行时 **32/32**、Uni 运行时 **48/48**、源与 mutant 三套 **295/295** 通过。Worker 去重 482 项通过：30 项新增真实 PostgreSQL/SQL-Hono HTTP、30 项既有装修回归、163 项真实金融 SQL，另 259 项协议/单元/嵌入 SQL；20 项线下收银 workerd HTTP 在进入业务断言前被环境阻断，不计通过。 四套类型检查及 Admin/H5/MP-WEIXIN/APP 四处独立资源构建通过。最终实际编译浏览器 **48/48 组**（Admin 22、Uni 26），桌面 1440×1000、手机 390×844；意外 console、页面异常、rejection、HTTP、请求和未归因警告均为 0。故意故障及 SDK 警告按实际请求/编译文件严格配对。失败、重复、初始化诊断和过时输入保留，不计最终通过。
+
+整屏保持 **partial**：26 项连接门控中 24 真，旧商家订单管理/发货等实际操作与工作台、客服、配送角色目标仍未完整迁入。核销不替代这些功能。旧微信会员码 provider 分支、原生客服、外部小程序、真机/扫描/支付渠道、生产授权与 Hyperdrive、规模与发布继续开放。现有库没有通用 group CRUD；本批保护实际三个固定 namespace 写入器及通用 DIY，直接高权限 alias 导入维护仍须停写或使用同一协议。
+
+受影响的旧线下收银 HTTP fixture 已按真实已审阅 0176 安装流程修复 owner/catalog 就绪缺口，发布审计与收银权限条件保持。随后两次独立尝试（包括 workerd/postgres 全部退出后的完全串行重试）均在 Miniflare getKVNamespace 阶段遭 Windows workerd 0xc0000005 启动崩溃；20 项业务断言未执行，明确保留为环境阻断。10 个本批 PostgreSQL 集群已核实 pg_ctl status3、端口拒绝、fixture remaining0，workerd/postgres 进程为 0；诊断 data 与配置/日志保留。会员码期限场景使用确定性 provider 存储配合真实 SQL 当前账号，未冒称 live Redis/provider 集成。
+
+详见[合同](workers-ts/docs/user-center-design-contract-review-20261003.md)、[本批验证](workers-ts/docs/admin-user-center-design-validation-20261003.md)、[日期分布](workers-ts/audit/route-distribution-user-center-design-followup-20261003.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-user-center-design-followup-20261003.json)及[冻结验收](workers-ts/audit/user-center-design-acceptance-20261003.json)。旧父项不因本地六模块可用而关闭，下方保留完整历史。
+
+
+### 当前增量：商品详情十九键装修与实际购买、分享消费（2026-10-02，本地候选／未发布）
+
+旧 `/admin/setting/pages/product_detail` 已接独立 `/setting/product-detail-design`，完整保存十九键、编辑十八项并预览九个实际模块。`system_dise` 的 `product_detail,type3` 单例是后台与客户端共同权威，历史 `status=0` 有效，GET 不初始化。独立 view/manage、目录诊断、集合版本、actor/UUID 原子回执、真实 HTTP 回滚证明及通用 DIY 写保护共同约束保存；私有扩展保留，公开投影不泄漏。
+
+普通详情接入真实媒体、SKU、评价、关联种草、排行、套餐、推荐、底栏及会员显示，复用实际领券、购物车、表单与结算。展示价和交易价分开验证；PHP 合法的零展示价不影响金融最小金额约束。秒杀、拼团、预售实际 SKU 读取器在同一只读快照消费装修，保留普通/预售和积分/秒杀/拼团的参数开关差异。未知加购按账号跨页与刷新保持，不会因重读配置或导航失败重复 POST。
+
+新增认证商品平台码和有过期时间的 HMAC 推荐 scene，公众号回调重查商品/推荐人/素材；固定 HTTPS provider、十秒超时、禁止重定向及有界 PNG/JPEG 响应。当前 H5 hash 路径、MP 路径、好友/朋友圈、APP 与普通商品真实 canvas 海报接通。最终编译浏览器发现并修复空 `window.wx` 被误认为可用 SDK、种草页面误占首页两个实际问题；97 页主题宿主与原分类购物回归保持。
+
+日期快照 `product-detail-design-followup-20261002`：Worker **2194**，Admin **111 业务页、592 调用点／623 变体**全部注册且可执行。旧 PHP **1904 路径、890 可执行匹配、976 可行动 URL 缺口、47.2% 有效覆盖**；另有 21 条已匹配受控不可用和 17 条退役。设置 76 屏 **26 候选／24 部分／21 缺失／5 退役**，仅详情装修一屏 missing→candidate；全 Admin 274 屏 **92／114／60／8**。Uniapp 当前 **97** 真实页，151 旧路由保持 **28 直接、100 兼容、23 缺口**，兼容中 62 候选／38 部分。
+
+本批去重 **660 项通过**（**255 真实 SQL/HTTP、405 纯协议/实际 Vue 运行时/源与产物检查**）。原生库存 296 项按 AST 参数和用例主体核清；失败、重复和 34 个定向未选中观察保留，最终没有缺少通过证明的独立用例。Worker 双类型、Admin/Uni 类型及 Admin/H5/MP-WEIXIN/APP 四处独立资源构建通过。最终 dist 桌面 1440×1000、手机 390×844 浏览器 **87/87 组**（详情后台 18、普通详情 38、原分类回归 31），未预期 console、页面、rejection、路由、未分类请求和警告为 0；故意 HTTP 故障与原 SDK 警告严格配对保留。
+
+入批 **14337** 条 source/reference/raw 逐项分类，**19 处历史构建、5091 份文件**原字节与完整目录保持。每个既有源修改有原始 before，独立 reader 只读核对冻结摘要、真实构建输入、实际输出、终端库存和自有端口。13 个本批 PostgreSQL 已核实停机并清理 data，配置与日志保留。Checklist 仍 **246 勾选／158 开放／404 总项**；详情装修的本地候选完成不等于整体迁移或生产验收。
+
+浏览器使用实际编译应用与合成 API/SDK；真实 SQL/JWT/HTTP 分开验证。真实微信账号、平台发布路径、设备、生产权限、Hyperdrive、规模和发布继续开放，PC UI 完整装修及砍价独立流程不在本批完成范围。完整购物车仍有既有六键促销 KV 依赖。前批分类后台手机预览已有字幕局部重叠，保留为既有视觉边界。本批未提交、推送或部署。
+
+详见[合同](workers-ts/docs/product-detail-design-contract-review-20261002.md)、[本批验证](workers-ts/docs/admin-product-detail-design-validation-20261002.md)、[日期分布](workers-ts/audit/route-distribution-product-detail-design-followup-20261002.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-product-detail-design-followup-20261002.json)及[冻结验收](workers-ts/audit/product-detail-design-acceptance-final-retry3-20261002.json)。独立读回记录 `.cache/product-detail-design-independent-verification-final-retry3-20261002.json`；下方完整保留前批历史。
+
+### 当前增量：商品分类完整十布局与购物消费（2026-10-02，本地候选／未发布）
+
+旧 `/admin/setting/pages/product_category` 已接独立 `/setting/product-category-style`，完整承接二级六款、三级四款和实际客户端消费。旧 GET `diy/get_product_category` / POST `diy/save_product_category` 对应 `system_dise` 的 `category,type3` 单例，默认 2/1；独立 view/manage、集合版本、actor/UUID 原子回执与真实 HTTP 回滚证明保护保存，通用 DIY 不可绕过。公开布局与管理同权威，GET 不初始化，正常历史扩展字段保留，异常目录明确拒绝覆盖。
+
+客户端保留十种真实导航与商品布局、T1 滚动/首页定位、T2/T3 六种 mini-cart 和 T4 两种筛选抽屉。安全普通 SKU 支持实际图片、库存与精确会员价；分类购买进入真实普通详情再加购和确认结算。未知 cart/add 结果按账号持久保留，刷新、切页、购物车重读及详情入口不能解除保护或重复 POST；该接口没有 UUID 回执，不能冒称有服务端去重。原生底栏统一由页面的抽屉、SKU 和购物车共同管理，生命周期失败有归属检查及可恢复提示。
+
+日期快照 product-category-style-followup-20261002：Worker **2186**，Admin **110 业务页、589 调用点／620 变体**全部注册且可执行。旧 PHP **1904 路径、889 可执行匹配、977 可行动 URL 缺口、47.1% 有效覆盖**。设置 76 屏 **25 候选／24 部分／22 缺失／5 退役**，仅分类样式一屏 missing→candidate；全 Admin 274 屏 **91／114／61／8**。Uniapp 96 真实页／151 旧路由保持 28 直接、100 兼容、23 缺口，兼容中 62 候选／38 部分。消费者补全不增加原已存在兼容路由数。
+
+本批去重 **243 项通过**（136 项真实原生 SQL/HTTP、107 项纯协议/实际 Vue 运行时/静态与产物检查），0 跳过。原生新增 36 与旧回归 129 合计 165；覆盖门控 9、Admin 运行时 21、Uni 运行时 19、产物 5 与报告测试按实际终端库存计数。Worker 双类型、Admin/Uni 类型及 Admin/H5/MP-WEIXIN/APP 四处资源构建通过。最终实际 dist 桌面 1440×1000、手机 390×844 浏览器 **31/31**，六项检查包含其中；未预期 console、页面、原始 rejection、路由、未分类请求及警告均为 0。8 个故障 HTTP 与 25 条原 SDK 警告按实际脚本/请求/源码摘要配对保留。
+
+入批 **8394** 条 source/reference/raw 逐项分类，**15 处历史构建、3937 份文件**原字节保持。新资源独立输出；Admin final2 及重新验证后的 Uni 四平台输入均按其真实构建范围绑定，521 份完整原字节采集含一个 binary。6 个本批原生 PG 已停机，data 在逐项验证后清理，配置与日志保留；自有 PG/浏览器端口由独立 reader 实查。所有失败、诊断和重复通过保留而不累加。Checklist 仍 **246 勾选／158 开放／404 总项**。
+
+完整购物车仍有既有首单促销六个 KV 键依赖；会员展示/属性报价是 SQL 权威，但促销 KV 故障会拒绝完整购物车，不能悄悄忽略促销。浏览器是实际编译资源上的严格合成 API；真实 SQL/JWT/checkout 分开验证，不把浏览器当支付、生产授权或 provider 验收。本批未提交、推送或部署。生产权限、Hyperdrive、规模、真机、provider 与发布继续开放。
+
+详见[合同](workers-ts/docs/admin-product-category-style.md)、[本批验证](workers-ts/docs/admin-product-category-style-validation-20261002.md)、[日期分布](workers-ts/audit/route-distribution-product-category-style-followup-20261002.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-product-category-style-followup-20261002.json)及[冻结验收](workers-ts/audit/product-category-style-acceptance-20261002.json)。独立读回输出 `.cache/product-category-style-independent-verification-final1-20261002.json`；下方完整保留前批历史。
+
+### 当前增量：同城配送完整十键配置与实际运行时权威（2026-10-02，本地候选／未发布）
+
+旧 `/admin/setting/city/delivery/setting` 已接独立 `/setting/city-delivery-settings`，完整承接四项开关与六项凭据（保留 `dada_app_sercret` 旧拼写）。关闭开关保留隐藏配置，凭据可明确保留、替换或清除；GET 只显示配置状态和来源。共享 resolver 使四项 SQL 开关、受认证加密配置和既有 provider 查询/UU 回调消费同一权威；无受管密文时保留 Env，clear tombstone 禁止回退。专用独立 view/manage 权限，通用 config/SMS/log 入口不能绕过或展示新加密意图。
+
+保存采用服务端 HMAC 与不可变密文准备，再显式确认；本地不持久化凭据新值。刷新可恢复原准备/回执，未知确认遇 404、过期、网络或不匹配证明保持原请求；只有原成功回执或匹配的真正 HTTP 写入前回滚证明解除。共享协议锁不扩大 App 的配置 SELECT 权限；有未决配送、事件、outbox 或 reconciliation 时禁止实际凭据轮换。已完成旧 UU 回调只有严格原事件/COMPLETED outbox 精确重放才 ACK，不能重新派发。
+
+日期快照 `city-delivery-settings-followup-20261002`：Worker **2180**，Admin **109 业务页、586 调用点／617 变体**全部注册且可执行。旧 PHP 1904 路径仍为 **889 可执行匹配、977 可行动 URL 缺口、47.1% 有效覆盖**。设置 76 屏 **24 候选／24 部分／23 缺失／5 退役**，仅同城配置一屏 missing→candidate；全 Admin 274 屏 **90／114／62／8**，营销 48 屏 **33／14／0／1**。Uniapp 96 真实页／151 旧路由维持 28 直接、100 兼容、23 缺口（兼容中 62 候选／38 部分），216 份原输入未改，本批不重建 Uniapp。
+
+本批去重 **317 项通过**（198 真实原生 SQL/HTTP、119 纯输入/实际 Vue 运行时/静态），0 未选中，29 个文件；Worker 双类型、Admin 类型及一处 Admin 资源构建通过。最终实际 dist 桌面 1440×1000、手机 390×844 浏览器 **15/15**，六项基础检查包含其中；额外开关稳定帧诊断 **1/1** 单独保留不累计。未预期 console、页面、路由、未分类请求及警告均为 0，10 个注入 HTTP 错误严格按 group/URL/status/request 配对保留。新库存实际 33 项，首次 34/HTTP9 手工误计和所有失败/重复尝试保留不累计；签收供应商收入、积分和佣金的真实原生回归已重跑，不冒称通用支付/退款或外部渠道验收。
+
+入批 **7468** 条 source/reference/raw 逐项分类，历史 **4516** 条原始文件和 **14 处旧 build 的 3684 份文件**保持；新 Admin build 独立输出 **253** 文件，291 份完整输入在构建前按 raw/LF 采集。5 个本批 PG data 在独立停机核对、保留原配置/日志后清理；五个实际浏览器/诊断端口及所有 PG 端口由最终独立 reader 实查。Checklist 仍 **246 勾选／158 开放／404 总项**。
+
+真实 provider 账号/协议、第三方新发单与取消费用链、生产密钥部署/轮换/留存、生产权限/Hyperdrive/规模、真机和发布继续开放。旧 SQL 明文与历史 UU `event.client_id` 业务身份未迁移；新配置/意图加密不等于整个数据库身份字段均加密。共享 advisory 只协调合作路径，非合作维护 SQL 须停流或遵循协议。本批未提交、推送或部署，不关闭父项。详见[配置合同](workers-ts/docs/admin-city-delivery-settings.md)、[本批验证](workers-ts/docs/admin-city-delivery-settings-validation-20261002.md)、[日期路由分布](workers-ts/audit/route-distribution-city-delivery-settings-followup-20261002.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-settings-followup-20261002.json)和[冻结验收](workers-ts/audit/admin-city-delivery-settings-acceptance-final-20261002.json)。最终独立结果见 `.cache/city-delivery-settings-independent-verification-final-retry1-20261002.json`；下方保留前批历史。
+
+### 前批增量：主题六套预设管理与全部 Uniapp 页面消费（2026-10-01，本地候选／未发布）
+
+旧 `/admin/setting/theme_style` 已接独立 `/setting/theme-style`，管理六套固定预设及其品牌、价格、两种辅色、按钮和渐变共六个 token。公共 `/api/v2/diy/color_change/color_change`、签到及 Admin 共用 `system_dise` 的 `color_change` 标量权威；读取不初始化，旧显示回退不作为已配置数据，重复身份、别名和损坏记录明确诊断。独立查看/管理权限、集合版本、actor/UUID 原子回执与匹配真正 HTTP 回滚证明保护保存；通用 DIY 写入不能绕过专用合同。
+
+全部 **96 个真实 Uniapp 页面**已有实际宿主与生命周期消费；六套配色接入品牌、价格、按钮、选中状态、渐变和海报 canvas。DIY 跟随色与自定义色各自消费，财务状态、错误、禁用、分销自定义色和提供商品牌保留原语义。原生 tabbar 的 SDK 调用由运行时检查证明，H5 实际点击另做浏览器验证；MP/APP 资源构建不等于设备体验。旧 PC 没有同一全局主题调用证据，本批不扩大范围。
+
+日期快照 `theme-style-followup-20261001`：Worker **2170**，Admin **108 业务页、581 调用点／612 变体**全部注册且可执行。旧 PHP 1904 路径仍为 **889 可执行匹配、977 可行动 URL 缺口、47.1% 有效覆盖**。设置 76 屏 **23 候选／24 部分／24 缺失／5 退役**，仅主题一屏 missing→candidate；全 Admin 274 屏 **89／114／63／8**，营销 48 屏 **33／14／0／1**。Uniapp 151 旧路由保持 28 直接注册、100 兼容映射和 23 缺口，兼容映射中 62 候选／38 部分。
+
+本批唯一 **256 项通过**（65 真实 SQL/HTTP、191 纯输入/实际 Vue 运行时/静态回归），0 未选中；四套类型和 Admin/H5/MP-WEIXIN/APP 四处资源构建通过。最终实际 dist 桌面 1440×1000、手机 390×844 浏览器 **22/22**，六项基础检查包含其中；未预期、页面、路由和未分类请求错误为 0。6 个主动故障 HTTP 错误、12 条锁定 SDK 弃用警告和 1 条 canvas 像素读回性能提示原样保留。浏览器合成 API 与受限 LOGIN 的真实 SQL/HTTP 分开证明；当前支付/退款原生回归没有重跑，前批证据保留，本批另验证统一结算运行时和 type4 浏览器消费。
+
+入批 **5693** 条 source/reference/raw 逐条分类，历史 **2967** 原始文件及 **10 处旧 build 的 2549 份文件**保持；新 build 独立输出，前序失败、单组诊断和重复通过不累计。3 个本批 PG data 停机核对后清理，原配置/日志保留；9 个新自有 PG/预览端口由独立 reader 查询。Checklist 仍 **246 勾选／158 开放／404 总项**。详见[本批验证](workers-ts/docs/admin-theme-style-validation-20261001.md)、[日期路由分布](workers-ts/audit/route-distribution-theme-style-followup-20261001.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-theme-style-followup-20261001.json)和[冻结验收](workers-ts/audit/admin-theme-style-acceptance-20261001.json)，独立 reader 结果见 `.cache/theme-style-independent-verification-final-20261001.json`。生产权限、Hyperdrive、规模、真机、渠道及发布继续开放；未提交、推送或部署。后续继续同城十键配置权威及其余开放合同，下方保留前批历史口径。
+
+### 前批增量：积分指定详情、共享 SKU 与统一结算消费（2026-10-01，本地部分承接／未发布）
+
+旧积分商品 type4 深链接按真实活动 ID 接入 `/pages/activity/integralDetail`，积分商城、详情和 FAB 链接选择共用可读性合同。售罄活动仍可查看和选择，损坏报价、归属、规格或超容量数据明确诊断；公共显式 DTO 不暴露成本、结算或佣金字段。真实持久化商品与附件归属在有界只读快照里验证，积分正文另净化控制字符、素材路径别名和旧签名，再签发本方素材。
+
+详情与商城共用 SKU/数量选择，取六层库存最小值，保留选中规格现金和积分；真实 type4 加购进入既有统一确认页。未知加购不自动重发，成功购物车在跳转失败后复用；身份、路由、隐藏及迟到响应隔离。基础商品收藏、当前来访推荐绑定、当前账号分享和可导出的普通网页二维码海报已接实际消费者。正式微信小程序码、原生微信提供商和相册权限真机体验仍开放，悬浮设置保持 partial。
+
+日期快照 `integral-detail-followup-20261001`：Worker **2164**，Admin **107业务页、578调用点／609变体**全部注册且可执行。旧PHP1904路径中 **889可执行匹配、977可行动URL缺口、47.1%有效覆盖**；设置76屏 **22候选／24部分／25缺失／5退役**，全Admin274屏 **88／114／64／8**。Uniapp **96真实页面**；151旧路由按28直接注册、100兼容映射和23缺口完整记账，映射中62候选／38部分。URL匹配、页面候选与正式验收是不同口径。
+
+本批去重 **197项通过**（51真实SQL/HTTP、146纯输入/实际Vue交互/静态回归），330未选中项明确排除。Worker双类型、Admin/Uniapp类型及 Admin、H5、MP-WEIXIN、APP资源构建通过；实际最终dist桌面1440×1000和手机390×844浏览器 **16/16**，六项基础检查包含其中，页面/路由/未预期错误为0。14条锁定SDK弃用警告和1条海报像素读回性能提示原样保留。浏览器使用合成API，与受限LOGIN真实SQL/HTTP及金融支付/退款回归分开证明；APP资源构建不是签名包或真机验收。
+
+入批2001条source/reference/raw逐条分类，历史1672条原始文件和六处旧build的1427份文件保持；新构建使用独立目录，失败和重复运行不累计。5个本批PG data在独立status3核对并保留配置/日志后清理，浏览器服务关闭，自有端口由独立reader核对。Checklist仍 **246勾选／158开放／404总项**。详见[积分详情合同](workers-ts/docs/integral-product-detail.md)、[日期路由分布](workers-ts/audit/route-distribution-integral-detail-followup-20261001.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-integral-detail-followup-20261001.json)和[本批冻结验收](workers-ts/audit/integral-product-detail-acceptance-20261001.json)。生产角色、Hyperdrive、规模、真机及发布继续开放；未提交、推送或部署。下方保留前批历史口径。
+
+### 前批增量：悬浮按钮完整配置、链接选择与实际前端消费（2026-10-01，本地部分承接／未发布）
+
+旧 `/admin/setting/pages/fab` 已接独立 `/setting/fab`；恢复六键配置、四种样式、0至100位置、前后主图条件、子按钮数量/素材/链接/排序，以及真实商品、分类、活动、文章和专题选择。商品搜索承接关键词、介绍、商品与有效基础 SKU 条码。历史附加属性按明确原按钮归属保留；损坏、重复或无法安全合并的数据只诊断，不自动重建。公开消费不泄露历史扩展属性或管理标识。
+
+独立 `fab_settings.view/manage`，旧1612仅精确页面 path/auth 成对映射查看。全集/xmin版本、actor/UUID原子回执及匹配真正409/写入前400回滚证明保护保存；未知结果保留原请求。通用 DIY 保存先在已锁行上识别专用模板并拒绝绕过。本批使用既有正式授权，不新增生产 DDL、grant或维护前推。两套Admin前缀各5接口，公开读取沿共同合同消费签名素材与安全目标。
+
+日期快照为 **Worker2164**（API文件1123/Admin主文件766），Admin **107业务页、578调用点／609变体**全部注册且可执行。旧910精确匹配、889可执行、21受控不可用、17退役与977可行动URL缺口不变，有效覆盖 **47.1%**。设置76屏保持 **22候选／24部分／25缺失／5退役**，全Admin274屏 **88／114／64／8**，营销48屏 **33／14／0／1**；悬浮屏是 **partial→partial** 的实质功能增量，积分商品type4指定详情落点尚缺，不以普通商品或积分账户页替代。
+
+去重验证 **125项通过**（37真实SQL/HTTP、88纯输入/交互/静态回归；新增79、旧回归46），四套类型及两端构建通过，严格API报告与当前源码确定性重算5项通过。最终实际构建桌面1440×1000/手机390×844浏览器 **38/38**，六项基础检查包含其中；实际拖拽、身份隔离、保存恢复、手机弹窗与四样式点击通过，页面/路由/未预期错误为0，SDK原始弃用警告单列。root复核最终截图，H5窗口顶部偏移修复标题遮挡。前序失败、单组诊断和加载超时完整保留，不累计重复通过。本机7表/18表受限权限切片、合成API和本地R2 stub不代替完整主站、真实provider或真机验收。
+
+入批446项基线逐path声明源码变化，前批171及更早117共288项原始文件保持；旧build不作为本轮输出。三处历史build现有715文件中25份有旧摘要可比较、690份为本次首次采集，完整历史摘要覆盖不作推定。Checklist仍 **246勾选／158开放／404总项**，生产角色、Hyperdrive、规模、真机、外部网页域名配置及发布门槛继续开放。详见[悬浮合同](workers-ts/docs/admin-fab-settings.md)、[冻结验收](workers-ts/audit/admin-fab-settings-acceptance-final-20261001.json)、[日期路由分布](workers-ts/audit/route-distribution-fab-settings-followup-20261001.json)与[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-fab-settings-followup-20261001.json)。下一批补实际积分商品深链接详情及SKU/现金积分结算消费。未提交、推送或部署，下方保留各批历史口径。
+
+### 前批增量：分销等级、任务管理与实际升级消费（2026-10-01，本地候选／未发布）
+
+旧 `/admin/setting/membership_level/index` 已承接为独立 `/setting/distributor-levels` 与可独立选择父等级的任务页。完整恢复七个等级字段、五种任务指标、筛选/分页/排序、显隐与软删除；与普通会员等级保持各自权限和数据来源。旧972只按精确 path/auth 成对映射查看，管理须明确授予；任务只读/管理账号不借等级或广泛分销权限越权。集合/xmin版本与原子 actor/UUID 回执保护写入；仅匹配原请求的真正409或写入前400回滚证明释放待确认状态，保留草稿并明确重读后生成新UUID。未知结果保留原请求，已删除父等级下的孤儿任务仅可明确软删除。
+
+Uniapp真实分销等级入口消费当前、下一等级、图片/颜色与五种进度。实际注册、关系绑定、密码/手机及已验证UID登录和付款后置消费调用升级服务；赠送等级不降级，缺任务不自动升级，按顺序遇首个未完成等级停止，已完成记录及status0历史重复保留。共享目录锁、升序UID锁与用户NOWAIT行锁保护并发；非法未完成任务使目标事务整体回滚。注册/绑定升级失败在主事务提交后记录，付款失败进入可重试FAILED；等级与后续财务是各自事务。
+
+本批另补精确维护前推：仅从核定的 `pre-agent-levels` 目录/权限状态前推，增加Admin等级新增、sequence USAGE及八列语义UPDATE，保留运行身份、既有282表数据和历史五种升级边界。固定invoker函数/触发器与目录审计拒绝未知状态，HTTP不安装DDL或补grant，生产授权须独立验收。本机11表Admin/10表app受限LOGIN切片与完整282表维护/付款夹具分别验证；付款夹具使用合成支付标记，实际订单/后置任务/佣金消费不等于真实渠道验收。
+
+日期路由快照更新为 **Worker2154**（API文件1118/Admin主文件761），Admin **106业务页、573调用点／604变体**全部注册且可执行。旧PHP1904路径中910精确匹配、889可执行、21受控不可用、17退役、977可行动URL缺口，有效覆盖 **47.1%**。设置76屏 **22候选／24部分／25缺失／5退役**，全Admin274屏 **88／114／64／8**，营销48屏 **33／14／0／1**；只将分销等级一屏missing→candidate。七个等级旧兼容URL增加精确匹配，原有任务URL收紧到同一版本化合同。
+
+新原生专项59/59、历史授权23/23、历史业务30/30与历史页面46/46已通过；最终审计、类型、构建、浏览器、资源清理和唯一用例汇总以[本批冻结验收](workers-ts/audit/admin-distributor-levels-acceptance-20261001.json)为准。前序失败、超时和重复通过保留，历史验收原始字节不重写。Checklist仍 **246勾选／158开放／404总项**，实际客户、生产角色、Hyperdrive、provider、规模、真机和发布父项继续开放。合同见[分销等级与任务](workers-ts/docs/admin-distributor-levels.md)，日期设置台账见[76屏核对](workers-ts/audit/admin-legacy-setting-route-parity-distributor-levels-followup-20261001.json)；未提交、推送或部署。
+
+最终316项唯一通过（151真实SQL/HTTP、165纯输入/静态/既有回归），21未选中排除。四套类型、两端构建及最终实际dist桌面/390px浏览器39/39通过，六项基础检查已包含其中。root复核七字段滚动编辑、任务父选择和赠送等级保留；SDK弃用警告原始记录保留，主动故障与未知错误分开核验。13个本批PG data目录清理，三轮Chrome/静态服务关闭，含前批共28个自有端口实际无监听。旧PC305项baseline及117项原始证据保留，共用源码变化按本批范围声明；前序失败和重复绿色不累计。
+
+### 前批增量：完整 PC 首页轮播管理与实际消费（2026-10-01，本地候选／未发布）
+
+旧 `/admin/setting/system_group_data/pc/:id` 已接 `/setting/pc-banner` 和双 Admin 前缀各7接口，按 `pc_home_banner` 配置名定位，完整承接动态字段、素材、新增/编辑/显隐/删除、筛选/分页/排序。管理没有10条上限；PC Home 实际读取前10启用行、展示切换及安全跳转。单图历史数组取首项，多图历史字符串转数组；未知字段类型按旧规则回退输入，可解析 JSON 保留附加键，损坏记录明确诊断。核心标题/图片/跳转语义始终校验，动态元数据不能绕过。
+
+独立 `pc_home_banner.view/manage`，旧菜单只按精确 path/auth 成对映射查看，不借PC商城1036授权。集合/行全文与xmin版本、真实附件共享锁、数据表防phantom锁和原子 actor/UUID 回执保护完整写入；真正409回滚证明才释放待确认请求，未知结果按账号恢复并查询或重试原请求。GET不初始化，缺组首次明确新增才原子创建。公开素材沿实际附件归属和签名读取协议，拒绝非法路径、临时签名存储及多层编码绕过。暂时串行其他group写入，不能据此宣称生产规模完成。
+
+设置76屏 **21候选／24部分／26缺失／5退役**，仅旧轮播一屏missing→candidate；全Admin274屏 **87／114／65／8**，营销48屏保持33／14／0／1。Worker **2110** 条（API文件1096/Admin主文件739），Admin **104**业务页、**565**调用点／**589**变体全部可执行；旧882可执行精确匹配、46.7%有效覆盖和984可行动URL缺口保持。Checklist仍 **246勾选／158开放／404总项**；已勾选代码审计FE-001D4保持，整体功能、PC商城其他设置及生产/发布父项继续开放。
+
+证据见[完整合同](workers-ts/docs/admin-pc-home-banner.md)、[日期设置台账](workers-ts/audit/admin-legacy-setting-route-parity-pc-banner-followup-20261001.json)和[冻结验收](workers-ts/audit/admin-pc-home-banner-acceptance-20261001.json)。本机八表Admin/三表app受限LOGIN权限切片、实际JWT/createApp HTTP和合成API浏览器分开核验；公开signed-asset验证使用实际controller的专用Hono及本地R2字节夹具，不能替代完整282表commissioning、Hyperdrive、真实provider、规模或发布。没有新增DDL或grant，未提交、推送或部署；下方保留前批冻结口径。
+
+本批最终372/372项唯一测试通过（27真实SQL/HTTP、345纯输入/静态/既有回归），其中新合同64项、既有回归308项，22未选中排除。Worker双类型及两端类型/构建通过；最终实际dist桌面1440×1000与手机390×844的31组浏览器及6项基础检查通过，root复核手机表单和单行轮播指示器/标题间距。前序24/31、第二轮31/31及显示修正均独立保留，不累加。3个自有PG data清理，9个PG/三轮静态预览端口实际核对无监听，自有Chrome关闭；历史165项入批摘要全部匹配，预期共用文件修改单列，旧验收原始字节不重写。
+
+### 前批增量：同城配送回调归属与原子收货（2026-10-01，本地修复／未发布）
+
+本批修复现有回调与查单投影的原单UID、多态归属和唯一配送尝试核验；同事件重试也须重新确认当前履约权威。存在第二个历史尝试或归属无法证明时保持CONFLICT/DEAD，不按最大ID采用。送达复用共享收货事务，原单、真实积分/佣金/供应商结算、配送终态和watermark原子提交或回滚。UNKNOWN仍只保留IGNORED证据，历史已降级权威不自动重建。表级锁暂时串行保护所有同城投影，不能当作生产规模验收；未来配送写入须遵守表锁优先协议。
+
+本批没有新增页面、API或授权，记录整屏保持partial，同城配置保持missing。完整旧配置是四开关加六凭据，无计价或范围字段；当前Env凭据与SQL/KV开关不是完整页面激活合同。设置76屏仍 **20候选／24部分／27缺失／5退役**，全Admin274屏仍 **86／114／66／8**；Worker **2096**、Admin **103**业务页及 **558**调用点／**582**变体保持。Checklist仍 **246勾选／158开放／404总项**，不改变已有代码审计勾选，不关闭功能、履约或发布父项。
+
+本批真实旧源码完整红基线32失败/15通过；最终保护47/47、旧回归51/51、共用收货定向5/5（56未选中）、纯函数/源码49/49，合计152项唯一通过（83真实SQL/HTTP＋69纯输入/源码）。双Worker类型通过，九个本批PG集群独立确认停机/无监听并清理data；上一批UI与发布证据保持历史口径。结果记录在[回调归属合同](workers-ts/docs/city-delivery-callback-authority.md)和[独立验收](workers-ts/audit/city-delivery-callback-authority-acceptance-20261001.json)；完整配置逐项证据见[只读核对](workers-ts/docs/admin-city-delivery-settings-contract-review-20261001.md)。取消费用确认、未知外部提交恢复、持久操作回执、账户版本/历史adoption/active-attempt绑定、十键凭据配置及真实provider/生产/发布验收继续开放。未提交、推送或部署；下方保留前批冻结结果。
+
+### 前批增量：同城配送记录查询基础（2026-10-01，本地部分承接／未发布）
+
+旧 `/admin/setting/city/delivery/record` 接入 `/setting/city-delivery-records`，双Admin前缀各三个GET。恢复时间/门店/平台/状态/配送及可信原单号筛选、稳定分页、本地详情与隐藏/删除门店选项；count/list同有界只读快照。平台/门店/供应商的多态关联不能混接，独立发单尝试及孤儿保留，原单uid/归属不能可靠确认时号码遮罩。历史状态1含义待核实、未知状态/无效金额或距离明确诊断，费用保持原decimal、米准确换公里，上海秒时间与未记录时间0明确区分。
+
+权限仅独立 `city_delivery_record.view`，旧1491精确path/auth只映射查看，order/config/store/shipping_settings不代授；账号切换/撤权和迟到结果隔离，失败保留并标注旧快照。整屏只 **missing→partial**：取消费用确认、未知外部提交恢复、取消/完成回调竞争和原订单回退未实现，现有回调或查单不代替这些动作。同城配置屏仍missing，旧十键与现Secret权威需另行核定。
+
+设置76屏 **20候选／24部分／27缺失／5退役**，全Admin274屏 **86／114／66／8**；营销48屏保持 **33／14／0／1**。Worker **2096** 条（API文件1089/Admin主文件732），Admin **103**业务页、**558**调用点／**582**变体全部可执行；旧882可执行精确匹配、46.7%有效覆盖及可行动URL缺口984不变。Checklist仍 **246勾选／158开放／404总项**，不关闭FE-001D4或整体履约/发布父项。
+
+证据见[本批合同](workers-ts/docs/admin-city-delivery-records.md)、[取消规范审查](workers-ts/docs/admin-city-delivery-cancellation-contract-review-20261001.md)、[日期设置台账](workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json)与[验收记录](workers-ts/audit/admin-city-delivery-records-acceptance-20261001.json)。本地真实SQL/JWT/SELECT权限切片与合成API浏览器分开验证；生产Hyperdrive、真实provider、账户绑定、规模、真机和发布继续开放。未提交、推送或部署，下方保留各批冻结口径。
+
+同时修复现有UNKNOWN回调覆盖已确认配送watermark的错误：新9项真实SQL在修复前全部失败并复现取货后错误取消回退，修复后9SQL+14原pure共23/23通过；记录3文件17/17通过，两组5文件40项唯一用例（SQL20/pure20），不累计重跑。UNKNOWN仍持久为IGNORED事件，不创建或更新确认cursor、rank、终态和时序；既有历史降级watermark不自动重建。未改变运行权限/DDL或provider规范，不据此宣称完整取消完成。
+
+最终审计6文件40/40、权限目录定向2/2（22未选中）、前端14/14；Worker双类型、Admin类型及构建通过。最终实际dist的桌面1440×1000/手机390×844合成浏览器21/21、基础6/6，手机两个322×424日期弹层完整且不透明，详情、旧快照及账号隔离已验证；served JS摘要匹配构建。前序失败或截图过渡尝试完整保留，4个本任务PG集群停机后独立核对并清理data，Chrome/5277预览均关闭。本地部分承接不关闭上述取消合同或整体Checklist父项。
+
+### 前批增量：完整发货设置与自提消费（2026-10-01，本地候选／未发布）
+
+旧 `/admin/setting/distribution/deliver` 已接独立 `/setting/shipping`，双Admin前缀各4接口。完整承接全场包邮、精确到分的满额门槛、线下支付包邮、到店自提开关，以及最大ID未删除默认提货点的名称/手机/真实地区链/详细地址/营业时间/坐标。关闭保留金额和提货点，GET不补键；配置、默认行CAS与原子UUID回执防止覆盖旧管理器修改及未知提交重复写入。旧1359精确路径/auth只授独立查看，管理须显式授予。
+
+邮费继续使用同SQL权威及原阈值/优惠优先序；补齐普通及各活动自提报价/建单的全局双开关、提货点确认指纹、门店共享锁和末端重验。v2状态与配送建议也改用SQL，附近门店目录保持独立语义。使用既有受限运行权限，不新增数据库DDL或授权；坐标明确手工输入，不宣称地图provider定位完成。
+
+设置76屏为 **20候选／23部分／28缺失／5退役**，本批只将完整发货设置一屏missing→candidate；全Admin274屏 **86／113／67／8**，营销48屏保持 **33／14／0／1**。Worker **2090** 条（API文件1086/Admin主文件729，含Admin兼容别名的文件面计数），Admin **102** 条业务页、**555** 调用点／**579** 变体全部可执行；旧1904路径的882可执行精确匹配及46.7%有效覆盖不变。Checklist仍 **246勾选／158开放／404总项**，FE-001D4和全局下单/正式验收父项不因本地一屏关闭。tab26八项真实配置差异中的全场包邮已由本屏承接，其余七项及同城配置/记录继续开放。
+
+原生业务/并发/ACL、旧消费回归、前端、类型/构建、桌面与390px合成浏览器的具体结果和修复尝试见[本批验收](workers-ts/audit/admin-shipping-settings-acceptance-20261001.json)、[完整合同](workers-ts/docs/admin-shipping-settings.md)及[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-shipping-settings-followup-20261001.json)。真实生产角色、Hyperdrive、历史区域/提货点、规模争用、真机及发布仍待验收；未提交、推送或部署。下方保留各批冻结历史。
+
+后端10文件四组完整验证 **101/101**（94项真实原生数据库、7项纯输入），审计6文件 **39/39**、前端 **14/14**；Worker双类型、Admin类型及37.50秒构建通过。最终桌面/390px合成浏览器21组验证与实际服务的JS摘要一起冻结；地区根节点加载、地区控件覆盖表单只读状态及旧兼容路由被动态配置匹配的问题已修复，版本CAS明确回滚使用绑定UUID/hash的真正409。失败、超时、旧夹具资格缺失及截图动画中间帧均保留，重复尝试不累计。最终自有PG集群清零停机并经独立status3核对清理data。
+
+### 前批增量：签到天数组独立管理与孤儿配置别名核定（2026-09-30，本地候选／未发布）
+
+旧 `/admin/marketing/integral/signIn` 已接独立 `/marketing/sign-day-config` 页面及双 Admin 前缀各7项 REST。承接自由文本天数文案、正整数积分、排序、显示/隐藏、编辑和删除；七条上限包含隐藏，异常历史数据有诊断，编辑保留可解析附加字段。GET不初始化，缺组明确添加才建立固定元数据和首条用户输入。独立 view/manage 权限，旧154精确路径/auth只授查看；UUID与版本、原子回执及刷新恢复保护未知结果。本组是旧展示管理配置，旧PHP与Worker真实签到算法均不读取它，不冒充奖励算法变更。
+
+旧优惠券 `system_config` 页面经完整SQL及入口检索确认是无菜单或源码入链的错名通用配置别名，默认读取站点tab26。仅定向退役该孤儿路由；实际注册/等级激活赠券已由专用页面及消费者承接。tab26仍有验证码有效期、微信登录昵称头像策略、全场包邮和五个系统安全键，共八项真实设置差异，归属原设置partial，不因路由退役关闭。静态源码证据不证明生产自定义菜单或书签不存在。
+
+营销48屏为 **33候选／14部分／0缺失／1退役**，全 Admin274屏 **85／113／68／8**；Worker **2082** 条（Admin主路由文件725，v1的Admin兼容别名计入API文件面），Admin **101** 条业务页，**551** 调用点／**575** 请求变体全部可执行。旧PHP精确可执行匹配882及46.7%覆盖保持不变；Checklist仍 **246勾选／158开放／404总项**。新的最小Admin数据库权限由独立维护升级前推，旧current冻结为pre-sign-day，旧升级不顺带授新权限；HTTP不修复ACL或DDL。验证、修复尝试和冻结摘要见[本批验收](workers-ts/audit/admin-marketing-config-acceptance-20260930.json)、[合同](workers-ts/docs/admin-sign-day-config.md)及[来源记录](workers-ts/docs/admin-marketing-config-legacy-source-20260930.md)。真实生产角色、Hyperdrive、发布和全局开放合同继续保留；未提交、推送或部署。下方数字为各批历史快照。
+
+原生10文件分四组完整验证 **100/100**，审计及维护入口 **57/57**、前端 **11/11**、最终构建桌面/390px浏览器 **15/15**；失败、保护前及整体超时尝试未累计。未知提交编辑弹窗遮挡回执入口已修复；组行锁列权限新增数据库保护，直接改组主键拒绝。各最终临时PG集群清零、停机并经状态核对清理data，预览和浏览器停止；类型/构建及冻结摘要见验收记录。
+
+### 前批增量：积分商品真正批量添加与规格消费（2026-09-30，本地候选／未发布）
+
+旧批量页 `/admin/marketing/store_integral/add_store_integral` 已接独立 `/activity/integral-batch` 页面与双 Admin 前缀各4项接口。跨页选择多商品及多个真实基础规格，分别编辑现金、积分、兑换次数与图片；来源库存、成本及配送/履约元数据只读继承，创建独立 type4 属性、规格、结果和说明，不覆盖已有积分商品、不预扣基础库存。沿实际旧共享规格校验拒绝现金/积分同时为0，保留默认下架；现有积分启停同步 status/is_show 后可真实兑换。独立批量权限精确对应旧933页面或935 POST，旧931单件权限不越权。
+
+整批业务图与 actor/UUID 回执在同一事务；来源 revision、所属方、素材和配送绑定在锁内核验，任何组及最后回执失败均全批回滚。相同请求恢复原回执，异 body/异 actor 冲突拒绝；未知 POST 冻结原请求，页面刷新后先查结果，404仅允许原 UUID/原 body 重试。直接纯积分虚拟兑换按所选活动 SKU 扣积分，同时扣基础/活动根及两个真实 SKU，保存标准财务/履约/退款快照；现金规格走统一购物车，取消/退款幂等恢复实际库存及积分，全部活动规格退役或删除不回退为基础规格。参见[批量合同](workers-ts/docs/admin-integral-batch.md)和[本批验收](workers-ts/audit/admin-integral-batch-acceptance-20260930.json)。
+
+本批旧批量一屏 missing→candidate；营销48屏 **32候选／14部分／2缺失／0退役**，全 Admin274屏 **84／113／70／7**。Worker **2068** 条，Admin **100** 条业务页，**544** 调用点／**568** 请求变体全部可执行。新REST未增加PHP精确路径匹配，旧1904中882可执行精确匹配及46.7%覆盖保持不变；Checklist仍 **246勾选／158开放／404总项**。本机原生角色/业务、前端类型/构建及桌面/390px合成浏览器的具体结果与修复尝试以验收记录为准，不代替生产角色、真实渠道、Hyperdrive、规模或发布验收。代码未提交、推送或部署，保持全项目开放项，下方保留前批口径。
+
+### 前批增量：满送公开整单售后（2026-09-30，本地部分承接／未发布）
+
+客户既有申请入口与双 Admin 前缀 quote/create/execute 已接通原始、未发货、未拆分满送订单的全额整单退款；全部购买和赠品数量、实付、具体赠券实例与原赠积分须相符，最多100行。执行版本由服务器在订单锁内从严格来源证据选择，普通订单保持原v1，旧v1满送申请不升级。报价在返回前验证同一原子准入；付款后置事件必须精确绑定并已COMPLETED，退款/发票8组件固定目录与所需权限缺失或漂移均拒绝，无DDL/补授权回退。整单保持原实体ID，余额、实际库存、积分及不可变回执原子结算；保留已付赠券、标签和活动池，取消/拒绝仅释放数量预占。
+
+本批满送HTTP完整32/32、独立受限app/Admin LOGIN 3/3、其余七个完整原生文件134/134、审计27/27及Worker双类型通过；分批验证且不累计重复尝试，失败修正和边界见[整单售后验收](workers-ts/audit/admin-full-gift-refund-entry-acceptance-20260930.json)和[入口合同](workers-ts/docs/full-gift-refund-entry.md)。部分数量/少退金额、拆单、已发货、退货验收与仅剩赠品售后继续开放；两屏仍partial，路由2060、Admin99业务页/564API变体、营销31候选/14部分/3缺失/0退役、全Admin83/113/71/7及Checklist246/158/404均不变。本地账号证明不代替生产、渠道、Hyperdrive或售后浏览器验收；本增量未改前端、未提交/推送/部署。下方保留前批未公开退款时的历史口径。
+
+### 前批增量：满送列表、编辑及订单赠送权益（2026-09-30，本地部分承接／未发布）
+
+旧 `/admin/marketing/discount/give` 和 `/admin/marketing/discount/add_give/:id?` 新增独立满送列表与编辑页，双 Admin 前缀各 11 项 REST，`full_gift.view/manage` 精确对应旧 1395/1399 菜单。恢复金额/件数门槛、最高满足阶梯或单层循环、赠积分/赠券/具体赠品 SKU、活动总池、参与范围与付后标签。编辑池保留已用与预留量及历史身份；循环积分和赠品乘达标次数，优惠券每活动一份。
+
+普通购物车、确认与建单已消费管理规则：赠品为零款实体行，订单总数量包含赠品，购买门槛/配额/邮费/佣金排除赠品；PC/UniApp 确认页显示赠品、赠券和积分。未付取消归还实际库存及活动池一次，付款赠券记录具体券实例归属、赠积分与后置任务重放幂等。0176 精确收据目录和 0177 取消证据通过明确维护安装；运行权限阶段使用固定前推，保留旧安装/授权合同。内部原子退款仅承接完整未发货原单，核对全部购买和赠品数量及付款权益；公开售后报价与创建统一拒绝满送，部分/拆单/已发货及仅剩赠品退款仍未完成，因此两屏 **missing→partial**。
+
+营销 48 屏为 **31候选／14部分／3缺失／0退役**，全 Admin 274 屏 **83／113／71／7**。Worker **2060** 条，新 Admin **99** 条业务页，**540** 调用点／**564** 请求变体均可执行；旧 PHP 1904 条的可执行精确匹配仍为 882、有效覆盖 **46.7%**，新 REST 不增加旧动态 URL 精确别名。Checklist 保持 **246勾选／158开放／404总项**。
+
+原生业务/退款/目录专项、固定权限前推与旧促销回归、前端类型/构建及桌面/390px合成 API 浏览器证据统一记录在 [满送验收](workers-ts/audit/admin-full-gift-acceptance-20260930.json)，具体通过数不与历史批次累计。代码未提交、推送或部署；真实受限角色、生产规模/统计、Linux/Hyperdrive、UniApp原生构建与发布验收继续开放，不据此勾选 Checklist。见 [满送合同](workers-ts/docs/admin-full-gift-route-contract.md)、[日期版营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-full-gift-followup-20260930.json)、[路由分布](workers-ts/audit/route-distribution-full-gift-followup-20260930.json)和 [分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)。下方保留各批历史口径。
+
+### 前批增量：第N件N折列表与创建/编辑两屏（2026-09-30，本地候选／未发布）
+
+旧 `/admin/marketing/discount/pieces_discount` 与 `/admin/marketing/discount/add_pieces/:id?` 两屏已接独立Admin列表、编辑及双前缀各10项接口，`nth_discount.view/manage` 精确承接旧1397/1401菜单。列表恢复名称、启停、规则类型筛选、15条分页、参与商品数和订单/客户/实付/优惠统计；表单恢复第二件半价(2,50)、买一送一(2,0)、自定义正整数件数1..99999999与0..100百分比、付后标签100上限、叠加1/3/5及具体父商品SKU/品牌/商品标签范围。旧消费者按参与总件数达标后最便宜单件仅优惠一次，不按更多件循环；买一送一是同一单件免费，不增加赠品库存。日选择按上海整日提交，编辑原秒保留；排除SKU及自定义0%为明确隐藏输入扩展。type2不提供其报价未消费的每人限购，新保存拒绝相关字段，历史非零给问题提示并阻止启用。三种促销管理共用已有目录锁与精确金融证据。
+
+两屏 **missing→candidate**，营销48屏 **31候选／12部分／5缺失／0退役**，全Admin274屏 **83／111／73／7**。Worker **2038** 条，新Admin **97** 条业务页，**529** 调用点／**553** 请求变体均可执行。旧PHP1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效覆盖 **46.7%**；Checklist仍 **246勾选／158开放／404总项**。新动态页面没有旧PHP精确URL别名。
+
+隔离PG16九文件 **86/86** 通过，涵盖独立管理及双前缀HTTP、菜单正反授权、跨商品SKU最便宜单件报价、三种促销真实建单、付后标签、履约拆单及第N件连续三次退款物化，夹具清零、集群停机。前端 **4/4**、审计五文件 **27/27**（含API合同10/10）、Worker双类型及Admin类型/构建通过；桌面1440×1000与移动390×844合成API浏览器核对预设/自定义、跨页SKU取消/应用、启停确认、撤权/只读、未知POST禁重复与日末时间，Vite已停。本地未提交、推送或部署，不勾选Checklist；真实受限角色、生产统计/规模、Linux/Hyperdrive、UniApp原生类型/构建及发布仍开放。见[本批合同](workers-ts/docs/admin-nth-discount-route-contract.md)、[验收记录](workers-ts/audit/admin-nth-discount-acceptance-20260930.json)、[日期版营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-nth-discount-followup-20260930.json)、[路由分布](workers-ts/audit/route-distribution-nth-discount-followup-20260930.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-nth-discount-followup-20260930.json)和[Admin API合同](workers-ts/audit/admin-frontend-api-contracts-nth-discount-followup-20260930.json)。下方各节保留当批口径。
+
+### 前批增量：满减满折列表与创建/编辑两屏（2026-09-30，本地候选／未发布）
+
+旧 `/admin/marketing/discount/full_discount` 与 `/admin/marketing/discount/add_discount/:id?` 两屏已接独立Admin列表、编辑及双前缀各10项接口，`full_discount.view/manage` 精确承接旧1396/1400菜单。列表恢复名称、启停、满N元/满N件筛选、15条分页、商品数、规则说明和支付订单/客户/实付金额；表单恢复递增阶梯满减/满折、单层循环满减、上海秒级时段、付后用户标签、叠加1/2/5及具体父商品SKU/品牌/商品标签选择。旧UI隐藏的排除SKU是明确扩展，不将循环满折冒充旧管理能力。阶梯上限100级，满折历史0%可完整回显；保存与编辑严格保留规格和失效身份，UUID与revision保护未知提交及状态变更。type1与type3共用 `time_discount_catalog/platform_type_1` 目录锁协议：管理独占、建单共享，锁后以数据库时间重报价；修改或启停满减活动也须参与此协议。
+
+两屏 **missing→candidate**，营销48屏 **29候选／12部分／7缺失／0退役**，全Admin274屏 **81／111／75／7**。Worker **2018** 条，新Admin **95** 条业务页，**519** 调用点／**543** 请求变体均可执行。旧PHP1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效覆盖 **46.7%**；Checklist仍 **246勾选／158开放／404总项**。新动态页面没有旧PHP精确URL别名。
+
+隔离PG16本批11文件 **85/85** 通过；补充真实履约拆单与退款物化发现并修复版本化促销退款补偿的旧均分错误，最终补充四文件 **95/95** 通过（两批有重叠，不合称180个唯一用例），夹具清零、集群停机。55.97元满减行退一件应为18.66而非18.65，连续三次18.66+18.66+18.65守恒；报价、补偿与物化使用同一剩余促销分段，现金让利及冻结佣金/积分合同保留。本批还纠正此前限时折扣实际统计仅计pid=0的遗漏：已拆单原支付根pid=-1计一次，履约子单不重复；版本化快照按活动精确归属，旧无版本证据保留历史回退。两种管理与支付消费者统一付后标签上限100，101个拒绝且不静默截断。前端两文件 **8/8**、审计回归 **27/27**（含API合同10/10）、Worker双类型及Admin类型/构建通过。合成浏览器API在1440×1000与390×844验证阶梯编辑、循环单层、跨页具体SKU与取消、启停确认、只读/撤权、日期弹层及未知POST禁重放，Vite已停。真实受限角色、生产规模与统计对账、Linux/Hyperdrive、UniApp原生类型/构建及发布仍开放；UniApp缺少 `@dcloudio/types`。本地代码未提交、推送或部署，不勾选Checklist。证据见[满减满折合同](workers-ts/docs/admin-full-discount-route-contract.md)、[验收记录](workers-ts/audit/admin-full-discount-acceptance-20260930.json)、[日期版营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-full-discount-followup-20260930.json)、[路由分布](workers-ts/audit/route-distribution-full-discount-followup-20260930.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-full-discount-followup-20260930.json)和[Admin API合同](workers-ts/audit/admin-frontend-api-contracts-full-discount-followup-20260930.json)。下方各节保留当批口径。
+
+### 前批增量：限时折扣列表与创建/编辑两屏（2026-09-30，本地管理与消费候选／未发布）
+
+旧营销 `/admin/marketing/discount/list` 和 `/admin/marketing/discount/add/:id?` 两屏已接独立Admin列表、编辑及双前缀各10项接口。恢复15条分页、名称/开关筛选、参与商品数、实付/优惠金额及订单/新老客户统计；表单恢复上海秒级时段、整数折扣百分比（90%即九折）、每人每商品限购、付后用户标签、叠加选项、全部/指定父商品和具体SKU/品牌/商品标签范围。跨页选品与退役规格身份受保护，启停/删除有revision确认；独立 `time_discount.view/manage` 对应旧1394/1398菜单。旧复制入口目标创建页未读取copy参数，因此不将复制计入迁移。
+
+两屏 **missing→candidate**，营销48屏 **27候选／12部分／9缺失／0退役**，全Admin274屏 **79／111／77／7**。Worker **1998** 条，新Admin **93** 条业务页面，**509** 个调用点／**533** 个请求变体全注册可执行。旧PHP1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效覆盖 **46.7%**；Checklist仍 **246勾选／158开放／404总项**。新动态页面没有旧PHP精确URL别名。
+
+本地真实服务合同已覆盖普通购物车、确认与建单、优惠叠加、跨SKU每人限购、付后标签、精确促销账本、拆单及连续退款；Kefu订单、供应商导出及配货单读取精确行额。隔离PG16八文件 **52/52** 通过，夹具清零、集群停机；此前广域原生9文件140通过/2失败仅为旧克隆缺表，修复后两套场景均通过。合成浏览器API桌面与390px日期弹层通过。candidate仍是本地候选：真实受限角色、生产规模与统计对账、Linux CI、UniApp原生类型/构建、发布后流程仍开放；UniApp缺少 `@dcloudio/types`。不得据此勾选Checklist或宣称完整促销迁移；旧满送、满减、多件折扣目录和编辑仍缺失。本地代码未提交、推送或部署。证据见[限时折扣合同](workers-ts/docs/admin-time-discount-route-contract.md)、[验收记录](workers-ts/audit/admin-time-discount-acceptance-20260930.json)、[日期版营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-time-discount-followup-20260930.json)、[路由分布](workers-ts/audit/route-distribution-time-discount-followup-20260930.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-time-discount-followup-20260930.json)、[Admin API合同](workers-ts/audit/admin-frontend-api-contracts-time-discount-followup-20260930.json)及[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)。下方各节保留当批口径。
+
+### 前批增量：活动背景两屏与派生记录删除（2026-09-30，本地候选／未发布）
+
+旧 `/admin/marketing/activity_background` 与 `/create/:id?` 新增独立列表和编辑页，双 Admin 前缀各9项接口，固定type6平台根活动。恢复15条分页、名称/阶段/活动及创建时间筛选、父商品参与数、启停、素材和全部/指定商品/品牌/标签范围；独立 `activity_background.view/manage` 精确承接旧1542/1546菜单，通用活动和边框授权不能借用。背景与边框共用固定服务器配置内核，日志、UUID和锁命名隔离；删除同步软删同类型门店派生子行，保留异类型及历史关系。本批也修正此前边框只删根记录的遗漏。商品目录/推荐/详情实际消费新背景，窄屏起止时间分行完整显示；type3排除范围是明确扩展。
+
+两屏 **missing→candidate**，营销48屏最新 **25候选／12部分／11缺失／0退役**，全Admin274屏 **77／111／79／7**。Worker **1978** 条；新Admin **91** 条业务页、**499** 调用点／**523** 请求变体全注册可执行。旧PHP1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效覆盖 **46.7%**；Checklist仍 **246勾选／158开放／404总项**。新页面没有旧动态URL别名，未提交、推送或部署。
+
+合并专项 **10文件72通过／2原生专用并发项跳过**，两页前端 **7/7**；隔离原生 PostgreSQL16 背景 **12/12**、真实双前缀HTTP **2/2**、边框 **7/7**，夹具0剩余且停机。背景四种范围的错位辅助行正反回归已验证参与数与公开消费一致，价格促销type1–4保持原合同。Worker双类型、Admin类型/构建和严格API审计通过；合成API浏览器在1440×1000与390×844检查跨页选品/取消、版本化保存、启停、只读角色、权限撤销清空与未知保存禁重提，实际角色/生产数据/媒体/真实商品渲染/完整Linux及发布验收继续开放。见[本批合同](workers-ts/docs/admin-activity-background-route-contract.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-activity-background-followup-20260930.json)及[本批验收](workers-ts/audit/admin-activity-background-acceptance-20260930.json)。下方保留前批历史口径。
+
+### 前批增量：活动边框两屏与商品目录消费（2026-09-30，本地候选／未发布）
+
+旧营销 `/admin/marketing/activity_frame` 列表及 `/admin/marketing/activity_frame/create/:id?` 新增独立 Admin 页面和双前缀9项接口，恢复旧15条分页、名称/阶段/活动及创建时间筛选、参与商品数、启停、删除、图片与全商品/指定商品/品牌/标签范围；新建/编辑采用 UUID 请求标识和材料版本，旧数字菜单1541与1543分别精确映射独立 `activity_frame.view/manage`。普通商品列表和推荐新增 `activity_frame` 边框槽位，显式 `promotions_type=5` 商品活动读取及 DIY 展示开关已接通。旧 UI 未提供的 type3 排除范围作为受控扩展，修复旧辅助关系缺 `is_all=1` 且旧列表固定显示0的错误语义。
+
+这两屏由 **missing→candidate**，营销48屏最新 **23候选／12部分／13缺失／0退役**，全 Admin274屏 **75／111／81／7**。Worker **1960** 条，旧 PHP1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效可执行覆盖 **46.7%**；新 Admin **89** 条业务页面、**490** 个调用点／**514** 个请求变体全注册可执行。旧动态 PHP URL 没有新增精确别名；Checklist 仍 **246勾选／158开放／404总项**。代码未提交、推送或部署；真实受限角色、生产商品/活动规模、媒体、前台实际渲染与发布后验收继续开放。证据见[本批合同](workers-ts/docs/admin-activity-frame-route-contract.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[营销逐屏台账](workers-ts/audit/admin-legacy-marketing-route-parity-activity-frame-followup-20260930.json)、[路由分布](workers-ts/audit/route-distribution-activity-frame-followup-20260930.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-activity-frame-followup-20260930.json)及[Admin API](workers-ts/audit/admin-frontend-api-contracts-activity-frame-followup-20260930.json)。下方为前批当时口径。
+
+本批本地合并专项 **6文件42通过／1原生专用项跳过**，日期及历史逐屏台账 **2文件15/15**、Admin 前端 **3/3**；隔离原生 PostgreSQL16 活动边框 **6/6**、超过200个活动的商品目录 **3/3**、受影响价格与结算回归 **53/53**。Worker unit/runtime 类型、Admin 类型及生产构建、严格 API 审计和 diff 检查通过；原生夹具0剩余且实例停机。验收数字及限制见[本批验收](workers-ts/audit/admin-activity-frame-acceptance-20260930.json)。
+
+### 前批增量：资金记录账本纠偏与商品详情促销范围（2026-09-28，本地候选／未发布）
+
+回查旧 `/admin/finance/finance/bill` 发现旧 PHP 从 `user_money` 读取用户资金记录，而新 `/finance/bill` 一直读 `user_bill`；这比此前台账记录的筛选/导出缺口更基础。本批把该页面改用独立 `user_money` 双前缀列表、类型和导出接口，恢复六列、昵称/ID、业务类型、上海时间及20条分页，并把旧页面/列表/类型数字规则映射 `bill.view`、旧导出617规则映射独立 `bill.export`。导出按全量快照逐页校验并限定100000行／16MiB，输出为 Excel 可开的 CSV，与旧 XLSX 格式不同。原 `/bill/list` 保持其它账本语义，旧 PHP URL 未增加精确别名。
+
+商品详情促销读取同步修复“全部商品／指定商品／排除商品／品牌／标签”五种范围的匹配，按父商品及旧 DIY 开关开启时的默认类型集合 `[1,2,3,4,6]` 返回生效活动；旧显式 `promotions_type=5` 边框和 DIY 展示开关尚未接入当前 Controller，活动边框管理两屏仍是缺失，不虚记完成。资金记录旧屏由 **partial→candidate**；全 Admin 274屏为 **73候选／111部分／83缺失／7退役**，跨模块18屏 **5／11／1／1**。Worker **1942** 条；旧 PHP 1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效可执行覆盖 **46.7%**。新 Admin **87** 条业务页面、**481** 个调用点／**505** 个请求变体均可执行。Checklist 仍 **246勾选／158开放／404总项**。
+
+本批合并专项 **7文件41/41**、资金记录原生 PostgreSQL16 服务/双前缀 HTTP **2文件7/7**、商品详情促销范围原生 **1文件2/2**；Worker 双类型、Admin 类型及生产构建、严格 API 审计通过，原生临时夹具0剩余且停机。代码未提交、推送或部署；真实受限角色浏览器、生产资金规模/查询计划、促销管理入口、发布后回归和正式验收仍开放。证据见[本批合同](workers-ts/docs/admin-user-money-ledger-route-contract.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[跨模块逐屏台账](workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-user-money-ledger-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-user-money-ledger-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-user-money-ledger-followup-20260928.json)及[本批验收](workers-ts/audit/admin-user-money-ledger-acceptance-20260928.json)。下方为前批历史口径。
+
+### 前批增量：客服话术与积分日志导出旧屏合同（2026-09-28，本地候选／未发布）
+
+客服话术新增独立 `/kefu/speechcraft` 页面，完整管理平台 `kefu_id=0` 的话术及 `owner_id=0,type=0,group=1` 的分类；双 Admin 前缀补分类增改删，独立 `speechcraft.view/manage` 与客服会话权限隔离。旧分类删除后话术仍保留原 `cate_id`，新页在“全部”中标出已删除分类，不静默改写历史行。旧话术菜单仅在路径及 `uniqueAuth` 成对精确匹配时映射查看权限。积分日志新增双前缀 `/marketing/user-point/export`，沿用旧七列及筛选，每页最多1000条；独立 `integral_log.export`，旧 `export-userPoint` 数字规则可解析。导出以全结果快照、行数与 CSV 字节数逐页核对，最多100000行／16MiB，CSV 可由 Excel 打开但与旧 XLSX 格式不同。
+
+两旧屏由 **partial→candidate**；全 Admin 274屏为 **72候选／112部分／83缺失／7退役**，营销48屏 **21／12／15／0**，设置76屏 **19／23／29／5**。Worker **1936** 条；旧 PHP 1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效可执行覆盖 **46.7%**。新 Admin **87** 条业务页面、**478** 个调用点／**502** 个请求变体全部可执行。Checklist 仍 **246勾选／158开放／404总项**。本批合并专项 **12文件84/84**、隔离原生 PostgreSQL16 两屏服务与双前缀 HTTP 各 **2文件7/7**，Worker 双类型、Admin 类型及生产构建、严格 API 审计通过。本批未提交、推送或部署；生产历史、受限角色浏览器、导出规模和发布后验收开放。证据见[本批合同](workers-ts/docs/admin-speechcraft-user-point-route-contract.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-speechcraft-followup-20260928.json)、[营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-user-point-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-speechcraft-user-point-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-speechcraft-user-point-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-speechcraft-user-point-followup-20260928.json)及[本批验收](workers-ts/audit/admin-speechcraft-user-point-acceptance-20260928.json)。下方为前批历史口径。
+
+### 前批增量：抽奖目录、中奖记录和客服反馈旧屏合同（2026-09-28，本地候选／未发布）
+
+抽奖活动目录补齐名称或ID、参与条件、启停与未开始/进行中/已结束筛选、15条分页和三项批量参与统计；中奖记录改为独立 `/marketing/lottery-records`，可按活动、奖品、用户、上海日期及处理状态筛选和分页。其列表不返回电话、收货地址或物流号，物流预填只经 `lottery_record.manage` 的详情获取；`lottery.view/manage` 不代授记录。客服反馈新增 `/kefu/feedback`，恢复姓名/电话/内容与时间/状态筛选、15条分页、详情、处理备注和确认删除，独立 `feedback.view/manage` 不借客服会话权限。旧菜单路径与 `uniqueAuth` 成对精确映射查看权限，双 Admin 前缀均实测角色正反授权。抽奖创建页因微信红包及旧等级奖品仍为部分承接。
+
+旧 PHP 的不限期活动阶段重叠、中奖人数数组并集漏筛和记录类型只找一条启用活动均按历史查询意图修正，不冒称原始错误数值等价；旧“复制”按钮目标创建页未读取 `copy` 参数。三个旧屏由 **partial→candidate**，最新营销48屏 **20／13／15／0**，设置76屏 **18／24／29／5**，全 Admin 274屏 **70候选／114部分／83缺失／7退役**。Worker 仍 **1928** 条，旧 PHP 1904条中精确903、可执行882、受控不可用21、未注册未退役984，有效可执行覆盖 **46.7%**；新 Admin **86** 条业务页面、**468** 个调用点／**492** 个请求变体均可执行。Checklist 仍 **246勾选／158开放／404总项**。
+
+合并专项及审计 **14文件83/83**、隔离原生 PostgreSQL16 抽奖与反馈服务/双前缀 HTTP 分两批各 **2文件7/7**，Worker unit/runtime 类型、Admin 类型及生产构建、严格 Admin API 审计均通过；本机临时 PG 夹具0剩余且停机。未提交、推送或部署，真实受限角色浏览器、生产数据/规模、实际发货和发布后验收继续开放。证据见[本批合同](workers-ts/docs/admin-lottery-feedback-route-contract.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[营销台账](workers-ts/audit/admin-legacy-marketing-route-parity-lottery-followup-20260928.json)、[设置台账](workers-ts/audit/admin-legacy-setting-route-parity-feedback-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-lottery-feedback-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-lottery-feedback-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-lottery-feedback-followup-20260928.json)及[本批验收](workers-ts/audit/admin-lottery-feedback-acceptance-20260928.json)。下方为前批历史口径。
+
+### 前批增量：供应商菜单规则树只读承接与受控写入协议（2026-09-28，本地候选／未发布）
+
+旧 `/admin/supplier/supplier/index` 确认为 type=4 供应商菜单及接口规则编辑器，不是供应商目录。新 `/supplier/menu-rules` 页面在双 Admin 前缀读取未删除规则树、详情、规则可映射的稳定权限、原始数字角色引用和固定 Supplier 导航目录，独立 `supplier_menu_rules.view`；旧页面菜单仅精确映射查看，不授予管理。角色引用包含停用或未分配角色，页面没有写控件，因此该屏只从 **missing→partial**，不能声称账号已获得所示权限或恢复旧动态导航。
+
+后端另有 `supplier_menu_rules.manage` 四项受控写路由，数据库能力未安装或目录/ACL 漂移时返回 503。可选的 PostgreSQL16 专用函数由受限 NOLOGIN 属主执行，Admin 只获函数 EXECUTE，应用身份无权调用且 Admin 的菜单表直接 DML 未扩大；固定 type=4、校验父级与环、行版本、角色引用、子节点和已注册 Supplier 接口。被数字角色引用的规则不得改变授权含义，写入与审计同事务。原生能力测试 **6/6**，受限 Admin 登录的双前缀 HTTP **1/1**，本地 PGlite/前端/台账专项 **6文件40/40**，Worker 双类型、Admin 类型及生产构建、严格 Admin API 审计通过；临时 PG 夹具0剩余且停机。受控能力仅在隔离测试集群安装，生产未安装、未部署，真实受限角色/导航效果、前端写体验与发布后验收仍开放。
+
+最新静态分布：Worker **1928** 条；旧 PHP **1904** 条中精确903、可执行882、受控不可用21、未注册未退役984，有效可执行覆盖 **46.7%**。新 Admin **84** 条业务页面、**463** 个调用点／**487** 个请求变体均可执行；旧 Admin 274 屏 **67候选／117部分／83缺失／7退役**，供应商/代理19屏 **9／10／0／0**。Checklist 仍 **246勾选／158开放／404总项**；新增独立路由不提高旧 PHP 路径精确覆盖。本批未提交、推送或部署。证据见[菜单合同](workers-ts/docs/admin-supplier-menu-rules-gap.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-supplier-menu-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-supplier-menu-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-supplier-menu-followup-20260928.json)及[本批验收](workers-ts/audit/admin-supplier-menu-acceptance-20260928.json)。下方历史快照保留当时口径。
+
+### 前批增量：Admin 供应商申请、目录建档与推广员协议（2026-09-28，本地候选／未发布）
+
+本批承接旧 `/admin/supplier/apply`、`/admin/supplier/menu/list`、`/admin/supplier/supplierAdd/:id?` 和 `/admin/agent/agreement` 四屏。申请页恢复上海时间、状态、七字段搜索、全部资质图片及审核/备注/删除；三种写入都用含数据库行版本的确认值拒绝陈旧页面，审核与申请人重提按同一顺序加锁，批准后创建待短信激活账号，按已启用的旧通知配置发安全站内信。目录页恢复15条分页、建档/编辑/启停/删除、地区及主账号；写入保护并发版本，删除检查待处理订单且保留历史记录。推广员协议固定 `type=2`，与会员协议隔离，清洗历史正文并按修订版本写入。旧菜单仅精确授予查看权，管理操作采用各自独立权限。
+
+供应商目录与申请审核的账号分配已合并到同一事务锁；供应商自助主账号和子账号创建/改名入口也纳入本批并发回归，以防同名账号竞争。自助资料页只发送实际修改字段，并以供应商和主账号的组合版本拒绝新页面同字段陈旧写入；旧无版本客户端暂时兼容，仍有覆盖风险。旧目录快捷登录仍缺安全代登录合同，故目录只从 **missing→partial**；申请、建档和推广员协议转为 **candidate**。旧 `/admin/supplier/supplier/index` 是另一个供应商菜单规则树，仍为该领域唯一缺失屏；它受数据库运行权限、静态导航与既有数字规则授权影响，不能用目录页面或裸 CRUD 虚记完成。
+
+最新静态分布：Worker **1914** 条；旧 PHP **1904** 条中精确903、可执行882、受控不可用21、未注册未退役984，有效可执行覆盖 **46.7%**。新 Admin **83** 条业务页面、**460** 个调用点／**484** 个请求变体均已注册且可执行；旧 Admin 274 屏 **67候选／116部分／84缺失／7退役**，供应商/代理19屏 **9／9／1／0**。Checklist 仍 **246勾选／158开放／404总项**。专项 PGlite/静态 **20文件108通过／4原生专测跳过**，原生 PostgreSQL16 **8文件38/38**、临时夹具0剩余且停机；Worker双类型、Admin及Supplier类型与生产构建通过。本批未提交、推送或部署；真实角色/材料/账号、生产规模、外部通知和发布后验收仍开放。证据见[本批合同](workers-ts/docs/admin-supplier-directory-application-agreement-contract.md)、[菜单规则树缺口](workers-ts/docs/admin-supplier-menu-rules-gap.md)、[分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-closure-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-supplier-closure-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-supplier-closure-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-supplier-closure-followup-20260928.json)及[本批验收](workers-ts/audit/admin-supplier-closure-acceptance-20260928.json)。下方提现及更早快照保留原字节。
+
+### 前批增量：Admin 供应商提现旧屏闭环（2026-09-28，本地候选／未发布）
+
+旧 `/admin/supplier/cash/index` 由 `/finance/supplier-extract` 承接：恢复供应商、上海申请时间、审核及转账状态独立筛选、收款方式、15条分页和待转账／待审核／可提现／累计提现四卡。列表左关联供应商，保留软删或孤儿供应商的提现历史；下拉只选未软删供应商（含停用）。可提现按已结算未删的供应商净流水减全部未拒绝申请计算，不随列表日期／状态变化；修正旧 PHP 在“全部供应商”时把 `supplier_id=0` 用于预占求和、可能漏减提现的缺陷。旧 PHP 未写提现记录 `balance`，新页不把历史默认零值误称申请后余额。
+
+原有审核、转账、备注路径仍在双 Admin 前缀，新增供应商选项 GET 各一条，共增加 **2条 Worker 注册**。备注写回与供应商端共用的 `supplier_mark`，提交展示原值做 CAS，冲突409并重新读取；不再误写另一 `mark` 列。旧只传 `mark` 的客户端须升级，供应商仍可在 Admin 提交后再次编辑共享备注。审核兼容旧 `type=2` 拒绝，实际转账说明必填，凭证图片沿旧表单可空，操作以条件更新防重复。`supplier_extract.view/manage` 分离；旧菜单1578只有精确路径和 `admin-supplier-cash-index` 同时匹配才映射查看。旧动态转账表单 URL 未精确注册，不计旧路径覆盖。该屏从 **partial→candidate**，供应商/代理商19屏现为 **6候选／9部分／4缺失／0退役**。
+
+本批后端及双前缀HTTP在PGlite **3文件15/15**、原生 PostgreSQL16.15 **3文件15/15**，前端运行时 **7/7**，合并台账／路由／Admin API静态 **5文件21/21**；Worker 双类型、Admin 类型及生产构建通过，原生夹具0剩余并停机。最新分布：Worker **1889**；Admin **451调用点／475变体全部可执行**、新后台 **81** 条业务页面；旧Admin274屏 **64候选／116部分／87缺失／7退役**。旧PHP1904条精确895、可执行874、不可用21、未注册未退役992，有效覆盖 **46.3%**；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实财务历史、实际转账、受限角色浏览器、生产规模与发布后验收仍开放。证据见[提现合同](workers-ts/docs/admin-supplier-extract-contract.md)、[路由合同分布分析](workers-ts/docs/checklist-route-contract-distribution-20260928.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-cash-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-supplier-cash-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-supplier-cash-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-supplier-cash-followup-20260928.json)及[本批验收](workers-ts/audit/admin-supplier-extract-acceptance-20260928.json)。下方订单统计及更早快照保留原字节。
+
+### 前批增量：Admin 供应商订单统计独立只读合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/supplier/orderStatistics/index` 现由独立 `/supplier/order-statistics` 承接供应商与上海日期筛选、四项汇总、四序列营业趋势、五渠道订单数、九类型支付金额及供应商统计表，保留七种日期快捷和趋势图图片下载。两种 Admin 前缀各注册六条 GET，共 **12条 Worker 路由**，全部要求独立 `supplier_order_statistics.view`。旧菜单1455与供应商列表1439共用 `admin-supplier-supplier_list`，新授权仅在精确旧菜单路径匹配时生效，不能借供应商自用接口或通用统计权限。
+
+旧 `pid=>0` 经 PHP 搜索器实际成为 `pid>=0`，统计会计入拆分子单、排除 `pid=-1` 支付父单；汇总卡没有这项过滤。汇总、趋势与供应商表的退款金额分别来自退款表 `refund_price`、订单表 `refund_price`、退款表 `refunded_price`，各区块也有不同删除与状态条件，新服务逐项保留。旧四卡因空数组没有显示、默认近30天日期在请求后才设置、表格分页失效、32–92天趋势漏掉非采样日、供应商表忽略所选供应商，均作为明确纠偏；新表按供应商筛选且有界服务端分页，日期最长366天、按上海自然日排他结束点。旧页无 CSV/Excel 导出，不将这类导出计入合同。代码级该屏从 **missing→candidate**，供应商/代理商19屏为 **5候选／10部分／4缺失／0退役**。
+
+原生 PostgreSQL16.15 后端与双前缀HTTP **2文件12/12**、PGlite **2文件12/12**、独立权限 **13/13**、前端运行时 **6/6**、合并台账／前端／路由 **6文件26/26** 均通过；Worker 双类型、Admin 类型与生产构建通过，原生夹具0剩余且实例停机。最新分布：Worker **1887**；Admin **449调用点／473变体全部可执行**、新后台 **81** 条业务页面；旧Admin274屏 **63候选／117部分／87缺失／7退役**。旧PHP1904条中精确895、可执行874、不可用21、未注册未退役992，有效覆盖 **46.3%**；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实订单历史、受限角色浏览器、生产规模与发布验收仍开放。证据见[统计合同](workers-ts/docs/admin-supplier-order-statistics-contract.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-order-statistics-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-supplier-order-statistics-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-supplier-order-statistics-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-supplier-order-statistics-followup-20260928.json)及[本批验收](workers-ts/audit/admin-supplier-order-statistics-acceptance-20260928.json)。下方资金流水及更早快照保留原字节。
+
+### 前批增量：Admin 供应商资金流水独立查询与平台备注合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/supplier/capital/index` 现有独立 `/supplier/capital-flow`：可按供应商、上海创建时间与交易单号／交易人筛选，按流水 ID 倒序每页20条，显示原交易、收支、供应商、交易人、类型、支付方式及平台备注，并按同范围导出旧八列。两种 Admin 前缀各注册供应商选项、列表、导出 GET 和备注 PUT，共 **8条 Worker 路由**。读写分别要求 `supplier_capital.view/manage`；旧菜单 1576 的路径和 uniqueAuth 精确映射，不借平台财务流水或供应商账单权限。`supplier_id=0` 精确过滤未绑定供应商，仅空值表示全部；全选仍保留已删除或孤儿供应商的历史流水。
+
+旧备注请求虽叫 `mark`，实际写入 `supplier_flowing_water.remark`，与供应商自用 `mark` 列不同。新写入提交原备注确认值，在行锁事务中防止并发覆盖，只记录不含备注正文的管理员日志，并拒绝改写 Worker 拆单／退款的机器血缘 JSON。旧导出原本是全量命中，但旧页面把日期 `date` 误传给接收 `data` 的 PHP 接口；新导出与列表共用筛选并在超过5000行／2MiB时明确拒绝。旧路由从 **missing→candidate**；旧供应商/代理商19屏为 **4候选／10部分／5缺失／0退役**。资金流水关键词对软删用户身份不再命中、日期范围最多366天，属于明确收紧。
+
+原生 PostgreSQL16.15 服务及双前缀HTTP **2文件11/11**、PGlite **2文件11/11**、资金流水前端运行时 **6/6**、合并路由／台账／前端 **6文件25/25** 均通过；Worker双类型、Admin类型与生产构建通过，原生夹具0剩余且实例停机。首轮默认沙箱的 `pg_ctl` 启动失败后，相同隔离命令经自动审批重跑成功，未把失败启动计作测试通过。
+
+最新路由分布：Worker **1875**；Admin **443调用点／467变体全部可执行**、新后台 **80** 条业务页面；旧Admin274屏 **62候选／117部分／88缺失／7退役**。旧PHP1904条中精确895、可执行874、不可用21、未注册未退役992，有效覆盖 **46.3%**；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实资金流水、受限角色浏览器、生产规模与发布验收仍开放。证据见[资金流水合同](workers-ts/docs/admin-supplier-capital-contract.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-capital-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-supplier-capital-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-supplier-capital-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-supplier-capital-followup-20260928.json)及[本批验收](workers-ts/audit/admin-supplier-capital-acceptance-20260928.json)。下方账单及更早快照保留原字节。
+
+### 前批增量：Admin 供应商账单独立只读合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/supplier/bill/index` 与可选 `:type` 两条路由由新 `/supplier/bills` 承接，以 `?status=1|0|-1` 保留状态深链意图。页面按供应商、上海创建时间和日／周／月查账单，提供15条分组分页、10条明细分页与八列CSV导出；双 Admin 前缀各有供应商选项、分组、明细和导出4条GET，共 **8条 Worker 路由**，统一要求独立 `supplier_bill.view`。旧页面规则仅在精确菜单路径及 uniqueAuth 匹配时映射为新查看权限，通用 `bill.view` 与 `supplier_extract.view` 不能借用。状态1按 `finish_time` 归组，但日期条件仍筛 `add_time`；周键保持 MySQL `%Y-%u` 的日历年加周一首日周号，跨年可出现 `2020-53`、`2021-00`。全供应商账单保留已删或孤儿供应商历史流水，不让下拉列表过滤历史账。
+
+新明细与导出以期间、状态、供应商及原日期范围在服务端重新计算，避免旧 `GROUP_CONCAT` ID串截断；导出最多5000行／2MiB，并阻止CSV公式执行。旧导出实际会导出传入 ID 集合的全量，却忽略传入的 `supplier_id`；新合同补上供应商隔离。旧聚合任取组内 `add_time` 的非确定日期改用稳定期间键。旧详情与导出依赖 `ids` 参数，三个旧精确API路径没有以不兼容的别名伪注册，故PHP精确覆盖分子保持不变。旧两屏从 **missing→candidate**；旧供应商申请与代理申请经复核仍为 partial，其日期／材料／默认筛选、权限与会话／审核版本缺口已写入新逐屏台账。
+
+原生 PostgreSQL16.15 服务及双前缀HTTP **2文件10/10**、PGlite **2文件10/10**、前端运行时 **4/4**、合并路由／台账／前端 **6文件22/22** 均通过；Worker双类型、Admin类型与生产构建通过，原生夹具0剩余且实例停机。最新分布：Worker **1867**；Admin **439调用点／463变体全部可执行**、新后台 **79** 条业务页面；旧Admin274屏为 **61候选／117部分／89缺失／7退役**，供应商/代理商19屏为 **3／10／6／0**。旧PHP1904条中精确895、可执行874、不可用21、未注册未退役992，有效覆盖 **46.3%**；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实财务数据、受限角色浏览器、生产规模与发布验收仍开放。证据见[账单合同](workers-ts/docs/admin-supplier-bill-read-contract.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-bill-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-supplier-bill-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-supplier-bill-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-supplier-bill-followup-20260928.json)及[本批验收](workers-ts/audit/admin-supplier-bill-read-acceptance-20260928.json)。下方统计及更早日期快照保留原字节。
+
+### 前批增量：事业部统计独立只读合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/agent/statistics` 新增独立 `/division/statistics`，六张全期汇总卡、上海日期趋势和代理商／员工分列排行均有页面承接；双 Admin 前缀各增摘要、趋势、排行3条GET，共 **6条 Worker 路由**，只需独立 `division_statistics.view`，不借事业部管理 `division.view`。旧 `pid=>0` 被 PHP 搜索器改写为 `pid>=0`，三类统计均可含拆分子单；六卡订单口径是三个事业部角色 ID 任一大于0，排行订单数还包含未付单而金额/佣金只计已付单；用户计数虽不筛业务停用／`is_del`，仍排除软删除 `delete_time`。趋势按1日小时、2–31日逐日、32–92日每三日**取单日点**、更长按月展示，旧日期选择只影响趋势。新页切换会话或卸载时清理迟到响应。
+
+旧受限代理商排行用代理商 UID 当事业部 ID 查下级和订单，可能越界；新读法再与当前管理员事业部求交集，并要求普通管理员实际绑定事业部。旧跨日查询包含结束日次日零点，新接口用排他上界；无界旧排行改为500行硬上限、日期最多366日。这些安全/边界差异不伪称等价，旧屏继续 **partial**。原生 PostgreSQL16 服务/HTTP **12/12**、PGlite **12/12**、前端运行时 **5/5**、合并台账/前端/权限 **16文件92/92**，Worker双类型与 Admin 生产构建通过；原生隔离夹具0剩余且实例已停机。
+
+最新分布：Worker **1859**；Admin **435调用点／459变体全部可执行**、新后台 **78** 条业务页面；旧 Admin274屏仍 **59候选／117部分／91缺失／7退役**，供应商/代理商域19屏 **1／10／8／0**。旧 PHP1904条中精确895、可执行874、不可用21、未注册未退役992，有效覆盖 **46.3%**；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实事业部历史/受限角色浏览器、生产规模 EXPLAIN、完整 Linux CI 与发布验收仍开放。证据见[统计合同](workers-ts/docs/admin-division-statistics-read-contract.md)、[逐屏台账](workers-ts/audit/admin-legacy-supplier-agent-route-parity-division-statistics-followup-20260928.json)、[域说明](workers-ts/docs/admin-supplier-agent-route-parity.md)、[路由分布](workers-ts/audit/route-distribution-division-statistics-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-division-statistics-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-division-statistics-followup-20260928.json)及[本批验收](workers-ts/audit/admin-division-statistics-read-acceptance-20260928.json)。下方核销、佣金及更早阶段的历史结论继续保留。
+
+### 前批增量：核销订单记录只读合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/setting/merchant/system_verify_order/index` 新增独立 `/operations/writeoff-orders`：旧“核销日期”实际筛的是上海时间的订单 `add_time`；固定集合为 `paid=1,status=2,shipping_type=2,refund_status∈{0,3},is_del=0`，系统删除标记和拆单 `pid` 不额外排除。新页恢复旧日期预设、自定义日、六种字段／跨用户地址商品活动的“全部”搜索、门店筛选、15条分页、十列和当前页订单号／下单时间排序；商品按购买快照展示，另以限列弹窗查看推荐人。双 Admin 前缀注册列表、可见门店、推荐人及旧恒空 badge 四个 GET，共 **8条 Worker 路由**，独立 `writeoff_order.view`，不借 `order.view` 或 `store.view`。推荐人详情先核对该 UID 存在符合固定集合的订单，不回传旧弹窗的身份证号；自定义日结束改为次日零点排他，旧页会多包含该秒。故旧屏仅 **missing→partial**；真实历史、受限角色和生产规模仍待验。
+
+原生 PostgreSQL16 服务／HTTP 两文件 **10/10**、PGlite 同两文件 **10/10**、核销前端运行时 **5/5**、合并台账／前端／权限 **13文件79/79**，Worker unit/runtime 类型及 Admin 生产构建通过；隔离原生实例停机、夹具剩余0。最新分布为 Worker **1853**；Admin **432调用点／456变体全部可执行**、新后台 **77** 条业务页面；旧 Admin274屏 **59候选／117部分／91缺失／7退役**，设置域76屏 **17／25／29／5**。旧 PHP1904条中精确895、可执行874、不可用21、未注册未退役992，有效覆盖 **46.3%**；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实角色／订单历史、生产规模 EXPLAIN、完整 Linux CI及发布验收开放。证据见[核销合同](workers-ts/docs/admin-writeoff-order-read-contract.md)、[设置域逐屏](workers-ts/audit/admin-legacy-setting-route-parity-writeoff-followup-20260928.json)、[设置域说明](workers-ts/docs/admin-setting-route-parity.md)、[路由分布](workers-ts/audit/route-distribution-writeoff-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-writeoff-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-writeoff-followup-20260928.json)及[本批验收](workers-ts/audit/admin-writeoff-order-read-acceptance-20260928.json)。下方佣金及前批快照保留原字节。
+
+未注册未退役的旧路由 **992** 条中，Admin占 **923**（93.0%），Supplier **49**、公开 API **12**、ERP **8**；客服与 Out 为0。按旧路径的有效可执行覆盖，公开 API **96.0%**、Admin **18.6%**、Supplier **71.2%**、客服和 Out 各 **100%**、ERP **0%**。这是旧 PHP URL 的精确注册合同，不等于功能完成率：新 Admin 的456个调用变体虽全部可执行，仍有91个旧屏缺失、117个只部分承接。下一批优先旧 `/admin/agent/statistics`：新 `/division` 已有六张汇总卡和排行、三条GET可执行，但缺日期趋势，而且旧 `pid>=0` 与新 `pid=0`、32–92日每三日取单日点、代理商/员工分列排行及受限事业部范围口径尚未对齐；先做原生PG角色/父子单/日期边界合同，再补独立只读视图，不提前将该屏从 partial 标为 candidate。
+
+### 前批增量：财务佣金记录只读合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/finance/finance/commission` 已由独立 `/finance/commissions` 承接用户佣金汇总、上海时间/昵称账号手机UID/当前账户佣金范围筛选、20条分页、用户详情及按UID读取的全部类型流水；双 Admin 前缀新增 **6条GET Worker路由**，仅 `commission.view` 可读，不能借 `/brokerage/list` 的 `distribution.view`。旧 `UserUserBrokerageDao` 实为 `user LEFT JOIN user_brokerage`，空日期包含无流水用户；时间筛只决定哪些用户有匹配流水，提现额和总佣金仍为全时段/当前值。旧“提现到账佣金”实际包含审核中、已通过提现本金和手续费，列表总佣金是该额加当前账户佣金；详情“佣金总收入”另按四类收入减退款且下限为0。旧按UID分组时直接投 `b.add_time` 不确定，新页明确使用最近匹配流水时间；旧同分钟范围扩成24小时、不同分钟只计结束分钟首秒及明细包含次日零点的端点异常，统一改为完整分钟／整日的排他上界。明细保留原 `number`、所有收支/失效类型和ID倒序；切号或关窗清除迟到数据。
+
+旧六列导出以每批1000条循环至空页，本批没有对应的有界导出合同，故旧屏仅 **missing→partial**。原生PostgreSQL16两文件 **7/7**（含分钟/整日端点）、前端运行时 **5/5**，定向台账/前端/权限 **11文件65/65**；Worker双类型、Admin类型及生产构建通过。最新分布：Worker **1845**；Admin **429调用点／453变体全部可执行**，新后台 **76** 条业务页面；旧Admin274屏 **59候选／116部分／92缺失／7退役**，跨模块18屏 **4／12／1／1**。旧PHP1904条中精确892、可执行871、不可用21、未注册未退役995及有效覆盖46.2%不变；复选框仍 **246勾选／158开放／404总项**。本批未提交、推送或部署，真实角色/财务历史口径、导出、生产规模EXPLAIN、完整Linux CI及发布验收保持开放。证据见[佣金合同](workers-ts/docs/admin-commission-read-contract.md)、[跨模块逐屏](workers-ts/audit/admin-legacy-cross-module-route-parity-commission-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-commission-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-commission-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-commission-followup-20260928.json)及[本批验收](workers-ts/audit/admin-commission-read-acceptance-20260928.json)。下方操作日志/充值及更早日期快照保留原字节。
+
+### 前批增量：操作日志与充值订单只读合同（2026-09-28，本地候选／未发布）
+
+旧 `/admin/system/maintain/system_log/index` 现由 `/system/log` 承接服务端操作日志的上海时间、管理员、路径和 IP 筛选、管理员选项、原有列及 20 条分页；双前缀新增2条 GET 路由，独立 `log.view` 与当前管理员可见范围同时限制列表和选项。切号/卸载会清空并取消旧请求，迟到结果不回填。该旧屏 **partial→candidate**；旧 `/admin/system/log` 是浏览器 Vuex 前端事件页，仍为 missing，不能与服务端日志合并。本地原生 PostgreSQL16 操作日志 **4/4**、前端 **5/5**、权限定向 **13/13** 通过；真实历史日志、受限角色浏览器和生产规模待验。
+
+旧 `/admin/finance/user_recharge/index` 新增独立 `/finance/recharges` 只读页，按 `user_recharge` 展示已付／未付充值单、上海创建时间、支付状态和用户／订单搜索、详情及只计算已付单的四项统计；双前缀增加6条 GET 路由，须 `recharge_order.view`，不借用 `bill.view` 或充值档位权限。孤儿用户和异常历史行保留供核对。旧页 **missing→partial**；充值退款、未付删除与导出尚未迁移，尤其退款需支付回调和余额赠额的幂等协议，不能用旧无锁写法直接移植。充值原生 PostgreSQL16 双文件 **6/6**、前端运行时 **5/5**；Worker双类型、Admin类型和生产构建及路由／逐屏静态台账均通过。本批仍未做真实角色/生产数据、完整Linux CI、provider或发布验收，未提交、推送或部署。
+
+最新分布：Worker **1839**（相对前批+8）；Admin **426调用点／450变体全部注册且可执行**、新后台 **75** 条业务页面路由。旧PHP **1904** 条路由中精确892、可执行871、已注册不可用21、未注册未退役995，有效覆盖 **46.2%**；独立新REST不抬高旧路径分子。旧Admin274屏 **59候选／115部分／93缺失／7退役**，其中 system 17屏 **1／3／12／1**、跨模块18屏 **4／11／2／1**、用户/订单18屏 **3／15／0／0**。复选框仍 **246勾选／158开放／404总项**。本批证据见[系统逐屏](workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json)、[跨模块逐屏](workers-ts/audit/admin-legacy-cross-module-route-parity-recharge-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-recharge-read-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-recharge-read-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-recharge-read-followup-20260928.json)、[本批验收](workers-ts/audit/admin-read-followup-acceptance-20260928.json)、[充值合同](workers-ts/docs/admin-recharge-order-contract.md)及[系统说明](workers-ts/docs/admin-system-route-parity.md)。下方发票／会员及前批日期快照保留原字节。
+
+### 前批增量：发票订单信息与会员购买记录合同（2026-09-28，本地候选／未发布）
+
+旧发票页同弹窗缺少的收货、订单金额拆分和商品快照已由独立 `GET /order/invoices/:id/order-info` 承接，`/adminapi` 与 `/api/admin` 双前缀各新增1条，只需 `invoice.view`。服务端按申请行 ID 在只读可重复读事务中复核付款、UID、拆单根单与唯一有效申请，对商品行和快照大小设限；不放宽通用 `order.view`。前端只在详情展开时按需读取，切换账号或关窗清除迟到信息，并恢复旧表格当前页的票种/抬头过滤。旧 `all` 搜索还有邮箱、地址、银行、昵称/手机号缺口，旧 chart 全量统计未重建（旧模板未渲染）；无创建基线的历史 `0.00` 申请继续只读，故旧发票屏仍为 **partial**。
+
+旧 `/admin/vipuser/grade/record` 由 `/member` 记录 tab 补齐会员类型、免费支付及上海购买时间区间筛选和到期列。卡密与免费激活按旧 `member_type=free` 加 code 非空/空区分；免费支付按来源类型和赠送标志筛选，套餐选项分页读取全部启用项。该屏由 **partial→candidate**，仍待真实历史记录、受限角色和发布后验收。发票原生 PostgreSQL16 双前缀/归属合同 **15/15**、会员记录原生 **3/3**，隔离夹具0剩余且停机；发票前端运行时 **19/19**、会员前端及原有会员测试 **10/10**，Worker与Admin类型、Admin生产构建通过。首轮沙箱 `pg_ctl` 受 Windows restricted-token 错误阻断，后续按同一仓库隔离脚本的自动审批执行成功，未计失败启动为测试通过。
+
+最新分布：Worker **1831**；Admin **422调用点／446变体全部可执行**、新后台 **74** 条业务页面路由；旧PHP精确892、可执行871、已注册不可用21、未注册未退役995保持，有效覆盖46.2%。旧Admin274屏 **58候选／115部分／94缺失／7退役**，用户/订单18屏 **3／15／0／0**，营销48屏 **18／15／15／0**。复选框仍 **246勾选／158开放／404总项**；完整 Linux CI、真实业务/角色、provider/设备和发布验收继续开放。本批未提交、推送或部署。证据见[用户订单逐屏](workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json)、[路由分布](workers-ts/audit/route-distribution-invoice-followup-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-invoice-followup-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-invoice-followup-20260928.json)、[本批验收](workers-ts/audit/invoice-member-record-followup-acceptance-20260928.json)、[发票合同](workers-ts/docs/admin-invoice-management-contract.md)和[用户订单说明](workers-ts/docs/admin-user-order-route-parity.md)。下方前批日期快照保留原字节。
+
+### 前批增量：平台 Admin 发票管理（2026-09-28，本地候选／未发布）
+
+旧 `/admin/order/invoice/list` 由新 `/order/invoice` 承接已付款申请的分页、上海时间／状态／字段查询、个人和企业抬头详情、状态/发票号/备注处理及当前页旧八列 CSV。`GET list/detail` 与 `POST process` 在 `/adminapi` 和 `/api/admin` 双前缀注册，新增 **6 条 Worker 路由**；独立 `invoice.view/manage` 先于宽泛订单权限匹配，`order.view/manage` 不自动获得发票税号/银行资料。申请行主键、订单数据库主键、公开订单号和抬头模板 ID 分开使用。只读列表/详情按可重复读快照展示异常行；写入按支付根单、来源订单和票据锁序重验退款代次、归属、当前净额、不可变出票留痕及版本，UUID 回执与操作同事务保存。历史 `0.00` 仅有创建时未出票证据才可锁内补额；无创建基线的旧行保持只读。
+
+旧页同弹窗完整订单商品/收货/优惠信息仍需 `order.view`，旧票种/抬头本页筛选与更宽的全字段搜索未补，旧 chart 全量统计 API 本页也未重建；发票旧屏由 **missing→partial**，不记 candidate。最新分布：Worker **1829**；Admin **421调用点／445变体全部可执行**、新后台 **74** 条业务页面路由；旧PHP精确匹配892、可执行871、已注册不可用21、未注册未退役995保持。旧Admin274屏 **57候选／116部分／94缺失／7退役**，用户/订单18屏 **2／16／0／0**，营销48屏 **18／15／15／0**。复选框仍 **246勾选／158开放／404总项**；生产数据/真实角色、税务渠道、Linux/设备/provider及发布验收继续开放，未提交、推送或部署。本批证据见[发票合同](workers-ts/docs/admin-invoice-management-contract.md)、[路由分布](workers-ts/audit/route-distribution-invoice-admin-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-invoice-admin-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-invoice-admin-20260928.json)、[用户/订单逐屏](workers-ts/audit/admin-legacy-user-order-route-parity-invoice-admin-20260928.json)与[验收](workers-ts/audit/admin-invoice-acceptance-20260928.json)。下方付费会员批及更早日期快照保留原字节。
+
+原生 PostgreSQL16.15 采用两座隔离集群分别验收新 Admin 两文件 **11/11** 与共享 Out 生命周期 **32/32**，零跳过、夹具0剩余且均停机；前端运行时 **16/16**、用户/订单与全Admin台账 **11/11**、Worker 双类型、Admin 类型和生产构建通过，失败的混跑/堆限尝试不计。合成浏览器完成管理/只读列表、异常详情与搜索，写入0；CSV内容和下载调用有运行时测试，实际浏览器下载事件未捕获。浏览器的“确认处理”点击被 CUA 自动审批拦截（可能改变发票状态且未识别具体授权），没有绕过，浏览器写流程仍待验。UUID 回执在事件类型索引后对 JSON 文本扫描，生产体量需 EXPLAIN/压测，超时会拒绝处理。详见[本批验收](workers-ts/audit/admin-invoice-acceptance-20260928.json)。
+
+### 当前增量：付费会员功能两键配置（2026-09-28，本机验收通过／未发布）
+
+旧 `/admin/user/setup_user` 的付费会员 tab 由独立 `/config/paid-membership` 承接 `member_card_status` 和 `svip_price_status`：两键原值/缺失/坏值诊断与显式修复、只读/管理权限、保存前双键变化确认、版本和 UUID 重放、同事务审计、只改全局胜出行、提交后缓存状态均已接线。GET/POST 在 `/adminapi` 与 `/api/admin` 双前缀注册，增加 **4 条 Worker 路由**。旧 `/api/admin/config/save` 兼容入口已对本域两键及普通等级九键作整批预校验拒绝，混合请求也不写 SQL/KV；其它通用键仍可保存，`/adminapi/config/save` 未注册。总开关关闭仍保留价格开关的存值；价格开关实际影响新读取的付费会员计价，还须有效会员资格和 `vip_price` 权益。购卡、兑卡、会员页及收货结算赠积分倍数、个人中心会员标志及菜单入口均已改读 SQL 全局胜出行，避免旧 KV 盖过已提交配置；展示投影仍保留各自历史坏值解释。同屏其它键仍遵循原 KV 合同，已开始的操作可按此前读取的配置完成，不能把缓存清理回执称作全站瞬时一致。支付回调和已生成订单金额未加新门禁，收货/核销本身仍可完成。
+
+新 Admin 输入/SQL **17项**、前端运行时 **37项**、业务消费者轻量完整7文件 **63项**，另有展示投影3文件 **28项**实际PGlite SQL/静态回归、通用保存保护轻量 **15项**；原生PG16按完整绿文件四批 **12＋55＋36＋50＝153个不同用例**，含双前缀真实JWT/权限、独立受限Admin/App LOGIN、跨九键/旧批量配置锁、审计回滚、会员定价、购卡、收货赠分、结算权威与历史节省账本及通用保存11键拒绝。展示投影不冒称原生LOGIN/HTTP验收。Worker双类型和最终Admin生产构建通过；本机合成浏览器核对侧栏、双键草稿/确认、一次POST读回与只读角色，最终文案构建另行确认奖励和SQL展示说明。轻量定价文件的3项下单失败由夹具缺原生协议表导致，整文件在原生PG26/26通过，不把轻量失败计作通过；一次原生测试把未注册旧别名误期望为HTTP404，按实际HTTP200/业务501修正后完整文件12/12通过，失败尝试不计验收。四座计入的原生集群夹具0剩余并停机。见[两键合同](workers-ts/docs/admin-paid-membership-config-contract.md)与[本批验收](workers-ts/audit/paid-membership-config-acceptance-20260928.json)。
+
+最新分布为Worker **1823**，Admin **418调用点／442变体全部注册且可执行**、新后台 **73** 条业务页面路由；旧PHP精确匹配892/可执行871/已注册不可用21/未注册未退役995不变。旧Admin274屏为 **57候选／115部分／95缺失／7退役**，用户/订单18屏 **2／15／1／0**，营销48屏 **18／15／15／0**。旧充值配置路由与新充值档位页对应同一业务组，台账由missing改partial，但旧筛选、分页及任意gid界面仍有缺口。旧 `setup_user` 虽再完成一个子域，基础资料定义、签到/订单/邀请经验仍未闭合，整页继续partial；`member_price_status` 无旧页启用控件/Worker消费者，待明确退役判断。复选框仍 **246勾选／158开放／404总项**，生产配置与真实角色、Linux/设备/provider及发布继续开放；未提交、推送或部署。日期版[路由分布](workers-ts/audit/route-distribution-paid-membership-20260928.json)、[Admin清单](workers-ts/audit/admin-frontend-inventory-paid-membership-20260928.json)、[Admin API](workers-ts/audit/admin-frontend-api-contracts-paid-membership-20260928.json)与[用户/订单逐屏](workers-ts/audit/admin-legacy-user-order-route-parity-paid-membership-20260928.json)保留本轮口径；下方九键批及更早日期快照不覆写。
+
+### 当前增量：普通等级卡激活九键配置（2026-09-28，本机验收通过／未发布）
+
+旧 `/admin/user/setup_user` 的普通等级激活区由独立 `/config/level-activation` 页面承接：完整九键开关/积分/整元余额/资料必填/发行券选择，以及原值、实际消费解释和损坏历史显式修复。GET配置、GET分页候选券和POST保存均在 `/adminapi` 与 `/api/admin` 双前缀注册，新增 **6 条Worker路由**；读取须 `config.view`、保存须 `config.manage`。旧菜单ID 1436与 `user.view`、`level.manage`、`coupon.view` 均不能取得本域权限。保存只更新全局胜出九键或补缺键；revision、UUID重放、事务审计、发行行锁和提交后九键缓存状态已接通。自定义资料空param不再借用其他资料通过必填，自定义radio/date和负day赠券按真实消费者校验。历史失效券可保持/移除，新增或重新启用赠券须实时合格，实际激活仍在锁后重判并原子入账。
+
+原生PG16新合同 **11项业务＋4项双前缀HTTP＝15个不同用例** 分两次完整绿文件验收；既有激活/注册/使用期三完整文件 **111项回归**、相关纯函数/前端运行时3文件 **75项**、用户订单路由台账 **5项**、Worker双类型及Admin生产构建通过。本机浏览器以隔离合成角色/API驱动最终生产构建，确认侧栏入口、资料和折扣券选择、保存前预览、一次POST后GET读回以及只读权限；不计入自动测试数。首轮HTTP角色名超32字符的4项夹具失败已整文件替换，不计通过；沙箱中一次本地PG启动失败未进入测试。成功运行的三座临时集群均确认夹具0剩余并停机。详见[九键合同](workers-ts/docs/admin-level-activation-contract.md)与[本批验收](workers-ts/audit/level-activation-acceptance-20260928.json)。
+
+新的日期版审计为Worker **1819**，Admin **416调用点／440变体全部注册且可执行**；旧PHP精确匹配892、可执行871、已注册不可用21、未注册未退役995保持不变。旧Admin274屏仍 **57候选／114部分／96缺失／7退役**，营销48屏仍 **18／15／15／0**；`setup_user` 的激活子域完成，但同页基础资料定义、经验、价格展示和付费会员选项未补齐，整页继续partial。旧营销优惠券系统配置页仍missing；独立新路径不会提高旧路径匹配分子。复选框仍 **246勾选／158开放／404总项**。生产配置与真实角色、Linux/设备/provider及发布继续开放；本批未提交、推送或部署。日期版[路由分布](workers-ts/audit/route-distribution-20260928.json)、[Admin页面清单](workers-ts/audit/admin-frontend-inventory-20260928.json)、[Admin API合同](workers-ts/audit/admin-frontend-api-contracts-20260928.json)与[用户订单逐屏](workers-ts/audit/admin-legacy-user-order-route-parity-20260928.json)保留本轮口径，旧日期快照不覆写。
+
+旧优惠券动态路由复用通用 `setting/setSystem`，当前安装SQL的322项配置、52个tab和985个菜单没有优惠券专属tab/menu；它落到积分动态配置动作，且表单中的 `checkParam('point')` 白名单没有被调用。因而继续列为missing，先核准替代或退役合同，不按路由名称发明字段。见[营销逐屏核对](workers-ts/docs/admin-marketing-route-parity.md)。
+
+### 消费者修复补充：赠券固定使用期（2026-09-27，本机验收通过／未发布）
+
+新人注册和已付款商品赠券已补齐PHP使用期资格：正领后天数按滚动期发放；day=0必须存在固定结束且不早于操作整秒，截止秒包含；过期、缺失结束与负day跳过，未来开始允许预发。两个入口仍在发行行锁后读取最新字段，保留调用方捕获时钟、原库存解释、赠券来源及幂等。付款先提交，后置赠券晚失败只回滚outbox业务效果，保留已付事实并安全重试；不新增路由、页面、schema或grants。
+
+原生接受 **5个完整文件110个不同用例＝先前四文件91＋最终新文件19**，分属两次运行，不称单次110/110。首轮19为8失败／11通过且1个unhandled；修正版110为109通过／1项夹具失败，新范围18＋1整文件排除，失败日志和测试字节保留。最终19/19验证两入口截止相等、真实并发与锁后重判、注册22001和支付后置23505回滚／重试。兼容22、台账17文件95及Worker双类型分别通过；35份源／测试输入冻结，三座自有PG夹具清零、独立停机核验并删除data，日志保留。见[赠券合同](workers-ts/docs/coupon-gift-use-window-contract.md)与[本批原生证据](workers-ts/audit/coupon-gift-use-window-native-20260927.json)。前批发行、模板、拼团胶囊保持原字节。
+
+分布仍为Worker **1813**、Admin **413调用点／437变体全部可执行**、274屏 **57／114／96／7**、营销48屏 **18／15／15／0**；复选框 **246勾选／158开放／404总项**。本批无candidate或勾选增量。配置选券过滤、普通会员激活9键配置与负day边界、真实会员权益及自动赠券渠道继续开放；本机服务与SQL验证不替代HTTP／provider／真实配置／设备／Linux及发布验收。
+
+### 当前增量：发行券列表与完整新建／复制（2026-09-27，本地候选／本机验收通过／未发布）
+
+旧 `/admin/marketing/store_coupon_issue/index` 与 `create/:id?` 两屏由专用 `/coupon` 完整列表和新建／复制表单承接，分别从partial提升candidate。恢复类型、领取方式、标题／精确ID与状态筛选、15条分页，以及普通／会员身份、满减／折扣、通用／品类／商品集合／品牌、限量库存、上海固定使用期与领取窗口。旧create带id是读取完整草稿后INSERT新发行，保留会员、历史领取方式与85.99百分数，不冒称原券财务编辑；无效商品、缺失祖先和不支持受众给诊断并禁止复制，跨页商品集合完整确认后一次采用。
+
+9项专用操作在 `/adminapi` 和 `/api/admin` 双注册，增加18条Worker路由。管理与查看按 `coupon.manage/view`，精确发行领取身份另须 `coupon_record.view`，管理不能借此取得领取人数据。普通历史保留重复／空／负UID与孤儿记录，会员按owned来源读取；原生HTTP独立覆盖两个前缀、真实JWT和受限LOGIN。读取有界RR READ ONLY及5/2/5秒局部期限；写入由实际actor、UUID内容摘要、源revision、范围／发行锁和原子审计保护。复制新id、cid0、库存重新初始化且不继承proof；独立恢复历史-1发行不恢复源模板，软删除保留范围、赠券配置、来源证明及已领／订单历史。未知提交保留原UUID/body并只GET核对，人工解除仅是本地状态，不是服务端结果证明。
+
+普通公共手领兼容规范category0与旧普通1，仅receive_type1/app_type0；会员与隐藏受众不由公共目录或用途flag授予领取资格。旧receive_limit0按PHP公开一次解释，存活领取证据／owned历史不能因使用或过期被当作新额度，固定使用期结束后拒绝发券。新九REST的期限、版本和审计不扩称既有generic `/coupon/save/status/del` 入口已改造；owned金额／时间快照保持，但结算折扣类型与范围仍读取发行定义，不能宣称全券永久冻结。本轮无schema或grants变更。
+
+最终路由审计为Worker **1813**、Admin **413调用点／437请求变体全部可执行**，未解析／未注册／受控不可用均为0。全Admin274屏为 **57候选／114部分／96缺失／7退役**，营销48屏为 **18／15／15／0**；旧PHP892精确匹配、871可执行、21受控不可用、995未注册未退役及1016条静态旧路径缺口保持不变，独立REST不增加旧路径匹配分子。复选框仍 **246勾选／158开放／404总项**，不因本地页面候选关闭真实业务验收。
+
+原生业务4文件 **38项唯一通过**，由初轮两个完整绿文件22项和修订后的两个完整文件16项组成，首轮33通过／5失败的formal与HTTP两文件整份排除，不能称单次38/38。既有消费者 **7完整文件225项**原生通过；输入20＋权限13＋PC钱包17共 **50项**、前端运行时 **47项**、台账 **17文件95项**分别记录，零跳过。早期PGlite消费者22失败／74通过／159跳过不计接受数，由完整原生范围替代；两种Worker类型与最终Admin类型／构建通过。实际最终dist **166文件**重建前后同字节，CUA核对六种合成权限、六项GET故障重试、跨页商品取消／确认、未知创建单次请求、历史恢复不改源模板及390×844 CSS布局；28条观察不计自动测试数。三座隔离PG夹具清零并独立停止／删除，浏览器服务、标签、视口模拟均清理。证据见[发行合同](workers-ts/docs/admin-coupon-issue-contract.md)、[本轮原生](workers-ts/audit/coupon-issue-native-20260927.json)、[浏览器](workers-ts/audit/coupon-issue-browser-20260927.json)与[最终验收](workers-ts/audit/coupon-issue-acceptance-20260927.json)。前批已接受证据及哈希保持原样；优惠券配置、自动满赠／关注／新人、真实会员权益、完整Linux、真实角色／配置／设备／provider及发布仍开放。未提交、推送或部署。
+
+### 历史增量：优惠券模板与独立发布（2026-09-27，本地候选／本机验收通过／未发布）
+
+以下保留模板批次的冻结结果与当时计数；其中发行两屏partial、1795路由及55候选已由上方发行券增量覆盖，不改写历史证据。
+
+旧优惠券模板 `/admin/marketing/store_coupon/index` 由专用 `/marketing/coupon-templates` 承接，源码语义从missing提升candidate。恢复名称/精确ID与状态筛选、15条分页、排序和范围/面额/门槛/领后有效期，以及创建、立即失效、软删除、发布；旧页无实际编辑/重新启用，不虚构该操作面。通用、单品类和指定商品三范围分别校验，商品跨页保留、最多100项/500字符；旧image是选品对象而非素材封面。新面额>0、有效期1–3650比旧允许0更严格，新列表默认有效而旧默认全部，差异明确记录。
+
+9项操作在 `/adminapi` 与 `/api/admin` 双注册，共增加18条路由。模板view/manage和发布manage独立，发布还须模板view；只有发布权限的角色可以看到导航，但页面无view时显示拒绝状态，换号过渡请求仍由服务器权限校验并丢弃旧上下文响应，服务器也拒绝发布。五项读取为有界只读RR及5/2/5秒期限；写入有源revision、源/范围锁、UUID内容摘要重放与事务审计。未知结果只GET核对，人工确认仅解除本地内存待核对状态，不等于服务端回执，错误确认后新UUID可能重复发行，刷新/退出不提供持久恢复。
+
+新 `store_coupon_template` 与 `store_coupon_template_issue` 两实体经外部0169/内嵌0175注册，当前正式链171文件/176步骤/281表；DDL和窄运行权限升级均须显式维护，不自动线上修复或广泛授权。归属以不可变proof为准，issue.cid仅兼容，历史孤儿cid不认领。DB约束范围形状、正int32与容量，CSV规范排序去重由应用保证。发布生成独立发行及scope快照；立即失效只停止proof关联发行，删除仅源模板，保留已领/已占券、范围和订单。proof来源版本不禁止既有发行管理独立编辑。普通手动领取仅receive_type=1/category=0/app_type=0，新人=2仍须注册赠券配置，赠送=3仍须明确渠道；用途flag/满赠门槛不宣称自动满赠或关注投递闭合。旧发行列表/编辑维持partial，配置页仍missing。
+
+当前统一审计为Worker **1795**、Admin **404调用点／428变体全部可执行**；全Admin **55候选／116部分／96缺失／7退役**、营销 **16／17／15／0**。旧PHP892精确匹配、871可执行匹配、21受控不可用、995未注册未退役及1016静态缺口不变；复选框 **246勾选／158开放／404总项**。本机业务四文件55项唯一通过（首批38＋最终17）、既有消费者23文件381项唯一通过（21完整文件370＋两文件修订11），分别计账而非单批全绿；结构批59含27项PGlite/静态及32项原生，页面41、权限28、台账93项通过，unit/runtime类型与Admin构建通过。九路径均281表／228序列且结构差异为零；前两次门禁／磁盘失败日志保留，全部本輪测试集群及浏览器服务已停止。合成浏览器覆盖三范围、三用途、五权限组合、未知结果及读取重试，不等同真实配置/角色、渠道、设备、完整Linux或部署验收。旧拼团/秒杀/充值已接受记录与字节归档保留。详见[模板合同](workers-ts/docs/admin-coupon-template-contract.md)、[最终验收](workers-ts/audit/coupon-template-acceptance-20260927.json)和[营销逐屏台账说明](workers-ts/docs/admin-marketing-route-parity.md)。
+
+### 历史增量：拼团剩余三个只读屏（2026-09-27，本地候选／未发布）
+
+旧拼团商品目录、全局团记录和独立统计已由partial提升candidate；完整创建/编辑/复制维持前批candidate，四屏分别计账。目录 `/activity/combinations` 补活动价、当前基础商品划线价及原始团长/全部pink/成功团长计数，缺基础商品保留活动且划线价为空，不混SKU快照或成团配置人数。独立 `/activity/combination-groups` 恢复全局两卡、团分页及历史成员；`/activity/combination-statistics/:id?` 恢复可选ID入口、六卡及团/订单双列表。新增8个GET按导出1、全局团3、统计4分配，并在两个Admin前缀注册，共增加16条Worker路由；`combination_export.view`、`combination_group.view`、`combination_statistics.view` 分别授权，不由管理权限或generic活动接口替代。
+
+导出按相同筛选/排序逐页核验完整集合snapshot与精确总CSV字节，每页最多1000条、全集最多100000行／16MiB、单响应4MiB；保留旧11列语义、Shanghai时间、精确金额、UTF-8 BOM及公式保护。全部页和总行数/字节一致才生成文件，取消、失败、容量超限或数据变化不产出部分文件。团列表过期raw status=1只标pending，不触发结算；历史cid0、虚拟uid0、退款旧团长与缺失/软删关系保留问题标记，成员订单要求作用域与双身份严格匹配且另验order.view。六卡毛额是已付主单gross，包含后续退款及已删除主单；不同UID、原始团长数不称真实付款资格或推广归因。查询使用有界只读RR及局部期限，未新增schema、迁移或角色授权，不扩充前批交易消费者闭合范围。
+
+本轮原生去重 **140项（范围105＋回归35）**，由初轮4个完整绿文件128项及最终两个文件12项组成；初轮整体135通过／5失败保留，旧formal6整文件排除、旧HTTP6被最终结果替代，不冒称单次140/140。前端 **72项（新33＋旧表单39）**、权限定向 **26项**、路由/前端API/语义台账 **17文件92项**、Worker双类型和Admin类型/最终构建通过。CUA使用实际最终dist验证三屏、分页、独立错误重试、六个合成角色及跨tab换号；换号过渡有旧权限判定下使用新token的GET，被服务端400011拒绝且无数据，界面拒绝迟到payload、稳定后显示权限警告，不宣称零越权请求。1005行实际CSV Blob为 **94543字节**，按引号规则解析确认1005唯一ID、11列、BOM、公式保护、内嵌换行和排序，snapshot失败和取消均无Blob。下载事件没有OS文件路径，仅证明实际Blob生成；390宽DOM无页面溢出，局部表格可横滑，截图合成器灰边/缩放不代表真机。夹具给各角色导航path不证明实际服务器菜单，原生权限测试另覆盖真实菜单映射；订单详情正文未在该浏览器夹具验收。两tab控制台均为 `[]`，已关闭并重置viewport；临时服务已Ctrl+C，5202监听数已独立确认为0。证据：[本轮原生](workers-ts/audit/combination-read-native-20260927.json)、[本轮浏览器](workers-ts/audit/combination-read-browser-20260927.json)、[本轮验收汇总](workers-ts/audit/combination-read-acceptance-20260927.json)及[营销逐屏合同](workers-ts/docs/admin-marketing-route-parity.md)。旧完整表单155／485／640及原JSON/hash按历史原样保留，不与本轮重复累计。
+
+当前路由合同分布：Worker **1777**，Admin **395调用点／419变体全部可执行**；旧后台274屏为 **54候选／116部分／97缺失／7退役**，营销 **15／17／16／0**。旧PHP精确匹配892、可执行匹配871、已注册不可用21、未注册未退役995及合计1016条静态旧路径缺口不变，有效覆盖46.2%；独立新REST不提高旧路径分子。复选框仍 **246勾选／158开放／404总项**。完整Linux CI、真实配置/角色、完整公共媒体/R2、provider、真实设备及发布继续开放；本轮未提交、推送或部署。
+
+### 历史增量：拼团完整表单及到期闭环（2026-09-27）
+
+下段保留前批冻结证据及当时路由口径，三屏partial和下一批待办已由上方当前只读增量覆盖，不改写原生或浏览器历史结果。
+
+拼团完整表单及到期闭环（2026-09-27，历史本地候选／未发布）：独立 `/activity/combinations` 恢复单来源多SKU创建、原位编辑和锁源复制，完整图库/富文本、上海时间、时效/限购/人数/虚拟阈值、配送/邮费/所属方模板、退款及规格价格/配置总额度。既有SKU身份、历史消耗和退休保持；UUID/revision、原子审计与未知写仅GET核对。generic拼团写入已在DML前拒绝。旧创建页由partial提升candidate，商品目录、全局团记录及独立统计三屏仍partial，不用CRUD注册或人数配置冒充旧统计/导出。
+
+到期消费者按有效真实已付成员阈值补虚拟uid/订单0，不产生订单/账单/库存或provider调用。完整成团成功通知恢复系统标识、买家手机号短信及小程序3098，不可变outbox及生成渠道前二次资格检查；通知购时商品名与旧PHP实时活动名的差异、生成后无第三次provider资格检查明确保留，开团/参团成功通知尚未补齐。拼团退款策略固定在购时快照。关闭提前到期，软删除仅隐藏活动并保留原团截止，两者锁边界分别验证。
+
+最终原生范围去重 **8文件155项**：冻结批次完整通过7文件135项，另独立修订迁移20项通过；冻结批次整体153通过/2失败保留，未写成单次155/155。既有SKU/取消/付款/退款/确认规则另 **9文件485项**通过，原生合计 **17文件640个不同用例**；前端 **39项**、兼容 **5文件113项**、台账 **5文件19项**分别通过，零跳过，不累计早期诊断。Worker双类型及Admin类型/最终构建通过。新增外部0168/内嵌0174，当前170外部/175内嵌；九路径279表/3885列/668约束/1076索引/227序列一致、五类diff全0，空库元数据拒绝单独计账。迁移仅已知10→11事件CHECK，保留行/权限/注释并拒漂移，不扩张角色权限。
+
+CUA最终构建验证只读/管理/无图库界面、选源分页与失败原草稿保持、跨页图库、稳定富文本、额度整批拒绝、复制新身份/零消耗、未知创建只读核对、已结束启停/损坏拒绝及软删。共享190条合成请求含轮询，6次内存拼团写入、真实业务写0；390×844 DOM无页面横向溢出，截图合成器缩放/灰边未称真机。浏览器5201停机，最终原生集群夹具清零并独立停止；最初gM8fUa的20个合成库保留在已停机诊断目录，不冒称所有历史尝试均清零。63本批源码/测试、157最终Admin构建文件和前批81源码字节已分别归档。详见[本批原生证据](workers-ts/audit/combination-native-20260927.json)、[本批浏览器证据](workers-ts/audit/combination-browser-20260927.json)及[拼团合同与下一批边界](workers-ts/docs/admin-combination-contract.md)。
+
+前批完整表单路由历史：当时Worker **1761**，Admin **388调用点／411变体全部可执行**；旧后台274屏为 **51候选／119部分／97缺失／7退役**，营销 **12／20／16／0**。995未注册未退役＋21已注册不可用仍为1016条静态旧路径缺口，有效覆盖46.2%；独立新REST不改变PHP精确路径分子。复选框仍 **246勾选／158开放／404总项**。当时下一批为拼团目录价格/原始参与统计/导出、全局团分页/成员订单、独立六卡及双列表，现已由上方增量承接；完整Linux CI、真实配置/媒体/设备/provider与发布继续开放，未提交、推送或部署。
+
+前批 extras65 历史——秒杀父创建五项合同补齐（2026-09-27，本地候选／未发布）：已恢复分类/单标签筛选、跨页多选一次添加、跨商品批量价格/总额度及移除、选品类型/分类列、SKU自身图片预览，旧创建/编辑页由partial提升candidate。全部选中商品源规格读取成功后才一次加入，失败与取消不留下半批草稿；批量额度不得低于已消耗量，历史移除保留子商品/SKU身份并退休，新草稿可移除。专用图片按有效供应商/平台实际上传归属复核并响应时签名；公共秒杀列表商品主图也已补 HMAC，稳定数据库引用不变，完整公共媒体与真实R2验收仍开放。
+
+本轮最终原生 **5文件65项**（父业务33＋并发/实际Admin8＋实际app12＋图片6＋受影响PC购买6）、前端 **3文件75项**、列表兼容 **2项**、明确五文件台账 **33项**均通过，零失败／零跳过；Worker双类型和Admin类型/生产构建通过。最终构建CUA验收跨页筛选、批量失败/重试、配置/移除、SKU预览与历史身份保留；桌面1280×850和紧凑DOM390×844通过，手机截图有应用合成器灰边，未称完整真机验收。合成fixture共享日志114请求包含两次工具只读回读，CUA自身112次，真实业务写0；临时PG四实例夹具清零、独立停机核验及浏览器5200服务清理完成。前批core99原JSON/日志保留，32源码及旧route/runner字节按哈希归档，不累加历史测试数，旧dist已被最终构建替换。详见[本轮原生证据](workers-ts/audit/seckill-parent-extras-native-20260927.json)、[本轮浏览器证据](workers-ts/audit/seckill-parent-extras-browser-20260927.json)和[父活动合同](workers-ts/docs/admin-seckill-parent-contract.md)。
+
+前批 extras65 路由历史：当时Worker **1743**，Admin **379调用点／402变体全部可执行**；旧后台274屏为 **50候选／120部分／97缺失／7退役**，营销 **11／21／16／0**。旧路径缺口仍为995未注册未退役＋21已注册不可用＝1016，有效覆盖46.2%；接口注册率不代表逐屏合同全部闭合。整体复选框仍 **246勾选／158开放／404总项**，当时迁移仍169外部/174内嵌，该批无新编号迁移或角色/授权变更。完整Linux CI、真实角色/配置/设备/provider及发布验收继续开放；未提交、推送或部署。
+
+前批 core99 历史——秒杀父活动及真实角色增量（2026-09-27，本地候选／未发布）：已新增 `/activity/seckill-activities` 和9项专用REST／18项Worker注册，父活动日期、多场次、限购、平台氛围图、商品/规格、新建、原位编辑、复制、级联启停与软删除均有独立权限、全图revision、请求UUID及原子审计。既有子商品/SKU身份与已消耗额度保持，退休后取消仍恢复同一库存账；来源与供应商、活动结束时间、源库存上限由锁后服务端复核。该批父目录提升candidate；当时创建页仍partial，余下五项旧交互已由上方最新增量补齐。
+
+补齐实际app购买FOR SHARE权限：父/时段只加UPDATE(id)并由独立锁边界拒绝语义改写及未知UPDATE触发器；Admin只加父INSERT/UPDATE和固定序列USAGE，无父物理DELETE。两步窄forward复验旧角色权限与catalog，不重新commission全量；原锁边界及169外部/174内嵌注册不变，生产授权未应用。最终原生新5文件69项（权限24、业务34、真实秒杀LOGIN11），另普通LOGIN30项回归，共6文件99项通过、零失败／零跳过；中间失败和修复历史保留，不重复累加。前端23新＋30旧、台账33项、Worker双类型和Admin构建通过。桌面/手机CUA完成只读、分页选品、图库、新建编辑复制、级联取消/确认、删除、损坏日期/场次修复及异常只重读；合成API验收与真实数据库证据分开。四座最终原生实例均夹具清零、独立核验停机；浏览器服务与标签已清理。详见[父活动合同](workers-ts/docs/admin-seckill-parent-contract.md)、[原生证据](workers-ts/audit/seckill-parent-native-20260927.json)、[浏览器证据](workers-ts/audit/seckill-parent-browser-20260927.json)和[权限维护合同](workers-ts/docs/seckill-runtime-privileges.md)。
+
+前批 core99 路由历史：当时Worker **1743**，Admin **379调用点／402变体全部可执行**；旧后台274屏为 **49候选／121部分／97缺失／7退役**，营销 **10／22／16／0**，整体复选框 **246勾选／158开放／404总项**。当时未完成的父创建五项交互及公共秒杀列表主图签名已由上方最新增量推进；完整Linux CI、真实配置/角色/provider和发布门禁继续开放。以下同日时段段落所述父目录missing及app锁权限缺口亦为该批历史状态。
+
+秒杀时段管理增量（2026-09-27，本地候选／未发布）：旧 `/admin/marketing/store_seckill_data/index` 的真实 `store_seckill_time` 合同由 `/activity/seckill-times` 承接，恢复标题、起止时间、平台图片、描述、显隐、筛选、20条分页和增删改。独立权限、revision/request_id、原子审计及统一事务锁保护写入；重叠检查包含隐藏项，支持24:00结束、损坏项逐项修复、1000显示容量。删除保护未结束的父/子ID及旧父时间对引用，包含隐藏、未来和结束当天；图片保存稳定引用并按平台scope签名，原错误continuedTime字段和只读widget已移除。旧父活动目录仍missing，不用时段页抵作恢复。
+
+外部0167/内嵌0173注册固定引用锁函数，显式独立NOLOGIN owner，Admin仅新增时段UPDATE/DELETE和固定EXECUTE，父活动DML不扩展；安装与运行权限经原维护/commissioning协议，生产未应用。最后补齐owner列级INSERT/REFERENCES及grant option拒绝。最终原生 **11文件342个不同用例通过，零失败／零跳过**：时段业务/购买并发42、固定能力33、三路完整建库/升级2、实际受限LOGIN30及既有消费者235；重跑替代旧结果不重复累加。旧完整168文件库单独forward0167、全新169外部和174内嵌均通过，279表业务行及五类catalog、既有对象身份/权限保持；初轮夹具、Windows文件及initdb超时历史保留，最终按冻结代码复验。前端30、审计18、Worker双类型和Admin最终构建通过；桌面/手机CUA覆盖只读、图库上传、24:00、坏项修复、显隐/删除、失败及未知写入只重读，临时库和浏览器服务已清理停机。详见[营销合同](workers-ts/docs/admin-marketing-route-parity.md)、[原生证据](workers-ts/audit/seckill-time-native-20260927.json)、[浏览器证据](workers-ts/audit/seckill-time-browser-20260927.json)及[锁维护合同](workers-ts/docs/seckill-time-reference-lock.md)。
+
+当前重新核算Worker1725、Admin370调用点／393变体全部可执行；后台274屏为 **48候选／121部分／98缺失／7退役**，营销9／22／17／0。旧路径静态缺口仍1016，整体复选框 **246勾选／158开放／404总项** 不变。另确认app计划对父活动/时段只有SELECT，秒杀购买FOR SHARE所需窄锁权限及实际app购买尚未验收；上述购买并发采用维护夹具，受限LOGIN30覆盖普通/预售，不能合并宣称秒杀实际角色已闭合。下一批先补该权限合同，再恢复父活动日期、多场次、商品/SKU及复制，调查见[父活动合同](workers-ts/docs/admin-seckill-parent-contract.md)。商品列表主图签名、完整Linux CI、真实配置/角色/provider和发布门禁继续开放；未提交、推送或部署。
+
+充值空配置组初始化增量（2026-09-27，本地候选／未发布）：正式外部0166/内嵌0172仅在缺少 `user_recharge_quota` 时建立固定空元数据与一条迁移审计，不生成充值档位或改动余额、订单、支付开关。已有唯一组连同旧名称/分类/任意fields文本原样保留，重复组及新gid碰撞孤儿档位明确拒绝并回滚；组内锁、表锁后DDL/RLS复验、所有权/主键/序列/默认值验证覆盖初始化并发及副作用。全新建库正常注册，已有库通过固定维护runner单独forward，不能重跑全量runAll。
+
+验证已完成：原生充值/支付/权限/注册七文件149项，完整升级与受影响迁移/受限LOGIN十三文件403项，共 **20文件552项通过，零失败／零跳过**。三条完整种子数据路径证明旧库单独forward、新建外部及内嵌库只新增一个空组和一条迁移审计；旧库所有既有public业务行、catalog、对象身份/权限保持。三座维护集群均夹具清零、pg_ctl停止及端口无监听，双类型和最终18项路由台账回归通过。该轮九路径PG16.15结构审计冻结的168外部／173内嵌输入哈希一致（后续0167／0173另证，不沿用旧哈希），279表／3885列／668约束／1076索引／227序列全部一致并清理停机；结构与业务数据分别验证。早期维护批无可恢复摘要未计入，已由本轮完整复验替代。另纠正秒杀父活动与时段配置的API证据分配，两页仍missing；重新核算995未注册未退役加21已注册不可用，共1016条静态旧路径缺口。路由1713、Admin387变体、47候选／121部分／99缺失／7退役及246勾选／158开放／404总项不变。完整Linux CI、真实角色/配置/provider和发布验收继续开放；未提交、推送或部署。详见[营销合同](workers-ts/docs/admin-marketing-route-parity.md)、[原生复验证据](workers-ts/audit/recharge-quota-seed-native-20260927.json)和[九路径结构证据](workers-ts/audit/recharge-quota-seed-catalog-20260927.json)。
+
+充值金额档位增量（2026-09-26，本地候选／未发布）：旧 `/admin/marketing/balance_recharge` 由新 `/marketing/recharge-options` 承接金额/赠送/排序/显隐、添加编辑删除及启用预览。固定 `user_recharge_quota` 组专用REST、独立权限、revision/request_id和原子审计，不开放任意组合JSON；管理变更与套餐下单同锁，既有订单金额快照保持。保留无组时公共空档位及自定义金额，后台依赖基础组已初始化；旧签到视觉的sign_day_num不被当前签到逻辑消费，仍missing。后台分布为 **47候选／121部分／99缺失／7退役**，营销为8／22／18／0；Worker路由1713，旧PHP可执行缺口995不变，Admin364调用点展开387变体全部可执行。原生PostgreSQL16.15四文件42/42零跳过（含9并发场景）、前端17/17、审计18/18、Worker双类型及Admin最终构建通过；临时库夹具清零并停机。CUA合成API验证只读、金额精度、损坏项修复、显隐取消/确认、20条上限与删除恢复、读取失败及未知写入后只重读，桌面1280×850和手机390×844无页面横向溢出或控制台error/warn；已修桌面排序列遮挡，浏览器服务已停止。真实角色/配置、完整Linux CI及支付渠道和发布验收仍开放，复选框 **246勾选／158开放／404总项** 不变；未提交、推送或部署。详见[营销逐屏合同](workers-ts/docs/admin-marketing-route-parity.md)。
+
+积分分类管理增量（2026-09-26，本地候选／未发布）：旧 `/admin/marketing/integral/classify` 由新 `/marketing/integral-categories` 承接15条分页、名称/ID及显隐筛选、区间新增编辑、显隐确认与删除。实际合同为 `category.group=5` 的平面积分范围，公开商城仍消费 `label/value=min-max`，不涉及商品分类树或商品ID占用。独立 `integral_category.view/manage`、请求UUID、记录revision、组内事务锁和原子审计保护写入；补齐旧PHP漏掉的完全包围区间冲突，包含隐藏项，显示上限1000，名称常见大小写判重。6项新REST同步注册两面，旧7动态表单API仍未恢复；后台分布为 **46候选／121部分／100缺失／7退役**，营销为7／22／19／0。Worker路由1701，旧PHP可执行缺口995不变；Admin358调用点展开381变体，全部可执行。原生PostgreSQL16.15四文件35/35（含7并发场景）零跳过、前端15/15、审计18/18、Worker双类型及Admin最终构建通过。CUA内置浏览器验证只读、翻页筛选、范围校验、新增编辑、开关取消/确认、末页删除、失败重读及部分响应断线恢复，1280×850和390×844无页面横向溢出与控制台error/warn；临时数据库及浏览器服务均已停止。真实运营范围/角色、完整Linux CI和发布门禁仍开放，复选框 **246勾选／158开放／404总项** 不变。未提交、推送或部署。详见[营销逐屏合同](workers-ts/docs/admin-marketing-route-parity.md)。
+
+分销员申请审核与浏览器复核（2026-09-26，本地候选／未发布）：已确认 Browser 插件可用，并通过 CUA 内置浏览器继续验收。旧 `/admin/agent/promoter/apply` 由新 `/agent/promoter-applications` 承接，支持15条分页、关键词/状态筛选、通过、必填原因拒绝及软删除；`distribution.view/manage` 分离，审核与删除携带材料 `revision`，按用户加锁、校验状态与活跃用户，审计与业务同事务，响应未知时只重读不自动重写。旧GET审核及无body删除仍保留兼容，缺少新版本保护。后台逐屏调整为 **45候选／121部分／101缺失／7退役**；新增两个POST注册使Worker路由1687→1689，旧PHP可执行缺口仍995、有效覆盖46.2%。Admin 352调用点展开375请求变体，全部可执行。新增及相关后端PGlite/原生PG去重36项通过，其中原生PostgreSQL16.15为4文件31/31、零跳过，含9个并发场景；前端12项运行时、另48项权限/路由/接口/逐屏回归、Worker双类型与Admin构建通过。上轮砍价退役的PGlite失败已换原生PG正式夹具复验20/20、零跳过，临时库夹具余留0并停机。完整Linux CI、生产真实申请与角色、发布验收仍开放，复选框维持 **246勾选／158开放／404总项**。未提交、推送或部署。合同及浏览器证据见[分销申请审计](workers-ts/docs/admin-supplier-agent-route-parity.md)。
+
+路由合同重新核算与活动目录分页（2026-09-26，本地候选／未发布）：当前工作区实际复选框仍为 **246勾选／158开放／404总项**。重新执行路由审计得到PHP1904／Worker1687／精确892／可执行871／明确不可用21／原始缺失1012／退役17／可执行缺口995，有效覆盖46.2%；下方路由分布表已更新，后台逐屏仍为44候选／121部分／102缺失／7退役。秒杀、拼团、砍价、积分四目录补齐有界分页、名称与启停筛选、同一只读快照的列表/总数及禁缓存；修复原三目录无界读取和砍价仅前100条的问题。前端处理切页/切tab/换号迟到响应、只读角色写按钮及加载时分页组件回跳；旧时间状态/复制/导出/完整字段仍缺，四屏保持partial。FE-003C的UniApp台账陈旧“待CI/未勾选”已按本清单既有PR #11记录同步，未扩大FE-003J/K范围。定向列表/权限31项、活动保留与砍价表单84项、前端运行时8项、审计35项，共158个去重用例通过；Admin类型/生产构建及Worker双类型通过。Playwright/Edge在本机1280×800与390×844验证第2/7页、筛选、四tab、错误重试和空集，23次合成只读API请求、业务写入/外发/控制台错误均0。扩展砍价退役回归另有10通过／6跳过／3失败：两项下单夹具缺pricing capability、一项PGlite不支持prepared多SQL，均未进入修改的列表路径，未计通过；完整Linux CI、原生PG、真实角色数据与发布验收仍待后续。未提交、推送或部署。详见[营销逐屏合同](workers-ts/docs/admin-marketing-route-parity.md)。
 
 FE-003C 五旧客户路由代码主线合入（2026-09-25，未发布）：经批准，[PR #11](https://github.com/cinagroup/cinashop/pull/11) 已合入 `main@211ee4e10b8a0f2c5f3d61660db683a862f68f66`。仅 FE-003C 从开放改勾选；远端原文独立核算为 **246 勾选／158 开放／404 总项**。旧申请、状态、双域当前记录及员工页按原路径直达，代理商与分销员分别接真实 Worker 合同；独立 PostgreSQL 16.15 五项路由/并发场景、UniApp 工具链 752/752、三端构建和 390×844 H5 合成只读路由烟测通过，详见 `workers-ts/audit/fe003c-h5-local-smoke.md`。PR 精确头完整 Linux CI 11/11 成功，主线合并提交的[完整 Linux CI](https://github.com/cinagroup/cinashop/actions/runs/36085034725) 已启动；FE-003J/K 的真实设备、账号、历史数据、旧客户端原位升级和发布门禁仍开放。本次合入未触发部署。
 
@@ -748,17 +1312,38 @@ SKU退役并发增量（2026-09-10）：实际多商品下单＋后台编辑＋�
 
 静态路由统计由 `cd workers-ts && npm run audit:routes` 生成。参数名差异会归一化，ThinkPHP `resource` 会按 `only/except` 展开，PHP 行注释和块注释会先按原长度遮蔽，通配 501 不计为覆盖。`audit/legacy-route-decisions.json` 只允许带源代码证据、原因和替代合同的退役项；退役路由仍保留在原始 PHP 分母和缺失数中，另列可执行缺口与有效覆盖，不能靠删分母粉饰进度。该统计仍只是上限：它不证明权限、响应字段、并发状态机、数据或第三方副作用等价。
 
-### 路由合同分布
+### 路由合同分布（2026-09-27 本地代码重新核算，未发布）
 
-| 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
+| 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 未注册未退役 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 866 | 440 | 437 | 3 | 17 | 2 | 15 | 96.3% / 95.6% / 96.0% |
-| `/adminapi` | 1,153 | 513 | 220 | 205 | 15 | 933 | 0 | 933 | 19.1% / 17.8% / 17.8% |
-| `/supplierapi` | 182 | 160 | 120 | 120 | 0 | 62 | 12 | 50 | 65.9% / 65.9% / 70.6% |
+| `/api` | 457 | 944 | 443 | 437 | 6 | 14 | 2 | 12 | 96.9% / 95.6% / 96.0% |
+| `/adminapi` | 1,153 | 594 | 227 | 212 | 15 | 926 | 0 | 926 | 19.7% / 18.4% / 18.4% |
+| `/supplierapi` | 182 | 164 | 121 | 121 | 0 | 61 | 12 | 49 | 66.5% / 66.5% / 71.2% |
 | `/kefuapi` | 63 | 70 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,650 | 881 | 863 | 18 | 1,023 | 17 | 1,006 | 46.3% / 45.3% / 45.7% |
+| 合计 | 1,904 | 1,813 | 892 | 871 | 21 | 1,012 | 17 | 995 | 46.8% / 45.7% / 46.2% |
+
+本表由当前工作区 `scripts/route-parity-audit.ts` 只读重新执行，并与[路由分布JSON](workers-ts/audit/route-distribution-20260927.json)及本轮封存台账统一；上方较早综合事实表保留历史口径。`actionableMissing=995` 仅表示未注册且未退役的旧路径，另有21条已注册但明确不可用，合计 **1016条静态旧路径缺口**：api18、admin941、supplier49、kefu0、out0、erp8。有效覆盖为871/(1904−17)，只衡量路径注册，不能证明行为等价；1016也不能直接等同全部待完成业务。Admin当前413个调用点展开为437个请求变体，437/437已注册且可执行，未解析/未注册/受控不可用均为0；新接口路径不一定沿用旧PHP路径，因此不能按926个旧路径缺口推断新Admin页面全部不可用。
+
+后台逐屏合同以11份 `audit/admin-legacy-*-route-parity.json` 的274条无重叠旧业务路由为基线；下表与本轮生成JSON一致，计入发行列表及新建／复制两屏partial→candidate。candidate只表示本地候选覆盖，真实角色、业务数据和发布验收另计：
+
+| 模块 | 候选覆盖 | 部分覆盖 | 缺失 | 退役 | 合计 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 系统设置 setting | 17 | 24 | 30 | 5 | 76 |
+| 营销 marketing | 18 | 15 | 15 | 0 | 48 |
+| 企业微信 work | 0 | 8 | 12 | 0 | 20 |
+| 应用渠道 app | 0 | 8 | 12 | 0 | 20 |
+| 系统 system | 0 | 4 | 12 | 1 | 17 |
+| 供应商/代理 supplier-agent | 1 | 10 | 8 | 0 | 19 |
+| 跨模块 cross-module | 4 | 10 | 3 | 1 | 18 |
+| 内容 content | 8 | 3 | 2 | 0 | 13 |
+| 用户/订单 user-order | 2 | 14 | 2 | 0 | 18 |
+| 客服 kefu | 1 | 12 | 0 | 0 | 13 |
+| 商品 product | 6 | 6 | 0 | 0 | 12 |
+| 合计 | 57 | 114 | 96 | 7 | 274 |
+
+UniApp台账当前为93个目标页面；151条旧逻辑路由唯一分为28条原路径直达、100条兼容（61候选覆盖/39部分替代）及23条显式缺口。FE-003C的台账状态已与本清单既有PR #11代码/Linux CI完成记录同步，FE-003J/K真实设备、旧客户端升级和发布门禁继续开放。复选框独立核算仍为246勾选/158开放/404总项。
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -1095,7 +1680,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## P2：前端、测试与发布
 
-- [ ] **FE-001 Admin 页面补齐**：机器审计已把“旧378→新56个 Vue文件”的粗略口径收紧为旧端274条启用业务路由/245个独立已路由页面组件，对比新端52条业务路由/51个独立已路由页面组件；文件数和路由数均不等于语义覆盖率，父项继续未完成。
+- [ ] **FE-001 Admin 页面补齐**：机器审计已把“旧378→新56个 Vue文件”的粗略口径收紧为旧端274条启用业务路由/245个独立已路由页面组件；最新日期版新端为87条业务路由/86个独立已路由页面组件，旧屏语义分布为72候选/112部分/83缺失/7退役。文件数和路由数均不等于语义覆盖率，父项继续未完成。
   - [x] **FE-001A 可重复导航盘点**：`audit/admin-frontend-inventory.json` 固化旧端18个实际导入路由文件及 SHA-256、274条业务页面路由、18条辅助页面路由、133个未路由页面文件；新端路由、页面、未路由文件和组件可解析性由测试防漂移。注释路由、未导入模块和错误页不进入业务分母。
   - [x] **FE-001B 商品创建/编辑 501 与字段合同修复**：新 Admin 已从不存在的 `/product/create|update/:id` 改为 Worker 已注册的 `/product/add|edit/:id`；详情由数据库 camelCase 明确投影为页面 snake_case，编辑提交再映射回模型字段，会员价/排序不再在新建时静默丢失。定向测试覆盖路由、详情和更新字段。
   - [x] **FE-001C 商品单位与保障服务首批操作面（候选完成，未发布）**：新增 `/product/metadata`，接回旧 `unitList` 与 `ensure` 活跃能力；单位支持查、新增、编辑、引用保护删除并进入商品编辑下拉，保障支持查、新增、编辑、停启和引用保护删除。服务端继续执行 `product.view/manage`，本地桌面/390px预览交互通过。
@@ -1282,7 +1867,11 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **REL-003 Pages 发布（2026-09-12五端测试部署及代理复验完成）**：Admin使用cinashop-admin.pages.dev，PC使用shop.cinaseek.ai；H5/Supplier/Kefu分别使用cinashop-h5/supplier/kefu.pages.dev。五端均已发布97b2a13和Functions，deployment ID及SHA见full-test-deployment-20260912.json。首页及入口脚本200，Admin代理已返回真实JSON匿名拒绝，公开品牌JSON正常。保留已占用域名与admin-ts项目；真实登录、写入和完整五端业务验收仍开放。测试商品图片已在后续独立处理，用户确认新图可读；不据此关闭五端整体验收或重复改图/清缓存。
 - [ ] **REL-004 发布后观察与旧 PHP 下线**：至少观察登录/写入/支付/退款/Queue/Hyperdrive/R2/DO；完成流量切换、回滚演练、旧回调撤销和旧数据库只读封存后才能下线 PHP。
 
-## 当前下一步（2026-09-21 更新）
+## 当前下一步（2026-09-27 更新）
+
+四类通用活动目录的分页与基础筛选已完成；其后的独立拼团目录含完整快照导出、完整创建/编辑/复制、全局团记录及独立统计四屏均为本地candidate，不再列为下一批待恢复。分销员申请审核、积分分类、充值档位、秒杀时段及独立秒杀父目录与完整创建/编辑也保持本地candidate，其余通用活动目录仍按逐屏合同保留partial。充值固定组空元数据外部0166/内嵌0172及固定时段引用锁0167/0173已有隔离证据，既有库按维护入口单独forward；具体运营档位和真实支付配置仍按DATA-006验收。秒杀父日期、多场次、商品/SKU、原位编辑、复制、级联启停和软删除，以及创建页五项交互均已本机验收；app窄锁与Admin父写权限固定升级的历史证据保留，生产授权未应用。公共秒杀列表主图与SKU图片已有所属方校验及响应时HMAC，完整公共媒体、真实R2/JWT与其余消费者仍须继续验证，不能借单一列表签名关闭全域媒体合同。优惠券模板目录、创建/失效/删除及独立发布，以及发行实例完整列表/新建/复制/独立启停/软删除/精确领取历史均已通过本机合同、原生、合成浏览器与台账验收，分别封存且未发布。下一步优先核清优惠券配置及其消费者、真实会员权益和自动满赠/关注/新人合同，再恢复其他活动完整表单、时间筛选、复制/导出和设置消费者；用途flag不关闭自动投递，拼团开团/参团成功通知也未由只读屏关闭。旧sign_day_num不被当前PHP/Worker签到逻辑消费，视觉页仍missing，先核清用途再恢复或作有证据的退役判断。437/437前端接口注册率不能替代274屏业务对账；仍须完整Linux门禁、真实部署角色/配置/设备/provider及发布验收，158项开放不变。
+
+### 2026-09-21 下一步历史记录
 
 已发布基线为 `main@7a5508f`，受限业务/后台连接及本次授权测试订单维护已完成，不重复安装权限、清理订单或回退高权限。当前 `codex/user-visit-history-20260921` 仅本地候选；推荐分页、品牌/标签/参考会员价，以及真实秒杀/砍价/拼团ID和有效期导航已补。预售已完成PHP全款模式核对及只读时段/规格合同，接下来优先补预售type=6的加购/数量/报价/建单权威校验和履约快照，再连接列表/详情/推荐与结算恢复；随后继续促销边框、隐私/协议与账号治理，并做真实账号/真机及部署后的联合验收。当前路由台账为64目标页、97兼容映射（60候选覆盖/37部分替代）、48未映射或跨端缺口，旧151路由完整计账。主Worker/Pages的新候选发布仍需独立批准；真实支付provider与其余DATA-007异常裁决不在本轮授权内。以下保留2026-09-07当时的待办及计数，不当作当前线上状态或覆盖统计。
 

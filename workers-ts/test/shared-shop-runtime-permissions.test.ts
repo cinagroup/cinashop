@@ -2,6 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { checkoutPricingMigrationDatabase } from './helpers/checkoutPricingMigrationDatabase';
 import { runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { runBrokeragePaidOrderFence } from '../src/migrations/runBrokeragePaidOrderFence';
 import { installCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { offlineRuntimeGrantPlan } from '../src/migrations/offlineOrderRuntimeContract';
@@ -21,6 +22,7 @@ describe('explicit shared shop role pricing capabilities PG16', () => {
   beforeEach(async () => {
     f = await checkoutPricingMigrationDatabase(); await f.exec(ddl);
     await runOfflineOrderSchema(f.db, true); await runBrokeragePaidOrderFence(f.db);
+    await runOrderPromotionGiftReceipt(f.db);
     await installCheckoutPricingLock(f.db, f.pricingOwner);
   }, 30000);
   afterEach(async () => { await f?.close(); }, 30000);

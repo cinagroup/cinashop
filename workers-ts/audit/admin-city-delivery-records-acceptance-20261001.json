@@ -1,0 +1,685 @@
+{
+  "version": 1,
+  "dateUtc": "2026-10-01",
+  "frozenAtUtc": "2026-10-01T02:32:12.558Z",
+  "phase": "locally_verified_partial_unpublished",
+  "status": "partial",
+  "productionAccepted": false,
+  "published": false,
+  "scope": "City delivery record read foundation and preservation of confirmed callback watermark authority. Full provider cancellation remains open.",
+  "outcome": {
+    "workerRoutes": 2096,
+    "workerRouteFileSurfaces": {
+      "api": 1089,
+      "admin": 732,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "surfaceCountingBoundary": "Source route files; API count includes protected Admin aliases. New REST does not add legacy exact URL parity.",
+    "legacyPhpRoutes": {
+      "php": 1904,
+      "ts": 2096,
+      "matched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "missing": 1001,
+      "retired": 17,
+      "actionableMissing": 984,
+      "coveragePercent": 47.4,
+      "executableCoveragePercent": 46.3,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 103,
+    "adminApi": {
+      "callSites": 558,
+      "pathVariants": 582,
+      "registered": 582,
+      "executable": 582,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "legacySettingsScreens": {
+      "legacyRoutes": 76,
+      "reviewed": 76,
+      "candidate": 20,
+      "partial": 24,
+      "missing": 27,
+      "retired": 5,
+      "unreviewed": 0
+    },
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 86,
+      "partial": 114,
+      "missing": 66,
+      "retired": 8
+    },
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "screenClassificationChanges": [
+      {
+        "path": "/admin/setting/city/delivery/record",
+        "from": "missing",
+        "to": "partial",
+        "target": "/setting/city-delivery-records"
+      }
+    ]
+  },
+  "contracts": {
+    "authority": "Independent city_delivery_record.view; exact old1491 auth/path is view only; broad order/config/store/shipping groups do not authorize. No manage or write route.",
+    "reads": "Bounded RR READ ONLY, count/list same snapshot, stricter deadlines retained, literal keyword, signed historical status, typed owners and trusted uid/owner original order join. Ambiguous pickup identity masked.",
+    "history": "Multiple attempts and hidden/deleted/orphan owners retained. Status1 ambiguous, unknown values diagnostic; exact decimal money and meters-to-km text; add_time0 unrecorded; explicit projection excludes finish code, coordinates and provider payload.",
+    "ui": "Draft/applied query separate; failed GET preserves explicit old snapshot; separate bounded store choices and local detail; auth identity/generation/abort prevent late disclosure.",
+    "callbackFix": "UNKNOWN remains durably IGNORED in event/outbox and does not create or replace confirmed watermark, including last rank, terminal and confirmed chronology. No new provider cancellation or fee claim.",
+    "open": [
+      "Provider cancellation request/fee-confirmation contract and trusted historic account binding",
+      "Unknown external submission recovery and completion/cancellation competition",
+      "Atomic original-order restore and operation receipt",
+      "Adjacent city-delivery configuration",
+      "Production Hyperdrive, real roles/providers, scale, devices and release"
+    ]
+  },
+  "verification": {
+    "native": {
+      "batches": [
+        {
+          "log": ".cache/city-delivery-records-native-final-20261001.log",
+          "files": 3,
+          "passed": 17,
+          "failed": 0,
+          "skipped": 0,
+          "tests": [
+            "test/admin-city-delivery-records.test.ts",
+            "test/admin-city-delivery-records-postgres.test.ts",
+            "test/admin-city-delivery-records-http.test.ts"
+          ],
+          "port": 65240,
+          "cluster": ".cache/finance-postgres-9vn5CZ",
+          "durationSeconds": 22.11,
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterIndependentStoppedCheck": true
+        },
+        {
+          "log": ".cache/city-delivery-callback-watermark-native-final-20261001.log",
+          "files": 2,
+          "passed": 23,
+          "failed": 0,
+          "skipped": 0,
+          "tests": [
+            "test/city-delivery-callback-watermark-postgres.test.ts",
+            "test/city-delivery-callback.test.ts"
+          ],
+          "port": 61296,
+          "cluster": ".cache/finance-postgres-sYIkgR",
+          "durationSeconds": 14.02,
+          "remainingFixtures": 0,
+          "stopped": true,
+          "dataRemovedAfterIndependentStoppedCheck": true
+        }
+      ],
+      "uniqueFiles": 5,
+      "uniquePassed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "databaseCases": 20,
+      "pureInputAndExistingProviderCases": 20,
+      "boundary": "Fresh native PG16.15 clusters. Record reads use actual nonowner Admin/app SELECT-only intersection of unchanged production ACL. Callback red/green evidence uses a 12-table fixture with existing production DML/column-UPDATE/sequence-USAGE on the 7 callback tables and SELECT-only on remaining fixture tables. No full 282-table commissioning or provider-network acceptance claim.",
+      "independentCleanup": {
+        "log": ".cache/city-delivery-records-cluster-cleanup-final-20261001.json",
+        "records": [
+          {
+            "cluster": "finance-postgres-oIg2vw",
+            "port": 61045,
+            "statusExit": 3,
+            "dataAbsent": true,
+            "noListener": true
+          },
+          {
+            "cluster": "finance-postgres-9BYm3C",
+            "port": 63637,
+            "statusExit": 3,
+            "dataAbsent": true,
+            "noListener": true
+          },
+          {
+            "cluster": "finance-postgres-9vn5CZ",
+            "port": 65240,
+            "statusExit": 3,
+            "dataAbsent": true,
+            "noListener": true
+          },
+          {
+            "cluster": "finance-postgres-sYIkgR",
+            "port": 61296,
+            "statusExit": 3,
+            "dataAbsent": true,
+            "noListener": true
+          }
+        ]
+      }
+    },
+    "callbackRegression": {
+      "beforeFixLog": ".cache/city-delivery-callback-watermark-native-before-fix-20261001.log",
+      "baselineFailed": true,
+      "baselineSqlFailed": 9,
+      "baselinePurePassed": 14,
+      "afterFixLog": ".cache/city-delivery-callback-watermark-native-final-20261001.log",
+      "sqlPassed": 9,
+      "existingPurePassed": 14,
+      "originalAuditTool": "19 assertions and 18 events/outboxes retained; confirmed subjects corrected to 7 with initial UNKNOWN absent. Original deployed audit was not rerun.",
+      "historyBoundary": "This patch does not reconstruct authority already overwritten by old code."
+    },
+    "audit": {
+      "files": 6,
+      "passed": 40,
+      "failed": 0,
+      "log": ".cache/city-delivery-records-audits-final-20261001.log"
+    },
+    "permissionCatalog": {
+      "selectedPassed": 2,
+      "unselectedSkipped": 22,
+      "fullFileCases": 24,
+      "log": ".cache/city-delivery-records-permission-catalog-20261001.log"
+    },
+    "frontendUnit": {
+      "passed": 14,
+      "failed": 0,
+      "log": ".cache/city-delivery-records-frontend-tests-final-20261001.log"
+    },
+    "typechecks": {
+      "passed": true,
+      "logs": [
+        ".cache/city-delivery-records-worker-types-final-20261001.log",
+        ".cache/city-delivery-records-worker-runtime-types-final-20261001.log",
+        ".cache/city-delivery-records-admin-types-final-20261001.log"
+      ],
+      "metadata": {
+        ".cache/city-delivery-records-worker-types-final-20261001.log": {
+          "finished_at": "2026-10-01T02:27:11.4296326Z",
+          "elapsed_ms": 66060,
+          "exit_code": 0
+        },
+        ".cache/city-delivery-records-worker-runtime-types-final-20261001.log": {
+          "finished_at": "2026-10-01T02:27:52.5512504Z",
+          "elapsed_ms": 41067,
+          "exit_code": 0
+        },
+        ".cache/city-delivery-records-admin-types-final-20261001.log": {
+          "exit_code": 0,
+          "elapsed_ms": 18270,
+          "finished_at": "2026-10-01T02:11:30.5968775Z"
+        }
+      }
+    },
+    "ownedListeners": {
+      "file": ".cache/city-delivery-records-all-owned-listeners-final-20261001.json",
+      "owned_ports": [
+        5277,
+        61045,
+        63637,
+        65240,
+        61296
+      ],
+      "listeners": [],
+      "query_context": "Read-only local host TCP listener query outside the restricted token",
+      "checked_at": "2026-10-01T02:31:53.5097583Z",
+      "query_succeeded": true
+    },
+    "adminBuild": {
+      "passed": true,
+      "durationSeconds": 22,
+      "log": ".cache/city-delivery-records-admin-build-final-20261001.log"
+    },
+    "browser": {
+      "passed": true,
+      "functionalGroups": 21,
+      "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa.json",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "driver": "regular Playwright + local Chrome headless",
+      "availability": "Absent",
+      "reason": "Browser plugin not available",
+      "screenshots": [
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-desktop-fees.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-detail-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-detail-orphan.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-stale-desktop.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-table.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-detail.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-date-start.png",
+        "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-date-end.png"
+      ],
+      "basicChecks": [
+        {
+          "name": "Page identity",
+          "status": "passed",
+          "url": "http://127.0.0.1:5277/setting/city-delivery-records",
+          "title": "同城配送记录 - CinaShop 管理后台"
+        },
+        {
+          "name": "Not blank",
+          "status": "passed",
+          "meaningfulContentCharacters": 5566
+        },
+        {
+          "name": "No framework overlay",
+          "status": "passed",
+          "overlayCount": 0
+        },
+        {
+          "name": "Console health",
+          "status": "passed",
+          "unexplainedErrors": 0,
+          "warnings": 0,
+          "pageErrors": 0,
+          "expectedSyntheticFaults": 3
+        },
+        {
+          "name": "Screenshot evidence",
+          "status": "passed",
+          "screenshots": [
+            "city-delivery-records-desktop.png",
+            "city-delivery-records-desktop-fees.png",
+            "city-delivery-records-detail-desktop.png",
+            "city-delivery-records-detail-orphan.png",
+            "city-delivery-records-stale-desktop.png",
+            "city-delivery-records-mobile.png",
+            "city-delivery-records-mobile-table.png",
+            "city-delivery-records-mobile-detail.png",
+            "city-delivery-records-mobile-date-start.png",
+            "city-delivery-records-mobile-date-end.png"
+          ]
+        },
+        {
+          "name": "Interaction proof",
+          "status": "passed",
+          "observedFlow": "/setting/city-delivery-records -> draft filters -> explicit query -> pagination/store paging -> local detail -> errors/actor isolation -> mobile date/table/detail",
+          "exercisedBusinessGroups": [
+            {
+              "name": "desktop route identity, menu selection and visible read-only scope",
+              "status": "passed"
+            },
+            {
+              "name": "complete legacy columns, typed store/supplier owners and distinct attempts remain visible",
+              "status": "passed"
+            },
+            {
+              "name": "draft keyword and platform filters do not fetch until query is explicitly requested",
+              "status": "passed"
+            },
+            {
+              "name": "pagination and page-size changes use applied filters rather than the latest unconfirmed draft",
+              "status": "passed"
+            },
+            {
+              "name": "status zero, known cancellation and unknown status codes are exact independent filters",
+              "status": "passed"
+            },
+            {
+              "name": "Shanghai time range sends paired inclusive epoch bounds without browser timezone conversion",
+              "status": "passed"
+            },
+            {
+              "name": "invalid keyword or status prevents any list GET and preserves the last readable snapshot",
+              "status": "passed"
+            },
+            {
+              "name": "hidden deleted store choices remain selected when independent store pages change",
+              "status": "passed"
+            },
+            {
+              "name": "store keyword search is bounded, independent and retains the selected missing-page choice",
+              "status": "passed"
+            },
+            {
+              "name": "local detail shows snapshot addresses fees reasons and never renders projected secrets",
+              "status": "passed"
+            },
+            {
+              "name": "unknown orphan detail keeps invalid raw values and uncertainty diagnostics instead of fabricated amounts",
+              "status": "passed"
+            },
+            {
+              "name": "failed or malformed new list query retains the clearly stale last query and successful retry recovers it",
+              "status": "passed"
+            },
+            {
+              "name": "detail failures and mismatched IDs do not expose a different local record",
+              "status": "passed"
+            },
+            {
+              "name": "failed store page keeps selected hidden deleted choice and explicitly marks old options",
+              "status": "passed"
+            },
+            {
+              "name": "no permission loads no record or store data and live revocation clears an open detail immediately",
+              "status": "passed"
+            },
+            {
+              "name": "late list data from a replaced actor cannot overwrite the replacement snapshot",
+              "status": "passed"
+            },
+            {
+              "name": "late detail data is aborted on actor switch and cannot reopen or populate the old dialog",
+              "status": "passed"
+            },
+            {
+              "name": "late stores data cannot restore old actor choices after replacement",
+              "status": "passed"
+            },
+            {
+              "name": "mobile layout keeps the long table scroll inside its container and detail text inside the dialog",
+              "status": "passed"
+            },
+            {
+              "name": "mobile date popup stays within the viewport and can be dismissed without applying filters",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "fullStableMobileDatePopupBounds": [
+        {
+          "field": "start",
+          "x": 59,
+          "y": 411,
+          "width": 322,
+          "height": 424,
+          "right": 381,
+          "bottom": 835,
+          "natural": {
+            "width": 322,
+            "height": 424,
+            "minimumOpacity": 1
+          }
+        },
+        {
+          "field": "end",
+          "x": 59,
+          "y": 31,
+          "width": 322,
+          "height": 424,
+          "right": 381,
+          "bottom": 455,
+          "natural": {
+            "width": 322,
+            "height": 424,
+            "minimumOpacity": 1
+          }
+        }
+      ],
+      "personalScreenshotReview": {
+        "reviewer": "root",
+        "method": "view_image",
+        "reviewed": [
+          "city-delivery-records-desktop.png",
+          "city-delivery-records-mobile-date-start.png",
+          "city-delivery-records-mobile-date-end.png",
+          "city-delivery-records-mobile-detail.png"
+        ],
+        "findings": "Desktop shows the intended record page, selected independent menu, filters and distinct history rows. Both mobile calendar popups are opaque and fully visible with Now/OK controls inside the viewport. Mobile local detail text and exact decimal values stay within the dialog."
+      },
+      "cleanup": {
+        "file": ".cache/city-delivery-records-browser-cleanup-final-20261001.json",
+        "owned_preview_session": 53100,
+        "preview_exit_code": 0,
+        "listener_port": 5277,
+        "listeners": [],
+        "checked_at": "2026-10-01T02:25:33.7449883Z"
+      },
+      "boundary": "Synthetic API/session with actual final Vue dist and verified served hashes. Native SQL/JWT verified separately. No provider or real-device claim."
+    },
+    "scopedDiffCheck": {
+      "passed": true,
+      "includesUntrackedSources": true
+    },
+    "attempts": [
+      {
+        "log": ".cache/city-delivery-records-native-first-20261001.log",
+        "accepted": false,
+        "passed": 16,
+        "failed": 1,
+        "reason": "POST not registered used existing HTTP200 business501/404 fallback; strict expected envelopes corrected without global API mutation. GET missing detail remains actual404."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa-first-failed.json",
+        "log": ".cache/city-delivery-records-browser-first-20261001.log",
+        "accepted": false,
+        "passed": 18,
+        "failed": 3,
+        "reason": "Mobile double-calendar popup exceeded 390px; fixed with paired datetime controls. Page-size locator and synthetic error text assumptions corrected; error handling now preserves a bounded server message."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa-before-popup-position-fix.json",
+        "log": ".cache/city-delivery-records-browser-before-popup-position-fix-20261001.log",
+        "accepted": false,
+        "passed": 20,
+        "failed": 1,
+        "reason": "Paired mobile date popup still extended 15px below 844px viewport; Popper vertical overflow prevention now keeps the full controls visible. Bounds assertions retained."
+      },
+      {
+        "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa-before-popup-settle.json",
+        "log": ".cache/city-delivery-records-browser-before-popup-settle-20261001.log",
+        "accepted": false,
+        "passed": 21,
+        "failed": 0,
+        "reason": "All functional assertions passed, but end-popup screenshot was captured during entry animation. Final QA waits for complete hidden/open transitions and verifies stable natural height and opacity before capturing."
+      },
+      {
+        "log": ".cache/city-delivery-records-worker-types-first-20261001.log",
+        "accepted": false,
+        "exitCode": 2,
+        "errors": 2,
+        "reason": "Two incomplete test-only Worker Env adapters needed an explicit typed boundary. satisfies checks actual used fields; runtime fixture values and assertions unchanged."
+      },
+      {
+        "log": ".cache/city-delivery-records-worker-types-before-satisfies-fix-20261001.log",
+        "accepted": false,
+        "exitCode": 2,
+        "files": 2,
+        "reason": "Leading satisfies on the next line after an object literal was parsed as a new expression. Both annotations moved to the closing-brace line; syntax diagnostics cleared, runtime values and assertions unchanged."
+      }
+    ]
+  },
+  "history": {
+    "previousShippingAcceptance": {
+      "file": "workers-ts/audit/admin-shipping-settings-acceptance-20261001.json",
+      "sha256": "7a3953e492778dde25a7c6ce8c8a24e9f40cb5c52635db2c48bb4f8c68350b32",
+      "preserved": true
+    },
+    "unchangedRuntimeSourceHashes": {
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805"
+    }
+  },
+  "evidence": {
+    "reports": [
+      "workers-ts/audit/route-distribution-city-delivery-records-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-inventory-city-delivery-records-followup-20261001.json",
+      "workers-ts/audit/admin-frontend-api-contracts-city-delivery-records-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json",
+      "workers-ts/audit/admin-legacy-app-route-parity.json",
+      "workers-ts/audit/admin-legacy-content-route-parity.json",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json",
+      "workers-ts/audit/admin-legacy-product-route-parity.json",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json",
+      "workers-ts/audit/admin-legacy-work-route-parity.json"
+    ],
+    "sourceHashFormat": "UTF8 text with CRLF/CR normalized to LF",
+    "sourceHashes": {
+      "MIGRATION_CHECKLIST.md": "65e374de63bb8e5ab65657301121f683f6a44fbd9fbcb49986b435f335a87ba9",
+      "view/admin-ts/src/api/cityDeliveryRecords.ts": "3a2d60d3c9c93e199f57d3c94821d508d9ea117f8f0f63858c89f0e88f311a88",
+      "view/admin-ts/src/layouts/AdminLayout.vue": "bdb6727b85d966c64e7a1c6ecb9760e62051c22531f3f92948b1729413c0470b",
+      "view/admin-ts/src/pages/setting/CityDeliveryRecords.vue": "a668bbfe75e2c497bb2e9f5397c8c7b518214daf9342b99cbf75c9f704910dc5",
+      "view/admin-ts/src/router/index.ts": "c3f459eb2d198056cb1c9eec16aa1cf32928c09aaf83d611367e5a7433517a7c",
+      "view/admin-ts/test/cityDeliveryRecords.test.ts": "f3321f60605ebc9a3c0b2d37ad8ad53c6491e094dea8e034124719f9264c3248",
+      "workers-ts/audit/admin-frontend-api-contracts-city-delivery-records-followup-20261001.json": "d2c6fa6b6d0d901b72b26ae5a6c8278943d8db9220fb2454fbbc8256770c78dd",
+      "workers-ts/audit/admin-frontend-inventory-city-delivery-records-followup-20261001.json": "bec0208749d9294629e9d9651f9962f6f85c44ac9bded40aea62f587d02fae5b",
+      "workers-ts/audit/admin-legacy-app-route-parity.json": "0b4242cea112b1c2e41d5250ef321c1ba3b6e6e9004296b88f83a366ad54d8e3",
+      "workers-ts/audit/admin-legacy-content-route-parity.json": "4b36d08c0b6e7c02406e433f7d095e3bd447fbc357ecbccb46801b428c7754fa",
+      "workers-ts/audit/admin-legacy-cross-module-route-parity-user-money-ledger-followup-20260928.json": "874dad0ce442e47812460c102d188ee9b26bf8b55379e7926ef80b065b4f63c8",
+      "workers-ts/audit/admin-legacy-kefu-route-parity.json": "650e47aa201712737f8933d047f19e1dad37d849d53a3430de25e81ddc233b8e",
+      "workers-ts/audit/admin-legacy-marketing-route-parity-marketing-config-followup-20260930.json": "7d069a52a7c2877cad510d9926e76791f6922965910ab02ed664a72366288ea5",
+      "workers-ts/audit/admin-legacy-product-route-parity.json": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "workers-ts/audit/admin-legacy-setting-route-parity-city-delivery-records-followup-20261001.json": "ccab56201722efd9bca6fd3cd6c9674b09af65681c7a1d66599820feed8467be",
+      "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-menu-followup-20260928.json": "fb0b64da3e8fca2e7da128ac6ac72ef5ac722b1ff655ca2d841d1ecb981703a5",
+      "workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json": "8e52f56b8683c778e0a7ff1163c57116f2af3cbf21c6f5c14fb12e282b09c0b5",
+      "workers-ts/audit/admin-legacy-user-order-route-parity-invoice-followup-20260928.json": "6e2d256c968ba7a378421c3b2236143b8ba6f8057bde32f672bf10a2bab49438",
+      "workers-ts/audit/admin-legacy-work-route-parity.json": "daf6fbfff1b69e987422eda4274445223fd732c51ea082d38970615c21c11caf",
+      "workers-ts/audit/route-distribution-city-delivery-records-followup-20261001.json": "44df15942f1341da468bbda8e92befcfd9ecfbe503f76066d927348299ce1329",
+      "workers-ts/docs/admin-city-delivery-cancellation-contract-review-20261001.md": "95479b7c409c5063b0666ef13768b788c37dd26238732e6771c97760a0cd28a6",
+      "workers-ts/docs/admin-city-delivery-records.md": "b4ef1ecc570f611a81b80db763797835b932a64ec64935edda0172bd466cc33e",
+      "workers-ts/docs/checklist-route-contract-distribution-20260928.md": "98b1fddcdce20c738f44618956930ce254e76a83499355e28313d4ffa4697015",
+      "workers-ts/migrations/0124_city_delivery_callback_pipeline.sql": "fea0ff0d7d7b1a6bdeb1943102ab67527e98ebc44c9b0626861e74ffd0ebc858",
+      "workers-ts/scripts/admin-frontend-api-audit.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",
+      "workers-ts/scripts/admin-frontend-parity-audit.ts": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0",
+      "workers-ts/scripts/admin-setting-frontend-parity-audit.ts": "7881a400d5a9dcbc702c897b86a7b86e60260275d29adaa7c8102981af45fd51",
+      "workers-ts/scripts/route-parity-audit.ts": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "e2983f4b4bddc4f86e3cee80f8f98746e9a8ad19ce90d493fddb41bd5b790b71",
+      "workers-ts/src/app.ts": "71f210930fde68657c3d10bb47f9d8d4b211c0c65cd55005fa62ef502dd1b773",
+      "workers-ts/src/controllers/api/v1/AdminCityDeliveryRecordController.ts": "c1e3905b6b2d2f36a991c9e34270f40555660a6b5d5383861284d8edc7c37a47",
+      "workers-ts/src/lib/di.ts": "3a2bef880f97ffeea0eb09669c2ac66cfcfe5ef30334e5c199ffeee1d4f46109",
+      "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts": "40820086309c137de5347f5fcdb645beeea07a905e5acdeb939cdcd3f7a67805",
+      "workers-ts/src/migrations/cityDeliveryCallbackPipeline.ts": "cd046b818d08d43ccf181a9cb1534bf33288e7ac86ce7c8b875291f72f2e4d1b",
+      "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts": "066902ab2fb73cf1725cb2519c771a1ff6afda1f01c40b8d5943e00dc643d7d4",
+      "workers-ts/src/models/schema/order_delivery.ts": "eb6c85d55433f98c3c30d566d35e786ce5366ca1b964f6a42193cc80e1ef7751",
+      "workers-ts/src/routes/adminapi.ts": "7beea957ebf08e76ae322357052d23fe20c23d4de25293f72e067c7f48ad3624",
+      "workers-ts/src/routes/v1/index.ts": "aeac22be06cb81cbd21b7ceac859ac4ed8bf93f81406d9be5727ffd1a672e59e",
+      "workers-ts/src/services/admin/AdminCityDeliveryRecordInput.ts": "aeb29329ba5b700467c37567f74ee2dfbe776c54051c0a55666ff9d773c31dd3",
+      "workers-ts/src/services/admin/AdminCityDeliveryRecordService.ts": "95e7ba00063fa0053e7c0c0eda3cf3a192ebef27c9b387c17cb0f26b644d1dc8",
+      "workers-ts/src/services/admin/AdminPermissionService.ts": "e00375cbca5ad3a3a6ce6c5b1b117716ab5f127bb64cf926fea6f97996558ae4",
+      "workers-ts/src/services/delivery/CityDeliveryCallbackService.ts": "699e57237488ad35159e948a37a44cdd1637f5708bac58d0dbd8b8f97cb43e4a",
+      "workers-ts/src/services/delivery/DadaCityDeliveryCallback.ts": "cae32c17ec1172a03dd15726466e4cf3c3196f296efe08d7a24165ad18c6e108",
+      "workers-ts/src/services/delivery/DadaCityDeliveryProvider.ts": "2b60d2a7ed431d69e6dc0d5a4ad04ef12d2c66762f9005e2d3b19c0df6dceb65",
+      "workers-ts/src/services/delivery/UuCityDeliveryCallback.ts": "c26983f988397be0e9eacbaf2161b29733ad479ccffecb0073cac8a6bb409a7f",
+      "workers-ts/src/services/delivery/UuCityDeliveryProvider.ts": "880ab431e03af1af24f88cbcfd844821071ac32e4f6f86c32fbf62c43a8f4a9c",
+      "workers-ts/src/utils/errors.ts": "5505f8fb2c2de21b7e7955541992a56d929dc638143ae9d833729128f84a630c",
+      "workers-ts/src/utils/jwt.ts": "658b42ff9f823d44423cd83d4abee9b19701447269e6700dda375525294995e7",
+      "workers-ts/test/admin-all-frontend-parity.test.ts": "10553065787af2e5763c569cf6148cf4ebfca83d96a70c4c4946a8269ebd1be5",
+      "workers-ts/test/admin-city-delivery-records-http.test.ts": "b1ed6bd3ecd9999d30015479467085c26c30677156451747c4e1cb2e5780458d",
+      "workers-ts/test/admin-city-delivery-records-postgres.test.ts": "1f0ff216c4d771ce08b61926d6daf6f2691ba8e320d2d86c5358bb0a12b4661a",
+      "workers-ts/test/admin-city-delivery-records.test.ts": "e9a6764afae2e2f64c0bcec2831279972afcba4d258cf625597438f5f4219a47",
+      "workers-ts/test/admin-frontend-api-audit.test.ts": "cef974c9471329d4b3a317b933c3ff75c867597b54a2be45c2d26af24ab14c47",
+      "workers-ts/test/admin-frontend-api-contract.test.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",
+      "workers-ts/test/admin-frontend-inventory.test.ts": "823206fc1be3892e0fe97ac5d165f7c2078f7ed9ac466f61297e11221865d23f",
+      "workers-ts/test/admin-marketing-frontend-parity.test.ts": "c6ce695e3fa981d0b4884f119bf5dc81c6b7acaf740351c7e843bcf08cf5f7c5",
+      "workers-ts/test/admin-permission.test.ts": "ac99f99e35eff400c5b8406ac8b40e008c7f1fb5a5e3e0dcbd9ebdd5a92ad22b",
+      "workers-ts/test/admin-setting-frontend-parity.test.ts": "70c7eb8e7e92923cbef377874b51da444e4ec71da0875edefcd66c311f475e3c",
+      "workers-ts/test/city-delivery-callback-watermark-postgres.test.ts": "2b5cf0e3d471307d673d16903d90ed936709ab8193cc7cf4a9b7dd89aa74ab3a",
+      "workers-ts/test/city-delivery-callback.test.ts": "202a7d89d1258aea4a8da90c41adbd0b5e9400732632a986dcbbeb42b9f5af69",
+      "workers-ts/test/helpers/cityDeliveryRecordFixture.ts": "6f0b64d6b5220ba0952c7c404030ed422393905221f962ad01691cc6507dc1f9",
+      "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts": "23a5f83c0a7fb590a05c8e4e4188e1c3da64c5578e5ecacc61731a6cd8b50b33",
+      "workers-ts/test/integration/CityDeliveryCallbackAuditWorker.ts": "a66a6bc866e9449f78408d2428287e3327795083e2f7aaf199bb32c5ce1e09c5"
+    },
+    "rawLogHashes": {
+      ".cache/city-delivery-records-native-final-20261001.log": "65731964e040f899530287d66ef1c70714cbc99b7d5248861508ac29c3517211",
+      ".cache/city-delivery-callback-watermark-native-final-20261001.log": "7ddb23e4f5aa0fe07aebfc194b1ada3057939a4fc8de38be89a4f666bb148357",
+      ".cache/city-delivery-records-cluster-cleanup-final-20261001.json": "6a8dcc678475f1f91fbae93239b76daab9465d4c2f9fc0a1c56249d0e4b0a8a3",
+      ".cache/city-delivery-callback-watermark-native-before-fix-20261001.log": "463d7968ca9a6c466805025c1488524873b2ddcae6a07b932871a32e267cbd4f",
+      ".cache/city-delivery-records-audits-final-20261001.log": "651edac6c403b206b1044924dbda984e5bbfe7874eef3081959f2ac81a1addd5",
+      ".cache/city-delivery-records-permission-catalog-20261001.log": "ef8f061c1eed67c0c92f24b672c01c8550c0592e33c7e73a6c5a91d2299dd805",
+      ".cache/city-delivery-records-frontend-tests-final-20261001.log": "d26702e664f9a48a7b99c0523035dbdff5d661c556590d5211a8026fba32d354",
+      ".cache/city-delivery-records-worker-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/city-delivery-records-worker-runtime-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/city-delivery-records-admin-types-final-20261001.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      ".cache/city-delivery-records-admin-build-final-20261001.log": "758a3c73ef66d72c235d574fbece168caea6fc106da73684ec141f392be092e7",
+      ".cache/city-delivery-records-browser-final-20261001.log": "85ce43e713b13c7a9af19f98130dfd41772a42b1faa40f02cb2e8b5d0b683afa",
+      ".cache/city-delivery-records-worker-types-first-20261001.log": "5cdcb01f13f3157edb1e08dbdac512fd4b923f967273b9980a891599191fd998",
+      ".cache/city-delivery-records-worker-types-first-20261001.metadata.json": "5c668aeacd02341e76eaa33df8d3ae130368736d0bfa0304268815128496cd8a",
+      ".cache/city-delivery-records-browser-cleanup-final-20261001.json": "ed735194c907e6ef2740a785da1708f3b84d3e0d377b2154e02a3f1dea029257",
+      ".cache/city-delivery-records-all-owned-listeners-final-20261001.json": "51e4bff115ba9d772757bf3934e9242c1385065309f40c368e70d7b137f503d9",
+      ".cache/city-delivery-records-worker-types-final-20261001.metadata.json": "41e5a582ee6d4d1a6bde46382a5ea4d1412859d7ed537416d3a5fef9f37e4eb6",
+      ".cache/city-delivery-records-worker-runtime-types-final-20261001.metadata.json": "ae718cce707251239b17d8ffc50f99416bc52d8c808cc2ad091a8ce2cf264ad0",
+      ".cache/city-delivery-records-admin-types-final-20261001.metadata.json": "1c40ff5deaddb5ad5cb4575bba4223a1fcc0759a6850a04c910b46519362a9d8",
+      ".cache/city-delivery-records-admin-build-final-20261001.metadata.json": "76a1e997c7b82e24f303412adf406ba078e968acbb6ba813c66708b285f207f4",
+      ".cache/city-delivery-records-browser-final-20261001.metadata.json": "aca550e802bb187511a94da78d0ee81cffeaf7554e8750ba4818b5cb18926769",
+      ".cache/city-delivery-records-worker-types-before-satisfies-fix-20261001.log": "7fa675461dcba5f848e285c8b4cee849c2ef4cf28da8358176ec682660591440",
+      ".cache/city-delivery-records-worker-types-before-satisfies-fix-20261001.metadata.json": "e42a2b897f44e108cd471cac22ccb8034b26e3ae2ebe8b4a264a6a97be9dcfed",
+      ".cache/city-delivery-records-native-first-20261001.log": "fa01ec9e544a21d29a14722778bed947443cd32091c7e6413f87d788bf3c8f0d",
+      ".cache/city-delivery-records-browser-first-20261001.log": "17155f8382b23a8dd6581b20e923366fcda72475a5c0cd042427548ef6f7f3e1",
+      ".cache/city-delivery-records-browser-first-20261001.metadata.json": "1d38241259d555aadfc8bfd4970126fc76eba26fd45184fa958e12a4dc6491f3",
+      ".cache/city-delivery-records-browser-before-popup-position-fix-20261001.log": "d5f5f34fe5340b8ec621af5ee8eceed408568a2490b7b4ab7c4702cd8840e826",
+      ".cache/city-delivery-records-browser-before-popup-position-fix-20261001.metadata.json": "3f3cf6e4ae4cb0d2dbbd006bf5986ae077b2ff9c1e3428845d9155ee0532609b",
+      ".cache/city-delivery-records-browser-before-popup-settle-20261001.log": "85ce43e713b13c7a9af19f98130dfd41772a42b1faa40f02cb2e8b5d0b683afa",
+      ".cache/city-delivery-records-browser-before-popup-settle-20261001.metadata.json": "f2bf8853f1f5f3bb422250de4af80f749f6f84893282766ab046f8620c469a6b"
+    },
+    "browserFileHashes": {
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa.json": "b795f8b7ddbfc068fd40671670d4c20e7fec2d8e014aed182af7461053133119",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa.cjs": "333e764a2f99f5ffc7bcf397835214f8d7cbc08a5eaaacbdfbd9242b21bfe3dc",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-desktop.png": "a6e1e566e25cfe22c0e260b59858286dce5edba9a783d2157e40ec318b0919d8",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-desktop-fees.png": "9e93049afbbd271fc389e9cf5ae41d33334cb37965a9a5f4fcdf4eb82826b917",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-detail-desktop.png": "733164789885dac713be5e3b5b2e00fade78d974683b5f6fc4bf19a6c77655ca",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-detail-orphan.png": "3ee556186450d3ff190701dce27d4c6f6181c500b373d2b24cb608a7211eacbe",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-stale-desktop.png": "3f5211fdae83e10ca0590067a47c8ed48e46a806b6e17d36d3b0e6b63e22ce38",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile.png": "10a09094b3055635df4d4d43c4e0c9115090e5ab2b3490f305b6a22b46bd81ab",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-table.png": "ca247c6c0534900bf7d03b58b8cc07c8ef0873135741800fe1f38841f1f8b6be",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-detail.png": "2e53f757e1b6f57efd4d6f5254541ed143b0aa52a3405b9b40bf03ea96f25c40",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-date-start.png": "c8e4a28778cc40f3026a40746a2062b707f6c735ba15c3371de628e2066e3f7a",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-mobile-date-end.png": "3d086005cedefb57f9c07c6dadc6ba5211f68680283f16b0ec422d07a2b5888f"
+    },
+    "priorFailedBrowserFileHashes": {
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa-first-failed.json": "6e813aa0c242137832b605ef05c43688dc714ad0b38f0c98f7a85ff43a5b8a90",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-desktop-first-failed.png": "a6e1e566e25cfe22c0e260b59858286dce5edba9a783d2157e40ec318b0919d8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-desktop-fees-first-failed.png": "9e93049afbbd271fc389e9cf5ae41d33334cb37965a9a5f4fcdf4eb82826b917",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-failure-4-first-failed.png": "de77529490462e33ad2ceacc5b6c176c27b87e3c18c831539469d505c9b8a4d9",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-detail-desktop-first-failed.png": "ec976307ad8ab203d8b7393e0015196f9dcac709a756b12005d720ce1ffc6b51",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-detail-orphan-first-failed.png": "002b09c728f24442e1d2c29b45752853fee502553f62f6669c9956c0de36e817",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-stale-desktop-first-failed.png": "66f69237dc8d27403576ada5a53696591c822df17bdae909886d39e764184c85",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-failure-14-first-failed.png": "c3721f54dd24758fabd912fa5ed3bfe65e05e2809066a7fde906c6bf25ff7df4",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-first-failed.png": "07279616050fc2ef116dab9bec789210e2ddb2c409a7cbcd755fe9cad46cba19",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-table-first-failed.png": "5c6c8748e7e64ee6de2fbe6f2250c5ed4575ebfbf861858c912d65dc5a32ff0a",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-detail-first-failed.png": "d2816319ccc4b96984cae40181ddd7b535208efdebd41a537f4b4ebe2ebd407c",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-failure-20-first-failed.png": "e798cc48a313b65a51f26dcd0f1f0f0e4906693226e42b9ee119736d126da71a",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa-before-popup-position-fix.json": "68c8faca2e95a16a11ad96f2faecb983688aabfdbf102504dd6987b901686551",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-desktop-before-popup-position-fix.png": "a6e1e566e25cfe22c0e260b59858286dce5edba9a783d2157e40ec318b0919d8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-desktop-fees-before-popup-position-fix.png": "9e93049afbbd271fc389e9cf5ae41d33334cb37965a9a5f4fcdf4eb82826b917",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-detail-desktop-before-popup-position-fix.png": "733164789885dac713be5e3b5b2e00fade78d974683b5f6fc4bf19a6c77655ca",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-detail-orphan-before-popup-position-fix.png": "3ee556186450d3ff190701dce27d4c6f6181c500b373d2b24cb608a7211eacbe",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-stale-desktop-before-popup-position-fix.png": "5528199c7119770dc77b19a174b34bfb5f828e94cea6173989a652167964fb21",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-before-popup-position-fix.png": "10a09094b3055635df4d4d43c4e0c9115090e5ab2b3490f305b6a22b46bd81ab",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-table-before-popup-position-fix.png": "ca247c6c0534900bf7d03b58b8cc07c8ef0873135741800fe1f38841f1f8b6be",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-detail-before-popup-position-fix.png": "2e53f757e1b6f57efd4d6f5254541ed143b0aa52a3405b9b40bf03ea96f25c40",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-failure-20-before-popup-position-fix.png": "1124b443bb63cabf9a6a964557f53fcfb9d327bb7df2a7f9a37459915891984e"
+    },
+    "priorUnsettledBrowserFileHashes": {
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/city-delivery-records-browser-qa-before-popup-settle.json": "b7e831ed05ac637ae41d1e74f02ffc3e5c2789ab86b355addc671ef12974a4ed",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-desktop-before-popup-settle.png": "a6e1e566e25cfe22c0e260b59858286dce5edba9a783d2157e40ec318b0919d8",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-desktop-fees-before-popup-settle.png": "9e93049afbbd271fc389e9cf5ae41d33334cb37965a9a5f4fcdf4eb82826b917",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-detail-desktop-before-popup-settle.png": "733164789885dac713be5e3b5b2e00fade78d974683b5f6fc4bf19a6c77655ca",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-detail-orphan-before-popup-settle.png": "3ee556186450d3ff190701dce27d4c6f6181c500b373d2b24cb608a7211eacbe",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-stale-desktop-before-popup-settle.png": "5528199c7119770dc77b19a174b34bfb5f828e94cea6173989a652167964fb21",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-before-popup-settle.png": "10a09094b3055635df4d4d43c4e0c9115090e5ab2b3490f305b6a22b46bd81ab",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-table-before-popup-settle.png": "ca247c6c0534900bf7d03b58b8cc07c8ef0873135741800fe1f38841f1f8b6be",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-detail-before-popup-settle.png": "2e53f757e1b6f57efd4d6f5254541ed143b0aa52a3405b9b40bf03ea96f25c40",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-date-start-before-popup-settle.png": "c8e4a28778cc40f3026a40746a2062b707f6c735ba15c3371de628e2066e3f7a",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\city-delivery-records-mobile-date-end-before-popup-settle.png": "24e8ade85b23b5da138f62f60df94cec1a1bbc0708e769378ce9d24c5af908df"
+    },
+    "providerDocumentSnapshotHashes": {
+      ".cache/city-delivery-provider-docs-20261001/dada-app.js": "1d713239dcbab550b11321a3bddd6d4477bd2631ac6a7e678e8a85c56e86af55",
+      ".cache/city-delivery-provider-docs-20261001/uu-app.js": "e7607087b94d440a091028db9b3622f3d411651b1e1c27e49ac8a7586aa8efff",
+      ".cache/city-delivery-provider-docs-20261001/uu-business-cancel.js": "c4b66e796be7041a0bc77ea941b970016d412dfeb6d0583c13330cb4dc39eff8",
+      ".cache/city-delivery-provider-docs-20261001/uu-api-doc.js": "f0b55362d65444a765e2e67f26657e6b409fbd9f86e243503f6bbb59a8be6fa2"
+    }
+  }
+}

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="recharge-page">
     <!-- 当前余额 -->
     <view class="balance-card">
@@ -69,9 +70,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, onMounted } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiOrderCashier, apiPaymentReadiness, apiRechargePay } from "@/api/order";
@@ -304,7 +307,7 @@ onShow(() => {
 }
 
 .balance-card {
-  background: linear-gradient(135deg, #e93323, #ff7a45);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 40rpx 30rpx;
   color: #fff;
@@ -356,8 +359,8 @@ onShow(() => {
 }
 
 .amount-item.active {
-  border-color: #e93323;
-  color: #e93323;
+  border-color: var(--view-priceColor, #e93323);
+  color: var(--view-priceColor, #e93323);
   background: #fff5f5;
 }
 
@@ -404,7 +407,7 @@ onShow(() => {
 }
 
 .recharge-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 44rpx;

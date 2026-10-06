@@ -62,6 +62,27 @@ test('actual confirm SFC reads exact Admin scope, complete quote and no create/p
     r.checkout.consent.value=true;assert.equal(r.checkout.canSubmit.value,true);
   }finally{r.stop();}
 });
+test('assisted quote preserves a partial-cap line total and explains its priced segments', async () => {
+  const promotion = { key: 21, productId: 7, quantity: 3, unitPriceCents: null, totalPriceCents: 2900,
+    promotionSavingsCents: 100, segments: [
+      { quantity: 1, unitPriceCents: 900, totalPriceCents: 900, promotionIds: [41] },
+      { quantity: 2, unitPriceCents: 1000, totalPriceCents: 2000, promotionIds: [] },
+    ] };
+  const priced = { ...cart(), cart_num: 3, truePrice: 9.66, trueSumPrice: 29, totalPriceCents: 2900, promotion };
+  const base = server({ transform: value => {
+    value.cartInfo = [priced]; Object.assign(value.priceGroup, { sumPrice: '30.00', totalPrice: '29.00',
+      vipPrice: '0.00', promotionsPrice: '1.00', pay_price: '32.00' }); return value;
+  } });
+  const r = await setup({ component: true, send: call => call.url.includes('/order/cart/') ? { data: [priced] } : base(call) });
+  try {
+    assert.equal(r.checkout.items.value[0].totalPrice, '29.00');
+    assert.equal(r.checkout.quote.value.items[0].price, '9.66');
+    assert.equal(r.checkout.quote.value.items[0].totalPrice, '29.00');
+    assert.equal(r.checkout.quote.value.items[0].nonUniform, true);
+    assert.equal(r.checkout.quote.value.items[0].promotionSummary, '活动 1 件 ¥9.00，其余 2 件 ¥20.00');
+    assert.equal(r.checkout.quote.value.amounts.promotion, '1.00');
+  } finally { r.stop(); }
+});
 test('natural Admin expiry removes assisted checkout delivery fields and quote without another request',async()=>{
   const r=await setup({component:true});try{
     assert.ok(r.checkout.quote.value);r.checkout.manual.value={...manual};

@@ -85,13 +85,16 @@ describe("agent level task migration", () => {
     const service = readFileSync("src/services/agent/AgentLevelTaskService.ts", "utf8");
     expect(service).toContain("pg_advisory_xact_lock_shared");
     expect(service).toContain("pg_advisory_xact_lock");
-    expect(service).toContain('.for("update")');
+    expect(service).toContain('.for("update", { noWait: true })');
     expect(service).toContain("innerJoin(userTable");
     expect(service).toContain("Promise.all");
-    expect(service).toContain("COUNT(DISTINCT");
-    expect(service).toContain("已有用户完成该任务，不能修改任务类型或要求");
+    expect(service).toContain('new Set(records.filter(row => row.uid === id)');
+    expect(service).toContain('completedKeys.has');
+    const admin = readFileSync('src/services/admin/AdminDistributorLevelService.ts', 'utf8');
+    expect(admin).toContain('已有用户完成');
+    expect(service).not.toContain('async save(');
     expect(service).toContain("tx.insert(agentLevelTaskRecord)");
-    expect(service).toContain("agentLevel: nextAgentLevel");
+    expect(service).toContain("agentLevel: plan.levelId");
   });
 
   it("restores public and dual-admin route surfaces with distribution ACL", () => {
@@ -106,8 +109,8 @@ describe("agent level task migration", () => {
       expect(routes).toContain("/agent/level_task/set_status/:id/:status");
     }
     expect(requiredAdminPermission("GET", "/adminapi/agent/level_task"))
-      .toBe("distribution.view");
+      .toBe("agent_level_task.view");
     expect(requiredAdminPermission("POST", "/api/admin/agent/level_task"))
-      .toBe("distribution.manage");
+      .toBe("agent_level_task.manage");
   });
 });

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="history-page">
     <view class="history-header">
       <view><view class="heading">我的足迹</view><text class="hint">按最近浏览时间排列 · 共 {{ total }} 件商品</text></view>
@@ -60,9 +61,11 @@
     </view>
     <DiySuspendedNavigation />
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { useVisitHistory } from "@/composables/useVisitHistory";
 import VisitRecommendationImage from "@/components/VisitRecommendationImage.vue";
@@ -91,7 +94,7 @@ function failImage(url: string) { if (!failedImages.value.includes(url)) failedI
 .product-card.selected { border-color: #c83226; }.product-image { display: block; width: 100%; height: 280rpx; }
 .image-placeholder { background: #ededed; color: #777; display: flex; justify-content: center; align-items: center; font-size: 24rpx; }
 .product-info { padding: 16rpx; }.product-name { display: block; overflow-wrap: anywhere; font-size: 26rpx; line-height: 1.5; }
-.price { color: #bd3025; font-size: 30rpx; font-weight: 600; margin-top: 8rpx; }.select-button { font-size: 24rpx; margin: 0 16rpx 16rpx; }
+.price { color: var(--view-priceColor, #e93323); font-size: 30rpx; font-weight: 600; margin-top: 8rpx; }.select-button { font-size: 24rpx; margin: 0 16rpx 16rpx; }
 .empty, .end { display: block; text-align: center; color: #777; padding: 40rpx 8rpx; font-size: 26rpx; }.more-button { font-size: 28rpx; }
 .recommendation-grid { margin: 20rpx 0; }
 .brand-name { display: block; font-size: 22rpx; font-weight: 600; color: #555; overflow-wrap: anywhere; margin-bottom: 6rpx; }

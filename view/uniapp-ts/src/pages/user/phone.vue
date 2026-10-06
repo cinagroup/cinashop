@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="phone-page">
     <view class="status-card">
       <view class="status-label">当前状态</view>
@@ -25,9 +26,11 @@
       </view>
     </view>
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { computed, onUnmounted, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiBindPhone, apiRequestCode, apiUpdatePhone } from "@/api/auth";
@@ -148,7 +151,7 @@ onUnmounted(() => {
 
 .status-card {
   margin-bottom: 24rpx;
-  background: linear-gradient(135deg, #e93323, #ff795d);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   color: #fff;
 }
 
@@ -200,7 +203,7 @@ onUnmounted(() => {
 .code-button {
   flex-shrink: 0;
   padding-left: 22rpx;
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 25rpx;
 }
 
@@ -213,7 +216,7 @@ onUnmounted(() => {
   margin-top: 34rpx;
   padding: 24rpx;
   border-radius: 42rpx;
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   font-size: 30rpx;
   text-align: center;

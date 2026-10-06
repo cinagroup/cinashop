@@ -199,6 +199,6 @@ export function apiDiySign(): Promise<DiySignData> {
   return http.get<DiySignData>("diy/sign");
 }
 
-export function apiDiySuspended(): Promise<DiySuspendedConfig> {
-  return http.get<DiySuspendedConfig>("diy/get_suspended");
+export function apiDiySuspended(): Promise<DiySuspendedConfig | []> {
+  return http.get<DiySuspendedConfig | []>("diy/get_suspended", {}, { noAuth: true });
 }

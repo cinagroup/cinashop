@@ -1,0 +1,105 @@
+{
+  "dateUtc": "2026-09-28T05:36:50.525Z",
+  "scope": "Local, unpublished read-only legacy Admin writeoff order follow-up",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 59,
+      "partial": 117,
+      "missing": 91,
+      "retired": 7
+    },
+    "legacySettingScreens": {
+      "total": 76,
+      "candidate": 17,
+      "partial": 25,
+      "missing": 29,
+      "retired": 5
+    },
+    "workerRoutes": 1853,
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 895,
+      "executableMatched": 874,
+      "unavailable": 21,
+      "actionableMissing": 992,
+      "effectiveExecutableCoveragePercent": 46.3
+    },
+    "adminApi": {
+      "callSites": 432,
+      "pathVariants": 456,
+      "executable": 456,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "adminBusinessPageRoutes": 77,
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "verification": {
+    "writeoffNativePg16": {
+      "files": [
+        "test/admin-writeoff-order-read-postgres.test.ts",
+        "test/admin-writeoff-order-read-http.test.ts"
+      ],
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "fixturesRemaining": 0,
+      "clusterStopped": true
+    },
+    "writeoffPglite": {
+      "files": 2,
+      "passed": 10,
+      "failed": 0
+    },
+    "writeoffFrontendRuntime": {
+      "files": 1,
+      "passed": 5,
+      "failed": 0
+    },
+    "finalStaticAndFrontendSuites": {
+      "files": 13,
+      "passed": 79,
+      "failed": 0
+    },
+    "workerUnitAndRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "adminApiAudit": "456 executable variants; 0 unregistered or unresolved",
+    "browserWrite": "not run; no business mutation or production deployment"
+  },
+  "limitations": [
+    "The old writeoff order screen remains partial: legacy card_id was deliberately omitted from the spread-detail response, and historical all-field HTML/order responses were not exposed.",
+    "The legacy custom day predicate includes the next midnight at 00:00:00; the new read model uses a full-day exclusive upper bound.",
+    "The old UI labels an add_time order-date filter as writeoff date; this implementation preserves the underlying add_time semantics.",
+    "Store options are bounded at 500, page offset at 10000, and one page at 1000 goods; an over-limit request errors rather than silently truncating.",
+    "Real writeoff history, constrained browser roles, production-scale EXPLAIN, full Linux CI and release acceptance remain unverified."
+  ],
+  "sourceSha256": {
+    "MIGRATION_CHECKLIST.md": "aee4bed7b22ca738a5a2f7a78310ae1253bc6503c680316070a047760851b68c",
+    "view/admin-ts/src/api/writeoffOrders.ts": "67101d86204da1d35038b6c7079624a468ce2ee2efa0e8076e3d4d4a03b5ad5a",
+    "view/admin-ts/src/pages/operations/WriteoffOrders.vue": "2d7ea53ea6140b0bf1258dd6af90d21bf6bb2b773fddc4679ee7ec3c82d67eea",
+    "view/admin-ts/src/router/index.ts": "68257ca8c4b47b1c15518ba699097b8ab0ef0d46b8d56227eeb2bef5ebeb1244",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "a07954b95eb87e40b86984701e427bf288248ffee3c2715b13c2fdadc1bc2570",
+    "workers-ts/src/services/admin/AdminWriteoffOrderReadService.ts": "2180dfe21530cae936b8c62e3ee0829c345fda56b125db7492a96e353aba2a09",
+    "workers-ts/src/controllers/api/v1/AdminWriteoffOrderReadController.ts": "f5f27d47f717d56041be02d8a57fc88eaede08e0bcb2576084cf7ea29324bc9c",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "f2cc768c58f5e5a811d0a26d3d9955b018e8e5d4fd3a6b546c1547fa89973d5a",
+    "workers-ts/src/routes/adminapi.ts": "71ce95628874703cff6f1f0c8d1a6acf59a1121dd7b34e7651d9d4c0c09571b4",
+    "workers-ts/src/routes/v1/index.ts": "1bff5b1938b2edeb22a073f9abc3a14b1f6cbd1e11898647e3f8aa17a468b384",
+    "workers-ts/test/admin-writeoff-order-read-postgres.test.ts": "ae75ef32eeaa52e10d6e20e903425fb8a74049f5ec524f9bc1bffd5b7d2eb9c8",
+    "workers-ts/test/admin-writeoff-order-read-http.test.ts": "5573c2f725a45d95f26c51397c58373de93bcb41bd2a39ac695dad6dc7f15b89",
+    "workers-ts/test/admin-writeoff-orders-frontend.test.ts": "fc057e5d3dabbf3e6ded4a6f5bf212dc2268ec6e877b8e9beaaf283a54090f30",
+    "workers-ts/test/admin-setting-frontend-parity.test.ts": "ab34dd2d7b75e9aea7e16200b9dd392c6c844f4caf049cce20da1bd06db1b96e",
+    "workers-ts/test/admin-all-frontend-parity.test.ts": "532c20e2c49a1a6c1c9ff167bdb7d6d511ae0de29b8c6fd078ddb2d616bf0d4b",
+    "workers-ts/scripts/admin-setting-frontend-parity-audit.ts": "6675368615badbfde3d25ad827a519000362466fa09137094fcfbd792a8aabd3",
+    "workers-ts/docs/admin-writeoff-order-read-contract.md": "9778e1f483abfe7992c031a1a4ea8d77b79d36890516127343d0e40319dd78eb",
+    "workers-ts/docs/admin-setting-route-parity.md": "a37554fc40180f66096ccf00fe96e8aa6c81cd95428394700198d5137deaa13d",
+    "workers-ts/audit/admin-legacy-setting-route-parity-writeoff-followup-20260928.json": "feb27ebe49c11b27a3dcce6e0c21530d8539bfb2dc27ef023fb7c2f697b368b1",
+    "workers-ts/audit/route-distribution-writeoff-followup-20260928.json": "1e4535595499b04d8d7ff8e0b0acb590dcd24f90cbf2a9f548502d8ba986ff2b",
+    "workers-ts/audit/admin-frontend-inventory-writeoff-followup-20260928.json": "8f4b3eaef7abba8a5bdae7e8be7c5e1a77d6a39dd13800abc1cfe7ce50e2ba00",
+    "workers-ts/audit/admin-frontend-api-contracts-writeoff-followup-20260928.json": "04028cbaec063db8fbbcce82a4c3477943af7e5f8008940e693271422a1d0ee1"
+  }
+}

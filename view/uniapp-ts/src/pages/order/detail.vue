@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view v-if="loading" class="empty">正在加载订单...</view>
   <view class="order-detail" v-else-if="order">
     <!-- 状态 -->
@@ -200,9 +201,11 @@
     <button @tap="load">重新加载订单</button>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiOrderCashier, apiOrderDetail, apiOrderPay } from "@/api/order";
@@ -632,7 +635,7 @@ onUnload(() => {
 }
 
 .status-card {
-  background: linear-gradient(135deg, #e93323, #ff7a45);
+  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
   border-radius: 16rpx;
   padding: 40rpx;
   color: #fff;
@@ -741,7 +744,7 @@ onUnload(() => {
 }
 
 .payment-row.active {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
 }
 
 .payment-row.disabled {
@@ -803,7 +806,7 @@ onUnload(() => {
 }
 
 .package-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-weight: 600;
 }
 
@@ -851,7 +854,7 @@ onUnload(() => {
 }
 
 .cart-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
 }
 
 .cart-num {
@@ -863,7 +866,7 @@ onUnload(() => {
   flex-direction: column;
   align-items: center;
   gap: 12rpx;
-  border: 2rpx dashed #e93323;
+  border: 2rpx dashed var(--view-theme, #e93323);
   background: #fff7f6;
 }
 
@@ -873,7 +876,7 @@ onUnload(() => {
 }
 
 .verify-code {
-  color: #e93323;
+  color: var(--view-theme, #e93323);
   font-size: 44rpx;
   font-weight: 700;
   letter-spacing: 4rpx;
@@ -1038,7 +1041,7 @@ onUnload(() => {
 }
 
 .amount-price {
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-size: 32rpx;
   font-weight: 700;
 }
@@ -1054,7 +1057,7 @@ onUnload(() => {
 }
 
 .pay-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   padding: 22rpx;

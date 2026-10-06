@@ -2,14 +2,15 @@
   <div class="activity-page">
     <div class="page-head">
       <h2>营销活动</h2>
-      <div v-if="activeTab !== 'discounts'">
-        <el-tag type="success" class="count-tag">当前 {{ list.length }} 个活动</el-tag>
-        <el-button type="primary" size="small" @click="openForm()">＋ 新增活动</el-button>
+      <div v-if="activeTab !== 'discounts' && canView" class="head-actions">
+        <el-tag type="success">{{ loading ? '加载中' : listError ? '加载失败' : `共 ${count} 个活动` }}</el-tag>
+        <el-button v-if="canManage" type="primary" size="small" @click="openForm()">＋ 新增活动</el-button>
+        <el-button v-if="activeTab === 'integral' && canIntegralBatch" type="primary" plain size="small" @click="router.push('/activity/integral-batch')">批量添加积分商品</el-button>
       </div>
     </div>
 
     <!-- Tab 切换 -->
-    <el-tabs v-model="activeTab" @tab-change="load">
+    <el-tabs v-model="activeTab">
       <el-tab-pane label="秒杀" name="seckill" />
       <el-tab-pane label="拼团" name="combination" />
       <el-tab-pane label="砍价" name="bargain" />
@@ -18,10 +19,31 @@
     </el-tabs>
 
     <DiscountPackageManager v-if="activeTab === 'discounts'" />
+    <el-alert v-else-if="!canView" title="当前账号没有营销活动查看权限" type="warning" :closable="false" show-icon />
     <template v-else>
-    <el-table :data="list" v-loading="loading" border>
+    <div class="filters">
+      <label class="filter-field">
+        <span>活动名称</span>
+        <el-input v-model="draftKeyword" aria-label="活动名称" maxlength="100" clearable placeholder="输入活动名称关键词" @keyup.enter="search" />
+      </label>
+      <label class="filter-field status-field">
+        <span>活动状态</span>
+        <el-select v-model="draftStatus" aria-label="活动状态" clearable placeholder="全部状态">
+          <el-option label="启用" :value="1" /><el-option label="停用" :value="0" />
+        </el-select>
+      </label>
+      <div class="filter-actions">
+        <el-button type="primary" @click="search">查询</el-button>
+        <el-button @click="reset">重置</el-button>
+      </div>
+    </div>
+    <el-alert v-if="listError" :title="listError" type="error" :closable="false" show-icon class="list-error">
+      <template #default><el-button link type="primary" @click="load()">重试列表</el-button></template>
+    </el-alert>
+    <div v-else class="table-scroll">
+    <el-table :data="list" v-loading="loading" border row-key="id" :empty-text="loading ? '加载中…' : '暂无活动数据'">
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="storeName" label="活动名称" />
+      <el-table-column prop="storeName" label="活动名称" min-width="180" />
       <el-table-column label="价格" width="110">
         <template #default="{ row }">
           ¥{{ row.price }}<span v-if="row.otPrice" class="ot-price"> / {{ row.otPrice }}</span>
@@ -65,14 +87,19 @@
           >
             明细
           </el-button>
-          <el-button link type="primary" @click="openForm(row)">编辑</el-button>
-          <el-button link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">
+          <el-button v-if="canManage" link type="primary" @click="openForm(row)">编辑</el-button>
+          <el-button v-if="canManage" link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">
             {{ row.status === 1 ? "停用" : "启用" }}
           </el-button>
-          <el-button link type="danger" @click="del(row)">删除</el-button>
+          <el-button v-if="canManage" link type="danger" @click="del(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
+    </div>
+    <el-pagination v-if="!listError && !loading" :current-page="page" :page-size="PAGE_SIZE" :total="count"
+      :page-count="Math.min(Math.max(1, Math.ceil(count / PAGE_SIZE)), MAX_PAGE)" :pager-count="5"
+      :disabled="loading" layout="total, prev, pager, next" class="pager" @current-change="load" />
+    <p v-if="count > MAX_PAGE * PAGE_SIZE" class="time-hint">可浏览前 {{ MAX_PAGE * PAGE_SIZE }} 项，请使用名称或状态筛选缩小范围。</p>
 
     <!-- 活动创建/编辑弹窗 -->
     <el-dialog v-model="formVisible" :title="form.id ? '编辑活动' : '新增活动'" width="min(560px, calc(100vw - 24px))" top="5vh" :style="{ maxHeight: '90vh', overflowY: 'auto' }">
@@ -181,24 +208,22 @@
         <el-button type="primary" :loading="saving" @click="save">保存</el-button>
       </template>
     </el-dialog>
-    <el-empty v-if="!list.length && !loading" description="暂无活动数据" />
 
-    <!-- 秒杀时段表 -->
-    <el-card v-if="activeTab === 'seckill' && seckillTimes.length" shadow="never" class="time-card">
+    <el-card v-if="activeTab === 'seckill' && canSeckillActivities" shadow="never" class="time-card">
+      <template #header>秒杀父活动</template>
+      <p class="time-hint">设置活动日期、多场次及参与商品规格。当前列表展示活动内的子商品。</p>
+      <el-button type="primary" plain @click="router.push('/activity/seckill-activities')">管理秒杀父活动</el-button>
+    </el-card>
+    <el-card v-if="activeTab === 'seckill' && canSeckillTimes" shadow="never" class="time-card">
       <template #header>秒杀时段</template>
-      <el-table :data="seckillTimes" border>
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column label="开始时间" prop="startTime" width="120" />
-        <el-table-column label="结束时间" prop="endTime" width="120" />
-        <el-table-column label="持续天数" prop="continuedTime" width="100" />
-        <el-table-column label="状态" width="90">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'">
-              {{ row.status === 1 ? "启用" : "停用" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
+      <p class="time-hint">在时段管理中设置每日秒杀时间、图片及显示状态。</p>
+      <el-button type="primary" plain @click="router.push('/activity/seckill-times')">管理秒杀时段</el-button>
+    </el-card>
+
+    <el-card v-if="activeTab === 'combination' && canCombinations" shadow="never" class="time-card">
+      <template #header>拼团商品管理</template>
+      <p class="time-hint">设置拼团日期、商品规格额度、成团人数、虚拟成团比例及配送方式。</p>
+      <el-button type="primary" plain @click="router.push('/activity/combinations')">管理拼团商品</el-button>
     </el-card>
 
     <!-- 拼团团列表弹窗 -->
@@ -256,11 +281,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
-import { getToken } from "@/utils/auth";
+import { getAdminSession, getToken } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import {
   apiAdminSeckillList,
@@ -276,6 +301,7 @@ import {
   apiAdminBargainSkuOptions,
   type BargainSkuOptions,
   type ActivityItem,
+  type ActivityListQuery,
 } from "@/api/activity";
 import { ElMessageBox } from "element-plus";
 import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue";
@@ -286,18 +312,44 @@ import { shippingForm, withBargainShipping, type BargainShippingFields } from '@
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
-const activeTab = ref(previewMode ? "discounts" : "seckill");
+const requestedTab = useRoute().query.tab;
+const activeTab = ref(typeof requestedTab === 'string' && ['seckill','combination','bargain','integral','discounts'].includes(requestedTab) ? requestedTab : previewMode ? "discounts" : "seckill");
 const router = useRouter();
 const auth = useAuthStore();
+const canIntegralBatch = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes('integral_batch.view')));
+const canView = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes("activity.view")));
+const canManage = computed(() => activeTab.value !== 'combination' && canView.value && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes("activity.manage")));
 const canSeckillStatistics = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
   (auth.userInfo.level === 0 || auth.uniqueAuth.includes("seckill_statistics.view")));
+const canSeckillTimes = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes('seckill_time.view')));
+const canSeckillActivities = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes('seckill_activity.view')));
+const canCombinations = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes('combination.view')));
+const sessionKey = computed(() => `${auth.token}:${auth.userInfo?.id ?? 0}:${auth.userInfo?.level ?? ''}:${auth.uniqueAuth.join(',')}`);
+const PAGE_SIZE = 20;
+const MAX_PAGE = Math.floor(10_000 / PAGE_SIZE) + 1;
+const page = ref(1);
+const count = ref(0);
+const draftKeyword = ref('');
+const draftStatus = ref<'' | 0 | 1>('');
+const keyword = ref('');
+const status = ref<0 | 1 | undefined>();
 const list = ref<ActivityItem[]>([]);
-const loading = ref(true);
+const loading = ref(false);
+const listError = ref('');
+let mounted = false;
+let listRequest = 0;
+let listAbort: AbortController | null = null;
 const pinkVisible = ref(false);
 const pinks = ref<{ id: number; uid: number; orderId: string; people: number; status: number; addTime: number }[]>([]);
 const bargainVisible = ref(false);
 const bargainUsers = ref<{ id: number; uid: number; bargainPrice: string; bargainPriceMin: string; price: string; status: number; addTime: number }[]>([]);
-const seckillTimes = ref<{ id: number; startTime: string; endTime: string; continuedTime: number; status: number }[]>([]);
+const seckillTimes = ref<{ id: number; startTime: string; endTime: string; status: number }[]>([]);
 
 // M20: 表单
 const formVisible = ref(false);
@@ -367,58 +419,95 @@ async function showBargainUsers(row: ActivityItem) {
   }
 }
 
-async function loadTimes() {
+function currentList(requestId: number, tab: string, session: string) {
+  return mounted && canView.value && requestId === listRequest && activeTab.value === tab &&
+    sessionKey.value === session && auth.token === getToken();
+}
+
+async function loadTimes(requestId: number, tab: string, session: string) {
   try {
-    seckillTimes.value = await apiAdminSeckillTimes();
+    const result = await apiAdminSeckillTimes();
+    if (currentList(requestId, tab, session)) seckillTimes.value = result;
   } catch {
-    seckillTimes.value = [];
+    if (currentList(requestId, tab, session)) seckillTimes.value = [];
   }
 }
 
-async function load() {
+function discardList() {
+  listRequest++;
+  listAbort?.abort(); listAbort = null;
+  list.value = []; count.value = 0; seckillTimes.value = [];
+  loading.value = false; listError.value = '';
+}
+
+async function load(targetPage = page.value) {
+  if (!mounted || !canView.value || activeTab.value === 'discounts') return;
+  if (!Number.isSafeInteger(targetPage) || targetPage < 1 || targetPage > MAX_PAGE) return;
+  discardList();
+  page.value = targetPage;
+  const requestId = listRequest, tab = activeTab.value, session = sessionKey.value;
+  const controller = new AbortController();
+  listAbort = controller;
   loading.value = true;
+  const query: ActivityListQuery = { page: targetPage, limit: PAGE_SIZE, keyword: keyword.value };
+  if (status.value !== undefined) query.status = status.value;
   try {
-    switch (activeTab.value) {
-      case "seckill":
-        list.value = await apiAdminSeckillList();
-        void loadTimes();
-        break;
-      case "combination":
-        list.value = await apiAdminCombinationList();
-        break;
-      case "bargain":
-        list.value = await apiAdminBargainList();
-        break;
-      case "integral":
-        list.value = await apiAdminIntegralList();
-        break;
-      case "discounts":
-        list.value = [];
-        seckillTimes.value = [];
-        break;
+    const fetchList = { seckill: apiAdminSeckillList, combination: apiAdminCombinationList,
+      bargain: apiAdminBargainList, integral: apiAdminIntegralList }[tab];
+    if (!fetchList) return;
+    const result = await fetchList(query, controller.signal);
+    if (!currentList(requestId, tab, session)) return;
+    // A deletion or concurrent change may remove the final row on this page.
+    if (!result.list.length && targetPage > 1) {
+      await load(Math.max(1, Math.min(targetPage - 1, Math.ceil(result.count / PAGE_SIZE))));
+      return;
     }
+    list.value = result.list;
+    count.value = result.count;
+    if (tab === 'seckill') void loadTimes(requestId, tab, session);
   } catch (e) {
-    ElMessage.error((e as Error).message || "加载失败");
+    if (currentList(requestId, tab, session)) listError.value = e instanceof Error ? e.message : "活动列表加载失败";
   } finally {
-    loading.value = false;
+    if (listAbort === controller) { listAbort = null; loading.value = false; }
   }
+}
+
+function search() {
+  keyword.value = draftKeyword.value.trim();
+  status.value = draftStatus.value === 0 || draftStatus.value === 1 ? draftStatus.value : undefined;
+  void load(1);
+}
+
+function reset() {
+  draftKeyword.value = ''; draftStatus.value = ''; keyword.value = ''; status.value = undefined;
+  void load(1);
+}
+
+function changeTab() {
+  discardList(); page.value = 1;
+  pinkVisible.value = false; bargainVisible.value = false;
+  reset();
 }
 
 async function toggleStatus(row: ActivityItem) {
+  if (!canManage.value || activeTab.value === 'discounts') return;
+  const tab = activeTab.value, session = sessionKey.value;
   try {
     await apiAdminActivityStatus(
-      activeTab.value as "seckill" | "combination" | "bargain" | "integral",
+      tab as "seckill" | "combination" | "bargain" | "integral",
       row.id,
       row.status === 1 ? 0 : 1,
     );
     ElMessage.success("操作成功");
-    load();
+    if (activeTab.value === tab && sessionKey.value === session) void load();
   } catch (e) {
     ElMessage.error((e as Error).message || "操作失败");
   }
 }
 
 function openForm(row?: ActivityItem) {
+  if (!canManage.value || activeTab.value === 'discounts') return;
+  saving.value = false;
   Object.assign(shipping, shippingForm()); shippingProductId.value = 0; originalShipping.value = null;
   Object.assign(content,contentForm()); contentReady.value = !row; originalContent = null;
   skuRequest++;
@@ -502,10 +591,13 @@ function selectBargainSku() {
 }
 
 async function save() {
+  if (!canManage.value) return;
   if (!form.storeName) return ElMessage.error("请输入活动名称");
   if (!form.price) return ElMessage.error("请输入活动价");
   saving.value = true;
   formError.value = "";
+  const session = sessionKey.value, formRequest = skuRequest, savedType = formType.value;
+  const currentForm = () => mounted && canManage.value && sessionKey.value === session && formRequest === skuRequest;
   try {
     await apiAdminActivitySave(formType.value === "bargain" ? withBargainShipping(withBargainContent(withBargainSku(bargainEditPayload(form, bargainOriginal),
       skuOptions.value, selectedBaseUnique.value, originalBaseUnique, form.productId),content,originalContent,contentReady.value),
@@ -526,44 +618,96 @@ async function save() {
       sort: form.sort,
       status: form.status,
     });
+    if (!currentForm()) return;
     ElMessage.success("保存成功");
     formVisible.value = false;
-    load();
+    if (activeTab.value === savedType) void load();
   } catch (e) {
+    if (!currentForm()) return;
     formError.value = e instanceof Error ? e.message : "保存失败";
     await nextTick();
     formErrorElement.value?.scrollIntoView({ block: "nearest" });
   } finally {
-    saving.value = false;
+    if (currentForm()) saving.value = false;
   }
 }
 
 async function del(row: ActivityItem) {
+  if (!canManage.value || activeTab.value === 'discounts') return;
+  const tab = activeTab.value, session = sessionKey.value;
   try {
     await ElMessageBox.confirm(`确认删除活动「${row.storeName}」?`, "删除确认", { type: "warning" });
   } catch {
     return;
   }
+  if (!canManage.value || activeTab.value !== tab || sessionKey.value !== session) return;
   try {
-    await apiAdminActivityDel(activeTab.value, row.id);
+    await apiAdminActivityDel(tab, row.id);
     ElMessage.success("已删除");
-    load();
+    if (activeTab.value === tab && sessionKey.value === session) void load();
   } catch (e) {
     ElMessage.error((e as Error).message || "删除失败");
   }
 }
 
-onMounted(load);
+function syncSession() {
+  const session = getAdminSession();
+  auth.$patch({ token: getToken() ?? '', userInfo: session?.userInfo ?? null,
+    menus: (session?.menus as typeof auth.menus) ?? [], uniqueAuth: session?.uniqueAuth ?? [] });
+}
+function syncStoredSession(event: StorageEvent) {
+  if (event.key === null || event.key === 'admin_token' || event.key === 'admin_session') syncSession();
+}
+
+watch(activeTab, changeTab, { flush: 'sync' });
+watch(sessionKey, () => {
+  if (!mounted) return;
+  formVisible.value = false; pinkVisible.value = false; bargainVisible.value = false;
+  saving.value = false;
+  skuRequest++;
+  discardList(); page.value = 1;
+  reset();
+});
+onMounted(() => {
+  mounted = true;
+  window.addEventListener('admin-session-changed', syncSession);
+  window.addEventListener('admin-auth-expired', syncSession);
+  window.addEventListener('storage', syncStoredSession);
+  const previous = sessionKey.value;
+  syncSession();
+  if (previous === sessionKey.value) void load();
+});
+onBeforeUnmount(() => {
+  mounted = false; skuRequest++;
+  window.removeEventListener('admin-session-changed', syncSession);
+  window.removeEventListener('admin-auth-expired', syncSession);
+  window.removeEventListener('storage', syncStoredSession);
+  discardList();
+});
 </script>
 
 <style scoped>
+.activity-page { min-width: 0; }
+.page-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.head-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .page-head h2 {
   font-size: 18px;
-  margin: 0 0 16px;
+  margin: 0;
 }
 
-.count-tag {
-  margin-bottom: 16px;
+.filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin: 8px 0 18px; }
+.filter-field { display: flex; flex: 1 1 240px; min-width: 0; flex-direction: column; gap: 6px; font-size: 13px; }
+.status-field { flex: 0 1 180px; }
+.filter-field :deep(.el-input), .filter-field :deep(.el-select) { width: 100%; }
+.filter-actions { display: flex; gap: 8px; }
+.filter-actions :deep(.el-button + .el-button) { margin-left: 0; }
+.list-error { margin-bottom: 12px; }
+.table-scroll { width: 100%; max-width: 100%; overflow-x: auto; }
+.pager { margin: 16px 0; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 600px) {
+  .filters { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .pager { justify-content: center; }
+  .pager :deep(.el-pagination__total) { width: 100%; text-align: center; margin-right: 0; }
 }
 
 .ot-price {

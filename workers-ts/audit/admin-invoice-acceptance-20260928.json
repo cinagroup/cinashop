@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "date": "2026-09-28",
+  "status": "local-partial-unpublished",
+  "scope": "platform Admin invoice application list, detail, guarded processing and route-contract distribution",
+  "routes": {
+    "workerRegistered": 1829,
+    "workerDeltaFromPaidMembership": 6,
+    "phpTotal": 1904,
+    "phpExactMatched": 892,
+    "phpExecutableMatched": 871,
+    "phpUnavailableMatched": 21,
+    "phpUnregisteredNonretired": 995,
+    "phpEffectiveExecutableCoveragePercent": 46.2,
+    "adminCallSites": 421,
+    "adminPathVariants": 445,
+    "adminExecutableVariants": 445,
+    "adminUnregisteredOrUnresolved": 0,
+    "newAdminBusinessPageRoutes": 74,
+    "legacyAdminScreens": 274,
+    "legacyAdminStatus": {
+      "candidate": 57,
+      "partial": 116,
+      "missing": 94,
+      "retired": 7
+    },
+    "legacyUserOrderStatus": {
+      "candidate": 2,
+      "partial": 16,
+      "missing": 0,
+      "retired": 0
+    },
+    "legacyMarketingStatus": {
+      "candidate": 18,
+      "partial": 15,
+      "missing": 15,
+      "retired": 0
+    },
+    "legacyInvoicePage": "partial",
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    }
+  },
+  "validation": {
+    "workerUnitTypecheck": "passed",
+    "workerRuntimeTypecheck": "passed",
+    "adminTypecheckAndProductionBuild": "passed",
+    "frontendRuntime": {
+      "file": "test/admin-invoices-frontend.test.ts",
+      "passed": 16,
+      "skipped": 0
+    },
+    "userOrderAndAllAdminLedger": {
+      "files": [
+        "test/admin-user-order-frontend-parity.test.ts",
+        "test/admin-all-frontend-parity.test.ts"
+      ],
+      "passed": 11,
+      "skipped": 0
+    },
+    "nativePostgres": {
+      "version": "16.15",
+      "singleRun": false,
+      "runs": [
+        {
+          "mode": "ordinary finance runner",
+          "command": "node scripts/run-local-finance-postgres.mjs ../.cache/postgres16-20260915/runtime/pgsql/bin test/admin-invoice-postgres.test.ts test/admin-invoice-http.test.ts",
+          "files": [
+            "test/admin-invoice-postgres.test.ts",
+            "test/admin-invoice-http.test.ts"
+          ],
+          "passed": 11,
+          "skipped": 0,
+          "cluster": ".cache/finance-postgres-9FGtbL",
+          "port": 62844,
+          "fixturesRemaining": 0,
+          "stopped": true
+        },
+        {
+          "mode": "owned schema-maintenance fixture",
+          "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/out-invoice-lifecycle.test.ts",
+          "files": [
+            "test/out-invoice-lifecycle.test.ts"
+          ],
+          "passed": 32,
+          "skipped": 0,
+          "cluster": ".cache/finance-postgres-RRGbqP",
+          "port": 52099,
+          "fixturesRemaining": 0,
+          "stopped": true
+        }
+      ],
+      "uniquePassed": 43,
+      "finalPortsListening": 0
+    },
+    "browserQa": {
+      "mode": "built Admin dist with isolated localhost synthetic roles and API",
+      "fixture": "test/fixtures/admin-invoice-browser-qa.cjs",
+      "observed": [
+        "Manager list rendered a normal row and an orphan diagnostic row; the latter opened read-only with explicit issues.",
+        "Normal detail showed read-only amounts, status and document-number fields and a confirmation entry point.",
+        "Order-number search reduced two rows to one; invoice.view-only role had no processing control.",
+        "Final built page showed the invoice-relevant order contact summary."
+      ],
+      "syntheticApiWrites": 0,
+      "syntheticApiReads": 4,
+      "syntheticDetailReads": 4,
+      "browserCsvDownloadObserved": false,
+      "csvBytesAndDownloadInvocationCoveredByRuntimeTests": true,
+      "blockedAction": "CUA auto-review rejected clicking the synthetic Confirm Processing button because it could change an invoice status and the request did not explicitly authorize processing a specific invoice; the action was not retried through another browser channel.",
+      "fixtureStopped": true,
+      "finalPortListening": false,
+      "productionDataUsed": false
+    },
+    "auditFiles": [
+      "audit/route-distribution-invoice-admin-20260928.json",
+      "audit/admin-frontend-inventory-invoice-admin-20260928.json",
+      "audit/admin-frontend-api-contracts-invoice-admin-20260928.json",
+      "audit/admin-legacy-user-order-route-parity-invoice-admin-20260928.json"
+    ]
+  },
+  "excludedAttempts": [
+    "The initial Admin native file passed 7/7, but the final complete two-file 11/11 run supersedes it; overlapping cases are not added.",
+    "A mixed ordinary-runner Admin/Out attempt passed the Admin 11 cases but the Out fixture failed beforeEach while creating its NOLOGIN owner (permission denied to create role). Neither mixed-run result is counted; both scopes were rerun as complete green files in their respective modes.",
+    "An earlier parallel Worker typecheck and Admin build exhausted Node's default heap. The standalone 4 GiB Worker unit and runtime typechecks and final Admin build passed."
+  ],
+  "operationalLimit": "Invoice UUID receipt lookup uses the indexed change_type then a leading-wildcard JSON-text search in store_order_status; cost grows with invoice-operation volume. Check production-scale EXPLAIN and load before release, and use an indexed unique receipt key if the five-second statement deadline becomes material.",
+  "sha256": {
+    "src/services/admin/AdminInvoiceService.ts": "e601e8cc312f3ce12a58f60e84772b008ee6d454c968f6e7f59af9cc3016bc20",
+    "src/controllers/api/v1/AdminInvoiceController.ts": "2233b10606816fa743b8c735fe7d3efb7be3ea10974fd7f859ec3858326eaabc",
+    "src/services/order/InvoiceWriteGuard.ts": "8876cfcde8c1a3f0221ba8e9d1f9600766359d3e80243725a6ffe03f057571e4",
+    "src/services/order/InvoiceOrderLifecycle.ts": "803d9c7eb1d27181daaa5cf8c5a2dfc9698b7d2ebf7d1a26688bdd0594496d5b",
+    "src/services/out/OutApiService.ts": "425fdea24b392bb5cd547953da2852d212246e4bda784014015e6c4f849bba4b",
+    "src/services/admin/AdminPermissionService.ts": "d16c9182c173d776d6a12003d308c484761b0d54a5cc63f9d31fcdb4eb91ae60",
+    "src/routes/adminapi.ts": "1279719eb5241ae3c1539ec806c82ff528d8edcb9cbeb45a6b0204543715f06f",
+    "src/routes/v1/index.ts": "2f66a3dbd38baa7d70decaa36da4ee06e0b557a90d56ddf0d2887c242d7419e5",
+    "scripts/run-local-finance-postgres.mjs": "91a668054b246c89552e70447ee871cecb5ffc2fc327e42a653866769055789c",
+    "scripts/admin-user-order-frontend-parity-audit.ts": "b34318e8fde376a3f8fa70649675458420d4f68d83f05dea3a415fece2038294",
+    "test/admin-invoice-postgres.test.ts": "3025846824df48801ff60b3c061d0e978b8e5c606d3d4ca8aada346d85fd4078",
+    "test/admin-invoice-http.test.ts": "416bcb81325fed2bc6fca4504ede344c2b23ecacc02f0738b72019023fca85fb",
+    "test/admin-invoices-frontend.test.ts": "a95be6f7b514ae2f981941a0c9b6125e79e711cf51fb4d34ca76dee8ebfe3fa5",
+    "test/admin-user-order-frontend-parity.test.ts": "429a783d51f0bc50ff05e20711f9c0d0f9f9723ed0a7cc7121b8a39fe4c40e14",
+    "test/fixtures/admin-invoice-browser-qa.cjs": "3dc6e61df1ccd22b4ccd5102f00bfa76218ff5368203d83f3d468926a80c7aad",
+    "../view/admin-ts/src/api/invoiceManagement.ts": "39d180c9e0eea1963244c208efd410173d89153e2b973cc7ee6ec1b2a683b741",
+    "../view/admin-ts/src/pages/order/InvoiceManagement.vue": "cac72699ba655f182f5923eaf4e2219ffa0c685c8ace69c1eac16aa48998d769",
+    "../view/admin-ts/src/router/index.ts": "e093bfcec1e96a662901f904b89a6cc3e30d6ee4a65b2d7b3f329107f9fae366",
+    "../view/admin-ts/src/layouts/AdminLayout.vue": "7a2746f8849bdbffbc25f7bbc9c00682cb1f29b49fbc4a885c71efd4beafa1f9",
+    "docs/admin-invoice-management-contract.md": "87144671e0150d65bd8cab093a12fa03fe3a93e842ac83a686885e436b1c8ded",
+    "docs/admin-user-order-route-parity.md": "caf2d88a0a86062c0d28888d265d564d4135b3c0ccdd7f9a9098035c0f984327",
+    "../MIGRATION_CHECKLIST.md": "84973a8b6f85c45abaace2acd09a95cd4a743f05d2da17ac8f3f9c7230027d35",
+    "audit/route-distribution-invoice-admin-20260928.json": "4a96c6cb125221072d915925b26564d977f9e827d758b9f1ac3c1b204bc06a48",
+    "audit/admin-frontend-inventory-invoice-admin-20260928.json": "bc3a112c38e245d8d0a06bb9d679f5310f9a7084371b0947278b2a99dfbd632e",
+    "audit/admin-frontend-api-contracts-invoice-admin-20260928.json": "156c3b2e03815245232f1534e412d60f44ec817382578d5cfd28d7c814307fa6",
+    "audit/admin-legacy-user-order-route-parity-invoice-admin-20260928.json": "f5659ac0495367c066886af1623a12cdad4da76175d173e284671eb723d13d4d"
+  },
+  "limits": [
+    "This is platform Admin only; Supplier and Kefu invoice management are not covered.",
+    "The old full order dialog, local invoice/header-type filters, broader all-fields search and full chart API are not yet reproduced within invoice.view.",
+    "Pre-install historical 0.00 applications without an authenticated creation baseline stay read-only.",
+    "No production invoice records, real deployed roles, tax provider, Linux release gate, browser write or actual CSV download event were verified.",
+    "No commit, push or deployment was performed."
+  ]
+}

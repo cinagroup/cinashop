@@ -3,9 +3,13 @@ import { eq } from 'drizzle-orm';
 import { financePostgres } from './helpers/financePostgres';
 import { createContainerFromDb } from '../src/lib/di';
 import { StoreProductService } from '../src/services/product/StoreProductService';
+import { withFinancePeers } from './helpers/financePeers';
+import { observeIntegralReadDb } from './helpers/integralProductReadFixture';
 import type { Env } from '../src/env';
 import { storeProduct, storeProductAttrValue, storeProductRelation, storeProductEnsure,
-  user, userRelation, systemUserLevel, systemConfig, memberRight } from '../src/models/schema';
+  user, userRelation, systemUserLevel, systemConfig, memberRight,
+  storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,
+  systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts } from '../src/models/schema';
 
 // Stateful Redis substitute reproduces cross-request hits from the old code.
 // SQL and DAOs are real; no production credentials or network cache are used.
@@ -29,7 +33,9 @@ describe('product detail request isolation with SQL authority', () => {
   } } as Env;
   beforeAll(async () => {
     f = await financePostgres([storeProduct, storeProductAttrValue, storeProductRelation,
-      storeProductEnsure, user, userRelation, systemUserLevel, systemConfig, memberRight]);
+      storeProductEnsure, user, userRelation, systemUserLevel, systemConfig, memberRight,
+      storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,
+      systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts]);
     service = new StoreProductService(createContainerFromDb(f.db), env);
   }, 60_000);
   afterAll(async () => { await f?.close(); }, 60_000);
@@ -110,9 +116,11 @@ describe('product detail request isolation with SQL authority', () => {
 
   it('never serves stale detail when the authoritative read fails', async () => {
     await service.getProductDetail(70, 0);
-    const container = createContainerFromDb(f.db);
-    vi.spyOn(container.storeProductDao, 'getById').mockRejectedValue(new Error('synthetic database outage'));
-    await expect(new StoreProductService(container, env).getProductDetail(70, 0)).rejects.toThrow('synthetic database outage');
+    // The new explicit projection no longer calls getById. Break the actual
+    // SQL source temporarily, proving that cached detail cannot hide SQL failure.
+    await f.exec('ALTER TABLE store_product RENAME TO unavailable_product');
+    try { await expect(service.getProductDetail(70, 0)).rejects.toThrow(); }
+    finally { await f.exec('ALTER TABLE unavailable_product RENAME TO store_product'); }
   });
 
   it('cleans only all eight exact legacy keys when explicitly requested', async () => {
@@ -122,24 +130,23 @@ describe('product detail request isolation with SQL authority', () => {
     expect([...redis.keys()]).toEqual(['product_info_71', 'tb_fixture']);
   });
 
-  it('cannot repopulate a stale shared response when an older reader finishes after an update', async () => {
-    const container = createContainerFromDb(f.db);
-    const oldProduct = await container.storeProductDao.getById(70);
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('cannot repopulate a stale shared response when an older reader finishes after an update', async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => { release = resolve; });
     let notifyStarted!: () => void;
     const started = new Promise<void>((resolve) => { notifyStarted = resolve; });
-    vi.spyOn(container.storeProductDao, 'getById').mockImplementationOnce(async () => {
-      notifyStarted(); await gate; return oldProduct;
+    await withFinancePeers(f.db,async([reader,writer,fresh])=>{
+      let observed=false;
+      const db=observeIntegralReadDb(reader.db,async(_tx,command)=>{
+        if(!observed&&command.includes('from "store_product"')){observed=true;notifyStarted();await gate;}
+      });
+      const slowRead=new StoreProductService(createContainerFromDb(db),env).getProductDetail(70,0);
+      try{await started;await writer.db.update(storeProduct).set({image:'/committed.svg'}).where(eq(storeProduct.id,70));
+        expect(await new StoreProductService(createContainerFromDb(fresh.db),env).getProductDetail(70,0)).toMatchObject({image:'/committed.svg'});
+      }finally{release();expect(await slowRead).toMatchObject({image:'/old.svg'});}
+      expect(await new StoreProductService(createContainerFromDb(fresh.db),env).getProductDetail(70,0)).toMatchObject({image:'/committed.svg'});
+      expect(redis.size).toBe(0);
     });
-    const slowRead = new StoreProductService(container, env).getProductDetail(70, 0);
-    try {
-      await started;
-      await f.db.update(storeProduct).set({ image: '/committed.svg' }).where(eq(storeProduct.id, 70));
-      expect(await service.getProductDetail(70, 0)).toMatchObject({ image: '/committed.svg' });
-    } finally { release(); await slowRead; }
-    expect(await service.getProductDetail(70, 0)).toMatchObject({ image: '/committed.svg' });
-    expect(redis.size).toBe(0);
   });
 
   it('does not mutate any product, SKU, user, relation or level rows while reading', async () => {

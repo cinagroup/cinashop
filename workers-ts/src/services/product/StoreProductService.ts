@@ -4,14 +4,13 @@
  * 对应 PHP app/services/product/StoreProductServices.php
  * 核心方法: getGoodsList (列表) + getProductDetail (详情)
  */
-import type { Container } from "@/lib/di";
+import { withTx, createContainerFromDb, type Container } from "@/lib/di";
 import type { Env } from "@/env";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
 import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
 import { calculateMemberUnitPriceCents, isPaidMembershipActive } from "@/services/order/StoreOrderCreateService";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
-import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { UserBehaviorService } from "@/services/user/UserBehaviorService";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import {
@@ -21,6 +20,11 @@ import {
   storeProductCategory,
   systemForm,
 } from "@/models/schema";
+import { readOrdinaryProductSnapshot } from './OrdinaryProductReadData';
+import { validatePublicCategoryFilters } from './PublicCategoryPolicy';
+import { themeDeadlines } from '@/services/content/ThemeReadService';
+import { renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { detailDisplayPrice,readProductDetailExtras,renderProductDetailExtras,readDetailVideo } from './ProductDetailDesignData';
 import { parseSystemFormDefinition } from "@/services/system/SystemMetadataService";
 
 /** 默认分页大小 (对应 PHP database.page.defaultLimit) */
@@ -139,6 +143,7 @@ export class StoreProductService {
     const p = Number(page) > 0 ? Number(page) : 1;
     let l = Number(limit) > 0 ? Number(limit) : DEFAULT_LIMIT;
     if (l > MAX_LIMIT) l = MAX_LIMIT;
+    if (!Number.isSafeInteger(p) || !Number.isSafeInteger(l) || (p - 1) * l > 100000) throw new ValidateException("商品分页超出完整读取范围");
     return [p, l];
   }
 
@@ -157,6 +162,15 @@ export class StoreProductService {
     list: Record<string, unknown>[];
     count: number | null;
   }> {
+    return withTx(this.container, async tx => {
+      // Keyword search retains its existing history write. The catalogue,
+      // membership and count still observe one bounded transaction snapshot.
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`); await themeDeadlines(tx);
+      return new StoreProductService(createContainerFromDb(tx), this.env).getGoodsListInSnapshot(params, _uid);
+    });
+  }
+  private async getGoodsListInSnapshot(params: GoodsListParams, _uid: number): Promise<{ list: Record<string, unknown>[]; count: number }> {
+    await validatePublicCategoryFilters(this.container.db, { cid: params.cid, sid: params.sid, tid: params.tid, selectId: params.selectId });
     // 1. 组装 where
     const where: Record<string, unknown> = {
       isShow: 1,
@@ -164,6 +178,7 @@ export class StoreProductService {
       isVerify: 1,
       status: 1, // 上架 (searcher status=1 → is_show=1 AND is_del=0 AND is_verify=1)
       isVipProduct: 0, // 非 svip 专属 (默认隐藏 svip 商品)
+      publicCatalog: true,
     };
 
     if (_uid) {
@@ -249,7 +264,8 @@ export class StoreProductService {
     // 5. 精确 count 与 PHP `{list,count}` 契约保持一致。
     const count = await this.container.storeProductDao.countSearch(where);
 
-    return { list, count };
+    const { decoratePublicProductCards } = await import('./PublicProductCardData');
+    return { list: await this.decorateLegacyPromotions(await decoratePublicProductCards(this.container.db, list, _uid, this.env)), count };
   }
 
   /** 公共首页、推荐和榜单共用的可售商品读取路径。 */
@@ -258,6 +274,7 @@ export class StoreProductService {
     params: RecommendProductParams = {},
   ): Promise<Record<string, unknown>[]> {
     const where: Record<string, unknown> = {
+      publicCatalog: true,
       status: 1,
       isShow: 1,
       isDel: 0,
@@ -284,7 +301,26 @@ export class StoreProductService {
     const list = await this.container.storeProductDao.getSearchList({ where, page, limit });
     const { discount, levelName, paidMemberPriceEnabled } = await this.getUserDiscount(uid);
     for (const item of list) this.postProcessRow(item, discount, levelName, paidMemberPriceEnabled);
-    return list;
+    return this.decorateLegacyPromotions(list);
+  }
+
+  /**
+   * PHP attaches the promotion, activity-frame and activity-background slots to
+   * every ordinary catalogue row. Load the compatibility service only after
+   * this module is initialized because its promotion-specific product endpoint
+   * also uses StoreProductService for the base catalogue query.
+   */
+  private async decorateLegacyPromotions(list: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+    if (!list.length) return list;
+    const { V2PromotionCompatibilityService } = await import("@/services/activity/V2PromotionCompatibilityService");
+    const decorated = await new V2PromotionCompatibilityService(this.container, this.env)
+      .decorateCatalogProducts(list);
+    return decorated.map((item) => ({
+      ...item,
+      promotions: item.promotions && typeof item.promotions === "object"
+        && !Array.isArray(item.promotions) && Object.keys(item.promotions).length === 0
+        ? [] : item.promotions,
+    }));
   }
 
   /**
@@ -582,105 +618,36 @@ export class StoreProductService {
    */
   async getProductDetail(id: number, uid: number, type = 0): Promise<Record<string, unknown>> {
     if (!Number.isSafeInteger(id) || id <= 0) throw new NotFoundException("商品不存在");
-    if (!Number.isSafeInteger(type) || type < 0 || type > 7) {
-      throw new NotFoundException("商品类型不存在");
-    }
-    // Legacy product_info_* values are intentionally neither read nor refilled.
-    // 2. 查商品
-    const product = await this.container.storeProductDao.getById(id);
-    if (!product) throw new NotFoundException("商品不存在");
-    if (!product.isShow || product.isDel) {
-      throw new NotFoundException("商品已下架");
-    }
-
-    // 3. 构建详情 (访问器, 对应 PHP model getter)
-    const detail: Record<string, unknown> = {
-      ...product,
-      sliderImage: this.parseSliderImage(product.sliderImage),
-      storeName: product.storeName,
-      storeInfo: product.storeInfo,
-      // 展示销量 = 真实 + 虚拟
-      fsales: product.sales + product.ficti,
-      // 视频处理
-      videoLink: product.videoOpen ? product.videoLink : "",
-      // 配送类型
-      deliveryType: String(product.deliveryType || "").split(",").filter(Boolean),
-      // 默认值
-      userCollect: false,
-      userLike: 0,
-      uid,
-    };
-
-    // 4. 价格区间: 多规格从 attr_value 取 min/max, 单规格用 product.price
-    if (product.specType === 1) {
-      const range = await this.container.storeProductAttrValueDao.getPriceRange(id, type);
-      detail.price = range.min > 0 ? String(range.min) : String(product.price);
-      detail.min_price = range.min;
-      detail.max_price = range.max;
-    } else {
-      detail.price = String(product.price);
-      detail.min_price = Number(product.price);
-      detail.max_price = Number(product.price);
-    }
-    detail.otPrice = String(product.otPrice);
-
-    // 5. 会员价计算 (getMinPrice)
-    const pricing = await this.getUserDiscount(uid);
-    const { discount, levelName, paidMemberPriceEnabled } = pricing;
-    const minPrice = this.getMinPrice(
-      String(detail.price),
-      paidMemberPriceEnabled ? product.isVip : 0,
-      String(product.vipPrice),
-      discount,
-      levelName,
-    );
-    detail.price_type = minPrice.price_type;
-    detail.level_name = minPrice.level_name;
-    // PHP merges the selected quote after loading base product data. A level
-    // winner must expose that selected price too, not the original SVIP price.
-    detail.vipPrice = minPrice.vip_price;
-    detail.level_price = minPrice.level_price;
-
-    // 6. SKU 详情 (M3 完整接入; 这里先返回价格区间供前端用)
-    detail.spec_type = product.specType;
-
-    // 6b. SKU 列表 (M18: 规格弹窗用, 单规格也返回一条)
-    const skus = await this.container.storeProductAttrValueDao.getByProductId(id, type);
-    detail.attr_value = skus.map((s) => ({
-      id: s.id,
-      unique: s.unique,
-      suk: s.suk || "默认",
-      price: String(s.price),
-      ot_price: String(s.otPrice ?? s.price),
-      vip_price: paidMemberPriceEnabled && product.isVip ? String(s.vipPrice ?? "0") : "0",
-      ...(type === 0 ? this.skuMemberPrice(String(s.price), String(s.vipPrice), product.isVip, pricing) : {}),
-      stock: s.stock,
-      sales: s.sales,
-      image: s.image,
-      small_image: s.image,
-    }));
-
-    // Product assurance definitions are a separate catalog. Resolve both the
-    // legacy ensure_id CSV and type=5 relation rows, filtering disabled entries.
-    detail.ensure = await new ProductExperienceService(this.container)
-      .productEnsures(id, product.ensureId);
-
-    detail.userCollect = uid ? await this.container.userRelationDao.be({
-      uid, relationId: id, type: "collect", category: "product",
-    }) : false;
-
+    if (!Number.isSafeInteger(type) || type < 0 || type > 7) throw new NotFoundException("商品类型不存在");
+    const snapshot = await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`); await themeDeadlines(tx);
+      const source = await readOrdinaryProductSnapshot(tx, id, uid, type), product = source.product;
+      const scoped = new StoreProductService(createContainerFromDb(tx), this.env), pricing = await scoped.getUserDiscount(uid);
+      const cents = source.skus.map(row => decimalToCents(row.price));
+      const minimum = product.specType === 1 && cents.length ? Math.min(...cents) : decimalToCents(product.price);
+      const maximum = product.specType === 1 && cents.length ? Math.max(...cents) : decimalToCents(product.price);
+      const quoted = this.getMinPrice(centsToDecimal(minimum), pricing.paidMemberPriceEnabled ? product.isVip : 0, product.vipPrice, pricing.discount, pricing.levelName);
+      const extras = await readProductDetailExtras(tx,product,uid,pricing.paidMemberActive);
+      const attr_value = source.skus.map(row => ({ ...row, vip_price: pricing.paidMemberPriceEnabled && product.isVip ? row.vip_price : '0.00',
+        display_price:detailDisplayPrice(extras.product_detail_design.value.showPrice,row.price,row.vip_price,pricing.discount,pricing.levelName,pricing.paidMemberPriceEnabled&&product.isVip===1),
+        ...(type === 0 ? this.skuMemberPrice(row.price, row.vip_price, product.isVip, pricing) : {}),
+        purchasable: source.cartButton === 1 && row.stock > 0, issues: [] }));
+      const display_price=detailDisplayPrice(extras.product_detail_design.value.showPrice,centsToDecimal(minimum),product.vipPrice,pricing.discount,pricing.levelName,pricing.paidMemberPriceEnabled&&product.isVip===1);
+      const userCollect = uid ? await createContainerFromDb(tx).userRelationDao.be({ uid, relationId: id, type: 'collect', category: 'product' }) : false;
+      return { source, extras, detail: { ...product, display_price, fsales: product.sales + product.ficti, price: centsToDecimal(minimum), otPrice: product.otPrice,
+        min_price: minimum / 100, max_price: maximum / 100, price_type: quoted.price_type, level_name: quoted.level_name,
+        vipPrice: quoted.vip_price, level_price: quoted.level_price, deliveryType: String(product.deliveryType || '').split(',').filter(Boolean),
+        videoLink: await readDetailVideo(tx,product), userCollect, userLike: 0, uid,
+        brand_name: source.brandName, cart_button: source.cartButton, cart_num: attr_value.reduce((sum,row) => sum + row.cart_num, 0),
+        spec_type: product.specType, productAttr: source.productAttr, attr_value, issues: [] } };
+    });
+    const images = await renderProductPictures(this.env?.APP_KEY, snapshot.source.references), galleryLength = snapshot.source.galleryLength;
+    snapshot.detail.image = images[0];
+    snapshot.detail.videoLink=(await renderProductPictures(this.env?.APP_KEY,[snapshot.detail.videoLink]))[0];
+    const detail: Record<string, unknown> = { ...snapshot.detail, ...await renderProductDetailExtras(this.env,snapshot.extras), sliderImage: images.slice(1, 1 + galleryLength),
+      attr_value: snapshot.detail.attr_value.map((row, index) => ({ ...row, image: images[1 + galleryLength + index], small_image: images[1 + galleryLength + index] })) };
+    delete detail.ensureId; delete detail.customFormPresent; delete detail.recommendList;
     return detail;
-  }
-
-  /** 解析轮播图 JSON (对应 PHP getSliderImageAttr) */
-  private parseSliderImage(raw: string): string[] {
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
   }
 
   /** Explicit legacy cleanup only; current detail reads do not depend on it. */
@@ -692,3 +659,4 @@ export class StoreProductService {
     ));
   }
 }
+

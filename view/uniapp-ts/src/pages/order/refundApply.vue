@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="refund-page">
     <view class="page-status">
       <view v-if="state.loadError || routeError" class="policy-warning" role="alert">{{ routeError || state.loadError }}</view>
@@ -70,9 +71,11 @@
     <view v-else-if="state.loading" class="empty">正在核对退款订单…</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, reactive, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiOrderDetail, apiRefundApply } from "@/api/order";
@@ -218,8 +221,8 @@ onUnload(() => {
 }
 
 .check.checked {
-  background: #e93323;
-  border-color: #e93323;
+  background: var(--view-theme, #e93323);
+  border-color: var(--view-theme, #e93323);
 }
 
 .goods-info {
@@ -241,7 +244,7 @@ onUnload(() => {
 
 .goods-price {
   font-size: 26rpx;
-  color: #e93323;
+  color: var(--view-priceColor, #e93323);
   font-weight: 600;
 }
 
@@ -262,7 +265,7 @@ onUnload(() => {
 }
 
 .reason-item.active {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
 }
 
@@ -278,7 +281,7 @@ onUnload(() => {
 }
 
 .submit-btn {
-  background: #e93323;
+  background: var(--view-theme, #e93323);
   color: #fff;
   text-align: center;
   border-radius: 40rpx;

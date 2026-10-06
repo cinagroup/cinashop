@@ -1,0 +1,269 @@
+{
+  "dateUtc": "2026-09-30",
+  "scope": "Local unpublished Admin time-discount screens and ordinary-order promotion pricing, limits, paid labels, split/refund evidence and downstream amount projections",
+  "outcome": {
+    "legacyAdminScreens": {
+      "total": 274,
+      "candidate": 79,
+      "partial": 111,
+      "missing": 77,
+      "retired": 7
+    },
+    "legacyMarketingScreens": {
+      "total": 48,
+      "candidate": 27,
+      "partial": 12,
+      "missing": 9,
+      "retired": 0
+    },
+    "workerRoutes": 1998,
+    "workerRouteSurfaces": {
+      "api": 1040,
+      "admin": 683,
+      "supplier": 164,
+      "kefu": 70,
+      "out": 41,
+      "erp": 0
+    },
+    "legacyPhpRoutes": {
+      "total": 1904,
+      "exactMatched": 903,
+      "executableMatched": 882,
+      "unavailable": 21,
+      "retired": 17,
+      "actionableMissing": 984,
+      "effectiveExecutableCoveragePercent": 46.7
+    },
+    "adminBusinessPageRoutes": 93,
+    "adminApi": {
+      "callSites": 509,
+      "pathVariants": 533,
+      "executable": 533,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "screenPromotions": [
+      "/admin/marketing/discount/list: missing->candidate",
+      "/admin/marketing/discount/add/:id?: missing->candidate"
+    ],
+    "checklist": {
+      "checked": 246,
+      "open": 158,
+      "total": 404
+    },
+    "productionAccepted": false
+  },
+  "contracts": {
+    "management": "Ten REST operations per /adminapi and /api/admin prefix; independent time_discount.view/manage; exact legacy menu 1394/1398 mapping; UUID replay and revision CAS; same-type soft deletion",
+    "pricing": "Ordinary cart/confirmation/create/assisted paths use integer-cent promotion quotes; per-unit PHP saving truncation; mutual overlay rules; first-order precedence; exact partial-limit segments and coupon-eligible scopes",
+    "limits": "Per user, activity and actual product across SKUs; original payment roots counted once; unpaid cancellation releases; paid refund preserves historical usage; transaction locks and requote reject stale confirmation",
+    "financialEvidence": "Versioned exact line amounts, promotion/member savings, quantities, segments and allocations; per-activity order ledger; split and sequential refund preserve the same cents and allocations",
+    "paidLabels": "Strict versioned label intent; labels granted only from paid root outbox, with user serialization and idempotent relation creation",
+    "downstreamProjections": "Versioned evidence is validated before exact Kefu/mobile-order, supplier-export and picking-sheet amounts are read; legacy rows retain their historical fallback",
+    "examples": [
+      "19.99 at 90 percent: per-unit saving 1.99 and payable 18.00",
+      "Two discounted units plus one original-price unit: exact gross 55.99",
+      "Sequential refund partitions replay original segments instead of averaging the entire line",
+      "Partial member saving 0.15 is retained instead of multiplying display unit 0.07 by two"
+    ]
+  },
+  "verification": {
+    "finalNativePostgresql16": {
+      "files": 8,
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 98.62,
+      "maxWorkers": 2,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-cndiL7",
+      "fixturesRemaining": 0,
+      "clusterStopped": true,
+      "filesRun": [
+        "test/order-time-discount-checkout.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/order-promotion-paid-labels.test.ts",
+        "test/order-promotion-quote.test.ts",
+        "test/order-promotion-split-finance.test.ts",
+        "test/order-promotion-ledger-split.test.ts",
+        "test/store-order-create-scenario-postgres.test.ts",
+        "test/checkout-marketing-scenarios-postgres.test.ts"
+      ]
+    },
+    "nativeManagementContracts": {
+      "adminTimeDiscountService": "8/8 passed in the broader native run",
+      "adminTimeDiscountHttp": "2/2 passed; actual createApp, both prefixes and numeric permission pair validation"
+    },
+    "additionalNativeMemberEvidence": {
+      "file": "test/checkout-member-evidence.test.ts",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 21.72,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-nZZDsh",
+      "fixturesRemaining": 0,
+      "clusterStopped": true,
+      "pgliteBoundary": "This fixture intentionally installs the reviewed checkout NOLOGIN-owner capability and purchase-origin protocol only on owned native PostgreSQL; PGlite cannot establish these create-order capabilities"
+    },
+    "finalNativeTransactionRegressionAcrossClusters": {
+      "files": 9,
+      "passed": 66,
+      "failed": 0,
+      "skipped": 0
+    },
+    "intermediateNativeRegression": {
+      "files": 9,
+      "passed": 140,
+      "failed": 2,
+      "total": 142,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-bP0HyU",
+      "fixturesRemaining": 0,
+      "clusterStopped": true,
+      "failureCause": "Two existing cloned scenario databases lacked newly required promotion tables",
+      "resolution": "Added promotion/relation tables to both isolated clone fixtures and approved product flags to the first-order fixture; both scenario suites pass in the final native run above"
+    },
+    "focusedPglite": [
+      {
+        "scope": "Modern cart, coupon picker and V2 promotion compatibility",
+        "files": 3,
+        "passed": 52,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "scope": "Order outbox/rewards, V2 promotion compatibility and complete Admin parity",
+        "files": 4,
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "scope": "Kefu exact promotion projection and supplier export plus existing contracts",
+        "files": 4,
+        "passed": 28,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "supplierPickingSheetFocused": {
+      "files": 2,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "adminFrontendRuntime": {
+      "files": 1,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "uniappRuntime": {
+      "files": 4,
+      "passed": 183,
+      "failed": 0,
+      "skipped": 0
+    },
+    "pcAuthAndCheckoutRuntime": {
+      "passed": 286,
+      "failed": 0,
+      "skipped": 0
+    },
+    "workerUnitTypecheck": "passed; final rerun after Kefu/export/picking changes were frozen",
+    "workerRuntimeTypecheck": "passed; final rerun after Kefu/export/picking changes were frozen",
+    "adminTypecheckAndProductionBuild": "passed; final build 32.39 seconds",
+    "pcTypecheckAndProductionBuild": "passed; final Vite build 14.66 seconds",
+    "adminApiStrictAudit": "533/533 executable variants from 509 call sites; 0 unregistered or unresolved",
+    "adminAuditRegression": {
+      "files": 3,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "gitDiffCheck": "passed (Git line-ending conversion warnings only)",
+    "published": "No commit, push, deployment or production mutation"
+  },
+  "browser": {
+    "environment": {
+      "os": "Windows",
+      "browser": "Installed Chrome via bundled Playwright",
+      "browserPlugin": "absent",
+      "fallbackReason": "Browser plugin not available",
+      "url": "http://127.0.0.1:5197/marketing/time-discounts",
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "api": "Synthetic mocked API; actual financial and concurrency proof comes from isolated native PostgreSQL tests"
+    },
+    "checks": {
+      "identityAndMeaningfulContent": "passed; list, all seven statistics and form",
+      "frameworkOverlay": "absent",
+      "console": "Only expected net::ERR_FAILED from deliberately aborted unknown-result POST",
+      "interaction": "passed; exact SKU edit, cross-page selection, cancellation, UUID/revision PUT, confirmed PATCH, read-only and permission revocation",
+      "unknownResult": "One POST only; repeated save blocked after unknown response",
+      "mobileOverflow": "passed; document width and full-page images 390px, date popper right edge within 390px with internal vertical scrolling",
+      "screenshots": "Desktop list and final mobile form/date popup visually inspected"
+    },
+    "devServerStopped": true,
+    "listenerPort5197": false,
+    "script": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-browser-qa.cjs",
+    "screenshots": [
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-list-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-form-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-sku-picker-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-sku-desktop.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-list-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-form-mobile.png",
+      "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/time-discount-date-mobile.png"
+    ]
+  },
+  "remaining": [
+    "Actual restricted-role browser acceptance, production statistics/scale and release acceptance remain open",
+    "Immutable Linux CI, Workers runtime and Hyperdrive acceptance for this unpublished increment remain open",
+    "UniApp runtime tests pass, but native typecheck/build is unverified because local @dcloudio/types is missing",
+    "Historical promotion rows without complete versioned financial evidence cannot be reconstructed from current rules; legacy gift/coupon refund guards remain",
+    "Future type2/type3 administration must use the same catalog advisory-lock protocol to prevent newly inserted matching activities during order creation",
+    "Old PHP copy navigation did not consume copy parameters; excluded-SKU scope is an explicit extension; no exact dynamic PHP URL aliases added",
+    "Nine legacy marketing screens remain missing, including full-gift/full-cut/nth-discount administration; no claim of complete promotion migration"
+  ],
+  "evidence": [
+    "docs/admin-time-discount-route-contract.md",
+    "docs/checklist-route-contract-distribution-20260928.md",
+    "audit/route-distribution-time-discount-followup-20260930.json",
+    "audit/admin-legacy-marketing-route-parity-time-discount-followup-20260930.json",
+    "audit/admin-frontend-inventory-time-discount-followup-20260930.json",
+    "audit/admin-frontend-api-contracts-time-discount-followup-20260930.json"
+  ],
+  "sourceEvidence": {
+    "normalization": "UTF-8 text with CRLF/CR normalized to LF",
+    "sha256": {
+      "src/controllers/api/v1/AdminTimeDiscountController.ts": "b2dd59b22f8993ec763f7b1cf98522c59aead616dd544c8c37a5a74c03562644",
+      "src/services/admin/AdminTimeDiscountService.ts": "7015f0bf14b51076396c6c52988e4d88e3e3dcad4cf0f7d80449ceea4933fcac",
+      "src/services/admin/AdminPermissionService.ts": "83a6260eb8ea4d7afc3a4226c7fc4ef44750cc43520cc577a920c342eacfc38a",
+      "src/services/activity/OrderPromotionQuoteService.ts": "09ad3fd402fff8e4c98520e69205055ea2f6ffdb305b3e20efafa9587bc3af10",
+      "src/services/activity/OrderCouponService.ts": "310d6d698c43c39ba3775d4af07f13c65936f1ee4e9e8424c2aca42530838536",
+      "src/services/order/StoreOrderCreateService.ts": "1c72515dbdeb19deb55d9be5c9f8661fb85107706cb7cee427e95f11c9f50873",
+      "src/services/order/StoreCartService.ts": "e5e745c8cbc84d80e44b9ca71571da9d5817a19a7826931cd0180be36f67a7fa",
+      "src/services/order/OrderRewardService.ts": "76d69520313ef801acc4b3fd0af192bbb589295ffc7d7c86e5ddd8dd461642cd",
+      "src/services/order/OrderOutboxService.ts": "4d3c8b77887aa70564441d42c3177debcd1c700eaba3410f51a972bdf6718600",
+      "src/services/order/OrderSplitFinance.ts": "e5afe324379da3bea3425ae07746b3ab4943558a5527c1e387d531ff314dfee2",
+      "src/services/order/RefundSplitAllocation.ts": "4464fcd7b3e74626c9f8b339366c70116b188a097bd86160d0e2c3ec1648d440",
+      "src/services/order/RefundAtomicMaterialization.ts": "c3ea16a86a76437d3acd1ab86485befdcb684fa391808e95a67be0a1b322eca6",
+      "src/services/order/OrderPromotionLedgerSplit.ts": "1265e2ea40243bb3306003e9cf7e25849e08a11d446171577cd6033dae99fedd",
+      "src/services/kefu/KefuOrderService.ts": "c2619dad2d952fb2c438487c2eebed5f8739f4ce093991eb14396d501c280a25",
+      "src/services/supplier/SupplierExportService.ts": "43d2398b92e86cec577d62741586c4cc8996018997096a79a73d43031f98acd5",
+      "src/services/supplier/SupplierPickingSheetReadService.ts": "475d71a790c9677d8d27101e0c892d7c33b165ca856a2779dd03d69909c016df",
+      "test/order-time-discount-checkout.test.ts": "b4cef8144fcaab2c40d5a5a2b70dd008bb6b53d4ab496f426a97f4845b4c6ce4",
+      "test/order-promotion-quote.test.ts": "b450b52785a8d0237b2854c16698df0cf1070416e9e4734ddd191580c3b52e5b",
+      "test/order-promotion-paid-labels.test.ts": "17f018d37631c71792b93146607bf2d22100a0cedd09960a91ff533b38e48596",
+      "test/order-promotion-split-finance.test.ts": "dccbbd50154d03afc89684ee8746559dabf756464b34540d1c5e2af804c5fbb8",
+      "test/order-promotion-ledger-split.test.ts": "f82abb8991dcecc92e3593f7d3a12b74213b64855f5bbd0cd2d38f4e04847357",
+      "test/supplier-export-promotion-savings.test.ts": "568444f7e42e38d2f85578088a01ee0d87c212492ba356a1ca02f390dc753452",
+      "test/supplier-picking-promotion-lines.test.ts": "0a66d801fd1a4b93ea0e85febd077f9c3be0f4b123cc8646da29d655490e9ea4",
+      "../view/common/cartPrice.ts": "a2194b804190bcc70052043f9c886df67eb9e9fa52b71ff43d5c13a87a59e19f",
+      "../view/common/checkoutQuote.ts": "81d6a287d9e1734d64e8f9c2dc51c9707b714db5204048f131a699f56a314260",
+      "../view/admin-ts/src/pages/marketing/TimeDiscountList.vue": "4f7dad19ab37027f7c0173a8b106ae298083eba90aac8830405db95ec8ca9ae8",
+      "../view/admin-ts/src/pages/marketing/TimeDiscountForm.vue": "3e0652b6535ca34d2ffd7f90502828cc58fc4fae81dffc313636a0ba8d071b53",
+      "docs/admin-time-discount-route-contract.md": "491e36f75031dcf07df89812e5e54db2e95e709eca0b632f7123a7e8318790f6"
+    }
+  }
+}

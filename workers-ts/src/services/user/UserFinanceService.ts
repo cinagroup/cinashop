@@ -7,7 +7,6 @@
  */
 import { asc, desc, eq, and, inArray, sql } from "drizzle-orm";
 import {
-  systemGroup,
   systemGroupData,
   user as userTable,
   userInvoice,
@@ -26,6 +25,9 @@ import { grantReferralLotteryChance } from "@/services/activity/LotteryService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserWithdrawalService, type WithdrawalInput } from "./UserWithdrawalService";
 import { UserFinanceReadService } from "./UserFinanceReadService";
+import { evaluateAgentLevelsAfterRegistration } from '@/services/agent/AgentLevelRegistrationEffects';
+import { decodeRechargeQuota, MAX_RECHARGE_QUOTAS, rechargeQuotaDeadlines, rechargeQuotaGroup,
+  RECHARGE_QUOTA_LOCK_KEY, RECHARGE_QUOTA_LOCK_NAMESPACE } from '@/services/payment/RechargeQuotaPolicy';
 
 const USER_INVOICE_LOCK_NAMESPACE = 21_406;
 
@@ -94,29 +96,11 @@ export interface RechargeIndexData {
   user_extract_balance_status: number;
 }
 
-function legacyGroupField(value: unknown): unknown {
-  if (value && typeof value === "object" && "value" in value) {
-    return (value as { value?: unknown }).value;
-  }
-  return value;
-}
-
 /** Decode PHP system_group_data's nested `{ type, value }` field shape. */
 export function parseRechargeQuota(id: number, value: string | null): RechargeQuota | null {
   if (!Number.isSafeInteger(id) || id <= 0 || !value) return null;
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    const priceCents = decimalToCents(String(legacyGroupField(parsed.price) ?? ""));
-    const giveCents = decimalToCents(String(legacyGroupField(parsed.give_money) ?? "0"));
-    if (priceCents <= 0 || giveCents < 0) return null;
-    return {
-      id,
-      price: centsToDecimal(priceCents),
-      give_money: centsToDecimal(giveCents),
-    };
-  } catch {
-    return null;
-  }
+  const quota = decodeRechargeQuota(value);
+  return quota ? { id, ...quota } : null;
 }
 
 export interface BrokerageToBalanceInput {
@@ -382,6 +366,7 @@ export class UserFinanceService {
       }
       await grantReferralLotteryChance(tx, spreadUid, now);
     });
+    await evaluateAgentLevelsAfterRegistration(this.container,uid);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -418,18 +403,7 @@ export class UserFinanceService {
     } catch {
       throw new ValidateException("充值金额格式错误");
     }
-    let givePriceCents = 0;
-    if (rechargeId !== 0) {
-      if (!Number.isSafeInteger(rechargeId) || rechargeId <= 0) {
-        throw new ValidateException("充值套餐参数错误");
-      }
-      const quota = (await this.rechargeQuotas()).find((item) => item.id === rechargeId);
-      if (!quota) throw new ValidateException("您选择的充值方式已下架");
-      priceCents = decimalToCents(quota.price);
-      givePriceCents = decimalToCents(quota.give_money);
-    }
-    if (priceCents <= 0) throw new ValidateException("充值金额必须大于 0");
-    if (priceCents > 10_000_000) throw new ValidateException("单次充值金额不能超过 100000 元");
+    if (rechargeId !== 0 && (!Number.isSafeInteger(rechargeId) || rechargeId <= 0)) throw new ValidateException("充值套餐参数错误");
     const normalizedChannel = channel.trim().toLowerCase() === "h5"
       ? "weixinh5"
       : channel.trim().toLowerCase();
@@ -450,14 +424,17 @@ export class UserFinanceService {
         minRechargeCents = 1;
       }
     }
-    if (priceCents < minRechargeCents) {
-      throw new ValidateException(`充值金额不能低于 ${centsToDecimal(minRechargeCents)} 元`);
-    }
+    const validateAmount = () => {
+      if (priceCents <= 0) throw new ValidateException("充值金额必须大于 0");
+      if (priceCents > 10_000_000) throw new ValidateException("单次充值金额不能超过 100000 元");
+      if (priceCents < minRechargeCents) throw new ValidateException(`充值金额不能低于 ${centsToDecimal(minRechargeCents)} 元`);
+    };
+    if (rechargeId === 0) validateAmount();
 
     // 雪花订单号 (cz 前缀, 对应 PHP getNewOrderId('cz'))
     const orderId = await this.createRechargeOrderId("cz");
 
-    await c.userRechargeDao.save({
+    const values = (givePriceCents: number) => ({
       uid,
       orderId,
       price: centsToDecimal(priceCents),
@@ -467,6 +444,23 @@ export class UserFinanceService {
       paid: 0,
       addTime: Math.floor(Date.now() / 1000),
     });
+    if (rechargeId) {
+      // Provider/sequence/config I/O has completed before taking the quota
+      // fence. Concurrent edits/hides/deletes serialize with this snapshot.
+      await withTx(c, async tx => {
+        await rechargeQuotaDeadlines(tx);
+        await tx.execute(sql`SELECT pg_advisory_xact_lock_shared(${RECHARGE_QUOTA_LOCK_NAMESPACE},${RECHARGE_QUOTA_LOCK_KEY})`);
+        const gid = await rechargeQuotaGroup(tx);
+        const [row] = await tx.select({ id: systemGroupData.id, value: systemGroupData.value }).from(systemGroupData)
+          .where(and(eq(systemGroupData.id, rechargeId), eq(systemGroupData.gid, gid), eq(systemGroupData.status, 1))).limit(1);
+        const quota = row ? parseRechargeQuota(row.id, row.value) : null;
+        if (!quota) throw new ValidateException("您选择的充值方式已下架");
+        priceCents = decimalToCents(quota.price);
+        const givePriceCents = decimalToCents(quota.give_money);
+        validateAmount();
+        await tx.insert(userRecharge).values(values(givePriceCents));
+      });
+    } else await c.userRechargeDao.save(values(0));
     return {
       orderId,
       order_id: orderId,
@@ -510,18 +504,25 @@ export class UserFinanceService {
   }
 
   private async rechargeQuotas(): Promise<RechargeQuota[]> {
-    const rows = await this.container.db
-      .select({ id: systemGroupData.id, value: systemGroupData.value })
-      .from(systemGroupData)
-      .innerJoin(systemGroup, eq(systemGroupData.gid, systemGroup.id))
-      .where(and(
-        eq(systemGroup.configName, "user_recharge_quota"),
-        eq(systemGroupData.status, 1),
-      ))
-      .orderBy(desc(systemGroupData.sort), asc(systemGroupData.id));
-    return rows
-      .map((row) => parseRechargeQuota(row.id, row.value))
-      .filter((quota): quota is RechargeQuota => quota !== null);
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await rechargeQuotaDeadlines(tx);
+      const gid = await rechargeQuotaGroup(tx, true);
+      // A shop without configured packages still offers custom cash amounts.
+      if (gid === null) return [];
+      const rows = await tx
+        .select({ id: systemGroupData.id, value: systemGroupData.value })
+        .from(systemGroupData)
+        .where(and(
+          eq(systemGroupData.gid, gid),
+          eq(systemGroupData.status, 1),
+        ))
+        .orderBy(desc(systemGroupData.sort), desc(systemGroupData.id)).limit(MAX_RECHARGE_QUOTAS + 1);
+      if (rows.length > MAX_RECHARGE_QUOTAS) throw new ValidateException('充值档位配置超过20条，请联系管理员');
+      return rows
+        .map((row) => parseRechargeQuota(row.id, row.value))
+        .filter((quota): quota is RechargeQuota => quota !== null);
+    });
   }
 
   // ═══════════════════════════════════════════════════════════

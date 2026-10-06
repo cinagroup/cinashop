@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="msg-detail">
     <view v-if="detail" class="body">
       <view class="msg-card">
@@ -11,9 +12,11 @@
     <view v-else class="empty">消息不存在</view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";

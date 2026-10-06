@@ -553,7 +553,8 @@ async function isolatedScenario(connectionString: string) {
       cancel_before_pickup_reset: byOrder.get(IDS.cancel)?.status === 0
         && byOrder.get(IDS.cancel)?.deliveryType === "" && byDelivery.get(IDS.cancel)?.status === -1,
       precompleted_idempotent: byOrder.get(IDS.completed)?.status === 2 && byDelivery.get(IDS.completed)?.status === 4,
-      unknown_ignored: events.some((row) => row.providerOrderId === "dd-isolated-unknown" && row.status === "IGNORED"),
+      unknown_ignored: events.some((row) => row.providerOrderId === "dd-isolated-unknown" && row.status === "IGNORED"
+        && !watermarks.some((watermark) => watermark.provider === row.provider && watermark.subjectKeyHash === row.subjectKeyHash)),
       abnormal_return_completed: byOrder.get(IDS.returned)?.status === 0
         && byOrder.get(IDS.returned)?.deliveryType === "" && byDelivery.get(IDS.returned)?.status === 10,
       uu_rider_cancel_cleared: uuRiderCleared,
@@ -564,8 +565,8 @@ async function isolatedScenario(connectionString: string) {
       same_state_query_no_duplicate_log: statusTypes.filter((value) => value === `${IDS.active}:city_delivery_3`).length === 1,
       queue_failure_recovered: queueFailed && outboxes.some((row) => row.id === queueEvent.outboxId
         && row.dispatchCount >= 2 && row.status === "COMPLETED"),
-      watermark_subjects_unique: watermarks.length === 8
-        && new Set(watermarks.map((row) => row.subjectKeyHash)).size === watermarks.length,
+      watermark_subjects_unique: watermarks.length === 7 && watermarks.every((row) => row.lastState !== "UNKNOWN")
+        && new Set(watermarks.map((row) => `${row.provider}:${row.subjectKeyHash}`)).size === watermarks.length,
       reconciliation_seeded: seededCases >= 1 && cases.length === seededCases,
       migration_idempotent: JSON.stringify(firstEvidence) === JSON.stringify(secondEvidence),
     };

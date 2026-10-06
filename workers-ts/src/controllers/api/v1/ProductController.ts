@@ -14,11 +14,27 @@ import { RecommendationNavigationService } from "@/services/product/Recommendati
 import { PresaleSkuCatalogService } from "@/services/activity/PresaleSkuCatalogService";
 import { V2PromotionCompatibilityService } from "@/services/activity/V2PromotionCompatibilityService";
 import { jsonFail } from "@/utils/json";
-import { NotFoundException } from "@/utils/errors";
+import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { categoryPublicId, publicCategoryQuery } from '@/services/product/PublicCategoryPolicy';
+import { withTx } from '@/lib/di';
+import { sql } from 'drizzle-orm';
+import { themeDeadlines } from '@/services/content/ThemeReadService';
+import { readProductCommunity } from '@/services/product/ProductDetailDesignData';
+import { renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
+
+/** Public posts attached to this exact visible product; count/list share RR. */
+export async function productCommunity(c:C){
+  const id=categoryPublicId(c.req.param('id')),query=new URL(c.req.url).searchParams;
+  for(const key of query.keys())if(!['page','limit'].includes(key)||query.getAll(key).length!==1)throw new ValidateException('商品晒单查询参数无效');
+  const page=Number(query.get('page')??1),limit=Number(query.get('limit')??10);
+  const result=await withTx(c.get('container'),async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);await themeDeadlines(tx);return readProductCommunity(tx,id,page,limit);});
+  const images=await renderProductPictures(c.env.APP_KEY,result.list.map(row=>row.image));
+  return jsonOk(c,{...result,list:result.list.map((row,i)=>({...row,image:images[i]}))});
+}
 
 /**
  * GET /api/products
@@ -27,12 +43,9 @@ type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 export async function lst(c: C) {
   const q = c.req.query();
   const params: GoodsListParams = {
+    ...publicCategoryQuery(new URL(c.req.url).searchParams),
     store_name: q.store_name || q.keyword,
-    sid: q.sid ? Number(q.sid) : undefined,
-    cid: q.cid ? Number(q.cid) : undefined,
-    tid: q.tid ? Number(q.tid) : undefined,
     cate_id: q.cate_id,
-    selectId: q.selectId ? Number(q.selectId) : undefined,
     brand_id: q.brand_id,
     priceOrder: (q.priceOrder as "" | "asc" | "desc") || "",
     salesOrder: (q.salesOrder as "" | "asc" | "desc") || "",
@@ -59,10 +72,9 @@ export async function detail(c: C) {
     c.header("Cache-Control", "private, no-store");
     if (c.req.query("view") !== "presale" || c.req.queries("view")?.length !== 1 ||
       (c.req.param("type") !== undefined && c.req.param("type") !== "0")) return jsonFail(c, "商品详情视图无效");
-    return jsonOk(c, await new PresaleSkuCatalogService(c.get("container")).read(c.get("uid") ?? 0, c.req.param("id")));
+    return jsonOk(c, await new PresaleSkuCatalogService(c.get("container"),c.env).read(c.get("uid") ?? 0, c.req.param("id")));
   }
-  const id = Number(c.req.param("id"));
-  if (!id) return jsonOk(c, null, "参数错误");
+  const id = categoryPublicId(c.req.param("id"));
   const type = Number(c.req.param("type") ?? 0);
   if (!Number.isSafeInteger(type) || type < 0 || type > 7) return jsonFail(c, "商品类型不存在");
 
@@ -102,7 +114,7 @@ export async function detail(c: C) {
     is_del: info.isDel ?? info.is_del ?? 0,
     unit_name: info.unitName ?? info.unit_name ?? "",
     cate_id: info.cateId ?? info.cate_id ?? "",
-    cart_button: Number(info.productType ?? info.product_type ?? 0) > 0
+    cart_button: info.cart_button === 0 || Number(info.productType ?? info.product_type ?? 0) > 0
       || Number(info.isPresaleProduct ?? info.is_presale_product ?? 0) > 0
       || Number(info.systemFormId ?? info.system_form_id ?? 0) > 0 ? 0 : 1,
   };
@@ -113,13 +125,13 @@ export async function detail(c: C) {
   return jsonOk(c, {
     ...flat,
     storeInfo: legacyStore,
-    productAttr: [],
-    productValue: Object.fromEntries(skus.map((sku) => [String(sku.unique ?? sku.id ?? ""), sku])),
-    reply: [],
-    replyChance: 0,
-    replyCount: 0,
-    elegant_list: [],
-    elegant_count: 0,
+    productAttr: info.productAttr ?? [],
+    productValue: Object.fromEntries(skus.filter(sku => typeof sku.unique === 'string' && sku.unique).map((sku) => [String(sku.unique), sku])),
+    reply: info.reply ?? [],
+    replyChance: info.replyChance ?? 0,
+    replyCount: info.replyCount ?? 0,
+    elegant_list: info.elegant_list ?? [],
+    elegant_count: info.elegant_count ?? 0,
   });
 }
 
@@ -146,12 +158,9 @@ export async function getProductAttrV2(c: C) {
 function catalogParams(c: C): GoodsListParams & { productId?: string } {
   const q = c.req.query();
   return {
+    ...publicCategoryQuery(new URL(c.req.url).searchParams),
     store_name: q.store_name || q.keyword,
-    sid: q.sid ? Number(q.sid) : undefined,
-    cid: q.cid ? Number(q.cid) : undefined,
-    tid: q.tid ? Number(q.tid) : undefined,
     cate_id: q.cate_id,
-    selectId: q.selectId ? Number(q.selectId) : undefined,
     brand_id: q.brand_id,
     store_label_id: q.store_label_id,
     news: q.news ? Number(q.news) : undefined,
@@ -210,7 +219,13 @@ export async function detailRecommend(c: C) {
 export async function detailActivity(c: C) {
   const id = Number(c.req.param("id"));
   if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "参数错误");
-  return jsonOk(c, await new PublicCatalogService(c.get("container"), c.env).productActivity(id));
+  const promotionTypeValue = c.req.query("promotions_type");
+  const promotionType = promotionTypeValue === undefined || promotionTypeValue === ""
+    ? 0 : Number(promotionTypeValue);
+  if (!Number.isSafeInteger(promotionType) || promotionType < 0 || promotionType > 32_767) {
+    return jsonFail(c, "促销类型参数错误");
+  }
+  return jsonOk(c, await new PublicCatalogService(c.get("container"), c.env).productActivity(id, promotionType));
 }
 
 /** GET /api/product/detail_content/:id */
@@ -292,17 +307,10 @@ export async function categoryVersion(c: C) {
  * 对应 PHP StoreProductCategory::levelCategory (同级分类)
  */
 export async function levelCategory(c: C) {
-  const q = c.req.query();
-  const cid = q.cid ? Number(q.cid) : 0;
-  if (!cid) return jsonOk(c, []);
-
-  const container = c.get("container");
-  // 取当前分类 → 找同级 (pid 相同)
-  const current = await container.storeProductCategoryDao.get(cid);
-  if (!current) return jsonOk(c, []);
-  const siblings = await container.storeProductCategoryDao.selectList({
-    where: { pid: current.pid, isShow: 1 },
-    orderBy: undefined,
-  });
-  return jsonOk(c, siblings);
+  const { categoryPublicId } = await import('@/services/product/PublicCategoryPolicy');
+  const q = new URL(c.req.url).searchParams;
+  if ([...q.keys()].some(key => !['id', 'cid'].includes(key)) || q.getAll('id').length > 1 || q.getAll('cid').length > 1) throw new ValidateException('同级分类参数无效');
+  const id = categoryPublicId(q.get('id') ?? q.get('cid'));
+  if (q.has('id') && q.has('cid') && categoryPublicId(q.get('cid')) !== id) throw new ValidateException('同级分类ID冲突');
+  return jsonOk(c, await new StoreCategoryService(c.get('container'), c.env).getLevelCategory(id));
 }

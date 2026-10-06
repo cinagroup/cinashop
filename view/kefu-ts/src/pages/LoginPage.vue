@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { kefuApi } from "@/api/kefu";
 import UiIcon from "@/components/UiIcon.vue";
 import { useAuthStore } from "@/stores/auth";
+import { safeKefuRedirect } from "@/router/kefu-navigation";
 
 type LoginMode = "password" | "scan";
 type ScanStage = "idle" | "pending" | "scanned" | "expired";
@@ -40,15 +41,7 @@ function textQuery(value: unknown): string {
 }
 
 function safeRedirect(value: unknown): string {
-  const candidate = textQuery(value).trim();
-  if (!candidate.startsWith("/") || candidate.startsWith("//")) return "/workbench";
-  try {
-    const target = new URL(candidate, window.location.origin);
-    if (target.origin !== window.location.origin || target.pathname === "/login") return "/workbench";
-    return `${target.pathname}${target.search}${target.hash}`;
-  } catch {
-    return "/workbench";
-  }
+  return safeKefuRedirect(value, window.location.origin);
 }
 
 const requestedRedirect = safeRedirect(route.query.redirect);

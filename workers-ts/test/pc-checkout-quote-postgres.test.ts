@@ -5,7 +5,9 @@ import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "../../view/pc
 import type { CartItem } from "../../view/pc-ts/src/types/order";
 import { storeProductAttrValue, userAddress, storeIntegral, storeCart } from "../src/models/schema";
 
-describe("PC full quote through real controller/service/SQL", () => {
+// Native fixture commissioning inside a case includes full SQL setup; keep the
+// behavioral assertions while allowing the local PG host more than Node's 5s.
+describe("PC full quote through real controller/service/SQL", { timeout: 30_000 }, () => {
   let fixture: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   let selected: CartItem[];
   const options: CheckoutQuoteOptions = { type: 0, addressId: 11, shippingType: 1, storeId: 0, couponId: 0, useIntegral: false };

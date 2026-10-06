@@ -1,0 +1,105 @@
+{
+  "date": "2026-09-27",
+  "status": "passed-local-final-source",
+  "published": false,
+  "scope": "Independent issued coupon list, complete new/copy, explicit status/soft-delete, separate exact issuer claim identities, ordinary PHP manual-claim compatibility.",
+  "native": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-native-20260927.json",
+    "sha256": "b99a4f7725549e1f9d7a022a8af6fd60b47a2cf3c45f0c3033bedecf2dd782ab",
+    "bytes": 35740
+  },
+  "browser": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-issue-browser-20260927.json",
+    "sha256": "c49be3900b9177ef2552336236404e27d181bb0f4b708350f69afcf3b303a936",
+    "bytes": 7168
+  },
+  "routeDistribution": {
+    "path": "C:/cinagroup/cinashop/workers-ts/audit/route-distribution-20260927.json",
+    "sha256": "6fa7e34b33173789e642060bb7a1a93856c35ea05e2c06732565377939f700ad",
+    "bytes": 1093312
+  },
+  "snapshots": {
+    "ledger": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-ledger-accepted-snapshot/manifest.json",
+      "sha256": "1356de65843c6150fc610dd6e1eb0c14d86ef31b08cd170ab008adeefcdab001",
+      "bytes": 4704
+    },
+    "frontend": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-frontend-accepted-snapshot/manifest.json",
+      "sha256": "c9d8b2e1bf4e42fa09190f44bf4bcb035e9f169ede0d9571994bf640bee844b4",
+      "bytes": 1397
+    },
+    "dist": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-dist-after-final-20260927.manifest.json",
+      "sha256": "5b9c5835931cd2034872dcee6b4d01a42bd0f3468c36704889f460fe0c29c2d5",
+      "bytes": 22065
+    }
+  },
+  "checks": {
+    "businessUniquePassed": 38,
+    "consumerRegressionPassed": 225,
+    "inputPermissionsWalletPassed": 50,
+    "frontendPassed": 47,
+    "ledgerPassed": 95,
+    "unitTypes": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-unit-types-final-20260927.log",
+      "sha256": "eb009fa5230d3127c5a2785569bbc7bcaf08c2e80680639a98adac9c6d52d982",
+      "bytes": 120
+    },
+    "runtimeTypes": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-runtime-types-final-20260927.log",
+      "sha256": "c2227e3d41f23c38accd1845361307439a1932e6c14908377298d27b41a01849",
+      "bytes": 153
+    },
+    "adminBuild": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-admin-build-final-20260927.log",
+      "sha256": "6b818c2dfa172636e2b480d4dc0affe010c606c7a44e6fba3678bc7cd17402aa",
+      "bytes": 14940
+    }
+  },
+  "cleanup": {
+    "path": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/coupon-issue-cleanup-20260927.json",
+    "sha256": "73898623a95281e7ac2a09a2f398a3b9ce4800546520cd5281c59f0e6acdf97d",
+    "bytes": 934
+  },
+  "previousAccepted": [
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-native-20260927.json",
+      "sha256": "6bebc715f9816cbb04f45822d4ddede03d67558425512c0aac3e81cf948ad00d",
+      "bytes": 28419
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-browser-20260927.json",
+      "sha256": "18b1bda88d7b7cf0ef739e71b1e23f3c8f34254f921a6907be8f59fa12a21920",
+      "bytes": 33502
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/coupon-template-acceptance-20260927.json",
+      "sha256": "1cdd40490a4d0cb29b579c8de97523537dd1a56ab83111a142a53789c935b52b",
+      "bytes": 3975
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-native-20260927.json",
+      "sha256": "1e040b3cf9a17ce707ffb68e922bd753ade405b7633e8c383c507b0b00acd184",
+      "bytes": 8061
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-browser-20260927.json",
+      "sha256": "097a534448dacdbe65c3ea3e08b9cb22cb8d4cfbe04726a8e95ed84d9f51022c",
+      "bytes": 7423
+    },
+    {
+      "path": "C:/cinagroup/cinashop/workers-ts/audit/combination-read-acceptance-20260927.json",
+      "sha256": "241d5e5a202fc1e942f9d876fb9d37c0ae53e853c464a29a67b55b36cd32a3f4",
+      "bytes": 2652
+    }
+  ],
+  "limitations": [
+    "New 9 REST revision/UUID/audit contract does not cover legacy generic coupon/save/status/del write entrypoints.",
+    "Owned financial/time snapshots remain; current issuer discount/type/category/scope still influence checkout.",
+    "No schema or grant changes, production deployment or new automatic/member entitlement channel acceptance.",
+    "Full Linux, real roles/configuration/devices/providers, coupon configuration and automatic gift/follow/newcomer channels remain open.",
+    "Unknown acknowledgment only clears local state; it is neither persistent recovery nor server-result proof."
+  ],
+  "aggregation": "Native scope first22 retained from two complete green files plus final16 across two complete repaired files; initial formal and HTTP wholly excluded. Consumer225 is one complete seven-file native run. PGlite/static input/permission/wallet50 and Vue/Axios47 are separately reported, not summed as all-native."
+}

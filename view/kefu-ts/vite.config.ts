@@ -1,12 +1,13 @@
 import { fileURLToPath, URL } from "node:url";
 import vue from "@vitejs/plugin-vue";
-import { defineConfig } from "vite";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const apiProxyTarget = process.env.CINASHOP_API_PROXY_TARGET
   ?? "https://cinashop-api.cinagroup.workers.dev";
 
 export default defineConfig({
   plugins: [vue()],
+  test: { exclude: [...configDefaults.exclude, "scripts/kefu-workbench-runtime.test.cjs"] },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },

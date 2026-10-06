@@ -4,7 +4,7 @@ import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
 import { createContainerFromDb, withTx, type DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderOutbox, storeOrderStatus, storeProductVirtual,
   storeOrderRefund, storeOrderRefundSplit, storeOrderFulfillmentBranch, storeOrderInvoice,
-  storeProductCoupon, printDocument, user } from '@/models/schema';
+  storeProductCoupon, printDocument, user, systemConfig } from '@/models/schema';
 import { enqueueOrderPaidEvent, OrderOutboxService, isPresaleDeliveryOutboxMessage } from '@/services/order/OrderOutboxService';
 import { enqueuePresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import { deliverPaidVirtualOrders } from '@/services/order/VirtualProductDeliveryService';
@@ -36,7 +36,7 @@ describe('registered presale payment -> durable Queue -> delivery transaction', 
     events: await f.db.select().from(storeOrderOutbox).orderBy(storeOrderOutbox.id), users: await f.db.select().from(user) });
   beforeAll(async () => {
     f = await financePostgres([storeOrder, storeOrderCartInfo, storeOrderOutbox, storeOrderStatus, storeProductVirtual,
-      storeOrderRefund, storeOrderRefundSplit, storeOrderFulfillmentBranch, storeOrderInvoice, storeProductCoupon, printDocument, user]);
+      storeOrderRefund, storeOrderRefundSplit, storeOrderFulfillmentBranch, storeOrderInvoice, storeProductCoupon, printDocument, user, systemConfig]);
     await f.exec('CREATE UNIQUE INDEX soob_event_key_uq ON store_order_outbox(event_key)');
     const check = getTableConfig(storeOrderOutbox).checks.find(c => c.name === 'soob_event_type_ck')!;
     await f.exec(`ALTER TABLE store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (${new PgDialect().sqlToQuery(check.value).sql})`);
@@ -45,6 +45,7 @@ describe('registered presale payment -> durable Queue -> delivery transaction', 
   beforeEach(async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External requests forbidden'));
     queue.sendBatch.mockClear(); await f.reset();
+    await f.db.insert(systemConfig).values({ menuName: 'brokerage_func_status', isStore: 0, value: '0' });
     await f.db.insert(user).values({ uid: 11, account: 'local-presale-test' });
     await f.db.insert(storeOrder).values({ orderId: 'LOCAL-PRESALE', uid: 11, type: 6, productType: 1,
       paid: 1, totalNum: 3, supplierAllocationStatus: 2, payType: 'offline', payTime: 100,

@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="presale-page">
     <view class="heading">预售专区</view>
     <view class="notice">全款预售 · 时间为北京时间。列表价格仅供参考，购买资格以详情与结算校验为准。</view>
@@ -29,8 +30,10 @@
     <button v-if="state.list.length < state.count && !state.error" :disabled="state.loading || navigating" @tap="load(true)">加载更多</button>
     <view v-else-if="state.list.length && !state.loading && !state.error" class="notice">已加载全部 {{ state.count }} 件商品</view>
   </view>
+  </ThemePage>
 </template>
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { usePresaleCatalog } from '@/composables/usePresaleCatalog';
 import { PRESALE_FILTERS, presaleBeijingTime } from '../../../../common/presaleCatalog';
 const { state, navigating, openProduct, load, select } = usePresaleCatalog();

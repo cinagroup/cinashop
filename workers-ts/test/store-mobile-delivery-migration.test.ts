@@ -70,11 +70,15 @@ describe("API-008 mobile-store delivery compatibility", () => {
   it("fails closed on actor scope and returns only bounded projections", () => {
     const service = readFileSync("src/services/store/StoreMobileDeliveryService.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/StoreMobileDeliveryController.ts", "utf8");
-    expect(service).toContain("eq(storeOrder.deliveryUid, uid)");
-    expect(service).toContain("eq(deliveryService.relationId, staff[0].storeId)");
-    expect(service).toContain("配送员门店身份存在重复");
+    const reader = readFileSync("src/services/store/DeliveryReadService.ts", "utf8");
+    const scope = readFileSync("src/services/store/DeliveryPrincipalScope.ts", "utf8");
+    expect(reader).toContain("eq(storeOrder.deliveryUid,scope.actor_uid)");
+    expect(reader).toContain("orderReadStatusPredicate(2)");
+    expect(reader).toContain("orderReadStatusPredicate(9)");
+    expect(service).toContain("eq(deliveryService.relationId,staff[0].storeId)");
+    expect(scope).toContain("所选配送身份存在重复");
     expect(service).toContain("店员身份存在重复");
-    expect(service).toContain("MAX_SNAPSHOT_BYTES");
+    expect(reader).toContain("MAX_SNAPSHOT_BYTES");
     expect(service).not.toContain("fetch(");
     expect(controller.match(/private, no-store/g)).toHaveLength(1);
     expect(controller).toContain('c.header("Pragma", "no-cache")');

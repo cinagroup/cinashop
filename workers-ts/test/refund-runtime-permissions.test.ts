@@ -4,6 +4,8 @@ import { refundRuntimeFixture, runtimeTablePrivileges, runtimeRowLockTables, run
 import { SupplierFulfillmentService } from '../src/services/supplier/SupplierFulfillmentService';
 import { SupplierFinanceService } from '../src/services/supplier/SupplierFinanceService';
 import { storeOrderInvoice, storeOrderFulfillmentBranch, storeOrderInvoiceEvidence, user } from '../src/models/schema';
+import { runRuntimeBusinessCommissioning } from '../src/migrations/runRuntimeBusinessCommissioning';
+import { auditRuntimeBusinessPrivileges } from '../src/migrations/auditRuntimeBusinessPrivileges';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('complete-schema independent runtime LOGIN', () => {
   let f: Awaited<ReturnType<typeof refundRuntimeFixture>>;
@@ -54,7 +56,24 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('complete-schema 
   });
 
   it('runs checkout, invoice, refund, fulfillment fork, receipt and repeated refunds without owner authority', async () => {
-    await f.withRuntime(async r => {
+    // Only this complete business scenario uses the formally commissioned current
+    // profiles. The other cases retain their historical exact fixture ACL.
+    // Commissioning requires fresh empty LOGINs; never upgrade the legacy role
+    // or repair missing permissions with individual grants or revokes.
+    await f.withRuntimeRole!(app => f.withRuntimeRole!(async admin => {
+      const [identity] = await f.db.execute(sql`SELECT current_database() AS name`);
+      const names = { app: app.role, admin: admin.role, maintenance: 'finance_test',
+        database: String(identity.name), pricingOwner: f.pricingOwner };
+      await runRuntimeBusinessCommissioning(f.db, names);
+      for (const [peer, profile] of [[app, 'app'], [admin, 'admin']] as const) {
+        expect(await auditRuntimeBusinessPrivileges(peer.db, profile, names)).toMatchObject({ ready: true, failures: [] });
+        expect((await peer.exec('SELECT current_user AS role,session_user AS session'))[0])
+          .toEqual({ role: peer.role, session: peer.role });
+        expect((await peer.exec("SELECT has_schema_privilege(current_user,'public','CREATE') AS ddl,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls FROM pg_roles WHERE rolname=current_user"))[0])
+          .toEqual({ ddl: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolbypassrls: false });
+      }
+      expect(app.pid).not.toBe(admin.pid);
+      const r = f.operationsFor(app);
       const source = await r.createPaid(); expect(source.payPrice).toBe('55.00');
       await r.invoice(source.id);
       const first = await r.apply(source.id); expect(await r.finish(first.refundId)).toBe('completed');
@@ -79,7 +98,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('complete-schema 
       const done = await f.state();
       for (const id of [first.refundId, second.refundId, third.refundId]) expect(await r.finish(id)).toBe('already-completed');
       expect(await f.state()).toEqual(done);
-    });
+    }));
   });
 
   it.each(['store_order_refund_split', 'store_order_invoice'])('missing late INSERT on %s rolls back the refund and can recover once restored', async table => {

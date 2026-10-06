@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="work-page">
     <!-- #ifdef H5 -->
     <button class="back" @tap="back">‹ 返回订单</button>
@@ -39,9 +40,11 @@
     <!-- #endif -->
     <!-- #ifndef H5 --><view class="notice">企业微信工作台仅支持 H5 侧边栏。</view><!-- #endif -->
   </view>
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { ref, watch } from "vue";
 import { onLoad, onUnload } from "@dcloudio/uni-app";
 import { getWorkOrderInfo, type WorkOrder } from "@/api/work";
@@ -97,6 +100,6 @@ function back() {
 .card, .notice { background: #fff; border-radius: 16rpx; padding: 26rpx; margin-bottom: 18rpx; }.notice { overflow-wrap: anywhere; }.notice button { margin-top: 16rpx; }.error { color: #a72d2d; }
 .card:first-of-type { display: flex; flex-direction: column; gap: 10rpx; }.state { font-size: 34rpx; color: #1768c8; font-weight: 700; }.muted { color: #6e7a8a; font-size: 24rpx; }
 .heading { display: block; font-size: 29rpx; font-weight: 650; margin-bottom: 14rpx; }.row { display: flex; justify-content: space-between; gap: 24rpx; padding: 13rpx 0; border-bottom: 1rpx solid #edf0f4; font-size: 25rpx; }
-.row text:last-child { max-width: 65%; overflow-wrap: anywhere; text-align: right; }.total { color: #bd3025; font-weight: 700; font-size: 29rpx; }
+.row text:last-child { max-width: 65%; overflow-wrap: anywhere; text-align: right; }.total { color: var(--view-priceColor, #e93323); font-weight: 700; font-size: 29rpx; }
 .product { display: flex; align-items: center; gap: 14rpx; padding: 16rpx 0; border-bottom: 1rpx solid #edf0f4; font-size: 25rpx; }.photo { width: 90rpx; height: 90rpx; border-radius: 9rpx; flex-shrink: 0; }.product-name { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
 </style>

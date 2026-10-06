@@ -101,6 +101,9 @@ export default {
       isCityDeliveryCallbackDispatchMessage,
       isCityDeliveryCallbackOutboxMessage,
     } = await import("./services/delivery/CityDeliveryCallbackService");
+    const { CustomerCityDeliveryService } = await import(
+      "./services/customer-work/CustomerCityDeliveryService"
+    );
     const {
       consumePaymentReconciliationMessage,
       isPaymentReconciliationDispatchMessage,
@@ -164,6 +167,7 @@ export default {
     const wechatCallbacks = new WechatCallbackService(container, env);
     const merchantShipmentCallbacks = new MerchantShipmentCallbackService(container, env);
     const cityDeliveryCallbacks = new CityDeliveryCallbackService(container, env);
+    const customerCityDeliveries = new CustomerCityDeliveryService(container, env);
     const paymentReconciliation = new PaymentReconciliationService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
@@ -181,6 +185,7 @@ export default {
       const messageStartedAt = Date.now();
       if (isCityDeliveryCallbackDispatchMessage(msg.body)) {
         try {
+          const customerDispatched = await customerCityDeliveries.dispatchPending(20);
           const [dispatched, seeded, reconciled] = await Promise.all([
             cityDeliveryCallbacks.dispatchPending(100),
             cityDeliveryCallbacks.seedReconciliation(100),
@@ -191,7 +196,7 @@ export default {
             component: "queue",
             operation: "city_delivery_callback_dispatch",
             outcome: "success",
-            resourceCount: dispatched.enqueued + seeded + reconciled.queried + reconciled.resolved,
+            resourceCount: customerDispatched + dispatched.enqueued + seeded + reconciled.queried + reconciled.resolved,
             durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
           });

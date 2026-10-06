@@ -56,7 +56,10 @@ export function orderMembershipSavings(order: Pick<Order, 'id' | 'uid' | 'totalN
       || chargedFreight > rawFreight
       || (freight !== 0n && freight !== rawFreight - chargedFreight)
       || (voucher !== 0n && voucher !== lineCoupon)) throw invalid();
-    if (info.price_type === 'member') member += benefit * BigInt(row.cartNum);
+    const lineMember = info.promotion_quote_version === 'order-promotion-quote-v1'
+      ? money(info.promotion_line_member_savings) : benefit * BigInt(row.cartNum);
+    if (info.price_type === '' && lineMember !== 0n) throw invalid();
+    if (info.price_type === 'member') member += lineMember;
     postage += freight; coupon += voucher; quantity += BigInt(row.cartNum);
   }
   if (!Number.isSafeInteger(order.totalNum) || quantity !== BigInt(order.totalNum)) throw invalid();

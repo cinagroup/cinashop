@@ -1,4 +1,5 @@
 <template>
+  <ThemePage>
   <view class="records-page">
     <view v-if="loading" class="state">记录加载中…</view>
     <view v-else-if="!records.length" class="state"><text class="empty-icon">🎁</text><text>还没有中奖记录</text></view>
@@ -16,9 +17,11 @@
     </view>
   </view>
   <DiySuspendedNavigation />
+  </ThemePage>
 </template>
 
 <script setup lang="ts">
+import ThemePage from '@/components/ThemePage.vue';
 import { onMounted, reactive, ref } from "vue";
 import { onPullDownRefresh } from "@dcloudio/uni-app";
 import { apiLotteryReceive, apiLotteryRecords, type LotteryRecord } from "@/api/lottery";

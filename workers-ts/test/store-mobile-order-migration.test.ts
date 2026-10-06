@@ -83,8 +83,13 @@ describe("API-008 STORE-B mobile order compatibility", () => {
     expect(service).toContain("eq(storeOrderRefund.storeId, staff.storeId)");
     expect(service).toContain("eq(systemStoreStaff.verifyStatus, 1)");
     expect(service).toContain("门店店员身份存在重复");
-    expect(service).toContain("核销身份类型仅支持客服或配送员");
-    expect(service).toContain("eq(storeService.customer, 1)");
+    expect(service).toContain("核销身份类型仅支持手机订单管理员或配送员");
+    expect(service).toContain("authorizeCustomerWorkActor(this.container.db,actor)");
+    expect(service).toContain("legacySearch(actor.actor,lookup)");
+    const scope=readFileSync('src/services/customer-work/CustomerWorkScope.ts','utf8');
+    expect(scope).toContain('eq(storeService.customer, 1)');
+    expect(scope).toContain('eq(storeService.accountStatus, 1)');
+    expect(scope).not.toContain('eq(storeService.status, 1)');
     expect(writeoff).toContain("infoByOrderId(actor");
     expect(writeoff).toContain("MAX_LEGACY_SEARCH_RESULTS");
   });

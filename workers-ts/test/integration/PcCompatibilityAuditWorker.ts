@@ -192,7 +192,7 @@ async function isolatedScenario(connectionString: string) {
       `;
       await tx`INSERT INTO system_group (id, name, info, config_name) VALUES (1, 'PC banner', 'audit', 'pc_home_banner')`;
       await tx`INSERT INTO system_group_data (id, gid, value, sort, status) VALUES
-        (1, 1, ${JSON.stringify({ name: { value: "banner" }, pic: { value: "/banner.png" } })}, 9, 1)`;
+        (1, 1, ${JSON.stringify({ title: { value: "banner" }, image: { type: "upload", value: "/banner.png" }, url: { value: "/goods/101" } })}, 9, 1)`;
       await tx`
         INSERT INTO store_product_category (id,pid,type,relation_id,cate_name,path,level,sort,is_show) VALUES
           (11,0,0,0,'root','',0,9,1), (12,11,0,0,'middle','11',1,8,1),
@@ -253,7 +253,8 @@ async function isolatedScenario(connectionString: string) {
         hierarchical_sid: sid.count === 1 && sid.list[0]?.id === 101,
         exact_tid: tid.count === 1 && tid.list[0]?.id === 101,
         category_envelope: categories.count === 1 && categories.list[0]?.productList.length === 2,
-        banner_contract: banner.list.length === 1,
+        banner_contract: banner.list.length === 1 && banner.list[0]?.title === "banner"
+          && banner.list[0]?.image === "/banner.png" && banner.list[0]?.url === "/goods/101",
         company_sort_and_logo: company.logoUrl === "https://audit.example/logo.png"
           && (company.links_list[0]?.sort === 2),
         city_contract: city.length === 1 && Array.isArray(city[0]?.children),

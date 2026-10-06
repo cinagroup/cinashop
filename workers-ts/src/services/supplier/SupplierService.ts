@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
-import { and, desc, eq, ilike, ne, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, sql, type SQL } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
+import { withTx, type Container } from "@/lib/di";
 import {
   storeOrder,
   storeOrderRefund,
@@ -11,7 +11,7 @@ import {
 } from "@/models/schema";
 import { createToken, md5 } from "@/utils/jwt";
 import { setTokenBucket } from "@/utils/cache";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { HttpApiException, NotFoundException, ValidateException } from "@/utils/errors";
 import { SupplierPermissionService } from "@/services/supplier/SupplierPermissionService";
 import { SupplierProductManagementService } from "@/services/supplier/SupplierProductManagementService";
 import { SupplierOrderReadService, type SupplierOrderQuery } from './SupplierOrderReadService';
@@ -20,6 +20,26 @@ export { normalizeSupplierPickingSheetIds, projectPickingSheetCartItem, type Pic
 
 const SUPPLIER_ADMIN_TYPE = 4;
 const UTC8_OFFSET_MS = 8 * 60 * 60 * 1000;
+// Shared with SupplierApplicationService and AdminSupplierDirectoryService.
+const SUPPLIER_ACCOUNT_LOCK_NAMESPACE = 505_607;
+const SUPPLIER_ACCOUNT_LOCK_KEY = 0;
+const PROFILE_REVISION = /^[0-9a-f]{64}$/;
+const supplierVersionColumns = {
+  ...getTableColumns(systemSupplier),
+  rowVersion: sql<string>`${systemSupplier}.xmin::text`,
+};
+const adminVersionColumns = {
+  ...getTableColumns(systemAdmin),
+  rowVersion: sql<string>`${systemAdmin}.xmin::text`,
+};
+
+async function profileRevision(supplierId: number, supplierVersion: string,
+  primaryId: number, primaryVersion: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
+    JSON.stringify([supplierId, supplierVersion, primaryId, primaryVersion]),
+  ));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
 
 export interface PageInput {
   page: number;
@@ -76,6 +96,8 @@ function optionalInteger(input: Record<string, unknown>, key: string): number | 
 }
 
 export interface SupplierProfileInput {
+  /** Optional only while legacy full-form clients migrate to revision-aware writes. */
+  expectedRevision?: string;
   supplierName?: string;
   name?: string;
   phone?: string;
@@ -90,6 +112,11 @@ export interface SupplierProfileInput {
 }
 
 export function normalizeSupplierProfileInput(input: Record<string, unknown>): SupplierProfileInput {
+  const expectedRevision = input.expected_revision;
+  if (expectedRevision !== undefined &&
+    (typeof expectedRevision !== "string" || !PROFILE_REVISION.test(expectedRevision))) {
+    throw new ValidateException("资料版本无效，请刷新后重试");
+  }
   const password = optionalString(input, "pwd", 72);
   const confirmPassword = optionalString(input, "conf_pwd", 72);
   if ((password?.length ?? 0) > 0 || (confirmPassword?.length ?? 0) > 0) {
@@ -107,6 +134,7 @@ export function normalizeSupplierProfileInput(input: Record<string, unknown>): S
   }
 
   return {
+    expectedRevision,
     supplierName: optionalString(input, "supplier_name", 50),
     name: optionalString(input, "name", 255),
     phone,
@@ -218,8 +246,28 @@ export class SupplierService {
   }
 
   async profile(supplierId: number, adminId: number) {
-    const supplier = await this.container.systemSupplierDao.getOrThrow(supplierId, "供应商不存在");
-    const admin = await this.container.systemAdminDao.getOrThrow(adminId, "管理员不存在");
+    // Both xmin values come from one statement snapshot. The UI can submit a
+    // token for the exact supplier/primary-account pair it displayed.
+    const profileRows = await this.container.db.select({
+      supplier: systemSupplier,
+      primary: systemAdmin,
+      supplierVersion: sql<string>`${systemSupplier}.xmin::text`,
+      primaryVersion: sql<string>`${systemAdmin}.xmin::text`,
+    }).from(systemSupplier).innerJoin(systemAdmin, and(
+      eq(systemAdmin.id, systemSupplier.adminId),
+      eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
+      eq(systemAdmin.relationId, systemSupplier.id),
+      eq(systemAdmin.isDel, 0),
+    )).where(and(
+      eq(systemSupplier.id, supplierId),
+      eq(systemSupplier.isDel, 0),
+      eq(systemSupplier.isShow, 1),
+    )).limit(1);
+    const row = profileRows[0];
+    if (!row) throw new NotFoundException("供应商不存在");
+    const supplier = row.supplier;
+    const admin = adminId === row.primary.id ? row.primary
+      : await this.container.systemAdminDao.getOrThrow(adminId, "管理员不存在");
     if (
       admin.adminType !== SUPPLIER_ADMIN_TYPE
       || admin.relationId !== supplier.id
@@ -246,41 +294,33 @@ export class SupplierService {
       mark: supplier.mark,
       account: admin.account,
       pwd: "",
+      revision: await profileRevision(supplier.id, row.supplierVersion,
+        row.primary.id, row.primaryVersion),
     };
   }
 
   async updateProfile(supplierId: number, adminId: number, input: SupplierProfileInput) {
-    await this.container.db.transaction(async (tx) => {
+    if (input.expectedRevision !== undefined && !PROFILE_REVISION.test(input.expectedRevision)) {
+      throw new ValidateException("资料版本无效，请刷新后重试");
+    }
+    await withTx(this.container, async (tx) => {
       const supplierRows = await tx
-        .select()
+        .select(supplierVersionColumns)
         .from(systemSupplier)
         .where(
           and(
             eq(systemSupplier.id, supplierId),
             eq(systemSupplier.isDel, 0),
+            eq(systemSupplier.isShow, 1),
           ),
         )
+        .for("update")
         .limit(1);
       const supplier = supplierRows[0];
       if (!supplier) throw new NotFoundException("供应商不存在");
 
-      const actorRows = await tx
-        .select()
-        .from(systemAdmin)
-        .where(
-          and(
-            eq(systemAdmin.id, adminId),
-            eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
-            eq(systemAdmin.relationId, supplierId),
-            eq(systemAdmin.status, 1),
-            eq(systemAdmin.isDel, 0),
-          ),
-        )
-        .limit(1);
-      const actor = actorRows[0];
-      if (!actor) throw new NotFoundException("管理员不存在");
       const primaryRows = await tx
-        .select()
+        .select(adminVersionColumns)
         .from(systemAdmin)
         .where(and(
           eq(systemAdmin.id, supplier.adminId),
@@ -288,24 +328,45 @@ export class SupplierService {
           eq(systemAdmin.relationId, supplierId),
           eq(systemAdmin.isDel, 0),
         ))
+        .for("update")
         .limit(1);
       const primary = primaryRows[0];
       if (!primary) throw new NotFoundException("主管理员不存在");
+      if (input.expectedRevision !== undefined && input.expectedRevision !==
+        await profileRevision(supplier.id, supplier.rowVersion, primary.id, primary.rowVersion)) {
+        throw new HttpApiException("供应商资料已变更，请刷新后重试", 409, 409);
+      }
+      const actorRows = adminId === primary.id ? [primary] : await tx
+        .select()
+        .from(systemAdmin)
+        .where(and(
+          eq(systemAdmin.id, adminId),
+          eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
+          eq(systemAdmin.relationId, supplierId),
+          eq(systemAdmin.status, 1),
+          eq(systemAdmin.isDel, 0),
+        ))
+        .for("update")
+        .limit(1);
+      const actor = actorRows[0];
+      if (!actor || actor.isDel || !actor.status) throw new NotFoundException("管理员不存在");
       const isPrimary = actor.id === primary.id;
 
       if (!isPrimary && input.account && input.account !== actor.account) {
         throw new ValidateException("子管理员不能在供应商资料中修改账号");
       }
-      if (isPrimary && input.account && input.account !== primary.account) {
+      if (isPrimary && input.account !== undefined && !input.account) {
+        throw new ValidateException("登录账号不能为空");
+      }
+      if (isPrimary && input.account !== undefined && input.account !== primary.account) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${SUPPLIER_ACCOUNT_LOCK_NAMESPACE}, ${SUPPLIER_ACCOUNT_LOCK_KEY})`);
         const duplicate = await tx
           .select({ id: systemAdmin.id })
           .from(systemAdmin)
           .where(
             and(
-              eq(systemAdmin.account, input.account),
-              eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
-              ne(systemAdmin.id, primary.id),
-              eq(systemAdmin.isDel, 0),
+              sql`lower(${systemAdmin.account}) = lower(${input.account})`,
+              sql`${systemAdmin.id} <> ${primary.id}`,
             ),
           )
           .limit(1);

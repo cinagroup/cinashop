@@ -1,0 +1,6 @@
+import request, { getData } from '@/utils/request';
+import { normalizeDetailDesignWrite, parseDetailDesignReceipt, parseDetailDesignSnapshot, type DetailDesignWrite } from '../../../common/productDetailDesignController';
+import type { ProductDetailDesignSnapshot, ProductDetailDesignReceipt } from '../../../common/productDetailDesign';
+export async function apiProductDetailDesign(signal?: AbortSignal): Promise<ProductDetailDesignSnapshot> { return parseDetailDesignSnapshot(await getData(request.get('/config/product-detail-design', { signal }))); }
+export async function apiSaveProductDetailDesign(value: DetailDesignWrite, signal?: AbortSignal): Promise<ProductDetailDesignReceipt> { const input = normalizeDetailDesignWrite(value); return parseDetailDesignReceipt(await getData(request.post('/config/product-detail-design/save', input, { signal })), input.operationId); }
+export async function apiProductDetailDesignReceipt(operationId: string, signal?: AbortSignal): Promise<ProductDetailDesignReceipt> { if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u.test(operationId)) throw Error('商品详情设计请求标识无效'); return parseDetailDesignReceipt(await getData(request.get(`/config/product-detail-design/receipt/${operationId}`, { signal })), operationId); }

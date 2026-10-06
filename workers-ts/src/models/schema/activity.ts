@@ -191,6 +191,32 @@ export const storeOrderProductCouponReward = pgTable(
   ],
 );
 
+/** Immutable receipt tying a promotion gift coupon to its paid original order. */
+export const storeOrderPromotionGiftCouponReward = pgTable(
+  "store_order_promotion_gift_coupon_reward",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id").notNull(),
+    uid: integer("uid").notNull(),
+    rootId: integer("root_id").notNull(),
+    tierId: integer("tier_id").notNull(),
+    auxiliaryId: integer("auxiliary_id").notNull(),
+    issueCouponId: integer("issue_coupon_id").notNull(),
+    couponUserId: integer("coupon_user_id").notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("sopgcr_order_aux_uq").on(table.orderId, table.auxiliaryId),
+    uniqueIndex("sopgcr_coupon_user_uq").on(table.couponUserId),
+    index("sopgcr_uid_order").on(table.uid, table.orderId, table.id),
+    check("sopgcr_positive_ids_ck", sql`
+      ${table.orderId} > 0 AND ${table.uid} > 0 AND ${table.rootId} > 0
+      AND ${table.tierId} > 0 AND ${table.auxiliaryId} > 0
+      AND ${table.issueCouponId} > 0 AND ${table.couponUserId} > 0 AND ${table.addTime} >= 0
+    `),
+  ],
+);
+
 // ─── 秒杀活动 ────────────────────────────────────────────────
 export const storeSeckill = pgTable(
   "store_seckill",
