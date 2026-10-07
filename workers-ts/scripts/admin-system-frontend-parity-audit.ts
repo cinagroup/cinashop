@@ -102,11 +102,13 @@ add("/admin/system/user", "partial", ["/system"], ["GET /adminapi/system_admin/l
 ], ["cinashop-php/view/admin/src/api/user.js", screenFiles["/system"]]);
 add("/admin/system/file", "partial", ["/assets"], [
   "GET /adminapi/file/file", "GET /adminapi/file/category", "POST /adminapi/file/upload", "POST /adminapi/file/file/delete",
+  "PUT /adminapi/file/file/do_move", "PUT /adminapi/file/file/update/:id",
 ], [
   "新素材中心提供图片分类、名称搜索、预览、安全上传和删除，并使用私有 R2 临时签名。",
+  "图片操作切片提供当前页最多50项移动到合法子分类或根目录及单项重命名；按 attachment.view/manage 限权，待提交冻结选择，失败保留选择和草稿，切号或切分类丢弃迟到结果。",
 ], [
-  "旧页可在图片/视频间切换、上传视频、预览视频、批量移动与重命名并管理分类树；新页只接受图片，移动/重命名虽有 Worker API，却没有页面操作。",
-], ["cinashop-php/view/admin/src/api/uploadPictures.js", "view/admin-ts/src/api/attachment.ts", "workers-ts/src/controllers/system/AttachmentController.ts"]);
+  "旧页的视频切换、视频上传和预览及分类树完整管理仍未迁移；当前切片只处理图片移动与重命名，真实历史数据、生产角色及规模验收仍开放。",
+], ["cinashop-php/view/admin/src/api/uploadPictures.js", "view/admin-ts/src/api/attachment.ts", "workers-ts/src/controllers/system/AttachmentController.ts", "view/admin-ts/src/utils/attachmentLibrary.ts", "workers-ts/test/admin-attachment-library-frontend.test.ts"]);
 add("/admin/system/maintain/clear/index", "missing", [], [], [], [
   "旧页发起 system/refresh_cache/cache 与 system/refresh_cache/log 清理；新 Admin 无缓存/日志清理屏，也没有对应已注册的 Worker 操作。",
 ]);
