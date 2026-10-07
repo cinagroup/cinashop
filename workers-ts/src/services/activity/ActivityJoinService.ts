@@ -541,6 +541,7 @@ export class ActivityJoinService {
       )).limit(1),
       this.container.db.select({
         price: storeBargainUser.price,
+        original: storeBargainUser.bargainPrice,
         minimum: storeBargainUser.bargainPriceMin,
       }).from(storeBargainUser).where(and(
         eq(storeBargainUser.bargainId, bargainId),
@@ -553,8 +554,14 @@ export class ActivityJoinService {
     if (bargain.quota <= 0) throw new ValidateException("砍价已结束");
     const participation = participations[0];
     if (!participation) throw new NotFoundException("用户砍价信息未查到");
-    const currentCents = Math.max(0, decimalToCents(bargain.price) - decimalToCents(participation.price));
-    const remainingCents = Math.max(0, currentCents - decimalToCents(participation.minimum));
+    const originalCents = decimalToCents(participation.original);
+    const minimumCents = decimalToCents(participation.minimum);
+    const cutCents = decimalToCents(participation.price);
+    if (minimumCents > originalCents || cutCents > originalCents - minimumCents) {
+      throw new ValidateException("砍价记录金额异常");
+    }
+    const currentCents = originalCents - cutCents;
+    const remainingCents = currentCents - minimumCents;
     return {
       url: await this.routineCode(2, bargainId, uid),
       title: bargain.title,
@@ -674,10 +681,10 @@ export class ActivityJoinService {
       const peopleLimit = Math.max(1, bargain.people);
       if (completedPeople >= peopleLimit) throw new ValidateException("砍价帮助人数已满");
 
-      const participationOriginalCents = decimalToCents(record.bargainPrice);
-      const activityOriginalCents = decimalToCents(bargain.price);
-      // 早期 Worker 曾把 bargain_price 原地减小；活动原价可将这类行恢复为 PHP 快照语义。
-      const originalCents = Math.max(participationOriginalCents, activityOriginalCents);
+      // The participation captured the start price when it was created. An
+      // activity edit affects only future participations; malformed historical
+      // rows require explicit reconciliation instead of guessing a new price.
+      const originalCents = decimalToCents(record.bargainPrice);
       const minimumCents = decimalToCents(record.bargainPriceMin);
       const alreadyCutCents = decimalToCents(record.price);
       const maximumCutCents = Math.max(0, originalCents - minimumCents);
@@ -703,7 +710,6 @@ export class ActivityJoinService {
       await tx
         .update(storeBargainUser)
         .set({
-          bargainPrice: centsToDecimal(originalCents),
           price: centsToDecimal(newAlreadyCutCents),
           status: newAlreadyCutCents >= maximumCutCents ? 3 : 1,
         })

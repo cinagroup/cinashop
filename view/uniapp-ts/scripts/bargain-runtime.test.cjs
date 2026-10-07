@@ -305,13 +305,12 @@ test('unknown or invalid start results cannot fabricate a participant or auto-re
   }
 });
 
-test('activity repricing is displayed as a different catalogue price, not silently rewritten to the floor', async () => {
+test('activity repricing keeps the existing participation snapshot on mobile', async () => {
   const r = setup({ detail: () => { const data = catalogue(); data.activity_price = '12.00';
-    data.participation.catalog_price = '4.00'; data.participation.activity_price_changed = true;
-    data.skus.forEach(s => { s.catalog_price = '4.00'; }); return { data }; } }); try {
+    data.participation.activity_price_changed = true; return { data }; } }); try {
     await start(r); const p = r.checkout;
-    assert.equal(p.detail.value.participation.current_price, '2.00'); assert.equal(p.detail.value.participation.catalog_price, '4.00');
-    p.choose('actblu40'); assert.equal(p.selectedSku.value.catalog_price, '4.00'); assert.equal(p.canBuy.value, true);
+    assert.equal(p.detail.value.participation.current_price, '2.00'); assert.equal(p.detail.value.participation.catalog_price, '2.00');
+    p.choose('actblu40'); assert.equal(p.selectedSku.value.catalog_price, '2.00'); assert.equal(p.canBuy.value, true);
   } finally { r.stop(); }
 });
 

@@ -31,6 +31,21 @@ describe('bargain helper admission on isolated SQL (not multi-connection proof)'
     expect(after.participations.find(row => row.id === 84)).toEqual(before.participations.find(row => row.id === 84));
     expect({ ...after, helps: before.helps, participations: before.participations, sequences: before.sequences }).toEqual(before);
   });
+  it('keeps the participant start-price snapshot when an activity price rises', async () => {
+    await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40));
+    expect(await help(11, 81)).toEqual({ price: '8.00' });
+    const after = await f.snapshot();
+    expect(after.participations.find(row => row.id === 81)).toMatchObject({ bargainPrice: '10.00',
+      bargainPriceMin: '2.00', price: '8.00', status: 3 });
+    expect(after.helps).toMatchObject([{ bargainUserId: 81, price: '8.00' }]);
+  });
+  it('rejects a malformed historical participation without guessing from the new activity price', async () => {
+    await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40));
+    await f.db.update(storeBargainUser).set({ bargainPrice: '4.00', price: '8.00' }).where(eq(storeBargainUser.id, 81));
+    const before = await f.snapshot();
+    await expect(help(11, 81)).rejects.toThrow('砍价金额数据异常');
+    expect(await f.snapshot()).toEqual(before);
+  });
   it('different activities retain separate allowances for the same helper', async () => {
     const [activity] = await f.db.select().from(storeBargain).where(eq(storeBargain.id, 40));
     await f.db.insert(storeBargain).values({ ...activity, id: 41 });

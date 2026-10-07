@@ -38,6 +38,6 @@ describe('actual bargain HTTP/SQL responses through the shared PC purchase contr
     expect(() => bargainCartInput(anonymous, 'actred40', 1)).toThrow();
     await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40));
     expect(parseBargainSelection(await request('/bargain/detail/40?view=skus&bargain_user_id=80'), 40, 80).participation)
-      .toMatchObject({ current_price: '2.00', catalog_price: '4.00', activity_price_changed: true });
+      .toMatchObject({ current_price: '2.00', catalog_price: '2.00', activity_price_changed: true });
   });
 });
