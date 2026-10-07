@@ -21,6 +21,8 @@ describe('offline actual runtime permission envelope PG16', () => {
   const snapshot = () => f.db.execute(sql`SELECT 'relation' AS kind,oid::text,to_jsonb(c)::text AS value FROM pg_class c WHERE relnamespace='public'::regnamespace
     UNION ALL SELECT 'function',oid::text,to_jsonb(p)::text FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
   it('distinguishes protocol-only grants from real connection readiness and never writes or runs pricing',async()=>{
+    // The full native PG rebuild below uses the same 30s budget as the fixture hooks.
+    // This does not change the SQL lock deadlines or permission audit assertions.
     // This case explicitly exercises the original v1 commissioning boundary
     // before the separately reviewed gift upgrade. All other cases retain the
     // shared current gift-ready setup above. Rebuild one fresh owned database;
@@ -50,7 +52,7 @@ describe('offline actual runtime permission envelope PG16', () => {
         try { expect((await audit(r.db)).ready).toBe(true); } finally { await peer.exec('ROLLBACK'); }
       });
     });
-  });
+  },30000);
   it('finds every missing declared table, column, sequence and function right',async()=>{
     await f.withRuntimeRole!(async r=>{
       await f.exec(offlineRuntimeGrantPlan(r.role));
