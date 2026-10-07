@@ -48,4 +48,45 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('independent newc
       await f.close();
     }
   }, 30_000);
+
+  it('rolls back default third-party grants and rejects later rogue app ACL drift', async () => {
+    const f = await financePostgres([storeCart], { namespace: 'public' });
+    const suffix = crypto.randomUUID().replaceAll('-', '');
+    const app = `ncar_app_${suffix}`;
+    const rogue = `ncar_rogue_${suffix}`;
+    let appCreated = false;
+    let rogueCreated = false;
+    let defaultGrant = false;
+    try {
+      await f.db.execute(sql.raw(`CREATE ROLE ${app} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`));
+      appCreated = true;
+      await f.db.execute(sql.raw(`CREATE ROLE ${rogue} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`));
+      rogueCreated = true;
+      await f.db.execute(sql.raw(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO ${rogue}`));
+      defaultGrant = true;
+      await expect(installNewcomerCartAddReplay(f.db, app))
+        .rejects.toThrow('Newcomer replay installed ACL contains an unreviewed grant');
+      expect(await inspectNewcomerCartAddReplayCatalog(f.db)).toMatchObject({ present: false });
+      await f.db.execute(sql.raw(`ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT, INSERT ON TABLES FROM ${rogue}`));
+      defaultGrant = false;
+
+      await installNewcomerCartAddReplay(f.db, app);
+      const asApp = () => f.db.transaction(async tx => {
+        await tx.execute(sql.raw(`SET LOCAL ROLE ${app}`));
+        return newcomerCartAddReplayReadiness(tx);
+      });
+      expect(await asApp()).toMatchObject({ ready: true });
+      await f.db.execute(sql.raw(`GRANT SELECT, INSERT ON public.newcomer_cart_add_replay TO ${rogue}`));
+      expect(await newcomerCartAddReplayReadiness(f.db)).toMatchObject({ ready: false });
+      expect(await asApp()).toMatchObject({ ready: false,
+        reason: 'newcomer_cart_replay_runtime_privileges_unreviewed' });
+      await f.db.execute(sql.raw(`REVOKE SELECT, INSERT ON public.newcomer_cart_add_replay FROM ${rogue}`));
+      expect(await asApp()).toMatchObject({ ready: true });
+    } finally {
+      if (defaultGrant) await f.db.execute(sql.raw(`ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT, INSERT ON TABLES FROM ${rogue}`));
+      if (rogueCreated) await f.db.execute(sql.raw(`DROP OWNED BY ${rogue}; DROP ROLE ${rogue}`));
+      if (appCreated) await f.db.execute(sql.raw(`DROP OWNED BY ${app}; DROP ROLE ${app}`));
+      await f.close();
+    }
+  }, 30_000);
 });

@@ -46,7 +46,19 @@ export async function newcomerCartAddReplayReadiness(db: Query) {
     (pg_catalog.has_table_privilege(current_user,c.oid,'UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
       OR pg_catalog.has_any_column_privilege(current_user,c.oid,'UPDATE,REFERENCES')) AS mutable,
     NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-      WHERE a.grantee<>c.relowner AND (a.grantee=0 OR a.is_grantable OR a.privilege_type NOT IN ('SELECT','INSERT')))
+      WHERE a.grantee<>c.relowner AND (a.grantee=0 OR a.is_grantable OR a.privilege_type NOT IN ('SELECT','INSERT')
+        OR (c.relowner<>(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user)
+          AND a.grantee<>(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user))))
+      AND ((c.relowner=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user)
+          AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+            WHERE a.grantee<>c.relowner))
+        OR ((SELECT count(DISTINCT a.grantee)=1
+          FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+          WHERE a.grantee<>c.relowner)
+          AND EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+            WHERE a.grantee<>c.relowner AND a.privilege_type='SELECT')
+          AND EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+            WHERE a.grantee<>c.relowner AND a.privilege_type='INSERT')))
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a
         WHERE a.attrelid=c.oid AND a.attacl IS NOT NULL) AS "appendOnlyAcl"
     FROM pg_catalog.pg_class c WHERE c.oid='public.newcomer_cart_add_replay'::regclass`);
@@ -74,6 +86,20 @@ export async function installNewcomerCartAddReplay(
     await tx.execute(sql.raw(`GRANT SELECT, INSERT ON public.newcomer_cart_add_replay TO ${role}`));
     if (!(await inspectNewcomerCartAddReplayCatalog(tx)).complete) {
       throw Error('Newcomer replay installed catalog did not match reviewed PG16 shape');
+    }
+    const [selected] = await tx.execute<{ granted: boolean }>(sql`SELECT
+      EXISTS(SELECT 1 FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_roles r ON r.rolname=${appRole} AND r.oid<>c.relowner
+        CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+        WHERE c.oid='public.newcomer_cart_add_replay'::regclass AND a.grantee=r.oid
+          AND a.privilege_type='SELECT')
+      AND EXISTS(SELECT 1 FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_roles r ON r.rolname=${appRole} AND r.oid<>c.relowner
+        CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+        WHERE c.oid='public.newcomer_cart_add_replay'::regclass AND a.grantee=r.oid
+          AND a.privilege_type='INSERT') AS granted`);
+    if (selected?.granted !== true || !(await newcomerCartAddReplayReadiness(tx)).ready) {
+      throw Error('Newcomer replay installed ACL contains an unreviewed grant');
     }
   }, { isolationLevel: 'read committed', accessMode: 'read write' });
 }

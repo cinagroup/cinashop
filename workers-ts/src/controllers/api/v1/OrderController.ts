@@ -5,7 +5,7 @@
  */
 import type { Context } from "hono";
 import { jsonOk, jsonFail, jsonRaw } from "@/utils/json";
-import { ApiException, ValidateException } from "@/utils/errors";
+import { ApiException, HttpApiException, ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { addNewcomerCartWithReplay } from "@/services/order/NewcomerCartAddReplayService";
 import { parseBargainSelection } from "@/services/activity/BargainParticipationSelection";
@@ -193,6 +193,7 @@ export async function cartAddNewcomerReplay(c: C) {
     });
     return jsonOk(c, result, result.replayed ? '新人购物车原请求已恢复' : '加入购物车成功');
   } catch (error) {
+    if (error instanceof HttpApiException) throw error;
     if (error instanceof ApiException) return jsonRaw(c, error.code, error.message, error.data);
     throw error;
   }

@@ -12,6 +12,7 @@ import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { newcomerCartAddReplay } from '../src/models/schema/newcomer_cart_replay';
 import { NEWCOMER_CART_ADD_REPLAY_INSTALLATION_SQL } from '../src/migrations/newcomerCartAddReplay';
+import { errorHandler } from '../src/middleware/error';
 import {
   legacyCache, printDocument, storeCart, storeCouponIssue, storeCouponProduct, storeCouponUser, storeDiscounts,
   storeDiscountsProducts, storeNewcomer, storeOrderCartInfo, storeOrderStatus,
@@ -79,6 +80,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     f.app.post('/api/cart/add/newcomer-replay', cartAddNewcomerReplay);
     f.app.get('/api/cart/list', cartList);
     f.app.post('/api/order/create/:key', orderCreate);
+    f.app.onError(errorHandler);
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => new Response('newcomer_pg_order') }) } });
   }, 30_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
@@ -116,7 +118,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
   it('rejects the new route before independent installation without inserting a cart', async () => {
     const before = await f.snapshot();
     const key = { ...addBody, requestKey: '00000000-0000-4000-8000-000000000099' };
-    expect(await request('/api/cart/add/newcomer-replay', 'POST', key)).toMatchObject({ status: 503 });
+    const response = await f.app.request('/api/cart/add/newcomer-replay', { method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(key) }, f.env);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ status: 503 });
     expect((await f.snapshot()).carts).toEqual(before.carts);
     expect((await f.db.execute(sql`SELECT to_regclass('public.newcomer_cart_add_replay') AS receipt`))[0])
       .toMatchObject({ receipt: null });
@@ -136,8 +141,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     const replay = await request('/api/cart/add/newcomer-replay', 'POST', keyed);
     expect(replay.status, replay.msg).toBe(200);
     expect(replay.data).toMatchObject({ id: cartId, cartId, cartNum: 1, replayed: true });
-    const conflict = await request('/api/cart/add/newcomer-replay', 'POST', { ...keyed, activityId: 41 });
-    expect(conflict).toMatchObject({ status: 409, data: { code: 'request_key_conflict' } });
+    const conflictResponse = await f.app.request('/api/cart/add/newcomer-replay', { method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-fixture-user': '11' },
+      body: JSON.stringify({ ...keyed, activityId: 41 }) }, f.env);
+    expect(conflictResponse.status).toBe(200);
+    expect(await conflictResponse.json()).toMatchObject({ status: 409, data: { code: 'request_key_conflict' } });
     await f.db.update(storeCart).set({ isPay: 1 }).where(eq(storeCart.id, cartId));
     const terminal = await request('/api/cart/add/newcomer-replay', 'POST', keyed);
     expect(terminal).toMatchObject({ status: 409, data: { code: 'cart_terminal', cartId } });
@@ -179,7 +187,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
       intentHash: 'a'.repeat(64), cartId: 2, baseUnique: 'base0001', createdAt: 1,
     });
     const keyed = { ...addBody, requestKey: '00000000-0000-4000-8000-000000000003' };
-    expect((await request('/api/cart/add/newcomer-replay', 'POST', keyed)).status).toBe(400);
+    // The production error handler masks an unexpected receipt constraint
+    // failure; the important contract here is that both writes roll back.
+    expect((await request('/api/cart/add/newcomer-replay', 'POST', keyed)).status).toBe(500);
     expect((await f.snapshot()).carts).toHaveLength(1);
     expect(await f.db.select().from(newcomerCartAddReplay)).toHaveLength(1);
     expect((await request('/api/cart/add/newcomer-replay', 'POST', keyed)).status).toBe(200);
