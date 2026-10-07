@@ -35,6 +35,13 @@ export function apiCartAdd(params: {
   return http.post<{ id: number; cartNum: number }>("/cart/add", params as Record<string, unknown>);
 }
 
+/** Dedicated idempotent type-7 route. Old Workers return 404 without creating a row. */
+export function apiNewcomerCartAdd(params: {
+  productId: number; unique: string; cartNum: 1; type: 7; activityId: number; new: 1; requestKey: string;
+}): Promise<{ id: number; cartId: number; cartNum: 1; replayed: boolean }> {
+  return http.post('/cart/add/newcomer-replay', params);
+}
+
 export function apiCartNum(id: number, cartNum: number): Promise<null> {
   return http.post<null>("/cart/num", { id, cartNum });
 }

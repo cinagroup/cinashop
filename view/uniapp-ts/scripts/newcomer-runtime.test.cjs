@@ -10,6 +10,11 @@ const list = page => page === 1 ? Array.from({ length: 9 }, (_, i) => product(90
 const detail = id => ({ storeInfo: { id, product_id: id + 100, title: `新人商品${id}`, image: '/safe.png', price: '9.90', ot_price: '19.90', stock: 4, info: '测试商品' },
   productValue: { 红色: { unique: 'new-sku-1', suk: '红色', price: '9.90', stock: 3, image: '/sku.png' } } });
 const publicDesignUrl = '/api/v2/diy/product_detail';
+const newcomerAddUrl = '/api/cart/add/newcomer-replay';
+const cartRow = (id = 15, activityId = 81, productId = 181) => ({ id, productId, cartNum: 1, type: 7, activityId,
+  unique: 'base-sku', isNew: 1, isValid: true, sumPrice: '9.90', productInfo: {
+    storeName: '新人商品', image: '', price: '9.90', stock: 4, otPrice: '19.90', suk: '红色', systemFormId: 0, productType: 0,
+  } });
 function detailRuntime(send) {
   let r;
   r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: call => {
@@ -74,7 +79,7 @@ for (const boundary of ['onHide', 'onUnload', 'identity']) test(`late newcomer r
 });
 
 test('newcomer activity detail selects the exact SKU and enters isolated type-7 checkout with one item', async () => {
-  const r = detailRuntime(call => ({ data: call.url.endsWith('/cart/add') ? { id: 15, cartNum: 1 } : detail(81) }));
+  const r = detailRuntime(call => ({ data: call.url === newcomerAddUrl ? { id: 15, cartId: 15, cartNum: 1, replayed: false } : detail(81) }));
   try {
     await r.start({ id: '81' });
     assert.deepEqual(r.calls.map(c => c.url), [publicDesignUrl, '/api/marketing/newcomer/product_detail/81']);
@@ -85,9 +90,10 @@ test('newcomer activity detail selects the exact SKU and enters isolated type-7 
     assert.equal(r.checkout.canBuy.value, true);
     await r.checkout.purchase();
     assert.equal(r.calls.length, 3);
-    assert.deepEqual(r.calls[2], { url: '/api/cart/add', data: {
-      productId: 181, unique: 'new-sku-1', cartNum: 1, type: 7, activityId: 81, new: 1,
-    } });
+    assert.equal(r.calls[2].url, newcomerAddUrl);
+    assert.deepEqual({ ...r.calls[2].data, requestKey: undefined }, { productId: 181, unique: 'new-sku-1', cartNum: 1,
+      type: 7, activityId: 81, new: 1, requestKey: undefined });
+    assert.match(r.calls[2].data.requestKey, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartId=15&type=7&newcomerId=81']);
     r.auth.clear(); assert.equal(r.checkout.detail.value, null);
   } finally { r.stop(); }
@@ -111,14 +117,14 @@ test('selected base SKU with zero stock disables type-7 purchase despite positiv
 
 test('failed checkout navigation reuses the prepared cart instead of adding again', async () => {
   const r = runtime({ component: 'pages/activity/newcomerDetail.vue', navigationFails: true,
-    send: call => ({ data: call.url.endsWith('/cart/add') ? { id: 15, cartNum: 1 } : detail(81) }) });
+    send: call => ({ data: call.url === newcomerAddUrl ? { id: 15, cartId: 15, cartNum: 1, replayed: false } : detail(81) }) });
   try {
     await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
     await r.checkout.purchase();
     assert.equal(r.checkout.prepared.value, 15);
     assert.match(r.checkout.error.value, /无需重新加购/);
     await r.checkout.purchase();
-    assert.equal(r.calls.filter(call => call.url.endsWith('/cart/add')).length, 1);
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
     assert.deepEqual(r.navigations, [
       '/pages/order/confirm?mode=buy&cartId=15&type=7&newcomerId=81',
       '/pages/order/confirm?mode=buy&cartId=15&type=7&newcomerId=81',
@@ -130,21 +136,169 @@ test('late type-7 add cannot navigate after hide or account change', async () =>
   for (const boundary of ['hide', 'identity']) {
     const gate = deferred();
     const r = runtime({ component: 'pages/activity/newcomerDetail.vue',
-      send: call => call.url.endsWith('/cart/add') ? gate.promise : { data: detail(81) } });
+      send: call => call.url === newcomerAddUrl ? gate.promise : { data: detail(81) } });
     try {
       await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
       const purchase = r.checkout.purchase(); await tick();
       if (boundary === 'hide') r.hooks.onHide(); else r.auth.setLogin('different-owner', 42);
-      gate.resolve({ data: { id: 15, cartNum: 1 } }); await purchase; await tick();
+      gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); await purchase; await tick();
       assert.equal(r.checkout.prepared.value, null);
       assert.deepEqual(r.navigations, []);
-    } finally { gate.resolve({ data: { id: 15, cartNum: 1 } }); r.stop(); }
+    } finally { gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); r.stop(); }
   }
+});
+
+test('successful navigation then return verifies the same buy-scope cart and does not add twice', async () => {
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: call => {
+    if (call.url === newcomerAddUrl) return { data: { id: 15, cartId: 15, cartNum: 1, replayed: false } };
+    if (call.url.endsWith('/cart/list')) return { data: [cartRow()] };
+    return { data: detail(81) };
+  } });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+    assert.equal(r.storage.has('cinashop_newcomer_purchase_v1_11'), true);
+    r.hooks.onHide(); r.hooks.onShow(); await tick();
+    assert.equal(r.checkout.prepared.value, 15);
+    assert.deepEqual(r.calls.find(call => call.url.endsWith('/cart/list')).data, { scope: 'buy', ids: 15 });
+    await r.checkout.purchase();
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    assert.deepEqual(r.navigations, Array(2).fill('/pages/order/confirm?mode=buy&cartId=15&type=7&newcomerId=81'));
+  } finally { r.stop(); }
+});
+
+test('unknown network result survives hide and retries only the same persisted request key after confirmation', async () => {
+  let attempts = 0;
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', modal: true, send: call => {
+    if (call.url === newcomerAddUrl) return ++attempts === 1 ? { transport: 'timeout' }
+      : { data: { id: 15, cartId: 15, cartNum: 1, replayed: true } };
+    return { data: detail(81) };
+  } });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+    const first = r.calls.find(call => call.url === newcomerAddUrl).data.requestKey;
+    assert.equal(r.checkout.recovery.value.state, 'unknown'); assert.equal(r.checkout.canBuy.value, false);
+    r.hooks.onHide(); r.hooks.onShow(); await tick();
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    await r.checkout.purchase(); assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    await r.checkout.retryOriginal();
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 2);
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl)[1].data.requestKey, first);
+    assert.equal(r.checkout.recovery.value.state, 'acknowledged'); assert.equal(r.checkout.prepared.value, 15);
+  } finally { r.stop(); }
+});
+
+test('hidden successful response persists for its original account; switching account never reuses the cart', async () => {
+  const gate = deferred();
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: call => {
+    if (call.url === newcomerAddUrl) return gate.promise;
+    if (call.url.endsWith('/cart/list')) return { data: [cartRow()] };
+    return { data: detail(81) };
+  } });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
+    const pending = r.checkout.purchase(); await tick(); r.hooks.onHide();
+    gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); await pending;
+    assert.equal(JSON.parse(r.storage.get('cinashop_newcomer_purchase_v1_11')).cartId, 15);
+    r.auth.setLogin('other-account', 42); r.hooks.onShow(); await tick();
+    assert.equal(r.checkout.recovery.value, null); assert.equal(r.checkout.prepared.value, null);
+    r.auth.setLogin('original-account', 11); await tick();
+    assert.equal(r.checkout.prepared.value, 15);
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+  } finally { gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); r.stop(); }
+});
+
+test('unknown intent locks another activity and changed SKU until explicit read and abandon', async () => {
+  let changed = false;
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', modal: true, send: call => {
+    if (call.url === newcomerAddUrl) return { transport: 'timeout' };
+    if (call.url.endsWith('/cart/list')) return { data: [cartRow()] };
+    const id = Number(call.url.split('/').at(-1));
+    const value = detail(Number.isSafeInteger(id) ? id : 81);
+    if (id === 81 && changed) value.productValue = { 蓝色: { unique: 'new-sku-2', suk: '蓝色', price: '11.90', stock: 3, image: '' } };
+    return { data: value };
+  } });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+    changed = true; r.hooks.onHide(); r.hooks.onShow(); await tick();
+    assert.equal(r.checkout.detail.value.skus[0].unique, 'new-sku-2');
+    r.checkout.choose('new-sku-2'); await r.checkout.purchase();
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    r.hooks.onHide(); r.hooks.onLoad({ id: '82' }); r.hooks.onShow(); await tick();
+    assert.equal(r.checkout.recovery.value.activityId, 81);
+    r.checkout.choose('new-sku-1'); await r.checkout.purchase(); await r.checkout.retryOriginal();
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    assert.match(r.checkout.error.value, /返回原活动/);
+    await r.checkout.inspect();
+    assert.deepEqual(r.checkout.candidates.value, [{ id: 15, sku: '红色', valid: true }]);
+    await r.checkout.abandon();
+    assert.equal(r.storage.has('cinashop_newcomer_purchase_v1_11'), false);
+    assert.match(r.checkout.error.value, /额外购物行/);
+  } finally { r.stop(); }
+});
+
+test('duplicate taps create one persisted type-7 intent and one request', async () => {
+  const gate = deferred();
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: call =>
+    call.url === newcomerAddUrl ? gate.promise : { data: detail(81) } });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
+    const first = r.checkout.purchase(), second = r.checkout.purchase(); await tick();
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); await Promise.all([first, second]);
+    assert.equal(r.checkout.prepared.value, 15);
+  } finally { gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); r.stop(); }
+});
+
+test('cancelled login returns to newcomer detail without reopening login automatically', async () => {
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: () => ({ data: detail(81) }) });
+  try {
+    r.auth.clear(); await r.start({ id: '81' });
+    assert.deepEqual(r.navigations, ['/pages/auth/login']);
+    r.hooks.onHide(); r.hooks.onShow(); await tick();
+    assert.deepEqual(r.navigations, ['/pages/auth/login']);
+    r.checkout.login(); assert.deepEqual(r.navigations, ['/pages/auth/login', '/pages/auth/login']);
+    r.hooks.onHide(); r.auth.setLogin('returning-account', 11); r.hooks.onShow(); await tick();
+    assert.equal(r.checkout.detail.value.id, 81);
+  } finally { r.stop(); }
+});
+
+test('old Worker 404 and terminal replay keep the original key and never fall back to unkeyed add', async () => {
+  for (const response of [{ status: 404, msg: 'not found' },
+    { status: 409, msg: 'terminal', data: { code: 'cart_terminal', cartId: 15 } }]) {
+    const r = runtime({ component: 'pages/activity/newcomerDetail.vue', modal: true,
+      send: call => call.url === newcomerAddUrl ? response : { data: detail(81) } });
+    try {
+      await r.start({ id: '81' }); r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+      const first = r.calls.find(call => call.url === newcomerAddUrl).data.requestKey;
+      assert.equal(r.checkout.recovery.value.state, 'unknown');
+      await r.checkout.retryOriginal();
+      assert.deepEqual(r.calls.filter(call => call.url === newcomerAddUrl).map(call => call.data.requestKey), [first, first]);
+      assert.equal(r.calls.some(call => call.url === '/api/cart/add'), false);
+      assert.equal(r.checkout.canBuy.value, false);
+      if (response.status === 409) assert.match(r.checkout.error.value, /已成单/);
+    } finally { r.stop(); }
+  }
+});
+
+test('acknowledged recovery refuses a mismatched exact cart row', async () => {
+  const storage = new Map([['cinashop_newcomer_purchase_v1_11', JSON.stringify({ version: 1, actor: 11,
+    activityId: 81, productId: 181, activityUnique: 'new-sku-1',
+    requestKey: '11111111-1111-4111-8111-111111111111', state: 'acknowledged', cartId: 15 })]]);
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', storage, send: call =>
+    call.url.endsWith('/cart/list') ? { data: [cartRow(15, 82)] } : { data: detail(81) } });
+  try {
+    await r.start({ id: '81' });
+    assert.deepEqual(r.calls.find(call => call.url.endsWith('/cart/list')).data, { scope: 'buy', ids: 15 });
+    assert.equal(r.checkout.prepared.value, null); assert.equal(r.checkout.canBuy.value, false);
+    assert.match(r.checkout.error.value, /无法核对/);
+    r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+    assert.equal(r.calls.some(call => call.url === newcomerAddUrl), false);
+  } finally { r.stop(); }
 });
 
 test('rejected type-7 add clears stale detail and requires a fresh selection', async () => {
   const r = runtime({ component: 'pages/activity/newcomerDetail.vue',
-    send: call => call.url.endsWith('/cart/add') ? { status: 400, msg: '新人专享资格已失效' } : { data: detail(81) } });
+    send: call => call.url === newcomerAddUrl ? { status: 400, msg: '新人专享资格已失效' } : { data: detail(81) } });
   try {
     await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
     await r.checkout.purchase();
@@ -155,13 +309,15 @@ test('rejected type-7 add clears stale detail and requires a fresh selection', a
 
 test('expired shopper session clears the selected activity and opens login once', async () => {
   const r = runtime({ component: 'pages/activity/newcomerDetail.vue',
-    send: call => call.url.endsWith('/cart/add') ? { status: 410000, msg: '登录已失效' } : { data: detail(81) } });
+    send: call => call.url === newcomerAddUrl ? { status: 410000, msg: '登录已失效' } : { data: detail(81) } });
   try {
     await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
     await r.checkout.purchase(); await tick();
     assert.equal(r.auth.isLoggedIn, false);
     assert.equal(r.checkout.detail.value, null);
     assert.equal(r.checkout.prepared.value, null);
+    assert.deepEqual(r.navigations, ['/pages/auth/login']);
+    r.hooks.onHide(); r.hooks.onShow(); await tick();
     assert.deepEqual(r.navigations, ['/pages/auth/login']);
   } finally { r.stop(); }
 });
