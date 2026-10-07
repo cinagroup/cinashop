@@ -4,9 +4,10 @@
  * 对应 PHP app/controller/api/v1/order/StoreCart.php + StoreOrder.php
  */
 import type { Context } from "hono";
-import { jsonOk, jsonFail } from "@/utils/json";
+import { jsonOk, jsonFail, jsonRaw } from "@/utils/json";
 import { ApiException, ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
+import { addNewcomerCartWithReplay } from "@/services/order/NewcomerCartAddReplayService";
 import { parseBargainSelection } from "@/services/activity/BargainParticipationSelection";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
@@ -164,6 +165,36 @@ export async function cartAdd(c: C) {
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
+  }
+}
+
+/** GET /api/cart/add/newcomer-replay-key. Issuing a key creates no cart state. */
+export async function cartAddNewcomerReplayKey(c: C) {
+  c.header('Cache-Control', 'private, no-store');
+  if (!c.get('uid')) return jsonFail(c, '请先登录');
+  return jsonOk(c, { requestKey: crypto.randomUUID() });
+}
+
+/** POST /api/cart/add/newcomer-replay. The legacy route never interprets keys. */
+export async function cartAddNewcomerReplay(c: C) {
+  c.header('Cache-Control', 'private, no-store');
+  const uid = c.get('uid');
+  if (!uid) return jsonFail(c, '请先登录');
+  try {
+    const body = await readBoundedJsonObject(c);
+    if (body.type !== 7 || body.new !== 1 || body.cartNum !== 1 ||
+        !Number.isSafeInteger(body.productId) || !Number.isSafeInteger(body.activityId) ||
+        typeof body.unique !== 'string' || typeof body.requestKey !== 'string') {
+      throw new ValidateException('新人购物车请求参数无效');
+    }
+    const result = await addNewcomerCartWithReplay(c.get('container'), c.env, {
+      uid, productId: body.productId as number, activityId: body.activityId as number,
+      unique: body.unique, requestKey: body.requestKey,
+    });
+    return jsonOk(c, result, result.replayed ? '新人购物车原请求已恢复' : '加入购物车成功');
+  } catch (error) {
+    if (error instanceof ApiException) return jsonRaw(c, error.code, error.message, error.data);
+    throw error;
   }
 }
 

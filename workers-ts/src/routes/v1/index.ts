@@ -473,6 +473,8 @@ v1Routes.get(
 
 // ─── 购物车 (M3) ───────────────────────────────────────────────
 v1Routes.post("/cart/add", authMiddleware({ force: true }), OrderController.cartAdd);
+v1Routes.post("/cart/add/newcomer-replay", authMiddleware({ force: true }), OrderController.cartAddNewcomerReplay);
+v1Routes.get("/cart/add/newcomer-replay-key", authMiddleware({ force: true }), OrderController.cartAddNewcomerReplayKey);
 v1Routes.get("/cart/list", authMiddleware({ force: true }), OrderController.cartList);
 v1Routes.post("/cart/num", authMiddleware({ force: true }), OrderController.cartNum);
 v1Routes.post("/cart/del", authMiddleware({ force: true }), OrderController.cartDel);

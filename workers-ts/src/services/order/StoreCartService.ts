@@ -63,6 +63,8 @@ interface CartAddParams {
   activityId?: number;
   /** Exact owned participation ID; omitted only for a sole live record. */
   bargainUserId?: number;
+  /** Internal keyed newcomer admission; never accepted from the legacy route. */
+  newcomerEligibilityFromDb?: boolean;
 }
 
 /** Explicit scopes let migrated clients isolate checkout rows without changing
@@ -272,6 +274,7 @@ export class StoreCartService {
         productId,
         activityUnique: unique,
         quantity: cartNum,
+        eligibilityFromDb: params.newcomerEligibilityFromDb,
       });
       product = resolved.product;
       productId = resolved.product.id;

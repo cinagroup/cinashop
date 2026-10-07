@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
-import { cartAdd, cartList, orderCreate } from '../src/controllers/api/v1/OrderController';
+import { cartAdd, cartAddNewcomerReplay, cartList, orderCreate } from '../src/controllers/api/v1/OrderController';
+import { addNewcomerCartWithReplay } from '../src/services/order/NewcomerCartAddReplayService';
 import { AdminConfigBatchService } from '../src/services/system/AdminConfigBatchService';
 import { AdminNewcomerService } from '../src/services/activity/AdminNewcomerService';
 import { StoreNewcomerService } from '../src/services/activity/StoreNewcomerService';
@@ -9,8 +10,10 @@ import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateS
 import { OrderQuoteReconfirmRequired } from '../src/services/order/CheckoutConfirmation';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
+import { newcomerCartAddReplay } from '../src/models/schema/newcomer_cart_replay';
+import { NEWCOMER_CART_ADD_REPLAY_INSTALLATION_SQL } from '../src/migrations/newcomerCartAddReplay';
 import {
-  legacyCache, printDocument, storeCouponIssue, storeCouponProduct, storeCouponUser, storeDiscounts,
+  legacyCache, printDocument, storeCart, storeCouponIssue, storeCouponProduct, storeCouponUser, storeDiscounts,
   storeDiscountsProducts, storeNewcomer, storeOrderCartInfo, storeOrderStatus,
   storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink,
   storeIntegral, storeProduct, storeProductAttrValue, systemConfig, systemStore, user,
@@ -44,6 +47,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     return { key: String(response.data?.orderKey), token: String(response.data?.quoteToken),
       data: response.data! };
   };
+  const installReplay = async () => {
+    await f.db.transaction(tx => tx.execute(sql.raw(NEWCOMER_CART_ADD_REPLAY_INSTALLATION_SQL)),
+      { isolationLevel: 'read committed', accessMode: 'read write' });
+  };
 
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([
@@ -69,6 +76,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     await f.exec("SELECT setval(pg_get_serial_sequence('store_cart','id'),(SELECT max(id) FROM store_cart),true)");
     await f.exec("SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),(SELECT max(id) FROM store_product_attr_value),true)");
     f.app.post('/api/cart/add', cartAdd);
+    f.app.post('/api/cart/add/newcomer-replay', cartAddNewcomerReplay);
     f.app.get('/api/cart/list', cartList);
     f.app.post('/api/order/create/:key', orderCreate);
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => new Response('newcomer_pg_order') }) } });
@@ -103,6 +111,80 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     const replay = await request(`/api/order/create/${first.key}`, 'POST', { ...body(cartId), quoteToken: latestToken });
     expect(replay.status, replay.msg).toBe(200);
     expect(await f.snapshot()).toEqual(state);
+  }, 30_000);
+
+  it('rejects the new route before independent installation without inserting a cart', async () => {
+    const before = await f.snapshot();
+    const key = { ...addBody, requestKey: '00000000-0000-4000-8000-000000000099' };
+    expect(await request('/api/cart/add/newcomer-replay', 'POST', key)).toMatchObject({ status: 503 });
+    expect((await f.snapshot()).carts).toEqual(before.carts);
+    expect((await f.db.execute(sql`SELECT to_regclass('public.newcomer_cart_add_replay') AS receipt`))[0])
+      .toMatchObject({ receipt: null });
+  }, 30_000);
+
+  it('restores the same keyed cart after a lost response, rejects changed intent and terminal rows', async () => {
+    await installReplay();
+    const requestKey = '00000000-0000-4000-8000-000000000001';
+    const keyed = { ...addBody, requestKey };
+    const first = await request('/api/cart/add/newcomer-replay', 'POST', keyed);
+    expect(first.status, first.msg).toBe(200);
+    expect(first.data).toMatchObject({ cartNum: 1, replayed: false });
+    const cartId = Number(first.data?.cartId);
+    expect(first.data).toMatchObject({ id: cartId });
+    expect(await f.db.select().from(newcomerCartAddReplay)).toHaveLength(1);
+    await f.db.update(systemConfig).set({ value: '0' }).where(eq(systemConfig.menuName, 'newcomer_status'));
+    const replay = await request('/api/cart/add/newcomer-replay', 'POST', keyed);
+    expect(replay.status, replay.msg).toBe(200);
+    expect(replay.data).toMatchObject({ id: cartId, cartId, cartNum: 1, replayed: true });
+    const conflict = await request('/api/cart/add/newcomer-replay', 'POST', { ...keyed, activityId: 41 });
+    expect(conflict).toMatchObject({ status: 409, data: { code: 'request_key_conflict' } });
+    await f.db.update(storeCart).set({ isPay: 1 }).where(eq(storeCart.id, cartId));
+    const terminal = await request('/api/cart/add/newcomer-replay', 'POST', keyed);
+    expect(terminal).toMatchObject({ status: 409, data: { code: 'cart_terminal', cartId } });
+    expect((await f.snapshot()).carts).toHaveLength(2);
+    expect(await f.db.select().from(newcomerCartAddReplay)).toHaveLength(1);
+  }, 30_000);
+
+  it('serializes concurrent duplicate keys on independent PostgreSQL backends', async () => {
+    await installReplay();
+    const input = { uid: 11, productId: 70, activityId: 40, unique: addBody.unique,
+      requestKey: '00000000-0000-4000-8000-000000000002' };
+    await withFinancePeers(f.db, async ([blocker, firstPeer, secondPeer]) => {
+      await blocker.exec('BEGIN');
+      await blocker.db.execute(sql`SELECT pg_advisory_xact_lock(1313030497, 11)`);
+      const first = outcome(addNewcomerCartWithReplay(createContainerFromDb(firstPeer.db), f.env, input));
+      await waitForFinanceBlock(f.db, firstPeer.pid, blocker.pid);
+      const second = outcome(addNewcomerCartWithReplay(createContainerFromDb(secondPeer.db), f.env, input));
+      try { await waitForFinanceBlock(f.db, secondPeer.pid, firstPeer.pid); }
+      finally { await blocker.exec('COMMIT'); }
+      const [a, b] = await Promise.all([first, second]);
+      expect(a.ok, a.ok ? '' : String(a.error)).toBe(true);
+      expect(b.ok, b.ok ? '' : String(b.error)).toBe(true);
+      if (a.ok && b.ok) {
+        expect(a.value.id).toBe(b.value.id);
+        expect([a.value.replayed, b.value.replayed].sort()).toEqual([false, true]);
+      }
+    });
+    expect((await f.snapshot()).carts).toHaveLength(2);
+    expect(await f.db.select().from(newcomerCartAddReplay)).toHaveLength(1);
+  }, 30_000);
+
+  it('rolls back a new cart when receipt uniqueness rejects the insert, then permits the same key', async () => {
+    await installReplay();
+    // The next cart id is 2. This independent receipt reserves it without
+    // changing the reviewed catalog, forcing the target insert to fail after
+    // StoreCartService.save but before either row can commit.
+    await f.db.insert(newcomerCartAddReplay).values({
+      uid: 99, requestKey: '00000000-0000-4000-8000-000000000099',
+      intentHash: 'a'.repeat(64), cartId: 2, baseUnique: 'base0001', createdAt: 1,
+    });
+    const keyed = { ...addBody, requestKey: '00000000-0000-4000-8000-000000000003' };
+    expect((await request('/api/cart/add/newcomer-replay', 'POST', keyed)).status).toBe(400);
+    expect((await f.snapshot()).carts).toHaveLength(1);
+    expect(await f.db.select().from(newcomerCartAddReplay)).toHaveLength(1);
+    expect((await request('/api/cart/add/newcomer-replay', 'POST', keyed)).status).toBe(200);
+    expect((await f.snapshot()).carts).toHaveLength(2);
+    expect(await f.db.select().from(newcomerCartAddReplay)).toHaveLength(2);
   }, 30_000);
 
   it('keeps legacy activity stock=0 purchasable but invalidates removed SKU, disabled gate and expired account', async () => {
