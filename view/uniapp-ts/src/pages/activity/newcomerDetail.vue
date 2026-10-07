@@ -12,11 +12,11 @@
       <button v-if="recovery && recovery.activityId !== routeActivityId" size="mini" :disabled="navigating" @tap="openRecoveryActivity">返回原活动</button>
       <button v-if="recovery?.state === 'acknowledged' && prepared !== null" size="mini" :disabled="!canBuy" @tap="purchase">继续原购物行结算</button>
       <button v-if="recovery?.state === 'acknowledged' && prepared === null" size="mini" :disabled="checking" @tap="verify">重新核对原购物行</button>
-      <button v-if="recovery?.state === 'unknown'" size="mini" :disabled="buying || checking || recovery.activityId !== routeActivityId" @tap="retryOriginal">使用原编号核对请求</button>
-      <button size="mini" :disabled="checking || buying" @tap="inspect">读取未结算购物行</button>
+      <button v-if="recovery?.state === 'unknown'" size="mini" :disabled="preparing || buying || checking || recovery.activityId !== routeActivityId" @tap="retryOriginal">使用原编号核对请求</button>
+      <button size="mini" :disabled="checking || preparing || buying" @tap="inspect">读取未结算购物行</button>
       <view v-for="candidate in candidates" :key="candidate.id" class="notice">购物行 #{{ candidate.id }} · {{ candidate.sku }} · {{ candidate.valid ? '当前有效' : '当前无效' }}</view>
       <button size="mini" :disabled="navigating" @tap="openOrders">查看订单</button>
-      <button size="mini" :disabled="buying || checking || navigating" @tap="abandon">已核对，放弃原意图</button>
+      <button size="mini" :disabled="preparing || buying || checking || navigating" @tap="abandon">已核对，放弃原意图</button>
     </view>
     <view v-if="detail" class="product">
       <ProductMedia :images="detail.image?[detail.image]:[]" video="" :picture-config="activityDesign.pictureConfig" :dots="activityDesign.swiperDot" :active="visible"/>
@@ -29,13 +29,13 @@
         <view class="notice">基础商品库存快照 {{ detail.stock }}，下单以服务端实时校验为准</view>
         <view class="section-title">活动规格</view>
         <button v-for="sku in detail.skus" :key="sku.unique" size="mini" class="sku" :class="{ chosen: selected === sku.unique }"
-          :disabled="buying || navigating || recovery !== null || recoveryInvalid" @tap="choose(sku.unique)">
+          :disabled="preparing || buying || navigating || recovery !== null || recoveryInvalid" @tap="choose(sku.unique)">
           <image v-if="sku.image" :src="sku.image" mode="aspectFill" class="sku-image" />
           <view><view>{{ sku.name || '默认规格' }}</view><view class="sku-price">¥{{ sku.price }}</view></view>
         </button>
         <view v-if="!detail.skus.length" class="notice">当前没有可购买的活动规格</view>
         <view class="notice">新人专享限购 1 件。活动规格库存仅为配置快照，具体可购状态将在加购和结算时核验。</view>
-        <button class="purchase" :disabled="!canBuy" @tap="purchase">{{ prepared !== null ? '继续结算' : buying ? '正在加购…' : '立即购买' }}</button>
+        <button class="purchase" :disabled="!canBuy" @tap="purchase">{{ prepared !== null ? '继续结算' : buying ? '正在加购…' : preparing ? '正在准备…' : '立即购买' }}</button>
       </view>
     </view>
   </view>
@@ -48,7 +48,7 @@ import ActivityDetailMenu from '@/components/productDetail/ActivityDetailMenu.vu
 import {useActivityDetailDesign,useActivityDetailShare} from '@/composables/useActivityDetailDesign';
 const {activityDesign,activityDesignError,reloadActivityDesign}=useActivityDetailDesign();
 import { useNewcomerProduct } from '@/composables/useNewcomerProduct';
-const { auth, detail, routeActivityId, selected, selectedSku, loading, buying, navigating, prepared, canBuy, error, visible,
+const { auth, detail, routeActivityId, selected, selectedSku, loading, preparing, buying, navigating, prepared, canBuy, error, visible,
   recovery, recoveryInvalid, checking, candidates, load, login, choose, purchase, retryOriginal, verify, inspect, abandon, openOrders, openRecoveryActivity } = useNewcomerProduct();
 useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/newcomerDetail?id=${detail.value.id}`,image:detail.value.image}:null,()=>visible.value);
 </script>

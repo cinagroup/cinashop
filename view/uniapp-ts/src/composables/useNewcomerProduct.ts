@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
 import { apiNewcomerProductDetail, type NewcomerProductDetail } from '@/api/newcomer';
-import { apiNewcomerCartAdd } from '@/api/order';
+import { apiNewcomerCartAdd, apiNewcomerCartKey } from '@/api/order';
 import { http, RequestError } from '@/utils/request';
 import { validateCheckoutItems } from '../../../common/checkoutSelection';
 import { newcomerRecoveryKey, parseNewcomerRecovery, sameNewcomerIntent, type NewcomerPurchaseRecovery as Recovery } from '../../../common/newcomerPurchaseRecovery';
@@ -10,35 +10,19 @@ import { newcomerRecoveryKey, parseNewcomerRecovery, sameNewcomerIntent, type Ne
 interface Candidate { id: number; sku: string; valid: boolean }
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-async function requestKey(): Promise<string> {
-  const format = (bytes: Uint8Array) => {
-    if (bytes.length !== 16) throw new Error('安全请求编号生成失败，本次尚未提交');
-    bytes[6] = (bytes[6]! & 15) | 64; bytes[8] = (bytes[8]! & 63) | 128;
-    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-  };
-  // #ifdef H5
-  if (typeof globalThis.crypto?.getRandomValues === 'function') return format(globalThis.crypto.getRandomValues(new Uint8Array(16)));
-  // #endif
-  if (typeof uni.getRandomValues === 'function') return new Promise((resolve, reject) => uni.getRandomValues({ length: 16,
-    success: result => { try { resolve(format(new Uint8Array(result.randomValues))); } catch (cause) { reject(cause); } },
-    fail: () => reject(new Error('安全请求编号生成失败，本次尚未提交')) }));
-  throw new Error('当前环境缺少安全随机数，本次尚未提交');
-}
-
 export function useNewcomerProduct() {
   const auth = useAuthStore();
   const detail = ref<NewcomerProductDetail | null>(null), loading = ref(false), error = ref(''), visible = ref(false);
   const routeActivityId = ref(0);
-  const selected = ref(''), buying = ref(false), navigating = ref(false), prepared = ref<number | null>(null);
+  const selected = ref(''), preparing = ref(false), buying = ref(false), navigating = ref(false), prepared = ref<number | null>(null);
   const recovery = ref<Recovery | null>(null), recoveryInvalid = ref(false), checking = ref(false), candidates = ref<Candidate[]>([]);
   const selectedSku = computed(() => detail.value?.skus.find(sku => sku.unique === selected.value));
-  const canBuy = computed(() => visible.value && auth.isLoggedIn && !loading.value && !buying.value && !navigating.value && !checking.value &&
+  const canBuy = computed(() => visible.value && auth.isLoggedIn && !loading.value && !preparing.value && !buying.value && !navigating.value && !checking.value &&
     (prepared.value !== null || !recovery.value && !recoveryInvalid.value && !!detail.value && !!selectedSku.value && detail.value.stock > 0 && selectedSku.value.stock > 0));
   let productId = 0, generation = 0, navigationRevision = 0, disposed = false, loginPending = false, loginAttempted = false;
   const routeId = (raw: unknown) => typeof raw === 'string' && /^[1-9]\d{0,9}$/.test(raw) && Number(raw) <= 2_147_483_647 ? Number(raw) : 0;
   const current = (life: number, owner: number, uid: number) => life === generation && visible.value && !disposed && owner === auth.sessionVersion && uid === auth.uid;
-  function clear() { generation++; navigationRevision++; detail.value = null; selected.value = ''; prepared.value = null; loading.value = false; buying.value = false; navigating.value = false; checking.value = false; recovery.value = null; recoveryInvalid.value = false; candidates.value = []; }
+  function clear() { generation++; navigationRevision++; detail.value = null; selected.value = ''; prepared.value = null; loading.value = false; preparing.value = false; buying.value = false; navigating.value = false; checking.value = false; recovery.value = null; recoveryInvalid.value = false; candidates.value = []; }
   function setRoute(raw: unknown) { clear(); productId = routeId(raw); routeActivityId.value = productId; error.value = productId ? '' : '新人商品链接无效'; }
   function readHashRoute() {
     // #ifdef H5
@@ -61,12 +45,12 @@ export function useNewcomerProduct() {
     uni.navigateTo({ url: '/pages/auth/login', fail: () => { loginPending = false; error.value = '登录页面打开失败，请重试'; } });
   }
   function choose(unique: string) {
-    if (!visible.value || loading.value || buying.value || navigating.value || recovery.value || recoveryInvalid.value ||
+    if (!visible.value || loading.value || preparing.value || buying.value || navigating.value || recovery.value || recoveryInvalid.value ||
       !detail.value?.skus.some(sku => sku.unique === unique)) return;
     selected.value = unique; error.value = '';
   }
   async function load() {
-    if (!visible.value || disposed || loading.value || buying.value || navigating.value || checking.value || prepared.value !== null) return;
+    if (!visible.value || disposed || loading.value || preparing.value || buying.value || navigating.value || checking.value || prepared.value !== null) return;
     generation++; detail.value = null; selected.value = '';
     if (!productId) { error.value = '新人商品链接无效'; return; }
     if (!auth.isLoggedIn) { error.value = '登录后查看新人商品'; if (!loginAttempted) login(); return; }
@@ -172,21 +156,25 @@ export function useNewcomerProduct() {
     }
     const row = detail.value, sku = selectedSku.value;
     if (!row || !sku || row.id !== productId || auth.uid < 1) return;
-    const life = generation, owner = auth.sessionVersion, uid = auth.uid;
-    if (uni.getStorageSync(newcomerRecoveryKey(uid))) { restore(); return; }
-    let key: string;
-    try { key = await requestKey(); } catch (cause) { error.value = cause instanceof Error ? cause.message : '安全请求编号生成失败'; return; }
-    if (!current(life, owner, uid) || buying.value || recovery.value) return;
-    const intent: Recovery = { version: 1, actor: uid, activityId: row.id, productId: row.productId,
-      activityUnique: sku.unique, requestKey: key, state: 'unknown', cartId: null };
-    if (uni.getStorageSync(newcomerRecoveryKey(uid))) { restore(); return; }
-    try { write(intent); recovery.value = intent; }
-    catch { error.value = '无法保存购买恢复资料，本次尚未提交'; return; }
-    await submit(intent);
+    const life = generation, owner = auth.sessionVersion, uid = auth.uid, token = auth.token;
+    preparing.value = true; error.value = '';
+    try {
+      if (uni.getStorageSync(newcomerRecoveryKey(uid))) { restore(); return; }
+      const key = await apiNewcomerCartKey();
+      if (!current(life, owner, uid) || auth.token !== token || !auth.isLoggedIn || buying.value || recovery.value
+        || productId !== row.id || detail.value !== row || selected.value !== sku.unique || selectedSku.value?.unique !== sku.unique) return;
+      if (uni.getStorageSync(newcomerRecoveryKey(uid))) { restore(); return; }
+      const intent: Recovery = { version: 1, actor: uid, activityId: row.id, productId: row.productId,
+        activityUnique: sku.unique, requestKey: key, state: 'unknown', cartId: null };
+      write(intent); recovery.value = intent;
+      await submit(intent);
+    } catch (cause) {
+      if (current(life, owner, uid)) error.value = cause instanceof Error ? cause.message : '无法保存购买恢复资料，本次尚未提交';
+    } finally { if (life === generation) preparing.value = false; }
   }
   async function retryOriginal() {
     const row = recovery.value;
-    if (!row || row.state !== 'unknown' || !visible.value || buying.value || checking.value || !auth.isLoggedIn) return;
+    if (!row || row.state !== 'unknown' || !visible.value || preparing.value || buying.value || checking.value || !auth.isLoggedIn) return;
     if (row.activityId !== productId) { error.value = '请先返回原活动，再核对原请求'; return; }
     if (!await confirm('核对原请求', '将携带原请求编号再次查询并提交同一购买意图。服务器若不支持安全重放将拒绝，页面不会换编号创建新购物行。')) return;
     const stored = saved(row);
@@ -197,7 +185,7 @@ export function useNewcomerProduct() {
     return new Promise(resolve => { try { uni.showModal({ title, content, success: answer => resolve(!!answer.confirm), fail: () => resolve(false) }); } catch { resolve(false); } });
   }
   async function inspect() {
-    if (!visible.value || !auth.isLoggedIn || checking.value || buying.value) return;
+    if (!visible.value || !auth.isLoggedIn || checking.value || preparing.value || buying.value) return;
     const life = generation, owner = auth.sessionVersion, uid = auth.uid;
     checking.value = true; candidates.value = [];
     try {
@@ -218,7 +206,7 @@ export function useNewcomerProduct() {
     finally { if (current(life, owner, uid)) checking.value = false; }
   }
   async function abandon() {
-    if (!visible.value || !auth.isLoggedIn || buying.value || checking.value || navigating.value || (!recovery.value && !recoveryInvalid.value)) return;
+    if (!visible.value || !auth.isLoggedIn || preparing.value || buying.value || checking.value || navigating.value || (!recovery.value && !recoveryInvalid.value)) return;
     const life = generation, owner = auth.sessionVersion, uid = auth.uid;
     if (!await confirm('放弃原加购意图', '请先核对购物行和订单。原请求可能稍后提交；放弃后再购买可能留下多条未结算购物行。确认已核对并放弃？')
       || !current(life, owner, uid)) return;
@@ -258,6 +246,6 @@ export function useNewcomerProduct() {
     if (typeof window !== 'undefined') window.removeEventListener('hashchange', hashChanged);
     // #endif
   });
-  return { auth, detail, routeActivityId, selected, selectedSku, loading, buying, navigating, prepared, canBuy, error, visible,
+  return { auth, detail, routeActivityId, selected, selectedSku, loading, preparing, buying, navigating, prepared, canBuy, error, visible,
     recovery, recoveryInvalid, checking, candidates, choose, load, login, purchase, retryOriginal, verify, inspect, abandon, openOrders, openRecoveryActivity };
 }

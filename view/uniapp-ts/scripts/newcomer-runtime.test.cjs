@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
+const { runtime: rawRuntime, tick, deferred } = require('./uni-store-runtime.cjs');
 
 const info = () => ({ register_give_coupon: [{ id: 81, coupon_price: '20', coupon_type: 1, use_min_price: '50', applicable_type: 2 }],
   register_give_integral: 12, register_give_money: '5.00', first_order_status: 1, first_order_discount: 90, newcomer_agreement: '<p>新人规则</p>' });
@@ -11,6 +11,16 @@ const detail = id => ({ storeInfo: { id, product_id: id + 100, title: `新人商
   productValue: { 红色: { unique: 'new-sku-1', suk: '红色', price: '9.90', stock: 3, image: '/sku.png' } } });
 const publicDesignUrl = '/api/v2/diy/product_detail';
 const newcomerAddUrl = '/api/cart/add/newcomer-replay';
+const newcomerKeyUrl = '/api/cart/add/newcomer-replay-key';
+function runtime({ keyResponse, send, ...options } = {}) {
+  let issued = 0;
+  return rawRuntime({ ...options, send: call => {
+    if (call.url === newcomerKeyUrl) return keyResponse === undefined
+      ? { data: { requestKey: `00000000-0000-4000-8000-${String(++issued).padStart(12, '0')}` } }
+      : typeof keyResponse === 'function' ? keyResponse(call) : keyResponse;
+    return send(call);
+  } });
+}
 const cartRow = (id = 15, activityId = 81, productId = 181) => ({ id, productId, cartNum: 1, type: 7, activityId,
   unique: 'base-sku', isNew: 1, isValid: true, sumPrice: '9.90', productInfo: {
     storeName: '新人商品', image: '', price: '9.90', stock: 4, otPrice: '19.90', suk: '红色', systemFormId: 0, productType: 0,
@@ -89,11 +99,12 @@ test('newcomer activity detail selects the exact SKU and enters isolated type-7 
     r.checkout.choose('new-sku-1');
     assert.equal(r.checkout.canBuy.value, true);
     await r.checkout.purchase();
-    assert.equal(r.calls.length, 3);
-    assert.equal(r.calls[2].url, newcomerAddUrl);
-    assert.deepEqual({ ...r.calls[2].data, requestKey: undefined }, { productId: 181, unique: 'new-sku-1', cartNum: 1,
+    assert.equal(r.calls.length, 4);
+    assert.deepEqual(r.calls[2], { url: newcomerKeyUrl, data: {} });
+    assert.equal(r.calls[3].url, newcomerAddUrl);
+    assert.deepEqual({ ...r.calls[3].data, requestKey: undefined }, { productId: 181, unique: 'new-sku-1', cartNum: 1,
       type: 7, activityId: 81, new: 1, requestKey: undefined });
-    assert.match(r.calls[2].data.requestKey, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    assert.match(r.calls[3].data.requestKey, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartId=15&type=7&newcomerId=81']);
     r.auth.clear(); assert.equal(r.checkout.detail.value, null);
   } finally { r.stop(); }
@@ -247,6 +258,73 @@ test('duplicate taps create one persisted type-7 intent and one request', async 
     gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); await Promise.all([first, second]);
     assert.equal(r.checkout.prepared.value, 15);
   } finally { gate.resolve({ data: { id: 15, cartId: 15, cartNum: 1, replayed: false } }); r.stop(); }
+});
+
+test('deferred key GET locks SKU selection and duplicate taps before a single add', async () => {
+  const gate = deferred();
+  const twoSkus = detail(81);
+  twoSkus.productValue.蓝色 = { unique: 'new-sku-2', suk: '蓝色', price: '11.90', stock: 3, image: '' };
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', keyResponse: gate.promise,
+    send: call => ({ data: call.url === newcomerAddUrl ? { id: 15, cartId: 15, cartNum: 1, replayed: false } : twoSkus }) });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
+    const first = r.checkout.purchase(); await tick();
+    assert.equal(r.checkout.preparing.value, true);
+    r.checkout.choose('new-sku-2'); const second = r.checkout.purchase(); await second;
+    assert.equal(r.checkout.selected.value, 'new-sku-1');
+    assert.equal(r.calls.filter(call => call.url === newcomerKeyUrl).length, 1);
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 0);
+    gate.resolve({ data: { requestKey: '11111111-1111-4111-8111-111111111111' } }); await first;
+    assert.equal(r.calls.filter(call => call.url === newcomerAddUrl).length, 1);
+    assert.equal(r.calls.find(call => call.url === newcomerAddUrl).data.unique, 'new-sku-1');
+  } finally { gate.resolve({ data: { requestKey: '11111111-1111-4111-8111-111111111111' } }); r.stop(); }
+});
+
+test('old Worker or invalid key response cannot create a journal or send add', async () => {
+  for (const response of [{ status: 404, msg: 'not found' }, { data: { requestKey: 'BAD-KEY' } },
+    { transport: 'key offline' }]) {
+    const r = runtime({ component: 'pages/activity/newcomerDetail.vue', keyResponse: response,
+      send: () => ({ data: detail(81) }) });
+    try {
+      await r.start({ id: '81' }); r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+      assert.equal(r.calls.filter(call => call.url === newcomerKeyUrl).length, 1);
+      assert.equal(r.calls.some(call => call.url === newcomerAddUrl || call.url === '/api/cart/add'), false);
+      assert.equal(r.storage.has('cinashop_newcomer_purchase_v1_11'), false);
+      assert.equal(r.checkout.preparing.value, false);
+    } finally { r.stop(); }
+  }
+});
+
+test('hide or account switch while key GET is pending cannot persist or add', async () => {
+  for (const boundary of ['hide', 'identity']) {
+    const gate = deferred();
+    const r = runtime({ component: 'pages/activity/newcomerDetail.vue', keyResponse: gate.promise,
+      send: () => ({ data: detail(81) }) });
+    try {
+      await r.start({ id: '81' }); r.checkout.choose('new-sku-1');
+      const pending = r.checkout.purchase(); await tick();
+      if (boundary === 'hide') r.hooks.onHide(); else r.auth.setLogin('different-account', 42);
+      gate.resolve({ data: { requestKey: '22222222-2222-4222-8222-222222222222' } }); await pending; await tick();
+      assert.equal(r.storage.has('cinashop_newcomer_purchase_v1_11'), false);
+      assert.equal(r.calls.some(call => call.url === newcomerAddUrl), false);
+    } finally { gate.resolve({ data: { requestKey: '22222222-2222-4222-8222-222222222222' } }); r.stop(); }
+  }
+});
+
+test('a key cannot reach POST until the intent is durably read back', async () => {
+  class DroppedJournalStorage extends Map {
+    set(key, value) { return key.startsWith('cinashop_newcomer_purchase_v1_') ? this : super.set(key, value); }
+  }
+  const storage = new DroppedJournalStorage();
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', storage,
+    send: () => ({ data: detail(81) }) });
+  try {
+    await r.start({ id: '81' }); r.checkout.choose('new-sku-1'); await r.checkout.purchase();
+    assert.equal(r.calls.filter(call => call.url === newcomerKeyUrl).length, 1);
+    assert.equal(r.calls.some(call => call.url === newcomerAddUrl), false);
+    assert.equal(storage.has('cinashop_newcomer_purchase_v1_11'), false);
+    assert.match(r.checkout.error.value, /恢复资料未保存/);
+  } finally { r.stop(); }
 });
 
 test('cancelled login returns to newcomer detail without reopening login automatically', async () => {
