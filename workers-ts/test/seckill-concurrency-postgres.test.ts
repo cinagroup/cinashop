@@ -159,16 +159,30 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     await prepareOldRefund();
     await StoreOrderCreateService.createWithRuntime(f.container,
       { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_to_cancel" }, { ...params, key: "cancel_order", cartIds: [2] });
+    const beforeConflict = await snapshot();
     await withFinancePeers(f.db, async ([blocker, canceller, refunder]) => {
       await blocker.exec("BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE");
-      const cancel = outcome(cancelStoreOrder(createContainerFromDb(canceller.db), { uid: 11, orderId: "isolated_to_cancel" }));
-      await waitForFinanceBlock(f.db, canceller.pid, blocker.pid);
-      const refund = outcome(finalizeStoreOrderRefund(createContainerFromDb(refunder.db), 1));
-      await waitForFinanceBlock(f.db, refunder.pid, canceller.pid);
-      // Fails if refund takes settlement users BEFORE waiting for the activity.
-      await f.exec('SELECT uid FROM "user" WHERE uid=11 FOR UPDATE NOWAIT');
-      await blocker.exec("COMMIT");
-      expect(await cancel).toMatchObject({ ok: true }); expect(await refund).toEqual({ ok: true, value: "completed" });
+      let held = true;
+      try {
+        const busy = await outcome(cancelStoreOrder(createContainerFromDb(canceller.db),
+          { uid: 11, orderId: "isolated_to_cancel" }));
+        expect(busy).toMatchObject({ ok: false, error: { code: 409, httpStatus: 409 } });
+        expect(await snapshot()).toEqual(beforeConflict);
+        await blocker.exec("COMMIT"); held = false;
+
+        // A later cart lock keeps cancellation on the child after inventory
+        // restoration, so refund must still wait before settlement-user locks.
+        await blocker.exec("BEGIN; SELECT id FROM store_cart WHERE id=2 FOR UPDATE"); held = true;
+        const cancel = outcome(cancelStoreOrder(createContainerFromDb(canceller.db),
+          { uid: 11, orderId: "isolated_to_cancel" }));
+        await waitForFinanceBlock(f.db, canceller.pid, blocker.pid);
+        const refund = outcome(finalizeStoreOrderRefund(createContainerFromDb(refunder.db), 1));
+        await waitForFinanceBlock(f.db, refunder.pid, canceller.pid);
+        await f.exec('SELECT uid FROM "user" WHERE uid=11 FOR UPDATE NOWAIT');
+        await blocker.exec("COMMIT"); held = false;
+        expect(await cancel).toMatchObject({ ok: true });
+        expect(await refund).toEqual({ ok: true, value: "completed" });
+      } finally { if (held) await blocker.exec("ROLLBACK"); }
     });
     const state = await snapshot();
     expect(state.orders).toHaveLength(2); expect(state.details).toHaveLength(2);
