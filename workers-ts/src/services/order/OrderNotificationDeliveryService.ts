@@ -9,6 +9,7 @@ import {
   type SmsNotificationPayload,
   type WechatShippingNotificationPayload,
   type WechatTemplateNotificationPayload,
+  type WecomRobotNotificationPayload,
 } from "@/models/schema";
 import {
   AliyunSmsRejectedError,
@@ -22,6 +23,7 @@ import {
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { customerCityQueuedNoticeIsActive } from './OrderNotificationOutboxService';
+import { sendWithdrawalWecomRobot, WECOM_WITHDRAWAL_TARGET } from "@/services/wechat/WithdrawalWecomRobotProvider";
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -48,7 +50,7 @@ interface ProviderResult {
 }
 
 function isChannel(value: unknown): value is OrderNotificationChannel {
-  return ["sms", "wechat_official", "wechat_routine", "wechat_shipping"].includes(
+  return ["sms", "wechat_official", "wechat_routine", "wechat_shipping", "wecom_robot"].includes(
     String(value),
   );
 }
@@ -61,7 +63,7 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel);
 }
 
@@ -100,6 +102,13 @@ function assertPayload(
   if (payload.kind !== channel) throw new ValidateException("外部通知渠道与载荷不匹配");
   if (channel === "sms") {
     stringRecord(payload.params, "短信模板变量");
+    return;
+  }
+  if (channel === "wecom_robot") {
+    if (!Number.isSafeInteger(payload.withdrawalId) || Number(payload.withdrawalId) <= 0
+      || Object.keys(payload).sort().join(",") !== "kind,withdrawalId") {
+      throw new ValidateException("企业微信机器人载荷无效");
+    }
     return;
   }
   if (channel === "wechat_official" || channel === "wechat_routine") {
@@ -256,6 +265,16 @@ export class OrderNotificationDeliveryService {
   private async deliver(claim: ClaimedDelivery, fetcher: typeof fetch): Promise<ProviderResult> {
     assertPayload(claim.channel, claim.payload);
     if (!claim.target) throw new WechatProviderConfigurationError("通知目标尚未配置");
+    if (claim.channel === "wecom_robot") {
+      if (claim.target !== WECOM_WITHDRAWAL_TARGET || claim.templateCode !== "") {
+        throw new WechatProviderConfigurationError("企业微信机器人通知目标无效");
+      }
+      if (claim.eventKey !== `withdrawal.applied.notice:${(claim.payload as WecomRobotNotificationPayload).withdrawalId}`) {
+        throw new WechatProviderConfigurationError("企业微信机器人申请标识无效");
+      }
+      return sendWithdrawalWecomRobot(this.env.WECHAT_WITHDRAWAL_ROBOT_WEBHOOK,
+        claim.payload as WecomRobotNotificationPayload, fetcher);
+    }
     if (claim.channel === "sms") {
       if (!claim.templateCode) throw new WechatProviderConfigurationError("短信模板尚未配置");
       if (

@@ -103,6 +103,10 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   WECHAT_WORK_CORP_SECRET?: string;
   /** Self-built application JS-SDK credential. Inject only with `wrangler secret put`. */
   WECHAT_WORK_AGENT_SECRET?: string;
+  /** Withdrawal group robot webhook. Inject as a Worker Secret; never read system_notification.url. */
+  WECHAT_WITHDRAWAL_ROBOT_WEBHOOK?: string;
+  /** Default off. Arm only after the independently installed delivery CHECK is verified. */
+  WITHDRAWAL_WECOM_ROBOT_ENABLED?: string;
   /** Least-privilege Enterprise WeChat directory credential for member/department reads. */
   WECHAT_WORK_DIRECTORY_SECRET?: string;
   /** Set to `verified` only after a real full-directory visibility acceptance test. */
@@ -178,7 +182,7 @@ export interface OrderNotificationDeliveryMessage {
   action: "processOrderNotificationDelivery";
   deliveryId: number;
   eventKey: string;
-  channel: "sms" | "wechat_official" | "wechat_routine" | "wechat_shipping";
+  channel: "sms" | "wechat_official" | "wechat_routine" | "wechat_shipping" | "wecom_robot";
 }
 
 /** One durable receipt-printer side effect; content and credentials stay in PostgreSQL. */

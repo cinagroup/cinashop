@@ -5,9 +5,13 @@ import { storeOrderOutbox, storeService, systemMessage, systemNotification, user
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { eligibleKefuInboxAccount } from "@/services/kefu/KefuInboxService";
 import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
+import { createImmutableDelivery } from "@/services/order/OrderNotificationOutboxService";
+import { WECOM_WITHDRAWAL_TARGET } from "@/services/wechat/WithdrawalWecomRobotProvider";
+import { WECOM_CHANNEL_CHECK_DEFINITION } from "@/migrations/withdrawalWecomRobotChannel";
 
 export const WITHDRAWAL_APPLICATION_EVENT = "withdrawal.applied.notice";
 export const WITHDRAWAL_APPLICATION_MARK = "kefu_send_extract_application";
+export type WithdrawalWecomGap = "feature_disabled" | "channel_unavailable";
 
 /** Application + debit + immutable event commit together, including automatic balance approval. */
 export async function recordWithdrawalApplication(tx: DbClient, payload: WithdrawalApplicationOutboxPayload): Promise<void> {
@@ -32,8 +36,8 @@ function assertPayload(value: unknown): asserts value is WithdrawalApplicationOu
 
 /** Durable DB-only fan-out. The existing Queue scanner retries crashes and lost dispatches. */
 export async function processWithdrawalApplication(tx: DbClient, event: {
-  aggregateType: string; aggregateId: number; eventType: string; eventKey: string; payload: unknown;
-}, now: number): Promise<void> {
+  id: number; aggregateType: string; aggregateId: number; eventType: string; eventKey: string; payload: unknown;
+}, now: number, robotEnabled = false): Promise<WithdrawalWecomGap | null> {
   await tx.execute(sql`SET LOCAL statement_timeout = '5s'`);
   assertPayload(event.payload);
   const p = event.payload;
@@ -55,7 +59,28 @@ export async function processWithdrawalApplication(tx: DbClient, event: {
   const configs = await tx.select().from(systemNotification).where(eq(systemNotification.mark, WITHDRAWAL_APPLICATION_MARK)).limit(2);
   if (configs.length > 1) throw new Error("客服提现通知存在重复配置来源");
   const config = configs[0];
-  if (!config || config.isSystem !== 1) return;
+  let robotGap: WithdrawalWecomGap | null = null;
+  if (config?.isEntWechat === 1) {
+    // Keep the existing Kefu inbox available if a Worker deploy precedes the controlled CHECK upgrade.
+    const ready = robotEnabled && (await tx.execute<{ ready: boolean }>(sql`
+      SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_constraint c
+        WHERE c.conrelid=pg_catalog.to_regclass('public.order_notification_delivery')
+          AND c.conname='ond_channel_ck' AND c.contype='c' AND c.convalidated
+          AND pg_catalog.pg_get_constraintdef(c.oid)=${WECOM_CHANNEL_CHECK_DEFINITION}) AS ready
+    `))[0]?.ready === true;
+    if (!robotEnabled) robotGap = "feature_disabled";
+    else if (!ready) robotGap = "channel_unavailable";
+    else await createImmutableDelivery(tx, {
+      // The legacy URL/template are deliberately ignored. This channel is independent of the inbox switch.
+      event: { id: event.id, eventKey: event.eventKey, aggregateId: event.aggregateId,
+        eventType: event.eventType, payload: p },
+      payload: { userId: p.userId, withdrawalId: p.withdrawalId },
+      mark: WITHDRAWAL_APPLICATION_MARK, channel: "wecom_robot",
+      target: WECOM_WITHDRAWAL_TARGET, templateCode: "",
+      deliveryPayload: { kind: "wecom_robot", withdrawalId: p.withdrawalId }, now,
+    });
+  }
+  if (!config || config.isSystem !== 1) return robotGap;
   // PHP addresses the bound UID, not the staff-account ID. Choose its lowest active staff ID
   // deterministically; do not send a duplicate or choose an arbitrary recipient nickname.
   const recipients = await tx.selectDistinctOn([storeService.uid], { uid: storeService.uid, nickname: storeService.nickname })
@@ -75,4 +100,5 @@ export async function processWithdrawalApplication(tx: DbClient, event: {
   for (let index = 0; index < messages.length; index += 100) {
     await tx.insert(systemMessage).values(messages.slice(index, index + 100));
   }
+  return robotGap;
 }

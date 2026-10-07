@@ -10,6 +10,8 @@ import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
 import { OrderOutboxService, isOrderNotificationOutboxMessage } from "@/services/order/OrderOutboxService";
 import { OrderNotificationAdminService } from "@/services/order/OrderNotificationAdminService";
 import { WITHDRAWAL_APPLICATION_EVENT, WITHDRAWAL_APPLICATION_MARK } from "@/services/user/WithdrawalApplicationNoticeService";
+import { OrderNotificationDeliveryService, isOrderNotificationDeliveryMessage } from "@/services/order/OrderNotificationDeliveryService";
+import { WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL } from "@/migrations/withdrawalWecomRobotChannel";
 import { KefuInboxService } from "@/services/kefu/KefuInboxService";
 import { userUnreadMessageCount, visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
 import { kefuapiRoutes } from "@/routes/kefuapi";
@@ -37,17 +39,21 @@ const input = (extractType = "alipay") => ({ extractType, extractPrice: "20.00",
 
 beforeAll(async () => {
   fixture = await financePostgres([user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow,
-    storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery, notificationTemplate]);
+    storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery, notificationTemplate], { namespace: "public" });
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL); await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
   await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL); await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
   await fixture.exec(STAFF_NOTIFICATION_REFRESH_SQL);
   await fixture.exec("CREATE UNIQUE INDEX soob_event_key_uq ON store_order_outbox(event_key); CREATE UNIQUE INDEX smsg_event_key_uq ON system_message(event_key);");
+  await fixture.exec("CREATE UNIQUE INDEX ond_event_channel_uq ON order_notification_delivery(event_key,channel); ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
+  await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
   container = createContainerFromDb(fixture.db); withdrawal = new UserWithdrawalService(container);
   outbox = new OrderOutboxService(container, env); inbox = new KefuInboxService(container);
 }, 30000);
 afterAll(async () => { await fixture?.close(); });
 beforeEach(async () => {
   await fixture.reset(); sent.length = 0; sendBatch.mockClear();
+  delete envOverrides.WECHAT_WITHDRAWAL_ROBOT_WEBHOOK;
+  delete envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED;
   await fixture.db.insert(user).values([
     { uid: 7, nickname: "申请{money}<b>用户</b>", brokeragePrice: "100.00", nowMoney: "5.00" },
     { uid: 10, nickname: "客服绑定用户" }, { uid: 11 }, { uid: 12, status: 0 }, { uid: 13, isDel: 1 },
@@ -185,6 +191,89 @@ describe("withdrawal application events and isolated staff inbox", () => {
     await fixture.db.update(systemNotification).set({ isSystem: 0 }); await notice();
     expect(await fixture.db.select().from(systemMessage)).toHaveLength(0);
     expect((await applicationEvent()).status).toBe("COMPLETED");
+  });
+
+  it("stages one minimal robot delivery independently of the customer inbox and ignores legacy URL/template", async () => {
+    const secret = `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${"a".repeat(32)}`;
+    envOverrides.WECHAT_WITHDRAWAL_ROBOT_WEBHOOK = secret;
+    envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED = "enabled";
+    await fixture.db.update(systemNotification).set({ isSystem: 0, isEntWechat: 1,
+      url: "https://untrusted.example.invalid/collect?key=legacy-secret",
+      entWechatText: "{nickname} {money} legacy-template" });
+    const event = await notice();
+    const rows = await fixture.db.select().from(orderNotificationDelivery);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ eventKey: event.eventKey, channel: "wecom_robot",
+      target: "withdrawal_admin_group", payload: { kind: "wecom_robot", withdrawalId: Number(event.eventKey.split(":")[1]) } });
+    expect(JSON.stringify(rows[0])).not.toMatch(/legacy-secret|untrusted\.example|申请\{money\}|20\.00|<b>/);
+    expect(await fixture.db.select().from(systemMessage)).toHaveLength(0);
+    const delivery = new OrderNotificationDeliveryService(container, env);
+    await delivery.dispatchPending(10, event.eventKey);
+    const message = sent.find((value) => isOrderNotificationDeliveryMessage(value));
+    expect(message).toBeDefined();
+    if (!message || !isOrderNotificationDeliveryMessage(message)) throw Error("Missing delivery message");
+    const fetcher = vi.fn(async () => Response.json({ errcode: 0, errmsg: "ok" })) as unknown as typeof fetch;
+    expect(await delivery.processMessage(message, fetcher)).toBe("sent");
+    expect(await delivery.processMessage(message, fetcher)).toBe("already-sent");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const [url, init] = vi.mocked(fetcher).mock.calls[0];
+    expect(url).toBe(secret);
+    expect(JSON.parse(String(init?.body))).toEqual({ msgtype: "text",
+      text: { content: `收到一笔提现申请，请在后台查看。申请编号：${rows[0].withdrawalId}` } });
+  });
+
+  it("preserves the existing staff inbox when the robot switch is also enabled", async () => {
+    envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED = "enabled";
+    await fixture.db.update(systemNotification).set({ isEntWechat: 1 });
+    const event = await notice();
+    expect((await fixture.db.select().from(systemMessage)).map((row) => row.userId)).toEqual([10, 11]);
+    expect((await fixture.db.select().from(orderNotificationDelivery))[0]).toMatchObject({
+      eventKey: event.eventKey, channel: "wecom_robot", status: "PENDING" });
+    expect(await outbox.processMessage(event)).toBe("already-completed");
+    expect(await fixture.db.select().from(orderNotificationDelivery)).toHaveLength(1);
+  });
+
+  it("records a post-commit gap and keeps Kefu inbox when the robot switch is not armed", async () => {
+    await fixture.db.update(systemNotification).set({ isEntWechat: 1 });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      const first = await notice();
+      expect((await fixture.db.select().from(systemMessage)).map((row) => row.userId)).toEqual([10, 11]);
+      expect(await fixture.db.select().from(orderNotificationDelivery)).toHaveLength(0);
+      expect((await applicationEvent()).status).toBe("COMPLETED");
+      expect(warning).toHaveBeenCalledWith(expect.objectContaining({ event: "withdrawal_wecom_robot_gap",
+        eventKey: first.eventKey, errorCode: "feature_disabled" }));
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
+  it("records a post-commit gap and keeps Kefu inbox when the channel CHECK is not installed", async () => {
+    envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED = "enabled";
+    await fixture.db.update(systemNotification).set({ isEntWechat: 1 });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
+    try {
+      const event = await notice();
+      expect((await fixture.db.select().from(systemMessage)).map((row) => row.userId)).toEqual([10, 11]);
+      expect(await fixture.db.select().from(orderNotificationDelivery)).toHaveLength(0);
+      expect((await applicationEvent()).status).toBe("COMPLETED");
+      expect(warning).toHaveBeenCalledWith(expect.objectContaining({ event: "withdrawal_wecom_robot_gap",
+        eventKey: event.eventKey, errorCode: "channel_unavailable" }));
+    } finally {
+      await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
+      warning.mockRestore();
+    }
+  });
+
+  it("upgrades the old channel CHECK once and rejects unknown CHECK drift", async () => {
+    expect(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL).toContain("no automatic repair");
+    await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
+    await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
+    await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
+    await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms'));");
+    await expect(fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL)).rejects.toThrow(/CHECK drift/);
+    await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping','wecom_robot'));");
   });
 
   it("supports controlled Admin configuration without allowing unimplemented external channels", async () => {
