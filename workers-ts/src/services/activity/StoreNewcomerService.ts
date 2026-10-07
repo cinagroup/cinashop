@@ -596,9 +596,17 @@ export class StoreNewcomerService {
     productId: number;
     activityUnique?: string;
     quantity: number;
+    /** Keyed cart admission uses SQL only; no KV access inside its transaction. */
+    eligibilityFromDb?: boolean;
   }) {
     if (params.quantity !== 1) throw new ValidateException("新人专享商品限购一件");
-    await this.assertEligible(params.uid);
+    if (params.eligibilityFromDb) {
+      if (!(await isNewcomerEligibleFromDb(this.container, params.uid))) {
+        throw new ValidateException("您已无法享受新人专享价");
+      }
+    } else {
+      await this.assertEligible(params.uid);
+    }
     const newcomer = await this.getActive(params.newcomerId);
     if (!newcomer) throw new ValidateException("该新人专享商品已下架");
     if (newcomer.productId !== params.productId) throw new ValidateException("新人专享商品与活动不匹配");
