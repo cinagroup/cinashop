@@ -112,7 +112,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Slot edits versu
     await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.insert(storeSeckillTime).values({ id: 101, title: '测试场', startTime: '00:00', endTime: '24:00', pic: '/images/slot.png', describe: '隔离样本', status: 1 });
-    const today = Math.floor((Date.now() + 28800000) / 86400000) * 86400 - 28800;
+    const [clock] = await f.db.execute<{ epoch_ms: string }>(sql`SELECT (extract(epoch FROM clock_timestamp()) * 1000)::text AS epoch_ms`);
+    const today = Math.floor((Number(clock.epoch_ms) + 28800000) / 86400000) * 86400 - 28800;
+    // The full-day purchase window covers the real SQL clock on this Shanghai day.
+    // Fix only Date at noon so an edited 00:00–00:01 slot is always already past.
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(today * 1000 + 12 * 3600000));
     await f.db.insert(storeActivity).values({ id: 9, type: 1, status: 1, timeId: '101', startDay: today, endDay: today + 86400 });
     await f.db.insert(storeSeckill).values({ id: 20, activityId: 9, productId: 70, timeId: '101', stock: 7, quota: 6, onceNum: 3, num: 10, status: 1, isShow: 1, isDel: 0 });
     await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 20, type: 1, unique: 'qatime01', suk: '红色,大号', stock: 7, quota: 6, price: '6.25' });
@@ -122,14 +126,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Slot edits versu
 
   for (const operation of ['update', 'status', 'delete'] as const) {
     it.each(['admin-first', 'buyer-first'] as const)(`${operation} respects the existing purchase lock order: %s`, async order => {
-      // Freeze the application clock at the real owned SQL clock; final admission
-      // still uses PostgreSQL clock_timestamp(), so a synthetic noon is insufficient.
-      const [clock] = await f.db.execute<{ epoch_ms: string }>(sql`SELECT (extract(epoch FROM clock_timestamp()) * 1000)::text AS epoch_ms`);
-      const actualNow = new Date(Number(clock.epoch_ms));
-      const localMinute = Math.floor((actualNow.getTime() + 28800000) % 86400000 / 60000);
-      const inactiveWindow = localMinute < 720 ? { start_time: '23:00', end_time: '24:00' }
-        : { start_time: '00:00', end_time: '00:01' };
-      vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(actualNow);
+      const inactiveWindow = { start_time: '00:00', end_time: '00:01' };
       const service = (db: typeof f.db) => new AdminSeckillTimeService(createContainerFromDb(db), f.env.APP_KEY);
       const revision = (await service(f.db).detail(101)).revision;
       const body = { revision, request_id: crypto.randomUUID(), ...(operation === 'update' ? { ...seckillTimeInput,

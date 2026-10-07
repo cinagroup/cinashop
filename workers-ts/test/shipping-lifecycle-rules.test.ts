@@ -24,7 +24,22 @@ const rules=`SELECT r.oid,r.rulename,r.ev_enabled,pg_get_ruledef(r.oid) AS defin
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rewrite rules on full isolated shipping PG16 schema',()=>{
   let f:Fixture;
-  beforeAll(async()=>{f=await sequenceRunnerDatabase();await model(f);},120000);
+  beforeAll(async()=>{
+    f=await sequenceRunnerDatabase();await model(f);
+    // This owned fixture churns rows and deliberately refreshes statistics.
+    // Background autovacuum's ShareUpdateExclusiveLock would conflict with
+    // the installer's intentional NOWAIT barrier, independently of rules.
+    // Control only these seven synthetic tables; explicit ANALYZE still runs.
+    for(const table of targets) await f.exec(`ALTER TABLE public.${table} SET (autovacuum_enabled=false)`);
+    const {rows}=await f.query(`SELECT c.relname,c.reloptions FROM pg_class c
+      JOIN pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname='public' AND c.relname IN (${targets.map(table=>`'${table}'`).join(',')})
+      ORDER BY c.relname`);
+    if(rows.length!==targets.length || rows.some(row=>!Array.isArray(row.reloptions)
+      || !row.reloptions.includes('autovacuum_enabled=false')))
+      throw new Error('Shipping rule fixture background maintenance was not disabled');
+    console.log('SHIPPING_RULE_FIXTURE_MAINTENANCE '+JSON.stringify(rows));
+  },120000);
   afterAll(async()=>{await f?.close();},45000);
   beforeEach(async()=>{
     for(const table of [...targets,'store_order']) await f.exec(`DROP RULE IF EXISTS qa_shipping_rule ON public.${table}`);
