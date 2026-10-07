@@ -5,7 +5,7 @@ const { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } = require("no
 const { tmpdir } = require("node:os");
 const { dirname, join, resolve } = require("node:path");
 const test = require("node:test");
-const { isIntlifyModule, inspectRuntimeGraph, runtimeI18nAudit } = require("./runtime-i18n-audit.cjs");
+const { isIntlifyModule, isDcloudSsrModule, inspectRuntimeGraph, runtimeI18nAudit } = require("./runtime-i18n-audit.cjs");
 
 test("inventory recognizes package, vendored, virtual and external Intlify representations", () => {
   for (const id of ["vue-i18n", "vue-i18n/dist/runtime.js", "@intlify/core-base", "/app/node_modules/vue-i18n/dist/index.js", "C:\\app\\node_modules\\@intlify\\shared\\index.js", "\0/app/node_modules/@dcloudio/uni-cli-shared/lib/vue-i18n/dist/runtime.js?commonjs-proxy"]) {
@@ -37,6 +37,48 @@ test("inventory does not hide external or loaded-but-tree-shaken Intlify consume
   }, "/app");
   assert.deepEqual(assetOnly.separateScriptModules, []);
   assert.deepEqual(assetOnly.separateScriptAssets, ["app-renderjs.js", "app-wxs.js"]);
+});
+
+test("DCloud SSR dependencies remain visible when external or tree-shaken", () => {
+  for (const id of ["express", "body-parser", "qs", "proxy-addr", "/app/node_modules/express/lib/application.js", "C:\\app\\node_modules\\proxy-addr\\index.js", "\0qs?commonjs-proxy"]) {
+    assert.equal(isDcloudSsrModule(id), true, id);
+  }
+  for (const id of ["/app/src/pages/expressions.vue", "/app/src/pages/order/express.vue", "request", "@dcloudio/uni-h5", "unrelated-qs"]) {
+    assert.equal(isDcloudSsrModule(id), false, id);
+  }
+  const ids = ["/app/src/main.ts", "express", "/app/node_modules/proxy-addr/index.js"];
+  const context = {
+    getModuleIds: () => ids,
+    getModuleInfo: (id) => ({ isEntry: id === ids[0], isExternal: id === ids[1] }),
+  };
+  const inventory = inspectRuntimeGraph(context, {
+    "main.js": { type: "chunk", modules: { [ids[0]]: { renderedLength: 1 } } },
+  }, "/app");
+  assert.deepEqual(inventory.dcloudSsr, ["express", "node_modules/proxy-addr/index.js"]);
+});
+
+test("real Rollup generation rejects an external SSR dependency", async (t) => {
+  const fixture = mkdtempSync(join(tmpdir(), "cinashop-d3-ssr-negative-"));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const previousCI = process.env.CI;
+  const previousReport = process.env.CINASHOP_RUNTIME_I18N_REPORT;
+  process.env.CI = "1";
+  process.env.CINASHOP_RUNTIME_I18N_REPORT = join(fixture, "negative.jsonl");
+  t.after(() => {
+    if (previousCI === undefined) delete process.env.CI; else process.env.CI = previousCI;
+    if (previousReport === undefined) delete process.env.CINASHOP_RUNTIME_I18N_REPORT;
+    else process.env.CINASHOP_RUNTIME_I18N_REPORT = previousReport;
+  });
+  const audit = runtimeI18nAudit();
+  audit.configResolved({ root: fixture });
+  const build = await require("rollup").rollup({
+    input: "virtual:d3-ssr-entry", external: ["proxy-addr"],
+    plugins: [{ name: "inert-d3-ssr-input", resolveId: (id) => id === "virtual:d3-ssr-entry" ? id : null,
+      load: (id) => id === "virtual:d3-ssr-entry" ? "import proxyaddr from 'proxy-addr'; export default proxyaddr;" : null }, audit],
+  });
+  t.after(() => build.close());
+  await assert.rejects(build.generate({ format: "es" }), /DCloud SSR Express\/qs\/proxy-addr.*reopen TEST-004D3/);
+  assert.deepEqual(JSON.parse(readFileSync(join(fixture, "negative.jsonl"), "utf8")).dcloudSsr, ["proxy-addr"]);
 });
 
 test("real Rollup generation fails when a new external Intlify consumer enters the graph", async (t) => {
@@ -176,6 +218,7 @@ for (const platform of ["h5", "mp-weixin", "app"]) {
       assert.deepEqual(record.intlify, []);
       assert.deepEqual(record.automatorQr, []);
       assert.deepEqual(record.jestJsdomOnce, []);
+      assert.deepEqual(record.dcloudSsr, []);
       assert.deepEqual(record.separateScriptModules, []);
       assert.deepEqual(record.separateScriptAssets, []);
       if (record.compiler !== "nvue") assert.equal(record.hasMain, true);
