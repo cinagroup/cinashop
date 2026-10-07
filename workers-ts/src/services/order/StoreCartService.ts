@@ -612,10 +612,7 @@ export class StoreCartService {
             ) throw new ValidateException("砍价活动已失效");
             price = Math.max(
               decimalToCents(participant.bargainPriceMin),
-              Math.max(
-                decimalToCents(participant.bargainPrice),
-                decimalToCents(activity.price),
-              ) - decimalToCents(participant.price),
+              decimalToCents(participant.bargainPrice) - decimalToCents(participant.price),
             ) / 100;
             displayName = activity.storeName || activity.title || product.storeName;
             displayImage = pair.activitySku.image || activity.image || product.image;
