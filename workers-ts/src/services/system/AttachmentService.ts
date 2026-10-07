@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import type { AttachmentObjectCleanupMessage, Env } from "@/env";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import {
@@ -964,42 +964,86 @@ export class AttachmentService {
   async rename(scope: AttachmentScope, idValue: unknown, nameValue: unknown) {
     const id = positiveId(idValue, "附件ID");
     const realName = textValue(nameValue, "文件名称", 255);
-    const updated = await this.container.db.update(systemAttachment).set({ realName }).where(and(
-      eq(systemAttachment.attId, id),
-      eq(systemAttachment.type, scope.type),
-      eq(systemAttachment.relationId, scope.relationId),
-      eq(systemAttachment.moduleType, scope.moduleType),
-    )).returning({ id: systemAttachment.attId });
-    if (!updated[0]) throw new NotFoundException("附件不存在");
-    return { id, real_name: realName };
+    return withTx(this.container, async (tx) => {
+      await this.lockAttachmentMutation(tx, scope);
+      const where = and(
+        eq(systemAttachment.attId, id),
+        eq(systemAttachment.type, scope.type),
+        eq(systemAttachment.relationId, scope.relationId),
+        eq(systemAttachment.moduleType, scope.moduleType),
+      );
+      const rows = await tx.select({ id: systemAttachment.attId }).from(systemAttachment)
+        .where(where).for("update");
+      if (rows.length !== 1) throw new NotFoundException("附件不存在");
+      const updated = await tx.update(systemAttachment).set({ realName }).where(where)
+        .returning({ id: systemAttachment.attId, realName: systemAttachment.realName });
+      if (updated.length !== 1 || updated[0].id !== id || updated[0].realName !== realName) {
+        throw new ValidateException("素材已变更，请刷新后重试");
+      }
+      return { id, real_name: realName };
+    });
   }
 
   async move(scope: AttachmentScope, idsValue: unknown, pidValue: unknown) {
     const ids = this.attachmentIds(idsValue);
     const pid = nonNegativeId(pidValue, "分类ID");
-    const rows = await this.container.db.select({
-      id: systemAttachment.attId,
-      fileType: systemAttachment.fileType,
-    })
-      .from(systemAttachment).where(and(
+    return withTx(this.container, async (tx) => {
+      // Category create/delete use this same scope lock. Acquire it before any
+      // attachment row locks so both the original and destination folders remain
+      // valid until the whole selection is committed.
+      await this.lockAttachmentMutation(tx, scope);
+      const where = and(
         inArray(systemAttachment.attId, ids),
         eq(systemAttachment.type, scope.type),
         eq(systemAttachment.relationId, scope.relationId),
         eq(systemAttachment.moduleType, scope.moduleType),
-      ));
-    if (rows.length !== ids.length) throw new NotFoundException("一个或多个附件不存在");
-    const fileTypes = new Set(rows.map((row) => row.fileType));
-    if (fileTypes.size !== 1) throw new ValidateException("图片与视频不能同时移动");
-    const fileType = rows[0].fileType;
-    if (fileType !== 1 && fileType !== 2) throw new ValidateException("文件类型无效");
-    if (pid > 0) await this.assertCategory(scope, pid, fileType);
-    await this.container.db.update(systemAttachment).set({ pid }).where(and(
-      inArray(systemAttachment.attId, ids),
-      eq(systemAttachment.type, scope.type),
-      eq(systemAttachment.relationId, scope.relationId),
-      eq(systemAttachment.moduleType, scope.moduleType),
-    ));
-    return { ids, pid };
+      );
+      const rows = await tx.select({
+        id: systemAttachment.attId,
+        fileType: systemAttachment.fileType,
+        pid: systemAttachment.pid,
+      }).from(systemAttachment).where(where).orderBy(asc(systemAttachment.attId)).for("update");
+      if (rows.length !== ids.length) throw new NotFoundException("一个或多个附件不存在");
+      const fileTypes = new Set(rows.map((row) => row.fileType));
+      if (fileTypes.size !== 1) throw new ValidateException("图片与视频不能同时移动");
+      const fileType = rows[0].fileType;
+      if (fileType !== 1 && fileType !== 2) throw new ValidateException("文件类型无效");
+      if (rows.some((row) => !Number.isSafeInteger(row.pid) || row.pid < 0)) {
+        throw new ValidateException("素材原分类无效，请刷新后重试");
+      }
+      const folders = [...new Set([pid, ...rows.map((row) => row.pid)].filter((value) => value > 0))];
+      if (folders.length) {
+        const categories = await tx.select({ id: systemAttachmentCategory.id })
+          .from(systemAttachmentCategory).where(and(
+            inArray(systemAttachmentCategory.id, folders),
+            eq(systemAttachmentCategory.type, scope.type),
+            eq(systemAttachmentCategory.relationId, scope.relationId),
+            eq(systemAttachmentCategory.fileType, fileType),
+          )).orderBy(asc(systemAttachmentCategory.id)).for("share");
+        if (categories.length !== folders.length) throw new NotFoundException("素材原分类或目标分类不存在");
+      }
+      const updated = await tx.update(systemAttachment).set({ pid }).where(where).returning({
+        id: systemAttachment.attId,
+        pid: systemAttachment.pid,
+        type: systemAttachment.type,
+        relationId: systemAttachment.relationId,
+        moduleType: systemAttachment.moduleType,
+        fileType: systemAttachment.fileType,
+      });
+      const updatedIds = new Set(updated.map((row) => row.id));
+      if (updated.length !== ids.length || updatedIds.size !== ids.length || ids.some((id) => !updatedIds.has(id))
+        || updated.some((row) => row.pid !== pid || row.type !== scope.type || row.relationId !== scope.relationId
+          || row.moduleType !== scope.moduleType || row.fileType !== fileType)) {
+        throw new ValidateException("素材已变更，请刷新后重试");
+      }
+      return { ids, pid };
+    });
+  }
+
+  private async lockAttachmentMutation(tx: DbClient, scope: AttachmentScope): Promise<void> {
+    await tx.execute(sql`SET LOCAL lock_timeout = '2s'`);
+    await tx.execute(sql`SET LOCAL statement_timeout = '5s'`);
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(${CATEGORY_LOCK_NAMESPACE + scope.type}, ${scope.relationId})`);
   }
 
   async delete(scope: AttachmentScope, idsValue: unknown) {

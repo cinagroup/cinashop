@@ -6,3 +6,6 @@ workers-ts/audit/shipping-lifecycle-index*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-rules*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-route-auth*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-restricted-routes*.json text eol=lf
+# Admin system ledgers must match their generators byte-for-byte on Windows.
+workers-ts/audit/admin-legacy-system-route-parity.json text eol=lf
+workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json text eol=lf

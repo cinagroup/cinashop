@@ -99,6 +99,17 @@ describe("legacy Admin system route semantic audit", () => {
     expect(report.methodology.validationBoundary).toMatch(/No production role/u);
   });
 
+  it("records only the attachment image operation slice and keeps the full route partial", () => {
+    const row = byPath.get("/admin/system/file");
+    expect(row?.status).toBe("partial");
+    expect(row?.targetApis).toContain("PUT /adminapi/file/file/do_move");
+    expect(row?.targetApis).toContain("PUT /adminapi/file/file/update/:id");
+    expect(row?.covered.join(" ")).toContain("最多50项");
+    expect(row?.remaining.join(" ")).toContain("视频");
+    expect(row?.remaining.join(" ")).toContain("分类树完整管理");
+    expect(row?.evidence).toContain("workers-ts/test/admin-attachment-library-frontend.test.ts");
+  });
+
   it("regenerates the checked-in JSON byte for byte", () => {
     const generated = execFileSync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/admin-system-frontend-parity-audit.ts"], {
       cwd: process.cwd(), encoding: "utf8",
