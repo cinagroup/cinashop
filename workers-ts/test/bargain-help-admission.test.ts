@@ -2,13 +2,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
 import { ActivityJoinService } from '../src/services/activity/ActivityJoinService';
-import { helpBargain } from '../src/controllers/api/v1/ActivityJoinController';
+import { helpBargain, bargainHelpPrice } from '../src/controllers/api/v1/ActivityJoinController';
 import { storeBargain, storeBargainUser } from '../src/models/schema';
 
 describe('bargain helper admission on isolated SQL (not multi-connection proof)', () => {
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
   beforeEach(async () => {
     f = await createBargainSelectionFixture(); f.app.post('/api/bargain/help', helpBargain);
+    f.app.post('/api/bargain/help/price', bargainHelpPrice);
     await f.db.update(storeBargain).set({ people: 1, bargainNum: 1 });
     await f.db.update(storeBargainUser).set({ status: 1, price: '0.00' }).where(eq(storeBargainUser.id, 80));
     await f.db.update(storeBargainUser).set({ price: '0.00' }).where(eq(storeBargainUser.id, 81));
@@ -39,11 +40,32 @@ describe('bargain helper admission on isolated SQL (not multi-connection proof)'
       bargainPriceMin: '2.00', price: '8.00', status: 3 });
     expect(after.helps).toMatchObject([{ bargainUserId: 81, price: '8.00' }]);
   });
-  it('rejects a malformed historical participation without guessing from the new activity price', async () => {
+  it('keeps an unfinished old participation on its original floor when both new activity prices fall', async () => {
+    await f.db.update(storeBargain).set({ price: '8.00', minPrice: '1.00' }).where(eq(storeBargain.id, 40));
+    await f.db.update(storeBargainUser).set({ status: 2 }).where(eq(storeBargainUser.id, 80));
+    const started = await new ActivityJoinService(f.container).startBargain(11, 40);
+    const [fresh] = await f.db.select().from(storeBargainUser).where(eq(storeBargainUser.id, started.id));
+    expect(fresh).toMatchObject({ bargainPrice: '8.00', bargainPriceMin: '1.00', price: '0.00' });
+    expect(await help(11, 81)).toEqual({ price: '8.00' });
+    const [old] = await f.db.select().from(storeBargainUser).where(eq(storeBargainUser.id, 81));
+    expect(old).toMatchObject({ bargainPrice: '10.00', bargainPriceMin: '2.00', price: '8.00', status: 3 });
+    expect(await new ActivityJoinService(f.container).bargainHelpCount(11, 81)).toMatchObject({
+      price: '0.00', alreadyPrice: '8.00', pricePercent: 100,
+    });
+  });
+  it('rejects a malformed historical participation across help writes and public reads', async () => {
     await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40));
     await f.db.update(storeBargainUser).set({ bargainPrice: '4.00', price: '8.00' }).where(eq(storeBargainUser.id, 81));
-    const before = await f.snapshot();
+    const before = await f.snapshot(), service = new ActivityJoinService(f.container);
     await expect(help(11, 81)).rejects.toThrow('砍价金额数据异常');
+    await expect(service.bargainHelpPrice(11, 81)).rejects.toThrow('砍价金额数据异常');
+    await expect(service.bargainHelpCount(11, 81)).rejects.toThrow('砍价金额数据异常');
+    for (const path of ['/api/bargain/help/price', '/api/bargain/help/count']) {
+      const response = await f.app.request(path, { method: 'POST',
+        headers: { 'x-fixture-user': '11', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bargain_user_id: 81 }) }, f.env);
+      expect(await response.json()).toMatchObject({ status: 400, msg: '砍价金额数据异常' });
+    }
     expect(await f.snapshot()).toEqual(before);
   });
   it('different activities retain separate allowances for the same helper', async () => {

@@ -687,8 +687,10 @@ export class ActivityJoinService {
       const originalCents = decimalToCents(record.bargainPrice);
       const minimumCents = decimalToCents(record.bargainPriceMin);
       const alreadyCutCents = decimalToCents(record.price);
-      const maximumCutCents = Math.max(0, originalCents - minimumCents);
-      if (alreadyCutCents > maximumCutCents) throw new ValidateException("砍价金额数据异常");
+      if (minimumCents > originalCents || alreadyCutCents > originalCents - minimumCents) {
+        throw new ValidateException("砍价金额数据异常");
+      }
+      const maximumCutCents = originalCents - minimumCents;
       const remainingCents = maximumCutCents - alreadyCutCents;
       if (remainingCents <= 0) throw new ValidateException("已砍到最低价");
       const cutCents = calculateBargainHelpCutCents({
@@ -755,10 +757,15 @@ export class ActivityJoinService {
       .orderBy(desc(storeBargainUserHelp.id))
       .limit(1);
     if (!rows[0]) throw new NotFoundException("砍价记录不存在");
-    const currentCents = decimalToCents(rows[0].bargainPrice) - decimalToCents(rows[0].totalCut);
+    const originalCents = decimalToCents(rows[0].bargainPrice);
+    const minimumCents = decimalToCents(rows[0].bargainPriceMin);
+    const cutCents = decimalToCents(rows[0].totalCut);
+    if (minimumCents > originalCents || cutCents > originalCents - minimumCents) {
+      throw new ValidateException("砍价金额数据异常");
+    }
     return {
       price: rows[0].price ?? "0.00",
-      status: currentCents <= decimalToCents(rows[0].bargainPriceMin),
+      status: originalCents - cutCents === minimumCents,
     };
   }
 
@@ -785,8 +792,11 @@ export class ActivityJoinService {
     const originalCents = decimalToCents(record.bargainPrice);
     const minimumCents = decimalToCents(record.bargainPriceMin);
     const alreadyCents = decimalToCents(record.price);
-    const capacityCents = Math.max(0, originalCents - minimumCents);
-    const remainingCents = Math.max(0, capacityCents - alreadyCents);
+    if (minimumCents > originalCents || alreadyCents > originalCents - minimumCents) {
+      throw new ValidateException("砍价金额数据异常");
+    }
+    const capacityCents = originalCents - minimumCents;
+    const remainingCents = capacityCents - alreadyCents;
     const percentage = capacityCents > 0
       ? Math.min(100, Math.floor(alreadyCents * 100 / capacityCents))
       : 100;
