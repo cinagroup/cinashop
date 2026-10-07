@@ -35,7 +35,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rewrite rules on
       JOIN pg_namespace n ON n.oid=c.relnamespace
       WHERE n.nspname='public' AND c.relname IN (${targets.map(table=>`'${table}'`).join(',')})
       ORDER BY c.relname`);
-    if(rows.length!==targets.length || rows.some(row=>!Array.isArray(row.reloptions)
+    if(rows.length!==targets.length || rows.some(row=>!row || typeof row!=='object'
+      || !('reloptions' in row) || !Array.isArray(row.reloptions)
       || !row.reloptions.includes('autovacuum_enabled=false')))
       throw new Error('Shipping rule fixture background maintenance was not disabled');
     console.log('SHIPPING_RULE_FIXTURE_MAINTENANCE '+JSON.stringify(rows));
