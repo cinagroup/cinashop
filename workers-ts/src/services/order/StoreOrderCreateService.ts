@@ -45,6 +45,7 @@ import {
   systemStore,
 } from "@/models/schema";
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
+import { lockOrderCompensationInventory } from "@/services/order/OrderCompensationInventoryLocks";
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException, HttpApiException } from "@/utils/errors";
 import {
@@ -585,6 +586,10 @@ export async function cancelStoreOrder(
 
     await releaseUnpaidOrderPromotionGifts(tx, order);
 
+    const restorationLines: Array<{
+      item: typeof cartInfos[number]; snapshotSkuId: number;
+      snapshotActivitySkuId: number; legacyActivitySnapshot: boolean;
+    }> = [];
     for (const item of cartInfos) {
       let snapshotSkuId = 0;
       let snapshotActivitySkuId = 0;
@@ -624,6 +629,15 @@ export async function cancelStoreOrder(
         }
         snapshotSkuId = legacySkus[0].id;
       }
+      restorationLines.push({ item, snapshotSkuId, snapshotActivitySkuId, legacyActivitySnapshot });
+    }
+    // Inventory writes below follow the frozen line order. A competing checkout
+    // may hold these rows in the opposite order, so every required SKU and
+    // product must be acquired without waiting before the first stock update.
+    if (order.type === 1) await lockOrderCompensationInventory(tx, restorationLines.map(({ item, snapshotSkuId }) => ({
+      baseSkuId: snapshotSkuId, productId: item.productId,
+    })), () => new Error(`订单 ${orderId} 的商品库存无法完整恢复`));
+    for (const { item, snapshotSkuId, snapshotActivitySkuId, legacyActivitySnapshot } of restorationLines) {
       const skuRestored = await tx
         .update(storeProductAttrValue)
         .set({
