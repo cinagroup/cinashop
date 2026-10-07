@@ -34,6 +34,7 @@ import {
   userBill as userBillTable,
 } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
+import { lockOrderCompensationInventory } from "@/services/order/OrderCompensationInventoryLocks";
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
@@ -2346,7 +2347,7 @@ async function restoreRefundStock(
   const cartInfos = await tx
     .select()
     .from(storeOrderCartInfo)
-    .where(eq(storeOrderCartInfo.oid, order.id));
+    .where(eq(storeOrderCartInfo.oid, order.id)).orderBy(asc(storeOrderCartInfo.id));
   const requestedSelections = parseRefundCartSelections(cartInfoSnapshot);
   const selected = requestedSelections.length
     ? requestedSelections.map((selection) => {
@@ -2375,6 +2376,10 @@ async function restoreRefundStock(
       : [];
     missingLegacyActivityMain = !rows[0];
   }
+  const restorationLines: Array<{
+    ci: typeof cartInfos[number]; num: number; baseSkuId: number;
+    activitySkuId: number; legacyActivitySnapshot: boolean;
+  }> = [];
   let remaining = refundNum;
   for (const { row: ci, requestedNum } of selected) {
     const num = requestedNum ?? Math.min(ci.cartNum, remaining);
@@ -2416,6 +2421,13 @@ async function restoreRefundStock(
       if (baseRows.length !== 1) throw new ValidateException("退款商品规格无法唯一定位");
       baseSkuId = baseRows[0].id;
     }
+    restorationLines.push({ ci, num, baseSkuId, activitySkuId, legacyActivitySnapshot });
+  }
+  if (remaining > 0) throw new ValidateException("退款商品快照与退款数量不一致");
+  if (order.type === 1) await lockOrderCompensationInventory(tx, restorationLines.map(({ ci, baseSkuId }) => ({
+    baseSkuId, productId: ci.productId,
+  })), () => new ValidateException("退款商品库存无法回退"));
+  for (const { ci, num, baseSkuId, activitySkuId, legacyActivitySnapshot } of restorationLines) {
     let baseSkuRetired = false;
     if (baseSkuId > 0) {
       const baseSkuRows = await tx
@@ -2506,7 +2518,6 @@ async function restoreRefundStock(
       }
     }
   }
-  if (remaining > 0) throw new ValidateException("退款商品快照与退款数量不一致");
 }
 
 function parseRefundCartSelections(value: string | null): RefundCartSelection[] {

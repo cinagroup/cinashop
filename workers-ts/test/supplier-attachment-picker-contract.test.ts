@@ -140,12 +140,13 @@ describe('actual Axios endpoints and Supplier identity boundaries', () => {
   });
   it('explicit upload uses one multipart request, validates the real response and never returns a signed persistence URL', async () => {
     const data = new FormData(); data.append('file', new Blob(['local-image'], { type: 'image/png' }), 'local.png'); data.append('pid', '0');
-    const adapter = vi.fn(async (config: any) => response(config, envelope({ att_id: 5, url: '/api/assets/5', src: ticket(5), name: 'local.png', size: 11, type: 'image/png' })));
+    const signed = ticket(5);
+    const adapter = vi.fn(async (config: any) => response(config, envelope({ att_id: 5, url: '/api/assets/5', src: signed, name: 'local.png', size: 11, type: 'image/png' })));
     actual.http.defaults.adapter = adapter;
     const result = await actual.attachments.uploadSupplierImage(data);
     expect(adapter).toHaveBeenCalledTimes(1); expect(adapter.mock.calls[0][0]).toMatchObject({ method: 'post', url: '/file/upload' });
     expect(adapter.mock.calls[0][0].data).toBe(data);
-    expect(result).toMatchObject({ id: 5, canonicalUrl: '/api/assets/5', previewUrl: ticket(5), mime: 'image/png' });
+    expect(result).toMatchObject({ id: 5, canonicalUrl: '/api/assets/5', previewUrl: signed, mime: 'image/png' });
     expect(() => actual.attachments.decodeSupplierUploadedImage({ att_id: 5, url: ticket(5), src: ticket(5), name: 'local.png', size: 11, type: 'image/png' })).toThrow();
     expect(() => actual.attachments.decodeSupplierUploadedImage({ att_id: 5, url: '/api/assets/5', src: ticket(6), name: 'local.png', size: 11, type: 'image/png' })).toThrow();
   });

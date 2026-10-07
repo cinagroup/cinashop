@@ -11,18 +11,20 @@ const lock = JSON.parse(readFileSync(resolve(__dirname, "../package-lock.json"),
 const locked = (name) => lock.packages[`node_modules/${name}`];
 
 test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited dependency path", () => {
-  for (const name of ["@dcloudio/vite-plugin-uni", "express", "qs", "body-parser"]) {
+  for (const name of ["@dcloudio/vite-plugin-uni", "express", "qs", "body-parser", "proxy-addr"]) {
     const expected = {
       "@dcloudio/vite-plugin-uni": DCLOUD,
       express: "4.22.2",
       qs: "6.15.3",
       "body-parser": "1.20.6",
+      "proxy-addr": "2.0.7",
     }[name];
     assert.equal(locked(name).version, expected, name);
     assert.equal(require(`${name}/package.json`).version, expected, name);
   }
   assert.equal(locked("@dcloudio/vite-plugin-uni").dependencies.express, "^4.17.1");
   assert.equal(locked("express").dependencies.qs, "~6.15.1");
+  assert.equal(locked("express").dependencies["proxy-addr"], "~2.0.7");
   assert.equal(locked("body-parser").dependencies.qs, "~6.15.1");
 
   const cli = readFileSync(require.resolve("@dcloudio/vite-plugin-uni/dist/cli/index.js"), "utf8");
@@ -117,6 +119,8 @@ test("real DCloud server entrypoints defer Express and pass undefined host in SS
       qs.parse = (...args) => { queryParses++; return savedParse(...args); };
       express.application.listen = function (port, host) {
         assert.equal(this.get("query parser"), "extended");
+        assert.equal(this.get("trust proxy"), false);
+        assert.equal(this.get("trust proxy fn")("::ffff:192.0.2.4", 0), false);
         assert.deepEqual(this.get("query parser fn")("item[id]=42"), { item: { id: "42" } });
         listens.push({ port, host, middleware: this._router.stack.map((layer) => layer.name) });
         throw stopBeforeListen;
