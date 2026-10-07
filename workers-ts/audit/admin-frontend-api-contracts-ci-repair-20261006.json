@@ -5536,7 +5536,7 @@
     },
     {
       "file": "view/admin-ts/src/api/attachment.ts",
-      "sha256": "7133ac29cd54e4c8a08437dd8118e3854824e7b566f7039775add0404fb8b738"
+      "sha256": "e0b75bd8598b4badf532f8e3a32de369af14fff85f91e020b199583035009477"
     },
     {
       "file": "view/admin-ts/src/api/auth.ts",
@@ -5884,10 +5884,10 @@
     }
   ],
   "counts": {
-    "callSites": 598,
-    "pathVariants": 629,
-    "registered": 629,
-    "executable": 629,
+    "callSites": 600,
+    "pathVariants": 631,
+    "registered": 631,
+    "executable": 631,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -6360,7 +6360,7 @@
       "method": "GET",
       "path": "/file/file",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 34,
+      "line": 49,
       "registered": true,
       "matchedRoute": "/file/file",
       "matchedHandler": "AttachmentController.adminList",
@@ -6370,7 +6370,7 @@
       "method": "POST",
       "path": "/file/upload",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 52,
+      "line": 68,
       "registered": true,
       "matchedRoute": "/file/upload",
       "matchedHandler": "AttachmentController.adminUploadImage",
@@ -6380,7 +6380,7 @@
       "method": "POST",
       "path": "/file/file/delete",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 67,
+      "line": 83,
       "registered": true,
       "matchedRoute": "/file/file/delete",
       "matchedHandler": "AttachmentController.adminDelete",
@@ -6390,7 +6390,7 @@
       "method": "GET",
       "path": "/file/category",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 74,
+      "line": 90,
       "registered": true,
       "matchedRoute": "/file/category",
       "matchedHandler": "AttachmentController.adminCategories",
@@ -6400,7 +6400,7 @@
       "method": "POST",
       "path": "/file/category",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 81,
+      "line": 101,
       "registered": true,
       "matchedRoute": "/file/category",
       "matchedHandler": "AttachmentController.adminCategorySave",
@@ -6410,10 +6410,30 @@
       "method": "GET",
       "path": "/config/storage",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 88,
+      "line": 108,
       "registered": true,
       "matchedRoute": "/config/storage",
       "matchedHandler": "AttachmentController.adminStorage",
+      "availability": "executable"
+    },
+    {
+      "method": "PUT",
+      "path": "/file/file/do_move",
+      "source": "view/admin-ts/src/api/attachment.ts",
+      "line": 134,
+      "registered": true,
+      "matchedRoute": "/file/file/do_move",
+      "matchedHandler": "AttachmentController.adminMove",
+      "availability": "executable"
+    },
+    {
+      "method": "PUT",
+      "path": "/file/file/update/:param",
+      "source": "view/admin-ts/src/api/attachment.ts",
+      "line": 145,
+      "registered": true,
+      "matchedRoute": "/file/file/update/:id",
+      "matchedHandler": "AttachmentController.adminRename",
       "availability": "executable"
     },
     {
