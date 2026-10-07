@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -82,10 +82,10 @@ describe("DB-009E5 typed sequence generator prerequisite", () => {
   it.each(["cjs", "esm"])("executes the actual %s API with network denied", format => {
     const directory = mkdtempSync(join(tmpdir(), "cinashop-sequence-")), report = join(directory, "audit.json");
     try {
-      const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
+      const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
         join(root, "test/helpers/sequenceStateGeneratorLocal.cjs"), format], {
         cwd: root, env: environment(report), encoding: "utf8", timeout: 30_000, windowsHide: true,
-      });
+      }, { caseId: "drizzle-sequence-state", mode: format });
       expect(result.error, result.stdout + result.stderr).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain("DB-009E5 " + format + ": sequence generation/state/ownership/rollback verified");
@@ -101,11 +101,11 @@ describe("DB-009E5 typed sequence generator prerequisite", () => {
       writeFileSync(schema, "module.exports = require(" + JSON.stringify(join(root, "test/helpers/sequenceStateSchema.cjs")) + ")(process.env.SEQUENCE_TEST_MODE);");
       writeFileSync(config, "module.exports = { dialect: 'postgresql', schema: " + JSON.stringify(relative(root, schema).replaceAll("\\", "/")) + ", out: process.env.SEQUENCE_TEST_OUTPUT };");
       const run = (mode: string, destination = output, command = "generate") => {
-        const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
+        const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
           join(kit, "bin.cjs"), command, "--config=" + config, ...(command === "generate" ? ["--name=audit"] : [])], {
           cwd: root, env: { ...environment(report), SEQUENCE_TEST_MODE: mode, SEQUENCE_TEST_OUTPUT: relative(root, destination).replaceAll("\\", "/") },
           encoding: "utf8", timeout: 30_000, windowsHide: true,
-        });
+        }, { caseId: "drizzle-sequence-state", mode: command });
         expect(result.error, result.stdout + result.stderr).toBeUndefined();
         expect(result.status, result.stdout + result.stderr).toBe(0);
         expect(result.stderr).not.toMatch(/DB-009E5:|Error:/);

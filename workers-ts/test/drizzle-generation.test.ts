@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -100,9 +100,9 @@ module.exports = { ...base, out: ${JSON.stringify(relative(root, output).replace
       Object.assign(environment, { CI: "1", TSX_DISABLE_CACHE: "1", DATABASE_URL: "postgresql://audit:audit@127.0.0.1:9/audit", CINASHOP_DRIZZLE_AUDIT_REPORT: report });
       const cli = join(dirname(require.resolve("drizzle-kit")), "bin.cjs");
       const run = (command: "generate" | "export" = "generate") => {
-        const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), cli, command, "--config", config, ...(command === "generate" ? ["--name", "audit"] : [])], {
+        const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), cli, command, "--config", config, ...(command === "generate" ? ["--name", "audit"] : [])], {
           cwd: root, env: environment, encoding: "utf8", timeout: 45_000, windowsHide: true,
-        });
+        }, { caseId: "drizzle-generation", mode: command });
         expect(result.error).toBeUndefined();
         expect(result.status, result.stdout + result.stderr).toBe(0);
         const audit = JSON.parse(readFileSync(report, "utf8")) as { loaded: string[]; esbuild: [string, string][]; networkAttempts: number; blockedSockets: string[] };

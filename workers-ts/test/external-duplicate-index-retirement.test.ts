@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -95,9 +95,9 @@ describe("DB-009D2b3e external physical duplicate retirement", () => {
       const allowed = new Set(["PATH", "Path", "SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP", "LOCALAPPDATA"]);
       for (const key of Object.keys(environment)) if (!allowed.has(key)) delete environment[key];
       Object.assign(environment, { CI: "1", TSX_DISABLE_CACHE: "1", DATABASE_URL: "postgresql://audit:audit@127.0.0.1:9/audit", CINASHOP_DRIZZLE_AUDIT_REPORT: report });
-      const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), join(root, "test/helpers/externalDuplicateIndexLocalAudit.cjs")], {
+      const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), join(root, "test/helpers/externalDuplicateIndexLocalAudit.cjs")], {
         cwd: root, env: environment, encoding: "utf8", timeout: 90_000, windowsHide: true,
-      });
+      }, { caseId: "external-duplicate-index-retirement", mode: "pglite" });
       expect(result.error, result.stdout + result.stderr).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain("DB-009D2b3e pglite: 5 guarded duplicate removals, 34 dependency/drift refusals");

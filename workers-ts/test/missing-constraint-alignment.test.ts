@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -94,9 +94,9 @@ describe("DB-009E2B exact missing CHECK/FK reconciliation", () => {
       const allowed = new Set(["PATH", "Path", "SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP", "LOCALAPPDATA"]);
       for (const key of Object.keys(environment)) if (!allowed.has(key)) delete environment[key];
       Object.assign(environment, { CI: "1", TSX_DISABLE_CACHE: "1", DATABASE_URL: "postgresql://audit:audit@127.0.0.1:9/audit", CINASHOP_DRIZZLE_AUDIT_REPORT: report });
-      const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), join(root, "test/helpers/missingConstraintLocalAudit.cjs"), format], {
+      const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), join(root, "test/helpers/missingConstraintLocalAudit.cjs"), format], {
         cwd: root, env: environment, encoding: "utf8", timeout: 180_000, windowsHide: true,
-      });
+      }, { caseId: "missing-constraint-alignment", mode: format });
       expect(result.error, result.stdout + result.stderr).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-009E2B ${format}: 41 constraints, 33 invalid-old-row refusals, 8 NOT VALID contracts`);

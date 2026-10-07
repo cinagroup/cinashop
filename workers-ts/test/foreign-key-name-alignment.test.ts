@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -84,10 +84,10 @@ describe("DB-009E3 identity-preserving foreign-key names",()=>{
       const allowed=new Set(["PATH","Path","SystemRoot","WINDIR","COMSPEC","PATHEXT","TEMP","TMP","LOCALAPPDATA"]);
       for(const key of Object.keys(environment))if(!allowed.has(key))delete environment[key];
       Object.assign(environment,{CI:"1",TSX_DISABLE_CACHE:"1",DATABASE_URL:"postgresql://audit:audit@127.0.0.1:9/audit",CINASHOP_DRIZZLE_AUDIT_REPORT_FD:"3"});
-      const result=spawnSync(process.execPath,["--require",join(root,"test/helpers/drizzleCliAudit.cjs"),join(root,"test/helpers/foreignKeyNameLocalAudit.cjs"),format],{
+      const result=spawnNativeDiagnostic(process.execPath,["--require",join(root,"test/helpers/drizzleCliAudit.cjs"),join(root,"test/helpers/foreignKeyNameLocalAudit.cjs"),format],{
         cwd:root,env:environment,encoding:"utf8",timeout:180_000,windowsHide:true,
         stdio:['ignore','pipe','pipe','pipe'],
-      });
+      }, { caseId: "foreign-key-name-alignment", mode: format });
       expect(result.error,result.stdout+result.stderr).toBeUndefined();expect(result.status,result.stdout+result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-009E3 ${format}: 12 foreign keys renamed;`);
       expect(result.stdout).toContain("141 drift refusals / 12 raw proposal hazards");

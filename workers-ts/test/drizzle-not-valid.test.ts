@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -73,10 +73,10 @@ describe("DB-009E2A explicit PostgreSQL NOT VALID generator prerequisite", () =>
     const directory = mkdtempSync(join(tmpdir(), "cinashop-not-valid-api-"));
     const report = join(directory, "audit.json");
     try {
-      const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
+      const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
         join(root, "test/helpers/notValidLocalAudit.cjs"), format], {
         cwd: root, env: environment(report), encoding: "utf8", timeout: 30_000, windowsHide: true,
-      });
+      }, { caseId: "drizzle-not-valid", mode: format });
       expect(result.error, result.stdout + result.stderr).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-009E2A ${format}: 5 NOT VALID constraints`);
@@ -96,12 +96,12 @@ describe("DB-009E2A explicit PostgreSQL NOT VALID generator prerequisite", () =>
       writeFileSync(schemaFile, `module.exports = require(${JSON.stringify(join(root, "test/helpers/notValidSchema.cjs"))})(process.env.CINASHOP_NOT_VALID_MODE);`);
       writeFileSync(config, `module.exports = { dialect: 'postgresql', schema: ${JSON.stringify(relative(root, schemaFile).replaceAll("\\", "/"))}, out: process.env.CINASHOP_NOT_VALID_OUT };`);
       const run = (mode: string, out = output, command = "generate") => {
-        const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
+        const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
           join(kit, "bin.cjs"), command, `--config=${config}`, ...(command === "generate" ? ["--name=audit"] : [])], {
           cwd: root, env: { ...environment(report), CINASHOP_NOT_VALID_MODE: mode,
             CINASHOP_NOT_VALID_OUT: relative(root, out).replaceAll("\\", "/") },
           encoding: "utf8", timeout: 30_000, windowsHide: true,
-        });
+        }, { caseId: "drizzle-not-valid", mode: command });
         expect(result.error, result.stdout + result.stderr).toBeUndefined();
         expect(result.status, result.stdout + result.stderr).toBe(0);
         assertReport(report);

@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -129,10 +129,10 @@ describe("DB-009E5B guarded business sequence alignment", () => {
       const environment = { ...process.env }, allowed = new Set(["PATH", "Path", "SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP", "LOCALAPPDATA"]);
       for (const key of Object.keys(environment)) if (!allowed.has(key)) delete environment[key];
       Object.assign(environment, { CI: "1", TSX_DISABLE_CACHE: "1", CINASHOP_DRIZZLE_AUDIT_REPORT: report });
-      const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
+      const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"),
         join(root, "test/helpers/kefuSequenceLocalAudit.cjs"), format], {
         cwd: root, env: environment, encoding: "utf8", timeout: 150_000, windowsHide: true,
-      });
+      }, { caseId: "kefu-sequence-alignment", mode: format });
       expect(result.error, result.stdout + result.stderr).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       const line = result.stdout.split(/\r?\n/).find(line => line.startsWith("KEFU_SEQUENCE_AUDIT "));

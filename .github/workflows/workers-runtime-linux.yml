@@ -123,20 +123,29 @@ jobs:
         if: matrix.shard == 1
         run: npm run typecheck
 
+      - name: Begin isolated native child diagnostic capture
+        run: node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts --begin
+
       - name: Run Worker unit tests
         shell: bash
         run: |
           set -o pipefail
           npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=verbose --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log
 
+      - name: Audit native child diagnostics including incomplete failed runs
+        if: ${{ always() }}
+        run: node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts
+
       - name: Preserve unit shard diagnostics even on failure
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: unit-shard-${{ matrix.shard }}-${{ github.sha }}
+          include-hidden-files: true
           path: |
             workers-ts/unit-shard-results.json
             workers-ts/unit-shard.log
+            workers-ts/.cache/native-child-diagnostics/published-*/*.json
           if-no-files-found: error
           retention-days: 7
 
