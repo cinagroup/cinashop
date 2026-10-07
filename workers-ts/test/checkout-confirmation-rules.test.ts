@@ -310,7 +310,7 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     const after = await monetaryState(); expect(after.orders).toHaveLength(1);
     expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: refreshed.data.pay_price });
   });
-  it.runIf(kind === 'bargain')('keeps a confirmed old participation price after an activity price edit', async () => {
+  if (kind === 'bargain') it('keeps a confirmed old participation price after an activity price edit', async () => {
     const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
     beforeSequence = async () => { await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40)); };
     const created = await request(`/api/order/create/${receipt.data.orderKey}`,
