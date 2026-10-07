@@ -1,0 +1,548 @@
+{
+  "version": "checklist-merge-test-release-v1",
+  "recordedAt": "2026-10-07T04:38:50.416Z",
+  "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+  "previousMain": "a295a8d95e11dac4bf8820b945b6925d60a1ef0a",
+  "mergedOriginals": {
+    "feedback": "2441ff9664d2ce737da29ccffbc981ed1506ffee",
+    "supplier": "09fe34a12990d55eddfd08838ffbae967524afeb"
+  },
+  "ci": {
+    "runId": 37563452672,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/37563452672",
+    "jobs": 11,
+    "testFiles": 894,
+    "tests": 14770,
+    "failed": 0,
+    "skipped": 0,
+    "pending": 0,
+    "todo": 0,
+    "execution": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\ci-final03\\execution.json",
+      "sha256": "ff97d770e1ad2be2e866519e5de0bc93c9cf6a4b371ccac17f14cb0e6c3c74b7",
+      "bytes": 1593
+    }
+  },
+  "frontend": {
+    "assets": 728,
+    "functions": 11,
+    "originalValidatedSourceCommit": "4181975509eec7e701d1ae8830dad3a94b5a5f12",
+    "cliCommandsRerun": 0,
+    "sourceDrift": [],
+    "acceptance": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\frontend-ready-validator-check03.json",
+      "sha256": "0ddc669456406ce7f6f33e63648732f4706d3cb58fcd9072a028a4f9d26db93a",
+      "bytes": 4066
+    },
+    "originalRequiredCliCount": 30,
+    "originalOptionalProductionAuditsFailed": 3
+  },
+  "worker": {
+    "originalCommands": 4,
+    "sourceFiles": 4270,
+    "runtimeFiles": 7639,
+    "outputFiles": 3,
+    "capture": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\release-inputs03\\execution.json",
+      "sha256": "884a171868a7eaaa155b4adc696eb3c79b4affad2ade4dfe5596b2de853e23d4",
+      "bytes": 834
+    }
+  },
+  "deployment": {
+    "releaseReady": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\release-ready03.json",
+      "sha256": "8850c2790612cb8ba6e1b4b753f0f8a219d5e1cd1d4190264a7ec36cb6922236",
+      "bytes": 7793
+    },
+    "projectedBindingsBefore": 31,
+    "projectedBindingsAfter": 31,
+    "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+    "capturedAt": "2026-10-07T04:23:39.033Z",
+    "mode": "verify-public-captured-metadata-and-readonly-smoke",
+    "deploymentVerified": true,
+    "worker": {
+      "deploymentId": "e2e171a9-e53d-4c0a-bf15-8380fcd0d3a6",
+      "versionId": "aac929e4-c288-4ea1-986a-37d6f0533f27",
+      "trafficPercent": 100,
+      "sourceAnnotation": "Checklist six-app online test release a8f5dceb8512f31eb4a02bff6e53514b07f14f37"
+    },
+    "pages": [
+      {
+        "name": "cinashop-admin",
+        "deploymentId": "c2098933-e4cf-4971-b7b6-5823d2b30e8a",
+        "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "environment": "production",
+        "branch": "main",
+        "status": "success",
+        "domains": [
+          "cinashop-admin.pages.dev"
+        ]
+      },
+      {
+        "name": "cinashop-pc",
+        "deploymentId": "b6eb4dbd-39d0-432a-b5ea-47c3123801a0",
+        "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "environment": "production",
+        "branch": "main",
+        "status": "success",
+        "domains": [
+          "cinashop-pc.pages.dev",
+          "shop.cinaseek.ai"
+        ]
+      },
+      {
+        "name": "cinashop-h5",
+        "deploymentId": "a55b94fa-f039-4a4c-9e9a-040b5d863111",
+        "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "environment": "production",
+        "branch": "main",
+        "status": "success",
+        "domains": [
+          "cinashop-h5.pages.dev"
+        ]
+      },
+      {
+        "name": "cinashop-supplier",
+        "deploymentId": "61fefcae-6572-4610-8eec-5487a45dffa7",
+        "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "environment": "production",
+        "branch": "main",
+        "status": "success",
+        "domains": [
+          "cinashop-supplier.pages.dev"
+        ]
+      },
+      {
+        "name": "cinashop-kefu",
+        "deploymentId": "3777a2e3-a4d6-498a-ac47-0c26a62c0d95",
+        "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "environment": "production",
+        "branch": "main",
+        "status": "success",
+        "domains": [
+          "cinashop-kefu.pages.dev"
+        ]
+      }
+    ],
+    "existingProjectedBindingsPreserved": true,
+    "secretValuesInspected": false,
+    "publicH5OriginVerified": true,
+    "smokePassed": 17,
+    "exactEntryAssetHashesPassed": 5,
+    "pagesFunctionsCompiledAndUploaded": 5,
+    "commands": [
+      {
+        "target": "api",
+        "evidence": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\api\\execution.json",
+          "sha256": "da662f748ec22bb52a7571678f84f63a6a469dda36e6423085e0fa644798ae78",
+          "bytes": 4306
+        },
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\api\\stdout.log",
+          "sha256": "ca1a6bfcd83e6a83c114fd83218f88124fd721856e9248e5f7199011da582472",
+          "bytes": 3474
+        },
+        "functionsCompiledAndUploaded": false
+      },
+      {
+        "target": "admin",
+        "evidence": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\admin\\execution.json",
+          "sha256": "25abaf85d49bed0c6ceea70a55b6afa5984616a3e9cf48169307d4b8511e2942",
+          "bytes": 3497
+        },
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\admin\\stdout.log",
+          "sha256": "8d03ff942b3efebf5961a6c5f52b45a11121f877f8cf705491be50040355e616",
+          "bytes": 523
+        },
+        "functionsCompiledAndUploaded": true
+      },
+      {
+        "target": "pc",
+        "evidence": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\pc\\execution.json",
+          "sha256": "c554a469a214cd36ddbbe718169958014359b3365e2c7abfb52a69cdb2f97ed5",
+          "bytes": 3479
+        },
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\pc\\stdout.log",
+          "sha256": "99f3a0b686574181570c91161087d4f11ef99f254dc8cba735da26e9a5263b84",
+          "bytes": 515
+        },
+        "functionsCompiledAndUploaded": true
+      },
+      {
+        "target": "supplier",
+        "evidence": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\supplier\\execution.json",
+          "sha256": "d0ee220ea343a5e0a59b7ca83ec8a2c4d5f632833310a839444235fc88f4dd5e",
+          "bytes": 3515
+        },
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\supplier\\stdout.log",
+          "sha256": "584aa3f054f36d14427c2a8b8b9500ac151a8dcfa9e6d6aaa7cd769898479fdb",
+          "bytes": 516
+        },
+        "functionsCompiledAndUploaded": true
+      },
+      {
+        "target": "kefu",
+        "evidence": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\kefu\\execution.json",
+          "sha256": "57718057beca162b95493f597a7d7a482db6a253b832bf42ef6f4395f2ff14a5",
+          "bytes": 3491
+        },
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\kefu\\stdout.log",
+          "sha256": "2d4efec2371adc994700b1f00a22a410db54ab454e5a04111dd1d2300a79daee",
+          "bytes": 473
+        },
+        "functionsCompiledAndUploaded": true
+      },
+      {
+        "target": "h5",
+        "evidence": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\h5\\execution.json",
+          "sha256": "058f890830a253a5806a34cee468905d4d3a9b48e184828c6ecb445b35652a7c",
+          "bytes": 3498
+        },
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\h5\\stdout.log",
+          "sha256": "d2b0f7d5ab0cddca78508c87293c2311e81eddba4375b90463c536e8ca3c517f",
+          "bytes": 520
+        },
+        "functionsCompiledAndUploaded": true
+      }
+    ],
+    "apiReconciliation": {
+      "receiver": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\root-release04\\api\\execution.json",
+        "sha256": "f55fdac34b4a42ee305d15d3d7fb0432381cf64c221f5d7fc8a13700fab6bad8",
+        "bytes": 5071
+      },
+      "normalization": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\api-runtime-reconciliation04.json",
+        "sha256": "1f2fb6eacadc72074028efed11a1dc1b8200e4685e8278d13392dc9d0c8c1b1d",
+        "bytes": 2053
+      },
+      "originalCommand": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\api\\execution.json",
+        "sha256": "da662f748ec22bb52a7571678f84f63a6a469dda36e6423085e0fa644798ae78",
+        "bytes": 4306
+      },
+      "originalReceiver": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\root-release03\\api\\execution.json",
+        "sha256": "507ab20a26680c8617d3b05675330569cbb2607bd214f27caab212dfd6df7f2b",
+        "bytes": 4266
+      },
+      "originalExecution": {
+        "error": null,
+        "commandInputs": {
+          "releaseReady": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\release-ready03.json",
+            "sha256": "8850c2790612cb8ba6e1b4b753f0f8a219d5e1cd1d4190264a7ec36cb6922236",
+            "bytes": 7793
+          },
+          "baseline": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\control-api-before03.json",
+            "sha256": "e9c6c2106b42e78cca4c82ab7108344b451ecfecec0d05e5e0d04a6fea22b6d3",
+            "bytes": 25580
+          },
+          "baselineExecution": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\root-release03\\before\\execution.json",
+            "sha256": "d1e9f8b6d156d4082a08cada6b30734a6691e2d180495f9e2ae9961f6f326ab0",
+            "bytes": 3832
+          },
+          "helper": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deploy-release03.cjs",
+            "sha256": "37f0fc9c5c993506409e825cd4f90c0f77557e9c3fc1860f6d6884afe8963763",
+            "bytes": 5513
+          },
+          "gate": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\release-ready-gate05.cjs",
+            "sha256": "3693366665acfd86fff9d3137d26b6dc34f92b35fa4f6066f62b5a32f70147f2",
+            "bytes": 13631
+          },
+          "frontendValidator": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\frontend-ready-validator03.cjs",
+            "sha256": "5d0c3ffb8864a5284282598775c243bff7e99330ff0d062ac29eadafff0b1029",
+            "bytes": 19247
+          },
+          "node": {
+            "file": "C:\\Program Files\\nodejs\\node.exe",
+            "sha256": "58e74bf02fc5bbacc41dcb8bef089961cd5bddd37830b87784e4fc624d145d1f",
+            "bytes": 91426304
+          },
+          "cli": {
+            "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\checkout\\workers-ts\\node_modules\\wrangler\\bin\\wrangler.js",
+            "sha256": "780661a508810f3b65786895b1ca9aacbc4f55d329ae6b8c1e49ec8433569f77",
+            "bytes": 3088
+          }
+        },
+        "releaseReady": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\release-ready03.json",
+          "sha256": "8850c2790612cb8ba6e1b4b753f0f8a219d5e1cd1d4190264a7ec36cb6922236",
+          "bytes": 7793
+        },
+        "afterInputError": "Whole current Worker installed runtime census\n+ actual - expected\n... Skipped lines\n\n  [\n    {\n      bytes: 387,\n      file: 'C:\\\\cinagroup\\\\cinashop\\\\.cache\\\\merge-release-20261007\\\\checkout\\\\workers-ts\\\\node_modules\\\\.bin\\\\bcrypt',\n      relative: '.bin/bcrypt',\n...\n    {\n-     bytes: 92,\n-     file: 'C:\\\\cinagroup\\\\cinashop\\\\.cache\\\\merge-release-20261007\\\\checkout\\\\workers-ts\\\\node_modules\\\\.cache\\\\wrangler\\\\wrangler-account.json',\n-     relative: '.cache/wrangler/wrangler-account.json',\n-     sha256: '9073d5f3f6c296bbe3d5d648db43bc9614f70da28bc87a62bc122b0645fa6932'\n-   },\n-   {\n      bytes: 66868,\n      file: 'C:\\\\cinagroup\\\\cinashop\\\\.cache\\\\merge-release-20261007\\\\checkout\\\\workers-ts\\\\node_modules\\\\.package-lock.json',\n      relative: '.package-lock.json',\n      sha256: 'b8549f363d3f7a1845df4c925362bd7907d7b18e9d16756701c789ee882e3c9e'\n    },\n",
+        "step": "api",
+        "scope": "authorized-existing-six-app-test-release",
+        "sourceCommit": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "cwd": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\checkout\\workers-ts",
+        "command": [
+          "C:\\Program Files\\nodejs\\node.exe",
+          "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\checkout\\workers-ts\\node_modules\\wrangler\\bin\\wrangler.js",
+          "deploy",
+          "--config",
+          "wrangler.toml",
+          "--keep-vars",
+          "--message",
+          "Checklist six-app online test release a8f5dceb8512f31eb4a02bff6e53514b07f14f37"
+        ],
+        "startedAt": "2026-10-07T04:00:13.772Z",
+        "completedAt": "2026-10-07T04:01:27.217Z",
+        "exitCode": 0,
+        "signal": null,
+        "afterHead": "a8f5dceb8512f31eb4a02bff6e53514b07f14f37",
+        "afterTrackedStatus": "",
+        "stdout": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\api\\stdout.log",
+          "sha256": "ca1a6bfcd83e6a83c114fd83218f88124fd721856e9248e5f7199011da582472",
+          "bytes": 3474
+        },
+        "stderr": {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\api\\stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "cacheRemoved": true
+    },
+    "originalApiGuardFailureRetained": true,
+    "apiRedeployedForReconciliation": false,
+    "inputs": [
+      {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\control-api-before03.json",
+        "sha256": "e9c6c2106b42e78cca4c82ab7108344b451ecfecec0d05e5e0d04a6fea22b6d3",
+        "bytes": 25580
+      },
+      {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\control-api-after03.json",
+        "sha256": "83265dba3b7fac3ff9fd97dd51258d325c5fbf190203f1fcc560816d877007ff",
+        "bytes": 22626
+      },
+      {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\probe\\stdout.log",
+        "sha256": "ba4d212d9a405086386da28b8797bd256e99a954d53acd8dcdbdcbe142fbab7e",
+        "bytes": 3593
+      }
+    ],
+    "productionDDLExecuted": false,
+    "productionGrantsExecuted": false,
+    "formalBusinessAcceptanceClaimed": false
+  },
+  "routeAndChecklistBinding": {
+    "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\route-checklist-binding02\\report.json",
+    "sha256": "90d787217eead649072009e78c77b96fcb2a4f7a6f7c456d97ee5bd0e088a33d",
+    "bytes": 502316
+  },
+  "historicalFailures": {
+    "candidateCleanupGuard": {
+      "originalToolObservedFailure": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04-failure.json",
+        "sha256": "763f7a569fa4d8ea0429157bc1283b4dc16a3eff93462c5386afca5865fdcea4",
+        "bytes": 1222
+      },
+      "originalNativeCommands": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\01.execution.json",
+          "sha256": "33009db2bc031b1bbce32feee79f400dc88e58097d9d7b7dbb0e3c82e7e650ad",
+          "bytes": 730
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\02.execution.json",
+          "sha256": "90362983936faa914c89db8f95f1496f75c6d16dd1b712109c5c87bd014a8f2e",
+          "bytes": 737
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\03.execution.json",
+          "sha256": "da1e07078433a70bd85d807dceb7bc3d9937574ef2be3e4462e78dbd94616c64",
+          "bytes": 760
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\04.execution.json",
+          "sha256": "b338b45ab97a6519313ff866d5e071e0a78b743d874af86ceea1016e9275be1e",
+          "bytes": 759
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\05.execution.json",
+          "sha256": "0255f8c5dec9fd2b214b450f73358b0461b2ee0943280f8fa645d66dd1b40538",
+          "bytes": 737
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\06.execution.json",
+          "sha256": "c5ae93c541a4a40ff8a37c65acfbf046e6845e50cba014f3c42f10f7d137ee35",
+          "bytes": 835
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\07.execution.json",
+          "sha256": "09aa62162bafcf087c63b67b6a441acecf369b21ae6f3d5d9c801daa5f2c8f17",
+          "bytes": 776
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\08.execution.json",
+          "sha256": "2c9088c689caced138b318ab64acc2132649b8f7f41058db10a9912c8e980b2b",
+          "bytes": 807
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\09.execution.json",
+          "sha256": "f709536da8fb48b12573b1efc620a162b6a885399a5d777bda47237cb6cdf8b0",
+          "bytes": 775
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\10.execution.json",
+          "sha256": "7441c68446071b67bfef9cf004c858745a1b494f4a3d4f924d66713187152b3d",
+          "bytes": 835
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\11.execution.json",
+          "sha256": "f75f35c4736bd48616bfb91c3da9d734256e71d9bb95a877eb3c63d03e5d114e",
+          "bytes": 804
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\12.execution.json",
+          "sha256": "b7b537a52d4d22cfc6ca6ea63311d69be8bbe995b55ee4d8d18c3d421bb9dbae",
+          "bytes": 1227
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\13.execution.json",
+          "sha256": "6acd241ca26dea2873a39b6d30c51b15bf5eca201162764c074b6f0ba99a82b0",
+          "bytes": 822
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\14.execution.json",
+          "sha256": "1a57e19b00831b398320e266f59f9cc8ec165883a60bf8eacaa2a3947b430c65",
+          "bytes": 833
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\15.execution.json",
+          "sha256": "a116a7e66d6679bdf9b50fb9fd31323479c7e7366a4bb089ee2641c1f75c5703",
+          "bytes": 776
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\16.execution.json",
+          "sha256": "f6f3a3e0be8a2287fcaf38e9649a171e8ff1d40a4c75a1267f724a7a60c78b50",
+          "bytes": 807
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\17.execution.json",
+          "sha256": "2d0628bc2c4f5bf85c0f8e270dc66e5b5e48b06bd75e42c105e481c65cf58f36",
+          "bytes": 774
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\18.execution.json",
+          "sha256": "681d0d0a853087454808f1c3a2acf6a14fab36ecf8f0c60a9660be0775acbb8e",
+          "bytes": 835
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\19.execution.json",
+          "sha256": "e376f42baff9a8fd420a9f145c7c295f2fcb0b64bbdba3a36b8f4daa774e76f8",
+          "bytes": 804
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\20.execution.json",
+          "sha256": "ac007048493251c7b6fef9fa906564d62189381ee6890dfcea3d420ebea9ddc4",
+          "bytes": 1227
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates04\\21.execution.json",
+          "sha256": "ded212473b8d913ee29a6c5759af88eb8cfd939d1b67362074394c0b32209f6d",
+          "bytes": 822
+        }
+      ],
+      "originalNativeCommandCount": 21,
+      "originalHelperExit": 1,
+      "originalAggregateSuccessClaimed": false,
+      "continuationCompletedCandidates": 2,
+      "continuationReport": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates05\\report.json",
+        "sha256": "45e37ddf96f6a4a1dee71f1743c9fc862aa8a5dde9d545e8f5acdb95da5cc8d8",
+        "bytes": 68177
+      }
+    },
+    "apiDeploymentGuard": {
+      "originalWranglerExit": 0,
+      "originalWrapperExit": 1,
+      "originalCommand": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\deployment03\\api\\execution.json",
+        "sha256": "da662f748ec22bb52a7571678f84f63a6a469dda36e6423085e0fa644798ae78",
+        "bytes": 4306
+      },
+      "originalReceiver": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\root-release03\\api\\execution.json",
+        "sha256": "507ab20a26680c8617d3b05675330569cbb2607bd214f27caab212dfd6df7f2b",
+        "bytes": 4266
+      },
+      "normalization": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\api-runtime-reconciliation04.json",
+        "sha256": "1f2fb6eacadc72074028efed11a1dc1b8200e4685e8278d13392dc9d0c8c1b1d",
+        "bytes": 2053
+      },
+      "reconciliationReceiver": {
+        "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\root-release04\\api\\execution.json",
+        "sha256": "f55fdac34b4a42ee305d15d3d7fb0432381cf64c221f5d7fc8a13700fab6bad8",
+        "bytes": 5071
+      },
+      "cacheRemoved": true,
+      "apiRedeployed": false
+    },
+    "fullCiRun": 37556086716,
+    "fullCiReport": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\failed-ci01\\report.json",
+      "sha256": "d74393331b6c92d92631e026a9763fe027e904c10437b0e06d0c8ba486d89c80",
+      "bytes": 7475
+    },
+    "typeFailureCancelledCiRun": 37562662846,
+    "typeFailureReport": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\type-failed-ci02-final01\\report.json",
+      "sha256": "7ac3732bad66e3b15fdaaa0d14fc587dfcd2e9384f07691a36ad502049806ae9",
+      "bytes": 1274
+    }
+  },
+  "cleanup": {
+    "candidates": [
+      {
+        "id": "feedback",
+        "relative": ".cache/worktrees/fe003d-checklist-evidence",
+        "branch": "codex/feedback-page-lifecycle-20260927",
+        "head": "2441ff9664d2ce737da29ccffbc981ed1506ffee",
+        "removed": true
+      },
+      {
+        "id": "supplier",
+        "relative": ".cache/worktrees/member-barcode-allocation",
+        "branch": "codex/supplier-product-media-20260927",
+        "head": "09fe34a12990d55eddfd08838ffbae967524afeb",
+        "removed": true
+      }
+    ],
+    "removedCandidates": 2,
+    "execution": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\cleanup-candidates05\\report.json",
+      "sha256": "45e37ddf96f6a4a1dee71f1743c9fc862aa8a5dde9d545e8f5acdb95da5cc8d8",
+      "bytes": 68177
+    },
+    "sourceHistory": {
+      "file": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\history-preservation03\\report.json",
+      "sha256": "bd22f08736b1002c5591eec8e912fff2c26b781406b9c8d92b2169ff7bf283bd",
+      "bytes": 853
+    },
+    "ownedWorktreeCleanup": "Separate final receipt is written outside checkout after this documentation is pushed",
+    "finalReceiptLocation": "C:\\cinagroup\\cinashop\\.cache\\merge-release-20261007\\root-release-complete-20261007.json"
+  },
+  "productionDDLExecuted": false,
+  "productionGrantsExecuted": false,
+  "formalBusinessAcceptanceClaimed": false
+}
