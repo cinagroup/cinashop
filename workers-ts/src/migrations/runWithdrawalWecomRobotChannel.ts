@@ -1,9 +1,12 @@
 import type { DbClient } from "@/lib/di";
-import { WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL } from "./withdrawalWecomRobotChannel";
+import { withdrawalWecomRobotChannelSql, type WithdrawalWecomMaintenanceTarget } from "./withdrawalWecomRobotChannel";
 
-export async function runWithdrawalWecomRobotChannel(db: Pick<DbClient, "$client">): Promise<void> {
+export async function runWithdrawalWecomRobotChannel(
+  db: Pick<DbClient, "$client">, target: WithdrawalWecomMaintenanceTarget,
+): Promise<void> {
   if (!db.$client) throw Error("Withdrawal WeCom channel upgrade requires a root database");
+  const installation = withdrawalWecomRobotChannelSql(target);
   await db.$client.begin("isolation level read committed", async (tx) => {
-    await tx.unsafe(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
+    await tx.unsafe(installation);
   });
 }

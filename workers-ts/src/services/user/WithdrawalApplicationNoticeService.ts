@@ -11,7 +11,7 @@ import { WECOM_CHANNEL_CHECK_DEFINITION } from "@/migrations/withdrawalWecomRobo
 
 export const WITHDRAWAL_APPLICATION_EVENT = "withdrawal.applied.notice";
 export const WITHDRAWAL_APPLICATION_MARK = "kefu_send_extract_application";
-export type WithdrawalWecomGap = "feature_disabled" | "channel_unavailable";
+export type WithdrawalWecomGap = "feature_disabled";
 
 /** Application + debit + immutable event commit together, including automatic balance approval. */
 export async function recordWithdrawalApplication(tx: DbClient, payload: WithdrawalApplicationOutboxPayload): Promise<void> {
@@ -52,16 +52,13 @@ export async function processWithdrawalApplication(tx: DbClient, event: {
     || centsToDecimal(decimalToCents(request.extractPrice) + decimalToCents(request.extractFee)) !== p.grossAmount) {
     throw new Error("提现申请提醒与原申请不匹配");
   }
-  // Durable child dispatch survives a crash after inbox creation or after any partial live fan-out.
-  await tx.insert(storeOrderOutbox).values({ eventKey: `${STAFF_REFRESH_EVENT}:${p.withdrawalId}`,
-    eventType: STAFF_REFRESH_EVENT, aggregateType: "withdrawal", aggregateId: p.withdrawalId,
-    payload: { withdrawalId: p.withdrawalId }, status: "PENDING", availableTime: now, addTime: now, updateTime: now });
   const configs = await tx.select().from(systemNotification).where(eq(systemNotification.mark, WITHDRAWAL_APPLICATION_MARK)).limit(2);
   if (configs.length > 1) throw new Error("客服提现通知存在重复配置来源");
   const config = configs[0];
   let robotGap: WithdrawalWecomGap | null = null;
   if (config?.isEntWechat === 1) {
-    // Keep the existing Kefu inbox available if a Worker deploy precedes the controlled CHECK upgrade.
+    // With the switch armed, a missing CHECK must leave the original event retryable.
+    // Fail before any child dispatch or inbox insert; the surrounding transaction rolls back.
     const ready = robotEnabled && (await tx.execute<{ ready: boolean }>(sql`
       SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_constraint c
         WHERE c.conrelid=pg_catalog.to_regclass('public.order_notification_delivery')
@@ -69,7 +66,7 @@ export async function processWithdrawalApplication(tx: DbClient, event: {
           AND pg_catalog.pg_get_constraintdef(c.oid)=${WECOM_CHANNEL_CHECK_DEFINITION}) AS ready
     `))[0]?.ready === true;
     if (!robotEnabled) robotGap = "feature_disabled";
-    else if (!ready) robotGap = "channel_unavailable";
+    else if (!ready) throw new Error("企业微信机器人渠道约束尚未安装，提现申请通知待重试");
     else await createImmutableDelivery(tx, {
       // The legacy URL/template are deliberately ignored. This channel is independent of the inbox switch.
       event: { id: event.id, eventKey: event.eventKey, aggregateId: event.aggregateId,
@@ -80,6 +77,10 @@ export async function processWithdrawalApplication(tx: DbClient, event: {
       deliveryPayload: { kind: "wecom_robot", withdrawalId: p.withdrawalId }, now,
     });
   }
+  // The child refresh and staff inbox commit atomically with robot staging and completion.
+  await tx.insert(storeOrderOutbox).values({ eventKey: `${STAFF_REFRESH_EVENT}:${p.withdrawalId}`,
+    eventType: STAFF_REFRESH_EVENT, aggregateType: "withdrawal", aggregateId: p.withdrawalId,
+    payload: { withdrawalId: p.withdrawalId }, status: "PENDING", availableTime: now, addTime: now, updateTime: now });
   if (!config || config.isSystem !== 1) return robotGap;
   // PHP addresses the bound UID, not the staff-account ID. Choose its lowest active staff ID
   // deterministically; do not send a duplicate or choose an arbitrary recipient nickname.

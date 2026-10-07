@@ -54,6 +54,20 @@ describe("withdrawal WeCom robot provider", () => {
     }
   });
 
+  it("cancels unconsumed bodies for oversized declared length and non-2xx responses", async () => {
+    for (const responseInit of [
+      { status: 200, headers: { "content-length": "2049" } },
+      { status: 503 },
+    ]) {
+      const canceled = vi.fn();
+      const response = new Response(new ReadableStream<Uint8Array>({ cancel: canceled }), responseInit);
+      const fetcher = vi.fn(async () => response) as unknown as typeof fetch;
+      await expect(sendWithdrawalWecomRobot(secret, payload, fetcher))
+        .rejects.toThrow("企业微信机器人投递结果未知");
+      expect(canceled).toHaveBeenCalledTimes(1);
+    }
+  });
+
   it("bounds a stalled response body even if its stream ignores AbortSignal", async () => {
     vi.useFakeTimers();
     try {

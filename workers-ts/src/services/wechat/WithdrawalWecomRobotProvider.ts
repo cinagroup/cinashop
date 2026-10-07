@@ -15,6 +15,7 @@ export function validWithdrawalWecomWebhook(value: unknown): value is string {
 async function boundedResponse(response: Response): Promise<unknown> {
   const length = response.headers.get("content-length");
   if (length !== null && (!/^\d+$/.test(length) || Number(length) > MAX_RESPONSE_BYTES)) {
+    void response.body?.cancel().catch(() => undefined);
     throw new Error("企业微信机器人响应结果未知");
   }
   if (!response.body) throw new Error("企业微信机器人响应结果未知");
@@ -67,7 +68,10 @@ export async function sendWithdrawalWecomRobot(
         signal: controller.signal,
         body: JSON.stringify({ msgtype: "text", text: { content: `收到一笔提现申请，请在后台查看。申请编号：${payload.withdrawalId}` } }),
       });
-      if (!response.ok) throw new Error("企业微信机器人 HTTP 响应结果未知");
+      if (!response.ok) {
+        void response.body?.cancel().catch(() => undefined);
+        throw new Error("企业微信机器人 HTTP 响应结果未知");
+      }
       const data = await boundedResponse(response);
       if (!data || typeof data !== "object" || Array.isArray(data) || !("errcode" in data)
         || !Number.isSafeInteger((data as { errcode: unknown }).errcode)) {

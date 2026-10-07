@@ -3,7 +3,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
 import { user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow,
-  storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery, notificationTemplate } from "@/models/schema";
+  storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery,
+  orderNotificationDeliveryAction, notificationTemplate } from "@/models/schema";
 import { createContainerFromDb, type Container } from "@/lib/di";
 import type { Env, AppVariables, OrderMessage, OrderNotificationOutboxMessage } from "@/env";
 import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
@@ -11,7 +12,8 @@ import { OrderOutboxService, isOrderNotificationOutboxMessage } from "@/services
 import { OrderNotificationAdminService } from "@/services/order/OrderNotificationAdminService";
 import { WITHDRAWAL_APPLICATION_EVENT, WITHDRAWAL_APPLICATION_MARK } from "@/services/user/WithdrawalApplicationNoticeService";
 import { OrderNotificationDeliveryService, isOrderNotificationDeliveryMessage } from "@/services/order/OrderNotificationDeliveryService";
-import { WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL } from "@/migrations/withdrawalWecomRobotChannel";
+import { withdrawalWecomRobotChannelSql, type WithdrawalWecomMaintenanceTarget } from "@/migrations/withdrawalWecomRobotChannel";
+import { runWithdrawalWecomRobotChannel } from "@/migrations/runWithdrawalWecomRobotChannel";
 import { KefuInboxService } from "@/services/kefu/KefuInboxService";
 import { userUnreadMessageCount, visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
 import { kefuapiRoutes } from "@/routes/kefuapi";
@@ -26,6 +28,7 @@ import { financePostgres } from "./helpers/financePostgres";
 
 let fixture: Awaited<ReturnType<typeof financePostgres>>, container: Container;
 let withdrawal: UserWithdrawalService, outbox: OrderOutboxService, inbox: KefuInboxService;
+let maintenanceTarget: WithdrawalWecomMaintenanceTarget, maintenanceSql: string;
 const sent: OrderMessage[] = [];
 const sendBatch = vi.fn(async (messages: Iterable<MessageSendRequest<OrderMessage>>) => {
   sent.push(...Array.from(messages, (message) => message.body));
@@ -39,13 +42,18 @@ const input = (extractType = "alipay") => ({ extractType, extractPrice: "20.00",
 
 beforeAll(async () => {
   fixture = await financePostgres([user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow,
-    storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery, notificationTemplate], { namespace: "public" });
+    storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery,
+    orderNotificationDeliveryAction, notificationTemplate], { namespace: "public" });
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL); await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
   await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL); await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
   await fixture.exec(STAFF_NOTIFICATION_REFRESH_SQL);
   await fixture.exec("CREATE UNIQUE INDEX soob_event_key_uq ON store_order_outbox(event_key); CREATE UNIQUE INDEX smsg_event_key_uq ON system_message(event_key);");
   await fixture.exec("CREATE UNIQUE INDEX ond_event_channel_uq ON order_notification_delivery(event_key,channel); ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
-  await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
+  await fixture.exec("CREATE UNIQUE INDEX onda_request_key_uq ON order_notification_delivery_action(request_key)");
+  const [identity] = await fixture.db.execute<{ database: string; role: string }>(sql`SELECT current_database() AS database, current_user AS role`);
+  maintenanceTarget = { expectedDatabase: identity.database, expectedMaintenanceRole: identity.role };
+  maintenanceSql = withdrawalWecomRobotChannelSql(maintenanceTarget);
+  await fixture.exec(maintenanceSql);
   container = createContainerFromDb(fixture.db); withdrawal = new UserWithdrawalService(container);
   outbox = new OrderOutboxService(container, env); inbox = new KefuInboxService(container);
 }, 30000);
@@ -79,6 +87,16 @@ async function consume() {
   await outbox.processMessage(message); return message;
 }
 async function notice() { await withdrawal.apply(7, input()); return consume(); }
+async function queuedRobotDelivery() {
+  envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED = "enabled";
+  await fixture.db.update(systemNotification).set({ isEntWechat: 1 });
+  const event = await notice();
+  const delivery = new OrderNotificationDeliveryService(container, env);
+  await delivery.dispatchPending(10, event.eventKey);
+  const message = sent.find((value) => isOrderNotificationDeliveryMessage(value));
+  if (!message || !isOrderNotificationDeliveryMessage(message)) throw Error("Missing robot delivery message");
+  return { delivery, message };
+}
 
 describe("withdrawal application events and isolated staff inbox", () => {
   it("registers rerunnable DDL, actual enum constraints and the inbox index", async () => {
@@ -222,6 +240,37 @@ describe("withdrawal application events and isolated staff inbox", () => {
       text: { content: `收到一笔提现申请，请在后台查看。申请编号：${rows[0].withdrawalId}` } });
   });
 
+  it("holds a timed-out robot send as UNKNOWN without Queue resend until manual confirmation", async () => {
+    envOverrides.WECHAT_WITHDRAWAL_ROBOT_WEBHOOK = `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${"a".repeat(32)}`;
+    const { delivery, message } = await queuedRobotDelivery();
+    const fetcher = vi.fn((_url: URL | RequestInfo, init?: RequestInit) => new Promise<Response>((_, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new Error("timeout")), { once: true });
+    })) as unknown as typeof fetch;
+    expect(await delivery.processMessage(message, fetcher)).toBe("unknown");
+    expect((await fixture.db.select().from(orderNotificationDelivery))[0].status).toBe("UNKNOWN");
+    expect(await delivery.processMessage(message, fetcher)).toBe("unknown");
+    expect(await delivery.dispatchPending(10, message.eventKey)).toMatchObject({ claimed: 0, enqueued: 0 });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const [row] = await fixture.db.select().from(orderNotificationDelivery);
+    const admin = new OrderNotificationAdminService(container, env);
+    const decision = { requestKey: crypto.randomUUID(), reason: "已核对企业微信后台确认发送", providerReference: "verified-in-console" };
+    expect(await admin.confirmSent(row.id, 1, decision)).toMatchObject({ duplicate: false });
+    expect(await admin.confirmSent(row.id, 1, decision)).toMatchObject({ duplicate: true });
+    expect((await fixture.db.select().from(orderNotificationDelivery))[0].status).toBe("SENT");
+    expect(await fixture.db.select().from(orderNotificationDeliveryAction)).toHaveLength(1);
+    expect(await delivery.processMessage(message, fetcher)).toBe("already-sent");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  }, 15000);
+
+  it("stops a robot delivery with a missing Secret as DEAD without calling the provider", async () => {
+    const { delivery, message } = await queuedRobotDelivery();
+    const fetcher = vi.fn() as unknown as typeof fetch;
+    expect(await delivery.processMessage(message, fetcher)).toBe("dead");
+    expect(await delivery.processMessage(message, fetcher)).toBe("dead");
+    expect((await fixture.db.select().from(orderNotificationDelivery))[0].status).toBe("DEAD");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("preserves the existing staff inbox when the robot switch is also enabled", async () => {
     envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED = "enabled";
     await fixture.db.update(systemNotification).set({ isEntWechat: 1 });
@@ -248,32 +297,76 @@ describe("withdrawal application events and isolated staff inbox", () => {
     }
   });
 
-  it("records a post-commit gap and keeps Kefu inbox when the channel CHECK is not installed", async () => {
+  it("keeps the original event retryable until the robot CHECK is installed, then stages both destinations once", async () => {
     envOverrides.WITHDRAWAL_WECOM_ROBOT_ENABLED = "enabled";
     await fixture.db.update(systemNotification).set({ isEntWechat: 1 });
-    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
     try {
-      const event = await notice();
-      expect((await fixture.db.select().from(systemMessage)).map((row) => row.userId)).toEqual([10, 11]);
+      await withdrawal.apply(7, input());
+      await expect(consume()).rejects.toThrow("渠道约束尚未安装");
+      const failed = await applicationEvent();
+      expect(failed.status).toBe("FAILED");
+      expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(1);
+      expect(await fixture.db.select().from(systemMessage)).toHaveLength(0);
       expect(await fixture.db.select().from(orderNotificationDelivery)).toHaveLength(0);
+      expect(await fixture.db.select().from(userBrokerage)).toHaveLength(1);
+      await fixture.exec(maintenanceSql);
+      await outbox.replay(failed.id);
+      const message = await consume();
       expect((await applicationEvent()).status).toBe("COMPLETED");
-      expect(warning).toHaveBeenCalledWith(expect.objectContaining({ event: "withdrawal_wecom_robot_gap",
-        eventKey: event.eventKey, errorCode: "channel_unavailable" }));
+      expect((await fixture.db.select().from(systemMessage)).map((row) => row.userId)).toEqual([10, 11]);
+      expect((await fixture.db.select().from(orderNotificationDelivery))[0]).toMatchObject({
+        eventKey: message.eventKey, channel: "wecom_robot", status: "PENDING" });
+      expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(2);
+      expect(await outbox.processMessage(message)).toBe("already-completed");
+      expect(await fixture.db.select().from(systemMessage)).toHaveLength(2);
+      expect(await fixture.db.select().from(orderNotificationDelivery)).toHaveLength(1);
     } finally {
-      await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
-      warning.mockRestore();
+      await fixture.exec(maintenanceSql);
     }
   });
 
   it("upgrades the old channel CHECK once and rejects unknown CHECK drift", async () => {
-    expect(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL).toContain("no automatic repair");
+    expect(maintenanceSql).toContain("no automatic repair");
     await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
-    await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
-    await fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL);
+    await fixture.exec(maintenanceSql);
+    await fixture.exec(maintenanceSql);
     await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms'));");
-    await expect(fixture.exec(WITHDRAWAL_WECOM_ROBOT_CHANNEL_SQL)).rejects.toThrow(/CHECK drift/);
+    await expect(fixture.exec(maintenanceSql)).rejects.toThrow(/CHECK drift/);
     await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping','wecom_robot'));");
+  });
+
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("PostgreSQL 16: refuses wrong maintenance identity, competing lock and oversized table", async () => {
+    await expect(runWithdrawalWecomRobotChannel(fixture.db, { ...maintenanceTarget, expectedDatabase: "wrong_database" }))
+      .rejects.toThrow(/maintenance identity/);
+    await expect(runWithdrawalWecomRobotChannel(fixture.db, { ...maintenanceTarget, expectedMaintenanceRole: "wrong_role" }))
+      .rejects.toThrow(/maintenance identity/);
+    const client = fixture.db.$client;
+    if (!client) throw Error("Root PostgreSQL client required");
+    await expect(client.begin(async (tx) => {
+      await tx.unsafe("SET TRANSACTION READ ONLY");
+      await tx.unsafe(maintenanceSql);
+    })).rejects.toThrow(/maintenance identity/);
+    await client.begin(async (tx) => {
+      await tx.unsafe("SET LOCAL statement_timeout='2000ms'; SET LOCAL lock_timeout='500ms'; SET LOCAL idle_in_transaction_session_timeout='2000ms'");
+      await tx.unsafe(maintenanceSql);
+      const [timeouts] = await tx.unsafe("SELECT current_setting('statement_timeout') AS statement, current_setting('lock_timeout') AS lock, current_setting('idle_in_transaction_session_timeout') AS idle");
+      expect(timeouts).toMatchObject({ statement: "2s", lock: "500ms", idle: "2s" });
+    });
+    await client.begin(async (tx) => {
+      await tx.unsafe("LOCK TABLE public.order_notification_delivery IN ACCESS EXCLUSIVE MODE");
+      await expect(runWithdrawalWecomRobotChannel(fixture.db, maintenanceTarget)).rejects.toThrow(/lock/);
+    });
+    await fixture.exec("ALTER TABLE order_notification_delivery DROP CONSTRAINT ond_channel_ck; ALTER TABLE order_notification_delivery ADD CONSTRAINT ond_channel_ck CHECK (channel IN ('sms','wechat_official','wechat_routine','wechat_shipping'));");
+    try {
+      await fixture.exec("INSERT INTO order_notification_delivery(outbox_id,event_key,order_id,user_id,notice_mark,channel,payload) SELECT 1,'budget:'||i,1,7,'fixture','sms','{\"kind\":\"sms\",\"params\":{}}'::jsonb FROM generate_series(1,10001) i");
+      await expect(runWithdrawalWecomRobotChannel(fixture.db, maintenanceTarget)).rejects.toThrow(/row budget/);
+      const [check] = await fixture.db.execute<{ definition: string }>(sql`SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='public.order_notification_delivery'::regclass AND conname='ond_channel_ck'`);
+      expect(check.definition).not.toContain("wecom_robot");
+    } finally {
+      await fixture.exec("TRUNCATE TABLE order_notification_delivery");
+      await runWithdrawalWecomRobotChannel(fixture.db, maintenanceTarget);
+    }
   });
 
   it("supports controlled Admin configuration without allowing unimplemented external channels", async () => {
