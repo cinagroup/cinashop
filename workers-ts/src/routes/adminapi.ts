@@ -844,8 +844,10 @@ adminapiRoutes.delete("/brand/del/:id", adminAuth, AdminCrud.adminBrandDel);
 
 // ─── 系统管理员/角色 (M16) ──────────────────────────────────
 adminapiRoutes.get("/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
+adminapiRoutes.get("/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 adminapiRoutes.post("/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);
 adminapiRoutes.get("/system_role/list", adminAuth, AdminCrud.adminSystemRoleList);
+adminapiRoutes.get("/system_role/directory", adminAuth, AdminCrud.adminSystemRoleDirectory);
 adminapiRoutes.post("/system_role/save", adminAuth, AdminCrud.adminSystemRoleSave);
 adminapiRoutes.delete("/system_role/del/:id", adminAuth, AdminCrud.adminSystemRoleDel);
 adminapiRoutes.get("/system_menus/tree", adminAuth, AdminCrud.adminSystemPermissionTree);

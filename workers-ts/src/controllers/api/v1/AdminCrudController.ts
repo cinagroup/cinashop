@@ -1473,6 +1473,104 @@ export async function adminBrandDel(c: C) {
 // 系统管理员/角色管理 (M16)
 // ═══════════════════════════════════════════════════════════
 
+function systemDirectoryQuery(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  c.header("Pragma", "no-cache");
+  const query = new URL(c.req.url).searchParams;
+  const allowed = new Set(["page", "limit", "keyword", "status"]);
+  for (const key of query.keys()) {
+    if (!allowed.has(key) || query.getAll(key).length !== 1) {
+      throw new ValidateException("目录查询参数错误");
+    }
+  }
+  const integer = (key: "page" | "limit", fallback: number, maximum: number) => {
+    const value = query.get(key);
+    if (value === null) return fallback;
+    if (!/^[1-9]\d*$/.test(value) || value.length > 3 || Number(value) > maximum) {
+      throw new ValidateException(`${key} 必须为 1 到 ${maximum} 的整数`);
+    }
+    return Number(value);
+  };
+  const rawKeyword = query.get("keyword") ?? "";
+  if (rawKeyword.length > 64 || /[\u0000-\u001f\u007f]/u.test(rawKeyword)) {
+    throw new ValidateException("关键词最多 64 个字符且不能包含控制字符");
+  }
+  const status = query.get("status") ?? "";
+  if (status !== "" && status !== "0" && status !== "1") {
+    throw new ValidateException("状态只能为 0 或 1");
+  }
+  const keyword = rawKeyword.trim();
+  const page = integer("page", 1, 500);
+  const limit = integer("limit", 20, 100);
+  if ((page - 1) * limit > 10_000) {
+    throw new ValidateException("目录分页偏移最多为 10000");
+  }
+  return {
+    page,
+    limit,
+    // Escape LIKE metacharacters so search is a literal substring.
+    pattern: keyword ? `%${keyword.replace(/[\\%_]/g, "\\$&")}%` : undefined,
+    status: status === "" ? undefined : Number(status),
+  };
+}
+
+/** GET /api/admin/system_admin/directory — 平台管理员只读分页目录 */
+export async function adminSystemAdminDirectory(c: C) {
+  const query = systemDirectoryQuery(c);
+  const { and, eq, gte, ilike, or, desc, sql } = await import("drizzle-orm");
+  const { systemAdmin } = await import("@/models/schema");
+  const where = and(
+    eq(systemAdmin.adminType, 1), eq(systemAdmin.isDel, 0), gte(systemAdmin.status, 0),
+    query.status === undefined ? undefined : eq(systemAdmin.status, query.status),
+    query.pattern ? or(ilike(systemAdmin.account, query.pattern), ilike(systemAdmin.realName, query.pattern),
+      ilike(systemAdmin.phone, query.pattern)) : undefined,
+  );
+  const result = await withTx(c.get("container"), async (tx) => {
+    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+    await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+    await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+    await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
+    const [count] = await tx.select({ total: sql<number>`count(*)::integer` }).from(systemAdmin).where(where);
+    const list = await tx.select({
+      id: systemAdmin.id, account: systemAdmin.account, realName: systemAdmin.realName,
+      phone: systemAdmin.phone, roles: systemAdmin.roles, level: systemAdmin.level,
+      status: systemAdmin.status, lastTime: systemAdmin.lastTime,
+    }).from(systemAdmin).where(where).orderBy(desc(systemAdmin.id))
+      .limit(query.limit).offset((query.page - 1) * query.limit);
+    return { list, total: count.total, page: query.page, limit: query.limit };
+  });
+  return jsonOk(c, result);
+}
+
+/** GET /api/admin/system_role/directory — 平台角色只读分页目录 */
+export async function adminSystemRoleDirectory(c: C) {
+  const query = systemDirectoryQuery(c);
+  const { and, eq, gte, ilike, inArray, desc, sql } = await import("drizzle-orm");
+  const { systemRole } = await import("@/models/schema");
+  const container = c.get("container");
+  const where = and(
+    eq(systemRole.relationId, 0), inArray(systemRole.type, [0, 1]), gte(systemRole.status, 0),
+    query.status === undefined ? undefined : eq(systemRole.status, query.status),
+    query.pattern ? ilike(systemRole.roleName, query.pattern) : undefined,
+  );
+  const result = await withTx(container, async (tx) => {
+    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+    await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+    await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+    await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
+    const [count] = await tx.select({ total: sql<number>`count(*)::integer` }).from(systemRole).where(where);
+    const rows = await tx.select({ id: systemRole.id, roleName: systemRole.roleName,
+      rules: systemRole.rules, level: systemRole.level, status: systemRole.status,
+    }).from(systemRole).where(where).orderBy(desc(systemRole.id))
+      .limit(query.limit).offset((query.page - 1) * query.limit);
+    const permissions = await new AdminPermissionService({ ...container, db: tx })
+      .resolveManyRulePermissionKeys(rows.map((row) => row.rules));
+    const list = rows.map((row, index) => ({ ...row, permissionKeys: permissions[index] ?? [] }));
+    return { list, total: count.total, page: query.page, limit: query.limit };
+  });
+  return jsonOk(c, result);
+}
+
 /** GET /api/admin/system_admin/list — 管理员列表 */
 export async function adminSystemAdminList(c: C) {
   const container = c.get("container");
