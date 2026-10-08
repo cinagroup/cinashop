@@ -140,7 +140,7 @@ try {
     $taskMainBindings = @($taskCurrent.result.bindings | Where-Object type -eq 'hyperdrive' |
         Sort-Object name | ForEach-Object { "{0}:{1}" -f $_.name,$_.id })
     $taskExpectedMain = @('HYPERDRIVE:ba7faa6680cd48d4b3a1d36a7a5fc8f7',
-        'HYPERDRIVE_ADMIN:446e94a4de0143f58c8e5178ec55db8b') | Sort-Object
+        'HYPERDRIVE_ADMIN:446e94a4de0143f58c8e5178ec55db8b')
     if ($taskMainBindings.Count -ne 2 -or
         ($taskMainBindings -join '|') -cne ($taskExpectedMain -join '|')) {
         throw 'Current API Hyperdrive bindings differ from reviewed target.'
