@@ -1,5 +1,13 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 当前增量：Admin 权限写入共同事务（2026-10-08，本地验证完成，未发布）
+
+现代管理员保存、角色保存/软删除、旧数字角色 POST 与 Division 平台账号分配/删除共用 public 管理员及角色双表屏障；全部决定读取在屏障后，以真实密码版本、到期、当前角色和所属域复核授权，锁持有到实际 COMMIT。补齐本人角色/状态/等级及整组最后超级管理员保护、受限角色委派和完整 RETURNING/实际存储回读。保留现代 role.level=0 创建与有授权的本人改密码入口，旧 JWT 随密码版本失效。
+
+已引用角色的真实权限/status 变化或删除暂返回明确409；这是一项用户行为限制，完整影响预览、revision绑定、明确确认、耐久UUID回执及响应丢失恢复仍未实现。旧独立启停/删除和 staff/account 写全链也继续开放，不用这一拒绝替代旧正常变更验收。
+
+本批58业务、77相关回归、16真实PG16测试合计 **151唯一项实际通过**；unit-types03/runtime-types01两套完整检查均0。最初导入EPERM和两轮单元类型失败保留，最终两处类型注解的编译代码与原生执行输入精确一致。独有PG16.15 gmbNQ9/port65160 fixtures0、自停及独立pg_ctl status3/no server running已核对，数据和日志保留。原路由/调用CLI实际0：**PHP1904/Worker2349、896可执行、970可行动缺口（Admin902）**；Admin602调用/633变体全部可执行。没有新增路由或抵扣缺口，所有复选行保持 **404总项/249完成/155开放**。完整本地证据及限制见[本批合同](workers-ts/docs/admin-authority-write-contract-20261008.md)。新提交CI、推送、合并和部署未执行，Primary保持原HEAD与干净状态。
+
 ## 当前增量：旧 Admin 角色创建、编辑与基本保存链（2026-10-08，本地验证完成，未发布）
 
 承接真实旧 `GET /adminapi/setting/role/create`、`GET /adminapi/setting/role/:id/edit` 与 `POST /adminapi/setting/role/:id`，并新增三个v1同handler别名。GET返回旧页面实际消费的菜单与七列role；POST兼容先编辑再添加的旧回显，但域/下一层级由实时actor派生。新form/manage细权限与原名单权限分离，不提升为现代全层级读写。每个真实grant以原数字ID作为独立叶子，完整祖先名称作标签，父/子/父子组合无损回传；mapped keys必须实时subset，合格opaque仅按当前原数字membership保留，特殊受保护metadata不能伪装opaque。只剔除经过证明的纯结构祖先。

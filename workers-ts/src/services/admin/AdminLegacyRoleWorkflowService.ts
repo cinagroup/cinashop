@@ -5,6 +5,7 @@ import { systemAdmin, systemMenus, systemRole } from '@/models/schema';
 import { ApiErrorCode, AuthException, HttpApiException, NotFoundException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
 import { AdminPermissionService, canRetainOpaqueLegacyMenu, hasAdminPermission } from './AdminPermissionService';
+import { inspectAdminRoleMutationImpact, requireAdminRoleImpactConfirmation, withAdminAuthorityWriteTx } from './AdminAuthorityWriteService';
 
 export const MAX_LEGACY_ROLE_MENU_ROWS = 10_000;
 export const MAX_LEGACY_ROLE_SELECTED_MENUS = 2_048;
@@ -218,13 +219,18 @@ export class AdminLegacyRoleWorkflowService {
   async save(pathId: string, body: unknown, actor: AdminLegacyRoleActor): Promise<{ id: number; created: boolean }> {
     const input = parseLegacyRoleSave(pathId, body); assertActor(actor);
     try {
-      return await withTx(this.container, async tx => {
-        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`); await deadlines(tx);
+      return await withAdminAuthorityWriteTx(this.container, actor, 'system.legacy_role_manage', async (tx, authorityActor) => {
         const live = await liveActor(tx, actor, true);
         const current = input.id ? await targetRole(tx, input.id, live, true) : undefined;
         const directory = await catalogue(tx, live, true);
-        if (current) canonicalSelection(numericRules(current.rules), directory);
+        const currentSelection = current ? canonicalSelection(numericRules(current.rules), directory) : undefined;
         const rules = canonicalSelection(input.menuIds, directory).join(',');
+        // Sorting and removing structural ancestors preserve the actual grant
+        // set. Only a permission/status change requires reference confirmation.
+        if (current && (current.status !== input.status || currentSelection!.join(',') !== rules)) {
+          await requireAdminRoleImpactConfirmation(tx, authorityActor,
+            await inspectAdminRoleMutationImpact(tx, current, { rules, status: input.status }));
+        }
         assertActor(actor);
         const fields = { roleName: input.roleName, rules, status: input.status };
         const rows = current ? await tx.update(systemRole).set(fields).where(and(eq(systemRole.id, current.id),

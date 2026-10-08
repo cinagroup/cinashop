@@ -8,6 +8,7 @@ import { systemAdmin, systemMenus, systemRole } from '../src/models/schema';
 import { adminAuthMiddleware } from '../src/middleware/admin-auth';
 import { adminRuntimeAuthMiddleware } from '../src/middleware/admin-runtime-auth';
 import { installRuntimeAdminBoundaryInTransaction } from '../src/migrations/runtimeAdminBoundary';
+import { runtimeBusinessPrivilegePlan } from '../src/migrations/runtimeBusinessPrivilegePlan';
 import { adminLegacyRoleCreateForm, adminLegacyRoleEditForm, adminLegacyRoleSave } from '../src/controllers/api/v1/AdminLegacyRoleController';
 import { ApiException, HttpApiException } from '../src/utils/errors';
 import { createToken, md5 } from '../src/utils/jwt';
@@ -187,12 +188,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Legacy role form
   async function runtime<T>(run: (env: Env, appRole: LoginPeer, adminRole: LoginPeer) => Promise<T>) {
     return fixture.withRuntimeRole!(async appRole => fixture.withRuntimeRole!(async adminRole => {
       await fixture.db.transaction(tx => installRuntimeAdminBoundaryInTransaction(tx, appRole.role, 'finance_test'));
-      await fixture.exec(`GRANT SELECT ON public.system_admin,public.system_role,public.system_menus TO "${appRole.role}","${adminRole.role}";
-        GRANT UPDATE(login_count) ON public.system_admin TO "${appRole.role}","${adminRole.role}";
-        GRANT UPDATE(id) ON public.system_menus TO "${appRole.role}","${adminRole.role}";
-        GRANT INSERT ON public.system_role TO "${appRole.role}","${adminRole.role}";
-        GRANT UPDATE(role_name,rules,status) ON public.system_role TO "${appRole.role}","${adminRole.role}";
-        GRANT USAGE ON SEQUENCE public.system_role_id_seq TO "${appRole.role}","${adminRole.role}"`);
+      for (const [kind, peer] of [['app', appRole], ['admin', adminRole]] as const) {
+        const plan = runtimeBusinessPrivilegePlan(kind);
+        const grants: string[] = [];
+        for (const table of ['system_admin', 'system_role', 'system_menus'] as const) {
+          grants.push(`GRANT ${plan.tables[table].join(',')} ON public.${table} TO "${peer.role}"`);
+          if (plan.updateColumns[table]) grants.push(`GRANT UPDATE(${plan.updateColumns[table].join(',')}) ON public.${table} TO "${peer.role}"`);
+          if (plan.tables[table].includes('INSERT')) grants.push(`GRANT USAGE ON SEQUENCE public.${table}_id_seq TO "${peer.role}"`);
+        }
+        await fixture.exec(grants.join(';'));
+      }
       await identity(appRole); await identity(adminRole);
       const env = { ...baseEnv, HYPERDRIVE: { connectionString: appRole.connectionString },
         HYPERDRIVE_ADMIN: { connectionString: adminRole.connectionString } } as Env;
@@ -248,7 +253,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Legacy role form
         .rejects.toMatchObject({ code: '42501' });
       await expect(appRole.exec("UPDATE system_role SET rules='system.manage' WHERE id=50")).rejects.toMatchObject({ code: '42501' });
       await expect(appRole.exec('UPDATE system_menus SET id=99 WHERE id=2')).rejects.toMatchObject({ code: '42501' });
-      await expect(adminRole.exec("UPDATE system_admin SET roles='901' WHERE id=100")).rejects.toMatchObject({ code: '42501' });
+      // The real Admin profile has table UPDATE, required by the common table
+      // barrier. Unlike app, raw Admin SQL can update roles: prove and roll back
+      // that fact instead of retaining the former column-grant 42501 oracle.
+      await adminRole.exec('BEGIN');
+      try {
+        expect(await adminRole.exec("UPDATE system_admin SET roles='901' WHERE id=100 RETURNING id,roles"))
+          .toEqual([{ id: 100, roles: '901' }]);
+      } finally { await adminRole.exec('ROLLBACK'); }
       let observedWrites = 0;
       const app = writeApplication(async tx => {
         const [state] = await tx.execute(sql`SELECT current_user AS role,session_user AS session,pg_backend_pid() AS pid,

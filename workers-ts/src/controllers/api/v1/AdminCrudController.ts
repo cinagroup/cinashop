@@ -12,11 +12,8 @@
 import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import type { AppVariables, Env } from "@/env";
-import {
-  AdminPermissionService,
-  assertDelegablePermissions,
-  normalizeRoleRules,
-} from "@/services/admin/AdminPermissionService";
+import { AdminPermissionService } from "@/services/admin/AdminPermissionService";
+import { AdminAuthorityWriteService, type AdminAuthorityActor } from "@/services/admin/AdminAuthorityWriteService";
 import { ValidateException } from "@/utils/errors";
 import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
 import { withTx } from "@/lib/di";
@@ -72,40 +69,11 @@ import { retirePlatformSourceProduct } from "@/services/activity/BargainSourcePr
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
-async function assertRoleAssignmentsWithinActor(
-  c: C,
-  roleIds: string | undefined,
-  requireEveryRole = true,
-): Promise<void> {
-  const actor = c.get("adminInfo");
-  if (!actor) throw new ValidateException("管理员身份不存在");
-  const permissions = new AdminPermissionService(c.get("container"));
-  const assignment = await permissions.resolveRoleAssignment(roleIds);
-  if (requireEveryRole && assignment.missingRoleIds.length) {
-    throw new ValidateException(`角色不存在或已停用: ${assignment.missingRoleIds.join(",")}`);
-  }
-  if (actor.level !== 0) {
-    if (assignment.legacyRuleIds.length) {
-      throw new ValidateException("包含旧版数字菜单规则的角色只能由超级管理员委派");
-    }
-    const granted = await permissions.resolveAdminPermissionKeys(actor);
-    assertDelegablePermissions(granted, assignment.keys);
-  }
-}
-
-async function assertRoleRulesWithinActor(c: C, rules: string): Promise<void> {
-  const actor = c.get("adminInfo");
-  if (!actor) throw new ValidateException("管理员身份不存在");
-  if (actor.level === 0) return;
-  if (rules.split(",").some((rule) => /^\d+$/.test(rule.trim()))) {
-    throw new ValidateException("旧版数字菜单规则只能由超级管理员迁移");
-  }
-  const permissions = new AdminPermissionService(c.get("container"));
-  const [granted, requested] = await Promise.all([
-    permissions.resolveAdminPermissionKeys(actor),
-    permissions.resolveRulePermissionKeys(rules),
-  ]);
-  assertDelegablePermissions(granted, requested);
+function systemAuthorityActor(c: C): AdminAuthorityActor {
+  c.header("Cache-Control", "private, no-store");
+  c.header("Pragma", "no-cache");
+  return { id: c.get("adminId") ?? 0, authVersion: c.get("socketAuthVersion") ?? "",
+    expiresAt: c.get("socketTokenExp") ?? 0 };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1618,91 +1586,10 @@ export async function adminSystemAdminList(c: C) {
 
 /** POST /api/admin/system_admin/save — 新增/编辑管理员 */
 export async function adminSystemAdminSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    account?: string;
-    real_name?: string;
-    phone?: string;
-    pwd?: string;
-    roles?: string;
-    level?: number;
-    status?: number;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemAdmin } = await import("@/models/schema");
-  const actor = c.get("adminInfo");
-  if (!actor) throw new ValidateException("管理员身份不存在");
-  // 管理员密码与登录一致用 bcrypt (AdminAuthService.login 用 bcrypt 校验)
-  const bcrypt = (await import("bcryptjs")).default;
-  const hashPwd = (pwd: string) => bcrypt.hash(pwd, 12);
-
-  const normalizeRoleIds = (value: string | undefined): string | undefined => {
-    if (value === undefined) return undefined;
-    const ids = [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
-    if (ids.some((id) => !/^[1-9]\d*$/.test(id))) throw new ValidateException("角色 ID 格式错误");
-    return ids.join(",");
-  };
-  const normalizedRoles = normalizeRoleIds(body.roles);
-  if (body.level !== undefined && (!Number.isInteger(body.level) || body.level < 0 || body.level > 9)) {
-    throw new ValidateException("管理员等级必须为 0 到 9 的整数");
-  }
-  if (body.status !== undefined && body.status !== 0 && body.status !== 1) {
-    throw new ValidateException("管理员状态参数错误");
-  }
-
-  if (body.id) {
-    const target = await container.db
-      .select({ level: systemAdmin.level, roles: systemAdmin.roles })
-      .from(systemAdmin)
-      .where(eq(systemAdmin.id, body.id))
-      .limit(1);
-    if (!target[0]) throw new ValidateException("管理员不存在");
-    if (actor.level !== 0 && (target[0].level === 0 || body.level === 0)) {
-      throw new ValidateException("只有超级管理员可以管理超级管理员账号");
-    }
-    if (actor.level !== 0) {
-      await assertRoleAssignmentsWithinActor(c, target[0].roles, false);
-    }
-    if (normalizedRoles !== undefined) {
-      await assertRoleAssignmentsWithinActor(c, normalizedRoles);
-    }
-    if (body.pwd && body.pwd.length < 12) throw new ValidateException("管理员密码至少 12 位");
-    const updates: Record<string, unknown> = {};
-    if (body.real_name !== undefined) updates.realName = body.real_name;
-    if (body.phone !== undefined) updates.phone = body.phone;
-    if (normalizedRoles !== undefined) updates.roles = normalizedRoles;
-    if (body.level !== undefined) updates.level = body.level;
-    if (body.status !== undefined) updates.status = body.status;
-    if (body.pwd) updates.pwd = await hashPwd(body.pwd);
-    await container.db.update(systemAdmin).set(updates).where(eq(systemAdmin.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-
-  if (!body.account?.trim()) return jsonFail(c, "账号不能为空");
-  if (!body.pwd || body.pwd.length < 12) return jsonFail(c, "新管理员密码至少 12 位");
-  const newLevel = body.level ?? 1;
-  if (actor.level !== 0 && newLevel === 0) throw new ValidateException("只有超级管理员可以创建超级管理员账号");
-  await assertRoleAssignmentsWithinActor(c, normalizedRoles ?? "");
-  const now = Math.floor(Date.now() / 1000);
-  const row = await container.db
-    .insert(systemAdmin)
-    .values({
-      account: body.account.trim(),
-      pwd: await hashPwd(body.pwd),
-      realName: body.real_name ?? "",
-      phone: body.phone ?? "",
-      roles: normalizedRoles ?? "",
-      level: newLevel,
-      status: body.status ?? 1,
-      adminType: 1,
-      relationId: 0,
-      headPic: "",
-      lastIp: "",
-      lastTime: now,
-    })
-    .returning({ id: systemAdmin.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
+  const actor = systemAuthorityActor(c);
+  const body = await readBoundedJsonObject(c.req.raw, 16_384);
+  const result = await new AdminAuthorityWriteService(c.get("container")).saveAdmin(body, actor);
+  return jsonOk(c, { id: result.id }, result.created ? "创建成功" : "更新成功");
 }
 
 /** GET /api/admin/system_role/list — 角色列表 */
@@ -1752,76 +1639,17 @@ export async function adminSystemPermissionTree(c: C) {
 
 /** POST /api/admin/system_role/save — 新增/编辑角色 */
 export async function adminSystemRoleSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    role_name?: string;
-    rules?: string;
-    level?: number;
-    status?: number;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemRole } = await import("@/models/schema");
-  const normalizedRules = body.rules === undefined ? undefined : normalizeRoleRules(body.rules);
-  const roleName = body.role_name?.trim();
-  if (body.role_name !== undefined && !roleName) throw new ValidateException("角色名称不能为空");
-  if (body.level !== undefined && (!Number.isInteger(body.level) || body.level < 0 || body.level > 9)) {
-    throw new ValidateException("角色等级必须为 0 到 9 的整数");
-  }
-  if (body.status !== undefined && body.status !== 0 && body.status !== 1) {
-    throw new ValidateException("角色状态参数错误");
-  }
-
-  if (body.id) {
-    const existing = await container.db
-      .select({ rules: systemRole.rules })
-      .from(systemRole)
-      .where(eq(systemRole.id, body.id))
-      .limit(1);
-    if (!existing[0]) throw new ValidateException("角色不存在");
-    await assertRoleRulesWithinActor(c, existing[0].rules);
-    if (normalizedRules !== undefined) await assertRoleRulesWithinActor(c, normalizedRules);
-    const updates: Record<string, unknown> = {};
-    if (roleName !== undefined) updates.roleName = roleName;
-    if (normalizedRules !== undefined) updates.rules = normalizedRules;
-    if (body.level !== undefined) updates.level = body.level;
-    if (body.status !== undefined) updates.status = body.status;
-    await container.db
-      .update(systemRole)
-      .set(updates)
-      .where(eq(systemRole.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-
-  await assertRoleRulesWithinActor(c, normalizedRules ?? "");
-  const row = await container.db
-    .insert(systemRole)
-    .values({
-      roleName: roleName ?? "新角色",
-      rules: normalizedRules ?? "",
-      level: body.level ?? 0,
-      status: body.status ?? 1,
-      type: 0,
-      relationId: 0,
-    })
-    .returning({ id: systemRole.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
+  const actor = systemAuthorityActor(c);
+  const body = await readBoundedJsonObject(c.req.raw, 65_536);
+  const result = await new AdminAuthorityWriteService(c.get("container")).saveRole(body, actor);
+  return jsonOk(c, { id: result.id }, result.created ? "创建成功" : "更新成功");
 }
 
 /** DELETE /api/admin/system_role/del/:id — 删除角色 */
 export async function adminSystemRoleDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemRole } = await import("@/models/schema");
-  const existing = await container.db
-    .select({ rules: systemRole.rules })
-    .from(systemRole)
-    .where(eq(systemRole.id, id))
-    .limit(1);
-  if (!existing[0]) throw new ValidateException("角色不存在");
-  await assertRoleRulesWithinActor(c, existing[0].rules);
-  await container.db.update(systemRole).set({ status: -1 }).where(eq(systemRole.id, id));
+  const rawId = c.req.param("id") ?? "0";
+  if (!/^[1-9]\d*$/.test(rawId) || rawId.length > 10) throw new ValidateException("ID错误");
+  await new AdminAuthorityWriteService(c.get("container")).deleteRole(Number(rawId), systemAuthorityActor(c));
   return jsonOk(c, null, "删除成功");
 }
 

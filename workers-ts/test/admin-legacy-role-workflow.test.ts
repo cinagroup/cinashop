@@ -153,6 +153,32 @@ describe('legacy platform role forms and numeric-menu writes', () => {
       expect(after).toEqual({ ...before, roleName: '保存角色', status: 1, rules: '2' });
     }
   });
+  it('blocks referenced status/grant changes through both old POST aliases without changing any authority table', async () => {
+    await fixture.db.insert(systemAdmin).values({ id: 200, account: 'role-reference', roles: ' 50 ',
+      pwd: 'role-fixture-password', level: 2, status: 0, isDel: 1 });
+    const before = { admins: await fixture.db.select().from(systemAdmin).orderBy(systemAdmin.id),
+      roles: await allRoles(), menus: await fixture.db.select().from(systemMenus).orderBy(systemMenus.id) };
+    for (const prefix of ['/adminapi', '/api/admin']) {
+      for (const body of [payload([2], { status: 0 }), payload([4])]) {
+        const result = await request('50', { prefix, body });
+        expect(result.response.status).toBe(409);
+        expect(result.body).toMatchObject({ status: 409, msg: '角色已被管理员引用，修改权限或状态需要先确认影响范围' });
+      }
+    }
+    expect({ admins: await fixture.db.select().from(systemAdmin).orderBy(systemAdmin.id),
+      roles: await allRoles(), menus: await fixture.db.select().from(systemMenus).orderBy(systemMenus.id) }).toEqual(before);
+  });
+  it('preserves referenced name-only and structural-ancestor normalization saves without requiring impact confirmation', async () => {
+    await fixture.db.insert(systemAdmin).values({ id: 200, account: 'role-reference', roles: '50,59',
+      pwd: 'role-fixture-password', level: 2 });
+    const beforeAdmin = await fixture.db.select().from(systemAdmin).orderBy(systemAdmin.id);
+    for (const prefix of ['/adminapi', '/api/admin']) {
+      expect((await request('50', { prefix, body: payload([2], { role_name: '仅改名称' }) })).body.status).toBe(200);
+      expect((await request('59', { prefix, body: payload([1,2], { role_name: '结构规范化' }) })).body.status).toBe(200);
+    }
+    expect(await fixture.db.select().from(systemAdmin).orderBy(systemAdmin.id)).toEqual(beforeAdmin);
+    expect((await allRoles()).find(row => row.id === 59)).toMatchObject({ rules: '2', roleName: '结构规范化', status: 1 });
+  });
   it('keeps list-only and form-only privileges separated from writes', async () => {
     for (const id of [104,105]) expect((await request('create', { id })).body.status).toBe(400011);
     expect((await request('create', { id: 101 })).body.status).toBe(200);
