@@ -307,6 +307,7 @@ adminapiRoutes.post("/file/upload", adminAuth, AttachmentController.adminUploadI
 adminapiRoutes.post("/file/upload/:upload_type", adminAuth, AttachmentController.adminUploadImage);
 adminapiRoutes.get("/file/upload_type", adminAuth, AttachmentController.uploadType);
 adminapiRoutes.get("/file/category", adminAuth, AttachmentController.adminCategories);
+adminapiRoutes.get("/file/category/create", adminAuth, AttachmentController.adminCategoryCreateForm);
 adminapiRoutes.get("/file/category/create/:parentId", adminAuth, AttachmentController.adminCategoryCreateForm);
 adminapiRoutes.post("/file/category", adminAuth, AttachmentController.adminCategorySave);
 adminapiRoutes.get("/file/category/:id/edit", adminAuth, AttachmentController.adminCategoryEditForm);

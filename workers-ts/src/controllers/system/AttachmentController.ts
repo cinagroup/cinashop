@@ -17,6 +17,7 @@ import {
 } from "@/middleware/kefu-rate-limit";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import { AdminAttachmentCategoryCreateFormService } from "@/services/admin/AdminAttachmentCategoryCreateFormService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -317,7 +318,14 @@ export async function supplierCategories(c: C) {
   ));
 }
 
-export const adminCategoryCreateForm = (c: C) => categoryForm(c, "admin");
+export async function adminCategoryCreateForm(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  c.header("Pragma", "no-cache");
+  return jsonOk(c, await new AdminAttachmentCategoryCreateFormService(c.get("container")).createForm(
+    new URL(c.req.url).searchParams, { id: c.get("adminId") ?? 0,
+      authVersion: c.get("socketAuthVersion") ?? "", expiresAt: c.get("socketTokenExp") ?? 0 }, c.req.param("parentId"),
+  ));
+}
 export const supplierCategoryCreateForm = (c: C) => categoryForm(c, "supplier");
 export const adminCategoryEditForm = (c: C) => categoryForm(c, "admin", c.req.param("id"));
 export const supplierCategoryEditForm = (c: C) => categoryForm(c, "supplier", c.req.param("id"));
