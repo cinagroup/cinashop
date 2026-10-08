@@ -24,13 +24,21 @@ $taskDirty = @(& git -C $taskRepository status --porcelain=v1)
 if ($LASTEXITCODE -ne 0 -or $taskDirty.Count -ne 0) { throw 'Maintenance source worktree must be clean.' }
 
 $taskConfigObject = Get-Content -LiteralPath $taskConfig -Raw | ConvertFrom-Json
+function ConvertTo-OrdinalBindingStrings {
+    param([string[]]$Values)
+    [string[]]$taskStrings = @($Values)
+    [Array]::Sort($taskStrings, [StringComparer]::Ordinal)
+    return $taskStrings
+}
+
+
 $taskExpectedBindings = @(
     @{ name = 'HYPERDRIVE_MAINTENANCE'; id = '9748c294e21c49a99579c9cef70102e0' },
     @{ name = 'HYPERDRIVE'; id = 'ba7faa6680cd48d4b3a1d36a7a5fc8f7' },
     @{ name = 'HYPERDRIVE_ADMIN'; id = '446e94a4de0143f58c8e5178ec55db8b' }
 )
-$taskConfigured = @($taskConfigObject.hyperdrive | Sort-Object binding | ForEach-Object { "{0}:{1}" -f $_.binding,$_.id })
-$taskReviewed = @($taskExpectedBindings | Sort-Object name | ForEach-Object { "{0}:{1}" -f $_.name,$_.id })
+$taskConfigured = @(ConvertTo-OrdinalBindingStrings -Values @($taskConfigObject.hyperdrive | ForEach-Object { "{0}:{1}" -f $_.binding,$_.id }))
+$taskReviewed = @(ConvertTo-OrdinalBindingStrings -Values @($taskExpectedBindings | ForEach-Object { "{0}:{1}" -f $_.name,$_.id }))
 if ($taskConfigured.Count -ne 3 -or ($taskConfigured -join '|') -cne ($taskReviewed -join '|')) {
     throw 'Maintenance Hyperdrive binding config differs from reviewed IDs.'
 }
@@ -58,6 +66,7 @@ $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
 $taskStage = 'control-plane-baseline'
 $taskFailure = $null
+$taskHttpFailures = [Collections.Generic.List[object]]::new()
 $taskAttempted = $false
 $taskApplyAttempted = $false
 $taskDeleted = $false
@@ -70,7 +79,7 @@ $taskBefore = $null
 $taskApplyResult = $null
 $taskAfter = $null
 $taskAccess = @{}
-$taskExpectedVersionBindings = @(
+$taskExpectedVersionBindings = @(ConvertTo-OrdinalBindingStrings -Values @(
     'HYPERDRIVE_MAINTENANCE:hyperdrive:9748c294e21c49a99579c9cef70102e0',
     'HYPERDRIVE:hyperdrive:ba7faa6680cd48d4b3a1d36a7a5fc8f7',
     'HYPERDRIVE_ADMIN:hyperdrive:446e94a4de0143f58c8e5178ec55db8b',
@@ -78,7 +87,7 @@ $taskExpectedVersionBindings = @(
     'SOURCE_SHA:plain_text', 'EXPECTED_INSTALL_SQL_SHA256:plain_text',
     'RUN_MARKER:plain_text', 'APPLY_ARMED:plain_text',
     'APPROVED_PREFLIGHT_SHA256:plain_text'
-) | Sort-Object
+))
 
 function Get-OwnedVersionId {
     $taskDeployments = Invoke-RestMethod -Uri "$taskApi/deployments" -Headers $taskApiHeaders -TimeoutSec 20
@@ -96,15 +105,49 @@ function Get-OwnedVersionId {
     if ($taskVersion.result.annotations.'workers/message' -cne $taskMarker) {
         throw 'Temporary Worker version marker changed.'
     }
-    $taskProjection = @($taskVersion.result.resources.bindings | ForEach-Object {
+    $taskProjection = @(ConvertTo-OrdinalBindingStrings -Values @($taskVersion.result.resources.bindings | ForEach-Object {
         if ($_.type -eq 'hyperdrive') { "{0}:{1}:{2}" -f $_.name,$_.type,$_.id }
         else { "{0}:{1}" -f $_.name,$_.type }
-    } | Sort-Object)
+    }))
     if ($taskProjection.Count -ne $taskExpectedVersionBindings.Count -or
         ($taskProjection -join '|') -cne ($taskExpectedVersionBindings -join '|')) {
         throw 'Temporary Worker version binding projection changed.'
     }
     return $taskVersionId
+}
+
+function Get-SafeMaintenanceHttpFailure {
+    param([string]$Path,[string]$Method,$Response)
+    $taskSafeFailure = [ordered]@{
+        path = if (@('/preflight', '/apply', '/postflight') -ccontains $Path) { $Path } else { $null }
+        method = if (@('Get', 'Post') -ccontains $Method) { $Method } else { $null }
+        httpStatus = [int]$Response.StatusCode
+        noStore = $Response.Headers['Cache-Control'] -contains 'no-store'
+        error = $null
+        stage = $null
+        sqlState = $null
+    }
+    # Only exact Worker constants and a five-character SQLSTATE may leave this function.
+    # Never save raw response content, arbitrary error text, headers, tokens or SQL.
+    try {
+        $taskSafeJson = $Response.Content | ConvertFrom-Json -Depth 20
+        $taskAllowedErrors = @('forbidden', 'not found', 'method not allowed',
+            'apply is not armed in this deployment', 'explicit operation and empty body required',
+            'fixed source or SQL digest missing', 'reviewed installation SQL digest mismatch',
+            'current preflight differs from the reviewed evidence',
+            'outcome unconfirmed; inspect read-only before any further action')
+        if ($taskSafeJson.error -is [string] -and $taskAllowedErrors -ccontains $taskSafeJson.error) {
+            $taskSafeFailure.error = $taskSafeJson.error
+        }
+        if ($taskSafeJson.stage -is [string] -and
+            @('preflight', 'single_apply', 'postflight') -ccontains $taskSafeJson.stage) {
+            $taskSafeFailure.stage = $taskSafeJson.stage
+        }
+        if ($taskSafeJson.sqlState -is [string] -and $taskSafeJson.sqlState -cmatch '^[0-9A-Z]{5}$') {
+            $taskSafeFailure.sqlState = $taskSafeJson.sqlState
+        }
+    } catch { }
+    return [pscustomobject]$taskSafeFailure
 }
 
 function Get-MaintenanceJson {
@@ -113,9 +156,14 @@ function Get-MaintenanceJson {
         -SkipHttpErrorCheck -TimeoutSec 30
     if ([int]$taskResponse.StatusCode -ne 200 -or
         $taskResponse.Headers['Cache-Control'] -notcontains 'no-store') {
+        $taskHttpFailures.Add((Get-SafeMaintenanceHttpFailure $Path $Method $taskResponse))
         throw 'Maintenance HTTP result was not confirmed.'
     }
-    return ($taskResponse.Content | ConvertFrom-Json -Depth 20)
+    try { return ($taskResponse.Content | ConvertFrom-Json -Depth 20) }
+    catch {
+        $taskHttpFailures.Add((Get-SafeMaintenanceHttpFailure $Path $Method $taskResponse))
+        throw 'Maintenance HTTP JSON result was not confirmed.'
+    }
 }
 
 function Assert-ReadOnlyPreflight {
@@ -137,10 +185,10 @@ function Assert-ReadOnlyPreflight {
 
 try {
     $taskCurrent = Invoke-RestMethod -Uri $taskSettingsApi -Headers $taskApiHeaders -TimeoutSec 20
-    $taskMainBindings = @($taskCurrent.result.bindings | Where-Object type -eq 'hyperdrive' |
-        Sort-Object name | ForEach-Object { "{0}:{1}" -f $_.name,$_.id })
-    $taskExpectedMain = @('HYPERDRIVE:ba7faa6680cd48d4b3a1d36a7a5fc8f7',
-        'HYPERDRIVE_ADMIN:446e94a4de0143f58c8e5178ec55db8b') | Sort-Object
+    $taskMainBindings = @(ConvertTo-OrdinalBindingStrings -Values @($taskCurrent.result.bindings | Where-Object type -eq 'hyperdrive' |
+        ForEach-Object { "{0}:{1}" -f $_.name,$_.id }))
+    $taskExpectedMain = @(ConvertTo-OrdinalBindingStrings -Values @('HYPERDRIVE:ba7faa6680cd48d4b3a1d36a7a5fc8f7',
+        'HYPERDRIVE_ADMIN:446e94a4de0143f58c8e5178ec55db8b'))
     if ($taskMainBindings.Count -ne 2 -or
         ($taskMainBindings -join '|') -cne ($taskExpectedMain -join '|')) {
         throw 'Current API Hyperdrive bindings differ from reviewed target.'
@@ -242,8 +290,8 @@ try {
     }
     try {
         $taskFinal = Invoke-RestMethod -Uri $taskSettingsApi -Headers $taskApiHeaders -TimeoutSec 20
-        $taskFinalBindings = @($taskFinal.result.bindings | Where-Object type -eq 'hyperdrive' |
-            Sort-Object name | ForEach-Object { "{0}:{1}" -f $_.name,$_.id })
+        $taskFinalBindings = @(ConvertTo-OrdinalBindingStrings -Values @($taskFinal.result.bindings | Where-Object type -eq 'hyperdrive' |
+            ForEach-Object { "{0}:{1}" -f $_.name,$_.id }))
         $taskMainUnchanged = ($taskFinalBindings -join '|') -ceq ($taskMainBindings -join '|')
     } catch { $taskFailure = 'Current API binding postflight needs independent verification.' }
     $taskToken = $null; $taskAuth = $null; $taskWrite = $null
@@ -266,6 +314,7 @@ $taskReceipt = [ordered]@{
         deleted = $taskDeleted;
         controlPlaneMissing = $taskMissing }
     failure = $taskFailure
+    httpFailures = @($taskHttpFailures.ToArray())
 }
 [IO.File]::WriteAllText((Join-Path $taskReceiptDir 'receipt.json'),
     ($taskReceipt | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))

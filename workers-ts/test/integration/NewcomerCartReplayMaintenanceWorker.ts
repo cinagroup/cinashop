@@ -82,6 +82,42 @@ async function inspectAfter(env: NewcomerCartReplayMaintenanceEnv, sourceSha: st
     target, maintenance, app, admin };
 }
 
+// Body identity is not a byte count: an HTTP POST may expose an empty stream.
+// Never aggregate a body or await cancellation; every rejected body stays before DB access.
+async function emptyMaintenanceBody(request: Request): Promise<boolean> {
+  if (request.signal.aborted) return false;
+  if (request.body === null) return true;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let abort: (() => void) | undefined;
+  let ended = false;
+  try {
+    reader = request.body.getReader();
+    const stopped = new Promise<null>(resolve => {
+      timer = setTimeout(() => resolve(null), 250);
+      abort = () => resolve(null);
+      request.signal.addEventListener('abort', abort, { once: true });
+    });
+    // Bound both pending reads and immediate empty-chunk loops.
+    for (let emptyChunks = 0; emptyChunks < 32; emptyChunks++) {
+      const next = await Promise.race([reader.read(), stopped]);
+      if (next === null) return false;
+      if (next.done) { ended = true; return !request.signal.aborted; }
+      if (!(next.value instanceof Uint8Array) || next.value.byteLength !== 0) return false;
+    }
+    return false;
+  } catch {
+    return false;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+    if (abort) request.signal.removeEventListener('abort', abort);
+    if (reader) {
+      try { if (!ended) void reader.cancel().catch(() => undefined); } catch { }
+      try { reader.releaseLock(); } catch { }
+    }
+  }
+}
+
 /** Temporary, fixed-operation Worker only. It is never imported by the API.
  * A 503 after POST is an unknown transaction outcome, not a retry signal. */
 export default {
@@ -106,7 +142,7 @@ export default {
       return reply({ error: 'apply is not armed in this deployment' }, 403);
     }
     if (method === 'POST' && (request.headers.get('X-Migration-Operation')
-        !== NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION || request.body !== null)) {
+        !== NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION || !(await emptyMaintenanceBody(request)))) {
       return reply({ error: 'explicit operation and empty body required' }, 400);
     }
     if (!hex40.test(env.SOURCE_SHA) || !hex64.test(env.EXPECTED_INSTALL_SQL_SHA256)
