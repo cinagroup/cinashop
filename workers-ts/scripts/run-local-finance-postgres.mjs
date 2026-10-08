@@ -193,6 +193,8 @@ if (schemaMaintenance) {
     'test/bargain-cart-binding.test.ts',
     // Read-only A3e catalog fixture commissions the checkout NOLOGIN owner.
     'test/bargain-selection-catalog.test.ts',
+    // The helper-admission fixture uses the same owned checkout protocol.
+    'test/bargain-help-admission.test.ts',
     'test/presale-checkout-postgres.test.ts',
     // This policy suite performs real checkout after its read-only assertions.
     'test/membership-pricing-policy.test.ts',
@@ -435,6 +437,8 @@ if (schemaMaintenance) {
     'test/checkout-confirmation-rules.test.ts',
     // End-to-end newcomer checkout fixture installs the same NOLOGIN pricing owner.
     'test/newcomer-purchase-postgres.test.ts',
+    'test/newcomer-cart-add-replay-migration-postgres.test.ts',
+    'test/newcomer-cart-replay-maintenance-postgres.test.ts',
     'test/pc-checkout-form-postgres.test.ts',
     'test/pc-checkout-quote-postgres.test.ts',
     'test/brokerage-paid-runtime-permissions.test.ts',

@@ -35,6 +35,23 @@ export function apiCartAdd(params: {
   return http.post<{ id: number; cartNum: number }>("/cart/add", params as Record<string, unknown>);
 }
 
+/** Dedicated idempotent type-7 route. Old Workers return 404 without creating a row. */
+export async function apiNewcomerCartKey(): Promise<string> {
+  const value = await http.get<unknown>('/cart/add/newcomer-replay-key');
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('安全请求编号响应无效，本次尚未提交');
+  const key = (value as Record<string, unknown>).requestKey;
+  if (typeof key !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(key))
+    throw new Error('安全请求编号响应无效，本次尚未提交');
+  return key;
+}
+
+/** Dedicated idempotent type-7 route. Old Workers return 404 without creating a row. */
+export function apiNewcomerCartAdd(params: {
+  productId: number; unique: string; cartNum: 1; type: 7; activityId: number; new: 1; requestKey: string;
+}): Promise<{ id: number; cartId: number; cartNum: 1; replayed: boolean }> {
+  return http.post('/cart/add/newcomer-replay', params);
+}
+
 export function apiCartNum(id: number, cartNum: number): Promise<null> {
   return http.post<null>("/cart/num", { id, cartNum });
 }

@@ -1148,7 +1148,7 @@ export class StoreOrderCreateService {
     let bargainParticipantId = 0;
     let bargainShippingQuote: BargainShippingQuote | null = null;
     let bargainConfirmationRules: Pick<typeof storeBargain.$inferSelect,
-      'deliveryType' | 'startTime' | 'stopTime' | 'num' | 'isSupportRefund' | 'systemFormId' | 'giveIntegral' | 'price'> | null = null;
+      'deliveryType' | 'startTime' | 'stopTime' | 'num' | 'isSupportRefund' | 'systemFormId' | 'giveIntegral'> | null = null;
     let bargainParticipantQuote: Pick<typeof storeBargainUser.$inferSelect, "bargainPrice" | "bargainPriceMin" | "price"> | null = null;
     let orderSystemFormId = 0;
     let pinkCombinationId = 0;
@@ -1293,7 +1293,7 @@ export class StoreOrderCreateService {
         bargainShippingQuote = bargain[0];
         bargainConfirmationRules = { deliveryType: bargain[0].deliveryType, startTime: bargain[0].startTime,
           stopTime: bargain[0].stopTime, num: bargain[0].num, isSupportRefund: bargain[0].isSupportRefund,
-          systemFormId: bargain[0].systemFormId, giveIntegral: bargain[0].giveIntegral, price: bargain[0].price };
+          systemFormId: bargain[0].systemFormId, giveIntegral: bargain[0].giveIntegral };
         itemSystemFormId = bargain[0].systemFormId;
         bargainActivityId = bargain[0].id;
         if (!activitySku) {
@@ -1312,10 +1312,7 @@ export class StoreOrderCreateService {
           sku.stock, product.stock,
         );
         if (available < cart.cartNum) throw new ValidateException("砍价库存不足");
-        const bargainOriginalCents = Math.max(
-          decimalToCents(participant.bargainPrice),
-          decimalToCents(bargain[0].price),
-        );
+        const bargainOriginalCents = decimalToCents(participant.bargainPrice);
         const bargainMinimumCents = decimalToCents(participant.bargainPriceMin);
         unitPriceCents = Math.max(
           bargainMinimumCents,

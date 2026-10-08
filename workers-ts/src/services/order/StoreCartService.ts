@@ -63,6 +63,8 @@ interface CartAddParams {
   activityId?: number;
   /** Exact owned participation ID; omitted only for a sole live record. */
   bargainUserId?: number;
+  /** Internal keyed newcomer admission; never accepted from the legacy route. */
+  newcomerEligibilityFromDb?: boolean;
 }
 
 /** Explicit scopes let migrated clients isolate checkout rows without changing
@@ -272,6 +274,7 @@ export class StoreCartService {
         productId,
         activityUnique: unique,
         quantity: cartNum,
+        eligibilityFromDb: params.newcomerEligibilityFromDb,
       });
       product = resolved.product;
       productId = resolved.product.id;
@@ -612,10 +615,7 @@ export class StoreCartService {
             ) throw new ValidateException("砍价活动已失效");
             price = Math.max(
               decimalToCents(participant.bargainPriceMin),
-              Math.max(
-                decimalToCents(participant.bargainPrice),
-                decimalToCents(activity.price),
-              ) - decimalToCents(participant.price),
+              decimalToCents(participant.bargainPrice) - decimalToCents(participant.price),
             ) / 100;
             displayName = activity.storeName || activity.title || product.storeName;
             displayImage = pair.activitySku.image || activity.image || product.image;
