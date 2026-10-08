@@ -323,9 +323,9 @@ describe("MySQL to PostgreSQL schema audit", () => {
     );
     expect(definitionDrift).toEqual({
       externalTableCount: 285,
-      // This source-declaration scan includes ten independently installed ledgers.
+      // This source-declaration scan includes eleven independently installed ledgers.
       // It is distinct from the 282 tables actually installed by runAll.
-      workerTableCount: 292,
+      workerTableCount: 293,
       externalOnlyTables: [
         'customer_city_delivery_attempt',
         'customer_city_delivery_binding',

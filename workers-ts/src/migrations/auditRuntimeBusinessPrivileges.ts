@@ -20,6 +20,7 @@ import { inspectSignDayConfigRuntimeCatalog } from './signDayConfigRuntimeCatalo
 import { inspectRuntimeSignDayGroupLockBoundary } from './runtimeSignDayGroupLockBoundary';
 import { inspectRuntimeAgentLevelCatalogBoundary } from './runtimeAgentLevelCatalogBoundary';
 import { inspectAgentLevelRuntimeCatalog } from './agentLevelRuntimeCatalog';
+import { inspectNewcomerCartAddReplayCatalog } from './runNewcomerCartAddReplay';
 
 /** Exact effective ACL comparison for the real connection, not SET ROLE on a
  * maintenance session. Readonly: never grants/revokes/repairs. The result proves
@@ -79,6 +80,14 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if(verifyConnection && (identity?.role!==expectedRole || identity?.session!==expectedRole || identity?.backend!==expectedRole))failures.push('connection_identity');
     for(const key of ['version','restricted','login','no_memberships','no_ownership','no_ddl','no_replication_bypass','no_other_schema_data'])
       if(identity?.[key]!==true)failures.push(key);
+    // This separately commissioned receipt is absent from the fixed base
+    // profile. When installed, its actual PG16 shape must match before the
+    // auditor accepts precisely the app SELECT/INSERT grant and no Admin grant.
+    const newcomerReplay = await inspectNewcomerCartAddReplayCatalog(tx);
+    if(newcomerReplay.present) {
+      if(!newcomerReplay.complete)failures.push('newcomer_cart_replay_catalog');
+      else plan.tables.newcomer_cart_add_replay=kind==='app'?['SELECT','INSERT']:[];
+    }
     onStage?.('tables');
     const tableRows=await tx.execute(sql`SELECT c.relname AS name,c.oid::text AS oid,c.relkind,c.relpersistence,
       c.relrowsecurity OR c.relforcerowsecurity OR c.relispartition

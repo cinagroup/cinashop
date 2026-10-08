@@ -105,6 +105,7 @@ const explicitDeclarations = [
   ['customerWriteoffOperation.ts','044d8aa876e686e3e8b238b8cb4233240082f293060fc426ef00b7c5b1d952f0',['customer_writeoff_operation_request']],
   ['deliveryOrderOperation.ts','bb9cae7789a0efde6dd4d9fb6eb62ea4dc369d9d517b21e05e309af95d7328e3',['delivery_order_operation_request']],
   ['managerOrderOperation.ts','a119df84da27f34310094b1441ea3411408dc490beb02763cb309e4853f39ce8',['manager_order_operation_request']],
+  ['newcomerCartAddReplay.ts','7406be369eca4574f46dfbc126b2a44e4aed0b28cd948a7af573648c77bdeade',['newcomer_cart_add_replay']],
 ] as const;
 export function reviewedExplicitDeclarationTables() {
   for (const [file,sha256,tables] of explicitDeclarations) {
@@ -113,7 +114,7 @@ export function reviewedExplicitDeclarationTables() {
     assert.deepEqual([...parseCreateTables(source,'postgres').keys()].sort(),[...tables].sort());
   }
   const tables=explicitDeclarations.flatMap(([, , tables])=>[...tables]).sort();
-  assert.equal(tables.length,10);assert.equal(new Set(tables).size,10);
+  assert.equal(tables.length,11);assert.equal(new Set(tables).size,11);
   return tables;
 }
 const externalNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
