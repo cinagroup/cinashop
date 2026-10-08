@@ -35,6 +35,7 @@ import { upgradeStaffNotification } from "@/services/notification/StaffNotificat
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
@@ -846,6 +847,9 @@ adminapiRoutes.delete("/brand/del/:id", adminAuth, AdminCrud.adminBrandDel);
 // ─── 系统管理员/角色 (M16) ──────────────────────────────────
 adminapiRoutes.get("/setting/admin", adminAuth, AdminCrud.adminLegacySystemAdminList);
 adminapiRoutes.get("/setting/role", adminAuth, AdminCrud.adminLegacySystemRoleList);
+adminapiRoutes.get("/setting/role/create", adminAuth, AdminLegacyRole.adminLegacyRoleCreateForm);
+adminapiRoutes.get("/setting/role/:id/edit", adminAuth, AdminLegacyRole.adminLegacyRoleEditForm);
+adminapiRoutes.post("/setting/role/:id", adminAuth, AdminLegacyRole.adminLegacyRoleSave);
 adminapiRoutes.get("/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
 adminapiRoutes.get("/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 adminapiRoutes.post("/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);

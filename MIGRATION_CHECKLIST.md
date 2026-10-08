@@ -1,5 +1,15 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 当前增量：旧 Admin 角色创建、编辑与基本保存链（2026-10-08，本地验证完成，未发布）
+
+承接真实旧 `GET /adminapi/setting/role/create`、`GET /adminapi/setting/role/:id/edit` 与 `POST /adminapi/setting/role/:id`，并新增三个v1同handler别名。GET返回旧页面实际消费的菜单与七列role；POST兼容先编辑再添加的旧回显，但域/下一层级由实时actor派生。新form/manage细权限与原名单权限分离，不提升为现代全层级读写。每个真实grant以原数字ID作为独立叶子，完整祖先名称作标签，父/子/父子组合无损回传；mapped keys必须实时subset，合格opaque仅按当前原数字membership保留，特殊受保护metadata不能伪装opaque。只剔除经过证明的纯结构祖先。
+
+GET使用同一有界RR只读快照；POST锁内复验平台actor、身份版本、assigned roles、授权菜单和下一层级target，自用角色拒绝，锁保持到真实COMMIT并核对单行结果及读回。未引入客户端没有提供的UUID或假防重；未知CREATE结果恢复、独立启停/删除、管理员全链及父workflow继续开放。
+
+原路由CLI实际退出0：**Worker2349／PHP1904，917精确匹配中896可执行、21受控不可用；987未匹配减17退役为970可行动缺口，有效覆盖47.5%**。本批实际补齐3个旧Admin URL，缺口905→902；API11／Supplier49／ERP8保持，Kefu/Out0。Admin602调用／633变体仍全注册可执行；三个v1别名不额外抵扣旧缺口。
+
+最终business03真实23项、权限/既有读目录63项、审计7项及native02原生4项共 **97唯一项实际通过**，两套完整Worker类型unit02/runtime02均0。首轮业务失败、两套types01真实退出2及被替代business02/native01保留；Controller仅两处严格parser默认值修复共12字节后，受影响检查重新通过，不重复计历史执行。PG16.15独有tlEv3X/port62777 fixtures0自停，独立pg_ctl status3；本机actualmiddleware/controller、LOGIN和真实并发锁证据的范围见[本批合同与验证](workers-ts/docs/legacy-role-workflow-contract-20261008.md)。页面/Uni账本与复选行保持，仍 **404总项／249完成／155开放**；完整旧浏览器、production、当前CI与发布不由本批证明。下方保留历史。
+
 ## 当前增量：旧 Admin 素材分类编辑表单（2026-10-08，本地实现，未发布）
 
 承接真实旧 `GET /adminapi/file/category/:id/edit`，并新增 v1 GET/PUT 别名。根或子分类目标必须属于平台；省略文件类型时使用保存类型，显式类型不符拒绝。父选择器完整读取同类型根分类并剔除自身；历史深层、孤儿或跨域父引用明确409，不静默重设根级。DTO保留真实名称/父ID、20字显示限制及固定相对 `file/category/{id}` 的PUT地址，两API base复用原受保护更新服务，现代50字写限制、范围锁、提交时类型/父引用和循环复验保持。
@@ -17,6 +27,8 @@
 当前业务22项、原生数据库3项及既有素材/审计19项合计44项实际通过，原失败与被替代版本保留；类型及完整证据见[本批合同与验证](workers-ts/docs/admin-category-create-form-contract-20261008.md)。完整旧编辑、分类树、图片/视频工作流、写入结果未知的恢复、真实账号与生产验收、Linux新提交CI和发布继续开放。本批未公开推送或部署。下方保留历史。
 
 ## 当前增量：旧管理员与角色列表路由合同（2026-10-08，本地实现，未发布）
+
+后续角色create/edit与基本POST链见[本轮角色合同](workers-ts/docs/legacy-role-workflow-contract-20261008.md)；本段保留旧列表批次当时范围与验证，管理员写链、独立启停/删除和未知结果恢复仍开放。
 
 恢复 `GET /adminapi/setting/admin`、`GET /adminapi/setting/role` 及两个 `/api/admin/setting/` 别名，使用实际旧 PHP 与仍启用的 Vue 消费者确认参数、`list/count`、蛇形字段、角色/菜单名称和上海日期。两列表仅查询当前管理员下一层级；旧数字菜单分别授予 `system.legacy_admin_view`、`system.legacy_role_view`，不能扩为现代全层级目录或写权限。既有 `system.view` 单向兼容旧列表。授权、总数、当前页及显示名称共用有界只读快照，排除非平台和已删除记录。
 

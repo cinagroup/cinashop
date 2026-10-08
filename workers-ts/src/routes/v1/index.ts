@@ -53,6 +53,7 @@ import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWech
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
@@ -2009,6 +2010,9 @@ v1Routes.delete("/admin/brand/del/:id", adminAuth, AdminCrud.adminBrandDel);
 // ─── Admin 系统管理员/角色 (M16) ─────────────────────────────
 v1Routes.get("/admin/setting/admin", adminAuth, AdminCrud.adminLegacySystemAdminList);
 v1Routes.get("/admin/setting/role", adminAuth, AdminCrud.adminLegacySystemRoleList);
+v1Routes.get("/admin/setting/role/create", adminAuth, AdminLegacyRole.adminLegacyRoleCreateForm);
+v1Routes.get("/admin/setting/role/:id/edit", adminAuth, AdminLegacyRole.adminLegacyRoleEditForm);
+v1Routes.post("/admin/setting/role/:id", adminAuth, AdminLegacyRole.adminLegacyRoleSave);
 v1Routes.get("/admin/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
 v1Routes.get("/admin/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 v1Routes.post("/admin/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);

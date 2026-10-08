@@ -1,5 +1,7 @@
 # 旧 Admin 管理员与角色列表 GET 合同
 
+2026-10-08 后续：旧角色创建/编辑 GET 和基本 POST 保存已由[角色表单与保存合同](legacy-role-workflow-contract-20261008.md)承接，新增独立细权限。下文记录当时的列表批次；其中未实施表单的描述是历史状态，独立启停、删除和完整未知结果恢复仍开放。
+
 本轮仅承接 `GET /adminapi/setting/admin`、`GET /adminapi/setting/role` 及对应 `/api/admin/setting/` 别名。新 `system_admin/directory`、`system_role/directory` 与原数组列表保持各自合同。本轮不承接旧新增、编辑表单、保存、启停或删除，也不因两个路径注册而关闭 `ADM-001`、`FE-001` 或真实账号、生产与发布门禁。
 
 下述旧源实际位于 **`C:\cinagroup\cinashop-php`**；这是本机只读核对的 PHP sibling，不能把隔离工作树旁不存在的相对目录当作旧源缺失。证据为实际文件字节及行号，未执行旧 PHP，也未复制旧文件正文。

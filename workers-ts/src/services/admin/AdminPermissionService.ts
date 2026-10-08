@@ -277,13 +277,17 @@ permissionKeys.add("integral_log.export");
 permissionKeys.add("bill.export");
 permissionKeys.add("system.legacy_admin_view");
 permissionKeys.add("system.legacy_role_view");
+permissionKeys.add("system.legacy_role_form_view");
+permissionKeys.add("system.legacy_role_manage");
 
-/** Modern platform readers may use the narrower legacy lists; the reverse is forbidden. */
+/** Canonical grants cover narrower legacy contracts; legacy grants stay within their own workflow. */
 export function hasAdminPermission(granted: ReadonlySet<string>, required: string): boolean {
-  return granted.has(required) || (
-    (required === "system.legacy_admin_view" || required === "system.legacy_role_view")
-    && granted.has("system.view")
-  );
+  if (granted.has(required)) return true;
+  if (required === "system.legacy_role_manage") return granted.has("system.manage");
+  if (["system.legacy_role_view", "system.legacy_role_form_view"].includes(required)
+    && granted.has("system.legacy_role_manage")) return true;
+  return ["system.legacy_admin_view", "system.legacy_role_view", "system.legacy_role_form_view"].includes(required)
+    && granted.has("system.view");
 }
 
 function isNumericToken(token: string): boolean {
@@ -323,13 +327,15 @@ function isAssistedOrderRoute(route: string): boolean {
 export function requiredAdminPermission(method: string, routePath: string): string | null {
   const route = normalizeAdminRoute(routePath);
   // Legacy staff authority lives under setting/, but is independent of runtime
-  // configuration. Only its read contracts are migrated here. Unimplemented
-  // legacy writes must not grant config access or authority over modern writes.
+  // configuration. Its lists and numeric role form/save have separate grants.
+  // Other legacy writes do not grant config access or authority over modern writes.
   if (/^setting\/(?:admin(?:\/|$)|role(?:\/|$)|set_status(?:\/|$))/.test(route)) {
     if (["GET", "HEAD"].includes(method.toUpperCase())) {
       if (route === "setting/admin") return "system.legacy_admin_view";
       if (route === "setting/role") return "system.legacy_role_view";
+      if (route === "setting/role/create" || /^setting\/role\/(?::id|[1-9]\d*)\/edit$/.test(route)) return "system.legacy_role_form_view";
     }
+    if (method.toUpperCase() === "POST" && /^setting\/role\/(?::id|0|[1-9]\d*)$/.test(route)) return "system.legacy_role_manage";
     return null;
   }
   // Legacy quick-login is a separate impersonation capability, never a
@@ -446,6 +452,10 @@ export function normalizeRoleRules(value: string | readonly string[] | undefined
   const expanded = new Set(tokens);
   for (const token of tokens) {
     if (token.endsWith(".manage")) expanded.add(`${token.slice(0, -7)}.view`);
+    if (token === "system.legacy_role_manage") {
+      expanded.add("system.legacy_role_view");
+      expanded.add("system.legacy_role_form_view");
+    }
   }
   const orderedKeys = [...permissionKeys].filter((key) => expanded.has(key));
   const legacyIds = [...expanded]
@@ -517,6 +527,43 @@ function menuPathPermission(menuPath: string): string | null {
   return group ? `${group.key}.view` : null;
 }
 
+/** These identities have an audited binding. A rejected binding cannot become
+ * an opaque grant merely because it resolves to no current permission keys. */
+const auditedLegacyMenuIds = new Set([1035, 1075, 1490, 1592, 1593, 1594]);
+const auditedLegacyPageAuth = new Set([
+  'setting-system-list', 'setting-system-role', 'admin-statistic-capital',
+  'agent-division-statistics', 'admin-supplier-supplier_list', 'admin-supplier-capital-index',
+  'admin-supplier-cash-index', 'admin-supplier-apply', 'admin-supplier-menu-list', 'agent-agreement',
+  'admin-supplier-supplier-index', 'admin-supplier-bill-index',
+  'admin-marketing-lottery-recording_list', 'marketing-integral-sign',
+  'setting-distribution-deliver', 'setting-city-delivery-record', 'setting-city-delivery-setting',
+  'admin-setting-pages-home', 'admin-setting-pages-product_category', 'admin-setting-pages-product_detail',
+  'setting-system-fab', 'admin-setting-theme_style', '/admin/setting/membership_level/index',
+  'setting-system-group_data-pc', 'admin-marketing-activity_frame', 'marketing-activity_frame-create',
+  'admin-marketing-activity_background', 'marketing-activity_background-create',
+  'marketing-discount-list', 'marketing-discount-add', 'marketing-discount-full_discount',
+  'marketing-discount-add_discount', 'marketing-discount-pieces_discount',
+  'marketing-discount-add_pieces', 'marketing-discount-give', 'marketing-discount-add_give',
+  'marketing-store_integral-create', 'admin-setting-store_service-feedback',
+  'admin-setting-store_service-speechcraft', 'finance-finance-bill',
+]);
+
+export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
+  'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
+  if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
+    || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
+  // The membership-level page has a paired page-only policy outside the usual
+  // path mapping. Integral batch is an exact legacy API tuple too.
+  if (menu.menuPath === '/admin/setting/membership_level/index'
+    || normalizeAdminRoute(menu.apiUrl) === 'marketing/integral/batch') return false;
+  if (menu.authType === 1) return !!menu.menuPath.trim() && !menu.apiUrl.trim();
+  if (menu.authType !== 2 || !menu.apiUrl.trim()) return false;
+  const methods = menu.methods.split(/[\s,|]+/).filter(Boolean).map(method => method.toUpperCase());
+  return methods.length > 0
+    && methods.every(method => ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'].includes(method))
+    && methods.every(method => !requiredAdminPermission(method, menu.apiUrl));
+}
+
 export class AdminPermissionService {
   constructor(private readonly container: Container) {}
 
@@ -534,6 +581,8 @@ export class AdminPermissionService {
         ...(group.key === "system" ? [
           { key: "system.legacy_admin_view", label: "旧管理员列表（下一层级）" },
           { key: "system.legacy_role_view", label: "旧角色列表（下一层级）" },
+          { key: "system.legacy_role_form_view", label: "旧角色表单（下一层级）" },
+          { key: "system.legacy_role_manage", label: "旧角色保存（下一层级）" },
         ] : []),
       ],
     }));
@@ -950,6 +999,10 @@ export class AdminPermissionService {
     }
     for (const key of [...resolved]) {
       if (key.endsWith(".manage")) resolved.add(`${key.slice(0, -7)}.view`);
+      if (key === "system.legacy_role_manage") {
+        resolved.add("system.legacy_role_view");
+        resolved.add("system.legacy_role_form_view");
+      }
     }
     return resolved;
   }

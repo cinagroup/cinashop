@@ -42,20 +42,22 @@ describe('legacy staff list permissions', () => {
   });
   afterAll(async () => { await fixture?.close(); });
 
-  it('keeps staff reads independent of generic settings and leaves legacy writes ungranted', () => {
+  it('keeps staff reads independent of generic settings and grants only the restored role form/save contracts', () => {
     for (const prefix of ['/adminapi', '/api/admin']) {
       for (const [path, capability] of [['setting/admin', 'system.legacy_admin_view'], ['setting/role', 'system.legacy_role_view']]) {
         for (const method of ['GET', 'HEAD']) expect(requiredAdminPermission(method, `${prefix}/${path}`)).toBe(capability);
       }
       for (const [method, path] of [['POST', 'setting/admin'], ['PUT', 'setting/admin/21'],
-        ['DELETE', 'setting/admin/21'], ['POST', 'setting/role/22'], ['PUT', 'setting/role/set_status/22/0']]) {
+        ['DELETE', 'setting/admin/21'], ['PUT', 'setting/role/set_status/22/0']]) {
         expect(requiredAdminPermission(method, `${prefix}/${path}`)).toBeNull();
       }
       expect(requiredAdminPermission('GET', `${prefix}/setting/administrator`)).toBe('config.view');
       expect(requiredAdminPermission('GET', `${prefix}/setting/roles`)).toBe('config.view');
       expect(requiredAdminPermission('PUT', `${prefix}/setting/set_status_extra/22/0`)).toBe('config.manage');
       expect(requiredAdminPermission('POST', `${prefix}/system_role/save`)).toBe('system.manage');
-      for (const path of ['setting/admin/create', 'setting/role/22/edit', 'setting/set_status/22/0', 'setting/role/set_status/22/0']) {
+      expect(requiredAdminPermission('POST', `${prefix}/setting/role/22`)).toBe('system.legacy_role_manage');
+      expect(requiredAdminPermission('GET', `${prefix}/setting/role/22/edit`)).toBe('system.legacy_role_form_view');
+      for (const path of ['setting/admin/create', 'setting/set_status/22/0', 'setting/role/set_status/22/0']) {
         expect(requiredAdminPermission('GET', `${prefix}/${path}`)).toBeNull();
       }
     }
@@ -63,10 +65,12 @@ describe('legacy staff list permissions', () => {
 
   it('resolves audited numeric page and API rules to read authority in single and batch paths', async () => {
     expect(await permissions.resolveManyRulePermissionKeys(['1', '2', '3', '4', '5', '6', '7,8,9,10,11']))
-      .toEqual([['system.legacy_admin_view'], ['system.legacy_role_view'], ['system.legacy_admin_view'], ['system.legacy_role_view'], [], [], []]);
+      .toEqual([['system.legacy_admin_view'], ['system.legacy_role_view'], ['system.legacy_admin_view'], ['system.legacy_role_view'],
+        ['system.legacy_role_manage', 'system.legacy_role_view', 'system.legacy_role_form_view'], [], []]);
     for (const rules of ['1', '3']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual(['system.legacy_admin_view']);
     for (const rules of ['2', '4']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual(['system.legacy_role_view']);
-    for (const rules of ['5', '6', '7,8,9,10,11']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual([]);
+    expect(await permissions.resolveRulePermissionKeys('5')).toEqual(['system.legacy_role_manage', 'system.legacy_role_view', 'system.legacy_role_form_view']);
+    for (const rules of ['6', '7,8,9,10,11']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual([]);
     const locked = await withTx(createContainerFromDb(fixture.db), tx => new AdminPermissionService(createContainerFromDb(tx)).resolveRoleAssignment('22', true));
     expect([...locked.keys]).toEqual(['system.legacy_admin_view', 'system.legacy_role_view']);
     expect(locked.missingRoleIds).toEqual([]);
@@ -76,7 +80,7 @@ describe('legacy staff list permissions', () => {
     const result = await permissions.resolveRoleAssignment('21,22,23,24,25,26,27');
     expect([...result.keys]).toEqual(['system.view', 'system.legacy_admin_view', 'system.legacy_role_view']);
     expect(result.missingRoleIds).toEqual([23, 24, 25, 26, 27]);
-    for (const roles of ['23', '24', '25', '26', '27', '29', '30']) {
+    for (const roles of ['23', '24', '25', '26', '27', '30']) {
       expect([...await permissions.resolveAdminPermissionKeys({ level: 1, roles })]).toEqual([]);
     }
     const batch = await permissions.resolveManyAdminPermissionKeys([
@@ -86,15 +90,17 @@ describe('legacy staff list permissions', () => {
     expect(batch.map(keys => [...keys])).toEqual([['system.view'], ['system.legacy_admin_view', 'system.legacy_role_view'], []]);
   });
 
-  it('admits staff viewers but rejects config-only and unmigrated-writer roles for both list prefixes', async () => {
+  it('admits staff viewers and keeps the restored role writer out of the sibling administrator list', async () => {
     const actor = (roles: string) => ({ id: 100, account: 'reader', realName: '', divisionId: 0, level: 1, roles });
     for (const prefix of ['/adminapi', '/api/admin']) for (const path of ['setting/admin', 'setting/role']) {
       await expect(permissions.assertAuthorized(actor('21'), 'GET', `${prefix}/${path}`)).resolves.toBeUndefined();
       await expect(permissions.assertAuthorized(actor('33'), 'GET', `${prefix}/${path}`)).resolves.toBeUndefined();
       await expect(permissions.assertAuthorized(actor('22'), 'GET', `${prefix}/${path}`)).resolves.toBeUndefined();
-      for (const roles of ['23', '24', '25', '26', '27', '28', '29', '30']) {
+      for (const roles of ['23', '24', '25', '26', '27', '28', '30']) {
         await expect(permissions.assertAuthorized(actor(roles), 'GET', `${prefix}/${path}`)).rejects.toThrow();
       }
+      if (path === 'setting/role') await expect(permissions.assertAuthorized(actor('29'), 'GET', `${prefix}/${path}`)).resolves.toBeUndefined();
+      else await expect(permissions.assertAuthorized(actor('29'), 'GET', `${prefix}/${path}`)).rejects.toThrow();
       await expect(permissions.assertAuthorized(actor('22'), 'POST', `${prefix}/system_admin/save`)).rejects.toThrow();
     }
   });
@@ -122,7 +128,7 @@ describe('legacy staff list permissions', () => {
   it('registers selectable narrow capabilities and permits only one-way delegation from canonical readers', () => {
     const narrow = ['system.legacy_admin_view', 'system.legacy_role_view'];
     const children = permissions.permissionTree().find(group => group.key === 'system')!.children;
-    expect(children.map(node => node.key)).toEqual(['system.view', 'system.manage', ...narrow]);
+    expect(children.map(node => node.key)).toEqual(['system.view', 'system.manage', ...narrow, 'system.legacy_role_form_view', 'system.legacy_role_manage']);
     expect(children.every(node => node.key.startsWith('system.'))).toBe(true);
     expect(normalizeRoleRules(narrow)).toBe(narrow.join(','));
     expect(normalizeRoleRules('system.manage')).toBe('system.view,system.manage');

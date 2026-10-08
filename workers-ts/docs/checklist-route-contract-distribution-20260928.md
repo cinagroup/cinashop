@@ -1,5 +1,24 @@
 # Checklist 路由与页面合同分布（更新至 2026-10-08）
 
+## 当前增量：旧角色创建、编辑与基本POST合同（2026-10-08，本地验证完成，未发布）
+
+原两CLI实际退出0：**Worker2349／PHP1904，917精确匹配中896可执行、21受控不可用；987未匹配减17有据退役为970可行动URL缺口，有效覆盖47.5%**。新增旧Admin GET create/edit及POST的三个精确合同，另有三个v1同handler别名；没有新增退役决定，没有借通配501计分。旧Admin缺口905→902，全局973→970。
+
+| 合同面 | PHP | Worker | 旧URL可执行 | 可行动缺口 |
+| --- | ---: | ---: | ---: | ---: |
+| API | 457 | 1280 | 438 | 11 |
+| Admin | 1153 | 794 | 236 | 902 |
+| Supplier | 182 | 164 | 121 | 49 |
+| Kefu | 63 | 70 | 60 | 0 |
+| Out | 41 | 41 | 41 | 0 |
+| ERP | 8 | 0 | 0 | 8 |
+
+真实旧Vue使用自己的Modal/Tree，GET角色七列回显和整对象POST；先编辑再添加的旧scope字段只兼容回显，服务器始终派生平台下一层级。form/manage/list细权限分离，不提升现代目录权限。菜单返回独立真实grant叶子和完整祖先名称，父/子/父子集合不会由Tree半选推导增删；mapped实时subset、合格opaque原数字membership及受保护metadata拒绝共同防止越权。GET有界RR只读，POST持有当前身份/角色/菜单决定锁到COMMIT，结果单行及读回校验。
+
+最终business03实际23项、权限/既有读目录63项、审计7项与native02原生4项共97唯一项通过，两套标准完整Worker类型unit02/runtime02均0。首次业务失败、两套types01真实退出2及被替代business02/native01保留；Controller仅两处严格parser缺省值修复共12字节后，受影响检查重新通过，不重复计历史。最终PG16.15 tlEv3X/port62777 fixtures0自停，Root独立pg_ctl status3；真实LOGIN/只读事务/保存到COMMIT的锁与local middleware/controller有本批证据。原Admin调用CLI实际602处调用／633变体全注册可执行，未解析/未注册/受控不可用均0。Admin112业务页、Uni126真实页和151旧逻辑29直连／115兼容／7缺口的页面与账本未改。接口登记不是完整旧端浏览器或生产验收；未知CREATE结果恢复、独立启停/删除、管理员写全链、父workflow、provider/设备/Hyperdrive、当前CI与发布继续开放。Checklist仍404／249／155，全部复选行保持。
+
+详见[本批合同与验证](legacy-role-workflow-contract-20261008.md)、[实际路由分布](../audit/route-distribution-legacy-role-workflow-followup-20261008.json)、[当前Admin调用快照](../audit/admin-frontend-api-contracts-legacy-role-workflow-followup-20261008.json)。下方保留历史。
+
 ## 当前增量：旧素材分类编辑表单（2026-10-08，本地实现，未发布）
 
 本批实际原CLI退出0：**Worker2343／PHP1904，914精确匹配中893可执行、21受控不可用；990未匹配减17退役后为973可行动URL缺口，有效覆盖47.3%**。新增v1编辑GET/PUT别名；Admin canonical编辑路由原已登记，本批修正实际合同，不按两条别名虚构旧URL缺口减少，也未增加退役决定或借通配501计分。
@@ -39,6 +58,8 @@
 详见[本批合同与验证](admin-category-create-form-contract-20261008.md)、[实际路由分布](../audit/route-distribution-category-create-form-followup-20261008.json)、[当前Admin调用快照](../audit/admin-frontend-api-contracts-category-create-form-followup-20261008.json)。下方保留历史。
 
 ## 当前增量：旧管理员与角色列表合同（2026-10-08，本地实现，未发布）
+
+后续角色create/edit与基本POST链见[当前角色合同](legacy-role-workflow-contract-20261008.md)；本段保留当时列表批次信用，不把有限新链等同完整父workflow。
 
 原始路由审计读取实际 `cinashop-php` 源码并退出0：**Worker2338／PHP1904，913精确匹配中892可执行、21受控不可用；991未匹配减17有依据退役后为974可行动缺口，有效覆盖47.3%**。本批新增四个注册入口，其中两个匹配旧Admin GET，两个是v1别名；旧URL缺口实际减少2。未增加退役决定，未把通配501算作可执行。
 
