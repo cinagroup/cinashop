@@ -285,10 +285,10 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     expect(after.users.find(row => row.uid === 11)).toMatchObject({ isNewcomer: 1 });
   });
   const monetaryCases = ['base-price',
-    ...(kind === 'bargain' ? ['bargain-price'] as const : kind === 'coupon' ? [] : ['activity-price'] as const),
+    ...(kind === 'bargain' || kind === 'coupon' ? [] : ['activity-price'] as const),
     ...(kind === 'integral' ? ['activity-integral'] as const : []),
   ] as const;
-  type MonetaryCase = typeof monetaryCases[number] | 'unused-vip-price' | 'unused-bargain-sku-price';
+  type MonetaryCase = typeof monetaryCases[number] | 'bargain-price' | 'unused-vip-price' | 'unused-bargain-sku-price';
   const editMonetary = async (db: DbClient, variant: MonetaryCase) => {
     if (variant === 'bargain-price') await db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40));
     else await db.update(storeProductAttrValue).set(variant === 'activity-integral' ? { integral: 20 }
@@ -310,8 +310,18 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     const after = await monetaryState(); expect(after.orders).toHaveLength(1);
     expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: refreshed.data.pay_price });
   });
+  if (kind === 'bargain') it('keeps a confirmed old participation price after an activity price edit', async () => {
+    const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
+    beforeSequence = async () => { await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40)); };
+    const created = await request(`/api/order/create/${receipt.data.orderKey}`,
+      { ...input, quoteToken: receipt.data.quoteToken });
+    expect(created.status, created.msg).toBe(200);
+    const after = await monetaryState();
+    expect(after.orders).toHaveLength(1);
+    expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: receipt.data.priceGroup.pay_price });
+  });
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each([...monetaryCases, 'unused-vip-price',
-    ...(kind === 'bargain' ? ['unused-bargain-sku-price'] as const : [])] as const)(
+    ...(kind === 'bargain' ? ['bargain-price', 'unused-bargain-sku-price'] as const : [])] as const)(
     'checks monetary fact %s after an independent PostgreSQL price writer wait', async variant => {
       const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
       const before = await monetaryState();
@@ -323,7 +333,7 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
           ...input, uid: 11, key: receipt.data.orderKey, quoteToken: receipt.data.quoteToken, userIp: '127.0.0.1',
         }));
         await waitForFinanceBlock(f.db, buyer.pid, editor.pid); await editor.exec('COMMIT');
-        const result = await buying, permitted = variant === 'unused-vip-price' || variant === 'unused-bargain-sku-price';
+        const result = await buying, permitted = variant === 'bargain-price' || variant === 'unused-vip-price' || variant === 'unused-bargain-sku-price';
         expect(result.ok).toBe(permitted);
         if (!result.ok) expect(result.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
         const after = await monetaryState();

@@ -66,7 +66,7 @@ export function parseBargainSelection(value: unknown, expectedId: number, reques
     if (floor > original || remaining < 0 || status === 3 && remaining !== 0) return invalid();
     const state = status === 4 ? 'used' : status === 2 ? 'closed' : remaining === 0 ? 'ready' : 'cutting';
     const progress = original === floor ? 100 : Math.floor(cut * 100 / (original - floor));
-    const catalog = decimal(Math.max(floor, Math.max(original, cents(activity_price)) - cut));
+    const catalog = decimal(original - cut);
     if (p.state !== state || p.current_price !== decimal(original - cut) || p.remaining_cut !== decimal(remaining)
       || p.catalog_price !== catalog || p.progress_percent !== progress || p.activity_price_changed !== (cents(activity_price) !== original)) return invalid();
     participation = { id, status, state, original_price, minimum_price: minimum, cut_price, current_price: money(p.current_price),
