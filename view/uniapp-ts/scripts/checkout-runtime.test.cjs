@@ -180,6 +180,55 @@ test('unknown result survives reload with identical key/body and does not load a
   assert.deepEqual(second.calls, [captured]); assert.equal(JSON.parse(storage.get(key)).payload.mark, 'frozen');
   assert.equal(second.navigations.length, 0); second.stop();
 });
+
+test('the actual confirm page reviews own orders without releasing or replaying an uncertain intent', async () => {
+  const storage = new Map();
+  const send = server({ '/api/order/create/checkout_key1': () => ({ transport: 'timeout' }) });
+  const r = runtime({ component: 'pages/order/confirm.vue', storage, send });
+  try {
+    await r.start();
+    await r.checkout.submit();
+    const firstCreate = r.calls.find(call => call.url === '/api/order/create/checkout_key1');
+    assert.ok(firstCreate);
+    const saved = storage.get(key);
+    assert.ok(saved);
+    const requestCount = r.calls.length;
+
+    r.checkout.reviewOrders();
+    assert.deepEqual(r.navigations, ['/pages/order/list']);
+    assert.equal(r.calls.length, requestCount);
+    assert.equal(storage.get(key), saved);
+
+    r.hooks.onHide(); r.hooks.onShow(); await tick();
+    assert.equal(r.checkout.pending.value.key, 'checkout_key1');
+    assert.equal(r.calls.length, requestCount);
+    await r.checkout.submit();
+    assert.deepEqual(r.calls.filter(call => call.url === '/api/order/create/checkout_key1'), [firstCreate, firstCreate]);
+    assert.equal(storage.get(key), saved);
+    assert.equal(r.calls.some(call => /\/pay(?:\/|$)/.test(call.url)), false);
+
+    r.auth.setLogin('another-account', 22); await tick();
+    assert.equal(r.checkout.pending.value, null);
+    r.checkout.reviewOrders();
+    assert.deepEqual(r.navigations, ['/pages/order/list']);
+    assert.equal(storage.get(key), saved);
+  } finally { r.stop(); }
+});
+
+test('the actual confirm page retains the uncertain intent when order-list navigation fails', async () => {
+  const r = runtime({ component: 'pages/order/confirm.vue', navigationFails: true,
+    send: server({ '/api/order/create/checkout_key1': () => ({ transport: 'timeout' }) }) });
+  try {
+    await r.start(); await r.checkout.submit();
+    const saved = r.storage.get(key);
+    const requests = r.calls.length;
+    r.checkout.reviewOrders();
+    assert.equal(r.checkout.submissionError.value, '订单列表暂无法打开；原下单记录已保留，请稍后重试。');
+    assert.equal(r.storage.get(key), saved);
+    assert.equal(r.calls.length, requests);
+    assert.equal(r.checkout.pending.value.key, 'checkout_key1');
+  } finally { r.stop(); }
+});
 test('a known result navigates without payment and clears only after successful navigation', async () => {
   const send = server({ '/api/order/create/checkout_key1': () => ({ data: { key: 'checkout_key1', orderId: 'order_local_1' } }) });
   const r = runtime({ send, navigationFails: true }); await r.start(); await r.checkout.submit();

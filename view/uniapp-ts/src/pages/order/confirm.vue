@@ -10,6 +10,10 @@
       <text>{{ pending.orderId ? '请查看订单详情，再选择支付方式。' : '提交内容已锁定。刷新或返回本页后仍会复用同一订单标识和内容，不会自动付款。' }}</text>
       <view class="muted">订单标识：{{ pending.key }}</view>
       <view class="muted">已锁定 {{ pending.payload.cartIds.length }} 项商品，{{ pending.payload.shippingType === 2 ? '门店自提' : '快递配送' }}</view>
+      <view v-if="!pending.orderId" class="pending-review">
+        <text class="muted">可先核对本人订单；查看列表不会重试建单或解除当前锁定。</text>
+        <button size="mini" :disabled="!canSubmit" @tap="reviewOrders">查看本人订单</button>
+      </view>
     </view>
     <template v-if="!pending && !loading && !error">
       <view class="section">
@@ -126,6 +130,12 @@ function promotionSummary(id: number): string {
 }
 function addAddress() { if (!locked.value) uni.navigateTo({ url: "/pages/user/address" }); }
 function integralChange(event: Event) { if (!locked.value) useIntegral.value = (event as unknown as { detail: { value: boolean } }).detail.value === true; }
+function reviewOrders() {
+  if (!pending.value || pending.value.orderId || !canSubmit.value) return;
+  const fail = () => { submissionError.value = '订单列表暂无法打开；原下单记录已保留，请稍后重试。'; };
+  try { uni.navigateTo({ url: '/pages/order/list', fail }); }
+  catch { fail(); }
+}
 </script>
 
 <style scoped>
