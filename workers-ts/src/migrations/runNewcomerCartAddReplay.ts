@@ -78,10 +78,12 @@ export async function assertNewcomerCartAddReplayReady(db: Query): Promise<void>
 export async function installNewcomerCartAddReplay(
   db: Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>,
   appRole: string,
+  beforeCreate?: (tx: Pick<DbClient, 'execute'>) => Promise<void>,
 ): Promise<void> {
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Newcomer replay installation requires root maintenance client');
   const role = pricingIdentifier(appRole);
   await db.transaction(async tx => {
+    if (beforeCreate) await beforeCreate(tx);
     await tx.execute(sql.raw(NEWCOMER_CART_ADD_REPLAY_INSTALLATION_SQL));
     await tx.execute(sql.raw(`GRANT SELECT, INSERT ON public.newcomer_cart_add_replay TO ${role}`));
     if (!(await inspectNewcomerCartAddReplayCatalog(tx)).complete) {

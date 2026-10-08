@@ -436,6 +436,7 @@ if (schemaMaintenance) {
     // End-to-end newcomer checkout fixture installs the same NOLOGIN pricing owner.
     'test/newcomer-purchase-postgres.test.ts',
     'test/newcomer-cart-add-replay-migration-postgres.test.ts',
+    'test/newcomer-cart-replay-maintenance-postgres.test.ts',
     'test/pc-checkout-form-postgres.test.ts',
     'test/pc-checkout-quote-postgres.test.ts',
     'test/brokerage-paid-runtime-permissions.test.ts',
