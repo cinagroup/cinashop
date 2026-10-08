@@ -2324,6 +2324,8 @@ v1Routes.put("/admin/assets/:id", adminAuth, AttachmentController.adminRename);
 v1Routes.get("/admin/asset-categories", adminAuth, AttachmentController.adminCategories);
 v1Routes.get("/admin/file/category/create", adminAuth, AttachmentController.adminCategoryCreateForm);
 v1Routes.post("/admin/file/category", adminAuth, AttachmentController.adminCategorySave);
+v1Routes.get("/admin/file/category/:id/edit", adminAuth, AttachmentController.adminCategoryEditForm);
+v1Routes.put("/admin/file/category/:id", adminAuth, AttachmentController.adminCategoryUpdate);
 v1Routes.post("/admin/asset-categories", adminAuth, AttachmentController.adminCategorySave);
 v1Routes.put("/admin/asset-categories/:id", adminAuth, AttachmentController.adminCategoryUpdate);
 v1Routes.delete("/admin/asset-categories/:id", adminAuth, AttachmentController.adminCategoryDelete);

@@ -18,6 +18,7 @@ import {
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
 import { AdminAttachmentCategoryCreateFormService } from "@/services/admin/AdminAttachmentCategoryCreateFormService";
+import { AdminAttachmentCategoryEditFormService } from "@/services/admin/AdminAttachmentCategoryEditFormService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -327,7 +328,14 @@ export async function adminCategoryCreateForm(c: C) {
   ));
 }
 export const supplierCategoryCreateForm = (c: C) => categoryForm(c, "supplier");
-export const adminCategoryEditForm = (c: C) => categoryForm(c, "admin", c.req.param("id"));
+export async function adminCategoryEditForm(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  c.header("Pragma", "no-cache");
+  return jsonOk(c, await new AdminAttachmentCategoryEditFormService(c.get("container")).editForm(
+    c.req.param("id") ?? "", new URL(c.req.url).searchParams, { id: c.get("adminId") ?? 0,
+      authVersion: c.get("socketAuthVersion") ?? "", expiresAt: c.get("socketTokenExp") ?? 0 },
+  ));
+}
 export const supplierCategoryEditForm = (c: C) => categoryForm(c, "supplier", c.req.param("id"));
 export const adminCategorySave = (c: C) => saveCategory(c, "admin");
 export const supplierCategorySave = (c: C) => saveCategory(c, "supplier");

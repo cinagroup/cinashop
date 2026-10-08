@@ -58,6 +58,9 @@ async function authorizeRead(tx: DbClient, actor: AdminAttachmentCategoryCreateF
   assertActor(actor);
 }
 
+// Both legacy forms use the same live Admin-session read boundary.
+export { assertActor as assertAdminCategoryFormActor, authorizeRead as authorizeAdminCategoryFormRead };
+
 /** The PHP create-form DTO is independent of modern category writes: the form
  * limits the old input to 20 characters without changing POST's 50-char limit. */
 export class AdminAttachmentCategoryCreateFormService {

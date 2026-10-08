@@ -178,6 +178,7 @@ if (schemaMaintenance) {
     'test/admin-supplier-menu-rules-native-http.test.ts',
     'test/admin-legacy-system-list-native.test.ts',
   'test/admin-category-create-form-native.test.ts',
+    'test/admin-category-edit-form-native.test.ts',
     // These HTTP fixtures now install the real checkout NOLOGIN capability.
     'test/admin-refund-operation-http.test.ts',
     'test/admin-refund-creation-http.test.ts',

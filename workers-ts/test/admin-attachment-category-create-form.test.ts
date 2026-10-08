@@ -204,11 +204,11 @@ describe('Admin legacy category create-form', () => {
     expect((await fixture.db.execute(sql`SELECT count(*)::integer AS count FROM ${systemAttachmentCategory}`))[0].count).toBe(10001);
   });
 
-  it('keeps modern POST names up to 50 and leaves Supplier/edit form behavior separate',async()=>{
+  it('keeps modern POST names up to 50 and leaves Supplier form behavior separate',async()=>{
     const name='名'.repeat(50);expect((await post('/adminapi/file/category',{pid:0,name,file_type:1})).status).toBe(200);
     expect((await post('/adminapi/file/category',{pid:0,name:'名'.repeat(51),file_type:1})).status).toBe(400);
     const edit=await application().request('/adminapi/file/category/12/edit',{headers:{'Authori-zation':`Bearer ${tokens.reader}`}},env);
-    expect((await edit.json<Reply>()).data).toMatchObject({title:'编辑附件分类',method:'PUT',action:'/adminapi/file/category/12',rules:[{}, {type:'number'}, {maxlength:50}]});
+    expect((await edit.json<Reply>()).data).toMatchObject({title:'编辑分类',method:'PUT',action:'file/category/12',rules:[{}, {type:'select'}, {props:{maxlength:20}}]});
     const supplier=await application().request('/supplierapi/file/category/create/30',{},env);
     expect((await supplier.json<Reply>()).data).toMatchObject({title:'添加附件分类',action:'/supplierapi/file/category',rules:[{}, {type:'number',value:30}, {maxlength:50}]});
   });
