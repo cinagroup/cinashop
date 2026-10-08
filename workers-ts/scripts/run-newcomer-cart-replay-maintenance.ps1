@@ -58,6 +58,9 @@ $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
 $taskStage = 'control-plane-baseline'
 $taskFailure = $null
+$taskFailureDetail = $null
+$taskCleanupFailureDetail = $null
+$taskMainFailureDetail = $null
 $taskAttempted = $false
 $taskApplyAttempted = $false
 $taskDeleted = $false
@@ -80,8 +83,82 @@ $taskExpectedVersionBindings = @(
     'APPROVED_PREFLIGHT_SHA256:plain_text'
 ) | Sort-Object
 
+function New-SafeRequestFailure {
+    param([string]$Type,[Nullable[int]]$Status)
+    $taskError = [InvalidOperationException]::new('Reviewed HTTP result was not confirmed.')
+    $taskError.Data['safeType'] = $Type
+    if ($null -ne $Status) { $taskError.Data['safeStatus'] = [int]$Status }
+    return $taskError
+}
+
+function Get-SafeFailureDetail {
+    param([string]$Stage,$ErrorRecord)
+    $taskType = if ($Stage -eq 'single-apply') { 'write-response-unconfirmed' } else { 'validation' }
+    $taskStatus = $null
+    $taskException = $ErrorRecord.Exception
+    while ($taskException) {
+        if ($taskException.Data['safeType']) {
+            $taskType = [string]$taskException.Data['safeType']
+            if ($null -ne $taskException.Data['safeStatus']) {
+                $taskStatus = [int]$taskException.Data['safeStatus']
+            }
+            break
+        }
+        $taskException = $taskException.InnerException
+    }
+    return [ordered]@{ stage = $Stage; type = $taskType; status = $taskStatus }
+}
+
+# GET only. A missing response or short propagation delay is safe to retry; writes never call this helper.
+function Invoke-ReadOnlyGet {
+    param([string]$Uri,[hashtable]$Headers,[int]$TimeoutSec,
+        [int[]]$ExpectedStatus = @(200),[int[]]$RetryStatus = @(408,429,502,503,504))
+    $taskDelays = @(2,4,8)
+    for ($taskAttempt = 0; $taskAttempt -le $taskDelays.Count; $taskAttempt++) {
+        $taskResponse = $null
+        $taskStatus = $null
+        try {
+            $taskResponse = Invoke-WebRequest -Uri $Uri -Method Get -Headers $Headers `
+                -SkipHttpErrorCheck -TimeoutSec $TimeoutSec
+            if ($null -ne $taskResponse -and $null -ne $taskResponse.StatusCode) {
+                $taskStatus = [int]$taskResponse.StatusCode
+            }
+        } catch {
+            # Keep only the numeric status, if supplied. Never persist URI, body, headers or exception text.
+            if ($null -ne $_.Exception.Response -and
+                $null -ne $_.Exception.Response.StatusCode) {
+                try { $taskStatus = [int]$_.Exception.Response.StatusCode }
+                catch { $taskStatus = $null }
+            }
+        }
+        if ($null -ne $taskResponse -and $null -ne $taskStatus -and
+            $ExpectedStatus -contains $taskStatus) {
+            return $taskResponse
+        }
+        $taskRetryable = if ($null -eq $taskStatus) { $true } else {
+            $RetryStatus -contains $taskStatus }
+        if ($taskRetryable -and $taskAttempt -lt $taskDelays.Count) {
+            Start-Sleep -Seconds $taskDelays[$taskAttempt]
+            continue
+        }
+        if ($null -eq $taskStatus) {
+            throw (New-SafeRequestFailure -Type 'transport-no-status')
+        }
+        throw (New-SafeRequestFailure -Type 'http-status' -Status $taskStatus)
+    }
+}
+
+function Get-ReadOnlyJson {
+    param([string]$Uri,[hashtable]$Headers,[int]$TimeoutSec,
+        [int[]]$RetryStatus = @(408,429,502,503,504))
+    $taskResponse = Invoke-ReadOnlyGet -Uri $Uri -Headers $Headers -TimeoutSec $TimeoutSec `
+        -ExpectedStatus @(200) -RetryStatus $RetryStatus
+    return ($taskResponse.Content | ConvertFrom-Json -Depth 20)
+}
+
 function Get-OwnedVersionId {
-    $taskDeployments = Invoke-RestMethod -Uri "$taskApi/deployments" -Headers $taskApiHeaders -TimeoutSec 20
+    $taskDeployments = Get-ReadOnlyJson -Uri "$taskApi/deployments" -Headers $taskApiHeaders `
+        -TimeoutSec 20 -RetryStatus @(404,408,429,502,503,504)
     $taskRows = if ($taskDeployments.result -is [array]) {
         @($taskDeployments.result)
     } else { @($taskDeployments.result.deployments) }
@@ -91,8 +168,8 @@ function Get-OwnedVersionId {
         throw 'Temporary Worker deployment traffic identity changed.'
     }
     $taskVersionId = $taskFull[0].version_id
-    $taskVersion = Invoke-RestMethod -Uri "$taskApi/versions/$taskVersionId" `
-        -Headers $taskApiHeaders -TimeoutSec 20
+    $taskVersion = Get-ReadOnlyJson -Uri "$taskApi/versions/$taskVersionId" `
+        -Headers $taskApiHeaders -TimeoutSec 20 -RetryStatus @(404,408,429,502,503,504)
     if ($taskVersion.result.annotations.'workers/message' -cne $taskMarker) {
         throw 'Temporary Worker version marker changed.'
     }
@@ -109,11 +186,23 @@ function Get-OwnedVersionId {
 
 function Get-MaintenanceJson {
     param([string]$Path,[string]$Method,[hashtable]$Headers)
-    $taskResponse = Invoke-WebRequest -Uri "$taskUrl$Path" -Method $Method -Headers $Headers `
-        -SkipHttpErrorCheck -TimeoutSec 30
-    if ([int]$taskResponse.StatusCode -ne 200 -or
-        $taskResponse.Headers['Cache-Control'] -notcontains 'no-store') {
-        throw 'Maintenance HTTP result was not confirmed.'
+    if ($Method -ceq 'Get') {
+        $taskResponse = Invoke-ReadOnlyGet -Uri "$taskUrl$Path" -Headers $Headers `
+            -TimeoutSec 30 -ExpectedStatus @(200) -RetryStatus @(404,408,429,502,503,504)
+    } elseif ($Method -ceq 'Post') {
+        # The apply POST can have committed even if its response is lost. Never retry it.
+        $taskResponse = Invoke-WebRequest -Uri "$taskUrl$Path" -Method Post -Headers $Headers `
+            -SkipHttpErrorCheck -TimeoutSec 30
+    } else { throw 'Unsupported maintenance method.' }
+    if ($null -eq $taskResponse -or $null -eq $taskResponse.StatusCode) {
+        $taskType = if ($Method -ceq 'Post') { 'write-response-unconfirmed' } else { 'transport-no-status' }
+        throw (New-SafeRequestFailure -Type $taskType)
+    }
+    if ([int]$taskResponse.StatusCode -ne 200) {
+        throw (New-SafeRequestFailure -Type 'http-status' -Status ([int]$taskResponse.StatusCode))
+    }
+    if ($taskResponse.Headers['Cache-Control'] -notcontains 'no-store') {
+        throw (New-SafeRequestFailure -Type 'response-validation' -Status 200)
     }
     return ($taskResponse.Content | ConvertFrom-Json -Depth 20)
 }
@@ -136,19 +225,18 @@ function Assert-ReadOnlyPreflight {
 }
 
 try {
-    $taskCurrent = Invoke-RestMethod -Uri $taskSettingsApi -Headers $taskApiHeaders -TimeoutSec 20
+    $taskCurrent = Get-ReadOnlyJson -Uri $taskSettingsApi -Headers $taskApiHeaders -TimeoutSec 20
     $taskMainBindings = @($taskCurrent.result.bindings | Where-Object type -eq 'hyperdrive' |
         Sort-Object name | ForEach-Object { "{0}:{1}" -f $_.name,$_.id })
     $taskExpectedMain = @('HYPERDRIVE:ba7faa6680cd48d4b3a1d36a7a5fc8f7',
-        'HYPERDRIVE_ADMIN:446e94a4de0143f58c8e5178ec55db8b') | Sort-Object
+        'HYPERDRIVE_ADMIN:446e94a4de0143f58c8e5178ec55db8b')
     if ($taskMainBindings.Count -ne 2 -or
         ($taskMainBindings -join '|') -cne ($taskExpectedMain -join '|')) {
         throw 'Current API Hyperdrive bindings differ from reviewed target.'
     }
     $taskStage = 'target-absence'
-    $taskAbsent = Invoke-WebRequest -Uri $taskApi -Headers $taskApiHeaders `
-        -SkipHttpErrorCheck -TimeoutSec 20
-    if ([int]$taskAbsent.StatusCode -ne 404) { throw 'Temporary Worker name is not absent.' }
+    $null = Invoke-ReadOnlyGet -Uri $taskApi -Headers $taskApiHeaders -TimeoutSec 20 `
+        -ExpectedStatus @(404)
     $taskStage = 'deploy'
     $taskAttempted = $true
     $taskDeploy = & node $taskCli deploy --config $taskConfig --name $taskName `
@@ -163,18 +251,21 @@ try {
         'https://' + [regex]::Escape($taskName) + '\.cinagroup\.workers\.dev')
     if (-not $taskMatch.Success) { throw 'Temporary maintenance URL unavailable.' }
     $taskUrl = $taskMatch.Value
+    $taskStage = 'verify-deployment'
     $taskOwnedVersionId = Get-OwnedVersionId
     $taskOwned = $true
 
     $taskStage = 'access-boundaries'
-    $taskAccess.anonymous = [int](Invoke-WebRequest -Uri "$taskUrl/preflight" `
-        -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
-    $taskAccess.wrongMethod = [int](Invoke-WebRequest -Uri "$taskUrl/apply" -Headers $taskAuth `
-        -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    $taskAccess.anonymous = [int](Invoke-ReadOnlyGet -Uri "$taskUrl/preflight" `
+        -Headers @{} -TimeoutSec 20 -ExpectedStatus @(403) `
+        -RetryStatus @(404,408,429,502,503,504)).StatusCode
+    $taskAccess.wrongMethod = [int](Invoke-ReadOnlyGet -Uri "$taskUrl/apply" `
+        -Headers $taskAuth -TimeoutSec 20 -ExpectedStatus @(405) `
+        -RetryStatus @(404,408,429,502,503,504)).StatusCode
     $taskAccess.missingOperation = [int](Invoke-WebRequest -Uri "$taskUrl/apply" -Method Post `
         -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
-    $taskAccess.query = [int](Invoke-WebRequest -Uri "$taskUrl/preflight?sql=none" `
-        -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    $taskAccess.query = [int](Invoke-ReadOnlyGet -Uri "$taskUrl/preflight?sql=none" `
+        -Headers $taskAuth -TimeoutSec 20 -ExpectedStatus @(404)).StatusCode
     $taskExpectedMissingOperation = if ($Apply) { 400 } else { 403 }
     if ($taskAccess.anonymous -ne 403 -or $taskAccess.wrongMethod -ne 405 -or
         $taskAccess.missingOperation -ne $taskExpectedMissingOperation -or $taskAccess.query -ne 404) {
@@ -214,6 +305,7 @@ try {
     }
     $taskStage = 'completed'
 } catch {
+    $taskFailureDetail = Get-SafeFailureDetail -Stage $taskStage -ErrorRecord $_
     $taskFailure = 'Maintenance outcome not fully confirmed; inspect the database read-only before any new mutation.'
     if ($taskApplyAttempted -and $taskUrl -and -not $taskAfter) {
         try { $taskAfter = Get-MaintenanceJson '/postflight' 'Get' $taskAuth }
@@ -221,31 +313,44 @@ try {
     }
 } finally {
     if ($taskAttempted) {
+        $taskCleanupStage = 'cleanup-presence'
         try {
-            $taskPresent = Invoke-WebRequest -Uri $taskApi -Headers $taskApiHeaders `
-                -SkipHttpErrorCheck -TimeoutSec 20
+            $taskPresent = Invoke-ReadOnlyGet -Uri $taskApi -Headers $taskApiHeaders `
+                -TimeoutSec 20 -ExpectedStatus @(200,404)
             if ([int]$taskPresent.StatusCode -eq 404) {
                 $taskMissing = $true
                 if ($taskOwnedVersionId) { throw 'Previously verified temporary Worker disappeared before cleanup.' }
             } elseif ([int]$taskPresent.StatusCode -eq 200) {
+                $taskCleanupStage = 'cleanup-ownership'
                 $taskBeforeDeleteVersionId = Get-OwnedVersionId
                 $taskOwned = $taskBeforeDeleteVersionId -and
                     (-not $taskOwnedVersionId -or $taskBeforeDeleteVersionId -ceq $taskOwnedVersionId)
                 if (-not $taskOwned) { throw 'Temporary target version changed before deletion.' }
+                $taskCleanupStage = 'cleanup-delete'
                 $taskDelete = & node $taskCli delete $taskName --config $taskConfig --force 2>&1
                 $taskDeleted = $LASTEXITCODE -eq 0
-                $taskRemoved = Invoke-WebRequest -Uri $taskApi -Headers $taskApiHeaders `
-                    -SkipHttpErrorCheck -TimeoutSec 20
-                $taskMissing = [int]$taskRemoved.StatusCode -eq 404
+                if (-not $taskDeleted) { throw 'Temporary Worker deletion unconfirmed.' }
+                $taskCleanupStage = 'cleanup-absence'
+                $null = Invoke-ReadOnlyGet -Uri $taskApi -Headers $taskApiHeaders `
+                    -TimeoutSec 20 -ExpectedStatus @(404) `
+                    -RetryStatus @(200,408,429,502,503,504)
+                $taskMissing = $true
             } else { throw 'Temporary target control-plane state is unknown.' }
-        } catch { $taskFailure = 'Temporary Worker cleanup needs independent verification.' }
+        } catch {
+            $taskCleanupFailureDetail = Get-SafeFailureDetail -Stage $taskCleanupStage -ErrorRecord $_
+            $taskFailure = 'Temporary Worker cleanup needs independent verification.'
+        }
     }
     try {
-        $taskFinal = Invoke-RestMethod -Uri $taskSettingsApi -Headers $taskApiHeaders -TimeoutSec 20
+        $taskFinal = Get-ReadOnlyJson -Uri $taskSettingsApi -Headers $taskApiHeaders -TimeoutSec 20
         $taskFinalBindings = @($taskFinal.result.bindings | Where-Object type -eq 'hyperdrive' |
             Sort-Object name | ForEach-Object { "{0}:{1}" -f $_.name,$_.id })
         $taskMainUnchanged = ($taskFinalBindings -join '|') -ceq ($taskMainBindings -join '|')
-    } catch { $taskFailure = 'Current API binding postflight needs independent verification.' }
+        if (-not $taskMainUnchanged) { throw 'Current API binding postflight changed.' }
+    } catch {
+        $taskMainFailureDetail = Get-SafeFailureDetail -Stage 'main-binding-postflight' -ErrorRecord $_
+        $taskFailure = 'Current API binding postflight needs independent verification.'
+    }
     $taskToken = $null; $taskAuth = $null; $taskWrite = $null
 }
 
@@ -264,8 +369,11 @@ $taskReceipt = [ordered]@{
     mainBindingsUnchanged = $taskMainUnchanged
     cleanup = @{ attempted = $taskAttempted; ownershipVerified = $taskOwned;
         deleted = $taskDeleted;
-        controlPlaneMissing = $taskMissing }
+        controlPlaneMissing = $taskMissing;
+        failureDetail = $taskCleanupFailureDetail }
     failure = $taskFailure
+    failureDetail = $taskFailureDetail
+    mainBindingFailureDetail = $taskMainFailureDetail
 }
 [IO.File]::WriteAllText((Join-Path $taskReceiptDir 'receipt.json'),
     ($taskReceipt | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
