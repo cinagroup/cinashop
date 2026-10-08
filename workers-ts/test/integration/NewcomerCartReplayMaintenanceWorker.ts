@@ -40,6 +40,33 @@ function reply(value: unknown, status = 200): Response {
   return Response.json(value, { status, headers });
 }
 
+async function hasEmptyPostBody(request: Request): Promise<boolean> {
+  if (request.headers.has('transfer-encoding')) return false;
+  const contentLength = request.headers.get('content-length');
+  if (contentLength !== null && contentLength !== '0') return false;
+  if (request.body === null) return true;
+  if (contentLength !== '0') return false;
+  // A zero-byte POST can still expose a body stream. Inspect only its first
+  // chunk: EOF is empty; even a zero-length chunk fails closed. A stalled or
+  // invalid stream is rejected before opening a database connection.
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    reader = request.body.getReader();
+    return await Promise.race([
+      reader.read().then(chunk => chunk.done === true),
+      new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), 2_000); }),
+    ]);
+  } catch { return false; }
+  finally {
+    if (timer !== undefined) clearTimeout(timer);
+    if (reader) {
+      try { void reader.cancel().catch(() => undefined); }
+      catch { /* Invalid streams fail closed above. */ }
+    }
+  }
+}
+
 async function useBinding<T>(binding: Binding, label: string,
   fn: (db: ReturnType<typeof createDbFromConnectionString>) => Promise<T>): Promise<T> {
   const db = createDbFromConnectionString(binding.connectionString, 1, {
@@ -106,7 +133,7 @@ export default {
       return reply({ error: 'apply is not armed in this deployment' }, 403);
     }
     if (method === 'POST' && (request.headers.get('X-Migration-Operation')
-        !== NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION || request.body !== null)) {
+        !== NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION || !await hasEmptyPostBody(request))) {
       return reply({ error: 'explicit operation and empty body required' }, 400);
     }
     if (!hex40.test(env.SOURCE_SHA) || !hex64.test(env.EXPECTED_INSTALL_SQL_SHA256)
