@@ -229,6 +229,92 @@ test('the actual confirm page retains the uncertain intent when order-list navig
     assert.equal(r.checkout.pending.value.key, 'checkout_key1');
   } finally { r.stop(); }
 });
+
+test('delayed order-list failure cannot write into a new account and duplicate taps issue one navigation', async () => {
+  const r = runtime({ component: 'pages/order/confirm.vue',
+    send: server({ '/api/order/create/checkout_key1': () => ({ transport: 'timeout' }) }) });
+  try {
+    await r.start(); await r.checkout.submit();
+    const saved = r.storage.get(key), priorError = r.checkout.submissionError.value;
+    const navigations = [];
+    r.uni.navigateTo = options => { navigations.push(options); };
+    const requests = r.calls.length;
+    r.checkout.reviewOrders(); r.checkout.reviewOrders();
+    assert.equal(navigations.length, 1);
+    assert.equal(navigations[0].url, '/pages/order/list');
+    assert.equal(r.checkout.reviewingOrders.value, true);
+    assert.equal(r.calls.length, requests);
+
+    r.auth.setLogin('another-account', 22);
+    navigations[0].fail(new Error('late navigation failure'));
+    await tick();
+    assert.equal(r.checkout.submissionError.value, priorError);
+    assert.equal(r.checkout.reviewingOrders.value, false);
+    assert.equal(r.checkout.pending.value, null);
+    assert.equal(r.storage.get(key), saved);
+    r.checkout.reviewOrders();
+    assert.equal(navigations.length, 1);
+  } finally { r.stop(); }
+});
+
+test('delayed order-list failure cannot write across a same-UID session change', async () => {
+  const r = runtime({ component: 'pages/order/confirm.vue',
+    send: server({ '/api/order/create/checkout_key1': () => ({ transport: 'timeout' }) }) });
+  try {
+    await r.start(); await r.checkout.submit();
+    const saved = r.storage.get(key), priorError = r.checkout.submissionError.value;
+    let navigation;
+    r.uni.navigateTo = options => { navigation = options; };
+    r.checkout.reviewOrders();
+    assert.ok(navigation);
+    r.auth.setLogin('renewed-session', 11);
+    navigation.fail(new Error('late navigation failure'));
+    assert.equal(r.checkout.submissionError.value, priorError);
+    assert.equal(r.storage.get(key), saved);
+    await tick();
+    assert.equal(r.checkout.pending.value, null);
+  } finally { r.stop(); }
+});
+
+test('delayed order-list failures after hide and reload leave the original intent untouched', async () => {
+  const storage = new Map();
+  const send = server({ '/api/order/create/checkout_key1': () => ({ transport: 'timeout' }) });
+  const first = runtime({ component: 'pages/order/confirm.vue', storage, send });
+  let stopped = false;
+  try {
+    await first.start(); await first.checkout.submit();
+    const saved = storage.get(key), priorError = first.checkout.submissionError.value;
+    const navigations = [];
+    first.uni.navigateTo = options => { navigations.push(options); };
+    first.checkout.reviewOrders();
+    assert.equal(first.checkout.reviewingOrders.value, true);
+    first.hooks.onHide();
+    navigations[0].fail(new Error('late failure after hide'));
+    assert.equal(first.checkout.submissionError.value, priorError);
+    assert.equal(first.checkout.reviewingOrders.value, false);
+    assert.equal(storage.get(key), saved);
+
+    first.hooks.onShow(); await tick();
+    assert.equal(first.checkout.pending.value.key, 'checkout_key1');
+    const currentError = first.checkout.submissionError.value;
+    first.checkout.reviewOrders();
+    assert.equal(navigations.length, 2);
+    navigations[0].fail(new Error('stale failure after returning'));
+    assert.equal(first.checkout.reviewingOrders.value, true);
+    assert.equal(first.checkout.submissionError.value, currentError);
+    first.stop(); stopped = true;
+
+    const restored = runtime({ component: 'pages/order/confirm.vue', storage, send });
+    try {
+      await restored.start();
+      const restoredError = restored.checkout.submissionError.value;
+      navigations[1].fail(new Error('late failure after reload'));
+      assert.equal(restored.checkout.submissionError.value, restoredError);
+      assert.equal(storage.get(key), saved);
+      assert.equal(restored.checkout.pending.value.key, 'checkout_key1');
+    } finally { restored.stop(); }
+  } finally { if (!stopped) first.stop(); }
+});
 test('a known result navigates without payment and clears only after successful navigation', async () => {
   const send = server({ '/api/order/create/checkout_key1': () => ({ data: { key: 'checkout_key1', orderId: 'order_local_1' } }) });
   const r = runtime({ send, navigationFails: true }); await r.start(); await r.checkout.submit();

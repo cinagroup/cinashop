@@ -12,7 +12,7 @@
       <view class="muted">已锁定 {{ pending.payload.cartIds.length }} 项商品，{{ pending.payload.shippingType === 2 ? '门店自提' : '快递配送' }}</view>
       <view v-if="!pending.orderId" class="pending-review">
         <text class="muted">可先核对本人订单；查看列表不会重试建单或解除当前锁定。</text>
-        <button size="mini" :disabled="!canSubmit" @tap="reviewOrders">查看本人订单</button>
+        <button size="mini" :disabled="!canSubmit || reviewingOrders" @tap="reviewOrders">查看本人订单</button>
       </view>
     </view>
     <template v-if="!pending && !loading && !error">
@@ -116,7 +116,10 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import SystemFormFields from "@/components/SystemFormFields.vue";
+import { ref } from 'vue';
+import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { useCheckout } from "@/composables/useCheckout";
+import { useAuthStore } from '@/stores/auth';
 import { cartPromotionSummary } from '../../../../common/cartPrice';
 // Route parameters are validated by useCheckout.onLoad, not DOM attributes.
 defineOptions({ inheritAttrs: false });
@@ -124,6 +127,9 @@ const { loading, error, load, locked, formLocked, items, displayItems, addresses
   allowedShippingTypes, requiresAddress, shippingLoading,
   customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
   coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();
+const auth = useAuthStore();
+const reviewingOrders = ref(false);
+let reviewGeneration = 0;
 function promotionSummary(id: number): string {
   const item = quote.value.result?.items.find(row => row.id === id);
   return item ? cartPromotionSummary(item) : '';
@@ -131,11 +137,25 @@ function promotionSummary(id: number): string {
 function addAddress() { if (!locked.value) uni.navigateTo({ url: "/pages/user/address" }); }
 function integralChange(event: Event) { if (!locked.value) useIntegral.value = (event as unknown as { detail: { value: boolean } }).detail.value === true; }
 function reviewOrders() {
-  if (!pending.value || pending.value.orderId || !canSubmit.value) return;
-  const fail = () => { submissionError.value = '订单列表暂无法打开；原下单记录已保留，请稍后重试。'; };
+  const intent = pending.value;
+  if (!intent || intent.orderId || !canSubmit.value || reviewingOrders.value) return;
+  const owner = { uid: auth.uid, sessionVersion: auth.sessionVersion };
+  const attempt = ++reviewGeneration;
+  reviewingOrders.value = true;
+  const fail = () => {
+    if (attempt !== reviewGeneration || !reviewingOrders.value) return;
+    reviewingOrders.value = false;
+    if (canSubmit.value && pending.value === intent && auth.uid === owner.uid && auth.sessionVersion === owner.sessionVersion) {
+      submissionError.value = '订单列表暂无法打开；原下单记录已保留，请稍后重试。';
+    }
+  };
   try { uni.navigateTo({ url: '/pages/order/list', fail }); }
   catch { fail(); }
 }
+function resetOrderReview() { reviewGeneration++; reviewingOrders.value = false; }
+onShow(resetOrderReview);
+onHide(resetOrderReview);
+onUnload(resetOrderReview);
 </script>
 
 <style scoped>
