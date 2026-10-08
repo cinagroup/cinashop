@@ -2,6 +2,125 @@
  * Admin 系统管理 API
  */
 import request, { getData } from "@/utils/request";
+import type { AxiosResponse } from "axios";
+
+export type AdminAuthorityOperationKind = "admin-save" | "role-save" | "role-delete";
+export interface AdminAuthorityEnvelope {
+  operation_id: string;
+  operation: AdminAuthorityOperationKind;
+  payload: Record<string, unknown>;
+}
+export interface AdminAuthorityValues { role_name?: string; rules?: string; level?: number; status?: number; roles?: string }
+export interface AdminAuthorityPreview {
+  operation_id: string; actor_id: number; operation: AdminAuthorityOperationKind;
+  request_hash: string; revision: string; expires_at: number;
+  summary: { target_id: number; target_name: string; action: "create" | "update" | "delete";
+    before: AdminAuthorityValues | null; after: AdminAuthorityValues };
+  affected_accounts: Array<{ id: number; account: string; real_name: string; level: number; status: number; is_del: number }>;
+  requires_confirmation: true;
+}
+export interface AdminAuthorityPending {
+  version: 1; operation_id: string; actor_id: number; operation: AdminAuthorityOperationKind;
+  request_hash: string; target_id: number; action: "create" | "update" | "delete";
+}
+export interface AdminAuthorityReceipt {
+  operation_id: string; actor_id: number; operation: AdminAuthorityOperationKind;
+  state: "committed" | "not_applied" | "unknown"; request_hash: string | null;
+  result: { id: number; created?: boolean; deleted?: boolean } | null;
+}
+export interface AdminAuthorityCommit extends AdminAuthorityEnvelope { revision: string; expires_at: number; confirmed: true }
+const authorityUUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+const authorityHash = /^[a-f0-9]{64}$/;
+const authorityKinds = new Set(["admin-save", "role-save", "role-delete"]);
+const positiveId = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0 && value <= 2147483647;
+const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
+const safeText = (value: unknown, maximum: number): value is string => typeof value === "string"
+  && [...value].length <= maximum && !/[\u0000-\u001f\u007f-\u009f]/u.test(value);
+
+export function isAdminAuthorityPending(value: unknown, owner: number): value is AdminAuthorityPending {
+  if (!object(value)) return false;
+  const allowed = new Set(["version", "operation_id", "actor_id", "operation", "request_hash", "target_id", "action"]);
+  return Object.keys(value).every(key => allowed.has(key)) && value.version === 1 && value.actor_id === owner && positiveId(owner)
+    && typeof value.operation_id === "string" && authorityUUID.test(value.operation_id)
+    && typeof value.operation === "string" && authorityKinds.has(value.operation)
+    && typeof value.request_hash === "string" && authorityHash.test(value.request_hash)
+    && (value.target_id === 0 || positiveId(value.target_id))
+    && (value.operation === "role-delete" ? value.action === "delete" && positiveId(value.target_id)
+      : value.action === (value.target_id === 0 ? "create" : "update"));
+}
+function authorityValues(value: unknown): value is AdminAuthorityValues {
+  if (!object(value)) return false;
+  return Object.entries(value).every(([key, field]) => key === "role_name" ? safeText(field, 32)
+    : key === "rules" ? safeText(field, 16384) : key === "roles" ? safeText(field, 128)
+      : key === "level" ? typeof field === "number" && Number.isSafeInteger(field) && field >= 0 && field <= 32767
+        : key === "status" && (field === -1 || field === 0 || field === 1));
+}
+function completeAuthorityValues(value: unknown, kind: AdminAuthorityOperationKind, deleted = false): value is AdminAuthorityValues {
+  if (!authorityValues(value)) return false;
+  const required = kind === "admin-save" ? ["roles", "level", "status"] : ["role_name", "rules", "level", "status"];
+  return required.every(key => Object.prototype.hasOwnProperty.call(value, key)) && (kind !== "admin-save" || Number(value.level) <= 9)
+    && (deleted ? value.status === -1 : value.status === 0 || value.status === 1);
+}
+async function authorityData(promise: Promise<AxiosResponse<unknown>>): Promise<unknown> {
+  const response = await promise;
+  const body = response.data;
+  if (response.status !== 200 || !object(body) || body.status !== 200 || typeof body.msg !== "string" || !("data" in body)) {
+    throw new Error("操作响应不可靠，请查询操作回执");
+  }
+  return body.data;
+}
+export async function apiAdminAuthorityPreview(envelope: AdminAuthorityEnvelope, owner: number, signal?: AbortSignal): Promise<AdminAuthorityPreview> {
+  const value = await authorityData(request.post("/system/authority/preview", envelope, { signal }));
+  const target = envelope.payload.id ?? 0, action = envelope.operation === "role-delete" ? "delete" : target === 0 ? "create" : "update";
+  if (!positiveId(owner) || !authorityUUID.test(envelope.operation_id) || (target !== 0 && !positiveId(target))
+    || !object(value) || value.operation_id !== envelope.operation_id || value.actor_id !== owner || value.operation !== envelope.operation
+    || typeof value.request_hash !== "string" || !authorityHash.test(value.request_hash)
+    || typeof value.revision !== "string" || !authorityHash.test(value.revision)
+    || !Number.isSafeInteger(value.expires_at) || Number(value.expires_at) <= Math.floor(Date.now() / 1000)
+    || Number(value.expires_at) > Math.floor(Date.now() / 1000) + 300 || value.requires_confirmation !== true
+    || !object(value.summary) || value.summary.target_id !== target || value.summary.action !== action
+    || !safeText(value.summary.target_name, 128) || !value.summary.target_name.trim()
+    || (action === "create" ? value.summary.before !== null : !completeAuthorityValues(value.summary.before, envelope.operation))
+    || !completeAuthorityValues(value.summary.after, envelope.operation, action === "delete")
+    || value.summary.after.status !== (action === "delete" ? -1 : envelope.payload.status ?? (object(value.summary.before) ? value.summary.before.status : 1))
+    || !Array.isArray(value.affected_accounts) || value.affected_accounts.length > 1000
+    || value.affected_accounts.some(row => !object(row) || !positiveId(row.id) || !safeText(row.account, 32) || !safeText(row.real_name, 16)
+      || typeof row.level !== "number" || !Number.isInteger(row.level) || row.level < 0 || row.level > 9
+      || ![0, 1].includes(Number(row.status)) || typeof row.status !== "number" || ![0, 1].includes(Number(row.is_del)) || typeof row.is_del !== "number")
+    || new Set(value.affected_accounts.map(row => row.id)).size !== value.affected_accounts.length) {
+    throw new Error("影响预览响应格式错误，请重新预览");
+  }
+  return value as unknown as AdminAuthorityPreview;
+}
+function authorityReceipt(value: unknown, pending: AdminAuthorityPending): AdminAuthorityReceipt {
+  if (!object(value) || value.operation_id !== pending.operation_id || value.actor_id !== pending.actor_id || value.operation !== pending.operation
+    || !["committed", "not_applied", "unknown"].includes(String(value.state))) throw new Error("操作回执身份或操作不匹配");
+  if (value.state === "committed") {
+    const result = value.result;
+    if (value.request_hash !== pending.request_hash || !object(result) || !positiveId(result.id)
+      || pending.target_id !== 0 && result.id !== pending.target_id
+      || (pending.operation === "role-delete" ? result.deleted !== true || Object.keys(result).some(key => !["id", "deleted"].includes(key))
+        : result.created !== (pending.action === "create") || Object.keys(result).some(key => !["id", "created"].includes(key)))) {
+      throw new Error("操作回执请求或结果不匹配");
+    }
+  } else if (value.request_hash !== null || value.result !== null) throw new Error("未执行操作回执格式错误");
+  return value as unknown as AdminAuthorityReceipt;
+}
+export async function apiAdminAuthorityCommit(envelope: AdminAuthorityCommit, pending: AdminAuthorityPending, signal?: AbortSignal): Promise<AdminAuthorityReceipt> {
+  const receipt = authorityReceipt(await authorityData(request.post("/system/authority/commit", envelope, { signal })), pending);
+  if (receipt.state !== "committed") throw new Error("提交未返回已执行回执，请查询操作结果");
+  return receipt;
+}
+export async function apiAdminAuthorityReceipt(pending: AdminAuthorityPending, signal?: AbortSignal): Promise<AdminAuthorityReceipt> {
+  return authorityReceipt(await authorityData(request.get(`/system/authority/receipt/${pending.operation_id}`,
+    { params: { operation: pending.operation }, signal })), pending);
+}
+export async function apiAdminAuthorityResolve(pending: AdminAuthorityPending, signal?: AbortSignal): Promise<AdminAuthorityReceipt> {
+  const receipt = authorityReceipt(await authorityData(request.post("/system/authority/resolve",
+    { operation_id: pending.operation_id, operation: pending.operation }, { signal })), pending);
+  if (receipt.state === "unknown") throw new Error("操作尚未封存，仍须查询或确认取消");
+  return receipt;
+}
 
 export interface AdminAccount {
   id: number;
@@ -61,8 +180,8 @@ function directory<T>(value: SystemDirectory<T>, query: SystemDirectoryQuery, va
   return value;
 }
 
-const validIdentity = (row: { id: number; level: number; status: number }) => Number.isSafeInteger(row.id) && row.id > 0
-  && Number.isInteger(row.level) && row.level >= 0 && row.level <= 9 && (row.status === 0 || row.status === 1);
+const validIdentity = (row: { id: number; level: number; status: number }, maximumLevel = 9) => Number.isSafeInteger(row.id) && row.id > 0
+  && Number.isSafeInteger(row.level) && row.level >= 0 && row.level <= maximumLevel && (row.status === 0 || row.status === 1);
 
 export async function apiAdminSystemAdminDirectory(query: SystemDirectoryQuery, signal?: AbortSignal): Promise<SystemDirectory<AdminAccount>> {
   const params = directoryParams(query);
@@ -74,7 +193,7 @@ export async function apiAdminSystemAdminDirectory(query: SystemDirectoryQuery, 
 export async function apiAdminSystemRoleDirectory(query: SystemDirectoryQuery, signal?: AbortSignal): Promise<SystemDirectory<RoleItem>> {
   const params = directoryParams(query);
   const result = await getData<SystemDirectory<RoleItem>>(request.get("/system_role/directory", { params, signal }));
-  return directory(result, query, row => validIdentity(row) && typeof row.roleName === "string" && typeof row.rules === "string"
+  return directory(result, query, row => validIdentity(row, 32767) && typeof row.roleName === "string" && typeof row.rules === "string"
     && Array.isArray(row.permissionKeys) && row.permissionKeys.every(key => typeof key === "string"));
 }
 

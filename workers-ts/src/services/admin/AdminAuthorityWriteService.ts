@@ -245,115 +245,148 @@ async function verifyRoleReadBack(tx: DbClient, saved: AdminAuthorityRoleRow | u
   if (!sameValues(readBack, saved)) throw conflict(`角色${action}回读不一致`);
 }
 
+export type AdminAuthorityOperationKind = 'admin-save' | 'role-save' | 'role-delete';
+export interface PreparedAdminAuthorityWrite {
+  operation: AdminAuthorityOperationKind;
+  id: number;
+  account?: string; realName?: string; phone?: string; password?: string;
+  roles?: string; roleName?: string; rules?: string; level?: number; status?: 0 | 1;
+}
+export interface AdminAuthorityWritePlan {
+  prepared: PreparedAdminAuthorityWrite;
+  currentAdmin?: typeof systemAdmin.$inferSelect;
+  currentRole?: AdminAuthorityRoleRow;
+  adminFields?: Partial<typeof systemAdmin.$inferInsert>;
+  roleFields?: Partial<typeof systemRole.$inferInsert>;
+  roleImpact?: AdminRoleMutationImpact;
+}
+
+/** Pure validation. Preview must not hash a password, write/roll back a trial
+ * mutation, or consume a PostgreSQL sequence to discover the intended result. */
+export function prepareAdminAuthorityWrite(operation: AdminAuthorityOperationKind, body: unknown): PreparedAdminAuthorityWrite {
+  const row = record(body), id = optionalId(row);
+  if (operation === 'role-delete') {
+    if (!integerId(id)) throw new ValidateException('ID错误');
+    return Object.freeze({ operation, id });
+  }
+  if (operation === 'role-save') {
+    const roleName = optionalText(row.role_name, '角色名称', 32, true);
+    if (roleName !== undefined && !roleName) throw new ValidateException('角色名称不能为空');
+    return Object.freeze({ operation, id, roleName, rules: row.rules === undefined ? undefined : normalizeAdminAuthorityRules(row.rules),
+      level: optionalLevel(row.level, '角色'), status: optionalStatus(row.status, '角色') });
+  }
+  const account = optionalText(row.account, '账号', 32, true), realName = optionalText(row.real_name, '管理员姓名', 16);
+  const phone = optionalText(row.phone, '手机号', 32), password = optionalText(row.pwd, '管理员密码', 256);
+  if (id && password && password.length < 12) throw new ValidateException('管理员密码至少 12 位');
+  if (!id && !account) throw new ValidateException('账号不能为空');
+  if (!id && (!password || password.length < 12)) throw new ValidateException('新管理员密码至少 12 位');
+  return Object.freeze({ operation, id, account, realName, phone, password,
+    roles: row.roles === undefined ? undefined : parseAdminAuthorityRoleIds(row.roles as string).join(','),
+    level: optionalLevel(row.level, '管理员'), status: optionalStatus(row.status, '管理员') });
+}
+
+/** SELECT and authorization only; the caller owns the common transaction and
+ * acquired its barrier before every decision read. Never starts a nested tx. */
+export async function planAdminAuthorityWrite(tx: DbClient, live: AdminAuthorityLiveActor,
+  prepared: PreparedAdminAuthorityWrite): Promise<AdminAuthorityWritePlan> {
+  const { id, operation } = prepared;
+  if (operation === 'admin-save') {
+    const { account, realName, phone, password, level, status, roles } = prepared;
+    const [target] = id ? await tx.select().from(systemAdmin).where(and(eq(systemAdmin.id, id),
+      eq(systemAdmin.adminType, 1), eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0), inArray(systemAdmin.status, [0, 1]))).limit(1) : [];
+    if (id && !target) throw new ValidateException('管理员不存在');
+    if (live.level !== 0 && (target?.level === 0 || level === 0)) {
+      throw new ValidateException(id ? '只有超级管理员可以管理超级管理员账号' : '只有超级管理员可以创建超级管理员账号');
+    }
+    if (target?.id === live.id) {
+      const sameRoles = roles === undefined || parseAdminAuthorityRoleIds(roles).sort((a,b) => a-b).join(',')
+        === [...live.roleIds].sort((a,b) => a-b).join(',');
+      if (level !== undefined && level !== target.level || status !== undefined && status !== target.status || !sameRoles) {
+        throw conflict('不能修改本人账号的权限、状态或等级');
+      }
+    } else if (target && live.level !== 0) await assertAdminAuthorityRoleAssignment(tx, live, target.roles, false);
+    if (roles !== undefined && target?.id !== live.id) await assertAdminAuthorityRoleAssignment(tx, live, roles);
+    if (!target) await assertAdminAuthorityRoleAssignment(tx, live, roles ?? '');
+    if (target && target.level === 0 && target.status === 1 && (level !== undefined && level !== 0 || status === 0)) {
+      await assertRemainingActivePlatformSuperAdmin(tx, target.id);
+    }
+    const fields = target ? { ...(realName !== undefined ? { realName } : {}), ...(phone !== undefined ? { phone } : {}),
+      ...(roles !== undefined ? { roles } : {}), ...(level !== undefined ? { level } : {}), ...(status !== undefined ? { status } : {}) }
+      : { account: account!, realName: realName ?? '', phone: phone ?? '', roles: roles ?? '', level: level ?? 1,
+        status: status ?? 1, adminType: 1, relationId: 0, headPic: '', lastIp: '', addTime: 0, loginCount: 0, isWay: 0, divisionId: 0, isDel: 0 };
+    return { prepared: { ...prepared, password }, currentAdmin: target, adminFields: fields };
+  }
+  if (live.roleIds.includes(id)) throw conflict(operation === 'role-delete' ? '不能删除本人正在使用的角色' : '不能修改本人正在使用的角色');
+  const [target] = id ? await tx.select().from(systemRole).where(and(eq(systemRole.id, id), inArray(systemRole.type, [0, 1]),
+    eq(systemRole.relationId, 0), inArray(systemRole.status, [0, 1]))).limit(1) : [];
+  if (id && !target) throw new ValidateException('角色不存在');
+  if (target) await assertAdminAuthorityRoleRules(tx, live, target.rules);
+  if (operation === 'role-save' && (prepared.rules !== undefined || !target)) await assertAdminAuthorityRoleRules(tx, live, prepared.rules ?? '');
+  const nextRules = operation === 'role-delete' ? target!.rules : prepared.rules ?? target?.rules ?? '';
+  const nextStatus = operation === 'role-delete' ? -1 : prepared.status ?? target?.status ?? 1;
+  const roleImpact = target && (operation === 'role-delete' || prepared.rules !== undefined && !sameAdminAuthorityRuleSemantics(target.rules, nextRules)
+    || target.status !== nextStatus)
+    ? await inspectAdminRoleMutationImpact(tx, target, { rules: nextRules, status: nextStatus }) : undefined;
+  const roleFields = operation === 'role-delete' ? { status: -1 } : target
+    ? { ...(prepared.roleName !== undefined ? { roleName: prepared.roleName } : {}), ...(prepared.rules !== undefined ? { rules: prepared.rules } : {}),
+      ...(prepared.level !== undefined ? { level: prepared.level } : {}), ...(prepared.status !== undefined ? { status: prepared.status } : {}) }
+    : { roleName: prepared.roleName ?? '新角色', rules: prepared.rules ?? '', level: prepared.level ?? 0, status: prepared.status ?? 1, type: 0, relationId: 0 };
+  return { prepared, currentRole: target, roleFields, roleImpact };
+}
+
+/** Apply a server-built, freshly revalidated plan on its original transaction. */
+export async function applyAdminAuthorityWrite(tx: DbClient, plan: AdminAuthorityWritePlan,
+  passwordHash?: string): Promise<{ id: number; created: boolean }> {
+  const { prepared, currentAdmin, currentRole } = plan;
+  if (prepared.operation === 'admin-save') {
+    if (prepared.password && !passwordHash) throw new Error('Prepared administrator password hash required');
+    const fields = { ...plan.adminFields, ...(passwordHash ? { pwd: passwordHash } : {}) };
+    if (currentAdmin) {
+      if (!Object.keys(fields).length) return { id: currentAdmin.id, created: false };
+      const [saved] = await tx.update(systemAdmin).set(fields).where(and(eq(systemAdmin.id, currentAdmin.id),
+        eq(systemAdmin.adminType, 1), eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0))).returning();
+      await verifyAdminReadBack(tx, saved, { ...currentAdmin, ...fields });
+      return { id: currentAdmin.id, created: false };
+    }
+    const createFields = { ...fields, account: prepared.account!, pwd: passwordHash!, lastTime: Math.floor(Date.now()/1000) };
+    const [saved] = await tx.insert(systemAdmin).values(createFields).returning();
+    if (!saved || !integerId(saved.id)) throw conflict('管理员保存结果不一致');
+    await verifyAdminReadBack(tx, saved, { ...createFields, id: saved.id });
+    return { id: saved.id, created: true };
+  }
+  const fields = plan.roleFields!;
+  if (currentRole) {
+    if (!Object.keys(fields).length) return { id: currentRole.id, created: false };
+    const [saved] = await tx.update(systemRole).set(fields).where(and(eq(systemRole.id, currentRole.id),
+      inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), eq(systemRole.status, currentRole.status))).returning();
+    await verifyRoleReadBack(tx, saved, { ...currentRole, ...fields }, prepared.operation === 'role-delete');
+    return { id: currentRole.id, created: false };
+  }
+  const [saved] = await tx.insert(systemRole).values(fields).returning();
+  if (!saved || !integerId(saved.id)) throw conflict('角色保存结果不一致');
+  await verifyRoleReadBack(tx, saved, { ...fields, id: saved.id });
+  return { id: saved.id, created: true };
+}
+
 export class AdminAuthorityWriteService {
   constructor(private readonly container: Container,
     private readonly roleMutationPolicy: AdminRoleMutationPolicy = requireAdminRoleImpactConfirmation) {}
-
+  private async write(operation: AdminAuthorityOperationKind, body: unknown, actor: AdminAuthorityActor) {
+    const prepared = prepareAdminAuthorityWrite(operation, body);
+    const passwordHash = prepared.password ? await bcrypt.hash(prepared.password, 12) : undefined;
+    return withAdminAuthorityWriteTx(this.container, actor, 'system.manage', async (tx, live) => {
+      const plan = await planAdminAuthorityWrite(tx, live, prepared);
+      if (plan.roleImpact) await this.roleMutationPolicy(tx, live, plan.roleImpact);
+      return applyAdminAuthorityWrite(tx, plan, passwordHash);
+    });
+  }
   async saveAdmin(body: unknown, actor: AdminAuthorityActor): Promise<{ id: number; created: boolean }> {
-    const row = record(body), id = optionalId(row);
-    const account = optionalText(row.account, '账号', 32, true);
-    const realName = optionalText(row.real_name, '管理员姓名', 16);
-    const phone = optionalText(row.phone, '手机号', 32);
-    const password = optionalText(row.pwd, '管理员密码', 256);
-    const level = optionalLevel(row.level, '管理员'), status = optionalStatus(row.status, '管理员');
-    const roles = row.roles === undefined ? undefined : parseAdminAuthorityRoleIds(row.roles as string).join(',');
-    if (id && password && password.length < 12) throw new ValidateException('管理员密码至少 12 位');
-    if (!id && !account) throw new ValidateException('账号不能为空');
-    if (!id && (!password || password.length < 12)) throw new ValidateException('新管理员密码至少 12 位');
-    // Hashing is deliberately outside the bounded transaction; the live
-    // password version is revalidated after hashing and acquiring the barrier.
-    const pwd = password ? await bcrypt.hash(password, 12) : undefined;
-    return withAdminAuthorityWriteTx(this.container, actor, 'system.manage', async (tx, live) => {
-      const [target] = id ? await tx.select().from(systemAdmin).where(and(eq(systemAdmin.id, id),
-        eq(systemAdmin.adminType, 1), eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0), inArray(systemAdmin.status, [0, 1]))).limit(1) : [];
-      if (id && !target) throw new ValidateException('管理员不存在');
-      if (live.level !== 0 && (target?.level === 0 || level === 0)) {
-        throw new ValidateException(id ? '只有超级管理员可以管理超级管理员账号' : '只有超级管理员可以创建超级管理员账号');
-      }
-      if (target?.id === live.id) {
-        const sameRoles = roles === undefined || [...parseAdminAuthorityRoleIds(roles)].sort((a,b) => a-b).join(',')
-          === [...live.roleIds].sort((a,b) => a-b).join(',');
-        if (level !== undefined && level !== target.level || status !== undefined && status !== target.status || !sameRoles) {
-          throw conflict('不能修改本人账号的权限、状态或等级');
-        }
-      } else if (target && live.level !== 0) await assertAdminAuthorityRoleAssignment(tx, live, target.roles, false);
-      if (roles !== undefined && target?.id !== live.id) await assertAdminAuthorityRoleAssignment(tx, live, roles);
-      if (!target) await assertAdminAuthorityRoleAssignment(tx, live, roles ?? '');
-      if (target && target.level === 0 && target.status === 1 && (level !== undefined && level !== 0 || status === 0)) {
-        await assertRemainingActivePlatformSuperAdmin(tx, target.id);
-      }
-      if (target) {
-        const fields = { ...(realName !== undefined ? { realName } : {}), ...(phone !== undefined ? { phone } : {}),
-          ...(roles !== undefined ? { roles } : {}), ...(level !== undefined ? { level } : {}),
-          ...(status !== undefined ? { status } : {}), ...(pwd ? { pwd } : {}) };
-        if (!Object.keys(fields).length) return { id, created: false };
-        const [saved] = await tx.update(systemAdmin).set(fields).where(and(eq(systemAdmin.id, id),
-          eq(systemAdmin.adminType, 1), eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0))).returning();
-        await verifyAdminReadBack(tx, saved, { ...target, ...fields });
-        return { id, created: false };
-      }
-      const fields = { account: account!, pwd: pwd!, realName: realName ?? '',
-        phone: phone ?? '', roles: roles ?? '', level: level ?? 1, status: status ?? 1, adminType: 1, relationId: 0,
-        headPic: '', lastIp: '', lastTime: Math.floor(Date.now()/1000), addTime: 0, loginCount: 0, isWay: 0, divisionId: 0, isDel: 0 };
-      const [saved] = await tx.insert(systemAdmin).values(fields).returning();
-      if (!saved || !integerId(saved.id)) throw conflict('管理员保存结果不一致');
-      await verifyAdminReadBack(tx, saved, { ...fields, id: saved.id });
-      return { id: saved.id, created: true };
-    });
+    return this.write('admin-save', body, actor);
   }
-
   async saveRole(body: unknown, actor: AdminAuthorityActor): Promise<{ id: number; created: boolean }> {
-    const row = record(body), id = optionalId(row);
-    const roleName = optionalText(row.role_name, '角色名称', 32, true);
-    if (roleName !== undefined && !roleName) throw new ValidateException('角色名称不能为空');
-    const rules = row.rules === undefined ? undefined : normalizeAdminAuthorityRules(row.rules);
-    const level = optionalLevel(row.level, '角色'), status = optionalStatus(row.status, '角色');
-    return withAdminAuthorityWriteTx(this.container, actor, 'system.manage', async (tx, live) => {
-      if (live.roleIds.includes(id)) throw conflict('不能修改本人正在使用的角色');
-      const [target] = id ? await tx.select().from(systemRole).where(and(eq(systemRole.id, id),
-        inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), inArray(systemRole.status, [0, 1]))).limit(1) : [];
-      if (id && !target) throw new ValidateException('角色不存在');
-      if (target) await assertAdminAuthorityRoleRules(tx, live, target.rules);
-      if (rules !== undefined || !target) await assertAdminAuthorityRoleRules(tx, live, rules ?? '');
-      if (target) {
-        // The modern form echoes expanded permissionKeys. A known manage
-        // rule and its explicit manage+view representation grant the same
-        // authority. Absent rules preserve legacy numeric/opaque data exactly;
-        // unknown or incomplete representations are never treated as equal.
-        if (rules !== undefined && !sameAdminAuthorityRuleSemantics(target.rules, rules)
-          || status !== undefined && status !== target.status) {
-          const impact = await inspectAdminRoleMutationImpact(tx, target, { rules: rules ?? target.rules, status: status ?? target.status });
-          await this.roleMutationPolicy(tx, live, impact);
-        }
-        const fields = { ...(roleName !== undefined ? { roleName } : {}), ...(rules !== undefined ? { rules } : {}),
-          ...(level !== undefined ? { level } : {}), ...(status !== undefined ? { status } : {}) };
-        if (!Object.keys(fields).length) return { id, created: false };
-        const [saved] = await tx.update(systemRole).set(fields).where(and(eq(systemRole.id, id),
-          inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), eq(systemRole.status, target.status))).returning();
-        await verifyRoleReadBack(tx, saved, { ...target, ...fields });
-        return { id, created: false };
-      }
-      const fields = { roleName: roleName ?? '新角色', rules: rules ?? '', level: level ?? 0, status: status ?? 1, type: 0, relationId: 0 };
-      const [saved] = await tx.insert(systemRole).values(fields).returning();
-      if (!saved || !integerId(saved.id)) throw conflict('角色保存结果不一致');
-      await verifyRoleReadBack(tx, saved, { ...fields, id: saved.id });
-      return { id: saved.id, created: true };
-    });
+    return this.write('role-save', body, actor);
   }
-
   async deleteRole(id: number, actor: AdminAuthorityActor): Promise<void> {
-    if (!integerId(id)) throw new ValidateException('ID错误');
-    await withAdminAuthorityWriteTx(this.container, actor, 'system.manage', async (tx, live) => {
-      if (live.roleIds.includes(id)) throw conflict('不能删除本人正在使用的角色');
-      const [target] = await tx.select().from(systemRole).where(and(eq(systemRole.id, id), inArray(systemRole.type, [0, 1]),
-        eq(systemRole.relationId, 0), inArray(systemRole.status, [0, 1]))).limit(1);
-      if (!target) throw new ValidateException('角色不存在');
-      await assertAdminAuthorityRoleRules(tx, live, target.rules);
-      const impact = await inspectAdminRoleMutationImpact(tx, target, { rules: target.rules, status: -1 });
-      await this.roleMutationPolicy(tx, live, impact);
-      const [saved] = await tx.update(systemRole).set({ status: -1 }).where(and(eq(systemRole.id, id),
-        inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), eq(systemRole.status, target.status))).returning();
-      await verifyRoleReadBack(tx, saved, { ...target, status: -1 }, true);
-    });
+    await this.write('role-delete', { id }, actor);
   }
 }

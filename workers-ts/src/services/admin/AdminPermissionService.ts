@@ -324,8 +324,18 @@ function isAssistedOrderRoute(route: string): boolean {
     /^order\/(?:cart\/[^/]+|cart\/(?:add|del|num)\/[^/]+|confirm\/[^/]+|computed\/[^/]+\/[^/]+|coupons\/[^/]+|create\/[^/]+\/[^/]+|pay\/[^/]+)$/.test(route);
 }
 
+export function isAdminAuthorityRecoveryRoute(method:string,routePath:string):boolean {
+  const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^system\/authority\/receipt\/[^/]+$/.test(route))
+    || (verb==='POST' && route==='system/authority/resolve');
+}
+
 export function requiredAdminPermission(method: string, routePath: string): string | null {
   const route = normalizeAdminRoute(routePath);
+  // Only authenticated owners may recover their own immutable operation key.
+  // Recovery service admits live identity independently of current role grants.
+  if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
+  if (isAdminAuthorityRecoveryRoute(method,routePath)) return null;
   // Legacy staff authority lives under setting/, but is independent of runtime
   // configuration. Its lists and numeric role form/save have separate grants.
   // Other legacy writes do not grant config access or authority over modern writes.
@@ -751,6 +761,10 @@ export class AdminPermissionService {
     method: string,
     routePath: string,
   ): Promise<void> {
+    // Auth middleware has authenticated the account. The recovery service
+    // repeats live realm/status/password checks and binds the receipt owner;
+    // these two exact endpoints never perform a staff/role mutation.
+    if (isAdminAuthorityRecoveryRoute(method,routePath)) return;
     if (admin.level === 0) return;
     // Common header: authenticated financial/product-only roles need not hold
     // dashboard access. The controller independently filters EVERY count by role.

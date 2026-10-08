@@ -35,6 +35,7 @@ import { upgradeStaffNotification } from "@/services/notification/StaffNotificat
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
@@ -853,6 +854,10 @@ adminapiRoutes.post("/setting/role/:id", adminAuth, AdminLegacyRole.adminLegacyR
 adminapiRoutes.get("/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
 adminapiRoutes.get("/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 adminapiRoutes.post("/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);
+adminapiRoutes.post("/system/authority/preview", adminAuth, AdminAuthorityOperation.adminAuthorityPreview);
+adminapiRoutes.post("/system/authority/commit", adminAuth, AdminAuthorityOperation.adminAuthorityCommit);
+adminapiRoutes.get("/system/authority/receipt/:operationId", adminAuth, AdminAuthorityOperation.adminAuthorityReceipt);
+adminapiRoutes.post("/system/authority/resolve", adminAuth, AdminAuthorityOperation.adminAuthorityResolve);
 adminapiRoutes.get("/system_role/list", adminAuth, AdminCrud.adminSystemRoleList);
 adminapiRoutes.get("/system_role/directory", adminAuth, AdminCrud.adminSystemRoleDirectory);
 adminapiRoutes.post("/system_role/save", adminAuth, AdminCrud.adminSystemRoleSave);

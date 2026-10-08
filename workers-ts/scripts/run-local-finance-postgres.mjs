@@ -181,6 +181,7 @@ if (schemaMaintenance) {
     'test/admin-category-edit-form-native.test.ts',
     'test/admin-legacy-role-workflow-native.test.ts',
     'test/admin-authority-write-native.test.ts',
+    'test/admin-authority-operation-native.test.ts',
     'test/agent-application-postgres.test.ts',
     // These HTTP fixtures now install the real checkout NOLOGIN capability.
     'test/admin-refund-operation-http.test.ts',

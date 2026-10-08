@@ -46,7 +46,7 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  storage = new Map();
+  storage = new Map(); receipts.clear();
   browser = Object.assign(new EventTarget(), { location: { pathname: "/system", href: "", search: "" } });
   vi.stubGlobal("window", browser);
   vi.stubGlobal("localStorage", {
@@ -81,11 +81,40 @@ const adminRow = (id = 20) => ({ id, account: `operator${id}`, realName: `管理
 const roleRow = (id = 2) => ({ id, roleName: `角色 ${id}`, rules: "system.view", permissionKeys: ["system.view"], level: 1, status: 1 });
 const tree = [{ key: "system", label: "系统", path: "/system", children: [{ key: "system.view", label: "查看" }, { key: "system.manage", label: "管理" }] }];
 const directory = (rows: unknown[], page = 1, limit = 20, total = 21) => ({ list: rows, total, page, limit });
+const receipts = new Map<string, any>();
+const hash = "a".repeat(64), revision = "b".repeat(64);
+const ownerOf = (config: any) => Number(String(config.headers["Authori-zation"]).match(/system-token-(\d+)/)?.[1] ?? 20);
+const parsedBody = (config: any) => typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+function previewFor(config: any) {
+  const envelope = parsedBody(config), payload = envelope.payload, admin = envelope.operation === "admin-save";
+  const action = envelope.operation === "role-delete" ? "delete" : payload.id ? "update" : "create";
+  return { operation_id: envelope.operation_id, actor_id: ownerOf(config), operation: envelope.operation,
+    request_hash: hash, revision, expires_at: Math.floor(Date.now()/1000)+300, requires_confirmation: true,
+    summary: { target_id: payload.id ?? 0, target_name: payload.account ?? payload.role_name ?? "待删除角色", action,
+      before: action === "create" ? null : admin ? { roles: "2", level: 1, status: 1 } : { role_name: "原角色", rules: "system.view", level: 1, status: 1 },
+      after: admin ? { roles: payload.roles ?? "2", level: payload.level ?? 1, status: payload.status ?? 1 }
+        : { role_name: payload.role_name ?? "原角色", rules: payload.rules ?? "system.view", level: payload.level ?? 1, status: action === "delete" ? -1 : payload.status ?? 1 } },
+    affected_accounts: [40,41,42].map(id => ({ id, account: "affected-"+id, real_name: "受影响账号", level: 1, status: id===41?0:1, is_del: id===42?1:0 })) };
+}
+function receiptFor(config: any) {
+  const envelope = parsedBody(config);
+  return { operation_id: envelope.operation_id, actor_id: ownerOf(config), operation: envelope.operation,
+    state: "committed", request_hash: hash, result: envelope.operation === "role-delete"
+      ? { id: envelope.payload.id, deleted: true } : { id: envelope.payload.id ?? 30, created: !envelope.payload.id } };
+}
 function standardResponse(config: any) {
+  if (config.url === "/system/authority/preview") return previewFor(config);
+  if (config.url === "/system/authority/commit") { const value=receiptFor(config); receipts.set(value.operation_id,value); return value; }
+  if (config.url.startsWith("/system/authority/receipt/")) {
+    const id=config.url.split("/").at(-1); return receipts.get(id) ?? { operation_id:id,actor_id:ownerOf(config),operation:config.params.operation,state:"unknown",request_hash:null,result:null };
+  }
+  if (config.url === "/system/authority/resolve") {
+    const body=parsedBody(config), value=receipts.get(body.operation_id) ?? { ...body,actor_id:ownerOf(config),state:"not_applied",request_hash:null,result:null };
+    receipts.set(body.operation_id,value); return value;
+  }
   return config.url === "/system_menus/tree" ? tree
     : config.url === "/system_admin/directory" ? directory([adminRow()], config.params.page, config.params.limit)
-    : config.url === "/system_role/directory" ? directory([roleRow()], config.params.page, config.params.limit)
-    : { id: 30 };
+    : config.url === "/system_role/directory" ? directory([roleRow()], config.params.page, config.params.limit) : { id:30 };
 }
 
 async function mount(permissions = ["system.view", "system.manage"], respond?: (config: any) => unknown) {
@@ -115,7 +144,8 @@ async function mount(permissions = ["system.view", "system.manage"], respond?: (
 }
 
 // Behavior cases below bind the public setup actions of the actual SystemList SFC.
-const writes = (calls: any[]) => calls.filter(call => call.method !== "get");
+const writes = (calls: any[]) => calls.filter(call => ["/system/authority/commit", "/system/authority/resolve"].includes(call.url));
+async function confirmOperation(view: any) { view.previewDialog.confirmed = true; await view.confirmOperation(); }
 function adminDraft(view: any) {
   view.openAdminForm();
   Object.assign(view.adminDialog, { account: "new-operator", real_name: "新管理员", phone: "13800000000", pwd: "synthetic-password-123", roles: "2", level: 1 });
@@ -126,7 +156,7 @@ async function roleDraft(view: any) {
   Object.assign(view.roleDialog, { role_name: "新角色", level: 1 });
 }
 
-it("uses both directory contracts and server totals while keeping status read-only", async () => {
+it("uses both directory contracts and server totals while initial reads send no mutation", async () => {
   const fixture = await mount();
   try {
     expect(fixture.calls.filter(call => call.url.includes("directory")).map(call => call.url).sort()).toEqual(["/system_admin/directory", "/system_role/directory"]);
@@ -374,39 +404,36 @@ it("permission-directory retry closes old editing and requires reopening the ori
     expect(checked).toEqual(["system.view"]);
     expect(fixture.view.roleDialog.permissionKeys).toEqual(["system.view"]);
     await fixture.view.saveRole();
+    expect(fixture.view.previewDialog.show).toBe(true); await confirmOperation(fixture.view);
     expect(writes(fixture.calls)).toHaveLength(1);
-    expect(JSON.parse(writes(fixture.calls)[0].data).rules).toBe("system.view");
+    expect(JSON.parse(writes(fixture.calls)[0].data).payload.rules).toBe("system.view");
   } finally { fixture.close(); }
 });
 
-it("canceling role deletion sends nothing while a real API failure remains visible", async () => {
+it("canceling role deletion preview sends no commit while a real commit failure remains visible", async () => {
   const fixture = await mount(undefined, config => {
-    if (config.method === "delete") throw Error("role deletion unavailable");
+    if (config.url === "/system/authority/commit") throw Error("role deletion unavailable");
     if (config.url === "/system_role/directory") return directory([roleRow(3)], config.params.page, config.params.limit);
     return standardResponse(config);
   });
   try {
-    runtime.messages.state.confirm = async () => { throw "cancel"; };
-    await fixture.view.delRole(fixture.view.roleList.value[0]); expect(writes(fixture.calls)).toEqual([]);
-    expect(runtime.messages.state.errors).toEqual([]);
-    runtime.messages.state.confirm = async () => {};
-    await fixture.view.delRole(fixture.view.roleList.value[0]);
+    await fixture.view.delRole(fixture.view.roleList.value[0]); fixture.view.cancelPreview();
+    expect(writes(fixture.calls)).toEqual([]); expect(runtime.messages.state.errors).toEqual([]);
+    await fixture.view.delRole(fixture.view.roleList.value[0]); await confirmOperation(fixture.view);
     expect(writes(fixture.calls)).toHaveLength(1);
-    expect([...runtime.messages.state.errors, fixture.view.roleError.value].join(" ")).toContain("role deletion unavailable");
+    expect([...runtime.messages.state.errors, fixture.view.recoveryMessage.value].join(" ")).toContain("role deletion unavailable");
     expect(runtime.messages.state.success).toEqual([]);
   } finally { fixture.close(); }
 });
 
 it("confirmation rechecks permissions before issuing a role deletion", async () => {
-  const confirmation = deferred<void>();
   const fixture = await mount(undefined, config => config.url === "/system_role/directory"
     ? directory([roleRow(3)], config.params.page, config.params.limit) : standardResponse(config));
   try {
-    runtime.messages.state.confirm = () => confirmation.promise;
-    const pending = fixture.view.delRole(fixture.view.roleList.value[0]); await flush();
-    expect(runtime.messages.state.confirmations).toHaveLength(1);
+    await fixture.view.delRole(fixture.view.roleList.value[0]);
+    expect(fixture.view.previewDialog.show).toBe(true);
     login(["system.view"], "system-token-b", 30); browser.dispatchEvent(new Event("admin-session-changed")); await flush();
-    confirmation.resolve(); await pending;
+    await confirmOperation(fixture.view);
     expect(writes(fixture.calls)).toEqual([]);
   } finally { fixture.close(); }
 });
@@ -414,30 +441,32 @@ it("confirmation rechecks permissions before issuing a role deletion", async () 
 it("pending admin and role saves cannot be submitted twice", async () => {
   for (const kind of ["admin", "role"] as const) {
     const gate = deferred<unknown>();
-    const fixture = await mount(undefined, config => config.method === "post" ? gate.promise : standardResponse(config));
+    const fixture = await mount(undefined, config => config.url === "/system/authority/commit" ? gate.promise : standardResponse(config));
     try {
       if (kind === "admin") adminDraft(fixture.view); else await roleDraft(fixture.view);
       const save = kind === "admin" ? fixture.view.saveAdmin : fixture.view.saveRole;
-      const first = save(); await flush(); await save();
+      await save(); fixture.view.previewDialog.confirmed = true;
+      const first = fixture.view.confirmOperation(); await flush(); await save(); await fixture.view.confirmOperation();
       expect(writes(fixture.calls)).toHaveLength(1);
       expect(fixture.view.busy.value).toBeTruthy();
-      gate.resolve({ id: 30 }); await first;
+      gate.resolve(receiptFor(writes(fixture.calls)[0])); await first;
       expect(writes(fixture.calls)).toHaveLength(1);
     } finally { fixture.close(); }
   }
 });
 
-it("unknown admin save outcome retains the draft and blocks a blind repeat until reread", async () => {
+it("unknown admin save outcome retains the draft and blocks blind repeats even after directory reread", async () => {
   const fixture = await mount(undefined, config => {
-    if (config.method === "post") throw Error("response lost");
+    if (config.url === "/system/authority/commit") throw Error("response lost");
     return standardResponse(config);
   });
   try {
-    adminDraft(fixture.view); await fixture.view.saveAdmin();
+    adminDraft(fixture.view); await fixture.view.saveAdmin(); await confirmOperation(fixture.view);
     expect(fixture.view.adminDialog.show).toBe(true);
     expect(fixture.view.adminDialog.account).toBe("new-operator");
-    expect(fixture.view.adminReady.value).toBe(false);
-    expect([...runtime.messages.state.errors, fixture.view.adminError.value].join(" ")).toContain("response lost");
+    expect(fixture.view.writeBlocked.value).toBe(true);
+    expect([...runtime.messages.state.errors, fixture.view.recoveryMessage.value].join(" ")).toContain("response lost");
+    await fixture.view.loadAdmin(); expect(fixture.view.writeBlocked.value).toBe(true);
     await fixture.view.saveAdmin(); expect(writes(fixture.calls)).toHaveLength(1);
     expect(runtime.messages.state.success).toEqual([]);
   } finally { fixture.close(); }
@@ -445,14 +474,15 @@ it("unknown admin save outcome retains the draft and blocks a blind repeat until
 
 it("late successful mutation cannot close or toast for a replacement session", async () => {
   const late = deferred<unknown>();
-  const fixture = await mount(undefined, config => config.method === "post" ? late.promise : standardResponse(config));
+  const fixture = await mount(undefined, config => config.url === "/system/authority/commit" ? late.promise : standardResponse(config));
   try {
-    adminDraft(fixture.view); const pending = fixture.view.saveAdmin(); await flush();
+    adminDraft(fixture.view); await fixture.view.saveAdmin(); fixture.view.previewDialog.confirmed = true;
+    const pending = fixture.view.confirmOperation(); await flush();
     const posted = writes(fixture.calls)[0];
     login(["system.view"], "system-token-b", 30); browser.dispatchEvent(new Event("admin-session-changed")); await flush();
     expect(posted.signal.aborted).toBe(true);
     expect(fixture.view.adminDialog.pwd).toBe("");
-    late.resolve({ id: 30 }); await pending; await flush();
+    late.resolve(receiptFor(posted)); await pending; await flush();
     expect(runtime.messages.state.success).toEqual([]); expect(runtime.messages.state.errors).toEqual([]);
     expect(fixture.view.adminDialog.show).toBe(false);
   } finally { fixture.close(); }

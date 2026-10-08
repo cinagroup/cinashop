@@ -53,6 +53,7 @@ import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWech
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
@@ -2016,6 +2017,10 @@ v1Routes.post("/admin/setting/role/:id", adminAuth, AdminLegacyRole.adminLegacyR
 v1Routes.get("/admin/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
 v1Routes.get("/admin/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 v1Routes.post("/admin/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);
+v1Routes.post("/admin/system/authority/preview", adminAuth, AdminAuthorityOperation.adminAuthorityPreview);
+v1Routes.post("/admin/system/authority/commit", adminAuth, AdminAuthorityOperation.adminAuthorityCommit);
+v1Routes.get("/admin/system/authority/receipt/:operationId", adminAuth, AdminAuthorityOperation.adminAuthorityReceipt);
+v1Routes.post("/admin/system/authority/resolve", adminAuth, AdminAuthorityOperation.adminAuthorityResolve);
 v1Routes.get("/admin/system_role/list", adminAuth, AdminCrud.adminSystemRoleList);
 v1Routes.get("/admin/system_role/directory", adminAuth, AdminCrud.adminSystemRoleDirectory);
 v1Routes.post("/admin/system_role/save", adminAuth, AdminCrud.adminSystemRoleSave);
