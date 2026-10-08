@@ -2007,6 +2007,8 @@ v1Routes.post("/admin/brand/save", adminAuth, AdminCrud.adminBrandSave);
 v1Routes.delete("/admin/brand/del/:id", adminAuth, AdminCrud.adminBrandDel);
 
 // ─── Admin 系统管理员/角色 (M16) ─────────────────────────────
+v1Routes.get("/admin/setting/admin", adminAuth, AdminCrud.adminLegacySystemAdminList);
+v1Routes.get("/admin/setting/role", adminAuth, AdminCrud.adminLegacySystemRoleList);
 v1Routes.get("/admin/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
 v1Routes.get("/admin/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 v1Routes.post("/admin/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);

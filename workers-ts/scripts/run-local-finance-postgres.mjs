@@ -176,6 +176,7 @@ if (schemaMaintenance) {
     'test/runtime-admin-boundary.test.ts',
     'test/admin-supplier-menu-write-capability.test.ts',
     'test/admin-supplier-menu-rules-native-http.test.ts',
+    'test/admin-legacy-system-list-native.test.ts',
     // These HTTP fixtures now install the real checkout NOLOGIN capability.
     'test/admin-refund-operation-http.test.ts',
     'test/admin-refund-creation-http.test.ts',

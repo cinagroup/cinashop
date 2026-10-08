@@ -56,6 +56,7 @@ import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillme
 import { AdminRefundReadService, adminRefundId } from "@/services/admin/AdminRefundReadService";
 import { AdminOrderReadService } from "@/services/admin/AdminOrderReadService";
 import { AdminSystemLogReadService } from "@/services/admin/AdminSystemLogReadService";
+import { AdminLegacySystemListService, type AdminLegacySystemListActor } from "@/services/admin/AdminLegacySystemListService";
 import { listAdminUsers } from "@/services/admin/AdminUserListService";
 import { listAdminActivities } from "@/services/admin/AdminActivityListService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
@@ -1472,6 +1473,27 @@ export async function adminBrandDel(c: C) {
 // ═══════════════════════════════════════════════════════════
 // 系统管理员/角色管理 (M16)
 // ═══════════════════════════════════════════════════════════
+
+function legacySystemListActor(c: C): AdminLegacySystemListActor {
+  c.header("Cache-Control", "private, no-store");
+  c.header("Pragma", "no-cache");
+  return { id: c.get("adminId") ?? 0, authVersion: c.get("socketAuthVersion") ?? "",
+    expiresAt: c.get("socketTokenExp") ?? 0 };
+}
+
+/** GET /adminapi/setting/admin — PHP staff page's paginated display contract. */
+export async function adminLegacySystemAdminList(c: C) {
+  const actor = legacySystemListActor(c);
+  return jsonOk(c, await new AdminLegacySystemListService(c.get("container"))
+    .adminList(new URL(c.req.url).searchParams, actor));
+}
+
+/** GET /adminapi/setting/role — PHP role page's paginated display contract. */
+export async function adminLegacySystemRoleList(c: C) {
+  const actor = legacySystemListActor(c);
+  return jsonOk(c, await new AdminLegacySystemListService(c.get("container"))
+    .roleList(new URL(c.req.url).searchParams, actor));
+}
 
 function systemDirectoryQuery(c: C) {
   c.header("Cache-Control", "private, no-store");

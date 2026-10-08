@@ -275,6 +275,16 @@ const permissionKeys = new Set(
 permissionKeys.add("order.assisted");
 permissionKeys.add("integral_log.export");
 permissionKeys.add("bill.export");
+permissionKeys.add("system.legacy_admin_view");
+permissionKeys.add("system.legacy_role_view");
+
+/** Modern platform readers may use the narrower legacy lists; the reverse is forbidden. */
+export function hasAdminPermission(granted: ReadonlySet<string>, required: string): boolean {
+  return granted.has(required) || (
+    (required === "system.legacy_admin_view" || required === "system.legacy_role_view")
+    && granted.has("system.view")
+  );
+}
 
 function isNumericToken(token: string): boolean {
   return /^[1-9]\d*$/.test(token);
@@ -312,6 +322,16 @@ function isAssistedOrderRoute(route: string): boolean {
 
 export function requiredAdminPermission(method: string, routePath: string): string | null {
   const route = normalizeAdminRoute(routePath);
+  // Legacy staff authority lives under setting/, but is independent of runtime
+  // configuration. Only its read contracts are migrated here. Unimplemented
+  // legacy writes must not grant config access or authority over modern writes.
+  if (/^setting\/(?:admin(?:\/|$)|role(?:\/|$)|set_status(?:\/|$))/.test(route)) {
+    if (["GET", "HEAD"].includes(method.toUpperCase())) {
+      if (route === "setting/admin") return "system.legacy_admin_view";
+      if (route === "setting/role") return "system.legacy_role_view";
+    }
+    return null;
+  }
   // Legacy quick-login is a separate impersonation capability, never a
   // directory read. No such handoff route is enabled yet.
   if (/^supplier\/supplier\/login\/[^/]+$/.test(route)) return null;
@@ -440,7 +460,7 @@ export function assertDelegablePermissions(
   granted: ReadonlySet<string>,
   requested: Iterable<string>,
 ): void {
-  const excess = [...new Set(requested)].filter((key) => !granted.has(key));
+  const excess = [...new Set(requested)].filter((key) => !hasAdminPermission(granted, key));
   if (excess.length) {
     throw new ValidateException(`不能授予超出当前管理员范围的权限: ${excess.join(",")}`);
   }
@@ -448,6 +468,8 @@ export function assertDelegablePermissions(
 
 function menuPathPermission(menuPath: string): string | null {
   const route = menuPath.trim().toLowerCase();
+  if (route === "/admin/setting/system_admin/index") return "system.legacy_admin_view";
+  if (route === "/admin/setting/system_role/index") return "system.legacy_role_view";
   if(route==='/admin/setting/membership_level/index')return 'agent_level.view';
   if (route === "/admin/statistic/capital") return "capital_flow.view";
   if (route === "/admin/agent/statistics") return "division_statistics.view";
@@ -509,6 +531,10 @@ export class AdminPermissionService {
         ...(group.key === "order" ? [{ key: "order.assisted", label: "代客下单" }] : []),
         ...(group.key === "integral_log" ? [{ key: "integral_log.export", label: "导出" }] : []),
         ...(group.key === "bill" ? [{ key: "bill.export", label: "导出" }] : []),
+        ...(group.key === "system" ? [
+          { key: "system.legacy_admin_view", label: "旧管理员列表（下一层级）" },
+          { key: "system.legacy_role_view", label: "旧角色列表（下一层级）" },
+        ] : []),
       ],
     }));
   }
@@ -526,7 +552,8 @@ export class AdminPermissionService {
     const ids = [...new Set(assignments.flat())];
     if (ids.length > 10000) throw new ValidateException("通知角色数量超出单批上限");
     const roles = ids.length ? await this.container.db.select({ id: systemRole.id, rules: systemRole.rules }).from(systemRole)
-      .where(and(inArray(systemRole.id, ids), eq(systemRole.status, 1))) : [];
+      .where(and(inArray(systemRole.id, ids), eq(systemRole.status, 1),
+        inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0))) : [];
     const keys = await this.resolveManyRulePermissionKeys(roles.map((role) => role.rules));
     const byRole = new Map(roles.map((role, index) => [role.id, keys[index]]));
     return admins.map((admin, index) => admin.level === 0 ? new Set(permissionKeys)
@@ -549,7 +576,8 @@ export class AdminPermissionService {
     const roleQuery = this.container.db
       .select({ id: systemRole.id, rules: systemRole.rules })
       .from(systemRole)
-      .where(and(inArray(systemRole.id, roleIds), eq(systemRole.status, 1)));
+      .where(and(inArray(systemRole.id, roleIds), eq(systemRole.status, 1),
+        inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0)));
     const roles = lockForDecision ? await roleQuery.orderBy(asc(systemRole.id)).for("share", { noWait: true }) : await roleQuery;
     const found = new Set(roles.map((role) => role.id));
     const ruleTokens = roles.flatMap((role) => splitRuleTokens(role.rules));
@@ -584,6 +612,10 @@ export class AdminPermissionService {
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
+                and(eq(systemMenus.uniqueAuth, "setting-system-list"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_admin/index")),
+                and(eq(systemMenus.uniqueAuth, "setting-system-role"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_role/index")),
                 and(eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
                   eq(systemMenus.menuPath, "/admin/statistic/capital")),
                 and(eq(systemMenus.uniqueAuth, "agent-division-statistics"),
@@ -679,7 +711,7 @@ export class AdminPermissionService {
       throw new AuthException("该管理接口尚未登记权限规则", ApiErrorCode.ERR_AUTH);
     }
     const granted = await this.resolveAdminPermissionKeys(admin);
-    if (!granted.has(required)) {
+    if (!hasAdminPermission(granted, required)) {
       throw new AuthException("暂时没有权限访问", ApiErrorCode.ERR_AUTH);
     }
   }
@@ -725,6 +757,10 @@ export class AdminPermissionService {
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
+                and(eq(systemMenus.uniqueAuth, "setting-system-list"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_admin/index")),
+                and(eq(systemMenus.uniqueAuth, "setting-system-role"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_role/index")),
                 and(eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
                   eq(systemMenus.menuPath, "/admin/statistic/capital")),
                 and(eq(systemMenus.uniqueAuth, "agent-division-statistics"),

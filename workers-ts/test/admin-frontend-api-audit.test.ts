@@ -29,7 +29,7 @@ interface ApiAuditReport {
 const testDir = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(testDir, "..");
 const committed = JSON.parse(readFileSync(
-  join(workerRoot, "audit", "admin-frontend-api-contracts-system-directory-followup-20261008.json"),
+  join(workerRoot, "audit", "admin-frontend-api-contracts-legacy-system-list-followup-20261008.json"),
   "utf8",
 )) as ApiAuditReport;
 
