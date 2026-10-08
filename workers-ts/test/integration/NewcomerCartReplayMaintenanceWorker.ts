@@ -85,8 +85,11 @@ async function inspectAfter(env: NewcomerCartReplayMaintenanceEnv, sourceSha: st
 // Body identity is not a byte count: an HTTP POST may expose an empty stream.
 // Never aggregate a body or await cancellation; every rejected body stays before DB access.
 async function emptyMaintenanceBody(request: Request): Promise<boolean> {
-  if (request.signal.aborted) return false;
+  if (request.signal.aborted || request.headers.has('transfer-encoding')) return false;
+  const contentLength = request.headers.get('content-length');
+  if (contentLength !== null && contentLength !== '0') return false;
   if (request.body === null) return true;
+  if (contentLength !== '0') return false;
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let abort: (() => void) | undefined;
@@ -98,7 +101,7 @@ async function emptyMaintenanceBody(request: Request): Promise<boolean> {
       abort = () => resolve(null);
       request.signal.addEventListener('abort', abort, { once: true });
     });
-    // Bound both pending reads and immediate empty-chunk loops.
+    // Bound pending reads and empty-chunk loops: at most 32 reads, including EOF.
     for (let emptyChunks = 0; emptyChunks < 32; emptyChunks++) {
       const next = await Promise.race([reader.read(), stopped]);
       if (next === null) return false;

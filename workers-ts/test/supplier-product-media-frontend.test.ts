@@ -29,6 +29,8 @@ beforeAll(async () => {
   runtime = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
 }, 60_000);
 beforeEach(() => {
+  const now = Date.now();
+  vi.spyOn(Date, 'now').mockReturnValue(now);
   const storage = new Map<string, string>();
   windowSurface = new EventTarget(); vi.stubGlobal('window', windowSurface);
   vi.stubGlobal('localStorage', { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value), removeItem: (key: string) => storage.delete(key) });
@@ -39,7 +41,7 @@ beforeEach(() => {
   runtime.dialog.ElMessageBox.prompt = async () => ({ value: 'fixture' });
   runtime.dialog.ElMessageBox.confirm = async () => {};
 });
-afterEach(() => { runtime.disposePinia(pinia); vi.unstubAllGlobals(); });
+afterEach(() => { runtime.disposePinia(pinia); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 const ticket = (id: number) => `/api/assets/${id}?expires=${Math.floor(Date.now() / 1000) + 900}&signature=${'a'.repeat(43)}`;
 const image = (id = 1) => ({ id, pid: 0, name: `图片${id}.png`, canonicalUrl: `/api/assets/${id}`, previewUrl: ticket(id), thumbnailUrl: ticket(id) });
 const rawImage = (id = 1) => ({ att_id: id, pid: 0, type: 4, file_type: 1, module_type: 1, relation_id: 20, real_name: `图片${id}.png`, att_type: 'image/png', canonical_url: `/api/assets/${id}`, att_dir: ticket(id), satt_dir: ticket(id) });
