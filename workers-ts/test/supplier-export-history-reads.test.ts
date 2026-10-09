@@ -221,11 +221,30 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('supplier export/
       expect(await send(selected(ids.join(',')))).toMatchObject({status:400,data:null});
     });
   });
-  it('retains empty directory, batch and finance column definitions',async()=>{
+  it('retains empty directory and batch column definitions',async()=>{
     await readOnly(async()=>{
       for(const [path,length] of [['/export/expressList',2],['/export/batchOrderDelivery/999/7/3',5],
-        ['/export/batchOrderDelivery/999/10/6',4],['/export/financeRecord?ids=999',8]] as const){
+        ['/export/batchOrderDelivery/999/10/6',4]] as const){
         const manifest=await data(path);expect(manifest.export).toEqual([]);expect(manifest.header).toHaveLength(length);expect(manifest.filekey).toHaveLength(length);
+      }
+    });
+  });
+  it('exports every selected owned finance row or rejects the entire selection',async()=>{
+    await f.db.insert(supplierFlowingWater).values([
+      {id:901,supplierId:7,uid:11,orderId:'OWNED-FLOW-901',linkId:'LOCAL-25',number:'12.34',pm:1,type:1,payType:'yue'},
+      {id:902,supplierId:7,uid:11,orderId:'OWNED-FLOW-902',linkId:'LOCAL-25',number:'5.67',pm:0,type:2,payType:'yue'},
+      {id:903,supplierId:8,uid:11,orderId:'FOREIGN-FLOW-903',linkId:'OTHER-26',number:'999.00',pm:1,type:1,payType:'yue'},
+      {id:904,supplierId:7,uid:11,orderId:'DELETED-FLOW-904',linkId:'LOCAL-25',number:'1.00',pm:1,type:1,payType:'yue',isDel:1},
+    ]);
+    await readOnly(async()=>{
+      const complete=await data('/export/financeRecord?ids=901,902');
+      expect(rows(complete.export).map(row=>row.order_id)).toEqual(['OWNED-FLOW-902','OWNED-FLOW-901']);
+      expect(complete.header).toHaveLength(8);
+      expect(rows((await data('/export/financeRecord?ids=901,901,902')).export)).toHaveLength(2);
+      for(const ids of ['901,999','901,903','901,904','999']){
+        const response=await send('/export/financeRecord?ids='+ids);
+        expect(response,ids).toMatchObject({status:400,data:null});
+        expect(JSON.stringify(response)).not.toMatch(/OWNED-FLOW-901|FOREIGN-FLOW-903|DELETED-FLOW-904/);
       }
     });
   });

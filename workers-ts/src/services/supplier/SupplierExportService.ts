@@ -511,6 +511,7 @@ export class SupplierExportService {
       .orderBy(desc(supplierFlowingWater.id))
       .limit(MAX_FINANCE_EXPORT_ROWS + 1);
     if (rows.length > MAX_FINANCE_EXPORT_ROWS) throw new ValidateException("账单记录超过 1000 条，请缩小范围");
+    if (rows.length !== ids.length) throw new ValidateException("所选账单记录不存在、不属于当前供应商或不满足导出条件；未导出部分数据");
     const exported = rows.map((row) => ({
       order_id: safeSpreadsheetCell(row.orderId),
       link_id: safeSpreadsheetCell(row.linkId),
