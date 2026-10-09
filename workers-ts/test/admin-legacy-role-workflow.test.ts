@@ -65,7 +65,7 @@ describe('legacy platform role forms and numeric-menu writes', () => {
       { id: 9, menuName: '已删节点', isDel: 1, authType: 2, apiUrl: 'product/list', methods: 'GET' },
       { id: 10, menuName: '禁用节点', access: 0, authType: 2, apiUrl: 'product/list', methods: 'GET' },
       { id: 11, menuName: '根叶权限', authType: 2, apiUrl: 'product/list', methods: 'GET', sort: 1 },
-      { id: 20, menuName: '数字旧角色写', authType: 2, apiUrl: 'setting/role/:id', methods: 'POST' },
+      { id: 220, menuName: '数字旧角色写', authType: 2, apiUrl: 'setting/role/:id', methods: 'POST' },
       { id: 21, menuName: '数字旧角色表单', authType: 2, apiUrl: 'setting/role/create', methods: 'GET' },
     ]);
     await fixture.db.insert(systemRole).values([
@@ -75,7 +75,7 @@ describe('legacy platform role forms and numeric-menu writes', () => {
       { id: 903, roleName: '现代管理', level: 1, rules: 'system.manage,product.view,5' },
       { id: 904, roleName: '其他业务', level: 1, rules: 'product.view' },
       { id: 905, roleName: '不持旧opaque权限', level: 1, rules: 'system.legacy_role_form_view,product.view' },
-      { id: 906, roleName: '数字角色写权限', level: 1, rules: '20,2,5' },
+      { id: 906, roleName: '数字角色写权限', level: 1, rules: '220,2,5' },
       { id: 50, roleName: '平台子角色', level: 2, rules: '2' },
       { id: 51, type: 1, roleName: '平台旧子角色', level: 2, rules: '4', status: 0 },
       { id: 52, roleName: '现代规则', level: 2, rules: 'product.view' },

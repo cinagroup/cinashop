@@ -55,6 +55,7 @@ import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
 import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
+import * as AdminLegacyAdmin from "@/controllers/api/v1/AdminLegacyAdminController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
@@ -2010,6 +2011,15 @@ v1Routes.delete("/admin/brand/del/:id", adminAuth, AdminCrud.adminBrandDel);
 
 // ─── Admin 系统管理员/角色 (M16) ─────────────────────────────
 v1Routes.get("/admin/setting/admin", adminAuth, AdminCrud.adminLegacySystemAdminList);
+v1Routes.get("/admin/setting/admin/create", adminAuth, AdminLegacyAdmin.adminLegacyAdminCreateForm);
+v1Routes.get("/admin/setting/admin/:id/edit", adminAuth, AdminLegacyAdmin.adminLegacyAdminEditForm);
+v1Routes.post("/admin/setting/admin", adminAuth, AdminLegacyAdmin.adminLegacyAdminCreate);
+v1Routes.put("/admin/setting/admin/:id", adminAuth, AdminLegacyAdmin.adminLegacyAdminUpdate);
+v1Routes.put("/admin/setting/set_status/:id/:status", adminAuth, AdminLegacyAdmin.adminLegacyAdminStatus);
+v1Routes.delete("/admin/setting/admin/:id", adminAuth, AdminLegacyAdmin.adminLegacyAdminDelete);
+v1Routes.post("/admin/setting/admin-authority/preview", adminAuth, AdminLegacyAdmin.adminLegacyAdminPreview);
+v1Routes.get("/admin/setting/admin-authority/receipt/:operationId", adminAuth, AdminLegacyAdmin.adminLegacyAdminReceipt);
+v1Routes.post("/admin/setting/admin-authority/resolve", adminAuth, AdminLegacyAdmin.adminLegacyAdminResolve);
 v1Routes.get("/admin/setting/role", adminAuth, AdminCrud.adminLegacySystemRoleList);
 v1Routes.get("/admin/setting/role/create", adminAuth, AdminLegacyRole.adminLegacyRoleCreateForm);
 v1Routes.get("/admin/setting/role/:id/edit", adminAuth, AdminLegacyRole.adminLegacyRoleEditForm);

@@ -85,7 +85,20 @@ export const ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS: Record<string,strin
   aao_state_ck: "CHECK ((((((state)::text = 'not_applied'::text) AND ((request_hash)::text = ''::text) AND ((revision)::text = ''::text) AND (result IS NULL)) OR (((state)::text = 'committed'::text) AND ((request_hash)::text ~ '^[0-9a-f]{64}$'::text) AND ((revision)::text ~ '^[0-9a-f]{64}$'::text) AND (result IS NOT NULL) AND (jsonb_typeof(result) = 'object'::text) AND (jsonb_typeof((result -> 'id'::text)) = 'number'::text) AND ((result ->> 'id'::text) ~ '^[1-9][0-9]{0,9}$'::text) AND (((result ->> 'id'::text))::bigint <= 2147483647) AND ((((operation)::text = 'role-delete'::text) AND ((result -> 'deleted'::text) = 'true'::jsonb) AND (((result - 'id'::text) - 'deleted'::text) = '{}'::jsonb) AND (result ? 'deleted'::text)) OR (((operation)::text = ANY ((ARRAY['admin-save'::character varying, 'role-save'::character varying])::text[])) AND (jsonb_typeof((result -> 'created'::text)) = 'boolean'::text) AND (((result - 'id'::text) - 'created'::text) = '{}'::jsonb) AND (result ? 'created'::text))))) IS TRUE))",
 };
 
-export async function inspectAdminAuthorityOperation(tx: Pick<DbClient,'execute'>,names?: { maintenance:string; admin:string }): Promise<boolean> {
+/** A separately commissioned, bounded extension. Original receipt kinds and
+ * immutable evidence remain valid; modern request parsers stay unchanged. */
+export const ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS: Record<string,string> = {
+  ...ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS,
+  aao_operation_ck: "CHECK (((operation)::text = ANY ((ARRAY['admin-save'::character varying, 'role-save'::character varying, 'role-delete'::character varying, 'legacy-admin-save'::character varying, 'legacy-admin-status'::character varying, 'legacy-admin-delete'::character varying])::text[])))",
+  aao_state_ck: ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS.aao_state_ck
+    .replace("((operation)::text = 'role-delete'::text)", "((operation)::text = ANY ((ARRAY['role-delete'::character varying, 'legacy-admin-delete'::character varying])::text[]))")
+    .replace("ARRAY['admin-save'::character varying, 'role-save'::character varying]", "ARRAY['admin-save'::character varying, 'role-save'::character varying, 'legacy-admin-save'::character varying, 'legacy-admin-status'::character varying]")
+    .replace("AND (jsonb_typeof((result -> 'created'::text)) = 'boolean'::text)", "AND (jsonb_typeof((result -> 'created'::text)) = 'boolean'::text) AND (((operation)::text <> 'legacy-admin-status'::text) OR ((result -> 'created'::text) = 'false'::jsonb))"),
+};
+export type AdminAuthorityOperationCatalog = 'v1' | 'legacy-admin-v2' | 'either';
+
+export async function inspectAdminAuthorityOperation(tx: Pick<DbClient,'execute'>,names?: { maintenance:string; admin:string },
+  catalog: AdminAuthorityOperationCatalog = 'either'): Promise<boolean> {
   const [row] = await tx.execute(sql`SELECT
     c.relkind='r' AND c.relpersistence='p' AND NOT c.relispartition AND NOT c.relrowsecurity AND NOT c.relforcerowsecurity
     AND c.relnatts=10 AND c.relchecks=4 AND c.reloptions IS NULL AND c.relreplident='d'
@@ -133,8 +146,11 @@ export async function inspectAdminAuthorityOperation(tx: Pick<DbClient,'execute'
   if (!row || row.safe !== true || row.commissioned_acl !== true || row.indexes !== true || row.triggers !== true || row.function !== true) return false;
   if (JSON.stringify(row.columns) !== JSON.stringify(columns)) return false;
   const actual = row.constraints as Record<string,string>;
-  return !!actual && Object.keys(actual).length===5 && Object.entries(ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS)
-    .every(([name,definition]) => actual[name] === definition);
+  if (!actual || Object.keys(actual).length !== 5) return false;
+  const exact = (expected: Record<string,string>) => Object.entries(expected).every(([name,definition]) => actual[name] === definition);
+  return catalog === 'v1' ? exact(ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS)
+    : catalog === 'legacy-admin-v2' ? exact(ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS)
+      : exact(ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS) || exact(ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS);
 }
 
 /** Runtime assertion only: a missing or altered catalog fails before DML. */
@@ -148,6 +164,14 @@ export async function assertAdminAuthorityOperationReady(tx: Pick<DbClient,'exec
          WHERE a.grantee<>c.relowner AND a.grantee<>(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user)))) AS ready
     FROM pg_catalog.pg_class c WHERE c.oid=to_regclass('public.admin_authority_operation')`);
   if (privileges?.ready !== true) throw new ServiceUnavailableException('权限操作回执权限尚未就绪');
+}
+
+/** Dedicated legacy writes cannot run against the original three-kind addon. */
+export async function assertAdminLegacyAdminOperationReady(tx: Pick<DbClient,'execute'>): Promise<void> {
+  if (!(await inspectAdminAuthorityOperation(tx, undefined, 'legacy-admin-v2'))) {
+    throw new ServiceUnavailableException('旧管理员操作回执升级尚未就绪');
+  }
+  await assertAdminAuthorityOperationReady(tx);
 }
 
 export async function inspectAdminAuthorityMenuLock(tx: Pick<DbClient,'execute'>,names?: { maintenance:string; admin:string }): Promise<boolean> {

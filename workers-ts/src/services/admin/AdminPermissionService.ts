@@ -276,6 +276,8 @@ permissionKeys.add("order.assisted");
 permissionKeys.add("integral_log.export");
 permissionKeys.add("bill.export");
 permissionKeys.add("system.legacy_admin_view");
+permissionKeys.add("system.legacy_admin_form_view");
+permissionKeys.add("system.legacy_admin_manage");
 permissionKeys.add("system.legacy_role_view");
 permissionKeys.add("system.legacy_role_form_view");
 permissionKeys.add("system.legacy_role_manage");
@@ -283,11 +285,13 @@ permissionKeys.add("system.legacy_role_manage");
 /** Canonical grants cover narrower legacy contracts; legacy grants stay within their own workflow. */
 export function hasAdminPermission(granted: ReadonlySet<string>, required: string): boolean {
   if (granted.has(required)) return true;
-  if (required === "system.legacy_role_manage") return granted.has("system.manage");
+  if (["system.legacy_admin_manage", "system.legacy_role_manage"].includes(required)) return granted.has("system.manage");
+  if (["system.legacy_admin_view", "system.legacy_admin_form_view"].includes(required)
+    && granted.has("system.legacy_admin_manage")) return true;
   if (["system.legacy_role_view", "system.legacy_role_form_view"].includes(required)
     && granted.has("system.legacy_role_manage")) return true;
-  return ["system.legacy_admin_view", "system.legacy_role_view", "system.legacy_role_form_view"].includes(required)
-    && granted.has("system.view");
+  return ["system.legacy_admin_view", "system.legacy_admin_form_view", "system.legacy_role_view", "system.legacy_role_form_view"].includes(required)
+    && (granted.has("system.view") || granted.has("system.manage"));
 }
 
 function isNumericToken(token: string): boolean {
@@ -326,8 +330,29 @@ function isAssistedOrderRoute(route: string): boolean {
 
 export function isAdminAuthorityRecoveryRoute(method:string,routePath:string):boolean {
   const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
-  return (['GET','HEAD'].includes(verb) && /^system\/authority\/receipt\/[^/]+$/.test(route))
-    || (verb==='POST' && route==='system/authority/resolve');
+  return (['GET','HEAD'].includes(verb) && /^(?:system\/authority|setting\/admin-authority)\/receipt\/[^/]+$/.test(route))
+    || (verb==='POST' && ['system/authority/resolve','setting/admin-authority/resolve'].includes(route));
+}
+
+/** Both actual IDs and the two historical/router placeholder spellings have
+ * the same narrow policy. Malformed IDs never fall through to config access. */
+function legacyAdminId(value: string): boolean {
+  return value === ':id' || value === '<id>'
+    || /^[1-9]\d*$/.test(value) && value.length <= 10 && Number(value) <= 2147483647;
+}
+function legacyAdminPermission(method: string, route: string): string | null {
+  const parts = route.split('/');
+  if (['GET','HEAD'].includes(method)) {
+    if (route === 'setting/admin') return 'system.legacy_admin_view';
+    if (route === 'setting/admin/create' || parts.length === 4 && parts[0] === 'setting'
+      && parts[1] === 'admin' && legacyAdminId(parts[2]) && parts[3] === 'edit') return 'system.legacy_admin_form_view';
+  }
+  if (method === 'POST' && route === 'setting/admin') return 'system.legacy_admin_manage';
+  if (['PUT','DELETE'].includes(method) && parts.length === 3 && parts[0] === 'setting'
+    && parts[1] === 'admin' && legacyAdminId(parts[2])) return 'system.legacy_admin_manage';
+  if (method === 'PUT' && parts.length === 4 && parts[0] === 'setting' && parts[1] === 'set_status'
+    && legacyAdminId(parts[2]) && ['0','1',':status','<status>'].includes(parts[3])) return 'system.legacy_admin_manage';
+  return null;
 }
 
 export function requiredAdminPermission(method: string, routePath: string): string | null {
@@ -336,10 +361,17 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // Recovery service admits live identity independently of current role grants.
   if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
   if (isAdminAuthorityRecoveryRoute(method,routePath)) return null;
+  if (route === 'setting/admin-authority' || route.startsWith('setting/admin-authority/')) {
+    return method.toUpperCase() === 'POST' && route === 'setting/admin-authority/preview' ? 'system.legacy_admin_manage' : null;
+  }
+  if (route === 'system/legacy-staff') return ['GET','HEAD'].includes(method.toUpperCase()) ? 'system.legacy_admin_view' : null;
   // Legacy staff authority lives under setting/, but is independent of runtime
   // configuration. Its lists and numeric role form/save have separate grants.
   // Other legacy writes do not grant config access or authority over modern writes.
   if (/^setting\/(?:admin(?:\/|$)|role(?:\/|$)|set_status(?:\/|$))/.test(route)) {
+    if (route === 'setting/admin' || route.startsWith('setting/admin/') || route === 'setting/set_status' || route.startsWith('setting/set_status/')) {
+      return legacyAdminPermission(method.toUpperCase(), route);
+    }
     if (["GET", "HEAD"].includes(method.toUpperCase())) {
       if (route === "setting/admin") return "system.legacy_admin_view";
       if (route === "setting/role") return "system.legacy_role_view";
@@ -462,6 +494,10 @@ export function normalizeRoleRules(value: string | readonly string[] | undefined
   const expanded = new Set(tokens);
   for (const token of tokens) {
     if (token.endsWith(".manage")) expanded.add(`${token.slice(0, -7)}.view`);
+    if (token === "system.legacy_admin_manage") {
+      expanded.add("system.legacy_admin_view");
+      expanded.add("system.legacy_admin_form_view");
+    }
     if (token === "system.legacy_role_manage") {
       expanded.add("system.legacy_role_view");
       expanded.add("system.legacy_role_form_view");
@@ -488,6 +524,7 @@ export function assertDelegablePermissions(
 
 function menuPathPermission(menuPath: string): string | null {
   const route = menuPath.trim().toLowerCase();
+  if (route === "/system/legacy-staff") return "system.legacy_admin_view";
   if (route === "/admin/setting/system_admin/index") return "system.legacy_admin_view";
   if (route === "/admin/setting/system_role/index") return "system.legacy_role_view";
   if(route==='/admin/setting/membership_level/index')return 'agent_level.view';
@@ -558,8 +595,55 @@ const auditedLegacyPageAuth = new Set([
   'admin-setting-store_service-speechcraft', 'finance-finance-bill',
 ]);
 
+type LegacyAdminMenuMetadata = Pick<typeof systemMenus.$inferSelect,
+  'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>;
+const legacyAdminActionIds = new Set([20,331,332,333,334,335,336,337,610,635]);
+const legacyAdminCapabilities = new Set(['system.legacy_admin_view','system.legacy_admin_form_view','system.legacy_admin_manage']);
+/** A protected identity/path/auth/API claim must match its complete proved
+ * tuple. It cannot fall back to generic system/config or opaque membership. */
+function legacyAdminMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const path = menu.menuPath.trim(), auth = menu.uniqueAuth.trim(), route = normalizeAdminRoute(menu.apiUrl);
+  const adminApi = /^(?:setting\/(?:admin(?:\/|$)|set_status(?:\/|$)|admin-authority(?:\/|$))|system\/legacy-staff(?:\/|$))/.test(route);
+  const protectedClaim = legacyAdminActionIds.has(menu.id) || adminApi
+    || /^\/admin\/setting\/system_admin(?:\/|$)/.test(path.toLowerCase().replace(/\s+/g,'')) || path.toLowerCase() === '/system/legacy-staff'
+    || auth.toLowerCase() === 'setting-system-list' || auth.toLowerCase().startsWith('setting-system_admin-') || legacyAdminCapabilities.has(auth.toLowerCase());
+  if (!protectedClaim) return { protected:false,permission:null };
+  let permission: string | null = null;
+  if (menu.authType === 1 && menu.apiUrl === '' && menu.methods === '' && menu.menuPath === path && menu.uniqueAuth === auth) {
+    if (path === '/admin/setting/system_admin/index' && auth === 'setting-system-list') permission = 'system.legacy_admin_view';
+    if ([['/admin/setting/system_admin/add','setting-system_admin-add'],['/admin/setting/system_admin/edit','setting-system_admin-edit']]
+      .some(([page,key]) => path === page && auth === key)) permission = 'system.legacy_admin_form_view';
+  } else if (menu.authType === 2 && menu.menuPath === '' && menu.uniqueAuth === '' && !/\s/.test(menu.apiUrl.trim())) {
+    const methods = menu.methods.trim().toUpperCase();
+    // One exact method, rather than the generic non-GET -> POST folding.
+    if (['GET','HEAD','POST','PUT','DELETE'].includes(methods)) permission = legacyAdminPermission(methods,route);
+  }
+  const expected: Record<number,string> = {
+    20:'system.legacy_admin_view',
+    331:'system.legacy_admin_form_view',332:'system.legacy_admin_form_view',333:'system.legacy_admin_manage',
+    334:'system.legacy_admin_form_view',335:'system.legacy_admin_form_view',336:'system.legacy_admin_manage',
+    337:'system.legacy_admin_manage',610:'system.legacy_admin_view',635:'system.legacy_admin_manage',
+  };
+  // Preserve the audited operation identity, not just its capability category.
+  const methods = menu.methods.trim().toUpperCase();
+  const identityMatches = !legacyAdminActionIds.has(menu.id) || (
+    menu.id === 20 ? menu.authType === 1 && path === '/admin/setting/system_admin/index' :
+    menu.id === 331 ? menu.authType === 1 && path === '/admin/setting/system_admin/add' :
+    menu.id === 334 ? menu.authType === 1 && path === '/admin/setting/system_admin/edit' :
+    menu.id === 332 ? ['GET','HEAD'].includes(methods) && route === 'setting/admin/create' :
+    menu.id === 333 ? methods === 'POST' && route === 'setting/admin' :
+    menu.id === 335 ? ['GET','HEAD'].includes(methods) && /^setting\/admin\/(?:<id>|:id|[1-9]\d*)\/edit$/.test(route) :
+    menu.id === 336 ? methods === 'PUT' && /^setting\/admin\/(?:<id>|:id|[1-9]\d*)$/.test(route) :
+    menu.id === 337 ? methods === 'DELETE' && /^setting\/admin\/(?:<id>|:id|[1-9]\d*)$/.test(route) :
+    menu.id === 610 ? ['GET','HEAD'].includes(methods) && route === 'setting/admin' :
+    methods === 'PUT' && /^setting\/set_status\/(?:<id>|:id|[1-9]\d*)\/(?:<status>|:status|[01])$/.test(route)
+  );
+  return { protected:true,permission:identityMatches && (!expected[menu.id] || permission === expected[menu.id]) ? permission : null };
+}
+
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
+  if (legacyAdminMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -590,6 +674,8 @@ export class AdminPermissionService {
         ...(group.key === "bill" ? [{ key: "bill.export", label: "导出" }] : []),
         ...(group.key === "system" ? [
           { key: "system.legacy_admin_view", label: "旧管理员列表（下一层级）" },
+          { key: "system.legacy_admin_form_view", label: "旧管理员表单（下一层级）" },
+          { key: "system.legacy_admin_manage", label: "旧管理员管理（下一层级）" },
           { key: "system.legacy_role_view", label: "旧角色列表（下一层级）" },
           { key: "system.legacy_role_form_view", label: "旧角色表单（下一层级）" },
           { key: "system.legacy_role_manage", label: "旧角色保存（下一层级）" },
@@ -673,6 +759,10 @@ export class AdminPermissionService {
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
                 and(eq(systemMenus.uniqueAuth, "setting-system-list"),
                   eq(systemMenus.menuPath, "/admin/setting/system_admin/index")),
+                and(eq(systemMenus.uniqueAuth, "setting-system_admin-add"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_admin/add")),
+                and(eq(systemMenus.uniqueAuth, "setting-system_admin-edit"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_admin/edit")),
                 and(eq(systemMenus.uniqueAuth, "setting-system-role"),
                   eq(systemMenus.menuPath, "/admin/setting/system_role/index")),
                 and(eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
@@ -780,7 +870,7 @@ export class AdminPermissionService {
   }
 
   buildMenus(keys: ReadonlySet<string>): Array<Record<string, unknown>> {
-    return ADMIN_PERMISSION_GROUPS.filter(
+    const menus: Array<Record<string, unknown>> = ADMIN_PERMISSION_GROUPS.filter(
       (group) => keys.has(`${group.key}.view`) || keys.has(`${group.key}.manage`),
     ).map((group, index) => ({
       id: index + 1,
@@ -801,6 +891,11 @@ export class AdminPermissionService {
         children: [],
       }] : [],
     }));
+    if (hasAdminPermission(keys, 'system.legacy_admin_view')) menus.push({
+      id: 20_001, pid: 0, path: '/system/legacy-staff', name: '下一层级管理员',
+      icon: '', sort: 0, type: 1, children: [],
+    });
+    return menus;
   }
 
   private async resolveRuleTokens(tokens: readonly string[], lockForDecision = false): Promise<Set<string>> {
@@ -822,6 +917,10 @@ export class AdminPermissionService {
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
                 and(eq(systemMenus.uniqueAuth, "setting-system-list"),
                   eq(systemMenus.menuPath, "/admin/setting/system_admin/index")),
+                and(eq(systemMenus.uniqueAuth, "setting-system_admin-add"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_admin/add")),
+                and(eq(systemMenus.uniqueAuth, "setting-system_admin-edit"),
+                  eq(systemMenus.menuPath, "/admin/setting/system_admin/edit")),
                 and(eq(systemMenus.uniqueAuth, "setting-system-role"),
                   eq(systemMenus.menuPath, "/admin/setting/system_role/index")),
                 and(eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
@@ -923,6 +1022,11 @@ export class AdminPermissionService {
     if (allowedLegacyIds.size) {
       for (const menu of menus) {
         if (!allowedLegacyIds.has(menu.id)) continue;
+        const legacyAdmin = legacyAdminMenuBinding(menu);
+        if (legacyAdmin.protected) {
+          if (legacyAdmin.permission) resolved.add(legacyAdmin.permission);
+          continue;
+        }
         if (menu.id === 1592 || menu.menuPath === '/admin/setting/pages/home' || menu.uniqueAuth === 'admin-setting-pages-home') {
           if (menu.id === 1592 && menu.authType === 1 && menu.menuPath === '/admin/setting/pages/home' && menu.uniqueAuth === 'admin-setting-pages-home') resolved.add('user_center_design.view');
           continue;
@@ -1013,6 +1117,10 @@ export class AdminPermissionService {
     }
     for (const key of [...resolved]) {
       if (key.endsWith(".manage")) resolved.add(`${key.slice(0, -7)}.view`);
+      if (key === "system.legacy_admin_manage") {
+        resolved.add("system.legacy_admin_view");
+        resolved.add("system.legacy_admin_form_view");
+      }
       if (key === "system.legacy_role_manage") {
         resolved.add("system.legacy_role_view");
         resolved.add("system.legacy_role_form_view");

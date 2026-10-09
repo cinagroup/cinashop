@@ -91,6 +91,7 @@ describe('legacy platform staff and role read contracts', () => {
       { id: 10, account: 'hidden-deleted', level: 2, isDel: 1 },
       { id: 20, account: 'hidden-negative', level: 2, status: -1 },
       { id: 21, account: 'hidden-store', level: 2, adminType: 2 },
+      { id: 22, account: 'hidden-platform-relation', level: 2, adminType: 1, relationId: 7 },
     ]);
     const signed = await Promise.all([101, 100, 102].map(async id => (await createToken(id, 'admin', md5('fixture-password'), env.APP_KEY)).token));
     tokens = { reader: signed[0], super: signed[1], unrelated: signed[2] };
@@ -184,10 +185,10 @@ describe('legacy platform staff and role read contracts', () => {
   });
 
   it('revalidates live actor password/status/type/deletion and expiry instead of stale adminInfo', async () => {
-    for (const change of [{ status: 0 }, { adminType: 4 }, { isDel: 1 }, { pwd: 'changed-password' }]) {
+    for (const change of [{ status: 0 }, { adminType: 4 }, { relationId: 7 }, { isDel: 1 }, { pwd: 'changed-password' }]) {
       const app = application(container, async () => { await fixture.db.update(systemAdmin).set(change).where(eq(systemAdmin.id,101)); });
       try { expect((await get('admin', '', tokens.reader, '/adminapi', app)).body.status).toBe('pwd' in change ? 410001 : 410002); }
-      finally { await fixture.db.update(systemAdmin).set({ status:1,adminType:1,isDel:0,pwd:'fixture-password' }).where(eq(systemAdmin.id,101)); }
+      finally { await fixture.db.update(systemAdmin).set({ status:1,adminType:1,relationId:0,isDel:0,pwd:'fixture-password' }).where(eq(systemAdmin.id,101)); }
     }
     const service = new AdminLegacySystemListService(container);
     await expect(service.roleList(new URLSearchParams(), { ...actor(), expiresAt: 1 })).rejects.toMatchObject({ code:410001 });

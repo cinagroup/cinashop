@@ -63,10 +63,10 @@ function assertActorClaims(actor: AdminLegacySystemListActor): void {
 
 type LegacyReadPermission = 'system.legacy_admin_view' | 'system.legacy_role_view';
 async function liveActorLevel(tx: DbClient, actor: AdminLegacySystemListActor, required: LegacyReadPermission): Promise<number> {
-  const [live] = await tx.execute(sql`SELECT id,pwd,admin_type,status,is_del,level,roles FROM ${systemAdmin} WHERE id=${actor.id} LIMIT 1`) as unknown as Array<{
-    id: number; pwd: string; admin_type: number; status: number; is_del: number; level: number; roles: string;
+  const [live] = await tx.execute(sql`SELECT id,pwd,admin_type,relation_id,status,is_del,level,roles FROM ${systemAdmin} WHERE id=${actor.id} LIMIT 1`) as unknown as Array<{
+    id: number; pwd: string; admin_type: number; relation_id: number; status: number; is_del: number; level: number; roles: string;
   }>;
-  if (!live || live.admin_type !== 1 || live.status !== 1 || live.is_del !== 0
+  if (!live || live.admin_type !== 1 || live.relation_id !== 0 || live.status !== 1 || live.is_del !== 0
     || !Number.isInteger(live.level) || live.level < 0 || live.level > 9) throw new AuthException('管理员已禁用或身份已变化', ApiErrorCode.ERR_BANNED);
   const encoder = new TextEncoder();
   if (!timingSafeEqual(encoder.encode(md5(live.pwd)), encoder.encode(actor.authVersion))) throw new AuthException('登录凭据已变化', ApiErrorCode.ERR_EXPIRED);
@@ -115,7 +115,7 @@ export class AdminLegacySystemListService {
   async adminList(query: URLSearchParams, actor: AdminLegacySystemListActor): Promise<{ list: LegacyAdminListRow[]; count: number }> {
     const filter = parseLegacyAdminListQuery(query);
     return this.snapshot(actor, 'system.legacy_admin_view', async (tx, level) => {
-      const predicates = [sql`admin_type=1`, sql`is_del=0`, sql`status>=0`, sql`level=${level + 1}`];
+      const predicates = [sql`admin_type=1`, sql`relation_id=0`, sql`is_del=0`, sql`status>=0`, sql`level=${level + 1}`];
       if (filter.status !== undefined) predicates.push(sql`status=${filter.status}`);
       if (filter.pattern) predicates.push(sql`(account ILIKE ${filter.pattern} OR real_name ILIKE ${filter.pattern})`);
       if (filter.roleId !== undefined) predicates.push(sql`${String(filter.roleId)} = ANY(string_to_array(roles, ','))`);
