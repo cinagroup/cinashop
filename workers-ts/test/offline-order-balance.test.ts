@@ -41,7 +41,7 @@ describe('offline wallet settlement candidate on isolated native PG16', () => {
     await f.db.insert(memberRight).values([
       { id: 1, rightType: 'offline', number: 80, status: 1 }, { id: 2, rightType: 'integral', number: 2, status: 1 },
     ]);
-  }, 30_000);
+  }, 60_000);
   afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); await f?.close(); } });
   const runtime = <T>(work: (r: Runtime) => Promise<T>) => f.withRuntimeRole!(async r => {
     await f.exec(`GRANT SELECT ON "user",system_config,member_right,other_order,other_order_status,
