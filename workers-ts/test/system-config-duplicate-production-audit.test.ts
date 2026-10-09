@@ -57,7 +57,7 @@ function fakeDatabase(rows: ReturnType<typeof row>[], identityPatch: Partial<typ
     return [];
   };
   const end = vi.fn();
-  postgresMock.connect.mockReturnValue({ begin: (fn: (tx: typeof tx) => unknown) => fn(tx), end });
+  postgresMock.connect.mockReturnValue({ begin: (fn: (client: typeof tx) => unknown) => fn(tx), end });
   return { statements, end };
 }
 
