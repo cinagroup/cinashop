@@ -1,0 +1,35 @@
+{
+  "observedAt": "2026-10-09T07:36:00Z",
+  "scope": "anonymous public PC post-release narrow-screen browser audit",
+  "productionAlias": "https://cinashop-pc.pages.dev",
+  "pinnedDeployment": "https://d4a37f6b.cinashop-pc.pages.dev",
+  "pinnedDeploymentId": "d4a37f6b-81f4-4bd3-b036-58f8bcd80d50",
+  "observedEntryAsset": "/assets/index-DpXbCvZA.js",
+  "method": [
+    "rendered DOM and screenshot inspection",
+    "read-only viewport geometry",
+    "public navigation interaction",
+    "browser console warnings and errors"
+  ],
+  "observations": [
+    { "path": "/search?keyword=测试", "viewportWidth": 390, "clientWidth": 375, "documentScrollWidth": 375, "bodyScrollWidth": 375 },
+    { "path": "/goods/70", "viewportWidth": 390, "clientWidth": 375, "documentScrollWidth": 375, "bodyScrollWidth": 375 },
+    { "path": "/goods/70", "viewportWidth": 320, "clientWidth": 305, "documentScrollWidth": 305, "bodyScrollWidth": 305 },
+    { "path": "/category", "viewportWidth": 320, "clientWidth": 305, "documentScrollWidth": 305, "bodyScrollWidth": 305 },
+    { "path": "/goods/70", "viewportWidth": 768, "clientWidth": 753, "documentScrollWidth": 753, "bodyScrollWidth": 753 }
+  ],
+  "interactions": [
+    "390px search Enter and button navigated to their corresponding query headings",
+    "390px product card opened /goods/70 with a rendered title and price",
+    "320px category navigation opened /category with its heading"
+  ],
+  "observedConsoleWarnings": 0,
+  "observedConsoleErrors": 0,
+  "limitations": [
+    "No authenticated role or package-purchase modal was exercised",
+    "No physical device or H5, mini-program, or app channel was exercised",
+    "The matching browser entry asset is not an independent source-commit attestation",
+    "Visible product artwork was sample imagery, not an operational-image acceptance"
+  ],
+  "checklistItem": "FE-002D remains open"
+}
