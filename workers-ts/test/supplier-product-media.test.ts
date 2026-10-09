@@ -135,6 +135,8 @@ describe('Supplier product media save/read through JWT, RBAC and registered HTTP
     return { response, body: await response.json() as { status: number; data: any; msg: string } };
   }
   it('persists stable gallery/main/SKU/HTML, returns fresh signed previews, and serves a verified private object', async () => {
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
     const saved = await request(0, product()); expect(saved.body.status).toBe(200);
     const id = saved.body.data.id;
     const rows = await f.db.select().from(storeProduct).where(eq(storeProduct.id, id));
@@ -153,7 +155,7 @@ describe('Supplier product media save/read through JWT, RBAC and registered HTTP
     expect(objectGet).toHaveBeenCalledWith('attachments/own-11.png', undefined);
     const corrupt = await app.request(preview.src.replace(/signature=[^&]+/, 'signature=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), {}, env);
     expect(corrupt.status).not.toBe(200); expect(objectGet).toHaveBeenCalledTimes(1);
-    const now = Date.now(); vi.spyOn(Date, 'now').mockReturnValue(now + 60000);
+    clock.mockReturnValue(now + 60_000);
     const next = await request(id); expect(next.body.data.media.previews['/api/assets/11'].expires_at).toBe(preview.expires_at + 60);
     expect(next.body.data.description).toBe(stableHtml);
     expect(first.response.headers.get('cache-control')).toContain('no-store');
