@@ -14,7 +14,7 @@ import { AdminAuthorityWriteService, type AdminAuthorityActor, type AdminAuthori
 import { adminAuthorityPreview, adminAuthorityCommit, adminAuthorityReceipt, adminAuthorityResolve } from '@/controllers/api/v1/AdminAuthorityOperationController';
 import { ApiException, HttpApiException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const password = 'owned-memory-authority-operation-password';
 const appKey = 'owned-memory-authority-operation-hmac-key';
@@ -71,15 +71,15 @@ function observedDatabase(db:DbClient,options:{ statements?:string[]; afterCommi
 }
 
 describe('authority confirmation and immutable operation receipts in owned local memory',() => {
-  let fixture:Awaited<ReturnType<typeof financePostgres>>,container:Container,service:AdminAuthorityOperationService,expiresAt:number;
+  let fixture:Awaited<ReturnType<typeof financeMemoryPostgres>>,container:Container,service:AdminAuthorityOperationService,expiresAt:number;
   const actor = (id=102):AdminAuthorityActor => ({ id,authVersion:md5(password),expiresAt });
   const snapshot = async () => ({ admins:await fixture.db.select().from(systemAdmin).orderBy(systemAdmin.id),
     roles:await fixture.db.select().from(systemRole).orderBy(systemRole.id),
     menus:await fixture.db.select().from(systemMenus).orderBy(systemMenus.id),
     receipts:await fixture.db.select().from(adminAuthorityOperation).orderBy(adminAuthorityOperation.operationId) });
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Authority operation business tests require owned local memory only');
-    fixture = await financePostgres([systemAdmin,systemRole,systemMenus],{ namespace:'public' });
+    fixture = await financeMemoryPostgres([systemAdmin,systemRole,systemMenus],{ namespace:'public' });
+    if (!fixture.isMemory) throw Error('Authority operation business tests require owned local memory only');
     // PGlite's PG18 is not the PG16 owner-maintenance installer gate. Execute
     // the exact reviewed receipt DDL, including all CHECKs and immutable
     // triggers, then exercise the real runtime catalog/privilege assertion.

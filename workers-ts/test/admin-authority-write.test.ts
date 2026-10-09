@@ -13,7 +13,7 @@ import { AdminAuthorityWriteService, assertRemainingActivePlatformSuperAdmin, in
   type AdminAuthorityActor, type AdminRoleMutationImpact } from '@/services/admin/AdminAuthorityWriteService';
 import { ApiException, HttpApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const password = 'owned-memory-authority-password';
 const actor = (id = 102): AdminAuthorityActor => ({ id, authVersion: md5(password), expiresAt: Math.floor(Date.now()/1000) + 3600 });
@@ -45,12 +45,12 @@ function observeStatements(db: DbClient, statements: string[]): DbClient {
 }
 
 describe('atomic modern Admin authority writes in owned local memory', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, container: Container, service: AdminAuthorityWriteService;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container: Container, service: AdminAuthorityWriteService;
   const snapshot = async () => ({ admins: await fixture.db.select().from(systemAdmin).orderBy(systemAdmin.id),
     roles: await fixture.db.select().from(systemRole).orderBy(systemRole.id) });
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Authority business tests require local memory only');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus], { namespace: 'public' });
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus], { namespace: 'public' });
+    if (!fixture.isMemory) throw Error('Authority business tests require local memory only');
     container = createContainerFromDb(fixture.db); service = new AdminAuthorityWriteService(container);
   }, 30_000);
   beforeEach(async () => {

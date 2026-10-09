@@ -4,7 +4,7 @@ import { createContainerFromDb, withTx } from '@/lib/di';
 import { systemMenus, systemRole } from '@/models/schema';
 import { AdminPermissionService, assertDelegablePermissions, canRetainOpaqueLegacyMenu,
   hasAdminPermission, isAdminAuthorityRecoveryRoute, normalizeRoleRules, requiredAdminPermission } from '@/services/admin/AdminPermissionService';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const list = 'system.legacy_admin_view', form = 'system.legacy_admin_form_view', manage = 'system.legacy_admin_manage';
 const writer = [manage,list,form];
@@ -24,10 +24,10 @@ const seed = [
 ];
 
 describe('legacy administrator exact route and numeric-menu authority', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, permissions: AdminPermissionService;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, permissions: AdminPermissionService;
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Staff permission tests require local memory only');
-    fixture = await financePostgres([systemMenus,systemRole]);
+    fixture = await financeMemoryPostgres([systemMenus,systemRole]);
+    if (!fixture.isMemory) throw Error('Staff permission tests require local memory only');
     permissions = new AdminPermissionService(createContainerFromDb(fixture.db));
   });
   beforeEach(async () => {

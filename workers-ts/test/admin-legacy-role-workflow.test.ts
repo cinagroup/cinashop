@@ -12,7 +12,7 @@ import { AdminLegacyRoleWorkflowService, MAX_LEGACY_ROLE_MENU_ROWS, MAX_LEGACY_R
   parseLegacyRoleSave, type AdminLegacyRoleActor } from '@/services/admin/AdminLegacyRoleWorkflowService';
 import { ApiException, HttpApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const env = { APP_KEY: 'legacy-role-workflow-local-only', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '' } as Env;
 type Reply = { status: number; msg: string; data: any };
@@ -20,7 +20,7 @@ const claims = (id = 102): AdminLegacyRoleActor => ({ id, authVersion: md5('role
 const payload = (checked_menus = [2], extra: Record<string, unknown> = {}) => ({ role_name: '保存角色', status: 1, checked_menus, ...extra });
 
 describe('legacy platform role forms and numeric-menu writes', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, container: Container;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container: Container;
   const tokens = new Map<number, string>();
   function application(afterAuth?: () => Promise<void>) {
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -46,8 +46,9 @@ describe('legacy platform role forms and numeric-menu writes', () => {
   }
   async function allRoles() { return fixture.db.select().from(systemRole).orderBy(systemRole.id); }
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Role business tests require local memory only');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus]); container = createContainerFromDb(fixture.db);
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus]);
+    if (!fixture.isMemory) throw Error('Role business tests require local memory only');
+    container = createContainerFromDb(fixture.db);
     for (const id of [100,101,102,103,104,105,106,107,108,109]) {
       tokens.set(id, (await createToken(id, 'admin', md5('role-fixture-password'), env.APP_KEY)).token);
     }
