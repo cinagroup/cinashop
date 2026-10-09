@@ -21,6 +21,12 @@ function isDcloudSsrModule(id) {
     || /(?:^|\/)node_modules\/(?:express|body-parser|qs|proxy-addr)(?:[/?.]|$)/.test(normalized);
 }
 
+function isBuildGlobModule(id) {
+  const normalized = id.replaceAll("\\", "/").replace(/^\0/, "");
+  return /^(?:braces|brace-expansion|chokidar|fast-glob|micromatch|minimatch)(?:[/?.]|$)/.test(normalized)
+    || /(?:^|\/)node_modules\/(?:braces|brace-expansion|chokidar|fast-glob|micromatch|minimatch)(?:[/?.]|$)/.test(normalized);
+}
+
 function inspectRuntimeGraph(context, bundle, root) {
   const ids = [...context.getModuleIds()];
   const info = (id) => {
@@ -49,6 +55,7 @@ function inspectRuntimeGraph(context, bundle, root) {
     automatorQr: ids.filter(isAutomatorQrModule).map(label).sort(),
     jestJsdomOnce: ids.filter(isJestJsdomOnceModule).map(label).sort(),
     dcloudSsr: ids.filter(isDcloudSsrModule).map(label).sort(),
+    buildGlob: ids.filter(isBuildGlobModule).map(label).sort(),
     // DCloud bundles these scripts with a separate esbuild invocation, leaving
     // only installation stubs in Rollup. Their dependencies need a fresh audit.
     separateScriptModules: ids.filter((id) => /[?&]type=(?:renderjs|wxs)(?:&|$)/.test(id)).map(label).sort(),
@@ -79,6 +86,7 @@ function runtimeI18nAudit() {
       if (inventory.automatorQr.length) this.error("Automator QR decoder entered the runtime graph; reopen TEST-004D3 before accepting this build");
       if (inventory.jestJsdomOnce.length) this.error("Jest/jsdom/once entered the runtime graph; reopen TEST-004D3 before accepting this build");
       if (inventory.dcloudSsr.length) this.error("DCloud SSR Express/qs/proxy-addr entered the runtime graph; reopen TEST-004D3 before accepting this build");
+      if (inventory.buildGlob.length) this.error("Build glob dependency entered the runtime graph; reopen TEST-004D3 before accepting this build");
       if (inventory.separateScriptModules.length || inventory.separateScriptAssets.length) {
         this.error("Separately compiled renderjs/wxs entered the build; reopen TEST-004D3A to audit its independent dependency graph");
       }
@@ -86,4 +94,4 @@ function runtimeI18nAudit() {
   };
 }
 
-module.exports = { isIntlifyModule, isAutomatorQrModule, isJestJsdomOnceModule, isDcloudSsrModule, inspectRuntimeGraph, runtimeI18nAudit };
+module.exports = { isIntlifyModule, isAutomatorQrModule, isJestJsdomOnceModule, isDcloudSsrModule, isBuildGlobModule, inspectRuntimeGraph, runtimeI18nAudit };
