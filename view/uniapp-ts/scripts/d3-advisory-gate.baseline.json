@@ -1,0 +1,1920 @@
+{
+  "schemaVersion": 1,
+  "lockSemanticSha256": "1b9f11abdb6c1e752b63d989edc3de40860b6cd8153bad556e9f1761fe6605c7",
+  "reviewedReceipt": "2026-10-09 npm-audit-final-candidate.json; affected package entries, not independent vulnerabilities",
+  "chains": {
+    "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
+    "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
+    "vite-toolchain": "Vite development/build toolchain with verified local safety backport",
+    "encrypted-zip": "DCloud encrypted uni_modules extraction; no configured encrypted modules",
+    "automator-qr": "Optional Weixin automator QR and Jimp decode path",
+    "jest-toolchain": "Optional uni-automator Jest, Istanbul and jsdom tooling",
+    "h5-ssr": "Optional DCloud H5 SSR Express listener; ordinary scripts leave SSR disabled",
+    "glob-toolchain": "DCloud and vue-tsc build/development glob and file-watch tooling"
+  },
+  "advisories": {
+    "1088964": {
+      "package": "jpeg-js",
+      "url": "https://github.com/advisories/GHSA-xvf7-4v9q-58w6",
+      "severity": "high",
+      "range": "<0.4.4",
+      "chain": "automator-qr"
+    },
+    "1093580": {
+      "package": "jpeg-js",
+      "url": "https://github.com/advisories/GHSA-w7q9-p3jq-fmhm",
+      "severity": "moderate",
+      "range": "<0.4.0",
+      "chain": "automator-qr"
+    },
+    "1096967": {
+      "package": "phin",
+      "url": "https://github.com/advisories/GHSA-x565-32qp-m3vf",
+      "severity": "moderate",
+      "range": "<3.7.1",
+      "chain": "automator-qr"
+    },
+    "1106453": {
+      "package": "@intlify/core-base",
+      "url": "https://github.com/advisories/GHSA-x8qp-wqqm-57ph",
+      "severity": "moderate",
+      "range": ">=9.0.0 <9.14.5",
+      "chain": "intlify"
+    },
+    "1116229": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+      "severity": "moderate",
+      "range": "<=6.4.1",
+      "chain": "vite-toolchain"
+    },
+    "1119438": {
+      "package": "@tootallnate/once",
+      "url": "https://github.com/advisories/GHSA-vpq2-c234-7xj6",
+      "severity": "low",
+      "range": "<2.0.1",
+      "chain": "jest-toolchain"
+    },
+    "1120784": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+      "severity": "moderate",
+      "range": "<=6.4.2",
+      "chain": "vite-toolchain"
+    },
+    "1123525": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+      "severity": "high",
+      "range": "<=6.4.2",
+      "chain": "vite-toolchain"
+    },
+    "1123686": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-xcpc-8h2w-3j85",
+      "severity": "high",
+      "range": "<0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1146054": {
+      "package": "@intlify/core-base",
+      "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+      "severity": "high",
+      "range": ">=9.1.0 <9.1.11",
+      "chain": "intlify"
+    },
+    "1146058": {
+      "package": "@intlify/message-resolver",
+      "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+      "severity": "high",
+      "range": ">=9.1.0 <9.1.11",
+      "chain": "intlify"
+    },
+    "1158506": {
+      "package": "qs",
+      "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+      "severity": "moderate",
+      "range": ">=6.14.2 <=6.15.3",
+      "chain": "h5-ssr"
+    },
+    "1158507": {
+      "package": "qs",
+      "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+      "severity": "moderate",
+      "range": ">=2.2.5 <6.16.0",
+      "chain": "h5-ssr"
+    },
+    "1193734": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-vwc7-r8mq-g2x9",
+      "severity": "moderate",
+      "range": ">=0.5.9 <=0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1239030": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-7q85-xj36-vmfc",
+      "severity": "high",
+      "range": "<0.6.1",
+      "chain": "encrypted-zip"
+    },
+    "1240032": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-rcw4-f5rp-g42v",
+      "severity": "high",
+      "range": "<=0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1240034": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-j5f4-cc29-5x44",
+      "severity": "high",
+      "range": "<=0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1240064": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-p634-w6r4-rjp2",
+      "severity": "moderate",
+      "range": "<=0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1240065": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-c6fg-446q-cg94",
+      "severity": "moderate",
+      "range": "<=0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1240066": {
+      "package": "adm-zip",
+      "url": "https://github.com/advisories/GHSA-8238-w5pm-2374",
+      "severity": "high",
+      "range": "<=0.6.0",
+      "chain": "encrypted-zip"
+    },
+    "1240992": {
+      "package": "braces",
+      "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "severity": "high",
+      "range": "<=3.0.3",
+      "chain": "glob-toolchain"
+    },
+    "1241202": {
+      "package": "sprintf-js",
+      "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+      "severity": "moderate",
+      "range": "<=1.1.3",
+      "chain": "jest-toolchain"
+    },
+    "1241259": {
+      "package": "@vue/server-renderer",
+      "url": "https://github.com/advisories/GHSA-g2v6-rqmx-r4w6",
+      "severity": "high",
+      "range": "<3.5.42",
+      "chain": "vue-ssr"
+    }
+  },
+  "entries": {
+    "@dcloudio/uni-app": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-app"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cloud",
+        "@dcloudio/uni-components",
+        "@dcloudio/uni-push",
+        "@dcloudio/uni-stat"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-app-plus": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-app-plus"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-app-uts",
+        "@dcloudio/uni-app-vite"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vite-toolchain",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-app-uts": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-app-uts"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-app-plus"
+      ],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-app-vite": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-app-vite"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@vitejs/plugin-vue"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-app-plus"
+      ],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vite-toolchain",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-automator": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-automator"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "jest",
+        "jest-environment-node"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "jest-toolchain",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-cli-shared": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-cli-shared"
+      ],
+      "viaPackages": [
+        "@intlify/core-base",
+        "@intlify/vue-devtools",
+        "@vue/server-renderer",
+        "adm-zip",
+        "chokidar",
+        "fast-glob",
+        "unplugin-auto-import"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-app-uts",
+        "@dcloudio/uni-app-vite",
+        "@dcloudio/uni-automator",
+        "@dcloudio/uni-cloud",
+        "@dcloudio/uni-mp-alipay",
+        "@dcloudio/uni-mp-baidu",
+        "@dcloudio/uni-mp-compiler",
+        "@dcloudio/uni-mp-toutiao",
+        "@dcloudio/uni-mp-vite",
+        "@dcloudio/uni-mp-weixin",
+        "@dcloudio/uni-push",
+        "@dcloudio/uni-stat"
+      ],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-cloud": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-cloud"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "fast-glob"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-app"
+      ],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-components": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-components"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cloud",
+        "@dcloudio/uni-h5"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-h5": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-h5"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-h5-vite",
+        "@dcloudio/uni-h5-vue",
+        "@vue/server-renderer"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-components"
+      ],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-h5-vite": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-h5-vite"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@vue/server-renderer"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-h5-vue": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-h5-vue"
+      ],
+      "viaPackages": [
+        "@vue/server-renderer"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-h5"
+      ],
+      "chains": [
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-mp-alipay": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-mp-alipay"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/uni-mp-vite"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-mp-baidu": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-mp-baidu"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/uni-mp-compiler",
+        "@dcloudio/uni-mp-vite",
+        "@dcloudio/uni-mp-weixin",
+        "jimp"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "automator-qr",
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-mp-compiler": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-mp-compiler"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-mp-toutiao": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-mp-toutiao"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/uni-mp-compiler",
+        "@dcloudio/uni-mp-vite"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-mp-vite": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-mp-vite"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/uni-mp-compiler"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-mp-weixin": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-mp-weixin"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/uni-mp-vite",
+        "jimp"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-mp-baidu"
+      ],
+      "chains": [
+        "automator-qr",
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-push": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/uni-push"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/uni-stat": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+      "nodes": [
+        "node_modules/@dcloudio/uni-stat"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vue-ssr"
+      ]
+    },
+    "@dcloudio/vite-plugin-uni": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "*",
+      "nodes": [
+        "node_modules/@dcloudio/vite-plugin-uni"
+      ],
+      "viaPackages": [
+        "@dcloudio/uni-cli-shared",
+        "@vitejs/plugin-legacy",
+        "@vitejs/plugin-vue",
+        "@vitejs/plugin-vue-jsx",
+        "fast-glob",
+        "unplugin-auto-import",
+        "vite"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "encrypted-zip",
+        "glob-toolchain",
+        "intlify",
+        "vite-toolchain",
+        "vue-ssr"
+      ]
+    },
+    "@intlify/core-base": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "9.0.0 - 9.14.4",
+      "nodes": [
+        "node_modules/@intlify/core-base"
+      ],
+      "viaPackages": [
+        "@intlify/message-compiler",
+        "@intlify/message-resolver",
+        "@intlify/runtime",
+        "@intlify/vue-devtools"
+      ],
+      "advisorySources": [
+        1106453,
+        1146054
+      ],
+      "effects": [
+        "@dcloudio/uni-cli-shared"
+      ],
+      "chains": [
+        "intlify"
+      ]
+    },
+    "@intlify/message-compiler": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "9.1.0 - 9.1.10",
+      "nodes": [
+        "node_modules/@intlify/message-compiler"
+      ],
+      "viaPackages": [
+        "@intlify/message-resolver"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "intlify"
+      ]
+    },
+    "@intlify/message-resolver": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "9.1.0 - 9.1.10",
+      "nodes": [
+        "node_modules/@intlify/message-resolver"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1146058
+      ],
+      "effects": [
+        "@intlify/core-base",
+        "@intlify/message-compiler",
+        "@intlify/runtime",
+        "@intlify/vue-devtools"
+      ],
+      "chains": [
+        "intlify"
+      ]
+    },
+    "@intlify/runtime": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "9.1.0 - 9.1.10",
+      "nodes": [
+        "node_modules/@intlify/runtime"
+      ],
+      "viaPackages": [
+        "@intlify/message-compiler",
+        "@intlify/message-resolver"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "intlify"
+      ]
+    },
+    "@intlify/vue-devtools": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=9.1.10",
+      "nodes": [
+        "node_modules/@intlify/vue-devtools"
+      ],
+      "viaPackages": [
+        "@intlify/message-resolver",
+        "@intlify/runtime"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "intlify"
+      ]
+    },
+    "@istanbuljs/load-nyc-config": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@istanbuljs/load-nyc-config"
+      ],
+      "viaPackages": [
+        "js-yaml"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "babel-plugin-istanbul"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "@jest/console": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "25.4.0 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/console"
+      ],
+      "viaPackages": [
+        "jest-message-util"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core",
+        "@jest/reporters",
+        "@jest/test-result",
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/core": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/core"
+      ],
+      "viaPackages": [
+        "@jest/console",
+        "@jest/reporters",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-config",
+        "jest-haste-map",
+        "jest-message-util",
+        "jest-resolve",
+        "jest-resolve-dependencies",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot",
+        "jest-watcher",
+        "micromatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest",
+        "jest-cli"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "@jest/environment": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/environment"
+      ],
+      "viaPackages": [
+        "@jest/fake-timers"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/globals",
+        "jest-circus",
+        "jest-environment-jsdom",
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/fake-timers": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/fake-timers"
+      ],
+      "viaPackages": [
+        "jest-message-util"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/environment",
+        "jest-environment-jsdom",
+        "jest-environment-node",
+        "jest-runtime"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/globals": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/globals"
+      ],
+      "viaPackages": [
+        "@jest/environment",
+        "expect"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-runtime"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/reporters": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/reporters"
+      ],
+      "viaPackages": [
+        "@jest/console",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-haste-map",
+        "jest-resolve"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "@jest/test-result": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "25.4.0 - 30.2.0",
+      "nodes": [
+        "node_modules/@jest/test-result"
+      ],
+      "viaPackages": [
+        "@jest/console"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/test-sequencer",
+        "jest-circus",
+        "jest-cli",
+        "jest-jasmine2",
+        "jest-runtime",
+        "jest-watcher"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/test-sequencer": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=30.2.0",
+      "nodes": [
+        "node_modules/@jest/test-sequencer"
+      ],
+      "viaPackages": [
+        "@jest/test-result",
+        "jest-haste-map",
+        "jest-runtime"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "@jest/transform": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@jest/transform"
+      ],
+      "viaPackages": [
+        "babel-plugin-istanbul",
+        "jest-haste-map",
+        "micromatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/reporters",
+        "babel-jest",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "@jimp/core": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+      "nodes": [
+        "node_modules/@jimp/core"
+      ],
+      "viaPackages": [
+        "phin"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jimp/custom"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "@jimp/custom": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+      "nodes": [
+        "node_modules/@jimp/custom"
+      ],
+      "viaPackages": [
+        "@jimp/core"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jimp"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "@jimp/jpeg": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<=0.12.0",
+      "nodes": [
+        "node_modules/@jimp/jpeg"
+      ],
+      "viaPackages": [
+        "jpeg-js"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jimp/types"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "@jimp/types": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<=0.11.1-canary.891.908.0",
+      "nodes": [
+        "node_modules/@jimp/types"
+      ],
+      "viaPackages": [
+        "@jimp/jpeg"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jimp"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "@tootallnate/once": {
+      "severity": "low",
+      "isDirect": false,
+      "range": "<2.0.1",
+      "nodes": [
+        "node_modules/@tootallnate/once"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1119438
+      ],
+      "effects": [
+        "http-proxy-agent"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "@vitejs/plugin-legacy": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "1.0.1 - 5.4.3",
+      "nodes": [
+        "node_modules/@vitejs/plugin-legacy"
+      ],
+      "viaPackages": [
+        "vite"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "vite-toolchain"
+      ]
+    },
+    "@vitejs/plugin-vue": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "1.8.0 - 5.2.0",
+      "nodes": [
+        "node_modules/@vitejs/plugin-vue"
+      ],
+      "viaPackages": [
+        "vite"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-app-vite",
+        "@dcloudio/vite-plugin-uni"
+      ],
+      "chains": [
+        "vite-toolchain"
+      ]
+    },
+    "@vitejs/plugin-vue-jsx": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "2.0.0-alpha.0 - 4.1.0",
+      "nodes": [
+        "node_modules/@vitejs/plugin-vue-jsx"
+      ],
+      "viaPackages": [
+        "vite"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "vite-toolchain"
+      ]
+    },
+    "@vue/server-renderer": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=3.5.41",
+      "nodes": [
+        "node_modules/@vue/server-renderer"
+      ],
+      "viaPackages": [
+        "vue"
+      ],
+      "advisorySources": [
+        1241259
+      ],
+      "effects": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/uni-h5",
+        "@dcloudio/uni-h5-vite",
+        "@dcloudio/uni-h5-vue",
+        "vue"
+      ],
+      "chains": [
+        "vue-ssr"
+      ]
+    },
+    "adm-zip": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=0.6.0",
+      "nodes": [
+        "node_modules/adm-zip"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1123686,
+        1193734,
+        1239030,
+        1240032,
+        1240034,
+        1240064,
+        1240065,
+        1240066
+      ],
+      "effects": [],
+      "chains": [
+        "encrypted-zip"
+      ]
+    },
+    "argparse": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "1.0.0 - 1.0.10",
+      "nodes": [
+        "node_modules/argparse"
+      ],
+      "viaPackages": [
+        "sprintf-js"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "js-yaml"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "babel-jest": {
+      "severity": "high",
+      "isDirect": false,
+      "range": ">=24.2.0-alpha.0",
+      "nodes": [
+        "node_modules/babel-jest"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "babel-plugin-istanbul"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "babel-plugin-istanbul": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=6.0.0-beta.0",
+      "nodes": [
+        "node_modules/babel-plugin-istanbul"
+      ],
+      "viaPackages": [
+        "@istanbuljs/load-nyc-config"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/transform",
+        "babel-jest"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "body-parser": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "1.20.5 - 1.20.6",
+      "nodes": [
+        "node_modules/body-parser"
+      ],
+      "viaPackages": [
+        "qs"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "h5-ssr"
+      ]
+    },
+    "braces": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/braces"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1240992
+      ],
+      "effects": [
+        "chokidar",
+        "micromatch"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "chokidar": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "2.0.0 - 3.6.0",
+      "nodes": [
+        "node_modules/chokidar"
+      ],
+      "viaPackages": [
+        "braces"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "expect": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "21.0.0-beta.1 - 30.2.0",
+      "nodes": [
+        "node_modules/expect"
+      ],
+      "viaPackages": [
+        "jest-message-util"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/globals",
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-snapshot"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "express": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "4.22.2",
+      "nodes": [
+        "node_modules/express"
+      ],
+      "viaPackages": [
+        "qs"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "h5-ssr"
+      ]
+    },
+    "fast-glob": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/fast-glob"
+      ],
+      "viaPackages": [
+        "micromatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "unimport",
+        "unplugin-auto-import"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "http-proxy-agent": {
+      "severity": "low",
+      "isDirect": false,
+      "range": "4.0.1",
+      "nodes": [
+        "node_modules/http-proxy-agent"
+      ],
+      "viaPackages": [
+        "@tootallnate/once"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jsdom"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "jest": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "23.5.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest"
+      ],
+      "viaPackages": [
+        "@jest/core",
+        "jest-cli"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-automator"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-circus": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "20.1.0-alpha.1 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-circus"
+      ],
+      "viaPackages": [
+        "@jest/environment",
+        "@jest/test-result",
+        "expect",
+        "jest-message-util",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-cli": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "23.5.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-cli"
+      ],
+      "viaPackages": [
+        "@jest/core",
+        "@jest/test-result",
+        "jest-config"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-config": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "18.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-config"
+      ],
+      "viaPackages": [
+        "@jest/test-sequencer",
+        "babel-jest",
+        "jest-circus",
+        "jest-environment-jsdom",
+        "jest-environment-node",
+        "jest-jasmine2",
+        "jest-resolve",
+        "jest-runner",
+        "micromatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-cli"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-environment-jsdom": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "24.2.0-alpha.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-environment-jsdom"
+      ],
+      "viaPackages": [
+        "@jest/environment",
+        "@jest/fake-timers",
+        "jsdom"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config",
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-environment-node": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "24.2.0-alpha.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-environment-node"
+      ],
+      "viaPackages": [
+        "@jest/environment",
+        "@jest/fake-timers"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-haste-map": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "18.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-haste-map"
+      ],
+      "viaPackages": [
+        "micromatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/reporters",
+        "@jest/test-sequencer",
+        "jest-resolve",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-jasmine2": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "18.5.0-alpha.7da3df39 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-jasmine2"
+      ],
+      "viaPackages": [
+        "@jest/environment",
+        "@jest/test-result",
+        "expect",
+        "jest-message-util",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-message-util": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "18.5.0-alpha.7da3df39 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-message-util"
+      ],
+      "viaPackages": [
+        "micromatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/console",
+        "@jest/fake-timers",
+        "expect",
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-resolve": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "18.1.0 - 19.0.2 || 24.2.0-alpha.0 - 24.5.0 || 27.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-resolve"
+      ],
+      "viaPackages": [
+        "jest-haste-map"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core",
+        "@jest/reporters",
+        "jest-config",
+        "jest-runner",
+        "jest-runtime"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-resolve-dependencies": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "23.3.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-resolve-dependencies"
+      ],
+      "viaPackages": [
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-runner": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "21.0.0-alpha.1 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-runner"
+      ],
+      "viaPackages": [
+        "@jest/console",
+        "@jest/environment",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-environment-jsdom",
+        "jest-environment-node",
+        "jest-haste-map",
+        "jest-message-util",
+        "jest-resolve",
+        "jest-runtime"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-runtime": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "18.1.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-runtime"
+      ],
+      "viaPackages": [
+        "@jest/environment",
+        "@jest/fake-timers",
+        "@jest/globals",
+        "@jest/test-result",
+        "@jest/transform",
+        "jest-haste-map",
+        "jest-message-util",
+        "jest-resolve",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/test-sequencer",
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-snapshot": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "23.3.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-snapshot"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "expect",
+        "jest-haste-map",
+        "jest-message-util"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-resolve-dependencies",
+        "jest-runtime"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-watcher": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "25.4.0 - 30.2.0",
+      "nodes": [
+        "node_modules/jest-watcher"
+      ],
+      "viaPackages": [
+        "@jest/test-result"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jimp": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "0.3.6-alpha.5 - 0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+      "nodes": [
+        "node_modules/jimp"
+      ],
+      "viaPackages": [
+        "@jimp/custom",
+        "@jimp/types"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-mp-weixin"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "jpeg-js": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "<=0.4.3",
+      "nodes": [
+        "node_modules/jpeg-js"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1088964,
+        1093580
+      ],
+      "effects": [
+        "@jimp/jpeg"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "js-yaml": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "3.2.7 - 3.15.2",
+      "nodes": [
+        "node_modules/js-yaml"
+      ],
+      "viaPackages": [
+        "argparse"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@istanbuljs/load-nyc-config"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "jsdom": {
+      "severity": "low",
+      "isDirect": false,
+      "range": "16.6.0 - 17.0.0",
+      "nodes": [
+        "node_modules/jsdom"
+      ],
+      "viaPackages": [
+        "http-proxy-agent"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-environment-jsdom"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "micromatch": {
+      "severity": "high",
+      "isDirect": false,
+      "range": ">=0.2.0",
+      "nodes": [
+        "node_modules/micromatch"
+      ],
+      "viaPackages": [
+        "braces"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core",
+        "@jest/transform",
+        "fast-glob",
+        "jest-config",
+        "jest-haste-map",
+        "jest-message-util"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "phin": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<3.7.1",
+      "nodes": [
+        "node_modules/phin"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1096967
+      ],
+      "effects": [
+        "@jimp/core"
+      ],
+      "chains": [
+        "automator-qr"
+      ]
+    },
+    "qs": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "2.2.5 - 6.15.3",
+      "nodes": [
+        "node_modules/qs"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1158506,
+        1158507
+      ],
+      "effects": [
+        "body-parser",
+        "express"
+      ],
+      "chains": [
+        "h5-ssr"
+      ]
+    },
+    "sprintf-js": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/sprintf-js"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1241202
+      ],
+      "effects": [
+        "argparse"
+      ],
+      "chains": [
+        "jest-toolchain"
+      ]
+    },
+    "unimport": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "0.2.2 - 3.13.4 || 3.14.5 - 4.1.1",
+      "nodes": [
+        "node_modules/unimport"
+      ],
+      "viaPackages": [
+        "fast-glob"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "unplugin-auto-import": {
+      "severity": "high",
+      "isDirect": false,
+      "range": "0.16.6 - 0.18.6",
+      "nodes": [
+        "node_modules/@dcloudio/uni-cli-shared/node_modules/unplugin-auto-import",
+        "node_modules/@dcloudio/vite-plugin-uni/node_modules/unplugin-auto-import"
+      ],
+      "viaPackages": [
+        "fast-glob"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@dcloudio/uni-cli-shared",
+        "@dcloudio/vite-plugin-uni"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "vite": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "<=6.4.2",
+      "nodes": [
+        "node_modules/vite"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1116229,
+        1120784,
+        1123525
+      ],
+      "effects": [
+        "@dcloudio/vite-plugin-uni",
+        "@vitejs/plugin-legacy",
+        "@vitejs/plugin-vue",
+        "@vitejs/plugin-vue-jsx"
+      ],
+      "chains": [
+        "vite-toolchain"
+      ]
+    },
+    "vue": {
+      "severity": "high",
+      "isDirect": true,
+      "range": "3.2.13 - 3.5.41",
+      "nodes": [
+        "node_modules/vue"
+      ],
+      "viaPackages": [
+        "@vue/server-renderer"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@vue/server-renderer"
+      ],
+      "chains": [
+        "vue-ssr"
+      ]
+    }
+  },
+  "resolvedAdvisories": {
+    "1106459": {
+      "package": "vue-i18n",
+      "url": "https://github.com/advisories/GHSA-x8qp-wqqm-57ph"
+    },
+    "1193726": {
+      "package": "js-yaml",
+      "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh"
+    },
+    "1240100": {
+      "package": "brace-expansion",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr"
+    },
+    "1240101": {
+      "package": "brace-expansion",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr"
+    },
+    "1240104": {
+      "package": "brace-expansion",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7"
+    },
+    "1240105": {
+      "package": "brace-expansion",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7"
+    },
+    "1240108": {
+      "package": "brace-expansion",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+    },
+    "1240109": {
+      "package": "brace-expansion",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+    },
+    "1241210": {
+      "package": "proxy-addr",
+      "url": "https://github.com/advisories/GHSA-jqcg-44mw-7w3h"
+    }
+  }
+}

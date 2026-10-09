@@ -1,4 +1,33 @@
-# TEST-004D3 current dependency boundary (2026-10-07 candidate)
+# TEST-004D3 dependency boundary
+
+## 2026-10-09 candidate: full current-lock advisory inventory
+
+This section supersedes the 2026-10-07 point-in-time inventory below. It covers the configured H5, Weixin and App resource builds and their installed development/compiler dependencies at `main@2e1bda25`. It does not establish safety for native APK/IPA containers, manually enabled SSR, encrypted cloud compilation, or remote automator debugging. TEST-004D3 and its parent remain open until this exact candidate passes Linux CI and release review.
+
+The original current-main lock SHA-256 was `187a2a2cf008a48d60de6a3ed60dc8647c9da33184024a4d7a025eac2fa30026`. A fresh official `npm audit --package-lock-only --json --registry=https://registry.npmjs.org` reported **83 affected package entries** (3 low, 15 moderate, 64 high, 1 critical), including **32 direct advisory objects**. The raw ignored receipt is `.cache/d3-inventory-20261009/npm-audit.json`. These are npm graph/report counts, not independent vulnerabilities or claims of application exploitability.
+
+Ten installed lock nodes were advanced within their existing parent ranges: `proxy-addr` 2.0.7→2.0.8; four `brace-expansion` copies to 1.1.21 or 2.1.7; `js-yaml` 3.15.1→3.15.2; and root `vue-i18n` plus its three nested Intlify packages 9.14.4→9.14.5. No DCloud pinned package or application source was upgraded. The resulting `package-lock.json` SHA-256 is `ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8`. The current locked report has **82 affected package entries** (3 low, 17 moderate, 62 high, 0 critical), **23 direct advisory objects**, and 22 distinct GHSA URLs. Its original receipt is `.cache/d3-inventory-20261009/npm-audit-final-candidate.json` (SHA-256 `9d2c77fe0834a993ed6d2922c46cdc6cfae6b41b8e6be0568d0d07b26d536bc9`). More moderate propagated entries after the updates do not mean more independent advisories.
+
+The fixed in-range paths include the [proxy-addr mapped-subnet advisory](https://github.com/jshttp/proxy-addr/security/advisories/GHSA-jqcg-44mw-7w3h), [brace-expansion](https://github.com/advisories/GHSA-q2hr-2g5m-vwhr), [js-yaml](https://github.com/advisories/GHSA-2883-xcg3-v3hh), and the top-level [vue-i18n/Intlify range](https://github.com/advisories/GHSA-x8qp-wqqm-57ph). The installed `proxy-addr@2.0.8` now rejects the malformed `::ffff:10.0.0.0/8` trust rule for IPv4 addresses, while the correct `/104` rule still accepts the intended subnet. DCloud's separate `@intlify/core-base@9.1.9` and `@intlify/message-resolver@9.1.9` remain; the root upgrade does not remove their report entries.
+
+`d3-advisory-gate.cjs` pins the cross-platform semantic lock SHA-256 `1b9f11abdb6c1e752b63d989edc3de40860b6cd8153bad556e9f1761fe6605c7` and compares every direct source ID, URL, severity and range, all 82 affected package names and installed node paths, forward `via` edges, severity and derived scope. The raw lock SHA-256 above is a local byte receipt; Git checkout line endings differ between Windows and Linux. The gate fails when a resolved advisory returns or any new path or advisory appears. npm sometimes recomputes propagated semver ranges and reverse `effects` for an unchanged lock; these informational fields are retained in the reviewed baseline but excluded from equality. The live `--package-lock-only` audit and nine self-tests pass locally. CI now invokes `npm run test:d3-advisories` in the UniApp job; the gate fails closed when the registry cannot provide a valid report. The eight scope labels overlap across parent packages, so their entry counts must not be added together.
+
+| Reviewed scope | Direct objects | Current boundary and remaining condition |
+| --- | ---: | --- |
+| DCloud Intlify | 3 | Configured H5/Weixin/App module graphs reject Intlify; DCloud 9.1.9 remains and native containers are outside this graph. |
+| Vue SSR renderer | 1 | Version-based alert remains on the separately verified local safety backport; a new SSR path needs review. |
+| Vendored Vite toolchain | 3 | Local Vite safety backport and development-server controls remain; audit still reports its version range. Do not expose development mode on a shared network. |
+| Encrypted `uni_modules` / `adm-zip` | 8 | Current source has no encrypted modules; optional cloud extraction and preexisting cache links retain the documented condition risk. |
+| Weixin automator QR / Jimp / `jpeg-js` / `phin` | 3 | First-party scripts do not use remote debugging; configured resource graphs reject this Node-only chain. Untrusted remote image input needs a compatible upstream fix and review. |
+| Jest / Istanbul / jsdom / `once` / `sprintf-js` | 2 | Tests run in Node, and the resource graph rejects this optional toolchain; jsdom external-resource/proxy use remains a separate condition. |
+| H5 SSR / Express / `qs` | 2 | Ordinary scripts leave SSR disabled, and the resource graph rejects server packages; manual `-ssr` can still bind beyond Vite's loopback setting. |
+| Glob and watcher build toolchain / `braces` | 1 | Real H5, Weixin, App-vue and App-nvue graphs reject build glob packages, including external or tree-shaken imports. Build/dev invocation still uses old `braces@3.0.3`; untrusted build patterns require fresh review. |
+
+The new graph matcher tests an external `braces` import and excludes business filenames such as `braces.vue`. The real four compiler graphs show `buildGlob: []`, alongside the existing Intlify, QR, Jest and SSR empty lists. The local `runtime-i18n-audit.test.cjs` run passed 13/13 with zero skips under normal filesystem access. In the restricted Windows sandbox Vite's `realpath` on installed `terser` returned `EPERM`, which Vite misreported as missing; a normal-permission run passed all three actual CLI builds. The Express/proxy focused test passed 4/4. See the prior five-chain evidence below for their specific optional-path limitations.
+
+---
+
+# 2026-10-07 candidate (historical point-in-time inventory)
 
 This is an audit of the repository's configured H5, Weixin and App resource builds and development scripts. It is not a finding that the old packages are patched, that every optional DCloud mode is safe, or that an APK/IPA has been inspected. `MIGRATION_CHECKLIST.md` keeps TEST-004D3 open.
 
