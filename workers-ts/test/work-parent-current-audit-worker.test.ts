@@ -123,8 +123,26 @@ describe('current app work-parent diagnostic Worker', () => {
     else mocks[stage].mockRejectedValue(secret);
     const response = await worker.fetch(request(), env);
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: 'audit failed' });
+    const expectedStage = { create: 'connect', audit: 'permission', capacity: 'capacity', end: 'close' }[stage];
+    expect(await response.json()).toEqual({ error: 'audit failed', stage: expectedStage, category: 'other' });
     expect(JSON.stringify(errors)).not.toContain(secret.message);
+    expect(errors).toEqual([
+      [JSON.stringify({ event: 'work_parent_current_audit_failed',
+        stage: expectedStage, category: 'other' })],
+      ...(stage === 'end' ? [[JSON.stringify({ event: 'work_parent_current_audit_close_failed' })]] : []),
+    ]);
     if (stage !== 'create') expect(mocks.end).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['42501', 'permission'], ['55P03', 'lock'], ['57014', 'timeout'],
+    ['08006', 'connection'], ['42P01', 'other'], ['private-connection-or-sql', 'other'],
+  ] as const)('classifies only fixed SQLSTATE category for %s', async (code, category) => {
+    mocks.capacity.mockRejectedValueOnce(Object.assign(Error('private connection and SQL'), { code }));
+    const response = await worker.fetch(request(), env);
+    const body = await response.json();
+    expect(response.status).toBe(503);
+    expect(body).toEqual({ error: 'audit failed', stage: 'capacity', category });
+    expect(JSON.stringify([body, errors])).not.toMatch(/private connection|private-connection-or-sql/);
   });
 });

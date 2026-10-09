@@ -40,6 +40,20 @@ $taskFormalBefore = $null
 $taskFormalAfter = $null
 $taskResult = $null
 $taskAccess = [ordered]@{ anonymous = 0; wrongMethod = 0; query = 0; wrongPath = 0 }
+$taskDiagnostic = [ordered]@{ outcome = 'not-started'; httpStatus = 'unobserved';
+    cacheControl = 'unobserved'; workerStage = 'unobserved'; category = 'unobserved' }
+
+function Test-AuditTimeout {
+    param([System.Exception]$ErrorObject)
+    for ($taskErrorDepth = 0; $taskErrorDepth -lt 4 -and $ErrorObject; $taskErrorDepth++) {
+        if ($ErrorObject -is [System.TimeoutException] -or
+            $ErrorObject -is [System.Threading.Tasks.TaskCanceledException] -or
+            ($ErrorObject -is [System.Net.WebException] -and
+             $ErrorObject.Status -eq [System.Net.WebExceptionStatus]::Timeout)) { return $true }
+        $ErrorObject = $ErrorObject.InnerException
+    }
+    return $false
+}
 
 function Get-Http {
     param([string]$Uri,[hashtable]$Headers=@{},[string]$Method='GET',[int]$TimeoutSec=20)
@@ -207,11 +221,45 @@ try {
         throw 'Temporary Worker access boundaries failed.'
     }
     $taskStage = 'single-readonly-audit'
-    $taskReply = Get-Http -Uri "$taskUrl/work-parents" -Headers $taskAuth -TimeoutSec 30
-    if ([int]$taskReply.StatusCode -ne 200 -or $taskReply.Headers['Cache-Control'] -notcontains 'no-store') {
+    $taskDiagnostic.outcome = 'transport'
+    try {
+        $taskReply = Get-Http -Uri "$taskUrl/work-parents" -Headers $taskAuth -TimeoutSec 30
+    } catch {
+        if (Test-AuditTimeout -ErrorObject $_.Exception) { $taskDiagnostic.outcome = 'timeout' }
+        throw 'Single database audit transport failed.'
+    }
+    $taskHttpStatus = [int]$taskReply.StatusCode
+    $taskDiagnostic.httpStatus = if ($taskHttpStatus -in @(200,403,408,429,500,502,503,504)) {
+        [string]$taskHttpStatus
+    } else { 'other' }
+    $taskDiagnostic.cacheControl = if ($taskReply.Headers['Cache-Control'] -contains 'no-store') {
+        'present'
+    } else { 'absent' }
+    $taskDiagnostic.outcome = 'http-status'
+    if ($taskHttpStatus -eq 503 -and $taskDiagnostic.cacheControl -ceq 'present') {
+        # Accept only fixed Worker diagnostic labels from a fixed failure body.
+        # No response text, SQL or arbitrary JSON value enters the receipt.
+        try {
+            $taskErrorBody = $taskReply.Content | ConvertFrom-Json -Depth 4
+            if ($taskErrorBody.error -ceq 'audit failed' -and
+                $taskErrorBody.stage -is [string] -and
+                @('connect','permission','capacity','close') -ccontains $taskErrorBody.stage -and
+                $taskErrorBody.category -is [string] -and
+                @('permission','lock','timeout','connection','other') -ccontains $taskErrorBody.category) {
+                $taskDiagnostic.workerStage = [string]$taskErrorBody.stage
+                $taskDiagnostic.category = [string]$taskErrorBody.category
+            }
+        } catch { }
+    }
+    if ($taskHttpStatus -ne 200) {
         throw 'Single database audit did not complete.'
     }
-    $taskRaw = $taskReply.Content | ConvertFrom-Json -Depth 12
+    $taskDiagnostic.outcome = 'cache-control'
+    if ($taskDiagnostic.cacheControl -cne 'present') { throw 'Single database audit cache boundary failed.' }
+    $taskDiagnostic.outcome = 'json-parse'
+    try { $taskRaw = $taskReply.Content | ConvertFrom-Json -Depth 12 }
+    catch { throw 'Single database audit JSON parse failed.' }
+    $taskDiagnostic.outcome = 'shape'
     if ($taskRaw.scope -cne 'work-parent-current-app' -or
         $taskRaw.identityMatch -isnot [bool] -or $taskRaw.ready -isnot [bool]) {
         throw 'Unexpected audit result shape.'
@@ -337,6 +385,7 @@ try {
     $taskResult = [ordered]@{ scope = 'work-parent-current-app';
         identityMatch = [bool]$taskRaw.identityMatch; ready = [bool]$taskRaw.ready;
         checks = $taskSafeChecks; failures = $taskFailures; capacity = $taskSafeCapacity }
+    $taskDiagnostic.outcome = 'complete'
     $taskStage = 'audit-completed'
 } catch {
     # Do not print raw HTTP, Wrangler or database exceptions: they can contain
@@ -417,6 +466,7 @@ $taskReceipt = [ordered]@{
     formalUnchanged = [bool]$taskMainUnchanged
     ownedVersionId = $taskOwnedVersion
     access = $taskAccess
+    diagnostic = $taskDiagnostic
     audit = $taskResult
     cleanup = [ordered]@{ attempted = $taskAttempted; ownershipVerified = $taskOwnershipVerified;
         deleted = $taskDeleted; controlPlane404 = $taskControlMissing; public404 = $taskPublicMissing }

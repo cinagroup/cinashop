@@ -16,6 +16,21 @@ const headers = {
 };
 const expectedRole = 'cinashop_app_v1';
 const expectedDatabase = 'postgres';
+type AuditStage = 'connect' | 'permission' | 'capacity' | 'close';
+type SqlstateCategory = 'permission' | 'lock' | 'timeout' | 'connection' | 'other';
+
+function sqlstateCategory(error: unknown): SqlstateCategory {
+  // Only fixed categories leave the Worker. Never log a driver error, its SQL,
+  // connection string, or message. A malformed error object is also "other".
+  let code: unknown;
+  try { code = error && typeof error === 'object' ? Reflect.get(error, 'code') : undefined; }
+  catch { return 'other'; }
+  if (code === '42501') return 'permission';
+  if (code === '55P03') return 'lock';
+  if (code === '57014') return 'timeout';
+  if (typeof code === 'string' && /^08[0-9A-Z]{3}$/.test(code)) return 'connection';
+  return 'other';
+}
 
 /** Single-purpose, expiring production probe. No arbitrary SQL or business data. */
 export default {
@@ -41,13 +56,16 @@ export default {
     }
 
     let db: ReturnType<typeof createDbFromConnectionString> | undefined;
+    let stage: AuditStage = 'connect';
     try {
       db = createDbFromConnectionString(env.HYPERDRIVE.connectionString, 1, {
         searchPath: 'public,pg_temp', applicationName: 'cinashop_work_parent_current_audit',
       });
+      stage = 'permission';
       const permission = await auditWorkParentIdentityPermissions(db, 'public', 'shared-shop', {
         role: expectedRole, database: expectedDatabase,
       });
+      stage = 'capacity';
       const capacity = permission.identityMatch === true
         ? await auditWorkParentCapacityStats(db, { role: expectedRole, database: expectedDatabase })
         : null;
@@ -61,12 +79,14 @@ export default {
         failures: permission.failures,
         capacity,
       };
+      stage = 'close';
       await db.$client.end({ timeout: 1 });
       db = undefined;
       return Response.json(result, { headers });
-    } catch {
-      console.error(JSON.stringify({ event: 'work_parent_current_audit_failed' }));
-      return Response.json({ error: 'audit failed' }, { status: 503, headers });
+    } catch (error) {
+      const category = sqlstateCategory(error);
+      console.error(JSON.stringify({ event: 'work_parent_current_audit_failed', stage, category }));
+      return Response.json({ error: 'audit failed', stage, category }, { status: 503, headers });
     } finally {
       if (db) {
         try { await db.$client.end({ timeout: 1 }); }

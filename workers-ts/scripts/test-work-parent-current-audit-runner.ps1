@@ -2,7 +2,8 @@
 # Wrangler calls are replaced before the runner is dot-sourced. No network or DB.
 [CmdletBinding()]
 param(
-    [ValidateSet('all','success','deploy-failed','request-failed','temporary-version-drift',
+    [ValidateSet('all','success','deploy-failed','request-failed','request-timeout',
+        'header-missing','malformed-json','malformed-shape','worker-capacity-503','temporary-version-drift',
         'formal-postflight-drift','foreign-target','owned-version-transient',
         'cleanup-presence-transient','ownership-read-unavailable',
         'control-404-transient','control-404-unavailable','marker-drift','binding-drift',
@@ -15,7 +16,8 @@ $ErrorActionPreference = 'Stop'
 $taskRunner = Join-Path $PSScriptRoot 'run-work-parent-current-production-audit.ps1'
 
 if ($Scenario -eq 'all') {
-    $taskCases = @('success','deploy-failed','request-failed','temporary-version-drift',
+    $taskCases = @('success','deploy-failed','request-failed','request-timeout',
+        'header-missing','malformed-json','malformed-shape','worker-capacity-503','temporary-version-drift',
         'formal-postflight-drift','foreign-target','owned-version-transient',
         'cleanup-presence-transient','ownership-read-unavailable',
         'control-404-transient','control-404-unavailable','marker-drift','binding-drift',
@@ -35,17 +37,38 @@ if ($Scenario -eq 'all') {
             if ($taskCase -in @('success','owned-version-transient','cleanup-presence-transient',
                 'control-404-transient')) {
                 if ($taskExit -ne 0 -or $taskReceipt.ready -ne $true -or
+                    $taskReceipt.diagnostic.outcome -cne 'complete' -or
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
                     $taskReceipt.cleanup.public404 -ne $true -or
                     $taskDeploys -ne 1 -or $taskDeletes -ne 1) {
                     throw 'Success simulation failed.'
                 }
-            } elseif ($taskCase -in @('deploy-failed','request-failed','formal-postflight-drift')) {
+            } elseif ($taskCase -in @('deploy-failed','request-failed','request-timeout',
+                'header-missing','malformed-json','malformed-shape','worker-capacity-503',
+                'formal-postflight-drift')) {
                 if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
                     $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
                     $taskReceipt.cleanup.public404 -ne $true) {
                     throw "$taskCase did not clean up its owned Worker."
+                }
+                $taskExpectedDiagnostic = switch ($taskCase) {
+                    'request-failed' { @('http-status','503','present','unobserved','unobserved') }
+                    'request-timeout' { @('timeout','unobserved','unobserved','unobserved','unobserved') }
+                    'header-missing' { @('cache-control','200','absent','unobserved','unobserved') }
+                    'malformed-json' { @('json-parse','200','present','unobserved','unobserved') }
+                    'malformed-shape' { @('shape','200','present','unobserved','unobserved') }
+                    'worker-capacity-503' { @('http-status','503','present','capacity','timeout') }
+                }
+                if ($taskExpectedDiagnostic -and
+                    (@($taskReceipt.diagnostic.outcome,$taskReceipt.diagnostic.httpStatus,
+                        $taskReceipt.diagnostic.cacheControl,$taskReceipt.diagnostic.workerStage,
+                        $taskReceipt.diagnostic.category) -join '|') -cne
+                    ($taskExpectedDiagnostic -join '|')) {
+                    throw "$taskCase diagnostic classification differs."
+                }
+                if (($taskOutput -join "`n") -match 'private-connection-or-sql') {
+                    throw "$taskCase leaked a synthetic private marker."
                 }
                 if ($taskCase -eq 'formal-postflight-drift' -and $taskReceipt.formalUnchanged -ne $false) {
                     throw 'Formal Worker drift was not detected.'
@@ -114,11 +137,11 @@ for ($taskIndex = 1; $taskIndex -le 29; $taskIndex++) {
     $script:bindings += @{ name = ('SAFE_{0:D2}' -f $taskIndex); type = 'plain_text' }
 }
 function New-Response {
-    param([int]$Status,[object]$Body=$null)
+    param([int]$Status,[object]$Body=$null,[bool]$NoStore=$true)
     [pscustomobject]@{
         StatusCode = $Status
         Content = if ($null -eq $Body) { '' } else { $Body | ConvertTo-Json -Depth 20 -Compress }
-        Headers = @{ 'Cache-Control' = @('no-store') }
+        Headers = if ($NoStore) { @{ 'Cache-Control' = @('no-store') } } else { @{} }
     }
 }
 function New-ApiResponse {
@@ -202,7 +225,22 @@ function Invoke-WebRequest {
         if (-not $Headers.ContainsKey('X-Audit-Token')) { return New-Response -Status 403 }
         if ($taskPath -cne '/work-parents') { return New-Response -Status 404 }
         if ($Method -cne 'GET') { return New-Response -Status 405 }
+        if ($Scenario -eq 'request-timeout') { throw [System.TimeoutException]::new('private-connection-or-sql') }
         if ($Scenario -eq 'request-failed') { return New-Response -Status 503 }
+        if ($Scenario -eq 'worker-capacity-503') {
+            return New-Response -Status 503 -Body @{ error = 'audit failed'; stage = 'capacity';
+                category = 'timeout'; unrelated = 'private-connection-or-sql' }
+        }
+        if ($Scenario -eq 'header-missing') { return New-Response -Status 200 -NoStore $false }
+        if ($Scenario -eq 'malformed-json') {
+            $taskInvalid = New-Response -Status 200
+            $taskInvalid.Content = '{private-connection-or-sql'
+            return $taskInvalid
+        }
+        if ($Scenario -eq 'malformed-shape') {
+            return New-Response -Status 200 -Body @{ scope = 'unexpected';
+                identityMatch = $true; ready = $true; unrelated = 'private-connection-or-sql' }
+        }
         $taskChecks = [ordered]@{
             connectionIdentityVisible = $true; objectsAndKeysPresent = $true;
             unprivilegedReachableRoles = $true; noOwnerControl = $true;
