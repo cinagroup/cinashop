@@ -575,11 +575,25 @@ export class AttachmentService {
 
     let id: number;
     let metadataWriteStarted = false;
+    let metadataCallbackCompleted = false;
     try {
       id = await withTx(this.container, async (tx) => {
         await authorizeMetadata?.(tx);
+        if (scope.moduleType !== 5) {
+          await this.lockAttachmentMutation(tx, scope);
+          if (pid > 0) {
+            const categories = await tx.select({ id: systemAttachmentCategory.id })
+              .from(systemAttachmentCategory).where(and(
+                eq(systemAttachmentCategory.id, pid),
+                eq(systemAttachmentCategory.type, scope.type),
+                eq(systemAttachmentCategory.relationId, scope.relationId),
+                eq(systemAttachmentCategory.fileType, 1),
+              )).limit(1).for("share");
+            if (!categories.length) throw new NotFoundException("附件分类不存在");
+          }
+        }
         metadataWriteStarted = true;
-        const inserted = await tx.insert(systemAttachment).values({
+        const metadata = {
           type: scope.type,
           fileType: 1,
           relationId: scope.relationId,
@@ -593,23 +607,54 @@ export class AttachmentService {
           imageType: R2_IMAGE_TYPE,
           moduleType: scope.moduleType,
           realName: originalName,
-        }).returning({ id: systemAttachment.attId });
-        const attachmentId = inserted[0].id;
+        };
+        const matchesMetadata = (row: typeof systemAttachment.$inferSelect | undefined, expected: typeof metadata) =>
+          row !== undefined && Object.entries(expected).every(([field, value]) => {
+            const actual = row[field as keyof typeof expected];
+            // These legacy CHAR(30) columns right-pad their SQL text values.
+            return (field === 'attSize' || field === 'attType') && typeof actual === 'string'
+              ? actual.replace(/ +$/, '') === value : actual === value;
+          });
+        const insertion = tx.insert(systemAttachment).values(metadata);
+        let attachmentId: number;
+        if (scope.moduleType === 5) {
+          const inserted = await insertion.returning({ id: systemAttachment.attId });
+          attachmentId = inserted[0].id;
+        } else {
+          const inserted = await insertion.returning();
+          const returnedId = inserted[0]?.attId;
+          if (inserted.length !== 1 || typeof returnedId !== 'number' || !Number.isSafeInteger(returnedId)
+            || returnedId <= 0 || !matchesMetadata(inserted[0], metadata)) {
+            throw new ValidateException("图片记录未完整保存，请重试");
+          }
+          attachmentId = returnedId;
+        }
         const canonical = canonicalAttachmentPath(attachmentId);
-        await tx.update(systemAttachment).set({ attDir: canonical, sattDir: canonical })
+        const canonicalUpdate = tx.update(systemAttachment).set({ attDir: canonical, sattDir: canonical })
           .where(eq(systemAttachment.attId, attachmentId));
+        if (scope.moduleType === 5) {
+          await canonicalUpdate;
+        } else {
+          const updated = await canonicalUpdate.returning();
+          if (updated.length !== 1 || updated[0]?.attId !== attachmentId || !matchesMetadata(updated[0], {
+            ...metadata, attDir: canonical, sattDir: canonical,
+          })) {
+            throw new ValidateException("图片记录未完整保存，请重试");
+          }
+        }
+        metadataCallbackCompleted = true;
         return attachmentId;
       });
     } catch (error) {
-      // A lost COMMIT reply can coexist with a committed metadata row. Only a
-      // pre-write rejection or an explicit SQL data/integrity/rollback/access
-      // error proves this assisted upload did not commit. Retain uncertain
-      // objects for reconciliation; never delete a possibly referenced object.
-      const uncertain = scope.moduleType === 5 && metadataWriteStarted && !isDefiniteImageMetadataRejection(error);
+      // Ordinary callbacks that fail before completion never request COMMIT.
+      // Once a callback returns, a lost COMMIT reply can coexist with a stored
+      // row. Keep possibly referenced objects unless SQL proves rejection.
+      // Assisted uploads retain their existing pre-write/SQL-error contract.
+      const uncertain = (scope.moduleType === 5 ? metadataWriteStarted : metadataCallbackCompleted)
+        && !isDefiniteImageMetadataRejection(error);
       if (!uncertain) {
         try { await this.env.ASSETS_BUCKET.delete(key); }
-        catch (cleanupError) {
-          if (scope.moduleType !== 5) throw cleanupError;
+        catch {
           try { await this.env.ORDER_QUEUE.send({ action: 'deleteAttachmentObjects', keys: [key] }); }
           catch (queueError) {
             emitOperationalEvent('error', { event: 'attachment_cleanup_enqueue_and_fallback_failed', component: 'r2',
