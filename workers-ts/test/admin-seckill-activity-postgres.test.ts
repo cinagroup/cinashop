@@ -76,6 +76,39 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Seckill parent i
     });
     expect(await f.snapshot()).toEqual(before);
   });
+  it('rolls back a proposed new SKU save on source contention, then allocates it once after retry', async () => {
+    const id = await create();
+    const [newBase] = await f.db.insert(storeProductAttrValue).values({ productId: 101, type: 0,
+      unique: 'base0004', suk: '绿', stock: 20, price: '13.00', otPrice: '23.00', cost: '4.00' })
+      .returning({ id: storeProductAttrValue.id });
+    const body = activityEdit(await service(f.db).detail(id));
+    body.name = 'should roll back';
+    body.products[0].skus[0].quota_total += 1;
+    body.products[0].skus.push({ id: null, base_unique: 'base0004', price: '7.00', quota_total: 5, enabled: true });
+    const before = await f.snapshot();
+    await withFinancePeers(f.db, async ([restorer, admin]) => {
+      await restorer.exec(`BEGIN; SELECT id FROM store_product_attr_value WHERE id=${newBase.id} FOR UPDATE`);
+      try {
+        const result = await outcome(service(admin.db).mutate('update', id, body, actor));
+        expect(result).toMatchObject({ ok: false, error: { message: expect.stringContaining('正在变化') } });
+        expect(await f.snapshot()).toEqual(before);
+      } finally { await restorer.exec('ROLLBACK'); }
+    });
+    expect(await f.snapshot()).toEqual(before);
+    expect(await service(f.db).mutate('update', id, body, actor)).toEqual({ id });
+    const after = await f.snapshot();
+    const childId = before.children[0].id;
+    const active = after.skus.filter(row => row.productId === childId && row.type === 1 && row.isRetired === 0);
+    expect(active).toHaveLength(3);
+    expect(active.filter(row => !before.skus.some(old => old.id === row.id)))
+      .toMatchObject([{ productId: childId, suk: '绿', stock: 5, quota: 5, quotaShow: 5, price: '7.00' }]);
+    expect(after.parents[0].name).toBe('should roll back');
+    expect(after.children[0]).toMatchObject({ quota: before.children[0].quota + 6,
+      quotaShow: before.children[0].quotaShow + 6, stock: before.children[0].stock + 6 });
+    expect(after.logs).toHaveLength(before.logs.length + 1);
+    expect(await service(f.db).mutate('update', id, body, actor)).toEqual({ id });
+    expect(await f.snapshot()).toEqual(after);
+  });
   it('rejects a repeatable-read write before snapshots, business changes or audit', async () => {
     await withFinancePeers(f.db, async ([admin]) => {
       await admin.exec("SET default_transaction_isolation='repeatable read'");
