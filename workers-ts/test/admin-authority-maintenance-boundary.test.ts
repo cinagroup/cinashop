@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { URL as NodeURL } from 'node:url';
 import { createDbFromConnectionString } from '../src/lib/di';
 import { applyAdminAuthorityMaintenance, inspectAdminAuthorityMaintenance, inspectAdminAuthorityRuntimeLogin,
   adminAuthorityInstallSqlSha256, ADMIN_AUTHORITY_MAINTENANCE_OPERATION, AdminAuthorityPreflightMismatch } from '../src/migrations/adminAuthorityOperationMaintenance';
+import { ADMIN_AUTHORITY_MAINTENANCE_SQL, ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL,
+  ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL, adminAuthorityPreflightEvidence,
+  adminAuthorityEvidenceSha256, ADMIN_AUTHORITY_PRODUCTION_TARGET, ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE } from '../src/migrations/adminAuthorityOperationMaintenance';
+import { ADMIN_AUTHORITY_OPERATION_SQL } from '../src/migrations/adminAuthorityOperation';
+import { ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL } from '../src/migrations/runAdminLegacyAdminOperationUpgrade';
+import { ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL } from '../src/migrations/runAdminLegacyRoleOperationUpgrade';
 import worker, { approvedAdminAuthorityApply, type AdminAuthorityMaintenanceEnv } from './integration/AdminAuthorityMaintenanceWorker';
 
 vi.mock('@/lib/di', () => ({ createDbFromConnectionString: vi.fn(() => ({ $client: { end: vi.fn(async () => {}) } })) }));
@@ -106,11 +114,84 @@ describe('temporary authority commissioning HTTP guard', () => {
     const after = await (await worker.fetch(request('/preflight'), bindings)).json() as { fingerprint: string; runMarker: string };
     expect(after.fingerprint).toBe(before.fingerprint); expect(after.runMarker).toBe(bindings.RUN_MARKER);
   });
-  it('postflight requires exact v2 in addition to three independent ready profiles', async () => {
+  it('postflight requires exact v3 while preflight distinguishes all eligible starting catalogs', async () => {
     const bindings = await env();
-    expect(await (await worker.fetch(request('/postflight'), bindings)).json()).toMatchObject({ ready: false });
-    vi.mocked(inspectAdminAuthorityMaintenance).mockResolvedValue({ ...maintenance, addon: 'legacy-admin-v2' } as never);
-    expect(await (await worker.fetch(request('/postflight'), bindings)).json()).toMatchObject({ ready: true });
+    for (const addon of ['absent', 'v1', 'legacy-admin-v2', 'legacy-role-v3']) {
+      vi.mocked(inspectAdminAuthorityMaintenance).mockResolvedValue({ ...maintenance, addon } as never);
+      expect(await (await worker.fetch(request('/preflight'), bindings)).json())
+        .toMatchObject({ ready: true, targetCatalog: 'legacy-role-v3', maintenance: { addon } });
+      expect(await (await worker.fetch(request('/postflight'), bindings)).json())
+        .toMatchObject({ ready: addon === 'legacy-role-v3', targetCatalog: 'legacy-role-v3' });
+    }
+    for (const addon of ['orphan', 'drift']) {
+      vi.mocked(inspectAdminAuthorityMaintenance).mockResolvedValue({ ...maintenance, ready: false, addon } as never);
+      expect(await (await worker.fetch(request('/preflight'), bindings)).json()).toMatchObject({ ready: false });
+      expect(await (await worker.fetch(request('/postflight'), bindings)).json()).toMatchObject({ ready: false });
+    }
+    expect(applyAdminAuthorityMaintenance).not.toHaveBeenCalled();
+  });
+  it('rejects old v2 operation and SQL approval before database access', async () => {
+    const bindings = await env(), headers = await arm(bindings);
+    for (const operation of ['admin-authority-install-v1-and-legacy-v2', 'admin-legacy-role-operation-v3', '']) {
+      expect((await worker.fetch(request('/apply', 'POST', { ...headers, 'X-Migration-Operation': operation }), bindings)).status).toBe(400);
+    }
+    const oldSql = [ADMIN_AUTHORITY_OPERATION_SQL, ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL].join('\n');
+    const oldHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(oldSql))), b => b.toString(16).padStart(2, '0')).join('');
+    expect(oldHash).not.toBe(bindings.EXPECTED_INSTALL_SQL_SHA256);
+    bindings.EXPECTED_INSTALL_SQL_SHA256 = oldHash;
+    expect((await worker.fetch(request('/apply', 'POST', headers), bindings)).status).toBe(503);
+    expect(createDbFromConnectionString).not.toHaveBeenCalled(); expect(applyAdminAuthorityMaintenance).not.toHaveBeenCalled();
+    bindings.EXPECTED_INSTALL_SQL_SHA256 = await adminAuthorityInstallSqlSha256();
+    // Replay the real old evidence shape with both its genuine v2 SQL hash and
+    // the new hash: even knowledge of new SQL cannot omit the new scope binding.
+    for (const installSqlSha256 of [oldHash, bindings.EXPECTED_INSTALL_SQL_SHA256]) {
+      const oldApproval = await adminAuthorityEvidenceSha256({ sourceSha: bindings.SOURCE_SHA, installSqlSha256,
+        target: ADMIN_AUTHORITY_PRODUCTION_TARGET, maintenance, app: profile('app'), admin: profile('admin') });
+      bindings.APPROVED_PREFLIGHT_SHA256 = oldApproval;
+      vi.clearAllMocks();
+      expect((await worker.fetch(request('/apply', 'POST', { ...headers, 'X-Preflight-SHA256': oldApproval }), bindings)).status).toBe(409);
+      expect(createDbFromConnectionString).toHaveBeenCalledTimes(3); expect(applyAdminAuthorityMaintenance).not.toHaveBeenCalled();
+    }
+  });
+  it('pins both v3 CHECKs and the sole Admin DELETE inside the complete ordered SQL bundle', async () => {
+    expect(ADMIN_AUTHORITY_MAINTENANCE_SQL).toBe([ADMIN_AUTHORITY_OPERATION_SQL,
+      ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL,
+      ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL, ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL].join('\n'));
+    const fullHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ADMIN_AUTHORITY_MAINTENANCE_SQL))), b => b.toString(16).padStart(2, '0')).join('');
+    expect(await adminAuthorityInstallSqlSha256()).toBe(fullHash);
+    const evidence = adminAuthorityPreflightEvidence('b'.repeat(40), fullHash, ADMIN_AUTHORITY_PRODUCTION_TARGET,
+      maintenance as never, profile('app') as never, profile('admin') as never);
+    expect(evidence).toMatchObject({ operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION,
+      targetCatalog: 'legacy-role-v3', deploymentScope: ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE,
+      target: ADMIN_AUTHORITY_PRODUCTION_TARGET, installSqlSha256: fullHash });
+    expect(ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL).toBe('GRANT DELETE ON TABLE public.system_role TO "cinashop_admin_v1";');
+  });
+  it('binds the reviewed account and three unchanged Hyperdrive IDs into source config and approval evidence', async () => {
+    const config = JSON.parse(readFileSync(new NodeURL('./integration/admin-authority-maintenance.wrangler.jsonc', import.meta.url), 'utf8'));
+    expect(config.account_id).toBe(ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE.accountId);
+    expect(Object.fromEntries(config.hyperdrive.map((binding: {binding: string; id: string}) => [binding.binding, binding.id])))
+      .toEqual(ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE.hyperdriveBindings);
+    const response = await worker.fetch(request('/preflight'), await env());
+    expect(await response.json()).toMatchObject({ deploymentScope: ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE });
+    expect(config.vars.APPLY_ARMED).toBe('false'); expect(config.vars.AUDIT_TOKEN_SHA256).toBe('');
+    expect(config.vars.APPROVED_PREFLIGHT_SHA256).toBe(''); expect(config.vars.SOURCE_SHA).toBe('');
+  });
+  it('refuses postflight and armed apply when any current v3 identity or profile is not ready', async () => {
+    vi.mocked(inspectAdminAuthorityMaintenance).mockResolvedValue({ ...maintenance, addon: 'legacy-role-v3' } as never);
+    const bindings = await env(), headers = await arm(bindings);
+    for (const kind of ['app', 'admin'] as const) {
+      bindings.APPROVED_PREFLIGHT_SHA256 = headers['X-Preflight-SHA256'];
+      vi.mocked(inspectAdminAuthorityRuntimeLogin).mockImplementation(async (_db, _target, actual) => ({ ...profile(actual), ready: actual !== kind }) as never);
+      expect(await (await worker.fetch(request('/postflight'), bindings)).json()).toMatchObject({ ready: false });
+      expect((await worker.fetch(request('/apply', 'POST', headers), bindings)).status).toBe(409);
+      const notReady = await (await worker.fetch(request('/preflight'), bindings)).json() as {ready: boolean; fingerprint: string};
+      expect(notReady.ready).toBe(false);
+      bindings.APPROVED_PREFLIGHT_SHA256 = notReady.fingerprint;
+      const fresh = await (await worker.fetch(request('/preflight'), bindings)).json() as {ready: boolean; fingerprint: string};
+      expect(fresh).toMatchObject({ ready: false, fingerprint: notReady.fingerprint });
+      // Fresh evidence and approval match exactly; readiness alone must deny.
+      expect((await worker.fetch(request('/apply', 'POST', { ...headers, 'X-Preflight-SHA256': notReady.fingerprint }), bindings)).status).toBe(409);
+    }
     expect(applyAdminAuthorityMaintenance).not.toHaveBeenCalled();
   });
   it('locked fingerprint refusal is 409; unknown POST never retries and redacts causes', async () => {

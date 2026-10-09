@@ -1,6 +1,7 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "cinashop-admin-authority-maintenance-template",
+  "account_id": "7ea8e46d8210bad342fa7595f7935fea",
   "main": "AdminAuthorityMaintenanceWorker.ts",
   "compatibility_date": "2026-09-10",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public", "enable_request_signal"],

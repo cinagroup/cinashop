@@ -4,6 +4,7 @@ import {
   applyAdminAuthorityMaintenance, inspectAdminAuthorityMaintenance, inspectAdminAuthorityRuntimeLogin,
   adminAuthorityEvidenceSha256, adminAuthorityInstallSqlSha256, adminAuthorityPreflightEvidence,
   ADMIN_AUTHORITY_MAINTENANCE_OPERATION, AdminAuthorityPreflightMismatch,
+  ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG,
   ADMIN_AUTHORITY_PRODUCTION_TARGET,
 } from '@/migrations/adminAuthorityOperationMaintenance';
 
@@ -57,10 +58,10 @@ async function inspectBefore(env: AdminAuthorityMaintenanceEnv, sourceSha: strin
   // Their omission makes the reviewed preflight fingerprint reusable while
   // each response still exposes its own mode and control-plane marker.
   const evidence = adminAuthorityPreflightEvidence(sourceSha, installSqlSha256, target, maintenance, app, admin);
-  return { operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION,
-    ready: maintenance.ready && app.ready && admin.ready && (!postflight || maintenance.addon === 'legacy-admin-v2'),
+  return { ...evidence,
+    ready: maintenance.ready && app.ready && admin.ready && (!postflight || maintenance.addon === ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG),
     fingerprint: await adminAuthorityEvidenceSha256(evidence),
-    runMarker: env.RUN_MARKER, applyArmed: env.APPLY_ARMED === 'true', ...evidence };
+    runMarker: env.RUN_MARKER, applyArmed: env.APPLY_ARMED === 'true' };
 }
 
 // Body identity is not a byte count: an HTTP POST may expose an empty stream.
