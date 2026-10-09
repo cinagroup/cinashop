@@ -64,6 +64,10 @@ function fakeDatabase(rows: ReturnType<typeof row>[], identityPatch: Partial<typ
 beforeEach(() => postgresMock.connect.mockReset());
 
 describe("DB-003 production read-only audit candidate", () => {
+  function itOnWindows(name: string, run: () => void) {
+    if (process.platform === "win32") it(name, run);
+  }
+
   it("rejects missing, wrong and expired tokens before opening a database connection", async () => {
     for (const [tokenInput, expiry] of [
       ["", Date.now() + 60_000], ["wrong-token", Date.now() + 60_000],
@@ -179,7 +183,7 @@ describe("DB-003 production read-only audit candidate", () => {
     expect(baseline.groups.reduce((sum: number, group: { removeIds: number[] }) => sum + group.removeIds.length, 0)).toBe(20);
   });
 
-  it.skipIf(process.platform !== "win32")("fails before network access without a token or with an unreviewed commit", () => {
+  itOnWindows("fails before network access without a token or with an unreviewed commit", () => {
     const script = "scripts/run-system-config-duplicate-production-audit.ps1";
     const sourceSha = "1578baba7df3d0a7fdf9620f068a8eb20986e01a";
     const noToken = spawnSync("pwsh", ["-NoProfile", "-File", script, "-ExpectedSourceSha", sourceSha], {
@@ -196,7 +200,7 @@ describe("DB-003 production read-only audit candidate", () => {
     expect(wrongCommit.stderr).toContain("Reviewed source commit mismatch");
   });
 
-  it.skipIf(process.platform !== "win32")("rejects changed deployed variables and Hyperdrive caching offline", () => {
+  itOnWindows("rejects changed deployed variables and Hyperdrive caching offline", () => {
     const offline = String.raw`
       $taskTokens=$null; $taskErrors=$null
       $taskAst=[System.Management.Automation.Language.Parser]::ParseFile(
