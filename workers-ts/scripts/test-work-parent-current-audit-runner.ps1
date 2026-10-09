@@ -5,7 +5,9 @@ param(
     [ValidateSet('all','success','deploy-failed','request-failed','temporary-version-drift',
         'formal-postflight-drift','foreign-target','owned-version-transient',
         'cleanup-presence-transient','ownership-read-unavailable',
-        'control-404-transient','control-404-unavailable','marker-drift','binding-drift')]
+        'control-404-transient','control-404-unavailable','marker-drift','binding-drift',
+        'capacity-identity-drift','capacity-catalog-drift','capacity-malformed-number',
+        'capacity-malformed-index')]
     [string]$Scenario = 'all',
     [string]$TracePath
 )
@@ -16,7 +18,9 @@ if ($Scenario -eq 'all') {
     $taskCases = @('success','deploy-failed','request-failed','temporary-version-drift',
         'formal-postflight-drift','foreign-target','owned-version-transient',
         'cleanup-presence-transient','ownership-read-unavailable',
-        'control-404-transient','control-404-unavailable','marker-drift','binding-drift')
+        'control-404-transient','control-404-unavailable','marker-drift','binding-drift',
+        'capacity-identity-drift','capacity-catalog-drift','capacity-malformed-number',
+        'capacity-malformed-index')
     foreach ($taskCase in $taskCases) {
         $taskTrace = Join-Path $env:TEMP ('db009g2-runner-' + [Guid]::NewGuid().ToString('N') + '.txt')
         try {
@@ -66,6 +70,19 @@ if ($Scenario -eq 'all') {
                     $taskReceipt.cleanup.controlPlane404 -ne $false -or
                     $taskReceipt.failure -cne 'Temporary Worker cleanup needs independent verification.') {
                     throw 'Unconfirmed control-plane deletion was accepted.'
+                }
+            } elseif ($taskCase -in @('capacity-identity-drift','capacity-catalog-drift')) {
+                if ($taskExit -ne 1 -or $taskReceipt.ready -ne $false -or
+                    $taskReceipt.audit.capacity.catalogMatch -ne $false -or
+                    $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
+                    $taskReceipt.cleanup.public404 -ne $true) {
+                    throw 'Incomplete capacity evidence was accepted or not cleaned up.'
+                }
+            } elseif ($taskCase -in @('capacity-malformed-number','capacity-malformed-index')) {
+                if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
+                    $taskDeletes -ne 1 -or $taskReceipt.audit -ne $null -or
+                    $taskReceipt.cleanup.public404 -ne $true) {
+                    throw 'Malformed capacity evidence escaped validation or cleanup.'
                 }
             }
             "$taskCase`: pass"
@@ -193,8 +210,40 @@ function Invoke-WebRequest {
             noReferencedKeyUpdate = $true; noReplicationBypass = $true;
             noUnreviewedDefinerRoutine = $true; parentReadAccess = $true
         }
+        $taskTable = [ordered]@{
+            estimatedRows = '30'; liveRowsEstimate = '30'; modificationsSinceAnalyze = '0';
+            heapBytes = '8192'; indexBytes = '8192'; totalBytes = '16384';
+            lastAnalyzeMs = $null; lastAutoanalyzeMs = $null
+        }
+        if ($Scenario -eq 'capacity-malformed-number') {
+            $taskTable.estimatedRows = '30 private-records'
+        }
+        $taskCapacity = [ordered]@{
+            scope = 'work-parent-capacity-metadata-only'; identityMatch = $true;
+            catalogMatch = $true;
+            tables = [ordered]@{
+                work_client_current = $taskTable; work_callback_event = $taskTable;
+                work_contact_action_outbox = $taskTable
+            };
+            index = [ordered]@{ name = 'wcao_client_ref'; exact = $true;
+                estimatedRows = '30'; bytes = '8192' };
+            statisticsTargets = [ordered]@{
+                corp_id = [ordered]@{ configured = -1; effective = 100 };
+                client_id = [ordered]@{ configured = -1; effective = 100 }
+            }
+        }
+        if ($Scenario -eq 'capacity-malformed-index') { $taskCapacity.index.exact = 1 }
+        if ($Scenario -in @('capacity-identity-drift','capacity-catalog-drift')) {
+            $taskCapacity.catalogMatch = $false
+            $taskCapacity.tables = $null
+            $taskCapacity.index = $null
+            $taskCapacity.statisticsTargets = $null
+            if ($Scenario -eq 'capacity-identity-drift') { $taskCapacity.identityMatch = $false }
+        }
+        $taskReady = $Scenario -notin @('capacity-identity-drift','capacity-catalog-drift')
         return New-Response -Status 200 -Body @{ scope = 'work-parent-current-app';
-            identityMatch = $true; ready = $true; checks = $taskChecks; failures = @() }
+            identityMatch = $true; ready = $taskReady; checks = $taskChecks; failures = @();
+            capacity = $taskCapacity }
     }
     throw 'Unexpected mock URL.'
 }
