@@ -25,7 +25,20 @@ interface ConfigRow {
   status: number;
 }
 
-const SECRET_LIKE_KEY = /(secret|token|password|private|api[_-]?key|app[_-]?id|appid|mchid|certificate|cert)/i;
+interface IdentityChecks {
+  database_ok: boolean;
+  current_role_ok: boolean;
+  session_role_ok: boolean;
+  backend_login_ok: boolean;
+  pg16_ok: boolean;
+  read_only_ok: boolean;
+  repeatable_read_ok: boolean;
+}
+
+const DUPLICATE_KEY_ALLOWLIST = new Set([
+  "record_No", "sign_give_point", "sign_status", "site_url",
+  "system_comment_time", "system_delivery_time",
+]);
 const MAX_CONFIG_ROWS = 1024;
 const EXPECTED_DATABASE = "postgres";
 const EXPECTED_ROLE = "cinashop_app_v1";
@@ -92,10 +105,32 @@ export default {
         await tx`SET LOCAL lock_timeout = '1s'`;
         await tx`SET LOCAL statement_timeout = '15s'`;
         await tx`SET LOCAL idle_in_transaction_session_timeout = '20s'`;
-        const identity = (await tx<{ database: string; role: string }[]>`
-          SELECT current_database() AS database, current_user AS role
+        const identity = (await tx<IdentityChecks[]>`
+          SELECT
+            current_database() = ${EXPECTED_DATABASE} AS database_ok,
+            current_user = ${EXPECTED_ROLE} AS current_role_ok,
+            session_user = ${EXPECTED_ROLE} AS session_role_ok,
+            EXISTS (
+              SELECT 1
+              FROM pg_stat_activity AS activity
+              JOIN pg_roles AS backend_role ON backend_role.oid = activity.usesysid
+              WHERE activity.pid = pg_backend_pid()
+                AND activity.usename = ${EXPECTED_ROLE}
+                AND activity.backend_type = 'client backend'
+                AND backend_role.rolname = ${EXPECTED_ROLE}
+                AND backend_role.rolcanlogin
+                AND NOT backend_role.rolsuper
+                AND NOT backend_role.rolreplication
+                AND NOT backend_role.rolbypassrls
+            ) AS backend_login_ok,
+            current_setting('server_version_num')::integer >= 160000
+              AND current_setting('server_version_num')::integer < 170000 AS pg16_ok,
+            current_setting('transaction_read_only') = 'on' AS read_only_ok,
+            current_setting('transaction_isolation') = 'repeatable read' AS repeatable_read_ok
         `)[0];
-        if (identity?.database !== EXPECTED_DATABASE || identity?.role !== EXPECTED_ROLE) {
+        if (!identity?.database_ok || !identity.current_role_ok || !identity.session_role_ok
+          || !identity.backend_login_ok || !identity.pg16_ok || !identity.read_only_ok
+          || !identity.repeatable_read_ok) {
           throw new Error("Unexpected database identity");
         }
         const allRows = await tx<ConfigRow[]>`
@@ -122,8 +157,10 @@ export default {
         const duplicateGroups = [];
         const keys = [...grouped.keys()].filter((key) => (grouped.get(key)?.length ?? 0) > 1)
           .sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+        if (keys.some((key) => !DUPLICATE_KEY_ALLOWLIST.has(key))) {
+          throw new Error("Unexpected duplicate key");
+        }
         for (const key of keys) {
-          if (SECRET_LIKE_KEY.test(key)) throw new Error("Secret-like duplicate requires a separate audit");
           const groupRows = grouped.get(key)!;
           groupRows.sort((a, b) => b.sort - a.sort || b.id - a.id);
           const winner = groupRows[0];
@@ -131,6 +168,8 @@ export default {
           const values = await Promise.all(groupRows.map(async (row) => ({
             row,
             valueDigest: await sha256(row.value),
+            typeDigest: await sha256(row.type),
+            inputTypeDigest: await sha256(row.input_type),
             payloadDigest: await sha256(JSON.stringify({
               is_store: row.is_store,
               menu_name: row.menu_name,
@@ -157,13 +196,13 @@ export default {
             runtime_selection_rule: "sort DESC, id DESC",
             values_identical: new Set(values.map((item) => item.valueDigest)).size === 1,
             payloads_identical_except_id: new Set(values.map((item) => item.payloadDigest)).size === 1,
-            rows: values.map(({ row, valueDigest, payloadDigest }) => ({
+            rows: values.map(({ row, valueDigest, typeDigest, inputTypeDigest, payloadDigest }) => ({
               id: row.id,
               sort: row.sort,
               status: row.status,
               config_tab_id: row.config_tab_id,
-              type: row.type,
-              input_type: row.input_type,
+              type_sha256: typeDigest,
+              input_type_sha256: inputTypeDigest,
               value_kind: valueKind(row.value),
               value_length: row.value.length,
               value_sha256: valueDigest,
@@ -179,9 +218,16 @@ export default {
         return {
           generated_at: new Date().toISOString(),
           run_marker: env.RUN_MARKER,
-          database: (await tx<{ version: string }[]>`SELECT current_setting('server_version') AS version`)[0]?.version,
-          database_name: identity.database,
-          database_role: identity.role,
+          identity: {
+            expected_role: EXPECTED_ROLE,
+            database_ok: identity.database_ok,
+            current_role_ok: identity.current_role_ok,
+            session_role_ok: identity.session_role_ok,
+            backend_login_ok: identity.backend_login_ok,
+            pg16_ok: identity.pg16_ok,
+            read_only_ok: identity.read_only_ok,
+            repeatable_read_ok: identity.repeatable_read_ok,
+          },
           table_rows: allRows.length,
           table_sha256: await sha256(JSON.stringify(allRows)),
           duplicate_keys: duplicateGroups.length,

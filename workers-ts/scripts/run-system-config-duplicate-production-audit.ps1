@@ -20,6 +20,7 @@ $taskAppHyperdrive = 'ba7faa6680cd48d4b3a1d36a7a5fc8f7'
 $taskAdminHyperdrive = '446e94a4de0143f58c8e5178ec55db8b'
 $taskApiBase = "https://api.cloudflare.com/client/v4/accounts/$taskAccount/workers/scripts"
 $taskMainApi = "$taskApiBase/cinashop-api"
+$taskAppHyperdriveApi = "https://api.cloudflare.com/client/v4/accounts/$taskAccount/hyperdrive/configs/$taskAppHyperdrive"
 
 # All failures that can be checked locally fail before any Cloudflare request.
 if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'Cloudflare API authentication is required.' }
@@ -70,6 +71,11 @@ $taskExpectedAuditBindings = @(
     'AUDIT_EXPIRES_AT:plain_text:',
     'RUN_MARKER:plain_text:'
 ) | Sort-Object
+$taskExpectedVarValues = @{
+    AUDIT_TOKEN_SHA256 = $taskTokenHash
+    AUDIT_EXPIRES_AT = $taskExpiry
+    RUN_MARKER = $taskMarker
+}
 $taskUrl = "https://$taskName.cinagroup.workers.dev"
 $taskStage = 'control-plane-preflight'
 $taskAttempted = $false
@@ -78,7 +84,9 @@ $taskDeleted = $false
 $taskControlPlane404 = $false
 $taskPublic404 = $false
 $taskMainUnchanged = $false
+$taskHyperdriveModifiedOn = $null
 $taskReport = $null
+$taskRawReport = $null
 $taskFailure = $null
 $taskCleanupFailure = $null
 $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
@@ -88,7 +96,7 @@ $env:WRANGLER_LOG_PATH = Join-Path ([IO.Path]::GetTempPath()) "$taskName.log"
 function Invoke-ControlPlane {
     param([string]$Uri, [int[]]$ExpectedStatus = @(200))
     $taskResponse = Invoke-WebRequest -Uri $Uri -Headers $taskHeaders `
-        -SkipHttpErrorCheck -TimeoutSec 20
+        -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 20
     $taskStatus = [int]$taskResponse.StatusCode
     if ($ExpectedStatus -notcontains $taskStatus) { throw 'Control-plane status differs from reviewed state.' }
     if ($taskStatus -eq 404) { return $null }
@@ -106,7 +114,16 @@ function Get-HyperdriveBindings {
 function Get-FullTrafficVersion {
     param([string]$ScriptApi)
     $taskDeployments = Invoke-ControlPlane "$ScriptApi/deployments"
-    $taskLatest = @($taskDeployments.result.deployments)[0]
+    $taskRows = if ($taskDeployments.result -is [array]) {
+        @($taskDeployments.result)
+    } else { @($taskDeployments.result.deployments) }
+    $taskSorted = @($taskRows | Sort-Object created_on -Descending)
+    if ($taskSorted.Count -eq 0 -or -not $taskSorted[0].created_on -or
+        ($taskSorted.Count -gt 1 -and
+            [string]$taskSorted[0].created_on -ceq [string]$taskSorted[1].created_on)) {
+        throw 'Worker deployment recency is ambiguous.'
+    }
+    $taskLatest = $taskSorted[0]
     $taskFull = @($taskLatest.versions | Where-Object { $_.percentage -eq 100 })
     if ($taskFull.Count -ne 1 -or @($taskLatest.versions).Count -ne 1 -or
         $taskFull[0].version_id -notmatch '^[0-9a-f-]{36}$') {
@@ -130,6 +147,20 @@ function Assert-MainWorker {
     }
 }
 
+function Assert-AppHyperdriveCacheDisabled {
+    $taskHyperdrive = Invoke-ControlPlane $taskAppHyperdriveApi
+    $taskModifiedOn = [string]$taskHyperdrive.result.modified_on
+    if ($taskHyperdrive.result.id -cne $taskAppHyperdrive -or
+        $taskHyperdrive.result.caching.disabled -isnot [bool] -or
+        $taskHyperdrive.result.caching.disabled -ne $true -or
+        -not $taskModifiedOn -or
+        ($script:taskHyperdriveModifiedOn -and
+            $taskModifiedOn -cne $script:taskHyperdriveModifiedOn)) {
+        throw 'Current app Hyperdrive caching or modification state differs.'
+    }
+    if (-not $script:taskHyperdriveModifiedOn) { $script:taskHyperdriveModifiedOn = $taskModifiedOn }
+}
+
 function Get-OwnedAuditVersion {
     $taskVersionId = Get-FullTrafficVersion $taskTargetApi
     $taskVersion = Invoke-ControlPlane "$taskTargetApi/versions/$taskVersionId"
@@ -143,19 +174,54 @@ function Get-OwnedAuditVersion {
     if (($taskBindings -join '|') -cne ($taskExpectedAuditBindings -join '|')) {
         throw 'Temporary Worker version bindings changed.'
     }
+    # The version API exposes the deployed plain_text values. Compare them in
+    # memory; never include token hash, expiry or marker in a failure receipt.
+    foreach ($taskVarName in $taskExpectedVarValues.Keys) {
+        $taskMatches = @($taskVersion.result.resources.bindings | Where-Object {
+            $_.name -ceq $taskVarName -and $_.type -ceq 'plain_text'
+        })
+        if ($taskMatches.Count -ne 1 -or
+            [string]$taskMatches[0].text -cne [string]$taskExpectedVarValues[$taskVarName]) {
+            throw 'Temporary Worker deployed variable differs from reviewed value.'
+        }
+    }
     return $taskVersionId
 }
 
 function Get-PublicResponse {
     param([string]$Uri, [hashtable]$Headers = @{}, [string]$Method = 'Get')
     return Invoke-WebRequest -Uri $Uri -Headers $Headers -Method $Method `
-        -SkipHttpErrorCheck -TimeoutSec 30
+        -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 30
 }
 
 function Assert-AuditReport {
     param($Value)
-    if ($Value.run_marker -cne $taskMarker -or $Value.database_name -cne 'postgres' -or
-        $Value.database_role -cne 'cinashop_app_v1' -or
+    if ($Value.run_marker -isnot [string] -or
+        $Value.table_sha256 -isnot [string] -or
+        $Value.identity.expected_role -isnot [string]) {
+        throw 'Read-only audit identity or digest field has an unexpected type.'
+    }
+    foreach ($taskFlag in @($Value.identity.database_ok,$Value.identity.current_role_ok,
+        $Value.identity.session_role_ok,$Value.identity.backend_login_ok,
+        $Value.identity.pg16_ok,$Value.identity.read_only_ok,
+        $Value.identity.repeatable_read_ok)) {
+        if ($taskFlag -isnot [bool]) { throw 'Read-only audit identity flag has an unexpected type.' }
+    }
+    foreach ($taskNumber in @($Value.table_rows,$Value.duplicate_keys,$Value.duplicate_rows,
+        $Value.extra_rows,$Value.referencing_foreign_keys)) {
+        if ($taskNumber -isnot [long] -and $taskNumber -isnot [int]) {
+            throw 'Read-only audit numeric field has an unexpected type.'
+        }
+    }
+    if ($Value.run_marker -cne $taskMarker -or
+        $Value.identity.expected_role -cne 'cinashop_app_v1' -or
+        $Value.identity.database_ok -ne $true -or
+        $Value.identity.current_role_ok -ne $true -or
+        $Value.identity.session_role_ok -ne $true -or
+        $Value.identity.backend_login_ok -ne $true -or
+        $Value.identity.pg16_ok -ne $true -or
+        $Value.identity.read_only_ok -ne $true -or
+        $Value.identity.repeatable_read_ok -ne $true -or
         $Value.table_rows -lt 26 -or $Value.table_rows -gt 1024 -or
         $Value.table_sha256 -cnotmatch '^[0-9a-f]{64}$' -or
         $Value.duplicate_keys -ne 6 -or $Value.duplicate_rows -ne 26 -or
@@ -164,11 +230,50 @@ function Assert-AuditReport {
     }
     $taskActualKeys = @($Value.duplicate_groups | ForEach-Object { $_.key })
     $taskExpectedKeys = @($taskBaseline.groups | ForEach-Object { $_.key })
-    if (($taskActualKeys -join '|') -cne ($taskExpectedKeys -join '|')) {
+    if ($taskActualKeys.Count -ne $taskExpectedKeys.Count -or
+        @($taskActualKeys | Where-Object { $_ -isnot [string] }).Count -ne 0 -or
+        ($taskActualKeys -join '|') -cne ($taskExpectedKeys -join '|')) {
         throw 'Current duplicate key set differs from the reviewed baseline.'
     }
     foreach ($taskExpected in $taskBaseline.groups) {
         $taskActual = @($Value.duplicate_groups | Where-Object { $_.key -ceq $taskExpected.key })[0]
+        if ($taskActual.runtime_selection_rule -isnot [string] -or
+            $taskActual.runtime_selection_rule -cne 'sort DESC, id DESC' -or
+            $taskActual.row_count -ne @($taskActual.rows).Count -or
+            $taskActual.extra_rows -ne (@($taskActual.rows).Count - 1)) {
+            throw 'Current duplicate group metadata is malformed.'
+        }
+        foreach ($taskNumber in @($taskActual.row_count,$taskActual.extra_rows,$taskActual.runtime_selected_id)) {
+            if ($taskNumber -isnot [long] -and $taskNumber -isnot [int]) {
+                throw 'Current duplicate group numeric field has an unexpected type.'
+            }
+        }
+        foreach ($taskFlag in @($taskActual.values_identical,$taskActual.payloads_identical_except_id)) {
+            if ($taskFlag -isnot [bool]) { throw 'Current duplicate group flag has an unexpected type.' }
+        }
+        foreach ($taskRow in @($taskActual.rows)) {
+            foreach ($taskNumber in @($taskRow.id,$taskRow.sort,$taskRow.status,
+                $taskRow.config_tab_id,$taskRow.value_length)) {
+                if ($taskNumber -isnot [long] -and $taskNumber -isnot [int]) {
+                    throw 'Current duplicate row numeric field has an unexpected type.'
+                }
+            }
+            foreach ($taskDigest in @($taskRow.type_sha256,$taskRow.input_type_sha256,
+                $taskRow.value_sha256,$taskRow.payload_sha256)) {
+                if ($taskDigest -isnot [string] -or $taskDigest -cnotmatch '^[0-9a-f]{64}$') {
+                    throw 'Current duplicate row digest is malformed.'
+                }
+            }
+            if ($taskRow.value_kind -isnot [string] -or
+                $taskRow.value_kind -cnotin @('empty','boolean_like','number_like',
+                'https_url','json_like','text') -or $taskRow.value_length -lt 0) {
+                throw 'Current duplicate row value metadata is malformed.'
+            }
+            foreach ($taskFlag in @($taskRow.selected_by_runtime,$taskRow.same_value_as_runtime,
+                $taskRow.matches_expected_site_url,$taskRow.matches_placeholder_site_url)) {
+                if ($taskFlag -isnot [bool]) { throw 'Current duplicate row flag has an unexpected type.' }
+            }
+        }
         $taskActualIds = @($taskActual.rows | ForEach-Object { [int]$_.id })
         $taskExpectedIds = @([int]$taskExpected.keepId) + @($taskExpected.removeIds | ForEach-Object { [int]$_ })
         $taskSelected = @($taskActual.rows | Where-Object { $_.selected_by_runtime -eq $true })
@@ -202,7 +307,63 @@ function Assert-AuditReport {
     }
 }
 
+function ConvertTo-SafeAuditReport {
+    param($Value)
+    # Project a fixed schema after validation. Extra response properties never
+    # reach stdout, even if a proxy or future Worker version adds them.
+    $taskSafeGroups = @(foreach ($taskGroup in $Value.duplicate_groups) {
+        [ordered]@{
+            key = [string]$taskGroup.key
+            row_count = [int]$taskGroup.row_count
+            extra_rows = [int]$taskGroup.extra_rows
+            runtime_selected_id = [int]$taskGroup.runtime_selected_id
+            runtime_selection_rule = 'sort DESC, id DESC'
+            values_identical = [bool]$taskGroup.values_identical
+            payloads_identical_except_id = [bool]$taskGroup.payloads_identical_except_id
+            rows = @(foreach ($taskRow in $taskGroup.rows) {
+                [ordered]@{
+                    id = [int]$taskRow.id
+                    sort = [int]$taskRow.sort
+                    status = [int]$taskRow.status
+                    config_tab_id = [int]$taskRow.config_tab_id
+                    type_sha256 = [string]$taskRow.type_sha256
+                    input_type_sha256 = [string]$taskRow.input_type_sha256
+                    value_kind = [string]$taskRow.value_kind
+                    value_length = [int]$taskRow.value_length
+                    value_sha256 = [string]$taskRow.value_sha256
+                    payload_sha256 = [string]$taskRow.payload_sha256
+                    selected_by_runtime = [bool]$taskRow.selected_by_runtime
+                    same_value_as_runtime = [bool]$taskRow.same_value_as_runtime
+                    matches_expected_site_url = [bool]$taskRow.matches_expected_site_url
+                    matches_placeholder_site_url = [bool]$taskRow.matches_placeholder_site_url
+                }
+            })
+        }
+    })
+    return [ordered]@{
+        run_marker = $taskMarker
+        identity = [ordered]@{
+            expected_role = 'cinashop_app_v1'
+            database_ok = $true
+            current_role_ok = $true
+            session_role_ok = $true
+            backend_login_ok = $true
+            pg16_ok = $true
+            read_only_ok = $true
+            repeatable_read_ok = $true
+        }
+        table_rows = [int]$Value.table_rows
+        table_sha256 = [string]$Value.table_sha256
+        duplicate_keys = [int]$Value.duplicate_keys
+        duplicate_rows = [int]$Value.duplicate_rows
+        extra_rows = [int]$Value.extra_rows
+        referencing_foreign_keys = [int]$Value.referencing_foreign_keys
+        duplicate_groups = $taskSafeGroups
+    }
+}
+
 try {
+    Assert-AppHyperdriveCacheDisabled
     Assert-MainWorker
     $taskStage = 'target-absence'
     $null = Invoke-ControlPlane $taskTargetApi @(404)
@@ -237,22 +398,24 @@ try {
         (Get-PublicResponse "$taskUrl/audit?probe=1" $taskAuth).StatusCode -ne 404) {
         throw 'Temporary Worker access boundary failed.'
     }
+    Assert-AppHyperdriveCacheDisabled
     $taskStage = 'single-readonly-snapshot'
     $taskReply = Get-PublicResponse "$taskUrl/audit" $taskAuth
     if ([int]$taskReply.StatusCode -ne 200 -or
         (($taskReply.Headers['Cache-Control'] -join ',') -notmatch 'no-store')) {
         throw 'Read-only snapshot response was not confirmed.'
     }
-    $taskReport = $taskReply.Content | ConvertFrom-Json -Depth 30
-    Assert-AuditReport $taskReport
-    $taskStage = 'snapshot-complete-owner-decision-pending'
+    $taskRawReport = $taskReply.Content | ConvertFrom-Json -Depth 30
+    Assert-AuditReport $taskRawReport
+    $taskReport = ConvertTo-SafeAuditReport $taskRawReport
+    $taskStage = 'snapshot-captured-historical-row-metadata-unverified'
 } catch {
     $taskFailure = "DB-003 read-only audit did not complete at $taskStage."
 } finally {
     if ($taskAttempted) {
         try {
             $taskPresent = Invoke-WebRequest -Uri $taskTargetApi -Headers $taskHeaders `
-                -SkipHttpErrorCheck -TimeoutSec 20
+                -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 20
             if ([int]$taskPresent.StatusCode -eq 200) {
                 $taskBeforeDeleteVersion = Get-OwnedAuditVersion
                 if ($taskOwnedVersion -and $taskBeforeDeleteVersion -cne $taskOwnedVersion) {
@@ -266,7 +429,7 @@ try {
             }
             for ($taskAttempt = 0; $taskAttempt -lt 6; $taskAttempt++) {
                 $taskControlPlane404 = [int](Invoke-WebRequest -Uri $taskTargetApi `
-                    -Headers $taskHeaders -SkipHttpErrorCheck -TimeoutSec 20).StatusCode -eq 404
+                    -Headers $taskHeaders -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 20).StatusCode -eq 404
                 $taskPublic404 = [int](Get-PublicResponse "$taskUrl/audit").StatusCode -eq 404
                 if ($taskControlPlane404 -and $taskPublic404) { break }
                 if ($taskAttempt -lt 5) { Start-Sleep -Seconds 2 }
@@ -279,14 +442,20 @@ try {
         }
     }
     try {
+        Assert-AppHyperdriveCacheDisabled
         Assert-MainWorker
         $taskMainUnchanged = $true
     } catch {
-        $taskFailure = 'Main Worker version or bindings changed during DB-003 audit.'
+        $taskFailure = 'Main Worker or app Hyperdrive state changed during DB-003 audit.'
     }
     $taskToken = $null
     $taskAuth = $null
+    $taskRawReport = $null
 }
+
+# Never print a response whose validation or cleanup failed, even if it parsed.
+if ($taskFailure -or $taskCleanupFailure -or -not $taskMainUnchanged -or
+    -not $taskControlPlane404 -or -not $taskPublic404) { $taskReport = $null }
 
 [ordered]@{
     generatedAt = [DateTimeOffset]::UtcNow.ToString('o')
@@ -296,6 +465,13 @@ try {
     stage = $taskStage
     report = $taskReport
     ownerDecision = 'pending'
+    validation = [ordered]@{
+        reviewedBaselineShapeMatched = $null -eq $taskFailure
+        historicalRowMetadataCompared = $false
+        originIdentityVerified = $false
+        readyForDml = $false
+        reasonCode = 'historical_row_metadata_and_origin_identity_unverified'
+    }
     cleanup = [ordered]@{
         workerName = $taskName
         deleted = $taskDeleted
