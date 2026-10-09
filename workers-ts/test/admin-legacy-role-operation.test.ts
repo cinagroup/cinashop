@@ -11,7 +11,7 @@ import { AdminLegacyRoleOperationService, legacyRoleOperationKind, parseLegacyRo
   parseLegacyRoleOperationStatus, type LegacyRoleActor, type LegacyRoleOperationKind } from '@/services/admin/AdminLegacyRoleOperationService';
 import { AdminPermissionService } from '@/services/admin/AdminPermissionService';
 import { md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const password = 'owned-legacy-role-password', key = 'owned-legacy-role-operation-hmac-key';
 const sessionExpiresAt = Math.floor(Date.now() / 1000) + 3600;
@@ -40,10 +40,10 @@ describe('legacy independent role protocol validation', () => {
 });
 
 describe('legacy independent role impact decisions and immutable results in PGlite', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, service: AdminLegacyRoleOperationService;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, service: AdminLegacyRoleOperationService;
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Memory business fixture only; actual PostgreSQL semantics have their own file');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus], { namespace: 'public' });
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus], { namespace: 'public' });
+    if (!fixture.isMemory) throw Error('Memory business fixture only; actual PostgreSQL semantics have their own file');
     await fixture.exec(ADMIN_AUTHORITY_OPERATION_SQL); await fixture.exec(ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL); await fixture.exec(ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL);
     service = new AdminLegacyRoleOperationService(createContainerFromDb(fixture.db), key);
   }, 30000);

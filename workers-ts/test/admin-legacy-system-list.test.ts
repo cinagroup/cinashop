@@ -14,7 +14,7 @@ import { adminAuthMiddleware } from '@/middleware/admin-auth';
 import { AdminLegacySystemListService, type AdminLegacySystemListActor } from '@/services/admin/AdminLegacySystemListService';
 import { ApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 type Kind = 'admin' | 'role';
 type Reply = { status: number; msg: string; data: any };
@@ -25,7 +25,7 @@ const env = { APP_KEY: 'legacy-system-list-local-key', UPSTASH_REDIS_URL: '', UP
 const actor = (id = 101): AdminLegacySystemListActor => ({ id, authVersion: md5('fixture-password'), expiresAt: Math.floor(Date.now() / 1000) + 3600 });
 
 describe('legacy platform staff and role read contracts', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, container: Container;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container: Container;
   let tokens: Record<'reader' | 'super' | 'unrelated', string>;
   function application(target = container, afterAuth?: () => Promise<void>) {
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -54,8 +54,8 @@ describe('legacy platform staff and role read contracts', () => {
   }
 
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Legacy list business tests require local memory only');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus]);
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus]);
+    if (!fixture.isMemory) throw Error('Legacy list business tests require local memory only');
     container = createContainerFromDb(fixture.db);
     await fixture.db.insert(systemRole).values([
       { id: 1, roleName: '目录只读', level: 1, rules: 'system.view' },

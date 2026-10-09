@@ -14,7 +14,7 @@ import { AdminLegacyRoleWorkflowService } from '@/services/admin/AdminLegacyRole
 import { AdminPermissionService } from '@/services/admin/AdminPermissionService';
 import { loadAdminLegacyRoleDeletionProofs, loadAdminLegacyRoleReferenceHistory } from '@/services/admin/AdminLegacyRoleDeletionProof';
 import { md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const password = 'owned-role-history-password', key = 'owned-role-history-hmac';
 const actor = (id = 101) => ({ id, authVersion: md5(password), expiresAt: Math.floor(Date.now()/1000)+3600 });
@@ -22,12 +22,12 @@ const actor = (id = 101) => ({ id, authVersion: md5(password), expiresAt: Math.f
 /** Exercise old consumers after the real new status/hard-delete decisions.
  * Snapshots classify references only; they must never restore deleted grants. */
 describe('complete role reference history across existing authority consumers in PGlite', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>;
   let roles: AdminLegacyRoleOperationService, modern: AdminAuthorityWriteService;
   let staff: AdminLegacyAdminWorkflowService, forms: AdminLegacyRoleWorkflowService, permissions: AdminPermissionService;
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Memory business fixture only; native semantics have separate cases');
-    fixture = await financePostgres([systemAdmin,systemRole,systemMenus],{ namespace:'public' });
+    fixture = await financeMemoryPostgres([systemAdmin,systemRole,systemMenus],{ namespace:'public' });
+    if (!fixture.isMemory) throw Error('Memory business fixture only; native semantics have separate cases');
     const container = createContainerFromDb(fixture.db);
     roles = new AdminLegacyRoleOperationService(container,key); modern = new AdminAuthorityWriteService(container);
     staff = new AdminLegacyAdminWorkflowService(container,key); forms = new AdminLegacyRoleWorkflowService(container);

@@ -4,7 +4,7 @@ import { createContainerFromDb, withTx } from '@/lib/di';
 import { systemMenus, systemRole } from '@/models/schema';
 import { AdminPermissionService, assertDelegablePermissions, canRetainOpaqueLegacyMenu,
   hasAdminPermission, isAdminAuthorityRecoveryRoute, normalizeRoleRules, requiredAdminPermission } from '@/services/admin/AdminPermissionService';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const list = 'system.legacy_role_view', form = 'system.legacy_role_form_view', save = 'system.legacy_role_manage';
 const status = 'system.legacy_role_status', remove = 'system.legacy_role_delete', preview = 'system.legacy_role_operation_preview';
@@ -22,10 +22,10 @@ const seed = [
 ];
 
 describe('legacy role independent operation permissions', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, permissions: AdminPermissionService;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, permissions: AdminPermissionService;
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Role permission tests require local memory only');
-    fixture = await financePostgres([systemMenus,systemRole]);
+    fixture = await financeMemoryPostgres([systemMenus,systemRole]);
+    if (!fixture.isMemory) throw Error('Role permission tests require local memory only');
     permissions = new AdminPermissionService(createContainerFromDb(fixture.db));
   });
   beforeEach(async () => {

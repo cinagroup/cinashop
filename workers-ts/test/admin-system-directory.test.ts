@@ -13,7 +13,7 @@ import { adminAuthMiddleware } from '@/middleware/admin-auth';
 import { requiredAdminPermission } from '@/services/admin/AdminPermissionService';
 import { ApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 type Kind = 'system_admin' | 'system_role';
 type Reply = { status: number; msg: string; data: any };
@@ -22,7 +22,7 @@ const handlers: Record<Kind, Handler<{ Bindings: Env; Variables: AppVariables }>
 };
 
 describe('platform Admin and role directories', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>;
   let container: Container;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   let tokens: { reader: string; unrelated: string; manager: string };
@@ -45,8 +45,8 @@ describe('platform Admin and role directories', () => {
 
   beforeAll(async () => {
     // This suite must remain local memory even on hosts configured for native PG.
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Directory unit tests require local memory only');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus]);
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus]);
+    if (!fixture.isMemory) throw Error('Directory unit tests require local memory only');
     container = createContainerFromDb(fixture.db);
     await fixture.db.insert(systemRole).values([
       { id: 1, roleName: '目录只读', rules: 'system.view' },

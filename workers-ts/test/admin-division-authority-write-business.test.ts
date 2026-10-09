@@ -11,7 +11,7 @@ import { DivisionManagementService, type DivisionAdminWriteScope, type SaveDivis
 import { assertRemainingActivePlatformSuperAdmin, withAdminAuthorityWriteTx } from '@/services/admin/AdminAuthorityWriteService';
 import { ApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const password = 'division-write-local-password';
 const env = { APP_KEY: 'division-write-business-local-key', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '' } as Env;
@@ -23,13 +23,13 @@ const input = (extra: Partial<SaveDivisionRoleInput> = {}): SaveDivisionRoleInpu
 type Reply = { status: number; msg: string; data: any };
 
 describe('Division writes share the platform authority transaction', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, container: Container;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container: Container;
   let service: DivisionManagementService, app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   let tokens: Record<number, string>;
 
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Division business tests require local memory only');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus, user, divisionApply], { namespace: 'public' });
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus, user, divisionApply], { namespace: 'public' });
+    if (!fixture.isMemory) throw Error('Division business tests require local memory only');
     container = createContainerFromDb(fixture.db);
     service = new DivisionManagementService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();

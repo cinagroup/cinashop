@@ -17,7 +17,7 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
       express: "4.22.2",
       qs: "6.15.3",
       "body-parser": "1.20.6",
-      "proxy-addr": "2.0.7",
+      "proxy-addr": "2.0.8",
     }[name];
     assert.equal(locked(name).version, expected, name);
     assert.equal(require(`${name}/package.json`).version, expected, name);
@@ -40,6 +40,16 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
   assert.match(server, /app\.listen\(port, hostname, onSuccess\)/);
   assert.match(express, /this\.set\('query parser', 'extended'\)/);
   assert.match(utils, /function parseExtendedQueryString\(str\)\s*\{\s*return qs\.parse\(str,/);
+});
+
+test("patched proxy-addr does not trust IPv4 through a malformed mapped subnet", () => {
+  const proxyaddr = require("proxy-addr");
+  const malformed = proxyaddr.compile("::ffff:10.0.0.0/8");
+  const mapped = proxyaddr.compile("::ffff:10.0.0.0/104");
+  assert.equal(malformed("203.0.113.9", 0), false);
+  assert.equal(malformed("10.1.2.3", 0), false);
+  assert.equal(mapped("203.0.113.9", 0), false);
+  assert.equal(mapped("10.1.2.3", 0), true);
 });
 
 test("current H5 scripts and manifest leave SSR disabled", () => {

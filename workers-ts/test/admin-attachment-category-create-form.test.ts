@@ -12,7 +12,7 @@ import { AdminAttachmentCategoryCreateFormService, MAX_ADMIN_CATEGORY_FORM_ROOT_
   type AdminAttachmentCategoryCreateFormActor } from '@/services/admin/AdminAttachmentCategoryCreateFormService';
 import { ApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 type Reply = { status: number; msg: string; data: any };
 const env = { APP_KEY: 'category-form-local-key', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '',
@@ -20,7 +20,7 @@ const env = { APP_KEY: 'category-form-local-key', UPSTASH_REDIS_URL: '', UPSTASH
 const actor = (): AdminAttachmentCategoryCreateFormActor => ({ id:101,authVersion:md5('fixture-password'),expiresAt:Math.floor(Date.now()/1000)+3600 });
 
 describe('Admin legacy category create-form', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, container:Container;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container:Container;
   let tokens:Record<'reader'|'manager'|'unrelated'|'foreign',string>;
   function application(target = container, afterAuth?: () => Promise<void>) {
     const app = new Hono<{ Bindings:Env;Variables:AppVariables }>();
@@ -46,8 +46,8 @@ describe('Admin legacy category create-form', () => {
     return response.json<Reply>();
   }
   beforeAll(async()=>{
-    if(process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Category form business tests require local memory only');
-    fixture=await financePostgres([systemAdmin,systemRole,systemMenus,systemAttachmentCategory]);
+    fixture=await financeMemoryPostgres([systemAdmin,systemRole,systemMenus,systemAttachmentCategory]);
+    if (!fixture.isMemory) throw Error('Category form business tests require local memory only');
     container=createContainerFromDb(fixture.db);
     const signed=await Promise.all([101,102,103,104].map(async id=>(await createToken(id,'admin',md5('fixture-password'),env.APP_KEY)).token));
     tokens={reader:signed[0],manager:signed[1],unrelated:signed[2],foreign:signed[3]};

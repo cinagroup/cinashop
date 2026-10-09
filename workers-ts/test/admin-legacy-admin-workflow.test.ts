@@ -10,7 +10,7 @@ import { ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL } from '@/migrations/runAdminL
 import { AdminLegacyAdminWorkflowService, parseLegacyAdminCommitMetadata, parseLegacyAdminPathId,
   parseLegacyAdminSave, type LegacyAdminActor, type LegacyAdminOperationKind } from '@/services/admin/AdminLegacyAdminWorkflowService';
 import { md5 } from '@/utils/jwt';
-import { financePostgres } from './helpers/financePostgres';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 const password = 'owned-legacy-staff-password';
 const payload = (id = 0) => ({ id, account: id ? 'renamed-staff' : 'created-staff', real_name: '管理员姓名', phone: '13800000099',
@@ -46,11 +46,11 @@ describe('legacy seven-field staff validation', () => {
 });
 
 describe('legacy next-level staff decisions and durable operation business semantics in PGlite', () => {
-  let fixture: Awaited<ReturnType<typeof financePostgres>>, service: AdminLegacyAdminWorkflowService;
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, service: AdminLegacyAdminWorkflowService;
   const actor = (id = 101): LegacyAdminActor => ({ id, authVersion: md5(password), expiresAt: Math.floor(Date.now() / 1000) + 3600 });
   beforeAll(async () => {
-    if (process.env.TEST_FINANCE_POSTGRES_URL) throw Error('Memory business fixture only; native semantics have their own file');
-    fixture = await financePostgres([systemAdmin, systemRole, systemMenus], { namespace: 'public' });
+    fixture = await financeMemoryPostgres([systemAdmin, systemRole, systemMenus], { namespace: 'public' });
+    if (!fixture.isMemory) throw Error('Memory business fixture only; native semantics have their own file');
     // This is the reviewed exact DDL, not a synthetic receipt schema. The
     // explicit PG16 maintenance installer is exercised only in the native file.
     await fixture.exec(ADMIN_AUTHORITY_OPERATION_SQL); await fixture.exec(ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL);
