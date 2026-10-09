@@ -55,10 +55,14 @@ describe("admin permission catalog", () => {
     expect(recovery).toEqual([
       { method:'GET',path:'/adminapi/setting/admin-authority/receipt/:operationId' },
       { method:'POST',path:'/adminapi/setting/admin-authority/resolve' },
+      { method:'GET',path:'/adminapi/setting/role-authority/receipt/:operationId' },
+      { method:'POST',path:'/adminapi/setting/role-authority/resolve' },
       { method:'GET',path:'/adminapi/system/authority/receipt/:operationId' },
       { method:'POST',path:'/adminapi/system/authority/resolve' },
       { method:'GET',path:'/api/admin/setting/admin-authority/receipt/:operationId' },
       { method:'POST',path:'/api/admin/setting/admin-authority/resolve' },
+      { method:'GET',path:'/api/admin/setting/role-authority/receipt/:operationId' },
+      { method:'POST',path:'/api/admin/setting/role-authority/resolve' },
       { method:'GET',path:'/api/admin/system/authority/receipt/:operationId' },
       { method:'POST',path:'/api/admin/system/authority/resolve' },
     ]);

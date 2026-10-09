@@ -6,6 +6,7 @@ import { systemAdmin, systemRole } from '@/models/schema';
 import { ApiErrorCode, AuthException, HttpApiException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
 import { AdminPermissionService, assertDelegablePermissions, hasAdminPermission, normalizeRoleRules } from './AdminPermissionService';
+import { loadAdminLegacyRoleReferenceHistory } from './AdminLegacyRoleDeletionProof';
 
 export interface AdminAuthorityActor { id: number; authVersion: string; expiresAt: number }
 export interface AdminAuthorityLiveActor {
@@ -30,7 +31,7 @@ export function assertAdminAuthoritySession(actor: AdminAuthorityActor): void {
  * can apply their legacy token limit. PostgreSQL varchar bounds characters. */
 export function parseAdminAuthorityRoleIds(value: string): number[] {
   if (typeof value !== 'string' || [...value].length > 128) throw new ValidateException('角色 ID 数据最多 128 个字符');
-  const tokens = value.split(',').map(item => item.trim()).filter(Boolean);
+  const tokens = value === '' ? [] : value.split(',').map(item => item.trim());
   if (tokens.some(token => !/^[1-9]\d*$/.test(token) || token.length > 10 || !integerId(Number(token)))) {
     throw new ValidateException('角色 ID 格式错误');
   }
@@ -118,9 +119,13 @@ export async function loadAdminAuthorityLiveActor(tx: DbClient, actor: AdminAuth
   const permissions = new AdminPermissionService(createContainerFromDb(tx));
   const assignment = await permissions.resolveRoleAssignment(live.roles, true);
   const keys = live.level === 0 ? await permissions.resolveAdminPermissionKeys(live) : assignment.keys;
-  if (live.level !== 0 && (assignment.missingRoleIds.length || !hasAdminPermission(keys, requiredCapability))) {
+  if (live.level !== 0 && !hasAdminPermission(keys, requiredCapability)) {
     throw new AuthException('管理员权限已变化', ApiErrorCode.ERR_AUTH);
   }
+  // Preserve the prior bounded-rule and revoked-writer refusals. Only an actor
+  // which can proceed needs historical classification; every persisted ID is
+  // still classified before any authorized callback or mutation.
+  await loadAdminLegacyRoleReferenceHistory(tx, roleIds, live.level);
   assertAdminAuthoritySession(actor);
   return { id: live.id, level: live.level, roles: live.roles, roleIds, divisionId: live.divisionId,
     keys, legacyRuleIds: assignment.legacyRuleIds };

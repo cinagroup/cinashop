@@ -50,7 +50,7 @@ describe('legacy staff list permissions', () => {
       for (const [method, path] of [['POST', 'setting/admin'], ['PUT', 'setting/admin/21'],
         ['DELETE', 'setting/admin/21']]) expect(requiredAdminPermission(method, `${prefix}/${path}`)).toBe('system.legacy_admin_manage');
       for (const [method, path] of [['PUT', 'setting/role/set_status/22/0']]) {
-        expect(requiredAdminPermission(method, `${prefix}/${path}`)).toBeNull();
+        expect(requiredAdminPermission(method, `${prefix}/${path}`)).toBe('system.legacy_role_status');
       }
       expect(requiredAdminPermission('GET', `${prefix}/setting/administrator`)).toBe('config.view');
       expect(requiredAdminPermission('GET', `${prefix}/setting/roles`)).toBe('config.view');
@@ -127,14 +127,15 @@ describe('legacy staff list permissions', () => {
       await expect(permissions.assertAuthorized(actor('21,31'), 'GET', `${prefix}/system_admin/directory`)).resolves.toBeUndefined();
     }
     expect(permissions.buildMenus(new Set(['system.legacy_admin_view', 'system.legacy_role_view'])))
-      .toEqual([expect.objectContaining({path:'/system/legacy-staff'})]);
+      .toEqual([expect.objectContaining({path:'/system/legacy-staff'}),expect.objectContaining({path:'/system/legacy-roles'})]);
   });
 
   it('registers selectable narrow capabilities and permits only one-way delegation from canonical readers', () => {
     const narrow = ['system.legacy_admin_view', 'system.legacy_role_view'];
     const children = permissions.permissionTree().find(group => group.key === 'system')!.children;
     expect(children.map(node => node.key)).toEqual(['system.view', 'system.manage', narrow[0],
-      'system.legacy_admin_form_view','system.legacy_admin_manage',narrow[1], 'system.legacy_role_form_view', 'system.legacy_role_manage']);
+      'system.legacy_admin_form_view','system.legacy_admin_manage',narrow[1], 'system.legacy_role_form_view', 'system.legacy_role_manage',
+      'system.legacy_role_status','system.legacy_role_delete']);
     expect(children.every(node => node.key.startsWith('system.'))).toBe(true);
     expect(normalizeRoleRules(narrow)).toBe(narrow.join(','));
     expect(normalizeRoleRules('system.manage')).toBe('system.view,system.manage');

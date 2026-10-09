@@ -97,6 +97,12 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       else {
         plan.tables.admin_authority_operation=ADMIN_AUTHORITY_OPERATION_RUNTIME_PRIVILEGES[kind];
         plan.functions=[...plan.functions,...ADMIN_AUTHORITY_OPERATION_RUNTIME_FUNCTIONS[kind]];
+        // A separately commissioned v3 hard-delete addon permits precisely one
+        // extra Admin table privilege. The fixed historical plan stays intact;
+        // absent/v1/v2 catalogs never justify this DELETE grant, nor does App.
+        if (kind==='admin' && await inspectAdminAuthorityOperation(tx,names,'legacy-role-v3')) {
+          plan.tables.system_role=[...(plan.tables.system_role ?? []),'DELETE'];
+        }
         if (kind==='admin') {
           const [capability]=await tx.execute(sql`SELECT to_regprocedure('public.admin_authority_menu_lock_v1()')::oid::text AS oid`);
           if (typeof capability?.oid==='string') reviewedAuthorityMenuLock=capability.oid;

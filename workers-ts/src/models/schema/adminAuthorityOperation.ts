@@ -1,5 +1,12 @@
 import { integer, jsonb, pgTable, uuid, varchar } from 'drizzle-orm/pg-core';
 
+/** A committed legacy hard deletion retains its exact original role identity.
+ * This evidence is never an assignable or effective runtime role. */
+export interface AdminLegacyDeletedRoleEvidence {
+  id: number; type: number; relation_id: number; role_name: string;
+  rules: string; level: number; status: number;
+}
+
 /** Permanent owner-scoped operation evidence. Installed with the reviewed
  * constraints and immutable triggers by the explicit maintenance installer. */
 export const adminAuthorityOperation = pgTable('admin_authority_operation', {
@@ -11,6 +18,7 @@ export const adminAuthorityOperation = pgTable('admin_authority_operation', {
   requestHash: varchar('request_hash', { length: 64 }).notNull(),
   revision: varchar('revision', { length: 64 }).notNull(),
   state: varchar('state', { length: 16 }).notNull(),
-  result: jsonb('result').$type<{ id: number; created?: boolean; deleted?: boolean } | null>(),
+  result: jsonb('result').$type<{ id: number; created?: boolean; deleted?: boolean;
+    deleted_role?: AdminLegacyDeletedRoleEvidence } | null>(),
   createdAt: integer('created_at').notNull(),
 });

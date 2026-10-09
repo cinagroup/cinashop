@@ -46,7 +46,7 @@
           <el-form-item label="确认密码"><el-input v-model="editor.fields.conf_pwd" type="password" show-password autocomplete="new-password" /></el-form-item>
           <el-form-item label="管理员姓名"><el-input v-model="editor.fields.real_name" maxlength="32" placeholder="最多16个字符" /></el-form-item>
           <el-form-item label="手机号"><el-input v-model="editor.fields.phone" maxlength="11" inputmode="tel" /></el-form-item>
-          <el-form-item label="角色"><el-select v-model="editor.fields.roles" multiple class="role-select" placeholder="请选择可委派的角色"><el-option v-for="role in form.roleOptions" :key="role.value" :label="`${role.label} (#${role.value})`" :value="role.value" :disabled="role.disabled === true" /></el-select><template v-if="hasInactiveRoles"><span class="hint">原账号含停用角色，请先移除；停用角色不能重新选择或保存。</span><el-button :disabled="!canManage || writeBlocked" @click="removeInactiveRoles">移除停用角色</el-button></template></el-form-item>
+          <el-form-item label="角色"><el-select v-model="editor.fields.roles" multiple class="role-select" placeholder="请选择可委派的角色"><el-option v-for="role in form.roleOptions" :key="role.value" :label="`${role.label} (#${role.value})`" :value="role.value" :disabled="role.disabled === true" /></el-select><template v-if="hasInactiveRoles"><span class="hint">原账号含停用或已删除角色，请先移除；停用或已删除角色不能重新选择或保存。</span><el-button :disabled="!canManage || writeBlocked" @click="removeInactiveRoles">移除停用或已删除角色</el-button></template></el-form-item>
           <el-form-item label="状态"><el-radio-group v-model="editor.fields.status"><el-radio :value="1">开启</el-radio><el-radio :value="0">关闭</el-radio></el-radio-group></el-form-item>
         </el-form>
         <template #footer><el-button :disabled="busy" @click="closeEditor">关闭</el-button><el-button v-if="canManage && form" type="primary" :disabled="writeBlocked || formLoading" @click="prepareSave">预览影响</el-button></template>
@@ -178,7 +178,7 @@ async function prepareOperation(operation: LegacyStaffKind, payload: Record<stri
 }
 async function prepareSave() {
   if (!canForm.value || !form.value || !editor.show || !canManage.value || writeBlocked.value) return;
-  if (hasInactiveRoles.value) { error.value = '请先移除停用角色，再选择可委派的启用角色'; ElMessage.warning(error.value); return; }
+  if (hasInactiveRoles.value) { error.value = '请先移除停用或已删除角色，再选择可委派的启用角色'; ElMessage.warning(error.value); return; }
   try { await prepareOperation('legacy-admin-save', savePayload()); } catch (reason) { error.value = message(reason, '请核对管理员表单'); ElMessage.warning(error.value); }
 }
 async function prepareStatus(row: LegacyStaffRow) {

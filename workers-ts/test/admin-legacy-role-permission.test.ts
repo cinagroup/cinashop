@@ -18,7 +18,7 @@ describe('legacy numeric role workflow authority', () => {
       { id: 2, authType: 2, type: 1, apiUrl: '/api/admin/setting/role/:id/edit', methods: 'HEAD' },
       { id: 3, authType: 2, type: 1, apiUrl: '/adminapi/setting/role/0', methods: 'POST' },
       { id: 4, authType: 2, type: 1, apiUrl: 'setting/role/:id', methods: 'POST' },
-      { id: 5, authType: 2, type: 1, apiUrl: 'setting/role/set_status/4/0', methods: 'PUT' },
+      { id: 5, authType: 2, type: 1, apiUrl: 'setting/role/set_status/4/0', methods: 'PUT,DELETE' },
       { id: 6, authType: 2, type: 1, apiUrl: 'setting/role/create', methods: 'POST' },
       { id: 7, authType: 2, type: 4, apiUrl: 'setting/role/4', methods: 'POST' },
       { id: 8, authType: 2, type: 1, access: 0, apiUrl: 'setting/role/4', methods: 'POST' },
@@ -42,8 +42,10 @@ describe('legacy numeric role workflow authority', () => {
         expect(requiredAdminPermission(method, `${prefix}/setting/role/${path}`)).toBe(form);
       }
       for (const id of ['0', '4', ':id']) expect(requiredAdminPermission('POST', `${prefix}/setting/role/${id}`)).toBe(manage);
-      for (const [method, path] of [['POST', 'create'], ['PUT', '4'], ['DELETE', '4'], ['GET', '0/edit'],
-        ['GET', '4'], ['PUT', 'set_status/4/0'], ['POST', '4/extra'], ['POST', '04']]) {
+      expect(requiredAdminPermission('DELETE', `${prefix}/setting/role/4`)).toBe('system.legacy_role_delete');
+      expect(requiredAdminPermission('PUT', `${prefix}/setting/role/set_status/4/0`)).toBe('system.legacy_role_status');
+      for (const [method, path] of [['POST', 'create'], ['PUT', '4'], ['DELETE', '0'], ['GET', '0/edit'],
+        ['GET', '4'], ['PUT', 'set_status/4/2'], ['POST', '4/extra'], ['POST', '04']]) {
         expect(requiredAdminPermission(method, `${prefix}/setting/role/${path}`)).toBeNull();
       }
     }

@@ -6,6 +6,7 @@ import { ApiErrorCode, AuthException, HttpApiException, NotFoundException, Servi
 import { md5 } from '@/utils/jwt';
 import { AdminPermissionService, canRetainOpaqueLegacyMenu, hasAdminPermission } from './AdminPermissionService';
 import { inspectAdminRoleMutationImpact, requireAdminRoleImpactConfirmation, withAdminAuthorityWriteTx } from './AdminAuthorityWriteService';
+import { loadAdminLegacyRoleReferenceHistory } from './AdminLegacyRoleDeletionProof';
 
 export const MAX_LEGACY_ROLE_MENU_ROWS = 10_000;
 export const MAX_LEGACY_ROLE_SELECTED_MENUS = 2_048;
@@ -93,6 +94,7 @@ async function liveActor(tx: DbClient, actor: AdminLegacyRoleActor, write: boole
   const encoder = new TextEncoder();
   if (!timingSafeEqual(encoder.encode(md5(live.pwd)), encoder.encode(actor.authVersion))) throw new AuthException('登录凭据已变化', ApiErrorCode.ERR_EXPIRED);
   const roleIds = assignedRoleIds(live.roles);
+  await loadAdminLegacyRoleReferenceHistory(tx, roleIds, live.level);
   const roleQuery = tx.select({ id: systemRole.id, rules: systemRole.rules }).from(systemRole)
     .where(and(inArray(systemRole.id, roleIds), inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), eq(systemRole.status, 1))).orderBy(asc(systemRole.id));
   const roles = roleIds.length ? write ? await roleQuery.for('share', { noWait: true }) : await roleQuery : [];
@@ -101,8 +103,8 @@ async function liveActor(tx: DbClient, actor: AdminLegacyRoleActor, write: boole
   }
   const permissions = new AdminPermissionService(createContainerFromDb(tx));
   const assignment = await permissions.resolveRoleAssignment(live.roles, write);
-  if (live.level !== 0 && (assignment.missingRoleIds.length || !hasAdminPermission(assignment.keys,
-    write ? 'system.legacy_role_manage' : 'system.legacy_role_form_view'))) throw new AuthException('角色表单权限已变化', ApiErrorCode.ERR_AUTH);
+  if (live.level !== 0 && !hasAdminPermission(assignment.keys,
+    write ? 'system.legacy_role_manage' : 'system.legacy_role_form_view')) throw new AuthException('角色表单权限已变化', ApiErrorCode.ERR_AUTH);
   assertActor(actor);
   return { level: live.level, roleIds, legacyIds: new Set(assignment.legacyRuleIds), keys: assignment.keys };
 }

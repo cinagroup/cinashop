@@ -119,15 +119,20 @@ test('validation enforces real storage, mobile, confirmation and Unicode bcrypt 
   const unicode = '界'.repeat(12); assert.equal(runtime.api.validateStaffFields({ ...fields, pwd: unicode, conf_pwd: unicode }, true).pwd, unicode);
   for (const changed of [{ account: 'a'.repeat(33) }, { real_name: ' ' }, { phone: '+8613800000000' }, { roles: ['2'] }, { roles: [] }, { roles: [2, 2] }, { roles: [0] }, { status: null }, { conf_pwd: 'different' }, { pwd: '', conf_pwd: '' }, { pwd: '界'.repeat(25), conf_pwd: '界'.repeat(25) }, { realm: 1 }]) assert.throws(() => runtime.api.validateStaffFields({ ...fields, ...changed }, true));
 });
-test('edit preserves assigned inactive numeric role IDs but disables re-selection and requires removal before preview', async () => {
-  const f = await mount(undefined, config => {
-    if (config.url.endsWith('/edit')) { const dto = form(30); dto.rules[5].options[0].label = '基础角色（当前停用身份，保存时请移除）'; dto.rules[5].options[0].disabled = true; return dto; }
-    return standard(config);
-  });
-  await f.view.openForm(f.view.rows.value[0]); assert.deepEqual(f.view.editor.fields.roles, [2]); assert.equal(f.view.form.value.roleOptions[0].disabled, true); assert.equal(f.view.hasInactiveRoles.value, true);
-  await f.view.prepareSave(); assert.equal(f.calls.filter(c => c.url.endsWith('/preview')).length, 0);
-  f.view.removeInactiveRoles(); assert.deepEqual(f.view.editor.fields.roles, []); assert.equal(f.view.hasInactiveRoles.value, false);
-  Object.assign(f.view.editor.fields, { ...fields, roles: [7], pwd: '', conf_pwd: '' }); await f.view.prepareSave(); assert.ok(f.view.preview.value); assert.deepEqual(f.view.preview.value.summary.after.roles, [7]);
+test('edit preserves assigned inactive or deleted numeric role IDs and requires explicit removal before preview', async () => {
+  for (const state of ['停用', '已删除']) {
+    const f = await mount(undefined, config => {
+      if (config.url.endsWith('/edit')) { const dto = form(30); dto.rules[5].options[0].label = `基础角色（当前${state}身份，保存时请移除）`; dto.rules[5].options[0].disabled = true; return dto; }
+      return standard(config);
+    });
+    await f.view.openForm(f.view.rows.value[0]); assert.deepEqual(f.view.editor.fields.roles, [2]); assert.equal(f.view.form.value.roleOptions[0].disabled, true); assert.equal(f.view.hasInactiveRoles.value, true);
+    assert.ok(f.view.form.value.roleOptions[0].label.includes(state));
+    await f.view.prepareSave(); assert.equal(f.calls.filter(c => c.url.endsWith('/preview')).length, 0);
+    f.view.removeInactiveRoles(); assert.deepEqual(f.view.editor.fields.roles, []); assert.equal(f.view.hasInactiveRoles.value, false);
+    Object.assign(f.view.editor.fields, { ...fields, roles: [7], pwd: '', conf_pwd: '' }); await f.view.prepareSave(); assert.ok(f.view.preview.value); assert.deepEqual(f.view.preview.value.summary.after.roles, [7]);
+    await confirm(f.view); assert.deepEqual(body(mutations(f.calls).at(-1)).roles, [7]);
+    f.close();
+  }
 });
 test('dedicated staff page consumes old list/edit DTO and sends original create/update/status/delete contracts', async () => {
   const f = await mount(); await savePreview(f.view); assert.ok(f.view.preview.value); assert.equal(mutations(f.calls).length, 0);

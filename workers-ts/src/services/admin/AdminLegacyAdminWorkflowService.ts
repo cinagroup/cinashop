@@ -8,6 +8,7 @@ import { acquireAdminAuthorityMenuLock, assertAdminLegacyAdminOperationReady } f
 import { ApiErrorCode, AuthException, HttpApiException, NotFoundException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
 import { AdminPermissionService, canRetainOpaqueLegacyMenu, hasAdminPermission } from './AdminPermissionService';
+import { loadAdminLegacyRoleDeletionProofs, loadAdminLegacyRoleReferenceHistory } from './AdminLegacyRoleDeletionProof';
 import { acquireAdminAuthorityWriteBarrier, adminAuthorityWriteError, assertAdminAuthoritySession,
   assertRemainingActivePlatformSuperAdmin, normalizeAdminAuthorityRules, parseAdminAuthorityRoleIds,
   type AdminAuthorityActor } from './AdminAuthorityWriteService';
@@ -176,15 +177,14 @@ async function liveActor(tx: DbClient, actor: LegacyAdminActor, write: boolean):
   const row = await identity(tx, actor);
   if (!Number.isInteger(row.level) || row.level < 0 || row.level > 9) throw new AuthException('管理员层级不支持下一层级表单', ApiErrorCode.ERR_AUTH);
   const roleIds = parseAdminAuthorityRoleIds(row.roles);
-  const roles = roleIds.length ? await tx.select().from(systemRole).where(and(inArray(systemRole.id, roleIds),
-    inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), eq(systemRole.status, 1))).orderBy(asc(systemRole.id)) : [];
-  if (roles.length !== roleIds.length) throw new AuthException('管理员身份已变化', ApiErrorCode.ERR_AUTH);
+  const history = await loadAdminLegacyRoleReferenceHistory(tx, roleIds, row.level);
+  const roles = history.roles.filter(role => role.status === 1);
   for (const role of roles) normalizeAdminAuthorityRules(role.rules);
   const permissions = new AdminPermissionService(createContainerFromDb(tx));
   const assignment = await permissions.resolveRoleAssignment(row.roles, write);
   const keys = row.level === 0 ? await permissions.resolveAdminPermissionKeys(row) : assignment.keys;
-  if (row.level !== 0 && (assignment.missingRoleIds.length || !hasAdminPermission(keys,
-    write ? 'system.legacy_admin_manage' : 'system.legacy_admin_form_view'))) throw new AuthException('旧管理员表单权限已变化', ApiErrorCode.ERR_AUTH);
+  if (row.level !== 0 && !hasAdminPermission(keys,
+    write ? 'system.legacy_admin_manage' : 'system.legacy_admin_form_view')) throw new AuthException('旧管理员表单权限已变化', ApiErrorCode.ERR_AUTH);
   return { row, roleIds, roles, keys, numeric: new Set(assignment.legacyRuleIds) };
 }
 function pureStructure(row: MenuRow): boolean {
@@ -262,14 +262,16 @@ function requireRoles(ids: number[], rows: RoleRow[], live: Live, directory: Cat
     delegable(row, live, directory);
   }
 }
-async function currentRoles(tx: DbClient, current: AdminRow, live: Live, directory: Catalogue): Promise<RoleRow[]> {
+interface AssignedLegacyRole { id: number; roleName: string; status: number; deleted?: true }
+async function currentRoles(tx: DbClient, current: AdminRow, live: Live, directory: Catalogue): Promise<AssignedLegacyRole[]> {
   const ids = parseAdminAuthorityRoleIds(current.roles);
-  const assigned = ids.length ? await tx.select().from(systemRole).where(and(inArray(systemRole.id, ids),
-    inArray(systemRole.type, [0, 1]), eq(systemRole.relationId, 0), eq(systemRole.level, live.row.level + 1),
-    inArray(systemRole.status, [-1, 0, 1]))).orderBy(asc(systemRole.id)) : [];
-  if (assigned.length !== ids.length) throw conflict('既有身份缺失或不属于下一级平台');
-  for (const role of assigned) delegable(role, live, directory, role.status === 1);
-  return assigned;
+  const history = await loadAdminLegacyRoleReferenceHistory(tx, ids, live.row.level + 1, true);
+  for (const role of history.roles) delegable(role, live, directory, role.status === 1);
+  // These are explicit disabled display choices, never synthetic database rows
+  // or assignable roles. Only the immutable deletion snapshot supplies a label.
+  return [...history.roles, ...[...history.deleted.values()].map(role => ({
+    id: role.id, roleName: role.role_name, status: -1, deleted: true as const,
+  }))].sort((a,b) => a.id-b.id);
 }
 function values(row: AdminRow): LegacyAdminValues {
   if (![0, 1].includes(row.status) || ![0, 1].includes(row.isDel) || !Number.isInteger(row.level) || row.level < 0 || row.level > 10) {
@@ -290,6 +292,9 @@ async function plan(tx: DbClient, input: Prepared, live: Live): Promise<Plan> {
   if (input.roleIds) requireRoles(input.roleIds, roles, live, directory);
   const relevantRoleIds = new Set([...live.roleIds, ...parseAdminAuthorityRoleIds(current?.roles ?? ''), ...(input.roleIds ?? [])]);
   const relevantRoles = relevantRoleIds.size ? await tx.select().from(systemRole).where(inArray(systemRole.id, [...relevantRoleIds])).orderBy(asc(systemRole.id)) : [];
+  const physicallyPresent = new Set(relevantRoles.map(role => role.id));
+  const deletedRoleEvidence = [...(await loadAdminLegacyRoleDeletionProofs(tx,
+    [...relevantRoleIds].filter(id => !physicallyPresent.has(id)))).values()].sort((a,b) => a.id-b.id);
   let uniqueness: AdminRow[] = [];
   if (input.operation === 'legacy-admin-save') {
     uniqueness = await tx.select().from(systemAdmin).where(and(eq(systemAdmin.adminType, 1), eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0),
@@ -311,7 +316,7 @@ async function plan(tx: DbClient, input: Prepared, live: Live): Promise<Plan> {
     is_del: input.operation === 'legacy-admin-delete' ? 1 : 0, password_changed: !!input.password };
   return { input, live, target: current, fields, summary: { target_id: input.id, target_name: after.real_name || after.account,
     action: input.operation === 'legacy-admin-delete' ? 'delete' : input.operation === 'legacy-admin-status' ? 'status' : current ? 'update' : 'create', before, after },
-    proof: { actor: live.row, actorRoles: live.roles, target: current, relevantRoles, nextLevelRoles: roles, menus: directory.rows,
+    proof: { actor: live.row, actorRoles: live.roles, target: current, relevantRoles, deletedRoleEvidence, nextLevelRoles: roles, menus: directory.rows,
       input, fields, uniqueness, permissions: new AdminPermissionService(createContainerFromDb(tx)).permissionTree() } };
 }
 function receiptDto(row: ReceiptRow): LegacyAdminReceipt {
@@ -402,7 +407,7 @@ export class AdminLegacyAdminWorkflowService {
         }
       }
       for (const role of assigned) if (role.status !== 1) options.push({ value: role.id,
-        label: `${role.roleName}（当前停用身份，保存时请移除）`, disabled: true });
+        label: `${role.roleName}（当前${role.deleted ? '已删除' : '停用'}身份，保存时请移除）`, disabled: true });
       options.sort((a, b) => a.value - b.value);
       if (options.length > MAX_LEGACY_ADMIN_ROLE_OPTIONS) throw new ServiceUnavailableException('身份回显超过1000，请先整理目录');
       assertAdminAuthoritySession(actor); return form(current, options);

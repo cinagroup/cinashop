@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { ServiceUnavailableException } from '../utils/errors';
+import { ADMIN_LEGACY_ROLE_OPERATION_STATE_CONSTRAINT } from './adminLegacyRoleOperationCatalog';
 
 /** Independently commissioned addon; historical whole-shop stages stay fixed. */
 export const ADMIN_AUTHORITY_OPERATION_RUNTIME_PRIVILEGES = {
@@ -95,7 +96,12 @@ export const ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS: Record<string,st
     .replace("ARRAY['admin-save'::character varying, 'role-save'::character varying]", "ARRAY['admin-save'::character varying, 'role-save'::character varying, 'legacy-admin-save'::character varying, 'legacy-admin-status'::character varying]")
     .replace("AND (jsonb_typeof((result -> 'created'::text)) = 'boolean'::text)", "AND (jsonb_typeof((result -> 'created'::text)) = 'boolean'::text) AND (((operation)::text <> 'legacy-admin-status'::text) OR ((result -> 'created'::text) = 'false'::jsonb))"),
 };
-export type AdminAuthorityOperationCatalog = 'v1' | 'legacy-admin-v2' | 'either';
+export const ADMIN_LEGACY_ROLE_OPERATION_EXPECTED_CONSTRAINTS: Record<string,string> = {
+  ...ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS,
+  aao_operation_ck: "CHECK (((operation)::text = ANY ((ARRAY['admin-save'::character varying, 'role-save'::character varying, 'role-delete'::character varying, 'legacy-admin-save'::character varying, 'legacy-admin-status'::character varying, 'legacy-admin-delete'::character varying, 'legacy-role-status'::character varying, 'legacy-role-delete'::character varying])::text[])))",
+  aao_state_ck: ADMIN_LEGACY_ROLE_OPERATION_STATE_CONSTRAINT,
+};
+export type AdminAuthorityOperationCatalog = 'v1' | 'legacy-admin-v2' | 'legacy-role-v3' | 'either';
 
 export async function inspectAdminAuthorityOperation(tx: Pick<DbClient,'execute'>,names?: { maintenance:string; admin:string },
   catalog: AdminAuthorityOperationCatalog = 'either'): Promise<boolean> {
@@ -150,7 +156,9 @@ export async function inspectAdminAuthorityOperation(tx: Pick<DbClient,'execute'
   const exact = (expected: Record<string,string>) => Object.entries(expected).every(([name,definition]) => actual[name] === definition);
   return catalog === 'v1' ? exact(ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS)
     : catalog === 'legacy-admin-v2' ? exact(ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS)
-      : exact(ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS) || exact(ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS);
+    : catalog === 'legacy-role-v3' ? exact(ADMIN_LEGACY_ROLE_OPERATION_EXPECTED_CONSTRAINTS)
+      : exact(ADMIN_AUTHORITY_OPERATION_EXPECTED_CONSTRAINTS) || exact(ADMIN_LEGACY_ADMIN_OPERATION_EXPECTED_CONSTRAINTS)
+        || exact(ADMIN_LEGACY_ROLE_OPERATION_EXPECTED_CONSTRAINTS);
 }
 
 /** Runtime assertion only: a missing or altered catalog fails before DML. */
@@ -168,10 +176,22 @@ export async function assertAdminAuthorityOperationReady(tx: Pick<DbClient,'exec
 
 /** Dedicated legacy writes cannot run against the original three-kind addon. */
 export async function assertAdminLegacyAdminOperationReady(tx: Pick<DbClient,'execute'>): Promise<void> {
-  if (!(await inspectAdminAuthorityOperation(tx, undefined, 'legacy-admin-v2'))) {
+  if (!(await inspectAdminAuthorityOperation(tx, undefined, 'legacy-admin-v2'))
+    && !(await inspectAdminAuthorityOperation(tx, undefined, 'legacy-role-v3'))) {
     throw new ServiceUnavailableException('旧管理员操作回执升级尚未就绪');
   }
   await assertAdminAuthorityOperationReady(tx);
+}
+
+/** New role actions require their exact snapshot-bearing version. */
+export async function assertAdminLegacyRoleOperationReady(tx: Pick<DbClient,'execute'>): Promise<void> {
+  if (!(await inspectAdminAuthorityOperation(tx, undefined, 'legacy-role-v3'))) {
+    throw new ServiceUnavailableException('旧角色耐久操作回执升级尚未就绪');
+  }
+  await assertAdminAuthorityOperationReady(tx);
+  const [privilege] = await tx.execute(sql`SELECT has_table_privilege(current_user,
+    'public.system_role','DELETE') AS ready`);
+  if (privilege?.ready !== true) throw new ServiceUnavailableException('旧角色删除运行权限尚未就绪');
 }
 
 export async function inspectAdminAuthorityMenuLock(tx: Pick<DbClient,'execute'>,names?: { maintenance:string; admin:string }): Promise<boolean> {
