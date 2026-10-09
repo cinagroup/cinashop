@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-10-09T08:27:52Z",
+  "scope": "offline ORM model index candidates, not a production catalog or query-plan audit",
+  "sourceCommit": "1578baba7df3d0a7fdf9620f068a8eb20986e01a",
+  "modelSchemaGitTree": "bd91b8299566a944ef400cf0d7ac06736abd650f",
+  "inventoryScript": "workers-ts/scripts/foreign-key-index-audit.ts",
+  "inventoryScriptSha256": "644c97ec3d6857c8815e28e84f030f9db6fc19577445e9e2ec8dcbb28ec23040",
+  "commandFromWorkersTs": "node node_modules/tsx/dist/cli.mjs scripts/foreign-key-index-audit.ts",
+  "counts": {
+    "foreignKeys": 68,
+    "fullNonpartialLeading": 52,
+    "narrowNonpartialLeading": 12,
+    "partialOnlyLeading": 3,
+    "withoutLeadingCandidate": 1
+  },
+  "withoutLeadingCandidate": [
+    "customer_city_delivery_binding.ccdbinding_attempt_fk"
+  ],
+  "productionCatalogChecked": false,
+  "productionRowVolumesChecked": false,
+  "performanceAccepted": false,
+  "note": "The checklist's earlier 45/30/15/0 counts are a 2026-09-12 model snapshot. This current inventory does not authorize an index migration; the city-delivery catalog and external 0173 are pinned and require a separately staged forward change."
+}
