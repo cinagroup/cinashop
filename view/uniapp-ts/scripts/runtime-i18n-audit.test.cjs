@@ -5,7 +5,7 @@ const { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } = require("no
 const { tmpdir } = require("node:os");
 const { dirname, join, resolve } = require("node:path");
 const test = require("node:test");
-const { isIntlifyModule, isDcloudSsrModule, inspectRuntimeGraph, runtimeI18nAudit } = require("./runtime-i18n-audit.cjs");
+const { isIntlifyModule, isDcloudSsrModule, isBuildGlobModule, inspectRuntimeGraph, runtimeI18nAudit } = require("./runtime-i18n-audit.cjs");
 
 test("inventory recognizes package, vendored, virtual and external Intlify representations", () => {
   for (const id of ["vue-i18n", "vue-i18n/dist/runtime.js", "@intlify/core-base", "/app/node_modules/vue-i18n/dist/index.js", "C:\\app\\node_modules\\@intlify\\shared\\index.js", "\0/app/node_modules/@dcloudio/uni-cli-shared/lib/vue-i18n/dist/runtime.js?commonjs-proxy"]) {
@@ -55,6 +55,48 @@ test("DCloud SSR dependencies remain visible when external or tree-shaken", () =
     "main.js": { type: "chunk", modules: { [ids[0]]: { renderedLength: 1 } } },
   }, "/app");
   assert.deepEqual(inventory.dcloudSsr, ["express", "node_modules/proxy-addr/index.js"]);
+});
+
+test("build glob packages are identified without matching business file names", () => {
+  for (const id of ["braces", "brace-expansion", "chokidar", "fast-glob", "micromatch", "minimatch", "/app/node_modules/braces/index.js", "C:\\app\\node_modules\\micromatch\\index.js", "\0braces?commonjs-proxy"]) {
+    assert.equal(isBuildGlobModule(id), true, id);
+  }
+  for (const id of ["/app/src/pages/braces.vue", "/app/src/pages/fast-glob.vue", "bracelets", "@dcloudio/uni-h5"]) {
+    assert.equal(isBuildGlobModule(id), false, id);
+  }
+  const ids = ["/app/src/main.ts", "braces", "/app/node_modules/micromatch/index.js"];
+  const context = {
+    getModuleIds: () => ids,
+    getModuleInfo: (id) => ({ isEntry: id === ids[0], isExternal: id === ids[1] }),
+  };
+  const inventory = inspectRuntimeGraph(context, {
+    "main.js": { type: "chunk", modules: { [ids[0]]: { renderedLength: 1 } } },
+  }, "/app");
+  assert.deepEqual(inventory.buildGlob, ["braces", "node_modules/micromatch/index.js"]);
+});
+
+test("real Rollup generation rejects an external build glob package", async (t) => {
+  const fixture = mkdtempSync(join(tmpdir(), "cinashop-d3-glob-negative-"));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const previousCI = process.env.CI;
+  const previousReport = process.env.CINASHOP_RUNTIME_I18N_REPORT;
+  process.env.CI = "1";
+  process.env.CINASHOP_RUNTIME_I18N_REPORT = join(fixture, "negative.jsonl");
+  t.after(() => {
+    if (previousCI === undefined) delete process.env.CI; else process.env.CI = previousCI;
+    if (previousReport === undefined) delete process.env.CINASHOP_RUNTIME_I18N_REPORT;
+    else process.env.CINASHOP_RUNTIME_I18N_REPORT = previousReport;
+  });
+  const audit = runtimeI18nAudit();
+  audit.configResolved({ root: fixture });
+  const build = await require("rollup").rollup({
+    input: "virtual:d3-glob-entry", external: ["braces"],
+    plugins: [{ name: "inert-d3-glob-input", resolveId: (id) => id === "virtual:d3-glob-entry" ? id : null,
+      load: (id) => id === "virtual:d3-glob-entry" ? "import braces from 'braces'; export default braces;" : null }, audit],
+  });
+  t.after(() => build.close());
+  await assert.rejects(build.generate({ format: "es" }), /Build glob dependency.*reopen TEST-004D3/);
+  assert.deepEqual(JSON.parse(readFileSync(join(fixture, "negative.jsonl"), "utf8")).buildGlob, ["braces"]);
 });
 
 test("real Rollup generation rejects an external SSR dependency", async (t) => {
@@ -219,6 +261,7 @@ for (const platform of ["h5", "mp-weixin", "app"]) {
       assert.deepEqual(record.automatorQr, []);
       assert.deepEqual(record.jestJsdomOnce, []);
       assert.deepEqual(record.dcloudSsr, []);
+      assert.deepEqual(record.buildGlob, []);
       assert.deepEqual(record.separateScriptModules, []);
       assert.deepEqual(record.separateScriptAssets, []);
       if (record.compiler !== "nvue") assert.equal(record.hasMain, true);
