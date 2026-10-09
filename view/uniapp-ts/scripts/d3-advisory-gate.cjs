@@ -202,9 +202,12 @@ function main(argv) {
     throw new Error("usage: node scripts/d3-advisory-gate.cjs --live | --fixture <npm-audit.json>");
   }
   const baseline = loadJson(BASELINE_PATH);
-  const lockSha256 = createHash("sha256").update(readFileSync(resolve(__dirname, "../package-lock.json"))).digest("hex");
-  if (baseline.lockSha256 !== lockSha256) {
-    throw new Error(`package-lock.json SHA-256 changed: ${lockSha256}; review and update the D3 baseline`);
+  // Git checks out CRLF on Windows and LF on Linux. Hash the parsed lock so
+  // formatting alone cannot break CI, while any locked package change does.
+  const lock = JSON.parse(readFileSync(resolve(__dirname, "../package-lock.json"), "utf8"));
+  const lockSemanticSha256 = createHash("sha256").update(JSON.stringify(lock)).digest("hex");
+  if (baseline.lockSemanticSha256 !== lockSemanticSha256) {
+    throw new Error(`package-lock.json semantic SHA-256 changed: ${lockSemanticSha256}; review and update the D3 baseline`);
   }
   const report = argv[0] === "--live" && argv.length === 1 ? liveAudit()
     : argv[0] === "--fixture" ? loadJson(resolve(argv[1]))

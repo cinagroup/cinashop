@@ -2,6 +2,7 @@
 
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
+const { createHash } = require("node:crypto");
 const { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { delimiter, join, resolve } = require("node:path");
@@ -52,6 +53,14 @@ test("reviewed package entries each resolve to a scoped advisory chain", () => {
   assert.deepEqual(result.issues, []);
   assert.equal(result.directAdvisoryObjects, 23);
   assert.equal(result.distinctAdvisoryUrls, 22);
+});
+
+test("reviewed lock fingerprint is stable across Git checkout line endings", () => {
+  const text = readFileSync(resolve(__dirname, "../package-lock.json"), "utf8");
+  const fingerprint = (value) => createHash("sha256").update(JSON.stringify(JSON.parse(value))).digest("hex");
+  assert.equal(fingerprint(text), baseline.lockSemanticSha256);
+  assert.equal(fingerprint(text.replace(/\r?\n/g, "\n")), baseline.lockSemanticSha256);
+  assert.equal(fingerprint(text.replace(/\r?\n/g, "\r\n")), baseline.lockSemanticSha256);
 });
 
 test("unknown direct advisory and a changed existing advisory fail closed", () => {
@@ -129,20 +138,22 @@ test("offline CLI accepts the reviewed fixture and rejects a new path without ru
   }
 });
 
-test("CLI rejects a byte change in package-lock.json before accepting an audit receipt", () => {
+test("CLI rejects a semantic package-lock change before accepting an audit receipt", () => {
   const dir = mkdtempSync(join(tmpdir(), "d3-advisory-lock-"));
   try {
     const scripts = join(dir, "scripts");
     mkdirSync(scripts);
     copyFileSync(resolve(__dirname, "d3-advisory-gate.cjs"), join(scripts, "d3-advisory-gate.cjs"));
     copyFileSync(resolve(__dirname, "d3-advisory-gate.baseline.json"), join(scripts, "d3-advisory-gate.baseline.json"));
-    writeFileSync(join(dir, "package-lock.json"), readFileSync(resolve(__dirname, "../package-lock.json"), "utf8") + " ");
+    const changedLock = JSON.parse(readFileSync(resolve(__dirname, "../package-lock.json"), "utf8"));
+    changedLock.packages["node_modules/proxy-addr"].version = "2.0.7";
+    writeFileSync(join(dir, "package-lock.json"), JSON.stringify(changedLock));
     const file = join(dir, "audit.json");
     writeFileSync(file, JSON.stringify(reviewedFixture()));
     const denied = spawnSync(process.execPath, [join(scripts, "d3-advisory-gate.cjs"), "--fixture", file],
       { encoding: "utf8", timeout: 10000 });
     assert.equal(denied.status, 1);
-    assert.match(denied.stderr, /package-lock\.json SHA-256 changed/);
+    assert.match(denied.stderr, /package-lock\.json semantic SHA-256 changed/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

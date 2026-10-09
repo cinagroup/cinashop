@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+  "lockSemanticSha256": "1b9f11abdb6c1e752b63d989edc3de40860b6cd8153bad556e9f1761fe6605c7",
   "reviewedReceipt": "2026-10-09 npm-audit-final-candidate.json; affected package entries, not independent vulnerabilities",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
