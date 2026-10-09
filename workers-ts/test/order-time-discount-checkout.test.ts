@@ -4,8 +4,11 @@ import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { createContainerFromDb, withTx, type DbClient } from '../src/lib/di';
 import { StoreCartService } from '../src/services/order/StoreCartService';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
+import { orderCoupons } from '../src/controllers/api/v1/OrderCouponController';
 import { OrderQuoteReconfirmRequired } from '../src/services/order/CheckoutConfirmation';
+import { ValidateException } from '../src/utils/errors';
 import { quoteOrderPromotions } from '../src/services/activity/OrderPromotionQuoteService';
+import { eligibleOrderCoupons } from '../src/services/activity/OrderCouponService';
 import { grantPaidPromotionLabels } from '../src/services/order/OrderRewardService';
 import { planOrderFinancialSplit } from '../src/services/order/OrderSplitFinance';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
@@ -19,6 +22,7 @@ describe('time discount through real cart, confirmation and checkout finance', (
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([printDocument, storeOrderStatus, storeOrderPromotions, storeCouponIssue,
       storeCouponUser, userLabel, userLabelRelation]);
+    f.app.get('/api/coupons/order/:price', orderCoupons);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(storeProduct).set({ price: '19.99', freight: 1, tempId: 0 });
     await f.db.update(storeProductAttrValue).set({ price: '19.99', vipPrice: '10.00' });
@@ -45,6 +49,15 @@ describe('time discount through real cart, confirmation and checkout finance', (
     await f.db.insert(storeCouponIssue).values({ id: 1, type: 1, couponType: 0 });
     await f.db.insert(storeCouponUser).values({ id: 41, uid: 11, issueCouponId: 1, couponPrice: '1.00', useMinPrice: '10.00' });
   };
+  const orderCouponPage = async () => {
+    const response = await f.app.request('/api/coupons/order/999999?cartId=1&new=1', {
+      headers: { 'x-fixture-user': '11' },
+    }, f.env);
+    const body = await response.json() as { status: number; msg: string; data: Array<{
+      id: number; estimated_discount: string; eligible_subtotal: string }> };
+    expect(body.status, body.msg).toBe(200);
+    return body.data;
+  };
   it('keeps a partial-cap line total exact in both carts and actual confirmation', async () => {
     const [row] = await new StoreCartService(f.container, f.env).list(11, { mode: 'buy', ids: [1] }) as Array<Record<string, unknown>>;
     expect(row).toMatchObject({ trueSumPrice: '55.99', priceType: 'promotions', promotion: {
@@ -65,6 +78,27 @@ describe('time discount through real cart, confirmation and checkout finance', (
     await f.db.update(storePromotions).set({ overlay: '5' }).where(eq(storePromotions.id, 1));
     expect((await confirm(41)).priceGroup.pay_price).toBe('54.99');
   });
+  it('uses the same capped promotion amount in picker and quote, and admits the promoted pieces only with overlay 5', async () => {
+    await coupon();
+    expect(await orderCouponPage()).toMatchObject([{ id: 41, eligible_subtotal: '19.99', estimated_discount: '1.00' }]);
+    await f.db.update(storeCouponUser).set({ useMinPrice: '30.00' }).where(eq(storeCouponUser.id, 41));
+    expect(await orderCouponPage()).toEqual([]);
+    await expect(new StoreOrderCreateService(f.container, f.env).quoteOrder({ uid: 11, ...request, couponId: 41 }))
+      .rejects.toThrow('适用商品满');
+
+    await f.db.update(storePromotions).set({ overlay: '5' }).where(eq(storePromotions.id, 1));
+    expect(await orderCouponPage()).toMatchObject([{ id: 41, eligible_subtotal: '55.99', estimated_discount: '1.00' }]);
+    const quote = await new StoreOrderCreateService(f.container, f.env).quoteOrder({ uid: 11, ...request, couponId: 41 });
+    expect(quote).toMatchObject({ totalCents: 5599, couponPriceCents: 100, payCents: 5499,
+      items: [{ totalPriceCents: 5599, promotion: { couponEligibleGrossCents: 5599 } }] });
+    const [cart] = await f.db.select().from(storeCart).where(eq(storeCart.id, 1));
+    const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    await expect(eligibleOrderCoupons(f.container, 11, [{ cart, product,
+      unitPriceCents: quote.items[0].unitPriceCents, promotion: quote.items[0].promotion }],
+    { limit: 20, before: 0, unpaged: false })).rejects.toThrow('促销优惠券报价金额不一致');
+    expect((await confirm(41)).priceGroup).toMatchObject({ totalPrice: '55.99', couponPrice: '1.00', pay_price: '54.99' });
+    expect((await f.snapshot()).orders).toEqual([]);
+  });
   it('gives the first-order rule precedence without assigning purchase labels in a quote', async () => {
     await f.setConfig({ newcomer_status: '1', first_order_status: '1', first_order_discount: '80', first_order_discount_limit: '100' });
     const response = await confirm();
@@ -73,10 +107,14 @@ describe('time discount through real cart, confirmation and checkout finance', (
   });
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('creates exact ledgers, preserves partial split cents, and tags only after payment', async () => {
     await coupon();
+    await f.db.update(storeCouponUser).set({ useMinPrice: '30.00' }).where(eq(storeCouponUser.id, 41));
+    await f.db.update(storePromotions).set({ overlay: '5' }).where(eq(storePromotions.id, 1));
     const receipt = await confirm(41), created = await create(f.db, receipt, 41);
     const [order] = await f.db.select().from(storeOrder).where(eq(storeOrder.orderId, created.orderId));
     const lines = await f.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id));
-    expect(order).toMatchObject({ totalPrice: '55.99', payPrice: '54.99', promotionsPrice: '3.98', couponPrice: '1.00' });
+    expect(order).toMatchObject({ totalPrice: '55.99', payPrice: '54.99', promotionsPrice: '3.98', couponId: 41, couponPrice: '1.00' });
+    // Create reserves an unpaid order's coupon; consumption happens at payment.
+    expect((await f.db.select().from(storeCouponUser).where(eq(storeCouponUser.id, 41)))[0].status).toBe(3);
     expect(JSON.parse(lines[0].cartInfo!)).toMatchObject({ promotion_line_price: '55.99', promotion_line_savings: '3.98',
       promotion_discount_quantity: 2, promotion_line_member_savings: '0.00', sum_true_price: '54.99' });
     expect(await f.db.select().from(storeOrderPromotions)).toMatchObject([{ oid: order.id, promotionsId: 1, productId: 70, promotionsPrice: '3.98' }]);
@@ -101,6 +139,19 @@ describe('time discount through real cart, confirmation and checkout finance', (
     await f.db.update(storePromotions).set({ discount: '80' }).where(eq(storePromotions.id, 1));
     await expect(create(f.db, receipt)).rejects.toBeInstanceOf(OrderQuoteReconfirmRequired);
     expect(await f.snapshot()).toEqual(before);
+  });
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rejects a stale coupon overlay before claiming cart, stock or coupon', async () => {
+    await coupon();
+    await f.db.update(storeCouponUser).set({ useMinPrice: '30.00' }).where(eq(storeCouponUser.id, 41));
+    await f.db.update(storePromotions).set({ overlay: '5' }).where(eq(storePromotions.id, 1));
+    const receipt = await confirm(41);
+    await f.db.update(storePromotions).set({ overlay: '' }).where(eq(storePromotions.id, 1));
+    const before = await f.snapshot();
+    const rejection = await create(f.db, receipt, 41).then(() => null, error => error);
+    expect(rejection).toBeInstanceOf(ValidateException);
+    expect(rejection).toMatchObject({ message: expect.stringContaining('适用商品满 ¥30.00') });
+    expect(await f.snapshot()).toEqual(before);
+    expect((await f.db.select().from(storeCouponUser).where(eq(storeCouponUser.id, 41)))[0].status).toBe(0);
   });
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rechecks a rule after actually waiting for the catalog writer', async () => {
     const receipt = await confirm(), before = await f.snapshot();
