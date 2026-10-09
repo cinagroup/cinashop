@@ -1,4 +1,23 @@
-# Checklist 路由与页面合同分布（更新至 2026-10-08）
+# Checklist 路由与页面合同分布（更新至 2026-10-09）
+
+## 当前增量：旧角色独立启停、物理删除与引用历史（2026-10-09，本地候选）
+
+两条旧canonical由专用确认协议承接，另有三个预览/回执/封存handler与五个v1同handler别名。仅canonical使旧可行动缺口964→962，不用新协议入口或别名增加旧覆盖分子，不新增退役判断。实际CLI **PHP1904/Worker2385、925匹配中904可执行/21受控不可用，979原始缺口减17退役为962可行动缺口，有效47.9%**。Admin621调用/653变体全注册且可执行，未解析/未注册/受控不可用0。
+
+| 合同面 | PHP | Worker | 旧URL可执行 | 可行动缺口 |
+| --- | ---: | ---: | ---: | ---: |
+| API | 457 | 1298 | 438 | 11 |
+| Admin | 1153 | 812 | 244 | 894 |
+| Supplier | 182 | 164 | 121 | 49 |
+| Kefu | 63 | 70 | 60 | 0 |
+| Out | 41 | 41 | 41 | 0 |
+| ERP | 8 | 0 | 0 | 8 |
+
+独立启停和物理删除保持原业务语义，保留账号和原CSV；持久七列删前快照只能解释历史、不能授予权限或重新分配。所有旧/现代写消费者核对完整存储角色；已删除、停用身份在旧staff编辑中须主动移除。局部维护在精确v2 profiles上只替换两个CHECK并新增Admin system_role DELETE，App无新增权限；异常整事务回滚、漂移无修复。v3生产适配和新增DELETE超出原d373待授权范围，未执行。
+
+本批554唯一测试实际通过：Worker372相关＋64上游、真实PG16四文件34项、Admin43项、UniApp38 checkout＋3 parser。Worker两组完整类型、Admin/UniApp类型与构建、API本地dry-run实际0；Admin265与H5 320产物均有实际逐文件SHA/大小证据。桌面/手机另有36检查、32图、80个实际CSS/JS响应匹配Admin产物，8源码和产物前后稳定。旧staff已删除身份明确移除后的roles[7]请求实证与真实PG16证明分列；最终原生集群零夹具/独立停机，data/失败日志保留。仅两末尾空行的旧回归输入差异已逐SHA重建证明；测试数量按实际报告唯一case计，不重复计重跑或浏览器步骤。
+
+在本地私有候选中正常合并精确公开main `2e1bda25`，保留上游四组修复，冻结d373及primary未改。全部404复选行仍249/155；旧角色创建/编辑未知结果、完整旧Vue兼容、可配置密码、当前提交完整CI、公开合并部署和生产账号/Hyperdrive仍开放。详见[本批合同](legacy-role-operations-contract-20261009.md)、[验证账本](../audit/legacy-role-operations-validation-20261009.json)、[原CLI路由快照](../audit/route-parity-legacy-role-operations-followup-20261009.json)和[调用快照](../audit/admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json)。下方为前批历史。
 
 ## 当前增量：现代权限变更确认与持久回执（2026-10-08，本地验证完成，未发布）
 

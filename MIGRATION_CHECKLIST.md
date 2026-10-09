@@ -1,5 +1,17 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 当前增量：旧角色独立启停、物理删除与引用历史（2026-10-09，本地候选）
+
+独立旧PUT启停与DELETE真实物理删除已有确认预览、全量影响、HMAC revision、明确确认、原子不可变回执与原owner恢复；数字329/330细权限分开，旧POST保存不隐式获得启停或删除。物理删除保留所有管理员原CSV及全行，只有精确v3 committed七列证据能解释真实缺行，快照不授予权限。现代写、旧角色form/POST及旧staff均先核对全部存储ID；未知缺行、外域、畸形或空CSV段拒绝，不以过滤方式放行。删除证据必须匹配原引用层级，旧下一层级业务严格核对真实角色level；现代既有真实角色level语义保持。已删除身份原名称禁选显示，旧staff须明确移除并保留真实可委派角色。
+
+v3在精确v2整库profiles上只变更两个CHECK及新增现有Admin的`DELETE public.system_role`，App ACL保持；普通LOGIN、schema/ACL漂移、提前grant、缺grant及异常写后验证都拒绝，维护与DML异常回滚。该新增DELETE不在旧d373待授权发布范围内，尚未生产应用；既有临时维护模板仍仅原v1/v2范围。
+
+本批554唯一测试实际通过：Worker相关16文件372项＋上游四文件64项、真实PG16四文件34项（角色1＋升级5＋优惠券8＋Supplier20）、Admin角色20＋staff23共43项、UniApp checkout38＋parser3共41项。整合后旧回归31输入精确同字节，仅两文件末尾空行差异已逐SHA证明；不重复计前次结果。Worker两组完整类型、Admin/UniApp类型与构建及API本地dry-run均实际0。UniApp独立物理安装按原lock恢复，五消费者实际parser7.1.6，H5共320产物逐一核验；首次H5原生realpath权限失败及同参数重跑记录保留。桌面/手机另有36检查、32截图、80实际资源匹配Admin265产物。已删除staff ID保留→显式移除→七字段PUT roles[7]有浏览器夹具证据，真实PG与网络夹具证明分列；最终fixtures0且独立pg_ctl退出3，自有测试服务已停，所有PGdata和失败记录保留。
+
+在本地私有候选中正常合并精确公开main `2e1bda25`，保留其优惠券overlay、Supplier整组选中、UniApp待确认查看订单和parser7.1.6修复，原冻结d373及primary保持。静态CLI为 **PHP1904/Worker2385、925匹配中904可执行/21受控不可用；979原始缺口减17退役为962可行动缺口（Admin894/API11/Supplier49/ERP8）**。五条新handler两base共10注册，仅两canonical抵扣旧缺口964→962；Admin621调用/653变体全可执行，0未注册/未解析/受控不可用。
+
+Checklist全部404复选行保持249完成/155开放，旧角色创建/编辑未知结果、完整旧Vue兼容、旧可配置密码及生产角色/规模/Hyperdrive验收继续开放。当前候选公开推送、自身完整CI、合并和部署未执行。详见[本批合同](workers-ts/docs/legacy-role-operations-contract-20261009.md)、[验证账本](workers-ts/audit/legacy-role-operations-validation-20261009.json)、[路由快照](workers-ts/audit/route-parity-legacy-role-operations-followup-20261009.json)及[Admin调用快照](workers-ts/audit/admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json)；下方旧批次为历史记录。
+
 ## 当前增量：旧平台管理员完整写入与回执恢复（2026-10-09，本地验证完成，未发布）
 
 恢复旧管理员 create/edit 表单、POST创建、PUT七字段编辑、独立PUT启停与DELETE软删除六个canonical URL，并提供同handler的v1别名。当前actor实时限定平台、下一层级且不操作本人；数字角色全量验证、不丢弃未知/外域权限，账号/电话在共同屏障内判断唯一性。七字段body配合四个明确确认头，专用预览、三类操作、原子不可变回执与原owner恢复独立于现代三种操作；旧Vue尚未升级，不以受控拒绝旧裸写入代替完整旧兼容验收。
