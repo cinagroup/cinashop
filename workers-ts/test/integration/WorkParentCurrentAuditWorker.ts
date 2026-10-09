@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { createDbFromConnectionString } from '@/lib/di';
 import { auditWorkParentIdentityPermissions } from '@/migrations/auditWorkParentIdentityPermissions';
+import { auditWorkParentCapacityStats } from '@/migrations/auditWorkParentCapacityStats';
 
 interface WorkParentCurrentAuditEnv {
   HYPERDRIVE: Hyperdrive;
@@ -47,13 +48,18 @@ export default {
       const permission = await auditWorkParentIdentityPermissions(db, 'public', 'shared-shop', {
         role: expectedRole, database: expectedDatabase,
       });
+      const capacity = permission.identityMatch === true
+        ? await auditWorkParentCapacityStats(db, { role: expectedRole, database: expectedDatabase })
+        : null;
       const identityMatch = permission.identityMatch === true;
       const result = {
         scope: 'work-parent-current-app' as const,
         identityMatch,
-        ready: identityMatch && permission.ready === true,
+        ready: identityMatch && permission.ready === true
+          && capacity?.identityMatch === true && capacity.catalogMatch === true,
         checks: permission.checks,
         failures: permission.failures,
+        capacity,
       };
       await db.$client.end({ timeout: 1 });
       db = undefined;

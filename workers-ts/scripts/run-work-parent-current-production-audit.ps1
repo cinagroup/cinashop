@@ -221,6 +221,8 @@ try {
         'noParentRemovalOrTriggerCreation','noReferencedKeyUpdate','noReplicationBypass',
         'noUnreviewedDefinerRoutine','parentReadAccess') | Sort-Object -CaseSensitive )
     $taskFailures = @($taskRaw.failures)
+    $taskCapacity = $taskRaw.capacity
+    $taskSafeCapacity = $null
     if ($taskRaw.identityMatch) {
         if ($null -eq $taskRaw.checks) { throw 'Expected permission checks missing.' }
         $taskActualChecks = @($taskRaw.checks.PSObject.Properties.Name | Sort-Object -CaseSensitive)
@@ -236,12 +238,96 @@ try {
         $taskExpectedFailures = @( $taskSafeChecks.GetEnumerator() |
             Where-Object Value -eq $false | ForEach-Object Key | Sort-Object -CaseSensitive )
         if ((@($taskFailures | Sort-Object -CaseSensitive) -join '|') -cne
-            ($taskExpectedFailures -join '|') -or $taskRaw.ready -ne ($taskExpectedFailures.Count -eq 0)) {
+            ($taskExpectedFailures -join '|')) {
             throw 'Permission failures do not match boolean checks.'
+        }
+        if ($null -eq $taskCapacity -or
+            $taskCapacity.scope -cne 'work-parent-capacity-metadata-only' -or
+            $taskCapacity.identityMatch -isnot [bool] -or
+            $taskCapacity.catalogMatch -isnot [bool]) {
+            throw 'Capacity metadata envelope differs.'
+        }
+        $taskSafeCapacity = [ordered]@{
+            scope = 'work-parent-capacity-metadata-only'
+            identityMatch = [bool]$taskCapacity.identityMatch
+            catalogMatch = [bool]$taskCapacity.catalogMatch
+            tables = $null; index = $null; statisticsTargets = $null
+        }
+        if ($taskCapacity.catalogMatch) {
+            if (-not $taskCapacity.identityMatch -or $null -eq $taskCapacity.tables -or
+                $null -eq $taskCapacity.index -or $null -eq $taskCapacity.statisticsTargets) {
+                throw 'Complete capacity metadata lacks its identity or sections.'
+            }
+            $taskTableNames = @('work_callback_event','work_client_current','work_contact_action_outbox')
+            if ((@($taskCapacity.tables.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                ($taskTableNames -join '|')) { throw 'Capacity table names differ.' }
+            $taskSafeTables = [ordered]@{}
+            $taskNumberFields = @('estimatedRows','liveRowsEstimate','modificationsSinceAnalyze',
+                'heapBytes','indexBytes','totalBytes','lastAnalyzeMs','lastAutoanalyzeMs')
+            foreach ($taskTable in $taskTableNames) {
+                $taskValues = $taskCapacity.tables.$taskTable
+                if ($null -eq $taskValues -or
+                    (@($taskValues.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                    (@($taskNumberFields | Sort-Object -CaseSensitive) -join '|')) {
+                    throw 'Capacity table field names differ.'
+                }
+                $taskSafeNumbers = [ordered]@{}
+                foreach ($taskField in $taskNumberFields) {
+                    $taskValue = $taskValues.$taskField
+                    if ($null -ne $taskValue -and ($taskValue -isnot [string] -or
+                        $taskValue -cnotmatch '^\d{1,20}$')) {
+                        throw 'Capacity table field is not a bounded decimal.'
+                    }
+                    if ($taskField -in @('heapBytes','indexBytes','totalBytes') -and $null -eq $taskValue) {
+                        throw 'Capacity table size is missing.'
+                    }
+                    $taskSafeNumbers[$taskField] = $taskValue
+                }
+                $taskSafeTables[$taskTable] = $taskSafeNumbers
+            }
+            $taskIndex = $taskCapacity.index
+            if ((@($taskIndex.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                'bytes|estimatedRows|exact|name' -or $taskIndex.name -cne 'wcao_client_ref' -or
+                $taskIndex.exact -isnot [bool] -or $taskIndex.exact -ne $true -or
+                $taskIndex.bytes -isnot [string] -or
+                $taskIndex.bytes -cnotmatch '^\d{1,20}$' -or
+                ($null -ne $taskIndex.estimatedRows -and
+                    ($taskIndex.estimatedRows -isnot [string] -or
+                     $taskIndex.estimatedRows -cnotmatch '^\d{1,20}$'))) {
+                throw 'Capacity index metadata differs.'
+            }
+            $taskColumnNames = @('client_id','corp_id')
+            if ((@($taskCapacity.statisticsTargets.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                ($taskColumnNames -join '|')) { throw 'Capacity statistics target names differ.' }
+            $taskSafeTargets = [ordered]@{}
+            foreach ($taskColumn in $taskColumnNames) {
+                $taskTarget = $taskCapacity.statisticsTargets.$taskColumn
+                if ((@($taskTarget.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                    'configured|effective' -or
+                    $taskTarget.configured -isnot [long] -or $taskTarget.effective -isnot [long] -or
+                    $taskTarget.configured -lt -1 -or $taskTarget.configured -gt 10000 -or
+                    $taskTarget.effective -lt 0 -or $taskTarget.effective -gt 10000) {
+                    throw 'Capacity statistics target differs.'
+                }
+                $taskSafeTargets[$taskColumn] = [ordered]@{
+                    configured = [int]$taskTarget.configured; effective = [int]$taskTarget.effective }
+            }
+            $taskSafeCapacity.tables = $taskSafeTables
+            $taskSafeCapacity.index = [ordered]@{ name = 'wcao_client_ref'; exact = $true;
+                estimatedRows = $taskIndex.estimatedRows; bytes = $taskIndex.bytes }
+            $taskSafeCapacity.statisticsTargets = $taskSafeTargets
+        } elseif ($null -ne $taskCapacity.tables -or $null -ne $taskCapacity.index -or
+            $null -ne $taskCapacity.statisticsTargets) {
+            throw 'Incomplete capacity metadata exposed sections.'
+        }
+        if ($taskRaw.ready -ne ($taskExpectedFailures.Count -eq 0 -and
+            $taskCapacity.identityMatch -and $taskCapacity.catalogMatch)) {
+            throw 'Combined permission and capacity readiness differs.'
         }
     } else {
         if ($null -ne $taskRaw.checks -or $taskRaw.ready -ne $false -or
-            $taskFailures.Count -ne 1 -or $taskFailures[0] -cne 'connectionIdentityMismatch') {
+            $taskFailures.Count -ne 1 -or $taskFailures[0] -cne 'connectionIdentityMismatch' -or
+            $null -ne $taskCapacity) {
             throw 'Backend identity mismatch shape differs.'
         }
         $taskSafeChecks = $null
@@ -250,7 +336,7 @@ try {
     # unexpectedly contains extra fields or text.
     $taskResult = [ordered]@{ scope = 'work-parent-current-app';
         identityMatch = [bool]$taskRaw.identityMatch; ready = [bool]$taskRaw.ready;
-        checks = $taskSafeChecks; failures = $taskFailures }
+        checks = $taskSafeChecks; failures = $taskFailures; capacity = $taskSafeCapacity }
     $taskStage = 'audit-completed'
 } catch {
     # Do not print raw HTTP, Wrangler or database exceptions: they can contain
