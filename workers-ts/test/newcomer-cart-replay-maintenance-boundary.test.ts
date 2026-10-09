@@ -46,7 +46,8 @@ describe('FE-003D temporary maintenance HTTP boundary', () => {
   it('rejects missing authority, wrong method, query, body and SQL digest before any DB connection', async () => {
     const bindings = await env();
     const request = (path: string, method = 'GET', headers: Record<string, string> = {}, body?: string) =>
-      worker.fetch(new Request(`${url}${path}`, { method, headers, ...(body !== undefined ? { body } : {}) }), bindings);
+      worker.fetch(new Request(`${url}${path}`, { method, headers,
+        ...(body !== undefined ? { body } : {}) }), bindings);
     expect((await request('/preflight')).status).toBe(403);
     expect((await request('/apply', 'GET', { 'X-Audit-Token': token })).status).toBe(405);
     expect((await request('/preflight?sql=none', 'GET', { 'X-Audit-Token': token })).status).toBe(404);
@@ -58,12 +59,83 @@ describe('FE-003D temporary maintenance HTTP boundary', () => {
     expect((await request('/apply', 'POST', { 'X-Audit-Token': token })).status).toBe(400);
     expect((await request('/apply', 'POST', { 'X-Audit-Token': token,
       'X-Migration-Operation': NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION }, '{}')).status).toBe(400);
+    const operationHeaders = { 'X-Audit-Token': token,
+      'X-Migration-Operation': NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION,
+      'X-Preflight-SHA256': bindings.APPROVED_PREFLIGHT_SHA256 };
+    expect((await request('/apply', 'POST', { ...operationHeaders,
+      'X-Migration-Operation': 'other' })).status).toBe(400);
+    expect((await request('/apply', 'POST', operationHeaders, '')).status).toBe(400);
+    expect((await request('/apply', 'POST', { ...operationHeaders,
+      'Content-Length': '1' }, '')).status).toBe(400);
+    expect((await request('/apply', 'POST', { ...operationHeaders,
+      'Content-Length': '0', 'Transfer-Encoding': 'chunked' }, '')).status).toBe(400);
+    expect((await request('/apply', 'POST', { ...operationHeaders,
+      'Content-Length': '0' }, '{}')).status).toBe(400);
+    const zeroByteStream = new Request(`${url}/apply`, { method: 'POST',
+      headers: { ...operationHeaders, 'Content-Length': '0' }, body: '' });
+    expect(zeroByteStream.body).not.toBeNull();
+    const emptyStreamReply = await worker.fetch(zeroByteStream, bindings);
+    expect(emptyStreamReply.status).toBe(503);
+    expect(await emptyStreamReply.json()).toMatchObject({
+      error: 'reviewed installation SQL digest mismatch',
+    });
     const mismatch = await request('/apply', 'POST', { 'X-Audit-Token': token,
       'X-Migration-Operation': NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION });
     expect(mismatch.status).toBe(503);
     expect(await mismatch.json()).toMatchObject({ error: 'reviewed installation SQL digest mismatch' });
     expect(mismatch.headers.get('Cache-Control')).toBe('no-store');
   });
+
+  it('rejects inconsistent framing before a body read or any DB connection', async () => {
+    const bindings = await env();
+    bindings.APPLY_ARMED = 'true';
+    bindings.APPROVED_PREFLIGHT_SHA256 = 'e'.repeat(64);
+    const operationHeaders = { 'X-Audit-Token': token,
+      'X-Migration-Operation': NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION,
+      'X-Preflight-SHA256': bindings.APPROVED_PREFLIGHT_SHA256 };
+    const read = vi.fn();
+    const framing: Record<string, string>[] = [
+      {}, { 'Content-Length': '1' }, { 'Content-Length': '00' },
+      { 'Content-Length': '0', 'Transfer-Encoding': 'chunked' },
+      { 'Content-Length': '0', 'Transfer-Encoding': '' },
+    ];
+    for (const extra of framing) {
+      const request = new Request(`${url}/apply`, { method: 'POST',
+        headers: { ...operationHeaders, ...extra },
+        body: new ReadableStream<Uint8Array>({ pull: read }, { highWaterMark: 0 }),
+        duplex: 'half',
+      } as RequestInit & { duplex: 'half' });
+      expect((await worker.fetch(request, bindings)).status).toBe(400);
+      expect(request.body!.locked).toBe(false);
+    }
+    expect(read).not.toHaveBeenCalled();
+    for (const extra of framing.slice(1)) {
+      const request = new Request(`${url}/apply`, {
+        method: 'POST', headers: { ...operationHeaders, ...extra },
+      });
+      expect(request.body).toBeNull();
+      expect((await worker.fetch(request, bindings)).status).toBe(400);
+    }
+  });
+
+  it('rejects locked and stalled body streams before any DB connection', async () => {
+    const bindings = await env();
+    bindings.APPLY_ARMED = 'true';
+    bindings.APPROVED_PREFLIGHT_SHA256 = 'e'.repeat(64);
+    const headers = { 'X-Audit-Token': token,
+      'X-Migration-Operation': NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION,
+      'X-Preflight-SHA256': bindings.APPROVED_PREFLIGHT_SHA256,
+      'Content-Length': '0' };
+    const locked = new Request(`${url}/apply`, { method: 'POST', headers, body: '' });
+    const reader = locked.body!.getReader();
+    try { expect((await worker.fetch(locked, bindings)).status).toBe(400); }
+    finally { reader.releaseLock(); }
+
+    const stalled = new Request(`${url}/apply`, { method: 'POST', headers,
+      body: new ReadableStream<Uint8Array>(), duplex: 'half',
+    } as RequestInit & { duplex: 'half' });
+    expect((await worker.fetch(stalled, bindings)).status).toBe(400);
+  }, 10_000);
 });
 
 
@@ -72,6 +144,7 @@ describe('FE-003D actual empty POST stream boundary', () => {
     'X-Audit-Token': token,
     'X-Migration-Operation': NEWCOMER_CART_REPLAY_MAINTENANCE_OPERATION,
     'X-Preflight-SHA256': 'e'.repeat(64),
+    'Content-Length': '0',
   };
   async function applyBody(body?: string | ReadableStream<Uint8Array>, signal?: AbortSignal) {
     const bindings = await env();
@@ -85,11 +158,13 @@ describe('FE-003D actual empty POST stream boundary', () => {
     const response = await applyBody(body);
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: 'reviewed installation SQL digest mismatch' });
+    if (body instanceof ReadableStream) expect(body.locked).toBe(false);
   }
   async function rejectedBeforeDb(body: ReadableStream<Uint8Array>, signal?: AbortSignal) {
     const response = await applyBody(body, signal);
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'explicit operation and empty body required' });
+    expect(body.locked).toBe(false);
   }
   it('accepts omitted body, explicit empty string, EOF stream and zero-byte chunks followed by EOF', async () => {
     await acceptedBeforeDb();
@@ -98,6 +173,14 @@ describe('FE-003D actual empty POST stream boundary', () => {
     await acceptedBeforeDb(new ReadableStream({ start(controller) {
       controller.enqueue(new Uint8Array()); controller.enqueue(new Uint8Array()); controller.close();
     } }));
+  });
+  it('requires EOF within the 32-read budget', async () => {
+    const empty = (chunks: number) => new ReadableStream<Uint8Array>({ start(controller) {
+      for (let index = 0; index < chunks; index++) controller.enqueue(new Uint8Array());
+      controller.close();
+    } });
+    await acceptedBeforeDb(empty(31));
+    await rejectedBeforeDb(empty(32));
   });
   it('rejects the first non-empty chunk and cancels remaining content', async () => {
     const cancelled = vi.fn();
@@ -133,6 +216,12 @@ describe('FE-003D actual empty POST stream boundary', () => {
     const abort = new AbortController(); abort.abort();
     await rejectedBeforeDb(new ReadableStream<Uint8Array>(), abort.signal);
   });
+  it('rejects an already-aborted request even when its body is omitted', async () => {
+    const abort = new AbortController(); abort.abort();
+    const response = await applyBody(undefined, abort.signal);
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'explicit operation and empty body required' });
+  });
   it('rejects an abort during a pending read and cancels it', async () => {
     const abort = new AbortController(), cancelled = vi.fn();
     const pending = rejectedBeforeDb(new ReadableStream<Uint8Array>({ cancel: cancelled }), abort.signal);
@@ -152,6 +241,13 @@ describe('FE-003D actual empty POST stream boundary', () => {
     }));
     expect(cancelled).toHaveBeenCalledOnce();
   });
+  it('returns without awaiting a cancellation that never settles', async () => {
+    const cancelled = vi.fn(() => new Promise<void>(() => {}));
+    await rejectedBeforeDb(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(new Uint8Array([1])); }, cancel: cancelled,
+    }));
+    expect(cancelled).toHaveBeenCalledOnce();
+  }, 2_000);
   it('preserves unarmed, authority and explicit-operation guards before a body read', async () => {
     const bindings = await env(), read = vi.fn();
     const body = () => new ReadableStream<Uint8Array>({ pull: read }, { highWaterMark: 0 });
