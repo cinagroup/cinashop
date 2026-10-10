@@ -13,7 +13,8 @@ param(
         'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
         'actual-stderr-url','actual-oversize','actual-nonzero-auth','actual-nonzero-stdout-auth','actual-nonzero-rate',
         'actual-nonzero-network','actual-nonzero-private','actual-nonzero-ambiguous',
-        'actual-nonzero-oversize')]
+        'actual-nonzero-oversize','post-put-subdomain-disabled','post-put-subdomain-unavailable',
+        'post-put-subdomain-malformed','post-put-subdomain-oversize','post-put-public-404')]
     [string]$Scenario = 'all',
     [string]$TracePath
 )
@@ -32,7 +33,8 @@ if ($Scenario -eq 'all') {
         'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
         'actual-stderr-url','actual-oversize','actual-nonzero-auth','actual-nonzero-stdout-auth','actual-nonzero-rate',
         'actual-nonzero-network','actual-nonzero-private','actual-nonzero-ambiguous',
-        'actual-nonzero-oversize')
+        'actual-nonzero-oversize','post-put-subdomain-disabled','post-put-subdomain-unavailable',
+        'post-put-subdomain-malformed','post-put-subdomain-oversize','post-put-public-404')
     foreach ($taskCase in $taskCases) {
         $taskTrace = Join-Path $env:TEMP ('db009g-city-fk-runner-' + [Guid]::NewGuid().ToString('N') + '.txt')
         try {
@@ -106,7 +108,9 @@ if ($Scenario -eq 'all') {
                     $taskDeploys -ne 1 -or $taskDeletes -ne 1) {
                     throw 'Success simulation failed.'
                 }
-            } elseif ($taskCase -in @('deploy-failed','deploy-url-missing','request-failed','request-timeout',
+            } elseif ($taskCase -in @('deploy-failed','deploy-url-missing','post-put-subdomain-disabled',
+                'post-put-subdomain-unavailable','post-put-subdomain-malformed',
+                'post-put-subdomain-oversize','post-put-public-404','request-failed','request-timeout',
                 'header-missing','malformed-json','malformed-shape','worker-catalog-503',
                 'formal-postflight-drift','deploy-hung-after-upload')) {
                 if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
@@ -138,6 +142,26 @@ if ($Scenario -eq 'all') {
                 }
                 if (($taskOutput -join "`n") -match 'private-connection-or-sql') {
                     throw "$taskCase leaked a synthetic private marker."
+                }
+                if ($taskCase -in @('deploy-failed','deploy-url-missing','post-put-subdomain-disabled',
+                    'post-put-subdomain-unavailable','post-put-subdomain-malformed',
+                    'post-put-subdomain-oversize','post-put-public-404')) {
+                    $taskPostPut = $taskReceipt.deployDiagnostic.postPut
+                    $taskExpectedWorkersDev = switch ($taskCase) {
+                        'post-put-subdomain-disabled' { 'disabled' }
+                        'post-put-subdomain-unavailable' { 'unobserved' }
+                        'post-put-subdomain-malformed' { 'malformed' }
+                        'post-put-subdomain-oversize' { 'oversize' }
+                        default { 'enabled' }
+                    }
+                    $taskExpectedPublic = if ($taskCase -ceq 'post-put-public-404') { '404' } else { '403' }
+                    if ((@($taskPostPut.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                            'deployment|public|script|workersDev' -or
+                        (@($taskPostPut.script,$taskPostPut.deployment,$taskPostPut.workersDev,
+                            $taskPostPut.public) -join '|') -cne
+                            (@('200','200',$taskExpectedWorkersDev,$taskExpectedPublic) -join '|')) {
+                        throw "$taskCase post-PUT projection differs."
+                    }
                 }
                 if ($taskCase -ceq 'deploy-failed' -and
                     ($taskReceipt.deployDiagnostic.outcome -cne 'cli-nonzero' -or
@@ -432,7 +456,7 @@ function New-ApiResponse {
 function Start-Sleep { param([int]$Seconds) }
 function Invoke-WebRequest {
     param([string]$Uri,[string]$Method='GET',[hashtable]$Headers,
-        [switch]$SkipHttpErrorCheck,[int]$TimeoutSec)
+        [switch]$SkipHttpErrorCheck,[int]$TimeoutSec,[int]$MaximumRedirection)
     if ($Method -cne 'GET' -and $Method -cne 'POST') { throw 'Unexpected mock HTTP method.' }
     if ($Uri -match '/workers/scripts/cinashop-api/deployments$') {
         $script:formalReadCount++
@@ -493,6 +517,23 @@ function Invoke-WebRequest {
             return New-ApiResponse @{ deployments = @(@{ id = 'temporary-deployment';
                 created_on = '2026-10-09T00:00:00Z'; versions = @(@{ percentage = 100; version_id = $taskVersion }) }) }
         }
+        if ($taskSuffix -eq '/subdomain') {
+            if ($Scenario -eq 'post-put-subdomain-unavailable') {
+                throw [TimeoutException]::new('private-connection-or-sql')
+            }
+            if ($Scenario -eq 'post-put-subdomain-malformed') {
+                return New-Response -Status 200 -Body @{ success = $true;
+                    result = @{ enabled = 'private-connection-or-sql' };
+                    private = 'private-connection-or-sql' }
+            }
+            if ($Scenario -eq 'post-put-subdomain-oversize') {
+                $taskOversize = New-Response -Status 200
+                $taskOversize.Content = ('x' * 8193) + 'private-connection-or-sql'
+                return $taskOversize
+            }
+            return New-ApiResponse @{ enabled = ($Scenario -ne 'post-put-subdomain-disabled');
+                previews_enabled = $false }
+        }
         if ($taskSuffix -match '^/versions/(?<version>[0-9a-f-]{36})$') {
             if ($Scenario -in @('owned-version-transient','ownership-read-unavailable')) {
                 $script:versionReadCount++
@@ -520,6 +561,9 @@ function Invoke-WebRequest {
     if ($Uri -match '^https://cinashop-city-binding-fk-current-audit-[0-9a-f]{16}\.cinagroup\.workers\.dev(?<path>.*)$') {
         if (-not $script:deployed) { return New-Response -Status 404 }
         $taskPath = $Matches.path
+        if ($Scenario -eq 'post-put-public-404' -and -not $Headers.ContainsKey('X-Audit-Token')) {
+            return New-Response -Status 404
+        }
         if (-not $Headers.ContainsKey('X-Audit-Token')) { return New-Response -Status 403 }
         if ($taskPath -cne '/city-binding-fk') { return New-Response -Status 404 }
         if ($Method -cne 'GET') { return New-Response -Status 405 }
@@ -590,7 +634,9 @@ function node {
         if ($env:WRANGLER_LOG_PATH) {
             [IO.File]::WriteAllText($env:WRANGLER_LOG_PATH,'synthetic-private-cli-log')
         }
-        if ($Scenario -eq 'deploy-failed') { $global:LASTEXITCODE = 1; return 'simulated deployment error' }
+        if ($Scenario -eq 'deploy-failed' -or $Scenario -like 'post-put-*') {
+            $global:LASTEXITCODE = 1; return 'simulated deployment error'
+        }
         if ($Scenario -eq 'deploy-url-missing') {
             $global:LASTEXITCODE = 0
             return 'https://unexpected.invalid'
