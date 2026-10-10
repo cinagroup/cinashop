@@ -8,7 +8,9 @@ param(
         'cleanup-presence-transient','ownership-read-unavailable',
         'control-404-transient','control-404-unavailable','marker-drift','binding-drift',
         'catalog-identity-drift','catalog-definition-drift','catalog-malformed-number',
-        'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift')]
+        'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
+        'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
+        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout')]
     [string]$Scenario = 'all',
     [string]$TracePath
 )
@@ -22,12 +24,24 @@ if ($Scenario -eq 'all') {
         'cleanup-presence-transient','ownership-read-unavailable',
         'control-404-transient','control-404-unavailable','marker-drift','binding-drift',
         'catalog-identity-drift','catalog-definition-drift','catalog-malformed-number',
-        'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift')
+        'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
+        'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
+        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout')
     foreach ($taskCase in $taskCases) {
         $taskTrace = Join-Path $env:TEMP ('db009g-city-fk-runner-' + [Guid]::NewGuid().ToString('N') + '.txt')
         try {
             $taskOutput = & pwsh -NoProfile -File $PSCommandPath -Scenario $taskCase -TracePath $taskTrace 2>&1
             $taskExit = $LASTEXITCODE
+            if ($taskCase -ceq 'process-tree-timeout') {
+                $taskProcessEvidence = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 4
+                if ($taskExit -ne 0 -or $taskProcessEvidence.deployStopped -ne $true -or
+                    $taskProcessEvidence.deleteStopped -ne $true -or
+                    $taskProcessEvidence.ownedOutputRemoved -ne $true) {
+                    throw 'Bounded child-tree process test failed.'
+                }
+                "$taskCase`: pass"
+                continue
+            }
             $taskReceipt = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 20
             $taskCalls = if (Test-Path -LiteralPath $taskTrace) {
                 @(Get-Content -LiteralPath $taskTrace)
@@ -45,7 +59,7 @@ if ($Scenario -eq 'all') {
                 }
             } elseif ($taskCase -in @('deploy-failed','request-failed','request-timeout',
                 'header-missing','malformed-json','malformed-shape','worker-catalog-503',
-                'formal-postflight-drift')) {
+                'formal-postflight-drift','deploy-hung-after-upload')) {
                 if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
                     $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
@@ -80,6 +94,44 @@ if ($Scenario -eq 'all') {
                     $taskReceipt.cleanup.deleted -ne $false -or
                     $taskReceipt.failure -cne 'Temporary Worker cleanup needs independent verification.') {
                     throw 'Unverified temporary Worker was deleted or accepted.'
+                }
+            } elseif ($taskCase -eq 'delete-hung-before-removal') {
+                if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
+                    $taskDeploys -ne 1 -or $taskDeletes -ne 0 -or
+                    $taskReceipt.cleanup.deleted -ne $false -or
+                    $taskReceipt.cleanup.controlPlane404 -ne $false -or
+                    $taskReceipt.cleanup.public404 -ne $false -or
+                    $taskReceipt.failure -cne 'Temporary Worker cleanup needs independent verification.' -or
+                    -not $taskReceipt.workerName) {
+                    throw 'Hung deletion lacked bounded failure and manual cleanup target.'
+                }
+            } elseif ($taskCase -eq 'delete-hung-after-removal') {
+                if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
+                    $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
+                    $taskReceipt.cleanup.deleted -ne $false -or
+                    $taskReceipt.cleanup.controlPlane404 -ne $true -or
+                    $taskReceipt.cleanup.public404 -ne $true -or
+                    $taskReceipt.failure -cne 'Temporary Worker cleanup needs independent verification.') {
+                    throw 'Timed-out deletion was treated as success or skipped dual-404 checks.'
+                }
+            } elseif ($taskCase -eq 'deploy-kill-unconfirmed') {
+                if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
+                    $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
+                    $taskReceipt.cleanup.processTreeConfirmedStopped -ne $false -or
+                    $taskReceipt.cleanup.controlPlane404 -ne $true -or
+                    $taskReceipt.cleanup.public404 -ne $true -or
+                    $taskReceipt.failure -cne 'Wrangler process tree needs independent verification; inspect the temporary Worker name.' -or
+                    -not $taskReceipt.workerName) {
+                    throw 'Unterminated child tree was accepted as safe cleanup.'
+                }
+            } elseif ($taskCase -eq 'deploy-output-cleanup-failed') {
+                if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
+                    $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
+                    $taskReceipt.cleanup.cliOutputRemoved -ne $false -or
+                    $taskReceipt.cleanup.controlPlane404 -ne $true -or
+                    $taskReceipt.cleanup.public404 -ne $true -or
+                    $taskReceipt.failure -cne 'Current city-binding FK audit could not be fully confirmed.') {
+                    throw 'Output cleanup error masked the primary bounded deployment failure.'
                 }
             } elseif ($taskCase -in @('formal-settings-binding-drift','formal-version-binding-drift')) {
                 if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
@@ -123,6 +175,72 @@ if ($Scenario -eq 'all') {
 }
 
 if (-not $TracePath) { throw 'A local trace path is required for one scenario.' }
+if ($Scenario -ceq 'process-tree-timeout') {
+    $taskSource = Get-Content -Raw -LiteralPath $taskRunner
+    $taskTokens = $null
+    $taskParseErrors = $null
+    $taskAst = [System.Management.Automation.Language.Parser]::ParseInput(
+        $taskSource,[ref]$taskTokens,[ref]$taskParseErrors)
+    $taskDefinitions = @($taskAst.FindAll({ param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+        $node.Name -ceq 'Invoke-BoundedWrangler' },$true))
+    if (@($taskParseErrors).Count -ne 0 -or $taskDefinitions.Count -ne 1) {
+        throw 'Production bounded process function changed.'
+    }
+    . ([ScriptBlock]::Create($taskDefinitions[0].Extent.Text))
+    $taskRoot = Split-Path -Parent $PSScriptRoot
+    $taskCache = Join-Path $taskRoot '.cache'
+    $null = New-Item -ItemType Directory -Force -Path $taskCache
+    $taskName = 'db009g-offline-' + [Guid]::NewGuid().ToString('N')
+    $taskCli = Join-Path $taskCache "$taskName-fixture.cjs"
+    $taskFixture = @'
+const fs = require('node:fs');
+const { spawn } = require('node:child_process');
+const child = spawn(process.execPath,
+  ['-e', `setInterval(() => {}, 1000); // ${process.argv[4]}`],
+  { stdio: 'ignore', windowsHide: true });
+fs.writeFileSync(process.argv[3], String(child.pid));
+setInterval(() => {}, 1000);
+'@
+    [IO.File]::WriteAllText($taskCli,$taskFixture)
+    $taskResults = [ordered]@{ deployStopped = $false; deleteStopped = $false;
+        ownedOutputRemoved = $false }
+    try {
+        foreach ($taskOperation in @('deploy','delete')) {
+            $taskPidFile = Join-Path $taskCache "$taskName-$taskOperation-child.pid"
+            $taskMarker = "db009g-child-$taskName-$taskOperation"
+            $taskStarted = [Diagnostics.Stopwatch]::StartNew()
+            $taskTimedOut = $false
+            try {
+                $null = Invoke-BoundedWrangler -Operation $taskOperation `
+                    -Arguments @($taskPidFile,$taskMarker) -TimeoutMs 500
+            } catch [TimeoutException] { $taskTimedOut = $true }
+            $taskStarted.Stop()
+            if (-not $taskTimedOut -or $taskStarted.ElapsedMilliseconds -gt 10000 -or
+                -not (Test-Path -LiteralPath $taskPidFile)) {
+                throw 'Owned local process did not hit the bounded timeout.'
+            }
+            $taskChildPid = [int](Get-Content -Raw -LiteralPath $taskPidFile)
+            Start-Sleep -Milliseconds 300
+            $taskStillAlive = Get-Process -Id $taskChildPid -ErrorAction SilentlyContinue
+            if ($taskStillAlive) {
+                # This PID came from the just-created, uniquely named local
+                # fixture. Stop it before reporting a failed tree-kill test.
+                Stop-Process -Id $taskChildPid -Force -ErrorAction SilentlyContinue
+                throw 'Bounded wrapper left a child process running.'
+            }
+            $taskResults["${taskOperation}Stopped"] = $true
+            Remove-Item -LiteralPath $taskPidFile -Force
+        }
+        $taskLeftovers = @(Get-ChildItem -LiteralPath $taskCache -File -Filter "$taskName-*.stdout") +
+            @(Get-ChildItem -LiteralPath $taskCache -File -Filter "$taskName-*.stderr")
+        $taskResults.ownedOutputRemoved = $taskLeftovers.Count -eq 0
+    } finally {
+        if (Test-Path -LiteralPath $taskCli) { Remove-Item -LiteralPath $taskCli -Force }
+    }
+    $taskResults | ConvertTo-Json -Compress
+    exit 0
+}
 $env:CLOUDFLARE_API_TOKEN = 'synthetic-local-test-token'
 $script:deployed = $false
 $script:workerName = $null
@@ -345,6 +463,48 @@ $taskMockSha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData(
     [Text.Encoding]::UTF8.GetBytes(($taskProjection -join "`n")))).ToLowerInvariant()
 $taskSource = $taskSource.Replace($taskProductionSha,$taskMockSha).Replace(
     $taskRootExpression,'$taskRoot = Split-Path -Parent $taskRunnerDir')
+$taskTokens = $null
+$taskParseErrors = $null
+$taskAst = [System.Management.Automation.Language.Parser]::ParseInput(
+    $taskSource,[ref]$taskTokens,[ref]$taskParseErrors)
+$taskBoundedDefinitions = @($taskAst.FindAll({ param($node)
+    $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+    $node.Name -ceq 'Invoke-BoundedWrangler' },$true))
+if (@($taskParseErrors).Count -ne 0 -or $taskBoundedDefinitions.Count -ne 1) {
+    throw 'Reviewed bounded Wrangler function is missing or invalid.'
+}
+$taskMockBounded = @'
+function Invoke-BoundedWrangler {
+    param([ValidateSet('deploy','delete')][string]$Operation,[string[]]$Arguments,
+        [int]$TimeoutMs = 0)
+    if ($Operation -ceq 'delete' -and $Scenario -ceq 'delete-hung-before-removal') {
+        Add-Content -LiteralPath $TracePath -Value 'delete-attempt-hung'
+        throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
+    }
+    $taskOutput = & node $taskCli $Operation @Arguments
+    if ($LASTEXITCODE -ne 0) { throw 'Synthetic Wrangler operation failed.' }
+    if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-hung-after-upload') {
+        throw [TimeoutException]::new('Synthetic bounded deployment deadline.')
+    }
+    if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-kill-unconfirmed') {
+        $script:taskProcessTreeUncertain = $true
+        throw [TimeoutException]::new('Synthetic child-tree termination failure.')
+    }
+    if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-output-cleanup-failed') {
+        $script:taskCliOutputCleanupFailed = $true
+        throw [TimeoutException]::new('Synthetic bounded deployment deadline.')
+    }
+    if ($Operation -ceq 'delete' -and $Scenario -ceq 'delete-hung-after-removal') {
+        throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
+    }
+    if ($Operation -ceq 'deploy') { return $taskOutput }
+    return $true
+}
+'@
+$taskDefinition = $taskBoundedDefinitions[0].Extent
+$taskSource = $taskSource.Remove($taskDefinition.StartOffset,
+    $taskDefinition.EndOffset-$taskDefinition.StartOffset).Insert(
+    $taskDefinition.StartOffset,$taskMockBounded)
 $taskRunnerDir = $PSScriptRoot
 . ([ScriptBlock]::Create($taskSource))
 exit $LASTEXITCODE

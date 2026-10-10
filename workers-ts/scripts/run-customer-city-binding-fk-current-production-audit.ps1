@@ -37,6 +37,8 @@ $taskDeleted = $false
 $taskControlMissing = $false
 $taskPublicMissing = $false
 $taskMainUnchanged = $false
+$taskProcessTreeUncertain = $false
+$taskCliOutputCleanupFailed = $false
 $taskFormalBefore = $null
 $taskFormalAfter = $null
 $taskResult = $null
@@ -186,6 +188,57 @@ function Test-PublicMissing {
     return $false
 }
 
+function Invoke-BoundedWrangler {
+    param([ValidateSet('deploy','delete')][string]$Operation,[string[]]$Arguments,
+        [int]$TimeoutMs = 0)
+    $taskDeadline = if ($TimeoutMs -gt 0) { $TimeoutMs } elseif ($Operation -ceq 'deploy') { 90000 } else { 45000 }
+    if ($taskDeadline -lt 100 -or $taskDeadline -gt 90000) { throw 'Invalid Wrangler deadline.' }
+    $taskNode = (Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    if (-not $taskNode -or -not (Test-Path -LiteralPath $taskNode -PathType Leaf)) {
+        throw 'Trusted Node executable unavailable.'
+    }
+    $taskOutputId = [Guid]::NewGuid().ToString('N')
+    $taskStdout = Join-Path $taskRoot ".cache/$taskName-$Operation-$taskOutputId.stdout"
+    $taskStderr = Join-Path $taskRoot ".cache/$taskName-$Operation-$taskOutputId.stderr"
+    $taskProcess = $null
+    try {
+        # Start-Process redirects to owned files, avoiding pipe-buffer deadlock.
+        # Argument values are fixed config paths, random hex, or fixed flags.
+        $taskProcessArguments = @(('"' + $taskCli + '"'),$Operation) + $Arguments
+        $taskProcess = Start-Process -FilePath $taskNode -ArgumentList $taskProcessArguments `
+            -WorkingDirectory $taskRoot -RedirectStandardOutput $taskStdout `
+            -RedirectStandardError $taskStderr -WindowStyle Hidden -PassThru
+        if (-not $taskProcess.WaitForExit($taskDeadline)) {
+            $taskTreeStopped = $false
+            try {
+                $taskProcess.Kill($true)
+                $taskTreeStopped = $taskProcess.WaitForExit(5000)
+            } catch { }
+            if (-not $taskTreeStopped) {
+                $script:taskProcessTreeUncertain = $true
+                throw 'Wrangler process tree could not be terminated within the deadline.'
+            }
+            throw [TimeoutException]::new('Wrangler process exceeded its wall-clock deadline.')
+        }
+        if ($taskProcess.ExitCode -ne 0) { throw 'Wrangler operation did not complete successfully.' }
+        if ($Operation -ceq 'deploy') {
+            if ((Get-Item -LiteralPath $taskStdout).Length -gt 65536) {
+                throw 'Wrangler deployment output exceeded reviewed bounds.'
+            }
+            return Get-Content -Raw -LiteralPath $taskStdout
+        }
+        return $true
+    } finally {
+        if ($taskProcess) { $taskProcess.Dispose() }
+        foreach ($taskFile in @($taskStdout,$taskStderr)) {
+            if (Test-Path -LiteralPath $taskFile) {
+                try { Remove-Item -LiteralPath $taskFile -Force }
+                catch { $script:taskCliOutputCleanupFailed = $true }
+            }
+        }
+    }
+}
+
 try {
     $taskParsed = Get-Content -Raw -LiteralPath $taskConfig | ConvertFrom-Json
     $taskConfigKeys = @($taskParsed.PSObject.Properties.Name | Sort-Object -CaseSensitive)
@@ -220,11 +273,11 @@ try {
     }
     $taskStage = 'deploy'
     $taskAttempted = $true
-    $taskDeploy = & node $taskCli deploy --config $taskConfig --name $taskName `
-        --var "AUDIT_TOKEN_SHA256:$taskTokenHash" --var "AUDIT_EXPIRES_AT:$taskExpiry" `
-        --message $taskMarker 2>&1
-    if ($LASTEXITCODE -ne 0) { throw 'Temporary Worker deployment not confirmed.' }
-    if (($taskDeploy -join "`n") -cnotmatch [regex]::Escape($taskUrl)) { throw 'Expected temporary URL not returned.' }
+    $taskDeploy = Invoke-BoundedWrangler -Operation deploy -Arguments @(
+        '--config',('"' + $taskConfig + '"'),'--name',$taskName,
+        '--var',"AUDIT_TOKEN_SHA256:$taskTokenHash",'--var',"AUDIT_EXPIRES_AT:$taskExpiry",
+        '--message',$taskMarker)
+    if ($taskDeploy -cnotmatch [regex]::Escape($taskUrl)) { throw 'Expected temporary URL not returned.' }
     $taskStage = 'owned-version'
     $taskOwnedVersion = Get-OwnedVersion
     $taskOwnershipVerified = $true
@@ -397,9 +450,12 @@ try {
                 }
                 $taskOwnershipVerified = $true
                 $taskStage = 'cleanup-delete'
-                $taskDelete = & node $taskCli delete $taskName --config $taskConfig --force 2>&1
-                $taskDeleted = $LASTEXITCODE -eq 0
-                if (-not $taskDeleted) { throw 'Temporary Worker deletion not confirmed.' }
+                $taskDeleteFailed = $false
+                try {
+                    $null = Invoke-BoundedWrangler -Operation delete -Arguments @(
+                        $taskName,'--config',('"' + $taskConfig + '"'),'--force')
+                    $taskDeleted = $true
+                } catch { $taskDeleteFailed = $true }
             } elseif ([int]$taskPresent.StatusCode -ne 404 -or $taskOwnedVersion) {
                 throw 'Temporary Worker control-plane state changed.'
             }
@@ -419,10 +475,11 @@ try {
                 if ($taskControlMissing) { break }
                 if ($taskTry -lt 5) { Start-Sleep -Seconds 1 }
             }
-            if (-not $taskControlMissing) { throw 'Temporary Worker control-plane absence not confirmed.' }
             $taskStage = 'cleanup-public-404'
             $taskPublicMissing = Test-PublicMissing
+            if (-not $taskControlMissing) { throw 'Temporary Worker control-plane absence not confirmed.' }
             if (-not $taskPublicMissing) { throw 'Temporary Worker public absence not confirmed.' }
+            if ($taskDeleteFailed) { throw 'Bounded Wrangler deletion did not finish successfully.' }
             $taskStage = $taskStageBeforeCleanup
         } catch {
             $taskFailure = 'Temporary Worker cleanup needs independent verification.'
@@ -445,11 +502,17 @@ try {
     $env:CLOUDFLARE_ACCOUNT_ID = $taskOriginalAccount
     $env:WRANGLER_SEND_METRICS = $taskOriginalMetrics
     $env:WRANGLER_LOG_PATH = $taskOriginalLog
+    if ($taskProcessTreeUncertain) {
+        $taskFailure = 'Wrangler process tree needs independent verification; inspect the temporary Worker name.'
+    } elseif ($taskCliOutputCleanupFailed -and -not $taskFailure) {
+        $taskFailure = 'Wrangler temporary output cleanup needs independent verification.'
+    }
 }
 
 $taskSuccess = $taskStage -eq 'audit-completed' -and -not $taskFailure -and
     $taskOwnershipVerified -and $taskDeleted -and $taskControlMissing -and $taskPublicMissing -and
-    $taskMainUnchanged -and $taskResult.audit.identityMatch -eq $true -and $taskResult.ready -eq $true
+    $taskMainUnchanged -and -not $taskProcessTreeUncertain -and -not $taskCliOutputCleanupFailed -and
+    $taskResult.audit.identityMatch -eq $true -and $taskResult.ready -eq $true
 $taskReceipt = [ordered]@{
     generatedAt = [DateTimeOffset]::UtcNow.ToString('o')
     scope = 'db009g-city-fk-current-app-readonly'
@@ -463,7 +526,9 @@ $taskReceipt = [ordered]@{
     diagnostic = $taskDiagnostic
     audit = $taskResult
     cleanup = [ordered]@{ attempted = $taskAttempted; ownershipVerified = $taskOwnershipVerified;
-        deleted = $taskDeleted; controlPlane404 = $taskControlMissing; public404 = $taskPublicMissing }
+        deleted = $taskDeleted; controlPlane404 = $taskControlMissing; public404 = $taskPublicMissing;
+        processTreeConfirmedStopped = (-not $taskProcessTreeUncertain);
+        cliOutputRemoved = (-not $taskCliOutputCleanupFailed) }
     ready = [bool]$taskSuccess
     failure = $taskFailure
 }
