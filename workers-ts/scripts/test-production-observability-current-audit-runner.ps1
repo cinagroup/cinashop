@@ -52,12 +52,28 @@ if ($Scenario -ceq 'all') {
             } else { @() }
             $taskDeploys = @($taskCalls | Where-Object { $_ -ceq 'deploy-attempt' }).Count
             $taskDeletes = @($taskCalls | Where-Object { $_ -ceq 'delete-owned' }).Count
+            # The runner makes one authenticated DB GET per run. The Worker
+            # bearer verifier remains valid until expiry and is not replay gated.
             $taskSamples = @($taskCalls | Where-Object { $_ -ceq 'sample-once' }).Count
             $taskExpectedExit = if ($taskCase -ceq 'success') { 0 }
                 elseif ($taskCase -in @('limited-privilege','disabled-tracking','disabled-activity')) { 1 }
                 else { 2 }
             if ($taskExit -ne $taskExpectedExit -or $taskEvidence.ready -ne ($taskExpectedExit -eq 0)) {
                 throw "$taskCase exit or readiness differs: $taskExit."
+            }
+            # Observed records whether Wrangler created a log. Inspected means
+            # the owned path was checked (and metadata read if present).
+            # Removed means that path was absent at the final check.
+            $taskExpectedLogObserved = $taskCase -in @('wrangler-log-cleanup-failed',
+                'oversized-wrangler-log')
+            $taskExpectedLogInspected = $taskCase -notin @('local-log-collision',
+                'local-config-collision')
+            $taskExpectedLogRemoved = $taskExpectedLogInspected -and
+                $taskCase -cne 'wrangler-log-cleanup-failed'
+            if ($taskEvidence.cleanup.wranglerLogObserved -ne $taskExpectedLogObserved -or
+                $taskEvidence.cleanup.wranglerLogInspected -ne $taskExpectedLogInspected -or
+                $taskEvidence.cleanup.wranglerLogRemoved -ne $taskExpectedLogRemoved) {
+                throw "$taskCase Wrangler log observation, inspection, or final absence differs."
             }
             if ($taskCase -in @('foreign-target','formal-binding-drift',
                 'local-log-collision','local-config-collision')) {

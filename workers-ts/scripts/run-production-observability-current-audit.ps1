@@ -21,6 +21,9 @@ $taskConfig = Join-Path $taskRoot ".cache/$taskName.wrangler.jsonc"
 $taskLogPath = Join-Path $taskRoot ".cache/$taskName-wrangler.log"
 $taskApi = "$taskBase/workers/scripts/$taskName"
 $taskUrl = "https://$taskName.cinagroup.workers.dev"
+# Each run creates a fresh 256-bit bearer value with a ten-minute expiry.
+# The runner makes one authenticated database GET; the Worker does not track
+# whether that bearer value has already been used.
 $taskToken = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
 $taskTokenHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($taskToken))).ToLowerInvariant()
 $taskExpiry = [DateTimeOffset]::UtcNow.AddMinutes(10).ToUnixTimeMilliseconds().ToString()
@@ -43,6 +46,9 @@ $taskProcessTreeUncertain = $false
 $taskCliOutputCleanupFailed = $false
 $taskLocalPathsOwned = $false
 $taskDeleteFailed = $false
+$taskWranglerLogObserved = $false
+$taskWranglerLogInspected = $false
+$taskWranglerLogRemoved = $false
 $taskWranglerLogInspectionFailed = $false
 $taskWranglerLogOversize = $false
 $taskWranglerLogBytes = $null
@@ -456,10 +462,16 @@ try {
     $env:WRANGLER_SEND_METRICS = $taskOriginalMetrics
     $env:WRANGLER_LOG_PATH = $taskOriginalLog
     if ($taskLocalPathsOwned) {
-        # Inspect only metadata. The Wrangler log may contain sensitive CLI or
-        # connection context, so never read or publish its contents. Keep the
-        # digest only when its size is within the reviewed one-MiB ceiling.
-        if (Test-Path -LiteralPath $taskLogPath) {
+        # Inspected means the owned log path was checked, with metadata read
+        # if a file appeared. Observed means a file actually appeared. Removed
+        # means the path was absent at the final check, including when Wrangler
+        # created no log. Never read or publish log contents; keep the digest
+        # only within the reviewed one-MiB ceiling.
+        try {
+            $taskWranglerLogObserved = Test-Path -LiteralPath $taskLogPath -ErrorAction Stop
+            $taskWranglerLogInspected = $true
+        } catch { $taskWranglerLogInspectionFailed = $true }
+        if ($taskWranglerLogObserved) {
             try {
                 $taskLogItem = Get-Item -LiteralPath $taskLogPath -ErrorAction Stop
                 if ($taskLogItem -isnot [IO.FileInfo]) { throw 'Owned log is not a file.' }
@@ -470,7 +482,13 @@ try {
             try { Remove-Item -LiteralPath $taskLogPath -Force }
             catch { $taskWranglerLogCleanupFailed = $true }
         }
-        if (Test-Path -LiteralPath $taskLogPath) { $taskWranglerLogCleanupFailed = $true }
+        try {
+            $taskWranglerLogRemoved = -not (Test-Path -LiteralPath $taskLogPath -ErrorAction Stop)
+            if (-not $taskWranglerLogRemoved) {
+                $taskWranglerLogObserved = $true
+                $taskWranglerLogCleanupFailed = $true
+            }
+        } catch { $taskWranglerLogCleanupFailed = $true }
 
         # A surviving temporary Worker still needs this generated, token-free
         # config for a controlled, ownership-checked recovery. A timed-out
@@ -534,8 +552,9 @@ $taskReceipt = [ordered]@{
         wranglerLogBytes = $taskWranglerLogBytes;
         wranglerLogSha256 = $taskWranglerLogSha256;
         wranglerLogSizeBounded = (-not $taskWranglerLogOversize);
-        wranglerLogInspected = (-not $taskWranglerLogInspectionFailed);
-        wranglerLogRemoved = ($taskLocalPathsOwned -and -not $taskWranglerLogCleanupFailed);
+        wranglerLogObserved = $taskWranglerLogObserved;
+        wranglerLogInspected = ($taskWranglerLogInspected -and -not $taskWranglerLogInspectionFailed);
+        wranglerLogRemoved = $taskWranglerLogRemoved;
         generatedConfigRemoved = ($taskLocalPathsOwned -and -not $taskConfigCleanupFailed -and
             -not $taskConfigRetainedForRecovery);
         generatedConfigRetainedForRecovery = $taskConfigRetainedForRecovery;
