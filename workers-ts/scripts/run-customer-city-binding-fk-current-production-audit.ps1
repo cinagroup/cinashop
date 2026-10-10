@@ -10,7 +10,7 @@ $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskConfig = Join-Path $taskRoot 'test/integration/customer-city-binding-fk-current-audit.wrangler.jsonc'
 $taskCli = Join-Path $taskRoot 'node_modules/wrangler/bin/wrangler.js'
 $taskAccount = '7ea8e46d8210bad342fa7595f7935fea'
-$taskExpectedVersion = 'cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2'
+$taskExpectedVersion = 'd44ef519-90ab-4864-b42f-3f0ca76890b2'
 $taskExpectedBindingSha = '85dcd3bd1cc2f2a6a836ed9913c2fb5f7f46dd03540894585b75be399cfe36be'
 $taskExpectedApp = 'ba7faa6680cd48d4b3a1d36a7a5fc8f7'
 $taskExpectedAdmin = '446e94a4de0143f58c8e5178ec55db8b'
@@ -28,6 +28,7 @@ $taskAuth = @{ 'X-Audit-Token' = $taskToken }
 $taskOriginalAccount = $env:CLOUDFLARE_ACCOUNT_ID
 $taskOriginalMetrics = $env:WRANGLER_SEND_METRICS
 $taskOriginalLog = $env:WRANGLER_LOG_PATH
+$taskWranglerLogPath = Join-Path $taskRoot ".cache/$taskName-wrangler.log"
 $taskStage = 'local-preflight'
 $taskFailure = $null
 $taskAttempted = $false
@@ -39,12 +40,14 @@ $taskPublicMissing = $false
 $taskMainUnchanged = $false
 $taskProcessTreeUncertain = $false
 $taskCliOutputCleanupFailed = $false
+$taskWranglerLogCleanupFailed = $false
 $taskFormalBefore = $null
 $taskFormalAfter = $null
 $taskResult = $null
 $taskAccess = [ordered]@{ anonymous = 0; wrongMethod = 0; query = 0; wrongPath = 0 }
 $taskDiagnostic = [ordered]@{ outcome = 'not-started'; httpStatus = 'unobserved';
     cacheControl = 'unobserved'; workerStage = 'unobserved'; category = 'unobserved' }
+$taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
 
 function Test-AuditTimeout {
     param([System.Exception]$ErrorObject)
@@ -202,6 +205,7 @@ function Invoke-BoundedWrangler {
     $taskStderr = Join-Path $taskRoot ".cache/$taskName-$Operation-$taskOutputId.stderr"
     $taskProcess = $null
     try {
+        if ($Operation -ceq 'deploy') { $script:taskDeployDiagnostic.outcome = 'start-attempted' }
         # Start-Process redirects to owned files, avoiding pipe-buffer deadlock.
         # Argument values are fixed config paths, random hex, or fixed flags.
         $taskProcessArguments = @(('"' + $taskCli + '"'),$Operation) + $Arguments
@@ -209,6 +213,7 @@ function Invoke-BoundedWrangler {
             -WorkingDirectory $taskRoot -RedirectStandardOutput $taskStdout `
             -RedirectStandardError $taskStderr -WindowStyle Hidden -PassThru
         if (-not $taskProcess.WaitForExit($taskDeadline)) {
+            if ($Operation -ceq 'deploy') { $script:taskDeployDiagnostic.outcome = 'deadline-exceeded' }
             # WaitForExit after Kill(true) confirms only the root process. A
             # descendant may still run, so every timeout needs manual review.
             $script:taskProcessTreeUncertain = $true
@@ -222,9 +227,17 @@ function Invoke-BoundedWrangler {
             }
             throw [TimeoutException]::new('Wrangler process exceeded its wall-clock deadline.')
         }
+        if ($Operation -ceq 'deploy') {
+            $script:taskDeployDiagnostic.exitCode = if ($taskProcess.ExitCode -ge 0 -and
+                $taskProcess.ExitCode -le 255) { [string]$taskProcess.ExitCode } else { 'other' }
+            $script:taskDeployDiagnostic.outcome = if ($taskProcess.ExitCode -eq 0) {
+                'cli-zero'
+            } else { 'cli-nonzero' }
+        }
         if ($taskProcess.ExitCode -ne 0) { throw 'Wrangler operation did not complete successfully.' }
         if ($Operation -ceq 'deploy') {
             if ((Get-Item -LiteralPath $taskStdout).Length -gt 65536) {
+                $script:taskDeployDiagnostic.outcome = 'stdout-oversize'
                 throw 'Wrangler deployment output exceeded reviewed bounds.'
             }
             return Get-Content -Raw -LiteralPath $taskStdout
@@ -259,7 +272,7 @@ try {
     if (-not (Test-Path -LiteralPath $taskCli -PathType Leaf)) { throw 'Wrangler executable unavailable.' }
     $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
     $env:WRANGLER_SEND_METRICS = 'false'
-    $env:WRANGLER_LOG_PATH = Join-Path $taskRoot ".cache/$taskName-wrangler.log"
+    $env:WRANGLER_LOG_PATH = $taskWranglerLogPath
     $null = New-Item -ItemType Directory -Force -Path (Join-Path $taskRoot '.cache')
 
     $taskStage = 'formal-preflight'
@@ -279,7 +292,11 @@ try {
         '--config',('"' + $taskConfig + '"'),'--name',$taskName,
         '--var',"AUDIT_TOKEN_SHA256:$taskTokenHash",'--var',"AUDIT_EXPIRES_AT:$taskExpiry",
         '--message',$taskMarker)
-    if ($taskDeploy -cnotmatch [regex]::Escape($taskUrl)) { throw 'Expected temporary URL not returned.' }
+    if ($taskDeploy -cnotmatch [regex]::Escape($taskUrl)) {
+        $taskDeployDiagnostic.outcome = 'stdout-url-missing'
+        throw 'Expected temporary URL not returned.'
+    }
+    $taskDeployDiagnostic.outcome = 'url-confirmed'
     $taskStage = 'owned-version'
     $taskOwnedVersion = Get-OwnedVersion
     $taskOwnershipVerified = $true
@@ -501,6 +518,17 @@ try {
     }
     $taskToken = $null
     $taskAuth = $null
+    if (Test-Path -LiteralPath $taskWranglerLogPath) {
+        try {
+            $taskLogItem = Get-Item -LiteralPath $taskWranglerLogPath -Force
+            if ($taskLogItem.PSIsContainer -or
+                ($taskLogItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+                throw 'Owned Wrangler log is not a regular file.'
+            }
+            Remove-Item -LiteralPath $taskWranglerLogPath -Force
+        } catch { $taskWranglerLogCleanupFailed = $true }
+    }
+    if (Test-Path -LiteralPath $taskWranglerLogPath) { $taskWranglerLogCleanupFailed = $true }
     $env:CLOUDFLARE_ACCOUNT_ID = $taskOriginalAccount
     $env:WRANGLER_SEND_METRICS = $taskOriginalMetrics
     $env:WRANGLER_LOG_PATH = $taskOriginalLog
@@ -508,12 +536,15 @@ try {
         $taskFailure = 'Wrangler process tree needs independent verification; inspect the temporary Worker name.'
     } elseif ($taskCliOutputCleanupFailed -and -not $taskFailure) {
         $taskFailure = 'Wrangler temporary output cleanup needs independent verification.'
+    } elseif ($taskWranglerLogCleanupFailed -and -not $taskFailure) {
+        $taskFailure = 'Wrangler log cleanup needs independent verification.'
     }
 }
 
 $taskSuccess = $taskStage -eq 'audit-completed' -and -not $taskFailure -and
     $taskOwnershipVerified -and $taskDeleted -and $taskControlMissing -and $taskPublicMissing -and
     $taskMainUnchanged -and -not $taskProcessTreeUncertain -and -not $taskCliOutputCleanupFailed -and
+    -not $taskWranglerLogCleanupFailed -and
     $taskResult.audit.identityMatch -eq $true -and $taskResult.ready -eq $true
 $taskReceipt = [ordered]@{
     generatedAt = [DateTimeOffset]::UtcNow.ToString('o')
@@ -525,12 +556,14 @@ $taskReceipt = [ordered]@{
     formalUnchanged = [bool]$taskMainUnchanged
     ownedVersionId = $taskOwnedVersion
     access = $taskAccess
+    deployDiagnostic = $taskDeployDiagnostic
     diagnostic = $taskDiagnostic
     audit = $taskResult
     cleanup = [ordered]@{ attempted = $taskAttempted; ownershipVerified = $taskOwnershipVerified;
         deleted = $taskDeleted; controlPlane404 = $taskControlMissing; public404 = $taskPublicMissing;
         processTreeConfirmedStopped = (-not $taskProcessTreeUncertain);
-        stdoutStderrRemoved = (-not $taskCliOutputCleanupFailed) }
+        stdoutStderrRemoved = (-not $taskCliOutputCleanupFailed);
+        wranglerLogRemoved = (-not $taskWranglerLogCleanupFailed) }
     ready = [bool]$taskSuccess
     failure = $taskFailure
 }
