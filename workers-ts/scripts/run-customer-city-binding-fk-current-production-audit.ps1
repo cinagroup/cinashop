@@ -47,7 +47,9 @@ $taskResult = $null
 $taskAccess = [ordered]@{ anonymous = 0; wrongMethod = 0; query = 0; wrongPath = 0 }
 $taskDiagnostic = [ordered]@{ outcome = 'not-started'; httpStatus = 'unobserved';
     cacheControl = 'unobserved'; workerStage = 'unobserved'; category = 'unobserved' }
-$taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved'; errorCategory = 'unobserved' }
+$taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved'; errorCategory = 'unobserved';
+    postPut = [ordered]@{ script = 'not-attempted'; deployment = 'not-attempted';
+        workersDev = 'not-attempted'; public = 'not-attempted' } }
 
 function Test-AuditTimeout {
     param([System.Exception]$ErrorObject)
@@ -189,6 +191,44 @@ function Test-PublicMissing {
         if ($taskTry -lt 5) { Start-Sleep -Seconds 1 }
     }
     return $false
+}
+
+function Get-PostPutDiagnostic {
+    # These are bounded, read-only observations before owned cleanup. A 200 is
+    # only a status, not proof that the script belongs to this runner.
+    $taskSnapshot = [ordered]@{ script = 'unobserved'; deployment = 'unobserved';
+        workersDev = 'unobserved'; public = 'unobserved' }
+    foreach ($taskProbe in @(
+        @{ Key = 'script'; Uri = $taskApi; Headers = $taskApiHeaders },
+        @{ Key = 'deployment'; Uri = "$taskApi/deployments"; Headers = $taskApiHeaders },
+        @{ Key = 'workersDev'; Uri = "$taskApi/subdomain"; Headers = $taskApiHeaders },
+        @{ Key = 'public'; Uri = "$taskUrl/city-binding-fk"; Headers = @{} }
+    )) {
+        try {
+            $taskProbeReply = Invoke-WebRequest -Uri $taskProbe.Uri -Method GET `
+                -Headers $taskProbe.Headers -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 5
+            $taskProbeStatus = [int]$taskProbeReply.StatusCode
+            $taskSnapshot[$taskProbe.Key] = if ($taskProbeStatus -in @(200,403,404,405,408,429,500,502,503,504)) {
+                [string]$taskProbeStatus
+            } else { 'other' }
+            if ($taskProbe.Key -ceq 'workersDev' -and $taskProbeStatus -eq 200) {
+                # The API result is projected to one fixed enum. Never retain
+                # its raw body, URL, account metadata or error text.
+                if ([Text.Encoding]::UTF8.GetByteCount([string]$taskProbeReply.Content) -le 8192) {
+                    $taskSubdomain = $taskProbeReply.Content | ConvertFrom-Json -Depth 4
+                    if ($taskSubdomain.success -eq $true -and
+                        $taskSubdomain.result.enabled -is [bool]) {
+                        $taskSnapshot.workersDev = if ($taskSubdomain.result.enabled) {
+                            'enabled'
+                        } else { 'disabled' }
+                    } else { $taskSnapshot.workersDev = 'malformed' }
+                } else { $taskSnapshot.workersDev = 'oversize' }
+            }
+        } catch {
+            $taskSnapshot[$taskProbe.Key] = 'unobserved'
+        }
+    }
+    return $taskSnapshot
 }
 
 function Invoke-BoundedWrangler {
@@ -505,6 +545,9 @@ try {
 } catch {
     # Do not print raw HTTP, Wrangler or database exceptions: they can contain
     # tokens, connection context or internal SQL. The stage is sufficient.
+    if ($taskStage -ceq 'deploy' -and $taskDeployDiagnostic.outcome -in @('cli-nonzero','url-missing')) {
+        try { $taskDeployDiagnostic.postPut = Get-PostPutDiagnostic } catch { }
+    }
     $taskFailure = 'Current city-binding FK audit could not be fully confirmed.'
 } finally {
     if ($taskAttempted) {
