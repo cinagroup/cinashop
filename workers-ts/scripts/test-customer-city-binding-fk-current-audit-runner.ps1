@@ -11,7 +11,9 @@ param(
         'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
         'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
         'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
-        'actual-stderr-url','actual-oversize')]
+        'actual-stderr-url','actual-oversize','actual-nonzero-auth','actual-nonzero-stdout-auth','actual-nonzero-rate',
+        'actual-nonzero-network','actual-nonzero-private','actual-nonzero-ambiguous',
+        'actual-nonzero-oversize')]
     [string]$Scenario = 'all',
     [string]$TracePath
 )
@@ -28,7 +30,9 @@ if ($Scenario -eq 'all') {
         'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
         'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
         'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
-        'actual-stderr-url','actual-oversize')
+        'actual-stderr-url','actual-oversize','actual-nonzero-auth','actual-nonzero-stdout-auth','actual-nonzero-rate',
+        'actual-nonzero-network','actual-nonzero-private','actual-nonzero-ambiguous',
+        'actual-nonzero-oversize')
     foreach ($taskCase in $taskCases) {
         $taskTrace = Join-Path $env:TEMP ('db009g-city-fk-runner-' + [Guid]::NewGuid().ToString('N') + '.txt')
         try {
@@ -53,9 +57,30 @@ if ($Scenario -eq 'all') {
                 } else { 'output-oversize' }
                 if ($taskExit -ne 0 -or $taskProcessEvidence.outcome -cne $taskExpectedReason -or
                     $taskProcessEvidence.exitCode -cne '0' -or
+                    $taskProcessEvidence.errorCategory -cne 'none' -or
                     $taskProcessEvidence.outputRemoved -ne $true -or
                     $taskProcessEvidence.confirmed -ne ($taskCase -ceq 'actual-stderr-url')) {
                     throw "$taskCase real-stream behavior differs."
+                }
+                "$taskCase`: pass"
+                continue
+            }
+            if ($taskCase -like 'actual-nonzero-*') {
+                $taskProcessEvidence = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 4
+                $taskExpectedCategory = switch ($taskCase) {
+                    'actual-nonzero-auth' { 'auth-or-permission' }
+                    'actual-nonzero-stdout-auth' { 'auth-or-permission' }
+                    'actual-nonzero-rate' { 'rate-limit' }
+                    'actual-nonzero-network' { 'network' }
+                    default { 'unknown' }
+                }
+                if ($taskExit -ne 0 -or $taskProcessEvidence.outcome -cne 'cli-nonzero' -or
+                    $taskProcessEvidence.exitCode -cne '1' -or
+                    $taskProcessEvidence.errorCategory -cne $taskExpectedCategory -or
+                    $taskProcessEvidence.outputRemoved -ne $true -or
+                    $taskProcessEvidence.confirmed -ne $false -or
+                    ($taskOutput -join "`n") -match 'private-connection-or-sql|private\.example\.invalid|account-secret') {
+                    throw "$taskCase real-process category or privacy behavior differs."
                 }
                 "$taskCase`: pass"
                 continue
@@ -254,7 +279,8 @@ setInterval(() => {}, 1000);
     $taskResults = [ordered]@{ deployStopped = $false; deleteStopped = $false;
         deployTimeoutMarkedUncertain = $false; deleteTimeoutMarkedUncertain = $false;
         ownedOutputRemoved = $false }
-    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
+    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved';
+        errorCategory = 'unobserved' }
     try {
         foreach ($taskOperation in @('deploy','delete')) {
             $taskPidFile = Join-Path $taskCache "$taskName-$taskOperation-child.pid"
@@ -271,7 +297,8 @@ setInterval(() => {}, 1000);
                 $taskStarted.ElapsedMilliseconds -gt 10000 -or
                 ($taskOperation -ceq 'deploy' -and
                  ($script:taskDeployDiagnostic.outcome -cne 'deadline-exceeded' -or
-                  $script:taskDeployDiagnostic.exitCode -cne 'unobserved')) -or
+                   $script:taskDeployDiagnostic.exitCode -cne 'unobserved' -or
+                   $script:taskDeployDiagnostic.errorCategory -cne 'unobserved')) -or
                 -not (Test-Path -LiteralPath $taskPidFile)) {
                 throw 'Owned local process did not mark its bounded timeout uncertain.'
             }
@@ -297,7 +324,8 @@ setInterval(() => {}, 1000);
     $taskResults | ConvertTo-Json -Compress
     exit 0
 }
-if ($Scenario -in @('actual-stderr-url','actual-oversize')) {
+if ($Scenario -in @('actual-stderr-url','actual-oversize') -or
+    $Scenario -like 'actual-nonzero-*') {
     $taskSource = Get-Content -Raw -LiteralPath $taskRunner
     $taskTokens = $null
     $taskParseErrors = $null
@@ -318,11 +346,34 @@ if ($Scenario -in @('actual-stderr-url','actual-oversize')) {
     $taskCli = Join-Path $taskCache "$taskName-fixture.cjs"
     $taskFixture = @'
 if (process.argv[2] !== 'deploy') process.exit(9);
-if (process.argv[4] === 'actual-oversize') process.stderr.write('x'.repeat(65537));
-else process.stderr.write(process.argv[3]);
+const scenario = process.argv[4];
+const privateText = 'private-connection-or-sql https://private.example.invalid account-secret';
+if (scenario === 'actual-oversize') process.stderr.write('x'.repeat(65537));
+else if (scenario === 'actual-nonzero-oversize') {
+  process.stderr.write('Authentication error ' + 'x'.repeat(65537) + privateText);
+  process.exitCode = 1;
+} else if (scenario.startsWith('actual-nonzero-')) {
+  if (scenario === 'actual-nonzero-stdout-auth') {
+    process.stdout.write('Authentication error ' + privateText);
+    process.stderr.write(privateText);
+    process.exitCode = 1;
+  } else {
+    process.stdout.write(privateText);
+    const message = {
+      'actual-nonzero-auth': 'Authentication error',
+      'actual-nonzero-rate': 'rate limited',
+      'actual-nonzero-network': 'ECONNRESET',
+      'actual-nonzero-private': 'opaque failure',
+      'actual-nonzero-ambiguous': 'Authentication error ECONNRESET'
+    }[scenario];
+    process.stderr.write(message + ' ' + privateText);
+    process.exitCode = 1;
+  }
+} else process.stderr.write(process.argv[3]);
 '@
     [IO.File]::WriteAllText($taskCli,$taskFixture)
-    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
+    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved';
+        errorCategory = 'unobserved' }
     $taskConfirmed = $false
     $taskThrown = $false
     try {
@@ -340,6 +391,7 @@ else process.stderr.write(process.argv[3]);
         [ordered]@{ confirmed = [bool]$taskConfirmed;
             outcome = $script:taskDeployDiagnostic.outcome;
             exitCode = $script:taskDeployDiagnostic.exitCode;
+            errorCategory = $script:taskDeployDiagnostic.errorCategory;
             outputRemoved = [bool]$taskOutputRemoved } | ConvertTo-Json -Compress
     } finally {
         if (Test-Path -LiteralPath $taskCli) { Remove-Item -LiteralPath $taskCli -Force }
