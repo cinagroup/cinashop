@@ -36,6 +36,8 @@ if ($Scenario -eq 'all') {
                 $taskProcessEvidence = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 4
                 if ($taskExit -ne 0 -or $taskProcessEvidence.deployStopped -ne $true -or
                     $taskProcessEvidence.deleteStopped -ne $true -or
+                    $taskProcessEvidence.deployTimeoutMarkedUncertain -ne $true -or
+                    $taskProcessEvidence.deleteTimeoutMarkedUncertain -ne $true -or
                     $taskProcessEvidence.ownedOutputRemoved -ne $true) {
                     throw 'Bounded child-tree process test failed.'
                 }
@@ -65,6 +67,12 @@ if ($Scenario -eq 'all') {
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
                     $taskReceipt.cleanup.public404 -ne $true) {
                     throw "$taskCase did not clean up its owned Worker."
+                }
+                if ($taskCase -ceq 'deploy-hung-after-upload' -and
+                    ($taskReceipt.cleanup.processTreeConfirmedStopped -ne $false -or
+                     $taskReceipt.failure -cne 'Wrangler process tree needs independent verification; inspect the temporary Worker name.' -or
+                     -not $taskReceipt.workerName)) {
+                    throw 'Timed-out deployment lost its manual-review target.'
                 }
                 $taskExpectedDiagnostic = switch ($taskCase) {
                     'request-failed' { @('http-status','503','present','unobserved','unobserved') }
@@ -101,7 +109,8 @@ if ($Scenario -eq 'all') {
                     $taskReceipt.cleanup.deleted -ne $false -or
                     $taskReceipt.cleanup.controlPlane404 -ne $false -or
                     $taskReceipt.cleanup.public404 -ne $false -or
-                    $taskReceipt.failure -cne 'Temporary Worker cleanup needs independent verification.' -or
+                    $taskReceipt.cleanup.processTreeConfirmedStopped -ne $false -or
+                    $taskReceipt.failure -cne 'Wrangler process tree needs independent verification; inspect the temporary Worker name.' -or
                     -not $taskReceipt.workerName) {
                     throw 'Hung deletion lacked bounded failure and manual cleanup target.'
                 }
@@ -111,7 +120,9 @@ if ($Scenario -eq 'all') {
                     $taskReceipt.cleanup.deleted -ne $false -or
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
                     $taskReceipt.cleanup.public404 -ne $true -or
-                    $taskReceipt.failure -cne 'Temporary Worker cleanup needs independent verification.') {
+                    $taskReceipt.cleanup.processTreeConfirmedStopped -ne $false -or
+                    $taskReceipt.failure -cne 'Wrangler process tree needs independent verification; inspect the temporary Worker name.' -or
+                    -not $taskReceipt.workerName) {
                     throw 'Timed-out deletion was treated as success or skipped dual-404 checks.'
                 }
             } elseif ($taskCase -eq 'deploy-kill-unconfirmed') {
@@ -127,7 +138,7 @@ if ($Scenario -eq 'all') {
             } elseif ($taskCase -eq 'deploy-output-cleanup-failed') {
                 if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
                     $taskDeploys -ne 1 -or $taskDeletes -ne 1 -or
-                    $taskReceipt.cleanup.cliOutputRemoved -ne $false -or
+                    $taskReceipt.cleanup.stdoutStderrRemoved -ne $false -or
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
                     $taskReceipt.cleanup.public404 -ne $true -or
                     $taskReceipt.failure -cne 'Current city-binding FK audit could not be fully confirmed.') {
@@ -204,6 +215,7 @@ setInterval(() => {}, 1000);
 '@
     [IO.File]::WriteAllText($taskCli,$taskFixture)
     $taskResults = [ordered]@{ deployStopped = $false; deleteStopped = $false;
+        deployTimeoutMarkedUncertain = $false; deleteTimeoutMarkedUncertain = $false;
         ownedOutputRemoved = $false }
     try {
         foreach ($taskOperation in @('deploy','delete')) {
@@ -211,15 +223,18 @@ setInterval(() => {}, 1000);
             $taskMarker = "db009g-child-$taskName-$taskOperation"
             $taskStarted = [Diagnostics.Stopwatch]::StartNew()
             $taskTimedOut = $false
+            $script:taskProcessTreeUncertain = $false
             try {
                 $null = Invoke-BoundedWrangler -Operation $taskOperation `
                     -Arguments @($taskPidFile,$taskMarker) -TimeoutMs 500
             } catch [TimeoutException] { $taskTimedOut = $true }
             $taskStarted.Stop()
-            if (-not $taskTimedOut -or $taskStarted.ElapsedMilliseconds -gt 10000 -or
+            if (-not $taskTimedOut -or -not $script:taskProcessTreeUncertain -or
+                $taskStarted.ElapsedMilliseconds -gt 10000 -or
                 -not (Test-Path -LiteralPath $taskPidFile)) {
-                throw 'Owned local process did not hit the bounded timeout.'
+                throw 'Owned local process did not mark its bounded timeout uncertain.'
             }
+            $taskResults["${taskOperation}TimeoutMarkedUncertain"] = $true
             $taskChildPid = [int](Get-Content -Raw -LiteralPath $taskPidFile)
             Start-Sleep -Milliseconds 300
             $taskStillAlive = Get-Process -Id $taskChildPid -ErrorAction SilentlyContinue
@@ -479,11 +494,13 @@ function Invoke-BoundedWrangler {
         [int]$TimeoutMs = 0)
     if ($Operation -ceq 'delete' -and $Scenario -ceq 'delete-hung-before-removal') {
         Add-Content -LiteralPath $TracePath -Value 'delete-attempt-hung'
+        $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
     }
     $taskOutput = & node $taskCli $Operation @Arguments
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic Wrangler operation failed.' }
     if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-hung-after-upload') {
+        $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deployment deadline.')
     }
     if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-kill-unconfirmed') {
@@ -492,9 +509,10 @@ function Invoke-BoundedWrangler {
     }
     if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-output-cleanup-failed') {
         $script:taskCliOutputCleanupFailed = $true
-        throw [TimeoutException]::new('Synthetic bounded deployment deadline.')
+        throw [InvalidOperationException]::new('Synthetic Wrangler failure with output cleanup error.')
     }
     if ($Operation -ceq 'delete' -and $Scenario -ceq 'delete-hung-after-removal') {
+        $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
     }
     if ($Operation -ceq 'deploy') { return $taskOutput }

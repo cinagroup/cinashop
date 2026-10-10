@@ -209,13 +209,15 @@ function Invoke-BoundedWrangler {
             -WorkingDirectory $taskRoot -RedirectStandardOutput $taskStdout `
             -RedirectStandardError $taskStderr -WindowStyle Hidden -PassThru
         if (-not $taskProcess.WaitForExit($taskDeadline)) {
+            # WaitForExit after Kill(true) confirms only the root process. A
+            # descendant may still run, so every timeout needs manual review.
+            $script:taskProcessTreeUncertain = $true
             $taskTreeStopped = $false
             try {
                 $taskProcess.Kill($true)
                 $taskTreeStopped = $taskProcess.WaitForExit(5000)
             } catch { }
             if (-not $taskTreeStopped) {
-                $script:taskProcessTreeUncertain = $true
                 throw 'Wrangler process tree could not be terminated within the deadline.'
             }
             throw [TimeoutException]::new('Wrangler process exceeded its wall-clock deadline.')
@@ -528,7 +530,7 @@ $taskReceipt = [ordered]@{
     cleanup = [ordered]@{ attempted = $taskAttempted; ownershipVerified = $taskOwnershipVerified;
         deleted = $taskDeleted; controlPlane404 = $taskControlMissing; public404 = $taskPublicMissing;
         processTreeConfirmedStopped = (-not $taskProcessTreeUncertain);
-        cliOutputRemoved = (-not $taskCliOutputCleanupFailed) }
+        stdoutStderrRemoved = (-not $taskCliOutputCleanupFailed) }
     ready = [bool]$taskSuccess
     failure = $taskFailure
 }
