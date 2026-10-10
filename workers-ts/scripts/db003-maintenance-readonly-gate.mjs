@@ -109,8 +109,7 @@ function exactSyntheticRows(rows) {
       || Object.keys(row).sort().join("|") !== expectedKeys
       || !Number.isSafeInteger(row.id) || ids.has(row.id)
       || KEY_FOR_ID.get(row.id) !== row.menu_name || row.is_store !== 0
-      || typeof row.value !== "string"
-      || !row.value.startsWith("SYNTHETIC_DB003_VALUE_")
+      || row.value !== `SYNTHETIC_DB003_VALUE_${row.id}`
       || ["config_tab_id", "upload_type", "width", "high", "sort", "status"]
         .some((field) => !Number.isSafeInteger(row[field]))
       || ["type", "input_type", "parameter", "required", "info", "description"]

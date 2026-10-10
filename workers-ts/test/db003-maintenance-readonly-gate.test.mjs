@@ -26,7 +26,7 @@ function configs() {
     app: { id: DB003_HYPERDRIVE_IDS.app, origin: { ...origin, user: "synthetic-app", password: "SECRET_SENTINEL" },
       caching: { disabled: true }, modified_on: "synthetic-time" },
     admin: { id: DB003_HYPERDRIVE_IDS.admin, origin: { ...origin, user: "synthetic-admin" },
-      caching: { disabled: true }, modified_on: "synthetic-time" },
+      caching: { disabled: false }, modified_on: "synthetic-time" },
     maintenance: { id: DB003_HYPERDRIVE_IDS.maintenance, origin: { ...origin, user: "postgres" },
       caching: { disabled: true }, modified_on: "synthetic-time" },
   };
@@ -42,8 +42,10 @@ function syntheticRows() {
   }));
 }
 
-test("three matching cache-disabled configurations permit designing a later SQL probe, not DML", () => {
-  const report = evaluateDb003ControlPlane(configs());
+test("matching routes with app and maintenance cache disabled permit designing a later SQL probe, not DML", () => {
+  const fixture = configs();
+  assert.equal(fixture.admin.caching.disabled, false);
+  const report = evaluateDb003ControlPlane(fixture);
   assert.equal(report.mayDesignFreshSqlProbe, true);
   assert.equal(report.productionSqlExecuted, false);
   assert.equal(report.physicalPrimaryVerified, false);
@@ -153,6 +155,8 @@ test("preimage rejects wrong key, tamper, missing column, duplicate ID and real-
   }), key), /row set invalid/);
   assert.throws(() => sealSyntheticDb003Preimage(rows.map((row, index) =>
     index === 0 ? { ...row, value: "https://real.example" } : row), key), /row set invalid/);
+  assert.throws(() => sealSyntheticDb003Preimage(rows.map((row, index) =>
+    index === 0 ? { ...row, value: `${row.value}REAL_SECRET_SUFFIX` } : row), key), /row set invalid/);
   assert.throws(() => openSyntheticDb003Preimage({ ...envelope, rawValue: "SECRET_SENTINEL" }, key),
     /Synthetic envelope invalid/);
 });
