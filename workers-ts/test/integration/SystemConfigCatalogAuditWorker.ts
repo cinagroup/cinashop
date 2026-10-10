@@ -15,10 +15,12 @@ async function sha256(value: string): Promise<string> {
 async function authorized(request: Request, env: AuditEnv): Promise<boolean> {
   const token = request.headers.get("X-Audit-Token") ?? "";
   const expiry = Number(env.AUDIT_EXPIRES_AT);
-  if (!token || !/^[a-f0-9]{64}$/i.test(env.AUDIT_TOKEN_SHA256 ?? "")
+  const remainingMs = expiry - Date.now();
+  if (!/^[a-f0-9]{64}$/i.test(token)
+    || !/^[a-f0-9]{64}$/i.test(env.AUDIT_TOKEN_SHA256 ?? "")
     || !/^[a-f0-9]{64}$/i.test(env.RUN_MARKER ?? "")
     || !/^\d{13}$/.test(env.AUDIT_EXPIRES_AT ?? "")
-    || !Number.isSafeInteger(expiry) || Date.now() > expiry) return false;
+    || !Number.isSafeInteger(expiry) || remainingMs <= 0 || remainingMs > 600_000) return false;
   const actual = await sha256(token);
   const encoder = new TextEncoder();
   const [left, right] = await Promise.all([

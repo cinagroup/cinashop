@@ -11,7 +11,7 @@ import worker from "./integration/SystemConfigCatalogAuditWorker";
 
 const runner = readFileSync("scripts/run-system-config-catalog-production-audit.ps1", "utf8");
 const config = JSON.parse(readFileSync("test/integration/system-config-catalog-audit.wrangler.jsonc", "utf8"));
-const token = "db003-catalog-offline-token";
+const token = "c".repeat(64);
 const marker = "a".repeat(64);
 const tokenHash = createHash("sha256").update(token).digest("hex");
 const identityNames = ["database", "currentRole", "sessionRole", "backendLogin", "postgres16",
@@ -53,9 +53,11 @@ function fakeClient(closeFails = false) {
 beforeEach(() => { mock.connect.mockReset(); mock.catalog.mockReset(); mock.catalog.mockResolvedValue(report()); });
 
 describe("DB-003 catalog-only one-shot audit", () => {
-  it("rejects no, wrong and expired tokens before connecting", async () => {
+  it("rejects missing, malformed, wrong, expired and overlong-lived tokens before connecting", async () => {
     for (const [suppliedToken, expiry] of [["", Date.now() + 60_000],
-      ["wrong", Date.now() + 60_000], [token, Date.now() - 1]] as const) {
+      ["wrong", Date.now() + 60_000], ["z".repeat(64), Date.now() + 60_000],
+      ["c".repeat(65), Date.now() + 60_000], [token, Date.now() - 1],
+      [token, Date.now() + 11 * 60_000]] as const) {
       expect((await worker.fetch(request("GET", "/audit", suppliedToken), env(expiry))).status).toBe(403);
     }
     expect(mock.connect).not.toHaveBeenCalled();
@@ -136,6 +138,89 @@ describe("DB-003 catalog-only one-shot audit", () => {
       });
       expect(wrongSource.status).toBe(1);
       expect(wrongSource.stderr).toContain("Reviewed source commit mismatch");
+    });
+
+    it("rejects unreviewed Wrangler config keys and runtime settings", () => {
+      const offline = String.raw`
+        $tokens=$null; $errors=$null
+        $ast=[System.Management.Automation.Language.Parser]::ParseFile(
+          (Resolve-Path 'scripts/run-system-config-catalog-production-audit.ps1'),
+          [ref]$tokens,[ref]$errors)
+        if ($errors.Count) { throw 'runner parse failed' }
+        $fn=$ast.Find({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+          $n.Name -eq 'Assert-ReviewedConfig'},$true)
+        if (-not $fn) { throw 'config gate missing' }
+        Invoke-Expression $fn.Extent.Text
+        $taskAppHyperdrive='ba7faa6680cd48d4b3a1d36a7a5fc8f7'
+        function FreshConfig {
+          return Get-Content -LiteralPath 'test/integration/system-config-catalog-audit.wrangler.jsonc' -Raw |
+            ConvertFrom-Json -Depth 20
+        }
+        function RejectChange([scriptblock]$change) {
+          $candidate=FreshConfig
+          & $change $candidate
+          $rejected=$false
+          try { Assert-ReviewedConfig $candidate } catch { $rejected=$true }
+          if (-not $rejected) { throw 'unreviewed config accepted' }
+        }
+        Assert-ReviewedConfig (FreshConfig)
+        RejectChange { param($c) $c | Add-Member -NotePropertyName routes -NotePropertyValue @('offline') }
+        RejectChange { param($c) $c | Add-Member -NotePropertyName triggers -NotePropertyValue @{crons=@('* * * * *')} }
+        RejectChange { param($c) $c.compatibility_date='2026-09-02' }
+        RejectChange { param($c) $c.compatibility_flags=@('nodejs_compat') }
+        RejectChange { param($c) $c.limits.cpu_ms=20000 }
+        RejectChange { param($c) $c.limits | Add-Member -NotePropertyName subrequests -NotePropertyValue 100 }
+        RejectChange { param($c) $c.observability.logs.invocation_logs=$true }
+        RejectChange { param($c) $c.observability | Add-Member -NotePropertyName head_sampling_rate -NotePropertyValue 1 }
+        RejectChange { param($c) $c.vars.AUDIT_TOKEN_SHA256='offline-drift' }
+        RejectChange { param($c) $c.vars | Add-Member -NotePropertyName EXTRA -NotePropertyValue '' }
+        RejectChange { param($c) $c.hyperdrive[0] | Add-Member -NotePropertyName localConnectionString -NotePropertyValue 'offline' }
+        RejectChange { param($c) $c.'$schema'='other' }
+        'reviewed_config_faults=12'
+      `;
+      const result = spawnSync("pwsh", ["-NoProfile", "-Command", offline], {
+        cwd: process.cwd(), encoding: "utf8", timeout: 10_000,
+        env: { ...process.env, CLOUDFLARE_API_TOKEN: "" },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain("reviewed_config_faults=12");
+    });
+
+    it("keeps non-secret ownership evidence when version verification fails", () => {
+      const offline = String.raw`
+        $tokens=$null; $errors=$null
+        $ast=[System.Management.Automation.Language.Parser]::ParseFile(
+          (Resolve-Path 'scripts/run-system-config-catalog-production-audit.ps1'),
+          [ref]$tokens,[ref]$errors)
+        if ($errors.Count) { throw 'runner parse failed' }
+        $fn=$ast.Find({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+          $n.Name -eq 'Get-OwnedAuditVersion'},$true)
+        if (-not $fn) { throw 'ownership check missing' }
+        Invoke-Expression $fn.Extent.Text
+        $taskTargetApi='offline-worker'; $taskMarker='a'*64
+        $script:taskObservedVersionId=$null
+        $version='11111111-1111-1111-1111-111111111111'
+        function Get-FullTrafficVersion { return $version }
+        function Invoke-ControlPlane { return @{result=@{annotations=@{'workers/message'='changed'}}} }
+        $rejected=$false
+        try { $null=Get-OwnedAuditVersion } catch { $rejected=$true }
+        if (-not $rejected -or $taskObservedVersionId -cne $version) {
+          throw 'unverified version not retained for cleanup review'
+        }
+        'ownership_drift_observed=1'
+      `;
+      const result = spawnSync("pwsh", ["-NoProfile", "-Command", offline], {
+        cwd: process.cwd(), encoding: "utf8", timeout: 10_000,
+        env: { ...process.env, CLOUDFLARE_API_TOKEN: "" },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain("ownership_drift_observed=1");
+      for (const field of ["expectedOwnerMarkerSha256 = $taskMarkerSha",
+        "observedVersionId = $taskObservedVersionId", "ownedVersionId = $taskOwnedVersion",
+        "workerMayRemain = $taskAttempted -and -not ($taskControlPlane404 -and $taskPublic404)"]) {
+        expect(runner).toContain(field);
+      }
+      expect(runner).not.toContain("expectedOwnerMarker = $taskMarker");
     });
 
     it("rejects binding and cache drift, projects only fixed fields, and requires dual 404", () => {

@@ -35,23 +35,58 @@ if ($LASTEXITCODE -ne 0 -or $taskDirty.Count -ne 0) {
 if (-not (Test-Path -LiteralPath $taskCli)) { throw 'Reviewed Wrangler dependency is not installed.' }
 $taskOutputRoot = Join-Path $taskRoot '.cache'
 $null = New-Item -ItemType Directory -Force -Path $taskOutputRoot
-$taskConfigValue = Get-Content -LiteralPath $taskConfig -Raw | ConvertFrom-Json -Depth 20
-if ($taskConfigValue.name -cne 'cinashop-system-config-catalog-audit-template' -or
-    $taskConfigValue.main -cne 'SystemConfigCatalogAuditWorker.ts' -or
-    $taskConfigValue.workers_dev -ne $true -or
-    @($taskConfigValue.hyperdrive).Count -ne 1 -or
-    $taskConfigValue.hyperdrive[0].binding -cne 'HYPERDRIVE' -or
-    $taskConfigValue.hyperdrive[0].id -cne $taskAppHyperdrive -or
-    ((@($taskConfigValue.vars.PSObject.Properties.Name | Sort-Object) -join '|') -cne
-        'AUDIT_EXPIRES_AT|AUDIT_TOKEN_SHA256|RUN_MARKER')) {
-    throw 'Temporary Worker configuration differs from reviewed read-only target.'
+function Assert-ReviewedConfig {
+    param($Config)
+    $taskTopKeys = @($Config.PSObject.Properties.Name | Sort-Object -CaseSensitive)
+    $taskExpectedTopKeys = @('$schema','compatibility_date','compatibility_flags',
+        'hyperdrive','limits','main','name','observability','vars','workers_dev' |
+        Sort-Object -CaseSensitive)
+    $taskFlags = @($Config.compatibility_flags | Sort-Object -CaseSensitive)
+    $taskExpectedFlags = @('enable_request_signal','global_fetch_strictly_public',
+        'nodejs_compat' | Sort-Object -CaseSensitive)
+    if (($taskTopKeys -join '|') -cne ($taskExpectedTopKeys -join '|') -or
+        $Config.'$schema' -cne '../../node_modules/wrangler/config-schema.json' -or
+        $Config.name -cne 'cinashop-system-config-catalog-audit-template' -or
+        $Config.main -cne 'SystemConfigCatalogAuditWorker.ts' -or
+        $Config.compatibility_date -cne '2026-09-01' -or
+        ($taskFlags -join '|') -cne ($taskExpectedFlags -join '|') -or
+        $Config.workers_dev -isnot [bool] -or $Config.workers_dev -ne $true -or
+        (@($Config.limits.PSObject.Properties.Name) -join '|') -cne 'cpu_ms' -or
+        $Config.limits.cpu_ms -isnot [long] -or $Config.limits.cpu_ms -ne 10000 -or
+        ((@($Config.observability.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+            'enabled|logs') -or
+        $Config.observability.enabled -isnot [bool] -or
+        $Config.observability.enabled -ne $true -or
+        (@($Config.observability.logs.PSObject.Properties.Name) -join '|') -cne
+            'invocation_logs' -or
+        $Config.observability.logs.invocation_logs -isnot [bool] -or
+        $Config.observability.logs.invocation_logs -ne $false -or
+        @($Config.hyperdrive).Count -ne 1 -or
+        ((@($Config.hyperdrive[0].PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+            'binding|id') -or
+        $Config.hyperdrive[0].binding -cne 'HYPERDRIVE' -or
+        $Config.hyperdrive[0].id -cne $taskAppHyperdrive -or
+        ((@($Config.vars.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+            'AUDIT_EXPIRES_AT|AUDIT_TOKEN_SHA256|RUN_MARKER') -or
+        $Config.vars.AUDIT_TOKEN_SHA256 -isnot [string] -or
+        $Config.vars.AUDIT_TOKEN_SHA256 -cne '' -or
+        $Config.vars.AUDIT_EXPIRES_AT -isnot [string] -or
+        $Config.vars.AUDIT_EXPIRES_AT -cne '' -or
+        $Config.vars.RUN_MARKER -isnot [string] -or
+        $Config.vars.RUN_MARKER -cne '') {
+        throw 'Temporary Worker configuration differs from reviewed read-only target.'
+    }
 }
+$taskConfigValue = Get-Content -LiteralPath $taskConfig -Raw | ConvertFrom-Json -Depth 20
+Assert-ReviewedConfig $taskConfigValue
 $taskName = 'cinashop-system-config-catalog-audit-' + [Guid]::NewGuid().ToString('N').Substring(0, 12)
 $taskTargetApi = "$taskApiBase/$taskName"
 $taskToken = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
 $taskTokenHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData(
     [Text.Encoding]::UTF8.GetBytes($taskToken))).ToLowerInvariant()
 $taskMarker = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+$taskMarkerSha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData(
+    [Text.Encoding]::UTF8.GetBytes($taskMarker))).ToLowerInvariant()
 $taskExpiry = [DateTimeOffset]::UtcNow.AddMinutes(10).ToUnixTimeMilliseconds().ToString()
 $taskHeaders = @{ Authorization = 'Bearer ' + $env:CLOUDFLARE_API_TOKEN }
 $taskAuth = @{ 'X-Audit-Token' = $taskToken }
@@ -73,6 +108,7 @@ $taskUrl = "https://$taskName.cinagroup.workers.dev"
 $taskStage = 'control-plane-preflight'
 $taskAttempted = $false
 $taskOwnedVersion = $null
+$taskObservedVersionId = $null
 $taskDeleted = $false
 $taskControlPlane404 = $false
 $taskPublic404 = $false
@@ -205,6 +241,7 @@ function Assert-AppHyperdriveCacheDisabled {
 
 function Get-OwnedAuditVersion {
     $taskVersionId = Get-FullTrafficVersion $taskTargetApi
+    $script:taskObservedVersionId = $taskVersionId
     $taskVersion = Invoke-ControlPlane "$taskTargetApi/versions/$taskVersionId"
     if ($taskVersion.result.annotations.'workers/message' -cne $taskMarker) {
         throw 'Temporary Worker ownership marker changed.'
@@ -216,8 +253,8 @@ function Get-OwnedAuditVersion {
     if (($taskBindings -join '|') -cne ($taskExpectedAuditBindings -join '|')) {
         throw 'Temporary Worker version bindings changed.'
     }
-    # The version API exposes the deployed plain_text values. Compare them in
-    # memory; never include token hash, expiry or marker in a failure receipt.
+    # The version API exposes deployed plain_text values. Compare in memory;
+    # only the SHA-256 of the non-secret ownership marker enters the receipt.
     foreach ($taskVarName in $taskExpectedVarValues.Keys) {
         $taskMatches = @($taskVersion.result.resources.bindings | Where-Object {
             $_.name -ceq $taskVarName -and $_.type -ceq 'plain_text'
@@ -543,6 +580,9 @@ if ($taskFailure -or $taskCleanupFailure -or -not $taskMainUnchanged -or
     expectedMainBindingSha256 = $taskMainBindingSha
     appHyperdrive = $taskAppHyperdrive
     stage = $taskStage
+    expectedOwnerMarkerSha256 = $taskMarkerSha
+    observedVersionId = $taskObservedVersionId
+    ownedVersionId = $taskOwnedVersion
     deployDiagnostic = $taskDeployDiagnostic
     report = $taskReport
     ownerDecision = 'not_assessed'
@@ -555,6 +595,7 @@ if ($taskFailure -or $taskCleanupFailure -or -not $taskMainUnchanged -or
     }
     cleanup = [ordered]@{
         workerName = $taskName
+        workerMayRemain = $taskAttempted -and -not ($taskControlPlane404 -and $taskPublic404)
         deleted = $taskDeleted
         controlPlane404 = $taskControlPlane404
         public404 = $taskPublic404
