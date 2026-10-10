@@ -16,13 +16,25 @@ import {
 import { hash } from "bcryptjs";
 import type { Container, DbClient } from "@/lib/di";
 import { agreement, divisionApply, storeOrder, systemAdmin, user } from "@/models/schema";
-import { ValidateException } from "@/utils/errors";
+import { ServiceUnavailableException, ValidateException } from "@/utils/errors";
+import {
+  assertAdminAuthorityRoleAssignment,
+  assertAdminAuthoritySession,
+  assertRemainingActivePlatformSuperAdmin,
+  parseAdminAuthorityRoleIds,
+  withAdminAuthorityWriteTx,
+  type AdminAuthorityActor,
+} from "@/services/admin/AdminAuthorityWriteService";
 
 export type DivisionRoleType = 1 | 2 | 3;
 
 export interface DivisionAdminScope {
   level: number;
   divisionId: number;
+}
+
+export interface DivisionAdminWriteScope extends DivisionAdminScope {
+  actor: AdminAuthorityActor;
 }
 
 export interface DivisionParentSnapshot {
@@ -61,6 +73,7 @@ export interface DivisionDateRange {
 
 const ROLE_LOCK_NAMESPACE = 1_147_879_249;
 const MAX_PAGE_SIZE = 100;
+const MAX_DIVISION_ADMIN_ACCOUNTS = 1_000;
 
 function assertInteger(value: number, message: string): void {
   if (!Number.isInteger(value)) throw new ValidateException(message);
@@ -258,6 +271,15 @@ function assertScope(scope: DivisionAdminScope, divisionId: number, allowOwnDivi
   }
 }
 
+function sameAdminRoles(left: string, right: string): boolean {
+  return parseAdminAuthorityRoleIds(left).sort((a, b) => a - b).join(",")
+    === parseAdminAuthorityRoleIds(right).sort((a, b) => a - b).join(",");
+}
+
+function sameAdminRow(left: typeof systemAdmin.$inferSelect, right: typeof systemAdmin.$inferSelect): boolean {
+  return (Object.keys(left) as Array<keyof typeof left>).every(key => left[key] === right[key]);
+}
+
 function roleReset(now: number) {
   return {
     divisionName: "",
@@ -394,7 +416,7 @@ export class DivisionManagementService {
     return { role, admin };
   }
 
-  async saveRole(input: SaveDivisionRoleInput, scope: DivisionAdminScope) {
+  async saveRole(input: SaveDivisionRoleInput, scope: DivisionAdminWriteScope) {
     if (![1, 2, 3].includes(input.roleType)) throw new ValidateException("角色类型错误");
     const uid = Number(input.uid);
     assertInteger(uid, "用户 UID 格式错误");
@@ -413,8 +435,8 @@ export class DivisionManagementService {
     const passwordHash = input.adminPassword ? await hash(input.adminPassword, 12) : undefined;
     const now = Math.floor(Date.now() / 1000);
 
-    return this.container.db.transaction(async (rawTx) => {
-      const tx = rawTx as unknown as DbClient;
+    return withAdminAuthorityWriteTx(this.container, scope.actor, "division.manage", async (tx, actor) => {
+      const liveScope = { level: actor.level, divisionId: actor.divisionId };
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${uid})`);
       await lockUsers(tx, [uid, parentUid]);
       const locked = await tx
@@ -431,12 +453,13 @@ export class DivisionManagementService {
       validateDivisionHierarchy(input.roleType, percent, endTime, parent);
 
       const divisionId = input.roleType === 1 ? uid : parent!.divisionType === 1 ? parent!.uid : parent!.divisionId;
-      assertScope(scope, divisionId);
-      if (scope.level !== 0 && input.roleType === 1 && target.divisionType === 0) {
+      assertScope(liveScope, divisionId);
+      if (actor.level !== 0 && input.roleType === 1 && target.divisionType === 0) {
         throw new ValidateException("事业部管理员不能新建其他事业部");
       }
 
       let divisionInvite = 0;
+      let verifiedAdmin: typeof systemAdmin.$inferSelect | undefined;
       if (input.roleType === 1) {
         divisionInvite = target.divisionInvite;
         if (!divisionInvite) {
@@ -506,15 +529,19 @@ export class DivisionManagementService {
                 spreadTime: now,
                 isPromoter: 1,
               };
-      await tx.update(user).set(update).where(eq(user.uid, uid));
-
       if (input.roleType === 1) {
         const adminRows = await tx
           .select()
           .from(systemAdmin)
-          .where(and(eq(systemAdmin.divisionId, uid), eq(systemAdmin.adminType, 1), eq(systemAdmin.isDel, 0)))
+          .where(and(eq(systemAdmin.divisionId, uid), eq(systemAdmin.adminType, 1),
+            eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0)))
+          .orderBy(asc(systemAdmin.id))
           .limit(1);
         const existingAdmin = adminRows[0];
+        if (existingAdmin) {
+          if (actor.level !== 0 && existingAdmin.level === 0) throw new ValidateException("不能修改超级管理员");
+          await assertAdminAuthorityRoleAssignment(tx, actor, existingAdmin.roles, true);
+        }
         const account = input.adminAccount?.trim() || existingAdmin?.account || "";
         if (!existingAdmin && (!account || !passwordHash)) {
           throw new ValidateException("新建事业部必须设置管理员账号和密码");
@@ -528,6 +555,7 @@ export class DivisionManagementService {
               and(
                 eq(systemAdmin.account, account),
                 eq(systemAdmin.adminType, 1),
+                eq(systemAdmin.relationId, 0),
                 eq(systemAdmin.isDel, 0),
                 existingAdmin ? ne(systemAdmin.id, existingAdmin.id) : sql`true`,
               ),
@@ -535,11 +563,20 @@ export class DivisionManagementService {
             .limit(1);
           if (duplicate.length) throw new ValidateException("管理员账号已存在");
         }
-        const roles = Array.isArray(input.adminRoles)
-          ? input.adminRoles.map(Number).filter(Number.isInteger).join(",")
+        if (Array.isArray(input.adminRoles) && input.adminRoles.some(id => typeof id !== "number"
+          || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647)) {
+          throw new ValidateException("管理员角色ID格式错误");
+        }
+        const roleValue = Array.isArray(input.adminRoles) ? input.adminRoles.join(",")
           : input.adminRoles ?? existingAdmin?.roles ?? "";
+        const roles = parseAdminAuthorityRoleIds(roleValue).join(",");
+        await assertAdminAuthorityRoleAssignment(tx, actor, roles, true);
+        if (existingAdmin?.id === actor.id && (account !== existingAdmin.account || passwordHash || existingAdmin.status !== 1
+          || !sameAdminRoles(roles, existingAdmin.roles))) {
+          throw new ValidateException("不能修改当前登录账号的身份或密码");
+        }
         if (existingAdmin) {
-          await tx
+          const changed = await tx
             .update(systemAdmin)
             .set({
               account,
@@ -550,9 +587,24 @@ export class DivisionManagementService {
               divisionId: uid,
               ...(passwordHash ? { pwd: passwordHash } : {}),
             })
-            .where(eq(systemAdmin.id, existingAdmin.id));
+            .where(and(eq(systemAdmin.id, existingAdmin.id), eq(systemAdmin.adminType, 1),
+              eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0)))
+            .returning();
+          if (changed.length !== 1 || changed[0].roles !== roles || changed[0].account !== account
+            || changed[0].status !== 1 || changed[0].divisionId !== uid
+            || changed[0].level !== existingAdmin.level || changed[0].adminType !== 1
+            || changed[0].relationId !== 0 || changed[0].isDel !== 0
+            || changed[0].phone !== (input.adminPhone?.trim() ?? existingAdmin.phone)
+            || changed[0].realName !== divisionName.slice(0, 16)
+            || changed[0].pwd !== (passwordHash ?? existingAdmin.pwd)
+            || !sameAdminRow({ ...existingAdmin, account,
+              phone: input.adminPhone?.trim() ?? existingAdmin.phone, realName: divisionName.slice(0, 16),
+              roles, status: 1, divisionId: uid, pwd: passwordHash ?? existingAdmin.pwd }, changed[0])) {
+            throw new ValidateException("事业部管理员保存失败");
+          }
+          verifiedAdmin = changed[0];
         } else {
-          await tx.insert(systemAdmin).values({
+          const created = await tx.insert(systemAdmin).values({
             account,
             pwd: passwordHash!,
             realName: divisionName.slice(0, 16),
@@ -564,29 +616,76 @@ export class DivisionManagementService {
             relationId: 0,
             divisionId: uid,
             addTime: now,
-          });
+          }).returning();
+          if (created.length !== 1 || created[0].roles !== roles || created[0].account !== account
+            || created[0].pwd !== passwordHash || created[0].status !== 1 || created[0].isDel !== 0
+            || created[0].adminType !== 1 || created[0].relationId !== 0 || created[0].divisionId !== uid
+            || created[0].level !== 1 || created[0].phone !== (input.adminPhone?.trim() ?? "")
+            || created[0].realName !== divisionName.slice(0, 16) || created[0].addTime !== now) {
+            throw new ValidateException("事业部管理员创建失败");
+          }
+          verifiedAdmin = created[0];
         }
+      }
+      assertAdminAuthoritySession(scope.actor);
+      const changedRole = await tx.update(user).set(update).where(eq(user.uid, uid)).returning({ uid: user.uid });
+      if (changedRole.length !== 1 || changedRole[0].uid !== uid) throw new ValidateException("事业部角色保存失败");
+      if (verifiedAdmin) {
+        const [persisted] = await tx.select().from(systemAdmin).where(eq(systemAdmin.id, verifiedAdmin.id));
+        if (!persisted || !sameAdminRow(verifiedAdmin, persisted)) throw new ValidateException("事业部管理员保存结果不一致");
       }
       return { uid, roleType: input.roleType, divisionId };
     });
   }
 
-  async deleteRole(uid: number, scope: DivisionAdminScope): Promise<void> {
+  async deleteRole(uid: number, scope: DivisionAdminWriteScope): Promise<void> {
     if (!uid) throw new ValidateException("用户 UID 不能为空");
     const now = Math.floor(Date.now() / 1000);
-    await this.container.db.transaction(async (rawTx) => {
-      const tx = rawTx as unknown as DbClient;
+    await withAdminAuthorityWriteTx(this.container, scope.actor, "division.manage", async (tx, actor) => {
+      const liveScope = { level: actor.level, divisionId: actor.divisionId };
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${uid})`);
       await lockUsers(tx, [uid]);
       const rows = await tx.select().from(user).where(eq(user.uid, uid)).limit(1);
       const role = rows[0];
       if (!role || !role.divisionType) throw new ValidateException("事业部角色不存在");
-      assertScope(scope, roleDivisionId(role), !(scope.level !== 0 && role.divisionType === 1));
+      assertScope(liveScope, roleDivisionId(role));
       const reset = roleReset(now);
       if (role.divisionType === 1) {
+        const adminScope = and(eq(systemAdmin.divisionId, uid), eq(systemAdmin.adminType, 1),
+          eq(systemAdmin.relationId, 0), eq(systemAdmin.isDel, 0));
+        const admins = await tx.select().from(systemAdmin).where(adminScope).orderBy(asc(systemAdmin.id))
+          .limit(MAX_DIVISION_ADMIN_ACCOUNTS + 1);
+        if (admins.length > MAX_DIVISION_ADMIN_ACCOUNTS) {
+          throw new ServiceUnavailableException("事业部管理员超过1000，请先整理账号");
+        }
+        if (actor.level !== 0 && admins.some(admin => admin.level === 0)) {
+          throw new ValidateException("只有超级管理员可以删除超级管理员账号");
+        }
+        assertScope(liveScope, roleDivisionId(role), actor.level === 0);
+        if (admins.some(admin => admin.id === actor.id)) throw new ValidateException("不能删除当前登录账号");
+        for (const admin of admins) await assertAdminAuthorityRoleAssignment(tx, actor, admin.roles, true);
+        if (admins.some(admin => admin.level === 0 && admin.status === 1)) {
+          await assertRemainingActivePlatformSuperAdmin(tx, admins.map(admin => admin.id));
+        }
+        assertAdminAuthoritySession(scope.actor);
         await tx.update(user).set(reset).where(eq(user.divisionId, uid));
-        await tx.update(systemAdmin).set({ isDel: 1, status: 0 }).where(eq(systemAdmin.divisionId, uid));
+        const changed = await tx.update(systemAdmin).set({ isDel: 1, status: 0 }).where(adminScope).returning();
+        const originals = new Map(admins.map(admin => [admin.id, admin]));
+        const ids = new Set(originals.keys());
+        if (changed.length !== ids.size || changed.some(admin => !ids.delete(admin.id)
+          || admin.isDel !== 1 || admin.status !== 0 || admin.adminType !== 1
+          || admin.relationId !== 0 || admin.divisionId !== uid
+          || !sameAdminRow({ ...originals.get(admin.id)!, isDel: 1, status: 0 }, admin)) || ids.size) {
+          throw new ValidateException("事业部管理员删除失败");
+        }
         await tx.update(divisionApply).set({ isDel: 1 }).where(eq(divisionApply.divisionId, uid));
+        if (admins.length) {
+          const persisted = await tx.select().from(systemAdmin).where(inArray(systemAdmin.id, admins.map(admin => admin.id)));
+          if (persisted.length !== admins.length || persisted.some(admin => !originals.has(admin.id)
+            || !sameAdminRow({ ...originals.get(admin.id)!, isDel: 1, status: 0 }, admin))) {
+            throw new ValidateException("事业部管理员删除结果不一致");
+          }
+        }
       } else if (role.divisionType === 2) {
         await tx.update(user).set(reset).where(eq(user.agentId, uid));
         await tx.update(divisionApply).set({ isDel: 1 }).where(eq(divisionApply.uid, uid));

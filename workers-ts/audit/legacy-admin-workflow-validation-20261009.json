@@ -1,0 +1,441 @@
+{
+  "version": 1,
+  "baseCommit": "8033ba07c5b544fc28976ffebf1295b4190f32ab",
+  "publicationBase": "5a4e363fd0e203c8654652ece666813331e8a637",
+  "scope": "Private legacy platform staff forms, explicit confirmed writes and owner recovery; separately prepared fixed maintenance adapter. No publication or production proof.",
+  "creditedUniqueTests": 286,
+  "testFiles": 18,
+  "newFeatureUniqueTests": 127,
+  "files": [
+    {
+      "file": "workers-ts/test/admin-legacy-admin-workflow.test.ts",
+      "passed": 58,
+      "mode": "PGlite business",
+      "run": "backend unit03"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-workflow-native.test.ts",
+      "passed": 13,
+      "mode": "actual PG16",
+      "run": "backend native03"
+    },
+    {
+      "file": "view/admin-ts/test/legacyStaff.test.mjs",
+      "passed": 23,
+      "mode": "actual SFC setup with Axios fixture",
+      "run": "frontend-unit01"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-cors.test.ts",
+      "passed": 6,
+      "mode": "actual Hono CORS middleware",
+      "run": "cors-list-unit01"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-system-list.test.ts",
+      "passed": 17,
+      "mode": "PGlite regression",
+      "run": "cors-list-unit01"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-operation-upgrade-native.test.ts",
+      "passed": 5,
+      "mode": "actual PG16",
+      "run": "upgrade-native04"
+    },
+    {
+      "file": "workers-ts/test/legacy-admin-permissions.test.ts",
+      "passed": 8,
+      "mode": "permission regression",
+      "run": "permission related03"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-permission.test.ts",
+      "passed": 4,
+      "mode": "permission regression",
+      "run": "permission related03"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "passed": 6,
+      "mode": "permission regression",
+      "run": "permission related03"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow.test.ts",
+      "passed": 25,
+      "mode": "PGlite regression",
+      "run": "permission related03"
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "passed": 24,
+      "mode": "permission regression",
+      "run": "permission catalog05"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-operation.test.ts",
+      "passed": 25,
+      "mode": "PGlite regression",
+      "run": "modern-main-regression01"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-write.test.ts",
+      "passed": 15,
+      "mode": "PGlite regression",
+      "run": "modern-main-regression01"
+    },
+    {
+      "file": "workers-ts/test/newcomer-cart-replay-maintenance-boundary.test.ts",
+      "passed": 17,
+      "mode": "actual Request boundary with synthetic DB boundary",
+      "run": "modern-main-regression01"
+    },
+    {
+      "file": "workers-ts/test/supplier-product-media-frontend.test.ts",
+      "passed": 24,
+      "mode": "actual SFC with fixture",
+      "run": "supplier-main-regression02"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-operation-native.test.ts",
+      "passed": 2,
+      "mode": "actual PG16 targeted; 15 skipped",
+      "run": "modern-native-regression01"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-maintenance-boundary.test.ts",
+      "passed": 13,
+      "mode": "actual Request and crypto boundary with synthetic DB boundary",
+      "run": "maintenance http04"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-maintenance-native.test.ts",
+      "passed": 1,
+      "mode": "actual PG16 one comprehensive case",
+      "run": "maintenance native03"
+    }
+  ],
+  "acceptedFileGroups": [
+    {
+      "run": "permission related03",
+      "overallExit": 1,
+      "creditedCompleteFiles": 43,
+      "explanation": "Four complete current-source files passed; catalog had a separate startup/load timeout and is credited only by catalog05."
+    },
+    {
+      "run": "permission catalog05",
+      "overallExit": 0,
+      "creditedCompleteFiles": 24
+    },
+    {
+      "run": "modern-main-regression01",
+      "overallExit": 1,
+      "creditedCompleteFiles": 57,
+      "explanation": "Three complete files passed; Supplier suite import failed because dependencies had not been installed, zero assertions."
+    },
+    {
+      "run": "supplier-main-regression02",
+      "overallExit": 0,
+      "creditedCompleteFiles": 24
+    },
+    {
+      "run": "modern-native-regression01",
+      "overallExit": 0,
+      "creditedCases": 2,
+      "skipped": 15,
+      "explanation": "Two literal cases only; never full-file credit."
+    }
+  ],
+  "checks": [
+    {
+      "id": "unit-types04",
+      "scope": "Full Worker unit tsc",
+      "exitCode": 0
+    },
+    {
+      "id": "runtime-types02",
+      "scope": "Full Worker runtime tsc",
+      "exitCode": 0
+    },
+    {
+      "id": "api-dry-run01",
+      "scope": "API local Wrangler dry-run",
+      "exitCode": 0
+    },
+    {
+      "id": "maintenance-dry-run01",
+      "scope": "Maintenance local Wrangler dry-run",
+      "exitCode": 0
+    },
+    {
+      "id": "Admin vue-tsc",
+      "scope": "actual tool da0735/session60673",
+      "exitCode": 0
+    },
+    {
+      "id": "Admin build",
+      "scope": "actual tool 404bde/session22009",
+      "exitCode": 0
+    }
+  ],
+  "browser": {
+    "report": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/checklist-route-contracts-20261008/legacy-admin-staff/browser/attempt07/browser-report.json",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "checks": 12
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "checks": 12
+      }
+    ],
+    "checks": 24,
+    "screenshots": 24,
+    "deliveredBodyHashComparisons": 40,
+    "networkFixture": true,
+    "realLoginExecuted": false,
+    "postgresCredit": false
+  },
+  "evidence": {
+    "root": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-workflow-20261009",
+    "backendManifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-workflow-20261009\\agent-evidence01\\legacy-admin-backend-validation.json",
+    "maintenanceManifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-workflow-20261009\\agent-evidence02\\admin-authority-maintenance-validation.json",
+    "frontendManifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-staff\\frontend-evidence-manifest.json",
+    "permissionReports": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-contract-review03",
+    "independentReview": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-maintenance-review05\\review.md"
+  },
+  "preservedFailures": [
+    "Backend initial assertions 56/58, fixture correction; final 58/58",
+    "Backend native02 Windows resource exhaustion; stopped, remaining fixture state unknown; retain data",
+    "Permission03 catalog timeout; permission04 0 assertions/OOM despite misleading reporter success; catalog05 actual 24/24",
+    "modern-main-regression01 Supplier MODULE_NOT_FOUND, zero assertions; supplier02 24/24",
+    "Maintenance boundary01 transform failure; native01 drift UPDATE zero rows; source/fixture corrected and final http04/native03 passed",
+    "unit-types03 actual exit2 TS2556; tuple annotation only, HTTP04 repeated; final unit-types04/runtime-types02 actual0",
+    "route-audits02 missing tracked snapshots due sparse checkout; exact two HEAD files materialized, route03 actual0; admin strict02 actual0"
+  ],
+  "limitations": [
+    "URL registrations and audits do not prove full old Vue or production contracts.",
+    "Fixed password minimum12/UTF8maximum72 is not old sysconfig equivalence; configurable old policy remains open.",
+    "Native new-session proof uses freshly signed JWT and actual middleware; no login-handler/browser real login credit.",
+    "Browser uses explicit local network fixtures; no database or production credit.",
+    "Maintenance normal approval binds protected authority data and stable catalog, not atomic whole-shop data; optional wholeData only local/native observation.",
+    "Historical private-af43 CI and d5 public release not reused as current commit proof.",
+    "Production source publication, complete current CI, exact runtime preflight, addon installation and deployment pending precise expanded authorization."
+  ],
+  "generatedAt": "2026-10-09T03:18:57.823Z",
+  "routeAudit": {
+    "exitCode": 0,
+    "report": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-workflow-20261009\\route-audits03\\route-parity.json",
+    "totals": {
+      "php": 1904,
+      "ts": 2375,
+      "matched": 923,
+      "executableMatched": 902,
+      "unavailable": 21,
+      "missing": 981,
+      "retired": 17,
+      "actionableMissing": 964,
+      "coveragePercent": 48.5,
+      "executableCoveragePercent": 47.4,
+      "effectiveExecutableCoveragePercent": 47.8
+    },
+    "surfaces": [
+      {
+        "surface": "api",
+        "actionableMissing": 11
+      },
+      {
+        "surface": "admin",
+        "actionableMissing": 896
+      },
+      {
+        "surface": "supplier",
+        "actionableMissing": 49
+      },
+      {
+        "surface": "kefu",
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "actionableMissing": 8
+      }
+    ]
+  },
+  "adminApiAudit": {
+    "strictExitCode": 0,
+    "report": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-admin-workflow-20261009\\route-audits02\\admin-api.json",
+    "counts": {
+      "callSites": 615,
+      "pathVariants": 647,
+      "registered": 647,
+      "executable": 647,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    }
+  },
+  "checklist": {
+    "total": 404,
+    "completed": 249,
+    "open": 155
+  },
+  "sourcePins": [
+    {
+      "file": "workers-ts/test/admin-legacy-admin-workflow.test.ts",
+      "sha256": "eabf1d375fde7d814b80d7427c467a52d2b3413cfd17a6aaef5a2da5d1409815"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-workflow-native.test.ts",
+      "sha256": "9db20365f8a1f4509a6932209d630cfcd68f1b992e0316595e29db8e920bb162"
+    },
+    {
+      "file": "view/admin-ts/test/legacyStaff.test.mjs",
+      "sha256": "7886b86786f5f249481a69a15ab82273c4679e9d363a05dd8eef307c0ad15f4d"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-cors.test.ts",
+      "sha256": "f98e881d23de04ad7bd50bcf08ad16b0f18f2cddd3e12156cb36eb91d3ff45f2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-system-list.test.ts",
+      "sha256": "d0f5b002d88dba61b3507c2a4338a622e712d70d731f8dd82e2d6b2009664ec2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-operation-upgrade-native.test.ts",
+      "sha256": "1b8e12c8f69d7a712a57bc60a51160293533c89a3aba832a1d160bb7ea43126f"
+    },
+    {
+      "file": "workers-ts/test/legacy-admin-permissions.test.ts",
+      "sha256": "c25a5871595fc745ccb4b07563c8986104326e89fad6c9521ba45bfbd7871b97"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-permission.test.ts",
+      "sha256": "312dca8bc7fb6d3e70e9e1557b328e9cc93937d047c5550ceabb4a4cb4a9e9e2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "sha256": "3df01a893b85ae3b11a82295a4a08519c2428a29a71fd083da185908f6751748"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow.test.ts",
+      "sha256": "2309ed012fb95696baf29d72088b75116409fd6df1d22684cd2fab759ece5126"
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "sha256": "535841c4ec48b837db8afb288ef57af61c130c540bb04ccbeb822ca58fa2a7e4"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-operation.test.ts",
+      "sha256": "3ed2eff2b2c90ebde1e99d73309c97e7895b08d687d9826ab581f5cd6cf5f7d5"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-write.test.ts",
+      "sha256": "be5f5dde27e27f361a4ec716818279b8fe172b8bfaebbcb4a46384131883d010"
+    },
+    {
+      "file": "workers-ts/test/newcomer-cart-replay-maintenance-boundary.test.ts",
+      "sha256": "0b7e834f51f7d9079534052f96b591ff4662e7610294c46b6efb48df00a938ce"
+    },
+    {
+      "file": "workers-ts/test/supplier-product-media-frontend.test.ts",
+      "sha256": "15ee239710c4e33b089a4aa64a93149c11ebbea491154f6198d62336e2d10fdb"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-operation-native.test.ts",
+      "sha256": "e2c5f6295704b78f4f41d01a8f60404bdda7ea6fa36ec43382b648543df6ccee"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-maintenance-boundary.test.ts",
+      "sha256": "cbca200abe5ba5ef47fad502bd22a8e3db89f33dc151eb84fb154c158fe62b8d"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-maintenance-native.test.ts",
+      "sha256": "54a2bf76df574716e8087fa33a8db1d318019103a4233306950a37ec2218154b"
+    }
+  ],
+  "agentSourcePins": {
+    "backend": {
+      "workers-ts/src/services/admin/AdminLegacyAdminWorkflowService.ts": "48cb4208a21a2e31ff916088aaf900fe676ce1cac5f0861a3d2fd74b544326a9",
+      "workers-ts/test/admin-legacy-admin-workflow.test.ts": "eabf1d375fde7d814b80d7427c467a52d2b3413cfd17a6aaef5a2da5d1409815",
+      "workers-ts/test/admin-legacy-admin-workflow-native.test.ts": "9db20365f8a1f4509a6932209d630cfcd68f1b992e0316595e29db8e920bb162"
+    },
+    "maintenance": [
+      {
+        "path": "workers-ts/src/migrations/adminAuthorityOperationMaintenance.ts",
+        "sha256": "e000f95234355ecc64a983da403a9a1a3e29dee3159244a7c6572d3481844592"
+      },
+      {
+        "path": "workers-ts/test/integration/AdminAuthorityMaintenanceWorker.ts",
+        "sha256": "666c5dcfc9d857dfdd1d27798fb89fbcc323bdec8fd13b867e73b8ab8470436a"
+      },
+      {
+        "path": "workers-ts/test/integration/admin-authority-maintenance.wrangler.jsonc",
+        "sha256": "73a86249b3a29742f756a95a8f3957ef86cf60bf07ff03ad2449653dab28899d"
+      },
+      {
+        "path": "workers-ts/test/integration/admin-authority-maintenance.README.md",
+        "sha256": "523a22d1879ae0bd2380dbd7a23558eb32a2f5dd80b3153f74e9d27b683e7c93"
+      },
+      {
+        "path": "workers-ts/test/admin-authority-maintenance-boundary.test.ts",
+        "sha256": "cbca200abe5ba5ef47fad502bd22a8e3db89f33dc151eb84fb154c158fe62b8d"
+      },
+      {
+        "path": "workers-ts/test/admin-authority-maintenance-native.test.ts",
+        "sha256": "54a2bf76df574716e8087fa33a8db1d318019103a4233306950a37ec2218154b"
+      }
+    ],
+    "frontend": [
+      {
+        "relative": "view/admin-ts/src/api/legacyAdmin.ts",
+        "bytes": 17769,
+        "sha256": "54983efa5150e9d5f1796ee415ef53d6ad3a034751240e04e99d03ef3a9e4f9a"
+      },
+      {
+        "relative": "view/admin-ts/src/pages/system/LegacyStaff.vue",
+        "bytes": 27058,
+        "sha256": "6ffa36ef1c8c71d97a652ad0e42a7bef4012ac2fdd01ddbd72d867e997b2a337"
+      },
+      {
+        "relative": "view/admin-ts/src/utils/legacyStaffOperation.ts",
+        "bytes": 4435,
+        "sha256": "68ab1eb5b93c847d16de7b13d4f3cf415de6327d64aaa3186f2e64be99a581c9"
+      },
+      {
+        "relative": "view/admin-ts/src/router/index.ts",
+        "bytes": 24632,
+        "sha256": "99ed28dbe81ff616cc0a58a9aabe5937de6fc6ad406f481d9702ed79bf9b0323"
+      },
+      {
+        "relative": "view/admin-ts/src/layouts/AdminLayout.vue",
+        "bytes": 31358,
+        "sha256": "0a515f47997c0a79d2bbee8e421e354405f477b596116fc54d378a78400d73b7"
+      },
+      {
+        "relative": "view/admin-ts/test/legacyStaff.test.mjs",
+        "bytes": 27656,
+        "sha256": "7886b86786f5f249481a69a15ab82273c4679e9d363a05dd8eef307c0ad15f4d"
+      }
+    ]
+  },
+  "sqlPin": {
+    "target": {
+      "database": "postgres",
+      "maintenance": "postgres",
+      "app": "cinashop_app_v1",
+      "admin": "cinashop_admin_v1"
+    },
+    "sha256": "fe3b8c158c246ece2b6796ae52cca3c44b5411451c39890893a1d7a90649ead8",
+    "bytes": 4676,
+    "scope": "Review artifact only; execution must use the verified owner InTransaction installers, never raw SQL replay"
+  }
+}

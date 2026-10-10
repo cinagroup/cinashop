@@ -1,5 +1,87 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 当前增量：旧角色独立启停、物理删除与引用历史（2026-10-09，本地候选）
+
+独立旧PUT启停与DELETE真实物理删除已有确认预览、全量影响、HMAC revision、明确确认、原子不可变回执与原owner恢复；数字329/330细权限分开，旧POST保存不隐式获得启停或删除。物理删除保留所有管理员原CSV及全行，只有精确v3 committed七列证据能解释真实缺行，快照不授予权限。现代写、旧角色form/POST及旧staff均先核对全部存储ID；未知缺行、外域、畸形或空CSV段拒绝，不以过滤方式放行。删除证据必须匹配原引用层级，旧下一层级业务严格核对真实角色level；现代既有真实角色level语义保持。已删除身份原名称禁选显示，旧staff须明确移除并保留真实可委派角色。
+
+v3在精确v2整库profiles上只变更两个CHECK及新增现有Admin的`DELETE public.system_role`，App ACL保持；普通LOGIN、schema/ACL漂移、提前grant、缺grant及异常写后验证都拒绝，维护与DML异常回滚。该新增DELETE不在旧d373待授权发布范围内，尚未生产应用；既有临时维护模板仍仅原v1/v2范围。
+
+本批554唯一测试实际通过：Worker相关16文件372项＋上游四文件64项、真实PG16四文件34项（角色1＋升级5＋优惠券8＋Supplier20）、Admin角色20＋staff23共43项、UniApp checkout38＋parser3共41项。整合后旧回归31输入精确同字节，仅两文件末尾空行差异已逐SHA证明；不重复计前次结果。Worker两组完整类型、Admin/UniApp类型与构建及API本地dry-run均实际0。UniApp独立物理安装按原lock恢复，五消费者实际parser7.1.6，H5共320产物逐一核验；首次H5原生realpath权限失败及同参数重跑记录保留。桌面/手机另有36检查、32截图、80实际资源匹配Admin265产物。已删除staff ID保留→显式移除→七字段PUT roles[7]有浏览器夹具证据，真实PG与网络夹具证明分列；最终fixtures0且独立pg_ctl退出3，自有测试服务已停，所有PGdata和失败记录保留。
+
+在本地私有候选中正常合并精确公开main `2e1bda25`，保留其优惠券overlay、Supplier整组选中、UniApp待确认查看订单和parser7.1.6修复，原冻结d373及primary保持。静态CLI为 **PHP1904/Worker2385、925匹配中904可执行/21受控不可用；979原始缺口减17退役为962可行动缺口（Admin894/API11/Supplier49/ERP8）**。五条新handler两base共10注册，仅两canonical抵扣旧缺口964→962；Admin621调用/653变体全可执行，0未注册/未解析/受控不可用。
+
+Checklist全部404复选行保持249完成/155开放，旧角色创建/编辑未知结果、完整旧Vue兼容、旧可配置密码及生产角色/规模/Hyperdrive验收继续开放。当前候选公开推送、自身完整CI、合并和部署未执行。详见[本批合同](workers-ts/docs/legacy-role-operations-contract-20261009.md)、[验证账本](workers-ts/audit/legacy-role-operations-validation-20261009.json)、[路由快照](workers-ts/audit/route-parity-legacy-role-operations-followup-20261009.json)及[Admin调用快照](workers-ts/audit/admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json)；下方旧批次为历史记录。
+
+## 当前增量：旧平台管理员完整写入与回执恢复（2026-10-09，本地验证完成，未发布）
+
+恢复旧管理员 create/edit 表单、POST创建、PUT七字段编辑、独立PUT启停与DELETE软删除六个canonical URL，并提供同handler的v1别名。当前actor实时限定平台、下一层级且不操作本人；数字角色全量验证、不丢弃未知/外域权限，账号/电话在共同屏障内判断唯一性。七字段body配合四个明确确认头，专用预览、三类操作、原子不可变回执与原owner恢复独立于现代三种操作；旧Vue尚未升级，不以受控拒绝旧裸写入代替完整旧兼容验收。
+
+独立页面恢复数字角色多选、账号改名、密码保留、启停/删除及未知结果处理，真实浏览器发现的停用角色无法移除已补专用按钮。pending发送前持久保存最小七字段并按账号隔离，只有匹配的原回执或永久not_applied能解除。固定至少12字符/至多72 UTF-8字节的密码政策明确不等价于旧sysconfig组成/长度配置，该旧合同继续开放。
+
+专用临时维护工具已本地准备并验证，固定既有三个Hyperdrive与四个数据库身份；独立只读preflight验证actual数据库/LOGIN及精确profile，单一owner RC事务内安装原v1 addon并扩展v2两CHECK，异常完整回滚、精确重复不改目录。仅新增回执表、两个函数/不可变触发器、Admin SELECT/INSERT和固定菜单锁EXECUTE；app不获新权限，历史profile和业务数据不自动修复。目录指纹含稳定sequence定义；普通订单/购物车变化不要求全店静止。生产前提、临时器上传、DDL/ACL与部署尚未执行。
+
+本批实际 **286不同测试/18文件通过，其中21项真实PG16**；权限67由43+24两轮完整文件结果组成，现代/main57+Supplier补测24分列，选定现代原生仅2通过、另15明确跳过。维护HTTP13与一个完整原生案例计14，不按内部阶段重复计数。最终unit-types04/runtime-types02、Admin类型/构建、API与维护Worker dry-run均实际0。桌面/手机各12项、共24截图及40真实递送资源SHA一致；网络夹具与真实PG证明分列，未执行真实网页登录或生产写入。依赖恢复、首次类型失败、资源耗尽及所有失败原生现场保留。
+
+本地已合入真实GitHub main `5a4e363`；实际静态CLI为 **PHP1904/Worker2375、旧902可执行、964可行动缺口（Admin896）**，六canonical让缺口970→964；Admin615调用/647变体全注册可执行。404总项/249完成/155开放及父项保持，旧Vue、可配置密码、独立旧role启停/删除、当前提交完整CI、公开推送、合并与生产发布继续开放。详见[本批合同](workers-ts/docs/legacy-admin-workflow-contract-20261009.md)、[验证账本](workers-ts/audit/legacy-admin-workflow-validation-20261009.json)与[维护工具边界](workers-ts/test/integration/admin-authority-maintenance.README.md)；下方旧批次为历史记录。
+
+## 当前增量：现代权限变更确认与持久回执（2026-10-08，本地验证完成，未发布）
+
+现代 SystemList 的管理员保存、角色保存和软删除已接入完整影响预览、绑定当前账号/目标/全部引用/目录的 revision、显式确认和同事务提交。已引用角色的正常授权、启停和软删除可以经此流程完成；旧裸接口和旧客户端的行为保持前批限制。七项账号隔离的 pending 元数据在发送前保存，响应丢失、刷新、reload 和重新登录不会作为成功证明；耐久原回执或永久未执行封存才能解除，新账号不可见旧账号记录，改密码后由有效原账号重新登录恢复。
+
+新表与固定菜单锁函数是独立维护 addon，未扩展菜单表 DML 或历史权限计划。真实完整 PG16 282 表权限配置升级到 283 表，两独立 app/Admin LOGIN 审计通过；原 282 表目录与数据不变、重复升级不改目录、第三方 ACL/default ACL/所有者漂移均拒绝不自修。真实并发、响应丢失及回执异常整笔回滚已验证。桌面/手机实际源码浏览器共 28 步/16 张截图通过，接口网络夹具与真实 PostgreSQL 证据分列。
+
+本批83业务、90相关回归、57前端和33真实PG16共 **263唯一项实际通过**。原生集群 fixtures0、自停及独立 pg_ctl status3 已确认，数据/日志保留。Worker 新增八个现代注册，总2357，PHP1904/旧896可执行/970可行动缺口（Admin902）保持；Admin606调用/637变体全注册可执行。复选行保持 **404总项/249完成/155开放**。旧独立角色启停/删除、staff/account、旧客户端确认恢复、当前提交完整 CI、公开推送、合并、生产安装及部署继续开放。详见[现代确认回执合同](workers-ts/docs/admin-authority-operation-contract-20261008.md)及[实际验证清单](workers-ts/audit/admin-authority-operation-validation-20261008.json)，下方保留前批历史。
+
+## 当前增量：Admin 权限写入共同事务（2026-10-08，本地验证完成，未发布）
+
+现代管理员保存、角色保存/软删除、旧数字角色 POST 与 Division 平台账号分配/删除共用 public 管理员及角色双表屏障；全部决定读取在屏障后，以真实密码版本、到期、当前角色和所属域复核授权，锁持有到实际 COMMIT。补齐本人角色/状态/等级及整组最后超级管理员保护、受限角色委派和完整 RETURNING/实际存储回读。保留现代 role.level=0 创建与有授权的本人改密码入口，旧 JWT 随密码版本失效。
+
+已引用角色的真实权限/status 变化或删除暂返回明确409；这是一项用户行为限制，完整影响预览、revision绑定、明确确认、耐久UUID回执及响应丢失恢复仍未实现。旧独立启停/删除和 staff/account 写全链也继续开放，不用这一拒绝替代旧正常变更验收。
+
+本批58业务、77相关回归、16真实PG16测试合计 **151唯一项实际通过**；unit-types03/runtime-types01两套完整检查均0。最初导入EPERM和两轮单元类型失败保留，最终两处类型注解的编译代码与原生执行输入精确一致。独有PG16.15 gmbNQ9/port65160 fixtures0、自停及独立pg_ctl status3/no server running已核对，数据和日志保留。原路由/调用CLI实际0：**PHP1904/Worker2349、896可执行、970可行动缺口（Admin902）**；Admin602调用/633变体全部可执行。没有新增路由或抵扣缺口，所有复选行保持 **404总项/249完成/155开放**。完整本地证据及限制见[本批合同](workers-ts/docs/admin-authority-write-contract-20261008.md)。新提交CI、推送、合并和部署未执行，Primary保持原HEAD与干净状态。
+
+## 当前增量：旧 Admin 角色创建、编辑与基本保存链（2026-10-08，本地验证完成，未发布）
+
+承接真实旧 `GET /adminapi/setting/role/create`、`GET /adminapi/setting/role/:id/edit` 与 `POST /adminapi/setting/role/:id`，并新增三个v1同handler别名。GET返回旧页面实际消费的菜单与七列role；POST兼容先编辑再添加的旧回显，但域/下一层级由实时actor派生。新form/manage细权限与原名单权限分离，不提升为现代全层级读写。每个真实grant以原数字ID作为独立叶子，完整祖先名称作标签，父/子/父子组合无损回传；mapped keys必须实时subset，合格opaque仅按当前原数字membership保留，特殊受保护metadata不能伪装opaque。只剔除经过证明的纯结构祖先。
+
+GET使用同一有界RR只读快照；POST锁内复验平台actor、身份版本、assigned roles、授权菜单和下一层级target，自用角色拒绝，锁保持到真实COMMIT并核对单行结果及读回。未引入客户端没有提供的UUID或假防重；未知CREATE结果恢复、独立启停/删除、管理员全链及父workflow继续开放。
+
+原路由CLI实际退出0：**Worker2349／PHP1904，917精确匹配中896可执行、21受控不可用；987未匹配减17退役为970可行动缺口，有效覆盖47.5%**。本批实际补齐3个旧Admin URL，缺口905→902；API11／Supplier49／ERP8保持，Kefu/Out0。Admin602调用／633变体仍全注册可执行；三个v1别名不额外抵扣旧缺口。
+
+最终business03真实23项、权限/既有读目录63项、审计7项及native02原生4项共 **97唯一项实际通过**，两套完整Worker类型unit02/runtime02均0。首轮业务失败、两套types01真实退出2及被替代business02/native01保留；Controller仅两处严格parser默认值修复共12字节后，受影响检查重新通过，不重复计历史执行。PG16.15独有tlEv3X/port62777 fixtures0自停，独立pg_ctl status3；本机actualmiddleware/controller、LOGIN和真实并发锁证据的范围见[本批合同与验证](workers-ts/docs/legacy-role-workflow-contract-20261008.md)。页面/Uni账本与复选行保持，仍 **404总项／249完成／155开放**；完整旧浏览器、production、当前CI与发布不由本批证明。下方保留历史。
+
+## 当前增量：旧 Admin 素材分类编辑表单（2026-10-08，本地实现，未发布）
+
+承接真实旧 `GET /adminapi/file/category/:id/edit`，并新增 v1 GET/PUT 别名。根或子分类目标必须属于平台；省略文件类型时使用保存类型，显式类型不符拒绝。父选择器完整读取同类型根分类并剔除自身；历史深层、孤儿或跨域父引用明确409，不静默重设根级。DTO保留真实名称/父ID、20字显示限制及固定相对 `file/category/{id}` 的PUT地址，两API base复用原受保护更新服务，现代50字写限制、范围锁、提交时类型/父引用和循环复验保持。
+
+本批原路由CLI实际退出0：**Worker2343／PHP1904，914精确匹配中893可执行、21受控不可用；990未匹配减17退役后为973可行动缺口，有效覆盖47.3%**。增加的是v1两条别名；Admin canonical编辑URL原已登记，本批修复它的实际DTO/scope合同，旧URL缺口仍Admin905、API11／Supplier49／ERP8，不能假称新增别名让缺口下降。Admin602处调用／633变体仍全注册可执行。
+
+本批业务51项（编辑29＋当前创建回归22）、既有素材/审计19项与最终native02原生3项共73项实际通过，unit02/runtime01类型均0。首次单元类型真实失败、native01被替代记录保留；修复仅test helper加async的6字节，受影响原生/单元类型重新通过，不重复计数。原生SELECT-only LOGIN、真实RR只读事务及scope锁/PID等待后PUT复验的范围、原始证据与限制见[本批合同与验证](workers-ts/docs/admin-category-edit-form-contract-20261008.md)。页面/Uni账本、复选行与 **404总项／249完成／155开放** 保持；完整旧form-create浏览器、分类树/图片视频工作流、旧有子级禁止改父写语义、未知写结果恢复、生产与发布仍开放。本批未推送或部署，不借旧CI。下方保留历史。
+
+## 当前增量：旧 Admin 素材分类创建表单（2026-10-08，本地实现，未发布）
+
+恢复无路径参数的 `GET /adminapi/file/category/create` 及 v1 别名，兼容旧 query 中空父分类 ID 和图片/视频类型。返回同平台、同类型的完整根分类选项、可筛选父分类选择器及旧输入的20字限制；在同一有界只读快照内复核当前账号和素材查看权限，选项超过10000明确失败而非截断。实际消费者核对发现带API前缀的提交地址会被Axios重复拼接，现改固定相对 `file/category`，两种API base均有受保护的原创建handler，读者不能获得写权限。保存仍使用原范围锁及父分类复验，现代50字限制保持。
+
+原路由CLI实际退出0：**Worker2341／PHP1904，914精确匹配中893可执行、21受控不可用；990未匹配减17退役后为973可行动缺口，有效覆盖47.3%**。本批补齐1条旧Admin URL；Admin缺口从906降为905，API11／Supplier49／ERP8保持。Admin602处调用／633变体仍全注册可执行。页面与Uni账本未改，有限表单合同不关闭 `ADM-001`、`ADM-007`、`FE-001`；清单仍 **404总项／249完成／155开放**。
+
+当前业务22项、原生数据库3项及既有素材/审计19项合计44项实际通过，原失败与被替代版本保留；类型及完整证据见[本批合同与验证](workers-ts/docs/admin-category-create-form-contract-20261008.md)。完整旧编辑、分类树、图片/视频工作流、写入结果未知的恢复、真实账号与生产验收、Linux新提交CI和发布继续开放。本批未公开推送或部署。下方保留历史。
+
+## 当前增量：旧管理员与角色列表路由合同（2026-10-08，本地实现，未发布）
+
+后续角色create/edit与基本POST链见[本轮角色合同](workers-ts/docs/legacy-role-workflow-contract-20261008.md)；本段保留旧列表批次当时范围与验证，管理员写链、独立启停/删除和未知结果恢复仍开放。
+
+恢复 `GET /adminapi/setting/admin`、`GET /adminapi/setting/role` 及两个 `/api/admin/setting/` 别名，使用实际旧 PHP 与仍启用的 Vue 消费者确认参数、`list/count`、蛇形字段、角色/菜单名称和上海日期。两列表仅查询当前管理员下一层级；旧数字菜单分别授予 `system.legacy_admin_view`、`system.legacy_role_view`，不能扩为现代全层级目录或写权限。既有 `system.view` 单向兼容旧列表。授权、总数、当前页及显示名称共用有界只读快照，排除非平台和已删除记录。
+
+原路由审计实际退出0：**Worker2338／PHP1904，精确匹配913，其中可执行892、受控不可用21；991未匹配减17退役后为974可行动缺口，有效覆盖47.3%**。Admin缺口从908降为906；其余API11、Supplier49、ERP8，Kefu与Out为0。Admin现有602处调用／633个路径变体仍全部注册可执行。Admin112业务页面与Uni126页未改变；151旧Uni逻辑仍29直连／115兼容／7缺口，兼容62候选／53部分。静态注册数量不等于业务或生产验收。
+
+当前本地业务、权限与原生数据库验证已完成，具体运行、原失败与类型结果见[本批合同与验证](workers-ts/docs/admin-legacy-system-list-contract-20261008.md)。旧表单、保存、启停、删除及完整旧端登录/菜单仍为独立开放合同；`ADM-001`、`ADM-007`、`FE-001` 等父项与全部复选行保持。清单仍为 **404总项／249完成／155开放**。本批未公开推送或部署；旧CI与历史发布不计本批信用。下方保留历史。
+
+## 当前增量：Admin 管理员与角色分页目录（2026-10-08，本地实现，未发布）
+
+新增平台管理员与角色的独立分页查询，原列表数组响应保持兼容。页面恢复账号/姓名/手机号或角色名称关键词、状态筛选、真实总数和独立页码；平台范围排除门店、供应商及软删除账号。目录使用同一只读快照和安全投影，实时 `system.view` 鉴权；页面按 `system.manage` 显示写入控件，读取失败保留旧列表并暂停编辑，账号或权限变化清空个人资料、密码与草稿，迟到响应不覆盖当前账号。权限目录失败及旧未登记规则阻止角色保存，重载权限树后必须重新打开编辑器恢复原勾选。
+
+新增后端 12 项本地 PGlite 查询/鉴权测试及前端 22 项实际 SFC 交互测试已通过；这些不抵扣生产 PostgreSQL、真实角色或本批 Linux CI。当前只承接有限目录合同，未开放账号/角色启停；防自锁、最后超级管理员保护、耐久写入回执、旧权限完整映射与真实账号验收仍开放，`ADM-001`、`ADM-007`、`FE-001` 等父项及既有复选状态保持。详见[本批查询和页面合同](workers-ts/docs/admin-system-directory-20261008.md)。本批未公开推送或部署，下方保留既有批次历史。
+
 ## 上传历史验证阶段：普通图片上传分类归属与提交互斥（2026-10-07，180项本地证明；后续门禁与发布见最新收据）
 
 普通图片上传覆盖 Admin、Supplier、User、Kefu 和 Visitor：R2 写入后，在 SQL 事务内使用与分类写操作相同的范围锁，重新核对目标分类的归属与图片类型，并持有共享行锁直到事务结束。分类删除先提交时上传拒绝并只清理本次新对象；上传先取得锁时，删除等待其提交后重新统计，不能删除非空分类。普通 INSERT 和 canonical 路径更新核对单行身份及完整 metadata，触发器静默改写或跳过操作不能假报成功。

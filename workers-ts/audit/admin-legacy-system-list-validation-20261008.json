@@ -1,0 +1,487 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-08T08:48:26.956Z",
+  "baseCommit": "ac9c733b8e4eaa2443a467218e790acf3a9b1cb4",
+  "scope": [
+    "GET /adminapi/setting/admin",
+    "GET /adminapi/setting/role",
+    "GET /api/admin/setting/admin",
+    "GET /api/admin/setting/role"
+  ],
+  "legacyCapabilities": [
+    "system.legacy_admin_view",
+    "system.legacy_role_view"
+  ],
+  "creditedUniqueTests": 81,
+  "runs": [
+    {
+      "id": "legacy-final01",
+      "passed": 23,
+      "credited": 23,
+      "tests": [
+        "test/admin-legacy-setting-read-permission.test.ts",
+        "test/admin-legacy-system-list.test.ts"
+      ],
+      "purpose": "Final six permission and seventeen PGlite/Hono contracts after test-only type repairs.",
+      "exitCode": 0,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-final01.stdout.txt",
+          "bytes": 273,
+          "sha256": "a27a8403f2513c710ffc85504f5bfecb8735e1b237644509fa5a88779059eaf7"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-final01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "permissions-test02",
+      "passed": 49,
+      "credited": 43,
+      "tests": [
+        "test/admin-permission.test.ts",
+        "test/admin-system-directory.test.ts",
+        "test/staff-notification-scenario.test.ts"
+      ],
+      "excludedFromCredit": [
+        "Six legacy permission cases rerun in legacy-final01."
+      ],
+      "purpose": "Existing permission, modern directory and batched notification regressions on the same final production sources.",
+      "exitCode": 0,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\permissions-test02.stdout.txt",
+          "bytes": 275,
+          "sha256": "7954cc655592be5f1c6353026907cfd50de51141c88234aeec599e9a7022a670"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\permissions-test02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "legacy-native01",
+      "passed": 8,
+      "credited": 8,
+      "tests": [
+        "test/admin-legacy-system-list-native.test.ts",
+        "test/admin-fab-permission.test.ts"
+      ],
+      "purpose": "Three independent-PG16 list tests, three native FAB SQL tests and two FAB rule tests.",
+      "exitCode": 0,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-native01.stdout.txt",
+          "bytes": 1038,
+          "sha256": "324f8a2c26c871ea06ecb6dfae70de70e26d3d304a818e35a683830324f615d0"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-native01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "audit-regression01",
+      "passed": 7,
+      "credited": 7,
+      "tests": [
+        "test/admin-frontend-api-audit.test.ts",
+        "test/route-parity-audit.test.ts"
+      ],
+      "purpose": "Recompute current Admin API snapshot; preserve PHP comment parsing.",
+      "exitCode": 0,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\audit-regression01.stdout.txt",
+          "bytes": 270,
+          "sha256": "1134b5c521f2f09b5784944f1c59b7c62609f9c415196ffb8e5873f5478b47e5"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\audit-regression01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "types": {
+    "unitExitCode": 0,
+    "runtimeExitCode": 0,
+    "heapLimitMb": 8192,
+    "commands": [
+      "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+    ],
+    "rawEvidence": [
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-types04.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-types04.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-runtime-types04.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-runtime-types04.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "earlierTypeAttempts": [
+    {
+      "id": "worker-types02",
+      "unitExitCode": 134,
+      "runtimeExecuted": false,
+      "reason": "Default Node heap exhausted; project-standard 8192MB option had been omitted.",
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-types02.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-types02.stderr.txt",
+          "bytes": 1415,
+          "sha256": "f2cb0e085e5f27e56612b003ae3a15e82e5d07a7ac3e5d279ddd8bf49ec9ff86"
+        }
+      ]
+    },
+    {
+      "id": "worker-types03",
+      "unitExitCode": 2,
+      "runtimeExitCode": null,
+      "heapLimitMb": 8192,
+      "reason": "Two new test-only Node URL / transaction type mismatches; repaired without weakening assertions.",
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-types03.stdout.txt",
+          "bytes": 2401,
+          "sha256": "952bf708ef75263dcc7c3987bc6f05d30940ea3af62d08749cbe8daa59b85f56"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\worker-types03.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "postgres": {
+    "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-HYhMBM/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 57071,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true,
+    "remainingFixtures": 0,
+    "stopped": true,
+    "statusRechecked": {
+      "observedExitCode": 3,
+      "output": "pg_ctl: no server running"
+    },
+    "boundary": "Schema maintenance owns one new disposable cluster. List test uses NOSUPERUSER restricted independent LOGIN sessions; no production database."
+  },
+  "routeAudit": {
+    "before": {
+      "php": 1904,
+      "ts": 2334,
+      "matched": 911,
+      "executableMatched": 890,
+      "unavailable": 21,
+      "missing": 993,
+      "retired": 17,
+      "actionableMissing": 976,
+      "coveragePercent": 47.8,
+      "executableCoveragePercent": 46.7,
+      "effectiveExecutableCoveragePercent": 47.2
+    },
+    "after": {
+      "php": 1904,
+      "ts": 2338,
+      "matched": 913,
+      "executableMatched": 892,
+      "unavailable": 21,
+      "missing": 991,
+      "retired": 17,
+      "actionableMissing": 974,
+      "coveragePercent": 48,
+      "executableCoveragePercent": 46.8,
+      "effectiveExecutableCoveragePercent": 47.3
+    },
+    "surfaces": [
+      {
+        "surface": "api",
+        "php": 457,
+        "ts": 1273,
+        "executableMatched": 438,
+        "actionableMissing": 11
+      },
+      {
+        "surface": "admin",
+        "php": 1153,
+        "ts": 790,
+        "executableMatched": 232,
+        "actionableMissing": 906
+      },
+      {
+        "surface": "supplier",
+        "php": 182,
+        "ts": 164,
+        "executableMatched": 121,
+        "actionableMissing": 49
+      },
+      {
+        "surface": "kefu",
+        "php": 63,
+        "ts": 70,
+        "executableMatched": 60,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "php": 41,
+        "ts": 41,
+        "executableMatched": 41,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "php": 8,
+        "ts": 0,
+        "executableMatched": 0,
+        "actionableMissing": 8
+      }
+    ],
+    "evidence": [
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\route-distribution-before.json",
+        "bytes": 1300502,
+        "sha256": "611c25b1b8eba44afa430909eb8aa0cf22fd5e90d563f23e32f9f00992d01935"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\route-after.json",
+        "bytes": 1300092,
+        "sha256": "4aeff7cd2590d8d4570a62c73db642a1f81c1e73ae62333ff26584771c08418d"
+      }
+    ]
+  },
+  "adminApiAudit": {
+    "counts": {
+      "callSites": 602,
+      "pathVariants": 633,
+      "registered": 633,
+      "executable": 633,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "exitCode": 0
+  },
+  "frontendInventory": {
+    "legacy": {
+      "pageVueFiles": 378,
+      "routeRecords": 292,
+      "businessPageRouteRecords": 274,
+      "distinctRoutedPageComponents": 245,
+      "auxiliaryRouteRecords": 18,
+      "layoutRouteRecords": 0,
+      "otherRouteRecords": 0,
+      "unresolvedComponents": 0,
+      "unroutedPageFiles": 133
+    },
+    "target": {
+      "pageVueFiles": 130,
+      "routeRecords": 113,
+      "businessPageRouteRecords": 112,
+      "distinctRoutedPageComponents": 111,
+      "auxiliaryRouteRecords": 0,
+      "layoutRouteRecords": 1,
+      "otherRouteRecords": 0,
+      "unresolvedComponents": 0,
+      "unroutedPageFiles": 19
+    },
+    "evidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-inventory-before.json",
+      "bytes": 181338,
+      "sha256": "22b170d06bbbfbaae99604a13d12717420277a4f9adc5e2af72c9f7662851efd"
+    },
+    "scope": "Executed original inventory CLI; frontend files unchanged by this batch."
+  },
+  "uniappAudit": {
+    "ok": true,
+    "legacyManifest": "C:\\cinagroup\\cinashop-php\\view\\uniapp\\pages.json",
+    "targetManifest": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\view\\uniapp-ts\\src\\pages.json",
+    "counts": {
+      "legacyLogicalRoutes": 151,
+      "targetRoutes": 126,
+      "directRegistered": 29,
+      "legacyCompatibilityRules": 115,
+      "candidateCoveredRules": 62,
+      "partialReplacementRules": 53,
+      "gaps": 7
+    },
+    "gapGroups": [
+      {
+        "id": "FE-003B",
+        "routes": 1
+      },
+      {
+        "id": "FE-003C",
+        "routes": 0
+      },
+      {
+        "id": "FE-003D",
+        "routes": 0
+      },
+      {
+        "id": "FE-003E",
+        "routes": 1
+      },
+      {
+        "id": "FE-003F",
+        "routes": 5
+      },
+      {
+        "id": "FE-003G",
+        "routes": 0
+      },
+      {
+        "id": "FE-003H",
+        "routes": 0
+      }
+    ],
+    "evidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\uniapp-parity-before.json",
+      "bytes": 853,
+      "sha256": "f5e323a4bb54e95f93ae1f07a90d3d1dffcd049b977d3703bc993e3dd654fa5d"
+    },
+    "scope": "Executed original CLI with --release-followup, manifest hashes, exhaustive ledger and navigation lock-step."
+  },
+  "checklist": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "checkboxChanges": 0
+  },
+  "payloadInputs": [
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 938883,
+      "sha256": "822e792f6808f6db0e8993403a06cceced891abe6a97ac37573ff13cca1a9a96"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "bytes": 123741,
+      "sha256": "d66fb59362c74c33ae891b7df59283221fdd71f26f3a157b00ff3d13d55fab60"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 92741,
+      "sha256": "e246edab802bb380a8e9ffb76fdb46f205b15e3fd83c4ad2bd1c1596ae7d2461"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 164994,
+      "sha256": "9160090abc929dd751c6334e48473c6031ea774a0fc599f3abee13fcf38844e1"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 55442,
+      "sha256": "dbb26044463bd0c9c697a5b5f58c96468dbcf31f654fcc33fa4c5e2868e829f6"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminLegacySystemListService.ts",
+      "bytes": 11183,
+      "sha256": "1b8bdcd0fe8f9bc3e67494c79551831f26101c1618cb466a50ca00b1855936a6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 43222,
+      "sha256": "cc380a3a47dca7101a329e60923ccb0fdfa20a199364bfaddd9fdeb38cd9e7cb"
+    },
+    {
+      "file": "workers-ts/scripts/uniapp-frontend-parity-audit.ts",
+      "bytes": 8604,
+      "sha256": "1d9fa67bf54351c46b6eae864b7357d0561bf77298e0e2343672113b60c0b5e1"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "bytes": 10020,
+      "sha256": "16794e7ca14a698276e66592c02f6c794bd8db0feb82955b5dc5185b4a37129d"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-system-list.test.ts",
+      "bytes": 22938,
+      "sha256": "2c5f173e21124318bdcdc731c67974d98dfa320701e6a093605bcb1f75d33a9f"
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "bytes": 40654,
+      "sha256": "824770e6567fabdc99336352fa2b81a59a75f6a2d70cb57a3b1709f60c9c018d"
+    },
+    {
+      "file": "workers-ts/test/admin-system-directory.test.ts",
+      "bytes": 15048,
+      "sha256": "2775914a16e11546ad2a20468d1026da8444399f4938a9e63b8faac7434ca5b6"
+    },
+    {
+      "file": "workers-ts/test/staff-notification-scenario.test.ts",
+      "bytes": 13444,
+      "sha256": "95d4315f716ac4453fafbbfc80c747dc40b6d18c8b8a07724b79ffffd24e8fc7"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-system-list-native.test.ts",
+      "bytes": 12906,
+      "sha256": "ff864a43296458260ac26f59df9862cd441acea6726b24fc249666256a17e8bc"
+    },
+    {
+      "file": "workers-ts/test/admin-fab-permission.test.ts",
+      "bytes": 6920,
+      "sha256": "b746569975740b21c804fd67e6d6ffa2f7725f3c40a44f7cf6f6ece29b6dbaed"
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "bytes": 2503,
+      "sha256": "ff21560f48bf0986913873b03e8213d8d129d4d2c70c3805e8d131e83cc4a218"
+    },
+    {
+      "file": "workers-ts/test/route-parity-audit.test.ts",
+      "bytes": 1435,
+      "sha256": "8fd923adab1b32dbbd70993e93e262db852f1d800908cf7c1a48d54ba622423d"
+    },
+    {
+      "file": "workers-ts/audit/route-distribution-legacy-system-list-followup-20261008.json",
+      "bytes": 1300092,
+      "sha256": "4aeff7cd2590d8d4570a62c73db642a1f81c1e73ae62333ff26584771c08418d"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-legacy-system-list-followup-20261008.json",
+      "bytes": 379299,
+      "sha256": "269c85ddadf1df8bb77238901adb4b49102aa273f73d85cf738ac7a9f6d77745"
+    }
+  ],
+  "limitations": [
+    "Static route/API registration is separate from behavioral, permission, state, provider and production parity.",
+    "Legacy create/edit forms, writes, status/delete, complete old login/menu and higher-level checklist items remain open.",
+    "No frontend source changed; no new browser/build credit claimed.",
+    "This batch has no public push, new-head Linux CI or production deployment.",
+    "Earlier failures and superseded executions remain available; only current unique tests are credited."
+  ]
+}
