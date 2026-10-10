@@ -40,6 +40,20 @@ $taskFormalBefore = $null
 $taskFormalAfter = $null
 $taskResult = $null
 $taskAccess = [ordered]@{ anonymous = 0; wrongMethod = 0; query = 0; wrongPath = 0 }
+$taskDiagnostic = [ordered]@{ outcome = 'not-started'; httpStatus = 'unobserved';
+    cacheControl = 'unobserved'; workerStage = 'unobserved'; category = 'unobserved' }
+
+function Test-AuditTimeout {
+    param([System.Exception]$ErrorObject)
+    for ($taskErrorDepth = 0; $taskErrorDepth -lt 4 -and $ErrorObject; $taskErrorDepth++) {
+        if ($ErrorObject -is [System.TimeoutException] -or
+            $ErrorObject -is [System.Threading.Tasks.TaskCanceledException] -or
+            ($ErrorObject -is [System.Net.WebException] -and
+             $ErrorObject.Status -eq [System.Net.WebExceptionStatus]::Timeout)) { return $true }
+        $ErrorObject = $ErrorObject.InnerException
+    }
+    return $false
+}
 
 function Get-Http {
     param([string]$Uri,[hashtable]$Headers=@{},[string]$Method='GET',[int]$TimeoutSec=20)
@@ -207,11 +221,45 @@ try {
         throw 'Temporary Worker access boundaries failed.'
     }
     $taskStage = 'single-readonly-audit'
-    $taskReply = Get-Http -Uri "$taskUrl/work-parents" -Headers $taskAuth -TimeoutSec 30
-    if ([int]$taskReply.StatusCode -ne 200 -or $taskReply.Headers['Cache-Control'] -notcontains 'no-store') {
+    $taskDiagnostic.outcome = 'transport'
+    try {
+        $taskReply = Get-Http -Uri "$taskUrl/work-parents" -Headers $taskAuth -TimeoutSec 30
+    } catch {
+        if (Test-AuditTimeout -ErrorObject $_.Exception) { $taskDiagnostic.outcome = 'timeout' }
+        throw 'Single database audit transport failed.'
+    }
+    $taskHttpStatus = [int]$taskReply.StatusCode
+    $taskDiagnostic.httpStatus = if ($taskHttpStatus -in @(200,403,408,429,500,502,503,504)) {
+        [string]$taskHttpStatus
+    } else { 'other' }
+    $taskDiagnostic.cacheControl = if ($taskReply.Headers['Cache-Control'] -contains 'no-store') {
+        'present'
+    } else { 'absent' }
+    $taskDiagnostic.outcome = 'http-status'
+    if ($taskHttpStatus -eq 503 -and $taskDiagnostic.cacheControl -ceq 'present') {
+        # Accept only fixed Worker diagnostic labels from a fixed failure body.
+        # No response text, SQL or arbitrary JSON value enters the receipt.
+        try {
+            $taskErrorBody = $taskReply.Content | ConvertFrom-Json -Depth 4
+            if ($taskErrorBody.error -ceq 'audit failed' -and
+                $taskErrorBody.stage -is [string] -and
+                @('connect','permission','capacity','close') -ccontains $taskErrorBody.stage -and
+                $taskErrorBody.category -is [string] -and
+                @('permission','lock','timeout','connection','other') -ccontains $taskErrorBody.category) {
+                $taskDiagnostic.workerStage = [string]$taskErrorBody.stage
+                $taskDiagnostic.category = [string]$taskErrorBody.category
+            }
+        } catch { }
+    }
+    if ($taskHttpStatus -ne 200) {
         throw 'Single database audit did not complete.'
     }
-    $taskRaw = $taskReply.Content | ConvertFrom-Json -Depth 12
+    $taskDiagnostic.outcome = 'cache-control'
+    if ($taskDiagnostic.cacheControl -cne 'present') { throw 'Single database audit cache boundary failed.' }
+    $taskDiagnostic.outcome = 'json-parse'
+    try { $taskRaw = $taskReply.Content | ConvertFrom-Json -Depth 12 }
+    catch { throw 'Single database audit JSON parse failed.' }
+    $taskDiagnostic.outcome = 'shape'
     if ($taskRaw.scope -cne 'work-parent-current-app' -or
         $taskRaw.identityMatch -isnot [bool] -or $taskRaw.ready -isnot [bool]) {
         throw 'Unexpected audit result shape.'
@@ -221,6 +269,8 @@ try {
         'noParentRemovalOrTriggerCreation','noReferencedKeyUpdate','noReplicationBypass',
         'noUnreviewedDefinerRoutine','parentReadAccess') | Sort-Object -CaseSensitive )
     $taskFailures = @($taskRaw.failures)
+    $taskCapacity = $taskRaw.capacity
+    $taskSafeCapacity = $null
     if ($taskRaw.identityMatch) {
         if ($null -eq $taskRaw.checks) { throw 'Expected permission checks missing.' }
         $taskActualChecks = @($taskRaw.checks.PSObject.Properties.Name | Sort-Object -CaseSensitive)
@@ -236,12 +286,96 @@ try {
         $taskExpectedFailures = @( $taskSafeChecks.GetEnumerator() |
             Where-Object Value -eq $false | ForEach-Object Key | Sort-Object -CaseSensitive )
         if ((@($taskFailures | Sort-Object -CaseSensitive) -join '|') -cne
-            ($taskExpectedFailures -join '|') -or $taskRaw.ready -ne ($taskExpectedFailures.Count -eq 0)) {
+            ($taskExpectedFailures -join '|')) {
             throw 'Permission failures do not match boolean checks.'
+        }
+        if ($null -eq $taskCapacity -or
+            $taskCapacity.scope -cne 'work-parent-capacity-metadata-only' -or
+            $taskCapacity.identityMatch -isnot [bool] -or
+            $taskCapacity.catalogMatch -isnot [bool]) {
+            throw 'Capacity metadata envelope differs.'
+        }
+        $taskSafeCapacity = [ordered]@{
+            scope = 'work-parent-capacity-metadata-only'
+            identityMatch = [bool]$taskCapacity.identityMatch
+            catalogMatch = [bool]$taskCapacity.catalogMatch
+            tables = $null; index = $null; statisticsTargets = $null
+        }
+        if ($taskCapacity.catalogMatch) {
+            if (-not $taskCapacity.identityMatch -or $null -eq $taskCapacity.tables -or
+                $null -eq $taskCapacity.index -or $null -eq $taskCapacity.statisticsTargets) {
+                throw 'Complete capacity metadata lacks its identity or sections.'
+            }
+            $taskTableNames = @('work_callback_event','work_client_current','work_contact_action_outbox')
+            if ((@($taskCapacity.tables.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                ($taskTableNames -join '|')) { throw 'Capacity table names differ.' }
+            $taskSafeTables = [ordered]@{}
+            $taskNumberFields = @('estimatedRows','liveRowsEstimate','modificationsSinceAnalyze',
+                'heapBytes','indexBytes','totalBytes','lastAnalyzeMs','lastAutoanalyzeMs')
+            foreach ($taskTable in $taskTableNames) {
+                $taskValues = $taskCapacity.tables.$taskTable
+                if ($null -eq $taskValues -or
+                    (@($taskValues.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                    (@($taskNumberFields | Sort-Object -CaseSensitive) -join '|')) {
+                    throw 'Capacity table field names differ.'
+                }
+                $taskSafeNumbers = [ordered]@{}
+                foreach ($taskField in $taskNumberFields) {
+                    $taskValue = $taskValues.$taskField
+                    if ($null -ne $taskValue -and ($taskValue -isnot [string] -or
+                        $taskValue -cnotmatch '^\d{1,20}$')) {
+                        throw 'Capacity table field is not a bounded decimal.'
+                    }
+                    if ($taskField -in @('heapBytes','indexBytes','totalBytes') -and $null -eq $taskValue) {
+                        throw 'Capacity table size is missing.'
+                    }
+                    $taskSafeNumbers[$taskField] = $taskValue
+                }
+                $taskSafeTables[$taskTable] = $taskSafeNumbers
+            }
+            $taskIndex = $taskCapacity.index
+            if ((@($taskIndex.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                'bytes|estimatedRows|exact|name' -or $taskIndex.name -cne 'wcao_client_ref' -or
+                $taskIndex.exact -isnot [bool] -or $taskIndex.exact -ne $true -or
+                $taskIndex.bytes -isnot [string] -or
+                $taskIndex.bytes -cnotmatch '^\d{1,20}$' -or
+                ($null -ne $taskIndex.estimatedRows -and
+                    ($taskIndex.estimatedRows -isnot [string] -or
+                     $taskIndex.estimatedRows -cnotmatch '^\d{1,20}$'))) {
+                throw 'Capacity index metadata differs.'
+            }
+            $taskColumnNames = @('client_id','corp_id')
+            if ((@($taskCapacity.statisticsTargets.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                ($taskColumnNames -join '|')) { throw 'Capacity statistics target names differ.' }
+            $taskSafeTargets = [ordered]@{}
+            foreach ($taskColumn in $taskColumnNames) {
+                $taskTarget = $taskCapacity.statisticsTargets.$taskColumn
+                if ((@($taskTarget.PSObject.Properties.Name | Sort-Object -CaseSensitive) -join '|') -cne
+                    'configured|effective' -or
+                    $taskTarget.configured -isnot [long] -or $taskTarget.effective -isnot [long] -or
+                    $taskTarget.configured -lt -1 -or $taskTarget.configured -gt 10000 -or
+                    $taskTarget.effective -lt 0 -or $taskTarget.effective -gt 10000) {
+                    throw 'Capacity statistics target differs.'
+                }
+                $taskSafeTargets[$taskColumn] = [ordered]@{
+                    configured = [int]$taskTarget.configured; effective = [int]$taskTarget.effective }
+            }
+            $taskSafeCapacity.tables = $taskSafeTables
+            $taskSafeCapacity.index = [ordered]@{ name = 'wcao_client_ref'; exact = $true;
+                estimatedRows = $taskIndex.estimatedRows; bytes = $taskIndex.bytes }
+            $taskSafeCapacity.statisticsTargets = $taskSafeTargets
+        } elseif ($null -ne $taskCapacity.tables -or $null -ne $taskCapacity.index -or
+            $null -ne $taskCapacity.statisticsTargets) {
+            throw 'Incomplete capacity metadata exposed sections.'
+        }
+        if ($taskRaw.ready -ne ($taskExpectedFailures.Count -eq 0 -and
+            $taskCapacity.identityMatch -and $taskCapacity.catalogMatch)) {
+            throw 'Combined permission and capacity readiness differs.'
         }
     } else {
         if ($null -ne $taskRaw.checks -or $taskRaw.ready -ne $false -or
-            $taskFailures.Count -ne 1 -or $taskFailures[0] -cne 'connectionIdentityMismatch') {
+            $taskFailures.Count -ne 1 -or $taskFailures[0] -cne 'connectionIdentityMismatch' -or
+            $null -ne $taskCapacity) {
             throw 'Backend identity mismatch shape differs.'
         }
         $taskSafeChecks = $null
@@ -250,7 +384,8 @@ try {
     # unexpectedly contains extra fields or text.
     $taskResult = [ordered]@{ scope = 'work-parent-current-app';
         identityMatch = [bool]$taskRaw.identityMatch; ready = [bool]$taskRaw.ready;
-        checks = $taskSafeChecks; failures = $taskFailures }
+        checks = $taskSafeChecks; failures = $taskFailures; capacity = $taskSafeCapacity }
+    $taskDiagnostic.outcome = 'complete'
     $taskStage = 'audit-completed'
 } catch {
     # Do not print raw HTTP, Wrangler or database exceptions: they can contain
@@ -331,6 +466,7 @@ $taskReceipt = [ordered]@{
     formalUnchanged = [bool]$taskMainUnchanged
     ownedVersionId = $taskOwnedVersion
     access = $taskAccess
+    diagnostic = $taskDiagnostic
     audit = $taskResult
     cleanup = [ordered]@{ attempted = $taskAttempted; ownershipVerified = $taskOwnershipVerified;
         deleted = $taskDeleted; controlPlane404 = $taskControlMissing; public404 = $taskPublicMissing }
