@@ -47,7 +47,7 @@ $taskResult = $null
 $taskAccess = [ordered]@{ anonymous = 0; wrongMethod = 0; query = 0; wrongPath = 0 }
 $taskDiagnostic = [ordered]@{ outcome = 'not-started'; httpStatus = 'unobserved';
     cacheControl = 'unobserved'; workerStage = 'unobserved'; category = 'unobserved' }
-$taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
+$taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved'; errorCategory = 'unobserved' }
 
 function Test-AuditTimeout {
     param([System.Exception]$ErrorObject)
@@ -205,7 +205,9 @@ function Invoke-BoundedWrangler {
     $taskStderr = Join-Path $taskRoot ".cache/$taskName-$Operation-$taskOutputId.stderr"
     $taskProcess = $null
     try {
-        if ($Operation -ceq 'deploy') { $script:taskDeployDiagnostic.outcome = 'start-attempted' }
+        if ($Operation -ceq 'deploy') {
+            $script:taskDeployDiagnostic.outcome = 'start-attempted'
+        }
         # Start-Process redirects to owned files, avoiding pipe-buffer deadlock.
         # Argument values are fixed config paths, random hex, or fixed flags.
         $taskProcessArguments = @(('"' + $taskCli + '"'),$Operation) + $Arguments
@@ -233,8 +235,50 @@ function Invoke-BoundedWrangler {
             $script:taskDeployDiagnostic.outcome = if ($taskProcess.ExitCode -eq 0) {
                 'cli-zero'
             } else { 'cli-nonzero' }
+            $script:taskDeployDiagnostic.errorCategory = if ($taskProcess.ExitCode -eq 0) {
+                'none'
+            } else { 'unknown' }
         }
-        if ($taskProcess.ExitCode -ne 0) { throw 'Wrangler operation did not complete successfully.' }
+        if ($taskProcess.ExitCode -ne 0) {
+            if ($Operation -ceq 'deploy') {
+                # Read at most 65,537 bytes per stream, even if another process
+                # still writes to a redirected file after the CLI exits.
+                $taskParts = @()
+                $taskWithinLimit = $true
+                foreach ($taskFile in @($taskStdout,$taskStderr)) {
+                    $taskStream = [IO.FileStream]::new($taskFile,[IO.FileMode]::Open,
+                        [IO.FileAccess]::Read,[IO.FileShare]::ReadWrite)
+                    try {
+                        $taskBuffer = [byte[]]::new(65537)
+                        $taskRead = 0
+                        while ($taskRead -lt $taskBuffer.Length) {
+                            $taskCount = $taskStream.Read($taskBuffer,$taskRead,$taskBuffer.Length - $taskRead)
+                            if ($taskCount -eq 0) { break }
+                            $taskRead += $taskCount
+                        }
+                        if ($taskRead -gt 65536) { $taskWithinLimit = $false; break }
+                        $taskParts += [Text.Encoding]::UTF8.GetString($taskBuffer,0,$taskRead)
+                    } finally { $taskStream.Dispose() }
+                }
+                if ($taskWithinLimit) {
+                    # CLI text may contain private URLs, account details, or
+                    # SQL. Only one unambiguous allowlisted hint enters receipt.
+                    $taskErrorText = $taskParts -join "`n"
+                    $taskMatches = @(
+                        [bool]($taskErrorText -match '(?i)\b(?:authentication error|not authenticated|unauthorized|not authorized|forbidden|permission denied)\b'),
+                        [bool]($taskErrorText -match '(?i)\b(?:rate[ -]?limit(?:ed|ing)?|too many requests)\b|\b(?:http|status)[ /:-]*429\b'),
+                        [bool]($taskErrorText -match '(?i)\b(?:ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|fetch failed|request timed out)\b')
+                    )
+                    if (@($taskMatches | Where-Object { $_ }).Count -eq 1) {
+                        $script:taskDeployDiagnostic.errorCategory = @(
+                            'auth-or-permission','rate-limit','network')[[Array]::IndexOf($taskMatches,$true)]
+                    }
+                    $taskErrorText = $null
+                }
+                $taskParts = $null
+            }
+            throw 'Wrangler operation did not complete successfully.'
+        }
         if ($Operation -ceq 'deploy') {
             if ((Get-Item -LiteralPath $taskStdout).Length -gt 65536 -or
                 (Get-Item -LiteralPath $taskStderr).Length -gt 65536) {
