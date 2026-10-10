@@ -217,10 +217,47 @@ describe("DB-003 catalog-only one-shot audit", () => {
       expect(result.stdout).toContain("ownership_drift_observed=1");
       for (const field of ["expectedOwnerMarkerSha256 = $taskMarkerSha",
         "observedVersionId = $taskObservedVersionId", "ownedVersionId = $taskOwnedVersion",
-        "workerMayRemain = $taskAttempted -and -not ($taskControlPlane404 -and $taskPublic404)"]) {
+        "workerMayRemain = Test-WorkerMayRemain"]) {
         expect(runner).toContain(field);
       }
       expect(runner).not.toContain("expectedOwnerMarker = $taskMarker");
+    });
+
+    it("keeps residual-worker status open after timeout despite transient dual 404", () => {
+      const offline = String.raw`
+        $tokens=$null; $errors=$null
+        $ast=[System.Management.Automation.Language.Parser]::ParseFile(
+          (Resolve-Path 'scripts/run-system-config-catalog-production-audit.ps1'),
+          [ref]$tokens,[ref]$errors)
+        if ($errors.Count) { throw 'runner parse failed' }
+        $fn=$ast.Find({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+          $n.Name -eq 'Test-WorkerMayRemain'},$true)
+        if (-not $fn) { throw 'residual worker gate missing' }
+        Invoke-Expression $fn.Extent.Text
+        $script:taskDeleted=$true
+        $script:taskControlPlane404=$true
+        $script:taskPublic404=$true
+        $script:taskProcessTreeUncertain=$false
+        if (Test-WorkerMayRemain) { throw 'verified cleanup reported residual' }
+        $script:taskProcessTreeUncertain=$true
+        if (-not (Test-WorkerMayRemain)) { throw 'timeout plus dual404 treated as clean' }
+        $script:taskProcessTreeUncertain=$false
+        $script:taskDeleted=$false
+        if (-not (Test-WorkerMayRemain)) { throw 'missing deletion treated as clean' }
+        $script:taskDeleted=$true
+        $script:taskControlPlane404=$false
+        if (-not (Test-WorkerMayRemain)) { throw 'missing control-plane 404 treated as clean' }
+        $script:taskControlPlane404=$true
+        $script:taskPublic404=$false
+        if (-not (Test-WorkerMayRemain)) { throw 'missing public 404 treated as clean' }
+        'residual_worker_gate_faults=4'
+      `;
+      const result = spawnSync("pwsh", ["-NoProfile", "-Command", offline], {
+        cwd: process.cwd(), encoding: "utf8", timeout: 10_000,
+        env: { ...process.env, CLOUDFLARE_API_TOKEN: "" },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain("residual_worker_gate_faults=4");
     });
 
     it("rejects binding and cache drift, projects only fixed fields, and requires dual 404", () => {

@@ -286,6 +286,13 @@ function Confirm-Dual404 {
     throw 'Temporary Worker dual-404 cleanup was not confirmed.'
 }
 
+function Test-WorkerMayRemain {
+    # A timed-out deploy can still finish in a child process after a transient
+    # dual-404. Only confirmed deletion plus a certain process tree closes it.
+    return [bool](-not ($script:taskDeleted -and $script:taskControlPlane404 -and
+        $script:taskPublic404 -and -not $script:taskProcessTreeUncertain))
+}
+
 function Assert-CatalogReport {
     param($Value)
     if ($Value.runMarker -cne $taskMarker -or
@@ -595,7 +602,7 @@ if ($taskFailure -or $taskCleanupFailure -or -not $taskMainUnchanged -or
     }
     cleanup = [ordered]@{
         workerName = $taskName
-        workerMayRemain = $taskAttempted -and -not ($taskControlPlane404 -and $taskPublic404)
+        workerMayRemain = Test-WorkerMayRemain
         deleted = $taskDeleted
         controlPlane404 = $taskControlPlane404
         public404 = $taskPublic404
