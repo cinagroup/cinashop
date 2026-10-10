@@ -2,7 +2,7 @@
 # Wrangler calls are replaced before the runner is dot-sourced. No network or DB.
 [CmdletBinding()]
 param(
-    [ValidateSet('all','success','deploy-failed','request-failed','request-timeout',
+    [ValidateSet('all','success','deploy-failed','deploy-url-missing','request-failed','request-timeout',
         'header-missing','malformed-json','malformed-shape','worker-catalog-503','temporary-version-drift',
         'formal-postflight-drift','foreign-target','owned-version-transient',
         'cleanup-presence-transient','ownership-read-unavailable',
@@ -10,7 +10,8 @@ param(
         'catalog-identity-drift','catalog-definition-drift','catalog-malformed-number',
         'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
         'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
-        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout')]
+        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
+        'actual-stderr-url','actual-oversize')]
     [string]$Scenario = 'all',
     [string]$TracePath
 )
@@ -18,7 +19,7 @@ $ErrorActionPreference = 'Stop'
 $taskRunner = Join-Path $PSScriptRoot 'run-customer-city-binding-fk-current-production-audit.ps1'
 
 if ($Scenario -eq 'all') {
-    $taskCases = @('success','deploy-failed','request-failed','request-timeout',
+    $taskCases = @('success','deploy-failed','deploy-url-missing','request-failed','request-timeout',
         'header-missing','malformed-json','malformed-shape','worker-catalog-503','temporary-version-drift',
         'formal-postflight-drift','foreign-target','owned-version-transient',
         'cleanup-presence-transient','ownership-read-unavailable',
@@ -26,7 +27,8 @@ if ($Scenario -eq 'all') {
         'catalog-identity-drift','catalog-definition-drift','catalog-malformed-number',
         'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
         'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
-        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout')
+        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
+        'actual-stderr-url','actual-oversize')
     foreach ($taskCase in $taskCases) {
         $taskTrace = Join-Path $env:TEMP ('db009g-city-fk-runner-' + [Guid]::NewGuid().ToString('N') + '.txt')
         try {
@@ -44,7 +46,26 @@ if ($Scenario -eq 'all') {
                 "$taskCase`: pass"
                 continue
             }
+            if ($taskCase -in @('actual-stderr-url','actual-oversize')) {
+                $taskProcessEvidence = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 4
+                $taskExpectedReason = if ($taskCase -ceq 'actual-stderr-url') {
+                    'url-confirmed'
+                } else { 'output-oversize' }
+                if ($taskExit -ne 0 -or $taskProcessEvidence.outcome -cne $taskExpectedReason -or
+                    $taskProcessEvidence.exitCode -cne '0' -or
+                    $taskProcessEvidence.outputRemoved -ne $true -or
+                    $taskProcessEvidence.confirmed -ne ($taskCase -ceq 'actual-stderr-url')) {
+                    throw "$taskCase real-stream behavior differs."
+                }
+                "$taskCase`: pass"
+                continue
+            }
             $taskReceipt = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 20
+            $taskLogPath = Join-Path (Split-Path -Parent $PSScriptRoot) ".cache/$($taskReceipt.workerName)-wrangler.log"
+            if ((Test-Path -LiteralPath $taskLogPath) -or
+                $taskReceipt.cleanup.wranglerLogRemoved -ne $true) {
+                throw "$taskCase left its owned Wrangler log."
+            }
             $taskCalls = if (Test-Path -LiteralPath $taskTrace) {
                 @(Get-Content -LiteralPath $taskTrace)
             } else { @() }
@@ -54,12 +75,13 @@ if ($Scenario -eq 'all') {
                 'control-404-transient')) {
                 if ($taskExit -ne 0 -or $taskReceipt.ready -ne $true -or
                     $taskReceipt.diagnostic.outcome -cne 'complete' -or
+                    $taskReceipt.deployDiagnostic.outcome -cne 'url-confirmed' -or
                     $taskReceipt.cleanup.controlPlane404 -ne $true -or
                     $taskReceipt.cleanup.public404 -ne $true -or
                     $taskDeploys -ne 1 -or $taskDeletes -ne 1) {
                     throw 'Success simulation failed.'
                 }
-            } elseif ($taskCase -in @('deploy-failed','request-failed','request-timeout',
+            } elseif ($taskCase -in @('deploy-failed','deploy-url-missing','request-failed','request-timeout',
                 'header-missing','malformed-json','malformed-shape','worker-catalog-503',
                 'formal-postflight-drift','deploy-hung-after-upload')) {
                 if ($taskExit -ne 2 -or $taskReceipt.ready -ne $false -or
@@ -91,6 +113,21 @@ if ($Scenario -eq 'all') {
                 }
                 if (($taskOutput -join "`n") -match 'private-connection-or-sql') {
                     throw "$taskCase leaked a synthetic private marker."
+                }
+                if ($taskCase -ceq 'deploy-failed' -and
+                    ($taskReceipt.deployDiagnostic.outcome -cne 'cli-nonzero' -or
+                     $taskReceipt.deployDiagnostic.exitCode -cne '1')) {
+                    throw 'Bounded Wrangler failure cause was not retained.'
+                }
+                if ($taskCase -ceq 'deploy-url-missing' -and
+                    ($taskReceipt.deployDiagnostic.outcome -cne 'url-missing' -or
+                     $taskReceipt.deployDiagnostic.exitCode -cne '0')) {
+                    throw 'Expected temporary URL failure cause was not retained.'
+                }
+                if ($taskCase -ceq 'deploy-hung-after-upload' -and
+                    ($taskReceipt.deployDiagnostic.outcome -cne 'deadline-exceeded' -or
+                     $taskReceipt.deployDiagnostic.exitCode -cne 'unobserved')) {
+                    throw 'Bounded Wrangler timeout cause was not retained.'
                 }
                 if ($taskCase -eq 'formal-postflight-drift' -and $taskReceipt.formalUnchanged -ne $false) {
                     throw 'Formal Worker drift was not detected.'
@@ -217,6 +254,7 @@ setInterval(() => {}, 1000);
     $taskResults = [ordered]@{ deployStopped = $false; deleteStopped = $false;
         deployTimeoutMarkedUncertain = $false; deleteTimeoutMarkedUncertain = $false;
         ownedOutputRemoved = $false }
+    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
     try {
         foreach ($taskOperation in @('deploy','delete')) {
             $taskPidFile = Join-Path $taskCache "$taskName-$taskOperation-child.pid"
@@ -231,6 +269,9 @@ setInterval(() => {}, 1000);
             $taskStarted.Stop()
             if (-not $taskTimedOut -or -not $script:taskProcessTreeUncertain -or
                 $taskStarted.ElapsedMilliseconds -gt 10000 -or
+                ($taskOperation -ceq 'deploy' -and
+                 ($script:taskDeployDiagnostic.outcome -cne 'deadline-exceeded' -or
+                  $script:taskDeployDiagnostic.exitCode -cne 'unobserved')) -or
                 -not (Test-Path -LiteralPath $taskPidFile)) {
                 throw 'Owned local process did not mark its bounded timeout uncertain.'
             }
@@ -256,6 +297,55 @@ setInterval(() => {}, 1000);
     $taskResults | ConvertTo-Json -Compress
     exit 0
 }
+if ($Scenario -in @('actual-stderr-url','actual-oversize')) {
+    $taskSource = Get-Content -Raw -LiteralPath $taskRunner
+    $taskTokens = $null
+    $taskParseErrors = $null
+    $taskAst = [System.Management.Automation.Language.Parser]::ParseInput(
+        $taskSource,[ref]$taskTokens,[ref]$taskParseErrors)
+    $taskDefinitions = @($taskAst.FindAll({ param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+        $node.Name -ceq 'Invoke-BoundedWrangler' },$true))
+    if (@($taskParseErrors).Count -ne 0 -or $taskDefinitions.Count -ne 1) {
+        throw 'Production bounded process function changed.'
+    }
+    . ([ScriptBlock]::Create($taskDefinitions[0].Extent.Text))
+    $taskRoot = Split-Path -Parent $PSScriptRoot
+    $taskCache = Join-Path $taskRoot '.cache'
+    $null = New-Item -ItemType Directory -Force -Path $taskCache
+    $taskName = 'db009g-stream-' + [Guid]::NewGuid().ToString('N')
+    $taskUrl = "https://$taskName.cinagroup.workers.dev"
+    $taskCli = Join-Path $taskCache "$taskName-fixture.cjs"
+    $taskFixture = @'
+if (process.argv[2] !== 'deploy') process.exit(9);
+if (process.argv[4] === 'actual-oversize') process.stderr.write('x'.repeat(65537));
+else process.stderr.write(process.argv[3]);
+'@
+    [IO.File]::WriteAllText($taskCli,$taskFixture)
+    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
+    $taskConfirmed = $false
+    $taskThrown = $false
+    try {
+        try {
+            $taskConfirmed = Invoke-BoundedWrangler -Operation deploy -Arguments @($taskUrl,$Scenario)
+        } catch { $taskThrown = $true }
+        $taskOutputRemoved = @(Get-ChildItem -LiteralPath $taskCache -File -Filter "$taskName-deploy-*.stdout").Count -eq 0 -and
+            @(Get-ChildItem -LiteralPath $taskCache -File -Filter "$taskName-deploy-*.stderr").Count -eq 0
+        if ($Scenario -ceq 'actual-stderr-url' -and ($taskThrown -or -not $taskConfirmed)) {
+            throw 'Bounded deployment did not accept an exact URL on stderr.'
+        }
+        if ($Scenario -ceq 'actual-oversize' -and (-not $taskThrown -or $taskConfirmed)) {
+            throw 'Bounded deployment accepted oversized stderr.'
+        }
+        [ordered]@{ confirmed = [bool]$taskConfirmed;
+            outcome = $script:taskDeployDiagnostic.outcome;
+            exitCode = $script:taskDeployDiagnostic.exitCode;
+            outputRemoved = [bool]$taskOutputRemoved } | ConvertTo-Json -Compress
+    } finally {
+        if (Test-Path -LiteralPath $taskCli) { Remove-Item -LiteralPath $taskCli -Force }
+    }
+    exit 0
+}
 $env:CLOUDFLARE_API_TOKEN = 'synthetic-local-test-token'
 $script:deployed = $false
 $script:workerName = $null
@@ -265,7 +355,7 @@ $script:temporaryReadCount = 0
 $script:versionReadCount = 0
 $script:presenceReadCount = 0
 $script:absenceReadCount = 0
-$script:mainVersion = 'cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2'
+$script:mainVersion = 'd44ef519-90ab-4864-b42f-3f0ca76890b2'
 $script:ownedVersion = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 $script:changedVersion = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 $script:bindings = @(
@@ -310,7 +400,7 @@ function Invoke-WebRequest {
         }
         return New-ApiResponse @{ bindings = $taskFormalBindings }
     }
-    if ($Uri -match '/workers/scripts/cinashop-api/versions/cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2$') {
+    if ($Uri -match '/workers/scripts/cinashop-api/versions/d44ef519-90ab-4864-b42f-3f0ca76890b2$') {
         $taskFormalBindings = @($script:bindings)
         if ($Scenario -eq 'formal-version-binding-drift') {
             $taskFormalBindings = @($script:bindings | ForEach-Object {
@@ -445,7 +535,14 @@ function node {
         $script:marker = $CommandArgs[$taskMarkerIndex + 1]
         $script:deployed = $true
         Add-Content -LiteralPath $TracePath -Value 'deploy-owned'
+        if ($env:WRANGLER_LOG_PATH) {
+            [IO.File]::WriteAllText($env:WRANGLER_LOG_PATH,'synthetic-private-cli-log')
+        }
         if ($Scenario -eq 'deploy-failed') { $global:LASTEXITCODE = 1; return 'simulated deployment error' }
+        if ($Scenario -eq 'deploy-url-missing') {
+            $global:LASTEXITCODE = 0
+            return 'https://unexpected.invalid'
+        }
         $global:LASTEXITCODE = 0
         return "https://$script:workerName.cinagroup.workers.dev"
     }
@@ -492,18 +589,27 @@ $taskMockBounded = @'
 function Invoke-BoundedWrangler {
     param([ValidateSet('deploy','delete')][string]$Operation,[string[]]$Arguments,
         [int]$TimeoutMs = 0)
+    if ($Operation -ceq 'deploy') { $script:taskDeployDiagnostic.outcome = 'start-attempted' }
     if ($Operation -ceq 'delete' -and $Scenario -ceq 'delete-hung-before-removal') {
         Add-Content -LiteralPath $TracePath -Value 'delete-attempt-hung'
         $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
     }
     $taskOutput = & node $taskCli $Operation @Arguments
+    if ($Operation -ceq 'deploy') {
+        $script:taskDeployDiagnostic.exitCode = [string]$LASTEXITCODE
+        $script:taskDeployDiagnostic.outcome = if ($LASTEXITCODE -eq 0) { 'cli-zero' } else { 'cli-nonzero' }
+    }
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic Wrangler operation failed.' }
     if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-hung-after-upload') {
+        $script:taskDeployDiagnostic.outcome = 'deadline-exceeded'
+        $script:taskDeployDiagnostic.exitCode = 'unobserved'
         $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deployment deadline.')
     }
     if ($Operation -ceq 'deploy' -and $Scenario -ceq 'deploy-kill-unconfirmed') {
+        $script:taskDeployDiagnostic.outcome = 'deadline-exceeded'
+        $script:taskDeployDiagnostic.exitCode = 'unobserved'
         $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic child-tree termination failure.')
     }
@@ -515,7 +621,13 @@ function Invoke-BoundedWrangler {
         $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
     }
-    if ($Operation -ceq 'deploy') { return $taskOutput }
+    if ($Operation -ceq 'deploy') {
+        $taskUrlFound = $taskOutput -cmatch [regex]::Escape($taskUrl)
+        $script:taskDeployDiagnostic.outcome = if ($taskUrlFound) {
+            'url-confirmed'
+        } else { 'url-missing' }
+        return [bool]$taskUrlFound
+    }
     return $true
 }
 '@
