@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-10-10T00:00:00.000Z",
+  "scope": "production-observability-db-aggregate",
+  "ready": true,
+  "settings": {
+    "server_version": "16.8",
+    "track_activities": "on",
+    "track_counts": "on",
+    "track_io_timing": "off",
+    "compute_query_id": "auto",
+    "log_min_duration_statement": "-1",
+    "statement_timeout": "5s",
+    "idle_in_transaction_session_timeout": "7s"
+  },
+  "extensions": ["pg_stat_statements"],
+  "statementStatistics": {
+    "available": true,
+    "authorized": true,
+    "aggregate": {
+      "statements": 4,
+      "calls": "10",
+      "rows": "3",
+      "total_exec_ms": 12.5,
+      "maximum_exec_ms": 8.2
+    },
+    "queryTextReturned": false
+  },
+  "databaseStats": {
+    "numbackends": 2,
+    "xact_commit": "11",
+    "xact_rollback": "1",
+    "blks_read": "2",
+    "blks_hit": "8",
+    "temp_files": "0",
+    "temp_bytes": "0",
+    "deadlocks": "0",
+    "checksum_failures": null,
+    "session_time_ms": 100.5,
+    "active_time_ms": 12.1,
+    "idle_in_transaction_time_ms": 0,
+    "stats_reset": "2026-10-10 00:00:00+00"
+  },
+  "activity": [
+    {
+      "state": "active",
+      "wait_event_type": "none",
+      "sessions": 1,
+      "transactions_over_1s": 0,
+      "transactions_over_5s": 0
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Client",
+      "sessions": 1,
+      "transactions_over_1s": 0,
+      "transactions_over_5s": 0
+    }
+  ],
+  "workflowStatus": [
+    { "workflow": "print", "status": "UNKNOWN", "rows": 1 },
+    { "workflow": "waybill", "status": "OTHER", "rows": 1 },
+    { "workflow": "refund_payment", "status": "UNKNOWN", "rows": 1 },
+    { "workflow": "queue_dead_letter", "status": "OPEN", "rows": 1 }
+  ],
+  "workflowAttention": {
+    "print_attention": 1,
+    "waybill_attention": 0,
+    "refund_attention": 1,
+    "dead_letter_attention": 1,
+    "oldest_unknown_refund_seconds": "17"
+  },
+  "relationStats": [
+    { "relname": "order_print_job", "seq_scan": "2", "idx_scan": "3", "n_live_tup": "4", "n_dead_tup": "0", "last_analyze": null, "last_autoanalyze": null },
+    { "relname": "order_waybill_job", "seq_scan": "2", "idx_scan": "3", "n_live_tup": "4", "n_dead_tup": "0", "last_analyze": null, "last_autoanalyze": null },
+    { "relname": "store_order_refund_payment", "seq_scan": "2", "idx_scan": "3", "n_live_tup": "4", "n_dead_tup": "0", "last_analyze": null, "last_autoanalyze": null },
+    { "relname": "system_queue_dead_letter", "seq_scan": "2", "idx_scan": "3", "n_live_tup": "4", "n_dead_tup": "0", "last_analyze": null, "last_autoanalyze": null }
+  ],
+  "safety": {
+    "identityVerified": true,
+    "transactionReadOnly": true,
+    "repeatableRead": true,
+    "queryTextReturned": false,
+    "businessValuesReturned": false
+  }
+}
