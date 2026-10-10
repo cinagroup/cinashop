@@ -236,11 +236,21 @@ function Invoke-BoundedWrangler {
         }
         if ($taskProcess.ExitCode -ne 0) { throw 'Wrangler operation did not complete successfully.' }
         if ($Operation -ceq 'deploy') {
-            if ((Get-Item -LiteralPath $taskStdout).Length -gt 65536) {
-                $script:taskDeployDiagnostic.outcome = 'stdout-oversize'
+            if ((Get-Item -LiteralPath $taskStdout).Length -gt 65536 -or
+                (Get-Item -LiteralPath $taskStderr).Length -gt 65536) {
+                $script:taskDeployDiagnostic.outcome = 'output-oversize'
                 throw 'Wrangler deployment output exceeded reviewed bounds.'
             }
-            return Get-Content -Raw -LiteralPath $taskStdout
+            # Wrangler can print the workers.dev URL to either stream. Match
+            # only this fixed URL in memory and never return raw CLI output.
+            $taskOutput = (Get-Content -Raw -LiteralPath $taskStdout) + "`n" +
+                (Get-Content -Raw -LiteralPath $taskStderr)
+            $taskUrlFound = $taskOutput -cmatch [regex]::Escape($taskUrl)
+            $taskOutput = $null
+            $script:taskDeployDiagnostic.outcome = if ($taskUrlFound) {
+                'url-confirmed'
+            } else { 'url-missing' }
+            return [bool]$taskUrlFound
         }
         return $true
     } finally {
@@ -288,15 +298,11 @@ try {
     }
     $taskStage = 'deploy'
     $taskAttempted = $true
-    $taskDeploy = Invoke-BoundedWrangler -Operation deploy -Arguments @(
+    $taskDeployConfirmed = Invoke-BoundedWrangler -Operation deploy -Arguments @(
         '--config',('"' + $taskConfig + '"'),'--name',$taskName,
         '--var',"AUDIT_TOKEN_SHA256:$taskTokenHash",'--var',"AUDIT_EXPIRES_AT:$taskExpiry",
         '--message',$taskMarker)
-    if ($taskDeploy -cnotmatch [regex]::Escape($taskUrl)) {
-        $taskDeployDiagnostic.outcome = 'stdout-url-missing'
-        throw 'Expected temporary URL not returned.'
-    }
-    $taskDeployDiagnostic.outcome = 'url-confirmed'
+    if ($taskDeployConfirmed -ne $true) { throw 'Expected temporary URL not returned.' }
     $taskStage = 'owned-version'
     $taskOwnedVersion = Get-OwnedVersion
     $taskOwnershipVerified = $true

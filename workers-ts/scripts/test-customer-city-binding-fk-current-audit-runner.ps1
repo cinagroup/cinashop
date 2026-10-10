@@ -10,7 +10,8 @@ param(
         'catalog-identity-drift','catalog-definition-drift','catalog-malformed-number',
         'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
         'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
-        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout')]
+        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
+        'actual-stderr-url','actual-oversize')]
     [string]$Scenario = 'all',
     [string]$TracePath
 )
@@ -26,7 +27,8 @@ if ($Scenario -eq 'all') {
         'catalog-identity-drift','catalog-definition-drift','catalog-malformed-number',
         'catalog-malformed-index','formal-settings-binding-drift','formal-version-binding-drift',
         'deploy-hung-after-upload','delete-hung-before-removal','delete-hung-after-removal',
-        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout')
+        'deploy-kill-unconfirmed','deploy-output-cleanup-failed','process-tree-timeout',
+        'actual-stderr-url','actual-oversize')
     foreach ($taskCase in $taskCases) {
         $taskTrace = Join-Path $env:TEMP ('db009g-city-fk-runner-' + [Guid]::NewGuid().ToString('N') + '.txt')
         try {
@@ -40,6 +42,20 @@ if ($Scenario -eq 'all') {
                     $taskProcessEvidence.deleteTimeoutMarkedUncertain -ne $true -or
                     $taskProcessEvidence.ownedOutputRemoved -ne $true) {
                     throw 'Bounded child-tree process test failed.'
+                }
+                "$taskCase`: pass"
+                continue
+            }
+            if ($taskCase -in @('actual-stderr-url','actual-oversize')) {
+                $taskProcessEvidence = ($taskOutput -join "`n") | ConvertFrom-Json -Depth 4
+                $taskExpectedReason = if ($taskCase -ceq 'actual-stderr-url') {
+                    'url-confirmed'
+                } else { 'output-oversize' }
+                if ($taskExit -ne 0 -or $taskProcessEvidence.outcome -cne $taskExpectedReason -or
+                    $taskProcessEvidence.exitCode -cne '0' -or
+                    $taskProcessEvidence.outputRemoved -ne $true -or
+                    $taskProcessEvidence.confirmed -ne ($taskCase -ceq 'actual-stderr-url')) {
+                    throw "$taskCase real-stream behavior differs."
                 }
                 "$taskCase`: pass"
                 continue
@@ -104,7 +120,7 @@ if ($Scenario -eq 'all') {
                     throw 'Bounded Wrangler failure cause was not retained.'
                 }
                 if ($taskCase -ceq 'deploy-url-missing' -and
-                    ($taskReceipt.deployDiagnostic.outcome -cne 'stdout-url-missing' -or
+                    ($taskReceipt.deployDiagnostic.outcome -cne 'url-missing' -or
                      $taskReceipt.deployDiagnostic.exitCode -cne '0')) {
                     throw 'Expected temporary URL failure cause was not retained.'
                 }
@@ -279,6 +295,55 @@ setInterval(() => {}, 1000);
         if (Test-Path -LiteralPath $taskCli) { Remove-Item -LiteralPath $taskCli -Force }
     }
     $taskResults | ConvertTo-Json -Compress
+    exit 0
+}
+if ($Scenario -in @('actual-stderr-url','actual-oversize')) {
+    $taskSource = Get-Content -Raw -LiteralPath $taskRunner
+    $taskTokens = $null
+    $taskParseErrors = $null
+    $taskAst = [System.Management.Automation.Language.Parser]::ParseInput(
+        $taskSource,[ref]$taskTokens,[ref]$taskParseErrors)
+    $taskDefinitions = @($taskAst.FindAll({ param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+        $node.Name -ceq 'Invoke-BoundedWrangler' },$true))
+    if (@($taskParseErrors).Count -ne 0 -or $taskDefinitions.Count -ne 1) {
+        throw 'Production bounded process function changed.'
+    }
+    . ([ScriptBlock]::Create($taskDefinitions[0].Extent.Text))
+    $taskRoot = Split-Path -Parent $PSScriptRoot
+    $taskCache = Join-Path $taskRoot '.cache'
+    $null = New-Item -ItemType Directory -Force -Path $taskCache
+    $taskName = 'db009g-stream-' + [Guid]::NewGuid().ToString('N')
+    $taskUrl = "https://$taskName.cinagroup.workers.dev"
+    $taskCli = Join-Path $taskCache "$taskName-fixture.cjs"
+    $taskFixture = @'
+if (process.argv[2] !== 'deploy') process.exit(9);
+if (process.argv[4] === 'actual-oversize') process.stderr.write('x'.repeat(65537));
+else process.stderr.write(process.argv[3]);
+'@
+    [IO.File]::WriteAllText($taskCli,$taskFixture)
+    $script:taskDeployDiagnostic = [ordered]@{ outcome = 'not-started'; exitCode = 'unobserved' }
+    $taskConfirmed = $false
+    $taskThrown = $false
+    try {
+        try {
+            $taskConfirmed = Invoke-BoundedWrangler -Operation deploy -Arguments @($taskUrl,$Scenario)
+        } catch { $taskThrown = $true }
+        $taskOutputRemoved = @(Get-ChildItem -LiteralPath $taskCache -File -Filter "$taskName-deploy-*.stdout").Count -eq 0 -and
+            @(Get-ChildItem -LiteralPath $taskCache -File -Filter "$taskName-deploy-*.stderr").Count -eq 0
+        if ($Scenario -ceq 'actual-stderr-url' -and ($taskThrown -or -not $taskConfirmed)) {
+            throw 'Bounded deployment did not accept an exact URL on stderr.'
+        }
+        if ($Scenario -ceq 'actual-oversize' -and (-not $taskThrown -or $taskConfirmed)) {
+            throw 'Bounded deployment accepted oversized stderr.'
+        }
+        [ordered]@{ confirmed = [bool]$taskConfirmed;
+            outcome = $script:taskDeployDiagnostic.outcome;
+            exitCode = $script:taskDeployDiagnostic.exitCode;
+            outputRemoved = [bool]$taskOutputRemoved } | ConvertTo-Json -Compress
+    } finally {
+        if (Test-Path -LiteralPath $taskCli) { Remove-Item -LiteralPath $taskCli -Force }
+    }
     exit 0
 }
 $env:CLOUDFLARE_API_TOKEN = 'synthetic-local-test-token'
@@ -556,7 +621,13 @@ function Invoke-BoundedWrangler {
         $script:taskProcessTreeUncertain = $true
         throw [TimeoutException]::new('Synthetic bounded deletion deadline.')
     }
-    if ($Operation -ceq 'deploy') { return $taskOutput }
+    if ($Operation -ceq 'deploy') {
+        $taskUrlFound = $taskOutput -cmatch [regex]::Escape($taskUrl)
+        $script:taskDeployDiagnostic.outcome = if ($taskUrlFound) {
+            'url-confirmed'
+        } else { 'url-missing' }
+        return [bool]$taskUrlFound
+    }
     return $true
 }
 '@
