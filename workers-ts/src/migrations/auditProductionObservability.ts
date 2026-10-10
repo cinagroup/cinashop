@@ -67,8 +67,8 @@ export async function auditProductionObservability(
       SELECT
         pg_catalog.to_regclass('public.pg_stat_statements') IS NOT NULL AS pg_stat_statements_available,
         (
-          pg_catalog.pg_has_role(current_user, 'pg_read_all_stats', 'member') OR
-          pg_catalog.pg_has_role(current_user, 'pg_monitor', 'member') OR
+          pg_catalog.pg_has_role(current_user, 'pg_read_all_stats', 'USAGE') OR
+          pg_catalog.pg_has_role(current_user, 'pg_monitor', 'USAGE') OR
           (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user)
         ) AS read_all_stats
     `;
@@ -95,7 +95,7 @@ export async function auditProductionObservability(
       FROM pg_catalog.pg_stat_database WHERE datname = current_database()
     `;
     if (!databaseStats) throw new Error("Observability database statistics unavailable");
-    const activity = statsAccess.read_all_stats
+    const activityGroups = statsAccess.read_all_stats && settings.track_activities === 'on'
       ? await tx<{
           state: string; wait_event_type: string; sessions: number;
           transactions_over_1s: number; transactions_over_5s: number;
@@ -113,18 +113,36 @@ export async function auditProductionObservability(
           ORDER BY state, wait_event_type
         `
       : null;
+    // Other sessions can disable activity tracking independently. An observed
+    // disabled group makes the whole activity snapshot incomplete.
+    const activity = activityGroups?.some((row) => row.state === 'disabled')
+      ? null : activityGroups;
     const workflowStatus = await tx<{ workflow: string; status: string; rows: number }[]>`
-      SELECT 'print' AS workflow, status::text, count(*)::int AS rows
-      FROM public.order_print_job GROUP BY status
-      UNION ALL
-      SELECT 'waybill', status::text, count(*)::int
-      FROM public.order_waybill_job GROUP BY status
-      UNION ALL
-      SELECT 'refund_payment', provider_status::text, count(*)::int
-      FROM public.store_order_refund_payment GROUP BY provider_status
-      UNION ALL
-      SELECT 'queue_dead_letter', status::text, count(*)::int
-      FROM public.system_queue_dead_letter GROUP BY status
+      SELECT workflow, status, count(*)::int AS rows FROM (
+        SELECT 'print'::text AS workflow,
+          CASE WHEN status IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING',
+            'RETRYABLE', 'SENT', 'UNKNOWN', 'DEAD', 'CLOSED')
+            THEN status::text ELSE 'OTHER' END AS status
+        FROM public.order_print_job
+        UNION ALL
+        SELECT 'waybill',
+          CASE WHEN status IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING',
+            'RETRYABLE', 'SENT', 'UNKNOWN', 'DEAD', 'CLOSED')
+            THEN status::text ELSE 'OTHER' END
+        FROM public.order_waybill_job
+        UNION ALL
+        SELECT 'refund_payment',
+          CASE WHEN provider_status IN ('CREATED', 'REQUESTING', 'PROCESSING',
+            'SUCCESS', 'CLOSED', 'ABNORMAL', 'FAILED', 'UNKNOWN')
+            THEN provider_status::text ELSE 'OTHER' END
+        FROM public.store_order_refund_payment
+        UNION ALL
+        SELECT 'queue_dead_letter',
+          CASE WHEN status IN ('OPEN', 'REPLAYING', 'REPLAYED', 'RESOLVED')
+            THEN status::text ELSE 'OTHER' END
+        FROM public.system_queue_dead_letter
+      ) classified
+      GROUP BY workflow, status
       ORDER BY workflow, status
     `;
     const [workflowAttention] = await tx<Record<string, number | string | null>[]>`
@@ -134,7 +152,7 @@ export async function auditProductionObservability(
         (SELECT count(*)::int FROM public.order_waybill_job
           WHERE status IN ('UNKNOWN', 'DEAD')) AS waybill_attention,
         (SELECT count(*)::int FROM public.store_order_refund_payment
-          WHERE provider_status = 'UNKNOWN') AS refund_attention,
+          WHERE provider_status IN ('UNKNOWN', 'ABNORMAL', 'FAILED')) AS refund_attention,
         (SELECT count(*)::int FROM public.system_queue_dead_letter
           WHERE status IN ('OPEN', 'REPLAYING')) AS dead_letter_attention,
         (SELECT greatest(0, coalesce(extract(epoch FROM clock_timestamp())::bigint
@@ -160,7 +178,8 @@ export async function auditProductionObservability(
     return {
       generatedAt: new Date().toISOString(),
       scope: 'production-observability-db-aggregate' as const,
-      ready: statsAccess.read_all_stats && settings.track_counts === 'on',
+      ready: statsAccess.read_all_stats && settings.track_counts === 'on'
+        && settings.track_activities === 'on' && activity !== null,
       settings,
       extensions: extensions.map((row) => row.extname),
       statementStatistics: {

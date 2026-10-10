@@ -79,11 +79,70 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))(
         businessValuesReturned: false });
       expect(JSON.stringify(result)).not.toContain(marker);
       expect(result.statementStatistics.queryTextReturned).toBe(false);
-      // This fixture LOGIN is intentionally non-superuser and lacks monitoring
-      // grants. Limited pg_stat_activity visibility must not look complete.
-      expect(result.statementStatistics.authorized).toBe(false);
-      expect(result.activity).toBeNull();
-      expect(result.ready).toBe(false);
+      const [capability] = await fixture.db.$client<{
+        read_all_stats: boolean; track_counts: string; track_activities: string;
+      }[]>`
+        SELECT (pg_catalog.pg_has_role(current_user, 'pg_read_all_stats', 'USAGE')
+          OR pg_catalog.pg_has_role(current_user, 'pg_monitor', 'USAGE')
+          OR (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user))
+          AS read_all_stats,
+          current_setting('track_counts') AS track_counts,
+          current_setting('track_activities') AS track_activities`;
+      expect(result.statementStatistics.authorized).toBe(capability.read_all_stats);
+      if (!capability.read_all_stats || capability.track_activities !== 'on') {
+        expect(result.activity).toBeNull();
+      }
+      expect(result.ready).toBe(capability.read_all_stats
+        && capability.track_counts === 'on' && capability.track_activities === 'on'
+        && result.activity !== null);
+    });
+
+    it("classifies unexpected task statuses without returning their raw values", async () => {
+      const privateStatus = "private@row";
+      for (const [table, column] of [
+        [orderPrintJob, "status"],
+        [orderWaybillJob, "status"],
+        [storeOrderRefundPayment, "provider_status"],
+        [systemQueueDeadLetter, "status"],
+      ] as const) await fixture.exec(insertStatus(table, column, privateStatus));
+      const result = await auditProductionObservability(fixture.db.$client,
+        { role: "finance_test", database });
+      expect(result.workflowStatus.filter((row) => row.status === "OTHER")).toEqual([
+        { workflow: "print", status: "OTHER", rows: 1 },
+        { workflow: "queue_dead_letter", status: "OTHER", rows: 1 },
+        { workflow: "refund_payment", status: "OTHER", rows: 1 },
+        { workflow: "waybill", status: "OTHER", rows: 1 },
+      ]);
+      expect(JSON.stringify(result)).not.toContain(privateStatus);
+    });
+
+    it("distinguishes membership from usable privileges when role setup is allowed", async () => {
+      const [owner] = await fixture.db.$client<{ can_create_role: boolean }[]>`
+        SELECT (rolsuper OR rolcreaterole) AS can_create_role
+        FROM pg_catalog.pg_roles WHERE rolname = current_user`;
+      if (!owner.can_create_role) return; // Local restricted fixture; CI superuser exercises this branch.
+      const suffix = crypto.randomUUID().replaceAll("-", "");
+      const role = `observability_noinherit_${suffix}`;
+      const memberRole = `observability_member_${suffix}`;
+      let createdGroup = false;
+      let createdMember = false;
+      let granted = false;
+      try {
+        await fixture.exec(`CREATE ROLE "${role}" NOLOGIN NOINHERIT`);
+        createdGroup = true;
+        await fixture.exec(`CREATE ROLE "${memberRole}" NOLOGIN NOINHERIT`);
+        createdMember = true;
+        await fixture.exec(`GRANT "${role}" TO "${memberRole}" WITH INHERIT FALSE, SET FALSE`);
+        granted = true;
+        const [membership] = await fixture.db.$client<{ member: boolean; usage: boolean }[]>`
+          SELECT pg_catalog.pg_has_role(${memberRole}, ${role}, 'MEMBER') AS member,
+            pg_catalog.pg_has_role(${memberRole}, ${role}, 'USAGE') AS usage`;
+        expect(membership).toEqual({ member: true, usage: false });
+      } finally {
+        if (granted) await fixture.exec(`REVOKE "${role}" FROM "${memberRole}"`);
+        if (createdMember) await fixture.exec(`DROP ROLE "${memberRole}"`);
+        if (createdGroup) await fixture.exec(`DROP ROLE "${role}"`);
+      }
     });
 
     it("rejects the wrong backend identity before returning any task counts", async () => {
