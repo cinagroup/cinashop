@@ -8,6 +8,7 @@ const { resolve, join } = require("node:path");
 const test = require("node:test");
 const WebSocket = require("ws");
 const https = require("node:https");
+const { assertDefaultViteFsAllow } = require("./vite-fs-allow-test-helper.cjs");
 
 // Vite 5 can finish an asynchronous watcher registration after server.close().
 // Track the REAL fs.watch handles created in this isolated node:test process;
@@ -131,7 +132,7 @@ test("actual UniApp H5 configuration preserves local development boundaries", { 
   assert.equal(server.config.server.host, "127.0.0.1");
   assert.equal(server.config.server.cors, false);
   assert.equal(server.config.server.fs.strict, true);
-  assert.deepEqual(server.config.server.fs.allow.map((path) => resolve(path)), [process.cwd()]);
+  assertDefaultViteFsAllow(server.config.server.fs.allow, process.cwd());
   assert.notEqual(server.config.server.allowedHosts, true);
   assert.notEqual(server.config.legacy?.skipWebSocketTokenCheck, true);
   assert.equal(server.config.server.proxy["/api"].target, process.env.CINASHOP_API_PROXY_TARGET);

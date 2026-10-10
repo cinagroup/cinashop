@@ -230,12 +230,6 @@ describe("presale cart selection on isolated SQL (not checkout/payment admission
     expect((await result)?.message).toContain("已下单"); expect((await state()).carts[0]).toMatchObject({ cartNum: 2, isPay: 1 });
   });
   native("uses database wall time after an unchanged SKU lock crosses the inclusive cutoff", async () => {
-    // Start after the first 300ms of a second: cutoff is 1-1.7s away, leaving
-    // headroom below the service's 2-second lock timeout on a slow test host.
-    await f.db.execute(sql`SELECT pg_sleep(GREATEST(0, 0.3 - mod(extract(epoch FROM clock_timestamp()), 1))::double precision)`);
-    const [clock] = await f.db.execute(sql`SELECT extract(epoch FROM clock_timestamp())::double precision AS seconds`);
-    const end = Math.floor(Number(clock.seconds)) + 1;
-    await f.db.update(storeProduct).set({ presaleEndTime: end });
     let release!: () => void, ready!: (pid: number) => void;
     const gate = new Promise<void>(resolve => { release = resolve; }), acquired = new Promise<number>(resolve => { ready = resolve; });
     const holder = f.db.transaction(async tx => {
@@ -246,6 +240,13 @@ describe("presale cart selection on isolated SQL (not checkout/payment admission
     const result = service.add({ ...params, type: 6 }).then(() => null, error => error as Error);
     try {
       await waitBlocked(pid);
+      // Give the already-blocked request a cutoff within the current database
+      // second, so the wait stays below the service's two-second lock timeout.
+      const [cutoff] = await f.db.update(storeProduct).set({
+        presaleEndTime: sql<number>`floor(extract(epoch FROM clock_timestamp()))::integer`,
+      }).where(eq(storeProduct.id, 70)).returning({ end: storeProduct.presaleEndTime });
+      if (!cutoff) throw new Error("Missing presale fixture product");
+      const end = cutoff.end;
       // Freeze only the application clock inside the still-active window.
       // Native PostgreSQL must independently reject the later admission.
       vi.setSystemTime(new Date(end * 1000));
