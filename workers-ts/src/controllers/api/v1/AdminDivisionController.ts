@@ -4,6 +4,7 @@ import {
   DivisionManagementService,
   parseDivisionDateRange,
   type DivisionAdminScope,
+  type DivisionAdminWriteScope,
   type DivisionRoleType,
 } from "@/services/division/DivisionManagementService";
 import { ValidateException } from "@/utils/errors";
@@ -16,6 +17,11 @@ function scope(c: C): DivisionAdminScope {
   const admin = c.get("adminInfo");
   if (!admin) throw new ValidateException("请先登录");
   return { level: admin.level, divisionId: admin.divisionId };
+}
+
+function writeScope(c: C): DivisionAdminWriteScope {
+  return { ...scope(c), actor: { id: c.get("adminId") ?? 0,
+    authVersion: c.get("socketAuthVersion") ?? "", expiresAt: c.get("socketTokenExp") ?? 0 } };
 }
 
 function numberValue(value: unknown, fallback = 0): number {
@@ -51,7 +57,7 @@ function parseRoleBody(body: Body, roleType: DivisionRoleType) {
     adminPassword: body.pwd === undefined ? undefined : String(body.pwd),
     adminPasswordConfirm: body.conf_pwd === undefined ? undefined : String(body.conf_pwd),
     adminRoles: Array.isArray(roles)
-      ? roles.map(Number)
+      ? roles as number[]
       : roles === undefined
         ? undefined
         : String(roles),
@@ -102,19 +108,19 @@ export async function divisionDetail(c: C) {
 export async function saveDivision(c: C) {
   const body = (await c.req.json().catch(() => ({}))) as Body;
   const service = new DivisionManagementService(c.get("container"));
-  return withValidation(c, () => service.saveRole(parseRoleBody(body, 1), scope(c)), "事业部保存成功");
+  return withValidation(c, () => service.saveRole(parseRoleBody(body, 1), writeScope(c)), "事业部保存成功");
 }
 
 export async function saveAgent(c: C) {
   const body = (await c.req.json().catch(() => ({}))) as Body;
   const service = new DivisionManagementService(c.get("container"));
-  return withValidation(c, () => service.saveRole(parseRoleBody(body, 2), scope(c)), "代理商保存成功");
+  return withValidation(c, () => service.saveRole(parseRoleBody(body, 2), writeScope(c)), "代理商保存成功");
 }
 
 export async function saveStaff(c: C) {
   const body = (await c.req.json().catch(() => ({}))) as Body;
   const service = new DivisionManagementService(c.get("container"));
-  return withValidation(c, () => service.saveRole(parseRoleBody(body, 3), scope(c)), "员工保存成功");
+  return withValidation(c, () => service.saveRole(parseRoleBody(body, 3), writeScope(c)), "员工保存成功");
 }
 
 export async function deleteDivisionRole(c: C) {
@@ -122,7 +128,7 @@ export async function deleteDivisionRole(c: C) {
   return withValidation(
     c,
     async () => {
-      await service.deleteRole(numberValue(c.req.param("uid")), scope(c));
+      await service.deleteRole(numberValue(c.req.param("uid")), writeScope(c));
       return null;
     },
     "删除成功",

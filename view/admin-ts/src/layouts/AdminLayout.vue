@@ -252,6 +252,14 @@
           <el-icon><UserFilled /></el-icon>
           <span>系统管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/system/legacy-staff')" index="/system/legacy-staff">
+          <el-icon><UserFilled /></el-icon>
+          <span>下级管理员</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/system/legacy-roles')" index="/system/legacy-roles">
+          <el-icon><UserFilled /></el-icon>
+          <span>下级角色</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/finance/extract')" index="/finance/extract">
           <el-icon><Wallet /></el-icon>
           <span>提现审核</span>
@@ -511,6 +519,8 @@ const activeMenu = computed(() => {
   if (path.startsWith("/reply")) return "/reply";
   if (path.startsWith("/brand")) return "/brand";
   if (path.startsWith("/system/log")) return "/system/log";
+  if (path === "/system/legacy-staff") return "/system/legacy-staff";
+  if (path === "/system/legacy-roles") return "/system/legacy-roles";
   if (path.startsWith("/system")) return "/system";
   if (path.startsWith("/finance/supplier-extract")) return "/finance/supplier-extract";
   if (path.startsWith("/finance/recharges")) return "/finance/recharges";

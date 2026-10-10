@@ -1,0 +1,627 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-08T10:46:58.275Z",
+  "baseCommit": "d209831b1faa1defb49d0a0c388578d727490f92",
+  "scope": [
+    "GET /adminapi/setting/role/create",
+    "GET /adminapi/setting/role/:id/edit",
+    "POST /adminapi/setting/role/:id (0=create)",
+    "Three equivalent /api/admin aliases"
+  ],
+  "creditedUniqueTests": 97,
+  "runs": [
+    {
+      "id": "business03",
+      "mode": "business_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-legacy-role-workflow.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:33:39.365Z",
+      "finishedAt": "2026-10-08T10:33:54.831Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 23,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\business03.stdout.txt",
+          "bytes": 4637,
+          "sha256": "1acd27e57e1cda3ef20bf1a63764d3e3dd0de2f23a58f427be3d2f20cf2ff233"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\business03.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "regression01",
+      "mode": "regressions",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/admin-legacy-setting-read-permission.test.ts",
+        "test/admin-permission.test.ts",
+        "test/admin-legacy-system-list.test.ts",
+        "test/admin-system-directory.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:22:43.148Z",
+      "finishedAt": "2026-10-08T10:23:21.379Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 63,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\regression01.stdout.txt",
+          "bytes": 275,
+          "sha256": "b140a6b2376f9672c6282dd3b9486026b6e0cf4bbccaf398d1b151c9b406c07a"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\regression01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "audit-regression01",
+      "mode": "audit_regressions",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/route-parity-audit.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:27:02.779Z",
+      "finishedAt": "2026-10-08T10:27:05.509Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 7,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\audit-regression01.stdout.txt",
+          "bytes": 270,
+          "sha256": "3dbe6d3fb138daa36b9a8e416a4013f7279ff4829cd4dae998b6cf142157710d"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\audit-regression01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "native02",
+      "mode": "native_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-legacy-role-workflow-native.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:33:44.157Z",
+      "finishedAt": "2026-10-08T10:34:12.044Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 4,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\native02.stdout.txt",
+          "bytes": 3671,
+          "sha256": "6824aa843b547c753c7f37b7347c4887a367de468ffd2a5e51dfbab03249aff9"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\native02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "id": "unit-types02",
+      "mode": "types_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:32:56.716Z",
+      "finishedAt": "2026-10-08T10:34:28.925Z",
+      "exitCode": 0,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\unit-types02.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\unit-types02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "runtime-types02",
+      "mode": "types_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:34:28.926Z",
+      "finishedAt": "2026-10-08T10:35:24.101Z",
+      "exitCode": 0,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\runtime-types02.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\runtime-types02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "routeAudit": {
+    "exitCode": 0,
+    "php": 1904,
+    "ts": 2349,
+    "matched": 917,
+    "executableMatched": 896,
+    "unavailable": 21,
+    "missing": 987,
+    "retired": 17,
+    "actionableMissing": 970,
+    "coveragePercent": 48.2,
+    "executableCoveragePercent": 47.1,
+    "effectiveExecutableCoveragePercent": 47.5,
+    "surfaces": [
+      {
+        "surface": "api",
+        "php": 457,
+        "ts": 1280,
+        "executableMatched": 438,
+        "actionableMissing": 11
+      },
+      {
+        "surface": "admin",
+        "php": 1153,
+        "ts": 794,
+        "executableMatched": 236,
+        "actionableMissing": 902
+      },
+      {
+        "surface": "supplier",
+        "php": 182,
+        "ts": 164,
+        "executableMatched": 121,
+        "actionableMissing": 49
+      },
+      {
+        "surface": "kefu",
+        "php": 63,
+        "ts": 70,
+        "executableMatched": 60,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "php": 41,
+        "ts": 41,
+        "executableMatched": 41,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "php": 8,
+        "ts": 0,
+        "executableMatched": 0,
+        "actionableMissing": 8
+      }
+    ],
+    "raw": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\route01.json",
+      "bytes": 1300501,
+      "sha256": "ec42a39090c83be1d787fa2fd8bbda564ee82d1eeb3e3a944e8b1e0fcf3b2d32"
+    }
+  },
+  "adminApiAudit": {
+    "exitCode": 0,
+    "counts": {
+      "callSites": 602,
+      "pathVariants": 633,
+      "registered": 633,
+      "executable": 633,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "raw": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\api01.json",
+      "bytes": 380116,
+      "sha256": "9d6cbd183efa710df3d29cd80c69d24c8385bc6e286f05049b68a48cc036d301"
+    },
+    "deterministicSnapshot": "Fresh CLI report saved under this batch date; existing deterministic recomputation passed with assertions unchanged."
+  },
+  "postgres": {
+    "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-tlEv3X/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 62777,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true,
+    "scope": "Owned isolated PG16 maintenance host. GET asserted real SELECT-only LOGIN with RR/READ ONLY; POST asserted independent non-superuser application/Admin LOGINs using the actual auth/factory/runtime boundary and local Hono controller, exact three-table row deltas and actual blocking PIDs until COMMIT.",
+    "fixturesRemaining": 0,
+    "stopped": true,
+    "statusRecheck": {
+      "checkedAt": "2026-10-08T10:37:24.959Z",
+      "command": "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin/pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\.cache\\finance-postgres-tlEv3X\\data"
+      ],
+      "data": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\.cache\\finance-postgres-tlEv3X\\data",
+      "exitCode": 3,
+      "signal": null,
+      "stdout": "pg_ctl: no server running\r\n",
+      "stderr": ""
+    },
+    "priorClusterStatus": {
+      "checkedAt": "2026-10-08T10:31:43.058Z",
+      "command": "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin/pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\.cache\\finance-postgres-rvvj1N\\data"
+      ],
+      "data": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\.cache\\finance-postgres-rvvj1N\\data",
+      "exitCode": 3,
+      "signal": null,
+      "stdout": "pg_ctl: no server running\r\n",
+      "stderr": ""
+    },
+    "retainedDataAndLogs": true
+  },
+  "checklist": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "checkboxChanges": 0
+  },
+  "sourceInputs": [
+    {
+      "file": "workers-ts/src/services/admin/AdminLegacyRoleWorkflowService.ts",
+      "bytes": 17330,
+      "sha256": "5bda5aa6404e8da9ffb3e1c0bae64524c2732f6ed28f0d3688d8023579fa1d3e"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminLegacyRoleController.ts",
+      "bytes": 1559,
+      "sha256": "459350de7a7148185e6e4a8ba21e322bcc0acc08fda7338c3030e4576207450c"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 59336,
+      "sha256": "dc56fc639d358fd4830e46773da4509980c44116d9c053b6fab2b5b1178b2ffb"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 93217,
+      "sha256": "5a9d9aa268b5e8a347d0df557f425a97682392dc10e913d152c7fbf9e39f0934"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 165760,
+      "sha256": "434cd3cf53277f6191d398bacae20308518cd8b0098e850edacce8b86a99b8b9"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow.test.ts",
+      "bytes": 25618,
+      "sha256": "c3906448ccd67c17a77db8caf7dfa67ff9e5b98f9a94f1a283081ec3d07869b6"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow-native.test.ts",
+      "bytes": 24580,
+      "sha256": "e13b214c436e1e88f5203ed6be1f13c2326c26b72a0d45b751aa59b6e25c0679"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 43383,
+      "sha256": "759a932558da24ce8b6f2e9768158b710ae377d0d4528fa309ef7becaefe52ad"
+    },
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 945064,
+      "sha256": "d4016f3c6b59747d587f6ba1e0e40393ec2f9f109acdf14ee99e5ab1688c296f"
+    },
+    {
+      "file": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+      "bytes": 111084,
+      "sha256": "13db307e34c8bf05cd8c43cfc1b94342e779df07c708a40b22c2b57827238a82"
+    },
+    {
+      "file": "workers-ts/docs/legacy-role-workflow-contract-20261008.md",
+      "bytes": 17494,
+      "sha256": "5c6f26dbc42f2f688267083fa700a97242780a2048be0a6eec07c724ad7e2c69"
+    },
+    {
+      "file": "workers-ts/docs/admin-legacy-system-list-contract-20261008.md",
+      "bytes": 13926,
+      "sha256": "6b0901cfa693c3e3542a96c0c01f0b5342777156f80d9fe893d1aeb05301a087"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-permission.test.ts",
+      "bytes": 6511,
+      "sha256": "312dca8bc7fb6d3e70e9e1557b328e9cc93937d047c5550ceabb4a4cb4a9e9e2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "bytes": 10768,
+      "sha256": "94c58458a132919eb1c0061e34d4f329b411b07e34d223f7a45588eedd05de71"
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "bytes": 40654,
+      "sha256": "824770e6567fabdc99336352fa2b81a59a75f6a2d70cb57a3b1709f60c9c018d"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-system-list.test.ts",
+      "bytes": 22938,
+      "sha256": "2c5f173e21124318bdcdc731c67974d98dfa320701e6a093605bcb1f75d33a9f"
+    },
+    {
+      "file": "workers-ts/test/admin-system-directory.test.ts",
+      "bytes": 15048,
+      "sha256": "2775914a16e11546ad2a20468d1026da8444399f4938a9e63b8faac7434ca5b6"
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "bytes": 2505,
+      "sha256": "e5c95dc3cbbc7051c4f580a75baa496aa86380484104f893f4e02968a0f4700a"
+    },
+    {
+      "file": "workers-ts/test/route-parity-audit.test.ts",
+      "bytes": 1435,
+      "sha256": "8fd923adab1b32dbbd70993e93e262db852f1d800908cf7c1a48d54ba622423d"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-auth.ts",
+      "bytes": 3350,
+      "sha256": "8fe03c83572b53644c04a890cf975851d6831daeb0e944f541666e35a1ec84c4"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "bytes": 1023,
+      "sha256": "6f43ddf32c495887e5908d6991b251c1cfaf9118bcd33e54d788353e2a50ff18"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "bytes": 8555,
+      "sha256": "bb72d9772d18f572faf5d8419da208210572551545ae8725f3d0efcc53f6cae7"
+    },
+    {
+      "file": "workers-ts/src/models/schema/admin.ts",
+      "bytes": 18879,
+      "sha256": "e757ca2b0cac713958157d765d90398b170d1b9d99f655dcce0493cc1317776e"
+    },
+    {
+      "file": "workers-ts/src/lib/di.ts",
+      "bytes": 10100,
+      "sha256": "5b9b8b78535f95c3f74a76506fc2e410ae988a3d6d579a97bf1a544578dd6052"
+    },
+    {
+      "file": "workers-ts/test/helpers/financePeers.ts",
+      "bytes": 5080,
+      "sha256": "b7e51a8de1000c8775a59c1e63c2dd72e4326bfdd8c801ac2e934aa5d4f4fbfb"
+    },
+    {
+      "file": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+      "bytes": 8757,
+      "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647"
+    },
+    {
+      "file": "workers-ts/audit/route-distribution-legacy-role-workflow-followup-20261008.json",
+      "bytes": 1300501,
+      "sha256": "ec42a39090c83be1d787fa2fd8bbda564ee82d1eeb3e3a944e8b1e0fcf3b2d32"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-legacy-role-workflow-followup-20261008.json",
+      "bytes": 380116,
+      "sha256": "9d6cbd183efa710df3d29cd80c69d24c8385bc6e286f05049b68a48cc036d301"
+    }
+  ],
+  "earlierAttempts": {
+    "business01": {
+      "exitCode": 1,
+      "passed": 13,
+      "failed": 8,
+      "reason": "Fixture iteration/expected valid form grant and numeric authority oracles; investigation also found real empty-footprint/invalid-metadata bugs, fixed before business02. Complete original evidence retained.",
+      "rawEvidence": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-legacy-role-business01\\stdout.raw",
+          "bytes": 4562,
+          "sha256": "992385a17260acaed78cf20622a4db47123d7474d96d097b42eda41d1b02ecea"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-legacy-role-business01\\stderr.raw",
+          "bytes": 4415,
+          "sha256": "c725017c6c1b28faf37e280e7b9bff0f584e33135519d3fc645bb92f64b21eaf"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-legacy-role-business01\\exit-code.txt",
+          "bytes": 1,
+          "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+        }
+      ]
+    },
+    "business02": {
+      "exitCode": 0,
+      "passed": 23,
+      "superseded": true,
+      "reason": "Before defensive Hono id fallback. Final business03 revalidates the resulting source; not counted twice.",
+      "rawEvidence": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-legacy-role-business02\\stdout.raw",
+          "bytes": 4636,
+          "sha256": "e01a55d5f06e684d8ec7dd10a1fb791b446e5c461cc1023c7f41dc7b708f2761"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-legacy-role-business02\\stderr.raw",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-legacy-role-business02\\exit-code.txt",
+          "bytes": 1,
+          "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+        }
+      ]
+    },
+    "types01": {
+      "runs": [
+        {
+          "id": "unit-types01",
+          "mode": "types",
+          "command": [
+            "C:\\Program Files\\nodejs\\node.exe",
+            "--max-old-space-size=8192",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+          "startedAt": "2026-10-08T10:30:09.151Z",
+          "finishedAt": "2026-10-08T10:31:34.713Z",
+          "exitCode": 2,
+          "signal": null,
+          "rawEvidence": [
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\unit-types01.stdout.txt",
+              "bytes": 436,
+              "sha256": "45b2ecbb27bab1be5148e45cbedfc2f562e6a712ff41bba8eb203bf5ed642b63"
+            },
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\unit-types01.stderr.txt",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "id": "runtime-types01",
+          "mode": "types",
+          "command": [
+            "C:\\Program Files\\nodejs\\node.exe",
+            "--max-old-space-size=8192",
+            "node_modules/typescript/bin/tsc",
+            "-p",
+            "tsconfig.runtime-test.json",
+            "--noEmit"
+          ],
+          "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+          "startedAt": "2026-10-08T10:31:34.716Z",
+          "finishedAt": "2026-10-08T10:32:26.627Z",
+          "exitCode": 2,
+          "signal": null,
+          "rawEvidence": [
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\runtime-types01.stdout.txt",
+              "bytes": 436,
+              "sha256": "45b2ecbb27bab1be5148e45cbedfc2f562e6a712ff41bba8eb203bf5ed642b63"
+            },
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\runtime-types01.stderr.txt",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      ],
+      "reason": "Controller req.param(id) was string|undefined; two strict-parser empty fallbacks fix typing, adding12bytes without relaxing positive-id validation."
+    },
+    "native01": {
+      "id": "native01",
+      "mode": "native",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-legacy-role-workflow-native.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T10:29:23.819Z",
+      "finishedAt": "2026-10-08T10:29:42.724Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 4,
+      "superseded": true,
+      "reason": "Same four cases before final controller id fallback; final native02 alone credited.",
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\native01.stdout.txt",
+          "bytes": 3668,
+          "sha256": "f17cb73320dc4726274f029818815958fd00d0e770fba44b6cb9c7cfc84b4269"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\legacy-role-workflow\\native01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  },
+  "published": false,
+  "deployed": false,
+  "limitations": [
+    "Local Hono mounts execute real middleware/controller, not full production app or old Vue browser. Old Vue leaf-check algorithm is reproduced from visible source; no full old iView interaction, provider, device, Hyperdrive or production data credit.",
+    "No durable operation receipt, client submit mutex or safe unknown CREATE retry exists in the legacy consumer; CREATE response loss remains unresolved and no automatic retry was added.",
+    "Dedicated status/delete and complete administrator/role parent workflows remain open; current scope guards self-used role and next level, not every historical writer or last-super-admin protocol.",
+    "Write catalogue locks up to10000 active platform menus through COMMIT; broad lock contention is returned as409, not retried automatically.",
+    "Native cleanup emitted harmless PostgreSQL25P01 rollback-without-transaction warnings. Raw output retained; no statement/result or test was filtered.",
+    "Existing permission regressions ran before the new opaque helper export was added; pre-existing resolution behavior and those test files are unchanged, while final business/native runs exercise the new helper and final controller.",
+    "No new-head Linux CI, public push, merge or deployment credit; prior approved d5c31e8 publication is a separate historical release."
+  ]
+}

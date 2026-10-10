@@ -1,0 +1,498 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-08T09:51:36.412Z",
+  "baseCommit": "039e2ef1deb1c5a4f13322c0f60653d144a9b1e2",
+  "scope": [
+    "Existing GET /adminapi/file/category/:id/edit",
+    "GET /api/admin/file/category/:id/edit alias",
+    "PUT /api/admin/file/category/:id alias to the existing protected update handler"
+  ],
+  "action": "file/category/{canonical-positive-id}",
+  "creditedUniqueTests": 73,
+  "runs": [
+    {
+      "id": "business01",
+      "exitCode": 0,
+      "passed": 51,
+      "breakdown": {
+        "edit": 29,
+        "createRegression": 22
+      },
+      "scope": "Actual PGlite/JWT/Hono dual-base forms/PUTs; strict query, persisted type, root/child, 409 unrepresentable parent, unchanged 50-char writes and Supplier form, real 10000/10001 catalog.",
+      "rawEvidence": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-edit-business01\\stdout.raw",
+          "bytes": 9360,
+          "sha256": "2dcdbc0306463309dd180da0d9fa4aded071a1344955cdd3d2fccb9794f6ca16"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-edit-business01\\stderr.raw",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-edit-business01\\actual-exit.txt",
+          "bytes": 1,
+          "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+        }
+      ]
+    },
+    {
+      "id": "regression01",
+      "mode": "regressions",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "test/attachment-storage-migration.test.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/route-parity-audit.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T09:34:06.367Z",
+      "finishedAt": "2026-10-08T09:34:14.012Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 19,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\regression01.stdout.txt",
+          "bytes": 272,
+          "sha256": "63c5e44c583fdf117dab253ed25b281b97830299e20213caef3ce63339d273e8"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\regression01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "native02",
+      "mode": "native_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-category-edit-form-native.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T09:43:41.196Z",
+      "finishedAt": "2026-10-08T09:43:57.337Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 3,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\native02.stdout.txt",
+          "bytes": 1001,
+          "sha256": "179908e7e12679eac661bb2cf0a5b83cb6cdd0fdf12cd346796a45a84c472cef"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\native02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "id": "unit-types02",
+      "mode": "unit_types_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T09:45:52.170Z",
+      "finishedAt": "2026-10-08T09:47:05.861Z",
+      "exitCode": 0,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\unit-types02.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\unit-types02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "runtime-types01",
+      "mode": "types",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T09:41:50.243Z",
+      "finishedAt": "2026-10-08T09:42:37.937Z",
+      "exitCode": 0,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\runtime-types01.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\runtime-types01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "consumerUri": {
+    "axiosVersion": "1.20.0",
+    "rows": [
+      {
+        "baseURL": "https://contract.example/adminapi",
+        "previous": "https://contract.example/adminapi/adminapi/file/category/12",
+        "corrected": "https://contract.example/adminapi/file/category/12"
+      },
+      {
+        "baseURL": "https://contract.example/api/admin",
+        "previous": "https://contract.example/api/admin/adminapi/file/category/12",
+        "corrected": "https://contract.example/api/admin/file/category/12"
+      }
+    ],
+    "scope": "Local installed Axios URI computation only; legacy source base/consumer call inspected. No legacy Axios0.18 or browser rendering credit.",
+    "evidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\action-uri-evidence.json",
+      "bytes": 641,
+      "sha256": "9ec0bb147f42ec19d159dd70ec847d6a917caa1e09d77155c26fe453a8bff076"
+    }
+  },
+  "postgres": {
+    "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-HvnQyy/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 60751,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true,
+    "remainingFixtures": 0,
+    "stopped": true,
+    "statusRecheck": {
+      "executable": "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin/pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-HvnQyy/data"
+      ],
+      "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-HvnQyy/data",
+      "exitCode": 3,
+      "signal": null,
+      "error": null,
+      "output": "pg_ctl: no server running\r\n",
+      "checkedAt": "2026-10-08T09:45:48.252Z"
+    },
+    "boundary": "Owned disposable PG16 maintenance fixture; GET uses restricted SELECT-only LOGIN. HTTP PUT race uses independent explicit writer LOGIN and the existing authenticated handler."
+  },
+  "routeAudit": {
+    "php": 1904,
+    "ts": 2343,
+    "matched": 914,
+    "executableMatched": 893,
+    "unavailable": 21,
+    "missing": 990,
+    "retired": 17,
+    "actionableMissing": 973,
+    "coveragePercent": 48,
+    "executableCoveragePercent": 46.9,
+    "effectiveExecutableCoveragePercent": 47.3,
+    "surfaces": [
+      {
+        "surface": "api",
+        "php": 457,
+        "ts": 1277,
+        "executableMatched": 438,
+        "actionableMissing": 11
+      },
+      {
+        "surface": "admin",
+        "php": 1153,
+        "ts": 791,
+        "executableMatched": 233,
+        "actionableMissing": 905
+      },
+      {
+        "surface": "supplier",
+        "php": 182,
+        "ts": 164,
+        "executableMatched": 121,
+        "actionableMissing": 49
+      },
+      {
+        "surface": "kefu",
+        "php": 63,
+        "ts": 70,
+        "executableMatched": 60,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "php": 41,
+        "ts": 41,
+        "executableMatched": 41,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "php": 8,
+        "ts": 0,
+        "executableMatched": 0,
+        "actionableMissing": 8
+      }
+    ],
+    "exitCode": 0,
+    "evidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\route01.json",
+      "bytes": 1301122,
+      "sha256": "fa37b3db187af659b0c2d8834de2ba2cfffce34162892bdc1e8222129115f148"
+    }
+  },
+  "adminApiAudit": {
+    "counts": {
+      "callSites": 602,
+      "pathVariants": 633,
+      "registered": 633,
+      "executable": 633,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "exitCode": 0,
+    "evidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\api01.json",
+      "bytes": 379508,
+      "sha256": "7ff15304e1acbe6e75a9e16cf113b0c2a2f580c793d56c1eee5ad44d8ec08c68"
+    },
+    "regressionSnapshot": "The prior CREATE-date API snapshot is byte-identical to this fresh CLI result; existing deterministic test recomputed it successfully without changing assertions or the input path."
+  },
+  "checklist": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "checkboxChanges": 0
+  },
+  "sourceInputs": [
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 942486,
+      "sha256": "2b864da69164088f8b5d5f489bb9b4efdfe83e89f0e00a9be3e25c11cde8c5a6"
+    },
+    {
+      "file": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+      "bytes": 108221,
+      "sha256": "365495a3f9773e63eb258ac35ca34057476b38cee540b2924a45be2c62d5efec"
+    },
+    {
+      "file": "workers-ts/docs/admin-category-edit-form-contract-20261008.md",
+      "bytes": 21475,
+      "sha256": "d9442fd5553e13c3dc10e86fed065d597164314c21fa0554d8fe9ef400c7cbbc"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminAttachmentCategoryCreateFormService.ts",
+      "bytes": 6199,
+      "sha256": "6f6515ffb2f5f80b9e4db819f3cfc9bf6dd18f69d08822558493fd3784c998cb"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminAttachmentCategoryEditFormService.ts",
+      "bytes": 4862,
+      "sha256": "bd2c5dd57db77c13dd9b85e70b026d7b029a6ebb369737d42bf7360f3149fa2e"
+    },
+    {
+      "file": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "bytes": 14994,
+      "sha256": "1e544e3b0508fa5c6e31d1eaa00cf2c6b0428009bb32d6abecfe561dbb201752"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 165387,
+      "sha256": "9255b3cf7c8765c9cb2774af7a8b529007ab7268a10e6fe11b4036ca862aa76a"
+    },
+    {
+      "file": "workers-ts/test/admin-attachment-category-create-form.test.ts",
+      "bytes": 18069,
+      "sha256": "c7810739f0cee5a4459e7c3e8be9349363328d02cb4a1474e82576a07164d5ba"
+    },
+    {
+      "file": "workers-ts/test/admin-attachment-category-edit-form.test.ts",
+      "bytes": 18153,
+      "sha256": "11ad63639034bf40360ad3ae44cc04175c5f20bc1a8b47f6bd54757a85a0fefb"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 92844,
+      "sha256": "789f9f62d9f8c4fcd7f0452191438c6a570f2a6fb65369fb45d77fe37db5a273"
+    },
+    {
+      "file": "workers-ts/src/services/system/AttachmentService.ts",
+      "bytes": 60222,
+      "sha256": "0f03654d7952c96fa3308f57d431df32c8fb23f97f0ff6efb064dbc4e8d1f241"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 55442,
+      "sha256": "dbb26044463bd0c9c697a5b5f58c96468dbcf31f654fcc33fa4c5e2868e829f6"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-auth.ts",
+      "bytes": 3350,
+      "sha256": "8fe03c83572b53644c04a890cf975851d6831daeb0e944f541666e35a1ec84c4"
+    },
+    {
+      "file": "workers-ts/src/models/schema/attachment.ts",
+      "bytes": 3941,
+      "sha256": "3535f1833936e5c79c8679068b86dabcfee1f7c2688d23b85d95a0ad819eddf9"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 43328,
+      "sha256": "60bd8332c168a3456921e3b8131a65befddf6e4fff1bc36e072814c1e09f18a1"
+    },
+    {
+      "file": "workers-ts/test/admin-category-edit-form-native.test.ts",
+      "bytes": 15500,
+      "sha256": "671fd58065dcc85ab95922ed622f410ba668fe3a070ebb70d3d486bd2978b5d6"
+    },
+    {
+      "file": "workers-ts/test/admin-category-create-form-native.test.ts",
+      "bytes": 12503,
+      "sha256": "48de2da31199a3b833c28408090a8147abc4ef1b579972b59aeb72da114cec69"
+    },
+    {
+      "file": "workers-ts/test/attachment-storage-migration.test.ts",
+      "bytes": 13465,
+      "sha256": "d27d7f4c0a7bf5aa739ddc0cdd79e6b37d2dc17e234a723e25e177416640664d"
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "bytes": 2505,
+      "sha256": "7ae025763dd44b3ce69062c4b9e22f5b0d5eeadd196ead37c20ab5de8ece6251"
+    },
+    {
+      "file": "workers-ts/test/route-parity-audit.test.ts",
+      "bytes": 1435,
+      "sha256": "8fd923adab1b32dbbd70993e93e262db852f1d800908cf7c1a48d54ba622423d"
+    },
+    {
+      "file": "workers-ts/audit/route-distribution-category-edit-form-followup-20261008.json",
+      "bytes": 1301122,
+      "sha256": "fa37b3db187af659b0c2d8834de2ba2cfffce34162892bdc1e8222129115f148"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-category-edit-form-followup-20261008.json",
+      "bytes": 379508,
+      "sha256": "7ff15304e1acbe6e75a9e16cf113b0c2a2f580c793d56c1eee5ad44d8ec08c68"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-category-create-form-followup-20261008.json",
+      "bytes": 379508,
+      "sha256": "7ff15304e1acbe6e75a9e16cf113b0c2a2f580c793d56c1eee5ad44d8ec08c68"
+    }
+  ],
+  "published": false,
+  "deployed": false,
+  "earlierAttempts": [
+    {
+      "id": "unit-types01",
+      "mode": "types",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T09:40:29.832Z",
+      "finishedAt": "2026-10-08T09:41:50.242Z",
+      "exitCode": 2,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\unit-types01.stdout.txt",
+          "bytes": 306,
+          "sha256": "ac5a22236772e1ec77527698716b9cc3863f581bf306c918dd8bea5e7618f708"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\unit-types01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "reason": "New native test helper inferred Response|Promise<Response>; explicit async return fixes the Promise contract without changing production or assertions."
+    },
+    {
+      "id": "native01",
+      "mode": "native",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-category-edit-form-native.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T09:39:29.808Z",
+      "finishedAt": "2026-10-08T09:39:54.060Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 3,
+      "superseded": true,
+      "statusRecheck": {
+        "executable": "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin/pg_ctl.exe",
+        "args": [
+          "status",
+          "-D",
+          "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-dqeIBc/data"
+        ],
+        "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-dqeIBc/data",
+        "exitCode": 3,
+        "signal": null,
+        "error": null,
+        "output": "pg_ctl: no server running\r\n",
+        "checkedAt": "2026-10-08T09:40:24.633Z"
+      },
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\native01.stdout.txt",
+          "bytes": 1002,
+          "sha256": "81d4ffb55722d6a9bb850c71573eb7051e11402d40d380b71ebf574e63dfafbe"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-edit-form\\native01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "reason": "Passing native payload retained; native02 revalidates the final typed helper. Not counted twice."
+    }
+  ],
+  "limitations": [
+    "Opaque PHP create_form helper and legacy Axios0.18/form-create browser not executed; visible legacy sources plus local Axios1.20 URI calculation only.",
+    "Existing writer reparent/cycle semantics remain unchanged; old PHP prohibition on reparenting a category with children is a separate unresolved contract.",
+    "Read/transport edit slice does not close full category/tree/image/video/delete/unknown-write-result recovery workflows.",
+    "No production provider, new-head Linux CI, public push or deployment credit.",
+    "Owned PG data and all raw test evidence retained after confirmed stop."
+  ]
+}
