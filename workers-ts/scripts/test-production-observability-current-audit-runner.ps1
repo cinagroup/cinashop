@@ -273,7 +273,7 @@ $script:workerName = $null
 $script:marker = $null
 $script:formalReadCount = 0
 $script:temporaryReadCount = 0
-$script:mainVersion = 'cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2'
+$script:mainVersion = 'd44ef519-90ab-4864-b42f-3f0ca76890b2'
 $script:ownedVersion = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 $script:changedVersion = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 $script:bindings = @(
@@ -314,7 +314,7 @@ function Invoke-WebRequest {
         }
         return New-ApiResponse @{ bindings = $taskBindings }
     }
-    if ($Uri -match '/workers/scripts/cinashop-api/versions/cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2$') {
+    if ($Uri -match '/workers/scripts/cinashop-api/versions/d44ef519-90ab-4864-b42f-3f0ca76890b2$') {
         return New-ApiResponse @{ resources = @{ bindings = @($script:bindings) } }
     }
     if ($Uri -match '/workers/scripts/(?<name>cinashop-observability-current-audit-[0-9a-f]{16})(?<suffix>/.*)?$') {
