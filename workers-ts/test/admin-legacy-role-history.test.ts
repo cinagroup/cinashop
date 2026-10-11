@@ -102,8 +102,9 @@ describe('complete role reference history across existing authority consumers in
     const body={ id:201,account:'history-staff',real_name:'显式移除',phone:'13800000099',pwd:'',conf_pwd:'',roles:[52],status:1 };
     const bad={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:{ ...body,roles:[52,53] } };
     const before=await snapshot(); await expect(staff.preview(bad,actor())).rejects.toThrow(); expect(await snapshot()).toEqual(before);
-    const input={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:body }, preview=await staff.preview(input,actor());
-    expect(await staff.commit({ ...input,revision:preview.revision,expires_at:preview.expires_at,confirmed:true },actor())).toMatchObject({ state:'committed',result:{ id:201,created:false } });
+    const input={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:body }, claims=actor();
+    const preview=await staff.preview(input,claims);
+    expect(await staff.commit({ ...input,revision:preview.revision,expires_at:preview.expires_at,confirmed:true },claims)).toMatchObject({ state:'committed',result:{ id:201,created:false } });
     expect((await fixture.db.select().from(systemAdmin).where(eq(systemAdmin.id,201)))[0].roles).toBe('52');
   });
   it('rejects unknown missing references across all old consumers without inventing deletion evidence',async () => {
