@@ -9,6 +9,7 @@ import { adminAssistedCartAdd, adminAssistedConfirm, adminAssistedComputed, admi
   adminAssistedPay, adminAssistedPayStatus, adminAssistedPlaceDetail, adminAssistedPlaceList } from '../src/controllers/api/v1/AdminController';
 import { createToken, md5 } from '../src/utils/jwt';
 import { refundRuntimeFixture, shipping } from './helpers/refundRuntimeFixture';
+import { ownsSequenceRunnerEndpoint } from './helpers/kefuSequenceRunnerDatabase';
 import { runRuntimeBusinessCommissioning } from '../src/migrations/runRuntimeBusinessCommissioning';
 import { auditRuntimeBusinessPrivileges } from '../src/migrations/auditRuntimeBusinessPrivileges';
 import { storeOrder, storeOrderCartInfo, storeOrderOutbox, systemAttachment, systemForm } from '../src/models/schema';
@@ -465,19 +466,99 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
       });
     }, 60_000);
 
+  // These two cases deliberately test one lock at a time in their fresh owned
+  // database. Ordinary vacuum/ANALYZE takes a pricing-conflicting table lock;
+  // disable it only on these two synthetic tables, retaining forced-vacuum checks.
+  async function withIsolatedPricingMaintenance(run: () => Promise<void>) {
+    const [identity] = await f.exec(`SELECT current_database() AS database, host(inet_server_addr()) AS host,
+      inet_server_port() AS port`);
+    if (!process.env.TEST_FINANCE_POSTGRES_URL || !ownsSequenceRunnerEndpoint(String(identity.database), 'public',
+      new URL(process.env.TEST_FINANCE_POSTGRES_URL).href, identity.host, identity.port)) throw Error('Owned pricing fixture required');
+    const catalog = await f.exec(`SELECT relname, reloptions, age(relfrozenxid)::integer AS xid_age,
+      mxid_age(relminmxid)::integer AS multi_age,
+      current_setting('autovacuum_freeze_max_age')::integer AS xid_limit,
+      current_setting('autovacuum_multixact_freeze_max_age')::integer AS multi_limit
+      FROM pg_class WHERE oid IN ('public.member_right'::regclass,'public.system_config'::regclass) ORDER BY relname`);
+    expect(catalog.map(row => row.relname)).toEqual(['member_right', 'system_config']);
+    for (const row of catalog) {
+      expect(Number(row.xid_age)).toBeLessThan(Number(row.xid_limit) / 10);
+      expect(Number(row.multi_age)).toBeLessThan(Number(row.multi_limit) / 10);
+      expect((row.reloptions as string[] | null ?? []).some(option => option.startsWith('autovacuum_enabled='))).toBe(false);
+    }
+    async function configureAutovacuum(disable: boolean) {
+      await f.withPeer(async peer => {
+        await peer.exec('BEGIN');
+        let inTransaction = true;
+        try {
+          await peer.exec("SET LOCAL lock_timeout='3s'; SET LOCAL statement_timeout='5s'");
+          await peer.exec(disable
+            ? 'ALTER TABLE public.member_right SET (autovacuum_enabled=false); ALTER TABLE public.system_config SET (autovacuum_enabled=false)'
+            : 'ALTER TABLE public.member_right RESET (autovacuum_enabled); ALTER TABLE public.system_config RESET (autovacuum_enabled)');
+          await peer.exec('COMMIT'); inTransaction = false;
+        } finally { if (inTransaction) await peer.exec('ROLLBACK'); }
+      });
+    }
+    try {
+      await configureAutovacuum(true);
+      // A waiting stronger lock also blocks a new compatible SHARE request.
+      // Fail on an existing maintenance worker or queue instead of retrying HTTP.
+      expect(await f.exec(`SELECT l.pid, l.mode, l.granted FROM pg_locks l
+        LEFT JOIN pg_stat_activity a ON a.pid=l.pid
+        WHERE l.database=(SELECT oid FROM pg_database WHERE datname=current_database())
+          AND l.relation IN ('public.member_right'::regclass,'public.system_config'::regclass)
+          AND (NOT l.granted OR a.backend_type='autovacuum worker'
+            OR l.mode IN ('RowExclusiveLock','ShareUpdateExclusiveLock','ShareRowExclusiveLock','ExclusiveLock','AccessExclusiveLock'))`)).toEqual([]);
+      await run();
+    } finally {
+      await configureAutovacuum(false);
+    }
+  }
+
   it('pins attachment metadata NOWAIT and preserves retry after a SQL lock failure', async () => {
     await scenario(async client => {
       const { body, quote } = await client.confirm(11), image = await client.upload(quote.orderKey, 11), before = await business();
       const payload = { ...body, quoteToken: quote.quoteToken, customForm: answers(`/api/assets/${image.att_id}`) };
-      await f.withPeer(async peer => {
-        await peer.exec('BEGIN');
+      await withIsolatedPricingMaintenance(() => f.withPeer(async pricingGuard => {
+        await pricingGuard.exec('BEGIN');
         try {
-          await peer.exec(`SELECT att_id FROM system_attachment WHERE att_id=${image.att_id} FOR UPDATE`);
-          expect(await client.post(`create/${quote.orderKey}/11`, payload)).toMatchObject({ status: 400, data: null });
-          expect(await business()).toEqual(before);
-        } finally { await peer.exec('ROLLBACK'); }
+          // Compatible with checkout's own SHARE lock; isolates the attachment lock.
+          await pricingGuard.exec('LOCK TABLE public.member_right, public.system_config IN SHARE MODE NOWAIT');
+          await f.withPeer(async peer => {
+            await peer.exec('BEGIN');
+            try {
+              await peer.exec(`SELECT att_id FROM system_attachment WHERE att_id=${image.att_id} FOR UPDATE`);
+              const blocked = await client.post(`create/${quote.orderKey}/11`, payload);
+              expect(blocked, blocked.msg).toMatchObject({ status: 400, data: null });
+              expect(blocked.msg).toContain('system_attachment');
+              expect(blocked.msg).toContain('for share nowait');
+              expect(await business()).toEqual(before);
+            } finally { await peer.exec('ROLLBACK'); }
+          });
+          const retried = await client.post(`create/${quote.orderKey}/11`, payload);
+          expect(retried.status, retried.msg).toBe(200);
+        } finally { await pricingGuard.exec('ROLLBACK'); }
+      }));
+    });
+  }, 60_000);
+
+  it('rejects a pricing maintenance lock without consuming the upload and accepts one retry after release', async () => {
+    await scenario(async client => {
+      const { body, quote } = await client.confirm(11), image = await client.upload(quote.orderKey, 11), before = await business();
+      const payload = { ...body, quoteToken: quote.quoteToken, customForm: answers(`/api/assets/${image.att_id}`) };
+      await withIsolatedPricingMaintenance(async () => {
+        await f.withPeer(async pricingPeer => {
+          await pricingPeer.exec('BEGIN');
+          try {
+            await pricingPeer.exec('LOCK TABLE public.member_right, public.system_config IN SHARE UPDATE EXCLUSIVE MODE NOWAIT');
+            const blocked = await client.post(`create/${quote.orderKey}/11`, payload);
+            expect(blocked, blocked.msg).toMatchObject({ status: 400,
+              data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: quote.orderKey } });
+            expect(await business()).toEqual(before);
+          } finally { await pricingPeer.exec('ROLLBACK'); }
+        });
+        const retried = await client.post(`create/${quote.orderKey}/11`, payload);
+        expect(retried.status, retried.msg).toBe(200);
       });
-      expect((await client.post(`create/${quote.orderKey}/11`, payload)).status).toBe(200);
     });
   }, 60_000);
 

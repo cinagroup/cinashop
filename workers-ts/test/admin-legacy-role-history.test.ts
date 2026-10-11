@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createContainerFromDb } from '@/lib/di';
 import { systemAdmin, systemMenus, systemRole } from '@/models/schema';
@@ -34,6 +34,7 @@ describe('complete role reference history across existing authority consumers in
     permissions = new AdminPermissionService(container);
   },30_000);
   afterAll(async () => { await fixture?.close(); });
+  afterEach(() => vi.restoreAllMocks());
   beforeEach(async () => {
     // Recreate this owned memory fixture, including its immutable history, so
     // reusing synthetic role IDs between cases cannot fabricate ID reuse.
@@ -102,8 +103,19 @@ describe('complete role reference history across existing authority consumers in
     const body={ id:201,account:'history-staff',real_name:'显式移除',phone:'13800000099',pwd:'',conf_pwd:'',roles:[52],status:1 };
     const bad={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:{ ...body,roles:[52,53] } };
     const before=await snapshot(); await expect(staff.preview(bad,actor())).rejects.toThrow(); expect(await snapshot()).toEqual(before);
-    const input={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:body }, preview=await staff.preview(input,actor());
-    expect(await staff.commit({ ...input,revision:preview.revision,expires_at:preview.expires_at,confirmed:true },actor())).toMatchObject({ state:'committed',result:{ id:201,created:false } });
+    const claims=actor(), input={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:body }, preview=await staff.preview(input,claims);
+    expect(await staff.commit({ ...input,revision:preview.revision,expires_at:preview.expires_at,confirmed:true },claims)).toMatchObject({ state:'committed',result:{ id:201,created:false } });
+    expect((await fixture.db.select().from(systemAdmin).where(eq(systemAdmin.id,201)))[0].roles).toBe('52');
+  });
+  it('keeps one authenticated claim across a clock second and rejects an altered session expiry without applying writes',async () => {
+    await commitRole('legacy-role-delete',{ id:53 },101);
+    const boundary=Math.floor(Date.now()/1000)*1000+990, clock=vi.spyOn(Date,'now').mockReturnValue(boundary);
+    const claims=actor(), input={ operation_id:randomUUID(),operation:'legacy-admin-save',payload:{ id:201,account:'history-staff',real_name:'原令牌跨秒',phone:'13800000099',pwd:'',conf_pwd:'',roles:[52],status:1 } }, preview=await staff.preview(input,claims);
+    const confirmation={ ...input,revision:preview.revision,expires_at:preview.expires_at,confirmed:true }, before=await snapshot();
+    clock.mockReturnValue(boundary+1000);
+    await expect(staff.commit(confirmation,{ ...claims,expiresAt:claims.expiresAt+1 })).rejects.toMatchObject({ code:409 });
+    expect(await snapshot()).toEqual(before);
+    await expect(staff.commit(confirmation,claims)).resolves.toMatchObject({ state:'committed',result:{ id:201,created:false } });
     expect((await fixture.db.select().from(systemAdmin).where(eq(systemAdmin.id,201)))[0].roles).toBe('52');
   });
   it('rejects unknown missing references across all old consumers without inventing deletion evidence',async () => {
