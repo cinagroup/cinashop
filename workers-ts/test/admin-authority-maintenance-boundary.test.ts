@@ -11,9 +11,11 @@ vi.mock('@/migrations/adminAuthorityOperationMaintenance', async importOriginal 
 }));
 const token = 'a'.repeat(64), base = 'https://temporary.example.workers.dev';
 const maintenance = { ready: true, addon: 'absent', menuLock: true,
-  identity: { database: 'postgres', role: 'postgres', session: 'postgres', backend: 'postgres' },
+  identity: { database: 'postgres', role: 'postgres', session: 'postgres', backend: 'postgres', primary: true, originSha256: '3'.repeat(64) },
   profiles: {}, snapshot: { tableCount: 284, dataSha256: 'e'.repeat(64), data: [], catalog: { objects: 2000, sha256: 'f'.repeat(64) } } };
 const profile = (kind: 'app' | 'admin') => ({ ready: true, readOnly: true, completeServiceCoverageVerified: false,
+  identity: { database: 'postgres', role: `cinashop_${kind}_v1`, session: `cinashop_${kind}_v1`,
+    backend: `cinashop_${kind}_v1`, supported: true, primary: true, originSha256: '3'.repeat(64) },
   kind, failures: [], tableCount: 284, sequenceCount: 90 });
 async function env(): Promise<AdminAuthorityMaintenanceEnv> {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
@@ -111,6 +113,17 @@ describe('temporary authority commissioning HTTP guard', () => {
     expect(await (await worker.fetch(request('/postflight'), bindings)).json()).toMatchObject({ ready: false });
     vi.mocked(inspectAdminAuthorityMaintenance).mockResolvedValue({ ...maintenance, addon: 'legacy-admin-v2' } as never);
     expect(await (await worker.fetch(request('/postflight'), bindings)).json()).toMatchObject({ ready: true });
+    expect(applyAdminAuthorityMaintenance).not.toHaveBeenCalled();
+  });
+  it('refuses replicas or mismatched physical primary evidence from any runtime connection', async () => {
+    const bindings = await env(), headers = await arm(bindings);
+    for (const changed of [{ primary: false }, { originSha256: '4'.repeat(64) }]) {
+      vi.mocked(inspectAdminAuthorityRuntimeLogin).mockImplementation(async (_db, _target, kind) => ({
+        ...profile(kind), identity: { ...profile(kind).identity, ...(kind === 'admin' ? changed : {}) },
+      }) as never);
+      expect(await (await worker.fetch(request('/preflight'), bindings)).json()).toMatchObject({ ready: false });
+      expect((await worker.fetch(request('/apply', 'POST', headers), bindings)).status).toBe(409);
+    }
     expect(applyAdminAuthorityMaintenance).not.toHaveBeenCalled();
   });
   it('locked fingerprint refusal is 409; unknown POST never retries and redacts causes', async () => {

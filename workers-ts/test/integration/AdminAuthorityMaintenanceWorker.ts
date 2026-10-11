@@ -5,6 +5,7 @@ import {
   adminAuthorityEvidenceSha256, adminAuthorityInstallSqlSha256, adminAuthorityPreflightEvidence,
   ADMIN_AUTHORITY_MAINTENANCE_OPERATION, AdminAuthorityPreflightMismatch,
   ADMIN_AUTHORITY_PRODUCTION_TARGET,
+  adminAuthoritySamePrimary,
 } from '@/migrations/adminAuthorityOperationMaintenance';
 
 type Binding = { connectionString: string };
@@ -58,7 +59,8 @@ async function inspectBefore(env: AdminAuthorityMaintenanceEnv, sourceSha: strin
   // each response still exposes its own mode and control-plane marker.
   const evidence = adminAuthorityPreflightEvidence(sourceSha, installSqlSha256, target, maintenance, app, admin);
   return { operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION,
-    ready: maintenance.ready && app.ready && admin.ready && (!postflight || maintenance.addon === 'legacy-admin-v2'),
+    ready: maintenance.ready && app.ready && admin.ready && adminAuthoritySamePrimary(maintenance, app, admin)
+      && (!postflight || maintenance.addon === 'legacy-admin-v2'),
     fingerprint: await adminAuthorityEvidenceSha256(evidence),
     runMarker: env.RUN_MARKER, applyArmed: env.APPLY_ARMED === 'true', ...evidence };
 }
