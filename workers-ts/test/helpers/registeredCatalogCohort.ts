@@ -97,6 +97,7 @@ export const REVIEWED_TABLE_ADDITIONS = Object.keys(additions).sort();
 // The schema-audit declaration scan includes every migration source; bind that
 // exact reviewed difference without pretending these tables exist after runAll.
 const explicitDeclarations = [
+  ['adminAuthorityOperation.ts','9111696cce90a9a16ddbebec2c7d0dab84d206c2323dd10b7fce969fe4603731',['admin_authority_operation']],
   ['cashierSecondCardOrigin.ts','e4a29d5080a0ac40154fb6f80d101fcdd5443c2e797e141f4649f398086318b4', ['cashier_second_card_cart_v1','cashier_second_card_origin_v1','cashier_second_card_payment_v1']],
   ['customerFinancialOperation.ts','11a5094042f0bbbff55afa76cb5312e3b132e1a61095dc193f1b4471f181479b',['customer_financial_operation_request']],
   ['customerProductOperation.ts','2a0111dd62350e205c848356b4b793eed61dc24d928f2a030314426d3bb3379b',['customer_product_operation_request']],
@@ -114,7 +115,7 @@ export function reviewedExplicitDeclarationTables() {
     assert.deepEqual([...parseCreateTables(source,'postgres').keys()].sort(),[...tables].sort());
   }
   const tables=explicitDeclarations.flatMap(([, , tables])=>[...tables]).sort();
-  assert.equal(tables.length,11);assert.equal(new Set(tables).size,11);
+  assert.equal(tables.length,12);assert.equal(new Set(tables).size,12);
   return tables;
 }
 const externalNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();

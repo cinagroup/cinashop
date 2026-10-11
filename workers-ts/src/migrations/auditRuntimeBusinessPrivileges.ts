@@ -21,6 +21,8 @@ import { inspectRuntimeSignDayGroupLockBoundary } from './runtimeSignDayGroupLoc
 import { inspectRuntimeAgentLevelCatalogBoundary } from './runtimeAgentLevelCatalogBoundary';
 import { inspectAgentLevelRuntimeCatalog } from './agentLevelRuntimeCatalog';
 import { inspectNewcomerCartAddReplayCatalog } from './runNewcomerCartAddReplay';
+import { ADMIN_AUTHORITY_OPERATION_RUNTIME_PRIVILEGES, ADMIN_AUTHORITY_OPERATION_RUNTIME_FUNCTIONS,
+  inspectAdminAuthorityOperation, inspectAdminAuthorityMenuLock } from './adminAuthorityOperation';
 
 /** Exact effective ACL comparison for the real connection, not SET ROLE on a
  * maintenance session. Readonly: never grants/revokes/repairs. The result proves
@@ -87,6 +89,25 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if(newcomerReplay.present) {
       if(!newcomerReplay.complete)failures.push('newcomer_cart_replay_catalog');
       else plan.tables.newcomer_cart_add_replay=kind==='app'?['SELECT','INSERT']:[];
+    }
+    const [authorityReceipt]=await tx.execute(sql`SELECT to_regclass('public.admin_authority_operation') IS NOT NULL AS present`);
+    let reviewedAuthorityMenuLock:string|null=null;
+    if (authorityReceipt?.present===true) {
+      if (!(await inspectAdminAuthorityOperation(tx,names)) || !(await inspectAdminAuthorityMenuLock(tx,names))) failures.push('admin_authority_operation_catalog');
+      else {
+        plan.tables.admin_authority_operation=ADMIN_AUTHORITY_OPERATION_RUNTIME_PRIVILEGES[kind];
+        plan.functions=[...plan.functions,...ADMIN_AUTHORITY_OPERATION_RUNTIME_FUNCTIONS[kind]];
+        // A separately commissioned v3 hard-delete addon permits precisely one
+        // extra Admin table privilege. The fixed historical plan stays intact;
+        // absent/v1/v2 catalogs never justify this DELETE grant, nor does App.
+        if (kind==='admin' && await inspectAdminAuthorityOperation(tx,names,'legacy-role-v3')) {
+          plan.tables.system_role=[...(plan.tables.system_role ?? []),'DELETE'];
+        }
+        if (kind==='admin') {
+          const [capability]=await tx.execute(sql`SELECT to_regprocedure('public.admin_authority_menu_lock_v1()')::oid::text AS oid`);
+          if (typeof capability?.oid==='string') reviewedAuthorityMenuLock=capability.oid;
+        }
+      }
     }
     onStage?.('tables');
     const tableRows=await tx.execute(sql`SELECT c.relname AS name,c.oid::text AS oid,c.relkind,c.relpersistence,
@@ -169,6 +190,7 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       AND n.nspname<>'information_schema' AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE')
       AND p.oid::text IS DISTINCT FROM ${reviewed.checkout} AND p.oid::text IS DISTINCT FROM ${reviewed.offline}
       AND p.oid::text IS DISTINCT FROM ${reviewedSlotLock}
+      AND p.oid::text IS DISTINCT FROM ${reviewedAuthorityMenuLock}
       AND p.oid::text IS DISTINCT FROM ${reviewedSupplierMenu}) AS no_unreviewed_definer,
       NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
         AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);

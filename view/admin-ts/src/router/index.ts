@@ -491,6 +491,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "系统管理" },
       },
       {
+        path: "system/legacy-staff",
+        name: "legacy-staff",
+        component: () => import("@/pages/system/LegacyStaff.vue"),
+        meta: { title: "下级管理员" },
+      },
+      {
+        path: "system/legacy-roles",
+        name: "legacy-roles",
+        component: () => import("@/pages/system/LegacyRoles.vue"),
+        meta: { title: "下级角色" },
+      },
+      {
         path: "finance/extract",
         name: "finance-extract",
         component: () => import("@/pages/finance/ExtractList.vue"),
