@@ -64,6 +64,9 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    // Fixed catalog probe creates an unprivileged LOGIN only in this owned cluster.
+    'test/db003-system-config-catalog-postgres.test.ts',
+    'test/customer-city-binding-fk-current-audit.test.ts',
     'test/withdrawal-effects-upgrade.test.ts',
     'test/shipping-template-lifecycle-services.test.ts',
     'test/uniapp-product-sku-postgres.test.ts',

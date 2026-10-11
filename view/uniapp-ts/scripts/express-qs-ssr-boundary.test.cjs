@@ -55,8 +55,8 @@ test("patched proxy-addr does not trust IPv4 through a malformed mapped subnet",
 test("current H5 scripts and manifest leave SSR disabled", () => {
   const pkg = JSON.parse(readFileSync(resolve(__dirname, "../package.json"), "utf8"));
   const manifest = JSON.parse(readFileSync(resolve(__dirname, "../src/manifest.json"), "utf8"));
-  assert.equal(pkg.scripts["dev:h5"], "uni");
-  assert.equal(pkg.scripts["build:h5"], "uni build");
+  assert.equal(pkg.scripts["dev:h5"], "node scripts/h5-ssr-guard.cjs");
+  assert.equal(pkg.scripts["build:h5"], "node scripts/h5-ssr-guard.cjs build");
   for (const [name, command] of Object.entries(pkg.scripts)) {
     if (!/^(?:dev|build):/.test(name)) continue;
     assert.doesNotMatch(command, /(?:^|\s)-(?:ssr|-ssr)(?:\s|$)/, name);

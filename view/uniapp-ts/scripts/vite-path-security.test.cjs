@@ -5,6 +5,7 @@ const { mkdtemp, writeFile, rm } = require("node:fs/promises");
 const http = require("node:http");
 const { dirname, join, relative, resolve } = require("node:path");
 const test = require("node:test");
+const { assertDefaultViteFsAllow } = require("./vite-fs-allow-test-helper.cjs");
 
 // Keep real filesystem access and watcher behavior. Vite 5 may register a
 // watcher after close(); close that owned late handle so this process drains.
@@ -120,7 +121,7 @@ test("real UniApp optimized-dependency maps respect fs allow and deny", { timeou
   assert.equal(server.config.server.host, "127.0.0.1");
   assert.equal(server.config.server.cors, false);
   assert.equal(server.config.server.fs.strict, true);
-  assert.deepEqual(server.config.server.fs.allow.map(path => resolve(path)), [root]);
+  assertDefaultViteFsAllow(server.config.server.fs.allow, root);
   assert.equal(server.config.server.proxy["/api"].target, process.env.CINASHOP_API_PROXY_TARGET);
   await server.listen();
   const address = server.httpServer.address();

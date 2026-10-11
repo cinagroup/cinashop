@@ -5,6 +5,7 @@ const http = require('node:http');
 const { basename, dirname, join, resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
+const { assertDefaultViteFsAllow } = require('./vite-fs-allow-test-helper.cjs');
 
 // Exercise the installed Vite/DCloud middleware. UNC filesystem probes are
 // intercepted before any network access; normal local probes are unchanged.
@@ -97,7 +98,7 @@ test('actual Vite rejects alternate private file names and editor UNC probes', {
   assert.equal(server.config.server.host, '127.0.0.1');
   assert.equal(server.config.server.fs.strict, true);
   assert.equal(server.config.server.cors, false);
-  assert.deepEqual(server.config.server.fs.allow.map(file => resolve(file)), [resolve(process.cwd())]);
+  assertDefaultViteFsAllow(server.config.server.fs.allow, process.cwd());
   assert.equal(server.config.server.proxy['/api'].target, 'http://127.0.0.1:1');
   await server.listen();
   const address = server.httpServer.address();
