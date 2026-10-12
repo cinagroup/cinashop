@@ -19,7 +19,9 @@ export default defineConfig({
         test: {
           name: "regular-unit",
           include: ["test/*.test.ts"],
-          exclude: ["test/admin-authority-maintenance-native.test.ts"],
+          exclude: ["test/admin-authority-maintenance-native.test.ts",
+            "test/manager-runtime-privileges-native.test.ts", "test/manager-runtime-provision-postgres.test.ts",
+            "test/manager-runtime-bootstrap-postgres.test.ts", "test/manager-runtime-capabilities-bootstrap-postgres.test.ts"],
           sequence: { groupOrder: 0 },
         },
       },
@@ -29,6 +31,17 @@ export default defineConfig({
           name: "admin-authority-maintenance-native",
           include: ["test/admin-authority-maintenance-native.test.ts"],
           sequence: { groupOrder: 1 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "manager-runtime-commissioning-native",
+          include: ["test/manager-runtime-privileges-native.test.ts", "test/manager-runtime-provision-postgres.test.ts",
+            "test/manager-runtime-bootstrap-postgres.test.ts", "test/manager-runtime-capabilities-bootstrap-postgres.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 2 },
         },
       },
     ],

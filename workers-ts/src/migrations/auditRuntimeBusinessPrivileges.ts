@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
+import { outRequestHash } from '../services/out/OutIdempotency';
 import { runtimeBusinessPrivilegePlanAtStage, type RuntimeBusinessProfileVersion } from './runtimeBusinessPrivilegePlan';
 import { inspectRuntimeAdminBoundary } from './runtimeAdminBoundary';
 import { inspectRuntimeLockOnlyBoundary } from './runtimeLockOnlyBoundary';
@@ -236,7 +237,8 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       failures.push('agent_level_catalog');
     onStage?.('purchase_evidence');
     if(!(await inspectRuntimePurchaseEvidence(tx,names.maintenance)).ready)failures.push('purchase_evidence_protocols');
+    // Bind the complete canonical set before maintenance callers cap diagnostics.
     const unique=[...new Set(failures)].sort();
     return {ready:unique.length===0,readOnly:true as const,completeServiceCoverageVerified:false as const,kind,
-      failures:unique,tableCount:present.size,sequenceCount:sequences.length};
+      failures:unique,failureSetSha256:await outRequestHash(unique),tableCount:present.size,sequenceCount:sequences.length};
 }

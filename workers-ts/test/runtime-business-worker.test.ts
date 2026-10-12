@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 const mocks=vi.hoisted(()=>({open:vi.fn(),close:vi.fn(),inspect:vi.fn(),apply:vi.fn(),shipping:vi.fn(),audit:vi.fn(),exercise:vi.fn()}));
 vi.mock('../src/lib/di',()=>({createDbFromConnectionString:mocks.open}));
 vi.mock('../src/migrations/runRuntimeBusinessCommissioning',()=>({RUNTIME_COMMISSION_OPERATION:'isolated-business-runtime-v5-agent-levels',
@@ -58,10 +59,14 @@ describe('fixed runtime commissioning maintenance boundary',()=>{
     expect(mocks.shipping).toHaveBeenCalledTimes(1);expect(mocks.apply).not.toHaveBeenCalled();
   });
   it('verifies two distinct bound LOGINs, caps diagnostics, and never opens maintenance',async()=>{
-    mocks.audit.mockResolvedValue({ready:false,failures:Array.from({length:100},(_,i)=>'missing-'+i)});
+    const failures=Array.from({length:100},(_,i)=>'missing-'+String(i).padStart(3,'0'));
+    const failureSetSha256=createHash('sha256').update(JSON.stringify(failures)).digest('hex');
+    mocks.audit.mockResolvedValue({ready:false,failures,failureSetSha256});
     const response=await worker.fetch(request('/verify'),env);expect(response.status).toBe(200);
-    const result=await response.json() as {ready:boolean;profiles:{failureCount:number;failures:string[]}[]};
+    const result=await response.json() as {ready:boolean;profiles:{failureCount:number;failures:string[];failureSetSha256:string}[]};
     expect(result.ready).toBe(false);expect(result.profiles.every(p=>p.failureCount===100&&p.failures.length===40)).toBe(true);
+    expect(result.profiles.every(p=>p.failureSetSha256===failureSetSha256)).toBe(true);
+    expect(result.profiles.every(p=>p.failureSetSha256!==createHash('sha256').update(JSON.stringify(p.failures)).digest('hex'))).toBe(true);
     expect(mocks.open.mock.calls.map(c=>c[0])).toEqual(['app-test','admin-test']);expect(mocks.close).toHaveBeenCalledTimes(2);
   });
   it('requires separate exercise authorization and verified profiles before synthetic service writes',async()=>{

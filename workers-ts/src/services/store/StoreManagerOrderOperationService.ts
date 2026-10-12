@@ -88,7 +88,8 @@ export async function storeManagerFulfillmentActions(db: DbClient, scope: StoreM
       // A live refund/waybill admission is another authority for this order.
       // Protect absent-row predicates as well as current rows without adding
       // a wait edge to peers that already hold their own financial resources.
-      await db.execute(sql`LOCK TABLE store_order_refund, order_waybill_job IN SHARE MODE NOWAIT`);
+      await db.execute(sql`LOCK TABLE public.store_order_refund IN SHARE MODE NOWAIT`);
+      await db.execute(sql`SELECT public.manager_lock_waybill_v1()`);
     }
     const refunds=await db.select({id:storeOrderRefund.id,uid:storeOrderRefund.uid,storeId:storeOrderRefund.storeId,supplierId:storeOrderRefund.supplierId}).from(storeOrderRefund).where(and(eq(storeOrderRefund.storeOrderId,order.id),eq(storeOrderRefund.isCancel,0),eq(storeOrderRefund.isDel,0),sql`${storeOrderRefund.refundType} IN (0,1,2,4,5)`)).limit(1);
     if (refunds.length) reason='订单存在进行中的售后';
@@ -126,8 +127,9 @@ async function lockDeliveryIdentity(tx:DbClient,scope:StoreManagerScope,input:Su
     if(carriers.length!==1 || carriers[0].name!==input.deliveryName) throw new ValidateException('快递公司已停用、重复或名称编码不匹配');
   }
   if (input.deliveryType==='send') {
-    await tx.execute(sql`LOCK TABLE delivery_service IN SHARE MODE NOWAIT`);
-    const agents=await tx.select({nickname:deliveryService.nickname,phone:deliveryService.phone}).from(deliveryService).innerJoin(user,eq(user.uid,deliveryService.uid)).where(and(eq(deliveryService.uid,input.deliveryUid),eq(deliveryService.type,1),eq(deliveryService.relationId,scope.store_id),eq(deliveryService.status,1),eq(deliveryService.isDel,0),eq(user.status,1),eq(user.isDel,0),isNull(user.deleteTime))).orderBy(asc(deliveryService.id)).limit(2).for('share',{noWait:true});
+    await tx.execute(sql`SELECT public.manager_lock_delivery_agents_v1(${input.deliveryUid}::integer,${scope.store_id}::integer)`);
+    await tx.select({uid:user.uid}).from(user).where(eq(user.uid,input.deliveryUid)).for('share',{noWait:true});
+    const agents=await tx.select({nickname:deliveryService.nickname,phone:deliveryService.phone}).from(deliveryService).innerJoin(user,eq(user.uid,deliveryService.uid)).where(and(eq(deliveryService.uid,input.deliveryUid),eq(deliveryService.type,1),eq(deliveryService.relationId,scope.store_id),eq(deliveryService.status,1),eq(deliveryService.isDel,0),eq(user.status,1),eq(user.isDel,0),isNull(user.deleteTime))).orderBy(asc(deliveryService.id)).limit(2);
     if(agents.length!==1) throw new ValidateException('配送员不存在、已停用或身份重复');
     input.deliveryName=text(agents[0].nickname,'配送员姓名',64); input.deliveryId=text(agents[0].phone,'配送员电话',20);
   }

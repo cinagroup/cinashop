@@ -30,6 +30,7 @@ import { assertNoConflictingCustomerCityJob } from '@/services/order/CustomerCit
 import { prepareSplitInvoice, materializeSplitInvoice } from "@/services/order/SplitInvoiceAllocation";
 import type { RefundWriteoffState } from "@/services/order/RefundSplitAllocation";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { MANAGER_SCOPE_CONTEXT } from '@/migrations/managerRuntimeCapabilities';
 
 export type SupplierDeliveryType = "express" | "send" | "fictitious" | "city_delivery";
 
@@ -416,7 +417,9 @@ async function assertNoConflictingWaybillJob(
   rootOrderId: number,
   allowedJobId?: number,
 ): Promise<void> {
-  const rows = await tx
+  const [context]=await tx.execute(sql`SELECT nullif(current_setting(${MANAGER_SCOPE_CONTEXT},true),'') IS NOT NULL AS manager`);
+  if(context?.manager===true)await tx.execute(sql`SELECT public.manager_lock_waybill_v1()`);
+  const query = tx
     .select({ id: orderWaybillJob.id })
     .from(orderWaybillJob)
     .where(and(
@@ -425,8 +428,8 @@ async function assertNoConflictingWaybillJob(
         'PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'RETRYABLE', 'UNKNOWN', 'DEAD'
       )`,
     ))
-    .limit(2)
-    .for("key share");
+    .limit(2);
+  const rows = await(context?.manager===true?query:query.for("key share"));
   if (rows.some((row) => row.id !== allowedJobId)) {
     throw new ValidateException("订单存在进行中的电子面单任务，请先在面单账本中处理");
   }

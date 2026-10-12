@@ -42,6 +42,7 @@ export function userCenterDesignSourceFiles(): Record<string, string> {
     pages: 'view/uniapp-ts/src/pages.json', orderList: 'view/uniapp-ts/src/pages/order/list.vue',
     managerStatistics:'workers-ts/src/services/store/StoreManagerOrderStatisticsService.ts', managerScope:'workers-ts/src/services/store/StoreManagerScope.ts',
     managerInput:'workers-ts/src/services/store/StoreManagerOrderInput.ts', managerController:'workers-ts/src/controllers/api/v1/StoreManagerOrderController.ts',
+    managerAuth:'workers-ts/src/middleware/manager-runtime-auth.ts', managerSession:'workers-ts/src/lib/di.ts',
     merchantConsumer:'view/uniapp-ts/src/composables/useMerchantOrders.ts', merchantStatsPage:'view/uniapp-ts/src/pages/merchant/statistics.vue',
     merchantOrdersPage:'view/uniapp-ts/src/pages/merchant/orders.vue', merchantApi:'view/uniapp-ts/src/api/merchantOrders.ts',
     merchantDecoder:'view/uniapp-ts/src/utils/merchantOrders.ts', workerRegistry:'workers-ts/src/services/content/FabRouteRegistry.ts',
@@ -86,6 +87,30 @@ class Source {
     let found = false;
     const visit = (node: ts.Node) => { if ((ts.isCallExpression(node) || ts.isNewExpression(node)) && compact(node.expression.getText(this.tree)) === compact(ts.isNewExpression(node) ? expression.replace(/^new\s+/u, '') : expression) && args.every((arg, i) => !!node.arguments?.[i] && compact(node.arguments[i]!.getText(this.tree)) === compact(arg))) found = true; ts.forEachChild(node, visit); };
     this.nodes(scope).forEach(visit); return found;
+  }
+  imported(module: string, name: string): boolean {
+    return this.tree.statements.some(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===module
+      && !!node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)
+      && node.importClause.namedBindings.elements.some(element=>element.name.text===name&&(element.propertyName?.text??element.name.text)===name));
+  }
+  rootRoutes(prefix: string): ts.CallExpression[] {
+    return this.tree.statements.filter(ts.isExpressionStatement).map(node=>node.expression).filter(ts.isCallExpression)
+      .filter(node=>/^v1Routes\.(?:get|post|put|patch|delete)$/u.test(node.expression.getText(this.tree))&&!!node.arguments[0]&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text.startsWith(prefix));
+  }
+  exactRootRoute(method: string,path: string,auth: string,handler: string): boolean {
+    return this.rootRoutes('/store/manager/').some(node=>node.expression.getText(this.tree)===`v1Routes.${method}`&&node.arguments.length===3
+      && ts.isStringLiteral(node.arguments[0]!)&&node.arguments[0]!.text===path
+      && node.arguments[1]!.getText(this.tree)===auth&&node.arguments[2]!.getText(this.tree)===handler);
+  }
+  guardThrows(scope: string,condition: string,error: string,...args: string[]): boolean {
+    let found=false;
+    const visit=(node:ts.Node)=>{if(ts.isIfStatement(node)&&compact(node.expression.getText(this.tree))===compact(condition)){
+      const statement=ts.isBlock(node.thenStatement)&&node.thenStatement.statements.length===1?node.thenStatement.statements[0]:node.thenStatement;
+      if(statement&&ts.isThrowStatement(statement)&&statement.expression&&ts.isNewExpression(statement.expression)){
+        const value=statement.expression;
+        if(value.expression.getText(this.tree)===error&&value.arguments?.length===args.length&&args.every((arg,i)=>compact(value.arguments![i]!.getText(this.tree))===compact(arg)))found=true;
+      }
+    }ts.forEachChild(node,visit);};this.nodes(scope).forEach(visit);return found;
   }
   binding(tag: string, attribute: string, expression: string): boolean { return this.tags.some(row => (tag === '*' || row.name === tag) && row.attributes.get(attribute) === compact(expression)); }
   html(...fragments: string[]): boolean { return !!this.template && fragments.every(fragment => this.template.includes(compact(fragment))); }
@@ -146,6 +171,38 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
   const route = (method: string, suffix: string, action: string) => ar!.call('$root', `adminapiRoutes.${method}`, `'/config/user-center-design${suffix}'`, 'adminAuth', `AdminUserCenterDesign.${action}`) && vr!.call('$root', `v1Routes.${method}`, `'/admin/config/user-center-design${suffix}'`, 'adminAuth', `AdminUserCenterDesign.${action}`);
   const publicConnected = pc!.call('menuUser', 'new UserCenterPublicReadService(this.container,this.env).menu', 'uid') && pc!.call('menuUserData', 'new UserCenterPublicReadService(this.container,this.env).data', 'uid');
   const manager=(role:string)=>s[role]!;
+  const managerRoutes:ReadonlyArray<readonly[string,string,string]>=[
+    ['get','/store/manager/order/context','StoreManagerOrder.context'],['get','/store/manager/context','StoreManagerOrder.context'],
+    ['get','/store/manager/order/statistics','StoreManagerOrder.statistics'],['get','/store/manager/order/time','StoreManagerOrder.time'],
+    ['get','/store/manager/order/chart','StoreManagerOrder.chart'],['get','/store/manager/order/time/chart','StoreManagerOrder.chart'],
+    ['get','/store/manager/order/data','StoreManagerOrder.daily'],['get','/store/manager/order/list','StoreManagerOrder.list'],
+    ['get','/store/manager/order/detail/:id','StoreManagerOrder.detail'],['get','/store/manager/order/delivery/gain/:id','StoreManagerOrder.deliveryGain'],
+    ['get','/store/manager/order/split_cart_info/:id','StoreManagerOrder.splitCartInfo'],['get','/store/manager/order/delivery/config','StoreManagerOrder.deliveryDefaults'],
+    ['get','/store/manager/order/export_all','StoreManagerOrder.carriers'],['get','/store/manager/order/delivery','StoreManagerOrder.deliveryAgents'],
+    ['get','/store/manager/order/express/:id','StoreManagerOrder.express'],['post','/store/manager/order/remark','StoreManagerOrderOperation.saveRemark'],
+    ['post','/store/manager/order/delivery','StoreManagerOrderOperation.manualDelivery'],['post','/store/manager/order/split_delivery','StoreManagerOrderOperation.splitDelivery'],
+    ['get','/store/manager/order/operation/:requestKey','StoreManagerOrderOperation.operationOutcome'],['post','/store/manager/order/operation/abandon/:kind','StoreManagerOrderOperation.abandonOperation'],
+    ['post','/store/manager/order/financial/price','StoreManagerFinancial.price'],['post','/store/manager/order/financial/offline','StoreManagerFinancial.offline'],
+    ['post','/store/manager/order/financial/refund/quote','StoreManagerFinancial.quote'],['post','/store/manager/order/financial/refund/create','StoreManagerFinancial.create'],
+    ['post','/store/manager/order/financial/refund/review','StoreManagerFinancial.review'],['post','/store/manager/order/financial/refund/execute','StoreManagerFinancial.execute'],
+    ['post','/store/manager/order/financial/receipt','StoreManagerFinancial.receipt'],['get','/store/manager/order/operation/:requestKey/status','StoreManagerFinancial.receiptStatus'],
+    ['post','/store/manager/order/financial/abandon','StoreManagerFinancial.abandon'],
+  ];
+  // Follow the actual authenticated independent-connection producer. A route
+  // alias or same-name fake import cannot supply evidence for this boundary.
+  const managerRuntimeConnected=vr!.imported('@/middleware/manager-runtime-auth','managerRuntimeAuthMiddleware')
+    && vr!.call('managerAuth','managerRuntimeAuthMiddleware')
+    && vr!.rootRoutes('/store/manager/').length===managerRoutes.length
+    && managerRoutes.every(([method,path,handler])=>vr!.exactRootRoute(method,path,'managerAuth',handler))
+    && manager('managerAuth').imported('./auth','authMiddleware')&&manager('managerAuth').imported('@/lib/di','createManagerDatabaseSession')
+    && manager('managerAuth').call('managerRuntimeAuthMiddleware','authMiddleware','{force:true}')
+    && manager('managerAuth').ordered('managerRuntimeAuthMiddleware','return(c,next)=>authenticate(c,async()=>{',"const application=c.get('container')",
+      'const session=createManagerDatabaseSession(c.env)',"c.set('container',session.container)",'try{await next();}',"finally{c.set('container',application)",'await session.close();')
+    && manager('managerSession').in('createManagerDatabaseSession','const binding=env.HYPERDRIVE_MANAGER')
+    && manager('managerSession').guardThrows('createManagerDatabaseSession','!binding?.connectionString?.trim()||binding===env.HYPERDRIVE||binding===env.HYPERDRIVE_ADMIN||binding.connectionString===env.HYPERDRIVE?.connectionString||binding.connectionString===env.HYPERDRIVE_ADMIN?.connectionString',
+      'HttpApiException','"门店管理运行环境尚未完成独立配置"','503','503')
+    && manager('managerSession').call('createManagerDatabaseSession','createDbFromConnectionString','binding.connectionString','2',"{searchPath:'public,pg_temp',applicationName:'cinashop_manager'}")
+    && manager('managerSession').call('createManagerDatabaseSession','createContainerFromDb','db');
   const merchantStatisticsConnected=manager('merchantStatsPage').call('$root','controller.read',"'statistics'",'isMerchantStatistics')
     && manager('merchantStatsPage').call('$root','controller.read',"'time'",'isMerchantPeriod','{type:periodValues[periodIndex.value]}')
     && manager('merchantStatsPage').call('$root','controller.read',"'time/chart'",'isMerchantChart','{type:periodValues[periodIndex.value]}')
@@ -156,9 +213,7 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
     && manager('managerStatistics').call('withManagerRead','requireStoreManagerScope','db','uid','storeId')
     && manager('managerStatistics').in('withManagerRead','REPEATABLE READ, READ ONLY','merchantManagementConsistencyKey')
     && manager('managerStatistics').in('statistics','store_id=${scope.store_id}','pid>=0','orderReadStatusPredicate(1)')
-    && vr!.call('$root','v1Routes.get',"'/store/manager/order/statistics'",'authMiddleware({force:true})','StoreManagerOrder.statistics')
-    && vr!.call('$root','v1Routes.get',"'/store/manager/order/time/chart'",'authMiddleware({force:true})','StoreManagerOrder.chart')
-    && vr!.call('$root','v1Routes.get',"'/store/manager/context'",'authMiddleware({force:true})','StoreManagerOrder.context')
+    && managerRuntimeConnected
     && manager('merchantOrdersPage').call('$root','controller.read',"'list'",'isMerchantPaged(isMerchantOrder)','filters()')
     && manager('managerInput').in('parseManagerListQuery','status','storeId','isDel')
     && manager('merchantDecoder').in('isMerchantStatistics','current_store_fulfillments_pid_gte_0','unshipped_count')

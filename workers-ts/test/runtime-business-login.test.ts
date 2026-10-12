@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { Hono } from 'hono';
 import type { AppVariables, Env } from '../src/env';
 import { orderConfirm, orderCreate, orderCancel, orderDel } from '../src/controllers/api/v1/OrderController';
@@ -78,6 +79,9 @@ describe('business profiles with two independent real LOGINs (isolated native ac
         expect(result.failures).toContain('missing:shipping_template_create_replay');
         expect(result.failures).toContain('staff_boundary');
         expect(result.failures).toContain('lock_only_boundary');
+        expect(result.failures.length).toBeGreaterThan(40);
+        expect(result.failureSetSha256).toBe(createHash('sha256').update(JSON.stringify(result.failures)).digest('hex'));
+        expect(result.failureSetSha256).not.toBe(createHash('sha256').update(JSON.stringify(result.failures.slice(0,40))).digest('hex'));
       }
       const [identity]=await f.exec('SELECT current_database() AS database');
       const target={...names,database:String(identity.database)};

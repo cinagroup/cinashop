@@ -21,8 +21,8 @@ interface ParityAudit {
 
 const parity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-product-detail-design-followup-20261002.json", "utf8")) as ParityAudit;
 // The October 2 artifact is an immutable historical checklist/route snapshot.
-// Current navigation is checked against the latest writeoff route snapshot plus
-// main's independently implemented member-barcode page; neither rewrites that evidence.
+// Current navigation adds the member-barcode page and three cashier routes to
+// the writeoff snapshot; exact added records are removed to verify its old hash.
 const currentParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json", "utf8")) as Omit<ParityAudit, "checklist">;
 const memberCodeRoute = "/pages/users/user_member_code/index";
 const currentDirectRoutes = [...currentParity.directRegisteredLegacyRoutes, memberCodeRoute];
@@ -55,13 +55,32 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     const manifestRoutes = pages.pages.map((page) => `/${page.path}`).sort();
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(currentParity.counting.target.logicalManifestRouteRecords + 1);
+    expect(manifestRoutes).toHaveLength(129);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
+    const cashierRecords = [
+      { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
+      { path: '/pages/customer-work/cashierRecord', title: '次卡收银凭据' },
+      { path: '/pages/customer-work/cashierRecords', title: '本人次卡收银记录' },
+    ];
+    expect(manifestRoutes.filter(route => route.startsWith('/pages/customer-work/cashier')))
+      .toEqual(cashierRecords.map(record => record.path));
+    for (const record of cashierRecords) {
+      expect(manifestRoutes.filter(route => route === record.path)).toHaveLength(1);
+      const query = record.path.endsWith('/cashierRecord') ? 'orderId=17&orderNo=owned-cashier-record' : '';
+      expect(resolveRegisteredPageRoute(record.path, query)).toBe(record.path + (query ? `?${query}` : ''));
+      if (query) expect(resolveRegisteredPageRoute(record.path)).toBe('');
+    }
     expect(currentParity.counting.target.manifestHashNormalization).toBe("LF");
     const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
     const memberRecord = '    {\n      "path": "pages/users/user_member_code/index",\n      "style": { "navigationBarTitleText": "会员核销码" }\n    },\n';
     expect(manifest.split(memberRecord)).toHaveLength(2);
-    const writeoffManifest = manifest.replace(memberRecord, "");
+    let writeoffManifest = manifest.replace(memberRecord, "");
+    for (const record of cashierRecords) {
+      const exactRecord = `    {\n      "path": "${record.path.slice(1)}",\n      "style": { "navigationBarTitleText": "${record.title}" }\n    },\n`;
+      expect(writeoffManifest.split(exactRecord)).toHaveLength(2);
+      writeoffManifest = writeoffManifest.replace(exactRecord, "");
+    }
+    expect(JSON.parse(writeoffManifest).pages).toHaveLength(currentParity.counting.target.logicalManifestRouteRecords);
     expect(createHash("sha256").update(writeoffManifest).digest("hex").toUpperCase()).toBe(currentParity.counting.target.manifestSha256);
     for (const page of pages.pages) {
       expect(existsSync(resolve("../view/uniapp-ts/src", `${page.path}.vue`))).toBe(true);

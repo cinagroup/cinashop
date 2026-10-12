@@ -66,6 +66,11 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    // Fixed Manager cluster role is isolated and serialized by its native project.
+    'test/manager-runtime-privileges-native.test.ts',
+    'test/manager-runtime-provision-postgres.test.ts',
+    'test/manager-runtime-bootstrap-postgres.test.ts',
+    'test/manager-runtime-capabilities-bootstrap-postgres.test.ts',
     // Fixed catalog probe creates an unprivileged LOGIN only in this owned cluster.
     'test/db003-system-config-catalog-postgres.test.ts',
     'test/customer-city-binding-fk-current-audit.test.ts',
