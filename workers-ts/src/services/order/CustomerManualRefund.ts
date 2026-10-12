@@ -12,6 +12,7 @@ import {financialRecord,validateFinancialPayload,type PreparedFinancialOperation
 import {hasInitiatedAssistedProviderPayment} from '@/services/payment/AssistedProviderPaymentClaim';
 import {readCashierSecondCardOrigin} from './CashierSecondCardOrigin';
 import {readCustomerManualOfflineOrigin,parseCustomerManualOfflineOrigin,type CustomerManualOfflineOrigin} from './CustomerManualOfflineOrigin';
+import {assertStoredManualInvoiceAllocation} from './InvoiceManualRedNoteEvidence';
 type Order=typeof storeOrder.$inferSelect;type Cart=typeof storeOrderCartInfo.$inferSelect;type Refund=typeof storeOrderRefund.$inferSelect;
 const bad=()=>new ValidateException('人工退款原付款、完整意图或实体来源无法核对');
 const fact=(ok:unknown)=>{if(!ok)throw bad();};
@@ -130,6 +131,8 @@ export interface CustomerManualRefundProofRow extends Record<string,unknown> {
 }
 export async function readCustomerManualRefundProof(db:DbClient,refund:Refund,order:Order):Promise<CustomerManualRefundProofRow>{
  fact((await inspectCustomerManualRefund(db)).complete);
+ const materializations=await db.execute<{invoice_allocation:string;uid:number;payment_order_id:number}>(sql`SELECT invoice_allocation,uid,payment_order_id FROM public.store_order_refund_split WHERE refund_id=${refund.id} LIMIT 2`);fact(materializations.length<=1);
+ if(materializations.length)await assertStoredManualInvoiceAllocation(db,materializations[0].invoice_allocation,materializations[0].uid,materializations[0].payment_order_id);
  const rows=await db.execute<CustomerManualRefundProofRow>(sql`SELECT * FROM public.customer_financial_manual_refund_v1 WHERE refund_id=${refund.id} LIMIT 2`);fact(rows.length===1);const row=rows[0];
  financialRecord(row.source,['version','order','carts','payment','promotion_rows']);
  fact(row.source.order&&typeof row.source.order==='object'&&!Array.isArray(row.source.order)&&row.source.payment&&typeof row.source.payment==='object'&&!Array.isArray(row.source.payment)&&Array.isArray(row.source.carts)&&row.source.carts.length>0&&row.source.carts.length<=200&&row.source.carts.every(c=>c&&typeof c==='object'&&!Array.isArray(c))&&Array.isArray(row.source.promotion_rows)&&row.source.promotion_rows.length<=200);

@@ -78,6 +78,7 @@ import * as AdminCouponRecords from "@/controllers/api/v1/AdminCouponRecordContr
 import * as AdminCouponTemplate from "@/controllers/api/v1/AdminCouponTemplateController";
 import * as AdminCouponIssue from "@/controllers/api/v1/AdminCouponIssueController";
 import * as AdminInvoice from "@/controllers/api/v1/AdminInvoiceController";
+import * as AdminInvoiceRedNote from "@/controllers/api/v1/AdminInvoiceRedNoteController";
 import * as AdminSeckillStatistics from "@/controllers/api/v1/AdminSeckillStatisticsController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
 import * as AdminWriteoffOrderRead from "@/controllers/api/v1/AdminWriteoffOrderReadController";
@@ -1122,6 +1123,10 @@ adminapiRoutes.post("/marketing/coupon-template-issues", adminAuth, AdminCouponT
 
 // Independent issuers: copying creates a new definition, never edits the source.
 adminapiRoutes.get("/order/invoices", adminAuth, AdminInvoice.list);
+adminapiRoutes.get('/order/invoices/:id/red-notes',adminAuth,AdminInvoiceRedNote.list);
+adminapiRoutes.post('/order/invoices/:id/red-notes',adminAuth,AdminInvoiceRedNote.record);
+adminapiRoutes.post('/order/invoices/:id/red-notes/:recordId/review',adminAuth,AdminInvoiceRedNote.review);
+adminapiRoutes.get('/order/invoices/:id/red-notes/operations/:requestId',adminAuth,AdminInvoiceRedNote.operation);
 adminapiRoutes.get("/finance/recharge-orders", adminAuth, AdminRechargeOrder.list);
 adminapiRoutes.get("/finance/recharge-orders/stats", adminAuth, AdminRechargeOrder.stats);
 adminapiRoutes.get("/finance/recharge-orders/:id", adminAuth, AdminRechargeOrder.detail);

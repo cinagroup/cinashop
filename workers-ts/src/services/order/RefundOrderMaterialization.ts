@@ -18,6 +18,7 @@ import { captureRefundEarnedIncomeScope } from './RefundEarnedIncome';
 import { splitSupplierRefundPayment } from '@/services/supplier/SupplierRefundSplitFinance';
 import { materializeRefundInvoice, type RefundInvoiceSnapshot } from './RefundInvoiceAllocation';
 import {isManualRefundOrder,readCustomerManualRefundProof,deleteCustomerManualRefundPromotionRows} from './CustomerManualRefund';
+import {assertStoredManualInvoiceAllocation} from './InvoiceManualRedNoteEvidence';
 export type { RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -72,6 +73,7 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
   const [previous] = await tx.select().from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.refundId, expected.id)).limit(1);
   if (previous) {
     if (previous.fingerprint !== expectedFingerprint) throw invalid();
+    await assertStoredManualInvoiceAllocation(tx,previous.invoiceAllocation,previous.uid,previous.paymentOrderId);
     return result(previous, true);
   }
   const [refund] = await tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, expected.id)).limit(1).for('update');

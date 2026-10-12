@@ -3,6 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderInvoice } from '@/models/schema';
 import { storeOrderInvoiceEvidence as evidence } from '@/models/schema/invoice_evidence';
 import { ValidateException } from '@/utils/errors';
+import {readInvoiceManualDisposition} from './InvoiceManualRedNoteEvidence';
 
 /** Caller holds root/source and active invoice rows. No new row locks here:
  * this is also checked after financial locks during finalization. */
@@ -22,7 +23,10 @@ export async function assertUnissuedInvoiceHistory(tx: DbClient, source: typeof 
   // between separate READ COMMITTED statements. Do not filter is_del here.
   const [history] = await tx.select({ blocked: sql<boolean>`EXISTS (${reported}) OR EXISTS (${unrecorded})` })
     .from(sql`(values (1)) as invoice_history_probe(n)`);
-  if (history.blocked) throw new ValidateException('订单有开票历史或未核验票据，退款需先完成原票与红冲处理');
+  if (history.blocked) {
+    try { const disposition=await readInvoiceManualDisposition(tx,source);if(invoice&&disposition.invoice_ids.includes(invoice.id))return; }
+    catch(error){if(!(error instanceof ValidateException))throw error;throw new ValidateException('订单有开票历史或未核验票据，退款需先完成原票与红冲处理');}
+  }
   if (!invoice) return;
   const [created] = await tx.select().from(evidence).where(and(eq(evidence.invoiceId, invoice.id),
     eq(evidence.kind, 'created'), eq(evidence.documentNumber, ''))).limit(1);

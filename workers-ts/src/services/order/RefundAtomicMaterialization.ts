@@ -13,6 +13,7 @@ import { refundSplitDisposition } from './RefundSplitAllocation';
 import { refundOrderSplitFingerprint, type RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 import { prepareRefundInvoice, type RefundInvoiceSnapshot } from './RefundInvoiceAllocation';
 import { loadRefundOrderGeneration } from './RefundOrderGeneration';
+import {assertStoredManualInvoiceAllocation} from './InvoiceManualRedNoteEvidence';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -90,7 +91,8 @@ export async function assertAtomicRefundAdmission(tx: DbClient, order: Order, se
 /** A committed v2 completion must already have its receipt. Never repair or
  * create physical orders from a terminal replay after money was committed. */
 export async function assertAtomicRefundCompleted(tx: DbClient, refund: RefundMaterializationIdentity): Promise<void> {
-  const [record] = await tx.select({ fingerprint: storeOrderRefundSplit.fingerprint, sourceOrderId: storeOrderRefundSplit.sourceOrderId })
+  const [record] = await tx.select({ fingerprint: storeOrderRefundSplit.fingerprint, sourceOrderId: storeOrderRefundSplit.sourceOrderId,invoiceAllocation:storeOrderRefundSplit.invoiceAllocation,uid:storeOrderRefundSplit.uid,paymentOrderId:storeOrderRefundSplit.paymentOrderId })
     .from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.refundId, refund.id)).limit(1);
   if (!record || record.sourceOrderId !== refund.storeOrderId || record.fingerprint !== await refundOrderSplitFingerprint(refund)) throw invalid();
+  await assertStoredManualInvoiceAllocation(tx,record.invoiceAllocation,record.uid,record.paymentOrderId);
 }

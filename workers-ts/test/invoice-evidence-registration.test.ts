@@ -54,9 +54,22 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoi
       for(const file of files) await f.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
     } else if(path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 180},(_,i)=>String(i).padStart(4,'0')),errors:[]});
-    } else { const api=await import('drizzle-kit/api'); assertRegisteredModelCohort(api.generateDrizzleJson(allModels)); await generated(allModels); }
+    } else {
+      const api=await import('drizzle-kit/api'),snapshot=api.generateDrizzleJson(allModels),publishedTables={...snapshot.tables};
+      for(const name of ['public.store_order_invoice_manual_red_note','public.store_order_invoice_manual_red_review'] as const){
+        expect(Object.hasOwn(publishedTables,name)).toBe(true);delete publishedTables[name];
+      }
+      // Preserve the independent published 285-table shape and every reviewed
+      // column check, then prove the complete fixed 287-table composition.
+      assertRegisteredModelCohort({...snapshot,tables:publishedTables});
+      expect(Object.keys(snapshot.tables).sort()).toEqual(completeConstructionTableNames('orm').map(name=>'public.'+name));
+      await generated(allModels);
+    }
     expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
-    await assertRegisteredDatabaseCohort(f.db,path);
+    if(path==='orm'){
+      expect((await f.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE \"C\" ")).map(row=>row.name)).toEqual(completeConstructionTableNames('orm'));
+    }else await assertRegisteredDatabaseCohort(f.db,path);
+    expect(await f.exec("SELECT to_regclass('public.store_order_invoice_manual_red_note') IS NOT NULL AS record_present,to_regclass('public.store_order_invoice_manual_red_review') IS NOT NULL AS review_present,to_regprocedure('public.guard_invoice_manual_red_note()') IS NOT NULL AS protected")).toEqual([{record_present:path==='orm',review_present:path==='orm',protected:false}]);
     expect(await inspectInvoiceEvidenceSchema(f.db)).toBe(path==='orm'?'orm-pending':'v2');
     if(path==='orm') await runInvoiceEvidenceSchema(f.db,true);
     await f.db.insert(storeOrderInvoice).values({uid:11,orderId:10,isPay:1,invoiceAmount:'10.00'});

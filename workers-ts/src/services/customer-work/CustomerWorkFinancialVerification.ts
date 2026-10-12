@@ -12,6 +12,7 @@ import {readRefundEarnedIncomeScope,captureRefundEarnedIncomeScope} from '@/serv
 import {readBargainOrderParticipation} from '@/services/activity/BargainOrderSnapshot';
 import {outRequestHash} from '@/services/out/OutIdempotency';
 import {assertGuestRefundAccountless,isManualRefundOrder,readCustomerManualRefundProof} from '@/services/order/CustomerManualRefund';
+import {assertStoredManualInvoiceAllocation} from '@/services/order/InvoiceManualRedNoteEvidence';
 import type {FinancialOrder,FinancialRefund} from './CustomerWorkFinancialReadService';
 
 const fail=()=>new ValidateException('实际退款结算及实体归属证据不完整，请继续核对原请求');
@@ -110,7 +111,39 @@ export async function verifyFinancialMaterializedRefund(tx:DbClient,refund:Finan
    const expected={...object(json(planned!.remaining!,65536)),id:remainingCart!.cartId,financial_version:'refund-order-line-finance-v1',refund_order_generation:{refundId:refund.id,role:'remaining'}};requireFact(await outRequestHash(object(json(remainingCart!.cartInfo!,65536)))===await outRequestHash(expected)&&remainingCart!.writeTimes===planned!.remainingWriteoff!.writeTimes&&remainingCart!.writeSurplusTimes===planned!.remainingWriteoff!.writeSurplusTimes);
   }else requireFact(part.remainingRowId===null);
  }
- const allocationRaw=json(record.invoiceAllocation,16384);if(allocationRaw!==null){const allocation=object(allocationRaw),original=object(allocation.original),chosen=object(allocation.selected),retained=allocation.remaining===null?null:object(allocation.remaining);requireFact(allocation.version==='refund-invoice-allocation-v1'&&allocation.sourceOrderId===record.sourceOrderId&&allocation.paymentOrderId===record.paymentOrderId&&chosen.orderId===record.selectedOrderId&&chosen.amount===plan!.selected.payPrice&&original.uid===refund.uid&&original.invoiceAmount===source.source.payPrice);const invoices=await tx.select().from(storeOrderInvoice).where(inArray(storeOrderInvoice.id,[Number(original.id),Number(chosen.invoiceId),...(retained?[Number(retained.invoiceId)]:[])])).limit(3);const invoice=invoices.find(x=>x.id===chosen.invoiceId);requireFact(!!invoice&&invoice.orderId===record.selectedOrderId&&invoice.uid===refund.uid&&invoice.isRefund===1&&invoice.isPay===1&&invoice.isDel===0&&invoice.invoiceAmount===chosen.amount);if(retained){requireFact(retained.orderId===record.remainingOrderId&&retained.amount===plan!.remaining.payPrice);if(successor){const nextAllocation=object(json(successor.invoiceAllocation,16384)),nextOriginal=object(nextAllocation.original);requireFact(nextAllocation.version==='refund-invoice-allocation-v1'&&nextAllocation.sourceOrderId===record.remainingOrderId&&nextAllocation.paymentOrderId===record.paymentOrderId&&nextOriginal.id===retained.invoiceId&&nextOriginal.orderId===retained.orderId&&nextOriginal.uid===refund.uid&&nextOriginal.invoiceAmount===retained.amount&&nextOriginal.isRefund===0&&nextOriginal.isPay===1&&nextOriginal.isDel===0);}else{const actualInvoice=invoices.find(x=>x.id===retained.invoiceId);requireFact(!!actualInvoice&&actualInvoice.orderId===record.remainingOrderId&&actualInvoice.uid===refund.uid&&actualInvoice.isRefund===0&&actualInvoice.isPay===1&&actualInvoice.isDel===0&&actualInvoice.invoiceAmount===retained.amount);}}}
+ const allocationRaw=json(record.invoiceAllocation,16384);
+ if(allocationRaw!==null){
+  const allocation=object(allocationRaw),manual=allocation.version==='refund-invoice-allocation-manual-red-v2';
+  requireFact(manual||allocation.version==='refund-invoice-allocation-v1');
+  // The new version is admitted only through the immutable original issued
+  // snapshots, exact manual record/review hashes and frozen created targets.
+  // Ordinary v1 receipts keep their existing proof and permission contract.
+  if(manual)await assertStoredManualInvoiceAllocation(tx,record.invoiceAllocation,refund.uid,record.paymentOrderId);
+  const original=object(allocation.original),chosen=object(allocation.selected),retained=allocation.remaining===null?null:object(allocation.remaining);
+  requireFact(allocation.sourceOrderId===record.sourceOrderId&&allocation.paymentOrderId===record.paymentOrderId&&chosen.orderId===record.selectedOrderId&&chosen.amount===plan!.selected.payPrice&&original.uid===refund.uid&&original.invoiceAmount===source.source.payPrice);
+  if(manual)requireFact(Number.isSafeInteger(original.id)&&Number(original.id)>0&&Number.isSafeInteger(chosen.invoiceId)&&Number(chosen.invoiceId)>0
+   &&original.orderId===record.sourceOrderId&&original.isRefund===0&&original.isPay===1&&original.isDel===0
+   &&chosen.invoiceId!==original.id&&(!retained||Number.isSafeInteger(retained.invoiceId)&&Number(retained.invoiceId)>0&&retained.invoiceId!==original.id&&retained.invoiceId!==chosen.invoiceId));
+  const invoices=await tx.select().from(storeOrderInvoice).where(inArray(storeOrderInvoice.id,[Number(original.id),Number(chosen.invoiceId),...(retained?[Number(retained.invoiceId)]:[])])).limit(3);
+  const invoice=invoices.find(x=>x.id===chosen.invoiceId);
+  requireFact(!!invoice&&invoice.orderId===record.selectedOrderId&&invoice.uid===refund.uid&&invoice.isRefund===1&&invoice.isPay===1&&invoice.isDel===0&&invoice.invoiceAmount===chosen.amount);
+  if(manual)requireFact(invoice!.isInvoice===0&&invoice!.invoiceNumber===''&&invoice!.invoiceTime===0);
+  if(retained){
+   requireFact(retained.orderId===record.remainingOrderId&&retained.amount===plan!.remaining.payPrice);
+   if(successor){
+    const nextAllocation=object(json(successor.invoiceAllocation,16384)),nextManual=nextAllocation.version==='refund-invoice-allocation-manual-red-v2',nextOriginal=object(nextAllocation.original);
+    requireFact(nextManual||nextAllocation.version==='refund-invoice-allocation-v1');
+    if(nextManual)await assertStoredManualInvoiceAllocation(tx,successor.invoiceAllocation,refund.uid,record.paymentOrderId);
+    requireFact(nextAllocation.sourceOrderId===record.remainingOrderId&&nextAllocation.paymentOrderId===record.paymentOrderId&&nextOriginal.id===retained.invoiceId&&nextOriginal.orderId===retained.orderId&&nextOriginal.uid===refund.uid&&nextOriginal.invoiceAmount===retained.amount&&nextOriginal.isRefund===0&&nextOriginal.isPay===1&&nextOriginal.isDel===0);
+   }else{
+    // A remaining child may have been legitimately issued since this refund.
+    // Its frozen created baseline is verified above; today's invoice number
+    // cannot rewrite the source of the earlier genuine settlement.
+    const actualInvoice=invoices.find(x=>x.id===retained.invoiceId);
+    requireFact(!!actualInvoice&&actualInvoice.orderId===record.remainingOrderId&&actualInvoice.uid===refund.uid&&actualInvoice.isRefund===0&&actualInvoice.isPay===1&&actualInvoice.isDel===0&&actualInvoice.invoiceAmount===retained.amount);
+   }
+  }
+ }
  if(isManualRefundOrder(source.source)&&amountToCents(refund.refundPrice)!>0){const manual=await readCustomerManualRefundProof(tx,refund,source.source);requireFact(await outRequestHash(manual.source.carts)===await outRequestHash(source.carts));}
  const frozenPayment=object(source.payment);requireFact(Object.keys(frozenPayment).sort().join(',')==='id,orderId,payPrice,payType,tradeNo'&&payment!.id===frozenPayment.id&&payment!.uid===refund.uid&&payment!.paid===1&&payment!.payType===source.source.payType&&selected!.payType===payment!.payType&&['orderId','tradeNo','payPrice','payType'].every(key=>(payment! as unknown as Record<string,unknown>)[key]===frozenPayment[key]));
  const points=planCompletedRefundLineCompensation(source.source,source.carts,[refund]);requireFact(!!points&&amountToCents(source.source.backIntegral)===points!.usedIntegral*100);

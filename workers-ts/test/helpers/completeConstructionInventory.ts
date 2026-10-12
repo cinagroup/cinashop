@@ -1,4 +1,4 @@
-/** Fixed complete registration inventory of all 285 registered ORM tables.
+/** Fixed complete registration inventory of all 287 registered ORM tables.
  * Complete external and embedded paths intentionally have their own
  * exact published sets; unknown/missing relations must never pass by count. */
 export type CompleteConstructionPath = 'external' | 'embedded' | 'orm';
@@ -121,6 +121,8 @@ export const COMPLETE_ORM_TABLE_NAMES = [
   "store_order_invoice",
   "store_order_invoice_allocation",
   "store_order_invoice_evidence",
+  "store_order_invoice_manual_red_note",
+  "store_order_invoice_manual_red_review",
   "store_order_outbox",
   "store_order_product_coupon_reward",
   "store_order_promotion_gift_coupon_reward",
@@ -290,7 +292,7 @@ export const COMPLETE_ORM_TABLE_NAMES = [
   "work_welcome_relation",
 ] as const;
 
-/** Four registered ORM tables beyond the former 0169 / 281-table baseline. */
+/** Four previously registered ORM tables beyond the former 0169 / 281-table baseline. */
 export const ORM_TABLES_AFTER_0169 = [
   'customer_city_delivery_attempt',
   'customer_city_delivery_binding',
@@ -298,12 +300,19 @@ export const ORM_TABLES_AFTER_0169 = [
   'store_order_promotion_gift_coupon_reward',
 ] as const;
 const cityTables = new Set<string>(ORM_TABLES_AFTER_0169.slice(0, 3));
-export const COMPLETE_CONSTRUCTION_COUNTS = { external: 286, embedded: 282, orm: 285 } as const;
+/** Registered models are bare until the explicit owner maintenance candidate is
+ * commissioned. Neither published external SQL nor runAll installs this realm. */
+export const MANUAL_RED_NOTE_ORM_TABLE_NAMES = [
+  'store_order_invoice_manual_red_note',
+  'store_order_invoice_manual_red_review',
+] as const;
+const manualRedTables = new Set<string>(MANUAL_RED_NOTE_ORM_TABLE_NAMES);
+export const COMPLETE_CONSTRUCTION_COUNTS = { external: 286, embedded: 282, orm: 287 } as const;
 export function completeConstructionTableNames(path: CompleteConstructionPath): string[] {
   const names: string[] = path === 'embedded'
-    ? COMPLETE_ORM_TABLE_NAMES.filter(name => !cityTables.has(name))
+    ? COMPLETE_ORM_TABLE_NAMES.filter(name => !cityTables.has(name) && !manualRedTables.has(name))
     : path === 'external'
-      ? [...COMPLETE_ORM_TABLE_NAMES, 'cashier_second_card_abandon_v1'].sort()
+      ? [...COMPLETE_ORM_TABLE_NAMES.filter(name => !manualRedTables.has(name)), 'cashier_second_card_abandon_v1'].sort()
       : [...COMPLETE_ORM_TABLE_NAMES];
   if (names.length !== COMPLETE_CONSTRUCTION_COUNTS[path] || new Set(names).size !== names.length)
     throw Error('Unreviewed complete construction inventory');
