@@ -45,6 +45,29 @@ regexes = [
 useDefault = true
 
 [[allowlists]]
+description = "Exact synthetic guest identity in the cashier records PostgreSQL fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^workers-ts/test/customer-cashier-records-postgres\.test\.ts$''']
+regexes = ['''^private-guest-record-001$''']
+
+[[allowlists]]
+description = "Exact non-secret UUID-v4 operation IDs in the cashier abandonment audit receipt"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^workers-ts/audit/customer-cashier-abandon-20261011\.json$''']
+regexes = [
+  '''^ee65d718-fe29-4904-8a75-c3edf5fa29de$''',
+  '''^33fed22e-fb9a-4d1c-ac40-d5c24d4bacaf$''',
+  '''^1807d7c3-c162-44f7-95b9-49fa50f373ab$''',
+  '''^2f09fb94-7fd7-4c93-a3be-e0f64dcf577d$''',
+  '''^3b5cc6f1-8e01-48d0-b58c-f7be0f8f8886$''',
+  '''^ab3220ef-5268-47cc-b575-f0781cd45a88$''',
+]
+
+[[allowlists]]
 description = "Fixed non-secret Out registration replay UUID fixture; not an authentication key"
 targetRules = ["generic-api-key"]
 condition = "AND"

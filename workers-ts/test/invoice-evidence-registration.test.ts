@@ -14,7 +14,7 @@ import { INVOICE_EVIDENCE_INSTALLATION_SQL, INVOICE_EVIDENCE_ORM_INSTALLATION_SQ
 import * as allModels from '../src/models/schema';
 import { MigrationService } from '../src/services/MigrationService';
 import { createContainerFromDb } from '../src/lib/di';
-import { COMPLETE_CONSTRUCTION_COUNTS, completeConstructionTableNames } from './helpers/completeConstructionInventory';
+import { COMPLETE_CONSTRUCTION_COUNTS } from './helpers/completeConstructionInventory';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoice evidence PG16 construction paths',()=>{
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;

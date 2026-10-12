@@ -47,8 +47,17 @@ export async function composeReviewedCashierAbandonCatalog(db: DbClient, path: s
     : [...beforeNames.map(row => row.name), CASHIER_ABANDON_TABLE].sort(), 'Unexpected table composition difference');
   const [count] = await db.execute(sql`SELECT count(*)::integer AS count FROM public.cashier_second_card_abandon_v1`);
   assert.equal(count.count, 0, 'Abandonment audit fixture must remain empty');
-  await assert.rejects(installCashierSecondCardAbandon(db), error => error instanceof Error
-    && error.message === 'Existing cashier abandonment protocol requires exact catalog review, no reinstall');
+  await assert.rejects(installCashierSecondCardAbandon(db), error => {
+    // Drizzle preserves the PostgreSQL refusal as a cause of its query error.
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+      if ('code' in cause && cause.code === 'P0001' && 'message' in cause
+        && cause.message === 'Existing cashier abandonment protocol requires exact catalog review, no reinstall') return true;
+      if (!('cause' in cause) || cause.cause === cause) break;
+      cause = cause.cause;
+    }
+    return false;
+  });
   assert.ok((await inspectCashierSecondCardAbandon(db)).complete);
   assert.deepEqual(Array.from(await db.execute(objectIdentities)), Array.from(installed), 'Refused abandonment reinstall changed identities');
   return { initial: initial.present ? 'exact-catalog' : 'absent', explicitInstallation: path !== 'external',
