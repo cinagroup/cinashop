@@ -46,3 +46,6 @@ Thumbs.db
 # ─── MCP / 工具产物（不入库） ─────────────────────────
 .playwright-mcp/
 .zcode/plans/
+
+# 原始验证日志、截图和重复快照保留在远程盘；源码和汇总报告入库。
+/workers-ts/audit/*-evidence/

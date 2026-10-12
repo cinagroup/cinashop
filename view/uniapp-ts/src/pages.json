@@ -666,6 +666,18 @@
         "navigationBarTitleText": "经营统计"
       }
     },
+    {
+      "path": "pages/customer-work/cashierRecords",
+      "style": { "navigationBarTitleText": "本人次卡收银记录" }
+    },
+    {
+      "path": "pages/customer-work/cashierRecord",
+      "style": { "navigationBarTitleText": "次卡收银凭据" }
+    },
+    {
+      "path": "pages/customer-work/cashier",
+      "style": { "navigationBarTitleText": "次卡现金收银" }
+    },
       {
         "path": "pages/customer-work/scanning",
         "style": { "navigationStyle": "custom", "navigationBarTitleText": "客户扫码核销" }

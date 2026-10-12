@@ -1,0 +1,191 @@
+{
+  "kind": "customer-offline-origin-refund-progress-snapshot",
+  "atUtc": "2026-10-12T04:59:37.143Z",
+  "status": "validation_in_progress",
+  "wholeMigrationComplete": false,
+  "sourceManifestSha256": "1c24661142a8fdc28858b566359e02aa53c828a276f90b631521f54e8b560a57",
+  "inputFiles": 3539,
+  "completedNewNativeCases": 58,
+  "ordinaryPassed": 434,
+  "ordinaryConditionalSkips": 268,
+  "checks": [
+    {
+      "label": "offline-native-a2-v1",
+      "mode": "native",
+      "tests": [
+        "test/customer-work-financial-postgres.test.ts",
+        "test/customer-work-writeoff-postgres.test.ts"
+      ],
+      "passed": false,
+      "exitCode": 1,
+      "signal": null,
+      "testSummary": [
+        "Test Files  1 failed | 1 passed (2)",
+        "Tests  1 failed | 101 passed (102)",
+        "Duration  101.97s (transform 13.61s, setup 0ms, import 18.13s, tests 184.66s, environment 0ms)"
+      ],
+      "sourceBeforeVerified": true,
+      "sourceAfterVerified": true,
+      "borrowedToolsBeforeVerified": true,
+      "borrowedToolsAfterVerified": true,
+      "nativeCleanup": {
+        "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\pg-cache\\finance-postgres-0GKWLk",
+        "host": "127.0.0.1",
+        "port": 53720,
+        "fixturesRemainingZero": true,
+        "runnerStopped": true,
+        "independentStatus": {
+          "exitCode": 3,
+          "signal": null,
+          "stdout": "pg_ctl: no server running\r\n",
+          "stderr": ""
+        },
+        "independentlyStopped": true
+      },
+      "originalReceipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-native-a2-v1\\receipt.json",
+        "sha256": "3ee4eb40cbd6e900cd20488016e35313ce09ea04aef171c6e28fce2b4861a07f"
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-native-a2-v1\\run.log",
+        "sha256": "a679f8bac9b43c1cdba32aab5c0989bd959267dcc9426eba9a9facc6e5a27327"
+      }
+    },
+    {
+      "label": "offline-native-n-v3",
+      "mode": "native",
+      "tests": [
+        "test/customer-work-offline-origin-refund-postgres.test.ts"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "testSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  58 passed (58)",
+        "Duration  220.41s (transform 10.98s, setup 0ms, import 13.97s, tests 206.21s, environment 0ms)"
+      ],
+      "sourceBeforeVerified": true,
+      "sourceAfterVerified": true,
+      "borrowedToolsBeforeVerified": true,
+      "borrowedToolsAfterVerified": true,
+      "nativeCleanup": {
+        "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\pg-cache\\finance-postgres-D6xpJI",
+        "host": "127.0.0.1",
+        "port": 49610,
+        "fixturesRemainingZero": true,
+        "runnerStopped": true,
+        "independentStatus": {
+          "exitCode": 3,
+          "signal": null,
+          "stdout": "pg_ctl: no server running\r\n",
+          "stderr": ""
+        },
+        "independentlyStopped": true
+      },
+      "originalReceipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-native-n-v3\\receipt.json",
+        "sha256": "7b57a660ada29ca1f4a905f97d24e1c760b948e8986106b8590c49568b2b1840"
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-native-n-v3\\run.log",
+        "sha256": "284c0e9e1e979c3b3621e2cf1f74eaa97c3633bc30213fe419e9404f6a225a4b"
+      }
+    },
+    {
+      "label": "offline-ordinary20-v3",
+      "mode": "unit",
+      "tests": [
+        "test/assisted-form-attachment-scope.test.ts",
+        "test/assisted-form-read.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/customer-work-read-independent-contract.test.ts",
+        "test/customer-work-writeoff-sale-price.test.ts",
+        "test/second-card-product.test.ts",
+        "test/second-card-validity.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/customer-cashier-abandon-catalog.test.ts",
+        "test/customer-manual-refund-protocol.test.ts",
+        "test/legacy-php-refund-line-finance.test.ts",
+        "test/customer-refund-application.test.ts",
+        "test/release-protocol-audit.test.ts",
+        "test/refund-earned-income.test.ts",
+        "test/order-notification-outbox.test.ts",
+        "test/order-notification-delivery.test.ts",
+        "test/order-outbox.test.ts",
+        "test/customer-manual-offline-origin.test.ts",
+        "test/manager-runtime-auth.test.ts"
+      ],
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "testSummary": [
+        "Test Files  19 passed | 1 skipped (20)",
+        "Tests  434 passed | 268 skipped (702)",
+        "Duration  35.21s (transform 9.15s, setup 0ms, import 38.75s, tests 24.98s, environment 2ms)"
+      ],
+      "sourceBeforeVerified": true,
+      "sourceAfterVerified": true,
+      "borrowedToolsBeforeVerified": true,
+      "borrowedToolsAfterVerified": true,
+      "originalReceipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-ordinary20-v3\\receipt.json",
+        "sha256": "e1f4b9d572dacedf31a58694b03a5665a9947decde644e141ed93f70dfa2c4c7"
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-ordinary20-v3\\run.log",
+        "sha256": "802391ab1b47ea71e901e16ad7f7aa724a05c46c2f95034df395bee839498451"
+      }
+    },
+    {
+      "label": "offline-types-runtime-v3",
+      "mode": "types-runtime",
+      "tests": [],
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "testSummary": [],
+      "sourceBeforeVerified": true,
+      "sourceAfterVerified": true,
+      "borrowedToolsBeforeVerified": true,
+      "borrowedToolsAfterVerified": true,
+      "originalReceipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-types-runtime-v3\\receipt.json",
+        "sha256": "45ed1889311be5b5fa948ab27fb6bd9b290624b85335fee0f7bc9a61f0c02363"
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-types-runtime-v3\\run.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "label": "offline-types-unit-v3",
+      "mode": "types-unit",
+      "tests": [],
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "testSummary": [],
+      "sourceBeforeVerified": true,
+      "sourceAfterVerified": true,
+      "borrowedToolsBeforeVerified": true,
+      "borrowedToolsAfterVerified": true,
+      "originalReceipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-types-unit-v3\\receipt.json",
+        "sha256": "c1e81102e2b9d49bb624eb064829fefbf738f923bca9b56d9e0a2404dece61d5"
+      },
+      "log": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-offline-origin-refund-validation\\worker-checks\\offline-types-unit-v3\\run.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "pending": "35 complete native files required. A2 first matching execution has 101 pass/1 failure at existing writeoff NOWAIT table lock (55P03); original holder unmeasured. Remaining groups and final consolidation remain open.",
+  "deployment": {
+    "productionConfigured": false,
+    "managerBinding": "HYPERDRIVE_MANAGER",
+    "noProductionDdlOrDeployment": true
+  },
+  "archivalPolicy": "Source, tests, documentation and summary reports pushed to the current GitHub work branch. Original logs/screenshots/repeated evidence remain on the remote disk and are Git-ignored."
+}

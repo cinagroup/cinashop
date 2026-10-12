@@ -9,7 +9,7 @@ export const CUSTOMER_FINANCIAL_VERSION = 'customer-work-financial-operation-v1'
 export const CUSTOMER_FINANCIAL_QUOTE_VERSION = 'customer-work-financial-refund-quote-v1' as const;
 export const CUSTOMER_FINANCIAL_KINDS = ['change_price','confirm_offline','refund_create','refund_return','refund_refuse','refund_execute','refund_remark'] as const;
 export type FinancialKind = typeof CUSTOMER_FINANCIAL_KINDS[number];
-export type FinancialOutcome = 'price-changed'|'offline-paid'|'refund-created'|'return-approved'|'refused'|'balance-settled'|'provider-admitted'|'refund-remark-saved'|'abandoned'|'rollback-rejected';
+export type FinancialOutcome = 'price-changed'|'offline-paid'|'refund-created'|'return-approved'|'refused'|'balance-settled'|'cash-settled'|'zero-settled'|'provider-admitted'|'refund-remark-saved'|'abandoned'|'rollback-rejected';
 export interface FinancialInput { readonly version:typeof CUSTOMER_FINANCIAL_VERSION; readonly scope_key:string; readonly order_id:number; readonly expected_order_revision:string; readonly expected_financial_revision:string; readonly payload:CustomerJson }
 export interface FinancialContext { actor:CustomerWorkActor; request_key:string }
 export interface PreparedFinancialOperation { readonly actor:CustomerWorkActor; readonly key:string; readonly hash:string; readonly kind:FinancialKind; readonly input:FinancialInput }
@@ -17,7 +17,7 @@ export interface FinancialReceipt { version:typeof CUSTOMER_FINANCIAL_VERSION; r
 export interface FinancialSelection { cart_row_id:number; cart_num:number }
 export interface FinancialCreation { mode:'remaining'|'items'; items:FinancialSelection[]; quoted_price:string; refund_price:string; quote_fingerprint:string; reason:string }
 export interface FinancialRefundTarget { refund_id:number; refund_no:string; expected_refund_revision:string; review_fingerprint:string }
-export interface FinancialDecision extends FinancialRefundTarget { decision:{apply_type:number;refund_type:number;received:boolean}; reason?:string;refund_price?:string }
+export interface FinancialDecision extends FinancialRefundTarget { decision:{apply_type:number;refund_type:number;received:boolean;cash_returned?:true}; reason?:string;refund_price?:string }
 export interface FinancialQuoteInput { version:typeof CUSTOMER_FINANCIAL_QUOTE_VERSION;scope_key:string;order_id:number;expected_order_revision:string;expected_financial_revision:string;mode:'remaining'|'items';items:FinancialSelection[] }
 export const FINANCIAL_SHA=/^[a-f0-9]{64}$/;
 export function financialRecord(value:unknown,keys:readonly string[]):Record<string,unknown> {
@@ -38,12 +38,14 @@ export function financialSelections(mode:unknown,value:unknown):{mode:'remaining
 export function financialCreation(value:unknown):FinancialCreation {const r=financialRecord(value,['mode','items','quoted_price','refund_price','quote_fingerprint','reason']),selected=financialSelections(r.mode,r.items),quoted_price=financialMoney(r.quoted_price),refund_price=financialMoney(r.refund_price);if(amountToCents(refund_price)!>amountToCents(quoted_price)!)throw new ValidateException('主动退款金额超过已核对的商品报价');return{...selected,quoted_price,refund_price,quote_fingerprint:financialHash(r.quote_fingerprint),reason:financialText(r.reason)};}
 export function financialRefundTarget(value:Record<string,unknown>):FinancialRefundTarget {return{refund_id:financialId(value.refund_id),refund_no:financialBusinessNumber(value.refund_no,50),expected_refund_revision:financialHash(value.expected_refund_revision),review_fingerprint:financialHash(value.review_fingerprint)};}
 export function financialDecision(kind:FinancialKind,value:unknown):FinancialDecision {
- const keys=['refund_id','refund_no','expected_refund_revision','review_fingerprint','decision',...(kind==='refund_refuse'?['reason']:kind==='refund_execute'?['refund_price']:[])],r=financialRecord(value,keys),d=financialRecord(r.decision,['apply_type','refund_type','received']);
+ const keys=['refund_id','refund_no','expected_refund_revision','review_fingerprint','decision',...(kind==='refund_refuse'?['reason']:kind==='refund_execute'?['refund_price']:[])],r=financialRecord(value,keys),cash=kind==='refund_execute'&&!!r.decision&&typeof r.decision==='object'&&Object.hasOwn(r.decision,'cash_returned'),d=financialRecord(r.decision,['apply_type','refund_type','received',...(cash?['cash_returned']:[])]);
+ if(cash&&d.cash_returned!==true)throw new ValidateException('现金退款必须明确确认已经实际返还');
+ if(cash&&financialMoney(r.refund_price)==='0.00')throw new ValidateException('零元退回不能确认现金返还');
  if(typeof d.apply_type!=='number'||![0,1,2,3,4].includes(d.apply_type)||typeof d.refund_type!=='number'||![0,1,2,4,5].includes(d.refund_type)||typeof d.received!=='boolean')throw new ValidateException('退款决策快照无效');
  if(kind==='refund_return'&&(![2,3].includes(d.apply_type)||![0,1,2].includes(d.refund_type)))throw new ValidateException('当前售后状态不能审批退货');
  if(kind==='refund_execute'&&![1,2,3,4].includes(d.apply_type))throw new ValidateException('历史售后类型缺少可证明的资金执行合同，请核对原申请');
  if(kind==='refund_execute'&&[2,3].includes(d.apply_type)&&(!d.received||d.apply_type===2&&d.refund_type!==5||d.apply_type===3&&![4,5].includes(d.refund_type)))throw new ValidateException('退货退款必须先审批退货并确认已经实际验收');
- return{...financialRefundTarget(r),decision:{apply_type:d.apply_type,refund_type:d.refund_type,received:d.received},...(kind==='refund_refuse'?{reason:financialText(r.reason)}:{}),...(kind==='refund_execute'?{refund_price:financialMoney(r.refund_price)}:{})};
+ return{...financialRefundTarget(r),decision:{apply_type:d.apply_type,refund_type:d.refund_type,received:d.received,...(cash?{cash_returned:true as const}:{})},...(kind==='refund_refuse'?{reason:financialText(r.reason)}:{}),...(kind==='refund_execute'?{refund_price:financialMoney(r.refund_price)}:{})};
 }
 export function validateFinancialPayload(kind:FinancialKind,value:unknown) {
  if(kind==='change_price'){const r=financialRecord(value,['price']);return{price:financialMoney(r.price)};}

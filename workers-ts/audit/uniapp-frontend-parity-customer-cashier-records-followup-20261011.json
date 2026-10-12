@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-10-11",
+  "scope": "Own immutable customer second-card cashier record list and detail; static registration inventory only",
+  "status": "local_inventory_verified",
+  "baselineLedger": "workers-ts/audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json",
+  "counting": {
+    "legacy": {
+      "pagesTreeVueFiles": 250,
+      "logicalManifestRouteRecords": 151,
+      "platformActiveRouteRecords": {
+        "H5": 151,
+        "MP-WEIXIN": 150,
+        "APP-PLUS": 150
+      },
+      "mainRoutes": 7,
+      "subPackageRoutes": 144,
+      "subPackages": 10,
+      "manifestSha256": "B3F0D0DB6F6E7E1E2C039695712797FBBB0B1146ACC85D304C24BB344E185EB7",
+      "conditionalNotes": [
+        "H5 includes pages/users/alipay_invoke/index",
+        "APP-PLUS selects pages/discover/discoverVideo/app while other builds select index; the route record count is unchanged"
+      ]
+    },
+    "target": {
+      "logicalManifestRouteRecords": 127,
+      "manifestSha256": "F1EBDFF8A2FFE7D356401D65B1B2E8AD727F411D79DB51F4653589A575B330C8",
+      "manifestHashNormalization": "LF"
+    },
+    "routeLedger": {
+      "directRegistered": 28,
+      "legacyCompatibilityRules": 116,
+      "candidateCoveredRules": 62,
+      "partialReplacementRules": 54,
+      "unmappedOrCrossSurface": 7,
+      "accountedLegacyRoutes": 151
+    }
+  },
+  "directRegisteredLegacyRoutes": [
+    "/pages/columnGoods/rank/index",
+    "/pages/columnGoods/live_list/index",
+    "/pages/activity/new_customer/index",
+    "/pages/discover/discoverTopic/index",
+    "/pages/discover/discoverSearch/index",
+    "/pages/discover/discoverVideo/index",
+    "/pages/extension/customer_list/feedback",
+    "/pages/work/userInfo/index",
+    "/pages/work/orderList/index",
+    "/pages/work/orderDetail/index",
+    "/pages/work/record/index",
+    "/pages/work/groupInfo/index",
+    "/pages/behalf/cashier/index",
+    "/pages/behalf/order_confirm/index",
+    "/pages/behalf/user_list/index",
+    "/pages/behalf/goods_list/index",
+    "/pages/behalf/record/index",
+    "/pages/index/index",
+    "/pages/user/index",
+    "/pages/annex/vip_active/index",
+    "/pages/annex/offline_pay/index",
+    "/pages/annex/offline_result/index",
+    "/pages/activity/goods_combination_status/index",
+    "/pages/users/distributor/apply",
+    "/pages/users/agent/apply",
+    "/pages/users/agent/state",
+    "/pages/users/agent/record",
+    "/pages/users/agent/staff_list"
+  ],
+  "gaps": [
+    {
+      "id": "FE-003B",
+      "legacyRoutes": [
+        "/pages/users/user_cancellation/index"
+      ]
+    },
+    {
+      "id": "FE-003C",
+      "legacyRoutes": []
+    },
+    {
+      "id": "FE-003D",
+      "legacyRoutes": []
+    },
+    {
+      "id": "FE-003E",
+      "legacyRoutes": [
+        "/pages/admin/order_cancellation/index"
+      ]
+    },
+    {
+      "id": "FE-003F",
+      "legacyRoutes": [
+        "/pages/users/alipay_invoke/index",
+        "/pages/annex/web_view/index",
+        "/pages/annex/record_list/index",
+        "/pages/goods/cashier/index",
+        "/pages/goods/match_pay/index"
+      ]
+    },
+    {
+      "id": "FE-003G",
+      "legacyRoutes": []
+    },
+    {
+      "id": "FE-003H",
+      "legacyRoutes": []
+    }
+  ],
+  "currentIncrement": {
+    "newRegisteredPages": [
+      "/pages/customer-work/cashierRecords",
+      "/pages/customer-work/cashierRecord"
+    ],
+    "legacyAliasChanges": 0,
+    "genericAssistedOrderComplete": false
+  },
+  "limitations": [
+    "Registration inventory does not establish response, authorization, business-state, device or production parity.",
+    "Existing generic assisted-order aliases and all legacy coverage classifications are unchanged.",
+    "Current functional evidence is recorded separately in customer-cashier-records-20261011.json."
+  ]
+}

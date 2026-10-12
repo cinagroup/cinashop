@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "timezone": "Asia/Singapore",
+  "generatedAt": "2026-10-11T10:59:38.567Z",
+  "status": "local_candidate_verified",
+  "scope": {
+    "actor": "ordinary customer UserJWT",
+    "feature": "second-card cashier required/optional form images, durable upload/session UUID recovery, cancellation before financial freeze and consumed original form detail",
+    "newIndependentEndpoints": 6,
+    "fullMigrationComplete": false,
+    "parentChecklistClosed": false,
+    "productionDeployed": false
+  },
+  "checks": {
+    "native": {
+      "files": 4,
+      "passed": 79,
+      "failed": 0,
+      "skipped": 0,
+      "actualExit": 0,
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "independentShutdown": {
+        "statusExit": 3,
+        "passwordFileExists": false,
+        "statusText": "pg_ctl: no server running",
+        "checked": "2026-10-11T10:49:21.2339327Z",
+        "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native\\clusters\\finance-postgres-2z9FK5",
+        "postmasterPidExists": false
+      }
+    },
+    "workerUnit": {
+      "files": 9,
+      "passed": 298,
+      "failed": 0,
+      "skipped": 268,
+      "skipMeaning": "Explicit native database conditional cases; not credited as passing",
+      "runnerCompleteFilePassed": 119,
+      "actualExit": 0
+    },
+    "uniRuntime": {
+      "files": 5,
+      "passed": 103,
+      "failed": 0,
+      "skipped": 0,
+      "actualExit": 0,
+      "inputs": 472,
+      "inputsUnchanged": true
+    },
+    "workerTypes": [
+      {
+        "completed": "2026-10-11T10:57:36.6550588Z",
+        "started": "2026-10-11T10:55:38.0892372Z",
+        "exit": 0,
+        "config": "tsconfig.json",
+        "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\worker-types-complete\\tsconfig.json.log"
+      },
+      {
+        "completed": "2026-10-11T10:58:43.2864460Z",
+        "started": "2026-10-11T10:57:36.7028975Z",
+        "exit": 0,
+        "config": "tsconfig.runtime-test.json",
+        "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\worker-types-complete\\tsconfig.runtime-test.json.log"
+      }
+    ],
+    "uniTypecheck": {
+      "name": "typecheck",
+      "exit": 0,
+      "completed": "2026-10-11T10:36:34.7165057Z",
+      "started": "2026-10-11T10:35:58.0346832Z"
+    },
+    "builds": [
+      {
+        "name": "h5",
+        "exit": 0,
+        "completed": "2026-10-11T10:46:08.6230712Z",
+        "started": "2026-10-11T10:45:23.0116157Z"
+      },
+      {
+        "name": "mp-weixin",
+        "exit": 0,
+        "completed": "2026-10-11T10:46:39.0715093Z",
+        "started": "2026-10-11T10:46:08.6802661Z"
+      },
+      {
+        "name": "app",
+        "exit": 0,
+        "completed": "2026-10-11T10:47:20.7222469Z",
+        "started": "2026-10-11T10:46:39.0773497Z"
+      }
+    ],
+    "h5": {
+      "scenarios": 4,
+      "checks": 50,
+      "screenshots": 24,
+      "viewports": [
+        {
+          "width": 1280,
+          "height": 900
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "url": "http://127.0.0.1:63928",
+      "browser": "154.0.8037.98",
+      "playwright": "1.62.1",
+      "browserPlugin": "not available",
+      "path": "Regular Playwright",
+      "builtFiles": 323,
+      "buildHashesUnchanged": true,
+      "passed": true,
+      "rawConsoleDecorativeIsolationErrors": 4,
+      "relatedErrors": 0,
+      "resourcesClosed": true,
+      "actualInterface": "synthetic API, actual browser file chooser and multipart bytes"
+    },
+    "static": {
+      "routes": {
+        "php": 1904,
+        "ts": 2331,
+        "matched": 911,
+        "executableMatched": 890,
+        "unavailable": 21,
+        "missing": 993,
+        "retired": 17,
+        "actionableMissing": 976,
+        "coveragePercent": 47.8,
+        "executableCoveragePercent": 46.7,
+        "effectiveExecutableCoveragePercent": 47.2
+      },
+      "uni": {
+        "legacyLogicalRoutes": 151,
+        "targetRoutes": 128,
+        "directRegistered": 28,
+        "legacyCompatibilityRules": 116,
+        "candidateCoveredRules": 62,
+        "partialReplacementRules": 54,
+        "gaps": 7
+      }
+    }
+  },
+  "sourceProof": {
+    "copyInputs": 3508,
+    "allVerified": true,
+    "differences": [],
+    "manifest": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-project/copy-input-manifest.json"
+  },
+  "checklist": {
+    "total": 404,
+    "completed": 246,
+    "open": 158
+  },
+  "artifacts": [
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/native/cashier-final.execution.json",
+      "sha256": "f592942fffcaec0ea0be0b538d8dd26b5861e5d119b692dc97842749f5ba4efd",
+      "bytes": 144
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/native/cashier-final.log",
+      "sha256": "d4af8bbb75bfeffb6e4f334025f62b87c7a190263a175f142a50ab1ddb491d39",
+      "bytes": 25692
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/native/independent-shutdown.json",
+      "sha256": "d147a68e3d6164b90c8b4a7b359dee5cd0b46cfcb5ba83e4e72eefe7c26bbf90",
+      "bytes": 370
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-unit/local-unit-full-complete-fixture-exit.json",
+      "sha256": "e918cd4fe7bc8432d6e2daa7f5c90f9ec04bde74f55dfc3c39b23fdc380bb3fe",
+      "bytes": 7934
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-unit/local-unit-full-complete-fixture.log",
+      "sha256": "866f413e7811d5c33effe0cc6f48ae06e7215818eaf5f2d9122d867c8f7a33bb",
+      "bytes": 99435
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-unit/local-unit-full-exit.json",
+      "sha256": "ca8a427f6c40b4f94b7244957a23f44c3cc38ac60d77881e726203ba3ba45d20",
+      "bytes": 6012
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-unit/local-unit-full-normal-permissions-exit.json",
+      "sha256": "ca194f7548b4118036785d11b2423d49eb14562884bf8841a70ba0da1bdfd25c",
+      "bytes": 6050
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-unit/local-unit-full-normal-permissions.log",
+      "sha256": "7845d16f22668cad809e23baa8b1296bd6acf5b1550e69c53e02b2a03824ea97",
+      "bytes": 100919
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-unit/local-unit-full.log",
+      "sha256": "94ad0ac8ae4b1ea61de6dd1ff65645131a90fc0d22850a0f2da8327042ae3b9f",
+      "bytes": 5233
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types/executions.json",
+      "sha256": "3174ded69cba04b65f9977312e5f56c84f62056e5c9b19575bc227454c3831c1",
+      "bytes": 695
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types/tsconfig.json.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types/tsconfig.runtime-test.json.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-local/executions.json",
+      "sha256": "7f923ff05cc54c4fab0f892717253ee3068576bc8eea65b00747f3ddfcd2af91",
+      "bytes": 323
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-local/tsconfig.json.log",
+      "sha256": "6d5e90db1dbac5f54a639b5776218fa2c6e7986cc86e87c1bce415cd9a841d14",
+      "bytes": 12342
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-verified/executions.json",
+      "sha256": "765614a8c00246d231f34c6adef74ffe45d0f5bdc22d37f6e26f9d6efec537cf",
+      "bytes": 326
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-verified/tsconfig.json.log",
+      "sha256": "f9744a03492ba89a00acbb26018a68b140d640822d549fa4687b010b8736466e",
+      "bytes": 341
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-complete/executions.json",
+      "sha256": "fae7913b4c3850a57213daecc061b9044ee807073d0e606a168955cbb8cb89ec",
+      "bytes": 713
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-complete/tsconfig.json.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-types-complete/tsconfig.runtime-test.json.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/static/executions.json",
+      "sha256": "c6e136462c0d08096930de7ab1ce6de7b41321735a2b37974f853c043b5dfb0d",
+      "bytes": 299
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/static/route-parity.log",
+      "sha256": "7ed8a5f52d04550e6508c65886387dcd7f88f6e9f3509e0c7bdee3d539e51367",
+      "bytes": 1332325
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/static/uniapp-parity.log",
+      "sha256": "0c09d4fcb0336ab70caaa80be8b21fcb9b54199b8313a54c6b6a5e9d15f6652f",
+      "bytes": 974
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/history/native-current-cashier-cleanup-final.json",
+      "sha256": "d0a01c8519cf0d6b103ec61dac28557ab618eb89346664b77f513335a0a75079",
+      "bytes": 1825
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/history/native-current-cashier-cleanup-final.log",
+      "sha256": "bdcf82935ab34506aaab880913600b99054ea44d1a54a96c565089c6d2ef5318",
+      "bytes": 150
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/history/native-current-cashier-cleanup-repair.json",
+      "sha256": "a66e5799bea89b6f107781e804604fa3a1d11b152eda3e859b49fef5b71ea016",
+      "bytes": 2626
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/history/native-current-cashier-cleanup-repair.log",
+      "sha256": "fa78a8ef2aa50a634ce1cba20ff1e01b42915be9f0e5e9a59426125c609aa4b9",
+      "bytes": 151
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/history/native-current-cashier-cleanup-restored-runtime.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/cashier-runtime-receipt.json",
+      "sha256": "ba46171d3b3618c75e19b394f429b9743423741e411136da96085c3290a00572",
+      "bytes": 1782
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/cashier-runtime.stdout.log",
+      "sha256": "5e268a40a301f8233251bc3514443820622b94b83c581bb1298744aca90801a0",
+      "bytes": 16048
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/cashier-runtime.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/inputs-before.json",
+      "sha256": "2e070b1df1ed0889e4a805758ffd5ec07a6b394fde157521a94dec8b5fb55bb1",
+      "bytes": 76131
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/inputs-after.json",
+      "sha256": "017a8ee8d2cb26a44a86a5f0615e2853cc39d01acf823ddffe6c05617638779c",
+      "bytes": 76130
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/check-built-h5.cjs",
+      "sha256": "b848380215603852461f3acba1cb34a10b62d5f88aec126c6771fed601eb7f3e",
+      "bytes": 20377
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend/run-cashier-runtime.mjs",
+      "sha256": "eac58512185802ed6504acdf4b3b060bdbfc8e043a8ba99f126b0f10e4823743",
+      "bytes": 4588
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-project/copy-input-manifest.json",
+      "sha256": "1b8da06fb2a8aac7f9fecee5b66296e9464412373bf76859fd743dbb359937d3",
+      "bytes": 1051894
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-project/dependency-copy-report.json",
+      "sha256": "1145596e3b2deeb5b9c3a84f2c39c7d05700f955f44d05f93fe7c6fb18290dc8",
+      "bytes": 5210
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-project/second-card-external-inputs.json",
+      "sha256": "e9f49cfbca179caa359e18ebe201f31b3c363c2d7cc48f9bfbdbace92d304954",
+      "bytes": 793
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/worker-project/view-type-source-copy.json",
+      "sha256": "19f2cf7f025e89dc637b7f94b965927d89e15b0d5c3490901db1a0e95cf74f51",
+      "bytes": 1164
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/native-tools/copy-verification.json",
+      "sha256": "ca810b4466b9d8c4d5294653c763c31c4c45793c74c6ec183b6207c1facb2498",
+      "bytes": 2161
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds/executions.json",
+      "sha256": "cc1b5db7d91e26655d99f780daca5540105bd5f3e0c68e95e06370655eb009df",
+      "bytes": 298
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds/h5.log",
+      "sha256": "6fb0029dd984684bbc1fb4517969e96584a1bcf25d749404d8852789e0856d66",
+      "bytes": 1067
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds/typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-final/executions.json",
+      "sha256": "f95392c8d82a8a73fc9a7cd1032bbe8a6759b1e24366c674baa90859e3bc389d",
+      "bytes": 130
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-final/h5.log",
+      "sha256": "884dec4e3dae055f1cfef7738250ae81011faabea2bca345e2800a896f997fdd",
+      "bytes": 1067
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-complete/executions.json",
+      "sha256": "ac886f33ee3e681209f4746de91035494b8ac3b56ef675617e6c17725661b676",
+      "bytes": 130
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-complete/h5.log",
+      "sha256": "1010f1470d530ccc4e5b2e23c9105dd11cdbf23cbb63c7d52b212c8e21f73e1d",
+      "bytes": 1247
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-verified/app.log",
+      "sha256": "f05f89f6dcb6f584be5c6dfd709edbd44de3e953c6838a3aad565ccede3b9e53",
+      "bytes": 322
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-verified/executions.json",
+      "sha256": "219c98b4811d515ad4d2f94290906e7073d9359780ce40472668029e7e7d6621",
+      "bytes": 442
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-verified/h5.log",
+      "sha256": "f69f8516db90b5bb840864b3f4bc80b26bb8248bd2cc5be31ae553e2cfe222a9",
+      "bytes": 223
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/frontend-builds-verified/mp-weixin.log",
+      "sha256": "f9696dc1b737ce978b28d4b3b2a17ac7f622154aba1f7a96bca20a804d5abe7a",
+      "bytes": 545
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/desktop-guest-zero.dom.txt",
+      "sha256": "4888ab3dbf84f4edbebe338643ae9399ac8c9e75bc3fb21744043bf81eb38d7a",
+      "bytes": 1018
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/desktop-member-cash.dom.txt",
+      "sha256": "d3d2955462ca80238688282a42493a2f7f2d07f2a8834f5f9ceeff4dc15edfd9",
+      "bytes": 999
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-built-inputs-after.json",
+      "sha256": "57616436b8ebd42211a58534053cb6e8783a60f078a1bfe3a1476414cb59566d",
+      "bytes": 48972
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-built-inputs-before.json",
+      "sha256": "09901bb01ba22caafdb32f3e6c70e01478bbdd048df6ffa03566bad0ce436a8e",
+      "bytes": 48973
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-playwright-console.json",
+      "sha256": "824bfbc51098b02979960b75af4b454c5270e4b4721f2e536edd5d7b0d9a48dc",
+      "bytes": 7962
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-playwright-execution.json",
+      "sha256": "a8247649f86bc019e9e3842203553b4b61c7a232b1554245237113cd004d4239",
+      "bytes": 121
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-playwright-network.json",
+      "sha256": "3a98eec8897b07242964617b2656bf8cb014f9e4897874647e8ec1725577ea6d",
+      "bytes": 1493
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-playwright-receipt.json",
+      "sha256": "6bbff6d869181b6d26d6afacc9b4189b7d6b31f8c2b2806b7c94c221e1db913d",
+      "bytes": 24161
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/h5-playwright-requests.json",
+      "sha256": "f71df0723e4b02dc2ce48bbee820d46dc610a07a22815e0f807481adb7e431ab",
+      "bytes": 54763
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/mobile-guest-zero.dom.txt",
+      "sha256": "179c3b292e8731c4b84ac7bd022c35537a53d0671c7277788abd0c73dc263d8f",
+      "bytes": 1018
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/h5-final/mobile-member-cash.dom.txt",
+      "sha256": "b3e0e5a61e181bda5604b19834f2537244e23aec789c956ae628f1643ad33df8",
+      "bytes": 999
+    },
+    {
+      "path": "workers-ts/audit/customer-cashier-form-images-20261011-evidence/followup-validation/finalize-evidence.cjs",
+      "sha256": "210a8651080de1eb83a246d6aa4a48d035375b0a3226ef2473e5bce1a567950d",
+      "bytes": 12786
+    }
+  ],
+  "screenshotDirectory": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\frontend\\browser-2026-10-11T10-51-07-477Z",
+  "limitations": [
+    "Native PG16 uses synthetic R2; H5 browser uses synthetic API. Neither replaces actual Worker/Hyperdrive/R2 end-to-end acceptance.",
+    "Weixin and App compiled, actual devices remain unverified.",
+    "Four decorative DCloud CDN errors are explicitly classified isolation failures and retained raw.",
+    "Existing mobile single-line readonly answers may clip long text.",
+    "No production DDL, commits, pushes or deployment. Full old assisted pages, other products/multi-product, financial-intent abandonment, cash/guest refunds and commissioning remain open."
+  ],
+  "historicalFailuresRetained": true,
+  "documents": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "81654477c5bd74afd4d7160c01e065fb2b7aa99a23e1eb15d94aa5b3e0821b4f"
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "313320e0c9d2dbcf49498ac63a258d739fafc713144cdd845afaca394b7bfa18"
+    },
+    {
+      "path": "workers-ts/docs/customer-cashier-form-images-20261011.md",
+      "sha256": "55e21822aa5a9233c50f8f4e4e84a0e27eab85f1f1591fddfe939b64324c05fa"
+    }
+  ],
+  "generator": {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\finalize-evidence.cjs",
+    "sha256": "210a8651080de1eb83a246d6aa4a48d035375b0a3226ef2473e5bce1a567950d"
+  },
+  "finalEvidenceVerification": {
+    "verifiedAt": "2026-10-11T11:01:03.722Z",
+    "artifactsVerified": 62,
+    "documentsVerified": 3,
+    "currentCashierAndRunnerInputsVerified": 62,
+    "artifactDifferences": [],
+    "sourceDifferences": [],
+    "checklist": {
+      "total": 404,
+      "completed": 246,
+      "open": 158
+    }
+  }
+}

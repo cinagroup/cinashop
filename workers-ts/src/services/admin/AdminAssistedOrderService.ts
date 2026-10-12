@@ -797,6 +797,7 @@ export class AdminAssistedOrderService {
       eq(storeOrder.isDel, 0),
       eq(storeOrder.isSystemDel, 0),
     )).limit(1);
+    if(rows[0])await this.excludeCustomerCashierOrder(this.container.db,rows[0].pid>0?rows[0].pid:rows[0].id);
     return rows[0] ?? null;
   }
 
@@ -1011,6 +1012,7 @@ export class AdminAssistedOrderService {
         eq(storeOrder.uid, uid), eq(storeOrder.staffId, adminId), eq(storeOrder.isChannel, 2),
         eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0))).limit(1);
       if (!order) throw new NotFoundException('订单不存在');
+      await this.excludeCustomerCashierOrder(db,order.pid>0?order.pid:order.id);
       return readOrderSystemFormForOrder(db, new AttachmentService(this.container, this.env), order);
     });
   }
@@ -1026,11 +1028,20 @@ export class AdminAssistedOrderService {
       eq(storeOrder.isSystemDel, 0),
     )).limit(1);
     if (!rows[0]) throw new NotFoundException("订单不存在");
+    await this.excludeCustomerCashierOrder(this.container.db,rows[0].pid>0?rows[0].pid:rows[0].id);
     return rows[0];
+  }
+
+  /** Admin IDs and UserJWT UIDs can share a number, never a principal. */
+  private async excludeCustomerCashierOrder(db:DbClient,rootId:number) {
+    const [catalog]=await db.execute<{present:boolean}>(sql`SELECT to_regclass('public.cashier_second_card_origin_v1') IS NOT NULL AS present`);
+    if(catalog.present&&(await db.execute(sql`SELECT 1 FROM public.cashier_second_card_origin_v1 WHERE order_id=${rootId} LIMIT 1`)).length)
+      throw new NotFoundException('订单不存在');
   }
 
   private authorizePayment(adminId: number, uid: number, expectedPayCents: number) {
     return async (tx: DbClient, order: typeof storeOrder.$inferSelect) => {
+      await this.excludeCustomerCashierOrder(tx,order.pid>0?order.pid:order.id);
       if (
         order.uid !== uid || order.staffId !== adminId || order.isChannel !== 2 ||
         order.isDel !== 0 || order.isSystemDel !== 0

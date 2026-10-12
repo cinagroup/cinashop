@@ -1,13 +1,13 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { INVOICE_MAINTENANCE_SETUP_SQL } from './invoiceEvidenceInstallation';
-import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
-import { REFUND_SPLIT_STATE_SQL } from './refundOrderSplitCatalog';
+import { refundEntityAcceptedPairSql } from './guestRefundEntityCatalog';
+import { lockReviewedGuestRefundEntities } from './runInvoiceEvidence';
 import { REFUND_SPLIT_INSTALLATION_SQL, REFUND_SPLIT_ORM_INSTALLATION_SQL } from './refundOrderSplitInstallation';
 
 type Root = Pick<DbClient,'transaction'> & Partial<Pick<DbClient,'$client'>>;
 type Query = Pick<DbClient,'execute'>;
-type State = 'fresh' | 'v1' | 'orm-pending' | 'drift';
+type State = 'fresh' | 'v1' | 'v2' | 'orm-pending' | 'drift';
 const setup=sql.raw(INVOICE_MAINTENANCE_SETUP_SQL);
 function validate(db: Root,role?: string) {
   if(!Object.hasOwn(db,'$client') || !db.$client) throw Error('Refund split installation requires a root database');
@@ -21,11 +21,11 @@ async function environment(tx: Query) {
   if(row?.safe!==true) throw Error('Refund split inspection requires reviewed PG16 READ COMMITTED');
 }
 async function catalog(tx: Query): Promise<{state: State;invoiceProtectionReady: boolean}> {
-  const [row]=await tx.execute(sql.raw(`SELECT refund.state,invoice.state='v2' AS invoice_ready
-    FROM (${REFUND_SPLIT_STATE_SQL}) refund CROSS JOIN (${INVOICE_EVIDENCE_STATE_SQL}) invoice`));
+  const [row]=await tx.execute(sql.raw(`SELECT split AS state,invoice,profile FROM (${refundEntityAcceptedPairSql()}) entities`));
   const state=row?.state;
-  if(state!=='fresh' && state!=='v1' && state!=='orm-pending' && state!=='drift') throw Error('Refund catalog state unavailable');
-  return {state,invoiceProtectionReady:row.invoice_ready===true};
+  if(state!=='fresh' && state!=='v1' && state!=='v2' && state!=='orm-pending' && state!=='drift') throw Error('Refund catalog state unavailable');
+  const guest = row.profile==='guest' && row.invoice==='v3' && state==='v2';
+  return {state:state==='v2'&&!guest?'drift':state,invoiceProtectionReady:guest || row.invoice==='v2'&&state!=='v2'};
 }
 async function runtimeSafe(tx: Query,role: string) {
   const [row]=await tx.execute(sql`WITH RECURSIVE authority AS (
@@ -60,7 +60,7 @@ export async function inspectRefundOrderSplit(db: Root,role: string) {
   return db.transaction(async tx=>{
     await tx.execute(setup);await environment(tx);
     const state=await catalog(tx),safe=await runtimeSafe(tx,role);
-    return {...state,runtimeSafe:safe,runtimeReady:safe && state.state==='v1' && state.invoiceProtectionReady && await ready(tx,role,true)};
+    return {...state,runtimeSafe:safe,runtimeReady:safe && (state.state==='v1'||state.state==='v2') && state.invoiceProtectionReady && await ready(tx,role,true)};
   },{isolationLevel:'read committed',accessMode:'read only'});
 }
 /** Two additive SELECT/INSERT grants only. Invoice commissioning is required
@@ -69,20 +69,27 @@ export async function runRefundOrderSplit(db: Root,role: string,completeEmptyOrm
   validate(db,role);
   return db.transaction(async tx=>{
     await tx.execute(setup);await environment(tx);
-    if(!await runtimeSafe(tx,role) || !(await catalog(tx)).invoiceProtectionReady || !await ready(tx,role,false))
+    const initial = await catalog(tx);
+    if(!await runtimeSafe(tx,role) || !initial.invoiceProtectionReady || !await ready(tx,role,false))
       throw Error('Refund runtime authority or invoice prerequisites are unsafe or missing');
-    await tx.execute(sql.raw(completeEmptyOrm ? REFUND_SPLIT_ORM_INSTALLATION_SQL : REFUND_SPLIT_INSTALLATION_SQL));
+    const guest = initial.state==='v2';
+    if (guest) await lockReviewedGuestRefundEntities(tx);
+    else await tx.execute(sql.raw(completeEmptyOrm ? REFUND_SPLIT_ORM_INSTALLATION_SQL : REFUND_SPLIT_INSTALLATION_SQL));
     await tx.execute(sql.raw(`GRANT SELECT,INSERT ON public.store_order_refund_split,public.store_order_fulfillment_branch TO "${role}"`));
     await environment(tx);const state=await catalog(tx);
-    if(state.state!=='v1' || !state.invoiceProtectionReady || !await runtimeSafe(tx,role) || !await ready(tx,role,true))
+    if(state.state!==(guest?'v2':'v1') || !state.invoiceProtectionReady || !await runtimeSafe(tx,role) || !await ready(tx,role,true))
       throw Error('Refund split catalog or runtime verification failed');
     return {...state,runtimeSafe:true,runtimeReady:true};
   },{isolationLevel:'read committed',accessMode:'read write'});
 }
 export async function runRefundOrderSplitSchema(db: Root,completeEmptyOrm=false): Promise<void> {
   validate(db);
-  await db.transaction(tx=>tx.execute(sql.raw(completeEmptyOrm ? REFUND_SPLIT_ORM_INSTALLATION_SQL : REFUND_SPLIT_INSTALLATION_SQL)),
-    {isolationLevel:'read committed',accessMode:'read write'});
+  await db.transaction(async tx=>{
+    await tx.execute(setup); await environment(tx);
+    const initial = await catalog(tx);
+    if (initial.state==='v2' && initial.invoiceProtectionReady) await lockReviewedGuestRefundEntities(tx);
+    else await tx.execute(sql.raw(completeEmptyOrm ? REFUND_SPLIT_ORM_INSTALLATION_SQL : REFUND_SPLIT_INSTALLATION_SQL));
+  },{isolationLevel:'read committed',accessMode:'read write'});
 }
 export async function inspectRefundOrderSplitSchema(db: Root) {
   validate(db);

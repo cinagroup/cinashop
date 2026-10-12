@@ -5,6 +5,7 @@ import { outRequestHash } from '@/services/out/OutIdempotency';
 import { customerWorkCatalogSql } from './customerWorkCatalog';
 import { CUSTOMER_FINANCIAL_OPERATION_INSTALLATION_SQL } from './customerFinancialOperation';
 import { customerWorkScopeLockReadiness } from './runCustomerWorkScopeLock';
+import { CUSTOMER_FINANCIAL_MANUAL_CATALOG_SHA256 } from './customerManualRefundPins';
 
 /** Complete relation, immutable validator bodies, overloads, policies and inbound FKs. */
 export const CUSTOMER_FINANCIAL_OPERATION_CATALOG_SQL = `SELECT jsonb_build_object(
@@ -31,7 +32,7 @@ export async function inspectCustomerFinancialOperation(db:Query) {
  if(rows.length===0)return{present:false,complete:false,fingerprint:null};
  if(rows.length!==1)throw Error('Customer financial operation catalog ambiguous');
  const fingerprint=await outRequestHash(rows[0].shape);
- return{present:true,complete:fingerprint===CUSTOMER_FINANCIAL_OPERATION_CATALOG_SHA256,fingerprint};
+ return{present:true,complete:[CUSTOMER_FINANCIAL_OPERATION_CATALOG_SHA256,CUSTOMER_FINANCIAL_MANUAL_CATALOG_SHA256].includes(fingerprint),fingerprint};
 }
 export async function assertCustomerFinancialOperationCatalog(db:Query) {
  if(!(await inspectCustomerFinancialOperation(db)).complete)

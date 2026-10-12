@@ -90,7 +90,7 @@ async function loadValidatedOrderSystemForm(
   const definition = await loadActiveOrderSystemForm(db, systemFormId, true);
   // Reserved server evidence must not be inherited from an editable template.
   const template = definition.value.map(component => {
-    const copy = { ...component }; delete copy[IMAGE_SCOPE]; return copy;
+    const copy = { ...component }; delete copy[IMAGE_SCOPE]; delete copy.cashierImageScope; return copy;
   });
   const prepared = prepareOrderSystemFormSubmission(template, submissionValue, systemFormId);
   if (assisted) {
@@ -192,7 +192,7 @@ export async function readOrderSystemFormForOrder(
   const allowed = owned.filter(row => scopes.some(scope => scope && belongsToAssistedFormScope(row.name, scope)));
   const signed = allowed.length ? await attachments.signReferences(allowed.map(row => canonicalAttachmentPath(row.id))) : [];
   return components.map((component, index) => {
-    const scope = scopes[index]; delete component[IMAGE_SCOPE];
+    const scope = scopes[index]; delete component[IMAGE_SCOPE]; delete component.cashierImageScope;
     if (component.name !== 'uploadPicture') return component;
     return { ...component, value: scope && Array.isArray(component.value) ? component.value.flatMap(value => {
       const id = scopedImageId(value);
@@ -234,7 +234,7 @@ export async function readOrderSystemFormSnapshot(
 ): Promise<JsonRecord[]> {
   const components = snapshotComponents(snapshotValue);
   if (!components) return [];
-  components.forEach(component => { delete component[IMAGE_SCOPE]; });
+  components.forEach(component => { delete component[IMAGE_SCOPE]; delete component.cashierImageScope; });
   const canonicalIds = [...new Set(components.flatMap((component) => (
     component.name === "uploadPicture" && Array.isArray(component.value)
       ? component.value.flatMap((value) => {

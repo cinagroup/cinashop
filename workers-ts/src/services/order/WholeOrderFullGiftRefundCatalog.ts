@@ -1,19 +1,12 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
-import { INVOICE_EVIDENCE_CATALOG_SQL, INVOICE_CATALOG_VERSIONS } from '@/migrations/invoiceEvidenceCatalog';
-import { REFUND_SPLIT_CATALOG_SQL, REFUND_SPLIT_CATALOG_VERSIONS } from '@/migrations/refundOrderSplitCatalog';
+import { INVOICE_EVIDENCE_CATALOG_SQL } from '@/migrations/invoiceEvidenceCatalog';
+import { REFUND_SPLIT_CATALOG_SQL } from '@/migrations/refundOrderSplitCatalog';
+import { REFUND_ENTITY_CATALOG_PROFILES, refundEntityCatalogProfile } from '@/migrations/guestRefundEntityCatalog';
 import { HttpApiException } from '@/utils/errors';
 
-const expected = new Map<string, string>([
-  ['table:store_order_invoice', INVOICE_CATALOG_VERSIONS.capturedBase],
-  ['table:store_order_invoice_evidence', INVOICE_CATALOG_VERSIONS.history],
-  ['table:store_order_invoice_allocation', INVOICE_CATALOG_VERSIONS.allocation],
-  ['function:capture_invoice_evidence', INVOICE_CATALOG_VERSIONS.capture],
-  ['function:protect_invoice_evidence', INVOICE_CATALOG_VERSIONS.protect],
-  ['table:store_order_refund_split', REFUND_SPLIT_CATALOG_VERSIONS.split],
-  ['table:store_order_fulfillment_branch', REFUND_SPLIT_CATALOG_VERSIONS.branch],
-  ['function:protect_refund_order_split', REFUND_SPLIT_CATALOG_VERSIONS.protect],
-]);
+const expectedNames = new Set(Object.keys(REFUND_ENTITY_CATALOG_PROFILES.legacy));
+const functions = new Set(['capture_invoice_evidence', 'protect_invoice_evidence', 'protect_refund_order_split']);
 const unavailable = () => new HttpApiException('满送退款运行合同尚未就绪，请联系商家核对', 503, 503);
 
 /** Public whole-order activation checks existing reviewed protocols only.
@@ -30,14 +23,17 @@ export async function assertWholeOrderFullGiftRefundCatalog(tx: DbClient): Promi
   if (environment?.ready !== true) throw unavailable();
   const rows = await tx.execute(sql.raw(`SELECT * FROM (${INVOICE_EVIDENCE_CATALOG_SQL}) invoice
     UNION ALL SELECT * FROM (${REFUND_SPLIT_CATALOG_SQL}) refund`));
-  const seen = new Set<string>();
-  if (rows.length !== expected.size) throw unavailable();
+  const fingerprints = new Map<string, string>();
+  if (rows.length !== expectedNames.size) throw unavailable();
   for (const row of rows) {
-    const key = `${row.kind}:${row.name}`;
-    if (seen.has(key) || row.present !== true || row.safe !== true
-      || row.fingerprint !== expected.get(key) || !expected.has(key)) throw unavailable();
-    seen.add(key);
+    if (typeof row.name !== 'string' || !expectedNames.has(row.name) || fingerprints.has(row.name)
+      || row.kind !== (functions.has(row.name) ? 'function' : 'table')
+      || row.present !== true || row.safe !== true || typeof row.fingerprint !== 'string') throw unavailable();
+    fingerprints.set(row.name, row.fingerprint);
   }
+  // Accept one complete reviewed generation. A mixture of independently valid
+  // old and guest tables cannot authorize a mature refund.
+  if (refundEntityCatalogProfile(fingerprints) === 'drift') throw unavailable();
   const [authority] = await tx.execute(sql`WITH owners AS (
     SELECT relowner AS owner FROM pg_class WHERE oid IN (
       'public.store_order_invoice'::regclass,'public.store_order_invoice_evidence'::regclass,

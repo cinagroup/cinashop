@@ -10,6 +10,8 @@
         <button class="cw-full" @tap="manager.go('statistics')">查看经营统计</button>
       </view>
       <view v-if="manager.context.value?.data.capabilities.writeoff_read===true" class="cw-card"><text class="cw-subtitle">普通客户核销</text><text class="cw-scope">扫码、手输或会员条码查单，核对实际商品与次数，再明确提交分次或全部核销。</text><button class="cw-full" @tap="manager.go('scanning')">进入客户核销</button></view>
+      <view v-if="manager.context.value?.data.capabilities.cashier_records===true" class="cw-card"><text class="cw-subtitle">本人次卡收银记录</text><text class="cw-scope">查看由本经营账号实际创建的次卡订单，核对原购买商品、创建来源与现金付款凭据。</text><button class="cw-full" @tap="manager.go('cashierRecords')">查询本人收银记录</button></view>
+      <view v-if="manager.context.value?.data.capabilities.cashier_second_card===true" class="cw-card"><text class="cw-subtitle">次卡现金收银</text><text class="cw-scope">选择实际次卡和购买人，核对报价后创建订单，再确认现金或零元付款。中断后可核对原收银编号。</text><button class="cw-full" @tap="manager.go('cashier')">进入次卡现金收银</button></view>
       <text class="cw-subtitle">待处理概况</text>
       <view class="cw-grid">
         <view class="cw-metric"><text class="cw-money">{{ overview.badges.unshipped_count }}</text><text>待发货</text><text class="cw-muted">平台履约订单</text></view>
@@ -18,7 +20,7 @@
         <view class="cw-metric"><text class="cw-money">{{ overview.badges.outofstock }}</text><text>待补货</text><text class="cw-muted">全站商品</text><button v-if="manager.context.value?.data.capabilities.product_management" @tap="manager.go('products',{type:4})">查看售罄商品</button></view>
         <view class="cw-metric"><text class="cw-money">{{ overview.badges.policeforce }}</text><text>库存预警</text><text class="cw-muted">全站商品</text><button v-if="manager.context.value?.data.capabilities.product_management" @tap="manager.go('products',{type:5})">查看预警商品</button></view>
       </view>
-      <view class="cw-card"><text class="cw-subtitle">经营管理</text><view class="cw-controls"><button @tap="manager.go('orders')">全站订单查询</button><button @tap="manager.go('orders',{status:'1'})">核对待发货订单</button><button @tap="manager.go('refunds')">全站售后查询</button><button v-if="manager.context.value?.data.capabilities.product_management" @tap="manager.go('products')">商品管理</button><button v-if="manager.context.value?.data.capabilities.user_management" @tap="manager.go('users')">用户管理</button></view><text class="cw-muted">订单详情可核对管理备注与发货。资金管理、代客及退款审批功能暂未开放。</text></view>
+      <view class="cw-card"><text class="cw-subtitle">经营管理</text><view class="cw-controls"><button @tap="manager.go('orders')">全站订单查询</button><button @tap="manager.go('orders',{status:'1'})">核对待发货订单</button><button @tap="manager.go('refunds')">全站售后查询</button><button v-if="manager.context.value?.data.capabilities.product_management" @tap="manager.go('products')">商品管理</button><button v-if="manager.context.value?.data.capabilities.user_management" @tap="manager.go('users')">用户管理</button></view><text class="cw-muted">订单详情可核对管理备注与发货。其他商品代客及退款审批功能暂未开放。</text></view>
     </template>
   </CustomerWorkShell>
 </template>

@@ -1,6 +1,6 @@
 import { asc, eq } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
-import { storeOrder, storeOrderCartInfo } from '@/models/schema';
+import { storeOrder, storeOrderCartInfo, storeOrderPromotions } from '@/models/schema';
 import { storeOrderRefundSplit, storeOrderFulfillmentBranch } from '@/models/schema/order_refund_split';
 import { ValidateException } from '@/utils/errors';
 import { lockOrderSettlement } from './OrderBrokerageService';
@@ -12,6 +12,7 @@ import { assertWholeOrderFullGiftRefundCatalog } from './WholeOrderFullGiftRefun
 import { refundSplitDisposition } from './RefundSplitAllocation';
 import { refundOrderSplitFingerprint, type RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 import { prepareRefundInvoice, type RefundInvoiceSnapshot } from './RefundInvoiceAllocation';
+import { loadRefundOrderGeneration } from './RefundOrderGeneration';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -53,7 +54,19 @@ export async function assertAtomicRefundAdmission(tx: DbClient, order: Order, se
         : !((row.splitStatus < 2 && row.splitSurplusNum === row.cartNum) || (row.splitStatus === 2 && row.splitSurplusNum === 0))))) throw invalid();
   const plan = planOrderFinancialSplit(order, rows.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selections);
   if (!plan || typeof plan.selected.payPrice !== 'string') throw invalid();
-  await assertOrderPromotionLedger(tx, order, rows);
+  const promotionVersioned=await assertOrderPromotionLedger(tx, order, rows);
+  // Only the fully reconciled original-PHP projection needs this additional
+  // zero-total/absent-ledger proof; modern lines retain their mature contract.
+  // Marked successors also resolve their actual protected generation receipt.
+  // Checkout appends only to newly allocated orders; existing-order writers
+  // share the caller's payment-root/source/cart transaction fences.
+  // An empty FOR UPDATE was not a predicate lock and unnecessarily required
+  // promotion UPDATE from the mature SELECT-only financial runtime profile.
+  if(!promotionVersioned&&plan.legacyPhpProjection){
+    if(plan.legacyPhpProjection==='refund-generation'&&!await loadRefundOrderGeneration(tx,order,rows))throw invalid();
+    const booked=await tx.select({id:storeOrderPromotions.id}).from(storeOrderPromotions).where(eq(storeOrderPromotions.oid,order.id)).limit(1);
+    if(booked.length)throw invalid();
+  }
   const fullGift = await assertFullGiftRefundAdmission(tx, order, rows, selections, refundAmount, true);
   if (fullGift) await assertWholeOrderFullGiftRefundCatalog(tx);
   const disposition = refundSplitDisposition(order.status, rows, [...selections].map(([cartId, cartNum]) => ({ cartId, cartNum })));

@@ -27,6 +27,7 @@ import {
 } from "@/models/schema";
 import { normalizeConfigScalar } from "@/utils/config";
 import { assertCustomerCityDeliveryReady } from '@/migrations/customerCityDelivery';
+import {assertGuestRefundRefusedNoticeSource} from './GuestRefundRefusedNoticeSource';
 
 export const ORDER_DELIVERY_NOTICE_EVENT = "order.delivery.notice";
 export const ORDER_REFUND_REFUSED_NOTICE_EVENT = "order.refund.refused.notice";
@@ -294,9 +295,10 @@ export async function enqueueOrderRefundRefusedNoticeEvent(
     orderId,
     orderNo: requiredString(input.orderNo, "订单号", 32),
     refundId,
-    userId: positiveId(input.userId, "用户 ID"),
+    userId: input.userId===0?0:positiveId(input.userId, "用户 ID"),
     payPrice: requiredString(input.payPrice, "订单金额", 32),
   };
+  if(payload.userId===0)await assertGuestRefundRefusedNoticeSource(db,payload,true);
   return insertImmutableNotificationEvent(db, {
     eventKey: orderRefundRefusedNoticeEventKey(refundId),
     aggregateId: orderId,
@@ -366,7 +368,7 @@ export function assertOrderNotificationPayload(
   if (!value || typeof value !== "object") throw new Error("通知 outbox payload 不是对象");
   const payload = value as Record<string, unknown>;
   positiveId(payload.orderId, "通知订单 ID");
-  if (!(eventType === ORDER_DELIVERY_NOTICE_EVENT && payload.userId === 0)) positiveId(payload.userId, "通知用户 ID");
+  if (!([ORDER_DELIVERY_NOTICE_EVENT,ORDER_REFUND_REFUSED_NOTICE_EVENT].includes(eventType) && payload.userId === 0)) positiveId(payload.userId, "通知用户 ID");
   if (payload.orderId !== aggregateId) throw new Error("通知 outbox 聚合 ID 不匹配");
   requiredString(payload.orderNo, "通知订单号", 32);
 
@@ -389,6 +391,7 @@ export function assertOrderNotificationPayload(
     return;
   }
   if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) {
+    if(payload.userId===0&&Object.keys(payload).sort().join(',')!==['orderId','orderNo','refundId','userId','payPrice'].sort().join(','))throw Error('游客拒绝通知字段无效');
     positiveId(payload.refundId, "通知售后 ID");
     requiredString(payload.payPrice, "通知订单金额", 32);
     return;
@@ -604,7 +607,10 @@ async function noticeContext(
   if (!order || order.uid !== payload.userId || order.orderId !== payload.orderNo) {
     throw new Error("通知订单快照与当前订单不匹配");
   }
-  if (payload.userId === 0) assertAssistedGuestDeliverySource(order);
+  if (payload.userId === 0) {
+    if(eventType===ORDER_REFUND_REFUSED_NOTICE_EVENT)await assertGuestRefundRefusedNoticeSource(tx,payload as OrderRefundRefusedNoticeOutboxPayload);
+    else assertAssistedGuestDeliverySource(order);
+  }
   const storeName = secondCard?.storeName ?? utf8Prefix(
     cartRows.map((row) => eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
       ? pinkProductTitleFromSnapshot(row.cartInfo) : productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join("|"),

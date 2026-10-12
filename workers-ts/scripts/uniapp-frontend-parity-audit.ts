@@ -27,7 +27,11 @@ const legacyManifestPath = resolve(
   process.env.LEGACY_UNIAPP_MANIFEST ?? resolve(repoRoot, "../cinashop-php/view/uniapp/pages.json"),
 );
 const targetManifestPath = resolve(repoRoot, "view/uniapp-ts/src/pages.json");
-const auditPath = resolve(repoRoot, process.argv.includes("--customer-work-writeoff-followup")
+const auditPath = resolve(repoRoot, process.argv.includes("--customer-cashier-checkout-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json"
+  : process.argv.includes("--customer-cashier-records-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-customer-cashier-records-followup-20261011.json"
+  : process.argv.includes("--customer-work-writeoff-followup")
   ? "workers-ts/audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json"
   : process.argv.includes("--customer-work-financial-followup")
   ? "workers-ts/audit/uniapp-frontend-parity-customer-work-financial-followup-20261005.json"

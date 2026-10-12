@@ -21,8 +21,7 @@ import { approveStoreOrderReturn, applyOrderRefundWithMaterialization, quoteOrde
 import { planOrderFinancialSplit } from '@/services/order/OrderSplitFinance';
 import { storeOrderCartInfo } from '@/models/schema';
 import { lockAdminRefundQuoteCarts } from '@/services/admin/AdminRefundQuotePolicy';
-import { REFUND_SPLIT_STATE_SQL } from '@/migrations/refundOrderSplitCatalog';
-import { INVOICE_EVIDENCE_STATE_SQL } from '@/migrations/invoiceEvidenceCatalog';
+import { refundEntityAcceptedPairSql } from '@/migrations/guestRefundEntityCatalog';
 import { acquireCheckoutPricingLock,auditCheckoutPricingLockRuntime } from '@/migrations/checkoutPricingLock';
 import { merchantOrderRevision, requireStoreManagerScope, managerId, type StoreManagerScope } from './StoreManagerScope';
 import { ManagerOrderOperationRequest, prepareManagerOperation, checkManagerOperation, appendManagerOperation, authorizeLockedManagerOperation, authorizeManagerOperationOwner, lockManagerOrder, freezeManagerJson, type ManagerOperationContext, type ManagerOperationInput, type ManagerOperationKind, type ManagerOperationReceipt, managerActor, type ManagerOrderActor } from './ManagerOrderOperationRequest';
@@ -56,15 +55,11 @@ async function reviewHash(tx:DbClient,refund:Refund,order:Order){const payments=
  * admission. Deeper stock/invoice/provider gates are recalculated by core. */
 function financialState(order:Order){const visible=order.pid>=0&&!order.isDel&&!order.isSystemDel&&order.supplierAllocationStatus!==1;const action=(available:boolean,reason:string)=>({available,reason:available?'':reason});return{change_price:action(visible&&order.paid===0&&order.status===0,'仅未支付且可操作订单允许改价'),confirm_offline:action(visible&&order.pid===0&&order.paid===0&&order.status===0,'仅未支付且未拆分订单允许确认线下收款'),refund_create:action(visible&&order.paid===1&&[0,1,2,3].includes(order.status)&&['yue','weixin','alipay'].includes(order.payType)&&order.type!==3,'当前状态或支付方式不支持安全主动退款'),refund_decide:action(visible&&order.paid===1,'当前订单不支持售后审核')};}
 /** Pure catalog and exact runtime ACL inspection; no commissioning at read time. */
-function managerRuntimeCatalog(source:string){
- const owner="owner=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user) AS owned";
- if(!source.includes(owner))throw Error('Mature catalog ownership projection changed; review required');
- return source.replace(owner,"owner=(SELECT relowner FROM pg_catalog.pg_class WHERE oid='public.store_order_invoice'::regclass) AS owned");
-}
 export async function managerRefundMaterializationReadiness(db:Pick<DbClient,'execute'>){
  const present=await db.execute<{installed:boolean}>(sql`SELECT to_regclass('public.store_order_invoice') IS NOT NULL AS installed`);if(present.length!==1||!present[0].installed)return{ready:false,reason:'manager_refund_materialization_not_installed'};
- const states=await db.execute<{split:string;invoice:string}>(sql.raw(`SELECT r.state AS split,i.state AS invoice FROM (${managerRuntimeCatalog(REFUND_SPLIT_STATE_SQL)}) r CROSS JOIN (${managerRuntimeCatalog(INVOICE_EVIDENCE_STATE_SQL)}) i`));
- if(states.length!==1||states[0].split!=='v1'||states[0].invoice!=='v2')return{ready:false,reason:'manager_refund_materialization_catalog_unreviewed'};
+ const states=await db.execute<{split:string;invoice:string;profile:string}>(sql.raw(refundEntityAcceptedPairSql(true)));
+ if(states.length!==1||!(states[0].profile==='legacy'&&states[0].invoice==='v2'&&states[0].split==='v1'
+  ||states[0].profile==='guest'&&states[0].invoice==='v3'&&states[0].split==='v2'))return{ready:false,reason:'manager_refund_materialization_catalog_unreviewed'};
  const rows=await db.execute<{ready:boolean}>(sql`SELECT NOT EXISTS(SELECT 1 FROM(VALUES ('public.store_order_refund_split','SELECT'),('public.store_order_refund_split','INSERT'),('public.store_order_fulfillment_branch','SELECT'),('public.store_order_fulfillment_branch','INSERT'),('public.store_order_invoice_evidence','SELECT'),('public.store_order_invoice_allocation','SELECT'),('public.store_order_invoice_allocation','INSERT')) p(tab,priv) WHERE NOT has_table_privilege(current_user,p.tab,p.priv)) AND NOT EXISTS(SELECT 1 FROM(VALUES ('public.store_order_refund_split'),('public.store_order_fulfillment_branch'),('public.store_order_invoice_evidence'),('public.store_order_invoice_allocation')) p(tab) WHERE has_table_privilege(current_user,p.tab,'UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') OR has_any_column_privilege(current_user,p.tab,'UPDATE,REFERENCES')) AS ready`);
  return{ready:rows.length===1&&rows[0].ready===true,reason:rows.length===1&&rows[0].ready===true?'':'manager_refund_materialization_runtime_unreviewed'};
 }

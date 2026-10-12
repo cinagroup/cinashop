@@ -1,4 +1,5 @@
 import {and,eq,sql} from 'drizzle-orm';
+import type {PgTable} from 'drizzle-orm/pg-core';
 import {randomUUID} from 'node:crypto';
 import {customerWorkFinancialFixture} from './customerWorkFinancialFixture';
 import {runCustomerWriteoffOperation} from '../../src/migrations/runCustomerWriteoffOperation';
@@ -11,12 +12,13 @@ import {createCustomerCashierSecondCardWithRuntime,applyCustomerCashierCashPayme
 import {OrderOutboxService} from '../../src/services/order/OrderOutboxService';
 import type {StoreOrderCreationRuntime} from '../../src/services/order/StoreOrderCreateService';
 import {installCashierSecondCardPromotionLock,inspectCashierSecondCardPromotionLock,cashierSecondCardPromotionLockGrantSql} from '../../src/migrations/cashierSecondCardPromotionLock';
+import {runCashierSecondCardAbandon,cashierSecondCardAbandonReadiness,inspectCashierSecondCardAbandon} from '../../src/migrations/runCashierSecondCardAbandon';
 
 /** Reuses the maintained PG16 column/checkout authority fixture, then grants
  * only these new append-only tables to its existing independently logged-in
  * customer role. Maintenance never executes a business create/payment. */
-export async function customerCashierSecondCardFixture(){
-  const f=await customerWorkFinancialFixture();
+export async function customerCashierSecondCardFixture(extraTables:PgTable[]=[]){
+  const f=await customerWorkFinancialFixture(extraTables);
   try{
     // The inherited fixture intentionally provides columns. These actual ORM
     // indexes are required by the unchanged paid-event and reconciliation
@@ -24,9 +26,9 @@ export async function customerCashierSecondCardFixture(){
     const kit=await import('drizzle-kit/api');
     for(const statement of await kit.generateMigration(kit.generateDrizzleJson({}),kit.generateDrizzleJson({storeOrderEconomize,paymentReconciliationCase,storeOrderPromotions})))
       if(/^CREATE (?:UNIQUE )?INDEX/.test(statement.trim()))await f.exec(statement);
-    await runCustomerWriteoffOperation(f.maintenanceDb);await runCashierSecondCardOrigin(f.maintenanceDb);
+    await runCustomerWriteoffOperation(f.maintenanceDb);await runCashierSecondCardOrigin(f.maintenanceDb);await runCashierSecondCardAbandon(f.maintenanceDb);
     const target=`"${f.role}"`;
-    for(const table of ['customer_writeoff_operation_request',...CASHIER_SECOND_CARD_TABLES])await f.exec(`GRANT SELECT,INSERT ON public."${table}" TO ${target}`);
+    for(const table of ['customer_writeoff_operation_request',...CASHIER_SECOND_CARD_TABLES,'cashier_second_card_abandon_v1'])await f.exec(`GRANT SELECT,INSERT ON public."${table}" TO ${target}`);
     const profile=cashierSecondCardRuntimePrivilegePlan(),promotionPrivileges=profile.tables.store_order_promotions;
     if(JSON.stringify(CASHIER_SECOND_CARD_PURCHASE_APPEND_TABLES)!==JSON.stringify(['store_order_promotions'])||JSON.stringify(promotionPrivileges)!==JSON.stringify(['SELECT','INSERT'])||JSON.stringify(profile.updateColumns.store_order_promotions)!==JSON.stringify(['id']))throw Error('Reviewed cashier profile lacks exact append/read and guarded-id order-promotion capability');
     await f.exec(`GRANT ${promotionPrivileges.join(',')} ON public.store_order_promotions TO ${target}`);
@@ -38,8 +40,11 @@ export async function customerCashierSecondCardFixture(){
     await f.exec(cashierSecondCardPromotionLockGrantSql(f.role));
     for(const fn of [...CUSTOMER_WRITEOFF_FUNCTIONS,...CASHIER_SECOND_CARD_FUNCTIONS])await f.exec(`GRANT EXECUTE ON FUNCTION public.${fn} TO ${target}`);
     if(!(await cashierSecondCardOriginReadiness(f.db)).ready)throw Error('Actual cashier customer LOGIN is not commissioned');
+    const abandon=await cashierSecondCardAbandonReadiness(f.db);
+    if(!abandon.ready){console.log(JSON.stringify({protocol:'customer-cashier-abandon-commissioning-v1',catalog:await inspectCashierSecondCardAbandon(f.maintenanceDb),readiness:abandon}));
+      throw Error('Actual cashier abandonment customer LOGIN is not commissioned');}
     const reset=async(price='7.00')=>{
-      await f.exec('TRUNCATE public.cashier_second_card_cart_v1,public.cashier_second_card_origin_v1,public.cashier_second_card_payment_v1,public.customer_writeoff_operation_request');
+      await f.exec('TRUNCATE public.cashier_second_card_abandon_v1,public.cashier_second_card_cart_v1,public.cashier_second_card_origin_v1,public.cashier_second_card_payment_v1,public.customer_writeoff_operation_request');
       await f.exec('ALTER TABLE public.store_order_purchase_origin DISABLE TRIGGER USER;TRUNCATE public.store_order_purchase_origin;ALTER TABLE public.store_order_purchase_origin ENABLE TRIGGER USER');
       await f.reset();await f.maintenanceDb.delete(storeCart);await f.maintenanceDb.delete(storeOrderCartInfo);await f.maintenanceDb.delete(storeOrder);
       await f.maintenanceDb.delete(storeOrderStatus);await f.maintenanceDb.delete(storeOrderPromotions);await f.maintenanceDb.delete(paymentReconciliationCase);

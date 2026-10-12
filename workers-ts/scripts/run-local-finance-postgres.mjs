@@ -1,6 +1,8 @@
 /** Dedicated PostgreSQL16 test host. No installer, system service, production
  * URL, persistent environment edit or automatic deletion. Keep stopped cluster
- * logs under ignored .cache for diagnostics. Supply an already trusted bin dir. */
+ * logs under ignored .cache for diagnostics. Supply an already trusted bin dir.
+ * TEST_FINANCE_LOCAL_CACHE_ROOT optionally chooses an absolute local directory
+ * when the checkout is on a Windows share; only a new unique child is owned. */
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync, unlinkSync, openSync, closeSync, readFileSync } from 'node:fs';
@@ -69,6 +71,13 @@ if (schemaMaintenance) {
     'test/cashier-second-card-origin-postgres.test.ts',
     'test/customer-work-writeoff-postgres.test.ts',
     'test/customer-cashier-second-card-postgres.test.ts',
+    'test/customer-cashier-records-postgres.test.ts',
+    'test/customer-cashier-write-ui-postgres.test.ts',
+    'test/customer-cashier-form-images-postgres.test.ts',
+    'test/customer-cashier-abandon-postgres.test.ts',
+    'test/customer-work-cash-refund-postgres.test.ts',
+    'test/customer-work-legacy-cash-payment-postgres.test.ts',
+    'test/customer-work-offline-origin-refund-postgres.test.ts',
     'test/customer-work-writeoff-mature-scenarios-postgres.test.ts',
     // Exact full consumer regressions for the independent customer writeoff
     // follow-up; maintenance still targets only this new disposable cluster.
@@ -253,6 +262,9 @@ if (schemaMaintenance) {
     'test/shipping-lifecycle-interactions.test.ts', 'test/shipping-lifecycle-indexes.test.ts',
     'test/shipping-lifecycle-migration.test.ts', 'test/kefu-sequence-runner.test.ts', 'audit:orm',
     'test/invoice-issuance-permissions.test.ts',
+    'test/invoice-issuance-evidence.test.ts',
+    'test/split-invoice-allocation.test.ts',
+    'test/order-invoice-concurrency.test.ts',
     'test/invoice-evidence-migration.test.ts',
     'test/invoice-evidence-registration.test.ts',
     'test/refund-split-migration.test.ts',
@@ -445,6 +457,20 @@ const suffix = process.platform === 'win32' ? '.exe' : '';
 const binary = name => join(bin, `${name}${suffix}`);
 for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) assert.ok(existsSync(binary(name)), `Missing ${name}`);
 
+const cacheOverride = process.env.TEST_FINANCE_LOCAL_CACHE_ROOT;
+assert.ok(cacheOverride === undefined || (cacheOverride.length > 0 && isAbsolute(cacheOverride)),
+  'TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
+function assertLocalCache(path) {
+  if (process.platform !== 'win32') return;
+  assert.ok(!path.startsWith('\\\\') && !path.startsWith('//'),
+    'Windows PostgreSQL cache cannot use a UNC path; set TEST_FINANCE_LOCAL_CACHE_ROOT to an absolute local drive directory');
+  assert.match(path, /^[a-z]:[\\/]/i,
+    'TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute local drive directory on Windows');
+}
+if (cacheOverride !== undefined) assertLocalCache(cacheOverride);
+const cacheCandidate = resolve(cacheOverride ?? resolve(workerRoot, '../.cache'));
+assertLocalCache(cacheCandidate);
+
 function command(file, args, options = {}) {
   const result = spawnSync(file, args, {
     cwd: workerRoot, encoding: 'utf8', windowsHide: true, timeout: 30_000,
@@ -464,8 +490,9 @@ const reservation = createServer();
 await new Promise((done, fail) => { reservation.once('error', fail); reservation.listen(0, '127.0.0.1', done); });
 const port = reservation.address().port;
 await new Promise((done, fail) => reservation.close(error => error ? fail(error) : done()));
-const cache = resolve(workerRoot, '../.cache');
-mkdirSync(cache, { recursive: true });
+mkdirSync(cacheCandidate, { recursive: true });
+const cache = realpathSync(cacheCandidate);
+assertLocalCache(cache);
 const taskRoot = mkdtempSync(join(cache, 'finance-postgres-'));
 const relativeRoot = relative(cache, taskRoot);
 assert.ok(relativeRoot && !relativeRoot.startsWith('..') && !isAbsolute(relativeRoot));

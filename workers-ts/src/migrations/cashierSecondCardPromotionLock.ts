@@ -39,7 +39,7 @@ END`;
 /** Exact structural catalog, not a name-only trigger or an allowed UPDATE.
  * No server-produced fingerprint is guessed: all columns, indices, function,
  * trigger, owner, identity and ACL fields are inspected independently. */
-export function cashierSecondCardPromotionLockCatalogQuery(runtimeRole: string, schema = 'public') {
+function promotionLockCatalogQuery(runtimeRole: string, schema: string, manualOwner: number | null) {
   pricingIdentifier(runtimeRole); pricingIdentifier(schema);
   const body = cashierSecondCardPromotionLockBody(runtimeRole, schema);
   return sql`WITH RECURSIVE ns AS (SELECT * FROM pg_catalog.pg_namespace WHERE nspname=${schema}),
@@ -133,7 +133,8 @@ export function cashierSecondCardPromotionLockCatalogQuery(runtimeRole: string, 
       OR EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname=current_database() AND datdba=r.oid)) AS "roleSafe",
     NOT EXISTS(SELECT 1 FROM routines p CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) a WHERE a.grantee<>p.proowner)
     AND NOT EXISTS(SELECT 1 FROM target c CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-      WHERE a.grantee<>c.relowner AND(a.grantee=0 OR a.is_grantable OR a.privilege_type NOT IN('SELECT','INSERT')))
+      WHERE a.grantee<>c.relowner AND(a.grantee=0 OR a.is_grantable OR (a.privilege_type NOT IN('SELECT','INSERT')
+        AND NOT(a.privilege_type='DELETE' AND ${manualOwner}::oid IS NOT NULL AND a.grantee=${manualOwner}::oid))))
     AND NOT EXISTS(SELECT 1 FROM actual_columns c CROSS JOIN LATERAL pg_catalog.aclexplode(c.attacl) a
       LEFT JOIN pg_catalog.pg_roles r ON r.oid=a.grantee
       WHERE c.attname<>'id' OR a.privilege_type<>'UPDATE' OR a.is_grantable OR r.oid IS NULL OR NOT r.rolcanlogin
@@ -154,9 +155,29 @@ export function cashierSecondCardPromotionLockCatalogQuery(runtimeRole: string, 
         AND pg_catalog.has_column_privilege(a.oid,c.oid,col.attnum,'UPDATE')))
     AS "aclSafe",(SELECT oid::text FROM routines LIMIT 1) AS "functionOid",(SELECT oid::text FROM runtime) AS "runtimeOid"`;
 }
+/** Strict original query remains the installation/grant admission contract. */
+export function cashierSecondCardPromotionLockCatalogQuery(runtimeRole:string,schema='public'){
+  return promotionLockCatalogQuery(runtimeRole,schema,null);
+}
+/** Server-only composition query. Its caller must first verify the exact manual
+ * catalog and actual definer owner/ACL; an HTTP value never supplies this OID.
+ * Installation and grant compilers always use the strict original query. */
+export function reviewedManualRefundPromotionLockCatalogQuery(runtimeRole:string,owner:number){
+  if(!Number.isSafeInteger(owner)||owner<=0)throw Error('Reviewed manual promotion owner OID required');
+  return promotionLockCatalogQuery(runtimeRole,'public',owner);
+}
 
 export async function inspectCashierSecondCardPromotionLock(db: Query, runtimeRole: string, schema = 'public') {
-  const [row] = await db.execute(cashierSecondCardPromotionLockCatalogQuery(runtimeRole, schema));
+  let [row] = await db.execute(cashierSecondCardPromotionLockCatalogQuery(runtimeRole,schema));
+  // Only the exact commissioned manual protocol can admit its fixed constrained
+  // definer owner's sole DELETE. The runtime and every other grantee retain the
+  // original table ACL boundary. Absent/unreviewed ledgers admit no exception.
+  let manualOwner:number|null=null;
+  if(schema==='public'&&row?.aclSafe===false){
+    const {customerManualRefundReadiness}=await import('./runCustomerManualRefund');
+    if((await customerManualRefundReadiness(db)).ready){const [proof]=await db.execute<{owner:number}>(sql`SELECT proowner::integer AS owner FROM pg_catalog.pg_proc WHERE oid='public.customer_manual_refund_promotion_delete_v1(integer,integer)'::regprocedure`);if(Number.isSafeInteger(proof?.owner)&&proof.owner>0)manualOwner=proof.owner;}
+  }
+  if(manualOwner!==null)[row]=await db.execute(promotionLockCatalogQuery(runtimeRole,schema,manualOwner));
   const state = { absent: row?.absent === true, tablesSafe: row?.tablesSafe === true, definitionSafe: row?.definitionSafe === true,
     triggerSafe: row?.triggerSafe === true, ownerSafe: row?.ownerSafe === true, roleSafe: row?.roleSafe === true,
     aclSafe: row?.aclSafe === true, functionOid: typeof row?.functionOid === 'string' ? row.functionOid : null,

@@ -312,27 +312,30 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
     });
   }, 60_000);
 
-  it('rolls back if an editor rebinds the product after the form lock but before inventory admission', async () => {
+  it('rolls back if an editor rebinds the product after the fast form read before inventory admission', async () => {
     await scenario(async client => {
       await f.db.insert(systemForm).values({ id: 78, name: 'Rebound local form', value: JSON.stringify(template), status: 1 });
       const { body, quote } = await client.confirm(11), image = await client.upload(quote.orderKey, 11);
       const beforeStock = await f.exec('SELECT stock,sales FROM store_product WHERE id=70');
       const beforeOther = await f.state();
       delete beforeOther.store_product;
-      const original = orderForms.loadOrderSystemFormSubmission;
+      const original = orderForms.loadActiveOrderSystemForm;
       let rebound = false;
-      const hook = vi.spyOn(orderForms, 'loadOrderSystemFormSubmission').mockImplementationOnce(async (...args) => {
-        const prepared = await original(...args);
+      const hook = vi.spyOn(orderForms, 'loadActiveOrderSystemForm').mockImplementationOnce(async (...args) => {
+        const definition = await original(...args);
+        // The existing promotion transaction pins the product before form
+        // submission. An independent editor can commit at this fast read,
+        // after the old product/form facts were read and before that lock.
         await f.withPeer(async peer => { await peer.exec('UPDATE store_product SET system_form_id=78 WHERE id=70'); });
         rebound = true;
-        return prepared;
+        return definition;
       });
       let stale: Reply<unknown>;
       try {
         stale = await client.post(`create/${quote.orderKey}/11`, { ...body, quoteToken: quote.quoteToken,
           customForm: answers(`/api/assets/${image.att_id}`) });
       } finally { hook.mockRestore(); }
-      expect(rebound).toBe(true);
+      expect(rebound, JSON.stringify(stale)).toBe(true);
       expect(stale).toMatchObject({ status: 400,
         data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: quote.orderKey } });
       const afterOther = await f.state();

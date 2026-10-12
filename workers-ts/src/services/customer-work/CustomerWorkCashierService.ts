@@ -15,6 +15,12 @@ import { type CheckoutConfirmation, OrderQuoteReconfirmRequired } from '@/servic
 import { lockOrderSettlement } from '@/services/order/OrderBrokerageService';
 import { hasInitiatedAssistedProviderPayment } from '@/services/payment/AssistedProviderPaymentClaim';
 import { OrderOutboxService } from '@/services/order/OrderOutboxService';
+import { CustomerWorkCashierCatalog, publicCashierSystemForm } from './CustomerWorkCashierCatalog';
+import { CustomerWorkCashierReadService } from './CustomerWorkCashierReadService';
+import { freezeCashierFormSession, cashierFormBaseReadiness } from './CustomerCashierFormImages';
+import { cashierSecondCardAbandonReadiness } from '@/migrations/runCashierSecondCardAbandon';
+import { CUSTOMER_CASHIER_ABANDON_VERSION,lockCashierOperationRequest,assertCashierNotAbandoned,readCashierAbandonment,
+  parseCashierAbandonIntent,cashierAbandonIntentJson,checkCashierCreationAbandonBinding,type CashierOperationKind } from './CustomerCashierAbandon';
 
 export const CUSTOMER_CASHIER_VERSION='customer-cashier-second-card-v1' as const;
 export const CUSTOMER_CASHIER_PAYMENT_VERSION='customer-cashier-second-card-payment-v1' as const;
@@ -40,17 +46,28 @@ function parseInput(value:unknown):CustomerCashierInput{const r=object(value,bod
     user_phone:string(r.user_phone,20),mark:string(r.mark,512,true),custom_form:freezeCustomerJson(r.custom_form,65536),
     coupon_id:integer(r.coupon_id,true),use_integral:r.use_integral});}
 async function admission(db:DbClient,actor:CustomerWorkActor,scopeKey:string){await assertCashierSecondCardOriginCatalog(db);
+  if(!(await cashierSecondCardAbandonReadiness(db)).ready)throw new HttpApiException('收银耐久放弃台账结构或完整写权限尚未验收',503,503);
   if(!(await cashierSecondCardOriginReadiness(db)).ready)throw new HttpApiException('客户次卡收银权限尚未验收',503,503);
+  if(!(await cashierFormBaseReadiness(db)).ready)throw new HttpApiException('客户次卡图片来源读取权限尚未验收',503,503);
   const scope=await authorizeCustomerWorkActor(db,actor);if(scope.scope_key!==scopeKey)throw new HttpApiException('客户收银身份已变化，请重新读取',403,403);return scope;}
 async function lockRequest(tx:DbClient,actor:CustomerWorkActor,key:string){await tx.execute(sql`SET LOCAL row_security=off`);
   await tx.execute(sql`SELECT set_config('lock_timeout','1500ms',true),set_config('statement_timeout','5000ms',true)`);
   const h=await outRequestHash([actor.uid,key]);await tx.execute(sql`SELECT pg_advisory_xact_lock(731688::int,${parseInt(h.slice(0,8),16)|0}::int)`);}
+export { parseInput as parseCustomerCashierInput };
+export function parseCustomerCashierPaymentBody(value:unknown) {
+ const r=object(value,['version','scope_key','order_id','order_no','expected_amount']);
+ if(r.version!==CUSTOMER_CASHIER_PAYMENT_VERSION)throw new ValidateException('次卡收银付款版本无效');
+ const scope_key=digest(r.scope_key),order_id=integer(r.order_id),order_no=string(r.order_no,32),expected_amount=string(r.expected_amount,13);
+ if(!/^[A-Za-z0-9_-]+$/.test(order_no)||!/^(0|[1-9]\d{0,9})\.\d{2}$/.test(expected_amount))throw new ValidateException('付款订单号或金额格式无效');
+ return Object.freeze({version:CUSTOMER_CASHIER_PAYMENT_VERSION,scope_key,order_id,order_no,expected_amount});
+}
 
 /** This mutation creates one actual customer-owned draft cart. Existing Admin
  * cart staff IDs never provide the independent customer draft proof. */
 export async function prepareCustomerCashierDraft(container:Container,actorValue:CustomerWorkActor,keyValue:unknown,value:unknown){
   const actor=freezeCustomerActor(actorValue),key=normalizeOutRequestKey(keyValue),input=parseInput(value),request_hash=await outRequestHash(input);
   return withTx(container,async tx=>{await admission(tx,actor,input.scope_key);await lockRequest(tx,actor,key);
+    await assertCashierNotAbandoned(tx,actor.uid,key,'creation',request_hash);
     await tx.execute(sql`LOCK TABLE public.cashier_second_card_cart_v1 IN ROW SHARE MODE NOWAIT`);
     await authorizeCustomerOperationOwner(tx,actor);await acquireCustomerWorkScopeLock(tx,actor.uid);await admission(tx,actor,input.scope_key);
     const previous=await tx.execute<{cart_id:number;request_hash:string;buyer_uid:number;tourist_hash:string}>(sql`SELECT cart_id,request_hash,buyer_uid,tourist_hash
@@ -58,6 +75,7 @@ export async function prepareCustomerCashierDraft(container:Container,actorValue
     if(previous.length){if(previous.length!==1||previous[0].request_hash!==request_hash||previous[0].buyer_uid!==input.buyer_uid
       ||previous[0].tourist_hash!==await outRequestHash(input.tourist_key))throw new HttpApiException('原收银请求已绑定其他内容',409,409);
       return {cart_id:previous[0].cart_id,request_hash,replayed:true};}
+    await freezeCashierFormSession(tx,actor,key,input,request_hash);
     if(input.buyer_uid>0){const rows=await tx.select({uid:user.uid}).from(user).where(and(eq(user.uid,input.buyer_uid),eq(user.status,1),eq(user.isDel,0),sql`${user.deleteTime} IS NULL`)).limit(1).for('share',{noWait:true});if(rows.length!==1)throw new ValidateException('购买用户已失效');}
     const[cart]=await tx.insert(storeCart).values({uid:input.buyer_uid,touristUid:input.tourist_key,staffId:actor.uid,
       productId:input.product_id,productType:4,productAttrUnique:input.sku_unique,cartNum:input.quantity,type:0,isNew:1,addTime:Math.floor(Date.now()/1000)}).returning();
@@ -93,11 +111,16 @@ async function readQuote(runtime:StoreOrderCreationRuntime,actor:CustomerWorkAct
   return{fingerprint:digest(r.fingerprint),expiresAt:r.expiresAt};}
 export async function quoteCustomerCashierSecondCard(container:Container,runtime:StoreOrderCreationRuntime,actorValue:CustomerWorkActor,keyValue:unknown,value:unknown){
   const actor=freezeCustomerActor(actorValue),key=normalizeOutRequestKey(keyValue),input=parseInput(value);await admission(container.db,actor,input.scope_key);
+  await assertCashierNotAbandoned(container.db,actor.uid,key,'creation',await outRequestHash(input));
   const c=await cartCapability(container,actor,key,input);
   const quote=await StoreOrderCreateService.createWithRuntime(container,{...runtime,cashierSecondCardCreation:c.capability},coreParams(input,key,c.cart_id),{preview:true});
-  await admission(container.db,actor,input.scope_key);return{quote,quote_token:await issueQuote(runtime,actor,key,input,quote)};}
+  const quoteToken=await withTx(container,async tx=>{await lockCashierOperationRequest(tx,actor.uid,key);await admission(tx,actor,input.scope_key);
+    await assertCashierNotAbandoned(tx,actor.uid,key,'creation',await outRequestHash(input));return issueQuote(runtime,actor,key,input,quote);});return{quote,quote_token:quoteToken,
+    pricing:{amount:(quote.payCents/100).toFixed(2),total:(quote.totalCents/100).toFixed(2),quantity:quote.totalNum},
+    card:quote.card,system_form:publicCashierSystemForm(quote.systemForm??null)};}
 export async function createCustomerCashierSecondCard(container:Container,runtime:StoreOrderCreationRuntime,actorValue:CustomerWorkActor,keyValue:unknown,value:unknown,token:unknown){
   const actor=freezeCustomerActor(actorValue),key=normalizeOutRequestKey(keyValue),input=parseInput(value);await admission(container.db,actor,input.scope_key);
+  await assertCashierNotAbandoned(container.db,actor.uid,key,'creation',await outRequestHash(input));
   const existing=await container.storeOrderDao.findByUnique(input.buyer_uid,key.replaceAll('-',''));
   const c=await cartCapability(container,actor,key,input,existing?undefined:await readQuote(runtime,actor,key,input,token));
   return StoreOrderCreateService.createWithRuntime(container,{...runtime,requirePurchaseOrigin:true,cashierSecondCardCreation:c.capability},coreParams(input,key,c.cart_id));}
@@ -119,6 +142,7 @@ export async function applyCustomerCashierCashPayment(container:Container,actorV
   if(!/^[A-Za-z0-9_-]+$/.test(orderNo)||!/^(0|[1-9]\d{0,9})\.\d{2}$/.test(amount))throw new ValidateException('付款订单号或金额格式无效');
   const request_hash=await outRequestHash({version:CUSTOMER_CASHIER_PAYMENT_VERSION,scope_key:scopeKey,order_id:orderId,order_no:orderNo,expected_amount:amount});
   return withTx(container,async tx=>{await assertCashierSecondCardOriginCatalog(tx);await lockRequest(tx,actor,key);
+    await assertCashierNotAbandoned(tx,actor.uid,key,'payment',request_hash);
     await tx.execute(sql`LOCK TABLE public.cashier_second_card_payment_v1 IN ROW SHARE MODE NOWAIT`);
     await lockOrderSettlement(tx,orderId);const[order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,orderId)).limit(1).for('update');
     await authorizeCustomerOperationOwner(tx,actor);
@@ -152,8 +176,62 @@ export class CustomerWorkCashierService {
   constructor(readonly container:Container,readonly env:Env){this.runtime={CONFIG_KV:env.CONFIG_KV,requirePurchaseOrigin:true,nextOrderId:async()=>{
     const seq=env.SEQUENCE.get(env.SEQUENCE.idFromName('seq'));return(await(await seq.fetch('https://internal/next-order-id?prefix=wx')).text()).trim();}};}
   draft(actor:CustomerWorkActor,key:unknown,input:unknown){return prepareCustomerCashierDraft(this.container,actor,key,input);}
+  catalog(actor:CustomerWorkActor,query:Record<string,string>={}){return new CustomerWorkCashierCatalog(this.container,this.env).list(actor,query);}
+  selection(actor:CustomerWorkActor,id:unknown,query:Record<string,string>={}){return new CustomerWorkCashierCatalog(this.container,this.env).selection(actor,id,query);}
+  async abandon(actorValue:CustomerWorkActor,keyValue:unknown,value:unknown,headerKey:unknown) {
+    const actor=freezeCustomerActor(actorValue),key=normalizeOutRequestKey(keyValue),body=object(value,['version','kind','intent']);
+    if(normalizeOutRequestKey(headerKey)!==key||body.version!==CUSTOMER_CASHIER_ABANDON_VERSION||typeof body.kind!=='string'||!['creation','payment'].includes(body.kind))
+      throw new ValidateException('耐久放弃必须绑定原收银版本、操作种类及请求编号');
+    const kind=body.kind as CashierOperationKind,intent=parseCashierAbandonIntent(kind,body.intent),hash=await outRequestHash(intent);
+    return withTx(this.container,async tx=>{
+      await lockCashierOperationRequest(tx,actor.uid,key);await authorizeCustomerOperationOwner(tx,actor);
+      if(!(await cashierSecondCardAbandonReadiness(tx)).ready)throw new HttpApiException('收银耐久放弃台账权限尚未验收',503,503);
+      await assertCashierSecondCardOriginCatalog(tx);
+      if(kind==='creation') {
+        const creation=intent as CustomerCashierInput;
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`cinashop:create-order:${creation.buyer_uid}:${key.replaceAll('-','')}`},0::bigint))`);
+      } else {
+        const payment=intent as ReturnType<typeof parseCustomerCashierPaymentBody>;
+        await lockOrderSettlement(tx,payment.order_id);
+        await tx.select({id:storeOrder.id}).from(storeOrder).where(eq(storeOrder.id,payment.order_id)).limit(1).for('update');
+      }
+      const reader=new CustomerWorkCashierReadService(this.container,this.env),receipt=await reader.verifiedReceipt(tx,actor,key,kind),prior=await readCashierAbandonment(tx,actor.uid,key,kind);
+      if(receipt&&prior)throw new ValidateException('原收银成功与放弃证明同时存在，请保留原编号核对');
+      if(receipt){if(receipt.request_hash!==hash)throw new HttpApiException('原收银成功请求已绑定其他内容',409,409);
+        return{version:'customer-cashier-receipt-v1' as const,actor_uid:actor.uid,request_key:key,kind,receipt,abandonment:null,replayed:true};}
+      if(prior){if(prior.request_hash!==hash)throw new HttpApiException('原收银放弃请求已绑定其他内容',409,409);
+        return{version:'customer-cashier-receipt-v1' as const,actor_uid:actor.uid,request_key:key,kind,receipt:null,abandonment:prior,replayed:true};}
+      if(kind==='creation')await checkCashierCreationAbandonBinding(tx,actor.uid,key,intent as CustomerCashierInput,hash);
+      else {
+        const payment=intent as ReturnType<typeof parseCustomerCashierPaymentBody>;
+        const origins=await tx.execute<{request_key:string}>(sql`SELECT request_key::text FROM public.cashier_second_card_origin_v1 WHERE actor_uid=${actor.uid} AND order_id=${payment.order_id} LIMIT 2`);
+        if(origins.length!==1)throw new ValidateException('原收银付款订单缺少实际创建来源');
+        const created=await reader.verifiedReceipt(tx,actor,origins[0].request_key,'creation');
+        if(!created||created.order.order_no!==payment.order_no)throw new ValidateException('原收银付款物理订单或业务单号无法核对');
+        const payments=await tx.execute<{request_key:string}>(sql`SELECT request_key::text FROM public.cashier_second_card_payment_v1 WHERE order_id=${payment.order_id} LIMIT 2`);
+        if(payments.length){if(payments.length!==1||!await reader.verifiedReceipt(tx,actor,payments[0].request_key,'payment'))throw new ValidateException('实际原收银付款无法核对');}
+        else {
+          const audits=await tx.select({id:storeOrderStatus.id}).from(storeOrderStatus).where(and(eq(storeOrderStatus.oid,payment.order_id),eq(storeOrderStatus.changeType,'customer_cashier_paid'))).limit(1);
+          const events=await tx.select({id:storeOrderOutbox.id}).from(storeOrderOutbox).where(eq(storeOrderOutbox.eventKey,`order.paid:${payment.order_id}`)).limit(1);
+          if(created.order.paid===1||audits.length||events.length)throw new HttpApiException('实际原付款效果存在但原编号证明无法核对，请继续核对',409,409);
+        }
+      }
+      const intentJson=cashierAbandonIntentJson(intent);
+      await tx.execute(sql`INSERT INTO public.cashier_second_card_abandon_v1(actor_uid,request_key,kind,request_hash,scope_key,intent,intent_json)
+        VALUES(${actor.uid},${key}::uuid,${kind},${hash},${intent.scope_key},${intentJson}::jsonb,${intentJson})`);
+      const abandonment=await readCashierAbandonment(tx,actor.uid,key,kind);if(!abandonment)throw Error('Actual cashier abandonment did not persist');
+      return{version:'customer-cashier-receipt-v1' as const,actor_uid:actor.uid,request_key:key,kind,receipt:null,abandonment,replayed:false};
+    });
+  }
   quote(actor:CustomerWorkActor,key:unknown,input:unknown){return quoteCustomerCashierSecondCard(this.container,this.runtime,actor,key,input);}
-  create(actor:CustomerWorkActor,key:unknown,input:unknown,token:unknown){return createCustomerCashierSecondCard(this.container,this.runtime,actor,key,input,token);}
+  async create(actor:CustomerWorkActor,key:unknown,input:unknown,token:unknown){
+    const result=await createCustomerCashierSecondCard(this.container,this.runtime,actor,key,input,token);
+    const receipt=await withTx(this.container,async db=>{await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true)`);
+      return new CustomerWorkCashierReadService(this.container,this.env).verifiedReceipt(db,actor,normalizeOutRequestKey(key),'creation');});
+    if(!receipt||receipt.order.order_no!==result.orderId)throw new ValidateException('实际收银创建结果无法核对，请保留原请求查询');
+    await authorizeCustomerWorkActor(this.container.db,actor);return {...result,receipt};
+  }
   async cash(actor:CustomerWorkActor,input:CustomerCashierPaymentInput){const result=await applyCustomerCashierCashPayment(this.container,actor,input);
     if(result.outbox){try{await new OrderOutboxService(this.container,this.env).dispatchById(result.outbox.id);}catch{/* The durable original event remains available for the existing retry worker. */}}
     return result;}

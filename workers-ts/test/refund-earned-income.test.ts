@@ -36,6 +36,12 @@ it('returns every credited residual unit at full allocation, regardless of today
 
 it('keeps a pending-income scope explicitly null', () => { expect(readRefundEarnedIncomeScope(null)).toBeNull(); });
 
+it('retains buyer zero as an accountless received-order identity while keeping entity IDs and bounds strict',()=>{
+  const guest={...scope(),uid:0,productIntegral:0,brokerage:Object.fromEntries(Object.keys(scope().brokerage).map(key=>[key,0]))};expect(readRefundEarnedIncomeScope(guest)).toMatchObject({uid:0,productIntegral:0});
+  for(const uid of[-1,'0',2147483648,0.5])expect(()=>readRefundEarnedIncomeScope({...guest,uid})).toThrow();
+  expect(()=>readRefundEarnedIncomeScope({...guest,refundId:0})).toThrow();
+});
+
 it.each(['version', 'id-zero', 'uid-string', 'fraction', 'overflow', 'missing', 'extra', 'array', 'alias-mismatch', 'missing-type'])
   ('rejects malformed income scope %s', kind => {
   const input: Record<string, unknown> = scope();

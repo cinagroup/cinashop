@@ -43,7 +43,7 @@ export function readRefundQuantityReservation(refund: Refund): Reservation | nul
   const snapshot = object(value, ['cartIds', 'quantityReservation']);
   const r = object(snapshot.quantityReservation, ['version', 'orderId', 'uid', 'items']);
   if ((r.version !== VERSION && r.version !== MATERIALIZED_REFUND_VERSION&&r.version!==CUSTOMER_ROW_REFUND_VERSION) || r.orderId !== refund.storeOrderId || r.uid !== refund.uid) throw invalid();
-  const rowNamespace=r.version===CUSTOMER_ROW_REFUND_VERSION,orderId = integer(r.orderId), uid = integer(r.uid), selected = selections(snapshot.cartIds,rowNamespace);
+  const rowNamespace=r.version===CUSTOMER_ROW_REFUND_VERSION,orderId = integer(r.orderId), uid = integer(r.uid,rowNamespace), selected = selections(snapshot.cartIds,rowNamespace);
   if (!Array.isArray(r.items) || r.items.length !== selected.length) throw invalid();
   const items = r.items.map(value => {
     const c = object(value, ['rowId', 'cartId', 'cartNum', 'beforeRefundNum', 'totalNum',...(rowNamespace?['sourceCartId']:[])]);
@@ -64,8 +64,9 @@ function transaction(tx: DbClient) {
  * counter update and snapshot/application insert commit (or roll back) together. */
 export async function reserveRefundQuantities(tx: DbClient, order: { id: number; uid: number }, input: readonly Selection[],
   version: Reservation['version'] = VERSION): Promise<string> {
-  transaction(tx); integer(order.id); integer(order.uid);
-  const rowNamespace=version===CUSTOMER_ROW_REFUND_VERSION,selected = selections(input,rowNamespace);
+  transaction(tx); integer(order.id);
+  const rowNamespace=version===CUSTOMER_ROW_REFUND_VERSION;integer(order.uid,rowNamespace);
+  const selected = selections(input,rowNamespace);
   const rows = await tx.select().from(storeOrderCartInfo)
     .where(and(eq(storeOrderCartInfo.oid, order.id), rowNamespace?inArray(storeOrderCartInfo.id,selected.map(row=>row.cartId)):inArray(storeOrderCartInfo.cartId, selected.map(row => String(row.cartId)))))
     .orderBy(asc(storeOrderCartInfo.id)).for('update');

@@ -218,6 +218,32 @@ npm test
 npm run typecheck       # 普通源码与 runtime 测试分别检查
 ```
 
+#### 独立 PostgreSQL 16 验证
+
+`scripts/run-local-finance-postgres.mjs` 使用已核验的 PostgreSQL 16 二进制，
+每次新建唯一测试集群，核对本机回环地址、端口和数据目录，结束时核对夹具残留并停机。
+默认缓存根目录是仓库根目录的 `.cache`；可用进程环境变量
+`TEST_FINANCE_LOCAL_CACHE_ROOT` 改为另一个绝对目录，不连接已有业务数据库。
+
+Windows 从 UNC 网络共享目录打开 checkout 时，须把该变量指向本机盘绝对路径；
+此 runner 在创建集群前拒绝 UNC 缓存目录，并核对解析后的实际路径。
+这是本 Windows 测试 runner 的准入约束，不用于判定其他部署中的网络文件系统是否满足
+PostgreSQL 要求。依赖缓存及归档报告可以另留网络共享目录；该变量仅控制新测试集群
+及其诊断文件的根目录。
+
+在 `workers-ts` 目录运行以下 PowerShell 示例，先把两处 `C:\path\to\...` 占位路径
+替换为本机缓存目录及可信 PostgreSQL 16 `bin` 目录。维护模式仅适用于本次新建的
+独立集群，四个次卡收银测试文件均完整执行：
+
+```powershell
+$env:TEST_FINANCE_LOCAL_CACHE_ROOT = 'C:\path\to\local-pg16-cache'
+node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests 'C:\path\to\trusted-pg16\bin' `
+  test/customer-cashier-form-images-postgres.test.ts `
+  test/customer-cashier-second-card-postgres.test.ts `
+  test/customer-cashier-write-ui-postgres.test.ts `
+  test/customer-cashier-records-postgres.test.ts
+```
+
 `test:runtime` 使用 `wrangler.test.toml` 的本地 Miniflare 绑定，不连接生产
 Hyperdrive、KV 或 Queue。Windows 运行 workerd 前需安装最新版 Microsoft Visual C++
 2015-2022 x64 Redistributable；旧版 `msvcp140.dll` / `vcruntime140.dll` 会在

@@ -11,6 +11,8 @@ import {eq} from 'drizzle-orm';
 import {HttpApiException} from '@/utils/errors';
 import {assertCashierSecondCardOriginCatalog} from '@/migrations/runCashierSecondCardOrigin';
 import {CustomerWorkCashierService, type CustomerCashierPaymentInput} from '@/services/customer-work/CustomerWorkCashierService';
+import {CustomerWorkCashierReadService} from '@/services/customer-work/CustomerWorkCashierReadService';
+import {readCashierAbandonment,CUSTOMER_CASHIER_ABANDON_VERSION} from '@/services/customer-work/CustomerCashierAbandon';
 import {customerWorkActor} from './CustomerWorkController';
 type C=Context<{Bindings:Env;Variables:AppVariables}>;
 function input(c:C){c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');
@@ -36,11 +38,28 @@ async function receipt(c:C,kind:'creation'|'payment'){const s=input(c),key=norma
     if(s.actor.expires_at<=Math.floor(Date.now()/1000)||rows.length!==1||rows[0].status!==1||rows[0].isDel!==0||rows[0].deleteTime!==null
       ||rows[0].digest!==s.actor.auth_version)throw new HttpApiException('原收银会话已失效，请重新登录核对',403,403);};
   const data=await withTx(c.get('container'),async tx=>{await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+    await tx.execute(sql`SELECT set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true)`);
     await authorizeOwner(tx);await assertCashierSecondCardOriginCatalog(tx);
-    const rows=kind==='creation'?await tx.execute(sql`SELECT order_id,request_hash,origin_hash,origin AS evidence FROM public.cashier_second_card_origin_v1 WHERE actor_uid=${s.actor.uid} AND request_key=${key}::uuid LIMIT 2`)
-      :await tx.execute(sql`SELECT order_id,request_hash,evidence FROM public.cashier_second_card_payment_v1 WHERE actor_uid=${s.actor.uid} AND request_key=${key}::uuid LIMIT 2`);
-    if(rows.length>1)throw Error('Cashier receipt identity is ambiguous');return rows[0]??null;});
+    const verified=await new CustomerWorkCashierReadService(c.get('container'),c.env).verifiedReceipt(tx,s.actor,key,kind);
+    const abandonment=await readCashierAbandonment(tx,s.actor.uid,key,kind);
+    if(verified&&abandonment)throw new ValidateException('原收银成功和放弃事实冲突，请保留原编号核对');
+    return{receipt:verified,abandonment};});
   await authorizeOwner(c.get('container').db);
-  return jsonOk(c,{version:'customer-cashier-receipt-v1',request_key:key,actor_uid:s.actor.uid,kind,receipt:data});}
+  return jsonOk(c,{version:'customer-cashier-receipt-v1',request_key:key,actor_uid:s.actor.uid,kind,...data});}
 export async function cashierCreationStatus(c:C){return receipt(c,'creation');}
 export async function cashierPaymentStatus(c:C){return receipt(c,'payment');}
+async function abandon(c:C,kind:'creation'|'payment') {const s=input(c),r=object(await body(c),['version','kind','intent']);
+  if(r.version!==CUSTOMER_CASHIER_ABANDON_VERSION||r.kind!==kind)throw new ValidateException('收银放弃版本或操作类型与原路径不符');
+  return jsonOk(c,await s.service.abandon(s.actor,c.req.param('key'),r,c.req.header('Idempotency-Key')??''));}
+export async function cashierCreationAbandon(c:C){return abandon(c,'creation');}
+export async function cashierPaymentAbandon(c:C){return abandon(c,'payment');}
+
+function readInput(c:C){
+  c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');
+  if(Object.values(c.req.queries()).some(values=>values.length!==1))throw new ValidateException('收银查询参数不能重复');
+  return{actor:customerWorkActor(c),query:c.req.query(),service:new CustomerWorkCashierReadService(c.get('container'),c.env)};
+}
+export async function cashierRecords(c:C){const s=readInput(c);return jsonOk(c,await s.service.records(s.actor,s.query));}
+export async function cashierRecord(c:C){const s=readInput(c);return jsonOk(c,await s.service.record(s.actor,c.req.param('id'),s.query));}
+export async function cashierCatalog(c:C){const s=readInput(c);return jsonOk(c,await new CustomerWorkCashierService(c.get('container'),c.env).catalog(s.actor,s.query));}
+export async function cashierSelection(c:C){const s=readInput(c);return jsonOk(c,await new CustomerWorkCashierService(c.get('container'),c.env).selection(s.actor,c.req.param('id'),s.query));}

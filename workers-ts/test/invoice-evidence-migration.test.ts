@@ -11,6 +11,7 @@ import { MigrationService } from '../src/services/MigrationService';
 import { INVOICE_EVIDENCE_SQL, INVOICE_HISTORY_V1_SQL } from '../src/migrations/invoiceEvidence';
 import { INVOICE_CATALOG_VERSIONS as expected, INVOICE_EVIDENCE_CATALOG_SQL } from '../src/migrations/invoiceEvidenceCatalog';
 import { inspectInvoiceEvidence, runInvoiceEvidence } from '../src/migrations/runInvoiceEvidence';
+import { COMPLETE_CONSTRUCTION_COUNTS, completeConstructionTableNames } from './helpers/completeConstructionInventory';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('invoice evidence controlled PG16 installation', () => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -125,9 +126,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('invoice evidence
           await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       } else {
         const report=await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(176);
-        expect(report.executed.at(-1)).toBe('0175');
+        expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(178);
+        expect(report.executed.at(-1)).toBe('0177');
+        expect(report.executed).toEqual(Array.from({length:178},(_,i)=>String(i).padStart(4,'0')));
       }
+      expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
+      expect((await whole.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE \"C\"")).map(row=>row.name)).toEqual(completeConstructionTableNames(path));
       await whole.withRuntimeRole!(async peer => {
         await whole.exec(`GRANT SELECT,INSERT,UPDATE,DELETE ON public.store_order_invoice TO "${peer.role}";
           GRANT USAGE,SELECT ON SEQUENCE public.store_order_invoice_id_seq TO "${peer.role}"`);

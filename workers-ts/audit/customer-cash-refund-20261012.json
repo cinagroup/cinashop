@@ -1,0 +1,2158 @@
+{
+  "kind": "customer-cash-refund-local-candidate-validation",
+  "createdAtUtc": "2026-10-12T03:51:10.039Z",
+  "status": "local_candidate_validated_not_published",
+  "wholeMigrationComplete": false,
+  "supportedPaymentOrigins": [
+    "customer_cashier_paid",
+    "cw_financial_confirm_offline",
+    "complete original PHP cash/offline facts"
+  ],
+  "manualConfirmation": "Positive cash/offline requires cash_returned:true; zero forbids it. UID0 is a buyer identity, not an account or actor.",
+  "recovery": "Already-returned cash preserves original UUID and full body after unknown/temporary failure; non-cash terminal or abandonment evidence cannot close it.",
+  "sql": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\src\\migrations\\maintenance\\0180_customer_manual_refund.sql",
+    "bytes": 83145,
+    "sha256": "bf8931e928d54ad4009cfda2ac01c0ae5ebb7b7753ec8699c6a0fd2b61b2280e",
+    "registeredInHistoricalMigrations": false
+  },
+  "catalogPins": {
+    "manual": "2c7dbb48559779989d08382e71a65c6038d449d2a8f601e01fddddba36f1d5a6",
+    "financial": "b0c11112ff4f5fd8e86def727164324cfb7228549d4cdf4f8d59f8bf22095da6",
+    "historyGuest": "f0aac4be250c1e1800b50e4b274d629be0156048ca8383d25a2c90d41cb9f71c",
+    "allocationGuest": "aba9ff86c3f88283979765a86e0d39e8df53dde31926a1585c95e6e7c6a66395",
+    "splitGuest": "6d8d309a74d565d2389ce69d0573c3992589c9ff2ee8b15d72b0982ca90f5667",
+    "branchGuest": "ed0a0a41327ab4ac75ffd73ef8939e90548acc80a836ccc0d8ac8f349e09321d"
+  },
+  "consolidation": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\validation-consolidation-2026-10-12T03-50-50-583Z.json",
+    "sha256": "0b6dbc6e5200353f7a87ca838ea9048c9e2a7e76147c48bfab77c38785cca0c4",
+    "result": {
+      "kind": "customer-cash-refund-terminal-evidence-consolidation",
+      "createdAtUtc": "2026-10-12T03:50:50.583Z",
+      "plan": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\final-validation-plan-v12.json",
+        "sha256": "0db819ac85bf8c119c99345823597538fa1fb90b96d747fd0a65ce50a478e15d"
+      },
+      "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+      "localCandidateValidationPassed": true,
+      "wholeMigrationComplete": false,
+      "failures": [],
+      "finalSource": {
+        "manifest": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-unit-v9\\source-manifest.json",
+          "sha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc"
+        },
+        "inputCount": 3532,
+        "differences": [],
+        "allMatch": true
+      },
+      "types": [
+        {
+          "config": "tsconfig.json",
+          "resolution": "Default tsconfig.json resolved by full tsc --noEmit in the verified frozen project cwd.",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:20:27.936Z",
+            "completedAtUtc": "2026-10-12T03:23:38.039Z",
+            "mode": "types-unit",
+            "label": "final-types-unit-v9",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "--max-old-space-size=8192",
+              "node_modules/typescript/bin/tsc",
+              "--noEmit"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-types-unit-v9\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-types-unit-v9\\run.log",
+            "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "passed": true,
+            "environmentOverrides": {},
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-types-unit-v9\\receipt.json",
+              "sha256": "b6fe568014b41cb9fb9467f593d88e399fad68ad6d63bb587c8e6bf3cd007bac"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "config": "tsconfig.runtime-test.json",
+          "resolution": "Explicit full runtime test configuration.",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:20:24.338Z",
+            "completedAtUtc": "2026-10-12T03:22:42.208Z",
+            "mode": "types-runtime",
+            "label": "final-types-runtime-v9",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "--max-old-space-size=8192",
+              "node_modules/typescript/bin/tsc",
+              "-p",
+              "tsconfig.runtime-test.json",
+              "--noEmit"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-types-runtime-v9\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-types-runtime-v9\\run.log",
+            "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "passed": true,
+            "environmentOverrides": {},
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-types-runtime-v9\\receipt.json",
+              "sha256": "07da17246ee9239b1b40a77d79c86a1df7db1823021282a441ba37d1cca25316"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        }
+      ],
+      "ordinary": {
+        "kind": "cashier-cash-refund-local-worker-check",
+        "startedAtUtc": "2026-10-12T03:20:27.635Z",
+        "completedAtUtc": "2026-10-12T03:21:53.286Z",
+        "mode": "unit",
+        "label": "final-unit-v9",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/assisted-form-attachment-scope.test.ts",
+          "test/assisted-form-read.test.ts",
+          "test/checkout-confirmation-rules.test.ts",
+          "test/checkout-confirmation.test.ts",
+          "test/customer-work-read-independent-contract.test.ts",
+          "test/customer-work-writeoff-sale-price.test.ts",
+          "test/second-card-product.test.ts",
+          "test/second-card-validity.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/customer-cashier-abandon-catalog.test.ts",
+          "test/customer-manual-refund-protocol.test.ts",
+          "test/legacy-php-refund-line-finance.test.ts",
+          "test/customer-refund-application.test.ts",
+          "test/release-protocol-audit.test.ts",
+          "test/refund-earned-income.test.ts",
+          "test/order-notification-outbox.test.ts",
+          "test/order-notification-delivery.test.ts",
+          "test/order-outbox.test.ts",
+          "--maxWorkers=2",
+          "--reporter",
+          "verbose"
+        ],
+        "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+        "tests": [
+          "test/assisted-form-attachment-scope.test.ts",
+          "test/assisted-form-read.test.ts",
+          "test/checkout-confirmation-rules.test.ts",
+          "test/checkout-confirmation.test.ts",
+          "test/customer-work-read-independent-contract.test.ts",
+          "test/customer-work-writeoff-sale-price.test.ts",
+          "test/second-card-product.test.ts",
+          "test/second-card-validity.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/customer-cashier-abandon-catalog.test.ts",
+          "test/customer-manual-refund-protocol.test.ts",
+          "test/legacy-php-refund-line-finance.test.ts",
+          "test/customer-refund-application.test.ts",
+          "test/release-protocol-audit.test.ts",
+          "test/refund-earned-income.test.ts",
+          "test/order-notification-outbox.test.ts",
+          "test/order-notification-delivery.test.ts",
+          "test/order-outbox.test.ts"
+        ],
+        "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+        "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-unit-v9\\source-manifest.json",
+        "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+        "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-unit-v9\\run.log",
+        "logSha256": "1f2ea7f1d9a977dbba7a6b91ee72fc791bf7480419f21f0276816fc027393043",
+        "exitCode": 0,
+        "signal": null,
+        "testSummary": [
+          "Test Files  17 passed | 1 skipped (18)",
+          "Tests  414 passed | 268 skipped (682)",
+          "Duration  34.95s (transform 9.76s, setup 0ms, import 41.22s, tests 21.32s, environment 2ms)"
+        ],
+        "sourceBeforeVerified": true,
+        "sourceAfterVerified": true,
+        "borrowedToolsBeforeVerified": true,
+        "borrowedToolsAfterVerified": true,
+        "passed": true,
+        "environmentOverrides": {},
+        "externalFinanceUrlRemoved": true,
+        "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-unit-v9\\receipt.json",
+          "sha256": "cabf7b683e105d08b18f87a2cea5023b803172e4e3350c411a61111131b5f231"
+        },
+        "byteIntegrity": true,
+        "counts": {
+          "passed": 414,
+          "failed": 0,
+          "skipped": 268
+        },
+        "terminalVerified": true
+      },
+      "native": [
+        {
+          "group": "B",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:38:27.707Z",
+            "completedAtUtc": "2026-10-12T02:40:45.310Z",
+            "mode": "native",
+            "label": "final-native-b-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-cashier-second-card-postgres.test.ts",
+              "test/customer-cashier-records-postgres.test.ts",
+              "test/customer-cashier-write-ui-postgres.test.ts",
+              "test/customer-cashier-form-images-postgres.test.ts",
+              "test/customer-cashier-abandon-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-cashier-second-card-postgres.test.ts",
+              "test/customer-cashier-records-postgres.test.ts",
+              "test/customer-cashier-write-ui-postgres.test.ts",
+              "test/customer-cashier-form-images-postgres.test.ts",
+              "test/customer-cashier-abandon-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-b-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-b-v1\\run.log",
+            "logSha256": "eb305cc76ebedb76e9ed69ceb35df934ab63a9407e10f11910b880efb7a5f21e",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  5 passed (5)",
+              "Tests  119 passed (119)",
+              "Duration  101.42s (transform 9.91s, setup 0ms, import 17.90s, tests 163.18s, environment 1ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-DMO8RB",
+              "host": "127.0.0.1",
+              "port": 50373,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-b-v1\\receipt.json",
+              "sha256": "4d5aca65f36b51bb32e0082d5076e15c382333832abf0e58d39f165403aab56f"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 119,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "C",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:40:58.298Z",
+            "completedAtUtc": "2026-10-12T02:44:42.206Z",
+            "mode": "native",
+            "label": "final-native-c-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/refund-quantity-reservation.test.ts",
+              "test/refund-atomic-materialization.test.ts",
+              "test/refund-order-materialization.test.ts",
+              "test/refund-line-finance.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/refund-quantity-reservation.test.ts",
+              "test/refund-atomic-materialization.test.ts",
+              "test/refund-order-materialization.test.ts",
+              "test/refund-line-finance.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-c-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-c-v1\\run.log",
+            "logSha256": "dadfcfe20bbad465e77ca23acd00dccce5b4a01c58080708354d120cb0ee2088",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  4 passed (4)",
+              "Tests  202 passed (202)",
+              "Duration  185.44s (transform 10.40s, setup 0ms, import 16.96s, tests 348.88s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-gh6vKQ",
+              "host": "127.0.0.1",
+              "port": 54982,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-c-v1\\receipt.json",
+              "sha256": "78be1b411473051e29e250668a38d14d456956a23d94b34732b7b227026d955e"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 202,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "D",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:45:16.151Z",
+            "completedAtUtc": "2026-10-12T02:46:03.629Z",
+            "mode": "native",
+            "label": "final-native-d-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-refund-application.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-refund-application.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-d-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-d-v1\\run.log",
+            "logSha256": "046226b55a08fb97ab2ec18eef5a76c3c56666ef10f7d9432a83d59bc7530ccf",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  1 passed (1)",
+              "Tests  4 passed (4)",
+              "Duration  7.58s (transform 4.43s, setup 0ms, import 5.92s, tests 1.48s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-Fuk9YK",
+              "host": "127.0.0.1",
+              "port": 52088,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-d-v1\\receipt.json",
+              "sha256": "816bf482dc2a0d4a90adc7eafc55e919774a820528a5fd1c2102bf5782ea71bd"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 4,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "E",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:46:45.346Z",
+            "completedAtUtc": "2026-10-12T02:47:40.721Z",
+            "mode": "native",
+            "label": "final-native-e-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-work-writeoff-mature-scenarios-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-work-writeoff-mature-scenarios-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-e-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-e-v1\\run.log",
+            "logSha256": "7141c05e5cc28606b426416daa43fd2db77854db13959885b301e3d35ef2d37a",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  1 passed (1)",
+              "Tests  4 passed (4)",
+              "Duration  16.51s (transform 4.27s, setup 0ms, import 5.71s, tests 10.62s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-JFBsAl",
+              "host": "127.0.0.1",
+              "port": 52102,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-e-v1\\receipt.json",
+              "sha256": "e0dcf217af3b13b2ff98adc5d858300e2d69bb1f1033bbccc3c6384da7f8dfe7"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 4,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "F",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:48:02.268Z",
+            "completedAtUtc": "2026-10-12T02:52:07.852Z",
+            "mode": "native",
+            "label": "final-native-f-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/refund-line-compensation.test.ts",
+              "test/refund-runtime-permissions.test.ts",
+              "test/order-full-gift-refund-http.test.ts",
+              "test/runtime-promotion-gift-refund.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/refund-line-compensation.test.ts",
+              "test/refund-runtime-permissions.test.ts",
+              "test/order-full-gift-refund-http.test.ts",
+              "test/runtime-promotion-gift-refund.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-f-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-f-v1\\run.log",
+            "logSha256": "989533e29eecec69cac514b40dd6793bedd7e794f6d0f7852e57d0993b6d1a04",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  4 passed (4)",
+              "Tests  72 passed (72)",
+              "Duration  207.28s (transform 5.74s, setup 0ms, import 11.58s, tests 194.99s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-sHmrFW",
+              "host": "127.0.0.1",
+              "port": 52133,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-f-v1\\receipt.json",
+              "sha256": "d3654cfc903786150ad7a20204d7ca347cf6706feaf962d68d52c3192fddfdf8"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 72,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "G",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:36:02.295Z",
+            "completedAtUtc": "2026-10-12T02:38:07.421Z",
+            "mode": "native",
+            "label": "final-native-g-v5",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-work-legacy-cash-payment-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-work-legacy-cash-payment-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-g-v5\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-g-v5\\run.log",
+            "logSha256": "237c720e1d3fe5fb2ea9d778e8c0dfc5b9b0227a5eceddc74f37961b87f4a175",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  1 passed (1)",
+              "Tests  48 passed (48)",
+              "Duration  89.80s (transform 4.69s, setup 0ms, import 6.13s, tests 83.51s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-B0RNdO",
+              "host": "127.0.0.1",
+              "port": 50347,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-g-v5\\receipt.json",
+              "sha256": "26e399d47fe9b46a93fc5e5752b75749b04f88f129bfa78f444d7bd6cc2ff4b0"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 48,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "A1",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:31:56.835Z",
+            "completedAtUtc": "2026-10-12T02:35:11.011Z",
+            "mode": "native",
+            "label": "final-native-a1-v5",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-work-cash-refund-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-work-cash-refund-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-a1-v5\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-a1-v5\\run.log",
+            "logSha256": "35528c2f165d0315943ee0354f73bbd49289bce2e8490376ab18e2cf51a38325",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  1 passed (1)",
+              "Tests  37 passed (37)",
+              "Duration  158.81s (transform 4.81s, setup 0ms, import 6.31s, tests 152.33s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-TqpBrF",
+              "host": "127.0.0.1",
+              "port": 55543,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-a1-v5\\receipt.json",
+              "sha256": "fe70f1d1fe9c403e41355cf10949469ace77d6e9692f2c340650dfb3bf2d1d85"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 37,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "A2",
+          "provenance": "original-execution-retained-for-verified-equivalent-executed-inputs",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T02:29:29.579Z",
+            "completedAtUtc": "2026-10-12T02:31:33.972Z",
+            "mode": "native",
+            "label": "final-native-a2-v2",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-work-financial-postgres.test.ts",
+              "test/customer-work-writeoff-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-work-financial-postgres.test.ts",
+              "test/customer-work-writeoff-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-a2-v2\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-a2-v2\\run.log",
+            "logSha256": "945bc0fcf2acb73a991953003a2b9a27e99ae3c8c41bea9328511d89f1379184",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  2 passed (2)",
+              "Tests  102 passed (102)",
+              "Duration  84.38s (transform 10.57s, setup 0ms, import 14.11s, tests 153.29s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-9p6F3J",
+              "host": "127.0.0.1",
+              "port": 52414,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-a2-v2\\receipt.json",
+              "sha256": "0a9f6c3dd138606491d49cffd5775565c064413b16ae89f7ea1430806a3be6a7"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 102,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "H",
+          "provenance": "executed-against-final-full-manifest",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:22:05.675Z",
+            "completedAtUtc": "2026-10-12T03:25:05.305Z",
+            "mode": "native",
+            "label": "final-native-h-v3",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/invoice-evidence-migration.test.ts",
+              "test/invoice-evidence-registration.test.ts",
+              "test/refund-split-migration.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/invoice-evidence-migration.test.ts",
+              "test/invoice-evidence-registration.test.ts",
+              "test/refund-split-migration.test.ts"
+            ],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-h-v3\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-h-v3\\run.log",
+            "logSha256": "7e1b7c88719bc44a4933fc8294afb1260a615539b40cf19673eb49927b857392",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  3 passed (3)",
+              "Tests  103 passed (103)",
+              "Duration  124.88s (transform 9.40s, setup 0ms, import 15.51s, tests 218.75s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-vvfq95",
+              "host": "127.0.0.1",
+              "port": 56886,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-h-v3\\receipt.json",
+              "sha256": "aefaf34ad99a1bb9dbc37a7580a6fad1834535b5af8eb85b97cc7c9514fdcf43"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 103,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "I",
+          "provenance": "executed-against-final-full-manifest",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:25:30.999Z",
+            "completedAtUtc": "2026-10-12T03:27:24.484Z",
+            "mode": "native",
+            "label": "final-native-i-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/invoice-issuance-evidence.test.ts",
+              "test/invoice-issuance-permissions.test.ts",
+              "test/split-invoice-allocation.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/invoice-issuance-evidence.test.ts",
+              "test/invoice-issuance-permissions.test.ts",
+              "test/split-invoice-allocation.test.ts"
+            ],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-i-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-i-v1\\run.log",
+            "logSha256": "f26e11ae5af5c1f5aca5672792c449bd76f81a46a2fbaadbda2c6e6fa443e5b6",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  3 passed (3)",
+              "Tests  84 passed (84)",
+              "Duration  74.21s (transform 7.92s, setup 0ms, import 11.68s, tests 106.63s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-EiU1WK",
+              "host": "127.0.0.1",
+              "port": 61787,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-i-v1\\receipt.json",
+              "sha256": "db67d487bff65acc01a5cecd06314bef97b218b60f50d02e7071b510b1762b08"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 84,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "J",
+          "provenance": "executed-against-final-full-manifest",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:28:22.384Z",
+            "completedAtUtc": "2026-10-12T03:29:59.840Z",
+            "mode": "native",
+            "label": "final-native-j-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/order-invoice-concurrency.test.ts",
+              "test/out-invoice-lifecycle.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/order-invoice-concurrency.test.ts",
+              "test/out-invoice-lifecycle.test.ts"
+            ],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-j-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-j-v1\\run.log",
+            "logSha256": "819f01f2df188de0928441779b1060ca7c9a88332972b4e412f494517c6442a0",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  2 passed (2)",
+              "Tests  70 passed (70)",
+              "Duration  53.68s (transform 9.53s, setup 0ms, import 13.34s, tests 91.05s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-YRwgkl",
+              "host": "127.0.0.1",
+              "port": 63796,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-j-v1\\receipt.json",
+              "sha256": "5b44c469db688d8116af8c09f8e8fa484a99dd18aa3370e15d1b4829e0f85cb0"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 70,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "K",
+          "provenance": "executed-against-final-full-manifest",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:30:14.578Z",
+            "completedAtUtc": "2026-10-12T03:33:22.247Z",
+            "mode": "native",
+            "label": "final-native-k-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/runtime-promotion-gift-privileges.test.ts",
+              "test/merchant-manager-financial-postgres.test.ts",
+              "test/release-protocol-schema.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/runtime-promotion-gift-privileges.test.ts",
+              "test/merchant-manager-financial-postgres.test.ts",
+              "test/release-protocol-schema.test.ts"
+            ],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-k-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-k-v1\\run.log",
+            "logSha256": "fb3c0a6cdf02cfc3cbd3ce1cd55fce73def22da2928a7a4106ea8522d1182c97",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  3 passed (3)",
+              "Tests  34 passed (34)",
+              "Duration  148.64s (transform 7.23s, setup 0ms, import 11.33s, tests 136.71s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-WSv2D1",
+              "host": "127.0.0.1",
+              "port": 59178,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-k-v1\\receipt.json",
+              "sha256": "cca9d1f516d0a70d060a4393d453003d2701b32f8121292bf68718934de7a73c"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 34,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "L",
+          "provenance": "executed-against-final-full-manifest",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:33:36.641Z",
+            "completedAtUtc": "2026-10-12T03:34:57.721Z",
+            "mode": "native",
+            "label": "final-native-l-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/customer-city-delivery-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/customer-city-delivery-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-l-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-l-v1\\run.log",
+            "logSha256": "c52f6fa6c53e2a8258e67f4b9c1b745f0747c93ffa4249e3d620e0a83d5d2707",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  1 passed (1)",
+              "Tests  27 passed (27)",
+              "Duration  43.76s (transform 4.62s, setup 0ms, import 6.14s, tests 37.43s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-Iu95hU",
+              "host": "127.0.0.1",
+              "port": 65174,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-l-v1\\receipt.json",
+              "sha256": "cce8d82e9f5185b17c23b12f7b783eab0346ad6edbef6b8567871b07fc23808f"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 27,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        },
+        {
+          "group": "M",
+          "provenance": "executed-against-final-full-manifest",
+          "result": {
+            "kind": "cashier-cash-refund-local-worker-check",
+            "startedAtUtc": "2026-10-12T03:35:45.172Z",
+            "completedAtUtc": "2026-10-12T03:41:35.186Z",
+            "mode": "native",
+            "label": "final-native-m-v1",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+              "test/assisted-form-consumption-postgres.test.ts"
+            ],
+            "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+            "tests": [
+              "test/assisted-form-consumption-postgres.test.ts"
+            ],
+            "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+            "manifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-m-v1\\source-manifest.json",
+            "stagingManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-source-manifest.json",
+            "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-m-v1\\run.log",
+            "logSha256": "a732056fabc840ea5b62cb1092e50f2f736dedb966bd5956565100fba64a50ea",
+            "exitCode": 0,
+            "signal": null,
+            "testSummary": [
+              "Test Files  1 passed (1)",
+              "Tests  33 passed (33)",
+              "Duration  310.50s (transform 7.03s, setup 0ms, import 9.13s, tests 301.16s, environment 0ms)"
+            ],
+            "sourceBeforeVerified": true,
+            "sourceAfterVerified": true,
+            "borrowedToolsBeforeVerified": true,
+            "borrowedToolsAfterVerified": true,
+            "nativeCleanup": {
+              "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache\\finance-postgres-XuO6Zd",
+              "host": "127.0.0.1",
+              "port": 56309,
+              "fixturesRemainingZero": true,
+              "runnerStopped": true,
+              "independentStatus": {
+                "exitCode": 3,
+                "signal": null,
+                "stdout": "pg_ctl: no server running\r\n",
+                "stderr": ""
+              },
+              "independentlyStopped": true
+            },
+            "passed": true,
+            "environmentOverrides": {
+              "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\pg-cache"
+            },
+            "externalFinanceUrlRemoved": true,
+            "tempRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\temp",
+            "receipt": {
+              "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-checks\\final-native-m-v1\\receipt.json",
+              "sha256": "9dd4f83512bc549e3d8d6eeb5fc0e983d4378a443decd7363ebf7cee523b81cf"
+            },
+            "byteIntegrity": true,
+            "counts": {
+              "passed": 33,
+              "failed": 0,
+              "skipped": 0
+            },
+            "terminalVerified": true
+          }
+        }
+      ],
+      "nativePassed": 939,
+      "scopedRetention": {
+        "qualification": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\native-scope-equivalence-after-h-final-20261012\\scope-qualification.json",
+          "sha256": "79452977ce02215a67af655a26485feb8a93c26e9c3a2615ebcef7e4c65f4340"
+        },
+        "proof": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\native-scope-equivalence-after-h-final-20261012\\native-scope-equivalence.json",
+          "sha256": "f992b174bd92701a2a902794a2977cc51c306ddaba80dc8128fffc0d1e8bdb94"
+        },
+        "staticProof": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\static-parity-summary.json",
+          "sha256": "3231627287b748d3128e6ddb33ac66f3dbf90563aa3fc8845bf1eadd6e9b6dbc"
+        },
+        "tupleProof": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\native-scope-equivalence-after-h-final-20261012\\h-tuple-type-change-proof.json",
+          "sha256": "072eeb87af9240584b0c4deb6fa59751326e8fe41a1140751ac22ad388969579"
+        },
+        "verified": true,
+        "originalManifestSha256": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+        "finalManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+        "originalExecutions": [
+          "final-native-a2-v2",
+          "final-native-a1-v5",
+          "final-native-g-v5",
+          "final-native-b-v1",
+          "final-native-c-v1",
+          "final-native-d-v1",
+          "final-native-e-v1",
+          "final-native-f-v1"
+        ],
+        "importedFilesVerifiedCurrent": 684,
+        "exactFilesystemInputs": [
+          {
+            "path": "workers-ts/migrations/0091_electronic_waybill_outbox.sql",
+            "sha256": "fd5b65af08dd0063984e19d524faa71fd66cadbc22ebbc9d2bf2ca17ac8980d0",
+            "old_new_actual_equal": true
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+            "sha256": "97cd9b6bcf06822faaeea0d1d07c748da0436a385bb4c4c92f7ffc9fa090d8b8",
+            "old_new_actual_equal": true
+          },
+          {
+            "path": "workers-ts/src/models/schema/index.ts",
+            "sha256": "4ad9dbf4985fd09940b5859141a70f1f26f831bd9ceccada866e0a4370881c78",
+            "old_new_actual_equal": true
+          },
+          {
+            "path": "workers-ts/src/services/MigrationService.ts",
+            "sha256": "068754d9934e4aad69086f173c51f183dd312d9ae4c6ad5f23b010307c466eeb",
+            "old_new_actual_equal": true
+          },
+          {
+            "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+            "sha256": "2233053317e0de026191593d2f47c1bfb7094f2f137fbd6de3cc5a5875bbb921",
+            "old_new_actual_equal": true
+          },
+          {
+            "path": "workers-ts/vitest.config.ts",
+            "sha256": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e",
+            "old_new_actual_equal": true
+          }
+        ],
+        "originalFullFiles": 19,
+        "originalPasses": 588,
+        "borrowedDependencySetUnchanged": true,
+        "dependenciesProof": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\borrowed-tools-proof.json",
+          "sha256": "162291ded105e2edf72e7f406eb3fc8dddf6f84efa0bde771a80de547705b7dd"
+        },
+        "dependenciesMapping": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-dependency-mapping.json",
+          "sha256": "0aedef82d1458cfb05e24417e1f3ebca981193b014495589dc9e3c527a1323e9"
+        },
+        "fullDelta": {
+          "changed": [
+            "workers-ts/test/customer-manual-refund-protocol.test.ts",
+            "workers-ts/test/invoice-evidence-migration.test.ts",
+            "workers-ts/test/invoice-evidence-registration.test.ts",
+            "workers-ts/test/refund-split-migration.test.ts"
+          ],
+          "added": [
+            "workers-ts/src/migrations/maintenance/0180_customer_manual_refund.sql",
+            "workers-ts/test/helpers/completeConstructionInventory.ts"
+          ],
+          "removed": [
+            "workers-ts/migrations/0180_customer_manual_refund.sql"
+          ]
+        },
+        "limits": [
+          "This qualifies only the exact unused H/protocol/candidate-location delta and the following exact H tuple type annotation; later changes require another exact qualification.",
+          "Original eight groups, nineteen whole-file native suites and 588 passes were executed against original985b; no receipt is relabeled as newly executed against final68f full raw inputs.",
+          "Final full typechecks/ordinary/H and remaining I-M native suites remain separate actual validation gates. No migration checklist closes through this qualification."
+        ],
+        "executionClaim": "Original 985b executions retained only for unchanged executed inputs; no reexecution or relabel as the final full raw manifest."
+      },
+      "nativeExecutedAgainstFinalFullManifest": 351,
+      "nativeRetainedOriginalPasses": 588,
+      "historicalReceiptIntegrity": {
+        "receipts": 52,
+        "allByteIntegrity": true
+      },
+      "static": {
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\static-parity-summary.json",
+          "sha256": "3231627287b748d3128e6ddb33ac66f3dbf90563aa3fc8845bf1eadd6e9b6dbc"
+        },
+        "verified": true,
+        "result": {
+          "completed_at_utc": "2026-10-12T03:23:11.955Z",
+          "stage": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project",
+          "worker_manifest_sha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+          "staged_input_count": 3532,
+          "all_staged_inputs_unchanged": true,
+          "external_input_count": 3564,
+          "external_input_changes": [],
+          "audit_input_copy": [
+            {
+              "name": "legacy-route-decisions.json",
+              "original": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\legacy-route-decisions.json",
+              "staged": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts\\audit\\legacy-route-decisions.json",
+              "original_sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+              "staged_sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+              "previous_staged_sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+              "previous_copy": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\stage-audit-before\\legacy-route-decisions.json"
+            },
+            {
+              "name": "legacy-route-authority.json",
+              "original": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\legacy-route-authority.json",
+              "staged": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts\\audit\\legacy-route-authority.json",
+              "original_sha256": "d3d8a19b4791c63a860fbb87b0948fed2df0b8bd320a5d09d9e753efedd8ed14",
+              "staged_sha256": "d3d8a19b4791c63a860fbb87b0948fed2df0b8bd320a5d09d9e753efedd8ed14",
+              "previous_staged_sha256": "d3d8a19b4791c63a860fbb87b0948fed2df0b8bd320a5d09d9e753efedd8ed14",
+              "previous_copy": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\stage-audit-before\\legacy-route-authority.json"
+            },
+            {
+              "name": "uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json",
+              "original": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json",
+              "staged": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts\\audit\\uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json",
+              "original_sha256": "85408c8491f7b24cef9328793af6b88dd356b2e65eb0193843cf2c5526d4e290",
+              "staged_sha256": "85408c8491f7b24cef9328793af6b88dd356b2e65eb0193843cf2c5526d4e290",
+              "previous_staged_sha256": "85408c8491f7b24cef9328793af6b88dd356b2e65eb0193843cf2c5526d4e290",
+              "previous_copy": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\stage-audit-before\\uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json"
+            }
+          ],
+          "executions": [
+            {
+              "started_at_utc": "2026-10-12T03:22:24.873Z",
+              "completed_at_utc": "2026-10-12T03:22:29.079Z",
+              "executable": "C:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts\\node_modules\\tsx\\dist\\cli.mjs",
+                "scripts/route-parity-audit.ts"
+              ],
+              "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+              "exit_code": 0,
+              "signal": null,
+              "error": null,
+              "parse_error": null,
+              "report": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\route-parity.json",
+              "stdout_sha256": "af328f03832014af1fc9720c2b95cec30f923f3a40948cfa19ea9ee75ce026c8",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "counts": {
+                "php": 1904,
+                "ts": 2333,
+                "matched": 911,
+                "executableMatched": 890,
+                "unavailable": 21,
+                "missing": 993,
+                "retired": 17,
+                "actionableMissing": 976,
+                "coveragePercent": 47.8,
+                "executableCoveragePercent": 46.7,
+                "effectiveExecutableCoveragePercent": 47.2
+              },
+              "php_root": "\\\\tsclient\\I\\cinagroup\\cinashop-php"
+            },
+            {
+              "started_at_utc": "2026-10-12T03:22:24.892Z",
+              "completed_at_utc": "2026-10-12T03:22:26.008Z",
+              "executable": "C:\\Program Files\\nodejs\\node.exe",
+              "args": [
+                "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts\\node_modules\\tsx\\dist\\cli.mjs",
+                "scripts/uniapp-frontend-parity-audit.ts",
+                "--customer-cashier-checkout-followup"
+              ],
+              "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\worker-project\\workers-ts",
+              "exit_code": 0,
+              "signal": null,
+              "error": null,
+              "parse_error": null,
+              "report": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\static-parity-final-v9-20261012\\uniapp-parity.json",
+              "stdout_sha256": "5bf9212d799da1ebcfe1a64917aa10b9d2dad165645c3a88db5d825787483561",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "counts": {
+                "legacyLogicalRoutes": 151,
+                "targetRoutes": 128,
+                "directRegistered": 28,
+                "legacyCompatibilityRules": 116,
+                "candidateCoveredRules": 62,
+                "partialReplacementRules": 54,
+                "gaps": 7
+              },
+              "php_root": "\\\\tsclient\\I\\cinagroup\\cinashop-php\\view\\uniapp\\pages.json"
+            }
+          ],
+          "checkboxes": [
+            {
+              "name": "MIGRATION_CHECKLIST.md",
+              "file": "\\\\tsclient\\I\\cinagroup\\cinashop\\MIGRATION_CHECKLIST.md",
+              "sha256": "a1d5e22a132fc700453546db4258cf0758474b87506964968e91c92470d57337",
+              "total": 404,
+              "done": 246,
+              "open": 158,
+              "rows_sha256": "cd6c9a7047da8e0345fb5376c612d16b31c8b437d636d1bffb10a519e4c280c6"
+            },
+            {
+              "name": "MIGRATION_AUDIT.md",
+              "file": "\\\\tsclient\\I\\cinagroup\\cinashop\\MIGRATION_AUDIT.md",
+              "sha256": "a701f803d30f256847554f29c884800e54a1efe2668481621215e3e90050c4a9",
+              "total": 88,
+              "done": 50,
+              "open": 38,
+              "rows_sha256": "8b869cdd424d1d091bf5822fa5e4fad75f88cdd98f80286ed3153daef165fff5"
+            }
+          ],
+          "checkbox_rows_unchanged": true,
+          "target_pages_present": 128,
+          "limitations": [
+            "Original static registration audit only; route counts and mapped pages do not prove business/permission/state-machine/data/payment parity.",
+            "This report does not close any migration checklist item or claim full PHP-to-TS migration completion."
+          ],
+          "all_original_inputs_match_frozen": true,
+          "passed": true
+        }
+      },
+      "frontend": {
+        "receipt": {
+          "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\terminal-receipt-refusal-20261012\\frontend\\front-validation-summary.json",
+          "sha256": "2f70cd6f87ec0288c2e2cc304d6c87e66e25c5d6a009c6c21f355dd4f5fd3fb8"
+        },
+        "currentSource": {
+          "manifest": {
+            "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\terminal-receipt-refusal-20261012\\frontend\\front-source-final.json",
+            "sha256": "459d2010998965c9804d4e3f0958d0f6dd97e0056bd1ffc7a2e57fa18faa1812"
+          },
+          "inputCount": 475,
+          "differences": [],
+          "allMatch": true
+        },
+        "result": {
+          "completed_at_utc": "2026-10-12T00:32:15.889Z",
+          "changed_source_files": [
+            "view/common/customerWorkFinancial.ts",
+            "view/uniapp-ts/src/utils/customerWorkFinancial.test.ts",
+            "view/uniapp-ts/scripts/test-customer-work-financial-runtime.mjs"
+          ],
+          "behavior": "Already-returned cash full intent rejects every non-cash-settled receipt, including matching original abandoned/rollback. Receipt-null stays UNKNOWN; noncash historical terminal semantics remain. Correct original SQL-status evidence must precede local close.",
+          "runtime": {
+            "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\terminal-receipt-refusal-20261012\\frontend\\runtime-2026-10-12T00-26-16.405Z\\financial-runtime-receipt.json",
+            "actual_exit_code": 0,
+            "tests": 284,
+            "pass": 284,
+            "fail": 0,
+            "skipped": 0,
+            "input_count": 472,
+            "source_hashes_unchanged": true
+          },
+          "build": {
+            "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\terminal-receipt-refusal-20261012\\frontend\\build-2026-10-12T00-26-13-467Z\\build-executions.json",
+            "source_count": 475,
+            "source_equal_now": true,
+            "executions": [
+              {
+                "name": "typecheck",
+                "actual_exit_code": 0
+              },
+              {
+                "name": "h5",
+                "actual_exit_code": 0
+              },
+              {
+                "name": "mp-weixin",
+                "actual_exit_code": 0
+              },
+              {
+                "name": "app",
+                "actual_exit_code": 0
+              }
+            ],
+            "artifacts": [
+              {
+                "platform": "h5",
+                "count": 323
+              },
+              {
+                "platform": "mp-weixin",
+                "count": 834
+              },
+              {
+                "platform": "app",
+                "count": 145
+              }
+            ]
+          },
+          "browser": {
+            "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\terminal-receipt-refusal-20261012\\frontend\\browser-2026-10-12T00-29-07-575Z\\h5-playwright-receipt.json",
+            "browser_path": "Regular Playwright; Browser plugin not available",
+            "checks": 66,
+            "failures": 0,
+            "screenshots": 38,
+            "resources_closed": true,
+            "relevant_errors": 0,
+            "deliberate_fault_errors": 4,
+            "contradictory_receipt_injections": 4,
+            "built_inputs_unchanged": true,
+            "source_inputs_unchanged": true
+          },
+          "historical_evidence": {
+            "old_staging_count": 475,
+            "old_staging_changes": 0,
+            "old_h5_asset_count": 323,
+            "old_h5_changes": 0,
+            "used_as_final": false
+          },
+          "sources_manifest": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\terminal-receipt-refusal-20261012\\frontend\\front-source-final.json",
+            "sha256": "459d2010998965c9804d4e3f0958d0f6dd97e0056bd1ffc7a2e57fa18faa1812"
+          },
+          "build_artifacts_manifest": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-cash-refund-validation\\terminal-receipt-refusal-20261012\\frontend\\all-built-artifacts-final.json",
+            "sha256": "db88cac592deec9bd69e536666257bb5929e13660c49eece41885ce3601fbb38"
+          },
+          "limitations": [
+            "Runtime and compiled H5 use synthetic API fixtures; no real Worker/PostgreSQL/Hyperdrive/R2 end-to-end evidence.",
+            "Weixin and App are compilation evidence; no device launch or app store validation."
+          ],
+          "passed": true
+        }
+      },
+      "historicalRuns": [
+        {
+          "label": "final-native-a1-v1",
+          "manifest": "8983d5ec70fd6431de83228881c4321327ace4b1e26e61b411b6d4d87eec4257",
+          "exitCode": 1,
+          "counts": {
+            "passed": 6,
+            "failed": 27,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-a1-v2",
+          "manifest": "48b6d89e84624fbb588b89acdd127c55d59afb890468f4e1ee5d69434a843b63",
+          "exitCode": 1,
+          "counts": {
+            "passed": 36,
+            "failed": 1,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-a1-v3",
+          "manifest": "bb6bfc27dd152fa6da9ee725bd22a3be28056827d5a760985fa82e564cd8b06f",
+          "exitCode": 0,
+          "counts": {
+            "passed": 37,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-a1-v4",
+          "manifest": "9555e85ba236b0cbdc25ceb0d444798193d49e7abf51e49dcd80a0068af98924",
+          "exitCode": 0,
+          "counts": {
+            "passed": 37,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-a1-v5",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 37,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-a2-v1",
+          "manifest": "9555e85ba236b0cbdc25ceb0d444798193d49e7abf51e49dcd80a0068af98924",
+          "exitCode": 1,
+          "counts": {
+            "passed": 64,
+            "failed": 38,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-a2-v2",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 102,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-b-v1",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 119,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-c-v1",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 202,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-d-v1",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-e-v1",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-f-v1",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 72,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-g-v1",
+          "manifest": "8983d5ec70fd6431de83228881c4321327ace4b1e26e61b411b6d4d87eec4257",
+          "exitCode": 1,
+          "counts": {
+            "passed": 22,
+            "failed": 15,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-g-v2",
+          "manifest": "48b6d89e84624fbb588b89acdd127c55d59afb890468f4e1ee5d69434a843b63",
+          "exitCode": 0,
+          "counts": {
+            "passed": 45,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-g-v3",
+          "manifest": "bb6bfc27dd152fa6da9ee725bd22a3be28056827d5a760985fa82e564cd8b06f",
+          "exitCode": 1,
+          "counts": {
+            "passed": 46,
+            "failed": 2,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-g-v4",
+          "manifest": "9555e85ba236b0cbdc25ceb0d444798193d49e7abf51e49dcd80a0068af98924",
+          "exitCode": 0,
+          "counts": {
+            "passed": 48,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-g-v5",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 48,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-h-v1",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 1,
+          "counts": {
+            "passed": 95,
+            "failed": 8,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-native-h-v2",
+          "manifest": "138bc910c0552df95320532a3e231c150fb8446d7903f90ab2f40d6f7df8d23b",
+          "exitCode": 0,
+          "counts": {
+            "passed": 103,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v1",
+          "manifest": "521ce87cacef0e0d684e002482815826466b8625d07dfa38abefb5e46d071d2e",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v2",
+          "manifest": "577ce525dfa992e1f5d939d8ab32ad1c0318119b80eaefa4f6275289e5e92a48",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v3",
+          "manifest": "8983d5ec70fd6431de83228881c4321327ace4b1e26e61b411b6d4d87eec4257",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v4",
+          "manifest": "48b6d89e84624fbb588b89acdd127c55d59afb890468f4e1ee5d69434a843b63",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v5",
+          "manifest": "bb6bfc27dd152fa6da9ee725bd22a3be28056827d5a760985fa82e564cd8b06f",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v6",
+          "manifest": "9555e85ba236b0cbdc25ceb0d444798193d49e7abf51e49dcd80a0068af98924",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v7",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-runtime-v8",
+          "manifest": "138bc910c0552df95320532a3e231c150fb8446d7903f90ab2f40d6f7df8d23b",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v1",
+          "manifest": "521ce87cacef0e0d684e002482815826466b8625d07dfa38abefb5e46d071d2e",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v2",
+          "manifest": "577ce525dfa992e1f5d939d8ab32ad1c0318119b80eaefa4f6275289e5e92a48",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v3",
+          "manifest": "8983d5ec70fd6431de83228881c4321327ace4b1e26e61b411b6d4d87eec4257",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v4",
+          "manifest": "48b6d89e84624fbb588b89acdd127c55d59afb890468f4e1ee5d69434a843b63",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v5",
+          "manifest": "bb6bfc27dd152fa6da9ee725bd22a3be28056827d5a760985fa82e564cd8b06f",
+          "exitCode": 2,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v6",
+          "manifest": "9555e85ba236b0cbdc25ceb0d444798193d49e7abf51e49dcd80a0068af98924",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v7",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-types-unit-v8",
+          "manifest": "138bc910c0552df95320532a3e231c150fb8446d7903f90ab2f40d6f7df8d23b",
+          "exitCode": 2,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v1",
+          "manifest": "521ce87cacef0e0d684e002482815826466b8625d07dfa38abefb5e46d071d2e",
+          "exitCode": 1,
+          "counts": {
+            "passed": 283,
+            "failed": 183,
+            "skipped": 19
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v2",
+          "manifest": "577ce525dfa992e1f5d939d8ab32ad1c0318119b80eaefa4f6275289e5e92a48",
+          "exitCode": 0,
+          "counts": {
+            "passed": 351,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v3",
+          "manifest": "8983d5ec70fd6431de83228881c4321327ace4b1e26e61b411b6d4d87eec4257",
+          "exitCode": 0,
+          "counts": {
+            "passed": 358,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v4",
+          "manifest": "48b6d89e84624fbb588b89acdd127c55d59afb890468f4e1ee5d69434a843b63",
+          "exitCode": 0,
+          "counts": {
+            "passed": 378,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v5",
+          "manifest": "bb6bfc27dd152fa6da9ee725bd22a3be28056827d5a760985fa82e564cd8b06f",
+          "exitCode": 0,
+          "counts": {
+            "passed": 412,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v6",
+          "manifest": "9555e85ba236b0cbdc25ceb0d444798193d49e7abf51e49dcd80a0068af98924",
+          "exitCode": 0,
+          "counts": {
+            "passed": 412,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v7",
+          "manifest": "985b9da48e6d9b8c2a87eb71fe4adb3acc31f5146ea60f8ad89cb6fe6c644ee7",
+          "exitCode": 0,
+          "counts": {
+            "passed": 414,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        },
+        {
+          "label": "final-unit-v8",
+          "manifest": "138bc910c0552df95320532a3e231c150fb8446d7903f90ab2f40d6f7df8d23b",
+          "exitCode": 0,
+          "counts": {
+            "passed": 414,
+            "failed": 0,
+            "skipped": 268
+          },
+          "byteIntegrity": true
+        }
+      ]
+    }
+  },
+  "consolidationAttempts": [
+    {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\validation-consolidation-2026-10-12T03-46-22-802Z.json",
+      "sha256": "8638e335423da8752fc0c9cb7da4d014411a32f69d874a55517ffd263ef14fcd",
+      "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+      "localCandidateValidationPassed": false,
+      "failures": [
+        "No complete passing receipt for tsconfig.json"
+      ]
+    },
+    {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\validation-consolidation-2026-10-12T03-50-50-583Z.json",
+      "sha256": "0b6dbc6e5200353f7a87ca838ea9048c9e2a7e76147c48bfab77c38785cca0c4",
+      "frozenManifestSha256": "68f3017b61dc37347698a69fdfba7af4f6b3acb67c3a281c1cde00d4a49003dc",
+      "localCandidateValidationPassed": true,
+      "failures": []
+    }
+  ],
+  "archive": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\archive-receipt-2026-10-12T03-46-21-406Z.json",
+    "sha256": "f9a1b44c30c6b83f064925fa9474868baf53519ce8bfccecdb9ecae66bc60812",
+    "files": 1065,
+    "bytes": 162240767,
+    "allExact": true
+  },
+  "nextOriginAnalysis": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\next-offline-origins.json",
+    "status": "not_implemented_or_validated"
+  },
+  "limitations": [
+    "Local PostgreSQL16 business and ACL validation; native fixtures may use synthetic provider/R2 transports.",
+    "Compiled H5 uses synthetic API; no Worker/PostgreSQL/Hyperdrive/R2 end-to-end or physical-device evidence.",
+    "The 268 ordinary native-conditional skips remain unexecuted in that run; other native files do not replace or credit these skips.",
+    "Modern admin_order_offline and manager_order_offline sources remain separate unimplemented adapters.",
+    "Admin guest invoice search/detail/issued replay and red flush remain open; this scope covers refund allocation of unissued invoices.",
+    "Original SQL and six published component constants remain; the new manual candidate is explicit maintenance-only and unregistered.",
+    "The general SQL comparison utilities still concatenate top-level TypeScript migration files; their comparison authority is not commissioned by these two original static CLI runs.",
+    "The 588 original native passes retain their original 985b receipts. Only unchanged actual import/filesystem inputs qualify for retention; other final gates execute against the final full manifest.",
+    "Known application writers intersect actual payment-root/source/cart row locks. The former empty FOR UPDATE was not a gap lock; arbitrary owner maintenance SQL is outside that guarantee.",
+    "The original 55P03 holder was not measured. Disposable-table maintenance isolation does not prove production contention behavior.",
+    "No production DDL, commit, push or deployment. Whole PHP-to-TS migration remains active."
+  ],
+  "reportBeforeBookkeeping": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\report-before-bookkeeping-v1.json",
+    "sha256": "c7afb55a6615a0b15072677a63a5b8e7931368c77f91496f1202e3e37a5db89b"
+  },
+  "migrationDocumentBookkeeping": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\migration-document-bookkeeping-2026-10-12T03-51-16-171Z\\receipt.json",
+    "sha256": "62d61c69cac0fade58f9d6fde97d896825975804344136e89f6f471455556c00",
+    "result": {
+      "kind": "verified-migration-document-progress-addition",
+      "createdAtUtc": "2026-10-12T03:51:16.712Z",
+      "consolidation": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\customer-cash-refund-20261012-evidence\\validation-consolidation-2026-10-12T03-50-50-583Z.json",
+        "sha256": "0b6dbc6e5200353f7a87ca838ea9048c9e2a7e76147c48bfab77c38785cca0c4"
+      },
+      "entries": [
+        {
+          "file": "MIGRATION_CHECKLIST.md",
+          "beforeSha256": "a1d5e22a132fc700453546db4258cf0758474b87506964968e91c92470d57337",
+          "afterSha256": "44a0298c64d34b5cc2ccf1a3cf0fc56a993f7f2a20b91a288fef9c523042ac4e",
+          "addedBytes": 2443,
+          "total": 404,
+          "done": 246,
+          "open": 158,
+          "allOriginalBytesPreserved": true,
+          "allCheckboxRowsPreserved": true,
+          "originalRowsSha256": "e8927c4d649ddc27a235184c67edb64053a35173242bf320d7ff52c9d60fec90"
+        },
+        {
+          "file": "MIGRATION_AUDIT.md",
+          "beforeSha256": "a701f803d30f256847554f29c884800e54a1efe2668481621215e3e90050c4a9",
+          "afterSha256": "04a50e95fef25f34013d7115dc86681147fbfb5a0561bc16d921dfb3a2218669",
+          "addedBytes": 2443,
+          "total": 88,
+          "done": 50,
+          "open": 38,
+          "allOriginalBytesPreserved": true,
+          "allCheckboxRowsPreserved": true,
+          "originalRowsSha256": "2c6d7dcf738c8f7a7f9d90f6101595071a6602e40a7e08e738f7693e707b830c"
+        }
+      ]
+    }
+  },
+  "reportDocument": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\docs\\customer-cash-refund-20261012.md",
+    "sha256": "0dc78a7e0f0425e52aa69986ea51099536a5887d96b4ae57edcd395256fe74ab"
+  },
+  "documentationVerification": "Static CLI records the original parent-document bytes before this addition. The bookkeeping separately verifies current bytes, all preserved original bytes and unchanged checkbox rows."
+}

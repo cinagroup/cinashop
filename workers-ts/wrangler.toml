@@ -31,6 +31,14 @@ binding = "HYPERDRIVE_ADMIN"
 id = "446e94a4de0143f58c8e5178ec55db8b"  # cinashop_admin_v1; no maintenance-role reachability
 localConnectionString = "postgresql://cinashop_admin_v1:local-development-only@localhost:5432/crmeb"
 
+# Manager endpoints require a separately commissioned application LOGIN.
+# Add the reviewed Hyperdrive binding before enabling these routes; no fallback
+# to main/Admin credentials is permitted. The configuration template is inactive.
+# [[hyperdrive]]
+# binding = "HYPERDRIVE_MANAGER"
+# id = "REPLACE_WITH_REVIEWED_MANAGER_HYPERDRIVE_ID"
+# localConnectionString = "postgresql://cinashop_manager_v1:local-development-only@localhost:5432/crmeb"
+
 # ─── Upstash Redis (REST API) ─────────────────────────────
 # 创建命令: wrangler kv namespace create CONFIG_KV
 # 把返回的 id 填入下面 (本地 dev 无所谓, 部署前必须替换)
