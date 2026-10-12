@@ -14,7 +14,7 @@ import { REFUND_SPLIT_INSTALLATION_SQL, REFUND_SPLIT_ORM_INSTALLATION_SQL } from
 import { MigrationService } from '../src/services/MigrationService';
 import { createContainerFromDb } from '../src/lib/di';
 import * as allModels from '../src/models/schema';
-import { COMPLETE_CONSTRUCTION_COUNTS, completeConstructionTableNames } from './helpers/completeConstructionInventory';
+import { COMPLETE_CONSTRUCTION_COUNTS } from './helpers/completeConstructionInventory';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split controlled PG16 installation',()=>{
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
