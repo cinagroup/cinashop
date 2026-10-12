@@ -13,6 +13,8 @@ export interface PricedCouponItem {
   cart: { cartNum: number };
   product: { id: number; pid: number; cateId: string; brandId: number };
   unitPriceCents: number;
+  /** Checkout must pass the promotion quote alongside its exact coupon amount. */
+  promotion?: { totalPriceCents: number; couponEligibleGrossCents: number } | null;
   /** Exact eligible line amount after promotion overlay and partial quantity caps. */
   couponEligibleGrossCents?: number;
 }
@@ -44,7 +46,15 @@ export async function prepareCouponScope(container: Container, orderItems: reado
   }
   const categoryById = new Map(categories.map((row) => [row.id, row]));
   const brandById = new Map(brands.map((row) => [row.id, row]));
-  const items: CouponScopeItem[] = orderItems.map(({ cart, product, unitPriceCents, couponEligibleGrossCents }) => {
+  const items: CouponScopeItem[] = orderItems.map(({ cart, product, unitPriceCents, promotion, couponEligibleGrossCents }) => {
+    // A promoted checkout must never fall back to its display unit price: a
+    // non-stackable promotion or a capped segment could then admit a coupon.
+    if (promotion && (typeof couponEligibleGrossCents !== "number"
+      || !Number.isSafeInteger(couponEligibleGrossCents)
+      || couponEligibleGrossCents < 0 || couponEligibleGrossCents > promotion.totalPriceCents
+      || couponEligibleGrossCents !== promotion.couponEligibleGrossCents)) {
+      throw new Error("促销优惠券报价金额不一致");
+    }
     const direct = parseCouponScopeIds(product.cateId);
     const brand = brandById.get(product.brandId);
     return { productId: product.id, parentProductId: product.pid || product.id, categoryIds: direct,

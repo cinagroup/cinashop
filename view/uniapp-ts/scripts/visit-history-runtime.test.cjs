@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const vue = require('vue');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const product = (id = 70, extra = {}) => ({ id: 1000 + id, product_id: id, store_name: `浏览商品${id}`,
   image: '/api/qa/product.svg', product_price: '10.00', stock: 2, is_show: 1, time_key: '09月21日', ...extra });
@@ -381,4 +382,148 @@ test('nullable unlimited activity ends and presale precedence retain the existin
   extra = { ...extra, is_presale_product: 1 }; await r.checkout.load(); r.checkout.openRecommendation(170);
   assert.equal(r.navigations.length, 1); assert.match(r.toasts.at(-1).title, /预售/);
   r.hooks.onHide(); r.checkout.openRecommendation(170); assert.equal(r.navigations.length, 1); r.stop();
+});
+
+const promotionFrame = (extra = {}) => ({ id: 9, name: '秋日好物', image: '/api/qa/frame.svg', ...extra });
+
+test('optional promotion frames preserve the real hot feed, price and destination, including older servers and malformed decoration', async () => {
+  let frame = promotionFrame();
+  const r = runtime({ component: 'pages/user/visitHistory.vue', send: call => ({ data: call.url === '/api/product/hot'
+    ? [recommended(170, { image: '/api/qa/product.svg', activity_frame: frame })] : page(1, []) }) });
+  try {
+    await r.start();
+    assert.deepEqual(r.checkout.recommendations.value[0].activityFrame, promotionFrame());
+    frame = promotionFrame({ name: 'x'.repeat(255) }); await r.checkout.load();
+    assert.deepEqual(r.checkout.recommendations.value[0].activityFrame, frame);
+    for (const invalid of [undefined, null, false, [], 'frame', {}, promotionFrame({ id: '9' }), promotionFrame({ id: 0 }),
+      promotionFrame({ id: 2147483648 }), promotionFrame({ id: 1.5 }), promotionFrame({ name: '' }), promotionFrame({ name: {} }),
+      promotionFrame({ name: 'x'.repeat(256) }), promotionFrame({ image: {} }), promotionFrame({ image: '' }),
+      promotionFrame({ image: '/'.repeat(2049) })]) {
+      frame = invalid; await r.checkout.load();
+      assert.equal(r.checkout.recommendationError.value, '');
+      const row = r.checkout.recommendations.value[0];
+      assert.equal(row.activityFrame, null); assert.equal(row.price, '12.30');
+      assert.equal(row.destination, '/pages/goods/detail?id=170');
+    }
+    r.checkout.openRecommendation(170); assert.deepEqual(r.navigations, ['/pages/goods/detail?id=170']);
+  } finally { r.stop(); }
+});
+
+test('promotion frames reuse safe image URLs and bounded literal text without turning decoration into navigation', async () => {
+  let frame = promotionFrame();
+  const r = await start(call => ({ data: call.url === '/api/product/hot' ? [recommended(170, { activity_frame: frame })] : page(1, []) }));
+  try {
+    for (const image of ['javascript:alert(1)', 'data:image/svg+xml,abc', 'http://example.invalid/frame.png', '//example.invalid/frame.png',
+      'https://user:secret@example.invalid/frame.png', 'https://example.invalid/a b.png', '/frame\u0000.png', '/frame\\other.png']) {
+      frame = promotionFrame({ image }); await r.checkout.load();
+      assert.equal(r.checkout.recommendations.value[0].activityFrame, null);
+      assert.equal(r.checkout.recommendationError.value, '');
+    }
+    for (const image of ['/api/qa/frame.svg?v=2', 'https://cdn.example.invalid/frame.png']) {
+      frame = promotionFrame({ name: ' <b>活动原文</b> ', image }); await r.checkout.load();
+      assert.deepEqual(r.checkout.recommendations.value[0].activityFrame, { ...frame, name: '<b>活动原文</b>' });
+      assert.equal(r.checkout.recommendations.value[0].destination, '/pages/goods/detail?id=170');
+    }
+  } finally { r.stop(); }
+});
+
+function recommendationImage(item) {
+  const props = vue.reactive({ item });
+  const r = runtime({ component: 'components/VisitRecommendationImage.vue', props });
+  return { ...r, props, state: r.checkout };
+}
+
+test('recommendation image requires a successful product image before showing the frame and isolates both failure modes', () => {
+  const r = recommendationImage({ image: '/api/qa/product.svg', activityFrame: promotionFrame() });
+  try {
+    const state = r.state;
+    assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, true);
+    state.media.value.onFrameError(); assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+    r.props.item = { ...r.props.item }; // An explicit refresh can retry the same URLs.
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, true);
+    state.media.value.onError(); assert.equal(state.showImage.value, false); assert.equal(state.showFrame.value, false);
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, false); // A late load cannot undo a terminal error.
+    r.props.item = { ...r.props.item, image: '' };
+    state.media.value.onLoad(); assert.equal(state.showImage.value, false); assert.equal(state.showFrame.value, false);
+    r.props.item = { image: '/api/qa/product.svg', activityFrame: null };
+    state.media.value.onLoad(); assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+  } finally { r.stop(); }
+});
+
+test('image URL and frame URL changes reject all late events from older native image nodes', () => {
+  const r = recommendationImage({ image: '/api/qa/product.svg', activityFrame: promotionFrame() });
+  try {
+    const state = r.state, oldImage = state.media.value;
+    oldImage.onLoad(); assert.equal(state.showFrame.value, true);
+    r.props.item.image = '/api/qa/product-2.svg';
+    assert.notEqual(state.media.value.key, oldImage.key); assert.equal(state.showFrame.value, false);
+    oldImage.onLoad(); oldImage.onError(); oldImage.onFrameError();
+    assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, true);
+    const oldFrame = state.media.value;
+    r.props.item.activityFrame.image = '/api/qa/frame-2.svg';
+    assert.notEqual(state.media.value.key, oldFrame.key); assert.equal(state.showFrame.value, false);
+    oldFrame.onError(); oldFrame.onFrameError(); oldFrame.onLoad();
+    assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, true);
+  } finally { r.stop(); }
+});
+
+test('compiled image event handlers retain their original snapshot even with Vue handler caching enabled', () => {
+  const { readFileSync } = require('node:fs'), { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
+  const ts = require('typescript'), filename = path.resolve(__dirname, '../src/components/VisitRecommendationImage.vue');
+  const descriptor = parse(readFileSync(filename, 'utf8'), { filename }).descriptor;
+  const script = compileScript(descriptor, { id: 'visit-frame-events' });
+  const compiled = compileTemplate({ source: descriptor.template.content, filename, id: 'visit-frame-events',
+    compilerOptions: { bindingMetadata: script.bindings, cacheHandlers: true } });
+  assert.deepEqual(compiled.errors, []);
+  const output = ts.transpileModule(compiled.code, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+  const exports = {}; new Function('require', 'exports', output)(require, exports);
+  const r = recommendationImage({ image: '/api/qa/product.svg', activityFrame: promotionFrame() });
+  const cache = [], render = () => exports.render({}, cache, {}, vue.proxyRefs(r.state));
+  function find(node, name) {
+    if (!node || typeof node !== 'object') return;
+    if (node.props?.class === name) return node;
+    for (const child of Array.isArray(node.children) ? node.children : []) { const found = find(child, name); if (found) return found; }
+  }
+  try {
+    const main = find(render(), 'recommendation-main-image');
+    main.props.onLoad(); assert.equal(r.state.showFrame.value, true);
+    const frame = find(render(), 'promotion-frame');
+    r.props.item = { ...r.props.item }; render();
+    main.props.onLoad(); main.props.onError(); frame.props.onError();
+    assert.equal(r.state.showImage.value, true); assert.equal(r.state.showFrame.value, false);
+    find(render(), 'recommendation-main-image').props.onLoad();
+    assert.equal(r.state.showFrame.value, true);
+  } finally { r.stop(); }
+});
+
+test('actual history page refresh and identity changes cannot carry failed frame state or stale image callbacks into a new recommendation', async () => {
+  const r = runtime({ component: 'pages/user/visitHistory.vue', send: call => ({ data: call.url === '/api/product/hot'
+    ? [recommended(170, { image: '/api/qa/product.svg', activity_frame: promotionFrame() })] : page(1, []) }) });
+  const scope = vue.effectScope();
+  try {
+    await r.start();
+    const props = vue.reactive({ item: r.checkout.recommendations.value[0] });
+    const state = scope.run(() => {
+      vue.watch(() => r.checkout.recommendations.value[0], item => { if (item) props.item = item; }, { flush: 'sync' });
+      return r.checkout.VisitRecommendationImage.setup(props, { expose() {} });
+    });
+    const first = state.media.value; first.onLoad(); first.onFrameError(); assert.equal(state.showFrame.value, false);
+    await r.checkout.load();
+    assert.notEqual(state.media.value.key, first.key); assert.equal(state.showFrame.value, false);
+    first.onLoad(); first.onError(); first.onFrameError();
+    assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, true);
+    const previousOwner = state.media.value;
+    r.auth.setLogin('other-owner', 22); assert.deepEqual(r.checkout.recommendations.value, []);
+    await r.checkout.load();
+    previousOwner.onLoad(); previousOwner.onError(); previousOwner.onFrameError();
+    assert.equal(state.showImage.value, true); assert.equal(state.showFrame.value, false);
+    state.media.value.onLoad(); assert.equal(state.showFrame.value, true);
+    r.checkout.openRecommendation(170); assert.deepEqual(r.navigations, ['/pages/goods/detail?id=170']);
+    const disposed = state.media.value; scope.stop(); disposed.onError(); disposed.onFrameError();
+    assert.equal(state.showFrame.value, true);
+  } finally { scope.stop(); r.stop(); }
 });

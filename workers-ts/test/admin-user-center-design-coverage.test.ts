@@ -18,6 +18,8 @@ const mutants: Mutant[] = [
   ['statistics true manager scope','managerStatistics','requireStoreManagerScope(db,uid,storeId)','fakeManagerScope(db,uid,storeId)','statisticsTwoStyles'],
   ['statistics actual root predicate','managerStatistics','pid>=0','pid=0','statisticsTwoStyles'],
   ['statistics actual signed request','merchantApi','uni.request({','fakeRequest({','statisticsTwoStyles'],
+  ['customer statistics alias preserves its partial boundary','navigation','"/pages/admin/order/index": { target: "/pages/customer-work/statistics", coverage: "partial_replacement" }','"/pages/admin/order/index": { target: "/pages/customer-work/statistics", coverage: "candidate_covered" }','statisticsTwoStyles'],
+  ['merchant statistics destination is actually registered','navigation','"/pages/merchant/statistics",','"/pages/merchant/unregistered-statistics",','statisticsTwoStyles'],
   ['save template action','admin','@click="controller.save()"','@click="previewOnly()"','adminScreen'],
   ['actual Admin controller construction','admin','new UserCenterDesignController(','new FakeDesignController(','adminScreen'],
   ['PHP video property4 default','contract','property: [0, 1, 2, 3, 4]','property: [0, 1, 2, 3, 5]','sixBlockContract'],

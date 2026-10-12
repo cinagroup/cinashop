@@ -96,6 +96,7 @@ export function parseNewcomerDetail(raw: unknown, requestedId: number): Newcomer
     if (!sku || typeof sku.unique !== 'string' || !sku.unique || typeof sku.suk !== 'string' || (key !== sku.suk && !(key === '' && sku.suk === '默认'))) throw new Error('新人商品规格响应无效');
     return { unique: sku.unique, name: sku.suk, price: money(sku.price), stock: nonnegative(sku.stock), image: safeDiyImageUrl(sku.image) };
   });
+  if (new Set(skus.map(sku => sku.unique)).size !== skus.length) throw new Error('新人商品规格标识重复，请刷新后重试');
   return {
     id: requestedId, productId: id(row.product_id), title: row.title.slice(0, 200),
     image: safeDiyImageUrl(row.image), price: money(row.price), originalPrice: money(row.ot_price ?? 0),

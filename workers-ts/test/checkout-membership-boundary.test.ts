@@ -231,6 +231,7 @@ describe('checkout membership authority', () => {
       await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
       await waitForFinanceClock(f.db, deadline * 1000); await holder.exec('COMMIT');
       const result = await buying; const allowed = variant === 'valid' || variant === 'forever';
+      if (allowed && !result.ok) throw result.error;
       expect(result.ok).toBe(allowed);
       if (!result.ok) expect(result.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
       if (allowed) expect((await state()).orders).toMatchObject([{ paid: 0, payPrice: receipt.data.priceGroup.pay_price }]);

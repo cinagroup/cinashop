@@ -75,7 +75,18 @@ export function ownsFinanceFixtureEndpoint(database: string, schema: string, bas
 
 /** Local memory by default. CI can opt into its dedicated disposable PostgreSQL 16 service only. */
 export async function financePostgres(tables: PgTable[], options: { namespace?: 'public' } = {}) {
-  const url = process.env.TEST_FINANCE_POSTGRES_URL;
+  return createFinanceFixture(tables, options, process.env.TEST_FINANCE_POSTGRES_URL);
+}
+
+/** Explicit owned memory for business-only suites, even with CI native PG configured.
+ * Backend proof comes from the actual Drizzle client, not a claimed driver label.
+ * This never reads the native URL or changes process-wide environment variables. */
+export async function financeMemoryPostgres(tables: PgTable[], options: { namespace?: 'public' } = {}) {
+  const fixture = await createFinanceFixture(tables, options, undefined);
+  return { ...fixture, isMemory: fixture.db.$client instanceof PGlite };
+}
+
+async function createFinanceFixture(tables: PgTable[], options: { namespace?: 'public' }, url: string | undefined) {
   let db: DbClient;
   let exec: (query: string) => Promise<unknown>;
   let close: () => Promise<void>;

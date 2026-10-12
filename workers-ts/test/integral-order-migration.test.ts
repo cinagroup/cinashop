@@ -144,6 +144,8 @@ describe("integral order migration", () => {
     const create = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     const pay = readFileSync("src/services/order/StoreOrderPayService.ts", "utf8");
     const storefront = readFileSync("../view/uniapp-ts/src/pages/user/integral.vue", "utf8");
+    const purchase = readFileSync("../view/uniapp-ts/src/composables/useIntegralPurchase.ts", "utf8");
+    const purchaseContract = readFileSync("../view/common/integralPurchase.ts", "utf8");
     expect(cart).toContain("resolveIntegralSku");
     expect(cart).toContain("积分商品与关联商品不匹配");
     expect(create).toContain("cinashop:integral-order:");
@@ -156,8 +158,14 @@ describe("integral order migration", () => {
     expect(address).toContain("请选择完整的收货地址");
     expect(address).toContain("请填写完整的收货地址、收货人和电话");
     expect(pay).toContain("debitRequiredOrderIntegral");
-    expect(storefront).toContain("apiCartAdd");
-    expect(storefront).toContain("/pages/order/confirm?mode=buy");
+    expect(storefront).toContain("useIntegralPurchase('dialog')");
+    expect(storefront).toContain("purchase: confirmExchange");
+    expect(storefront).toContain('@tap="confirmExchange"');
+    expect(purchase).toContain("await apiCartAdd(integralCartInput(detail.value, submitted.unique, submitted.quantity))");
+    expect(purchase).toContain("integralCheckoutUrl");
+    expect(purchaseContract).toContain("/pages/order/confirm?mode=buy");
     expect(storefront).not.toContain("/store_integral/exchange/");
+    expect(purchase).not.toContain("/store_integral/exchange/");
+    expect(purchaseContract).not.toContain("/store_integral/exchange/");
   });
 });

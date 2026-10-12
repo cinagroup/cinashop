@@ -9,7 +9,7 @@ import {
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
-import { boundBargainSourceProductRetirement, lockBargainSourceProductRetirement } from '@/services/activity/BargainSourceProductLifecycle';
+import { boundBargainSourceProductChange, lockBargainSourceProductChange } from '@/services/activity/BargainSourceProductLifecycle';
 import {
   storeCart,
   storeProduct,
@@ -33,6 +33,9 @@ import {
   replaceProductSkuEditor,
 } from "@/services/product/ProductSkuEditorService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import type { Env } from '@/env';
+import { lockSupplierProductMedia, prepareSupplierProductMediaInput, projectSupplierProductMedia,
+  supplierProductEditingHtml, supplierProductEditingMediaReference } from './SupplierProductMediaService';
 
 export {
   buildSkuCombinations,
@@ -118,6 +121,13 @@ function optionalString(value: unknown, field: string, maxLength: number): strin
   const normalized = value.trim();
   if (normalized.length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
   return normalized;
+}
+
+function editingDescription(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string') throw new ValidateException('商品详情格式错误');
+  if (value.length > 200_000) throw new ValidateException('商品详情不能超过200000个字符');
+  return value;
 }
 
 function integerValue(
@@ -264,7 +274,7 @@ export function normalizeSupplierProductInput(
     barCode: optionalString(firstValue(input, "bar_code", "barCode"), "商品条码", 15),
     cateIds: normalizeCategoryIds(firstValue(input, "cate_id", "cateIds", "cate_ids")),
     sliderImages,
-    description: optionalString(input.description, "商品详情", 200_000),
+    description: editingDescription(input.description),
     specType,
     dimensions,
     skus,
@@ -339,7 +349,7 @@ function buildCategoryTree<T extends { id: number; pid: number }>(rows: T[]): Ar
 }
 
 export class SupplierProductManagementService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly env?: Pick<Env, 'APP_KEY'>) {}
 
   private tenantProductWhere(supplierId: number, productId: number) {
     return and(
@@ -577,8 +587,12 @@ export class SupplierProductManagementService {
   }
 
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {
-    const input = normalizeSupplierProductInput(rawInput);
+    const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(rawInput));
     return withTx(this.container, async (tx) => {
+      if (productId > 0) {
+        await boundBargainSourceProductChange(tx);
+        await lockBargainSourceProductChange(tx, productId);
+      }
       await this.lockProduct(tx, supplierId, productId);
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
@@ -605,6 +619,7 @@ export class SupplierProductManagementService {
       }
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
+      await lockSupplierProductMedia(tx, supplierId, input);
       const stock = input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const price = minMoney(input.skus.map((sku) => sku.price));
@@ -651,6 +666,9 @@ export class SupplierProductManagementService {
       } as const;
       let savedProductId = productId;
       if (existing) {
+        // Checkout claims carts before SKU and product stock. Disable carts
+        // before either row write so a checkout-owned cart cannot form a cycle.
+        await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, productId));
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
       } else {
         const rows = await tx
@@ -694,7 +712,7 @@ export class SupplierProductManagementService {
         dimensions: input.dimensions,
         skus: input.skus.map((sku) => ({ ...sku, ...DEFAULT_SECOND_CARD_CONFIGURATION })),
       }, now);
-      await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
+      if (!existing) await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     });
   }
@@ -730,7 +748,7 @@ export class SupplierProductManagementService {
         .limit(1),
       loadProductSkuEditor(this.container.db, productId, product.specType),
     ]);
-    return {
+    const detail = {
       id: product.id,
       product_type: product.productType,
       store_name: product.storeName,
@@ -742,13 +760,15 @@ export class SupplierProductManagementService {
       slider_image: (() => {
         try {
           const parsed: unknown = JSON.parse(product.sliderImage);
-          return Array.isArray(parsed) ? parsed : [];
+          return Array.isArray(parsed) ? parsed.map(value => typeof value === 'string' ? supplierProductEditingMediaReference(value) : value) : [];
         } catch {
           return [];
         }
       })(),
-      description: descriptions[0]?.description ?? "",
+      description: supplierProductEditingHtml(descriptions[0]?.description ?? ""),
       ...skuEditor,
+      attrs: skuEditor.attrs.map(row => ({ ...row, image: supplierProductEditingMediaReference(row.image) })),
+      retired_attrs: skuEditor.retired_attrs.map(row => ({ ...row, image: supplierProductEditingMediaReference(row.image) })),
       freight: product.freight,
       postage: product.postage,
       temp_id: product.tempId,
@@ -764,14 +784,18 @@ export class SupplierProductManagementService {
       is_verify: product.isVerify,
       refusal: product.refusal,
     };
+    const media = await projectSupplierProductMedia(this.container.db, supplierId, {
+      sliderImages: detail.slider_image, skus: [...detail.attrs, ...detail.retired_attrs], description: detail.description,
+    }, this.env?.APP_KEY);
+    return { ...detail, media };
   }
 
   async recycleProduct(supplierId: number, productId: number) {
     await withTx(this.container, async (tx) => {
       // Retire every bargain admission on this source before changing the
       // product row. Cancellation/refund remain independent of this boundary.
-      await boundBargainSourceProductRetirement(tx);
-      await lockBargainSourceProductRetirement(tx, productId);
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const [owned] = await tx.select({ id: storeProduct.id }).from(storeProduct)
         .where(this.tenantProductWhere(supplierId, productId)).limit(1);
@@ -796,6 +820,10 @@ export class SupplierProductManagementService {
   async setProductShow(supplierId: number, productId: number, isShow: number) {
     if (isShow !== 0 && isShow !== 1) throw new ValidateException("商品状态错误");
     await withTx(this.container, async (tx) => {
+      // A source hide must serialize with every bargain start/help before the
+      // product is read or changed, including when another activity shares it.
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const product = (
         await tx
@@ -807,8 +835,9 @@ export class SupplierProductManagementService {
       if (!product) throw new NotFoundException("商品不存在或不属于当前供应商");
       if (isShow === 1 && product.isVerify !== 1) throw new ValidateException("商品尚未审核通过，不能上架");
       if (isShow === 1 && moneyCents(product.price) <= 0n) throw new ValidateException("商品价格必须大于0才能上架");
-      await tx.update(storeProduct).set({ isShow }).where(eq(storeProduct.id, productId));
+      // A checkout owns its cart before its final product row update.
       await tx.update(storeCart).set({ status: isShow }).where(eq(storeCart.productId, productId));
+      await tx.update(storeProduct).set({ isShow }).where(eq(storeProduct.id, productId));
       await tx
         .update(storeProductRelation)
         .set({ status: isShow })

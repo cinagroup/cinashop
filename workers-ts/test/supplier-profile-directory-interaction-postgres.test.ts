@@ -152,10 +152,11 @@ it.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)(
     });
     await locked;
     const pending = supplierService().updateProfile(1, 101, { name: '不能写入' });
+    const rejected = expect(pending).rejects.toThrow('供应商不存在');
     await new Promise(resolve => setTimeout(resolve, 40));
     release();
     await holder;
-    await expect(pending).rejects.toThrow('供应商不存在');
+    await rejected;
     const [supplier] = await fixture.db.select().from(systemSupplier).where(eq(systemSupplier.id, 1));
     expect(supplier).toMatchObject({ isShow: 0, name: '原联系人' });
   },

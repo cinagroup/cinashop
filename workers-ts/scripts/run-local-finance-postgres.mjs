@@ -66,6 +66,12 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    // Fixed catalog probe creates an unprivileged LOGIN only in this owned cluster.
+    'test/db003-system-config-catalog-postgres.test.ts',
+    'test/customer-city-binding-fk-current-audit.test.ts',
+    'test/withdrawal-effects-upgrade.test.ts',
+    'test/shipping-template-lifecycle-services.test.ts',
+    'test/uniapp-product-sku-postgres.test.ts',
     'test/customer-financial-catalog-postgres.test.ts',
     'test/customer-writeoff-operation-postgres.test.ts',
     'test/cashier-second-card-origin-postgres.test.ts',
@@ -166,6 +172,7 @@ if (schemaMaintenance) {
     'test/assisted-form-consumption-postgres.test.ts',
     'test/admin-user-list-postgres.test.ts',
     'test/shipping-lifecycle-route-auth.test.ts',
+    'test/shipping-template-lifecycle-services.test.ts',
     'test/order-delivery-address.test.ts',
     'test/bargain-pickup-postgres.test.ts',
     'test/bargain-shipping-selection-postgres.test.ts',
@@ -181,6 +188,18 @@ if (schemaMaintenance) {
     'test/runtime-admin-boundary.test.ts',
     'test/admin-supplier-menu-write-capability.test.ts',
     'test/admin-supplier-menu-rules-native-http.test.ts',
+    'test/admin-legacy-system-list-native.test.ts',
+  'test/admin-category-create-form-native.test.ts',
+    'test/admin-category-edit-form-native.test.ts',
+    'test/admin-legacy-role-workflow-native.test.ts',
+    'test/admin-authority-write-native.test.ts',
+    'test/admin-authority-operation-native.test.ts',
+    'test/admin-legacy-admin-workflow-native.test.ts',
+    'test/admin-legacy-admin-operation-upgrade-native.test.ts',
+    'test/admin-legacy-role-operation-native.test.ts',
+    'test/admin-legacy-role-operation-upgrade-native.test.ts',
+    'test/admin-authority-maintenance-native.test.ts',
+    'test/agent-application-postgres.test.ts',
     // These HTTP fixtures now install the real checkout NOLOGIN capability.
     'test/admin-refund-operation-http.test.ts',
     'test/admin-refund-creation-http.test.ts',
@@ -198,6 +217,8 @@ if (schemaMaintenance) {
     'test/bargain-cart-binding.test.ts',
     // Read-only A3e catalog fixture commissions the checkout NOLOGIN owner.
     'test/bargain-selection-catalog.test.ts',
+    // The helper-admission fixture uses the same owned checkout protocol.
+    'test/bargain-help-admission.test.ts',
     'test/presale-checkout-postgres.test.ts',
     // This policy suite performs real checkout after its read-only assertions.
     'test/membership-pricing-policy.test.ts',
@@ -224,6 +245,8 @@ if (schemaMaintenance) {
     'test/seckill-time-reference-lock-upgrade.test.ts',
     'test/admin-assisted-order-cursor-postgres.test.ts',
     'test/bargain-order-concurrency-postgres.test.ts',
+    'test/bargain-supplier-visibility-concurrency-postgres.test.ts',
+    'test/bargain-visibility-writers-concurrency-postgres.test.ts',
     'test/bargain-participation-concurrency-postgres.test.ts',
     // A3f rule admission tests commission the same isolated checkout owner.
     'test/bargain-help-rule-concurrency-postgres.test.ts',
@@ -233,6 +256,10 @@ if (schemaMaintenance) {
     'test/bargain-admin-dates-postgres.test.ts',
     'test/seckill-schedule-postgres.test.ts',
     'test/seckill-concurrency-postgres.test.ts',
+    'test/seckill-cross-activity-compensation-postgres.test.ts',
+    'test/seckill-compensation-refund-postgres.test.ts',
+    'test/seckill-compensation-ordinary-order-postgres.test.ts',
+    'test/seckill-sku-identity-fence-postgres.test.ts',
     'test/pc-seckill-purchase.test.ts',
     'test/admin-seckill-time.test.ts',
     'test/admin-seckill-time-postgres.test.ts',
@@ -312,12 +339,16 @@ if (schemaMaintenance) {
     'test/checkout-catalog-management.test.ts',
     'test/checkout-mobile-product-concurrency.test.ts',
     'test/checkout-out-product-concurrency.test.ts',
+    'test/account-cancellation-order-admission-postgres.test.ts',
+    'test/seckill-concurrency-postgres.test.ts',
     'test/checkout-sku-lifecycle-concurrency.test.ts',
     'test/level-pricing-activation.test.ts',
     'test/pc-coupon-wallet-postgres.test.ts',
     'test/product-price-truncation.test.ts',
     'test/out-stock-candidate-boundary.test.ts',
     'test/checkout-pricing-config-authority.test.ts',
+    // Full-ORM seckill/Admin shipping race fixture installs the lifecycle protocol.
+    'test/seckill-shared-rule-concurrency-postgres.test.ts',
     'test/admin-config-batch-postgres.test.ts',
     'test/brokerage-paid-business-transactions.test.ts',
     'test/checkout-confirmation.test.ts',
@@ -431,6 +462,10 @@ if (schemaMaintenance) {
     'test/order-promotion-split-finance.test.ts',
     'test/order-promotion-ledger-split.test.ts',
     'test/checkout-confirmation-rules.test.ts',
+    // End-to-end newcomer checkout fixture installs the same NOLOGIN pricing owner.
+    'test/newcomer-purchase-postgres.test.ts',
+    'test/newcomer-cart-add-replay-migration-postgres.test.ts',
+    'test/newcomer-cart-replay-maintenance-postgres.test.ts',
     'test/pc-checkout-form-postgres.test.ts',
     'test/pc-checkout-quote-postgres.test.ts',
     'test/brokerage-paid-runtime-permissions.test.ts',
@@ -566,6 +601,8 @@ try {
     // exhaust Windows commit memory; one Vitest worker retains those proofs.
     : ['node_modules/vitest/vitest.mjs', 'run', ...tests,
       tests.some(test => new Set([
+        'test/admin-legacy-role-operation-native.test.ts',
+        'test/admin-legacy-role-operation-upgrade-native.test.ts',
         'test/runtime-promotion-gift-privileges.test.ts',
         'test/runtime-promotion-gift-refund.test.ts',
         'test/runtime-coupon-template-privileges.test.ts',

@@ -98,7 +98,9 @@ describe("admin assisted order migration", () => {
     expect(cart).toContain("eq(storeCart.staffId, params.adminId)");
     expect(cart).toContain("pg_advisory_xact_lock");
     expect(create).toContain("cart.staffId !== assisted.adminId");
-    expect(create).toContain("eq(storeCart.staffId, assisted?.adminId ?? 0)");
+    expect(create).toContain("eq(storeCart.staffId, cashier?.actor.uid ?? assisted?.adminId ?? 0)");
+    expect(create).toContain("cart.staffId !== assisted.adminId");
+    expect(create).toContain("cart.staffId!==cashier.actor.uid");
     expect(create).toContain('changeType: "admin_assisted_create"');
     const createHandler = controller.split('export async function adminAssistedCreate(c: C)')[1]?.split('/** POST /api/admin/order/pay/')[0];
     expect(createHandler).toContain("readBoundedJsonObject(c.req.raw, 1_100_000)");

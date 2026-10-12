@@ -36,7 +36,10 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
     await f.db.insert(storeProduct).values({ id: 70, storeName: "基础商品", stock: 12, price: "90.00", isShow: 1, isVerify: 1, image: "/base.svg" });
     const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
     await f.db.insert(storeActivity).values({ id: 900, type: 1, status: 1, startDay: today - 86_400, endDay: today + 86_400, timeId: "4,8" });
-    await f.db.insert(storeSeckillTime).values({ id: 4, startTime: "0000", endTime: "2400", status: 1 });
+    await f.db.insert(storeSeckillTime).values([
+      { id: 4, startTime: "0000", endTime: "2400", status: 1 },
+      { id: 8, startTime: "0000", endTime: "2400", status: 0 },
+    ]);
     await f.db.insert(storeSeckill).values({ id: 20, activityId: 900, productId: 70, storeName: "秒杀<script>文字</script>",
       price: "8.00", cost: "1.00", stock: 10, quota: 9, quotaShow: 10, onceNum: 3, num: 6, image: "/seckill.svg", timeId: "4,8" });
     await f.db.insert(storeProductAttrValue).values([

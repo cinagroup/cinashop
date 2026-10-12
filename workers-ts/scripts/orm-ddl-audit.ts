@@ -17,6 +17,13 @@ import { inspectAdminRefundCreation, runAdminRefundCreation } from '../src/migra
 import { inspectInvoiceEvidenceSchema, runInvoiceEvidenceSchema } from '../src/migrations/runInvoiceEvidence';
 import { inspectRefundOrderSplitSchema, runRefundOrderSplitSchema } from '../src/migrations/runRefundOrderSplit';
 import { inspectOfflineOrderSchema, runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
+import { sql } from 'drizzle-orm';
+import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_ORM_CATALOG_VERSIONS } from '../src/migrations/offlineOrderCatalog';
+import { inspectReviewedOfflineGiftCatalog, REVIEWED_OFFLINE_GIFT_CATALOG_SQL } from '../src/migrations/reviewedOfflineGiftCatalog';
+import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
+import { inspectOrderPromotionGiftReceiptCatalog } from '../src/migrations/orderPromotionGiftReceipt';
+import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '../src/migrations/customerCityDelivery';
+import { inspectCustomerWaybillActor, runCustomerWaybillActor } from '../src/migrations/runCustomerWaybillActor';
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
@@ -43,6 +50,7 @@ import { assertForeignKeyNamesAligned } from "./data-migration/foreign-key-name-
 import { assertAllConstraintsAligned, assertCheckStatesAligned } from "./data-migration/check-state-contracts";
 import { assertAllSequencesAligned, assertKefuSequenceAligned } from "./data-migration/kefu-sequence-contracts";
 import { assertAllTablesAligned, TABLE_CATALOG_FIELDS } from "./data-migration/table-catalog-contracts";
+import { composeReviewedCashierAbandonCatalog } from './data-migration/cashier-abandon-catalog';
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -83,6 +91,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const invoiceEvidenceVerification: Record<string, unknown> = {};
   const refundSplitVerification: Record<string, unknown> = {};
   const offlineOrderVerification: Record<string, unknown> = {};
+  const customerCityDeliveryVerification: Record<string, unknown> = {};
+  const cashierAbandonmentVerification: Record<string, unknown> = {};
+  const customerWaybillActorVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
   const seckillTimeReferenceLockVerification: Record<string, unknown> = {};
   const pinkSuccessOutboxVerification: Record<string, unknown> = {};
@@ -237,6 +248,94 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         // Explicitly prove this protocol on every real construction path, with
         // no repair masking a missing external/embedded registration.
         const shippingDb = drizzle(client);
+// The authored city protocol is explicit owner maintenance, not runAll().
+        // Only the embedded base path may be genuinely absent; registered SQL and
+        // all generated ORM paths must already match the full measured catalog.
+        const cityNames = ['customer_city_delivery_job','customer_city_delivery_attempt','customer_city_delivery_binding'];
+        const cityPresence = await client.unsafe("SELECT name,to_regclass('public.'||name)::text AS relation FROM unnest(ARRAY['customer_city_delivery_job','customer_city_delivery_attempt','customer_city_delivery_binding']) AS name ORDER BY name");
+        if (cityPresence.length !== 3 || cityPresence.some(row => path === 'embedded' ? row.relation !== null : row.relation === null))
+          throw Error(`City explicit registration differs on ${path}; no partial repair`);
+        const cityIdentityQuery = "SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text AS acl FROM pg_class WHERE relnamespace='public'::regnamespace UNION ALL SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace UNION ALL SELECT 'constraint',oid::text,NULL,NULL,NULL FROM pg_constraint WHERE connamespace='public'::regnamespace UNION ALL SELECT 'trigger',oid::text,NULL,NULL,NULL FROM pg_trigger WHERE tgrelid IN(SELECT oid FROM pg_class WHERE relnamespace='public'::regnamespace) ORDER BY kind,oid";
+        const cityBefore = await client.unsafe(cityIdentityQuery);
+        if (path === 'embedded') await installCustomerCityDelivery(shippingDb, { maintenance: true });
+        await assertCustomerCityDeliveryReady(shippingDb, false);
+        const cityInstalled = await client.unsafe(cityIdentityQuery);
+        if (JSON.stringify(cityInstalled.filter(row => cityBefore.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(cityBefore))
+          throw Error(`City explicit installation replaced an existing object on ${path}`);
+        const cityRowCounts = await Promise.all(cityNames.map(async name => {
+          const [row] = await client.unsafe(`SELECT count(*)::int AS count FROM public."${name}"`);
+          return { table: name, count: row.count };
+        }));
+        if (cityRowCounts.some(row => row.count !== 0)) throw Error(`City audit must remain empty on ${path}`);
+        let cityRepeatRefused = false;
+        try { await installCustomerCityDelivery(shippingDb, { maintenance: true }); }
+        catch (error) { if (!(error instanceof Error) || error.message !== 'City fresh PG16 owner installation requires catalog review') throw error; cityRepeatRefused = true; }
+        await assertCustomerCityDeliveryReady(shippingDb, false);
+        if (!cityRepeatRefused || JSON.stringify(cityInstalled) !== JSON.stringify(await client.unsafe(cityIdentityQuery)))
+          throw Error(`City fresh-only refusal changed object identity on ${path}`);
+        customerCityDeliveryVerification[path] = { initial: path === 'embedded' ? 'absent' : 'exact-catalog', explicitInstallation: path === 'embedded', complete: true, existingObjectsPreserved: true, repeatRefused: true, noBackfill: true, rows: cityRowCounts };
+        // Preserve the historical 285-table base. Only this fixed independently
+        // commissioned protocol is composed into every complete audit path.
+        cashierAbandonmentVerification[path] = await composeReviewedCashierAbandonCatalog(shippingDb,path,root);
+        // Compose the independently reviewed customer actor owner forward only
+        // into exact empty legacy paths. Existing ORM targets must already be ready.
+        const registeredWaybill = path === 'external' || path === 'embedded';
+        const initialWaybill = await inspectCustomerWaybillActor(shippingDb);
+        if (registeredWaybill ? !initialWaybill.legacy || initialWaybill.ready : !initialWaybill.ready || initialWaybill.legacy)
+          throw Error(`Customer waybill registration differs on ${path}; no drift repair`);
+        const waybillCountsSql = "SELECT 'order_waybill_job' AS name,count(*)::int AS count FROM public.order_waybill_job UNION ALL SELECT 'order_waybill_job_action',count(*)::int FROM public.order_waybill_job_action ORDER BY name";
+        const beforeWaybillRows = await client.unsafe(waybillCountsSql);
+        if (beforeWaybillRows.length !== 2 || beforeWaybillRows.some(row => row.count !== 0))
+          throw Error(`Customer waybill audit requires empty targets on ${path}`);
+        const waybillConstraintsSql = "SELECT c.oid::text,t.relname,c.conname FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid WHERE (c.conrelid='public.order_waybill_job'::regclass AND c.conname='owj_actor_ck') OR (c.conrelid='public.order_waybill_job_action'::regclass AND c.conname='owja_actor_ck') ORDER BY t.relname,c.conname";
+        const oldWaybillConstraints = await client.unsafe(waybillConstraintsSql);
+        if (oldWaybillConstraints.length !== 2) throw Error('Customer waybill exact actor constraints unavailable');
+        const beforeWaybillIdentities = await client.unsafe(cityIdentityQuery);
+        const beforeWaybillCatalog = await readCatalog(async query => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        if (registeredWaybill) await runCustomerWaybillActor(shippingDb);
+        const completedWaybill = await inspectCustomerWaybillActor(shippingDb);
+        if (!completedWaybill.ready || completedWaybill.legacy) throw Error(`Customer waybill owner completion differs on ${path}`);
+        const newWaybillConstraints = await client.unsafe(waybillConstraintsSql);
+        const installedWaybillIdentities = await client.unsafe(cityIdentityQuery);
+        const installedWaybillCatalog = await readCatalog(async query => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        const waybillTransition = compareCatalogs(beforeWaybillCatalog, installedWaybillCatalog);
+        if (registeredWaybill) {
+          const expectedWaybillColumns = ['order_waybill_job', 'order_waybill_job_action'].map(table => ({
+            key: table + '.actor_service_id', name: 'actor_service_id', table, type: 'integer', notNull: true,
+            default: '0', identity: '', generated: '', collation: null,
+          }));
+          if (JSON.stringify(waybillTransition.columns.candidateOnly) !== JSON.stringify(expectedWaybillColumns)
+            || waybillTransition.columns.referenceOnly.length || waybillTransition.columns.changed.length || waybillTransition.columns.possibleRenames.length
+            || JSON.stringify(waybillTransition.constraints.changed.map(row => ({ key: row.key, fields: row.fields }))) !== JSON.stringify([
+              { key: 'order_waybill_job.owj_actor_ck', fields: ['definition'] },
+              { key: 'order_waybill_job_action.owja_actor_ck', fields: ['definition'] },
+            ]) || waybillTransition.constraints.referenceOnly.length || waybillTransition.constraints.candidateOnly.length || waybillTransition.constraints.possibleRenames.length
+            || ['tables', 'indexes', 'sequences'].some(kind => Object.values(waybillTransition[kind as 'tables' | 'indexes' | 'sequences']).some(rows => rows.length)))
+            throw Error(`Customer waybill forward changed unrelated catalog fields on ${path}`);
+          const oldConstraintOids = new Set(oldWaybillConstraints.map(row => row.oid));
+          const newConstraintOids = new Set(newWaybillConstraints.map(row => row.oid));
+          if (newWaybillConstraints.length !== 2 || newConstraintOids.size !== 2 || newWaybillConstraints.some(row => oldConstraintOids.has(row.oid))
+            || JSON.stringify(installedWaybillIdentities.filter(row => !(row.kind === 'constraint' && newConstraintOids.has(row.oid))))
+              !== JSON.stringify(beforeWaybillIdentities.filter(row => !(row.kind === 'constraint' && oldConstraintOids.has(row.oid)))))
+            throw Error(`Customer waybill forward replaced an unrelated OID/file/owner/ACL on ${path}`);
+        } else if (catalogKinds.some(kind => Object.values(waybillTransition[kind]).some(rows => rows.length))
+          || JSON.stringify(beforeWaybillIdentities) !== JSON.stringify(installedWaybillIdentities))
+          throw Error(`Ready ORM customer waybill was changed on ${path}`);
+        let waybillRepeatRefused = false;
+        try { await runCustomerWaybillActor(shippingDb); }
+        catch (error) { if (!(error instanceof Error) || error.message !== 'Customer waybill legacy catalog drift or already upgraded') throw error; waybillRepeatRefused = true; }
+        const repeatedWaybill = await inspectCustomerWaybillActor(shippingDb);
+        const repeatedWaybillCatalog = await readCatalog(async query => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        if (!waybillRepeatRefused || !repeatedWaybill.ready || repeatedWaybill.legacy
+          || repeatedWaybill.fingerprint !== completedWaybill.fingerprint
+          || catalogKinds.some(kind => Object.values(compareCatalogs(installedWaybillCatalog, repeatedWaybillCatalog)[kind]).some(rows => rows.length))
+          || JSON.stringify(installedWaybillIdentities) !== JSON.stringify(await client.unsafe(cityIdentityQuery))
+          || JSON.stringify(beforeWaybillRows) !== JSON.stringify(await client.unsafe(waybillCountsSql)))
+          throw Error(`Customer waybill repeat refusal changed catalog/identity/empty rows on ${path}`);
+        customerWaybillActorVerification[path] = { initial: registeredWaybill ? 'exact-legacy' : 'exact-ready', explicitOwnerForward: registeredWaybill,
+          complete: true, beforeFingerprint: initialWaybill.fingerprint, afterFingerprint: completedWaybill.fingerprint,
+          exactTwoColumnsAndActorChecks: registeredWaybill, unrelatedCatalogsPreserved: true, unrelatedOidsFilesOwnerAclPreserved: true,
+          repeatRefused: true, repeatAllCatalogsPreserved: true, noBackfill: true, rows: beforeWaybillRows };
         const initialOrigin = await inspectPurchaseOriginEvidence(shippingDb);
         const expectedOrigin = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
         if (initialOrigin.state !== expectedOrigin || !initialOrigin.sourcesReady)
@@ -258,7 +357,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           throw Error(`Purchase origin repeat or no-backfill verification differs on ${path}`);
         purchaseOriginVerification[path] = { initial: initialOrigin.state, complete: true, completionPreserved: true, repeatPreserved: true, noBackfill: true };
         const initialCancellation = await inspectPurchaseCancellationEvidence(shippingDb);
-        const expectedCancellation = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
+        const registeredGiftCancellation = path === 'external' || path === 'embedded';
+        const expectedCancellation = registeredGiftCancellation ? 'gift-v1' : 'orm-pending';
         if (initialCancellation.state !== expectedCancellation || !initialCancellation.sourcesReady)
           throw Error(`Purchase cancellation registration differs on ${path}; no automatic repair`);
         const beforeCancellation = await client.unsafe(originIdentityQuery);
@@ -267,7 +367,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         if (JSON.stringify(installedCancellation.filter(row => beforeCancellation.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeCancellation))
           throw Error(`Purchase cancellation completion replaced an existing object on ${path}`);
         await runPurchaseCancellationEvidenceSchema(shippingDb); await runPurchaseCancellationEvidenceSchema(shippingDb);
-        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== 'v1'
+        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== (registeredGiftCancellation ? 'gift-v1' : 'v1')
           || JSON.stringify(installedCancellation) !== JSON.stringify(await client.unsafe(originIdentityQuery))
           || (await client.unsafe('SELECT 1 FROM public.store_order_purchase_cancellation LIMIT 1')).length)
           throw Error(`Purchase cancellation repeat or no-backfill verification differs on ${path}`);
@@ -341,9 +441,32 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           || JSON.stringify(splitIdentities)!==JSON.stringify(await client.unsafe(splitIdentityQuery)))
           throw new Error(`Refund split repeat changed object identity on ${path}`);
         refundSplitVerification[path]={initial:initialSplit.state,complete:true,repeatPreserved:true};
-        const initialOffline = await inspectOfflineOrderSchema(shippingDb);
-        const expectedOffline = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
-        if (initialOffline.state !== expectedOffline) throw new Error(`Offline registration differs on ${path}: ${initialOffline.state}`);
+        const registeredOfflineGift = path === 'external' || path === 'embedded';
+        const initialOffline = registeredOfflineGift
+          ? await shippingDb.transaction(tx => inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' }),
+            { isolationLevel: 'repeatable read', accessMode: 'read only' })
+          : await inspectOfflineOrderSchema(shippingDb);
+        const expectedOffline = registeredOfflineGift ? 'v1-gift-index' : 'orm-pending';
+        if (initialOffline.state !== expectedOffline) {
+          // Read-only metadata witnesses; never learn a new approved shape or repair the target.
+          const fingerprintProjection = "encode(sha256(convert_to(shape::text,'UTF8')),'hex') AS fingerprint";
+          if (OFFLINE_CATALOG_SQL.split(fingerprintProjection).length !== 2
+            || REVIEWED_OFFLINE_GIFT_CATALOG_SQL.split(fingerprintProjection).length !== 2)
+            throw Error('Offline diagnostic projection differs; no automatic repair');
+          const diagnostic = await shippingDb.transaction(async tx => {
+            await tx.execute(sql`SELECT set_config('search_path','public,pg_temp',true),
+              set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true)`);
+            const actualComponents = await tx.execute(sql.raw(OFFLINE_CATALOG_SQL.replace(fingerprintProjection, fingerprintProjection + ',shape')));
+            const normalizedComponents = await tx.execute(sql.raw(REVIEWED_OFFLINE_GIFT_CATALOG_SQL.replace(fingerprintProjection, fingerprintProjection + ',shape')));
+            const reviewed = await inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' });
+            return { actualComponents, normalizedComponents, reviewed,
+              expected: { legacyV1: OFFLINE_CATALOG_VERSIONS.v1, barcodeV1: OFFLINE_BARCODE_CATALOG_VERSIONS.v1,
+                legacyOrm: OFFLINE_ORM_CATALOG_VERSIONS, barcodeOrm: OFFLINE_BARCODE_CATALOG_VERSIONS.orm } };
+          }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+          console.error(`ORM_DDL_AUDIT_DIAGNOSTIC ${JSON.stringify({ kind: 'offline-catalog-refusal', path,
+            expectedState: expectedOffline, actualState: initialOffline.state, ...diagnostic })}`);
+          throw new Error(`Offline registration differs on ${path}: ${initialOffline.state}`);
+        }
         // Preserve every existing public relation/index/sequence OID and file during
         // explicit empty-ORM completion; do not repair missing registered migrations.
         const offlineIdentityQuery = `SELECT 'relation' AS kind,oid::text,relfilenode::text FROM pg_class WHERE relnamespace='public'::regnamespace
@@ -353,11 +476,43 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         const offlineIdentities = await client.unsafe(offlineIdentityQuery);
         if (JSON.stringify(offlineIdentities.filter(row => beforeOffline.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeOffline))
           throw new Error(`Offline completion replaced an existing object on ${path}`);
-        await runOfflineOrderSchema(shippingDb); await runOfflineOrderSchema(shippingDb);
-        if ((await inspectOfflineOrderSchema(shippingDb)).state !== 'v1'
+        if (registeredOfflineGift) {
+          // The frozen legacy installer deliberately rejects the later gift index.
+          // Repeat the exact independently reviewed gift installer only after full readiness.
+          await runOrderPromotionGiftReceipt(shippingDb);
+          await runOrderPromotionGiftReceipt(shippingDb);
+        } else {
+          await runOfflineOrderSchema(shippingDb);
+          await runOfflineOrderSchema(shippingDb);
+        }
+        const repeatedOffline = registeredOfflineGift
+          ? await shippingDb.transaction(tx => inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' }),
+            { isolationLevel: 'repeatable read', accessMode: 'read only' })
+          : await inspectOfflineOrderSchema(shippingDb);
+        if (repeatedOffline.state !== (registeredOfflineGift ? 'v1-gift-index' : 'v1')
           || JSON.stringify(offlineIdentities) !== JSON.stringify(await client.unsafe(offlineIdentityQuery)))
           throw new Error(`Offline repeat changed object identity on ${path}`);
-        offlineOrderVerification[path] = { initial: initialOffline.state, complete: true, completionPreserved: true, repeatPreserved: true };
+        offlineOrderVerification[path] = { initial: initialOffline.state, complete: true, completionPreserved: true, repeatPreserved: true,
+          repeatInstaller: registeredOfflineGift ? 'exact-reviewed-gift-maintenance' : 'legacy-offline-maintenance' };
+if (!registeredOfflineGift) {
+          // Preserve the proven legacy empty-ORM completion and both legacy
+          // no-op repeats above before composing the later reviewed gift index.
+          const giftBefore = await inspectOrderPromotionGiftReceiptCatalog(shippingDb, 'finance_test');
+          const [giftState] = await client.unsafe("SELECT to_regclass('public.ub_order_promotion_gift_uq') IS NULL AS missing, NOT EXISTS(SELECT 1 FROM public.user_bill) AND NOT EXISTS(SELECT 1 FROM public.store_order_promotion_gift_coupon_reward) AS empty");
+          if (giftBefore.ready || !giftBefore.catalogReady || !giftBefore.sequenceReady || giftBefore.pointsReady || giftState.missing !== true || giftState.empty !== true)
+            throw Error(`Empty ORM gift completion prerequisites differ on ${path}; no drift repair`);
+          const giftIdentities = await client.unsafe(cityIdentityQuery);
+          await runOrderPromotionGiftReceipt(shippingDb);
+          const giftInstalled = await client.unsafe(cityIdentityQuery);
+          if (JSON.stringify(giftInstalled.filter(row => giftIdentities.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(giftIdentities))
+            throw Error(`Empty ORM gift completion replaced an existing object on ${path}`);
+          await runOrderPromotionGiftReceipt(shippingDb); await runOrderPromotionGiftReceipt(shippingDb);
+          const completedGift = await shippingDb.transaction(tx => inspectReviewedOfflineGiftCatalog(tx, { requireOwner: true, maintenance: 'finance_test' }), { isolationLevel: 'repeatable read', accessMode: 'read only' });
+          const [giftEmpty] = await client.unsafe("SELECT NOT EXISTS(SELECT 1 FROM public.user_bill) AND NOT EXISTS(SELECT 1 FROM public.store_order_promotion_gift_coupon_reward) AS empty");
+          if (completedGift.state !== 'v1-gift-index' || !(await inspectOrderPromotionGiftReceiptCatalog(shippingDb, 'finance_test')).ready || giftEmpty.empty !== true || JSON.stringify(giftInstalled) !== JSON.stringify(await client.unsafe(cityIdentityQuery)))
+            throw Error(`Empty ORM gift repeat/full catalog differs on ${path}`);
+          offlineOrderVerification[path] = { ...offlineOrderVerification[path] as Record<string, unknown>, reviewedGiftCompletion: true, giftInitial: 'exact-gift-table-and-sequence-without-points-index', final: completedGift.state, giftExistingObjectsPreserved: true, giftRepeatPreserved: true, giftNoBackfill: true };
+        }
         const initialPricing = await inspectCheckoutPricingLock(shippingDb);
         const registeredPricing = path === 'external' || path === 'embedded';
         if (registeredPricing ? !pricingCatalogReady(initialPricing) : !initialPricing.absent)
@@ -488,6 +643,13 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const foreignKeyNameManifest = JSON.parse(await readFile(resolve(root, "audit/orm-foreign-key-name-reconciliation.json"), "utf8"));
     const checkStateManifest = withPinkSuccessOutboxContract(withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8"))));
     const kefuSequenceManifest = JSON.parse(await readFile(resolve(root, "audit/orm-kefu-sequence-reconciliation.json"), "utf8"));
+    // Original complete gates below still throw. Preserve each already-read raw
+    // category difference for diagnosis before a generic gate loses the path.
+    for (const [path, catalog] of Object.entries(catalogs)) {
+      const comparison = compareCatalogs(catalogs.external, catalog);
+      if (catalogKinds.some(kind => Object.values(comparison[kind]).some(rows => rows.length)))
+        console.error(`ORM_DDL_AUDIT_COMPARISON_DIAGNOSTIC ${JSON.stringify({ kind: 'complete-five-category-refusal-witness', path, comparison })}`);
+    }
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
     for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog);
@@ -544,7 +706,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: "all nine paths: exact 281 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: `all nine paths: exact ${catalogs.external.tables.length} unique public tables and every raw metadata field; no omissions, additions or aliases waived`, count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -563,7 +725,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       purchaseCancellationVerification,
       fullConstraintCatalogContract: { mode: "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance", count: catalogs.external.constraints.length },
       checkStateUpgradeVerification: { ...checkStateUpgradeVerification, freshCatalogMatched: true },
-      fullSequenceCatalogContract: { mode: "all nine paths: exact 228 named sequences, type, options and ownership; no omissions or aliases waived", count: catalogs.external.sequences.length },
+      fullSequenceCatalogContract: { mode: `all nine paths: exact ${catalogs.external.sequences.length} named sequences, type, options and ownership; no omissions or aliases waived`, count: catalogs.external.sequences.length },
       kefuSequenceContracts: { mode: "all nine paths: exact integer type, bounds and AUTO owning column", keys: kefuSequenceManifest.entries.map((e: { key: string }) => e.key) },
       kefuSequenceUpgradeVerification: { ...kefuSequenceUpgradeVerification, freshCatalogMatched: true },
       missingConstraintUpgradeVerification: { ...missingConstraintUpgradeVerification, freshCatalogMatched: true },
@@ -577,6 +739,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       invoiceEvidenceVerification,
       refundSplitVerification,
       offlineOrderVerification,
+      customerCityDeliveryVerification,
+      cashierAbandonmentVerification,
+      customerWaybillActorVerification,
       checkoutPricingLockVerification,
       seckillTimeReferenceLockVerification,
       cleanupRecoveries,

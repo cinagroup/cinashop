@@ -25,7 +25,7 @@ import { persistVerifiedPaymentCallbackTx, type VerifiedPaymentCallback } from '
 import { PaymentCallbackEventService } from '../src/services/payment/PaymentCallbackEventService';
 import { PaymentReconciliationService } from '../src/services/payment/PaymentReconciliationService';
 import type { SystemConfigEnv } from '../src/services/system/SystemConfigService';
-import { systemForm, systemAttachment, storeOrder } from '../src/models/schema';
+import { systemForm, systemAttachment, storeOrder, systemStore } from '../src/models/schema';
 import { AttachmentService, R2_IMAGE_TYPE, adminAttachmentScope, userAttachmentScope } from '../src/services/system/AttachmentService';
 import { assistedFormAttachmentScope, belongsToAssistedFormScope } from '../src/services/system/AssistedFormAttachmentScope';
 import * as orderForms from '../src/services/order/OrderSystemFormService';
@@ -624,6 +624,10 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   },60_000);
 
   it('rejects unsupported assisted payment pricing and inactive pickup stores before issuing a quote',async()=>{
+    // Other positive cases require enabled pickup. This negative owns a genuinely
+    // disabled SQL store before preparing its otherwise valid ordinary quote.
+    await f.db.update(systemStore).set({ isStore: 0 }).where(eq(systemStore.id, 1));
+    expect((await f.db.select({ id: systemStore.id, isStore: systemStore.isStore }).from(systemStore).where(eq(systemStore.id, 1)))[0].isStore).toBe(0);
     await profiles(async(app,admin)=>{
       const client=await http(app,admin),{body,quote}=await confirm(client,11),before=await f.state();
       for(const options of [{payType:'offline'},{payType:'yue'},{shipping_type:2,store_id:999},{shipping_type:2,store_id:1}]){

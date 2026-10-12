@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { UserProfileService } from "@/services/user/UserProfileService";
+import { MemberBarcodeService } from "@/services/user/MemberBarcodeService";
 import { ScanLoginService } from "@/services/auth/ScanLoginService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
@@ -56,6 +57,12 @@ export async function randCode(c: C) {
   privateCodeResponse(c);
   if(new URL(c.req.url).searchParams.size)throw new ValidateException('会员码接口不接受查询参数');
   return response(c, () => service(c).paymentCodeSnapshot(uid(c)));
+}
+
+/** POST /api/user/bar_code — allocate once, then read the same stable member code. */
+export async function memberBarcode(c: C) {
+  privateCodeResponse(c);
+  return response(c, async () => ({ bar_code: await new MemberBarcodeService(c.get('container')).allocateOrRead(uid(c)) }));
 }
 
 /** POST /api/user/share — durable five-minute share cooldown. */

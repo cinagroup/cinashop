@@ -1,3 +1,4 @@
+import { assertRegisteredDatabaseCohort, assertRegisteredModelCohort, assertExternalMigrationCohort } from './helpers/registeredCatalogCohort';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { spawnSync } from 'node:child_process';
@@ -241,17 +242,17 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
     const whole=await sequenceRunnerDatabase();
     try {
       if(path==='external') {
-        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
+        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();assertExternalMigrationCohort(files);expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
         for(const file of files) await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       }else if(path==='embedded') {
-        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 178},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 180},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       }else{
-        const api=await import('drizzle-kit/api');await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(allModels))).join('\n'));
+        const api=await import('drizzle-kit/api'),snapshot=api.generateDrizzleJson(allModels);assertRegisteredModelCohort(snapshot);await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),snapshot)).join('\n'));
         await expect(runRefundOrderSplitSchema(whole.db,true)).rejects.toThrow();
         await runInvoiceEvidenceSchema(whole.db,true);
       }
       expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
-      expect((await whole.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE \"C\"")).map(row=>row.name)).toEqual(completeConstructionTableNames(path));
+      await assertRegisteredDatabaseCohort(whole.db,path);
       expect(await inspectRefundOrderSplitSchema(whole.db)).toEqual({state:path==='orm'?'orm-pending':'v1',invoiceProtectionReady:true});
       if(path==='orm') await runRefundOrderSplitSchema(whole.db,true);
       await whole.db.insert(storeOrderRefundSplit).values(split);await whole.db.insert(storeOrderFulfillmentBranch).values(branch);

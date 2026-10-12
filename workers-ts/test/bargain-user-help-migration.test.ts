@@ -54,7 +54,10 @@ describe("bargain user help migration", () => {
     expect(service).toContain("priorHelp");
     expect(service).toContain("completedPeople >= peopleLimit");
     expect(service).toContain("tx.insert(storeBargainUserHelp)");
-    expect(service).toContain("bargainPrice: centsToDecimal(originalCents)");
+    expect(service).toContain("bargainPrice: bargain.price");
+    expect(service).toContain("bargainPriceMin: bargain.minPrice");
+    expect(service).toContain("const originalCents = decimalToCents(record.bargainPrice)");
+    expect(service).toContain("const minimumCents = decimalToCents(record.bargainPriceMin)");
     expect(service).toContain("price: centsToDecimal(newAlreadyCutCents)");
   });
 

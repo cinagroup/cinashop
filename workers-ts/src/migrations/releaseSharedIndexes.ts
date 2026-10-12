@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
-import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
 
 /** Fixed ordinary indexes already declared by the ORM. No UNIQUE constraint,
  * row rewrite, DROP, IF NOT EXISTS, sequence or target-learned schema repair. */
@@ -40,7 +40,8 @@ async function inspect(tx: Query) {
   return tables.map(name => {
     const rows = catalog.filter(row => row.name === name && row.kind === 'table');
     const row = rows[0], safe = rows.length === 1 && row.present === true && row.owned === true && row.safe === true;
-    return { name, state: safe && [OFFLINE_CATALOG_VERSIONS.fresh[name], OFFLINE_CATALOG_VERSIONS.v1[name]].includes(row.fingerprint as string) ? 'ready'
+    return { name, state: safe && [OFFLINE_CATALOG_VERSIONS.fresh[name], OFFLINE_CATALOG_VERSIONS.v1[name],
+      OFFLINE_BARCODE_CATALOG_VERSIONS.fresh[name], OFFLINE_BARCODE_CATALOG_VERSIONS.v1[name]].includes(row.fingerprint as string) ? 'ready'
       : safe && row.fingerprint === RELEASE_PRE_INDEX_HASHES[name] ? 'missing-reviewed-indexes' : 'drift' };
   });
 }

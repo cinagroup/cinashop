@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { sql } from "drizzle-orm";
+import type { Env, ScheduledMaintenanceMessage } from "../src/env";
 import { createContainerFromDb } from "../src/lib/di";
 import { storeOrder, storeOrderRefund } from "../src/models/schema";
 import { pinkCancellationRecoverySnapshot, PINK_CANCELLATION_RECOVERY_SCAN_SIZE } from "../src/services/activity/PinkCancellationRecoveryService";
+import { ScheduledMaintenanceService } from "../src/services/order/ScheduledMaintenanceService";
 import { financePostgres } from "./helpers/financePostgres";
 import { outcome, waitForFinanceBlock, withFinancePeers } from "./helpers/financePeers";
 
@@ -81,24 +83,51 @@ describe("bounded recovery windows preserve due-row coverage", () => {
   }, 20000);
 
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))(
-    "PG16 keeps the window and due scan on one snapshot while eligibility changes between stages", async () => {
+    "PG16 freezes MAX, window and due scan while a peer changes eligibility and inserts", async () => {
       const { db, container } = await fixture(2);
       await db.execute(sql`UPDATE store_order_refund SET refund_reason='ordinary' WHERE id=1`);
       await withFinancePeers(db, async ([blocker, reader, writer]) => {
         // Only the second-stage query references orders; the ID-only window
         // completes before this real lock barrier. No mocked SQL responses.
         await blocker.exec("BEGIN; LOCK TABLE store_order IN ACCESS EXCLUSIVE MODE");
-        const pending = outcome(pinkCancellationRecoverySnapshot(createContainerFromDb(reader.db), 0, 1060000, 2));
+        const pending = outcome(pinkCancellationRecoverySnapshot(createContainerFromDb(reader.db), 0, 1060000, null));
         try {
           await waitForFinanceBlock(db, reader.pid, blocker.pid);
           await writer.db.execute(sql`UPDATE store_order_refund SET refund_reason='用户手动取消拼团', add_time=0 WHERE id=1`);
+          await writer.db.execute(sql`INSERT INTO store_order_refund
+            (id, store_order_id, order_id, apply_type, refund_reason, refund_explain, add_time)
+            VALUES (3, 3, 'pink_cancel_3_3', 1, '用户手动取消拼团', '用户手动取消未成团的拼团订单', 0)`);
         } finally { await blocker.exec("ROLLBACK"); }
         expect(await pending).toMatchObject({ ok: true, value: {
           candidates: [], examined: 1, nextCursor: 2, highWater: 2, hasMore: false,
         } });
       });
-      const nextRun = await pinkCancellationRecoverySnapshot(container, 0, 1060000, 2);
-      expect(nextRun.candidates.map(row => row.id)).toEqual([1]);
-      expect(nextRun.examined).toBe(2);
+      const nextRun = await pinkCancellationRecoverySnapshot(container, 0, 1060000, null);
+      expect(nextRun.candidates.map(row => row.id)).toEqual([1, 3]);
+      expect(nextRun).toMatchObject({ examined: 3, highWater: 3 });
+    }, 15000);
+
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))(
+    "PG16 replays the original empty-window cursor after Queue send failure and freezes its continuation ceiling", async () => {
+      const { db, container } = await fixture(1001);
+      const send = vi.fn().mockRejectedValueOnce(new Error("isolated Queue send failure")).mockResolvedValue({});
+      const service = new ScheduledMaintenanceService(container, { ORDER_QUEUE: { send } } as unknown as Env);
+      const root: ScheduledMaintenanceMessage = { action: "runScheduledMaintenance", job: "pink_cancellation_recovery",
+        runId: "scheduled:1060000", scheduledAt: 1060000, cursor: 0, threshold: null };
+      const continuation = { ...root, cursor: 1000, threshold: 1001 };
+      await expect(service.processMaintenance(root)).rejects.toThrow("isolated Queue send failure");
+      expect(send).toHaveBeenNthCalledWith(1, continuation, { contentType: "json" });
+      expect(await service.processMaintenance(root)).toMatchObject({ checked: 0, examined: 1000,
+        nextCursor: 1000, highWater: 1001, hasMore: true });
+      expect(send).toHaveBeenNthCalledWith(2, continuation, { contentType: "json" });
+      expect(await db.select({ id: storeOrderRefund.id }).from(storeOrderRefund)).toHaveLength(1001);
+
+      await db.insert(storeOrderRefund).values({ id: 1002, storeOrderId: 1002, orderId: "pink_cancel_1002_1002",
+        applyType: 1, refundReason: "用户手动取消拼团", refundExplain: "用户手动取消未成团的拼团订单", addTime: 2000 });
+      expect(await service.processMaintenance(continuation)).toMatchObject({ checked: 0, examined: 1,
+        nextCursor: 1001, highWater: 1001, hasMore: false });
+      expect(send).toHaveBeenCalledTimes(2);
+      expect(await pinkCancellationRecoverySnapshot(container, 1001, root.scheduledAt, null))
+        .toMatchObject({ examined: 1, highWater: 1002, nextCursor: 1002, hasMore: false });
     }, 15000);
 });

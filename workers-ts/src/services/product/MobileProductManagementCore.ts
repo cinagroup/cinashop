@@ -3,6 +3,7 @@ import type {DbClient} from '@/lib/di';
 import {lockShippingTemplateBindings} from './ShippingTemplateLifecycleService';
 import {storeCart,storeBrand,storeCouponIssue,storeProduct,storeProductAttrValue,storeProductCategory,storeProductCoupon,storeProductLabel,storeProductRelation,storeProductStockRecord,systemForm,userLabel} from '@/models/schema';
 import {lockProductWrite} from './ProductAssociationService';
+import {boundBargainSourceProductChange,lockBargainSourceProductChange} from '@/services/activity/BargainSourceProductLifecycle';
 import {HttpApiException,NotFoundException,ValidateException} from '@/utils/errors';
 import {outRequestHash} from '@/services/out/OutIdempotency';
 import type {AdminProductBatchInput,AdminProductSkuUpdate} from '@/services/admin/AdminMobileProductService';
@@ -28,6 +29,8 @@ async function inventoryLock<T>(read: () => PromiseLike<T>): Promise<T> {
 export async function applyMobileProductShow(tx: DbClient, input: {ids:number[];isShow:number}, audit: MobileProductAudit, options:MobileProductCoreOptions={}):Promise<{changed:number;verified:true}> {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      await boundBargainSourceProductChange(tx);
+      for (const productId of input.ids) await lockBargainSourceProductChange(tx, productId);
       for (const productId of input.ids) await lockProductWrite(tx, productId);
       const products = await inventoryLock(() => tx.select({
         id: storeProduct.id,

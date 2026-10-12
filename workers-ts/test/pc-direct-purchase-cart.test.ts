@@ -1,3 +1,5 @@
+import { storeProductRelation } from "../src/models/schema";
+import { storePromotions, storePromotionsAuxiliary } from "../src/models/schema";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
@@ -17,7 +19,7 @@ describe("FE-002E direct purchase cart isolation", () => {
   const input = { uid: 11, productId: 701, unique: "real-red", cartNum: 2 };
 
   beforeAll(async () => {
-    fixture = await financePostgres([storeProduct, storeProductAttrValue, storeCart, user, systemConfig, memberRight]);
+    fixture = await financePostgres([storeProductRelation, storePromotions, storePromotionsAuxiliary, storeProduct, storeProductAttrValue, storeCart, user, systemConfig, memberRight]);
     const container = createContainerFromDb(fixture.db);
     service = new StoreCartService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();

@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { privateRefundOperationResponse, retiredAdminRefundMutation as adminRefundMutationUnavailable } from '@/controllers/api/v1/AdminRefundOperationController';
 import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import { authMiddleware } from "@/middleware/auth";
+import { memberWriteoffRateLimit } from "@/middleware/member-writeoff-rate-limit";
 import * as LoginController from "@/controllers/api/v1/LoginController";
 import * as AppleAuthController from "@/controllers/api/v1/AppleAuthController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
@@ -53,6 +54,10 @@ import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWech
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
+import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
+import * as AdminLegacyRoleOperation from "@/controllers/api/v1/AdminLegacyRoleOperationController";
+import * as AdminLegacyAdmin from "@/controllers/api/v1/AdminLegacyAdminController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
@@ -474,6 +479,8 @@ v1Routes.get(
 
 // ─── 购物车 (M3) ───────────────────────────────────────────────
 v1Routes.post("/cart/add", authMiddleware({ force: true }), OrderController.cartAdd);
+v1Routes.post("/cart/add/newcomer-replay", authMiddleware({ force: true }), OrderController.cartAddNewcomerReplay);
+v1Routes.get("/cart/add/newcomer-replay-key", authMiddleware({ force: true }), OrderController.cartAddNewcomerReplayKey);
 v1Routes.get("/cart/list", authMiddleware({ force: true }), OrderController.cartList);
 v1Routes.post("/cart/num", authMiddleware({ force: true }), OrderController.cartNum);
 v1Routes.post("/cart/del", authMiddleware({ force: true }), OrderController.cartDel);
@@ -705,6 +712,24 @@ v1Routes.post(
   StoreOrderWriteoff.staffExecute,
 );
 v1Routes.post(
+  "/store/order/member_lookup",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("staff", "lookup"),
+  StoreOrderWriteoff.staffMemberLookup,
+);
+v1Routes.post(
+  "/store/order/member_info",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("staff", "info"),
+  StoreOrderWriteoff.staffMemberInfo,
+);
+v1Routes.post(
+  "/store/order/member_writeoff",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("staff", "execute"),
+  StoreOrderWriteoff.staffMemberExecute,
+);
+v1Routes.post(
   "/delivery/order/writeoff_info",
   authMiddleware({ force: true }),
   StoreOrderWriteoff.deliveryInfo,
@@ -713,6 +738,24 @@ v1Routes.post(
   "/delivery/order/writeoff",
   authMiddleware({ force: true }),
   StoreOrderWriteoff.deliveryExecute,
+);
+v1Routes.post(
+  "/delivery/order/member_lookup",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("delivery", "lookup"),
+  StoreOrderWriteoff.deliveryMemberLookup,
+);
+v1Routes.post(
+  "/delivery/order/member_info",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("delivery", "info"),
+  StoreOrderWriteoff.deliveryMemberInfo,
+);
+v1Routes.post(
+  "/delivery/order/member_writeoff",
+  authMiddleware({ force: true }),
+  memberWriteoffRateLimit("delivery", "execute"),
+  StoreOrderWriteoff.deliveryMemberExecute,
 );
 
 // ─── 订单 (M3) ─────────────────────────────────────────────────
@@ -930,6 +973,7 @@ v1Routes.get("/recharge/index", authMiddleware({ force: true }), UserMessageCont
 v1Routes.get("/user", authMiddleware({ force: true }), UserProfileController.personalHome);
 v1Routes.get("/userinfo", authMiddleware({ force: true }), UserProfileController.userInfo);
 v1Routes.get("/user/rand_code", authMiddleware({ force: true }), UserProfileController.randCode);
+v1Routes.post("/user/bar_code", authMiddleware({ force: true }), UserProfileController.memberBarcode);
 v1Routes.post("/user/share", authMiddleware({ force: true }), UserProfileController.userShare);
 v1Routes.get("/user/share/words", authMiddleware({ force: true }), UserProfileController.shareWords);
 v1Routes.get("/user/routine_code", authMiddleware({ force: true }), UserProfileController.routineCode);
@@ -1982,9 +2026,34 @@ v1Routes.post("/admin/brand/save", adminAuth, AdminCrud.adminBrandSave);
 v1Routes.delete("/admin/brand/del/:id", adminAuth, AdminCrud.adminBrandDel);
 
 // ─── Admin 系统管理员/角色 (M16) ─────────────────────────────
+v1Routes.get("/admin/setting/admin", adminAuth, AdminCrud.adminLegacySystemAdminList);
+v1Routes.get("/admin/setting/admin/create", adminAuth, AdminLegacyAdmin.adminLegacyAdminCreateForm);
+v1Routes.get("/admin/setting/admin/:id/edit", adminAuth, AdminLegacyAdmin.adminLegacyAdminEditForm);
+v1Routes.post("/admin/setting/admin", adminAuth, AdminLegacyAdmin.adminLegacyAdminCreate);
+v1Routes.put("/admin/setting/admin/:id", adminAuth, AdminLegacyAdmin.adminLegacyAdminUpdate);
+v1Routes.put("/admin/setting/set_status/:id/:status", adminAuth, AdminLegacyAdmin.adminLegacyAdminStatus);
+v1Routes.delete("/admin/setting/admin/:id", adminAuth, AdminLegacyAdmin.adminLegacyAdminDelete);
+v1Routes.post("/admin/setting/admin-authority/preview", adminAuth, AdminLegacyAdmin.adminLegacyAdminPreview);
+v1Routes.get("/admin/setting/admin-authority/receipt/:operationId", adminAuth, AdminLegacyAdmin.adminLegacyAdminReceipt);
+v1Routes.post("/admin/setting/admin-authority/resolve", adminAuth, AdminLegacyAdmin.adminLegacyAdminResolve);
+v1Routes.get("/admin/setting/role", adminAuth, AdminCrud.adminLegacySystemRoleList);
+v1Routes.get("/admin/setting/role/create", adminAuth, AdminLegacyRole.adminLegacyRoleCreateForm);
+v1Routes.get("/admin/setting/role/:id/edit", adminAuth, AdminLegacyRole.adminLegacyRoleEditForm);
+v1Routes.post("/admin/setting/role/:id", adminAuth, AdminLegacyRole.adminLegacyRoleSave);
+v1Routes.put("/admin/setting/role/set_status/:id/:status", adminAuth, AdminLegacyRoleOperation.adminLegacyRoleStatus);
+v1Routes.delete("/admin/setting/role/:id", adminAuth, AdminLegacyRoleOperation.adminLegacyRoleDelete);
+v1Routes.post("/admin/setting/role-authority/preview", adminAuth, AdminLegacyRoleOperation.adminLegacyRolePreview);
+v1Routes.get("/admin/setting/role-authority/receipt/:operationId", adminAuth, AdminLegacyRoleOperation.adminLegacyRoleReceipt);
+v1Routes.post("/admin/setting/role-authority/resolve", adminAuth, AdminLegacyRoleOperation.adminLegacyRoleResolve);
 v1Routes.get("/admin/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
+v1Routes.get("/admin/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 v1Routes.post("/admin/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);
+v1Routes.post("/admin/system/authority/preview", adminAuth, AdminAuthorityOperation.adminAuthorityPreview);
+v1Routes.post("/admin/system/authority/commit", adminAuth, AdminAuthorityOperation.adminAuthorityCommit);
+v1Routes.get("/admin/system/authority/receipt/:operationId", adminAuth, AdminAuthorityOperation.adminAuthorityReceipt);
+v1Routes.post("/admin/system/authority/resolve", adminAuth, AdminAuthorityOperation.adminAuthorityResolve);
 v1Routes.get("/admin/system_role/list", adminAuth, AdminCrud.adminSystemRoleList);
+v1Routes.get("/admin/system_role/directory", adminAuth, AdminCrud.adminSystemRoleDirectory);
 v1Routes.post("/admin/system_role/save", adminAuth, AdminCrud.adminSystemRoleSave);
 v1Routes.delete("/admin/system_role/del/:id", adminAuth, AdminCrud.adminSystemRoleDel);
 v1Routes.get("/admin/system_menus/tree", adminAuth, AdminCrud.adminSystemPermissionTree);
@@ -2293,6 +2362,10 @@ v1Routes.post("/admin/assets/upload/image", adminAuth, AttachmentController.admi
 v1Routes.post("/admin/assets/delete", adminAuth, AttachmentController.adminDelete);
 v1Routes.put("/admin/assets/:id", adminAuth, AttachmentController.adminRename);
 v1Routes.get("/admin/asset-categories", adminAuth, AttachmentController.adminCategories);
+v1Routes.get("/admin/file/category/create", adminAuth, AttachmentController.adminCategoryCreateForm);
+v1Routes.post("/admin/file/category", adminAuth, AttachmentController.adminCategorySave);
+v1Routes.get("/admin/file/category/:id/edit", adminAuth, AttachmentController.adminCategoryEditForm);
+v1Routes.put("/admin/file/category/:id", adminAuth, AttachmentController.adminCategoryUpdate);
 v1Routes.post("/admin/asset-categories", adminAuth, AttachmentController.adminCategorySave);
 v1Routes.put("/admin/asset-categories/:id", adminAuth, AttachmentController.adminCategoryUpdate);
 v1Routes.delete("/admin/asset-categories/:id", adminAuth, AttachmentController.adminCategoryDelete);

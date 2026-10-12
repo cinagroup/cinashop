@@ -117,7 +117,8 @@ function sanitizeTag(source: string): string {
   const allowed = ALLOWED_ATTRIBUTES[tag] ?? new Set<string>();
   const attributes = new Map<string, string>();
   const attributeSource = opening[2].replace(/\/?\s*$/, "");
-  const attributePattern = /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  // HTML retains '=' inside a bare value; splitting it truncates legitimate query strings.
+  const attributePattern = /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>`]+)))?/g;
   let match: RegExpExecArray | null;
   while ((match = attributePattern.exec(attributeSource)) !== null) {
     const name = match[1].toLowerCase();

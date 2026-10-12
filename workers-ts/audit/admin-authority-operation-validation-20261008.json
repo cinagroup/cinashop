@@ -1,0 +1,3374 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-08T12:44:17.962Z",
+  "baseCommit": "df72e9ed50699b60cec0790c4ae81158a82bc98c",
+  "scope": "Modern SystemList previews, explicit confirmations, transactional writes and immutable receipts with owner recovery; independent PG16 maintenance addon. Historical profiles and old-client gaps remain.",
+  "creditedUniqueTests": 263,
+  "testFiles": 17,
+  "newFeatureUniqueTests": 77,
+  "acceptedRuns": [
+    {
+      "id": "business03",
+      "mode": "business_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation.test.ts",
+        "test/admin-authority-write.test.ts",
+        "test/admin-division-authority-write-business.test.ts",
+        "test/admin-legacy-role-workflow.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:17:19.317Z",
+      "finishedAt": "2026-10-08T12:18:21.769Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "regression02",
+      "mode": "regression_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-permission.test.ts",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/admin-legacy-setting-read-permission.test.ts",
+        "test/admin-legacy-system-list.test.ts",
+        "test/admin-system-directory.test.ts",
+        "test/division-management.test.ts",
+        "test/runtime-business-privilege-plan.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:10:08.046Z",
+      "finishedAt": "2026-10-08T12:10:50.676Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "frontend02",
+      "mode": "frontend_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation-frontend.test.ts",
+        "test/admin-system-directory-frontend.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:17:21.787Z",
+      "finishedAt": "2026-10-08T12:17:36.438Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "native03",
+      "mode": "native_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-authority-operation-native.test.ts",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/agent-application-postgres.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:28:03.906Z",
+      "finishedAt": "2026-10-08T12:29:36.133Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    }
+  ],
+  "finalTypes": [
+    {
+      "id": "unit-types03",
+      "mode": "types_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:28:01.649Z",
+      "finishedAt": "2026-10-08T12:30:01.138Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "runtime-types03",
+      "mode": "types_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:30:01.140Z",
+      "finishedAt": "2026-10-08T12:31:10.992Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    }
+  ],
+  "adminBuild": [
+    {
+      "id": "admin-build01",
+      "mode": "build",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\view\\admin-ts",
+      "startedAt": "2026-10-08T12:02:09.716Z",
+      "finishedAt": "2026-10-08T12:03:13.655Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "admin-vite01",
+      "mode": "build",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\view\\admin-ts",
+      "startedAt": "2026-10-08T12:03:13.658Z",
+      "finishedAt": "2026-10-08T12:04:01.374Z",
+      "exitCode": 0,
+      "signal": null
+    }
+  ],
+  "sourceSnapshotCount": 2533,
+  "sourceSnapshots": [
+    {
+      "id": "business03",
+      "manifest": "business03.inputs.json",
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "id": "frontend02",
+      "manifest": "frontend02.inputs.json",
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "id": "native03",
+      "manifest": "native03.inputs.json",
+      "sha256": "cf3bf48af7977a00a4fe946620e627d4ee4df4242f3f8acd9de2009515970a36"
+    },
+    {
+      "id": "unit-types03",
+      "manifest": "unit-types03.inputs.json",
+      "sha256": "cf3bf48af7977a00a4fe946620e627d4ee4df4242f3f8acd9de2009515970a36"
+    },
+    {
+      "id": "runtime-types03",
+      "manifest": "runtime-types03.inputs.json",
+      "sha256": "cf3bf48af7977a00a4fe946620e627d4ee4df4242f3f8acd9de2009515970a36"
+    }
+  ],
+  "inputProof": [
+    {
+      "id": "business03",
+      "sourceUnchangedDuringRun": true,
+      "snapshotCount": 2533,
+      "verifiedCurrentRelevantInputs": 410,
+      "lateChangesOutsideConsumedInputs": [
+        "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "workers-ts/test/admin-authority-operation-native.test.ts"
+      ],
+      "verifiedEquivalentTerminalWhitespace": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+      "dependencyGraph": [
+        "workers-ts/src/models/pgNotValid.ts",
+        "workers-ts/src/models/schema/user.ts",
+        "workers-ts/src/models/schema/system.ts",
+        "workers-ts/src/lib/shippingReferenceExpression.ts",
+        "workers-ts/src/models/schema/product.ts",
+        "workers-ts/src/models/schema/product_relations.ts",
+        "workers-ts/src/models/schema/product_auxiliary.ts",
+        "workers-ts/src/models/schema/page_navigation.ts",
+        "workers-ts/src/models/schema/lottery.ts",
+        "workers-ts/src/models/schema/user_level.ts",
+        "workers-ts/src/models/schema/member.ts",
+        "workers-ts/src/models/schema/order.ts",
+        "workers-ts/src/models/schema/integral_order.ts",
+        "workers-ts/src/models/schema/catalog_templates.ts",
+        "workers-ts/src/models/schema/user_segmentation.ts",
+        "workers-ts/src/models/schema/system_metadata.ts",
+        "workers-ts/src/models/schema/system_sign_reward.ts",
+        "workers-ts/src/models/schema/order_auxiliary.ts",
+        "workers-ts/src/models/schema/order_delivery.ts",
+        "workers-ts/src/models/schema/promotions.ts",
+        "workers-ts/src/models/schema/activity_catalog.ts",
+        "workers-ts/src/models/schema/discounts.ts",
+        "workers-ts/src/models/schema/order_refund.ts",
+        "workers-ts/src/models/schema/order_refund_payment.ts",
+        "workers-ts/src/models/schema/order_outbox.ts",
+        "workers-ts/src/models/schema/queue_dead_letter.ts",
+        "workers-ts/src/models/schema/virtual_inventory_export.ts",
+        "workers-ts/src/models/schema/user_center.ts",
+        "workers-ts/src/models/schema/activity.ts",
+        "workers-ts/src/models/schema/wechat.ts",
+        "workers-ts/src/models/schema/wechat_content.ts",
+        "workers-ts/src/models/schema/wechat_qrcode.ts",
+        "workers-ts/src/models/pgSequenceState.ts",
+        "workers-ts/src/models/schema/admin.ts",
+        "workers-ts/src/models/schema/brokerage.ts",
+        "workers-ts/src/models/schema/agent_level.ts",
+        "workers-ts/src/models/schema/division.ts",
+        "workers-ts/src/models/schema/community.ts",
+        "workers-ts/src/models/schema/words.ts",
+        "workers-ts/src/models/schema/message.ts",
+        "workers-ts/src/models/schema/activity_user.ts",
+        "workers-ts/src/models/schema/reply.ts",
+        "workers-ts/src/models/schema/shipping.ts",
+        "workers-ts/src/models/schema/geography.ts",
+        "workers-ts/src/models/schema/content.ts",
+        "workers-ts/src/models/schema/notification.ts",
+        "workers-ts/src/models/schema/notification_delivery.ts",
+        "workers-ts/src/models/schema/supplier.ts",
+        "workers-ts/src/models/schema/supplier_finance.ts",
+        "workers-ts/src/models/schema/finance_legacy.ts",
+        "workers-ts/src/models/schema/migration.ts",
+        "workers-ts/src/models/schema/user_behavior.ts",
+        "workers-ts/src/models/schema/newcomer.ts",
+        "workers-ts/src/models/schema/legacy_cache.ts",
+        "workers-ts/src/models/schema/paid_membership.ts",
+        "workers-ts/src/models/schema/payment_callback.ts",
+        "workers-ts/src/models/schema/payment_reconciliation.ts",
+        "workers-ts/src/models/schema/store_operations.ts",
+        "workers-ts/src/models/schema/store_legacy.ts",
+        "workers-ts/src/models/schema/printing.ts",
+        "workers-ts/src/models/schema/printing_job.ts",
+        "workers-ts/src/models/schema/waybill_job.ts",
+        "workers-ts/src/models/schema/customer_city_delivery.ts",
+        "workers-ts/src/models/schema/supplier_application.ts",
+        "workers-ts/src/models/schema/attachment.ts",
+        "workers-ts/src/models/schema/legacy_runtime.ts",
+        "workers-ts/src/models/schema/live.ts",
+        "workers-ts/src/models/schema/out.ts",
+        "workers-ts/src/models/schema/work.ts",
+        "workers-ts/src/models/schema/work_callback.ts",
+        "workers-ts/src/models/schema/work_current.ts",
+        "workers-ts/src/models/schema/work_department_current.ts",
+        "workers-ts/src/models/schema/work_client_current.ts",
+        "workers-ts/src/models/schema/work_group_chat_current.ts",
+        "workers-ts/src/models/schema/work_external_tag_current.ts",
+        "workers-ts/src/models/schema/work_contact_action.ts",
+        "workers-ts/src/models/schema/wechat_member_card.ts",
+        "workers-ts/src/models/schema/wechat_callback.ts",
+        "workers-ts/src/models/schema/merchant_shipment_callback.ts",
+        "workers-ts/src/models/schema/city_delivery_callback.ts",
+        "workers-ts/src/models/schema/short_video.ts",
+        "workers-ts/src/models/schema/shipping_create_replay.ts",
+        "workers-ts/src/models/schema/admin_refund_operation.ts",
+        "workers-ts/src/models/schema/admin_refund_creation.ts",
+        "workers-ts/src/models/schema/invoice_evidence.ts",
+        "workers-ts/src/models/schema/coupon_templates.ts",
+        "workers-ts/src/models/schema/invoice_allocation.ts",
+        "workers-ts/src/models/schema/order_refund_split.ts",
+        "workers-ts/src/models/schema/purchase_origin_evidence.ts",
+        "workers-ts/src/models/schema/purchase_cancellation_evidence.ts",
+        "workers-ts/src/models/candidates/offline_order_admission.ts",
+        "workers-ts/src/models/candidates/offline_order_payment_selection.ts",
+        "workers-ts/src/models/candidates/offline_order_balance.ts",
+        "workers-ts/src/models/candidates/offline_order_query_evidence.ts",
+        "workers-ts/src/models/candidates/offline_order_external_payment.ts",
+        "workers-ts/src/models/candidates/offline_order_payment_dispatch.ts",
+        "workers-ts/src/models/schema/index.ts",
+        "workers-ts/src/utils/errors.ts",
+        "workers-ts/src/dao/BaseDao.ts",
+        "workers-ts/src/dao/user/UserDao.ts",
+        "workers-ts/src/dao/system/SystemConfigDao.ts",
+        "workers-ts/src/dao/user/SystemUserLevelDao.ts",
+        "workers-ts/src/services/product/PublicCategoryPolicy.ts",
+        "workers-ts/src/utils/request-body.ts",
+        "workers-ts/src/services/admin/AdminLevelActivationInput.ts",
+        "workers-ts/src/services/activity/IntegralProductDetailData.ts",
+        "workers-ts/src/utils/observability.ts",
+        "workers-ts/src/services/system/AssistedFormAttachmentScope.ts",
+        "workers-ts/src/services/system/AttachmentService.ts",
+        "workers-ts/src/services/content/ArticleContentPolicy.ts",
+        "workers-ts/src/services/activity/SeckillTimeAssetPolicy.ts",
+        "workers-ts/src/services/activity/ProductAssetPolicy.ts",
+        "workers-ts/src/services/product/OrdinaryProductReadData.ts",
+        "workers-ts/src/models/searchers/product.ts",
+        "workers-ts/src/dao/product/StoreProductDao.ts",
+        "workers-ts/src/dao/product/StoreProductCategoryDao.ts",
+        "workers-ts/src/dao/product/StoreProductAttrValueDao.ts",
+        "workers-ts/src/dao/order/OrderDaos.ts",
+        "workers-ts/src/dao/order/RefundDaos.ts",
+        "workers-ts/src/utils/sign.ts",
+        "workers-ts/src/dao/user/UserCenterDaos.ts",
+        "workers-ts/src/dao/user/BrokerageDaos.ts",
+        "workers-ts/src/dao/community/CommunityDaos.ts",
+        "workers-ts/src/services/activity/SeckillScheduleQuery.ts",
+        "workers-ts/src/dao/activity/ActivityDaos.ts",
+        "workers-ts/src/utils/jwt.ts",
+        "workers-ts/src/utils/cache.ts",
+        "workers-ts/src/utils/wechat-crypto.ts",
+        "workers-ts/src/utils/config.ts",
+        "workers-ts/src/services/content/ThemeReadService.ts",
+        "workers-ts/src/services/admin/AdminPcBannerInput.ts",
+        "workers-ts/../view/common/cityDeliverySettings.ts",
+        "workers-ts/src/services/admin/AdminCityDeliverySettingsInput.ts",
+        "workers-ts/src/services/delivery/CityDeliverySecretCodec.ts",
+        "workers-ts/src/services/delivery/DadaCityDeliveryCallback.ts",
+        "workers-ts/src/services/delivery/CityDeliverySettingsResolver.ts",
+        "workers-ts/src/services/system/SystemConfigService.ts",
+        "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+        "workers-ts/src/services/order/ShippingTemplateSnapshot.ts",
+        "workers-ts/src/services/product/ShippingTemplateLifecycleService.ts",
+        "workers-ts/src/services/activity/BargainSourceProductLifecycle.ts",
+        "workers-ts/src/services/product/ProductSkuIdentity.ts",
+        "workers-ts/src/services/product/ProductSkuInput.ts",
+        "workers-ts/src/services/product/ProductSkuEditorService.ts",
+        "workers-ts/../view/common/productMediaReference.ts",
+        "workers-ts/src/services/supplier/SupplierProductMediaService.ts",
+        "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+        "workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+        "workers-ts/src/services/order/RefundSplitAllocation.ts",
+        "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+        "workers-ts/src/services/supplier/SupplierPickingSheetReadService.ts",
+        "workers-ts/src/services/supplier/SupplierService.ts",
+        "workers-ts/src/services/supplier/SupplierFinanceLock.ts",
+        "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+        "workers-ts/src/services/order/RefundQuantityReservation.ts",
+        "workers-ts/src/services/order/RefundGenerationMarker.ts",
+        "workers-ts/src/services/order/OrderMembershipSavings.ts",
+        "workers-ts/src/services/order/OrderSplitFinance.ts",
+        "workers-ts/src/services/payment/RefundGateway.ts",
+        "workers-ts/src/services/order/RefundOrderSplitIdentity.ts",
+        "workers-ts/src/services/order/RefundEarnedIncome.ts",
+        "workers-ts/src/services/order/RefundFulfillmentBranch.ts",
+        "workers-ts/src/services/order/RefundOrderGeneration.ts",
+        "workers-ts/src/services/order/RefundLineCompensation.ts",
+        "workers-ts/src/services/activity/OrderPromotionGiftSnapshot.ts",
+        "workers-ts/src/services/order/OrderRewardService.ts",
+        "workers-ts/src/services/order/OrderBrokerageService.ts",
+        "workers-ts/src/utils/alipay.ts",
+        "workers-ts/src/migrations/checkoutPricingLockCatalog.ts",
+        "workers-ts/src/migrations/customerWorkCatalog.ts",
+        "workers-ts/src/services/out/OutIdempotency.ts",
+        "workers-ts/src/migrations/customerCityDelivery.ts",
+        "workers-ts/src/services/order/OrderNotificationOutboxService.ts",
+        "workers-ts/src/services/order/ManualVirtualDeliveryPolicy.ts",
+        "workers-ts/src/services/activity/PresaleFulfillmentSnapshot.ts",
+        "workers-ts/src/services/kefu/KefuOwnership.ts",
+        "workers-ts/src/services/user/MemberBarcodeService.ts",
+        "workers-ts/src/services/store/DeliveryPrincipalScope.ts",
+        "workers-ts/src/services/customer-work/CustomerWorkScope.ts",
+        "workers-ts/src/migrations/customerWorkOperation.ts",
+        "workers-ts/src/migrations/customerWorkScopeLock.ts",
+        "workers-ts/src/migrations/runCustomerWorkScopeLock.ts",
+        "workers-ts/src/migrations/runCustomerWorkOperation.ts",
+        "workers-ts/src/services/customer-work/CustomerWorkOperationRequest.ts",
+        "workers-ts/src/services/customer-work/CustomerWorkWriteoffSalePrice.ts",
+        "workers-ts/src/services/order/StoreOrderWriteoffService.ts",
+        "workers-ts/src/services/order/OrderCartIdentity.ts",
+        "workers-ts/src/services/order/OrderPromotionLedgerSplit.ts",
+        "workers-ts/src/services/supplier/SupplierSplitFinance.ts",
+        "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+        "workers-ts/src/services/supplier/SupplierOperationalReadService.ts",
+        "workers-ts/src/services/order/CustomerCityFulfillmentFence.ts",
+        "workers-ts/src/services/order/InvoiceIssuanceEvidence.ts",
+        "workers-ts/src/services/order/SplitInvoiceAllocation.ts",
+        "workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+        "workers-ts/src/services/order/OrderSupplierAllocationService.ts",
+        "workers-ts/src/services/product/ProductAssociationService.ts",
+        "workers-ts/src/services/activity/ProductCouponService.ts",
+        "workers-ts/src/services/order/VirtualProductDeliveryService.ts",
+        "workers-ts/src/services/order/SecondCardValidityService.ts",
+        "workers-ts/src/services/system/PrintDocumentManagementService.ts",
+        "workers-ts/src/services/printing/ReceiptPrintProvider.ts",
+        "workers-ts/src/services/printing/ReceiptPrintJobService.ts",
+        "workers-ts/src/services/user/WithdrawalEffectsService.ts",
+        "workers-ts/src/services/kefu/KefuInboxService.ts",
+        "workers-ts/src/services/notification/StaffNotificationProtocol.ts",
+        "workers-ts/src/services/wechat/WechatNotificationProvider.ts",
+        "workers-ts/src/services/wechat/WithdrawalWecomRobotProvider.ts",
+        "workers-ts/src/migrations/withdrawalWecomRobotChannel.ts",
+        "workers-ts/src/services/user/WithdrawalApplicationNoticeService.ts",
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "workers-ts/src/services/notification/StaffNotificationDeliveryService.ts",
+        "workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+        "workers-ts/src/services/activity/PresaleRefundBaseline.ts",
+        "workers-ts/src/services/activity/PresaleDeliveryIntent.ts",
+        "workers-ts/src/services/activity/PresaleDeliveryResolver.ts",
+        "workers-ts/src/services/order/PurchaseQuotaRefundReceipt.ts",
+        "workers-ts/src/services/activity/PresalePaidRecovery.ts",
+        "workers-ts/src/services/activity/PresaleSupplierRefundProof.ts",
+        "workers-ts/src/services/agent/AgentLevelTaskService.ts",
+        "workers-ts/src/services/order/OrderOutboxService.ts",
+        "workers-ts/src/services/activity/PinkCancellationIntent.ts",
+        "workers-ts/src/services/activity/PinkSuccessNotice.ts",
+        "workers-ts/src/services/activity/PinkVirtualCompletion.ts",
+        "workers-ts/src/services/activity/PinkLifecycleService.ts",
+        "workers-ts/src/services/payment/PaymentReadinessService.ts",
+        "workers-ts/src/services/payment/PaymentQueryIdentity.ts",
+        "workers-ts/src/utils/payment-response.ts",
+        "workers-ts/../view/common/offlineReturn.ts",
+        "workers-ts/src/services/payment/OfflinePaymentProviderContract.ts",
+        "workers-ts/src/services/payment/OfflinePaymentReturn.ts",
+        "workers-ts/src/services/wechat/WechatPayService.ts",
+        "workers-ts/src/services/payment/WechatPaymentIdentity.ts",
+        "workers-ts/src/services/payment/StoreOrderPaymentBoundary.ts",
+        "workers-ts/src/services/payment/PaymentReconciliationRegistry.ts",
+        "workers-ts/src/services/payment/AssistedProviderPaymentClaim.ts",
+        "workers-ts/src/services/payment/OrderPaymentPolicy.ts",
+        "workers-ts/src/services/order/StoreOrderPayService.ts",
+        "workers-ts/src/services/user/PublicAgreementService.ts",
+        "workers-ts/src/services/user/PaidMembershipService.ts",
+        "workers-ts/src/services/activity/LotteryService.ts",
+        "workers-ts/src/services/user/UserWithdrawalService.ts",
+        "workers-ts/src/services/user/V2UserCompatibilityService.ts",
+        "workers-ts/src/services/user/UserFinanceReadService.ts",
+        "workers-ts/src/services/agent/AgentLevelRegistrationEffects.ts",
+        "workers-ts/src/services/payment/RechargeQuotaPolicy.ts",
+        "workers-ts/src/services/user/UserFinanceService.ts",
+        "workers-ts/src/services/user/UserBehaviorService.ts",
+        "workers-ts/src/services/system/DatabaseCacheService.ts",
+        "workers-ts/src/services/user/UserLevelService.ts",
+        "workers-ts/src/migrations/checkoutPricingLockInstallation.ts",
+        "workers-ts/src/migrations/offlineOrderCatalog.ts",
+        "workers-ts/src/migrations/orderPromotionGiftReceipt.ts",
+        "workers-ts/src/migrations/reviewedOfflineGiftCatalog.ts",
+        "workers-ts/src/migrations/reviewedOfflinePricingCapability.ts",
+        "workers-ts/src/migrations/managerScopeLock.ts",
+        "workers-ts/src/migrations/runManagerScopeLock.ts",
+        "workers-ts/src/migrations/checkoutPricingLock.ts",
+        "workers-ts/src/services/order/CheckoutPricingSources.ts",
+        "workers-ts/src/services/user/MembershipPricingPolicy.ts",
+        "workers-ts/src/services/order/OrderCompensationInventoryLocks.ts",
+        "workers-ts/src/migrations/brokeragePaidOrderFence.ts",
+        "workers-ts/src/services/order/CheckoutPaidOrderAuthority.ts",
+        "workers-ts/src/services/order/CheckoutBrokerageAuthority.ts",
+        "workers-ts/src/services/order/CheckoutLineAllocation.ts",
+        "workers-ts/src/services/order/ShippingCalculator.ts",
+        "workers-ts/src/services/activity/UserCouponWalletService.ts",
+        "workers-ts/src/migrations/couponProductScopeFence.ts",
+        "workers-ts/src/services/order/CheckoutCouponRelationsAuthority.ts",
+        "workers-ts/src/services/order/CheckoutCouponItemAuthority.ts",
+        "workers-ts/src/services/order/CheckoutCouponTemplateAuthority.ts",
+        "workers-ts/src/services/activity/OrderCouponService.ts",
+        "workers-ts/src/services/activity/OrderPromotionQuoteService.ts",
+        "workers-ts/../view/common/order-system-form.ts",
+        "workers-ts/src/services/order/OrderSystemFormService.ts",
+        "workers-ts/src/services/activity/PinkInventoryLocks.ts",
+        "workers-ts/src/services/activity/BargainOrderSnapshot.ts",
+        "workers-ts/src/services/activity/BargainParticipationState.ts",
+        "workers-ts/src/services/activity/BargainInventoryLocks.ts",
+        "workers-ts/src/services/order/VirtualProductRefundPolicy.ts",
+        "workers-ts/src/services/activity/StoreDiscountService.ts",
+        "workers-ts/src/services/order/CheckoutPickupPolicy.ts",
+        "workers-ts/src/services/activity/ActivityOrderSkuService.ts",
+        "workers-ts/src/services/activity/SeckillScheduleService.ts",
+        "workers-ts/src/services/activity/ActivityCartQuoteGuard.ts",
+        "workers-ts/src/services/activity/SeckillPurchaseSnapshot.ts",
+        "workers-ts/src/services/activity/ActivityRuleQuoteGuard.ts",
+        "workers-ts/src/services/activity/PresaleScheduleService.ts",
+        "workers-ts/src/services/activity/PresalePurchaseLimits.ts",
+        "workers-ts/src/services/activity/PresalePurchaseSnapshot.ts",
+        "workers-ts/src/services/activity/BargainParticipationSelection.ts",
+        "workers-ts/src/services/activity/BargainShippingPolicy.ts",
+        "workers-ts/src/services/activity/BargainPickupPolicy.ts",
+        "workers-ts/src/services/order/OrderDeliveryAddress.ts",
+        "workers-ts/src/services/order/CheckoutConfirmation.ts",
+        "workers-ts/src/services/order/CheckoutMembershipSnapshot.ts",
+        "workers-ts/src/services/order/UnpaidOrderCancellationEvidence.ts",
+        "workers-ts/src/services/order/PurchaseOriginEvidence.ts",
+        "workers-ts/src/migrations/cashierSecondCardOrigin.ts",
+        "workers-ts/src/migrations/runtimeLockOnlyBoundary.ts",
+        "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+        "workers-ts/src/migrations/customerWorkRuntimePrivilegePlan.ts",
+        "workers-ts/src/migrations/customerProductRuntimePlan.ts",
+        "workers-ts/src/migrations/customerUserRuntimePlan.ts",
+        "workers-ts/src/migrations/customerFinancialRuntimePlan.ts",
+        "workers-ts/src/migrations/customerWriteoffRuntimePlan.ts",
+        "workers-ts/src/migrations/cashierSecondCardPromotionLock.ts",
+        "workers-ts/src/migrations/cashierSecondCardRuntimePlan.ts",
+        "workers-ts/src/migrations/runCashierSecondCardOrigin.ts",
+        "workers-ts/src/services/order/CashierSecondCardOrigin.ts",
+        "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "workers-ts/../view/common/productCategoryStyle.ts",
+        "workers-ts/src/services/content/ProductCategoryStyleReadService.ts",
+        "workers-ts/../view/common/productDetailDesign.ts",
+        "workers-ts/src/services/content/ProductDetailDesignReadService.ts",
+        "workers-ts/src/services/activity/IntegralCatalogReadability.ts",
+        "workers-ts/src/services/product/ReplyService.ts",
+        "workers-ts/src/services/product/ProductDetailDesignData.ts",
+        "workers-ts/src/services/system/SystemMetadataService.ts",
+        "workers-ts/src/services/product/PublicProductCardData.ts",
+        "workers-ts/src/services/activity/V2CouponCompatibilityService.ts",
+        "workers-ts/src/services/activity/V2PromotionCompatibilityService.ts",
+        "workers-ts/src/services/product/StoreProductService.ts",
+        "workers-ts/src/services/product/ProductExperienceService.ts",
+        "workers-ts/src/services/activity/StoreNewcomerService.ts",
+        "workers-ts/src/services/user/RegistrationLevelActivation.ts",
+        "workers-ts/src/services/user/LoginService.ts",
+        "workers-ts/src/services/wechat/WechatAuthService.ts",
+        "workers-ts/src/dao/admin/AdminDaos.ts",
+        "workers-ts/src/dao/product/ReplyDaos.ts",
+        "workers-ts/src/dao/supplier/SupplierDaos.ts",
+        "workers-ts/src/lib/di.ts",
+        "workers-ts/src/models/schema/adminAuthorityOperation.ts",
+        "workers-ts/src/migrations/adminAuthorityOperation.ts",
+        "workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+        "workers-ts/src/services/admin/AdminAuthorityOperationService.ts",
+        "workers-ts/src/utils/json.ts",
+        "workers-ts/src/controllers/api/v1/AdminAuthorityOperationController.ts",
+        "workers-ts/test/helpers/financePostgres.ts",
+        "workers-ts/test/admin-authority-operation.test.ts",
+        "workers-ts/src/services/activity/StoreIntegralOrderService.ts",
+        "workers-ts/src/services/product/ProductMetadataService.ts",
+        "workers-ts/src/services/user/UserSegmentationService.ts",
+        "workers-ts/src/services/system/SystemSignRewardService.ts",
+        "workers-ts/src/services/admin/AdminPaidMembershipConfigInput.ts",
+        "workers-ts/src/services/system/AdminConfigBatchService.ts",
+        "workers-ts/src/services/admin/AdminDistributorLevelInput.ts",
+        "workers-ts/src/services/admin/AdminDistributorLevelService.ts",
+        "workers-ts/src/controllers/api/v1/AdminDistributorLevelController.ts",
+        "workers-ts/src/services/product/ProductSkuRetirementService.ts",
+        "workers-ts/src/services/store/StoreOperationsService.ts",
+        "workers-ts/src/services/order/RefundReturnPayload.ts",
+        "workers-ts/src/services/order/RefundReturnContactService.ts",
+        "workers-ts/src/services/order/RefundReadSnapshot.ts",
+        "workers-ts/src/services/admin/AdminRefundReadService.ts",
+        "workers-ts/src/services/admin/AdminMobileOrderReadService.ts",
+        "workers-ts/src/services/admin/AdminOrderReadService.ts",
+        "workers-ts/src/services/admin/AdminSystemLogReadService.ts",
+        "workers-ts/src/services/admin/AdminLegacySystemListService.ts",
+        "workers-ts/src/services/admin/AdminUserListService.ts",
+        "workers-ts/src/services/admin/AdminActivityListService.ts",
+        "workers-ts/src/services/system/ErpCapabilityService.ts",
+        "workers-ts/src/services/kefu/KefuCoreService.ts",
+        "workers-ts/src/services/kefu/KefuOrderService.ts",
+        "workers-ts/src/services/admin/AdminMobileRefundService.ts",
+        "workers-ts/src/services/product/MobileProductManagementCore.ts",
+        "workers-ts/src/services/admin/AdminMobileProductService.ts",
+        "workers-ts/src/services/user/MobileUserManagementCore.ts",
+        "workers-ts/src/services/admin/AdminMobileUserService.ts",
+        "workers-ts/src/services/activity/BargainHelpRuleLock.ts",
+        "workers-ts/src/services/activity/BargainRetirementService.ts",
+        "workers-ts/src/services/activity/BargainProductPolicy.ts",
+        "workers-ts/src/services/activity/BargainContentService.ts",
+        "workers-ts/src/services/activity/BargainAdminShippingService.ts",
+        "workers-ts/src/services/activity/BargainAdminSkuService.ts",
+        "workers-ts/src/services/activity/BargainAdminService.ts",
+        "workers-ts/src/services/payment/AlipayRefundService.ts",
+        "workers-ts/src/services/order/OrderPromotionGiftRefund.ts",
+        "workers-ts/src/migrations/invoiceEvidenceCatalog.ts",
+        "workers-ts/src/migrations/refundOrderSplitCatalog.ts",
+        "workers-ts/src/services/order/WholeOrderFullGiftRefundCatalog.ts",
+        "workers-ts/src/services/order/RefundInvoiceAllocation.ts",
+        "workers-ts/src/services/order/RefundAtomicMaterialization.ts",
+        "workers-ts/src/services/supplier/SupplierRefundSplitFinance.ts",
+        "workers-ts/src/services/order/RefundOrderMaterialization.ts",
+        "workers-ts/src/services/order/StoreOrderRefundService.ts",
+        "workers-ts/src/services/admin/AdminRefundDecisionService.ts",
+        "workers-ts/src/services/admin/AdminRefundOperationLedger.ts",
+        "workers-ts/src/services/admin/AdminRefundOperationService.ts",
+        "workers-ts/src/controllers/api/v1/AdminRefundOperationController.ts",
+        "workers-ts/src/services/admin/AdminShippingTemplateListService.ts",
+        "workers-ts/src/services/product/ShippingTemplateRules.ts",
+        "workers-ts/src/services/product/ShippingTemplateRevision.ts",
+        "workers-ts/src/services/admin/AdminShippingTemplateSnapshot.ts",
+        "workers-ts/src/services/product/FlatShippingTemplateInput.ts",
+        "workers-ts/src/services/product/ShippingTemplateCreateReplay.ts",
+        "workers-ts/src/services/product/ShippingCreationContext.ts",
+        "workers-ts/src/services/supplier/SupplierShippingTemplateService.ts",
+        "workers-ts/src/services/admin/AdminShippingTemplateGroupedService.ts",
+        "workers-ts/src/services/admin/AdminShippingTemplateService.ts",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "workers-ts/src/middleware/auth.ts",
+        "workers-ts/src/middleware/admin-auth.ts",
+        "workers-ts/test/admin-authority-write.test.ts",
+        "workers-ts/src/services/division/DivisionManagementService.ts",
+        "workers-ts/src/controllers/api/v1/AdminDivisionController.ts",
+        "workers-ts/test/admin-division-authority-write-business.test.ts",
+        "workers-ts/src/services/admin/AdminLegacyRoleWorkflowService.ts",
+        "workers-ts/src/controllers/api/v1/AdminLegacyRoleController.ts",
+        "workers-ts/test/admin-legacy-role-workflow.test.ts"
+      ]
+    },
+    {
+      "id": "frontend02",
+      "sourceUnchangedDuringRun": true,
+      "snapshotCount": 2533,
+      "verifiedCurrentRelevantInputs": 259,
+      "lateChangesOutsideConsumedInputs": [
+        "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+        "workers-ts/test/admin-authority-operation-native.test.ts"
+      ],
+      "verifiedEquivalentTerminalWhitespace": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+      "dependencyGraph": [
+        "workers-ts/test/admin-authority-operation-frontend.test.ts",
+        "workers-ts/test/admin-system-directory-frontend.test.ts"
+      ]
+    },
+    {
+      "id": "native03",
+      "sourceUnchangedDuringRun": true,
+      "snapshotCount": 2533,
+      "verifiedCurrentRelevantInputs": 2533,
+      "lateChangesOutsideConsumedInputs": [],
+      "verifiedEquivalentTerminalWhitespace": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+      "dependencyGraph": null
+    },
+    {
+      "id": "unit-types03",
+      "sourceUnchangedDuringRun": true,
+      "snapshotCount": 2533,
+      "verifiedCurrentRelevantInputs": 2533,
+      "lateChangesOutsideConsumedInputs": [],
+      "verifiedEquivalentTerminalWhitespace": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+      "dependencyGraph": null
+    },
+    {
+      "id": "runtime-types03",
+      "sourceUnchangedDuringRun": true,
+      "snapshotCount": 2533,
+      "verifiedCurrentRelevantInputs": 2533,
+      "lateChangesOutsideConsumedInputs": [],
+      "verifiedEquivalentTerminalWhitespace": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+      "dependencyGraph": null
+    }
+  ],
+  "whitespaceProof": {
+    "path": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+    "beforeSha256": "e56ac89524f4b77a2233b426d3b439cf5ae4da22824b18bbbc8f70a6ee3dd5fd",
+    "afterSha256": "33410c3cae3961ea00d05fa7ff13d3d6dc0da518fb0523d5b89e5b47a1a0a0c7",
+    "beforeBytes": 31054,
+    "afterBytes": 31053,
+    "change": "Only the redundant terminal blank line was removed; all non-terminal bytes unchanged.",
+    "sameCompiledJavaScript": true,
+    "compiledJavaScriptSha256": "9e7f956bf713e0ff5690d9d6b2e9c928da29ec434d0fa4a4ef8a2c130031690a",
+    "matchedActualRunInputs": [
+      "business03",
+      "frontend02",
+      "native03",
+      "unit-types03",
+      "runtime-types03"
+    ]
+  },
+  "testCases": [
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > previews admin and role creates without DML, sequence consumption or credential fields",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > requires explicit confirmation and preserves the shared barriers before catalogue readiness",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > confirms the complete platform impact for referenced role rules",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > confirms the complete platform impact for referenced role disable",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > confirms the complete platform impact for referenced role enable",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > confirms the complete platform impact for referenced role delete",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > keeps old bare referenced writes blocked and permits only semantically unchanged metadata",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > preserves legacy role level 10 in a confirmed metadata update when the draft omits level",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > checks every affected current and projected permission and rejects foreign-realm disclosure",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > binds a complete source proof and requires a fresh preview after added-reference",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > binds a complete source proof and requires a fresh preview after removed-reference",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > binds a complete source proof and requires a fresh preview after reference-profile",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > binds a complete source proof and requires a fresh preview after referenced-other-role",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > binds a complete source proof and requires a fresh preview after target",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > binds a complete source proof and requires a fresh preview after catalogue",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > rejects tampered payload, operation, revision, expiration and current session without mutation",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > creates genuine accounts and roles, then replays the immutable original result without duplicate writes",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > recovers after a genuine COMMIT loses its response and still permits a revoked owner to restore evidence",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > leaves an absent lookup unknown and seals resolve not_applied against a late original commit",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > rolls all real business DML back when the receipt returning differs",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > rolls all real business DML back when the receipt readback differs",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > allows an own password commit, then requires the current password version for receipt recovery",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > checks the normal administrator target, requested roles and own authority before generating a confirmation",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > fails unavailable receipt capability before any business mutation and restores the owned table unchanged",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-operation.test.ts",
+      "name": "authority confirmation and immutable operation receipts in owned local memory > uses exact controller envelopes, receipt query kind and no-store responses with live claims",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > registers the two read forms and POST on both real router aliases",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > serves bounded lossless leaves and exact seven-field role DTOs on both aliases",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 2 ] without changing grants",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 4 ] without changing grants",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 2, 4 ] without changing grants",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 11 ] without changing grants",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 5 ] without changing grants",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > accepts actual old add-after-edit echoes but forces create scope and default disabled status",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > submits the existing relative API path through both bases and updates only fixed fields",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > blocks referenced status/grant changes through both old POST aliases without changing any authority table",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > preserves referenced name-only and structural-ancestor normalization saves without requiring impact confirmation",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > keeps list-only and form-only privileges separated from writes",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > enforces next-level platform target scope and refuses actor-assigned roles",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > derives legacy next-level 10 from live actor 9 while modern constraints stay separate",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > retains only actor-owned valid opaque IDs and never bypasses mapped-key delegation",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > normalizes proved pure ancestors but rejects inert leaves and unselected structures",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > never reclassifies explicitly rejected known-policy metadata as opaque, even for super or raw-ID members",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > requires genuine page/API metadata even when the global resolver produces a positive footprint",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > does not overwrite modern, missing, foreign, deleted or access-denied target rules",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > revalidates live actor, password, role and menu authority after ordinary middleware auth",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > revalidates target and requested menus after GET without trusting old echo fields",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > strictly rejects malformed paths, queries and bodies with no role writes",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > detects orphan and cyclic grant paths instead of returning partial selected permissions",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > rejects explicitly over-deep breadcrumbs without silently discarding grants",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow.test.ts",
+      "name": "legacy platform role forms and numeric-menu writes > returns all 10000 scoped menu rows and rejects 10001 rather than truncating",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > validates complete CSV, safe IDs, columns and rule input before legacy normalization can truncate",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > revalidates the current DB actor, password version and expiration before each mutation",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > reads actor permissions again after middleware-era role rules or assignment were reduced",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > takes the common barrier before invoking any decision callback and rolls back callback writes",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > bounds live role authority before resolution and fails a transaction which expires after DML",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > authorizes both the current and requested target roles and enforces platform target scope",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > allows own harmless profile with modern or numeric actor roles but rejects changes to own authority",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > preserves the existing own password reset and invalidates the previous JWT after commit",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > protects superadmin accounts and counts remaining supervisors outside the entire bulk target set",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > preserves modern rolelevel zero creation and scopes role writes/delete to live platform roles",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > reports referenced authority changes for a locked impact policy and preserves harmless role name edits",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > leaves numeric/modern rules byte-for-byte intact on harmless metadata updates without impact fanout",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > accepts referenced manage implicit-view form echoes but blocks real reductions or unrecognized current rules",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > checks full RETURNING and same-transaction readback after inserts, updates and tombstones",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-authority-write.test.ts",
+      "name": "atomic modern Admin authority writes in owned local memory > keeps controller field names and success messages while using claims rather than cached adminInfo",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > acquires the shared table barrier before every actor, role or division decision read",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > reads the current division scope instead of accepting a caller level override",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > retains division.manage for agent and staff writes on both route prefixes",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rejects revoked, expired and password-stale claims atomically",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rejects missing, inactive, foreign and broader requested roles before changing either row",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rechecks existing roles even when the request replaces them with an empty assignment",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > validates the complete CSV and the original JSON array without lossy coercion",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > creates a platform division account with validated deduplicated roles",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > permits own contact changes and rejects own credentials or role changes",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rejects a non-super edit of a division account promoted to level zero",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > edits the first platform account deterministically when a division has several accounts",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > protects the actor when bulk division deletion contains their account",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rejects a non-super actor deleting a same-division super account with empty roles",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rejects an oversized platform deletion group with 503 without updating a truncated subset",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > deletes all platform division accounts while preserving supplier and foreign relations",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > excludes the entire deletion group when checking the last active platform super administrator",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > rolls back all affected users and administrators when one real UPDATE is suppressed",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-division-authority-write-business.test.ts",
+      "name": "Division writes share the platform authority transaction > checks the real stored administrator after RETURNING and rolls back an AFTER-trigger mismatch",
+      "id": "business03"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps city delivery record reads in their own view domain",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > covers every route guarded by adminAuth in both compatibility surfaces",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps route aliases in the same permission domain",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > separates platform cash-flow reads from remark edits on both admin route surfaces",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps user-money ledger reads and export independent of other finance grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > maps the exact legacy page-only capital menu to view without granting remark writes",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > maps only the audited supplier and agreement page rules to read grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > separates lottery claimant records and feedback from broader activity and service grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps activity-frame reads and writes behind its audited legacy menu rules",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > isolates activity-background reads and writes from frame and generic activity grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > isolates the ten time-discount routes behind exact legacy list and add rules",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > isolates full-discount routes and accepts only paired legacy list and add rules",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > isolates nth-discount routes and accepts only paired legacy list and add rules",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > isolates full-gift routes and accepts only paired legacy list and add rules",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps speechcraft management and point-log export separate from adjacent read grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > fails closed for unregistered management routes",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > separates coupon templates, publication and existing issue management on both surfaces",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > maps template page visibility without silently granting publication",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps all eight combination reads in three independent domains on both surfaces",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > does not make combination management imply independent export or statistics grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > keeps a legacy catalog menu fallback from silently granting the new export capability",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > normalizes role rules and makes manage imply view",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > prevents restricted administrators from delegating permissions they do not hold",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-permission.test.ts",
+      "name": "admin permission catalog > publishes a unique view permission for every menu group",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > serves real middleware-authenticated snake-case staff DTOs on both aliases",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > uses exact next-level scope for ordinary and super actors",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > matches account or name literally, including SQL metacharacters, and excludes phone search",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > keeps CSV role ID membership exact and forces nondeleted records for old is_del values",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > uses identical filtered count/list predicates and stable bounded pagination",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > renders safe platform role and menu labels, including modern keys and unmigrated rules",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > searches role_name literally and combines status",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > rejects malformed admin query before opening a transaction",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > rejects malformed role query before opening a transaction",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > rejects missing login and unrelated permissions using actual Hono auth",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > revalidates live actor password/status/type/deletion and expiry instead of stale adminInfo",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > rechecks role permission and live scope after ordinary auth",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > keeps numeric legacy administrator and role grants separate from each other and modern directory/write authority",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > reads admin count/list/labels in one bounded read-only snapshot and changes no rows",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > reads role count/list/labels in one bounded read-only snapshot and changes no rows",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > propagates read failures and oversized rules instead of returning a false empty success",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-system-list.test.ts",
+      "name": "legacy platform staff and role read contracts > registers both protected aliases while preserving modern array responses",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > paginates platform administrators with a safe projection and stable descending IDs",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > searches administrator account, name and phone with case-insensitive literal text",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > filters both administrator states and combines state with the same count predicate",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > retains platform role types 0 and legacy 1, resolves permissions and excludes tenant roles",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > filters role names, literal metacharacters and enabled/disabled states",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > rejects malformed system_admin queries before opening a transaction",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > rejects malformed system_role queries before opening a transaction",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > uses one bounded read-only snapshot for system_admin and keeps rows unchanged",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > uses one bounded read-only snapshot for system_role and keeps rows unchanged",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > requires live system.view authorization on /adminapi for both directories",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > requires live system.view authorization on /api/admin for both directories",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory.test.ts",
+      "name": "platform Admin and role directories > keeps existing list responses as arrays and registers both directory surfaces behind adminAuth",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > enables only the separately authenticated fixed commissioning executor",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > app references only actual named tables and columns",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > admin references only actual named tables and columns",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > app preserves ledger, parent-key, sequence-reset and schema boundaries",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > admin preserves ledger, parent-key, sequence-reset and schema boundaries",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > does not grant ordinary callers configuration writes or admin operation receipt access",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > keeps app schedule edits guarded and gives Admin parent management no physical deletion",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > pins separate old, schedule and parent stages rather than replaying a caller-selected plan",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > keeps templates Admin-only and issued provenance immutable in every historical profile",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > isolates promotion management and immutable gift receipts from every prior forward",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > allows only the application identity to capture purchase evidence, never to rewrite it",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > freezes the complete gift-era profile and adds only two Admin group capabilities",
+      "id": "regression02"
+    },
+    {
+      "file": "test/runtime-business-privilege-plan.test.ts",
+      "name": "explicitly reviewed business privilege inventory > freezes the entire sign-day profile and adds only Admin distributor INSERT and eight semantic UPDATE columns",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-setting-read-permission.test.ts",
+      "name": "legacy staff list permissions > keeps staff reads independent of generic settings and grants only the restored role form/save contracts",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-setting-read-permission.test.ts",
+      "name": "legacy staff list permissions > resolves audited numeric page and API rules to read authority in single and batch paths",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-setting-read-permission.test.ts",
+      "name": "legacy staff list permissions > does not import supplier, store, foreign, disabled or deleted role authority into platform decisions",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-setting-read-permission.test.ts",
+      "name": "legacy staff list permissions > admits staff viewers and keeps the restored role writer out of the sibling administrator list",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-setting-read-permission.test.ts",
+      "name": "legacy staff list permissions > keeps each numeric legacy grant narrower than the sibling list and all modern system reads or writes",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-setting-read-permission.test.ts",
+      "name": "legacy staff list permissions > registers selectable narrow capabilities and permits only one-way delegation from canonical readers",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-role-permission.test.ts",
+      "name": "legacy numeric role workflow authority > registers only the exact form and save methods on both route surfaces",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-role-permission.test.ts",
+      "name": "legacy numeric role workflow authority > resolves numeric contracts identically in single, batched and locked decisions",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-role-permission.test.ts",
+      "name": "legacy numeric role workflow authority > keeps page, form and numeric writer authority separate from sibling and modern contracts",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-legacy-role-permission.test.ts",
+      "name": "legacy numeric role workflow authority > allows canonical fallback and delegation in one direction without broadening legacy grants",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > rejects bad agent application fields and ineligible ownership before SMS consumption",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > requires a live unexpired agent for customer-side staff reads and writes",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > accepts integer percentages at both boundaries",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > rejects fractional and out-of-range percentages",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > normalizes an end date to the UTC+8 end of day",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > allows an agent whose rate and expiry are within its division",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > rejects an agent rate higher than its division",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > rejects an agent expiry later than its division",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > requires an active parent with the correct role",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division management validation > allows a staff rate equal to the parent in the admin workflow",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division reporting date ranges > uses hourly buckets for one local day",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division reporting date ranges > uses daily buckets through 92 days",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division reporting date ranges > uses monthly buckets for longer bounded ranges",
+      "id": "regression02"
+    },
+    {
+      "file": "test/division-management.test.ts",
+      "name": "division reporting date ranges > rejects reversed and unbounded reporting ranges",
+      "id": "regression02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "uses both directory contracts and server totals while initial reads send no mutation",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "neither reads nor opens or submits mutation actions without system.view",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "system.view permits reads but direct action calls cannot bypass the hidden write buttons",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "keeps independent pagination and resets only the searched directory to page one",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "shows failed reads and retains rows without allowing stale-row editing or advancing pagination",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "a failed permission tree is visible and cannot silently save empty role rules",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "preserves an unresolved historical permission rule by blocking a lossy role save",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "discards superseded directory responses within the same session",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "session loss clears PII passwords drafts and trees and fences delayed old reads",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "account replacement only displays the replacement directory and ignores late old-account results",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "an A to B to A session change cannot revive the original A response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "storage-based grant revocation clears the surface and prevents further writes",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "Pinia-only grant revocation or actor change never restores stale persisted authority",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "permission-directory retry closes old editing and requires reopening the original role keys",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "canceling role deletion preview sends no commit while a real commit failure remains visible",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "confirmation rechecks permissions before issuing a role deletion",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "pending admin and role saves cannot be submitted twice",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "unknown admin save outcome retains the draft and blocks blind repeats even after directory reread",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "late successful mutation cannot close or toast for a replacement session",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "unmount aborts pending reads and disposes all retained PII",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "the actual SFC script and template compile with both independent server paginations",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-system-directory-frontend.test.ts",
+      "name": "the actual template hides mutation controls from read-only users and renders server pagination totals",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "previews all three operation kinds and requires explicit confirmation even for CREATE",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "shows the full affected list and status/rule comparison before changing an assigned role",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "preserves an existing legacy role level 10 until its level is explicitly changed",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "cancels preview without committing and invalidates preview when drafts, status or selected permissions change",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rechecks preview expiry and the actual tree payload before the first commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "locks both preview and commit against double submission",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable http commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable payload commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable owner commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable uuid commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable kind commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable hash commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable id commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable created commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable extra commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending and blocks every new write after an unreliable unknown commit response",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "GET unknown never unlocks; explicit resolve seals not_applied and then permits a new UUID",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "recovers a committed CREATE from its matching receipt instead of reposting the original payload",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending when receipt lookup returns a mismatched owner proof",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending when receipt lookup returns a mismatched uuid proof",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending when receipt lookup returns a mismatched kind proof",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending when receipt lookup returns a mismatched hash proof",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps pending when receipt lookup returns a mismatched result proof",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "persists pending across unmount and reload, hides it from a new owner and recovers after same-owner permission revocation",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "retries only by explicit confirmation with the same UUID and exact original request",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "auth-expiry clearing cannot forget an unknown own-password write; same owner can look up after fresh login",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "keeps the pending record when explicit resolve is canceled or its response is malformed",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "does not commit unless recovery metadata was durably saved before sending",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched owner preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched partial preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched duplicate preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched oversized preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched hash preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched level preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-operation-frontend.test.ts",
+      "name": "rejects an incomplete or mismatched status preview without a success or commit",
+      "id": "frontend02"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > uses the actual table-UPDATE plan, app trigger boundary and all three real modern handlers with complete row deltas",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > uses the actual four-table profile and migration constraints with genuine separate app/Admin LOGINs",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > rejects actual menu lock capability function-body drift before either preview or business mutation",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > rejects actual menu lock capability extra-execute-grant drift before either preview or business mutation",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > enforces live JWT, platform realms, self authority, last super and bounded fields without changing any rows",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > rejects authority changes on exact references, including disabled, deleted and foreign references, while permitting a name-only edit",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > confirms complete referenced-role impacts, rule/status changes, soft deletion and new admin/role creation with exact row deltas",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > rechecks committed authority revocation after ordinary authentication on the real separate Admin session",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > serializes role disable with a new Admin assignment, rejects NOWAIT and rejects the committed inactive role",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > serializes role soft-delete with a new Admin assignment, rejects NOWAIT and rejects the committed inactive role",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > rejects missing, malformed, stale or mismatched actor/request/realm confirmations without business or receipt DML",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-write-native.test.ts",
+      "name": "modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > holds both table barriers and real menu authority locks through COMMIT, including rows being newly assigned",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > rechecks authority after ordinary app authentication and an independently committed actor-role revocation",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > requires a fresh preview after an independently committed added-reference change",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > requires a fresh preview after an independently committed removed-reference change",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow-native.test.ts",
+      "name": "Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > uses SELECT-only RR READ ONLY forms and independently authenticated restricted Admin writes with exact row deltas",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > requires a fresh preview after an independently committed target-role change",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow-native.test.ts",
+      "name": "Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > rejects a concurrent assigned-role revocation with controlled NOWAIT conflict and rejects its committed state",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > requires a fresh preview after an independently committed catalogue change",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow-native.test.ts",
+      "name": "Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > locks the real numeric authority menu and rejects its concurrent and committed revocation",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-legacy-role-workflow-native.test.ts",
+      "name": "Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > retains both authority role and menu locks until the real save transaction commits",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > replays the exact original receipt after expiry and target removal, but rejects reuse for another payload, operation or owner",
+      "id": "native03"
+    },
+    {
+      "file": "test/agent-application-postgres.test.ts",
+      "name": "agent application route on isolated PostgreSQL 16 > prevalidates, consumes only its own purpose once, and commits the applicant row",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > recovers the original created id after a real COMMIT loses its ACK and leaves a merely absent receipt unknown",
+      "id": "native03"
+    },
+    {
+      "file": "test/agent-application-postgres.test.ts",
+      "name": "agent application route on isolated PostgreSQL 16 > keeps the promoter and division SMS purposes separate at the actual promoter write route",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > seals an absent operation under the common barrier and permanently rejects its late original commit",
+      "id": "native03"
+    },
+    {
+      "file": "test/agent-application-postgres.test.ts",
+      "name": "agent application route on isolated PostgreSQL 16 > serializes agent resubmission after admin review via the applicant advisory lock",
+      "id": "native03"
+    },
+    {
+      "file": "test/agent-application-postgres.test.ts",
+      "name": "agent application route on isolated PostgreSQL 16 > serializes agent resubmission with role removal without a row/advisory deadlock",
+      "id": "native03"
+    },
+    {
+      "file": "test/agent-application-postgres.test.ts",
+      "name": "agent application route on isolated PostgreSQL 16 > parent role removal cannot deadlock with review of a child application",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > holds the real common barrier and receipt readback in the same transaction until COMMIT",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > rolls the business mutation back when an actual BEFORE INSERT receipt trigger does suppress",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority preview, commit and durable resolution on actual PG16 LOGINs > rolls the business mutation back when an actual BEFORE INSERT receipt trigger does modify",
+      "id": "native03"
+    },
+    {
+      "file": "test/admin-authority-operation-native.test.ts",
+      "name": "authority receipt commissioning on the complete registered PG16 runtime profile > commissions the exact addon once and rejects third-party, default-ACL and owner drift without repairing the profile",
+      "id": "native03"
+    }
+  ],
+  "routeTotals": {
+    "php": 1904,
+    "ts": 2357,
+    "matched": 917,
+    "executableMatched": 896,
+    "unavailable": 21,
+    "missing": 987,
+    "retired": 17,
+    "actionableMissing": 970,
+    "coveragePercent": 48.2,
+    "executableCoveragePercent": 47.1,
+    "effectiveExecutableCoveragePercent": 47.5
+  },
+  "routeSurfaces": [
+    {
+      "surface": "api",
+      "worker": 1284,
+      "actionableMissing": 11
+    },
+    {
+      "surface": "admin",
+      "worker": 798,
+      "actionableMissing": 902
+    },
+    {
+      "surface": "supplier",
+      "worker": 164,
+      "actionableMissing": 49
+    },
+    {
+      "surface": "kefu",
+      "worker": 70,
+      "actionableMissing": 0
+    },
+    {
+      "surface": "out",
+      "worker": 41,
+      "actionableMissing": 0
+    },
+    {
+      "surface": "erp",
+      "worker": 0,
+      "actionableMissing": 8
+    }
+  ],
+  "adminApiCounts": {
+    "callSites": 606,
+    "pathVariants": 637,
+    "registered": 637,
+    "executable": 637,
+    "controlledUnavailable": 0,
+    "unregistered": 0,
+    "unresolved": 0
+  },
+  "checklist": {
+    "total": 404,
+    "complete": 249,
+    "open": 155,
+    "allCheckboxLinesUnchanged": true
+  },
+  "fullRuntimeUpgrade": {
+    "baseTables": 282,
+    "afterTables": 283,
+    "independentAppAdminAudits": true,
+    "oldCatalogAndAll282TableRowsUnchanged": true,
+    "repeatUpgradeUnchanged": true,
+    "thirdPartyReceiptAclRejected": true,
+    "publicDefaultsRejected": true,
+    "foreignOwnerRejected": true,
+    "noAutomaticRepair": true
+  },
+  "postgres": {
+    "server": "16.15",
+    "finalRaw": "native03.stdout.txt",
+    "stoppedProof": {
+      "command": "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin/pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\.cache\\finance-postgres-89Ci0H\\data"
+      ],
+      "startedAt": "2026-10-08T12:30:37.917Z",
+      "finishedAt": "2026-10-08T12:30:37.955Z",
+      "exitCode": 3,
+      "signal": null,
+      "stdout": "pg_ctl: no server running\r\n",
+      "stderr": "",
+      "remainingFixtures": 0
+    },
+    "dataAndLogsRetained": true
+  },
+  "browser": {
+    "report": "browser/browser-report.json",
+    "actualExit": 0,
+    "steps": 28,
+    "screenshots": 16,
+    "viewports": [
+      {
+        "name": "desktop",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        }
+      },
+      {
+        "name": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        }
+      }
+    ],
+    "network": "Local intercepted frontend fixtures; not production/backend evidence",
+    "noExternalRequests": true,
+    "noPageErrors": true,
+    "noDocumentOverflow": true,
+    "intentionalLostAckConsoleError": true,
+    "failedAttemptsPreserved": true
+  },
+  "executionHistory": [
+    {
+      "id": "admin-build01",
+      "mode": "build",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\view\\admin-ts",
+      "startedAt": "2026-10-08T12:02:09.716Z",
+      "finishedAt": "2026-10-08T12:03:13.655Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "admin-vite01",
+      "mode": "build",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\view\\admin-ts",
+      "startedAt": "2026-10-08T12:03:13.658Z",
+      "finishedAt": "2026-10-08T12:04:01.374Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "api01",
+      "mode": "audits",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/admin-frontend-api-audit.ts",
+        "--strict"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:20:10.600Z",
+      "finishedAt": "2026-10-08T12:20:17.064Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "business01",
+      "mode": "business",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation.test.ts",
+        "test/admin-authority-write.test.ts",
+        "test/admin-division-authority-write-business.test.ts",
+        "test/admin-legacy-role-workflow.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:02:12.388Z",
+      "finishedAt": "2026-10-08T12:03:15.431Z",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "id": "business02",
+      "mode": "business_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation.test.ts",
+        "test/admin-authority-write.test.ts",
+        "test/admin-division-authority-write-business.test.ts",
+        "test/admin-legacy-role-workflow.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:06:14.185Z",
+      "finishedAt": "2026-10-08T12:06:49.365Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "business03",
+      "mode": "business_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation.test.ts",
+        "test/admin-authority-write.test.ts",
+        "test/admin-division-authority-write-business.test.ts",
+        "test/admin-legacy-role-workflow.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:17:19.317Z",
+      "finishedAt": "2026-10-08T12:18:21.769Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "frontend01",
+      "mode": "frontend",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation-frontend.test.ts",
+        "test/admin-system-directory-frontend.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:02:12.862Z",
+      "finishedAt": "2026-10-08T12:02:32.292Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "frontend02",
+      "mode": "frontend_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-operation-frontend.test.ts",
+        "test/admin-system-directory-frontend.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:17:21.787Z",
+      "finishedAt": "2026-10-08T12:17:36.438Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "native-diagnostic01",
+      "mode": "native_diagnostic",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--case",
+        "uses the actual four-table profile and migration constraints with genuine separate app/Admin LOGINs",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-authority-operation-native.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:09:49.162Z",
+      "finishedAt": "2026-10-08T12:10:04.970Z",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "id": "native01",
+      "mode": "native",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-authority-operation-native.test.ts",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/agent-application-postgres.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:00:43.752Z",
+      "finishedAt": "2026-10-08T12:01:25.834Z",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "id": "native02",
+      "mode": "native_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-authority-operation-native.test.ts",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/agent-application-postgres.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:17:17.658Z",
+      "finishedAt": "2026-10-08T12:18:30.687Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "native03",
+      "mode": "native_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-authority-operation-native.test.ts",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/agent-application-postgres.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:28:03.906Z",
+      "finishedAt": "2026-10-08T12:29:36.133Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "regression01",
+      "mode": "regression",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-permission.test.ts",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/admin-legacy-setting-read-permission.test.ts",
+        "test/admin-legacy-system-list.test.ts",
+        "test/admin-system-directory.test.ts",
+        "test/division-management.test.ts",
+        "test/runtime-business-privilege-plan.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:02:12.038Z",
+      "finishedAt": "2026-10-08T12:03:43.394Z",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "id": "regression02",
+      "mode": "regression_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-permission.test.ts",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/admin-legacy-setting-read-permission.test.ts",
+        "test/admin-legacy-system-list.test.ts",
+        "test/admin-system-directory.test.ts",
+        "test/division-management.test.ts",
+        "test/runtime-business-privilege-plan.test.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:10:08.046Z",
+      "finishedAt": "2026-10-08T12:10:50.676Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "id": "route01",
+      "mode": "audits",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/route-parity-audit.ts"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:20:03.262Z",
+      "finishedAt": "2026-10-08T12:20:10.598Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "runtime-types03",
+      "mode": "types_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:30:01.140Z",
+      "finishedAt": "2026-10-08T12:31:10.992Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "unit-types01",
+      "mode": "types",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:02:09.385Z",
+      "finishedAt": "2026-10-08T12:04:41.670Z",
+      "exitCode": 2,
+      "signal": null
+    },
+    {
+      "id": "unit-types02",
+      "mode": "types_retry",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:17:17.300Z",
+      "finishedAt": "2026-10-08T12:19:38.570Z",
+      "exitCode": 2,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    },
+    {
+      "id": "unit-types03",
+      "mode": "types_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\workers-ts",
+      "startedAt": "2026-10-08T12:28:01.649Z",
+      "finishedAt": "2026-10-08T12:30:01.138Z",
+      "exitCode": 0,
+      "signal": null,
+      "sourceInputCount": 2533,
+      "sourceUnchanged": true
+    }
+  ],
+  "evidenceRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-operation",
+  "evidence": [
+    {
+      "path": "admin-build01.execution.json",
+      "bytes": 392,
+      "sha256": "77a7bce8d00e428ed01c6e9dbb9981f621945bc2944bdaeb7ac0df586d581c96"
+    },
+    {
+      "path": "admin-build01.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "admin-build01.stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "admin-vite01.execution.json",
+      "bytes": 388,
+      "sha256": "b1c17cbc24a0d5c57b499ee5b3817f09bde70c7581e414563f9fd47f12f6118b"
+    },
+    {
+      "path": "admin-vite01.stderr.txt",
+      "bytes": 801,
+      "sha256": "f0c831768c03867f1996aa79a7f0d946e85584904d9202f8032107bb2211795f"
+    },
+    {
+      "path": "admin-vite01.stdout.txt",
+      "bytes": 22078,
+      "sha256": "ab36d71b139a2dd57fb7b91503823427cf3a6ba25759273be52939efa4f904a5"
+    },
+    {
+      "path": "api01.execution.json",
+      "bytes": 479,
+      "sha256": "46114435cd92f57e70617032db92b556ca36ca408fa8c02fcee44737e14192ef"
+    },
+    {
+      "path": "api01.inputs.json",
+      "bytes": 403643,
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "path": "api01.json",
+      "bytes": 382343,
+      "sha256": "ec9cc4f17bac83366d33cfc6b29bd0cfbdcf21b6dd4ebfe807a7c5c62a9f21d6"
+    },
+    {
+      "path": "api01.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/attempt01/browser-qa.mjs",
+      "bytes": 20981,
+      "sha256": "d879bc7dd1b2cc88f0b34b03f81f0cdee705c29a514bf1f68774ba1d7b142012"
+    },
+    {
+      "path": "browser/attempt01/browser-report.json",
+      "bytes": 1026,
+      "sha256": "e2de4d02b3426efa2077e004fd3d7f2f7bab7a725b0ae0809e9c7d0c9abc1901"
+    },
+    {
+      "path": "browser/attempt01/qa.actual-exit.txt",
+      "bytes": 3,
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "browser/attempt01/qa.stderr.log",
+      "bytes": 423,
+      "sha256": "f907103b27a99504c3416bb9260594744cf14e0586b7377516bbf9374a560f23"
+    },
+    {
+      "path": "browser/attempt01/qa.stdout.log",
+      "bytes": 33,
+      "sha256": "de7d96feda402248b8df567f916b8458466a4de07f1231b7a88535c61ae48211"
+    },
+    {
+      "path": "browser/attempt01/vite.stderr.log",
+      "bytes": 3585,
+      "sha256": "5712e4d74d761740ac8058d8d13aa265a663d650ee8393ab458733d64358a707"
+    },
+    {
+      "path": "browser/attempt01/vite.stdout.log",
+      "bytes": 72,
+      "sha256": "3b4d05bf2a6a5e754cc77d114653e8edfa0c606b63907f7d277cad16e332f13b"
+    },
+    {
+      "path": "browser/attempt02/browser-qa.mjs",
+      "bytes": 21169,
+      "sha256": "16911930d29d72c2f7dcfbbab3ee07c31a133b39f43381966447a11238e5f889"
+    },
+    {
+      "path": "browser/attempt02/browser-report.json",
+      "bytes": 1245,
+      "sha256": "e2e27154aab939655548a4544fff6244c9ecdc747c2b11d2880e0eda31b82d76"
+    },
+    {
+      "path": "browser/attempt02/qa.actual-exit.txt",
+      "bytes": 3,
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "browser/attempt02/qa.stderr.log",
+      "bytes": 423,
+      "sha256": "f907103b27a99504c3416bb9260594744cf14e0586b7377516bbf9374a560f23"
+    },
+    {
+      "path": "browser/attempt02/qa.stdout.log",
+      "bytes": 33,
+      "sha256": "de7d96feda402248b8df567f916b8458466a4de07f1231b7a88535c61ae48211"
+    },
+    {
+      "path": "browser/attempt02/vite.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/attempt02/vite.stdout.log",
+      "bytes": 39,
+      "sha256": "daf0ac12a075c19b607dcf520f7e2ae0aaaf7a9228d437e95b9c0a3edc44077c"
+    },
+    {
+      "path": "browser/attempt03/browser-qa.mjs",
+      "bytes": 21166,
+      "sha256": "0cb6a3010f771bbfaada06110e12365fc897544cd4ba2a33005b0644a069608b"
+    },
+    {
+      "path": "browser/attempt03/browser-report.json",
+      "bytes": 10753,
+      "sha256": "76eccd025d3812c3c018ab87733bd9933c079037962552aaa4514f9680ac18df"
+    },
+    {
+      "path": "browser/attempt03/desktop-directory.png",
+      "bytes": 31355,
+      "sha256": "2d7c9ccc91aced4c07cd9f31dc79139d52b31425bf1e1fbde7f5eca0e2839a95"
+    },
+    {
+      "path": "browser/attempt03/desktop-failure.png",
+      "bytes": 37021,
+      "sha256": "369e1930c62c4573c95a1d4a3fecc53c9b03fe6d6d779a58a72dcc9e6811a19b"
+    },
+    {
+      "path": "browser/attempt03/qa.actual-exit.txt",
+      "bytes": 3,
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "browser/attempt03/qa.stderr.log",
+      "bytes": 1564,
+      "sha256": "28e8f2b1c0af4f6b6cb7a2b2bb73ee721e4babe10101adfac9edb2c12e5ed31b"
+    },
+    {
+      "path": "browser/attempt03/qa.stdout.log",
+      "bytes": 62,
+      "sha256": "6341486881532babf5490eaeea96dd53f6a4321bce132b1472f002dee751bacb"
+    },
+    {
+      "path": "browser/attempt03/vite.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/attempt03/vite.stdout.log",
+      "bytes": 373,
+      "sha256": "82c1ad4ba34f8b91535a13faa90096c8c044cc246095b3b24de4c17e7885bcce"
+    },
+    {
+      "path": "browser/attempt04/browser-qa.mjs",
+      "bytes": 21166,
+      "sha256": "04158e340cb96f8de52fc2b3810dae78ef50d4477a3147db8daf7c0c7db0cb29"
+    },
+    {
+      "path": "browser/attempt04/browser-report.json",
+      "bytes": 10116,
+      "sha256": "72b40914042a73a77a940b8452dbc0fa809cc867a78caaeecd2a6db331ac3368"
+    },
+    {
+      "path": "browser/attempt04/desktop-directory.png",
+      "bytes": 31355,
+      "sha256": "2d7c9ccc91aced4c07cd9f31dc79139d52b31425bf1e1fbde7f5eca0e2839a95"
+    },
+    {
+      "path": "browser/attempt04/desktop-failure.png",
+      "bytes": 58694,
+      "sha256": "a425612b40d0881def8b1aaea673cebf1f1ac64037a4a7b6c693e74fa8921459"
+    },
+    {
+      "path": "browser/attempt04/desktop-preview.png",
+      "bytes": 73379,
+      "sha256": "ff4f3e8dec58d63577d746d4d0661fa2720fe0e5a162ae071c30048f19956a6e"
+    },
+    {
+      "path": "browser/attempt04/qa.actual-exit.txt",
+      "bytes": 3,
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "browser/attempt04/qa.stderr.log",
+      "bytes": 1257,
+      "sha256": "aaa6a92238fbcdbe3a363e7e848b374c6fcab9bec87055e506c3046d1a680c27"
+    },
+    {
+      "path": "browser/attempt04/qa.stdout.log",
+      "bytes": 107,
+      "sha256": "9ae4638c8d51014a91b688060bcced7801036129cfc5b0251721e25e60f97836"
+    },
+    {
+      "path": "browser/attempt04/vite.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/attempt04/vite.stdout.log",
+      "bytes": 72,
+      "sha256": "1386dcf0145a705ec3ac1dfdc5e90dc3662ccff39d27c063f07c800f3d13d66d"
+    },
+    {
+      "path": "browser/attempt05/browser-qa.mjs",
+      "bytes": 21464,
+      "sha256": "44facf69d4745a818a6e2a8eedf27f8fdf35fa122eb7b1bacd4a01bf8aef587b"
+    },
+    {
+      "path": "browser/attempt05/browser-report.json",
+      "bytes": 37645,
+      "sha256": "8f18b76a0966ac6ce6db6ffb5afecca683f411207c7b6f53e353fde63316e84b"
+    },
+    {
+      "path": "browser/attempt05/desktop-create-preview.png",
+      "bytes": 47690,
+      "sha256": "3aaf1a9b711d837c8bcbda1fd70a041d4c1347c5f29dc3377d6b219acbfe09cc"
+    },
+    {
+      "path": "browser/attempt05/desktop-delete-preview.png",
+      "bytes": 60238,
+      "sha256": "1c96f801c17fc85d8d9f2e2cdae12cb1bd598eb02d35c317844046315ac83c41"
+    },
+    {
+      "path": "browser/attempt05/desktop-directory.png",
+      "bytes": 31713,
+      "sha256": "7b618d4360678fb86ddf03f7395ea9bc1a73f05b499d5c4bec322161d0bac88d"
+    },
+    {
+      "path": "browser/attempt05/desktop-failure.png",
+      "bytes": 58694,
+      "sha256": "a425612b40d0881def8b1aaea673cebf1f1ac64037a4a7b6c693e74fa8921459"
+    },
+    {
+      "path": "browser/attempt05/desktop-new-owner-isolation.png",
+      "bytes": 16263,
+      "sha256": "f30a9c57a88802262f615cbdcfbf536f49d1cce1ecf3848e111704f875137c83"
+    },
+    {
+      "path": "browser/attempt05/desktop-pending.png",
+      "bytes": 42912,
+      "sha256": "34c79a70a0435d704315746af509e13bcabbd0be02c1ae460fb679536e872c97"
+    },
+    {
+      "path": "browser/attempt05/desktop-preview.png",
+      "bytes": 58694,
+      "sha256": "a425612b40d0881def8b1aaea673cebf1f1ac64037a4a7b6c693e74fa8921459"
+    },
+    {
+      "path": "browser/attempt05/desktop-revoked-owner-recovery.png",
+      "bytes": 31253,
+      "sha256": "8e20380002af05250fb848d0223aa38fe9df3e8b26c81cadd8c63a8abb54d137"
+    },
+    {
+      "path": "browser/attempt05/mobile-create-preview.png",
+      "bytes": 36825,
+      "sha256": "9a467767ffeb1164b6b70a901352a7f49ea03a1645849744ea23aebd8f00a0cb"
+    },
+    {
+      "path": "browser/attempt05/mobile-delete-preview.png",
+      "bytes": 39505,
+      "sha256": "db5d031e11da923677a9d0b8f5160013f668dc6060017887d05b33a1c234201b"
+    },
+    {
+      "path": "browser/attempt05/mobile-directory.png",
+      "bytes": 20783,
+      "sha256": "caabacaafd4b0b03b40e12657487364f6627b2558e7849e70914f6db3e314a33"
+    },
+    {
+      "path": "browser/attempt05/mobile-new-owner-isolation.png",
+      "bytes": 10933,
+      "sha256": "8918237f6dca0524ed3e7b39d3f62f88414cd2df26623719b8fbb584896dfc4b"
+    },
+    {
+      "path": "browser/attempt05/mobile-pending.png",
+      "bytes": 32273,
+      "sha256": "1fcba219d628d406c29a49c451317e7fca130a3bdc6c90664c1bd7188b92da0e"
+    },
+    {
+      "path": "browser/attempt05/mobile-preview.png",
+      "bytes": 38603,
+      "sha256": "0d6ff1e947ed28a8a871ef699fae1282f5183ed32fef0008eb14cffe35a136c0"
+    },
+    {
+      "path": "browser/attempt05/mobile-revoked-owner-recovery.png",
+      "bytes": 24959,
+      "sha256": "3572134b0e27f9a96fa2950e34b5a18532be292f35e38c7d2fd32e287873d998"
+    },
+    {
+      "path": "browser/attempt05/qa.actual-exit.txt",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "browser/attempt05/qa.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/attempt05/qa.stdout.log",
+      "bytes": 1109,
+      "sha256": "cfbe83d26e9e5f402a1bc89fcad920da812867a4fa3d915228136a6079fd83b7"
+    },
+    {
+      "path": "browser/attempt05/vite.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/attempt05/vite.stdout.log",
+      "bytes": 72,
+      "sha256": "acbe0d171db30510b0a10bb56532177f54c0b8fdbc729bd992acd1d3d1a6155c"
+    },
+    {
+      "path": "browser/browser-qa-summary.md",
+      "bytes": 3078,
+      "sha256": "3eb1181b17377f771f6938cdb8409d6768d05ac078ef3c8a640288347d439386"
+    },
+    {
+      "path": "browser/browser-qa.mjs",
+      "bytes": 21996,
+      "sha256": "e4e1f6271037d98bc83058d0dc5ece455d91b06876c49619f6fff271b08d3a62"
+    },
+    {
+      "path": "browser/browser-report.json",
+      "bytes": 38366,
+      "sha256": "302ad4788ce46d90a66d040f6d9945a4ee7bfb4f4d6b7d728a39fbceacd1a533"
+    },
+    {
+      "path": "browser/desktop-create-preview.png",
+      "bytes": 52452,
+      "sha256": "787fe71f0328d613a3e83e48f1b7c87e441846855be387545490d0d9703145d8"
+    },
+    {
+      "path": "browser/desktop-delete-preview.png",
+      "bytes": 60238,
+      "sha256": "1c96f801c17fc85d8d9f2e2cdae12cb1bd598eb02d35c317844046315ac83c41"
+    },
+    {
+      "path": "browser/desktop-directory.png",
+      "bytes": 31713,
+      "sha256": "7b618d4360678fb86ddf03f7395ea9bc1a73f05b499d5c4bec322161d0bac88d"
+    },
+    {
+      "path": "browser/desktop-failure.png",
+      "bytes": 58694,
+      "sha256": "a425612b40d0881def8b1aaea673cebf1f1ac64037a4a7b6c693e74fa8921459"
+    },
+    {
+      "path": "browser/desktop-new-owner-isolation.png",
+      "bytes": 16263,
+      "sha256": "f30a9c57a88802262f615cbdcfbf536f49d1cce1ecf3848e111704f875137c83"
+    },
+    {
+      "path": "browser/desktop-pending.png",
+      "bytes": 42876,
+      "sha256": "be3111810372d43879792c92ebd47a4e4c589ca418ce4291f6f5afc73cecf738"
+    },
+    {
+      "path": "browser/desktop-preview-footer.png",
+      "bytes": 58694,
+      "sha256": "a425612b40d0881def8b1aaea673cebf1f1ac64037a4a7b6c693e74fa8921459"
+    },
+    {
+      "path": "browser/desktop-preview.png",
+      "bytes": 58694,
+      "sha256": "a425612b40d0881def8b1aaea673cebf1f1ac64037a4a7b6c693e74fa8921459"
+    },
+    {
+      "path": "browser/desktop-revoked-owner-recovery.png",
+      "bytes": 31213,
+      "sha256": "b76dc6a579b6ca34362847398dae5ba8cbdf5fd981a0cc5568c6f6e1d499ab81"
+    },
+    {
+      "path": "browser/mobile-create-preview.png",
+      "bytes": 33989,
+      "sha256": "f4053157edb8b8e8d302702369e7d23b1d59a3da745193ed4ee4a5e03afd0162"
+    },
+    {
+      "path": "browser/mobile-delete-preview.png",
+      "bytes": 39505,
+      "sha256": "db5d031e11da923677a9d0b8f5160013f668dc6060017887d05b33a1c234201b"
+    },
+    {
+      "path": "browser/mobile-directory.png",
+      "bytes": 20783,
+      "sha256": "caabacaafd4b0b03b40e12657487364f6627b2558e7849e70914f6db3e314a33"
+    },
+    {
+      "path": "browser/mobile-new-owner-isolation.png",
+      "bytes": 10933,
+      "sha256": "8918237f6dca0524ed3e7b39d3f62f88414cd2df26623719b8fbb584896dfc4b"
+    },
+    {
+      "path": "browser/mobile-pending.png",
+      "bytes": 32255,
+      "sha256": "5fee0cbe852a16998f21b2ced3bdea7ca31f6cb4ad8ed5acbe1dc33ca3210480"
+    },
+    {
+      "path": "browser/mobile-preview-footer.png",
+      "bytes": 37436,
+      "sha256": "48410e9511c7a2c599f7a9bd54206fee5c7e6966f4f73e3910ace2376a40fbda"
+    },
+    {
+      "path": "browser/mobile-preview.png",
+      "bytes": 38603,
+      "sha256": "0d6ff1e947ed28a8a871ef699fae1282f5183ed32fef0008eb14cffe35a136c0"
+    },
+    {
+      "path": "browser/mobile-revoked-owner-recovery.png",
+      "bytes": 24948,
+      "sha256": "8caca5320124f8b1a5fb0166f272582e876946d787fe16fb668ff3471905993b"
+    },
+    {
+      "path": "browser/qa.actual-exit.txt",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "browser/qa.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/qa.stdout.log",
+      "bytes": 1109,
+      "sha256": "cfbe83d26e9e5f402a1bc89fcad920da812867a4fa3d915228136a6079fd83b7"
+    },
+    {
+      "path": "browser/vite.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser/vite.stdout.log",
+      "bytes": 73,
+      "sha256": "b127f226d23ddd6669ccf7a77434294339462c8f3add3f1c2516ba3ee68afdd2"
+    },
+    {
+      "path": "business01.execution.json",
+      "bytes": 685,
+      "sha256": "e368911f02b223edd33f5a0daa7367dce3d3e9a6f539791b5cc1bafbb1e77331"
+    },
+    {
+      "path": "business01.stderr.txt",
+      "bytes": 9873,
+      "sha256": "6019b13cbe29c11e28a3713b8a6da3bf43a9cc09845fa69894588ba23994e333"
+    },
+    {
+      "path": "business01.stdout.txt",
+      "bytes": 17126,
+      "sha256": "65381d4555df4227e6262dcf4afaba06b596718a13aeb37c0845ae81cd2f8108"
+    },
+    {
+      "path": "business02.execution.json",
+      "bytes": 691,
+      "sha256": "473d53670dfdce4b2a171b4d273b69e00aba979e3cff7f92338dcb8c5e584d46"
+    },
+    {
+      "path": "business02.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "business02.stdout.txt",
+      "bytes": 17228,
+      "sha256": "b1d6abad4f739a7eb7d6cb432e49a1f3efe80f7264a960d503fbb362d201ee18"
+    },
+    {
+      "path": "business03.execution.json",
+      "bytes": 746,
+      "sha256": "f0d4478fd01bd58b6cd2c7d54b4c17b74666ad4274e88571bf5c3f79d6e1b9bc"
+    },
+    {
+      "path": "business03.inputs.json",
+      "bytes": 403643,
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "path": "business03.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "business03.stdout.txt",
+      "bytes": 17244,
+      "sha256": "7622afce312b419ade5c1e22c9aed78f383c6708b1b10e6a8aa338a8487866ff"
+    },
+    {
+      "path": "check-pg-stopped.mjs",
+      "bytes": 1705,
+      "sha256": "455f01560b2152adda8bc0e455af1d6aef981b57c49f40df1422cf50417f0605"
+    },
+    {
+      "path": "commit-local.mjs",
+      "bytes": 3538,
+      "sha256": "ac9ef44459e87a55f911aa4f709a3276860eadcf9204a12163f4956d243e31fa"
+    },
+    {
+      "path": "final-whitespace-proof.json",
+      "bytes": 655,
+      "sha256": "58c172d0ddd2cf4d38f6daeec7aa90d0005d3076b70e6504eb14fa97f7e81232"
+    },
+    {
+      "path": "fix-final-whitespace.mjs",
+      "bytes": 1762,
+      "sha256": "4b21bb1f01b0f80ac85ee6207d2e092cc03033e21a90fd8ccf074aa129d13282"
+    },
+    {
+      "path": "frontend01.execution.json",
+      "bytes": 597,
+      "sha256": "f6dcdbacb858b96cde764c01593262ea1f6174f7edd01573686f4c681e10cedd"
+    },
+    {
+      "path": "frontend01.stderr.txt",
+      "bytes": 1066,
+      "sha256": "7d5734c9365c482af4617ad582faa032942e08558a396cd4fc1717980503c164"
+    },
+    {
+      "path": "frontend01.stdout.txt",
+      "bytes": 8306,
+      "sha256": "f9179559d9bb655ef30e3bc3080249d5c49ff698f90e269df9962bfe9088c622"
+    },
+    {
+      "path": "frontend02.execution.json",
+      "bytes": 658,
+      "sha256": "e21bb267871ddc65e8e9648721fe81816843e3b03f124cc5321e9d417703c026"
+    },
+    {
+      "path": "frontend02.inputs.json",
+      "bytes": 403643,
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "path": "frontend02.stderr.txt",
+      "bytes": 1066,
+      "sha256": "7d5734c9365c482af4617ad582faa032942e08558a396cd4fc1717980503c164"
+    },
+    {
+      "path": "frontend02.stdout.txt",
+      "bytes": 8295,
+      "sha256": "45eedd0dc1538d29ce1efbac5a2c6d66f793db771df3940f86b55f34e7e692ea"
+    },
+    {
+      "path": "make-validation.mjs",
+      "bytes": 9716,
+      "sha256": "9239a1888c585d1dc0551fe59ddaadd42cfb62fbad3bc0d7143078bc97c1047f"
+    },
+    {
+      "path": "native-diagnostic01.execution.json",
+      "bytes": 698,
+      "sha256": "10dc097a1a87b547bde2bbefcb9acd841177a7317f33a2f57556175d794b452e"
+    },
+    {
+      "path": "native-diagnostic01.stderr.txt",
+      "bytes": 1359,
+      "sha256": "cc73576cbf19cb70524455e4c49cf6657da67e67514663caceae9f77591ebc89"
+    },
+    {
+      "path": "native-diagnostic01.stdout.txt",
+      "bytes": 4845,
+      "sha256": "846ad07057442a505702ba52c3c1af9bcf63c857468b5b19d316baa34964fe1b"
+    },
+    {
+      "path": "native01.execution.json",
+      "bytes": 705,
+      "sha256": "b9ca2e5aeba2437ae388b271fb26b154b23a3da9818fe426ac7a2c65088ee733"
+    },
+    {
+      "path": "native01.stderr.txt",
+      "bytes": 12480,
+      "sha256": "dcac130221d79f10d0f0b262f1fc4be2da11788be999e47110b5744d1c1e89ea"
+    },
+    {
+      "path": "native01.stdout.txt",
+      "bytes": 12941,
+      "sha256": "c70094fb6a4bc6bac93264fd6ed2d78aa7c9bfea537314577715b00ced59747f"
+    },
+    {
+      "path": "native02.execution.json",
+      "bytes": 766,
+      "sha256": "fbc540cb8e8d20174e05750805a7a8d39955d461e4ff526ca22c8e311d475b53"
+    },
+    {
+      "path": "native02.inputs.json",
+      "bytes": 403643,
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "path": "native02.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "native02.stdout.txt",
+      "bytes": 13101,
+      "sha256": "33517aa7830ac4a521964283fc28b0e116eb7ac178d6a8aeadd55fec2e938df1"
+    },
+    {
+      "path": "native03.execution.json",
+      "bytes": 766,
+      "sha256": "d3b649234b68e604d995de7e07ae8d000793bda9d2f8b1969cdb6a595bd9e1f3"
+    },
+    {
+      "path": "native03.inputs.json",
+      "bytes": 403643,
+      "sha256": "cf3bf48af7977a00a4fe946620e627d4ee4df4242f3f8acd9de2009515970a36"
+    },
+    {
+      "path": "native03.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "native03.stdout.txt",
+      "bytes": 13361,
+      "sha256": "b05c325de401bbd795a5b6335e17f637e30a650ce8a47fd887ca3ffd0c4eba99"
+    },
+    {
+      "path": "pg-stopped-native02.json",
+      "bytes": 472,
+      "sha256": "b47b4ea4a1660a693133758141c09e81a9332566cb7e1db4844882a8b2b238a8"
+    },
+    {
+      "path": "pg-stopped-native03.json",
+      "bytes": 472,
+      "sha256": "77cf4dbb1f755d3102500a1fd617bdd303106f8e0d847d25ef3bd1e87138dffe"
+    },
+    {
+      "path": "regression01.execution.json",
+      "bytes": 817,
+      "sha256": "a6598075a84ea61b0e1b06ead168c7d0687b9347d394ecfe1b353f41a6d35d81"
+    },
+    {
+      "path": "regression01.stderr.txt",
+      "bytes": 1747,
+      "sha256": "7bf17bbfe6ebf4f2a9696d6b8d586787ce5c5a0bf15b2f1ecd49e0b6a959b552"
+    },
+    {
+      "path": "regression01.stdout.txt",
+      "bytes": 15025,
+      "sha256": "9c096b0cf106e150f5f8ef7e426b57438c7f882ae7e4b60d281cf02927aa7d29"
+    },
+    {
+      "path": "regression02.execution.json",
+      "bytes": 823,
+      "sha256": "258e61807b6a1847bd882525c2445c05f1d15d471dba151c6ea1316854aa5194"
+    },
+    {
+      "path": "regression02.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "regression02.stdout.txt",
+      "bytes": 14768,
+      "sha256": "d75bab9c93e4774cbf32a1b587a22b44c42a52d63579c5487ac3e42d9f450892"
+    },
+    {
+      "path": "route01.execution.json",
+      "bytes": 459,
+      "sha256": "17faa9566b7d5086d552e93f602bb0236c4347156664932a712f9d1abefcb6b2"
+    },
+    {
+      "path": "route01.inputs.json",
+      "bytes": 403643,
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "path": "route01.json",
+      "bytes": 1304121,
+      "sha256": "fe9c57b4b25f000872afc2c398381535a42957d2ac3dbd3cef1f0d9e094b9708"
+    },
+    {
+      "path": "route01.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "run-probes.mjs",
+      "bytes": 6480,
+      "sha256": "0d94abb2f4db40c9f7b628231ed95103628aeb34a9ada5fa56f67af2c5f8f245"
+    },
+    {
+      "path": "runtime-types03.execution.json",
+      "bytes": 530,
+      "sha256": "13e685c498ba75a7e92c9a508f505357d09f8aa863d79edb4680691d238722de"
+    },
+    {
+      "path": "runtime-types03.inputs.json",
+      "bytes": 403643,
+      "sha256": "cf3bf48af7977a00a4fe946620e627d4ee4df4242f3f8acd9de2009515970a36"
+    },
+    {
+      "path": "runtime-types03.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runtime-types03.stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unit-types01.execution.json",
+      "bytes": 422,
+      "sha256": "6add8a76cc554eec60ea9fc77be6dda5ec70db6fad8eba867490f28a66a6059a"
+    },
+    {
+      "path": "unit-types01.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unit-types01.stdout.txt",
+      "bytes": 691,
+      "sha256": "d0f8b8130d481bdd7ba3f4941f3c38dde5676cded067e24663d2f5323c82153f"
+    },
+    {
+      "path": "unit-types02.execution.json",
+      "bytes": 483,
+      "sha256": "7d9e9c0e9484a5532e429d1f0ab970ec67f54b2bb6c6769711db5ef16d4b8f19"
+    },
+    {
+      "path": "unit-types02.inputs.json",
+      "bytes": 403643,
+      "sha256": "4ad3e973c017b81b0c386eec1472b37a8ca0b908952c456b2d02f597cb3b4240"
+    },
+    {
+      "path": "unit-types02.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unit-types02.stdout.txt",
+      "bytes": 251,
+      "sha256": "38b2d26e029a6d9325ff87585f6ca61b72e952aac5e4078e11fa1e0cbcab425e"
+    },
+    {
+      "path": "unit-types03.execution.json",
+      "bytes": 483,
+      "sha256": "36eee489e4f0985a51a63900b3d432367d909418433172cb18936e304ff8de3d"
+    },
+    {
+      "path": "unit-types03.inputs.json",
+      "bytes": 403643,
+      "sha256": "cf3bf48af7977a00a4fe946620e627d4ee4df4242f3f8acd9de2009515970a36"
+    },
+    {
+      "path": "unit-types03.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unit-types03.stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "verified-input-relevance.json",
+      "bytes": 27829,
+      "sha256": "18813585bb602c0b8647d4a6e4f98463246978ef48ea627ea35e6867a25b642e"
+    }
+  ],
+  "changedSource": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "24d6c733d490ed0f7b27fda8b22fe4b6927cb6037f4985273ab1d55a0d537d17"
+    },
+    {
+      "path": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+      "sha256": "c2f61edf4e4706537d9d39c0be4a0568055177872225a503045ae90ff24d2273"
+    },
+    {
+      "path": "workers-ts/docs/admin-authority-operation-contract-20261008.md",
+      "sha256": "4c5ef8f8901fd6340e8fd3e68f07af4c4ef81d5a0c348ed2900b77378d487984"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "a9acf985e515ef8ec279c22bf758034143d23ec8f79d30a879feb67c3da8a00f"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminAuthorityOperationController.ts",
+      "sha256": "ca07d658005a5bf65432f73c6887b5788af2dd40380e52733f2b5ab4fae9d480"
+    },
+    {
+      "path": "workers-ts/src/migrations/adminAuthorityOperation.ts",
+      "sha256": "c95381f7541071d1fbe6d490f6e2049ec20f62bb2786597f47acc5b339df4434"
+    },
+    {
+      "path": "workers-ts/src/migrations/runAdminAuthorityOperationUpgrade.ts",
+      "sha256": "3613831bbcfcb82fa2977fbc6d18f97e3f40b52e558a3e13400261bd5ea94dfe"
+    },
+    {
+      "path": "workers-ts/src/migrations/auditRuntimeBusinessPrivileges.ts",
+      "sha256": "fea5d234434f46e180f5f82610b15944711c4c0fcd1318be4d9e779d61538f44"
+    },
+    {
+      "path": "workers-ts/src/models/schema/adminAuthorityOperation.ts",
+      "sha256": "663e8af035df922a9cfa99f50d4f2608cbc72b22c0e95fc9454a0dd29805a975"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "02c388f107ee37ec0ef37e5184810cfd0d9f97d0bc8a84e30fb0201dc954f272"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "bd2890c1db13c0c729f60a4d1224a0bf0fcd4fac7ff3a95087a86b6f65942b6e"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminAuthorityOperationService.ts",
+      "sha256": "af221759f1de59f5bca66368c01f9c2f452fb8a2304e3de43679be6926b28c52"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+      "sha256": "78a769ddd6e85b8885b3636ed72b0cdfecb9d77debb14e64cfc32866b0d946e3"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "4f5361fef9b0bd555474b5b1d3a6bdde94538cec577c0f664c1029e735a3e713"
+    },
+    {
+      "path": "workers-ts/test/admin-authority-operation.test.ts",
+      "sha256": "3ed2eff2b2c90ebde1e99d73309c97e7895b08d687d9826ab581f5cd6cf5f7d5"
+    },
+    {
+      "path": "workers-ts/test/admin-authority-operation-native.test.ts",
+      "sha256": "e2c5f6295704b78f4f41d01a8f60404bdda7ea6fa36ec43382b648543df6ccee"
+    },
+    {
+      "path": "workers-ts/test/admin-authority-operation-frontend.test.ts",
+      "sha256": "33410c3cae3961ea00d05fa7ff13d3d6dc0da518fb0523d5b89e5b47a1a0a0c7"
+    },
+    {
+      "path": "workers-ts/test/admin-system-directory-frontend.test.ts",
+      "sha256": "1e59f5544f14288547ba335842b4730ad713b0d423e16e3c6ab9c064f99ee763"
+    },
+    {
+      "path": "workers-ts/test/admin-permission.test.ts",
+      "sha256": "224e8ab9fa6858e01f2a90606b4bbcfaab521967ccf210b3bc9ce0f4b7c7bf5a"
+    },
+    {
+      "path": "view/admin-ts/src/api/system.ts",
+      "sha256": "4c2e08efc3cf00d5e1e9ad7e71ed0a98e99feba57f4f0be0333cdf103f2943e1"
+    },
+    {
+      "path": "view/admin-ts/src/pages/system/SystemList.vue",
+      "sha256": "ab5890fba413ee7b4ec420b04eb929a6a6e477888e37156b5e4e91b56121b9c7"
+    }
+  ],
+  "limitations": [
+    "Current commit not publicly pushed or deployed; no current-head full Linux CI or production installation.",
+    "Old role PUT/DELETE, old staff/account writes and old clients confirmation/recovery remain open.",
+    "Local whole-profile and browser fixtures do not prove real production data, scale or Hyperdrive.",
+    "Receipt table and fixed lock capability are independently commissioned, not in historical runAll/external/ORM cohorts."
+  ]
+}

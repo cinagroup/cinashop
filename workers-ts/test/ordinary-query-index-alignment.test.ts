@@ -32,7 +32,13 @@ describe("DB-009D2b3b complete ordinary index disposition", () => {
       // The manifest records the source line at review time. Later source edits may move
       // the query, but its exact SQL evidence must still exist once in the live file.
       expect(query.sourceLine, `${entry.key}: historical source line`).toBeGreaterThan(0);
-      expect(source.split(query.sourceSql), `${entry.key}: ${query.source}:${query.sourceLine}`).toHaveLength(2);
+      if(entry.key==='store_pink.sp_kid') {
+        // Preserve the sealed historical query and bind its narrower live consumer.
+        expect(query.sourceSql).toBe('    })\n    .where(eq(storePink.id, leader.id));\n  if (completed) {\n    await tx\n      .update(storePink)\n      .set({ status: 2, stopTime: paidAt })\n      .where(eq(storePink.kId, leader.id));');
+        const current=query.sourceSql.replace('.where(eq(storePink.kId, leader.id));',
+          '.where(and(eq(storePink.kId, leader.id), eq(storePink.isRefund, 0), eq(storePink.status, 1)));');
+        expect(source.split(current), `${entry.key}: current active non-refunded participants`).toHaveLength(2);
+      }else expect(source.split(query.sourceSql), `${entry.key}: ${query.source}:${query.sourceLine}`).toHaveLength(2);
       for (const column of entry.columns) {
         const camel = column.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
         expect(query.sourceSql.includes(column) || query.sourceSql.includes(camel), `${entry.key}.${column}`).toBe(true);

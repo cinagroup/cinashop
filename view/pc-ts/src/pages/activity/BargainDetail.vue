@@ -26,7 +26,7 @@
           <el-progress :percentage="detail.participation.progress_percent" />
           <p>参与当前价 ¥{{ detail.participation.current_price }} · 参与底价 ¥{{ detail.participation.minimum_price }}</p>
           <p class="catalog-price">结算参考单价 ¥{{ detail.participation.catalog_price }}</p>
-          <p v-if="detail.participation.activity_price_changed" role="status">活动起价已变化，结算参考价可能高于参与底价；请确认服务端最终报价。</p>
+          <p v-if="detail.participation.activity_price_changed" role="status">活动起价已变化；本条参与仍按发起时起价 ¥{{ detail.participation.original_price }} 和底价结算，新价仅影响新参与。</p>
         </section>
         <p v-else>{{ authenticated ? '当前没有可识别的有效参与，请发起或从“我的砍价”选择记录。' : '登录后查看自己的参与；不会自动发起砍价。' }}</p>
         <el-button v-if="authenticated && !detail.participation && open" :disabled="loading || busy" @click="start">{{ pendingStart ? '打开已发起的参与' : '发起砍价' }}</el-button>

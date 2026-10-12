@@ -1,0 +1,83 @@
+{
+  "source": {
+    "name": "@vue/server-renderer",
+    "version": "3.4.21",
+    "url": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.4.21.tgz",
+    "integrity": "sha512-aV1gXyKSN6Rz+6kZ6kr5+Ll14YzmIbeuWe7ryJl5muJ4uwSwY/aStXTixx76TwkZFJLm1aAlA/HSWEJ4EyiMkg=="
+  },
+  "sourceArchiveSha256": "4535791e4ddbfd1008ea1dbd0d2de20774131a20c43f0a70bb762eeb5f2c8ec2",
+  "fileCount": 10,
+  "normalizedTarHeaderFields": "Only tar size/checksum fields are canonicalized by the existing deterministic archive writer.",
+  "files": [
+    {
+      "name": "LICENSE",
+      "mode": 420,
+      "bytes": 1091,
+      "sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+      "canonicalHeaderSha256": "c6f685ceca80814f87f6a62912a5d5c2c9f35c3c5a62d68e7ec59eb20d484a3e"
+    },
+    {
+      "name": "index.js",
+      "mode": 420,
+      "bytes": 195,
+      "sha256": "649f9ecc1d681df415cfe6e0a94bcab03c8ac7a98c2f14dee08afeeec43e1880",
+      "canonicalHeaderSha256": "19ef709e8347fa92beee07c992914028e489744da77ffd3b59ae7f749e67e59b"
+    },
+    {
+      "name": "dist/server-renderer.cjs.js",
+      "mode": 420,
+      "bytes": 31396,
+      "sha256": "c953dd3832938fa0bb8c0b1ffc5e362625e329d4b6d2646b84f6a38c2357bf44",
+      "canonicalHeaderSha256": "095d9eff02ec18efa6f571faf913aadd2e75a723d53b2dcddface7ddff2bbfde"
+    },
+    {
+      "name": "dist/server-renderer.cjs.prod.js",
+      "mode": 420,
+      "bytes": 23800,
+      "sha256": "3bfdf90dbe3da932dde152bea0216f184b087d69bf7daea608e4da588caa4c98",
+      "canonicalHeaderSha256": "80451274f38f83de18ba6b530883d81b285fcc710dad7b3c0f20cef6b587e9fe"
+    },
+    {
+      "name": "dist/server-renderer.esm-browser.js",
+      "mode": 420,
+      "bytes": 232366,
+      "sha256": "e727a89e1f204a682b34311b94359eab3c92b77b9df6e89bbce45bc1281ad9f4",
+      "canonicalHeaderSha256": "a9a7d7be15717dded7b5517bd3e7d7a5d5c971f6de758c8b9d7fab3a2d1b2248"
+    },
+    {
+      "name": "dist/server-renderer.esm-browser.prod.js",
+      "mode": 420,
+      "bytes": 63776,
+      "sha256": "7ee984a1de551fd1051dcf30ccbe2ad291883a7abbaedca20127a8bea31b113b",
+      "canonicalHeaderSha256": "ed8491e58a82e457df3a9259dc336be348188546bc0ed68e3f21a5521e480094"
+    },
+    {
+      "name": "dist/server-renderer.esm-bundler.js",
+      "mode": 420,
+      "bytes": 29489,
+      "sha256": "86f354f9ce0d57503b2c4fa702958fe7f0318f288d4fda7ded4dc89809a99e35",
+      "canonicalHeaderSha256": "8d3860976a0814063d9fa4eb2498c62920a393e6a9f065c0424e269879dfe9ca"
+    },
+    {
+      "name": "package.json",
+      "mode": 420,
+      "bytes": 1317,
+      "sha256": "41b74359ba442f746890b010c48897c4d55324088988f3247f61b9ba045244d3",
+      "canonicalHeaderSha256": "fa99e63ec181baa6410274ff185509efb1f4ca8aeaab869e2cb7ae12011667ff"
+    },
+    {
+      "name": "README.md",
+      "mode": 420,
+      "bytes": 3881,
+      "sha256": "d73367211cc62b0d3fbccc39417745536170081c7fbe9ba007b79c430bdbd3a1",
+      "canonicalHeaderSha256": "640c1f392ef6686d45b523fbf25ac8deb7425870d1783d1cbe5710578a5c486f"
+    },
+    {
+      "name": "dist/server-renderer.d.ts",
+      "mode": 420,
+      "bytes": 4121,
+      "sha256": "cdfc12701570173a7fd09f33bade18e2d41232f5c7538410f7a0a648f6bc5ff0",
+      "canonicalHeaderSha256": "514107b534df4161bd95bb392e8ef8edc251494b0059dbbeb573975a1a765bcf"
+    }
+  ]
+}

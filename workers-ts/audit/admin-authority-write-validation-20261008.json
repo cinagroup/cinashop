@@ -1,0 +1,772 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-08T11:28:09.612Z",
+  "baseCommit": "8647984db5780235e0b50e0118814ca9f0a23e8d",
+  "scope": "Existing modern Admin/role writes, legacy numeric role POST, and Division platform assignment/removal share one bounded transaction barrier. No new route or DDL.",
+  "creditedUniqueTests": 151,
+  "testFiles": 12,
+  "runs": [
+    {
+      "id": "business01",
+      "mode": "business",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-authority-write.test.ts",
+        "test/admin-division-authority-write-business.test.ts",
+        "test/admin-legacy-role-workflow.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:13:56.697Z",
+      "finishedAt": "2026-10-08T11:14:22.525Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 58,
+      "caseIds": [
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > registers the two read forms and POST on both real router aliases",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > serves bounded lossless leaves and exact seven-field role DTOs on both aliases",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 2 ] without changing grants",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 4 ] without changing grants",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 2, 4 ] without changing grants",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 11 ] without changing grants",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > round-trips actual legacy leaf-only initMenu and submit IDs [ 5 ] without changing grants",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > accepts actual old add-after-edit echoes but forces create scope and default disabled status",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > submits the existing relative API path through both bases and updates only fixed fields",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > blocks referenced status/grant changes through both old POST aliases without changing any authority table",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > preserves referenced name-only and structural-ancestor normalization saves without requiring impact confirmation",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > keeps list-only and form-only privileges separated from writes",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > enforces next-level platform target scope and refuses actor-assigned roles",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > derives legacy next-level 10 from live actor 9 while modern constraints stay separate",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > retains only actor-owned valid opaque IDs and never bypasses mapped-key delegation",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > normalizes proved pure ancestors but rejects inert leaves and unselected structures",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > never reclassifies explicitly rejected known-policy metadata as opaque, even for super or raw-ID members",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > requires genuine page/API metadata even when the global resolver produces a positive footprint",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > does not overwrite modern, missing, foreign, deleted or access-denied target rules",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > revalidates live actor, password, role and menu authority after ordinary middleware auth",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > revalidates target and requested menus after GET without trusting old echo fields",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > strictly rejects malformed paths, queries and bodies with no role writes",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > detects orphan and cyclic grant paths instead of returning partial selected permissions",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > rejects explicitly over-deep breadcrumbs without silently discarding grants",
+        "test/admin-legacy-role-workflow.test.ts > legacy platform role forms and numeric-menu writes > returns all 10000 scoped menu rows and rejects 10001 rather than truncating",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > validates complete CSV, safe IDs, columns and rule input before legacy normalization can truncate",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > revalidates the current DB actor, password version and expiration before each mutation",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > reads actor permissions again after middleware-era role rules or assignment were reduced",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > takes the common barrier before invoking any decision callback and rolls back callback writes",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > bounds live role authority before resolution and fails a transaction which expires after DML",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > authorizes both the current and requested target roles and enforces platform target scope",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > allows own harmless profile with modern or numeric actor roles but rejects changes to own authority",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > preserves the existing own password reset and invalidates the previous JWT after commit",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > protects superadmin accounts and counts remaining supervisors outside the entire bulk target set",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > preserves modern rolelevel zero creation and scopes role writes/delete to live platform roles",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > reports referenced authority changes for a locked impact policy and preserves harmless role name edits",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > leaves numeric/modern rules byte-for-byte intact on harmless metadata updates without impact fanout",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > accepts referenced manage implicit-view form echoes but blocks real reductions or unrecognized current rules",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > checks full RETURNING and same-transaction readback after inserts, updates and tombstones",
+        "test/admin-authority-write.test.ts > atomic modern Admin authority writes in owned local memory > keeps controller field names and success messages while using claims rather than cached adminInfo",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > acquires the shared table barrier before every actor, role or division decision read",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > reads the current division scope instead of accepting a caller level override",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > retains division.manage for agent and staff writes on both route prefixes",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rejects revoked, expired and password-stale claims atomically",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rejects missing, inactive, foreign and broader requested roles before changing either row",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rechecks existing roles even when the request replaces them with an empty assignment",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > validates the complete CSV and the original JSON array without lossy coercion",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > creates a platform division account with validated deduplicated roles",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > permits own contact changes and rejects own credentials or role changes",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rejects a non-super edit of a division account promoted to level zero",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > edits the first platform account deterministically when a division has several accounts",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > protects the actor when bulk division deletion contains their account",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rejects a non-super actor deleting a same-division super account with empty roles",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rejects an oversized platform deletion group with 503 without updating a truncated subset",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > deletes all platform division accounts while preserving supplier and foreign relations",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > excludes the entire deletion group when checking the last active platform super administrator",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > rolls back all affected users and administrators when one real UPDATE is suppressed",
+        "test/admin-division-authority-write-business.test.ts > Division writes share the platform authority transaction > checks the real stored administrator after RETURNING and rolls back an AFTER-trigger mismatch"
+      ],
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\business01.stdout.txt",
+          "bytes": 11812,
+          "sha256": "1499fde572ea1e0760651a533ffcbf1adc52be781e19dc0090908d513906a7c2"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\business01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "executionEvidence": {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\business01.execution.json",
+        "bytes": 633,
+        "sha256": "6a4518f4c15c4b59ad2fcd26c20f44266b9b929e59bc299fca9fd902a4406482"
+      }
+    },
+    {
+      "id": "regression01",
+      "mode": "regression",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--no-cache",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/admin-legacy-setting-read-permission.test.ts",
+        "test/admin-permission.test.ts",
+        "test/admin-legacy-system-list.test.ts",
+        "test/admin-system-directory.test.ts",
+        "test/division-management.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:13:14.190Z",
+      "finishedAt": "2026-10-08T11:14:00.968Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 77,
+      "caseIds": [
+        "test/admin-permission.test.ts > admin permission catalog > keeps city delivery record reads in their own view domain",
+        "test/admin-permission.test.ts > admin permission catalog > covers every route guarded by adminAuth in both compatibility surfaces",
+        "test/admin-permission.test.ts > admin permission catalog > keeps route aliases in the same permission domain",
+        "test/admin-permission.test.ts > admin permission catalog > separates platform cash-flow reads from remark edits on both admin route surfaces",
+        "test/admin-permission.test.ts > admin permission catalog > keeps user-money ledger reads and export independent of other finance grants",
+        "test/admin-permission.test.ts > admin permission catalog > maps the exact legacy page-only capital menu to view without granting remark writes",
+        "test/admin-permission.test.ts > admin permission catalog > maps only the audited supplier and agreement page rules to read grants",
+        "test/admin-permission.test.ts > admin permission catalog > separates lottery claimant records and feedback from broader activity and service grants",
+        "test/admin-permission.test.ts > admin permission catalog > keeps activity-frame reads and writes behind its audited legacy menu rules",
+        "test/admin-permission.test.ts > admin permission catalog > isolates activity-background reads and writes from frame and generic activity grants",
+        "test/admin-permission.test.ts > admin permission catalog > isolates the ten time-discount routes behind exact legacy list and add rules",
+        "test/admin-permission.test.ts > admin permission catalog > isolates full-discount routes and accepts only paired legacy list and add rules",
+        "test/admin-permission.test.ts > admin permission catalog > isolates nth-discount routes and accepts only paired legacy list and add rules",
+        "test/admin-permission.test.ts > admin permission catalog > isolates full-gift routes and accepts only paired legacy list and add rules",
+        "test/admin-permission.test.ts > admin permission catalog > keeps speechcraft management and point-log export separate from adjacent read grants",
+        "test/admin-permission.test.ts > admin permission catalog > fails closed for unregistered management routes",
+        "test/admin-permission.test.ts > admin permission catalog > separates coupon templates, publication and existing issue management on both surfaces",
+        "test/admin-permission.test.ts > admin permission catalog > maps template page visibility without silently granting publication",
+        "test/admin-permission.test.ts > admin permission catalog > keeps all eight combination reads in three independent domains on both surfaces",
+        "test/admin-permission.test.ts > admin permission catalog > does not make combination management imply independent export or statistics grants",
+        "test/admin-permission.test.ts > admin permission catalog > keeps a legacy catalog menu fallback from silently granting the new export capability",
+        "test/admin-permission.test.ts > admin permission catalog > normalizes role rules and makes manage imply view",
+        "test/admin-permission.test.ts > admin permission catalog > prevents restricted administrators from delegating permissions they do not hold",
+        "test/admin-permission.test.ts > admin permission catalog > publishes a unique view permission for every menu group",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > serves real middleware-authenticated snake-case staff DTOs on both aliases",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > uses exact next-level scope for ordinary and super actors",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > matches account or name literally, including SQL metacharacters, and excludes phone search",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > keeps CSV role ID membership exact and forces nondeleted records for old is_del values",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > uses identical filtered count/list predicates and stable bounded pagination",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > renders safe platform role and menu labels, including modern keys and unmigrated rules",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > searches role_name literally and combines status",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > rejects malformed admin query before opening a transaction",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > rejects malformed role query before opening a transaction",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > rejects missing login and unrelated permissions using actual Hono auth",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > revalidates live actor password/status/type/deletion and expiry instead of stale adminInfo",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > rechecks role permission and live scope after ordinary auth",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > keeps numeric legacy administrator and role grants separate from each other and modern directory/write authority",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > reads admin count/list/labels in one bounded read-only snapshot and changes no rows",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > reads role count/list/labels in one bounded read-only snapshot and changes no rows",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > propagates read failures and oversized rules instead of returning a false empty success",
+        "test/admin-legacy-system-list.test.ts > legacy platform staff and role read contracts > registers both protected aliases while preserving modern array responses",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > paginates platform administrators with a safe projection and stable descending IDs",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > searches administrator account, name and phone with case-insensitive literal text",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > filters both administrator states and combines state with the same count predicate",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > retains platform role types 0 and legacy 1, resolves permissions and excludes tenant roles",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > filters role names, literal metacharacters and enabled/disabled states",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > rejects malformed system_admin queries before opening a transaction",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > rejects malformed system_role queries before opening a transaction",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > uses one bounded read-only snapshot for system_admin and keeps rows unchanged",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > uses one bounded read-only snapshot for system_role and keeps rows unchanged",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > requires live system.view authorization on /adminapi for both directories",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > requires live system.view authorization on /api/admin for both directories",
+        "test/admin-system-directory.test.ts > platform Admin and role directories > keeps existing list responses as arrays and registers both directory surfaces behind adminAuth",
+        "test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > keeps staff reads independent of generic settings and grants only the restored role form/save contracts",
+        "test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > resolves audited numeric page and API rules to read authority in single and batch paths",
+        "test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > does not import supplier, store, foreign, disabled or deleted role authority into platform decisions",
+        "test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > admits staff viewers and keeps the restored role writer out of the sibling administrator list",
+        "test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > keeps each numeric legacy grant narrower than the sibling list and all modern system reads or writes",
+        "test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > registers selectable narrow capabilities and permits only one-way delegation from canonical readers",
+        "test/admin-legacy-role-permission.test.ts > legacy numeric role workflow authority > registers only the exact form and save methods on both route surfaces",
+        "test/admin-legacy-role-permission.test.ts > legacy numeric role workflow authority > resolves numeric contracts identically in single, batched and locked decisions",
+        "test/admin-legacy-role-permission.test.ts > legacy numeric role workflow authority > keeps page, form and numeric writer authority separate from sibling and modern contracts",
+        "test/admin-legacy-role-permission.test.ts > legacy numeric role workflow authority > allows canonical fallback and delegation in one direction without broadening legacy grants",
+        "test/division-management.test.ts > division management validation > rejects bad agent application fields and ineligible ownership before SMS consumption",
+        "test/division-management.test.ts > division management validation > requires a live unexpired agent for customer-side staff reads and writes",
+        "test/division-management.test.ts > division management validation > accepts integer percentages at both boundaries",
+        "test/division-management.test.ts > division management validation > rejects fractional and out-of-range percentages",
+        "test/division-management.test.ts > division management validation > normalizes an end date to the UTC+8 end of day",
+        "test/division-management.test.ts > division management validation > allows an agent whose rate and expiry are within its division",
+        "test/division-management.test.ts > division management validation > rejects an agent rate higher than its division",
+        "test/division-management.test.ts > division management validation > rejects an agent expiry later than its division",
+        "test/division-management.test.ts > division management validation > requires an active parent with the correct role",
+        "test/division-management.test.ts > division management validation > allows a staff rate equal to the parent in the admin workflow",
+        "test/division-management.test.ts > division reporting date ranges > uses hourly buckets for one local day",
+        "test/division-management.test.ts > division reporting date ranges > uses daily buckets through 92 days",
+        "test/division-management.test.ts > division reporting date ranges > uses monthly buckets for longer bounded ranges",
+        "test/division-management.test.ts > division reporting date ranges > rejects reversed and unbounded reporting ranges"
+      ],
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\regression01.stdout.txt",
+          "bytes": 12345,
+          "sha256": "23bd570e17bd7022b11a711fe63c7147029ae375566513968d87e0ae7cd67ef0"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\regression01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "executionEvidence": {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\regression01.execution.json",
+        "bytes": 759,
+        "sha256": "046de9118da6ea24f980e5a50825c1912cb58b584a1d5f1d913820c0a7fe0d60"
+      }
+    },
+    {
+      "id": "native01",
+      "mode": "native",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/agent-application-postgres.test.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:17:45.600Z",
+      "finishedAt": "2026-10-08T11:18:18.540Z",
+      "exitCode": 0,
+      "signal": null,
+      "passed": 16,
+      "caseIds": [
+        "test/admin-legacy-role-workflow-native.test.ts > Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > uses SELECT-only RR READ ONLY forms and independently authenticated restricted Admin writes with exact row deltas",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > uses the actual table-UPDATE plan, app trigger boundary and all three real modern handlers with complete row deltas",
+        "test/admin-legacy-role-workflow-native.test.ts > Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > rejects a concurrent assigned-role revocation with controlled NOWAIT conflict and rejects its committed state",
+        "test/admin-legacy-role-workflow-native.test.ts > Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > locks the real numeric authority menu and rejects its concurrent and committed revocation",
+        "test/admin-legacy-role-workflow-native.test.ts > Legacy role forms and atomic delegation on real PG16 application/Admin LOGINs > retains both authority role and menu locks until the real save transaction commits",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > enforces live JWT, platform realms, self authority, last super and bounded fields without changing any rows",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > rejects authority changes on exact references, including disabled, deleted and foreign references, while permitting a name-only edit",
+        "test/agent-application-postgres.test.ts > agent application route on isolated PostgreSQL 16 > prevalidates, consumes only its own purpose once, and commits the applicant row",
+        "test/agent-application-postgres.test.ts > agent application route on isolated PostgreSQL 16 > keeps the promoter and division SMS purposes separate at the actual promoter write route",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > rechecks committed authority revocation after ordinary authentication on the real separate Admin session",
+        "test/agent-application-postgres.test.ts > agent application route on isolated PostgreSQL 16 > serializes agent resubmission after admin review via the applicant advisory lock",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > serializes role disable with a new Admin assignment, rejects NOWAIT and rejects the committed inactive role",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > serializes role soft-delete with a new Admin assignment, rejects NOWAIT and rejects the committed inactive role",
+        "test/agent-application-postgres.test.ts > agent application route on isolated PostgreSQL 16 > serializes agent resubmission with role removal without a row/advisory deadlock",
+        "test/admin-authority-write-native.test.ts > modern authority writes on actual PG16 app/Admin LOGINs and a common table barrier > holds both table barriers and real menu authority locks through COMMIT, including rows being newly assigned",
+        "test/agent-application-postgres.test.ts > agent application route on isolated PostgreSQL 16 > parent role removal cannot deadlock with review of a child application"
+      ],
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\native01.stdout.txt",
+          "bytes": 8929,
+          "sha256": "6a783a32af405c399d7d50c9060fc4600e596287d537a9b93ec3f6c53321c922"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\native01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "executionEvidence": {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\native01.execution.json",
+        "bytes": 646,
+        "sha256": "856c7e5fcdecc0e3fef54b2fa1cc0ae6e8bd068c56e63b94f0e3f8e3264d47b8"
+      }
+    }
+  ],
+  "types": [
+    {
+      "id": "unit-types03",
+      "mode": "unit_types_final",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:23:54.253Z",
+      "finishedAt": "2026-10-08T11:25:08.162Z",
+      "exitCode": 0,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\unit-types03.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\unit-types03.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "runtime-types01",
+      "mode": "types",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:19:19.312Z",
+      "finishedAt": "2026-10-08T11:20:14.232Z",
+      "exitCode": 0,
+      "signal": null,
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\runtime-types01.stdout.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\runtime-types01.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "routeAudit": {
+    "execution": {
+      "id": "route01",
+      "mode": "audits",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/route-parity-audit.ts"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:13:57.243Z",
+      "finishedAt": "2026-10-08T11:13:59.372Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    "php": 1904,
+    "ts": 2349,
+    "matched": 917,
+    "executableMatched": 896,
+    "unavailable": 21,
+    "missing": 987,
+    "retired": 17,
+    "actionableMissing": 970,
+    "coveragePercent": 48.2,
+    "executableCoveragePercent": 47.1,
+    "effectiveExecutableCoveragePercent": 47.5,
+    "surfaces": [
+      {
+        "surface": "api",
+        "php": 457,
+        "ts": 1280,
+        "executableMatched": 438,
+        "actionableMissing": 11
+      },
+      {
+        "surface": "admin",
+        "php": 1153,
+        "ts": 794,
+        "executableMatched": 236,
+        "actionableMissing": 902
+      },
+      {
+        "surface": "supplier",
+        "php": 182,
+        "ts": 164,
+        "executableMatched": 121,
+        "actionableMissing": 49
+      },
+      {
+        "surface": "kefu",
+        "php": 63,
+        "ts": 70,
+        "executableMatched": 60,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "php": 41,
+        "ts": 41,
+        "executableMatched": 41,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "php": 8,
+        "ts": 0,
+        "executableMatched": 0,
+        "actionableMissing": 8
+      }
+    ],
+    "rawEvidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\route01.json",
+      "bytes": 1300501,
+      "sha256": "7157c1d1a681ef960d4d72ac24eb930faa4f0457b93d0b448c52b4e634926609"
+    }
+  },
+  "adminApiAudit": {
+    "execution": {
+      "id": "api01",
+      "mode": "audits",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/admin-frontend-api-audit.ts",
+        "--strict"
+      ],
+      "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+      "startedAt": "2026-10-08T11:13:59.374Z",
+      "finishedAt": "2026-10-08T11:14:02.318Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    "counts": {
+      "callSites": 602,
+      "pathVariants": 633,
+      "registered": 633,
+      "executable": 633,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "rawEvidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\api01.json",
+      "bytes": 380116,
+      "sha256": "9d6cbd183efa710df3d29cd80c69d24c8385bc6e286f05049b68a48cc036d301"
+    }
+  },
+  "postgres": {
+    "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-gmbNQ9/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 65160,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true,
+    "fixturesRemaining": 0,
+    "stopped": true,
+    "statusRecheck": {
+      "command": "C:/cinagroup/cinashop/.cache/postgres16-20260915/runtime/pgsql/bin/pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\checkout\\.cache\\finance-postgres-gmbNQ9\\data"
+      ],
+      "startedAt": "2026-10-08T11:19:46.934Z",
+      "finishedAt": "2026-10-08T11:19:46.980Z",
+      "exitCode": 3,
+      "signal": null,
+      "stdout": "pg_ctl: no server running\r\n",
+      "stderr": "",
+      "remainingFixtures": 0
+    },
+    "scope": "Actual non-superuser app/Admin LOGINs with fixed three-table projection from actual runtimeBusinessPrivilegePlan, runtimeAdminBoundary and local Hono/real middleware/controller. Table UPDATE on Admin is real; no false column-ACL denial claimed.",
+    "dataAndLogsRetained": true,
+    "nativeTypeAnnotationProof": {
+      "createdAt": "2026-10-08T11:23:53.778Z",
+      "file": "test/admin-authority-write-native.test.ts",
+      "preAnnotationInputSha256": "80db9dc99f8ef1f6df39428ec3ac13ab6748038498c154fd50056466156675d6",
+      "preAnnotationNativeExecutionInputSha256": "80db9dc99f8ef1f6df39428ec3ac13ab6748038498c154fd50056466156675d6",
+      "finalInputSha256": "a1476a6d7d8affb4b8f108fc892bd5a7f06b21eab747322c94809ec0f8ade743",
+      "transpiledBeforeSha256": "ff2ac2c038d252e4bbcb1b8db9188a7f1ceb429592ec367ee20d7749846bcf48",
+      "transpiledFinalSha256": "ff2ac2c038d252e4bbcb1b8db9188a7f1ceb429592ec367ee20d7749846bcf48",
+      "transpiledIdentical": true,
+      "changes": "Two erased TypeScript Array assertions on actual fixture SQL result values; SQL, assertions and production code unchanged."
+    },
+    "nativeTypeAnnotationEvidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\native-type-annotation-proof02.json",
+      "bytes": 763,
+      "sha256": "9c552482635090f5162203281438a63bebcb7f6e840cb02ba7ed8d599dcf3f59"
+    }
+  },
+  "checklist": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "checkboxChanges": 0,
+    "actionableRouteDelta": 0
+  },
+  "sourceInputs": [
+    {
+      "file": "workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+      "bytes": 23241,
+      "sha256": "c812d53cb7a24f37b1a3a8ec063a322b1e14681ec9fc21ae01dbddf24e610e3f"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-write.test.ts",
+      "bytes": 23738,
+      "sha256": "be5f5dde27e27f361a4ec716818279b8fe172b8bfaebbcb4a46384131883d010"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow-native.test.ts",
+      "bytes": 25131,
+      "sha256": "fc3b82a1134e2ca3ab88658f2c9be933f0c426b4b72e6956010f09c5be84b0b6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 43481,
+      "sha256": "8dc8c9cf335af03e33c1d51eeeb389b07c479c25901063d4b19409f60994a730"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminLegacyRoleWorkflowService.ts",
+      "bytes": 17918,
+      "sha256": "b7155c88572f45fe55ce8bc445b29c565e176377f2b142a05ad95e8e8a18e2ac"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 59336,
+      "sha256": "dc56fc639d358fd4830e46773da4509980c44116d9c053b6fab2b5b1178b2ffb"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "bytes": 116702,
+      "sha256": "9cc159559ce6fec74c80b8c51b992d135da4f66258852138119f883355d0ca07"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminDivisionController.ts",
+      "bytes": 9093,
+      "sha256": "7688dbcad026c212ce6e8c6b71790711dc26647f6e1b619aa121e8e24c4c2e95"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminLegacyRoleController.ts",
+      "bytes": 1559,
+      "sha256": "459350de7a7148185e6e4a8ba21e322bcc0acc08fda7338c3030e4576207450c"
+    },
+    {
+      "file": "workers-ts/src/services/division/DivisionManagementService.ts",
+      "bytes": 57172,
+      "sha256": "9357758b34f6bf7a081ecfc7e57379b4e336320439cd84c9261ce585391805ab"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-write-native.test.ts",
+      "bytes": 27174,
+      "sha256": "a1476a6d7d8affb4b8f108fc892bd5a7f06b21eab747322c94809ec0f8ade743"
+    },
+    {
+      "file": "workers-ts/test/admin-division-authority-write-business.test.ts",
+      "bytes": 18422,
+      "sha256": "f3151dfb1db6c4495da9ef83a0712cae64f05a23cae62718d27968edc3a42fb2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow.test.ts",
+      "bytes": 27674,
+      "sha256": "eefbdce3d3ce7778f32a1f5a5ac84051f883d1bf7de172c40d042b0443278fa4"
+    },
+    {
+      "file": "workers-ts/test/agent-application-postgres.test.ts",
+      "bytes": 17780,
+      "sha256": "37b417d2cad4ab431aed801de642fc0a23b7ba580c14306f0f7455da082d535e"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-permission.test.ts",
+      "bytes": 6511,
+      "sha256": "312dca8bc7fb6d3e70e9e1557b328e9cc93937d047c5550ceabb4a4cb4a9e9e2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "bytes": 10768,
+      "sha256": "94c58458a132919eb1c0061e34d4f329b411b07e34d223f7a45588eedd05de71"
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "bytes": 40654,
+      "sha256": "824770e6567fabdc99336352fa2b81a59a75f6a2d70cb57a3b1709f60c9c018d"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-system-list.test.ts",
+      "bytes": 22938,
+      "sha256": "2c5f173e21124318bdcdc731c67974d98dfa320701e6a093605bcb1f75d33a9f"
+    },
+    {
+      "file": "workers-ts/test/admin-system-directory.test.ts",
+      "bytes": 15048,
+      "sha256": "2775914a16e11546ad2a20468d1026da8444399f4938a9e63b8faac7434ca5b6"
+    },
+    {
+      "file": "workers-ts/test/division-management.test.ts",
+      "bytes": 5818,
+      "sha256": "7a4d0bdc2c1e55104e0a2b4692e71dd146f38fa2d05d9cbcf729d94ec181e05a"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 93217,
+      "sha256": "5a9d9aa268b5e8a347d0df557f425a97682392dc10e913d152c7fbf9e39f0934"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 165760,
+      "sha256": "434cd3cf53277f6191d398bacae20308518cd8b0098e850edacce8b86a99b8b9"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-auth.ts",
+      "bytes": 3350,
+      "sha256": "8fe03c83572b53644c04a890cf975851d6831daeb0e944f541666e35a1ec84c4"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "bytes": 1023,
+      "sha256": "6f43ddf32c495887e5908d6991b251c1cfaf9118bcd33e54d788353e2a50ff18"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "bytes": 18634,
+      "sha256": "12d3077ce77d1c650c084a246c3a12ca54e68d1d114c9e044fbb2c5929d50c8b"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "bytes": 8555,
+      "sha256": "bb72d9772d18f572faf5d8419da208210572551545ae8725f3d0efcc53f6cae7"
+    },
+    {
+      "file": "workers-ts/src/models/schema/admin.ts",
+      "bytes": 18879,
+      "sha256": "e757ca2b0cac713958157d765d90398b170d1b9d99f655dcce0493cc1317776e"
+    },
+    {
+      "file": "workers-ts/src/lib/di.ts",
+      "bytes": 10100,
+      "sha256": "5b9b8b78535f95c3f74a76506fc2e410ae988a3d6d579a97bf1a544578dd6052"
+    },
+    {
+      "file": "workers-ts/src/utils/jwt.ts",
+      "bytes": 3811,
+      "sha256": "a3b779c268b6e2f4eb9f56eccb15f3612ce90e3618a91a7b1339929039c67057"
+    },
+    {
+      "file": "workers-ts/test/helpers/financePostgres.ts",
+      "bytes": 9461,
+      "sha256": "8680137b4f61c5e740022839b0e44d3df6be6dc4fc40ffce5bfe42ace6dfe427"
+    },
+    {
+      "file": "workers-ts/test/helpers/financePeers.ts",
+      "bytes": 5080,
+      "sha256": "b7e51a8de1000c8775a59c1e63c2dd72e4326bfdd8c801ac2e934aa5d4f4fbfb"
+    },
+    {
+      "file": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+      "bytes": 8757,
+      "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647"
+    },
+    {
+      "file": "workers-ts/docs/admin-authority-write-contract-20261008.md",
+      "bytes": 13581,
+      "sha256": "c2e79499489c7082b20a4c6e1a94dfdf1c9bd6bfdc949ae452a19d51652d948a"
+    },
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 946857,
+      "sha256": "d2f84919cdb32dbf4846b86a102abe63c3d1f138ae09ca2e0dd17a025e7ef4a3"
+    },
+    {
+      "file": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+      "bytes": 112749,
+      "sha256": "652e06658a0e9e5bc94e4643e65b26c94c8e5899d54a0d9a8b2310b1fabac919"
+    }
+  ],
+  "earlierAttempts": {
+    "businessImport": {
+      "exitCode": 1,
+      "executedTests": 0,
+      "reason": "Sandbox EPERM renaming initial Temp Vitest import. Root final local memory execution used owned TEMP/TMP; raw failure retained, not counted.",
+      "rawEvidence": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\authority-write-evidence\\business-raw.log",
+          "bytes": 908,
+          "sha256": "c6b76f40971a3f861128efea13af5331e1799d1553fffca3654297a262c88072"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\authority-write-evidence\\business-exit.txt",
+          "bytes": 1,
+          "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+        }
+      ]
+    },
+    "unitTypes": {
+      "runs": [
+        {
+          "id": "unit-types01",
+          "mode": "types",
+          "command": [
+            "C:\\Program Files\\nodejs\\node.exe",
+            "--max-old-space-size=8192",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+          "startedAt": "2026-10-08T11:17:44.952Z",
+          "finishedAt": "2026-10-08T11:19:19.309Z",
+          "exitCode": 2,
+          "signal": null,
+          "rawEvidence": [
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\unit-types01.stdout.txt",
+              "bytes": 737,
+              "sha256": "24c0108e6814606052cde213318c0438aecb5c92082aebfd0f3488672bfd2b08"
+            },
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\unit-types01.stderr.txt",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "id": "unit-types02",
+          "mode": "unit_types_retry",
+          "command": [
+            "C:\\Program Files\\nodejs\\node.exe",
+            "--max-old-space-size=8192",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "cwd": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/workers-ts",
+          "startedAt": "2026-10-08T11:21:27.830Z",
+          "finishedAt": "2026-10-08T11:22:43.598Z",
+          "exitCode": 2,
+          "signal": null,
+          "rawEvidence": [
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\unit-types02.stdout.txt",
+              "bytes": 1130,
+              "sha256": "cf297575f078b42c11f5ab227a630b49fcfae53811c18fcfd56a6840190ca082"
+            },
+            {
+              "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\admin-authority-write\\unit-types02.stderr.txt",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      ],
+      "reason": "Native fixture exec exposes memory/native result union: three property errors then two explicit-cast overlap errors. Final two unknown/Array type assertions erase completely; identical esbuild JS proof retained. No production SQL or assertion changed."
+    }
+  },
+  "published": false,
+  "deployed": false,
+  "newHeadCiExecuted": false,
+  "limitations": [
+    "Referenced role permission/status changes and delete currently return409, including superadmin. This is an explicit temporary behavior restriction, not completion of the assigned-role change workflow.",
+    "Affected-admin preview, operation-bound revision, explicit confirmation, atomic durable operation receipt, and unknown-outcome recovery remain open.",
+    "Legacy dedicated PUT setting/role/set_status/:id/:status and DELETE setting/role/:id remain absent. Legacy staff/account forms and writes remain separate open contracts.",
+    "Table barriers serialize all mutations on public.system_admin/system_role; contention is409 without automatic retry. Real production scale and Hyperdrive behavior are not verified by these local fixtures.",
+    "The actual Admin table UPDATE profile permits raw platform SQL writes. Application LOGIN is restricted by the actual runtime boundary; handler checks are not a database prohibition on Admin raw SQL.",
+    "Local Hono mounts execute real middleware/controllers, not full production app, rendered old/new browsers, provider, device or production account/data acceptance.",
+    "Native raw stdout includes harmless PostgreSQL25P01 ROLLBACK-after-COMMIT cleanup warnings, retained without filtering.",
+    "Old approved d5c31e8 public publication/CI and older Cloudflare releases are separate historical payloads; this local batch has no new public push, merge or deployment credit."
+  ]
+}

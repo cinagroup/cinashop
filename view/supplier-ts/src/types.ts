@@ -297,6 +297,7 @@ export interface ProductDetail {
   is_show?: number;
   is_verify?: number;
   refusal?: string;
+  media?: import('./utils/productMedia').SupplierProductMedia;
 }
 
 export interface ShippingTemplateRow {

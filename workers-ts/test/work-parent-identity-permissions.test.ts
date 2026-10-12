@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../src/lib/di';
 import { auditWorkParentIdentityPermissions } from '../src/migrations/auditWorkParentIdentityPermissions';
@@ -10,6 +10,26 @@ it('rejects non-root or unsafe-schema permission audits before SQL', async () =>
   for (const schema of ['public;drop schema public', 'public,pg_temp', 'pg_catalog', 'information_schema']) {
     await expect(auditWorkParentIdentityPermissions({ $client: {} } as DbClient, schema)).rejects.toThrow('Invalid work');
   }
+  const unavailable = { $client: {}, transaction: () => { throw new Error('SQL reached'); } } as unknown as DbClient;
+  await expect(auditWorkParentIdentityPermissions(unavailable, 'public', 'shared-shop',
+    { role: 'app;grant', database: 'postgres' })).rejects.toThrow('Invalid expected');
+  await expect(auditWorkParentIdentityPermissions(unavailable, 'public', 'shared-shop',
+    { role: 'cinashop_app_v1', database: 'postgres;drop' })).rejects.toThrow('Invalid expected');
+});
+
+it('rejects a mismatched backend inside one read-only transaction before catalog review', async () => {
+  const execute = vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([{ matches: false }]);
+  const transaction = vi.fn((callback: (tx: { execute: typeof execute }) => Promise<unknown>) =>
+    callback({ execute }));
+  const db = { $client: {}, transaction } as unknown as DbClient;
+  expect(await auditWorkParentIdentityPermissions(db, 'public', 'shared-shop',
+    { role: 'cinashop_app_v1', database: 'postgres' })).toEqual({
+    scope: 'work-parent-identity-only', identityMatch: false, ready: false,
+    checks: null, failures: ['connectionIdentityMismatch'],
+  });
+  expect(transaction).toHaveBeenCalledExactlyOnceWith(expect.any(Function),
+    { isolationLevel: 'repeatable read', accessMode: 'read only' });
+  expect(execute).toHaveBeenCalledTimes(2);
 });
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real PG16 parent identity permission envelope', () => {
@@ -66,6 +86,30 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real PG16 parent
         await expect(peer.exec(statement)).rejects.toMatchObject({ code: '42501' });
       }
       expect(await snapshot()).toEqual(before);
+    });
+  });
+  it('checks the actual backend LOGIN and database inside the same read-only transaction as permissions', async () => {
+    await run(async peer => {
+      const [{ database }] = await peer.exec('SELECT current_database() AS database');
+      let transactionCount = 0;
+      const observed = new Proxy(peer.db, { get(target, key, receiver) {
+        if (key === 'transaction') return ((callback, config) => {
+          transactionCount++;
+          expect(config).toEqual({ isolationLevel: 'repeatable read', accessMode: 'read only' });
+          return target.transaction(callback, config);
+        }) satisfies DbClient['transaction'];
+        return Reflect.get(target, key, receiver);
+      } });
+      const expected = { role: peer.role, database: String(database) };
+      expect(await auditWorkParentIdentityPermissions(observed, 'public', 'shared-shop', expected))
+        .toMatchObject({ identityMatch: true, ready: true, failures: [] });
+      expect(transactionCount).toBe(1);
+      expect(await auditWorkParentIdentityPermissions(peer.db, 'public', 'shared-shop',
+        { ...expected, role: 'another_login' })).toMatchObject({ identityMatch: false,
+          ready: false, checks: null, failures: ['connectionIdentityMismatch'] });
+      expect(await auditWorkParentIdentityPermissions(peer.db, 'public', 'shared-shop',
+        { ...expected, database: 'another_database' })).toMatchObject({ identityMatch: false,
+          ready: false, checks: null, failures: ['connectionIdentityMismatch'] });
     });
   });
   it.each([
@@ -145,7 +189,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real PG16 parent
         expect((await auditWorkParentIdentityPermissions(runtime.db)).failures)
           .toEqual(expect.arrayContaining(['noSchemaCreation', 'noReplicationBypass']));
         await runtime.exec("SET session_replication_role='replica'");
-        expect((await auditWorkParentIdentityPermissions(runtime.db)).checks.noReplicationBypass).toBe(false);
+        expect((await auditWorkParentIdentityPermissions(runtime.db)).checks?.noReplicationBypass).toBe(false);
       } finally {
         await runtime.exec("SET session_replication_role='origin'");
         await f.exec(`REVOKE SET ON PARAMETER session_replication_role FROM "${runtime.role}"`);

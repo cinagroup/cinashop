@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import type { AppVariables, Env } from "@/env";
 import { createContainerFromDb } from "@/lib/di";
-import { agreement, divisionApply, promoterApply, systemAdmin, user } from "@/models/schema";
+import { agreement, divisionApply, promoterApply, systemAdmin, systemRole, user } from "@/models/schema";
+import { md5 } from "@/utils/jwt";
 import { applyAgent } from "@/controllers/api/v1/DivisionController";
 import { applyPromoter } from "@/controllers/api/v1/PromoterApplicationController";
 import { financePostgres } from "./helpers/financePostgres";
@@ -43,10 +44,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
   const promoterKey = "user_verification_code_user_promoter_application_13800138000";
   const body = { division_name: "青山代理商", name: "Alice", phone: "13800138000",
     code: "998877", division_invite: 123456, images: ["/assets/one"] };
+  const actor = { id: 900, authVersion: md5('isolated-admin-password'), expiresAt: Math.floor(Date.now() / 1000) + 3600 };
+  const writeScope = { level: 0, divisionId: 0, actor };
 
   beforeEach(async () => {
     state.codes.clear(); state.locks.clear();
-    fixture = await financePostgres([user, divisionApply, promoterApply, agreement, systemAdmin]);
+    fixture = await financePostgres([user, divisionApply, promoterApply, agreement, systemAdmin, systemRole], { namespace: 'public' });
+    await fixture.db.insert(systemAdmin).values({ id: actor.id, account: 'isolated-authority-admin',
+      pwd: 'isolated-admin-password', adminType: 1, relationId: 0, status: 1, isDel: 0, level: 0, roles: '' });
     await fixture.db.insert(user).values([
       { uid: 10, account: "local-division", divisionType: 1, divisionStatus: 1,
         divisionInvite: 123456, divisionEndTime: 0, status: 1 },
@@ -215,7 +220,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
         await blocker.exec("SELECT pg_advisory_xact_lock(1147879249, 11)");
         const admin = new DivisionManagementService(createContainerFromDb(adminPeer.db));
         const applicant = new DivisionManagementService(createContainerFromDb(applicantPeer.db));
-        const removed = outcome(admin.deleteRole(11, { level: 0, divisionId: 0 }));
+        const removed = outcome(admin.deleteRole(11, writeScope));
         await waitForFinanceBlock(fixture.db, adminPeer.pid, blocker.pid);
         const submitted = outcome(applicant.submitApplication({ uid: 11,
           divisionName: body.division_name, name: body.name, phone: body.phone,
@@ -244,7 +249,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
         await blocker.exec('SELECT uid FROM "user" WHERE uid = 12 FOR UPDATE');
         const parent = new DivisionManagementService(createContainerFromDb(parentPeer.db));
         const reviewer = new DivisionManagementService(createContainerFromDb(reviewerPeer.db));
-        const removed = outcome(parent.deleteRole(10, { level: 0, divisionId: 0 }));
+        const removed = outcome(parent.deleteRole(10, writeScope));
         await waitForFinanceBlock(fixture.db, parentPeer.pid, blocker.pid);
         const reviewed = outcome(reviewer.reviewApplication({ id: application.id, approved: true,
           divisionPercent: 0, divisionEndTime: 0, scope: { level: 0, divisionId: 0 } }));

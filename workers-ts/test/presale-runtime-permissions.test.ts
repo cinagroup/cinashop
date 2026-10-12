@@ -144,8 +144,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale atomic r
       const grants = await r.db.execute(sql`SELECT c.relname AS name,p.priv FROM pg_class c
         CROSS JOIN (VALUES ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER')) p(priv)
         WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND has_table_privilege(current_user,c.oid,p.priv)`);
-      expect(grants.map(row => `${row.name}:${row.priv}`).sort()).toEqual(Object.entries({ ...runtimeTablePrivileges, ...tables })
-        .flatMap(([table, values]) => values.map(value => `${table}:${value}`)).sort());
+      const declaredTables = [...new Set([...Object.keys(runtimeTablePrivileges), ...Object.keys(tables)])];
+      const expectedGrants = declaredTables.flatMap(table => [...new Set([
+        ...(runtimeTablePrivileges[table] ?? []), ...(tables[table] ?? []),
+      ])].map(value => `${table}:${value}`)).sort();
+      // Scenario additions compose with the reviewed paid-agent INSERT slice.
+      expect(expectedGrants.filter(value => value.startsWith('agent_level_task_record:')))
+        .toEqual(['agent_level_task_record:INSERT', 'agent_level_task_record:SELECT']);
+      expect(grants.map(row => `${row.name}:${row.priv}`).sort()).toEqual(expectedGrants);
       const updates = await r.db.execute(sql`SELECT c.relname AS name,a.attname AS col FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid
         WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND a.attnum>0 AND NOT a.attisdropped
         AND NOT has_table_privilege(current_user,c.oid,'UPDATE') AND has_column_privilege(current_user,c.oid,a.attnum,'UPDATE')`);

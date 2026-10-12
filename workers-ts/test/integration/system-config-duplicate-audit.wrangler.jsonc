@@ -3,13 +3,19 @@
   "name": "cinashop-system-config-duplicate-audit-template",
   "main": "SystemConfigDuplicateAuditWorker.ts",
   "compatibility_date": "2026-09-01",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public", "enable_request_signal"],
   "workers_dev": true,
-  "limits": { "cpu_ms": 300000 },
+  "limits": { "cpu_ms": 10000 },
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } },
+  "vars": {
+    "AUDIT_TOKEN_SHA256": "",
+    "AUDIT_EXPIRES_AT": "",
+    "RUN_MARKER": ""
+  },
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "9748c294e21c49a99579c9cef70102e0"
+      "id": "ba7faa6680cd48d4b3a1d36a7a5fc8f7"
     }
   ]
 }

@@ -4,7 +4,7 @@ import { inspectAdminRefundOperation } from './runAdminRefundOperation';
 import { inspectAdminRefundCreation } from './runAdminRefundCreation';
 import { inspectCheckoutPricingLock } from './checkoutPricingLock';
 import { GUEST_INVOICE_EVIDENCE_STATE_SQL, GUEST_REFUND_SPLIT_STATE_SQL } from './guestRefundEntityCatalog';
-import { OFFLINE_STATE_SQL, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
+import { OFFLINE_STATE_SQL, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_BARCODE_CATALOG_VERSIONS } from './offlineOrderCatalog';
 import { inspectTestReleaseSchemaUpgrade } from './runTestReleaseSchemaUpgrade';
 import { RELEASE_PRE_INDEX_HASHES } from './releaseSharedIndexes';
 
@@ -49,7 +49,8 @@ export async function auditReleaseProtocols(db: Pick<DbClient, 'transaction' | '
       return { name, present: matches.length === 1 && matches[0].present === true,
         owned: matches.length === 1 && matches[0].owned === true,
         safe: matches.length === 1 && matches[0].safe === true,
-        fingerprintMatches: matches.length === 1 && matches[0].fingerprint === expected,
+        fingerprintMatches: matches.length === 1 && (matches[0].fingerprint === expected
+          || matches[0].fingerprint === OFFLINE_BARCODE_CATALOG_VERSIONS.fresh[name]),
         // Independent canonical minus-19-index baseline, never a target-learned
         // approval. Safe/owned remain separate and must also pass installation.
         reviewedPreIndexMatches: Object.hasOwn(RELEASE_PRE_INDEX_HASHES, name)

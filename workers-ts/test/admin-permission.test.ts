@@ -7,6 +7,7 @@ import {
   normalizeAdminRoute,
   normalizeRoleRules,
   requiredAdminPermission,
+  isAdminAuthorityRecoveryRoute,
 } from "@/services/admin/AdminPermissionService";
 import { createContainerFromDb } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -50,7 +51,23 @@ describe("admin permission catalog", () => {
       { method: "GET", path: "/api/ws/kefu" },
     ];
     expect(routes.length).toBeGreaterThan(200);
-    const missing = routes.filter((route) => !requiredAdminPermission(route.method, route.path));
+    const recovery = routes.filter(route => isAdminAuthorityRecoveryRoute(route.method,route.path));
+    expect(recovery).toEqual([
+      { method:'GET',path:'/adminapi/setting/admin-authority/receipt/:operationId' },
+      { method:'POST',path:'/adminapi/setting/admin-authority/resolve' },
+      { method:'GET',path:'/adminapi/setting/role-authority/receipt/:operationId' },
+      { method:'POST',path:'/adminapi/setting/role-authority/resolve' },
+      { method:'GET',path:'/adminapi/system/authority/receipt/:operationId' },
+      { method:'POST',path:'/adminapi/system/authority/resolve' },
+      { method:'GET',path:'/api/admin/setting/admin-authority/receipt/:operationId' },
+      { method:'POST',path:'/api/admin/setting/admin-authority/resolve' },
+      { method:'GET',path:'/api/admin/setting/role-authority/receipt/:operationId' },
+      { method:'POST',path:'/api/admin/setting/role-authority/resolve' },
+      { method:'GET',path:'/api/admin/system/authority/receipt/:operationId' },
+      { method:'POST',path:'/api/admin/system/authority/resolve' },
+    ]);
+    const missing = routes.filter((route) => !isAdminAuthorityRecoveryRoute(route.method,route.path)
+      && !requiredAdminPermission(route.method, route.path));
     expect(missing).toEqual([]);
   });
 

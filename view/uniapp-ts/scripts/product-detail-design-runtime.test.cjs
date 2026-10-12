@@ -137,8 +137,13 @@ test('malformed officially loaded SDK rejects before config and can retry with a
 test('registered product community preserves the real Home entry and every existing subsequent page order',()=>{
   const pages=JSON.parse(fs.readFileSync(path.join(dir,'pages.json'),'utf8')).pages.map(row=>row.path);
   assert.equal(pages[0],'pages/index/index');assert.equal(pages[1],'pages/goods/productCommunity');assert.equal(new Set(pages).size,pages.length);
-  const incoming=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../../.cache/product-detail-design-frontend-before-20261002/view/uniapp-ts/src/pages.json'),'utf8')).pages.map(row=>row.path);
-  assert.deepEqual(pages.filter(page=>page!=='pages/goods/productCommunity'),incoming);
+  // Exact genuine 20261002 before bytes, now tracked so a clean checkout can
+  // verify the old page order. Raw SHA: 068c7b3a6b883f13f1eb74b84cf0e4c4cd7036d25a082d4dab799aff0770873e.
+  const original=fs.readFileSync(path.join(__dirname,'fixtures/product-detail-design-original-manifest-20261002.json'),'utf8');
+  assert.equal(require('node:crypto').createHash('sha256').update(original.replace(/\r\n/g,'\n')).digest('hex'),'0705f1a2f6ed1aae8c0d2b2583a4ee3a61a9b0666782ad60662c6f1ec8ea26f8');
+  const incoming=JSON.parse(original).pages.map(row=>row.path);
+  assert.equal(incoming.length,96);assert.equal(new Set(incoming).size,incoming.length);
+  assert.deepEqual(pages.filter(page=>incoming.includes(page)),incoming);
 });
 
 function selectionFixture(kind){const now=Math.floor(Date.now()/1000),common={selection_only:true,product_id:70,title:'活动商品',image:'/activity.png',images:['/gallery-one.png','/gallery-two.png'],skus:[{unique:'act00001',base_unique:'act00001',suk:'活动红',catalog_price:'0.10',ot_price:'1.00',image:'/sku.png',stock:8,max_quantity:3}]};

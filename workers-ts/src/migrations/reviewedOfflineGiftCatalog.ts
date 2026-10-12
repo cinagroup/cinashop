@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
-import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
 import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftReceipt';
 
 /** The immutable offline v1 catalog includes indexes on the shared user_bill
@@ -23,7 +23,8 @@ function exactOfflineV1(rows: CatalogRows, requireOwner: boolean) {
   return rows.length === 27 && new Set(rows.map(row => row.name)).size === 27
     && rows.every(row => typeof row.name === 'string' && Object.hasOwn(expected, row.name)
       && row.present === true && row.safe === true && (!requireOwner || row.owned === true)
-      && row.fingerprint === expected[row.name]);
+      && (row.fingerprint === expected[row.name]
+        || row.fingerprint === OFFLINE_BARCODE_CATALOG_VERSIONS.v1[row.name]));
 }
 
 /** Review all 27 original components. A new index is masked only after the

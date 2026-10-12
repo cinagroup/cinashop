@@ -23,7 +23,8 @@
       <p>当前价按参与起价减去已砍金额展示；结算价以详情及服务端最终报价为准。</p>
       <article v-for="item in myList" :key="item.id" class="my-item">
         <h3>{{ item.title }} · 参与 #{{ item.id }}</h3>
-        <p>{{ statusLabel(item) }} · 当前价 ¥{{ item.current }} / 底价 ¥{{ item.minimum }} · 已砍 ¥{{ item.cut }}</p>
+        <p>{{ statusLabel(item) }}</p>
+        <p v-if="item.amountsValid">当前价 ¥{{ item.current }} / 底价 ¥{{ item.minimum }} · 已砍 ¥{{ item.cut }}</p>
         <el-progress v-if="item.amountsValid" :percentage="item.progress" :stroke-width="8" />
         <p v-else role="status">参与金额异常，暂不可购买，请联系商家核查。</p>
         <div class="actions">

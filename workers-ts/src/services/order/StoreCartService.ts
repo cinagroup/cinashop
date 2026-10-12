@@ -16,6 +16,8 @@ import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPo
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
   quoteFirstOrderDiscount,
+  isNewcomerEligibleFromDb,
+  newcomerBaseProductIsEligible,
   StoreNewcomerService,
   type FirstOrderDiscountQuote,
 } from "@/services/activity/StoreNewcomerService";
@@ -42,6 +44,7 @@ import {
   storeCombination,
   storeDiscounts,
   storeDiscountsProducts,
+  storeNewcomer,
   storeOrder,
   storeProduct,
   storeProductAttrValue,
@@ -60,6 +63,8 @@ interface CartAddParams {
   activityId?: number;
   /** Exact owned participation ID; omitted only for a sole live record. */
   bargainUserId?: number;
+  /** Internal keyed newcomer admission; never accepted from the legacy route. */
+  newcomerEligibilityFromDb?: boolean;
 }
 
 /** Explicit scopes let migrated clients isolate checkout rows without changing
@@ -218,7 +223,7 @@ export class StoreCartService {
     });
   }
 
-  private async addResolved(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
+  private async addResolved(params: CartAddParams, firstAddLockHeld = false): Promise<{ id: number; cartNum: number }> {
     const { uid, cartNum } = params;
     const type = params.type ?? 0;
     const isNew = params.isNew ?? 0;
@@ -269,6 +274,7 @@ export class StoreCartService {
         productId,
         activityUnique: unique,
         quantity: cartNum,
+        eligibilityFromDb: params.newcomerEligibilityFromDb,
       });
       product = resolved.product;
       productId = resolved.product.id;
@@ -436,7 +442,13 @@ export class StoreCartService {
       } else if (newNum > sku.stock) {
         throw new ValidateException("加入购物车数量超过库存");
       }
-      if (type === 2) {
+      // The read above can predate an order claim or another add. Recheck the
+      // complete reusable-cart quote after any row-lock wait.
+      if (type === 1) {
+        // The cart lock may wait behind checkout. Re-read schedule, Admin
+        // limits and inventory in the same transaction as the quantity write.
+        await setSeckillCartQuantity(this.container, uid, existing.id, newNum, existing);
+      } else if (type === 2) {
         const updated = await this.container.db.update(storeCart).set({ cartNum: newNum }).where(and(
           activityCartQuoteGuard(existing), eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ""),
           eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1),
@@ -444,6 +456,22 @@ export class StoreCartService {
         if (!updated.length) throw new ValidateException("砍价购物车已变化或被占用，请刷新后重试");
       } else await this.container.storeCartDao.update(existing.id, { cartNum: newNum });
       return { id: existing.id, cartNum: newNum };
+    }
+
+    if (type === 1 && isNew === 0 && !firstAddLockHeld) {
+      if (!Number.isSafeInteger(uid) || uid <= 0 || uid > 2_147_483_647) throw new ValidateException("请先登录");
+      // Only the absent reusable seckill row needs the user lock. Re-run all
+      // schedule, SKU, quantity and cart checks after waiting; a concurrent
+      // first add may have created the canonical row in the meantime.
+      return withTx(this.container, async tx => {
+        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+        await tx.execute(sql.raw(`SELECT
+          pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+          pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true),
+          pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+        await lockCartUser(tx, uid);
+        return new StoreCartService(createContainerFromDb(tx), this.env).addResolved(params, true);
+      });
     }
 
     const row = await this.container.storeCartDao.save({
@@ -504,21 +532,36 @@ export class StoreCartService {
     const result = [];
     const promotionLines: OrderPromotionInputLine[] = [];
     let pricing: Awaited<ReturnType<StoreCartService['cartPricing']>> | undefined;
+    let newcomerEligible: Promise<boolean> | undefined;
     for (const cart of carts) {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
         | undefined;
-      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) || !presaleCartIsCurrent(cart, product)) {
+      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) ||
+        (cart.type === 7 && !newcomerBaseProductIsEligible(product)) || !presaleCartIsCurrent(cart, product)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
-      const sku = await this.container.storeProductAttrValueDao.getByUnique(
-        cart.productAttrUnique,
-        0,
-        cart.productId,
-      );
-      if ((scope || cart.type === 6) && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
+      // A corrupt ordinary SKU must remain an invalid cart row rather than
+      // enter the promotion quote and reject unrelated cart projection.
+      const baseSkus = cart.type === 7 || (cart.type === 0 && cart.activityId === 0)
+        ? await this.container.db.select().from(storeProductAttrValue).where(and(
+            eq(storeProductAttrValue.productId, cart.productId),
+            eq(storeProductAttrValue.type, 0),
+            eq(storeProductAttrValue.unique, cart.productAttrUnique),
+            eq(storeProductAttrValue.isRetired, 0),
+          )).limit(2)
+        : null;
+      if (baseSkus && (baseSkus.length > 1 || (cart.type === 7 && baseSkus.length !== 1))) {
+        result.push({ ...cart, isValid: false, productInfo: null });
+        continue;
+      }
+      const sku = baseSkus
+        ? baseSkus[0] ?? null
+        : await this.container.storeProductAttrValueDao.getByUnique(
+            cart.productAttrUnique, 0, cart.productId);
+      if ((scope || cart.type === 6 || cart.type === 7) && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
@@ -572,10 +615,7 @@ export class StoreCartService {
             ) throw new ValidateException("砍价活动已失效");
             price = Math.max(
               decimalToCents(participant.bargainPriceMin),
-              Math.max(
-                decimalToCents(participant.bargainPrice),
-                decimalToCents(activity.price),
-              ) - decimalToCents(participant.price),
+              decimalToCents(participant.bargainPrice) - decimalToCents(participant.price),
             ) / 100;
             displayName = activity.storeName || activity.title || product.storeName;
             displayImage = pair.activitySku.image || activity.image || product.image;
@@ -649,13 +689,37 @@ export class StoreCartService {
         displayName = entry.title || product.storeName;
         displayImage = packageSku.image || entry.image || product.image;
         displayStock = Math.max(0, Math.min(packageSku.stock, sku.stock, product.stock));
-      } else if (cart.type === 7 && cart.activityId > 0 && sku) {
-        const activitySku = await this.container.storeProductAttrValueDao.getBySuk(
-          cart.activityId,
-          sku.suk,
-          7,
-        );
-        if (activitySku) price = Number(activitySku.price);
+      } else if (cart.type === 7) {
+        // A type=7 cart must never appear as an ordinary product if the
+        // activity or its paired SKU was removed after add. Checkout may use
+        // this row only after validating the exact current campaign identity.
+        const [activities, activitySkus] = cart.activityId > 0 && sku && cart.cartNum === 1
+          ? await Promise.all([
+              this.container.db.select({ productId: storeNewcomer.productId })
+                .from(storeNewcomer)
+                .where(and(eq(storeNewcomer.id, cart.activityId), eq(storeNewcomer.isDel, 0)))
+                .limit(1),
+              this.container.db.select().from(storeProductAttrValue).where(and(
+                eq(storeProductAttrValue.productId, cart.activityId),
+                eq(storeProductAttrValue.type, 7),
+                eq(storeProductAttrValue.suk, sku.suk),
+                eq(storeProductAttrValue.isRetired, 0),
+              )).limit(2),
+            ])
+          : [[], []];
+        const activitySku = activitySkus.length === 1 ? activitySkus[0] : null;
+        const activityPrice = Number(activitySku?.price);
+        if (activities[0]?.productId !== product.id || !activitySku ||
+          !Number.isFinite(activityPrice) || activityPrice < 0 ||
+          !(await (newcomerEligible ??= isNewcomerEligibleFromDb(this.container, uid)))) {
+          result.push({ ...cart, isValid: false, productInfo: null });
+          continue;
+        }
+        price = activityPrice;
+        displayImage = activitySku.image || product.image;
+        // Legacy type=7 stock is decremented only on the base product/SKU.
+        // Activity SKU stock and quota are static campaign metadata.
+        displayStock = Math.min(sku.stock, product.stock);
       } else if (cart.type === 4 && cart.activityId > 0 && sku) {
         const activity = await this.container.storeIntegralDao.getById(cart.activityId);
         const activitySku = await this.container.storeProductAttrValueDao.getBySuk(

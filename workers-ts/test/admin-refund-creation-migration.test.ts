@@ -1,3 +1,4 @@
+import { assertRegisteredDatabaseCohort, assertRegisteredModelCohort, assertExternalMigrationCohort } from './helpers/registeredCatalogCohort';
 import { readFileSync, readdirSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
@@ -48,21 +49,23 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
   it.each(['external','embedded','orm'] as const)('registers the receipt in the complete %s schema before any standalone repair', async path => {
     if (path==='external') {
       const files=readdirSync('migrations').filter(name=>/^\d+.*\.sql$/.test(name)).sort();
-      expect(files.at(-1)).toBe('0169_coupon_template_catalog.sql');
+      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
       for (const file of files) await f.db.transaction(async tx=>{
         await tx.execute(sql`SET LOCAL search_path=public,pg_temp`);
         await tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8')));
       });
     } else if (path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({
-        executed:Array.from({length: 176},(_,i)=>String(i).padStart(4,'0')),errors:[],
+        executed:Array.from({length: 180},(_,i)=>String(i).padStart(4,'0')),errors:[],
       });
     } else {
       const api=await import('drizzle-kit/api');
-      await f.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(models))).join('\n'));
+      const snapshot=api.generateDrizzleJson(models); assertRegisteredModelCohort(snapshot);
+      await f.exec((await api.generateMigration(api.generateDrizzleJson({}),snapshot)).join('\n'));
     }
     expect(await f.db.execute(sql`SELECT COUNT(*)::int AS count FROM pg_class
-      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:281}]);
+      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?282:path==='external'?286:285}]);
+    await assertRegisteredDatabaseCohort(f.db,path);
     expect(await inspectAdminRefundCreation(f.db)).toMatchObject({present:true,complete:true});
     expect(await shape()).toMatchObject({safe:true,shape:ADMIN_REFUND_CREATION_EXPECTED_SHAPE});
     await seed();const before=await identity(),rows=await f.db.select().from(adminRefundCreation);

@@ -44,6 +44,8 @@ import {
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { isWithdrawalNoticeEvent, processWithdrawalNoticeEvent } from "@/services/user/WithdrawalEffectsService";
 import { WITHDRAWAL_APPLICATION_EVENT, processWithdrawalApplication } from "@/services/user/WithdrawalApplicationNoticeService";
+import type { WithdrawalWecomGap } from "@/services/user/WithdrawalApplicationNoticeService";
+import { emitOperationalEvent } from "@/utils/observability";
 import { deliverStaffRefresh, type StaffPublisher } from "@/services/notification/StaffNotificationDeliveryService";
 import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
 import { recordPaidOrderMembershipSavings } from './OrderMembershipSavings';
@@ -78,6 +80,7 @@ export type OrderOutboxStatus = (typeof OUTBOX_STATUSES)[number];
 export interface OrderOutboxEnvironment {
   ORDER_QUEUE: Queue<OrderMessage>;
   STAFF_NOTICE?: StaffPublisher;
+  WITHDRAWAL_WECOM_ROBOT_ENABLED?: string;
 }
 
 interface PaymentOrder {
@@ -542,7 +545,8 @@ export class OrderOutboxService {
       return;
     }
     const now = Math.floor(Date.now() / 1000);
-    return withTx(this.container, async (tx) => {
+    const outcome = await withTx(this.container, async (tx) => {
+      let robotGap: WithdrawalWecomGap | null = null;
       const eventRows = await tx
         .select()
         .from(storeOrderOutbox)
@@ -672,7 +676,8 @@ export class OrderOutboxService {
           return 'deferred' as const;
         }
       } else if (event.eventType === WITHDRAWAL_APPLICATION_EVENT) {
-        await processWithdrawalApplication(tx, event, now);
+        robotGap = await processWithdrawalApplication(tx, event, now,
+          this.env.WITHDRAWAL_WECOM_ROBOT_ENABLED === "enabled");
       } else if (isWithdrawalNoticeEvent(event.eventType)) {
         await processWithdrawalNoticeEvent(tx, event, now);
       } else if (isNotificationEventType(event.eventType)) {
@@ -700,6 +705,12 @@ export class OrderOutboxService {
         )
         .returning({ id: storeOrderOutbox.id });
       if (!completed[0]) throw new Error("outbox 完成状态写入失败");
+      return robotGap;
+    });
+    if (outcome === "deferred") return "deferred";
+    if (outcome) emitOperationalEvent("warn", {
+      event: "withdrawal_wecom_robot_gap", component: "queue", operation: "notification_delivery",
+      outcome: "failure", errorCode: outcome, eventKey: claim.eventKey, resourceCount: 1,
     });
   }
 

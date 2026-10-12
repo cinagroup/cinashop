@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { boundBargainSourceProductChange, lockBargainSourceProductChange } from "@/services/activity/BargainSourceProductLifecycle";
 import {
   legacyCategory,
   shippingTemplates,
@@ -470,6 +471,8 @@ export class ProductAssociationService {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
       if (productId > 0) {
+        await boundBargainSourceProductChange(tx);
+        await lockBargainSourceProductChange(tx, productId);
         await lockProductWrite(tx, productId);
       }
       const existingRows = productId > 0
@@ -694,6 +697,8 @@ export class ProductAssociationService {
     if (!Number.isSafeInteger(productId) || productId <= 0) throw new ValidateException("商品ID错误");
     if (isShow !== 0 && isShow !== 1) throw new ValidateException("上架状态只能是0或1");
     await withTx(this.container, async (tx) => {
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       await lockProductWrite(tx, productId);
       const updated = await tx.update(storeProduct).set({ isShow }).where(and(
         eq(storeProduct.id, productId),

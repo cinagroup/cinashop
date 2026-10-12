@@ -4,6 +4,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import { createBargainSelectionFixture } from "./helpers/bargainSelectionFixture";
 import { withFinancePeers } from "./helpers/financePeers";
 import { BargainSkuCatalogService } from "../src/services/activity/BargainSkuCatalogService";
+import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
 import { storeBargain, storeBargainUser, storeProduct, storeProductAttrValue, user } from "../src/models/schema";
 import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "../../view/pc-ts/src/api/checkoutQuote";
 import type { CartItem } from "../../view/pc-ts/src/types/order";
@@ -37,6 +38,22 @@ describe("bounded bargain selection catalogue, actual controller and isolated SQ
       cut_price: "8.00", current_price: "2.00", remaining_cut: "0.00", catalog_price: "2.00", progress_percent: 100, activity_price_changed: false } });
     expect(result.skus.map(sku => sku.catalog_price)).toEqual(["2.00", "2.00"]);
     expect(await f.snapshot()).toEqual(before);
+  });
+  it("locks the old start and floor while a new participation captures the edited activity prices", async () => {
+    await f.db.update(storeBargain).set({ price: "12.00", minPrice: "3.00" }).where(eq(storeBargain.id, 40));
+    await f.db.update(storeBargainUser).set({ status: 2 }).where(eq(storeBargainUser.id, 81));
+    const newRecord = await new ActivityJoinService(f.container).startBargain(22, 40);
+    const [created] = await f.db.select().from(storeBargainUser).where(eq(storeBargainUser.id, newRecord.id));
+    expect(created).toMatchObject({ bargainPrice: "12.00", bargainPriceMin: "3.00", price: "0.00", status: 1 });
+    expect((await read(11, "80")).participation).toMatchObject({ original_price: "10.00",
+      minimum_price: "2.00", catalog_price: "2.00", activity_price_changed: true });
+    expect((await read(22, String(newRecord.id))).participation).toMatchObject({ original_price: "12.00",
+      minimum_price: "3.00", current_price: "12.00", activity_price_changed: false });
+  });
+  it("uses the participation snapshot for the poster after an activity price edit", async () => {
+    await f.db.update(storeBargain).set({ price: "12.00" }).where(eq(storeBargain.id, 40));
+    const poster = await new ActivityJoinService(f.container, f.env).bargainPoster(11, 40);
+    expect(poster).toMatchObject({ price: "2.00", msg: "还差0.00元即可砍价成功" });
   });
   it("returns accurate unfinished progress, never a hard-coded minimum 10 percent or purchase permission", async () => {
     await f.setReady(false); const result = await read();
@@ -167,8 +184,8 @@ describe("bounded bargain selection catalogue, actual controller and isolated SQ
       expect(result.skus[0]).toMatchObject({ unique: "actred40", max_quantity: 6, catalog_price: "2.00" });
     };
     const assertAfter = (result: Awaited<ReturnType<typeof read>>) => {
-      expect(result).toMatchObject({ activity_price: "12.00", participation: { catalog_price: "4.00", activity_price_changed: true } });
-      expect(result.skus[0]).toMatchObject({ unique: "actred40", max_quantity: 1, catalog_price: "4.00" });
+      expect(result).toMatchObject({ activity_price: "12.00", participation: { catalog_price: "2.00", activity_price_changed: true } });
+      expect(result.skus[0]).toMatchObject({ unique: "actred40", max_quantity: 1, catalog_price: "2.00" });
     };
     const change = async (db: typeof f.db) => {
       await db.transaction(async tx => {
@@ -221,8 +238,8 @@ describe("bounded bargain selection catalogue, actual controller and isolated SQ
       assertAfter(await read());
     });
   }, 30000);
-  it("round-trips real activity SKU to the owner's cart and exact full quote, including mutable activity-price effect", async () => {
-    for (const activityPrice of ["10.00", "12.00"]) {
+  it("round-trips the existing participation snapshot through cart and confirmation after activity price edits", async () => {
+    for (const activityPrice of ["10.00", "12.00", "8.00"]) {
       await f.db.update(storeBargain).set({ price: activityPrice });
       const result = await read(), sku = result.skus[1];
       const add = await (await request("/cart/add", "POST", { productId: 70, activityId: 40, type: 2, unique: sku.unique, cartNum: 2, new: 1 })).json() as { status: number; data: { id: number } };
@@ -234,7 +251,7 @@ describe("bounded bargain selection catalogue, actual controller and isolated SQ
       expect(response.status, response.msg).toBe(200);
       const quote = normalizeCheckoutQuote(response.data, cart, options);
       expect(quote.items[0].quotedUnitPrice).toBe(sku.catalog_price);
-      expect(sku.catalog_price).toBe(activityPrice === "10.00" ? "2.00" : "4.00");
+      expect(sku.catalog_price).toBe("2.00");
       expect(result.participation?.activity_price_changed).toBe(activityPrice !== "10.00");
       const after = await f.snapshot();
       expect({ ...after, kv: before.kv, kvWrites: before.kvWrites }).toEqual(before);

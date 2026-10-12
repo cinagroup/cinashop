@@ -142,9 +142,9 @@ export class BargainSkuCatalogService {
       : remaining === 0 ? "ready" as const : "cutting" as const;
     return { id: record.id, status: record.status, state, original_price: record.original, minimum_price: record.minimum,
       cut_price: record.cut, current_price: centsToDecimal(original - cut), remaining_cut: centsToDecimal(remaining),
-      // Match the existing checkout compatibility formula, while making any
-      // mutable activity-price effect explicit rather than promising the floor.
-      catalog_price: centsToDecimal(Math.max(minimum, Math.max(original, cents(activityPrice)) - cut)),
+      // Existing participations keep the start-price snapshot. The activity
+      // price is shown separately and applies only to future participations.
+      catalog_price: centsToDecimal(original - cut),
       activity_price_changed: cents(activityPrice) !== original,
       progress_percent: original === minimum ? 100 : Math.floor(cut * 100 / (original - minimum)) };
   }

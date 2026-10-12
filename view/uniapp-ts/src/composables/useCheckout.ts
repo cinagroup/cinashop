@@ -118,6 +118,14 @@ export function useCheckout() {
       if (current !== generation) return;
       const type = rows[0].type;
       if (rows.some((row) => row.type !== type)) throw new Error("不同活动商品请分开结算");
+      if (type === 7) {
+        const rawId = query.newcomerId;
+        if (selection.mode !== 'buy' || rows.length !== 1 || typeof rawId !== 'string' ||
+          !/^[1-9]\d{0,9}$/.test(rawId) || Number(rawId) > 2_147_483_647 ||
+          rows[0].activityId !== Number(rawId) || rows[0].cartNum !== 1) {
+          throw new Error('新人专享结算活动不匹配，请返回活动商品重新选择');
+        }
+      } else if (query.newcomerId !== undefined) throw new Error('活动结算参数无效');
       const selectedActivity: typeof activity.value = { type };
       for (const name of ["type", "pinkId", "combinationId", "seckillId", "bargainUserId"] as const) {
         const value = query[name]; if (value === undefined) continue;

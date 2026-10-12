@@ -198,7 +198,8 @@ export function normalizeCheckoutQuote(
   const items = selected.map((item) => {
     const row = purchaseRows.find((candidate) => candidate.id === item.id);
     if (!row || row.isValid !== true || row.productId !== item.productId || row.unique !== item.unique
-      || row.cartNum !== item.cartNum || row.type !== item.type || row.isNew !== item.isNew || !item.productInfo) {
+      || row.cartNum !== item.cartNum || row.type !== item.type || row.isNew !== item.isNew || !item.productInfo
+      || (item.type === 7 && row.activityId !== item.activityId)) {
       throw new Error("报价商品或数量已变化，请重新确认商品");
     }
     const product = record(row.productInfo, "报价商品详情");
@@ -243,7 +244,8 @@ export function normalizeCheckoutQuote(
 }
 
 export function checkoutQuoteFingerprint(items: CartItem[], options: CheckoutQuoteOptions): string {
-  return JSON.stringify([items.map(({ id, productId, unique, cartNum, type, isNew }) => [id, productId, unique, cartNum, type, isNew]), options]);
+  return JSON.stringify([items.map(({ id, productId, unique, cartNum, type, isNew, activityId }) =>
+    [id, productId, unique, cartNum, type, isNew, type === 7 ? activityId : null]), options]);
 }
 
 export interface CheckoutQuoteState {
@@ -276,7 +278,8 @@ export class CheckoutQuoteSession {
   async load(items: CartItem[], options: CheckoutQuoteOptions) {
     const generation = ++this.generation;
     const fingerprint = checkoutQuoteFingerprint(items, options);
-    const selection = JSON.stringify(items.map(({ id, unique, cartNum, type, isNew }) => [id, unique, cartNum, type, isNew]));
+    const selection = JSON.stringify(items.map(({ id, unique, cartNum, type, isNew, activityId }) =>
+      [id, unique, cartNum, type, isNew, type === 7 ? activityId : null]));
     if (selection !== this.selection) { this.key = ""; this.selection = selection; }
     const key = this.key;
     this.publish({ loading: true, error: "", fingerprint, result: null });

@@ -10,6 +10,7 @@ import {
   storeProduct,
   storeProductAttrValue,
   systemStore,
+  systemConfig,
   userAddress,
   cityArea,
   shippingTemplates,
@@ -396,6 +397,7 @@ async function seedFixtures(container: Container, ids: FixtureIds): Promise<void
     ids.nonRefundable,
   ];
   await withTx(container, async (tx) => {
+    await tx.insert(systemConfig).values(['store_func_status', 'store_self_mention'].map(menuName => ({ menuName, value: '1' })));
     await tx.insert(shippingTemplates).values({ id: 1, name: '隔离套餐配送模板', type: 1, status: 1 });
     await tx.insert(cityArea).values([
       { id: 1, name: '审计省', parentId: 0, path: '/' },

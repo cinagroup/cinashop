@@ -68,8 +68,14 @@ describe("API-005 legacy PC compatibility", () => {
   });
 
   it("preserves hierarchical cid/sid/tid and PC selectId semantics", () => {
-    expect(productSearchers).toContain("category.path LIKE");
-    expect(productSearchers).toContain("category.pid =");
+    const categoryPolicy = readFileSync('src/services/product/PublicCategoryPolicy.ts', 'utf8');
+    expect(productSearchers).toContain("publicCategoryRelationSelection(id, 'cid')");
+    expect(productSearchers).toContain("publicCategoryRelationSelection(id, 'sid')");
+    expect(productSearchers).toContain("publicCategoryRelationSelection(Number(value), 'tid')");
+    expect(categoryPolicy).toContain('category.pid=${id}');
+    expect(categoryPolicy).toContain('ancestor.id=category.pid AND ancestor.pid=${id}');
+    expect(categoryPolicy).toContain('publicCategoryIdentitySql()');
+    expect(categoryPolicy).not.toContain('category.path LIKE');
     expect(productSearchers).toContain("tid: (value)");
     expect(productService).toContain("if (params.selectId && (!sid || !cid))");
     expect(productService).toContain("where.timeOrder = 1");

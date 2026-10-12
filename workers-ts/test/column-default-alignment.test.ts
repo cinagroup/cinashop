@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnNativeDiagnostic } from "./helpers/nativeChildDiagnostics";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -108,9 +108,9 @@ describe("DB-009E1 exact column default reconciliation", () => {
       const allowed = new Set(["PATH", "Path", "SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP", "LOCALAPPDATA"]);
       for (const key of Object.keys(environment)) if (!allowed.has(key)) delete environment[key];
       Object.assign(environment, { CI: "1", TSX_DISABLE_CACHE: "1", DATABASE_URL: "postgresql://audit:audit@127.0.0.1:9/audit", CINASHOP_DRIZZLE_AUDIT_REPORT: report });
-      const result = spawnSync(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), join(root, "test/helpers/columnDefaultLocalAudit.cjs"), format], {
+      const result = spawnNativeDiagnostic(process.execPath, ["--require", join(root, "test/helpers/drizzleCliAudit.cjs"), join(root, "test/helpers/columnDefaultLocalAudit.cjs"), format], {
         cwd: root, env: environment, encoding: "utf8", timeout: 90_000, windowsHide: true,
-      });
+      }, { caseId: "column-default-alignment", mode: format });
       expect(result.error, result.stdout + result.stderr).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-009E1 ${format}: 4 default-only alignments, 14 drift refusals`);

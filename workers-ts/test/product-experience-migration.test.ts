@@ -83,7 +83,11 @@ describe("product assurance and visit analytics migration", () => {
     expect(experience).toContain('.for("update")');
     expect(experience).toContain("existing[0].addTime + VISIT_THROTTLE_SECONDS < now");
     expect(experience).toContain("eq(storeProductLog.type, \"visit\")");
-    expect(product).toContain(".productEnsures(id, product.ensureId)");
+    const design = readFileSync('src/services/product/ProductDetailDesignData.ts', 'utf8');
+    expect(product).toContain('await readProductDetailExtras(tx,product,uid,pricing.paidMemberActive)');
+    expect(design).toContain('ensure=value.showService.includes(2)?await readDetailEnsures(tx,product):[]');
+    expect(design).toContain('product.ensureId');
+    expect(design).toContain('storeProductEnsure');
     expect(product).not.toContain("await cacheGet");
     expect(product).not.toContain("await cacheSet");
     expect(controller).toContain("c.executionCtx.waitUntil");

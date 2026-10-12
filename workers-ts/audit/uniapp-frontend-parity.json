@@ -2,6 +2,31 @@
   "schemaVersion": 1,
   "snapshotDate": "2026-09-24",
   "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
+  "memberCodeDisplayIncrement": {
+    "date": "2026-09-27",
+    "base": "b5adcefcccf6230e484b3103022f7fbd12a30297",
+    "status": "local-partial-candidate-not-deployed",
+    "directRoute": "/pages/users/user_member_code/index",
+    "contracts": [
+      "Explicit authenticated POST user/bar_code after the member taps display; no page-load allocation and no rand_code payment-code request",
+      "Bare stable member code is shown as text and UTF-8 QR for the existing logged-in operator in-app scan, lookup, preview and writeoff chain",
+      "Hide, unload, logout and session epoch changes remove private code and canvas; stale reads, draws and timeouts cannot republish an earlier identity",
+      "Reject malformed or ambiguous URL/parameter payloads and twelve-digit order codes; integer QR modules and four-module quiet zone share the actual canvas and CSS size"
+    ],
+    "verification": {
+      "targetedRuntime": { "passed": 19, "failed": 0, "skipped": 0 },
+      "routeLedger": { "passed": 18, "failed": 0 },
+      "uniTypecheck": "passed",
+      "uniBuilds": ["H5", "MP-WEIXIN", "APP-PLUS"],
+      "buildArtifacts": { "passed": 3, "failed": 0, "skipped": 0 },
+      "browser": "Isolated synthetic H5 at 1280x900 and 320x844: actual canvas pixels match all QR modules; independent decoding restores the sixteen-digit and thirty-two-character Chinese codes; explicit display, hide and invalid response checked with no app errors or horizontal overflow. One existing Vue Router warning; canvas readback warnings originate from QA instrumentation.",
+      "actualCanvasDecodes": { "passed": 2, "failed": 0 },
+      "independentReview": "API, lifecycle, QR and page reviewed with no unresolved blocker; digits, Chinese, long Chinese and emoji matrices independently decoded"
+    },
+    "remaining": "WeChat type-90 mini-program and Ticket provider QR protocols, actual device cameras and roles, cashier payment-code consumption, account cancellation, production duplicate/index/old-writer acceptance, candidate exact Linux CI and release remain open; FE-003B is unchecked",
+    "productionTouched": false,
+    "deployed": false
+  },
   "latestGovernanceAndRankingIncrement": {
     "date": "2026-09-24",
     "status": "local-partial-candidate-not-deployed",
@@ -498,18 +523,18 @@
       ]
     },
     "target": {
-      "pagesTreeVueFiles": 93,
-      "logicalManifestRouteRecords": 93,
-      "platformActiveRouteRecords": { "H5": 93, "MP-WEIXIN": 93, "APP-PLUS": 93 },
+      "pagesTreeVueFiles": 94,
+      "logicalManifestRouteRecords": 94,
+      "platformActiveRouteRecords": { "H5": 94, "MP-WEIXIN": 94, "APP-PLUS": 94 },
       "manifestHashNormalization": "LF",
-      "manifestSha256": "3877374985BCAEA3EF2D168EEFDCB1E4A306AC4075355446928EB00ABD1638F8"
+      "manifestSha256": "EEDB60E0347ED0A8D39B555A21A8594D3625441894B3503C1857C63704CB74C8"
     },
     "routeLedger": {
-      "directRegistered": 28,
+      "directRegistered": 29,
       "legacyCompatibilityRules": 100,
       "candidateCoveredRules": 61,
       "partialReplacementRules": 39,
-      "unmappedOrCrossSurface": 23,
+      "unmappedOrCrossSurface": 22,
       "accountedLegacyRoutes": 151
     },
     "method": "Use active pages.json records as the denominator. Raw Vue files include embedded components, templates and unrouted files and are never treated as route coverage."
@@ -555,7 +580,8 @@
     "/pages/users/agent/apply",
     "/pages/users/agent/state",
     "/pages/users/agent/record",
-    "/pages/users/agent/staff_list"
+    "/pages/users/agent/staff_list",
+    "/pages/users/user_member_code/index"
   ],
   "gaps": [
     {
@@ -563,10 +589,9 @@
       "title": "User governance and history screens",
       "status": "missing_actionable",
       "legacyRoutes": [
-        "/pages/users/user_cancellation/index",
-        "/pages/users/user_member_code/index"
+        "/pages/users/user_cancellation/index"
       ],
-      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate membership agreement rather than the user agreement alias; the public endpoint and page accept disabled records as old PHP did, while the membership home hides them. Account cancellation write and member QR/scan/cashier consumption still lack complete target contracts; deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames, full activity-flow parity, native-device and deployed real-user acceptance remain open."
+      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate membership agreement rather than the user agreement alias; the public endpoint and page accept disabled records as old PHP did, while the membership home hides them. Account cancellation and cashier payment-code consumption remain missing. Member-code allocation and operator lookup, preview and writeoff are on main; the directly registered member page adds a local display candidate, while WeChat provider QR protocols and real channel acceptance remain open. Deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames are on main; full activity-flow parity, native-device and deployed real-user acceptance remain open."
     },
     {
       "id": "FE-003C",

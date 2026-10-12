@@ -1,16 +1,65 @@
-import { readFileSync } from 'node:fs';
-import { URL } from 'node:url';
+import { readFileSync, realpathSync } from 'node:fs';
+import { URL, fileURLToPath } from 'node:url';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { fabCanonical, fabDefaults, fabHash, fabImage, fabLink, readFabBody, validateFabValues } from '../src/services/admin/AdminFabSettingsInput';
 import { decodeFabObject } from '../src/services/content/FabReadService';
+import { LEGACY_ROUTE_RULES, REGISTERED_PAGE_ROUTES } from '../src/services/content/FabRouteRegistry';
 
 const nonce = '00000000-0000-4000-8000-000000000001';
 const button = (url = '/pages/index/index') => ({ source_id: null, img: '/legacy/child.png', url });
 const values = () => ({ ...fabDefaults(), main_ago_image: '/legacy/main.png', button: [] });
 describe('complete FAB input and historical numeric preservation', () => {
   it('keeps the exact opaque navigation registry equal to the real Uniapp registry', () => {
-    expect(readFileSync(new URL('../src/services/content/FabRouteRegistry.ts', import.meta.url),'utf8').replaceAll('\r\n','\n'))
-      .toBe(readFileSync(new URL('../../view/uniapp-ts/src/config/navigation.ts',import.meta.url),'utf8').replaceAll('\r\n','\n'));
+    const shared = realpathSync(fileURLToPath(new URL('../../view/common/customerWorkRoute.ts', import.meta.url)));
+    function actualRegistry(file: URL): string {
+      const source = readFileSync(file, 'utf8').replaceAll('\r\n', '\n');
+      const parsed = ts.createSourceFile(file.pathname, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+      const imports = parsed.statements.filter(ts.isImportDeclaration);
+      expect(imports).toHaveLength(1);
+      const dependency = imports[0]!;
+      expect(dependency.importClause?.isTypeOnly).toBe(false);
+      expect(dependency.importClause?.namedBindings?.getText(parsed)).toBe('{ resolveCustomerWorkPageRoute }');
+      expect(ts.isStringLiteral(dependency.moduleSpecifier)).toBe(true);
+      const specifier = (dependency.moduleSpecifier as ts.StringLiteral).text;
+      expect(realpathSync(fileURLToPath(new URL(`${specifier}.ts`, file)))).toBe(shared);
+      // Only each module's necessarily different relative import is removed.
+      // Every remaining declaration, registered page, alias and resolver branch is equal.
+      const body = ts.factory.updateSourceFile(parsed, parsed.statements.filter(statement => statement !== dependency));
+      return ts.createPrinter({ removeComments: true }).printFile(body);
+    }
+    expect(actualRegistry(new URL('../src/services/content/FabRouteRegistry.ts', import.meta.url)))
+      .toBe(actualRegistry(new URL('../../view/uniapp-ts/src/config/navigation.ts', import.meta.url)));
+  });
+  it('links the actual registered community and independent legacy member barcode pages directly', () => {
+    for (const page of ['/pages/goods/productCommunity', '/pages/users/user_member_code/index']) {
+      expect(REGISTERED_PAGE_ROUTES.has(page)).toBe(true);
+      expect(LEGACY_ROUTE_RULES[page]).toBeUndefined();
+      expect(fabLink(page)).toEqual({value:page,target:page,kind:'page',partial:false});
+    }
+  });
+  it('preserves both legacy order query aliases and the shared scanning identity branch before fallback', () => {
+    for (const page of ['/pages/admin/distribution/orderDetail/index', '/pages/admin/distribution/scanning/detail/index']) {
+      expect(LEGACY_ROUTE_RULES[page]).toMatchObject({coverage:'partial_replacement',queryAliases:{id:'orderId'}});
+    }
+    expect(fabLink('/pages/admin/distribution/orderDetail/index?id=42')).toMatchObject({target:'/pages/delivery/orderDetail?orderId=42',partial:true});
+    expect(fabLink('/pages/admin/distribution/scanning/detail/index?id=42')).toMatchObject({target:'/pages/customer-work/writeoff?legacyOrderId=42',partial:true});
+    expect(fabLink('/pages/admin/distribution/scanning/detail/index?auth=2&id=42')).toMatchObject({target:'/pages/delivery/scanning',partial:true});
+    for (const query of ['id=42&id=43','id=42&orderId=43','id=042','id=42&auth=1&auth=2']) {
+      expect(()=>fabLink('/pages/admin/distribution/scanning/detail/index?'+query)).toThrow();
+    }
+  });
+  it('keeps legacy writeoff auth as explicit destination selection and rejects malformed or ambiguous parameters', () => {
+    const page='/pages/admin/order_cancellation/index';
+    expect(LEGACY_ROUTE_RULES[page]).toBeUndefined();
+    expect(fabLink(page)).toMatchObject({target:'/pages/operator/writeoff'});
+    expect(fabLink(page+'?code=123456789012')).toMatchObject({target:'/pages/operator/writeoff?code=123456789012'});
+    expect(fabLink(page+'?auth=1')).toMatchObject({target:'/pages/customer-work/scanning'});
+    expect(fabLink(page+'?auth=2')).toMatchObject({target:'/pages/delivery/scanning'});
+    for (const auth of ['0','3']) expect(fabLink(page+'?auth='+auth)).toMatchObject({target:'/pages/operator/writeoff?entry=legacy-auto&next=scanning'});
+    for (const query of ['auth=9','auth=1&auth=2','auth=1&uid=42','auth=1&code=%0A','auth=1&scene=%','auth=1&scene=123&code=456']) {
+      expect(()=>fabLink(page+'?'+query)).toThrow();
+    }
   });
   it('allows zero children in styles one/two and requires three to five in styles three/four', () => {
     for (const index of [1,2] as const) expect(() => validateFabValues({ ...values(), index })).not.toThrow();

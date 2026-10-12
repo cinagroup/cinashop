@@ -86,6 +86,10 @@ import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '@/migrations/purchaseCan
 import { runPurchaseCancellationEvidenceSchema } from '@/migrations/runPurchaseCancellationEvidence';
 import { ASSISTED_ORDER_LIST_INDEX_SQL } from '@/migrations/assistedOrderListIndex';
 import { runAssistedOrderListIndex } from '@/migrations/runAssistedOrderListIndex';
+import { SECKILL_SKU_IDENTITY_FENCE_SQL } from '@/migrations/seckillSkuIdentityFence';
+import { runSeckillSkuIdentityFence } from '@/migrations/runSeckillSkuIdentityFence';
+import { MEMBER_BARCODE_INDEX_SQL } from '@/migrations/memberBarcodeIndex';
+import { runMemberBarcodeIndex } from '@/migrations/runMemberBarcodeIndex';
 import { RECHARGE_QUOTA_GROUP_SEED_SQL } from '@/migrations/rechargeQuotaGroupSeed';
 import { runRechargeQuotaGroupSeed } from '@/migrations/runRechargeQuotaGroupSeed';
 import { SECKILL_TIME_REFERENCE_LOCK_INSTALLATION_SQL } from '@/migrations/seckillTimeReferenceLockInstallation';
@@ -119,11 +123,11 @@ export class MigrationService {
   }
 
   seckillTimeReferenceLockSqlForVerification(): string {
-    return this.migration_0173();
+    return this.migration_0179();
   }
 
   rechargeQuotaGroupSeedSqlForVerification(): string {
-    return this.migration_0172();
+    return this.migration_0178();
   }
 
   presaleDeliveryOutboxMigrationSqlForVerification(): string {
@@ -144,6 +148,14 @@ export class MigrationService {
 
   assistedOrderListIndexMigrationSqlForVerification(): string {
     return this.migration_0171();
+  }
+
+  seckillSkuIdentityFenceMigrationSqlForVerification(): string {
+    return this.migration_0172();
+  }
+
+  memberBarcodeIndexMigrationSqlForVerification(): string {
+    return this.migration_0173();
   }
 
   shippingLifecycleMigrationSqlForVerification(): string {
@@ -579,10 +591,22 @@ export class MigrationService {
       this.migration_0175(),
       this.migration_0176(),
       this.migration_0177(),
+      this.migration_0178(),
+      this.migration_0179(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 179) {
+          await runSeckillTimeReferenceLockSchema(this.container.db);
+          executed.push('0179');
+          continue;
+        }
+        if (i === 178) {
+          await runRechargeQuotaGroupSeed(this.container.db);
+          executed.push('0178');
+          continue;
+        }
         if (i === 177) {
           await runPurchaseCancellationGiftEvidence(this.container.db);
           executed.push('0177');
@@ -604,12 +628,12 @@ export class MigrationService {
           continue;
         }
         if (i === 173) {
-          await runSeckillTimeReferenceLockSchema(this.container.db);
+          await runMemberBarcodeIndex(this.container.db);
           executed.push('0173');
           continue;
         }
         if (i === 172) {
-          await runRechargeQuotaGroupSeed(this.container.db);
+          await runSeckillSkuIdentityFence(this.container.db);
           executed.push('0172');
           continue;
         }
@@ -8814,11 +8838,11 @@ $work_member_resolved_rename_fence$;
   }
 
   private migration_0172(): string {
-    return RECHARGE_QUOTA_GROUP_SEED_SQL;
+    return SECKILL_SKU_IDENTITY_FENCE_SQL;
   }
 
   private migration_0173(): string {
-    return SECKILL_TIME_REFERENCE_LOCK_INSTALLATION_SQL;
+    return MEMBER_BARCODE_INDEX_SQL;
   }
 
   private migration_0174(): string {
@@ -8835,5 +8859,13 @@ $work_member_resolved_rename_fence$;
 
   private migration_0177(): string {
     return PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL;
+  }
+
+  private migration_0178(): string {
+    return RECHARGE_QUOTA_GROUP_SEED_SQL;
+  }
+
+  private migration_0179(): string {
+    return SECKILL_TIME_REFERENCE_LOCK_INSTALLATION_SQL;
   }
 }

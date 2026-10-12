@@ -1,0 +1,19 @@
+# UniApp H5 SSR Express and qs boundary
+
+Scope: locked `@dcloudio/vite-plugin-uni` `3.0.0-4020920240930001` → `express` `4.22.2` → `qs` `6.15.3` and `proxy-addr` `2.0.7`. Express also loads `body-parser` `1.20.6`, which resolves the same `qs` version. This audit changes no dependency or runtime code.
+
+## Current reachability
+
+The DCloud H5 `runDev` action calls `createServer` for ordinary development and `createSSRServer` only when its `-ssr` option is enabled. The current `dev:h5` script is `uni`, the `build:h5` script is `uni build`, the CLI option defaults to false, the H5 manifest does not opt into SSR, and the source has no `entry-server.js`. The ordinary H5 development entrypoint invokes Vite without loading Express, body-parser or qs. Current build scripts also omit SSR; the H5 build action chooses ordinary `build`, not `buildSSR`. Existing H5, Weixin and App CI builds do not start the Express SSR server. This is an **untriggered developer-server path** in the current repository, not an observed app runtime endpoint.
+
+The fail-fast test checks the exact current scripts, manifest, entrypoint absence, locked dependency versions and DCloud CLI branch. Enabling SSR, changing these locked versions, or changing the entrypoint requires a fresh review.
+
+## Conditional SSR behavior
+
+If a future H5 development run enables SSR, DCloud dynamically loads Express. Its SSR handler installs Vite middleware and a catch-all page handler; it does not install an Express URL-encoded body parser. Express itself defaults to the extended query parser, which calls qs for request query strings. Thus qs is relevant to SSR request input even though the body-parser package is only loaded as an Express dependency.
+
+In this locked DCloud version, `createSSRServer` derives its listen hostname from CLI `options.host`, **not** the resolved Vite `server.host`. With no CLI host, it passes `undefined` to `app.listen`, which Node treats as a bind to available interfaces. Our `vite.config.ts` has `server.host: "127.0.0.1"` for ordinary Vite development, but it does not protect this SSR listener. The test intercepts the real Express `app.listen` before any socket binds: with a fake resolved Vite host of `127.0.0.1`, the default SSR call passes `undefined`; an explicit `host: "127.0.0.1"` passes loopback. Before enabling SSR, review the actual listener bind, network access, and the handling and limits of untrusted qs query input. Do not infer safety from this audit or from the absence of a known exploit reproduction.
+
+The October 2026 npm audit additionally reports [`proxy-addr` GHSA-jqcg-44mw-7w3h](https://github.com/jshttp/proxy-addr/security/advisories/GHSA-jqcg-44mw-7w3h) as critical. Its described IP spoofing requires an IPv4-mapped IPv6 trusted subnet with a short prefix. The actual DCloud SSR Express app still has `trust proxy=false`, checked at the intercepted `app.listen` for both calls; it does not configure that vulnerable trust subnet. The installed `proxy-addr@2.0.7` remains affected in the advisory range. This finding is separate from the listener bind issue above: neither condition should be silently called fixed by the other. The same DCloud/Express/proxy-addr versions were present in the September lock; this newly reported finding reflects the later advisory feed, not an upgrade of those three packages.
+
+From `view/uniapp-ts`, run `npm run test:express-qs` and `npm run test:runtime-i18n`. The first test uses the actual locked DCloud and Express code, stubs Vite startup, and blocks HTTP requests and socket listening. The second rejects Express, body-parser, qs or proxy-addr if any enters the four audited H5/Weixin/App resource graphs, including external or tree-shaken modules. CI runs both gates with the three resource builds. A passing result documents the current boundary; it does not exercise an exposed SSR endpoint, clear Express/qs/proxy-addr advisories, or close TEST-004D3.

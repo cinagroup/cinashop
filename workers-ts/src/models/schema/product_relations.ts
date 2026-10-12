@@ -176,6 +176,12 @@ export const storeProductAttrValue = pgTable(
     index("spav_product_suk_idx").on(t.productId, t.suk),
     index("spav_product_active").on(t.productId, t.type, t.isRetired, t.id),
     index("spav_product_type_suk").on(t.productId, t.type, t.suk),
+    // A legacy writer can bypass the seckill parent lock after checkout's last
+    // catalogue read. Keep each live activity SKU label and alias unambiguous.
+    uniqueIndex("spav_seckill_active_suk_uq").on(t.productId, t.suk)
+      .where(sql`${t.type} = 1 AND ${t.isRetired} = 0`),
+    uniqueIndex("spav_seckill_active_unique_uq").on(t.productId, t.unique)
+      .where(sql`${t.type} = 1 AND ${t.isRetired} = 0`),
     notValid(check("spav_is_retired_ck", sql`${t.isRetired} IN (0, 1)`)),
   ],
 );

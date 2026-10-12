@@ -98,15 +98,20 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real full-ORM ca
   it('refuses the SKU editor reverse wait without a database deadlock and preserves the buyer', async () => {
     const receipt = await confirm();
     await peers(async (holder, editor, buyer) => {
-      await holder.exec('BEGIN; SELECT id FROM store_product_category WHERE id=9 FOR UPDATE');
+      // Hold the real SKU before a savepoint, then the category after it.
+      // Current ordinary checkout takes product locks before SKU locks, so
+      // the old SKU-first buyer/editor inversion is no longer reachable.
+      await holder.exec('BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE; SAVEPOINT category_gate; SELECT id FROM store_product_category WHERE id=9 FOR UPDATE');
       const editing = request(app(editor.db), '/admin/product/edit/70', skuBody);
       await waitForFinanceBlock(f.db, editor.pid, holder.pid);
       const buying = buy(buyer.db, receipt);
       await waitForFinanceBlock(f.db, buyer.pid, editor.pid);
-      await holder.exec('COMMIT');
-      const e = await editing, b = await buying;
+      await holder.exec('ROLLBACK TO SAVEPOINT category_gate');
+      const e = await editing;
       expect(e.status, e.msg).toBe(400); expect(e.msg).toContain('商品库存正在变化');
-      expect(b.status, b.msg).toBe(200);
+      await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
+      await holder.exec('COMMIT');
+      const b = await buying; expect(b.status, b.msg).toBe(200);
     });
     const after = await state(); expect(after.orders).toHaveLength(1); expect(after.audit).toEqual([]);
     expect(after.products[0].stock).toBe(6); expect(after.skus[0].stock).toBe(6);

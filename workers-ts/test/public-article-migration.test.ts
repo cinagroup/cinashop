@@ -51,6 +51,15 @@ function routeStatement(path: string): string {
 }
 
 describe("PUBLIC-ARTICLE migration contract", () => {
+  it('keeps complete bare image queries and site links while stripping active attributes and schemes', () => {
+    const source = '<img src=https://images.example/a.jpg?x=1&y=2 onerror=attack()>'
+      + '<a href=/pages/article/detail?id=18&from=feed onclick=attack()>详情</a>'
+      + '<img src=javascript:alert(1)=ignored onerror=attack()>';
+    const expected = '<img src="https://images.example/a.jpg?x=1&amp;y=2" width="100%">'
+      + '<a href="/pages/article/detail?id=18&amp;from=feed">详情</a><img width="100%">';
+    expect(sanitizeArticleRichText(source)).toBe(expected);
+    expect(sanitizePublishedArticleHtml(source)).toBe(expected);
+  });
   it("registers all seven exact GET routes behind StationOpen then optional auth", () => {
     for (const [path, handler] of ROUTES) {
       const statement = routeStatement(path);

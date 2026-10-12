@@ -11,17 +11,39 @@ export async function auditWorkParentIdentityPermissions(
   db: Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>,
   schema = 'public',
   scope: PricingRuntimeScope = 'isolated',
+  expectedConnection?: { role: string; database: string },
 ) {
   validatePricingRuntimeScope(scope);
   if (!db.$client) throw new Error('Work parent identity audit requires a root database');
   if (!/^[a-z_][a-z0-9_]{0,62}$/.test(schema) || schema.startsWith('pg_') || schema === 'information_schema') {
     throw new Error('Invalid work parent identity audit schema');
   }
+  if (expectedConnection && (!/^[a-z_][a-z0-9_]{0,62}$/.test(expectedConnection.role)
+    || !/^[a-z_][a-z0-9_]{0,62}$/.test(expectedConnection.database))) {
+    throw new Error('Invalid expected work parent connection identity');
+  }
   return db.transaction(async tx => {
     await tx.execute(sql.raw(`SELECT
       pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
       pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1000)::text || 'ms',true),
       pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+    // Bind the caller's expected LOGIN to the same backend and catalog snapshot
+    // as the permission review. A pool limit does not pin separate transactions.
+    if (expectedConnection) {
+      const [identity] = await tx.execute(sql<{ matches: boolean }>`SELECT (
+        current_user = ${expectedConnection.role}
+        AND session_user = ${expectedConnection.role}
+        AND current_database() = ${expectedConnection.database}
+        AND current_setting('server_version_num')::integer / 10000 = 16
+        AND (SELECT count(*) = 1 FROM pg_catalog.pg_stat_activity a
+          JOIN pg_catalog.pg_roles r ON r.oid = a.usesysid
+          WHERE a.pid = pg_catalog.pg_backend_pid() AND r.rolname = ${expectedConnection.role})
+      ) AS matches`);
+      if (identity?.matches !== true) {
+        return { scope: 'work-parent-identity-only' as const, identityMatch: false,
+          ready: false, checks: null, failures: ['connectionIdentityMismatch'] };
+      }
+    }
     const reviewed = await reviewedRuntimePricingCapabilities(tx,schema,scope);
     const [checks] = await tx.select({
       connectionIdentityVisible: sql<boolean>`connection_identity_visible`,
@@ -87,6 +109,8 @@ export async function auditWorkParentIdentityPermissions(
     ) AS work_parent_permissions`);
     if (!checks) throw new Error('Work parent identity audit returned no catalog result');
     const failures = Object.entries(checks).filter(([, value]) => value !== true).map(([name]) => name);
-    return { scope: 'work-parent-identity-only' as const, ready: failures.length === 0, checks, failures };
+    return { scope: 'work-parent-identity-only' as const,
+      ...(expectedConnection ? { identityMatch: true } : {}),
+      ready: failures.length === 0, checks, failures };
   }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
 }

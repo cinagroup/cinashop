@@ -36,23 +36,49 @@ async function auditMissingConstraints({ api, models, format, database }) {
   }
   const initial = await api.generateMigration(api.generateDrizzleJson({}), old);
   const db = database ?? new PGlite();
-  const read = () => readCatalog(async query => (await db.query(query)).rows);
+  const read = query => readCatalog(async statement => (await query(statement)).rows);
   const rowTables = [...new Set([...Object.keys(f.fixtures), "store_order_cart_info", "work_client_current", "work_contact_action_outbox"])].sort();
-  const rows = async () => (await db.query(rowTables.map(table =>
+  const rows = async query => (await query(rowTables.map(table =>
     `SELECT '${table}' AS source,to_jsonb(t) AS row FROM public.${q(table)} t`).join(" UNION ALL ") + " ORDER BY source,row")).rows;
-  const capture = async () => ({
-    classIds: (await db.query("SELECT 'pg_constraint'::regclass::oid AS constraints,'pg_trigger'::regclass::oid AS triggers")).rows[0],
-    catalog: await read(),
-    objects: (await db.query("SELECT c.oid,c.relname,c.relkind,c.relfilenode FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' ORDER BY c.oid")).rows,
-    constraints: (await db.query("SELECT c.oid,t.relname||'.'||c.conname AS key,to_jsonb(c) AS metadata FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='public' ORDER BY c.oid")).rows,
-    triggers: (await db.query("SELECT t.oid,to_jsonb(t) AS metadata,c.relname||'.'||k.conname AS key FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace LEFT JOIN pg_constraint k ON k.oid=t.tgconstraint WHERE n.nspname='public' ORDER BY t.oid")).rows,
-    dependencies: (await db.query(`SELECT d.*,d.objid::text AS object_id FROM pg_depend d
+  const captureWith = async query => ({
+    classIds: (await query("SELECT 'pg_constraint'::regclass::oid AS constraints,'pg_trigger'::regclass::oid AS triggers")).rows[0],
+    catalog: await read(query),
+    objects: (await query("SELECT c.oid,c.relname,c.relkind,c.relfilenode FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' ORDER BY c.oid")).rows,
+    constraints: (await query("SELECT c.oid,t.relname||'.'||c.conname AS key,to_jsonb(c) AS metadata FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='public' ORDER BY c.oid")).rows,
+    triggers: (await query("SELECT t.oid,to_jsonb(t) AS metadata,c.relname||'.'||k.conname AS key FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace LEFT JOIN pg_constraint k ON k.oid=t.tgconstraint WHERE n.nspname='public' ORDER BY t.oid")).rows,
+    dependencies: (await query(`SELECT d.*,d.objid::text AS object_id FROM pg_depend d
       WHERE (d.refclassid='pg_class'::regclass AND d.refobjid IN (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public'))
       OR (d.classid='pg_constraint'::regclass AND d.objid IN (SELECT c.oid FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname='public'))
       OR (d.classid='pg_trigger'::regclass AND d.objid IN (SELECT t.oid FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public'))
       ORDER BY d.classid,d.objid,d.objsubid,d.refclassid,d.refobjid,d.refobjsubid,d.deptype`)).rows,
-    rows: await rows(),
+    rows: await rows(query),
   });
+  // Collect the exact existing SELECTs without opening an engine transaction.
+  // Only the helper-owned memory engine batches; injected native adapters keep
+  // their original sequential query API and transaction boundaries.
+  const captureQueries = [];
+  if (!database) {
+    await captureWith(async statement => {
+      captureQueries.push(statement);
+      return { rows: [] };
+    });
+    assert.equal(captureQueries.length, 11, "Complete capture query count");
+  }
+  const capture = async () => {
+    if (database) return captureWith(statement => db.query(statement));
+    const results = await db.exec(captureQueries.join(";\n"));
+    assert.ok(Array.isArray(results), "Complete batch result array");
+    assert.equal(results.length, captureQueries.length, "Complete batch result count");
+    for (const result of results) assert.ok(Array.isArray(result.rows), "Complete batch rows");
+    assert.equal(results[0].rows.length, 1, "Catalog class identity row");
+    let index = 0;
+    const state = await captureWith(async statement => {
+      assert.equal(statement, captureQueries[index], "Exact capture SELECT order");
+      return results[index++];
+    });
+    assert.equal(index, results.length, "All batch results consumed");
+    return state;
+  };
   const expectAligned = (after, before) => {
     assert.deepEqual(after.catalog, restored(before.catalog));
     assertMissingConstraintContracts(after.catalog, manifest);
@@ -105,8 +131,8 @@ async function auditMissingConstraints({ api, models, format, database }) {
           await db.exec(f.update(e.catalog.table, f.invalid[e.catalog.name]));
           const badOldRows = await capture();
           await db.exec(sql);
-          expectAligned(await capture(), badOldRows);
           const beforeWrite = await capture();
+          expectAligned(beforeWrite, badOldRows);
           await savepoint(() => rejectWrite(e, f.update(e.catalog.table, f.invalid[e.catalog.name])));
           await savepoint(() => rejectWrite(e, f.insert(e.catalog.table, { ...f.newRow(e.catalog.table), ...f.invalid[e.catalog.name] })));
           await savepoint(() => rejectWrite(e, `ALTER TABLE ${q(e.catalog.table)} VALIDATE CONSTRAINT ${q(e.catalog.name)}`));
@@ -164,8 +190,8 @@ async function auditMissingConstraints({ api, models, format, database }) {
       });
       assert.deepEqual(await capture(), fixture);
       await db.exec(sql);
-      expectAligned(await capture(), fixture);
       const aligned = await capture();
+      expectAligned(aligned, fixture);
       await db.exec(sql);
       assert.deepEqual(await capture(), aligned, "No-op includes all constraint and trigger OIDs");
       for (const e of entries) {
@@ -241,8 +267,8 @@ async function auditMissingConstraints({ api, models, format, database }) {
     await db.exec("BEGIN");
     try { await db.exec(sql); await db.exec("COMMIT"); }
     catch (error) { await db.exec("ROLLBACK"); throw error; }
-    expectAligned(await capture(), initialState);
     const after = await capture();
+    expectAligned(after, initialState);
     await db.exec(sql);
     assert.deepEqual(await capture(), after);
     assert.deepEqual(await api.generateMigration(target, api.generateDrizzleJson(models, target.id)), []);

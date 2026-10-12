@@ -1,8 +1,10 @@
+# Historical offline template only. Generate a random temporary Worker name and
+# re-read the current formal API Hyperdrive binding before any deployment.
 name = "cinashop-production-observability-audit"
 main = "ProductionObservabilityAuditWorker.ts"
 compatibility_date = "2026-08-31"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-workers_dev = true
+workers_dev = false
 
 [observability]
 enabled = true
@@ -10,4 +12,5 @@ head_sampling_rate = 1
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"
+# This historical ID is deliberately retained only for audit drift detection.
 id = "9748c294e21c49a99579c9cef70102e0"

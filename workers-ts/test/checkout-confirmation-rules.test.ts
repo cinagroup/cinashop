@@ -10,7 +10,7 @@ import { orderCreate } from '../src/controllers/api/v1/OrderController';
 import { runCouponProductScopeFence } from '../src/migrations/runCouponProductScopeFence';
 import { storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, storeCouponUser, storeCouponProduct,
   storeDiscounts, storeDiscountsProducts, storeProduct, storeProductAttrValue, storeCart, storeBargain,
-  storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink, storeIntegral, storeNewcomer, user } from '../src/models/schema';
+  storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink, storeIntegral, storeNewcomer, systemConfig, user } from '../src/models/schema';
 
 // These scenarios commit orders and require the native purchase-origin schema.
 // PGlite's simplified table generator cannot stand in for its protected SQL.
@@ -63,6 +63,12 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
           await f.db.insert(storeNewcomer).values({ id: 40, productId: 70 });
           await f.db.update(user).set({ addTime: Math.floor(Date.now() / 1000) });
           Object.assign(f.config, { newcomer_status: '1', register_price_status: '1' });
+          await f.db.insert(systemConfig).values([
+            { menuName: 'newcomer_status', value: '1' },
+            { menuName: 'register_price_status', value: '1' },
+            { menuName: 'newcomer_limit_status', value: '0' },
+            { menuName: 'newcomer_limit_time', value: '0' },
+          ]);
         }
       }
     }
@@ -279,10 +285,10 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     expect(after.users.find(row => row.uid === 11)).toMatchObject({ isNewcomer: 1 });
   });
   const monetaryCases = ['base-price',
-    ...(kind === 'bargain' ? ['bargain-price'] as const : kind === 'coupon' ? [] : ['activity-price'] as const),
+    ...(kind === 'bargain' || kind === 'coupon' ? [] : ['activity-price'] as const),
     ...(kind === 'integral' ? ['activity-integral'] as const : []),
   ] as const;
-  type MonetaryCase = typeof monetaryCases[number] | 'unused-vip-price' | 'unused-bargain-sku-price';
+  type MonetaryCase = typeof monetaryCases[number] | 'bargain-price' | 'unused-vip-price' | 'unused-bargain-sku-price';
   const editMonetary = async (db: DbClient, variant: MonetaryCase) => {
     if (variant === 'bargain-price') await db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40));
     else await db.update(storeProductAttrValue).set(variant === 'activity-integral' ? { integral: 20 }
@@ -304,8 +310,18 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     const after = await monetaryState(); expect(after.orders).toHaveLength(1);
     expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: refreshed.data.pay_price });
   });
+  if (kind === 'bargain') it('keeps a confirmed old participation price after an activity price edit', async () => {
+    const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
+    beforeSequence = async () => { await f.db.update(storeBargain).set({ price: '12.00' }).where(eq(storeBargain.id, 40)); };
+    const created = await request(`/api/order/create/${receipt.data.orderKey}`,
+      { ...input, quoteToken: receipt.data.quoteToken });
+    expect(created.status, created.msg).toBe(200);
+    const after = await monetaryState();
+    expect(after.orders).toHaveLength(1);
+    expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: receipt.data.priceGroup.pay_price });
+  });
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each([...monetaryCases, 'unused-vip-price',
-    ...(kind === 'bargain' ? ['unused-bargain-sku-price'] as const : [])] as const)(
+    ...(kind === 'bargain' ? ['bargain-price', 'unused-bargain-sku-price'] as const : [])] as const)(
     'checks monetary fact %s after an independent PostgreSQL price writer wait', async variant => {
       const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
       const before = await monetaryState();
@@ -317,7 +333,7 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
           ...input, uid: 11, key: receipt.data.orderKey, quoteToken: receipt.data.quoteToken, userIp: '127.0.0.1',
         }));
         await waitForFinanceBlock(f.db, buyer.pid, editor.pid); await editor.exec('COMMIT');
-        const result = await buying, permitted = variant === 'unused-vip-price' || variant === 'unused-bargain-sku-price';
+        const result = await buying, permitted = variant === 'bargain-price' || variant === 'unused-vip-price' || variant === 'unused-bargain-sku-price';
         expect(result.ok).toBe(permitted);
         if (!result.ok) expect(result.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
         const after = await monetaryState();
@@ -644,7 +660,12 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     else if (kind === 'seckill') await f.db.update(storeSeckill).set(variant === 'primary' ? { onceNum: 4 } : { stopTime: new Date(Date.now() + 86_400_000) });
     else if (kind === 'combination') await f.db.update(storeCombination).set(variant === 'primary' ? { people: 3 } : { effectiveTime: 7200 });
     else if (kind === 'integral') await f.db.update(storeIntegral).set(variant === 'primary' ? { onceNum: 4 } : { num: 9 });
-    else Object.assign(f.config, { newcomer_limit_status: '1', newcomer_limit_time: variant === 'primary' ? '30' : '60' });
+    else {
+      const limitTime = variant === 'primary' ? '30' : '60';
+      Object.assign(f.config, { newcomer_limit_status: '1', newcomer_limit_time: limitTime });
+      await f.db.update(systemConfig).set({ value: '1' }).where(eq(systemConfig.menuName, 'newcomer_limit_status'));
+      await f.db.update(systemConfig).set({ value: limitTime }).where(eq(systemConfig.menuName, 'newcomer_limit_time'));
+    }
     const before = await state(), path = `/api/order/create/${a.data.orderKey}`;
     expect(await request(path, { ...input, quoteToken: a.data.quoteToken })).toMatchObject({ status: 400,
       data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: a.data.orderKey } });

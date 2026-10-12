@@ -158,8 +158,10 @@ export function registerBargainPurchaseTests(getContext) {
       r => { r.participation.progress_percent = 0; }, r => { r.can_select = false; }]) {
       const row = bargainFixture(); change(row); assert.throws(() => model.parseBargainSelection(row, 40, 80));
     }
-    const row = bargainFixture(); row.activity_price = '12.00'; row.participation.activity_price_changed = true; row.participation.catalog_price = '4.00'; row.skus.forEach(s => { s.catalog_price = '4.00'; });
-    assert.equal(model.parseBargainSelection(row, 40, 80).participation.catalog_price, '4.00');
+    const row = bargainFixture(); row.activity_price = '12.00'; row.participation.activity_price_changed = true;
+    assert.equal(model.parseBargainSelection(row, 40, 80).participation.catalog_price, '2.00');
+    row.participation.catalog_price = '4.00'; row.skus.forEach(s => { s.catalog_price = '4.00'; });
+    assert.throws(() => model.parseBargainSelection(row, 40, 80));
     assert.throws(() => model.parseBargainSelection(row, 40, 80, false)); assert.throws(() => model.parseMyBargains([mine()], 22));
     assert.equal(model.parseMyBargains([{ ...mine(), price: '99.00', residue_price: '0.00' }], 11)[0].amountsValid, false);
   });

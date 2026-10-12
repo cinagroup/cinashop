@@ -8,6 +8,7 @@ import {
   storeProduct,
   storeProductAttrValue,
   systemStore,
+  systemConfig,
   user,
 } from "@/models/schema";
 import {
@@ -265,6 +266,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
   await withSchema(db, schemaName, async ({ db: tx }) => {
+    await tx.insert(systemConfig).values(['store_func_status', 'store_self_mention'].map(menuName => ({ menuName, value: '1' })));
     await tx.insert(user).values(ids.users.map((uid, index) => ({
       uid,
       account: `first-order-${uid}`.slice(0, 32),
@@ -501,6 +503,21 @@ async function runConcurrentSingleWinner(
       && discounts.length === 2
       && discounts[0] === "0.00"
       && discounts[1] === "10.00";
+    if (!exactlyOneDiscounted) {
+      const outcomes = settled.map(result => {
+        if (result.status === 'fulfilled') return { status: result.status, orderId: result.value.orderId };
+        const causes: Array<{ name: string; message: string; code: string | null }> = [];
+        let cause: unknown = result.reason;
+        for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+          causes.push({ name: 'name' in cause ? String(cause.name) : '',
+            message: 'message' in cause ? String(cause.message) : '', code: 'code' in cause ? String(cause.code) : null });
+          if (!('cause' in cause) || cause.cause === cause) break;
+          cause = cause.cause;
+        }
+        return { status: result.status, causes };
+      });
+      console.error('OWNED_FIRST_ORDER_CONCURRENT_ACTUAL', JSON.stringify({ successes, discounts, accounts, outcomes }));
+    }
     assertCondition(exactlyOneDiscounted, "concurrent carts did not select exactly one discount winner");
     assertCondition(accounts[0]?.isFirstOrder === 1, "concurrent winner did not consume qualification");
     return {

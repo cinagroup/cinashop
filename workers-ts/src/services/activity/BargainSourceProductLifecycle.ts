@@ -4,11 +4,12 @@ import { storeProduct } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 
 // A source product can back several bargain activities. Admission readers and
-// product retirement writers share this boundary without holding a product row
-// lock across a participant wait. Checkout owns activity/cart rows before it
-// updates the product row, so FOR SHARE here could create a lock cycle.
-// This covers the two Worker is_del retirement paths; it does not serialize
-// visibility/review edits or replace checkout's final product-row guard.
+// product retirement/visibility writers share this boundary without holding a
+// product row lock across a participant wait. Checkout owns activity/cart rows
+// before it updates the product row, so FOR SHARE here could create a lock cycle.
+// Every Worker source-product visibility/review writer must acquire the
+// exclusive side before any product, SKU, or cart row lock. Direct SQL and
+// legacy PHP writers do not participate in this application lock protocol.
 const BARGAIN_SOURCE_PRODUCT_LIFECYCLE_NAMESPACE = 731_634;
 
 function assertProductId(productId: number): void {
@@ -17,7 +18,7 @@ function assertProductId(productId: number): void {
   }
 }
 
-export async function boundBargainSourceProductRetirement(tx: DbClient): Promise<void> {
+export async function boundBargainSourceProductChange(tx: DbClient): Promise<void> {
   await tx.execute(sql.raw(`SELECT
     pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true),
     pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
@@ -29,7 +30,7 @@ export async function lockBargainSourceProductAdmission(tx: DbClient, productId:
   await tx.execute(sql`SELECT pg_advisory_xact_lock_shared(${BARGAIN_SOURCE_PRODUCT_LIFECYCLE_NAMESPACE}, ${productId})`);
 }
 
-export async function lockBargainSourceProductRetirement(tx: DbClient, productId: number): Promise<void> {
+export async function lockBargainSourceProductChange(tx: DbClient, productId: number): Promise<void> {
   assertProductId(productId);
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${BARGAIN_SOURCE_PRODUCT_LIFECYCLE_NAMESPACE}, ${productId})`);
 }
@@ -40,8 +41,8 @@ export async function lockBargainSourceProductRetirement(tx: DbClient, productId
 export async function retirePlatformSourceProduct(container: Container, productId: number): Promise<void> {
   assertProductId(productId);
   await withTx(container, async tx => {
-    await boundBargainSourceProductRetirement(tx);
-    await lockBargainSourceProductRetirement(tx, productId);
+    await boundBargainSourceProductChange(tx);
+    await lockBargainSourceProductChange(tx, productId);
     await tx.update(storeProduct).set({ isDel: 1 }).where(eq(storeProduct.id, productId));
   });
 }

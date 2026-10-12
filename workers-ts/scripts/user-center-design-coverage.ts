@@ -162,7 +162,7 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
     && manager('merchantOrdersPage').call('$root','controller.read',"'list'",'isMerchantPaged(isMerchantOrder)','filters()')
     && manager('managerInput').in('parseManagerListQuery','status','storeId','isDel')
     && manager('merchantDecoder').in('isMerchantStatistics','current_store_fulfillments_pid_gte_0','unshipped_count')
-    && nav!.rule('/pages/admin/order/index','candidate_covered') && nav!.rule('/pages/admin/orderList/index','partial_replacement')
+    && nav!.rule('/pages/admin/order/index','partial_replacement') && nav!.in('REGISTERED_PAGE_ROUTES', "'/pages/merchant/statistics'") && nav!.rule('/pages/admin/orderList/index','partial_replacement')
     && manager('workerRegistry').in('$root',"'/pages/merchant/statistics'","'/pages/merchant/orders'");
   return {
     adminScreen: screens.filter(path => path === '/setting/user-center-design').length === 1 && r!.in('$root', "path:'setting/user-center-design'", "import('@/pages/setting/UserCenterDesign.vue')", "alias:'/admin/setting/pages/home'") && sidebar!.binding('el-menu-item', 'v-if', "canMenu('/setting/user-center-design')") && a!.in('canView', "auth.uniqueAuth.includes('user_center_design.view')") && a!.call('$root', 'new UserCenterDesignController') && a!.binding('UserCenterDesignPreview', ':value', 'state.draft') && a!.binding('el-button', '@click', 'controller.save()'),

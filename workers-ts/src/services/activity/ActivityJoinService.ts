@@ -421,9 +421,13 @@ export class ActivityJoinService {
       const bargain = bargains[0];
       if (!bargain) throw new NotFoundException("砍价活动不存在");
       if (bargain.productId !== source.productId) throw new ValidateException("砍价关联商品已变化，请重试");
-      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct)
-        .where(and(eq(storeProduct.id, source.productId), eq(storeProduct.isDel, 0))).limit(1);
-      if (!product) throw new NotFoundException("砍价关联商品不存在或已删除");
+      const [product] = await tx.select({
+        isShow: storeProduct.isShow, isDel: storeProduct.isDel, isVerify: storeProduct.isVerify,
+      }).from(storeProduct).where(eq(storeProduct.id, source.productId)).limit(1);
+      if (!product || product.isDel !== 0) throw new NotFoundException("砍价关联商品不存在或已删除");
+      if (product.isShow !== 1 || product.isVerify !== 1) {
+        throw new NotFoundException("砍价关联商品不可见或未审核");
+      }
 
       const existing = await tx
         .select({ id: storeBargainUser.id })
@@ -537,6 +541,7 @@ export class ActivityJoinService {
       )).limit(1),
       this.container.db.select({
         price: storeBargainUser.price,
+        original: storeBargainUser.bargainPrice,
         minimum: storeBargainUser.bargainPriceMin,
       }).from(storeBargainUser).where(and(
         eq(storeBargainUser.bargainId, bargainId),
@@ -549,8 +554,14 @@ export class ActivityJoinService {
     if (bargain.quota <= 0) throw new ValidateException("砍价已结束");
     const participation = participations[0];
     if (!participation) throw new NotFoundException("用户砍价信息未查到");
-    const currentCents = Math.max(0, decimalToCents(bargain.price) - decimalToCents(participation.price));
-    const remainingCents = Math.max(0, currentCents - decimalToCents(participation.minimum));
+    const originalCents = decimalToCents(participation.original);
+    const minimumCents = decimalToCents(participation.minimum);
+    const cutCents = decimalToCents(participation.price);
+    if (minimumCents > originalCents || cutCents > originalCents - minimumCents) {
+      throw new ValidateException("砍价记录金额异常");
+    }
+    const currentCents = originalCents - cutCents;
+    const remainingCents = currentCents - minimumCents;
     return {
       url: await this.routineCode(2, bargainId, uid),
       title: bargain.title,
@@ -617,9 +628,13 @@ export class ActivityJoinService {
       const bargain = bargainRows[0];
       if (!bargain) throw new ValidateException("砍价活动已结束");
       if (bargain.productId !== source.productId) throw new ValidateException("砍价关联商品已变化，请重试");
-      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct)
-        .where(and(eq(storeProduct.id, source.productId), eq(storeProduct.isDel, 0))).limit(1);
-      if (!product) throw new ValidateException("砍价关联商品已删除");
+      const [product] = await tx.select({
+        isShow: storeProduct.isShow, isDel: storeProduct.isDel, isVerify: storeProduct.isVerify,
+      }).from(storeProduct).where(eq(storeProduct.id, source.productId)).limit(1);
+      if (!product || product.isDel !== 0) throw new ValidateException("砍价关联商品已删除");
+      if (product.isShow !== 1 || product.isVerify !== 1) {
+        throw new ValidateException("砍价关联商品不可见或未审核");
+      }
       // Read the database wall clock AFTER the lock wait, not application time
       // or transaction-start NOW(). KEY SHARE must remain compatible with the
       // checkout activity lock; a fresh statement also observes schedule edits.
@@ -666,14 +681,16 @@ export class ActivityJoinService {
       const peopleLimit = Math.max(1, bargain.people);
       if (completedPeople >= peopleLimit) throw new ValidateException("砍价帮助人数已满");
 
-      const participationOriginalCents = decimalToCents(record.bargainPrice);
-      const activityOriginalCents = decimalToCents(bargain.price);
-      // 早期 Worker 曾把 bargain_price 原地减小；活动原价可将这类行恢复为 PHP 快照语义。
-      const originalCents = Math.max(participationOriginalCents, activityOriginalCents);
+      // The participation captured the start price when it was created. An
+      // activity edit affects only future participations; malformed historical
+      // rows require explicit reconciliation instead of guessing a new price.
+      const originalCents = decimalToCents(record.bargainPrice);
       const minimumCents = decimalToCents(record.bargainPriceMin);
       const alreadyCutCents = decimalToCents(record.price);
-      const maximumCutCents = Math.max(0, originalCents - minimumCents);
-      if (alreadyCutCents > maximumCutCents) throw new ValidateException("砍价金额数据异常");
+      if (minimumCents > originalCents || alreadyCutCents > originalCents - minimumCents) {
+        throw new ValidateException("砍价金额数据异常");
+      }
+      const maximumCutCents = originalCents - minimumCents;
       const remainingCents = maximumCutCents - alreadyCutCents;
       if (remainingCents <= 0) throw new ValidateException("已砍到最低价");
       const cutCents = calculateBargainHelpCutCents({
@@ -695,7 +712,6 @@ export class ActivityJoinService {
       await tx
         .update(storeBargainUser)
         .set({
-          bargainPrice: centsToDecimal(originalCents),
           price: centsToDecimal(newAlreadyCutCents),
           status: newAlreadyCutCents >= maximumCutCents ? 3 : 1,
         })
@@ -741,46 +757,52 @@ export class ActivityJoinService {
       .orderBy(desc(storeBargainUserHelp.id))
       .limit(1);
     if (!rows[0]) throw new NotFoundException("砍价记录不存在");
-    const currentCents = decimalToCents(rows[0].bargainPrice) - decimalToCents(rows[0].totalCut);
+    const originalCents = decimalToCents(rows[0].bargainPrice);
+    const minimumCents = decimalToCents(rows[0].bargainPriceMin);
+    const cutCents = decimalToCents(rows[0].totalCut);
+    if (minimumCents > originalCents || cutCents > originalCents - minimumCents) {
+      throw new ValidateException("砍价金额数据异常");
+    }
     return {
       price: rows[0].price ?? "0.00",
-      status: currentCents <= decimalToCents(rows[0].bargainPriceMin),
+      status: originalCents - cutCents === minimumCents,
     };
   }
 
   async bargainHelpCount(uid: number, bargainUserId: number) {
     const records = await this.container.db
-      .select()
+      .select({
+        bargainPrice: storeBargainUser.bargainPrice,
+        bargainPriceMin: storeBargainUser.bargainPriceMin,
+        price: storeBargainUser.price,
+        status: storeBargainUser.status,
+        count: sql<number>`(SELECT COUNT(*)::int FROM ${storeBargainUserHelp}
+          WHERE ${storeBargainUserHelp.bargainUserId} = ${bargainUserId})`,
+        hasOwnHelp: sql<boolean>`EXISTS (SELECT 1 FROM ${storeBargainUserHelp}
+          WHERE ${storeBargainUserHelp.bargainUserId} = ${bargainUserId}
+            AND ${storeBargainUserHelp.uid} = ${uid})`,
+      })
       .from(storeBargainUser)
       .where(and(eq(storeBargainUser.id, bargainUserId), eq(storeBargainUser.isDel, 0)))
       .limit(1);
     const record = records[0];
     if (!record) throw new NotFoundException("砍价记录不存在");
-    const [countRows, ownHelpRows] = await Promise.all([
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(storeBargainUserHelp)
-        .where(eq(storeBargainUserHelp.bargainUserId, bargainUserId)),
-      this.container.db
-        .select({ id: storeBargainUserHelp.id })
-        .from(storeBargainUserHelp)
-        .where(and(
-          eq(storeBargainUserHelp.bargainUserId, bargainUserId),
-          eq(storeBargainUserHelp.uid, uid),
-        ))
-        .limit(1),
-    ]);
+    // One statement gives participation, count and this helper's history the
+    // same READ COMMITTED snapshot, even if a cut commits during this read.
     const originalCents = decimalToCents(record.bargainPrice);
     const minimumCents = decimalToCents(record.bargainPriceMin);
     const alreadyCents = decimalToCents(record.price);
-    const capacityCents = Math.max(0, originalCents - minimumCents);
-    const remainingCents = Math.max(0, capacityCents - alreadyCents);
+    if (minimumCents > originalCents || alreadyCents > originalCents - minimumCents) {
+      throw new ValidateException("砍价金额数据异常");
+    }
+    const capacityCents = originalCents - minimumCents;
+    const remainingCents = capacityCents - alreadyCents;
     const percentage = capacityCents > 0
       ? Math.min(100, Math.floor(alreadyCents * 100 / capacityCents))
       : 100;
     return {
-      userBargainStatus: !ownHelpRows[0],
-      count: countRows[0]?.count ?? 0,
+      userBargainStatus: !record.hasOwnHelp,
+      count: record.count,
       price: centsToDecimal(remainingCents),
       status: record.status,
       alreadyPrice: centsToDecimal(alreadyCents),

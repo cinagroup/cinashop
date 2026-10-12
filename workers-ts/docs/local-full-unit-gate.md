@@ -25,7 +25,33 @@ node scripts/run-local-finance-postgres.mjs --schema-maintenance <trusted-pg16-b
 
 每个私有诊断目录保留 `unit-gate-inputs.json`、原生 `unit-shard-results.json`、`unit-gate-result.json` 和 PostgreSQL 日志。输入范围包括 Worker 源码、测试、脚本、迁移、根配置/锁文件，以及前端源码、CI 配置和根 checklist/Git 策略。明确排除秘密环境文件、依赖安装、缓存/构建目录、外部 PHP checkout 和 Worker docs/audit。前后摘要一致只是约定范围的端点核验，不是整机、依赖或全过程不可变证明。
 
-## 2026-09-21 报告传输与中断诊断增量
+## 2026-09-27 显式生成器子进程诊断候选
+
+新增诊断只覆盖十份测试中十二个显式 Drizzle/PGlite `spawnSync` 调用点：CHECK 状态、列默认值、真实 CLI 生成、NOT VALID、索引顺序、sequence、外部重复索引、外键命名、客服 sequence、缺失约束。CJS/ESM 或 CLI generate/export 可能在同一调用点执行多次，不能把十二个调用点说成十二次实际执行。Vitest 内部 fork、依赖内部进程、进程内 PGlite 实例及其它数据库维护 CLI 尚未纳入本收据。
+
+父级 helper 原样委派 executable、argv、env、options、stdio、原有 30/45/90/150/180 秒期限和返回对象/异常；原业务断言、文件/fd3 报告验证、并发和版本不变。唯一 start JSON 在调用前同步持久化，返回时原子替换；异常退出后未返回的 start 只证明已进入该父级阶段，不能凭它断言内部 SQL 阶段、child RSS 或已获得原生回溯。记录退出 PID/status/signal/固定白名单 errorCode、单调耗时、既有期限和输出字节数，不记录 argv、环境值、SQL/payload、stdout/stderr 内容或完整 Error。未知错误码/信号只记固定 `UNKNOWN`，不把正则形状当脱敏。
+
+资源字段明确分为 parent 和 host；child 资源固定为 `null`。parent 的 memoryUsage/resourceUsage 不是子进程观测，maxRSS 使用 Node API 的 KiB 单位，其它内存字节数以字段名区分。没有子进程 RSS、原生 heap 诊断或内部执行阶段的观测，不能使用父级/主机值替代。
+
+直接本机目标运行可在 `workers-ts` 使用以下工序。每次必须先创建新的 run，旧收据不计入新运行预算，也不作为新结果的证明：
+
+```powershell
+node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts --begin
+node node_modules/vitest/vitest.mjs run --config vitest.config.ts test/native-child-diagnostics.test.ts test/drizzle-audit-report.test.ts --maxWorkers=2 --reporter=verbose --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | Tee-Object unit-shard.log
+node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts
+```
+
+原有本机完整 PostgreSQL runner 的输出仍位于它自己的私有任务目录；本增量没有修改 runner 或把其旧完整门禁称作已包含新诊断审计。上述目标不替代完整 Linux CI/原生目录/真实业务验收。
+
+忽略的 `.cache/native-child-diagnostics` 中每次有独立 run UUID、manifest、start/terminal 收据。单收据最多 16 KiB；当前 run 审计最多 256 次调用、总 8 MiB，预算不包含其它 run。目录/文件不接受 symlink、junction 或硬链接别名；记录、输入和发布文件均有名称/路径/读取大小边界。诊断写入异常保留原子进程返回/异常，并发出仅含固定字段的 unavailable 事件；不能因另一份好收据就把缺失的调用记录算完整。
+
+审计以最终 Vitest JSON 的实际执行文件推导应有的操作；缺模式、缺/过大/损坏记录、尚未返回的 start、写入异常事件、陈旧 run 或输入都拒绝完整证明。即使最终 JSON/log 缺失，也保留可验证的 manifest/已知记录和 `complete=false` 摘要，明确标记预期范围/log 未知，继续退出非零。只有经严格白名单验证的 JSON 可进入 published 目录；未知字段、错误详情或原生 dump 不复制。诊断完整只表示捕获完整，不表示原子进程或原测试通过；原退出/测试/零跳过门禁继续独立生效。
+
+Linux workflow 保留原 unit 命令、两分片、90 分钟帽和完整覆盖门禁，只添加 fresh run、失败时仍执行的诊断审计和 published JSON 的 always 保留。unit artifact 的 `include-hidden-files: true` 仅作用于现有三条显式路径：unit JSON、unit log 和 `.cache/native-child-diagnostics/published-*/*.json`；隐藏目录中只有经过上述严格验证并发布的白名单 JSON 纳入诊断上传。最终 CI 还需实际检查两份 shard ZIP 中的 audit、manifest 和各条记录，配置本身不作为留存成功的证明。平台强制取消、机器终止或文件系统不可用时，`always()` 仍可能没有机会执行；不能保证一定上传，也不能凭 start 当作已拿到 native backtrace。
+
+TEST-005 保持开放：旧 `corrupted size vs. prev_size` 根因和原生回溯仍未取得，本增量不声称修复它、不人工制造 abort、不加 soak 碰绿、不循环重跑或升级 Node/PGlite/Drizzle。后续受控 Linux 诊断应先只读核对 core_pattern、core 限制、磁盘界限和已有 debugger；不能更改全局 sysctl 或调用未知 pipe helper。只有现有 policy 允许时才对自然出现的 core 做私有本地保留与离线分析。Node fatal report 可作为单独审阅的模式配置环境排除，但不能保证捕获 glibc allocator abort，也不能原样上传含参数/身份/内存的数据。raw core/report/env 不自动上传，导出前仅投影已审阅的信号/frame/module/工具版本/hash/大小，缺失或截断如实记 unavailable。[Node24 report API](https://nodejs.org/docs/latest-v24.x/api/process.html#processreportreportonfatalerror)、[环境排除](https://nodejs.org/docs/latest-v24.x/api/process.html#processreportexcludeenv)、[Linux core_pattern](https://docs.kernel.org/admin-guide/sysctl/kernel.html#core-pattern) 提供对应机制说明；本轮没有启用这些采集模式。
+
+## 2026-09-21 报告传输与中断诊断增量（历史）
 
 外键 CJS/ESM 审计现通过独立 fd 3 同步回传有界 JSON，不再依赖退出时仍存在的临时目录；旧文件通道保留供其它审计使用。接收端严格核对子进程退出、PID、单一完整报告、字段形状及网络阻断证据，缺报、截断、重复、超限或子进程失败均拒绝。测试在自有临时目录中复现旧通道的 ENOENT，并证明管道通道不受该目录删除影响。历史目录的实际删除者仍未确定，不把结构性修复说成已找到删除原因。
 

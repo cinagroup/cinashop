@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-10-10T00:52:44.9606372+00:00",
+  "scope": "db009g2-current-app-readonly",
+  "workerName": "cinashop-work-parent-current-audit-08824ecf6df748ec",
+  "stage": "audit-completed",
+  "formalBefore": {
+    "deploymentId": "30cda1dc-61aa-4198-940c-5ed94c917c36",
+    "versionId": "cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2",
+    "traffic": 100,
+    "bindingCount": 31,
+    "bindingSha256": "85dcd3bd1cc2f2a6a836ed9913c2fb5f7f46dd03540894585b75be399cfe36be"
+  },
+  "formalAfter": {
+    "deploymentId": "30cda1dc-61aa-4198-940c-5ed94c917c36",
+    "versionId": "cd10e9cb-b3ad-49b0-8d31-e6b52e69d5e2",
+    "traffic": 100,
+    "bindingCount": 31,
+    "bindingSha256": "85dcd3bd1cc2f2a6a836ed9913c2fb5f7f46dd03540894585b75be399cfe36be"
+  },
+  "formalUnchanged": true,
+  "ownedVersionId": "3b429d43-2eb7-4448-b35a-084d5cc15242",
+  "access": {
+    "anonymous": 403,
+    "wrongMethod": 405,
+    "query": 404,
+    "wrongPath": 404
+  },
+  "diagnostic": {
+    "outcome": "complete",
+    "httpStatus": "200",
+    "cacheControl": "present",
+    "workerStage": "unobserved",
+    "category": "unobserved"
+  },
+  "audit": {
+    "scope": "work-parent-current-app",
+    "identityMatch": true,
+    "ready": true,
+    "checks": {
+      "connectionIdentityVisible": true,
+      "noOwnerControl": true,
+      "noParentRemovalOrTriggerCreation": true,
+      "noReferencedKeyUpdate": true,
+      "noReplicationBypass": true,
+      "noSchemaCreation": true,
+      "noUnreviewedDefinerRoutine": true,
+      "objectsAndKeysPresent": true,
+      "parentReadAccess": true,
+      "unprivilegedReachableRoles": true
+    },
+    "failures": [],
+    "capacity": {
+      "scope": "work-parent-capacity-metadata-only",
+      "identityMatch": true,
+      "catalogMatch": true,
+      "tables": {
+        "work_callback_event": {
+          "estimatedRows": null,
+          "liveRowsEstimate": "0",
+          "modificationsSinceAnalyze": "0",
+          "heapBytes": "0",
+          "indexBytes": "57344",
+          "totalBytes": "65536",
+          "lastAnalyzeMs": null,
+          "lastAutoanalyzeMs": null
+        },
+        "work_client_current": {
+          "estimatedRows": null,
+          "liveRowsEstimate": "0",
+          "modificationsSinceAnalyze": "0",
+          "heapBytes": "0",
+          "indexBytes": "32768",
+          "totalBytes": "40960",
+          "lastAnalyzeMs": null,
+          "lastAutoanalyzeMs": null
+        },
+        "work_contact_action_outbox": {
+          "estimatedRows": null,
+          "liveRowsEstimate": "0",
+          "modificationsSinceAnalyze": "0",
+          "heapBytes": "0",
+          "indexBytes": "65536",
+          "totalBytes": "73728",
+          "lastAnalyzeMs": null,
+          "lastAutoanalyzeMs": null
+        }
+      },
+      "index": {
+        "name": "wcao_client_ref",
+        "exact": true,
+        "estimatedRows": "0",
+        "bytes": "8192"
+      },
+      "statisticsTargets": {
+        "client_id": {
+          "configured": -1,
+          "effective": 100
+        },
+        "corp_id": {
+          "configured": -1,
+          "effective": 100
+        }
+      }
+    }
+  },
+  "cleanup": {
+    "attempted": true,
+    "ownershipVerified": true,
+    "deleted": true,
+    "controlPlane404": true,
+    "public404": true
+  },
+  "ready": true,
+  "failure": null
+}

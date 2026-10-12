@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { auditReleaseProtocols } from '../src/migrations/auditReleaseProtocols';
-import { OFFLINE_CATALOG_VERSIONS } from '../src/migrations/offlineOrderCatalog';
+import { OFFLINE_BARCODE_CATALOG_VERSIONS, OFFLINE_CATALOG_VERSIONS } from '../src/migrations/offlineOrderCatalog';
 import { RELEASE_PRE_INDEX_HASHES } from '../src/migrations/releaseSharedIndexes';
 
 const mocks = vi.hoisted(() => ({ operation: vi.fn(), creation: vi.fn(), pricing: vi.fn(), predecessor: vi.fn() }));
@@ -53,6 +53,14 @@ describe('fixed release protocol read-only inventory', () => {
     expect(result.protocols.offlinePredecessor.every(row => !row.reviewedPreIndexMatches)).toBe(true);
     expect(result.predecessor).not.toHaveProperty('catalog');
     expect(mocks.predecessor).toHaveBeenCalledWith(f.db);
+  });
+  it('recognizes the exact reviewed member index fingerprint in the read-only inventory', async () => {
+    const f = fixture();
+    f.rows[5] = Object.entries(OFFLINE_BARCODE_CATALOG_VERSIONS.fresh)
+      .map(([name, fingerprint]) => ({ name, fingerprint, present: true, owned: true, safe: true }));
+    const result = await auditReleaseProtocols(f.db);
+    expect(result.protocols.offlinePredecessor.every(row => row.fingerprintMatches)).toBe(true);
+    expect(result.ready).toBe(false);
   });
   it.each([undefined, null, 'invalid', 160000.5, 150014, 170000])('rejects an unsupported or malformed server version %s', async version => {
     const f = fixture(); f.rows[1] = [{ read_only: 'on', server_version: version }];

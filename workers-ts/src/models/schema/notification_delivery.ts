@@ -14,7 +14,8 @@ export type OrderNotificationChannel =
   | "sms"
   | "wechat_official"
   | "wechat_routine"
-  | "wechat_shipping";
+  | "wechat_shipping"
+  | "wecom_robot";
 
 export type OrderNotificationDeliveryStatus =
   | "PENDING"
@@ -56,10 +57,17 @@ export interface WechatShippingNotificationPayload {
   path: string;
 }
 
+/** No personal data, rendered template, or webhook credential enters the ledger. */
+export interface WecomRobotNotificationPayload {
+  kind: "wecom_robot";
+  withdrawalId: number;
+}
+
 export type OrderNotificationDeliveryPayload =
   | SmsNotificationPayload
   | WechatTemplateNotificationPayload
-  | WechatShippingNotificationPayload;
+  | WechatShippingNotificationPayload
+  | WecomRobotNotificationPayload;
 
 /**
  * Durable evidence for one provider side effect.

@@ -31,6 +31,8 @@ const auditPath = resolve(repoRoot, process.argv.includes("--customer-cashier-ch
   ? "workers-ts/audit/uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json"
   : process.argv.includes("--customer-cashier-records-followup")
   ? "workers-ts/audit/uniapp-frontend-parity-customer-cashier-records-followup-20261011.json"
+  : process.argv.includes("--release-followup")
+  ? "workers-ts/audit/uniapp-frontend-parity-release-20261006.json"
   : process.argv.includes("--customer-work-writeoff-followup")
   ? "workers-ts/audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json"
   : process.argv.includes("--customer-work-financial-followup")

@@ -4,6 +4,7 @@ export interface CheckoutCartItem {
   productId: number;
   cartNum: number;
   type: number;
+  activityId?: number;
   unique: string;
   isNew: number;
   isValid: boolean;
@@ -61,6 +62,7 @@ export function validateCheckoutItems(value: unknown, ids: readonly number[], is
     if (!ids.includes(row.id) || seen.has(row.id) || row.isNew !== isNew || row.isValid !== true
       || !Number.isSafeInteger(row.productId) || row.productId <= 0 || !Number.isSafeInteger(row.cartNum) || row.cartNum <= 0
       || !Number.isSafeInteger(row.type) || row.type < 0 || typeof row.unique !== "string" || !row.unique.trim()
+      || (row.type === 7 && (row.cartNum !== 1 || !Number.isSafeInteger(row.activityId) || (row.activityId ?? 0) <= 0))
       || !row.productInfo || typeof row.productInfo !== "object" || Array.isArray(row.productInfo)
       || !Number.isSafeInteger(row.productInfo.systemFormId) || row.productInfo.systemFormId < 0
       || !Number.isSafeInteger(row.productInfo.productType) || row.productInfo.productType < 0) throw new Error("结算商品或购买模式已失效");

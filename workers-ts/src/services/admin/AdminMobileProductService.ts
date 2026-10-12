@@ -503,7 +503,10 @@ export class AdminMobileProductService {
     };
   }
 
-  async setShow(body: unknown, actor: ProductEditorActor): Promise<{changed:number;verified:true}> { const input=parseAdminProductShowBody(body); return withTx(this.container,tx=>applyMobileProductShow(tx,input,adminAudit(actor))); }
+  async setShow(body: unknown, actor: ProductEditorActor): Promise<{changed:number;verified:true}> {
+    const input=parseAdminProductShowBody(body);
+    return withTx(this.container,tx=>applyMobileProductShow(tx,input,adminAudit(actor)));
+  }
 
   async labels() {
     const [groups, labels] = await Promise.all([

@@ -1,0 +1,378 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-08T09:21:29.846Z",
+  "baseCommit": "878748815dcfd0c6c9102012fbb3099c9a9b6287",
+  "scope": [
+    "GET /adminapi/file/category/create",
+    "GET /api/admin/file/category/create",
+    "Existing Admin create/:parentId form",
+    "POST /api/admin/file/category alias to existing protected category save"
+  ],
+  "action": "file/category",
+  "creditedUniqueTests": 44,
+  "runs": [
+    {
+      "id": "business03",
+      "exitCode": 0,
+      "passed": 22,
+      "scope": "Final PGlite/JWT/Hono DTO, two API bases and POSTs, scope/permission, real 10000/10001 catalog, unchanged modern 50-char writes/Supplier/edit",
+      "rawEvidence": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-form-business03\\stdout.raw",
+          "bytes": 4254,
+          "sha256": "1bf3aa247809a7aca2eccb02ee9a297b3176f1369f7be1922cf5e4cbf0bbf366"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-form-business03\\stderr.raw",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-form-business03\\actual-exit.txt",
+          "bytes": 1,
+          "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+        }
+      ]
+    },
+    {
+      "id": "native03",
+      "exitCode": 0,
+      "passed": 3,
+      "scope": "Actual PG16 SELECT-only LOGIN, RR READ ONLY, lock waits and committed parent deletion/file-type changes",
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\native03.stdout.txt",
+          "bytes": 1003,
+          "sha256": "5aab11380f7cff6eecd3b04881f16aafd9494fb3ad5c947ed930213e8311d79b"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\native03.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "id": "regression02",
+      "exitCode": 0,
+      "passed": 19,
+      "scope": "Existing attachment storage (12), Admin API snapshot recomputation (5) and PHP parsing (2)",
+      "rawEvidence": [
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\regression02.stdout.txt",
+          "bytes": 272,
+          "sha256": "44a0ff38690b59f93a5c36cee17626b0c3606689dbcb9cc59d6d5976d9907592"
+        },
+        {
+          "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\regression02.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "types": {
+    "unitExitCode": 0,
+    "runtimeExitCode": 0,
+    "heapLimitMb": 8192,
+    "commands": [
+      "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+    ],
+    "rawEvidence": [
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\unit-types02.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\unit-types02.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\runtime-types02.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\runtime-types02.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "consumerUri": {
+    "axiosVersion": "1.20.0",
+    "rows": [
+      {
+        "baseURL": "https://contract.example/adminapi",
+        "previous": "https://contract.example/adminapi/adminapi/file/category",
+        "corrected": "https://contract.example/adminapi/file/category"
+      },
+      {
+        "baseURL": "https://contract.example/api/admin",
+        "previous": "https://contract.example/api/admin/adminapi/file/category",
+        "corrected": "https://contract.example/api/admin/file/category"
+      }
+    ],
+    "scope": "Local URI computation only; actual old default baseURL and request call inspected in PHP frontend. Does not prove browser rendering or old axios0.18 runtime.",
+    "evidence": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\09\\26\\01a0db11-74a0-7cc2-b1f9-ee3b8653056a\\checklist-route-contracts-20261008\\category-create-form\\action-uri-evidence.json",
+      "bytes": 650,
+      "sha256": "981a494de9d0c79e6dc2fb045775b3369c698d748b68018061fbd9c85608106c"
+    },
+    "limitations": "Installed Axios1.20 local computation and inspected old default base/consumer call, not execution of legacy Axios0.18.1 or form-create browser."
+  },
+  "postgres": {
+    "data": "C:/cinagroup/cinashop/.cache/admin-system-implementation-20261008/checkout/.cache/finance-postgres-00DLvq/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 54186,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true,
+    "remainingFixtures": 0,
+    "stopped": true,
+    "statusRecheck": {
+      "exitCode": 3,
+      "output": "pg_ctl: no server running"
+    },
+    "boundary": "Maintenance role owns only new disposable cluster; GET assertions use restricted SELECT-only LOGIN. Save writer peers are explicit test boundary."
+  },
+  "routeAudit": {
+    "before": {
+      "php": 1904,
+      "ts": 2338,
+      "matched": 913,
+      "executableMatched": 892,
+      "unavailable": 21,
+      "missing": 991,
+      "retired": 17,
+      "actionableMissing": 974,
+      "coveragePercent": 48,
+      "executableCoveragePercent": 46.8,
+      "effectiveExecutableCoveragePercent": 47.3
+    },
+    "after": {
+      "php": 1904,
+      "ts": 2341,
+      "matched": 914,
+      "executableMatched": 893,
+      "unavailable": 21,
+      "missing": 990,
+      "retired": 17,
+      "actionableMissing": 973,
+      "coveragePercent": 48,
+      "executableCoveragePercent": 46.9,
+      "effectiveExecutableCoveragePercent": 47.3
+    },
+    "surfaces": [
+      {
+        "surface": "api",
+        "php": 457,
+        "ts": 1275,
+        "executableMatched": 438,
+        "actionableMissing": 11
+      },
+      {
+        "surface": "admin",
+        "php": 1153,
+        "ts": 791,
+        "executableMatched": 233,
+        "actionableMissing": 905
+      },
+      {
+        "surface": "supplier",
+        "php": 182,
+        "ts": 164,
+        "executableMatched": 121,
+        "actionableMissing": 49
+      },
+      {
+        "surface": "kefu",
+        "php": 63,
+        "ts": 70,
+        "executableMatched": 60,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "php": 41,
+        "ts": 41,
+        "executableMatched": 41,
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "php": 8,
+        "ts": 0,
+        "executableMatched": 0,
+        "actionableMissing": 8
+      }
+    ],
+    "beforeSource": "Previous committed original CLI output at baseCommit",
+    "afterExitCode": 0
+  },
+  "adminApiAudit": {
+    "counts": {
+      "callSites": 602,
+      "pathVariants": 633,
+      "registered": 633,
+      "executable": 633,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "exitCode": 0
+  },
+  "earlierAttempts": [
+    {
+      "id": "business01",
+      "exitCode": 1,
+      "passed": 20,
+      "failed": 1,
+      "reason": "Test collector counted constructed but unexecuted menu queries; replaced with root projection observation, no production assertion weakened.",
+      "rawEvidence": [
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-form-business01\\stdout.raw",
+          "bytes": 4113,
+          "sha256": "306fc643958c1e1f8a395a5b9b570a09926b0af55e29f202d83e25e93ae6e4b3"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-form-business01\\stderr.raw",
+          "bytes": 941,
+          "sha256": "525876df2edc9cc54816779ef82e2ab9f24617f15029161b67b6156e7efb9620"
+        },
+        {
+          "file": "C:\\cinagroup\\cinashop\\.cache\\admin-system-implementation-20261008\\admin-category-form-business01\\actual-exit.txt",
+          "bytes": 1,
+          "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+        }
+      ]
+    },
+    {
+      "id": "native01",
+      "exitCode": 1,
+      "testsExecuted": 0,
+      "clusterCreated": false,
+      "reason": "Existing schema-maintenance allowlist rejected ordinary storage suite; ordinary regressions moved to standard unit command without broadening allowlist."
+    },
+    {
+      "id": "business02/native02/types01/regression01",
+      "superseded": true,
+      "reason": "Current URI consumer required relative action and v1 POST alias; prior passing payload not credited as current.",
+      "preservedEvidenceRoot": "C:/Users/cina/.codex/visualizations/2026/09/26/01a0db11-74a0-7cc2-b1f9-ee3b8653056a/checklist-route-contracts-20261008/category-create-form"
+    }
+  ],
+  "checklist": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "checkboxChanges": 0
+  },
+  "sourceInputs": [
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 940547,
+      "sha256": "5d4c96cd12282da9569a4d87101f660ec0be81cf654c7ddec0bda517dc17b724"
+    },
+    {
+      "file": "workers-ts/docs/checklist-route-contract-distribution-20260928.md",
+      "bytes": 105648,
+      "sha256": "7f74e6bae60b74a456135d073c11ad534b52aecd68f399fde85c78a3a6bcff85"
+    },
+    {
+      "file": "workers-ts/docs/admin-category-create-form-contract-20261008.md",
+      "bytes": 22326,
+      "sha256": "9f2aec48ed74302dbaeeeddd19193c27747c29eee2bf3abfadfdb5e2d37efb18"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminAttachmentCategoryCreateFormService.ts",
+      "bytes": 6025,
+      "sha256": "d34ae98bbe3e7903fa4dad19c3360d123061c420a365b17be12d3274ef59e462"
+    },
+    {
+      "file": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "bytes": 14535,
+      "sha256": "6ba0c0435acfd8efc61196d391a4da17cac95a912a83be9713c15f81968c308c"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 92844,
+      "sha256": "789f9f62d9f8c4fcd7f0452191438c6a570f2a6fb65369fb45d77fe37db5a273"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 165188,
+      "sha256": "35beebb44f3218188207eeb7b455b59ec237a5174d8824245fb303821561e2fb"
+    },
+    {
+      "file": "workers-ts/src/services/system/AttachmentService.ts",
+      "bytes": 60222,
+      "sha256": "0f03654d7952c96fa3308f57d431df32c8fb23f97f0ff6efb064dbc4e8d1f241"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 55442,
+      "sha256": "dbb26044463bd0c9c697a5b5f58c96468dbcf31f654fcc33fa4c5e2868e829f6"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-auth.ts",
+      "bytes": 3350,
+      "sha256": "8fe03c83572b53644c04a890cf975851d6831daeb0e944f541666e35a1ec84c4"
+    },
+    {
+      "file": "workers-ts/src/models/schema/attachment.ts",
+      "bytes": 3941,
+      "sha256": "3535f1833936e5c79c8679068b86dabcfee1f7c2688d23b85d95a0ad819eddf9"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 43275,
+      "sha256": "cd1f606152404eb980fd34a6569fddacd95d3948b00b74e91b507312efb3889c"
+    },
+    {
+      "file": "workers-ts/test/admin-attachment-category-create-form.test.ts",
+      "bytes": 18082,
+      "sha256": "7aad5f7783712399c6038cd57995a8807a126aa0b1150cd2d461f01ce2b5e465"
+    },
+    {
+      "file": "workers-ts/test/admin-category-create-form-native.test.ts",
+      "bytes": 12503,
+      "sha256": "48de2da31199a3b833c28408090a8147abc4ef1b579972b59aeb72da114cec69"
+    },
+    {
+      "file": "workers-ts/test/attachment-storage-migration.test.ts",
+      "bytes": 13465,
+      "sha256": "d27d7f4c0a7bf5aa739ddc0cdd79e6b37d2dc17e234a723e25e177416640664d"
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "bytes": 2505,
+      "sha256": "7ae025763dd44b3ce69062c4b9e22f5b0d5eeadd196ead37c20ab5de8ece6251"
+    },
+    {
+      "file": "workers-ts/test/route-parity-audit.test.ts",
+      "bytes": 1435,
+      "sha256": "8fd923adab1b32dbbd70993e93e262db852f1d800908cf7c1a48d54ba622423d"
+    },
+    {
+      "file": "workers-ts/audit/route-distribution-category-create-form-followup-20261008.json",
+      "bytes": 1300261,
+      "sha256": "86ff5eb7d087cc8e55082723db225c9c4dc73f9e7ad16f293ea647cd6aab7129"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-category-create-form-followup-20261008.json",
+      "bytes": 379508,
+      "sha256": "7ff15304e1acbe6e75a9e16cf113b0c2a2f580c793d56c1eee5ad44d8ec08c68"
+    }
+  ],
+  "limitations": [
+    "Read/create-form contract only; full old edit/image/video/tree workflows and unknown write-result recovery remain open.",
+    "Opaque PHP create_form and old form-create browser were not executed; visible rule serialization and consumer semantics reviewed.",
+    "No production provider, new-head Linux CI, public push or deployment credit.",
+    "Failure and superseded logs/data retained; only final unique tests credited."
+  ]
+}

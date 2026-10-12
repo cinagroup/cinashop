@@ -7,12 +7,15 @@ import { createContainerFromDb, type Container } from "@/lib/di";
 import type { AppVariables, Env, OrderMessage } from "@/env";
 import { UserWithdrawalService, normalizeWithdrawalBody, withdrawalPolicy } from "@/services/user/UserWithdrawalService";
 import { extractCash } from "@/controllers/api/v1/UserFinanceController";
+import { adminExtractStatus } from "@/controllers/api/v1/AdminCrudController";
+import { errorHandler } from "@/middleware/error";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
 import { financePostgres } from "./helpers/financePostgres";
 import { capitalFlow, storeOrderOutbox, orderNotificationDelivery, systemMessage } from "@/models/schema";
 import { WITHDRAWAL_EFFECTS_SQL } from "@/migrations/withdrawalEffects";
 import { WITHDRAWAL_APPLICATION_NOTICE_SQL } from "@/migrations/withdrawalApplicationNotice";
+import { outcome, waitForFinanceBlock, withFinancePeers } from "./helpers/financePeers";
 
 let fixture: Awaited<ReturnType<typeof financePostgres>>;
 let container: Container;
@@ -49,6 +52,13 @@ async function state() {
     brokerage: await fixture.db.select().from(userBrokerage).orderBy(userBrokerage.id),
     money: await fixture.db.select().from(userMoney),
     recharge: await fixture.db.select().from(userRecharge),
+  };
+}
+async function stateWithEffects() {
+  return {
+    ...(await state()),
+    capital: await fixture.db.select().from(capitalFlow),
+    outbox: await fixture.db.select().from(storeOrderOutbox),
   };
 }
 async function config(key: string, value: string) {
@@ -179,6 +189,76 @@ describe("API-014 withdrawal money-state and replay scenarios", () => {
     expect(result.brokerage.find((row) => row.uid === 8)?.status).toBe(0);
     await expect(service.review(request.id, 1)).rejects.toThrow("不可改变");
   });
+
+  it.each([
+    { label: "is_del", patch: { isDel: 1 } },
+    { label: "delete_time", patch: { deleteTime: new Date("2026-09-25T00:00:00Z") } },
+    { label: "both deletion fields", patch: { isDel: 1, deleteTime: new Date("2026-09-25T00:00:00Z") } },
+  ])("rejects pending approval and refusal after $label without any financial effect", async ({ patch }) => {
+    const request = await service.apply(7, bank());
+    await fixture.db.update(user).set(patch).where(eq(user.uid, 7));
+    const before = await stateWithEffects();
+    for (const decision of [1, 2, -1]) {
+      await expect(service.review(request.id, decision)).rejects.toThrow("提现用户已注销，需人工核对");
+      expect(await stateWithEffects()).toEqual(before);
+    }
+    // Even an identical application key cannot debit an account after deletion.
+    await expect(service.apply(7, bank())).rejects.toThrow("用户不存在或已被禁用");
+    expect(await stateWithEffects()).toEqual(before);
+  });
+
+  it("keeps an already-final decision replay read-only after account deletion", async () => {
+    const request = await service.apply(7, bank());
+    await service.review(request.id, 2, "人工拒绝");
+    await fixture.db.update(user).set({ isDel: 1, deleteTime: new Date("2026-09-25T00:00:00Z") }).where(eq(user.uid, 7));
+    const before = await stateWithEffects();
+    expect(await service.review(request.id, -1)).toEqual({ id: request.id, replayed: true });
+    expect(await stateWithEffects()).toEqual(before);
+  });
+
+  it("admin review HTTP contract reports deleted pending account as a failure", async () => {
+    const request = await service.apply(7, bank());
+    await fixture.db.update(user).set({ deleteTime: new Date("2026-09-25T00:00:00Z") }).where(eq(user.uid, 7));
+    const before = await stateWithEffects();
+    const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    app.onError(errorHandler);
+    app.use("*", async (c, next) => { c.set("container", container); await next(); });
+    app.post("/admin/extract/status/:id", adminExtractStatus);
+    const response = await app.request(`/admin/extract/status/${request.id}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: 2, fail_msg: "拒绝" }),
+    }, {} as Env);
+    expect(await response.json()).toMatchObject({ status: 400, msg: "提现用户已注销，需人工核对" });
+    expect(await stateWithEffects()).toEqual(before);
+  });
+
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))(
+    "PostgreSQL 16: pending review waits for a deletion row lock, then rolls back before all financial writes",
+    async () => {
+      const request = await service.apply(7, bank());
+      await withFinancePeers(fixture.db, async ([canceller, reviewer]) => {
+        let open = false;
+        let reviewing: Promise<unknown> | undefined;
+        await canceller.exec("BEGIN"); open = true;
+        try {
+          await canceller.db.update(user).set({ isDel: 1, deleteTime: new Date("2026-09-25T00:00:00Z") }).where(eq(user.uid, 7));
+          reviewing = outcome(new UserWithdrawalService(createContainerFromDb(reviewer.db)).review(request.id, 2));
+          await waitForFinanceBlock(fixture.db, reviewer.pid, canceller.pid);
+          await canceller.exec("COMMIT"); open = false;
+          expect(await reviewing).toMatchObject({ ok: false, error: { message: "提现用户已注销，需人工核对" } });
+        } finally {
+          if (open) await canceller.exec("ROLLBACK");
+          if (reviewing) await reviewing;
+        }
+      });
+      const result = await stateWithEffects();
+      expect(result.users[0]).toMatchObject({ isDel: 1, brokeragePrice: "80.00" });
+      expect(result.requests[0]).toMatchObject({ status: 0 });
+      expect(result.brokerage).toHaveLength(1);
+      expect(result.brokerage[0]).toMatchObject({ pm: 0, type: "extract", status: 1 });
+      expect(result.capital).toHaveLength(0);
+      expect(result.outbox).toHaveLength(1); // application notice only, no refusal effect
+    }, 15_000,
+  );
 
   it("requires a matching debit and rejects missing/malformed review decisions", async () => {
     const request = await service.apply(7, bank());

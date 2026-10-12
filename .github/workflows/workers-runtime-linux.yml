@@ -113,9 +113,18 @@ jobs:
       - name: Install locked Supplier dependencies for cross-package unit tests
         run: npm ci --prefix ../view/supplier-ts
 
+      - name: Install locked Kefu dependencies for cross-package unit tests
+        run: npm ci --prefix ../view/kefu-ts
+
+      - name: Install locked Uni dependencies for customer SFC unit tests
+        run: npm ci --prefix ../view/uniapp-ts
+
       - name: Run both TypeScript configurations
         if: matrix.shard == 1
         run: npm run typecheck
+
+      - name: Begin isolated native child diagnostic capture
+        run: node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts --begin
 
       - name: Run Worker unit tests
         shell: bash
@@ -123,14 +132,20 @@ jobs:
           set -o pipefail
           npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=verbose --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log
 
+      - name: Audit native child diagnostics including incomplete failed runs
+        if: ${{ always() }}
+        run: node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts
+
       - name: Preserve unit shard diagnostics even on failure
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: unit-shard-${{ matrix.shard }}-${{ github.sha }}
+          include-hidden-files: true
           path: |
             workers-ts/unit-shard-results.json
             workers-ts/unit-shard.log
+            workers-ts/.cache/native-child-diagnostics/published-*/*.json
           if-no-files-found: error
           retention-days: 7
 
@@ -272,7 +287,7 @@ jobs:
             command: npm test && npm run build
           - name: UniApp
             directory: uniapp-ts
-            command: npm run typecheck && npm run test:toolchain && npm run build:h5 && npm run build:mp-weixin && npm run build:app && npm run test:build-artifacts && npm run test:runtime-i18n
+            command: npm run typecheck && npm run test:toolchain && npm run test:admzip && npm run test:express-qs && npm run test:jest-jsdom-once && npm run test:d3-advisories && npm run build:h5 && npm run build:mp-weixin && npm run build:app && npm run test:build-artifacts && npm run test:automator-qr && npm run test:runtime-i18n
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

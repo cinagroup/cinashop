@@ -205,15 +205,22 @@ test('authorized group member keeps client target through customer, orders, deta
       image: '', stock: 1, price: '8.00', sales: 1 }] };
     throw new Error(`unexpected API ${call.url}`);
   } });
+  // Native navigation disposes the previous page's lifecycle registrations.
+  // Keep the same session, transport and shared stores, but never replay an
+  // unloaded page's OAuth callbacks when the next page is mounted.
+  function nextPage(file) {
+    r.hooks.onUnload();
+    for (const name of Object.keys(r.hooks)) delete r.hooks[name];
+    assert.deepEqual(Object.keys(r.hooks), []);
+    return r.load(path.join(root, 'src/pages/work', file, 'index.vue')).default.setup({}, { expose() {} });
+  }
   try {
     r.uni.redirectTo = ({ url }) => r.navigations.push(url);
     await r.start({ chat_id: 'chat-1' });
     await callbackTo(r, b.location, { chat_id: 'chat-1' });
     await r.checkout.openClient(r.checkout.members.value[0]);
     assert.equal(r.navigations.at(-1), '/pages/work/userInfo/index?userid=external-2');
-    r.hooks.onUnload();
-
-    const user = r.load(path.join(root, 'src/pages/work/userInfo/index.vue')).default.setup({}, { expose() {} });
+    const user = nextPage('userInfo');
     await r.start({ userid: 'external-2' });
     await callbackTo(r, b.location, { userid: 'external-2' });
     assert.equal(user.client.value.external_userid, 'external-2');
@@ -231,26 +238,20 @@ test('authorized group member keeps client target through customer, orders, deta
     navFromUser.go('/pages/work/orderList/index');
     assert.equal(r.navigations.at(-1), '/pages/work/orderList/index?userid=external-2');
     assert.ok(!r.navigations.at(-1).includes('client-secret'));
-    r.hooks.onUnload();
-
-    const orders = r.load(path.join(root, 'src/pages/work/orderList/index.vue')).default.setup({}, { expose() {} });
+    const orders = nextPage('orderList');
     await r.start({ userid: 'external-2' });
     assert.equal(orders.rows.value[0].id, 44, 'group context can open the authorized customer orders');
     orders.open(44);
     assert.equal(r.navigations.at(-1), '/pages/work/orderDetail/index?id=44&userid=external-2');
-    r.hooks.onUnload();
-
-    const detail = r.load(path.join(root, 'src/pages/work/orderDetail/index.vue')).default.setup({}, { expose() {} });
+    const detail = nextPage('orderDetail');
     await r.start({ id: '44', userid: 'external-2' });
     assert.equal(detail.order.value.id, 44);
     detail.back();
     assert.equal(r.navigations.at(-1), '/pages/work/orderList/index?userid=external-2');
-    r.hooks.onUnload();
-
     const navFromOrders = navComponent.setup({ active: 'orders', ready: true, targetHint: 'external-2' }, { expose() {} });
     navFromOrders.go('/pages/work/record/index');
     assert.equal(r.navigations.at(-1), '/pages/work/record/index?userid=external-2');
-    const record = r.load(path.join(root, 'src/pages/work/record/index.vue')).default.setup({}, { expose() {} });
+    const record = nextPage('record');
     await r.start({ userid: 'external-2' });
     assert.equal(record.items.value[0].store_name, '花');
     assert.equal(r.calls.filter(call => call.url === '/api/work/context/challenge').length, 2,

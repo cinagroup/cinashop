@@ -658,17 +658,36 @@ export class AdminNewcomerService {
           .orderBy(asc(storeProductAttrValue.id))
           .for("update")
       : [];
-    const baseByProduct = new Map<number, Map<string, typeof storeProductAttrValue.$inferSelect>>();
+    const baseCandidatesByProduct = new Map<number, Map<string, (typeof storeProductAttrValue.$inferSelect)[]>>();
+    const baseSukCountsByProduct = new Map<number, Map<string, number>>();
     for (const sku of baseSkus) {
-      const byUnique = baseByProduct.get(sku.productId) ?? new Map();
-      byUnique.set(sku.unique, sku);
-      baseByProduct.set(sku.productId, byUnique);
+      const byUnique = baseCandidatesByProduct.get(sku.productId) ?? new Map();
+      const matches = byUnique.get(sku.unique) ?? [];
+      matches.push(sku);
+      byUnique.set(sku.unique, matches);
+      baseCandidatesByProduct.set(sku.productId, byUnique);
+      const bySuk = baseSukCountsByProduct.get(sku.productId) ?? new Map<string, number>();
+      bySuk.set(sku.suk, (bySuk.get(sku.suk) ?? 0) + 1);
+      baseSukCountsByProduct.set(sku.productId, bySuk);
     }
+    const baseByProduct = new Map<number, Map<string, typeof storeProductAttrValue.$inferSelect>>();
     for (const requested of products) {
-      const byUnique = baseByProduct.get(requested.productId);
-      if (!byUnique || requested.skus.some((sku) => !byUnique.has(sku.unique))) {
-        throw new ValidateException("新人专享规格已变更，请重新选择商品");
+      const candidates = baseCandidatesByProduct.get(requested.productId);
+      const selected = new Map<string, typeof storeProductAttrValue.$inferSelect>();
+      const selectedSuks = new Set<string>();
+      for (const requestedSku of requested.skus) {
+        const matches = candidates?.get(requestedSku.unique) ?? [];
+        if (matches.length !== 1) {
+          throw new ValidateException("新人专享基础规格标识无效或重复，请重新选择商品");
+        }
+        const base = matches[0];
+        if (selectedSuks.has(base.suk) || baseSukCountsByProduct.get(requested.productId)?.get(base.suk) !== 1) {
+          throw new ValidateException("新人专享基础规格名称重复，请重新选择商品");
+        }
+        selected.set(requestedSku.unique, base);
+        selectedSuks.add(base.suk);
       }
+      baseByProduct.set(requested.productId, selected);
     }
 
     const existingRows = await tx
@@ -736,9 +755,14 @@ export class AdminNewcomerService {
         eq(storeProductAttrValue.productId, newcomer.id),
       ));
       const rows = [];
+      const selectedActivityUniques = new Set<string>();
       for (const requestedSku of requested.skus) {
         const base = baseByProduct.get(requested.productId)!.get(requestedSku.unique)!;
         const unique = oldUniqueBySuk.get(base.suk) || await freshSkuUnique(tx, reserved);
+        if (selectedActivityUniques.has(unique)) {
+          throw new ValidateException("新人专享历史活动规格标识重复，请先核查配置");
+        }
+        selectedActivityUniques.add(unique);
         rows.push(cloneActivitySku(base, newcomer.id, unique, requestedSku.price));
       }
       await tx.insert(storeProductAttrValue).values(rows);

@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { boundBargainSourceProductChange, lockBargainSourceProductChange } from "@/services/activity/BargainSourceProductLifecycle";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 import {
   outProductWriteReplay,
@@ -389,6 +390,10 @@ export class OutProductService {
       if (replay) {
         return { id: replay.productId, idempotent: true, stock_preserved: productId > 0 };
       }
+      if (productId > 0) {
+        await boundBargainSourceProductChange(tx);
+        await lockBargainSourceProductChange(tx, productId);
+      }
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_SAVE_LOCK_NAMESPACE}, 0)`);
       await tx.execute(sql`LOCK TABLE "store_product_category" IN SHARE ROW EXCLUSIVE MODE`);
       const categories = await this.categories(tx, input.cateIds);
@@ -687,6 +692,8 @@ export class OutProductService {
     return withTx(this.container, async (tx) => {
       const replay = await replayResult(tx, account.id, "product_show", key, hash);
       if (replay) return { id: replay.productId, is_show: isShow, idempotent: true };
+      await boundBargainSourceProductChange(tx);
+      await lockBargainSourceProductChange(tx, productId);
       const product = (
         await inventoryLock(() => tx
           .select({ id: storeProduct.id, isShow: storeProduct.isShow, price: storeProduct.price })

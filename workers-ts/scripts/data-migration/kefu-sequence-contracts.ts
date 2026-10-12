@@ -22,9 +22,9 @@ export function assertKefuSequenceAligned(catalog: Catalog, manifest: { entries:
     throw new Error("Duplicate kefu sequence ownership alias");
 }
 
-/** Current catalog: 223 serial columns + four identities + the explicit kefu sequence.
+/** Current catalog: 226 serial columns + four identities + the explicit kefu sequence.
  * Historical reconciliation manifests retain their original cohorts. */
-export const CURRENT_SEQUENCE_CATALOG_COUNT = 228;
+export const CURRENT_SEQUENCE_CATALOG_COUNT = 231;
 /** Compare every current named sequence and raw field; never normalize away a difference. */
 export function assertAllSequencesAligned(reference: Catalog, candidate: Catalog) {
   for (const catalog of [reference, candidate]) {

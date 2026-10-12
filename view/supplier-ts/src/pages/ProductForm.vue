@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ArrowLeft, Delete, Plus } from "@element-plus/icons-vue";
@@ -10,9 +10,14 @@ import {
   restoreProductSkus,
   retireProductSkus,
   saveProduct,
+  previewMode,
 } from "@/api/supplier";
 import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku } from "@/types";
 import ShippingTemplatePicker from '@/components/ShippingTemplatePicker.vue';
+import ProductImagePicker from '@/components/ProductImagePicker.vue';
+import type { SupplierAttachment } from '@/api/attachments';
+import { escapeProductText, formatProductDescription, productDescriptionPreview, productImagePreview, type ProductMediaPreview } from '@/utils/productMedia';
+import { createSupplierSessionScope } from '@/utils/supplierSession';
 import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
@@ -30,6 +35,25 @@ const selectedRetiredSkuIds = ref<number[]>([]);
 const categories = ref<ProductCategory[]>([]);
 const ruleTemplates = ref<ProductRuleTemplate[]>([]);
 const selectedRuleId = ref<number | null>(null);
+const mediaPickerOpen = ref(false), mediaGeneration = ref(0), showDescriptionPreview = ref(false);
+const mediaTarget = ref<{ kind: 'slider' | 'sku' | 'sku-batch' | 'description'; sku?: ProductSku; skus?: ProductSku[] } | null>(null);
+const mediaPreviews = ref<Record<string, ProductMediaPreview>>({});
+const failedPreviewSources = ref(new Set<string>());
+const mediaReading = ref(false), mediaInvalidated = ref(false);
+const mediaContext = computed(() => `${productId.value}:${mediaGeneration.value}`);
+const mediaLimit = computed(() => mediaTarget.value?.kind === 'slider' ? 20 - form.slider_image.filter(item => item.trim()).length : mediaTarget.value?.kind === 'description' ? 20 : 1);
+const canChooseMedia = computed(() => canManageProducts.value && auth.can('supplier.attachment.view') && Number.isSafeInteger(auth.user?.supplier_id) && Number(auth.user?.supplier_id) > 0 && !mediaInvalidated.value);
+const descriptionInput = ref<{ textarea?: HTMLTextAreaElement }>();
+const descriptionCursor = ref({ start: 0, end: 0 });
+let mediaReadGeneration = 0, formReadGeneration = 0, formSaveGeneration = 0, skuActionGeneration = 0;
+const mediaSession = createSupplierSessionScope(() => {
+  mediaInvalidated.value = true; mediaPickerOpen.value = false; mediaTarget.value = null;
+  mediaPreviews.value = {}; showDescriptionPreview.value = false; mediaReadGeneration += 1;
+  failedPreviewSources.value = new Set(); skuActionGeneration += 1; skuActionLoading.value = false; mediaReading.value = false;
+  formReadGeneration += 1; formSaveGeneration += 1; resetProductForm(); saving.value = false;
+  categories.value = []; ruleTemplates.value = []; retiredAttrs.value = []; selectedActiveSkuIds.value = []; selectedRetiredSkuIds.value = []; selectedRuleId.value = null; loading.value = false;
+}, previewMode);
+onBeforeUnmount(() => { mediaReadGeneration += 1; formReadGeneration += 1; formSaveGeneration += 1; skuActionGeneration += 1; mediaSession.dispose(); });
 
 function blankSku(detail: Record<string, string>, previous?: ProductSku): ProductSku {
   const suk = Object.values(detail).join(",");
@@ -72,16 +96,13 @@ function selectRetiredSkus(rows: ProductSku[]) {
   selectedRetiredSkuIds.value = rows.flatMap((row) => row.id ? [row.id] : []);
 }
 
-async function reloadSkuState() {
-  const detail = await getProductDetail(productId.value);
-  applyProductDetail(detail);
-  selectedActiveSkuIds.value = [];
-  selectedRetiredSkuIds.value = [];
-}
-
 async function changeSkuLifecycle(action: "retire" | "restore") {
-  const skuIds = action === "retire" ? selectedActiveSkuIds.value : selectedRetiredSkuIds.value;
+  if (!editing.value || !canManageProducts.value || !mediaSession.isCurrent() || loading.value || saving.value || skuActionLoading.value) return;
+  const id = productId.value, generation = ++skuActionGeneration;
+  const skuIds = [...(action === "retire" ? selectedActiveSkuIds.value : selectedRetiredSkuIds.value)];
   if (!skuIds.length) return ElMessage.warning("请选择历史SKU");
+  const current = () => generation === skuActionGeneration && mediaSession.isCurrent() && productId.value === id;
+  skuActionLoading.value = true;
   try {
     const { value } = await ElMessageBox.prompt(
       action === "retire"
@@ -98,18 +119,21 @@ async function changeSkuLifecycle(action: "retire" | "restore") {
         },
       },
     );
-    skuActionLoading.value = true;
+    if (!current()) return;
     const result = action === "retire"
-      ? await retireProductSkus(productId.value, skuIds, value.trim())
-      : await restoreProductSkus(productId.value, skuIds, value.trim());
+      ? await retireProductSkus(id, skuIds, value.trim())
+      : await restoreProductSkus(id, skuIds, value.trim());
+    if (!current()) return;
     if (!result.verified) throw new Error("SKU状态数据库回读未通过");
-    await reloadSkuState();
+    const detail = await getProductDetail(id);
+    if (!current()) return;
+    applyProductDetail(detail); selectedActiveSkuIds.value = []; selectedRetiredSkuIds.value = [];
     ElMessage.success(action === "retire" ? `已退役 ${result.changed} 个SKU` : `已恢复 ${result.changed} 个SKU`);
   } catch (error) {
     if (error === "cancel" || error === "close") return;
-    ElMessage.error(error instanceof Error ? error.message : "SKU状态操作失败");
+    if (current()) ElMessage.error(error instanceof Error ? error.message : "SKU状态操作失败");
   } finally {
-    skuActionLoading.value = false;
+    if (generation === skuActionGeneration) skuActionLoading.value = false;
   }
 }
 
@@ -143,6 +167,10 @@ function initialForm(): ProductDetail {
 }
 
 const form = reactive<ProductDetail>(initialForm());
+function resetProductForm() {
+  for (const key of Object.keys(form)) Reflect.deleteProperty(form, key);
+  Object.assign(form, initialForm());
+}
 const isCardProduct = computed(() => form.product_type === 1);
 const isManualVirtualProduct = computed(() => form.product_type === 3);
 const isPhysicalProduct = computed(() => form.product_type === 0);
@@ -158,9 +186,87 @@ function editableSku(sku: ProductSku): ProductSku {
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  invalidateMediaTarget();
   Object.assign(form, { ...detail, attrs: detail.attrs.map(editableSku) });
   retiredAttrs.value = (detail.retired_attrs ?? []).map(editableSku);
+  mediaPreviews.value = detail.media?.version === 1 ? detail.media.previews : {};
+  failedPreviewSources.value = new Set();
 }
+
+function invalidateMediaTarget() {
+  mediaPickerOpen.value = false; mediaTarget.value = null; mediaGeneration.value += 1; mediaReadGeneration += 1; mediaReading.value = false;
+}
+function openMedia(kind: 'slider' | 'sku' | 'sku-batch' | 'description', sku?: ProductSku) {
+  if (!canChooseMedia.value || !mediaSession.isCurrent() || loading.value || saving.value) return;
+  if (kind === 'slider' && form.slider_image.filter(item => item.trim()).length >= 20) return void ElMessage.warning('轮播图不能超过20张');
+  if (kind === 'sku' && (!sku || !form.attrs.includes(sku))) return;
+  const skus = kind === 'sku-batch' ? form.attrs.filter(item => selectedActiveSkuIds.value.includes(item.id ?? 0)) : undefined;
+  if (kind === 'sku-batch' && !skus?.length) return void ElMessage.warning('请选择需要设置图片的SKU');
+  mediaGeneration.value += 1; mediaTarget.value = { kind, sku, skus }; mediaPickerOpen.value = true;
+}
+function receiveMedia(images: SupplierAttachment[], contextKey = mediaContext.value) {
+  const target = mediaTarget.value;
+  if (!mediaPickerOpen.value || contextKey !== mediaContext.value || !target || !canChooseMedia.value || !mediaSession.isCurrent() || loading.value || saving.value || !images.length || images.length > mediaLimit.value) return;
+  if (target.kind === 'sku' && !form.attrs.includes(target.sku!)) return;
+  if (target.kind === 'sku-batch' && target.skus?.some(sku => !form.attrs.includes(sku))) return;
+  const previews = { ...mediaPreviews.value };
+  for (const image of images) {
+    const expires = image.previewUrl.startsWith('/api/assets/') ? Number(new URL(image.previewUrl, 'https://supplier.invalid').searchParams.get('expires')) : null;
+    previews[image.canonicalUrl] = { status: 'ready', src: image.previewUrl, expires_at: expires };
+  }
+  mediaPreviews.value = previews;
+  if (target.kind === 'slider') form.slider_image = [...form.slider_image.filter(item => item.trim()), ...images.map(image => image.canonicalUrl)];
+  else if (target.kind === 'sku') target.sku!.image = images[0].canonicalUrl;
+  else if (target.kind === 'sku-batch') for (const sku of target.skus!) sku.image = images[0].canonicalUrl;
+  else {
+    const text = /<[a-z][^>]*>/i.test(form.description) ? form.description : escapeProductText(form.description).replaceAll('\n', '<br>');
+    const insertion = images.map(image => `<p><img src="${escapeProductText(image.canonicalUrl)}" alt="${escapeProductText(image.name)}"></p>`).join('');
+    if (text.length + insertion.length > 200000) return void ElMessage.warning('商品详情不能超过200000个字符');
+    form.description = text + insertion; showDescriptionPreview.value = true;
+  }
+  mediaPickerOpen.value = false; mediaTarget.value = null;
+}
+function moveSlider(index: number, direction: -1 | 1) {
+  if (loading.value || saving.value || index + direction < 0 || index + direction >= form.slider_image.length) return;
+  const images = [...form.slider_image]; [images[index], images[index + direction]] = [images[index + direction], images[index]]; form.slider_image = images;
+}
+function captureDescriptionCursor() {
+  const textarea = descriptionInput.value?.textarea;
+  if (textarea) descriptionCursor.value = { start: textarea.selectionStart, end: textarea.selectionEnd };
+}
+function formatDescription(tag: 'p' | 'strong' | 'em' | 'ul') {
+  if (!canManageProducts.value || !mediaSession.isCurrent() || saving.value || loading.value) return;
+  const next = formatProductDescription(form.description, descriptionCursor.value, tag);
+  if (next.length <= 200000) { form.description = next; showDescriptionPreview.value = true; }
+}
+const descriptionPreview = computed(() => productDescriptionPreview(form.description, mediaPreviews.value));
+function previewImage(reference: string) {
+  const src = productImagePreview(reference, mediaPreviews.value);
+  return src && !failedPreviewSources.value.has(src) ? src : null;
+}
+function imagePreviewFailed(event: Event) {
+  if (mediaInvalidated.value || !mediaSession.isCurrent()) return;
+  const src = (event.currentTarget as HTMLImageElement | null)?.getAttribute('src');
+  if (src) failedPreviewSources.value = new Set([...failedPreviewSources.value, src]);
+}
+async function refreshMediaPreview() {
+  if (!editing.value || mediaReading.value || !mediaSession.isCurrent()) return;
+  const generation = ++mediaReadGeneration, context = mediaContext.value, id = productId.value;
+  mediaReading.value = true;
+  try {
+    const detail = await getProductDetail(id);
+    if (generation === mediaReadGeneration && context === mediaContext.value && mediaSession.isCurrent() && detail.media?.version === 1) {
+      mediaPreviews.value = { ...mediaPreviews.value, ...detail.media.previews }; failedPreviewSources.value = new Set();
+    }
+  } catch { if (generation === mediaReadGeneration && mediaSession.isCurrent()) ElMessage.error('未能重读图片预览，当前商品编辑保持不变'); }
+  finally { if (generation === mediaReadGeneration) mediaReading.value = false; }
+}
+watch(productId, () => {
+  skuActionGeneration += 1; skuActionLoading.value = false; formSaveGeneration += 1; saving.value = false;
+  selectedActiveSkuIds.value = []; selectedRetiredSkuIds.value = []; retiredAttrs.value = []; failedPreviewSources.value = new Set();
+  invalidateMediaTarget(); mediaPreviews.value = {}; resetProductForm();
+  void load();
+});
 
 function cardBackedSku(sku: ProductSku) {
   return isCardProduct.value && sku.delivery_mode !== "fixed";
@@ -187,6 +293,7 @@ function cartesian(dimensions: ProductDimension[]) {
 }
 
 function regenerateSkus(showMessage = true) {
+  invalidateMediaTarget();
   if (form.spec_type === 0) {
     const previous = form.attrs.find((item) => item.suk === "默认") ?? form.attrs[0];
     form.items = [{ value: "规格", detail: ["默认"] }];
@@ -271,6 +378,8 @@ function removeDimension(index: number) {
 }
 
 async function applyProductRule() {
+  if (!canManageProducts.value || !mediaSession.isCurrent() || loading.value || saving.value) return;
+  const generation = formReadGeneration, id = productId.value;
   const template = ruleTemplates.value.find((item) => item.id === selectedRuleId.value);
   if (!template) return ElMessage.warning("请选择规格模板");
   try {
@@ -279,6 +388,7 @@ async function applyProductRule() {
       "套用规格模板",
       { type: "warning", confirmButtonText: "确认套用", cancelButtonText: "取消" },
     );
+    if (generation !== formReadGeneration || id !== productId.value || !mediaSession.isCurrent()) return;
     form.spec_type = 1;
     form.items = template.spec.map((dimension) => ({ value: dimension.value, detail: [...dimension.detail] }));
     form.attrs = [];
@@ -323,42 +433,51 @@ function validateForm() {
 }
 
 async function submit() {
+  if (saving.value || loading.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value) return;
   const validation = validateForm();
   if (validation) return ElMessage.warning(validation);
   saving.value = true;
+  invalidateMediaTarget();
+  const generation = ++formSaveGeneration, id = editing.value ? productId.value : 0;
   try {
     form.slider_image = form.slider_image.map((item) => item.trim()).filter(Boolean);
     const attrs = form.attrs.map(({ delivery_mode, original_disk_info, ...sku }) => ({
       ...sku,
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
-    const result = await saveProduct(editing.value ? productId.value : 0, { ...form, attrs });
+    const { media: _preview, ...editableForm } = form;
+    const result = await saveProduct(id, { ...editableForm, attrs });
+    if (generation !== formSaveGeneration || !mediaSession.isCurrent() || productId.value !== id && id !== 0) return;
     ElMessage.success(`商品 #${result.id} 已保存并进入待审核状态`);
     await router.push(form.product_type === 1 ? `/products/${result.id}/virtual-inventory` : "/products");
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "商品保存失败");
+    if (generation === formSaveGeneration && mediaSession.isCurrent()) ElMessage.error(error instanceof Error ? error.message : "商品保存失败");
   } finally {
-    saving.value = false;
+    if (generation === formSaveGeneration) saving.value = false;
   }
 }
 
 async function load() {
+  if (!mediaSession.isCurrent()) return;
+  const generation = ++formReadGeneration, id = productId.value;
   loading.value = true;
   try {
     const [categoryRows, productRuleRows] = await Promise.all([
       getProductCategories(),
       getProductRuleTemplates(),
     ]);
+    if (generation !== formReadGeneration || !mediaSession.isCurrent() || id !== productId.value) return;
     categories.value = categoryRows;
     ruleTemplates.value = productRuleRows;
-    if (editing.value) {
-      const detail = await getProductDetail(productId.value);
+    if (Number.isSafeInteger(id) && id > 0) {
+      const detail = await getProductDetail(id);
+      if (generation !== formReadGeneration || !mediaSession.isCurrent() || id !== productId.value) return;
       applyProductDetail(detail);
     }
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
+    if (generation === formReadGeneration && mediaSession.isCurrent()) ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
   } finally {
-    loading.value = false;
+    if (generation === formReadGeneration) loading.value = false;
   }
 }
 
@@ -367,6 +486,7 @@ onMounted(load);
 
 <template>
   <section v-loading="loading" class="page-section product-form-page">
+    <el-alert v-if="mediaInvalidated" title="登录身份或权限已改变，请重新进入商品页" type="warning" :closable="false" />
     <header class="page-heading product-form-heading">
       <div class="heading-with-back">
         <el-button circle plain :icon="ArrowLeft" aria-label="返回商品列表" @click="router.push('/products')" />
@@ -410,11 +530,13 @@ onMounted(load);
         </article>
 
         <article class="surface product-form-card">
-          <header class="card-heading-row"><div><h2>轮播图片</h2><p>填写可公开访问的 HTTPS 图片地址，第一张作为商品主图</p></div><el-button :icon="Plus" @click="addSlider">添加图片</el-button></header>
+          <header class="card-heading-row"><div><h2>轮播图片</h2><p>第一张作为商品主图；最多20张，可从素材选择或填写 HTTPS 地址</p></div><div class="media-actions"><el-button v-if="canChooseMedia" :disabled="loading || saving" @click="openMedia('slider')">从素材选择</el-button><el-button :icon="Plus" @click="addSlider">添加图片地址</el-button><el-button v-if="editing" :loading="mediaReading" @click="refreshMediaPreview">重读已保存图片预览</el-button></div></header>
           <div class="slider-editor">
             <div v-for="(image, index) in form.slider_image" :key="index" class="slider-row">
-              <div class="slider-preview"><img v-if="image" :src="image" alt="商品预览" /><span v-else>{{ index + 1 }}</span></div>
+              <div class="slider-preview"><img v-if="previewImage(image)" :src="previewImage(image)!" alt="商品预览" referrerpolicy="no-referrer" @error="imagePreviewFailed" /><span v-else>{{ image ? '预览不可用' : index + 1 }}</span></div>
               <el-input v-model="form.slider_image[index]" placeholder="https://..." />
+              <el-button text :disabled="index === 0 || saving" :aria-label="`前移图片 ${index + 1}`" @click="moveSlider(index, -1)">↑</el-button>
+              <el-button text :disabled="index === form.slider_image.length - 1 || saving" :aria-label="`后移图片 ${index + 1}`" @click="moveSlider(index, 1)">↓</el-button>
               <el-button text type="danger" :icon="Delete" aria-label="删除图片" @click="removeSlider(index)" />
             </div>
           </div>
@@ -423,6 +545,7 @@ onMounted(load);
         <article class="surface product-form-card">
           <header class="card-heading-row">
             <div><h2>规格与 SKU</h2><p>{{ isCardProduct ? "每个SKU独立选择一次性卡密或固定内容；卡密库存只能从库存页导入" : "价格、结算价和库存均以 SKU 为准" }}；历史SKU只能通过受控操作退役或恢复</p></div>
+            <el-button v-if="canChooseMedia && editing" :disabled="!selectedActiveSkuIds.length || loading || saving" @click="openMedia('sku-batch')">给选中SKU设置图片</el-button>
             <el-button
               v-if="editing && canManageProducts"
               type="danger"
@@ -460,6 +583,7 @@ onMounted(load);
             <el-table :data="form.attrs" row-key="suk" empty-text="请先生成SKU" class="sku-table" @selection-change="selectActiveSkus">
               <el-table-column v-if="editing" type="selection" width="48" :selectable="selectableHistoricalSku" />
               <el-table-column prop="suk" label="规格组合" fixed min-width="145" />
+              <el-table-column label="SKU图片" width="175"><template #default="scope"><div class="sku-image"><img v-if="previewImage(scope.row.image)" :src="previewImage(scope.row.image)!" alt="SKU预览" referrerpolicy="no-referrer" @error="imagePreviewFailed" /><span v-else>{{ scope.row.image ? '预览不可用' : '暂无预览' }}</span></div><el-button v-if="canChooseMedia" :disabled="loading || saving" @click="openMedia('sku', scope.row)">选择图片</el-button><el-button v-if="scope.row.image" text :disabled="saving" @click="scope.row.image = ''">清除</el-button></template></el-table-column>
               <el-table-column v-if="isCardProduct" label="交付方式" width="170">
                 <template #default="scope">
                   <el-select :model-value="scope.row.delivery_mode" @change="changeSkuDeliveryMode(scope.row, $event)">
@@ -519,8 +643,10 @@ onMounted(load);
         </article>
 
         <article class="surface product-form-card">
-          <header><h2>商品详情</h2><p>当前使用安全的纯文本详情；可填写退换货、材质和使用说明</p></header>
-          <el-input v-model="form.description" type="textarea" :rows="10" maxlength="200000" show-word-limit placeholder="填写商品详细说明" />
+          <header><h2>商品详情</h2><p>可填写文字或 HTML；预览只显示允许的格式和图片</p></header>
+          <div class="media-actions"><el-button @click="formatDescription('p')">段落</el-button><el-button @click="formatDescription('strong')">加粗</el-button><el-button @click="formatDescription('em')">强调</el-button><el-button @click="formatDescription('ul')">列表</el-button><el-button v-if="canChooseMedia" :disabled="loading || saving" @click="openMedia('description')">插入素材图片</el-button><el-button @click="showDescriptionPreview = !showDescriptionPreview">{{ showDescriptionPreview ? '收起预览' : '预览详情' }}</el-button></div>
+          <el-input ref="descriptionInput" v-model="form.description" type="textarea" :rows="10" maxlength="200000" show-word-limit placeholder="填写商品详细说明" @click="captureDescriptionCursor" @keyup="captureDescriptionCursor" @input="captureDescriptionCursor" />
+          <div v-if="showDescriptionPreview && !mediaInvalidated" class="description-preview" aria-label="安全商品详情预览" v-html="descriptionPreview" />
         </article>
       </main>
 
@@ -568,5 +694,19 @@ onMounted(load);
     </div>
 
     <footer class="product-form-footer"><span>{{ isCardProduct ? "保存后将进入卡密库存页；一次性卡密不会通过此表单传输。" : "保存会重置为待审核并下架，避免未审核改动直接对外销售。" }}</span><div><el-button @click="router.push('/products')">取消</el-button><el-button type="primary" :loading="saving" @click="submit">保存并提交审核</el-button></div></footer>
+    <ProductImagePicker v-if="mediaPickerOpen && canChooseMedia" :key="mediaContext" v-model="mediaPickerOpen" :supplier-id="auth.user!.supplier_id" :context-key="mediaContext" :limit="mediaLimit" @selected="receiveMedia" />
   </section>
 </template>
+
+<style scoped>
+.card-heading-row { flex-wrap: wrap; }
+.card-heading-row > .el-button, .media-actions > .el-button { margin-left: 0; }
+.media-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.slider-row { flex-wrap: wrap; }
+.slider-row .el-input { flex: 1; min-width: 160px; }
+.sku-image { height: 64px; display: flex; align-items: center; justify-content: center; background: var(--el-fill-color-light); margin-bottom: 4px; }
+.sku-image img { height: 100%; max-width: 100%; object-fit: contain; }
+.description-preview { margin-top: 12px; padding: 12px; border: 1px solid var(--el-border-color); overflow-wrap: anywhere; }
+.description-preview :deep(img) { max-width: 100%; height: auto; }
+.description-preview :deep(table) { max-width: 100%; }
+</style>

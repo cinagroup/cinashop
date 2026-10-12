@@ -1,4 +1,6 @@
 import { createRequire } from "node:module";
+import { assertRegisteredModelCohort } from './helpers/registeredCatalogCohort';
+import { createHash } from 'node:crypto';
 import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { sql, type SQL } from "drizzle-orm";
@@ -76,10 +78,36 @@ describe("standalone sequence transaction execution boundary", () => {
       ALTER SEQUENCE public.kefu_visitor_uid_seq AS bigint MINVALUE 1 MAXVALUE 2147483647 CACHE 1;`);
   });
 
-  it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
-    // The complete current ORM includes seven more statements than the prior
-    // 1156-statement baseline; the audit executes every generated statement.
-    expect(fullPath.initialStatements).toBe(1163);
+  it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", async () => {
+    // The complete current ORM includes the two active seckill identity indexes;
+    // the audit executes every generated statement, including their exact DDL.
+    const snapshot=api.generateDrizzleJson(models);assertRegisteredModelCohort(snapshot);
+    // Removing current tables cannot recreate the historical full model: the
+    // current cohort also includes coupon-template tables and reviewed shared
+    // columns/CHECKs. The original 1166 basis and its failed projection remain
+    // release evidence; this path executes the complete current model with only
+    // the independently pinned previous kefu sequence substituted by the audit.
+    // The original nine-path audit measured the complete 1191 current DDL
+    // statements, raw SHA 913f34ec0abf6fe311243a3f0b824ed41241968bbea450fd95ffda18bf52a4df.
+    // Node's namespace key order and Vitest's source export order produce
+    // different statement order (CI raw SHA a1ef244d08ba39c536acff3081267fa29fa8c909c420f513daa91a96344861f2).
+    // Independent full raw batches were proven identical as complete string
+    // multisets. Sort a copy by UTF-16 code units for this fixed digest only:
+    // no filtering, deduplication or text normalization; execution stays in
+    // the generator's original order. Every missing, extra or changed DDL fails.
+    const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
+    expect(createHash('sha256').update(JSON.stringify([...currentStatements].sort()),'utf8').digest('hex'))
+      .toBe('446204483beeaac88d9f77ea90d5bd294a885fb24668e05b4ae6cf37c00ff400');
+    expect(currentStatements).toHaveLength(1191);
+    // The independently pinned previous sequence has no owning-column ALTER;
+    // that real predecessor stage has 1190 statements, then the guarded upgrade.
+    expect(fullPath.initialStatements).toBe(1190);
+    expect(fullPath.generatedProposalStatements).toBe(2);
+    const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
+    expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([
+      `CREATE UNIQUE INDEX "spav_seckill_active_suk_uq" ON "store_product_attr_value" USING btree ("product_id","suk") ${activeSeckillPredicate}`,
+      `CREATE UNIQUE INDEX "spav_seckill_active_unique_uq" ON "store_product_attr_value" USING btree ("product_id","unique") ${activeSeckillPredicate}`,
+    ]);
     expect(fullPath.committedUpgradeExecution).toBe("standalone-drizzle-transaction");
     expect(fullPath.driftRefusals).toHaveLength(30);
     expect(fullPath.originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved).toBe(true);

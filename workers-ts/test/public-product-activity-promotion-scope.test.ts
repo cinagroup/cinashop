@@ -1,3 +1,4 @@
+import { systemStore, systemSupplier } from '../src/models/schema';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Env } from '../src/env';
 import { createContainerFromDb } from '../src/lib/di';
@@ -24,7 +25,7 @@ describe('public product activity promotion scopes', () => {
     productPartakeType: number,
     overrides: Partial<typeof storePromotions.$inferInsert> = {},
   ) => ({
-    id, promotionsType, productPartakeType, name: `promotion ${id}`, image: `image-${id}`,
+    id, promotionsType, productPartakeType, name: `promotion ${id}`, image: `/images/image-${id}.png`,
     startTime: now - 3_600, stopTime: now + 3_600, updateTime: id,
     ...overrides,
   });
@@ -34,17 +35,18 @@ describe('public product activity promotion scopes', () => {
   ) => ({ promotionsId, type: 1, ...overrides });
 
   beforeAll(async () => {
-    fixture = await financePostgres([
+    fixture = await financePostgres([systemStore, systemSupplier,
       storeProduct, storeProductRelation, storePromotions, storePromotionsAuxiliary,
       storeCouponIssue, storeCouponProduct, storeDiscounts, storeDiscountsProducts,
       systemDise,
     ]);
     catalog = new PublicCatalogService(createContainerFromDb(fixture.db), {} as Env);
+    await fixture.db.insert(systemStore).values({ id: 7, isStore: 1, isShow: 1, isDel: 0 });
     await fixture.db.insert(storeProduct).values([
-      { id: 101, pid: 0, storeName: 'main' },
-      { id: 102, pid: 101, storeName: 'variant' },
-      { id: 201, pid: 0, storeName: 'other' },
-      { id: 301, pid: 0, storeName: 'presale', isPresaleProduct: 1 },
+      { id: 101, pid: 0, storeName: 'main', isShow: 1, isVerify: 1 },
+      { id: 102, pid: 101, type: 1, relationId: 7, storeName: 'variant', isShow: 1, isVerify: 1 },
+      { id: 201, pid: 0, storeName: 'other', isShow: 1, isVerify: 1 },
+      { id: 301, pid: 0, storeName: 'presale', isPresaleProduct: 1, isShow: 1, isVerify: 1 },
     ]);
     await fixture.db.insert(storeProductRelation).values([
       { productId: 101, type: 2, relationId: 7 },
@@ -99,13 +101,13 @@ describe('public product activity promotion scopes', () => {
     expect(result.promotions.map((row) => [row.promotions_type, row.id])).toEqual([
       [1, 1], [2, 21], [3, 22], [4, 4],
     ]);
-    expect(result.activity_background).toEqual({ id: 5, name: 'promotion 5', image: 'image-5' });
+    expect(result.activity_background).toEqual({ id: 5, name: 'promotion 5', image: '/images/image-5.png' });
   });
 
   it('uses the parent product for a variant and preserves the presale/absent empty contract', async () => {
     const variant = await catalog.productActivity(102) as ActivityResult;
     expect(variant.promotions.map((row) => row.id)).toEqual([1, 21, 22, 4]);
-    expect(variant.activity_background).toEqual({ id: 5, name: 'promotion 5', image: 'image-5' });
+    expect(variant.activity_background).toEqual({ id: 5, name: 'promotion 5', image: '/images/image-5.png' });
     expect(await catalog.productActivity(301)).toMatchObject({ promotions: [], activity_background: [] });
     expect(await catalog.productActivity(999)).toMatchObject({ promotions: [], activity_background: [] });
   });
@@ -119,7 +121,7 @@ describe('public product activity promotion scopes', () => {
       value: JSON.stringify({ showService: [1, 2, 3] }) });
     const hidden = await catalog.productActivity(101) as ActivityResult;
     expect(hidden.promotions).toEqual([]);
-    expect(hidden.activity_background).toEqual({ id: 5, name: 'promotion 5', image: 'image-5' });
+    expect(hidden.activity_background).toEqual({ id: 5, name: 'promotion 5', image: '/images/image-5.png' });
     expect((await catalog.productActivity(101, 5) as ActivityResult).promotions.map((row) => row.id)).toEqual([12]);
   });
 });

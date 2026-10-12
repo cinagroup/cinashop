@@ -33,6 +33,8 @@ describe('authoritative checkout line financial snapshots in real SQL', () => {
     f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderEconomize,
       storeOrderStatus, userBrokerage, storeIntegral]);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    // This positive checkout fixture disables discounts, while SQL pickup authority remains enabled.
+    await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
     f.app.post('/api/order/create/:key', orderCreate);
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => new Response(await nextOrderId()) }) } });
   }, 30_000);

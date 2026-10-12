@@ -20,7 +20,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered cance
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External I/O forbidden'));
     f = await refundRuntimeFixture();
     // Verify registration BEFORE repeat installation can mask a missing step.
-    expect(await inspectPurchaseCancellationEvidence(f.db)).toEqual({ state:'v1',sourcesReady:true });
+    expect(await inspectPurchaseCancellationEvidence(f.db)).toEqual({ state:'gift-v1',sourcesReady:true });
     await runPurchaseCancellationEvidenceSchema(f.db);
     await f.db.update(storeProduct).set({ type: 1, relationId: 0 }).where(eq(storeProduct.id, 71));
   }, 45000);

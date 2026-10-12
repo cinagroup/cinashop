@@ -41,7 +41,7 @@ const workerRoot = resolve(testDir, "..");
 const repositoryRoot = resolve(workerRoot, "..");
 const adminRoot = join(repositoryRoot, "view", "admin-ts");
 const report = JSON.parse(
-  readFileSync(join(workerRoot, "audit", "admin-frontend-inventory-product-detail-design-followup-20261002.json"), "utf8"),
+  readFileSync(join(workerRoot, "audit", "admin-frontend-inventory-user-center-design-followup-20261003.json"), "utf8"),
 ) as InventoryReport;
 
 function listVueFiles(root: string): string[] {
@@ -114,6 +114,14 @@ describe("Admin frontend navigation inventory", () => {
     for (const route of report.target.routes) {
       if (!route.resolvedComponent) continue;
       expect(existsSync(join(adminRoot, route.resolvedComponent)), route.path).toBe(true);
+    }
+    expect(report.target.routes.filter(route => route.path === '/setting/user-center-design')).toEqual([
+      expect.objectContaining({ surface: 'page', resolvedComponent: 'src/pages/setting/UserCenterDesign.vue' }),
+    ]);
+    const design = readFileSync(join(adminRoot, 'src/pages/setting/UserCenterDesign.vue'), 'utf8');
+    for (const name of ['UserCenterDesignPicker', 'UserCenterDesignPreview']) {
+      expect(design).toContain(`import ${name} from './${name}.vue'`);
+      expect(report.target.unroutedPageFiles).toContain(`src/pages/setting/${name}.vue`);
     }
   });
 });

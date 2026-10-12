@@ -10,6 +10,9 @@ import { isCityConfigKey } from '@/services/delivery/CityDeliverySettingsResolve
 
 export const MAX_ADMIN_CONFIG_BODY_BYTES = 128 * 1024;
 const MAX_KEYS = 100;
+const NEWCOMER_CHECKOUT_KEYS = new Set([
+  'newcomer_status', 'register_price_status', 'newcomer_limit_status', 'newcomer_limit_time',
+]);
 const CONTROLLED_CONFIG_ENDPOINTS = new Map<string, string>([
   ...LEVEL_ACTIVATION_KEYS.map(key => [key, '/config/level-activation'] as const),
   ...PAID_MEMBERSHIP_CONFIG_KEYS.map(key => [key, '/config/paid-membership'] as const),
@@ -72,7 +75,13 @@ export class AdminConfigBatchService {
         set_config('lock_timeout', '2s', true),
         set_config('statement_timeout', '5s', true),
         set_config('idle_in_transaction_session_timeout', '5s', true)`);
-      // First business lock; no order/product/rights locks or external I/O held.
+      // The legacy generic editor can write these four newcomer gates too.
+      // Join the dedicated Admin save/checkout lock before the table fence so
+      // an in-flight type=7 order sees either the complete old or new policy.
+      if (entries.some(([key]) => NEWCOMER_CHECKOUT_KEYS.has(key))) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('admin-newcomer-register-config'))`);
+      }
+      // First table lock; no order/product/rights locks or external I/O held.
       // Checkout readers may finish, but another writer must not change winners.
       await tx.execute(sql`LOCK TABLE ${systemConfig} IN SHARE ROW EXCLUSIVE MODE`);
       await tx.execute(sql`

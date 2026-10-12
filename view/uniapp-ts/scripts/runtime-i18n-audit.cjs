@@ -5,6 +5,28 @@ function isIntlifyModule(id) {
   return /(?:^|[/:\0])(?:@intlify\/|vue-i18n(?:[/?.]|$))/.test(normalized);
 }
 
+function isAutomatorQrModule(id) {
+  const normalized = id.replaceAll("\\", "/");
+  return /(?:^|[/:\0])(?:@dcloudio\/uni-automator|@dcloudio\/uni-mp-weixin\/lib\/uni\.automator|@jimp\/[^/?.]+|jimp|jpeg-js|phin|qrcode-reader)(?:[/?.]|$)/.test(normalized);
+}
+
+function isJestJsdomOnceModule(id) {
+  const normalized = id.replaceAll("\\", "/");
+  return /(?:^|[/:\0])(?:@jest\/[^/?.]+|jest(?:-[a-z0-9-]+)?|jsdom|http-proxy-agent|@tootallnate\/once)(?:[/?.]|$)/.test(normalized);
+}
+
+function isDcloudSsrModule(id) {
+  const normalized = id.replaceAll("\\", "/").replace(/^\0/, "");
+  return /^(?:express|body-parser|qs|proxy-addr)(?:[/?.]|$)/.test(normalized)
+    || /(?:^|\/)node_modules\/(?:express|body-parser|qs|proxy-addr)(?:[/?.]|$)/.test(normalized);
+}
+
+function isBuildGlobModule(id) {
+  const normalized = id.replaceAll("\\", "/").replace(/^\0/, "");
+  return /^(?:braces|brace-expansion|chokidar|fast-glob|micromatch|minimatch)(?:[/?.]|$)/.test(normalized)
+    || /(?:^|\/)node_modules\/(?:braces|brace-expansion|chokidar|fast-glob|micromatch|minimatch)(?:[/?.]|$)/.test(normalized);
+}
+
 function inspectRuntimeGraph(context, bundle, root) {
   const ids = [...context.getModuleIds()];
   const info = (id) => {
@@ -30,6 +52,10 @@ function inspectRuntimeGraph(context, bundle, root) {
     hasMain: ids.some((id) => /\/src\/main\.ts(?:\?|$)/.test(id.replaceAll("\\", "/"))),
     // Include loaded-but-tree-shaken and external imports: a new consumer needs review.
     intlify: ids.filter(isIntlifyModule).map(label).sort(),
+    automatorQr: ids.filter(isAutomatorQrModule).map(label).sort(),
+    jestJsdomOnce: ids.filter(isJestJsdomOnceModule).map(label).sort(),
+    dcloudSsr: ids.filter(isDcloudSsrModule).map(label).sort(),
+    buildGlob: ids.filter(isBuildGlobModule).map(label).sort(),
     // DCloud bundles these scripts with a separate esbuild invocation, leaving
     // only installation stubs in Rollup. Their dependencies need a fresh audit.
     separateScriptModules: ids.filter((id) => /[?&]type=(?:renderjs|wxs)(?:&|$)/.test(id)).map(label).sort(),
@@ -57,6 +83,10 @@ function runtimeI18nAudit() {
       };
       appendFileSync(report, JSON.stringify(inventory) + "\n");
       if (inventory.intlify.length) this.error("Intlify entered the runtime graph; reopen TEST-004D3A before accepting this build");
+      if (inventory.automatorQr.length) this.error("Automator QR decoder entered the runtime graph; reopen TEST-004D3 before accepting this build");
+      if (inventory.jestJsdomOnce.length) this.error("Jest/jsdom/once entered the runtime graph; reopen TEST-004D3 before accepting this build");
+      if (inventory.dcloudSsr.length) this.error("DCloud SSR Express/qs/proxy-addr entered the runtime graph; reopen TEST-004D3 before accepting this build");
+      if (inventory.buildGlob.length) this.error("Build glob dependency entered the runtime graph; reopen TEST-004D3 before accepting this build");
       if (inventory.separateScriptModules.length || inventory.separateScriptAssets.length) {
         this.error("Separately compiled renderjs/wxs entered the build; reopen TEST-004D3A to audit its independent dependency graph");
       }
@@ -64,4 +94,4 @@ function runtimeI18nAudit() {
   };
 }
 
-module.exports = { isIntlifyModule, inspectRuntimeGraph, runtimeI18nAudit };
+module.exports = { isIntlifyModule, isAutomatorQrModule, isJestJsdomOnceModule, isDcloudSsrModule, isBuildGlobModule, inspectRuntimeGraph, runtimeI18nAudit };

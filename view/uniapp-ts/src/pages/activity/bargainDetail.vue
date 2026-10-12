@@ -35,7 +35,7 @@
           <view class="notice">底价 ¥{{ detail.participation.minimum_price }} · 已砍 ¥{{ detail.participation.cut_price }} · 还需砍 ¥{{ detail.participation.remaining_cut }}</view>
           <view class="progress"><view :style="{ width: detail.participation.progress_percent + '%' }" /></view>
           <view class="notice">进度 {{ detail.participation.progress_percent }}%</view>
-          <view v-if="detail.participation.activity_price_changed" class="error">活动起价已调整。当前价不等于结算参考价，请核对后再购买。</view>
+          <view v-if="detail.participation.activity_price_changed" class="notice">活动起价已调整；本条参与仍按发起时起价 ¥{{ detail.participation.original_price }} 和底价结算，新价仅影响新参与。</view>
         </view>
         <view v-else class="notice">{{ loggedIn ? '尚未参与，发起后可帮自己砍一刀。' : '登录后确认本人砍价资格；不会自动发起砍价。' }}</view>
         <view class="heading">选择活动规格</view>
