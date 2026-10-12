@@ -3,8 +3,9 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import type { DbClient } from '@/lib/di';
-import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
+import { managerRuntimePrivilegePlan } from '@/migrations/managerRuntimePrivilegePlan';
 import { installManagerScopeLock } from '@/migrations/runManagerScopeLock';
+import { installManagerRuntimeCapabilities } from '@/migrations/managerRuntimeCapabilities';
 import { ownsFinanceFixtureEndpoint, ownsFinanceFixtureTarget, validateFinanceFixtureUrl } from './financePostgres';
 
 const identifier=(value:string)=>{if(!/^[a-z_][a-z_0-9]*$/.test(value))throw Error('Invalid owned merchant runtime identifier');return `"${value}"`;};
@@ -15,9 +16,8 @@ export interface MerchantRuntimeOptions {
   installLockProtocol?:(owner:DbClient,role:string)=>Promise<void|(()=>Promise<void>)>;
 }
 /** Independent LOGIN, not SET ROLE on a maintenance session. Grants are the
- * actual current application plan for this fixture's actual tables; the new
- * receipt table gets append/read only. The helper never grants staff/catalog
- * DML that the current application plan does not already contain. */
+ * fixed manager profile for this fixture's present tables. This subset cannot
+ * replace the complete production role audit or service verification. */
 export async function createMerchantManagerRuntime(owner:DbClient,tables:PgTable[],options:MerchantRuntimeOptions={}) {
   const base=validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL??'');
   const [origin]=await owner.execute<{database:string;schema:string;role:string;session:string;version:string;host:string;port:number}>(sql`SELECT current_database() AS database,current_schema() AS schema,current_user AS role,session_user AS session,current_setting('server_version_num') AS version,host(inet_server_addr()) AS host,inet_server_port() AS port`);
@@ -41,8 +41,29 @@ export async function createMerchantManagerRuntime(owner:DbClient,tables:PgTable
       await installManagerScopeLock(owner,scopeOwner,'public');
       await execute(`GRANT EXECUTE ON FUNCTION public.manager_lock_scope_v1(integer,integer),public.manager_lock_carrier_v1(text) TO ${identifier(role)}`);
     }else protocolCleanup=await options.installLockProtocol?.(owner,role);
-    const plan=runtimeBusinessPrivilegePlan('app');
-    for(const table of tables){const definition=getTableConfig(table),name=definition.name,privileges=plan.tables[name];if(!privileges?.includes('SELECT'))throw Error(`Current application profile cannot read fixture table ${name}`);await execute(`GRANT ${privileges.join(',')} ON public.${identifier(name)} TO ${identifier(role)}`);const columns=plan.updateColumns[name];if(columns?.length)await execute(`GRANT UPDATE(${columns.map(identifier).join(',')}) ON public.${identifier(name)} TO ${identifier(role)}`);if(privileges.includes('INSERT'))for(const column of definition.columns)if(['serial','bigserial'].includes(column.getSQLType())){const rows=await owner.execute<{name:string}>(sql`SELECT pg_get_serial_sequence(${`public.${name}`},${column.name}) AS name`);const parts=rows[0]?.name?.split('.');if(parts?.length!==2||parts[0]!=='public')throw Error('Unexpected owned merchant sequence');await execute(`GRANT USAGE ON SEQUENCE public.${identifier(parts[1])} TO ${identifier(role)}`);}}
+    const [relations]=await owner.execute(sql`SELECT to_regclass('public.order_waybill_job') IS NOT NULL AS waybill,to_regclass('public.store_order_promotions') IS NOT NULL AS promotion`);
+    if(relations?.waybill===true){
+      const previousCleanup=protocolCleanup,waybillOwner=`manager_waybill_${crypto.randomUUID().replaceAll('-','')}`;
+      const [manual]=await owner.execute<{name:string}>(sql`SELECT r.rolname AS name FROM pg_proc p JOIN pg_roles r ON r.oid=p.proowner WHERE p.pronamespace='public'::regnamespace AND p.proname='customer_manual_refund_promotion_delete_v1'`);
+      const promotionOwner=relations.promotion===true?(manual?.name??`manager_promotion_${crypto.randomUUID().replaceAll('-','')}`):undefined;
+      const createdOwners:string[]=[];
+      protocolCleanup=async()=>{
+        await verifyOwner();
+        if(manual&&promotionOwner)await execute('DROP FUNCTION IF EXISTS public.manager_delete_order_promotions_v1(integer,jsonb)');
+        for(const name of createdOwners){await execute(`DROP OWNED BY ${identifier(name)}`);await execute(`DROP ROLE ${identifier(name)}`);}
+        if(previousCleanup)await previousCleanup();
+      };
+      for(const name of [waybillOwner,...(promotionOwner&&!manual?[promotionOwner]:[])]){
+        await execute(`CREATE ROLE ${identifier(name)} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`);createdOwners.push(name);
+      }
+      await owner.transaction(tx=>installManagerRuntimeCapabilities(tx,{waybillOwner,promotionOwner}),{isolationLevel:'read committed',accessMode:'read write'});
+      await execute(`GRANT EXECUTE ON FUNCTION public.manager_lock_waybill_v1(),public.manager_lock_delivery_agents_v1(integer,integer) TO ${identifier(role)}`);
+      if(promotionOwner)await execute(`GRANT EXECUTE ON FUNCTION public.manager_delete_order_promotions_v1(integer,jsonb) TO ${identifier(role)}`);
+    }
+    const plan=managerRuntimePrivilegePlan();
+    // Fixtures contain unrelated App/Admin tables. Only the fixed manager
+    // profile's present subset is granted here; production audit requires all.
+    for(const table of tables){const definition=getTableConfig(table),name=definition.name,privileges=plan.tables[name];if(!privileges)continue;if(!privileges.includes('SELECT'))throw Error(`Manager profile cannot read fixture table ${name}`);await execute(`GRANT ${privileges.join(',')} ON public.${identifier(name)} TO ${identifier(role)}`);const columns=plan.updateColumns[name];if(columns?.length)await execute(`GRANT UPDATE(${columns.map(identifier).join(',')}) ON public.${identifier(name)} TO ${identifier(role)}`);if(privileges.includes('INSERT'))for(const column of definition.columns)if(['serial','bigserial'].includes(column.getSQLType())){const rows=await owner.execute<{name:string}>(sql`SELECT pg_get_serial_sequence(${`public.${name}`},${column.name}) AS name`);const parts=rows[0]?.name?.split('.');if(parts?.length!==2||parts[0]!=='public')throw Error('Unexpected owned merchant sequence');await execute(`GRANT USAGE ON SEQUENCE public.${identifier(parts[1])} TO ${identifier(role)}`);}}
     await execute(`GRANT SELECT,INSERT ON public.manager_order_operation_request TO ${identifier(role)}`);
     client=connect();await verify(client);const database=drizzle(client) as unknown as DbClient;
     return{db:database,role,connectionString:target.href,close,withPeer:async<T>(callback:(db:DbClient,pid:number)=>Promise<T>)=>{const peer=connect();try{const pid=await verify(peer),result=await callback(drizzle(peer) as unknown as DbClient,pid);if(await verify(peer)!==pid)throw Error('Merchant runtime peer reconnected');return result;}finally{await peer.end({timeout:5});}}};

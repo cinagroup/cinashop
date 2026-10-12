@@ -15,7 +15,7 @@ import {
 } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
-import { PayType } from "@/services/order/StoreOrderPayService";
+import { PayType } from "@/services/payment/PayType";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import {
   assertPaymentMethodAvailable,

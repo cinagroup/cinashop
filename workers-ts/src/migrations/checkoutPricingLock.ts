@@ -85,12 +85,14 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   // Exact catalog, NOLOGIN owner and caller ACL verification precedes OID use.
   // A matching function name cannot exempt an unknown definer routine.
   const managerOids = managerScope?.ready ? managerScope.catalog.functionOids : [];
+  const managerCapabilityOids = sharedScope && schema==='public'
+    ? await(await import('./managerRuntimeCapabilities')).reviewedManagerRuntimeCapabilityOids(tx) : [];
   // Only this explicit customer scope admits the three exact reviewed lock
   // capabilities. Catalog, owner, ACL and this LOGIN's EXECUTE must all pass.
   const customerOids = customerScope?.ready ? customerScope.catalog.functionOids : [];
   const manualOid=scope==='customer-work'&&schema==='public'
     ?await(await import('./runCustomerManualRefund')).reviewedCustomerManualRefundPromotionOid(tx):null;
-  const reviewedOids = [...managerOids,...customerOids,...(manualOid?[manualOid]:[])];
+  const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[])];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
