@@ -36,6 +36,7 @@ import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
 import * as AdminLegacyProductMetadata from "@/controllers/api/v1/AdminLegacyProductMetadataController";
+import * as AdminLegacyProductReply from "@/controllers/api/v1/AdminLegacyProductReplyController";
 import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminLegacyRoleOperation from "@/controllers/api/v1/AdminLegacyRoleOperationController";
@@ -814,6 +815,11 @@ adminapiRoutes.get("/wechat_qrcode/statistic/:qid", adminAuth, AdminWechatQrcode
 adminapiRoutes.get("/reply/list", adminAuth, AdminCrud.adminReplyList);
 adminapiRoutes.post("/reply/status/:id", adminAuth, AdminCrud.adminReplyStatus);
 adminapiRoutes.delete("/reply/del/:id", adminAuth, AdminCrud.adminReplyDel);
+// Original Admin Vue review list, reply modal and soft-delete actions.
+adminapiRoutes.get("/product/reply", adminAuth, AdminLegacyProductReply.list);
+adminapiRoutes.put("/product/reply/set_reply/:id", adminAuth, AdminLegacyProductReply.setReply);
+adminapiRoutes.get("/product/reply/get_reply/:id", adminAuth, AdminLegacyProductReply.getReply);
+adminapiRoutes.delete("/product/reply/:id", adminAuth, AdminLegacyProductReply.remove);
 adminapiRoutes.get("/activity/pink/:combinationId", adminAuth, AdminCrud.adminPinkList);
 
 // ─── 营销细分 (M13) ─────────────────────────────────────────
