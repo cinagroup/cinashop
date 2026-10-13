@@ -56,6 +56,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoi
     } else await generated(allModels);
     expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
     expect((await f.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE \"C\"")).map(row=>row.name)).toEqual(completeConstructionTableNames(path));
+    expect(await f.exec("SELECT to_regclass('public.store_order_invoice_manual_red_note') IS NOT NULL AS record_present,to_regclass('public.store_order_invoice_manual_red_review') IS NOT NULL AS review_present,to_regprocedure('public.guard_invoice_manual_red_note()') IS NOT NULL AS protected")).toEqual([{record_present:path==='orm',review_present:path==='orm',protected:false}]);
     expect(await inspectInvoiceEvidenceSchema(f.db)).toBe(path==='orm'?'orm-pending':'v2');
     if(path==='orm') await runInvoiceEvidenceSchema(f.db,true);
     await f.db.insert(storeOrderInvoice).values({uid:11,orderId:10,isPay:1,invoiceAmount:'10.00'});

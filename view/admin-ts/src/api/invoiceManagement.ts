@@ -64,7 +64,7 @@ export interface InvoiceOrderInfo {
     vip_true_price: string | null; deduction_price: string; pay_price: string;
     add_time: number; pay_type: string; mark: string; real_name: string; user_phone: string; user_address: string;
   };
-  user: { nickname: string; spread_name: string };
+  user: { nickname: string; spread_name: string; is_guest?: boolean };
   cart_items: Array<{
     id: number; product_id: number | null; product_name: string; category_name: string | null;
     sku: string; unit_price: string | null; quantity: number; image: string;
@@ -82,6 +82,34 @@ export type InvoiceProcessReceipt = (AdminInvoice & { committed: true; request_i
   { id: number; order_db_id: number; order_number: null; template_id: null; is_invoice: InvoiceStatus; revision: string;
     committed: true; request_id: string; idempotent: true; archived: true; receipt_is_invoice: InvoiceStatus; superseded: false };
 
+export interface InvoiceManualRedRecordInput {
+  request_id: string; original_document_number: string; original_snapshot_hash: string; original_amount: string; currency: 'CNY';
+  red_document_number: string; red_amount: string; platform_evidence: string;
+}
+export interface InvoiceManualRedReviewInput {
+  request_id: string; record_hash: string; decision: 'confirm' | 'reject'; manual_checked: true; review_note: string;
+}
+export interface InvoiceManualRedRecord {
+  id: string; record_hash: string; actor_id: number; created_time: number;
+  original_document_number: string; original_snapshot_hash: string; original_amount: string; currency: 'CNY';
+  red_document_number: string; red_amount: string; platform_evidence: string; platform_evidence_hash: string;
+  state: 'RECORDED' | 'MANUAL_REVIEWED' | 'REJECTED';
+  review: null | { id: string; review_hash: string; actor_id: number; created_time: number;
+    decision: 'confirm' | 'reject'; manual_checked: true; review_note: string };
+}
+export interface InvoiceManualRedNotes {
+  invoice_id: number; source_order_id: number; payment_order_id: number; uid: number; currency: 'CNY';
+  ready: boolean; can_record: boolean; issues: string[];
+  issued: Array<{ document_number: string; snapshot_hash: string; original_amount: string;
+    manual_state: 'UNCOVERED' | 'MANUAL_REVIEWED'; records: InvoiceManualRedRecord[] }>;
+}
+export interface InvoiceManualRedReceipt {
+  version: 'invoice-manual-red-operation-v1'; request_id: string; invoice_id: number; actor_id: number;
+  kind: 'record' | 'review'; request_hash: string; committed: true; idempotent: boolean; record: InvoiceManualRedRecord;
+}
+export type InvoiceManualRedOperation = { id: number; kind: 'record'; body: InvoiceManualRedRecordInput } |
+  { id: number; kind: 'review'; recordId: string; body: InvoiceManualRedReviewInput };
+
 const revisionPattern = /^[a-f0-9]{64}$/u;
 const uuidPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u;
 const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/u;
@@ -92,6 +120,7 @@ const object = (value: unknown): value is Record<string, unknown> => !!value && 
 const integer = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0;
 const signedInteger = (value: unknown): value is number => Number.isSafeInteger(value);
 const string = (value: unknown): value is string => typeof value === 'string';
+const buyerUid = (value: string): boolean => /^(?:0|[1-9]\d{0,9})$/u.test(value) && Number(value) <= 2_147_483_647;
 
 function date(value: string): boolean {
   const match = datePattern.exec(value);
@@ -116,7 +145,7 @@ export function normalizeInvoiceQuery(value: InvoiceQuery): InvoiceQuery {
     !fields.includes(value.field) || !['all', 'pending', 'refunded', ...statuses].includes(value.status) ||
     typeof value.keyword !== 'string' || Array.from(value.keyword.trim()).length > 100 ||
     /[\u0000-\u001f\u007f]/u.test(value.keyword) ||
-    (value.field === 'uid' && value.keyword.trim() !== '' && !/^[1-9]\d{0,9}$/u.test(value.keyword.trim())) ||
+    (value.field === 'uid' && value.keyword.trim() !== '' && !buyerUid(value.keyword.trim())) ||
     (value.start_time !== '' && !date(value.start_time) && !minute(value.start_time)) ||
     (value.end_time !== '' && !date(value.end_time) && !minute(value.end_time)) ||
     (!!value.start_time !== !!value.end_time) ||
@@ -169,7 +198,10 @@ export function parseInvoiceOrderInfo(value: unknown, invoiceId: number): Invoic
     !['total_price', 'pay_postage', 'coupon_price', 'deduction_price', 'pay_price', 'pay_type', 'mark',
       'real_name', 'user_phone', 'user_address'].every(key => string(order[key])) ||
     !(order.vip_true_price === null || string(order.vip_true_price)) ||
-    !string(user.nickname) || !string(user.spread_name)) throw new Error('发票关联订单响应格式错误');
+    !string(user.nickname) || !string(user.spread_name) ||
+    (user.is_guest !== undefined && typeof user.is_guest !== 'boolean') ||
+    (order.uid === 0 && (user.is_guest !== true || user.nickname !== '' || user.spread_name !== '')) ||
+    (order.uid > 0 && user.is_guest === true)) throw new Error('发票关联订单响应格式错误');
   const ids = new Set<number>();
   for (const item of value.cart_items) {
     if (!object(item) || !integer(item.id) || item.id === 0 || ids.has(item.id) ||
@@ -227,7 +259,127 @@ export async function apiProcessInvoice(id: number, input: InvoiceProcessInput, 
     if (result.idempotent !== true || typeof result.superseded !== 'boolean' || result.receipt_is_invoice !== body.is_invoice)
       throw new Error('发票重放回执不完整，结果未确认');
   }
+  if (result.superseded !== true && (row.is_invoice !== body.is_invoice || row.invoice_number !== body.invoice_number || row.remark !== body.remark))
+    throw new Error('发票回执与原请求内容不一致，结果未确认');
   return result as unknown as InvoiceProcessReceipt;
+}
+
+const manualMoneyPattern = /^(?:0|[1-9]\d{0,9})\.\d{2}$/u;
+const manualDocumentPattern = /^\d{8,20}$/u;
+const positiveIdentity = (value: unknown): value is number => integer(value) && Number(value) > 0 && Number(value) <= 2_147_483_647;
+function manualText(value: unknown, maximum: number): value is string {
+  return string(value) && value === value.trim() && value.length > 0 && new TextEncoder().encode(value).length <= maximum &&
+    !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value);
+}
+function manualHash(value: unknown): value is string { return string(value) && revisionPattern.test(value); }
+function manualUuid(value: unknown): value is string { return string(value) && uuidPattern.test(value); }
+function manualMoney(value: unknown): value is string { return string(value) && manualMoneyPattern.test(value); }
+function manualDocument(value: unknown): value is string { return string(value) && manualDocumentPattern.test(value); }
+function manualOriginalDocument(value: unknown): value is string {
+  return string(value) && value.trim().length > 0 && Array.from(value).length <= 50 && !/[\u0000-\u001f\u007f]/u.test(value);
+}
+export function normalizeInvoiceManualRedRecord(value: InvoiceManualRedRecordInput): InvoiceManualRedRecordInput {
+  const input = { ...value, red_document_number: value.red_document_number.trim(), platform_evidence: value.platform_evidence.trim() };
+  if (!manualUuid(input.request_id) || !manualOriginalDocument(input.original_document_number) || !manualHash(input.original_snapshot_hash) ||
+    !manualMoney(input.original_amount) || input.currency !== 'CNY' || !manualDocument(input.red_document_number) ||
+    !manualMoney(input.red_amount) || input.red_amount !== input.original_amount || input.red_document_number === input.original_document_number ||
+    !manualText(input.platform_evidence, 4096)) throw new Error('红字票号、整票金额或税务平台人工凭据无效');
+  return { request_id: input.request_id, original_document_number: input.original_document_number, original_snapshot_hash: input.original_snapshot_hash,
+    original_amount: input.original_amount, currency: 'CNY', red_document_number: input.red_document_number, red_amount: input.red_amount, platform_evidence: input.platform_evidence };
+}
+export function normalizeInvoiceManualRedReview(value: InvoiceManualRedReviewInput): InvoiceManualRedReviewInput {
+  const review_note = value.review_note.trim();
+  if (!manualUuid(value.request_id) || !manualHash(value.record_hash) || !['confirm', 'reject'].includes(value.decision) ||
+    value.manual_checked !== true || !manualText(review_note, 1024)) throw new Error('请完成人工票据核对并填写核对记录');
+  return { request_id: value.request_id, record_hash: value.record_hash, decision: value.decision, manual_checked: true, review_note };
+}
+export function parseInvoiceManualRedRecord(value: unknown): InvoiceManualRedRecord {
+  if (!object(value) || !manualUuid(value.id) || !manualHash(value.record_hash) || !positiveIdentity(value.actor_id) || !positiveIdentity(value.created_time) ||
+    !manualOriginalDocument(value.original_document_number) || !manualHash(value.original_snapshot_hash) || !manualMoney(value.original_amount) || value.currency !== 'CNY' ||
+    !manualDocument(value.red_document_number) || !manualMoney(value.red_amount) || value.red_amount !== value.original_amount || value.red_document_number === value.original_document_number ||
+    !manualText(value.platform_evidence, 4096) || !manualHash(value.platform_evidence_hash) ||
+    !['RECORDED', 'MANUAL_REVIEWED', 'REJECTED'].includes(String(value.state))) throw new Error('人工红字票据响应格式错误');
+  if (value.review === null) {
+    if (value.state !== 'RECORDED') throw new Error('人工红字票据缺少核对记录');
+  } else {
+    const review = value.review;
+    if (!object(review) || !manualUuid(review.id) || !manualHash(review.review_hash) || !positiveIdentity(review.actor_id) || !positiveIdentity(review.created_time) ||
+      !['confirm', 'reject'].includes(String(review.decision)) || review.manual_checked !== true || !manualText(review.review_note, 1024) ||
+      value.state !== (review.decision === 'confirm' ? 'MANUAL_REVIEWED' : 'REJECTED')) throw new Error('人工红字票据核对状态不一致');
+  }
+  return value as unknown as InvoiceManualRedRecord;
+}
+export function parseInvoiceManualRedNotes(value: unknown, invoiceId: number): InvoiceManualRedNotes {
+  if (!object(value) || value.invoice_id !== invoiceId || !positiveIdentity(value.source_order_id) || !positiveIdentity(value.payment_order_id) ||
+    !integer(value.uid) || Number(value.uid) > 2_147_483_647 || value.currency !== 'CNY' || typeof value.ready !== 'boolean' || typeof value.can_record !== 'boolean' ||
+    !Array.isArray(value.issues) || !value.issues.every(string) || !Array.isArray(value.issued) || value.issued.length > 200 ||
+    (!value.ready && value.can_record)) throw new Error('原票与人工红字凭据响应格式错误');
+  const snapshots = new Set<string>(), records = new Set<string>();
+  for (const issued of value.issued) {
+    if (!object(issued) || !manualOriginalDocument(issued.document_number) || !manualHash(issued.snapshot_hash) || !manualMoney(issued.original_amount) ||
+      !['UNCOVERED', 'MANUAL_REVIEWED'].includes(String(issued.manual_state)) || !Array.isArray(issued.records) || issued.records.length > 200)
+      throw new Error('原票证据响应格式错误');
+    const key = `${issued.document_number}:${issued.snapshot_hash}`;
+    if (snapshots.has(key)) throw new Error('原票证据重复'); snapshots.add(key);
+    const rows = issued.records.map(parseInvoiceManualRedRecord);
+    for (const row of rows) {
+      if (records.has(row.id) || row.original_document_number !== issued.document_number || row.original_snapshot_hash !== issued.snapshot_hash || row.original_amount !== issued.original_amount)
+        throw new Error('人工红字凭据与原票不一致');
+      records.add(row.id);
+    }
+    if (rows.filter(row => row.state === 'MANUAL_REVIEWED').length > 1 ||
+      (issued.manual_state === 'MANUAL_REVIEWED') !== rows.some(row => row.state === 'MANUAL_REVIEWED')) throw new Error('原票处置状态与人工核对记录不一致');
+  }
+  return value as unknown as InvoiceManualRedNotes;
+}
+export function parseInvoiceManualRedReceipt(value: unknown, invoiceId: number, requestId: string): InvoiceManualRedReceipt {
+  if (!object(value) || value.version !== 'invoice-manual-red-operation-v1' || value.invoice_id !== invoiceId || value.request_id !== requestId ||
+    !positiveIdentity(value.actor_id) || !['record', 'review'].includes(String(value.kind)) || !manualHash(value.request_hash) ||
+    value.committed !== true || typeof value.idempotent !== 'boolean') throw new Error('人工红字操作回执不完整，结果未确认');
+  parseInvoiceManualRedRecord(value.record);
+  return value as unknown as InvoiceManualRedReceipt;
+}
+export async function apiInvoiceManualRedNotes(id: number, signal?: AbortSignal): Promise<InvoiceManualRedNotes> {
+  if (!positiveIdentity(id)) throw new Error('发票 ID 无效');
+  return parseInvoiceManualRedNotes(await getData<unknown>(request.get(`/order/invoices/${id}/red-notes`, { signal })), id);
+}
+export async function apiRecordInvoiceManualRedNote(id: number, input: InvoiceManualRedRecordInput, signal?: AbortSignal): Promise<InvoiceManualRedReceipt> {
+  if (!positiveIdentity(id)) throw new Error('发票 ID 无效');
+  const body = normalizeInvoiceManualRedRecord(input);
+  return parseInvoiceManualRedReceipt(await getData<unknown>(request.post(`/order/invoices/${id}/red-notes`, body, { signal })), id, body.request_id);
+}
+export async function apiReviewInvoiceManualRedNote(id: number, recordId: string, input: InvoiceManualRedReviewInput, signal?: AbortSignal): Promise<InvoiceManualRedReceipt> {
+  if (!positiveIdentity(id) || !manualUuid(recordId)) throw new Error('发票或红字记录 ID 无效');
+  const body = normalizeInvoiceManualRedReview(input);
+  return parseInvoiceManualRedReceipt(await getData<unknown>(request.post(`/order/invoices/${id}/red-notes/${recordId}/review`, body, { signal })), id, body.request_id);
+}
+export async function apiInvoiceManualRedOperation(id: number, requestId: string, signal?: AbortSignal): Promise<InvoiceManualRedReceipt | null> {
+  if (!positiveIdentity(id) || !manualUuid(requestId)) throw new Error('发票或原请求 ID 无效');
+  const value = await getData<unknown>(request.get(`/order/invoices/${id}/red-notes/operations/${requestId}`, { signal }));
+  return value === null ? null : parseInvoiceManualRedReceipt(value, id, requestId);
+}
+async function manualDigest(value: string): Promise<string> {
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+export async function verifyInvoiceManualRedReceipt(value: InvoiceManualRedReceipt, operation: InvoiceManualRedOperation, actorId: number): Promise<void> {
+  const receipt = parseInvoiceManualRedReceipt(value, operation.id, operation.body.request_id), record = receipt.record;
+  if (!positiveIdentity(actorId) || receipt.actor_id !== actorId || receipt.kind !== operation.kind ||
+    record.platform_evidence_hash !== await manualDigest(record.platform_evidence)) throw new Error('人工红字回执与原操作人或凭据内容不一致');
+  let intent: unknown[];
+  if (operation.kind === 'record') {
+    const body = normalizeInvoiceManualRedRecord(operation.body);
+    if (record.id !== body.request_id || record.actor_id !== actorId || record.original_document_number !== body.original_document_number || record.original_snapshot_hash !== body.original_snapshot_hash ||
+      record.original_amount !== body.original_amount || record.currency !== body.currency || record.red_document_number !== body.red_document_number ||
+      record.red_amount !== body.red_amount || record.platform_evidence !== body.platform_evidence) throw new Error('人工红字回执与原录入内容不一致');
+    intent = ['invoice-manual-red-record-intent-v1', operation.id, actorId, body.original_document_number, body.original_snapshot_hash,
+      body.original_amount, body.currency, body.red_document_number, body.red_amount, body.platform_evidence];
+  } else {
+    const body = normalizeInvoiceManualRedReview(operation.body), review = record.review;
+    if (record.id !== operation.recordId || record.record_hash !== body.record_hash || !review || review.actor_id !== actorId ||
+      review.id !== body.request_id || review.decision !== body.decision || review.manual_checked !== true || review.review_note !== body.review_note) throw new Error('人工红字回执与原核对内容不一致');
+    intent = ['invoice-manual-red-review-intent-v1', operation.id, operation.recordId, actorId, body.record_hash, body.decision, body.manual_checked, body.review_note];
+  }
+  if (receipt.request_hash !== await manualDigest(JSON.stringify(intent))) throw new Error('人工红字回执与原请求意图不一致');
 }
 
 function csvSafe(value: unknown): string {

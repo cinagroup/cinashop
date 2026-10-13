@@ -23,12 +23,12 @@ export async function lockSingleOrderInvoice(tx: DbClient, order: OrderRow): Pro
   return invoice;
 }
 
-export async function invoiceWriteAmount(tx: DbClient, order: OrderRow, readOnlySnapshot = false): Promise<string> {
+export async function invoiceWriteAmount(tx: DbClient, order: OrderRow, readOnlySnapshot = false,invoiceEvidenceMode:'reader'|'admin-read'='reader'): Promise<string> {
   if (order.pid < 0) throw new ValidateException('请先完成支付主单发票与履约子单归属核对');
   if (order.supplierAllocationStatus === 1 || order.status < 0 || ![0, 1].includes(order.paid)) {
     throw new ValidateException('订单当前状态不能修改发票');
   }
-  return currentInvoiceAmount(tx, order, readOnlySnapshot);
+  return currentInvoiceAmount(tx, order, readOnlySnapshot,invoiceEvidenceMode);
 }
 
 /** Shared by Out and Admin. The amount is from the current paid generation;

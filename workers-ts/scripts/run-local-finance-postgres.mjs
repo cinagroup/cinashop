@@ -78,6 +78,7 @@ if (schemaMaintenance) {
     'test/customer-work-cash-refund-postgres.test.ts',
     'test/customer-work-legacy-cash-payment-postgres.test.ts',
     'test/customer-work-offline-origin-refund-postgres.test.ts',
+    'test/admin-guest-invoice-manual-red-note-postgres.test.ts',
     'test/customer-work-writeoff-mature-scenarios-postgres.test.ts',
     // Exact full consumer regressions for the independent customer writeoff
     // follow-up; maintenance still targets only this new disposable cluster.

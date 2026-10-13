@@ -5,6 +5,7 @@ import { assertUnissuedInvoiceHistory } from '@/services/order/InvoiceIssuanceEv
 import { lockOrderSettlement } from '@/services/order/OrderBrokerageService';
 import { assertInvoiceWriteEvidence, invoiceWriteAmount, lockSingleOrderInvoice } from '@/services/order/InvoiceWriteGuard';
 import { NotFoundException, ValidateException } from '@/utils/errors';
+import { assertAdminInvoiceGuestIdentity } from './AdminInvoiceRedNoteService';
 
 type Invoice = typeof storeOrderInvoice.$inferSelect;
 type Order = typeof storeOrder.$inferSelect;
@@ -15,6 +16,7 @@ type ProcessInput = { isInvoice: -1 | 0 | 1; invoiceNumber: string; remark: stri
 
 const MAX_ID = 2_147_483_647;
 const REQUEST_TYPE = 'admin_invoice_process';
+function buyerUid(value:unknown):number {const n=typeof value==='number'?value:typeof value==='string'&&/^(0|[1-9]\d*)$/.test(value)?Number(value):NaN;if(!Number.isSafeInteger(n)||n<0||n>MAX_ID)throw new ValidateException('UID须为0至2147483647的整数');return n;}
 const MAX_ORDER_CART_ROWS = 200;
 const MAX_CART_SNAPSHOT_BYTES = 65_536;
 const MAX_ORDER_SNAPSHOT_BYTES = 524_288;
@@ -114,7 +116,7 @@ function parseQuery(parameters: URLSearchParams): Query {
   if (!['all', 'order_number', 'uid', 'real_name', 'user_phone', 'invoice_name', 'drawer_phone'].includes(field)) throw new ValidateException('发票搜索字段无效');
   const keyword = (parameters.get('keyword') || '').trim();
   if ([...keyword].length > 100 || /[\u0000-\u001f\u007f]/u.test(keyword)) throw new ValidateException('发票搜索词无效');
-  if (field === 'uid' && keyword && !/^[1-9]\d{0,9}$/.test(keyword)) throw new ValidateException('UID须为正整数');
+  if (field === 'uid' && keyword) buyerUid(keyword);
   const rawStatus = parameters.get('status') || 'all';
   if (!['all', '-1', '0', '1', 'pending', 'refunded'].includes(rawStatus)) throw new ValidateException('开票状态无效');
   const rawStart = parameters.get('start_time'), rawEnd = parameters.get('end_time');
@@ -171,6 +173,7 @@ async function project(tx: DbClient, row: Joined) {
   else {
     if (order.isDel || order.isSystemDel) issues.push('关联订单已删除');
     if (order.uid !== invoice.uid || invoice.category !== 'order') issues.push('发票与订单归属或类别不一致');
+    if(order.uid===0)try{await assertAdminInvoiceGuestIdentity(tx,order,true);}catch(error){if(!(error instanceof ValidateException))throw error;issues.push(error.message);}
     if (order.pid > 0) {
       const [root] = await tx.select({ id: storeOrder.id, pid: storeOrder.pid, uid: storeOrder.uid,
         paid: storeOrder.paid, payType: storeOrder.payType, storeId: storeOrder.storeId,
@@ -183,7 +186,7 @@ async function project(tx: DbClient, row: Joined) {
         || (root.storeId !== order.storeId && root.supplierAllocationStatus !== 2)) issues.push('拆单发票归属待核对');
     }
     if (!issues.length) {
-      try { expectedAmount = await invoiceWriteAmount(tx, order, true); }
+      try { expectedAmount = await invoiceWriteAmount(tx, order, true,'admin-read'); }
       catch (error) { if (!(error instanceof ValidateException)) throw error; issues.push(error.message); }
     }
     if (expectedAmount !== null) {
@@ -258,10 +261,11 @@ async function priorReceipt(tx: DbClient, invoiceId: number, input: ProcessInput
   catch { throw new ValidateException('发票操作回执损坏，请核对'); }
   if (receipt.v !== 1 || receipt.i !== invoiceId || receipt.o !== records[0].oid || receipt.r !== input.requestId
     || receipt.a !== actorId || receipt.h !== requestHash || ![-1, 0, 1].includes(Number(receipt.s))
-    || !Number.isSafeInteger(receipt.u) || Number(receipt.u) <= 0
+    || !Number.isSafeInteger(receipt.u) || Number(receipt.u) < 0 || Number(receipt.u)>MAX_ID
     || typeof receipt.z !== 'string' || !/^[a-f0-9]{64}$/.test(receipt.z)) {
     throw new ValidateException('请求标识已用于不同发票操作或回执损坏');
   }
+  if(receipt.u===0)await assertAdminInvoiceGuestIdentity(tx,{uid:0});
   const [current] = await tx.select({ id: storeOrderInvoice.id, isDel: storeOrderInvoice.isDel,
     orderId: storeOrderInvoice.orderId, uid: storeOrderInvoice.uid, category: storeOrderInvoice.category })
     .from(storeOrderInvoice).where(eq(storeOrderInvoice.id, invoiceId)).limit(1);
@@ -296,7 +300,7 @@ export class AdminInvoiceService {
       if (query.keyword) {
         const escaped = `%${query.keyword.replace(/[\\%_]/g, '\\$&')}%`;
         const search = query.field === 'order_number' ? ilike(storeOrder.orderId, escaped)
-          : query.field === 'uid' ? eq(storeOrderInvoice.uid, id(query.keyword, 'UID'))
+          : query.field === 'uid' ? eq(storeOrderInvoice.uid, buyerUid(query.keyword))
           : query.field === 'real_name' ? eq(storeOrder.realName, query.keyword)
           : query.field === 'user_phone' ? eq(storeOrder.userPhone, query.keyword)
           : query.field === 'invoice_name' ? ilike(storeOrderInvoice.name, escaped)
@@ -304,7 +308,7 @@ export class AdminInvoiceService {
           : or(ilike(storeOrder.orderId, escaped), ilike(storeOrder.realName, escaped),
             ilike(storeOrder.userPhone, escaped), ilike(storeOrderInvoice.name, escaped),
             ilike(storeOrderInvoice.drawerPhone, escaped),
-            /^[1-9]\d{0,9}$/.test(query.keyword) ? eq(storeOrderInvoice.uid, Number(query.keyword)) : undefined);
+            /^(0|[1-9]\d{0,9})$/.test(query.keyword)&&Number(query.keyword)<=MAX_ID ? eq(storeOrderInvoice.uid, Number(query.keyword)) : undefined);
         if (search) conditions.push(search);
       }
       const predicate = and(...conditions);
@@ -343,7 +347,7 @@ export class AdminInvoiceService {
         isPay: storeOrderInvoice.isPay, isDel: storeOrderInvoice.isDel })
         .from(storeOrderInvoice).where(eq(storeOrderInvoice.id, invoiceId)).limit(1);
       if (!invoice || invoice.isDel !== 0) throw new NotFoundException('发票申请不存在');
-      if (invoice.category !== 'order' || invoice.isPay !== 1 || invoice.uid <= 0 || invoice.orderId <= 0) {
+      if (invoice.category !== 'order' || invoice.isPay !== 1 || !Number.isSafeInteger(invoice.uid)||invoice.uid<0||invoice.uid>MAX_ID||invoice.orderId <= 0) {
         throw new ValidateException('发票申请未付款或关联异常，不能读取订单信息');
       }
       const [order] = await tx.select({ id: storeOrder.id, orderId: storeOrder.orderId,
@@ -381,10 +385,11 @@ export class AdminInvoiceService {
       if (siblings.length !== 1 || siblings[0].id !== invoiceId) {
         throw new ValidateException('订单存在重复或错属发票申请，不能读取订单信息');
       }
-      const [buyer] = await tx.select({ uid: user.uid, nickname: user.nickname, spreadUid: user.spreadUid })
-        .from(user).where(eq(user.uid, order.uid)).limit(1);
-      if (!buyer) throw new ValidateException('关联用户不存在，不能读取完整订单信息');
-      const [promoter] = buyer.spreadUid > 0 ? await tx.select({ nickname: user.nickname })
+      await assertAdminInvoiceGuestIdentity(tx,order);
+      const [buyer] = order.uid>0?await tx.select({ uid: user.uid, nickname: user.nickname, spreadUid: user.spreadUid })
+        .from(user).where(eq(user.uid, order.uid)).limit(1):[];
+      if (order.uid>0&&!buyer) throw new ValidateException('关联用户不存在，不能读取完整订单信息');
+      const [promoter] = buyer&&buyer.spreadUid > 0 ? await tx.select({ nickname: user.nickname })
         .from(user).where(eq(user.uid, buyer.spreadUid)).limit(1) : [];
       const cartHeaders = await tx.select({ id: storeOrderCartInfo.id,
         uid: storeOrderCartInfo.uid, oid: storeOrderCartInfo.oid,
@@ -423,7 +428,7 @@ export class AdminInvoiceService {
           deduction_price: order.deductionPrice, pay_price: order.payPrice,
           add_time: order.addTime, pay_type: order.payType, mark: order.mark,
           real_name: order.realName, user_phone: order.userPhone, user_address: order.userAddress },
-        user: { nickname: buyer.nickname, spread_name: promoter?.nickname ?? '' },
+        user: { nickname: buyer?.nickname??'', spread_name: promoter?.nickname ?? '',...(order.uid===0?{is_guest:true}:{}) },
         cart_items: projected.map(row => row.item) };
     });
   }
@@ -461,7 +466,8 @@ export class AdminInvoiceService {
       }
       const raced = await priorReceipt(tx, invoiceId, input, actorId, requestHash);
       if (raced) return raced;
-      const amount = await invoiceWriteAmount(tx, order);
+      const amount = await invoiceWriteAmount(tx, order,false,'admin-read');
+      await assertAdminInvoiceGuestIdentity(tx,order,true);
       const invoice = await lockSingleOrderInvoice(tx, order);
       if (invoice.id !== invoiceId || invoice.uid !== reference.uid || invoice.category !== reference.category) {
         throw new ValidateException('发票申请ID与关联订单已变化，请刷新后重试');
@@ -493,6 +499,7 @@ export class AdminInvoiceService {
       if (message.length > 256) throw new ValidateException('发票操作审计超出边界');
       await tx.insert(storeOrderStatus).values({ oid: order.id, changeType: REQUEST_TYPE,
         changeMessage: message, changeTime: Math.floor(Date.now() / 1000) });
+      await assertAdminInvoiceGuestIdentity(tx,order,true);
       return { ...result, committed: true, request_id: input.requestId, idempotent: unchanged && !needsAmountRepair };
     });
   }
