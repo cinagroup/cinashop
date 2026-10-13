@@ -11,6 +11,7 @@ import {acquireCustomerWorkScopeLock} from '@/migrations/runCustomerWorkScopeLoc
 import {financialRecord,validateFinancialPayload,type PreparedFinancialOperation,type FinancialInput} from '@/services/customer-work/CustomerWorkFinancialProtocol';
 import {hasInitiatedAssistedProviderPayment} from '@/services/payment/AssistedProviderPaymentClaim';
 import {readCashierSecondCardOrigin} from './CashierSecondCardOrigin';
+import {readCashierOrdinaryPaidOrigin} from './CashierOrdinaryOrigin';
 import {readCustomerManualOfflineOrigin,parseCustomerManualOfflineOrigin,type CustomerManualOfflineOrigin} from './CustomerManualOfflineOrigin';
 import {assertStoredManualInvoiceAllocation} from './InvoiceManualRedNoteEvidence';
 type Order=typeof storeOrder.$inferSelect;type Cart=typeof storeOrderCartInfo.$inferSelect;type Refund=typeof storeOrderRefund.$inferSelect;
@@ -39,11 +40,11 @@ export async function manualRefundPaymentFacts(db:DbClient,order:Order){
  // time() may be arbitrarily later; a guessed time window would reject valid
  // imported payments. Read the whole bounded payment history for this root,
  // then distinguish the actual legacy record from TS's atomic paid protocol.
- const audits=await db.select().from(storeOrderStatus).where(and(eq(storeOrderStatus.oid,root.id),inArray(storeOrderStatus.changeType,['pay_success','customer_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline','offline','pay_cash']))).orderBy(asc(storeOrderStatus.id)).limit(201);
+ const audits=await db.select().from(storeOrderStatus).where(and(eq(storeOrderStatus.oid,root.id),inArray(storeOrderStatus.changeType,['pay_success','customer_cashier_paid','customer_ordinary_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline','offline','pay_cash']))).orderBy(asc(storeOrderStatus.id)).limit(201);
  fact(audits.length>0&&audits.length<=200&&audits.every(x=>x.changeMessage.trim().length>0));
  const events=await db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.eventKey,`order.paid:${root.id}`)).limit(2);fact(events.length<=1);
  if(events.length){const event=events[0],payload=event.payload as {orderId?:unknown;orderNo?:unknown};fact(event.aggregateType==='order'&&event.aggregateId===root.id&&event.eventType==='order.paid'&&payload?.orderId===root.id&&payload.orderNo===root.orderId);}
- const tsAudits=audits.filter(x=>['customer_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline'].includes(x.changeType));
+ const tsAudits=audits.filter(x=>['customer_cashier_paid','customer_ordinary_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline'].includes(x.changeType));
  // New TS evidence cannot fall back to legacy admission after a missing event
  // or altered timestamp. PHP OrderStatusJob/saveStatus is not idempotent, so a
  // redelivered job can append repeated canonical success records. Every record
@@ -55,6 +56,7 @@ export async function manualRefundPaymentFacts(db:DbClient,order:Order){
   fact(events.length===1&&tsAudits.length===1&&tsAudits[0].changeTime===root.payTime);
   const primary=tsAudits[0],event=events[0];
   if(primary.changeType==='customer_cashier_paid')fact(root.payType==='cash'&&/^客户 [1-9][0-9]* 确认次卡收银现金付款$/.test(primary.changeMessage));
+  else if(primary.changeType==='customer_ordinary_cashier_paid')fact(root.payType==='cash'&&/^客户 [1-9][0-9]* 确认普通商品收银现金付款$/.test(primary.changeMessage));
   else if(primary.changeType==='cw_financial_confirm_offline')fact(root.payType==='offline'&&/^用户 [1-9][0-9]* \/ 原请求 [0-9a-f-]{36} 确认 confirm_offline$/.test(primary.changeMessage));
   else fact(root.payType==='offline');
   // The original TS consumer must have committed its purchase effects before
@@ -84,6 +86,7 @@ export async function manualRefundPaymentFacts(db:DbClient,order:Order){
  else fact(audits.every(x=>x.changeType==='pay_success'&&x.changeMessage==='用户付款成功'&&x.changeTime>=root.payTime));
  let origin_hash:string|null=null;
  if(audits.some(x=>x.changeType==='customer_cashier_paid')){const carts=await db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,root.id)).orderBy(asc(storeOrderCartInfo.id)).limit(201);const origin=await readCashierSecondCardOrigin(db,root,carts);fact(origin);origin_hash=origin!.origin_hash;}
+ if(audits.some(x=>x.changeType==='customer_ordinary_cashier_paid')){const carts=await db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,root.id)).orderBy(asc(storeOrderCartInfo.id)).limit(201);origin_hash=(await readCashierOrdinaryPaidOrigin(db,root,carts)).origin_hash;}
  await assertGuestRefundAccountless(db,order);
  const payment={root_id:root.id,order_no:root.orderId,buyer_uid:root.uid,pay_type:root.payType,amount:root.payPrice,pay_time:root.payTime,store_id:root.storeId,supplier_id:root.supplierId,
   origin_hash,audits:audits.map(x=>({id:x.id,change_type:x.changeType,change_message:x.changeMessage,change_time:x.changeTime})),event:events.length?{id:events[0].id,payload:events[0].payload,consumer_completion:consumerCompletion}:null};

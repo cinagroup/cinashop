@@ -1,9 +1,9 @@
 import type { DbClient } from '../lib/di';
 import { inspectReviewedOfflineGiftCatalog } from './reviewedOfflineGiftCatalog';
 
-export type PricingRuntimeScope = 'isolated' | 'shared-shop' | 'customer-work';
+export type PricingRuntimeScope = 'isolated' | 'shared-shop' | 'customer-work' | 'customer-work-ordinary';
 export function validatePricingRuntimeScope(scope: PricingRuntimeScope) {
-  if (scope !== 'isolated' && scope !== 'shared-shop' && scope !== 'customer-work') throw Error('Invalid pricing runtime scope');
+  if (scope !== 'isolated' && scope !== 'shared-shop' && scope !== 'customer-work' && scope !== 'customer-work-ordinary') throw Error('Invalid pricing runtime scope');
 }
 
 /** Explicit shared-identity review, never a function-name allowlist. All 27

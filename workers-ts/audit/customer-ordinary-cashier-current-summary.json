@@ -1,0 +1,300 @@
+{
+  "kind": "customer-ordinary-cashier-current-frontend-and-backend-summary",
+  "createdAtUtc": "2026-10-13T04:13:46.980Z",
+  "baseHead": "168d0005c4d6e9b17a99357a8b77f747eb7b9ac4",
+  "source": {
+    "manifest": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-validation-v6\\current-source-manifest.json",
+      "bytes": 100717,
+      "sha256": "d93066549a024834b7bd0d99eaf9add5aac3920190a5fd713339a276d33d86a0"
+    },
+    "files": 536,
+    "completeVueFiles": 178,
+    "changed": [
+      {
+        "path": "view/common/customerWorkRoute.ts",
+        "bytes": 13118,
+        "sha256": "f15607e34b412a43b6f54f64926f6ae0f6f7bb4e05a30c99e17a91144d529a81"
+      },
+      {
+        "path": "view/uniapp-ts/package.json",
+        "bytes": 5861,
+        "sha256": "6a9430cc88cbc853c855596300a43753587d8d893de414874c0a0bc5867d4b2e"
+      },
+      {
+        "path": "view/uniapp-ts/src/composables/useCustomerWork.ts",
+        "bytes": 8628,
+        "sha256": "c72dd9274a78169676172841c8819f07b35997d96801fce1b2d73b048a096ba4"
+      },
+      {
+        "path": "view/uniapp-ts/src/pages.json",
+        "bytes": 18970,
+        "sha256": "74594f7a1153e44b1e4a11f759503d63590cca5a60d9a0de01d1b7506c528261"
+      },
+      {
+        "path": "view/uniapp-ts/src/pages/customer-work/index.vue",
+        "bytes": 6448,
+        "sha256": "41a54cb10b2a77ff67bd66fbcf6f30cbf348c16c348d702b66a0c6c320caa07c"
+      },
+      {
+        "path": "view/uniapp-ts/src/types/customerWork.ts",
+        "bytes": 6397,
+        "sha256": "8fd55c5422ed53e1789da009e008b44d94de28e6b7547d77ddfd94fcd46dbce0"
+      },
+      {
+        "path": "view/uniapp-ts/src/utils/customerWork.ts",
+        "bytes": 15531,
+        "sha256": "4cb533bd42a5546ba063f4cb39899a85d48e6ea583369715c2ec6b76cf90fe06"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-page.test.cjs",
+        "bytes": 12080,
+        "sha256": "c4501ec017e5c388c9abdfa95b35eb41c225aa0f5584525047ce8ab02f50317a"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-protocol.test.cjs",
+        "bytes": 19557,
+        "sha256": "ab9a3f598c0e43d3ccebc4175ea3eba3bf1b57447e0e568ac55a65af235590b2"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-read.test.cjs",
+        "bytes": 9851,
+        "sha256": "ffb6505cfa6e34813d31baf0056690107062d862a49865ee156ed6f0c69c6672"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-request.test.cjs",
+        "bytes": 8786,
+        "sha256": "f5cce4a5de23ccbce7a853e4696e737377d4c28bb517067a0725c259f056460c"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-runtime.test.cjs",
+        "bytes": 19441,
+        "sha256": "4fcad55f2b4ffb239360ec12bda08d9dbc4db3c2c842bd0e64ec36c3e0cdf3bd"
+      },
+      {
+        "path": "view/uniapp-ts/src/api/customerWorkOrdinaryCashier.ts",
+        "bytes": 8131,
+        "sha256": "5f9658a986357d42e38178ad050ff9461b6d705aa9148a658fe4befca3238a14"
+      },
+      {
+        "path": "view/uniapp-ts/src/api/customerWorkOrdinaryCashierAssets.ts",
+        "bytes": 2619,
+        "sha256": "759323fa7b0efc6fc7d78944c94d5897a362940b984f3f9f69c178ccfcf8b027"
+      },
+      {
+        "path": "view/uniapp-ts/src/composables/useCustomerOrdinaryCashier.ts",
+        "bytes": 18017,
+        "sha256": "94cdcae2931d41179303efab2117dd79cf466eff4e953e80bc9d2f4af0010f60"
+      },
+      {
+        "path": "view/uniapp-ts/src/pages/customer-work/ordinaryCashier.vue",
+        "bytes": 33840,
+        "sha256": "02b725cbe72d7f00df534cd40f75217e1639ea20a4964ce7ac9442a8522be400"
+      },
+      {
+        "path": "view/uniapp-ts/src/types/customerWorkOrdinaryCashierRead.ts",
+        "bytes": 3219,
+        "sha256": "d4b7fca5af43c1c7e3c7c4eeaedca5b310b65383aba02b097a0e79900c2cec00"
+      },
+      {
+        "path": "view/uniapp-ts/src/utils/customerWorkOrdinaryCashier.ts",
+        "bytes": 28448,
+        "sha256": "822196bd4ced7300db02e154cbcc685c46f64de934580e446d744f59dbca7151"
+      },
+      {
+        "path": "view/uniapp-ts/src/utils/customerWorkOrdinaryCashierRead.ts",
+        "bytes": 9723,
+        "sha256": "8627ecdd4149fa12cdfdea21c306533b73b8f2d58862ceb0988e4f885d42613e"
+      }
+    ],
+    "allCurrentAndStagedRawBodiesVerified": true
+  },
+  "backend": {
+    "summary": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-backend-v8-summary.json",
+      "bytes": 32558,
+      "sha256": "2909c4a731ab282bdf73be2aba73b721b9a1ac85d652c5edcf5a49a4466f664f"
+    },
+    "exactSourceStillMatchesV8": true,
+    "native": {
+      "wholeFiles": [
+        "test/cashier-ordinary-catalog-postgres.test.ts",
+        "test/customer-cashier-ordinary-postgres.test.ts",
+        "test/checkout-coupon-item-authority.test.ts",
+        "test/order-promotion-paid-labels.test.ts",
+        "test/customer-cashier-second-card-postgres.test.ts"
+      ],
+      "passed": 111,
+      "failed": 0,
+      "skipped": 0,
+      "timeoutSeconds": 600,
+      "runnerAllowlist": "only two new ordinary files appended; existing files and timeout retained"
+    },
+    "contract": {
+      "wholeFiles": 1,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "wholeWorkersTypes": 2
+  },
+  "frontend": {
+    "receipts": [
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-validation-v6\\executions\\full-vue-types\\receipt.json",
+        "bytes": 4301,
+        "sha256": "9bdac5405c9f9c4126b13b29464d78419a0731813247d1df1b9c8558fa721e13"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-validation-v6\\executions\\original-build-h5\\receipt.json",
+        "bytes": 115490,
+        "sha256": "794091d70690f5fa848c65002447330ea2b6345665d25cfa62a1001ed9b26297"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-validation-v6\\executions\\whole-ordinary-five-files-tap\\receipt.json",
+        "bytes": 4823,
+        "sha256": "ace998f803075f4e5833a7e8c549eebfb78792ba6171fca4e7acc735b59d4b2e"
+      }
+    ],
+    "wholeOriginalFiles": [
+      "scripts/customer-ordinary-cashier-request.test.cjs",
+      "scripts/customer-ordinary-cashier-protocol.test.cjs",
+      "scripts/customer-ordinary-cashier-runtime.test.cjs",
+      "scripts/customer-ordinary-cashier-read.test.cjs",
+      "scripts/customer-ordinary-cashier-page.test.cjs"
+    ],
+    "actualTap": {
+      "tests": 50,
+      "pass": 50,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "buildFiles": 331,
+    "strictWholeVueTypesPassed": true,
+    "dependencyPhysicalInputFiles": 18576,
+    "installation": "fresh normal npm-ci ocu3; C6 independent complete physical copies, no new installation claimed"
+  },
+  "browser": {
+    "receipt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-tools-v2\\browser-qa-v11\\receipt.json",
+      "bytes": 131063,
+      "sha256": "f9a3a2f2737906c7b439de82781dcefdc2f36142b7b1e1a5d8ab43387a6dc6ff"
+    },
+    "currentC6Build": true,
+    "version": "154.0.8037.98",
+    "viewports": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 900,
+          "zero": false
+        },
+        "steps": [
+          "actual intended page, meaningful content and closed gate",
+          "two distinct SKU cart rows; closed gate sent no write",
+          "new query loads page one and replaces old catalog",
+          "record closure removes its prompt and retains verified payment",
+          "separate actual cash modal and receipt render; verified paid remains after journal closure",
+          "next ordinary transaction clears prior paid card without a replacement financial POST"
+        ],
+        "errors": [],
+        "warnings": [
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+        ],
+        "noHorizontalOverflow": true,
+        "postWrites": 3,
+        "screenshots": [
+          {
+            "path": "desktop-closed.png",
+            "sha256": "101f4c15c433144813326e99ee6b8691f323d1fe091622677776a18b002929be"
+          },
+          {
+            "path": "desktop-quote.png",
+            "sha256": "532e11f403123c82d5c490ddbd0857bc141297851e221725621ae52fcd5b8715"
+          },
+          {
+            "path": "desktop-paid.png",
+            "sha256": "5cbb2d5314f993fe2867b9b867c6bb6152345e55a198818cd5111b8a1882c18a"
+          }
+        ]
+      },
+      {
+        "viewport": {
+          "name": "mobile",
+          "width": 390,
+          "height": 844,
+          "zero": true
+        },
+        "steps": [
+          "actual intended page, meaningful content and closed gate",
+          "two distinct SKU cart rows; closed gate sent no write",
+          "new query loads page one and replaces old catalog",
+          "record closure removes its prompt and retains verified payment",
+          "separate actual zero modal and receipt render; verified paid remains after journal closure",
+          "next ordinary transaction clears prior paid card without a replacement financial POST"
+        ],
+        "errors": [],
+        "warnings": [
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+        ],
+        "noHorizontalOverflow": true,
+        "postWrites": 3,
+        "screenshots": [
+          {
+            "path": "mobile-closed.png",
+            "sha256": "557aa2a2e03b6c6a43cae91d331d7dbb2b5c0de90874b556e3077da5c4574c40"
+          },
+          {
+            "path": "mobile-quote.png",
+            "sha256": "d772fb30dd301e3226aada5f84922d358db51fe4ca098cc217064a84de4df302"
+          },
+          {
+            "path": "mobile-paid.png",
+            "sha256": "640ddd041b566b286b86a32caac93bea74d0b3844a9fddbfedaebc2d77d6c890"
+          }
+        ]
+      }
+    ],
+    "legacyWarning": {
+      "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+      "reason": "The exact warning is emitted by the installed @dcloudio/uni-h5/node_modules/vue-router/dist/vue-router.esm-bundler.js line 1. All warnings remain recorded; the direct importing module has not been established. No library or application source changed.",
+      "source": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-validation-v6\\project\\view\\uniapp-ts\\node_modules\\@dcloudio\\uni-h5\\node_modules\\vue-router\\dist\\vue-router.esm-bundler.js",
+        "sha256": "8c9ff0ee4bf521b91ba0db699b3462c84492c3f96e84ae3f69c070d302f8e1f3",
+        "bytes": 164
+      }
+    },
+    "syntheticLocalApiOnly": true,
+    "productionApiCalls": false,
+    "productionFinancialCredit": false
+  },
+  "behavior": [
+    "ordinary type0 products, multiple SKU rows and member or guest buyer",
+    "original complete durable UUID and intent before writes; UNKNOWN queries same key without financial POST replacement",
+    "actual shipping stores and region catalog, owned member addresses, common form template and creator image references",
+    "server quotation and required promotion threshold_type: 1 money / 2 quantity",
+    "separate create and cash/zero confirmation; verified payment persists after record closure",
+    "closed-record prompt removed after verified closure; next transaction clears prior display without financial POST"
+  ],
+  "history": {
+    "priorFailuresPreserved": true,
+    "C4Browser": "immutable prior build only; successful v10 and earlier failed instrument attempts preserved as raw",
+    "C5": "49 whole tests plus types/build passed before caption fix; independently preserved",
+    "unboundedMigrationComplete": false
+  },
+  "limits": {
+    "productionCommissioned": false,
+    "productionDdlExecuted": false,
+    "deployed": false,
+    "githubCiPassedForCurrentCandidate": false,
+    "allRepositoryTestsPassed": false,
+    "mainPeerCredit": false,
+    "rawArchivesToPush": false
+  },
+  "next": "Integrate the shared red-note CI repairs, commit source and summary reports, and run the resulting GitHub CI."
+}

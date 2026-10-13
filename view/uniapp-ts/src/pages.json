@@ -682,6 +682,10 @@
       "path": "pages/customer-work/cashier",
       "style": { "navigationBarTitleText": "次卡现金收银" }
     },
+    {
+      "path": "pages/customer-work/ordinaryCashier",
+      "style": { "navigationBarTitleText": "普通商品现金收银" }
+    },
       {
         "path": "pages/customer-work/scanning",
         "style": { "navigationStyle": "custom", "navigationBarTitleText": "客户扫码核销" }

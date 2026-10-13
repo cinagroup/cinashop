@@ -3,6 +3,9 @@ import { storeProduct, storeProductCategory, storeBrand } from '@/models/schema'
 import { parseCouponScopeIds, type CouponScopeItem } from '@/services/activity/ProductCouponService';
 import { ValidateException } from '@/utils/errors';
 import type { CouponAuthorityTransaction } from './CheckoutCouponRelationsAuthority';
+import type {DbClient} from '@/lib/di';
+import type {CashierOrdinaryCreationCapability} from './CashierOrdinaryOrigin';
+import {lockOrdinaryCheckoutTaxonomy,assertOrdinaryTaxonomyProof} from './CashierOrdinaryTaxonomy';
 
 /** The existing customer receipt's item projection, not a new pricing rule. */
 function facts(items: readonly CouponScopeItem[], scopeType: number) {
@@ -21,7 +24,7 @@ function facts(items: readonly CouponScopeItem[], scopeType: number) {
  * the calculator's authority; it does not recursively read ancestor rows.
  */
 export async function assertCheckoutCouponItems(
-  tx: CouponAuthorityTransaction, expected: readonly CouponScopeItem[], scopeType: number,
+  tx: CouponAuthorityTransaction, expected: readonly CouponScopeItem[], scopeType: number, ordinary?:CashierOrdinaryCreationCapability,
 ): Promise<void> {
   if (tx.$client || !tx.execute) throw new ValidateException('优惠券商品复核必须位于建单事务内');
   const [settings] = await tx.select({ timeout: sql<string>`pg_catalog.current_setting('lock_timeout')`,
@@ -40,9 +43,12 @@ export async function assertCheckoutCouponItems(
   const categoryIds = scopeType === 1 ? [...new Set(products.flatMap(row => parseCouponScopeIds(row.cateId)))].sort((a, b) => a - b) : [];
   const brandIds = scopeType === 3 ? [...new Set(products.map(row => row.brandId).filter(id => id > 0))].sort((a, b) => a - b) : [];
   if (categoryIds.length > 10000) throw new ValidateException('商品分类范围过大');
-  const categories = categoryIds.length ? await tx.select({ id: storeProductCategory.id,
+  const proof=ordinary&&categoryIds.length?await lockOrdinaryCheckoutTaxonomy(tx as DbClient,ordinary,'category',categoryIds):null;
+  if(proof)assertOrdinaryTaxonomyProof(tx,proof,'category',categoryIds);
+  const categoryQuery=tx.select({ id: storeProductCategory.id,
     pid: storeProductCategory.pid, path: storeProductCategory.path }).from(storeProductCategory)
-    .where(inArray(storeProductCategory.id, categoryIds)).orderBy(storeProductCategory.id).for('share', { noWait: true }) : [];
+    .where(inArray(storeProductCategory.id, categoryIds)).orderBy(storeProductCategory.id);
+  const categories=categoryIds.length?await(proof?categoryQuery:categoryQuery.for('share',{noWait:true})):[];
   const brands = brandIds.length ? await tx.select({ id: storeBrand.id, pid: storeBrand.pid, fid: storeBrand.fid })
     .from(storeBrand).where(inArray(storeBrand.id, brandIds)).orderBy(storeBrand.id).for('share', { noWait: true }) : [];
   if (categories.length !== categoryIds.length || brands.length !== brandIds.length) {

@@ -3,6 +3,8 @@ import type { DbClient } from '@/lib/di';
 import { user, systemUserLevel } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
 import { activityRuleQuoteGuard } from '@/services/activity/ActivityRuleQuoteGuard';
+import type {CashierOrdinaryCreationCapability} from './CashierOrdinaryOrigin';
+import {lockOrdinaryCheckoutTaxonomy,assertOrdinaryTaxonomyProof} from './CashierOrdinaryTaxonomy';
 
 export interface CheckoutMembershipSnapshot {
   uid: number;
@@ -22,7 +24,7 @@ export interface CheckoutMembershipSnapshot {
  * after all remaining potentially blocking SQL, not when these rows were read.
  */
 export async function assertCheckoutMembershipSnapshot(
-  tx: DbClient, expected: CheckoutMembershipSnapshot,
+  tx: DbClient, expected: CheckoutMembershipSnapshot, ordinary?:CashierOrdinaryCreationCapability,
 ): Promise<SQL | undefined> {
   try {
     const [account] = await tx.select({ isEverLevel: user.isEverLevel, isMoneyLevel: user.isMoneyLevel, overdueTime: user.overdueTime })
@@ -35,9 +37,12 @@ export async function assertCheckoutMembershipSnapshot(
       // An absent referenced row has no row lock. Do not authorize checkout with
       // a dangling level reference that a concurrent INSERT could turn into rights.
       if (!expected.level) throw new ValidateException('会员等级引用缺失，请修复后重新确认');
-      const [level] = await tx.select({ id: systemUserLevel.id }).from(systemUserLevel).where(and(
+      const proof=ordinary?await lockOrdinaryCheckoutTaxonomy(tx,ordinary,'level',[expected.levelId]):null;
+      if(proof)assertOrdinaryTaxonomyProof(tx,proof,'level',[expected.levelId]);
+      const levelQuery=tx.select({ id: systemUserLevel.id }).from(systemUserLevel).where(and(
         eq(systemUserLevel.id, expected.levelId), activityRuleQuoteGuard(expected.level, systemUserLevel),
-      )).limit(1).for('share', { noWait: true });
+      )).limit(1);
+      const [level]=await(proof?levelQuery:levelQuery.for('share',{noWait:true}));
       if (!level) throw new ValidateException('会员等级权益已变化，请重新确认');
     }
     return expected.paidActive === null ? undefined : sql`(

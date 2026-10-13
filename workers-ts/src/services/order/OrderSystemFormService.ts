@@ -10,6 +10,7 @@ import {
   type AttachmentService,
 } from "@/services/system/AttachmentService";
 import { ValidateException } from "@/utils/errors";
+import { readOrdinaryCashierFormForOrder } from '@/services/customer-work/CustomerOrdinaryCashierForm';
 
 import {
   MAX_FORM_COMPONENTS, isRecord, parseArray, cloneRecord, parseOrderSystemFormTemplate,
@@ -161,6 +162,8 @@ export async function readOrderSystemFormForOrder(
   db: DB, attachments: Pick<AttachmentService, 'signReferences'>, order: FormOrder,
 ): Promise<JsonRecord[]> {
   if (order.isChannel !== 2) return readOrderSystemFormSnapshot(db, attachments, order.uid, order.customForm);
+  const ordinary = await readOrdinaryCashierFormForOrder(db, attachments, order);
+  if (ordinary !== null) return ordinary;
   const components = snapshotComponents(order.customForm);
   if (!components) return [];
   let root: FormOrder | undefined = order;
