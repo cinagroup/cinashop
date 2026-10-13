@@ -1,0 +1,312 @@
+{
+  "kind": "admin-product-metadata-current-api-report-repair-summary",
+  "version": 1,
+  "recordedAtUtc": "2026-10-13T10:13:29.6087693Z",
+  "scope": "Report-only follow-up for the legacy canonical product metadata routes",
+  "sourceBaseHead": "cf0c1caedd700d190b86c3b3920d9a5f070c2f4f",
+  "validatedCandidate": "Source at base HEAD with exactly the two current generated API reports regenerated; new summary files are outside the validated executable source inventory",
+  "reports": [
+    {
+      "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 392848,
+      "sha256": "b0498bd0dc50d0156de6fa6c273c97b3471fadcbf2c21a97096d196f4333254a"
+    },
+    {
+      "path": "workers-ts/audit/admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json",
+      "bytes": 392848,
+      "sha256": "b0498bd0dc50d0156de6fa6c273c97b3471fadcbf2c21a97096d196f4333254a"
+    }
+  ],
+  "generation": {
+    "command": [
+      "node_modules/tsx/dist/cli.mjs",
+      "scripts/admin-frontend-api-audit.ts",
+      "--strict"
+    ],
+    "unchangedBuilder": {
+      "path": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "bytes": 14730,
+      "sha256": "94e4061fe3616b129c7e9e9733d84f0a700c6251f79683281360b01adeb195d0"
+    },
+    "unchangedAuditTest": {
+      "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "bytes": 2507,
+      "sha256": "b123b1b936484f491a76a6939d35bbab021e64dbb0fce1e4795e0da48ace8ba5"
+    },
+    "receipt": {
+      "path": ".cache\\metadata-api-report-repair-v1\\generator-receipt.json",
+      "bytes": 37392,
+      "sha256": "d3f25ff1f60c17fb4fb502e32e09056a4e33de1c8bee04438d696fb3078d3341"
+    },
+    "mutationReceipt": {
+      "path": ".cache\\metadata-api-report-repair-v1\\mutation-receipt.json",
+      "bytes": 41208,
+      "sha256": "7ffeaedd56ef50c3a786cae612757f161386ac89a45669749c38da7eee1b2b71"
+    },
+    "oldReportsPreservation": {
+      "path": ".cache\\metadata-api-report-repair-v1\\old-reports-preservation.json",
+      "bytes": 19812,
+      "sha256": "77c47109a48711b4a23159e452e5b8762fc78de67ce12d338182a1ac2d9b1ad9"
+    },
+    "counts": {
+      "callSites": 621,
+      "pathVariants": 653,
+      "registered": 653,
+      "executable": 653,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "registeredRoutes": 821,
+    "requiredNineCanonicalMetadataRoutesVerified": true,
+    "oldReportBodiesPreserved": true,
+    "auditAssertionsChanged": false
+  },
+  "originalMetadataSourcesAndSummaries": [
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 96489,
+      "sha256": "4c3287d79fb772414153cac4b9333e7e3bc24c2693e84c1c1738f3920ed172f6"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminLegacyProductMetadataController.ts",
+      "bytes": 1230,
+      "sha256": "e5b5d7a6d59214edbb7464d082e30aedaf5f8d288f4ff01723115e843ae36d7c"
+    },
+    {
+      "path": "workers-ts/test/admin-product-metadata-legacy-http.test.ts",
+      "bytes": 13359,
+      "sha256": "fe61b3211cf034b9f5cb956b5926c1fece7b527c549b6da0dd01283183859457"
+    },
+    {
+      "path": "workers-ts/audit/admin-product-metadata-legacy-canonical-20261013-summary.json",
+      "bytes": 13747,
+      "sha256": "52ff11099afef8e3fde295838f9bc8c3f911dfb86f3515796ee011030f9a63c0"
+    },
+    {
+      "path": "workers-ts/audit/admin-product-metadata-legacy-canonical-20261013-summary.md",
+      "bytes": 1577,
+      "sha256": "9da73cb52e20954d6b62948cf7cab96ddc8220481e9a6c11558fead5b8db7b64"
+    }
+  ],
+  "originalCI": {
+    "head": "cf0c1caedd700d190b86c3b3920d9a5f070c2f4f",
+    "runId": 38367697068,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38367697068",
+    "attempt": 1,
+    "status": "completed",
+    "conclusion": "failure",
+    "successfulJobs": 9,
+    "failedJobs": [
+      {
+        "id": 115196687009,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "conclusion": "failure"
+      },
+      {
+        "id": 115220435817,
+        "name": "Worker type, unit, schema and route gates",
+        "conclusion": "failure"
+      }
+    ],
+    "actualWholeUnitFiles": 970,
+    "actualPassedCases": 15969,
+    "actualFailedCases": 1,
+    "actualSkippedCases": 0,
+    "failedAssertion": "Admin frontend API registration audit: recomputes the same deterministic report from the current frontend and routes; stale report equality at test/admin-frontend-api-audit.test.ts:57",
+    "terminalSeal": {
+      "path": ".cache/metadata-ci-cf0-v2/terminal-summary.json",
+      "bytes": 219388,
+      "sha256": "4176e8bab6756ebb7097da32618ea12f34b4d61bc2025404700947802deeb857"
+    },
+    "originalJobLogsAndResultArtifactsPreserved": true,
+    "creditForRegeneratedCandidate": false
+  },
+  "freshLocalValidation": {
+    "epoch": "metadata-report-repair-validation-v1",
+    "manifest": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\manifest.json",
+      "bytes": 9202955,
+      "sha256": "bbeb5798d4fd0c9b59f43b243fab495e77b6b6b968ddbf9e507b7512ad6b45ee"
+    },
+    "derivationReceipt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\derivation-receipt.json",
+      "bytes": 825,
+      "sha256": "b1aad98d6fecef63a7d48d6fb2d4d30617eb5fc299b58a0fd64dbfb9fb8ecef8"
+    },
+    "prepareReceipt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\prepare-receipt.json",
+      "bytes": 16738,
+      "sha256": "c018794d716496f072e2c008c622a525d76bed53d3094b0c5ffb237aa852e591"
+    },
+    "compilerInputGraph": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\compiler-input-graph.json",
+      "bytes": 5080885,
+      "sha256": "9b1e16b81d1153627e91bb75255e15421923f743208c41135108535d4474eaed"
+    },
+    "primarySourceFiles": 3852,
+    "currentReportAuxiliaryFiles": 2,
+    "totalGuardedSourceInputs": 3854,
+    "independentPhysicalDependencyFiles": 42404,
+    "completeDependencyRoots": 4,
+    "originalProviderFiles": 43992,
+    "freshWorkerDependencyFiles": 7639,
+    "installationInputBindings": 15,
+    "completeTypeScriptConfigurations": 2,
+    "wholeTestFiles": 3,
+    "passedTests": 16,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "receipts": [
+      {
+        "label": "typecheck-unit",
+        "command": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "startedAt": "2026-10-13T09:52:00.935Z",
+        "endedAt": "2026-10-13T09:58:34.875Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-unit-receipt.json",
+          "bytes": 35180,
+          "sha256": "aeb95ab43c8c5571144a61adb894025b44d197a4c9beee331f51103c2fd0135b"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-unit-before.json",
+          "bytes": 16738,
+          "sha256": "6da3695d680d4182d4174ac4111deef7589314cc6da5f228c0fb33ff5277f9a1"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-unit-after.json",
+          "bytes": 16738,
+          "sha256": "1e510fea6b395cff8bac1745b518c97257e0bd4a0d1d303adf3f6f881d442150"
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-unit.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "summaries": [],
+        "fullSourceAndAuxiliaryAndDependencyGuardsBeforeAndAfter": true
+      },
+      {
+        "label": "typecheck-runtime",
+        "command": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "startedAt": "2026-10-13T09:52:00.935Z",
+        "endedAt": "2026-10-13T09:58:34.876Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-runtime-receipt.json",
+          "bytes": 35186,
+          "sha256": "50887d5027e8e03a02f509d9a7682b11fe8391be5c9fafafe936b8de72f26dce"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-runtime-before.json",
+          "bytes": 16738,
+          "sha256": "bb8cf2609aaed182da4ea3afe5d9202b7fee64e137379f73a0ee93b2a850d99a"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-runtime-after.json",
+          "bytes": 16738,
+          "sha256": "df7cd36011f67dacac8dec4e12b1f0d77aa246a9a52768ca4942aff4e7573878"
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\typecheck-runtime.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "summaries": [],
+        "fullSourceAndAuxiliaryAndDependencyGuardsBeforeAndAfter": true
+      },
+      {
+        "label": "unit-http",
+        "command": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/admin-product-metadata-legacy-http.test.ts",
+          "test/product-metadata-migration.test.ts",
+          "test/admin-frontend-api-audit.test.ts",
+          "--maxWorkers=1",
+          "--reporter",
+          "verbose"
+        ],
+        "startedAt": "2026-10-13T09:52:03.708Z",
+        "endedAt": "2026-10-13T09:58:34.91Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\unit-http-receipt.json",
+          "bytes": 35336,
+          "sha256": "15d8a75ec01db867d41cb60e7b023c3a00f8e73eb5db09d599bf5549b4bc55b2"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\unit-http-before.json",
+          "bytes": 16738,
+          "sha256": "326b23ee672e14b42a46e14ee6654a8c4757a1f3211aa2ff7b5cd3599facd4d6"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\unit-http-after.json",
+          "bytes": 16738,
+          "sha256": "df7cd36011f67dacac8dec4e12b1f0d77aa246a9a52768ca4942aff4e7573878"
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\unit-http.log",
+          "bytes": 3185,
+          "sha256": "b5109073b2799d5e8f22425f3e4c1ccbc80f8e1526ca40446485269442635cc6"
+        },
+        "summaries": [
+          "Test Files  3 passed (3)",
+          "Tests  16 passed (16)",
+          "Duration  49.94s (transform 19.36s, setup 0ms, import 26.52s, tests 22.42s, environment 0ms)"
+        ],
+        "fullSourceAndAuxiliaryAndDependencyGuardsBeforeAndAfter": true
+      }
+    ]
+  },
+  "rawEvidence": {
+    "directory": ".cache/metadata-api-report-final-v1",
+    "manifest": {
+      "path": ".cache\\metadata-api-report-final-v1\\raw-preservation-manifest.json",
+      "bytes": 2684978,
+      "sha256": "2a8fa9a6674e998502b5c58e01278193ac31ddccf416f0b726f866f6de2aa232"
+    },
+    "records": 3892,
+    "uniqueObjects": 3883,
+    "totalUniqueObjectBytes": 82347668,
+    "completeFrozenSourceAndReportBodies": 3854,
+    "copyAndOriginalGuardsRecordedInReferencedEvidence": true,
+    "completeDependencyHashesPreserved": true,
+    "completeDependencyBodiesCopiedToRawArchive": false,
+    "dependencyBodiesRetainedAt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-report-repair-validation-v1\\project",
+    "rawArchiveIgnoredByGit": true,
+    "originalCIAndOldReportsRemainPreserved": true
+  },
+  "limits": {
+    "newCandidateFullCI": "Not yet run as of this summary",
+    "fullLinuxCICredit": false,
+    "nativePostgresLockCredit": false,
+    "productionDDL": false,
+    "deployed": false,
+    "browserVisualQA": false,
+    "fullLegacySwooleLoaderExecution": false,
+    "fullPHPToTSMigrationComplete": false
+  }
+}
