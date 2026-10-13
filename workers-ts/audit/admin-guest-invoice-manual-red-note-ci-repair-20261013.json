@@ -1,8 +1,8 @@
 {
   "version": "admin-guest-invoice-manual-red-note-ci-repair-progress-v1",
   "date": "2026-10-13",
-  "recordedAt": "2026-10-13T00:38:08.555Z",
-  "status": "ci_regressions_repaired_pending_final_integrated_acceptance",
+  "recordedAt": "2026-10-13T03:02:07.925Z",
+  "status": "focused_ci_test_contract_repairs_verified_full_acceptance_pending",
   "wholeMigrationComplete": false,
   "actualGlobalMainCredit": false,
   "deployed": false,
@@ -167,5 +167,284 @@
         "productionSourceFiles": 1103
       }
     }
+  },
+  "latestAcceptanceAttempt": {
+    "sourceCommit": "168d0005c4d6e9b17a99357a8b77f747eb7b9ac4",
+    "sourceManifestSha256": "7661531da51341fdf4ffafc4cb5ff6042532f618126ae1b00302e0028803b1b5",
+    "sourceInputs": 3861,
+    "finalCredit": false,
+    "fullWorkerTypes": {
+      "unitExit": 0,
+      "runtimeExit": 0
+    },
+    "ordinaryWholeSuite": {
+      "files": 27,
+      "passed": 602,
+      "skipped": 268,
+      "failed": 0,
+      "skipReason": "Original native-only checkout cases; supplementary whole-file native execution has not started."
+    },
+    "nativeSequence": {
+      "exit": 1,
+      "completedGroups": 11,
+      "executedWholeFiles": 24,
+      "passed": 834,
+      "failed": 1,
+      "skipped": 0,
+      "stoppedAfter": "H",
+      "followingGroupsNotStarted": true,
+      "originalWholeFiles": 43,
+      "originalGroups": 24,
+      "supplementaryCheckoutNotStarted": true,
+      "failure": "invoice-evidence-registration.test.ts complete orm construction: current 287-model contract incorrectly received a filtered historical 285-model snapshot.",
+      "receiptSha256": "eff55db27a788cba280383654900687d87bfca3c4aca245f6d0f5fc8ec588999",
+      "failedGroupLogSha256": "61dcf3497e89dc93fc41b15e7f920fa78896cf328b1147f3747bb034465c4b23",
+      "fixtureExit": 0,
+      "clusterStopped": true,
+      "independentPgStatusExit": 3
+    },
+    "githubCi": {
+      "runId": 38332955682,
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/38332955682",
+      "conclusion": "failure",
+      "successfulJobs": 8,
+      "failedWorkerShards": 2,
+      "aggregateGate": "failure",
+      "summarySha256": "cbefef0d50a352e4802050616ff4c312cd7cc63ea221d8527beddc9d166f27b3",
+      "diagnosticSha256": "5659158aead76402eb3ae386c7383c63fac12fdac3596a5fd690d27ff2d1dc35",
+      "shard1": {
+        "jobId": 115087145099,
+        "passed": 8757,
+        "failed": 2,
+        "logBytes": 32829853,
+        "logSha256": "59ea48299f4310486e22fed10349ae0e3288efdd0c9c2552e86517dfe3a08764",
+        "findings": [
+          "Same complete ORM registration snapshot mismatch as native H.",
+          "Kefu full current ORM SQL multiset still asserted the historical 1191-statement model basis."
+        ]
+      },
+      "shard2": {
+        "jobId": 115087145471,
+        "passed": 7362,
+        "failed": 3,
+        "logBytes": 34637645,
+        "logSha256": "f7e5a8fe5cc70e2a0cfb447ac999a84a76b5acd48945a00f624f17f5f91a9624",
+        "findings": [
+          "Manual red-note cases exceeded the unchanged 30000 ms test budget; no financial assertion mismatch established."
+        ]
+      },
+      "rawLogsArchived": false,
+      "rawLogsPreservedOnRemoteDisk": true
+    },
+    "currentRepairs": {
+      "status": "under review; not validated on repaired source",
+      "scope": [
+        "Correct complete current ORM registration test wiring without dropping either manual red-note model.",
+        "Retain the historical Kefu SQL fingerprint and verify its exact six-statement current-model delta."
+      ],
+      "sourceDeployment": false
+    },
+    "staticAudit": {
+      "scope": "separate successful static-v4 audit of this source with current main document epoch; does not repair failed native or CI credit",
+      "actionablePhpRoutes": 962,
+      "openChecklistTasks": 155,
+      "uniappRouteGaps": 7
+    },
+    "historicalArtifactsPreserved": true,
+    "formalFinalArchiveExecuted": false
+  },
+  "lastRecordedAt": "2026-10-13T04:20:26.254Z",
+  "currentCiRepairValidation": {
+    "sourceHeadBeforeCommit": "168d0005c4d6e9b17a99357a8b77f747eb7b9ac4",
+    "runtimeAndTestSources": [
+      {
+        "path": "workers-ts/test/invoice-evidence-registration.test.ts",
+        "bytes": 12017,
+        "sha256": "f57152f3f473303b73a541c2e19300ab5a5a2a00a035205a5deeadb463bc32fa"
+      },
+      {
+        "path": "workers-ts/test/kefu-sequence-runner.test.ts",
+        "bytes": 15045,
+        "sha256": "d13903a56743036d9f4a86d1346602e5e94a317488edf6e5ce56bfad277bf44b"
+      },
+      {
+        "path": "workers-ts/vitest.config.ts",
+        "bytes": 2156,
+        "sha256": "8f424ca0ad6c161e084e36c95958f43b3ecf007a722e3a3444d28cde80484284"
+      }
+    ],
+    "sourceProgressReportAtValidation": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\admin-guest-invoice-integration-20261012\\workers-ts\\audit\\admin-guest-invoice-manual-red-note-ci-repair-20261013.json",
+      "bytes": 10221,
+      "sha256": "8d34fc6384d8829e2cd8942ad8a0644f28e0e741c35d2ed497c6519902f9884d"
+    },
+    "reportOnlyUpdateAfterValidation": true,
+    "wholeWorkersTypes": 2,
+    "checks": [
+      {
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\complete-types-unit-v1\\receipt.json",
+          "bytes": 2973,
+          "sha256": "4e280b7b7f3041d3605ebc510289fd44a78f402f1bf42eb4f0d72c51b46935ab"
+        },
+        "label": "complete-types-unit-v1",
+        "exitCode": 0,
+        "sourceFiles": 3861,
+        "sourceAndCompleteToolsBeforeAfterVerified": true,
+        "testSummary": []
+      },
+      {
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\complete-types-runtime-v1\\receipt.json",
+          "bytes": 3026,
+          "sha256": "07cc4d2d8c88666f0a5071a686b3aab2dbe4b6ba89f3ddd3f0f5f712f9d3dc40"
+        },
+        "label": "complete-types-runtime-v1",
+        "exitCode": 0,
+        "sourceFiles": 3861,
+        "sourceAndCompleteToolsBeforeAfterVerified": true,
+        "testSummary": []
+      },
+      {
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\actual-old-new-unit-partition-v1\\receipt.json",
+          "bytes": 3800,
+          "sha256": "96441ee4fa16836ae3b62999dfe027a64b58050c440c8749b6c718560023d2d9"
+        },
+        "label": "actual-old-new-unit-partition-v1",
+        "exitCode": 0,
+        "sourceFiles": 3861,
+        "sourceAndCompleteToolsBeforeAfterVerified": true,
+        "testSummary": []
+      },
+      {
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\whole-q-isolated-native-v1\\receipt.json",
+          "bytes": 3829,
+          "sha256": "8c67e207a91d4231053fffff7716602a857855740bd061dfb81cba746fa3300e"
+        },
+        "label": "whole-q-isolated-native-v1",
+        "exitCode": 0,
+        "sourceFiles": 3861,
+        "sourceAndCompleteToolsBeforeAfterVerified": true,
+        "testSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  85 passed (85)",
+          "Duration  402.38s (transform 17.56s, setup 0ms, import 27.78s, tests 373.38s, environment 0ms)"
+        ]
+      }
+    ],
+    "currentOrmCohort": {
+      "completeModels": 287,
+      "hAndKefuWholeFiles": 4,
+      "passed": 114,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-current-orm-cohort-repair-v1\\whole-h3-kefu-native-v1\\receipt.json",
+        "bytes": 4028,
+        "sha256": "9d3dfe5d4dddc57f1efc9efcc4a96a3352764cd4130940c7030b8e6a66113275"
+      },
+      "logSha256": "5233ebe72b609bd615f5bc1d4b77adda1f01cc48b597bb13e2d6df46b4fb9811",
+      "historicalSql1191PinPreserved": true,
+      "currentSqlCount": 1197,
+      "exactManualTwoTableDdlDelta": 6,
+      "historicalSqlAndRunAllUnmodified": true
+    },
+    "partition": {
+      "result": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\actual-old-new-unit-partition-v1\\partition-results.json",
+        "bytes": 213779,
+        "sha256": "b3988a7d97e8c961ea2981e6ce831e0c1b9fbb1c6f8feae58fb96187b6e77fbb"
+      },
+      "files": 970,
+      "completeInventoryUnchanged": true,
+      "shardMembershipChanged": false,
+      "inventoryDigest": "b1ba016599357b8447e905e1d045faa4c88462090bc9edacf70147d1f9022d13",
+      "shardDifferences": [
+        {
+          "index": 1,
+          "onlyOld": [],
+          "onlyNew": []
+        },
+        {
+          "index": 2,
+          "onlyOld": [],
+          "onlyNew": []
+        }
+      ],
+      "oldProfile": {
+        "root": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\original-partition-project\\workers-ts",
+        "configPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\original-partition-project\\workers-ts\\vitest.config.ts",
+        "configSha256": "46f000c4caab4c542ec9a33a1abad3cb833d33d659be3106dd7cfe3c19ea9b16",
+        "vitestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-guest-invoice-main-integration-validation\\dependencies\\worker-v3\\node_modules\\vitest\\dist\\node.js",
+        "actualCliEquivalentRootMaxWorkers": 2,
+        "sourceFile": "test/admin-guest-invoice-manual-red-note-postgres.test.ts",
+        "moduleOccurrences": 1,
+        "actualProjectName": "regular-unit",
+        "actualProjectGroupOrder": 0,
+        "inventoryFiles": 970,
+        "nativeCaseDeadlineChanged": false,
+        "nativeCasesExecuted": 0
+      },
+      "newProfile": {
+        "root": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\worker-project\\workers-ts",
+        "configPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\worker-project\\workers-ts\\vitest.config.ts",
+        "configSha256": "8f424ca0ad6c161e084e36c95958f43b3ecf007a722e3a3444d28cde80484284",
+        "vitestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-guest-invoice-main-integration-validation\\dependencies\\worker-v3\\node_modules\\vitest\\dist\\node.js",
+        "actualCliEquivalentRootMaxWorkers": 2,
+        "sourceFile": "test/admin-guest-invoice-manual-red-note-postgres.test.ts",
+        "moduleOccurrences": 1,
+        "actualProjectName": "guest-invoice-manual-red-note-native",
+        "actualProjectGroupOrder": 3,
+        "actualProjectMaxWorkers": 1,
+        "actualProjectFileParallelism": false,
+        "inventoryFiles": 970,
+        "nativeCaseDeadlineChanged": false,
+        "nativeCasesExecuted": 0
+      }
+    },
+    "manualRedNote": {
+      "wholeOriginalFiles": 1,
+      "passed": 85,
+      "failed": 0,
+      "skipped": 0,
+      "originalRunnerDeadlineSeconds": 600,
+      "perCaseOriginalDeadlineSeconds": 30,
+      "deadlineChanged": false,
+      "fullCaseBodiesAndOriginalRunnerPreserved": true,
+      "actualProject": "guest-invoice-manual-red-note-native",
+      "projectGroupOrder": 3,
+      "projectMaxWorkers": 1,
+      "fileParallelism": false,
+      "receipt": {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\whole-q-isolated-native-v1\\receipt.json",
+        "bytes": 3829,
+        "sha256": "8c67e207a91d4231053fffff7716602a857855740bd061dfb81cba746fa3300e"
+      },
+      "logSha256": "5a9db65c6acb01833340df293afb43c2e0e85d0eb5681d993da5c9fbda30dd54",
+      "nativeCleanup": {
+        "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ci-red-note-isolation-repair-v1\\pg-cache\\finance-postgres-YbhoKs",
+        "fixturesRemainingZero": true,
+        "runnerStopped": true,
+        "independentStatus": {
+          "exitCode": 3,
+          "signal": null,
+          "stdout": "pg_ctl: no server running\r\n",
+          "stderr": ""
+        }
+      },
+      "rawPreservationManifest": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\admin-guest-invoice-manual-red-note-20261012-evidence\\preparation\\current-red-note-isolation-v1\\exact-raw-v1\\raw-preservation-manifest.json",
+        "bytes": 26781,
+        "sha256": "da93603886eb5df2f6a5c7c26ee859b47b0f1d13c8193cbb7b7808af0db208b8"
+      }
+    },
+    "latestLinuxCiStillHistoricalFailure": true,
+    "fullIntegratedAcceptanceCredit": false,
+    "formalFinalArchiveCredit": false,
+    "actualGlobalMainCredit": false,
+    "deploymentCredit": false,
+    "next": "Commit these focused CI repairs and execute a fresh complete final source epoch plus GitHub CI; do not reuse the failed H or three CI timeout results as passed."
   }
 }
