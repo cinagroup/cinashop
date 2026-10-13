@@ -87,8 +87,19 @@ const OBJECTS_SQL = `SELECT * FROM (
 async function objects(tx: Query) { const rows = await tx.execute<ObjectRow>(sql.raw(OBJECTS_SQL)); if (rows.length > 20000) throw Error('Capability metadata budget exceeded'); return Array.from(rows); }
 const promotionReads = ['manager_order_operation_request','store_order','store_order_promotions','system_store','system_store_staff','user'];
 function preserved(before: ObjectRow[], after: ObjectRow[], waybillOid: string, promotionOid: string, reuse: boolean) {
+  const index = (rows: ObjectRow[]) => {
+    const kinds = new Map<string, Map<string, ObjectRow>>();
+    for (const row of rows) {
+      let keys = kinds.get(row.kind);
+      if (!keys) { keys = new Map<string, ObjectRow>(); kinds.set(row.kind, keys); }
+      // Preserve the first matching row, as the original Array.find did.
+      if (!keys.has(row.key)) keys.set(row.key, row);
+    }
+    return kinds;
+  };
+  const beforeIndex = index(before), afterIndex = index(after);
   for (const old of before) {
-    const current = after.find(r => r.kind === old.kind && r.key === old.key);
+    const current = afterIndex.get(old.kind)?.get(old.key);
     if (!current || old.name !== current.name || old.shape !== current.shape) throw Error('Capability bootstrap changed an old object');
     if (old.acl.some(a => !current.acl.some(b => JSON.stringify(a) === JSON.stringify(b)))) throw Error('Capability bootstrap removed an old grant');
     for (const a of current.acl.filter(a => !old.acl.some(b => JSON.stringify(a) === JSON.stringify(b)))) {
@@ -100,7 +111,7 @@ function preserved(before: ObjectRow[], after: ObjectRow[], waybillOid: string, 
       if (!allowed || a.grantable) throw Error('Capability bootstrap added unreviewed authority');
     }
   }
-  const added = after.filter(a => !before.some(b => a.kind === b.kind && a.key === b.key));
+  const added = after.filter(a => !beforeIndex.get(a.kind)?.has(a.key));
   if (added.length !== (reuse ? 4 : 5) || added.some(a => !(a.kind === 'role' && [MANAGER_WAYBILL_OWNER,...(reuse ? [] : [MANAGER_PROMOTION_OWNER])].includes(a.name)
     || a.kind === 'routine' && ['manager_lock_waybill_v1','manager_lock_delivery_agents_v1','manager_delete_order_promotions_v1'].includes(a.name)))) throw Error('Capability bootstrap created an unreviewed object');
   return { oldObjectsPreserved: before.length, oldPrincipalGrantsPreserved: true as const, newObjects: added.length, existingManualOwnerReused: reuse };
