@@ -58,8 +58,12 @@ async function main() {
   // compose the reviewed external abandonment ledger, which has no ORM model.
   // Keep both counts fixed; do not mistake the composed cohort for this API.
   const { TABLE_CATALOG_BASE_COUNT, TABLE_CATALOG_COUNT } = require("tsx/cjs/api").require("../../scripts/data-migration/table-catalog-contracts.ts", __filename);
+  const { assertRegisteredModelCohort } = require("tsx/cjs/api").require("./registeredCatalogCohort.ts", __filename);
+  const { completeConstructionTableNames, MANUAL_RED_NOTE_ORM_TABLE_NAMES } = require("tsx/cjs/api").require("./completeConstructionInventory.ts", __filename);
   assert.equal(TABLE_CATALOG_COUNT, TABLE_CATALOG_BASE_COUNT + 1);
-  assert.equal(Object.keys(previous.tables).length, TABLE_CATALOG_BASE_COUNT);
+  assertRegisteredModelCohort(previous);
+  assert.equal(Object.keys(previous.tables).length, completeConstructionTableNames('orm').length);
+  assert.equal(Object.keys(previous.tables).length, TABLE_CATALOG_BASE_COUNT + MANUAL_RED_NOTE_ORM_TABLE_NAMES.length);
   assert.equal(previous.tables["public.cashier_second_card_abandon_v1"], undefined);
   assert.ok(previous.tables["public.store_pink"]);
   assert.equal(previous.tables["public.store_pink_full"], undefined);

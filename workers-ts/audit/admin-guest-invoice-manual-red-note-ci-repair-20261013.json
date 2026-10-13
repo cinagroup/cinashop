@@ -1,0 +1,129 @@
+{
+  "version": "admin-guest-invoice-manual-red-note-ci-repair-progress-v1",
+  "date": "2026-10-13",
+  "recordedAt": "2026-10-13T00:38:08.555Z",
+  "status": "ci_regressions_repaired_pending_final_integrated_acceptance",
+  "wholeMigrationComplete": false,
+  "actualGlobalMainCredit": false,
+  "deployed": false,
+  "source": {
+    "branch": "codex/admin-guest-invoice-integration-20261012",
+    "codeBeforeRepair": "9b060ffbb53a9080bac4de87142f61a6b61f680d",
+    "baseCommit": "fed1313538c074f7de7f2f7355462ec616255537",
+    "repairFiles": 24,
+    "repairCandidateSha256": "c2e46c0ec604f04bd1e38789bb80dea406c641082c078252586510f72a0bebb4",
+    "finalSourceManifestSha256": null,
+    "finalSourceInputCount": null
+  },
+  "originalCi": {
+    "runId": 38241472740,
+    "headSha": "9b060ffbb53a9080bac4de87142f61a6b61f680d",
+    "conclusion": "failure",
+    "shard1": {
+      "jobId": 114784852224,
+      "passed": 8737,
+      "failed": 17,
+      "skipped": 4,
+      "logSha256": "d6733d7602069208509b3a3383ca4cf8e39c4fa035bf078d089beab568a29528"
+    },
+    "shard2": {
+      "jobId": 114784852161,
+      "passed": 7328,
+      "failed": 12,
+      "skipped": 22,
+      "failedSuites": 1,
+      "logSha256": "2c08ac23dfd12b3b5d363d6a197500f742233d628a8ba769e05d73d2c37de598"
+    },
+    "skipCauses": [
+      "Four host-specific Windows cache tests",
+      "Twenty-two offline registration cases not executed after genuine beforeAll catalog failure"
+    ],
+    "fullOriginalLogsPreservedOnRemoteDisk": true,
+    "allPassed": false
+  },
+  "repairs": [
+    "Probe optional manual invoice metadata before its document rows; use the mature original evidence relation in its actual source schema with unchanged SELECT privileges.",
+    "Keep the independent historical 281+4 table cohort; verify exactly the two reviewed bare ORM additions, all 25 columns and full database fingerprints. External 286, embedded 282 and runAll 180 remain fixed.",
+    "Align the current legacy route inventory with its existing member-code page. Generate a separate current Admin API authority with exactly four real calls/routes; retain historical reports and complete old semantic multisets.",
+    "Prove expiry races with actual PostgreSQL query_start, Lock wait and blocker identity; retain reconfirmation, financial/stock rollback and original retry assertions within the existing 1500ms lock budget.",
+    "Verify both real asset HMAC signatures before comparing their identical persisted asset identity and every remaining SKU field.",
+    "Run Windows path admission assertions on every host using the same pure policy; retain actual native runner admission on Windows and the original zero-skip CI gate."
+  ],
+  "componentValidation": {
+    "scope": "Focused complete files on independently captured candidate overlays; not the final common working-tree freeze or complete migration.",
+    "staticInventory": {
+      "unitFiles": 2,
+      "passed": [
+        19,
+        6
+      ],
+      "failed": 0,
+      "skipped": 0,
+      "originalUniCliExit": 0,
+      "originalAdminGeneratorExit": 0
+    },
+    "invoiceCompatibility": {
+      "nativeFiles": 2,
+      "nativePassed": 85,
+      "nativeFailed": 0,
+      "nativeSkipped": 0,
+      "ordinaryFiles": 2,
+      "ordinaryPassed": 14,
+      "ordinaryConditionalNativeSkipped": 2,
+      "nativeLogSha256": "669223c69987b12e66dd1a678275d80e3fc72bc36b122132aebb1fd89c29862f"
+    },
+    "catalogCompatibility": {
+      "ordinaryFiles": 3,
+      "ordinaryPassed": 54,
+      "ordinaryFailed": 0,
+      "ordinarySkipped": 0,
+      "nativeFiles": 5,
+      "nativePassed": 274,
+      "nativeFailed": 0,
+      "nativeSkipped": 0,
+      "nativeLogSha256": "6fb5cccd5e91ebc13d88a5d6284bc2554e95dc551e2df9c1a276616a5ef5eed5"
+    },
+    "rootRepairs": {
+      "ordinaryFiles": 1,
+      "ordinaryPassed": 123,
+      "ordinaryFailed": 0,
+      "ordinarySkipped": 0,
+      "nativeFiles": 3,
+      "nativePassed": 56,
+      "nativeFailed": 0,
+      "nativeSkipped": 0,
+      "nativeLogSha256": "2595743534c5a12a6e71077d78c25c9c1259f87ca4c93331dec27a0743f5f891"
+    },
+    "nativeCleanup": {
+      "remainingFixtures": 0,
+      "clustersStopped": true,
+      "independentPgCtlExit": 3
+    },
+    "candidateSourceAndPhysicalToolsVerifiedBeforeAndAfter": true,
+    "originalNativeRunnerSeconds": 600,
+    "noCaseFilters": true
+  },
+  "finalAcceptance": {
+    "status": "pending_new_common_commit_and_source_freeze",
+    "fullTypes": [
+      "tsconfig.json",
+      "tsconfig.runtime-test.json"
+    ],
+    "ordinaryFiles": 27,
+    "nativeFiles": 43,
+    "nativeSerialGroups": 24,
+    "originalStaticClis": 2,
+    "newCommitLinuxCi": "pending",
+    "complete": false
+  },
+  "boundaries": {
+    "externalTaxVerification": false,
+    "manualRedNoteSource": "manual_tax_platform_entry",
+    "eachOriginalInvoiceFullyRedBeforePartialRefund": true,
+    "oldManualRefundPinsAndMaintenanceSourcesChanged": false,
+    "startupDdlAdded": false,
+    "publicFinancialWireChanged": false,
+    "rawArchivesIncludedInGit": false,
+    "ordinaryCashierWorktreeSeparate": true
+  }
+}

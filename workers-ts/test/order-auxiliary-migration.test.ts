@@ -106,7 +106,7 @@ describe("order auxiliary migration", () => {
     const writeGuard = readFileSync('src/services/order/InvoiceWriteGuard.ts', 'utf8');
     expect(out.match(/const amount = await invoiceWriteAmount\(tx, order\)/g)).toHaveLength(2);
     expect(out.match(/assertInvoiceWriteEvidence\(order, invoice, amount\)/g)).toHaveLength(2);
-    expect(writeGuard).toContain('return currentInvoiceAmount(tx, order, readOnlySnapshot)');
+    expect(writeGuard).toContain('return currentInvoiceAmount(tx, order, readOnlySnapshot,invoiceEvidenceMode)');
     expect(writeGuard).toContain("order.pid < 0");
     expect(lifecycle).toContain('currentGenerationRefunds(history, generation)');
     expect(lifecycle).toContain('return centsToAmount(paid - refunded)');

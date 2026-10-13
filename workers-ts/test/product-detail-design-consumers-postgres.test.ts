@@ -1,5 +1,6 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {eq} from 'drizzle-orm';
+import {createHmac} from 'node:crypto';
 import {createContainerFromDb} from '../src/lib/di';
 import {systemDise,storeProduct,storeProductDescription,community} from '../src/models/schema';
 import {StoreProductService} from '../src/services/product/StoreProductService';
@@ -59,7 +60,21 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native full prod
     await design({showService:[2],showReply:1,replyNum:1});const before=await f.snapshot();let switched=false;
     const observed=observeCategoryDb(peer.db,async(_tx,command)=>{if(!switched&&command.includes('store_seckill')){switched=true;await writer.db.update(systemDise).set({value:JSON.stringify({...cloneProductDetailDesign(),showReply:0,showService:[3]})}).where(eq(systemDise.id,5));await writer.db.update(storeProductDescription).set({description:'NEW SECKILL PEER BODY'}).where(eq(storeProductDescription.productId,601));}});
     const old=await new SeckillSkuCatalogService(createContainerFromDb(observed),f.env).read(11,'601');expect(switched).toBe(true);expect(old.replyCount).toBe(2);expect(old.specs).toHaveLength(1);expect(old.description).toContain('秒杀公开正文');
-    const fresh=await new SeckillSkuCatalogService(createContainerFromDb(peer.db),f.env).read(11,'601');expect(fresh).toMatchObject({replyCount:0,reply:[],specs:[],description:'NEW SECKILL PEER BODY'});expect(fresh.skus).toEqual(old.skus);
+    const fresh=await new SeckillSkuCatalogService(createContainerFromDb(peer.db),f.env).read(11,'601');expect(fresh).toMatchObject({replyCount:0,reply:[],specs:[],description:'NEW SECKILL PEER BODY'});
+    // Each response signs the persisted asset again. Compare all SKU fields and
+    // the same asset identity, while independently checking both real signatures.
+    const financialSkus=<T extends {image:string}>(rows:readonly T[])=>rows.map(row=>{
+      if(row.image==='')return row;
+      const image=new URL(row.image,'https://fixture.invalid');
+      expect(image.origin).toBe('https://fixture.invalid');expect(image.pathname).toMatch(/^\/api\/assets\/[1-9]\d*$/);
+      expect([...image.searchParams.keys()].sort()).toEqual(['expires','signature']);
+      const expires=Number(image.searchParams.get('expires'));expect(Number.isSafeInteger(expires)).toBe(true);
+      expect(expires).toBeGreaterThanOrEqual(Math.floor(Date.now()/1000));
+      expect(image.searchParams.get('signature')).toBe(createHmac('sha256',f.env.APP_KEY)
+        .update(`GET\n${image.pathname}\n${expires}`).digest('base64url'));
+      return {...row,image:image.pathname};
+    });
+    expect(financialSkus(fresh.skus)).toEqual(financialSkus(old.skus));
     const after=await f.snapshot();for(const key of Object.keys(before))if(!['system_dise','store_product_description'].includes(key))expect(after[key as keyof typeof after]).toEqual(before[key as keyof typeof before]);
   });});});
 });

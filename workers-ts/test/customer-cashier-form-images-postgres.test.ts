@@ -217,24 +217,24 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('ordinary customer cashi
     const s=await session({buyer_uid:0,tourist_key:'guest-final-form-expiry'}),u=await upload(s),p=await prepared(s,u.body.data.receipt.reference),q=await quoted(p),before=await f.facts();
     const stock=async()=>f.maintenanceDb.execute(sql`SELECT 'product' AS kind,stock,sales FROM store_product WHERE id=70 UNION ALL SELECT 'sku',stock,sales FROM store_product_attr_value WHERE id=1 ORDER BY kind`),beforeStock=await stock();
     let pending:Promise<Awaited<ReturnType<typeof http>>>|undefined,result:Awaited<ReturnType<typeof http>>|undefined,
-      observed:{pid:number;clock:number}|undefined,blockerPid=0,releaseClock=0;
+      observed:{pid:number;clock:number;queryStarted:number}|undefined,blockerPid=0,releaseClock=0;
     try{await f.withPeer(async(observer,observerPid)=>f.maintenanceDb.transaction(async holder=>{
       const [identity]=await holder.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`);blockerPid=identity.pid;
       await holder.execute(sql`LOCK TABLE public.cashier_second_card_form_session_v1 IN SHARE MODE`);
       const readyDeadline=Date.now()+5000;
       while(Date.now()<readyDeadline){const [clock]=await observer.execute<{now:number}>(sql`SELECT extract(epoch from clock_timestamp())::double precision AS now`);
-        if(expiresAt-clock.now<=0.9){expect(clock.now).toBeLessThan(expiresAt);break;}await new Promise(resolve=>setTimeout(resolve,15));}
+        if(expiresAt-clock.now<=1.35){expect(clock.now).toBeLessThan(expiresAt);break;}await new Promise(resolve=>setTimeout(resolve,15));}
       pending=http('/orders',{intent:p.intent,quote_token:q.quote_token},s.key);
       const waitDeadline=Date.now()+1200;
-      while(Date.now()<waitDeadline){const [state]=await observer.execute<{pid:number;clock:number}>(sql`SELECT a.pid,extract(epoch from clock_timestamp())::double precision AS clock FROM pg_stat_activity a
-        WHERE a.usename=${f.role} AND a.pid<>${observerPid} AND ${blockerPid}=ANY(pg_blocking_pids(a.pid)) AND a.query LIKE '%UPDATE public.cashier_second_card_form_session_v1%' LIMIT 1`);
+      while(Date.now()<waitDeadline){const [state]=await observer.execute<{pid:number;clock:number;queryStarted:number}>(sql`SELECT a.pid,extract(epoch from clock_timestamp())::double precision AS clock,extract(epoch from a.query_start)::double precision AS "queryStarted" FROM pg_stat_activity a
+        WHERE a.usename=${f.role} AND a.pid<>${observerPid} AND ${blockerPid}=ANY(pg_blocking_pids(a.pid)) AND a.wait_event_type='Lock' AND a.query LIKE '%UPDATE public.cashier_second_card_form_session_v1%' LIMIT 1`);
         if(state){observed=state;break;}await new Promise(resolve=>setTimeout(resolve,10));}
-      expect(observed).toBeDefined();expect(observed!.clock).toBeLessThan(expiresAt);
+      expect(observed).toBeDefined();expect(observed!.queryStarted).toBeLessThan(expiresAt);
       while(true){const [clock]=await observer.execute<{now:number}>(sql`SELECT extract(epoch from clock_timestamp())::double precision AS now`);
         if(clock.now>=expiresAt+0.025){releaseClock=clock.now;break;}await new Promise(resolve=>setTimeout(resolve,10));}
     }));}finally{if(pending)result=await pending;}
-    console.log('CASHIER_FORM_FINAL_EXPIRY_WAIT '+JSON.stringify({expires_at:expiresAt,blocking_pid:blockerPid,creation_pid:observed!.pid,blocked_clock:observed!.clock,released_clock:releaseClock,observed_wait_ms:Math.round((releaseClock-observed!.clock)*1000)}));
-    expect(releaseClock-observed!.clock).toBeLessThan(0.95);expect(JSON.stringify(result!.body)).toContain('ORDER_QUOTE_RECONFIRM_REQUIRED');expect(result!.body.msg).not.toMatch(/lock timeout|55P03/);
+    console.log('CASHIER_FORM_FINAL_EXPIRY_WAIT '+JSON.stringify({expires_at:expiresAt,blocking_pid:blockerPid,creation_pid:observed!.pid,blocked_clock:observed!.queryStarted,observed_clock:observed!.clock,released_clock:releaseClock,observed_wait_ms:Math.round((releaseClock-observed!.queryStarted)*1000)}));
+    expect(releaseClock-observed!.queryStarted).toBeLessThan(1.45);expect(JSON.stringify(result!.body)).toContain('ORDER_QUOTE_RECONFIRM_REQUIRED');expect(result!.body.msg).not.toMatch(/lock timeout|55P03/);
     expect(await f.facts()).toEqual(before);expect(await stock()).toEqual(beforeStock);expect((await service().getSession(f.actor(),s.key)).receipt?.state).toBe('frozen');
     await f.maintenanceDb.update(storeProductAttrValue).set({writeEnd:expiresAt+3600}).where(eq(storeProductAttrValue.id,1));expect((await created(p)).receipt.order_id).toBeGreaterThan(0);
   },20000);

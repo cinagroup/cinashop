@@ -64,7 +64,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
       await f.exec((await api.generateMigration(api.generateDrizzleJson({}),snapshot)).join('\n'));
     }
     expect(await f.db.execute(sql`SELECT COUNT(*)::int AS count FROM pg_class
-      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?282:path==='external'?286:285}]);
+      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?282:path==='external'?286:287}]);
     await assertRegisteredDatabaseCohort(f.db,path);
     expect(await inspectAdminRefundCreation(f.db)).toMatchObject({present:true,complete:true});
     expect(await shape()).toMatchObject({safe:true,shape:ADMIN_REFUND_CREATION_EXPECTED_SHAPE});

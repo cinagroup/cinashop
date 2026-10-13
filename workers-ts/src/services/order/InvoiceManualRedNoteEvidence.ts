@@ -51,6 +51,10 @@ export async function financialManualInvoiceDisposition(tx:DbClient,source:typeo
  try{return await readInvoiceManualDisposition(tx,source);}catch(error){if(error instanceof ValidateException)return null;throw error;}
 }
 export async function readInvoiceManualDisposition(tx:DbClient,source:typeof storeOrder.$inferSelect):Promise<ManualInvoiceDisposition>{
+ // The additional manual realm is optional for mature unissued allocation.
+ // Check its fixed public metadata and reader authority before touching its
+ // original-document rows; an unavailable realm is a business rejection.
+ if(!(await invoiceManualRedNoteReadiness(tx)).ready)throw manualRedInvalid();
  const ids=source.pid>0?[source.pid,source.id]:[source.id];
  const [unknown]=await tx.execute<{blocked:boolean}>(sql`SELECT EXISTS(SELECT 1 FROM public.store_order_invoice_evidence e WHERE e.order_id IN(${sql.join(ids.map(n=>sql`${n}`),sql`,`)}) AND e.kind='unverified')
   OR EXISTS(SELECT 1 FROM public.store_order_invoice i WHERE i.order_id IN(${sql.join(ids.map(n=>sql`${n}`),sql`,`)}) AND NOT EXISTS(SELECT 1 FROM public.store_order_invoice_evidence e WHERE e.invoice_id=i.id AND e.kind='created' AND e.document_number='')) AS blocked`);
@@ -112,7 +116,12 @@ export async function assertStoredManualInvoiceAllocation(tx:DbClient,text:strin
 }
 export async function invoiceHasReportedHistory(tx:DbClient,source:typeof storeOrder.$inferSelect){
  const ids=source.pid>0?[source.pid,source.id]:[source.id];
- const [row]=await tx.execute<{reported:boolean}>(sql`SELECT EXISTS(SELECT 1 FROM public.store_order_invoice_evidence WHERE order_id IN(${sql.join(ids.map(n=>sql`${n}`),sql`,`)}) AND kind IN('issued','unverified')) AS reported`);
+ // Use the same original evidence relation as the existing invoice readers.
+ // Only the new manual realm is fixed to public; this probe also runs in the
+ // separately owned source schema with its established SELECT-only grant.
+ const reported=tx.select({id:storeOrderInvoiceEvidence.invoiceId}).from(storeOrderInvoiceEvidence)
+  .where(sql`${storeOrderInvoiceEvidence.orderId} IN(${sql.join(ids.map(n=>sql`${n}`),sql`,`)}) AND ${storeOrderInvoiceEvidence.kind} IN('issued','unverified')`).limit(1);
+ const [row]=await tx.execute<{reported:boolean}>(sql`SELECT EXISTS(${reported}) AS reported`);
  return row?.reported===true;
 }
 

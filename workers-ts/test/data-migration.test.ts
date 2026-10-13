@@ -324,10 +324,10 @@ describe("MySQL to PostgreSQL schema audit", () => {
     );
     expect(definitionDrift).toEqual({
       externalTableCount: 286,
-      // Sixteen independently installed ledgers are declared; abandonment is
-      // also the single explicit external addition, leaving fifteen TS-only tables.
+      // Eighteen independently installed ledgers are declared; abandonment is
+      // also the single explicit external addition, leaving seventeen TS-only tables.
       // It is distinct from the 282 tables actually installed by runAll.
-      workerTableCount: 298,
+      workerTableCount: 300,
       externalOnlyTables: [
         'customer_city_delivery_attempt',
         'customer_city_delivery_binding',

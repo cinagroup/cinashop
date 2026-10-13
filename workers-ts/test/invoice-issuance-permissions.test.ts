@@ -8,6 +8,7 @@ import { prepareSplitInvoice, materializeSplitInvoice } from '../src/services/or
 import { storeOrderInvoiceEvidence } from '../src/models/schema/invoice_evidence';
 import { INVOICE_EVIDENCE_SQL } from '../src/migrations/invoiceEvidence';
 import { withFinancePeers } from './helpers/financePeers';
+import { invoiceHasReportedHistory, readInvoiceManualDisposition } from '../src/services/order/InvoiceManualRedNoteEvidence';
 
 let f: Awaited<ReturnType<typeof financePostgres>>;
 let role: string, schema: string, created = false;
@@ -126,6 +127,38 @@ it('the actual allocation helper works with only receipt SELECT/INSERT and trigg
   await splitAsRuntime();
   expect((await f.db.select().from(storeOrderInvoice).orderBy(storeOrderInvoice.id)).map(row => [row.invoiceAmount, row.isDel]))
     .toEqual([['10.00', 1], ['3.33', 0], ['6.67', 0]]);
+});
+it('reads original source-schema history and rejects unavailable manual authority before any public document query', async () => {
+  await asRuntime(async tx => {
+    const [source] = await tx.select().from(storeOrder).where(eq(storeOrder.id, 10));
+    const [rights] = await tx.execute<{ original_read: boolean; original_append: boolean; allocation_read: boolean; allocation_append: boolean;
+      public_original_absent: boolean; manual_record_absent: boolean; manual_review_absent: boolean }>(sql`
+      SELECT has_table_privilege(current_user,'store_order_invoice_evidence','SELECT') AS original_read,
+        has_table_privilege(current_user,'store_order_invoice_evidence','INSERT') AS original_append,
+        has_table_privilege(current_user,'store_order_invoice_allocation','SELECT') AS allocation_read,
+        has_table_privilege(current_user,'store_order_invoice_allocation','INSERT') AS allocation_append,
+        to_regclass('public.store_order_invoice_evidence') IS NULL AS public_original_absent,
+        to_regclass('public.store_order_invoice_manual_red_note') IS NULL AS manual_record_absent,
+        to_regclass('public.store_order_invoice_manual_red_review') IS NULL AS manual_review_absent`);
+    expect(rights).toEqual({ original_read: true, original_append: false, allocation_read: true, allocation_append: true,
+      public_original_absent: true, manual_record_absent: true, manual_review_absent: true });
+    expect(await invoiceHasReportedHistory(tx, source)).toBe(false);
+    // This rejection must leave the transaction usable. A missing-table SQL
+    // error would abort it before the real unchanged invoice can be read.
+    await expect(readInvoiceManualDisposition(tx, source)).rejects.toThrow('原票与人工红字票据未完整核对');
+    expect(await tx.select().from(storeOrderInvoice)).toHaveLength(1);
+  });
+  await asRuntime(tx => tx.update(storeOrderInvoice).set({ isInvoice: 1, invoiceNumber: '12345678' }));
+  const before = { invoices: await f.db.select().from(storeOrderInvoice), evidence: await f.db.select().from(storeOrderInvoiceEvidence),
+    allocations: await f.db.select().from(storeOrderInvoiceAllocation), orders: await f.db.select().from(storeOrder) };
+  await asRuntime(async tx => {
+    const [source] = await tx.select().from(storeOrder).where(eq(storeOrder.id, 10)).for('update');
+    expect(await invoiceHasReportedHistory(tx, source)).toBe(true);
+    await expect(prepareSplitInvoice(tx, source)).rejects.toThrow('开票历史或未核验票据');
+    expect(await tx.select().from(storeOrderInvoice)).toEqual(before.invoices);
+  });
+  expect({ invoices: await f.db.select().from(storeOrderInvoice), evidence: await f.db.select().from(storeOrderInvoiceEvidence),
+    allocations: await f.db.select().from(storeOrderInvoiceAllocation), orders: await f.db.select().from(storeOrder) }).toEqual(before);
 });
 it.each(['UPDATE store_order_invoice_allocation SET reason=\'supplier\'', 'DELETE FROM store_order_invoice_allocation',
   'TRUNCATE store_order_invoice_allocation'])('runtime cannot rewrite allocation lineage: %s', async statement => {

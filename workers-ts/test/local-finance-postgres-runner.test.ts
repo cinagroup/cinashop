@@ -2,8 +2,9 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, win32 } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { resolveLocalFinanceCachePath } from '../scripts/local-finance-cache-path.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const script = resolve(root, 'scripts/run-local-finance-postgres.mjs');
@@ -47,17 +48,27 @@ syncBuiltinESMExports();
       expect(error).not.toContain(sentinel);
     } else expect(error).toContain(sentinel);
   });
-  it.skipIf(process.platform !== 'win32').each(['\\\\server\\share\\cache', '//server/share/cache', '\\\\?\\UNC\\server\\share\\cache'])
+  it.each(['\\\\server\\share\\cache', '//server/share/cache', '\\\\?\\UNC\\server\\share\\cache'])
     ('rejects Windows UNC override %j before native commands', cache => {
-      const error = admission(cache);
-      expect(error).toContain('Windows PostgreSQL cache cannot use a UNC path');
-      expect(error).not.toContain(sentinel);
+      expect(() => resolveLocalFinanceCachePath(cache, win32.resolve('C:/cinashop/workers-ts'), 'win32'))
+        .toThrow('Windows PostgreSQL cache cannot use a UNC path');
+      if (process.platform === 'win32') {
+        const error = admission(cache);
+        expect(error).toContain('Windows PostgreSQL cache cannot use a UNC path');
+        expect(error).not.toContain(sentinel);
+      }
     });
-  it.skipIf(process.platform !== 'win32')('rejects drive-relative and current-drive-rooted Windows overrides', () => {
-    expect(admission('C:finance-cache')).toContain('TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
-    const error = admission('\\finance-cache');
-    expect(error).toContain('absolute local drive directory on Windows');
-    expect(error).not.toContain(sentinel);
+  it('rejects drive-relative and current-drive-rooted Windows overrides', () => {
+    expect(() => resolveLocalFinanceCachePath('C:finance-cache', win32.resolve('C:/cinashop/workers-ts'), 'win32'))
+      .toThrow('TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
+    expect(() => resolveLocalFinanceCachePath(win32.sep + 'finance-cache', win32.resolve('C:/cinashop/workers-ts'), 'win32'))
+      .toThrow('absolute local drive directory on Windows');
+    if (process.platform === 'win32') {
+      expect(admission('C:finance-cache')).toContain('TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
+      const error = admission(win32.sep + 'finance-cache');
+      expect(error).toContain('absolute local drive directory on Windows');
+      expect(error).not.toContain(sentinel);
+    }
   });
 });
 

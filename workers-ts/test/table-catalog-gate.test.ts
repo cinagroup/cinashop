@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { assertAllTablesAligned, TABLE_CATALOG_BASE_COUNT, TABLE_CATALOG_COUNT, TABLE_CATALOG_FIELDS } from "../scripts/data-migration/table-catalog-contracts";
 import { verifyTableCatalogGate } from "./helpers/tableCatalogGateAudit";
+import { assertRegisteredModelCohort, registeredTableNames } from './helpers/registeredCatalogCohort';
+import { MANUAL_RED_NOTE_ORM_TABLE_NAMES } from './helpers/completeConstructionInventory';
 
 const table = (key: string): CatalogRow => ({
   key, name: key, kind: "r", persistence: "p", rowSecurity: false,
@@ -86,18 +88,41 @@ describe("DB-009F complete table catalog hard gate", () => {
     } finally { await db.close(); }
   }, 60_000);
 
-  it("binds the fixed 285-table cohort to all authored models and four reviewed additions", async () => {
+  it("retains the fixed historical 285-table cohort and binds exactly two reviewed bare manual ORM tables", async () => {
     const { generateDrizzleJson } = await import('drizzle-kit/api');
     const models = await import('../src/models/schema');
-    const snapshot = generateDrizzleJson(models) as { tables: Record<string, unknown> };
+    const snapshot = generateDrizzleJson(models) as { tables: Record<string, {columns?:Record<string,unknown>}> };
     const keys = Object.keys(snapshot.tables).sort();
     const additions = ['public.customer_city_delivery_attempt', 'public.customer_city_delivery_binding',
       'public.customer_city_delivery_job', 'public.store_order_promotion_gift_coupon_reward'];
-    expect(keys).toHaveLength(285); expect(new Set(keys).size).toBe(285);
+    assertRegisteredModelCohort(snapshot);
+    const manual = MANUAL_RED_NOTE_ORM_TABLE_NAMES.map(name=>'public.'+name);
+    expect(keys).toHaveLength(287); expect(new Set(keys).size).toBe(287);
+    expect(keys.filter(key=>manual.includes(key))).toEqual(manual);
+    const historical=keys.filter(key=>!manual.includes(key));
+    expect(historical).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
+    expect(historical).toHaveLength(285);
     expect(keys.filter(key => additions.includes(key))).toEqual(additions);
-    expect(keys.filter(key => !additions.includes(key))).toHaveLength(281);
-    expect(TABLE_CATALOG_BASE_COUNT).toBe(keys.length);
-    expect(TABLE_CATALOG_COUNT).toBe(keys.length+1);
+    expect(historical.filter(key => !additions.includes(key))).toHaveLength(281);
+    expect(TABLE_CATALOG_BASE_COUNT).toBe(historical.length);
+    expect(TABLE_CATALOG_COUNT).toBe(historical.length+1);
+  });
+
+  it('rejects foreign replacement, a partial manual pair, and manual column drift without filtering unknown ORM objects', async () => {
+    const { generateDrizzleJson } = await import('drizzle-kit/api');
+    const models = await import('../src/models/schema');
+    const snapshot = generateDrizzleJson(models) as {tables:Record<string,{columns?:Record<string,unknown>}>};
+    const record='public.store_order_invoice_manual_red_note';
+    const review='public.store_order_invoice_manual_red_review';
+    const foreign=structuredClone(snapshot);
+    foreign.tables['public.foreign_same_count']=foreign.tables[record]; delete foreign.tables[record];
+    expect(()=>assertRegisteredModelCohort(foreign)).toThrow();
+    const partial=structuredClone(snapshot); delete partial.tables[review];
+    expect(()=>assertRegisteredModelCohort(partial)).toThrow();
+    const missingColumn=structuredClone(snapshot); delete missingColumn.tables[record].columns!.record_hash;
+    expect(()=>assertRegisteredModelCohort(missingColumn)).toThrow();
+    const extraColumn=structuredClone(snapshot); extraColumn.tables[review].columns!.unreviewed_field={};
+    expect(()=>assertRegisteredModelCohort(extraColumn)).toThrow();
   });
 
   it("wires the hard gate to every collected catalog, retains the nine project paths, and keeps CLI failures nonzero", () => {
