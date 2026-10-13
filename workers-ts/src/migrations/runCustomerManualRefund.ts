@@ -5,8 +5,7 @@ import {outRequestHash} from '@/services/out/OutIdempotency';
 import {pricingIdentifier} from './checkoutPricingLockCatalog';
 import {CUSTOMER_MANUAL_REFUND_PROTOCOL_INSTALLATION_SQL} from './customerManualRefund';
 import {CUSTOMER_MANUAL_GUEST_IDENTITY_UPGRADE_SQL,CUSTOMER_MANUAL_GUEST_IDENTITY_POSTCHECK_SQL} from './customerManualRefundGuestIdentity';
-import {customerManualGuestIdentityReadiness,inspectGuestRefundEntityCatalog} from './guestRefundEntityCatalog';
-import {GUEST_REFUND_ENTITY_PINS} from './guestRefundEntityPins';
+import {customerManualGuestIdentityReadiness} from './guestRefundEntityCatalog';
 import {CUSTOMER_MANUAL_REFUND_CATALOG_SHA256,CUSTOMER_FINANCIAL_MANUAL_CATALOG_SHA256} from './customerManualRefundPins';
 import {customerFinancialOperationReadiness,inspectCustomerFinancialOperation,CUSTOMER_FINANCIAL_OPERATION_CATALOG_SHA256} from './runCustomerFinancialOperation';
 import {CASHIER_SECOND_CARD_ABANDON_CATALOG_SQL} from './runCashierSecondCardAbandon';
@@ -76,7 +75,6 @@ export async function installCustomerManualRefund(db:Pick<DbClient,'transaction'
  const prior=await inspectCustomerFinancialOperation(tx);if(!prior.complete||prior.fingerprint!==CUSTOMER_FINANCIAL_OPERATION_CATALOG_SHA256)throw Error('Manual refund upgrade requires exact original financial catalog');
  const [role]=await tx.execute<{ready:boolean}>(sql`SELECT count(*)=1 AND bool_and(NOT(rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolreplication OR rolbypassrls)) AS ready FROM pg_roles WHERE rolname=${promotionOwner}`);if(role?.ready!==true)throw Error('Manual promotion owner must be explicit constrained NOLOGIN role');
  await tx.execute(sql.raw(CUSTOMER_MANUAL_GUEST_IDENTITY_UPGRADE_SQL));
- if(Object.values(GUEST_REFUND_ENTITY_PINS).some(pin=>!/^[a-f0-9]{64}$/.test(pin)))console.log('CUSTOMER_MANUAL_GUEST_ENTITY_COMMISSION '+JSON.stringify({components:await inspectGuestRefundEntityCatalog(tx)}));
  // Pending measurements are evidence only. This exact postcheck rolls back
  // all four CHECK upgrades until separately measured pins are fixed in source.
  await tx.execute(sql.raw(CUSTOMER_MANUAL_GUEST_IDENTITY_POSTCHECK_SQL));

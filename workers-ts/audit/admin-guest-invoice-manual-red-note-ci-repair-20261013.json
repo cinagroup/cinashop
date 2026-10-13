@@ -10,10 +10,15 @@
     "branch": "codex/admin-guest-invoice-integration-20261012",
     "codeBeforeRepair": "9b060ffbb53a9080bac4de87142f61a6b61f680d",
     "baseCommit": "fed1313538c074f7de7f2f7355462ec616255537",
-    "repairFiles": 24,
+    "repairFiles": 25,
     "repairCandidateSha256": "c2e46c0ec604f04bd1e38789bb80dea406c641082c078252586510f72a0bebb4",
     "finalSourceManifestSha256": null,
-    "finalSourceInputCount": null
+    "finalSourceInputCount": null,
+    "additionalRepair": {
+      "path": "workers-ts/src/migrations/runCustomerManualRefund.ts",
+      "codeBeforeFix": "8c4b9d2f5237e3edfbb75a6547a0310403fcb15d",
+      "canonicalSha256": "2c51aa5f0ace2fdbe480e2fefa176a33a04a1edcaa355d1ebe173dc44af37c8b"
+    }
   },
   "originalCi": {
     "runId": 38241472740,
@@ -104,7 +109,7 @@
     "noCaseFilters": true
   },
   "finalAcceptance": {
-    "status": "pending_new_common_commit_and_source_freeze",
+    "status": "pending_new_common_commit_after_observability_repair",
     "fullTypes": [
       "tsconfig.json",
       "tsconfig.runtime-test.json"
@@ -120,10 +125,28 @@
     "externalTaxVerification": false,
     "manualRedNoteSource": "manual_tax_platform_entry",
     "eachOriginalInvoiceFullyRedBeforePartialRefund": true,
-    "oldManualRefundPinsAndMaintenanceSourcesChanged": false,
     "startupDdlAdded": false,
     "publicFinancialWireChanged": false,
     "rawArchivesIncludedInGit": false,
-    "ordinaryCashierWorktreeSeparate": true
+    "ordinaryCashierWorktreeSeparate": true,
+    "oldManualRefundPinFilesAndSqlBodiesChanged": false,
+    "ownerMaintenanceTransactionAndPostcheckChanged": false
+  },
+  "additionalOriginalGate": {
+    "command": "npm run audit:observability",
+    "beforeExitCode": 1,
+    "afterExitCode": 0,
+    "exactThreeDiagnosticAndUnusedImportRemovals": true,
+    "afterOutput": {
+      "policyVersion": 1,
+      "signals": 17,
+      "components": 10,
+      "requiredEvents": 53,
+      "logSamplingRate": 1,
+      "productionAlerts": "pending",
+      "observedReleaseBlockers": 6,
+      "productionSourceFiles": 1103
+    },
+    "proofSha256": "05e7b4fbde68cdf4ab069a955e67075909bb8970d4beea0c66d30e176b01d1f0"
   }
 }
