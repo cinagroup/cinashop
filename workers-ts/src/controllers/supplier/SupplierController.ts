@@ -38,6 +38,7 @@ import {
   ProductMetadataService,
   supplierMetadataOwner,
 } from "@/services/product/ProductMetadataService";
+import * as SupplierProductRules from '@/controllers/supplier/SupplierProductRuleController';
 import { SystemMetadataService } from "@/services/system/SystemMetadataService";
 import {
   ProductExperienceService,
@@ -52,6 +53,7 @@ import {
   StoreScopedConfigService,
 } from "@/services/store/StoreScopedConfigService";
 import { readBoundedJsonObject as readRequestJsonObject } from "@/utils/request-body";
+import { categoryActor } from './SupplierProductCategoryController';
 
 type SupplierContext = Context<{
   Bindings: Env;
@@ -499,51 +501,23 @@ export async function productEnsures(c: SupplierContext) {
 }
 
 export async function productRuleList(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  return jsonOk(
-    c,
-    await productMetadataService(c).ruleList(supplierMetadataOwner(supplierId), c.req.query()),
-  );
+  return SupplierProductRules.list(c);
 }
 
 export async function productRuleTemplates(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  return jsonOk(
-    c,
-    await productMetadataService(c).ruleTemplates(supplierMetadataOwner(supplierId)),
-  );
+  return SupplierProductRules.templates(c);
 }
 
 export async function productRuleDetail(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  return jsonOk(
-    c,
-    await productMetadataService(c).ruleDetail(
-      supplierMetadataOwner(supplierId),
-      positiveId(c.req.param("id"), "规则ID"),
-    ),
-  );
+  return SupplierProductRules.detail(c);
 }
 
 export async function productRuleSave(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  const id = Number(c.req.param("id") ?? "0");
-  if (!Number.isSafeInteger(id) || id < 0) throw new ValidateException("规则ID错误");
-  const result = await productMetadataService(c).saveRule(
-    supplierMetadataOwner(supplierId),
-    id,
-    await readJsonObject(c),
-  );
-  return jsonOk(c, result, "保存成功");
+  return SupplierProductRules.save(c);
 }
 
 export async function productRuleDelete(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  await productMetadataService(c).deleteRule(
-    supplierMetadataOwner(supplierId),
-    positiveId(c.req.param("id"), "规则ID"),
-  );
-  return jsonOk(c, null, "删除成功");
+  return SupplierProductRules.remove(c);
 }
 
 export async function productSpecsAll(c: SupplierContext) {
@@ -604,6 +578,7 @@ export async function saveCategory(c: SupplierContext) {
     supplierId,
     categoryId,
     await readJsonObject(c),
+    await categoryActor(c),
   );
   return jsonOk(c, result, categoryId > 0 ? "分类修改成功" : "分类创建成功");
 }
@@ -613,6 +588,7 @@ export async function deleteCategory(c: SupplierContext) {
   await productManagementService(c).deleteCategory(
     supplierId,
     positiveId(c.req.param("id"), "分类ID"),
+    await categoryActor(c),
   );
   return jsonOk(c, null, "分类删除成功");
 }
@@ -621,7 +597,7 @@ export async function setCategoryShow(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const categoryId = positiveId(c.req.param("id"), "分类ID");
   const isShow = Number(c.req.param("is_show"));
-  await productManagementService(c).setCategoryShow(supplierId, categoryId, isShow);
+  await productManagementService(c).setCategoryShow(supplierId, categoryId, isShow, await categoryActor(c));
   return jsonOk(c, null, isShow === 1 ? "分类已启用" : "分类已停用");
 }
 
@@ -629,20 +605,26 @@ export async function saveProduct(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const productId = Number(c.req.param("id"));
   if (!Number.isInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
+  const input = await readBoundedJsonObject(c);
+  const labelActor = Object.hasOwn(input, 'store_label_id') || Object.hasOwn(input, 'labelIds') ? await categoryActor(c) : undefined;
   const result = await productManagementService(c).saveProduct(
     supplierId,
     productId,
-    await readBoundedJsonObject(c),
+    input,
+    labelActor,
   );
   return jsonOk(c, result, productId === 0 ? "商品创建成功，等待平台审核" : "商品修改成功，已重新进入待审核");
 }
 
 export async function createProduct(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
+  const input = await readBoundedJsonObject(c);
+  const labelActor = Object.hasOwn(input, 'store_label_id') || Object.hasOwn(input, 'labelIds') ? await categoryActor(c) : undefined;
   const result = await productManagementService(c).saveProduct(
     supplierId,
     0,
-    await readBoundedJsonObject(c),
+    input,
+    labelActor,
   );
   return jsonOk(c, result, "商品创建成功，等待平台审核");
 }

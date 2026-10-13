@@ -1,0 +1,133 @@
+{
+  "createdAtUtc": "2026-10-13T06:09:19.400Z",
+  "command": {
+    "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin test/admin-product-brand.test.ts test/admin-product-brand-http.test.ts test/admin-product-brand-native.test.ts test/admin-product-brand-permission.test.ts test/supplier-product-batch-http.test.ts test/supplier-product-batch-concurrency-postgres.test.ts test/supplier-product-batch-permission.test.ts test/cart-computation-http.test.ts",
+    "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts",
+    "startedAtUtc": "2026-10-13T06:05:55.2118942Z",
+    "endedAtUtc": "2026-10-13T06:07:52.7540800Z",
+    "exitCode": 1,
+    "durationSeconds": 117.526,
+    "testFiles": [
+      "test/admin-product-brand.test.ts",
+      "test/admin-product-brand-http.test.ts",
+      "test/admin-product-brand-native.test.ts",
+      "test/admin-product-brand-permission.test.ts",
+      "test/supplier-product-batch-http.test.ts",
+      "test/supplier-product-batch-concurrency-postgres.test.ts",
+      "test/supplier-product-batch-permission.test.ts",
+      "test/cart-computation-http.test.ts"
+    ],
+    "testFilesCount": 8,
+    "caseFilter": null,
+    "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final.log",
+    "logSha256": "07DC16710705494ECB08F78E1438CF8BFEBCE8C2D8960C88EECE149C7B0F76FA",
+    "sourceProofBeforePath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final-sourceproof-before.json"
+  },
+  "runnerVersion": "postgres (PostgreSQL) 16.15",
+  "vitestVersion": "RUN  v4.1.11 C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts",
+  "nativeHostIdentity": {
+    "data": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/.cache/finance-postgres-GYBs5K/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 56288,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true
+  },
+  "uniqueTaskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-GYBs5K",
+  "ownedDataDirectory": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-GYBs5K\\data",
+  "rawSummary": {
+    "testFilesSummary": "Test Files  1 failed | 7 passed (8)",
+    "testsSummary": "Tests  1 failed | 110 passed (111)",
+    "vitestDuration": "Duration  101.19s (transform 19.92s, setup 0ms, import 42.05s, tests 56.37s, environment 1ms)"
+  },
+  "observedCases": {
+    "passed": 110,
+    "failed": 1,
+    "skipped": 0,
+    "perFile": [
+      {
+        "file": "test/admin-product-brand.test.ts",
+        "passedCases": 12,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/admin-product-brand-http.test.ts",
+        "passedCases": 4,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/admin-product-brand-native.test.ts",
+        "passedCases": 4,
+        "failedCases": 1,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/admin-product-brand-permission.test.ts",
+        "passedCases": 6,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-http.test.ts",
+        "passedCases": 26,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-concurrency-postgres.test.ts",
+        "passedCases": 11,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-permission.test.ts",
+        "passedCases": 2,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/cart-computation-http.test.ts",
+        "passedCases": 45,
+        "failedCases": 0,
+        "skippedCases": 0
+      }
+    ]
+  },
+  "fixtures": {
+    "remainingDatabases": 0,
+    "remainingRoles": 0,
+    "marker": "FINANCE_LOCAL_FIXTURES remaining=0",
+    "evidence": "Runner queries pg_database and pg_roles, asserts both are [], then emits FINANCE_LOCAL_FIXTURES remaining=0; runner input hash is in the source proof."
+  },
+  "shutdown": {
+    "runnerMarker": "FINANCE_LOCAL_STOPPED C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-GYBs5K",
+    "independentCommand": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe -D C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-GYBs5K\\data status",
+    "independentExitCode": 3,
+    "independentOutput": "pg_ctl: no server running",
+    "independentError": null,
+    "statusLogPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final-pg-status.log",
+    "statusLogSha256": "AABFE087C02B7D182DFAFE9FE6ACDC2C84459CAB8FFEB400521B9625DAA20E35"
+  },
+  "sourceProof": {
+    "beforePath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final-sourceproof-before.json",
+    "beforeSha256": "00FBBDB5762E4F4F606110874B65C5D182F0BBE114833CF27D67080BBE7871D2",
+    "afterPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final-sourceproof-after.json",
+    "afterSha256": "21F162649CEC54154AC0D03DEAF4D64523C6769B20A8A7754FA6F522319717CB",
+    "fileCount": 51,
+    "beforeMismatchCount": 0,
+    "afterMismatchCount": 0,
+    "sourceDriftCount": 0,
+    "sourceDrift": []
+  },
+  "files": {
+    "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final.log",
+    "logSha256": "07DC16710705494ECB08F78E1438CF8BFEBCE8C2D8960C88EECE149C7B0F76FA",
+    "commandPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final-command-receipt.json",
+    "commandSha256": "1C6110E142778F183FD70643340A8D0E8A94A0B4F319D54DDE2934C989D1075B"
+  },
+  "complete": false
+}

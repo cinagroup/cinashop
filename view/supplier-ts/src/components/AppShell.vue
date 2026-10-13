@@ -20,6 +20,7 @@ const navigationCatalog = [
   { path: "/products", label: "商品管理", icon: Goods, permission: "supplier.product.view" },
   { path: "/product-specifications", label: "规格模板", icon: Goods, permission: "supplier.product.view" },
   { path: "/product-reviews", label: "商品评价", icon: ChatDotRound, permission: "supplier.product.view" },
+  { path: '/product-labels', label: '商品标签', icon: Goods, permission: 'supplier.product.view' },
   { path: "/shipping-templates", label: "运费模板", icon: Box, permission: "supplier.shipping.view" },
   { path: "/orders", label: "订单管理", icon: List, permission: "supplier.order.view" },
   { path: "/refunds", label: "售后管理", icon: RefreshLeft, permission: "supplier.refund.view" },

@@ -1,0 +1,141 @@
+{
+  "generatedAt": "2026-10-13T02:42:33.326Z",
+  "phpRoot": "\\\\tsclient\\I\\cinagroup\\cinashop-php",
+  "workerRoot": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts",
+  "totals": {
+    "php": 1904,
+    "ts": 2397,
+    "matched": 925,
+    "executableMatched": 904,
+    "unavailable": 21,
+    "missing": 979,
+    "retired": 17,
+    "actionableMissing": 962,
+    "coveragePercent": 48.6,
+    "executableCoveragePercent": 47.5,
+    "effectiveExecutableCoveragePercent": 47.9
+  },
+  "surfaces": [
+    {
+      "surface": "api",
+      "php": 457,
+      "ts": 1310,
+      "matched": 444,
+      "executableMatched": 438,
+      "unavailable": 6,
+      "missing": 13,
+      "retired": 2,
+      "actionableMissing": 11
+    },
+    {
+      "surface": "admin",
+      "php": 1153,
+      "ts": 812,
+      "matched": 259,
+      "executableMatched": 244,
+      "unavailable": 15,
+      "missing": 894,
+      "retired": 0,
+      "actionableMissing": 894
+    },
+    {
+      "surface": "supplier",
+      "php": 182,
+      "ts": 164,
+      "matched": 121,
+      "executableMatched": 121,
+      "unavailable": 0,
+      "missing": 61,
+      "retired": 12,
+      "actionableMissing": 49
+    },
+    {
+      "surface": "kefu",
+      "php": 63,
+      "ts": 70,
+      "matched": 60,
+      "executableMatched": 60,
+      "unavailable": 0,
+      "missing": 3,
+      "retired": 3,
+      "actionableMissing": 0
+    },
+    {
+      "surface": "out",
+      "php": 41,
+      "ts": 41,
+      "matched": 41,
+      "executableMatched": 41,
+      "unavailable": 0,
+      "missing": 0,
+      "retired": 0,
+      "actionableMissing": 0
+    },
+    {
+      "surface": "erp",
+      "php": 8,
+      "ts": 0,
+      "matched": 0,
+      "executableMatched": 0,
+      "unavailable": 0,
+      "missing": 8,
+      "retired": 0,
+      "actionableMissing": 8
+    }
+  ],
+  "targetedMissingRoutes": [
+    {
+      "method": "GET",
+      "path": "/api/geoLbscoder",
+      "normalizedPath": "/api/geoLbscoder",
+      "kind": "explicit",
+      "source": "cinashop-php/route/api.php",
+      "line": 60,
+      "target": "v1.PublicController/geoLbscoder"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/system/log",
+      "normalizedPath": "/adminapi/system/log",
+      "kind": "explicit",
+      "source": "cinashop-php/route/admin.php",
+      "line": 2114,
+      "target": "v1.system.log.SystemLog/index"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/system/log/search_admin",
+      "normalizedPath": "/adminapi/system/log/search_admin",
+      "kind": "explicit",
+      "source": "cinashop-php/route/admin.php",
+      "line": 2116,
+      "target": "v1.system.log.SystemLog/search_admin"
+    },
+    {
+      "method": "GET",
+      "path": "/supplierapi/product/product_label",
+      "normalizedPath": "/supplierapi/product/product_label",
+      "kind": "explicit",
+      "source": "cinashop-php/route/supplier.php",
+      "line": 166,
+      "target": "product.label.StoreProductLabel/tree_list"
+    },
+    {
+      "method": "GET",
+      "path": "/supplierapi/product/brand/cascader_list/[:type]",
+      "normalizedPath": "/supplierapi/product/brand/cascader_list/:param",
+      "kind": "explicit",
+      "source": "cinashop-php/route/supplier.php",
+      "line": 247,
+      "target": "product.StoreBrand/cascader_list"
+    }
+  ],
+  "limitations": [
+    "Static route registration coverage does not prove response, permission, state-machine, data, or third-party parity.",
+    "PHP line and block comments are masked before parsing, so disabled route declarations do not count as authority.",
+    "ThinkPHP resource routes are expanded to the standard seven REST actions after only/except filters.",
+    "Wildcard 501 fallbacks never count as migrated routes.",
+    "Routes wired to handlers named *Unavailable or containing an inline 501 are registered but not executable.",
+    "Retired routes remain in the raw PHP denominator and missing count; effective coverage excludes only manifest entries with source evidence and a replacement."
+  ]
+}

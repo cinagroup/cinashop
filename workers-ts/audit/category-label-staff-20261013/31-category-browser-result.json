@@ -1,0 +1,530 @@
+{
+  "passed": true,
+  "url": "http://127.0.0.1:5216/category",
+  "browserPlugin": "Browser plugin not available",
+  "data": "Synthetic API/cache fixtures; backend SQL/JWT/independent-session proof is in separate tests",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "checks": [
+    "desktop page identity, meaningful roots, images columns, no overlay",
+    "lazy three-level read, fourth level disabled, self/subtree/hidden parent exclusion",
+    "create all three levels through complete source forms",
+    "move complete subtree with refreshed lazy ancestry",
+    "complete dual-image form preserves canonical reference and renders supplied preview",
+    "self/direct-child show policy preserves grandchild flag",
+    "child and reference delete rejections, leaf and parent deletion",
+    "name and display filters",
+    "definite conflict preserves dialog and draft",
+    "unknown retry inside retained modal sends immutable original revision and draft",
+    "read-only proof handles empty pictures and closes committed unknown draft",
+    "mobile modal images/controls/footer contained with table internal scrolling",
+    "mobile recovery buttons are genuinely clickable in modal",
+    "400011 removes rows/draft and latches cached authority",
+    "refreshed read-only identity restores reads and disables writes",
+    "fresh view-only session retains complete hierarchy reads without writer controls"
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "浏览器根",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000001",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          100
+        ],
+        "cate_name": "浏览器子",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000002",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          100,
+          101
+        ],
+        "cate_name": "浏览器末级",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000003",
+        "id": 0
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/101",
+      "body": {
+        "pid": [
+          4
+        ],
+        "cate_name": "浏览器移动子",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000004",
+        "id": 101
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/12",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "独立分类",
+        "pic": "/api/assets/100?expires=1&signature=copied",
+        "big_pic": "/category-qa.svg",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000005",
+        "id": 12
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/set_show/4/0",
+      "body": {
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000006"
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/set_show/4/1",
+      "body": {
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000007"
+      }
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/4",
+      "body": {
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000008"
+      }
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/3",
+      "body": {
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000008"
+      }
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/102",
+      "body": {
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000008"
+      }
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/101",
+      "body": {
+        "expected_revision": "0000000000000000000000000000000000000000000000000000000000000009"
+      }
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/100",
+      "body": {
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000a"
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "并发草稿",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000b",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "未知重试",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000b",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "未知重试",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000b",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "未知核对",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000c",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "手机核对",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000d",
+        "id": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category",
+      "body": {
+        "pid": [
+          0
+        ],
+        "cate_name": "撤权草稿",
+        "pic": "",
+        "big_pic": "",
+        "sort": 0,
+        "is_show": 1,
+        "expected_revision": "000000000000000000000000000000000000000000000000000000000000000e",
+        "id": 0
+      }
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/new_push"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/2"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/101"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/101"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/12"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/12"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/set_show/4/0"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/category/set_show/4/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/4"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/3"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/102"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/101"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/category/100"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/category/list"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/category/list"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category/create"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/new_push"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/category"
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "blocked": [],
+  "failedResponses": []
+}

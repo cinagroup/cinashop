@@ -105,6 +105,43 @@ export function normalizeSupplierRoute(routePath: string): string {
 /** Empty means authenticated self-service; null means an unknown route. */
 export function requiredSupplierPermissions(method: string, routePath: string): string[] | null {
   const route = normalizeSupplierRoute(routePath);
+  if (route === 'product/product/get_rule' || route.startsWith('product/product/get_rule/')
+    || route === 'product/product/rule' || route.startsWith('product/product/rule/')) {
+    const verb = method.toUpperCase(), id = '(?:[1-9][0-9]{0,9}|:id|<id>)';
+    if (readMethod(method) && (['product/product/rule', 'product/product/get_rule'].includes(route)
+      || new RegExp(`^product/product/rule/${id}$`).test(route))) return ['supplier.product.view'];
+    if (verb === 'POST' && new RegExp(`^product/product/rule/(?:0|${id})$`).test(route)) return ['supplier.product.manage'];
+    if (verb === 'DELETE' && new RegExp(`^product/product/rule/delete/${id}$`).test(route)) return ['supplier.product.manage'];
+    return null;
+  }
+  if (route === 'product/all_label' || route === 'product/label' || route.startsWith('product/label/')) {
+    const verb = method.toUpperCase();
+    if (readMethod(method) && ['product/all_label', 'product/label/catalog', 'product/label/form'].includes(route)) return ['supplier.product.view'];
+    const identifier = '(?:[1-9][0-9]{0,9}|:id|<id>)';
+    if (verb === 'POST' && (route === 'product/label/0' || new RegExp(`^product/label/${identifier}$`).test(route))) return ['supplier.product.manage'];
+    if (verb === 'DELETE' && new RegExp(`^product/label/${identifier}$`).test(route)) return ['supplier.product.manage'];
+    return null;
+  }
+  if (route === 'product/batch_process' || route.startsWith('product/batch_process/')
+    || route === 'product/product/batch-selection' || route.startsWith('product/product/batch-selection/')) {
+    if (method.toUpperCase() === 'POST' && route === 'product/batch_process') return ['supplier.product.manage'];
+    if (readMethod(method) && route === 'product/product/batch-selection') return ['supplier.product.view'];
+    return null;
+  }
+  if (route === 'product/category' || route.startsWith('product/category/')) {
+    const read = readMethod(method), verb = method.toUpperCase();
+    const identifier = '(?:[1-9][0-9]{0,9}|:id|<id>)';
+    // Form metadata is a read. Numeric GET menu grants must not become a
+    // product writer merely because the returned form contains a save action.
+    if (read && (route === 'product/category/create' || new RegExp(`^product/category/${identifier}$`).test(route))) return ['supplier.product.view'];
+    if (read && (['product/category', 'product/category/tree', 'product/category/cascader_list'].includes(route)
+      || /^product\/category\/(?:tree|cascader_list)\/(?:[012]|:type|<type>)$/.test(route)
+      || new RegExp(`^product/category/${identifier}/detail$`).test(route))) return ['supplier.product.view'];
+    if (verb === 'POST' && route === 'product/category') return ['supplier.product.manage'];
+    if (['PUT', 'DELETE'].includes(verb) && new RegExp(`^product/category/${identifier}$`).test(route)) return ['supplier.product.manage'];
+    if (verb === 'PUT' && new RegExp(`^product/category/set_show/${identifier}/(?:[01]|:is_show|<is_show>)$`).test(route)) return ['supplier.product.manage'];
+    return null;
+  }
   if (authenticatedSelfServiceRoutes.has(route)) return [];
   if (route.startsWith("order/print/")) return ["supplier.order.view", "supplier.print.manage"];
   if (route.startsWith("order/waybill/")) return ["supplier.order.view", "supplier.waybill.manage"];

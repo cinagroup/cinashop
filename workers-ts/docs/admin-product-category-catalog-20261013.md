@@ -1,0 +1,55 @@
+# Platform product-category workflow — 2026-10-13
+
+## Readable PHP evidence and scope
+
+The readable implementation is `../cinashop-php/app/controller/admin/v1/product/StoreProductCategory.php` (index 37, tree_list 55, cascader_list 69, set_show 79, create 91, save 100, edit 126, update 136, delete 159), `app/services/product/category/StoreProductCategoryServices.php`, the matching DAO/model, `route/admin.php:1467,1477–1496`, and the first-party `view/admin/src/pages/product/productClassify/index.vue` / `view/admin/src/api/product.js`. The old page is `/admin/product/product_classify`, permission page tuple `admin-store-storeCategory-index`, SQL menu ID 3. The migrated page uses `/category`; the shared router owns its old-page alias.
+
+Nine readable contracts are implemented:
+
+| Method and legacy route | Contract |
+| --- | --- |
+| GET product/category | `pid`, `id`, `is_show`, `cate_name`; `page`/`limit` accepted but ignored, matching the source DAO's unpaged call. Sorted sort DESC, id DESC; snake-case lazy rows, actual count and Shanghai add_time. |
+| GET product/category/tree/:type | Flat, parent-first visible tier rows. Type 0 roots, positive integer all levels. |
+| GET product/category/cascader_list/[:type] | Nested `{value,label,pid,children?}` selection nodes. Source ignores this optional type; normalized nonnegative integer values preserve that behavior. |
+| GET product/category/create | Source six-field create form, status, title, relative action and POST method. |
+| POST product/category | Complete old pid-array, cate_name, pic, big_pic, sort, is_show input. |
+| GET product/category/:id | Edit form, actual parent path, excluded self/subtree and fresh revision. |
+| PUT product/category/:id | Full save/move of category and descendants, not a thin PID change. |
+| PUT product/category/set_show/:id/:is_show | Source self plus direct children only; grandchildren flags remain unchanged. |
+| DELETE product/category/:id | Hard deletion after complete children/reference protection. |
+
+`PUT product/category/set_category/:id` remains open. The readable child controller has no such method; its ancestor `crmeb/basic/BaseController.php` is loader-encrypted. No guessed mutation is registered and numeric opaque menu 175 grants no capability. This is not a retirement finding. Exact helper bytes of the PHP generic `create_form` / `sort_list_tier` are not asserted; the readable component/service and first-party consumption establish the fields used here. `vendor/xaboy/form-builder/src/UI/Iview/Traits/FrameFactoryTrait.php`, `Components/Frame.php` and `Components/Cascader.php` establish the old serialized frame-image/cascader structures.
+
+Old dynamic forms consume `rules`, `title`, `action`, `method`, six fields and canonical `pic`/`big_pic`; the tier and cascader DTOs have different structures. The new Vue reads the same legacy list/form APIs and displays `pic_preview`/`big_pic_preview`. No end-to-end claim is made for the old Vue's R2 image rendering: it still consumes canonical references, while new Vue consumes projected previews. The modern category list/save/delete endpoints delegate to the same service and preserve omitted hierarchy/image fields on partial saves.
+
+## Authority and transaction boundaries
+
+Platform categories are `type=0, relation_id=0`; this table has no `store_id` column. Door-store `type=1` and supplier `type=2` records cannot be read as platform management rows or submitted as parents. No body accepts client ownership. Ordinary reads use category.view; selectors use route-only category.product_selection_view (product.view or category.view); writes use category.manage. Forms do not grant product.view.
+
+The actual installed SQL tuples are protected, including menu 173's nonempty `/adminproduct/category` and `product-save-cate`; menus 170–174,176–178 also use legacy nonempty paths, and 376/387/398/411/940/912 have the source tree/cascader API bindings. Fixtures use the actual 173 and 912 metadata. Shared exact-tuple policies and page query projection are root-owned.
+
+Reads run in REPEATABLE READ, READ ONLY with fresh platform admin identity, password version, expiry and current roles. Writes use the existing staff authority barrier, advisory namespace 731703 key 0, current admin FOR SHARE NOWAIT, and mature role/numeric-menu row locks. The admin's complete row and current permission are checked after callbacks/audit and before commit. Runtime proof grants menu UPDATE(id) only; semantic menu API edits remain forbidden. Missing required capabilities return 503, with PostgreSQL 42501 preserved as cause. SQL budgets remain 2s lock / 5s statement and idle timeout.
+
+The own category graph is limited to 1000 nodes, uses actual pid relationships, rejects cycles/missing parents/fourth levels and locks own rows in stable order with NOWAIT. Old stale path/level can still be listed and edited. Saving explicitly repairs the chosen subtree; selecting a stale parent requires first editing that parent. Unknown or incompatible history is not silently rewritten.
+
+Moves include products of type 0/1/2 which explicitly select affected platform categories. Up to 500 products are acquired with the shared product namespace 731617 try-fence, followed by product rows FOR UPDATE NOWAIT; this prevents waiting backwards on an existing product writer. Category rows already held by the move block a later product writer until commit. All related rows are bounded to 10000, locked and read back. Existing type-1 relationPid is updated to its selected category's actual parent; its relationId/status/addTime and all other relation kinds remain unchanged. Empty relations are not manufactured. Nonempty category relations must exactly match the valid explicit CSV selection, or the complete operation returns 409 requiring repair.
+
+The moved subtree's path/level and existing relationPid are the sole derived maintenance authority. Direct category selections, product CSV, owners, prices, inventory, wallet/order/claim facts and historical auxiliary records do not change. Source PHP moves only updated the chosen row, leaving descendants stale; this migration repairs that readable defect rather than perpetuating a broken coupon ancestry projection.
+
+The actual OrderCouponService uses category pid/path to derive coupon scope. A native test obtains the real StoreCart list and confirmed checkout budget, moves the in-use category with this service, proves old coupon confirmation rejects with OrderQuoteReconfirmRequired, and requotes the current ancestor's coupon at its correct amount. Orders, inventory, user/wallet and received coupons remain identical; coupon definitions are not rewritten.
+
+Deletion protects all children (including foreign invalid child links), live direct product CSV selections, current type-1 relation ID/parent, historical store_product_cate ID/parent, historical store_product_category_brand, issued category coupons and reusable category-template references. Historical rows and deleted template definitions remain protected. Decimal `012`/`+12` match the consumed ID; zero, whitespace/trailing commas and unrelated/out-of-range decimals do not become references. Unknown hex/exponent tokens conservatively block deletion/movement until that product CSV is explicitly repaired. No old auxiliary table is dual-written or used as a current authority.
+
+Every write verifies RETURNING, exact audit actor/type/action/method, complete category readback and related full product/relation rows. Trigger-skipped audits, rewritten owners/credentials and fields outside the authorized projection roll back the entire transaction. Optional expected_revision guards all new Vue saves/status/deletes; bodyless legacy delete remains supported, and optional body.id on legacy saves must equal the URL ID.
+
+## Images and frontend completion
+
+Canonical `/api/assets/:id` references use the existing public-product attachment owner, key and raster MIME rules; input signature parameters are removed before persistence. Attachment rows are held FOR SHARE NOWAIT during mutation. Private admin/supplier signed URLs are not durable facts. Static HTTPS/site references respect the category mobile pic column's 512 characters and big_pic's 255; other product picture slots retain their own 255 rule. The dedicated ProductCategoryAssetPolicy accepts the original ProductPicture shape, preserves owner-sensitive public-product authorization and renders fresh read-only previews. The public StoreCategoryService snapshot remains platform-only.
+
+The Vue page supports lazy three-level reads, source parent forms, complete dual-image creation/editing/moves, name/state filters, self/direct-child display, guarded deletion and visible repair notes. Read-only roles retain reads with writer controls disabled/absent. Unknown results retain an immutable draft/revision, freeze further writes and expose real retry/proof buttons inside the retained modal. Proof reads current facts without writing; it is not an operation receipt. Server 400011 clears rows and drafts and latches write withdrawal until identity/role data changes, even if stale cached canManage still says true.
+
+## Validation evidence
+
+Independent local validation lives outside the repository in `C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/admin-category-validation`, separate from the root's active mirror, using locked Vue 3.5.42 dependencies with separate Vite caches. Business tests: 14/14; actual createApp/JWT/role/controller/SQL HTTP tests: 4/4; compiled real Vue/state tests: 10/10, including direct-child status proof and modal recovery. HTTP connection factories alone are substituted for owned fixture sessions and close is asserted; this is not a real Hyperdrive LOGIN proof. Complete disposable PostgreSQL 16.15 replay of business/HTTP/native files: 25/25, including 7 independent native cases for real LOGIN ACLs, numeric row locks, both product-lock orders, staff/credential protection and actual confirmed checkout requoting. The runner confirms fixtures remaining=0 and STOPPED; an independent pg_ctl status=3 and no listener on its owned port are recorded.
+
+Complete Admin vue-tsc --noEmit and production Vite build exit 0 after copying the complete shared frontend source dependencies. The first native nested-error assertion failure, initial incomplete validation-copy build failure and browser-script locator failures remain as diagnostic evidence; no production timeout or lock protocol was weakened. Existing Playwright/Chromium1217 validates 16 rendered flows at 1440×1000 and 390×844: complete hierarchy CRUD/move, dual images, filters, status/deletion, conflict drafts, modal retry/proof, 400011 withdrawal and view-only entry. Console errors/warnings, external requests and failing HTTP responses are all zero; screenshots were inspected. The Browser plugin is unavailable, so this uses the existing Playwright runtime without installing dependencies. Browser synthetic API/cache fixtures cannot prove live SQL/JWT/concurrency; those are demonstrated separately above.

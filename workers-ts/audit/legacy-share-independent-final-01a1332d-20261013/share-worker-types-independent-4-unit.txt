@@ -1,0 +1,2 @@
+test/cart-computation-frontend.test.ts(6,71): error TS2307: Cannot find module '../../view/common/cartComputation' or its corresponding type declarations.
+test/cart-computation-frontend.test.ts(7,40): error TS2307: Cannot find module '../../view/common/cartCouponPreselection' or its corresponding type declarations.

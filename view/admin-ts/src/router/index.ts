@@ -247,6 +247,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "PC首页轮播" },
       },
       {
+        path: 'setting/operational-groups',
+        name: 'operational-group-data',
+        component: () => import('@/pages/system/OperationalGroupData.vue'),
+        meta: { title: '运营图片配置' },
+      },
+      {
         path: "setting/product-category-style",
         alias: "/admin/setting/pages/product_category",
         name: "product-category-style",
@@ -300,6 +306,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "category",
+        alias: '/admin/product/product_classify',
         name: "category",
         component: () => import("@/pages/category/CategoryList.vue"),
         meta: { title: "商品分类" },
@@ -480,6 +487,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "brand",
+        alias: "/admin/product/product_brand",
         name: "brand",
         component: () => import("@/pages/brand/BrandList.vue"),
         meta: { title: "品牌管理" },
@@ -567,6 +575,13 @@ const routes: RouteRecordRaw[] = [
         name: "statistic",
         component: () => import("@/pages/statistic/Dashboard.vue"),
         meta: { title: "统计报表" },
+      },
+      {
+        path: "label/products",
+        name: "product-label-catalog",
+        alias: "/admin/product/label",
+        component: () => import("@/pages/label/ProductLabelCatalog.vue"),
+        meta: { title: "商品标签管理" },
       },
       {
         path: "label",

@@ -1,0 +1,1114 @@
+{
+  "generatedAt": "2026-10-13T09:41:25.382Z",
+  "status": "verified-local-candidate-unreleased",
+  "goal": "PHP to TypeScript migration remains active",
+  "scope": [
+    "Admin platform product-category nine readable legacy contracts and real checkout ancestry",
+    "Supplier label catalogs, owned label lifecycle and actual full product-label assignment",
+    "Employee current-authority list/ratio/family removal/invitation/binding and registered UniApp pages",
+    "Regression of the earlier brand/batch/cart wave and peer share/delivery changes"
+  ],
+  "source": {
+    "count": 4031,
+    "digest": "06a609b8078a22be557651f401c6920c2a120e9ad63de7f8554c663ca35f445c",
+    "before": "2026-10-13T09:19:35.416Z",
+    "after": "2026-10-13T09:38:01.860Z",
+    "mismatches": [],
+    "owners": [
+      {
+        "owner": "admin",
+        "count": 14,
+        "manifestSha256": "959139270f7f5cd7ab04652aa98e7299f4dca14b3d418d361fa85129fc1d8e1b"
+      },
+      {
+        "owner": "supplier",
+        "count": 14,
+        "manifestSha256": "41a2c0131d4aa15d954cce1853ba95c3c2ae40e73fe16f0050f23b58aad95a78"
+      },
+      {
+        "owner": "api",
+        "count": 17,
+        "manifestSha256": "cb8947a1ddb124a858c7bdb7ebb27c75f3422b3222dce15b4dbcbef25d86cd1d"
+      }
+    ],
+    "boundary": "Exact frozen Worker/src/test/scripts/migrations/root configuration and entire view inputs in the local validation copy; dependency/output directories excluded. Owner docs separately hash-checked."
+  },
+  "ordinary": {
+    "files": 63,
+    "total": 1054,
+    "passed": 969,
+    "nativeConditionalSkips": 85,
+    "failed": 0,
+    "exitCode": 0,
+    "suites": [
+      {
+        "file": "test/admin-permission.test.ts",
+        "passed": 24,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-brand-frontend.test.ts",
+        "passed": 12,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-brand-http.test.ts",
+        "passed": 4,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-brand-native.test.ts",
+        "passed": 0,
+        "nativeConditionalSkips": 5
+      },
+      {
+        "file": "test/admin-product-brand-permission.test.ts",
+        "passed": 6,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-brand.test.ts",
+        "passed": 12,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-category-frontend.test.ts",
+        "passed": 10,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-category-http.test.ts",
+        "passed": 4,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-category-native.test.ts",
+        "passed": 0,
+        "nativeConditionalSkips": 7
+      },
+      {
+        "file": "test/admin-product-category-permission.test.ts",
+        "passed": 6,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-category.test.ts",
+        "passed": 14,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/admin-product-label-frontend.test.ts",
+        "passed": 14,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/cart-computation-frontend.test.ts",
+        "passed": 28,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/cart-computation-http.test.ts",
+        "passed": 44,
+        "nativeConditionalSkips": 1
+      },
+      {
+        "file": "test/cart-computation-input.test.ts",
+        "passed": 25,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/checkout-catalog-management.test.ts",
+        "passed": 0,
+        "nativeConditionalSkips": 25
+      },
+      {
+        "file": "test/division-staff-frontend.test.ts",
+        "passed": 29,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/division-staff-http.test.ts",
+        "passed": 52,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/division-staff-input.test.ts",
+        "passed": 38,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/division-staff-invite.test.ts",
+        "passed": 22,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/division-staff-method-http.test.ts",
+        "passed": 1,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/division-staff-navigation.test.ts",
+        "passed": 4,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/division-staff-postgres.test.ts",
+        "passed": 0,
+        "nativeConditionalSkips": 8
+      },
+      {
+        "file": "test/legacy-share-callback.test.ts",
+        "passed": 3,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-code.test.ts",
+        "passed": 12,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-http.test.ts",
+        "passed": 3,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-private-mini.test.ts",
+        "passed": 6,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-private-scan-flow.test.ts",
+        "passed": 5,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-private-scan.test.ts",
+        "passed": 35,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-provider-budget.test.ts",
+        "passed": 5,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/legacy-share-registered-http.test.ts",
+        "passed": 9,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/local-finance-postgres-runner.test.ts",
+        "passed": 162,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/modern-cart-membership-price.test.ts",
+        "passed": 24,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/order-cart-pink-migration.test.ts",
+        "passed": 5,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/order-coupon-picker.test.ts",
+        "passed": 23,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/order-full-discount-checkout.test.ts",
+        "passed": 2,
+        "nativeConditionalSkips": 5
+      },
+      {
+        "file": "test/order-full-gift-checkout.test.ts",
+        "passed": 1,
+        "nativeConditionalSkips": 5
+      },
+      {
+        "file": "test/order-nth-discount-checkout.test.ts",
+        "passed": 2,
+        "nativeConditionalSkips": 5
+      },
+      {
+        "file": "test/order-promotion-quote.test.ts",
+        "passed": 13,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/order-time-discount-checkout.test.ts",
+        "passed": 4,
+        "nativeConditionalSkips": 4
+      },
+      {
+        "file": "test/product-association-migration.test.ts",
+        "passed": 7,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/product-share-code.test.ts",
+        "passed": 8,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-batch-concurrency-postgres.test.ts",
+        "passed": 0,
+        "nativeConditionalSkips": 11
+      },
+      {
+        "file": "test/supplier-product-batch-frontend.test.ts",
+        "passed": 21,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-batch-http.test.ts",
+        "passed": 26,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-batch-permission.test.ts",
+        "passed": 2,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-catalog.test.ts",
+        "passed": 23,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-label-binding-http.test.ts",
+        "passed": 8,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-label-frontend.test.ts",
+        "passed": 15,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-label-http.test.ts",
+        "passed": 14,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-label-native.test.ts",
+        "passed": 0,
+        "nativeConditionalSkips": 9
+      },
+      {
+        "file": "test/supplier-product-label-picker-frontend.test.ts",
+        "passed": 14,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-management.test.ts",
+        "passed": 12,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-product-media-frontend.test.ts",
+        "passed": 24,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/supplier-rbac-migration.test.ts",
+        "passed": 10,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/uniapp-checkout-contract.test.ts",
+        "passed": 25,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/uniapp-checkout-postgres.test.ts",
+        "passed": 4,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/user-spread-poster-data.test.ts",
+        "passed": 46,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/v2-cart-compatibility-migration.test.ts",
+        "passed": 5,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/v2-coupon-compatibility-migration.test.ts",
+        "passed": 7,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/wechat-callback-pipeline.test.ts",
+        "passed": 9,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/wechat-follow-poster.test.ts",
+        "passed": 19,
+        "nativeConditionalSkips": 0
+      },
+      {
+        "file": "test/wechat-qrcode-migration.test.ts",
+        "passed": 7,
+        "nativeConditionalSkips": 0
+      }
+    ]
+  },
+  "native": {
+    "files": 33,
+    "passed": 455,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "file": "test/admin-product-brand-http.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "test/admin-product-brand-native.test.ts",
+        "passed": 5
+      },
+      {
+        "file": "test/admin-product-brand-permission.test.ts",
+        "passed": 6
+      },
+      {
+        "file": "test/admin-product-brand.test.ts",
+        "passed": 12
+      },
+      {
+        "file": "test/admin-product-category-http.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "test/admin-product-category-native.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "test/admin-product-category-permission.test.ts",
+        "passed": 6
+      },
+      {
+        "file": "test/admin-product-category.test.ts",
+        "passed": 14
+      },
+      {
+        "file": "test/cart-computation-http.test.ts",
+        "passed": 45
+      },
+      {
+        "file": "test/checkout-catalog-management.test.ts",
+        "passed": 25
+      },
+      {
+        "file": "test/delivery-workbench-read-postgres.test.ts",
+        "passed": 25
+      },
+      {
+        "file": "test/delivery-workbench-writeoff-postgres.test.ts",
+        "passed": 41
+      },
+      {
+        "file": "test/division-staff-http.test.ts",
+        "passed": 52
+      },
+      {
+        "file": "test/division-staff-invite.test.ts",
+        "passed": 22
+      },
+      {
+        "file": "test/division-staff-method-http.test.ts",
+        "passed": 1
+      },
+      {
+        "file": "test/division-staff-postgres.test.ts",
+        "passed": 8
+      },
+      {
+        "file": "test/legacy-share-code-native.test.ts",
+        "passed": 3
+      },
+      {
+        "file": "test/legacy-share-private-scan-native.test.ts",
+        "passed": 3
+      },
+      {
+        "file": "test/modern-cart-membership-price.test.ts",
+        "passed": 24
+      },
+      {
+        "file": "test/order-coupon-picker.test.ts",
+        "passed": 23
+      },
+      {
+        "file": "test/order-full-discount-checkout.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "test/order-full-gift-checkout.test.ts",
+        "passed": 6
+      },
+      {
+        "file": "test/order-nth-discount-checkout.test.ts",
+        "passed": 7
+      },
+      {
+        "file": "test/order-time-discount-checkout.test.ts",
+        "passed": 8
+      },
+      {
+        "file": "test/supplier-product-batch-concurrency-postgres.test.ts",
+        "passed": 11
+      },
+      {
+        "file": "test/supplier-product-batch-http.test.ts",
+        "passed": 26
+      },
+      {
+        "file": "test/supplier-product-batch-permission.test.ts",
+        "passed": 2
+      },
+      {
+        "file": "test/supplier-product-catalog.test.ts",
+        "passed": 23
+      },
+      {
+        "file": "test/supplier-product-label-binding-http.test.ts",
+        "passed": 8
+      },
+      {
+        "file": "test/supplier-product-label-http.test.ts",
+        "passed": 14
+      },
+      {
+        "file": "test/supplier-product-label-native.test.ts",
+        "passed": 9
+      },
+      {
+        "file": "test/user-spread-poster-data-native.test.ts",
+        "passed": 2
+      },
+      {
+        "file": "test/wechat-follow-poster-native.test.ts",
+        "passed": 2
+      }
+    ],
+    "completeCommands": [
+      {
+        "name": "main",
+        "files": 32,
+        "passed": 430,
+        "exitCode": 0,
+        "cleanup": {
+          "fixtureDatabasesAndRolesRemaining": 0,
+          "ownedCluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-H3h4rt",
+          "independentPgCtlStatus": 3,
+          "statusOutput": "pg_ctl: no server running"
+        }
+      },
+      {
+        "name": "catalog",
+        "files": 1,
+        "passed": 25,
+        "exitCode": 0,
+        "cleanup": {
+          "fixtureDatabasesAndRolesRemaining": 0,
+          "ownedCluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-LeN8AG",
+          "independentPgCtlStatus": 3,
+          "statusOutput": "pg_ctl: no server running"
+        }
+      }
+    ],
+    "ordinaryOverlap": 294,
+    "nativeOnly": 161,
+    "ordinaryNativeSkipsFilled": 85,
+    "uniquePassed": 1130,
+    "explanation": "Only complete files from both final native commands counted. Identity is filename plus complete ancestor/test title and same-title parameter occurrence in declaration/execution order. Date.now-derived ISO values in the unchanged displayed case title are normalized. Four employee JSON vectors have one displayed title; they remain four cases in both runs. Three coupon-boundary vectors and one deleted-agent vector have different run timestamps but the same definition and are not counted twice. No agent or first-attempt pass added to these totals."
+  },
+  "workerTypes": [
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T09:20:53.246Z",
+      "completedAt": "2026-10-13T09:24:31.967Z",
+      "durationMs": 218720,
+      "code": 0,
+      "signal": null,
+      "log": ".cache/category-label-staff-worker-unit-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "runtime",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T09:24:32.003Z",
+      "completedAt": "2026-10-13T09:26:50.250Z",
+      "durationMs": 138247,
+      "code": 0,
+      "signal": null,
+      "log": ".cache/category-label-staff-worker-runtime-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "frontend": {
+    "admin": {
+      "typesExit": 0,
+      "buildExit": 0,
+      "browserFlows": 16,
+      "unexpectedErrors": 0,
+      "consoleWarnings": 0,
+      "summary": "admin-category-final-summary.json"
+    },
+    "supplier": {
+      "typesExit": 0,
+      "buildExit": 0,
+      "browserSurfaces": 4,
+      "unexpectedErrors": 0,
+      "consoleWarnings": 0,
+      "expectedSyntheticHttp409Console": 1,
+      "summary": "supplier-label-final-summary.json"
+    },
+    "uniapp": {
+      "completeTypesExit": 0,
+      "builds": [
+        "H5",
+        "MP-Weixin",
+        "App"
+      ],
+      "buildExitCodes": [
+        0,
+        0,
+        0
+      ],
+      "browserFlows": 8,
+      "unexpectedErrors": 0,
+      "summary": "api-staff-final-summary.json"
+    },
+    "boundary": "Full frontend checks run in separate owned copies with changed UI hashes frozen. Admin/Supplier browser APIs are synthetic; employee browser uses real handlers/JWT/disposable memory SQL plus synthetic credentials/theme/PNG transport. Final controller HEAD fix is covered by the current full ordinary/native suites; older browser evidence is scoped to unchanged exercised UI/GET/DELETE paths. MP/App builds do not prove physical-device scans, real provider calls or production execution."
+  },
+  "staticRoutes": {
+    "php": 1904,
+    "ts": 2452,
+    "matched": 969,
+    "executableMatched": 948,
+    "unavailable": 21,
+    "missing": 935,
+    "retired": 17,
+    "actionableMissing": 918,
+    "coveragePercent": 50.9,
+    "executableCoveragePercent": 49.8,
+    "effectiveExecutableCoveragePercent": 50.2,
+    "previousExecutableMatched": 934,
+    "previousActionableMissing": 932,
+    "addedReadableLegacyContracts": 14,
+    "surfaces": [
+      {
+        "surface": "api",
+        "actionableMissing": 6
+      },
+      {
+        "surface": "admin",
+        "actionableMissing": 862
+      },
+      {
+        "surface": "supplier",
+        "actionableMissing": 42
+      },
+      {
+        "surface": "kefu",
+        "actionableMissing": 0
+      },
+      {
+        "surface": "out",
+        "actionableMissing": 0
+      },
+      {
+        "surface": "erp",
+        "actionableMissing": 8
+      }
+    ],
+    "explanation": "Nine Admin category, four Supplier label and one legacy GET employee removal records. URL registration counts do not establish whole-domain behavior or configured-provider readiness."
+  },
+  "checkboxStatus": {
+    "checklist": {
+      "total": 404,
+      "done": 249,
+      "open": 155
+    },
+    "audit": {
+      "total": 88,
+      "done": 50,
+      "open": 38
+    }
+  },
+  "correctedFailures": [
+    "Raw Hono HEAD is internally dispatched as GET; move the rejection into the actual employee removal controller, tested before and after whole-fact snapshot",
+    "Unknown inline label POST lost its retained attempt on close/reopen; preserve pending context, reread only and avoid selecting into a different product",
+    "Definite legacy/consistent HTTP refusal remains editable; transport failure, malformed receipt and inconsistent HTTP/body remain unknown",
+    "Two older Supplier SKU scenarios moved only a category leaf to Supplier ownership; fixture now keeps the full same-owner ancestor chain, without weakening runtime category validation"
+  ],
+  "retainedFirstAttempt": {
+    "sourceDigest": "b90973003c0635375e8075e7fd76db30345befb4efb1ee4c0c04f1da60d2e7bb",
+    "ordinary": {
+      "files": 63,
+      "passed": 961,
+      "failed": 1,
+      "nativeSkipped": 85,
+      "exitCode": 1
+    },
+    "native": {
+      "files": 33,
+      "passed": 452,
+      "failed": 3,
+      "exitCode": 1,
+      "fixturesRemaining": 0,
+      "independentPgCtlStatus": 3
+    },
+    "workerTypes": {
+      "unit": 0,
+      "runtime": 0
+    },
+    "credit": "Historical failure evidence only; no final aggregate credit"
+  },
+  "nativeIdentityVerifier": {
+    "at": "2026-10-13T09:36:39.239Z",
+    "originalVerifierExit": 1,
+    "originalCommandsExitCodes": [
+      0,
+      0
+    ],
+    "reason": "Four distinct it.each ratio-JSON vectors deliberately share one displayed title; definition-order occurrence differentiates them. Business tests and raw logs unchanged.",
+    "collisions": [
+      {
+        "identity": "test/division-staff-http.test.ts\u0000actual registered employee lifecycle, customer JWT and SQL identity authority > rejects duplicate/forged/oversized actual ratio JSON",
+        "count": 4
+      }
+    ]
+  },
+  "cleanup": {
+    "ownedNativeClusters": [
+      {
+        "fixtureDatabasesAndRolesRemaining": 0,
+        "ownedCluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-H3h4rt",
+        "independentPgCtlStatus": 3,
+        "statusOutput": "pg_ctl: no server running"
+      },
+      {
+        "fixtureDatabasesAndRolesRemaining": 0,
+        "ownedCluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-LeN8AG",
+        "independentPgCtlStatus": 3,
+        "statusOutput": "pg_ctl: no server running"
+      }
+    ],
+    "agentServersStopped": true,
+    "agentClustersStopped": true
+  },
+  "limitations": [
+    "Whole migration and parent checkboxes remain open",
+    "Opaque platform set_category inherited handler remains missing rather than invented or retired",
+    "Supplier PHP all_label had a visible getList argument mismatch; TS fixes the documented intent instead of claiming parity with a successful old call",
+    "The other chat routine_code four-file local candidate is not included in this snapshot or totals",
+    "Live WeChat/R2/Cloudflare, native device acceptance, production roles/data, full repository CI and publication remain open",
+    "No production DDL, business data mutation, external business message, commit, push or deployment"
+  ],
+  "receipts": [
+    {
+      "file": "audit/category-label-staff-20261013/01-category-label-staff-source-final-before.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-source-final-before.json",
+      "bytes": 642445,
+      "sha256": "288ed67a33176760697cd160ce2bb6de3b3e93057a2f7f6467b7138945ef5bcb"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/02-category-label-staff-source-final-after.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-source-final-after.json",
+      "bytes": 642445,
+      "sha256": "eb6882b67900e9fb25d8f227e364c3fc5ae4a171a628a4d408e1a7d860ea2020"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/03-category-label-staff-owner-before.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-owner-before.json",
+      "bytes": 9213,
+      "sha256": "024ea3a70665a59279d1979f48a9e949e6ee43bbd49688c95c1687a43c39d25c"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/04-category-label-staff-owner-after.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-owner-after.json",
+      "bytes": 9213,
+      "sha256": "2cd60fea95c8f56b4dd7c4a203b282df48cbd4530cba82d6db96793efc623d07"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/05-category-label-staff-tests-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-tests-final.json",
+      "bytes": 454846,
+      "sha256": "7c5f0151651bde562a14edcfcedab9e9a160d3fb3eb324ad7868434a83ed80a5"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/06-category-label-staff-tests-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-tests-final.log",
+      "bytes": 184,
+      "sha256": "980ac337c75897e875c900c76cf9e836b6035150cbffebbfa8e34c57c67cf8dd"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/07-category-label-staff-tests-final-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-tests-final-receipt.json",
+      "bytes": 9379,
+      "sha256": "b95e112a0cafc4d2023a659eed018542449b0a43e48297df7ca669facd02ef24"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/08-category-label-staff-worker-types-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-worker-types-final.json",
+      "bytes": 1128,
+      "sha256": "ad84e84f176f76788dea42f6af79650d88c246991f5eefc85cea013a4c895f21"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/09-category-label-staff-worker-unit-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-worker-unit-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/10-category-label-staff-worker-runtime-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-worker-runtime-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/11-category-label-staff-native-final-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-native-final-receipt.json",
+      "bytes": 281026,
+      "sha256": "4e31108221abedcb3bc0e7cb965194fd056470afee17d14bfa86d4f26244210d"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/12-category-label-staff-native-main-final-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-native-main-final-receipt.json",
+      "bytes": 123608,
+      "sha256": "a0454f379f26faff94bab2fab64e1349fcd5240fb627e23d009ddbdc5c9e146a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/13-category-label-staff-native-catalog-final-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-native-catalog-final-receipt.json",
+      "bytes": 7000,
+      "sha256": "f2e43576250aa06b6d34573a60c15efe0b8cbd1ea643eeb06b99ccf05565a1ad"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/14-category-label-staff-native-main-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-native-main-final.log",
+      "bytes": 111530,
+      "sha256": "3b6d783b9e5f7a45b44787edf7d9c0552b80bc83ec0bd47664c184771280dde3"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/15-category-label-staff-native-catalog-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-native-catalog-final.log",
+      "bytes": 5738,
+      "sha256": "28d4397785c3d7bba0c16ac59c34bc544660b4e5e6c73258e26641be206ea3ba"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/16-category-label-staff-diff-check-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-diff-check-final.log",
+      "bytes": 4470,
+      "sha256": "b5359d501036b1e525f2e079c44d2ff3f31147495b157a74236b40dc62be0c0a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/17-category-label-staff-route-audit-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-route-audit-final.json",
+      "bytes": 1321676,
+      "sha256": "f3cf8d1123e9ff5d2c11aebe6d7145af049c0df7101c7c44c634b8510509e0db"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/18-retained-first-attempt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\retained-first-attempt.json",
+      "bytes": 2784,
+      "sha256": "4e5e5cc5de5490178d329adfced2f8d8a5f894b2507a14d49a0b0a4803f3f05d"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/19-category-label-staff-native-identity-first-verifier.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-native-identity-first-verifier.json",
+      "bytes": 265863,
+      "sha256": "2272d8060f8baa78d49710dfccdb57eeb8bd07116d26d4e09d1135aeeaf98703"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/20-category-label-staff-title-time-first-ledger.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-title-time-first-ledger.json",
+      "bytes": 47128,
+      "sha256": "53a606ba37a5cf3e7066bef9cc26544a7e9efa63bc5f91823a6ab3984493ae8d"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/21-admin-category-final-summary.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-final-summary.json",
+      "bytes": 15674,
+      "sha256": "609bbaafd862e636898af44dcf3d90b4ca1540671b4e555e6fde866b795baf3a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/22-supplier-label-final-summary.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-final-summary.json",
+      "bytes": 8833,
+      "sha256": "3efd5ce51e565932a7fef2d4732173b4bc69e54532f549360bd672c157e1e26f"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/23-supplier-label-owned-freeze.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-owned-freeze.json",
+      "bytes": 4121,
+      "sha256": "41a2c0131d4aa15d954cce1853ba95c3c2ae40e73fe16f0050f23b58aad95a78"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/24-supplier-label-final-ui-receipt-recovery-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-final-ui-receipt-recovery-final.json",
+      "bytes": 8833,
+      "sha256": "3efd5ce51e565932a7fef2d4732173b4bc69e54532f549360bd672c157e1e26f"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/25-api-staff-final-summary.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-final-summary.json",
+      "bytes": 14192,
+      "sha256": "59e2de616b17e6aebd0339a0e608cdb26ecf6e53be3a81aea0134eee1b0aa62e"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/26-api-staff-pre-head-freeze.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-pre-head-freeze.json",
+      "bytes": 3338,
+      "sha256": "850d742f0015b6a4a741f9428f6ca9fbec91b5ce39e60ef109a97ff29c34d17f"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/27-category-agent-freeze.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-agent-freeze.json",
+      "bytes": 4481,
+      "sha256": "959139270f7f5cd7ab04652aa98e7299f4dca14b3d418d361fa85129fc1d8e1b"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/28-category-final-frontend-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-final-frontend-receipt.json",
+      "bytes": 106,
+      "sha256": "fbfc7a62090b264cc06580ad42fceefbe9f756f00e8f90a5672cf6c26f4a161a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/29-category-admin-typecheck-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-admin-typecheck-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/30-category-admin-build-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-admin-build-final.log",
+      "bytes": 23647,
+      "sha256": "350039540235c38372fc89aaa44ce1c1d6f0b96cca3b83f34e4d979c2e7fb21a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/31-category-browser-result.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-browser-result.json",
+      "bytes": 12237,
+      "sha256": "b90622f8bcd4c3f4fb94b043b285e9c622d3454a018ff605de261daa04eedbe3"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/32-category-playwright.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-playwright.log",
+      "bytes": 70,
+      "sha256": "0747989451e30e4bf79e35fa5e378c250a5d19607fa12ed8d0795826e22b2c26"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/33-category-native-final-claim-evidence.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-native-final-claim-evidence.log",
+      "bytes": 2853,
+      "sha256": "bdfff88e55cedec739787686c07a95410760829f6ac3042e1706020b131b3190"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/34-category-native-final-cleanup.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-native-final-cleanup.json",
+      "bytes": 153,
+      "sha256": "e160b6dea3c035a28a24342d350fb39032c70670c9d240533666701a5c245b6d"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/35-supplier-label-vue-types-recovery-final-v2.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-vue-types-recovery-final-v2.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/36-supplier-label-build-recovery-final-v2.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-build-recovery-final-v2.log",
+      "bytes": 4404,
+      "sha256": "f164d0fc52abe4381f82ce85b17d1f75d7ad06d332fea3e3ac13fd137947a6e1"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/37-supplier-label-browser-recovery-final-v4.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-recovery-final-v4.log",
+      "bytes": 1696,
+      "sha256": "58d6256d02f9be1fa9610cde12791e059bd2f4fc2697d94d72410708a521927a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/38-supplier-label-browser-verification-recovery-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-verification-recovery-final.json",
+      "bytes": 5988,
+      "sha256": "d414580841a7288ba31e825e4cfdd362bb0156251d7675cd29f47d8e7dbea6aa"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/39-division-staff-agent-final-freeze.json",
+      "original": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\.cache\\division-staff-agent-final-freeze.json",
+      "bytes": 3853,
+      "sha256": "cb8947a1ddb124a858c7bdb7ebb27c75f3422b3222dce15b4dbcbef25d86cd1d"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/40-division-staff-agent-final-validation.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-validation.json",
+      "bytes": 6921,
+      "sha256": "e00a35d94fd9be8410bee7dd3b45c3e56f31fc470e6b082c97c09f6a74caa5eb"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/41-division-staff-headfix-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-receipt.json",
+      "bytes": 2094,
+      "sha256": "b65990077bf53b6215429992e43eff3f887249106d39844511b358f290d97761"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/42-division-staff-headfix-tests.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-tests.json",
+      "bytes": 25081,
+      "sha256": "447e0460a65d29f09c37b92f79fe6aaf6e03992f9bac961d04114c885cddc2c5"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/43-division-staff-headfix-tests.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-tests.log",
+      "bytes": 1046,
+      "sha256": "989651747f989b52ed66d555dd152f3e4851dfc557019c0fb1b45882234c2f80"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/44-division-staff-agent-final-vue-tsc.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-vue-tsc.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/45-division-staff-agent-final-build-h5.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-build-h5.log",
+      "bytes": 395,
+      "sha256": "2a4ba1e23348ee5e17318fa6b48f5ebe29f950a00eeecd14010ada1a9aa7f0c2"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/46-division-staff-agent-final-build-mp.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-build-mp.log",
+      "bytes": 522,
+      "sha256": "5a34822a9163b0877b44743adb787177dddd1bcab08bb486b07f031eb3f21165"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/47-division-staff-agent-final-build-app.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-build-app.log",
+      "bytes": 299,
+      "sha256": "66a46e2d0cea4c081b5690aa622b1bc28c088ff320a0cf6b2fd111ad56af0233"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/48-division-staff-agent-final-native.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-native.log",
+      "bytes": 26048,
+      "sha256": "29a47cfa2d76a9d9957ff981fd94f68f7a991f45c287e3b4c4f25f34ab8d43b4"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/49-division-staff-agent-final-native-stopped.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-native-stopped.log",
+      "bytes": 27,
+      "sha256": "00e9e2231199060045479aeef60a466d575acde1f92e0f1567df14db2d3dc4b1"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/50-division-staff-agent-final-browser.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-browser.log",
+      "bytes": 1395,
+      "sha256": "168a4922e9b4ddaaaa74f94480aa9c6be71e71e4702ee1476a9dc7059a5d4e11"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/51-division-staff-browser-result.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-browser-result.json",
+      "bytes": 1489,
+      "sha256": "552f9c67072ddf45ce33ac7392176b8d7a5d811a6fac649a4e904c715668db3c"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/52-category-label-staff-diff-check-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-diff-check-final.log",
+      "bytes": 4470,
+      "sha256": "b5359d501036b1e525f2e079c44d2ff3f31147495b157a74236b40dc62be0c0a"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/53-category-label-staff-native-final-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-native-final-receipt.json",
+      "bytes": 129514,
+      "sha256": "6bb36db1f5da2a5996ad81ccf48598ec14661f65cfa9eb6a4bef20d718a87536"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/54-category-label-staff-native-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-native-final.log",
+      "bytes": 119742,
+      "sha256": "73870aa8d8d249c37c690d556a09a51201e52f0c6dcfd008df506722a34f2846"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/55-category-label-staff-owner-before.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-owner-before.json",
+      "bytes": 9213,
+      "sha256": "041ff79319dff8110720b7e7f670bbfe690c93ec1f2328feb7798783675f786b"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/56-category-label-staff-route-audit-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-route-audit-final.json",
+      "bytes": 1321676,
+      "sha256": "96786ce4f0dcbe038b750d8332e36dd13f907ab1a8738614e3638bfb4a2ff1e2"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/57-category-label-staff-source-final-before.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-source-final-before.json",
+      "bytes": 642445,
+      "sha256": "8782f10f32b54ee80fcb557c3bd2874fd6030cfe678069c88566cde6550f8408"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/58-category-label-staff-tests-final-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-tests-final-receipt.json",
+      "bytes": 9379,
+      "sha256": "1ced554cadc28260efd18e7df40ff1085f6f3f60293a1947dd1b598c7c0314f0"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/59-category-label-staff-tests-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-tests-final.json",
+      "bytes": 451727,
+      "sha256": "106a017e1ebcc3150245d0353babc0416c76feca5854ee1b190c622fa169e5c4"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/60-category-label-staff-tests-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-tests-final.log",
+      "bytes": 184,
+      "sha256": "980ac337c75897e875c900c76cf9e836b6035150cbffebbfa8e34c57c67cf8dd"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/61-category-label-staff-worker-runtime-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-worker-runtime-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/62-category-label-staff-worker-types-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-worker-types-final.json",
+      "bytes": 1128,
+      "sha256": "4a3564b9ed58c1a40eca3ea2570e9cc70be6eb12fb0f3518995fa0667650f90c"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/63-category-label-staff-worker-unit-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\category-label-staff-first-attempt\\category-label-staff-worker-unit-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "closureEvidence": {
+    "file": "audit/category-label-staff-20261013/closure-verification.json",
+    "bytes": 1296,
+    "sha256": "3ac511b1da749463469de73c92c73f47d94fef217cb6afc0cf3ddec8242ea429"
+  }
+}

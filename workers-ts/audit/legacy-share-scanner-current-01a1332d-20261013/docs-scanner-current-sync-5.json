@@ -1,0 +1,13 @@
+{
+  "completedAt": "2026-10-13T07:56:13.6421149Z",
+  "scope": "Owned doc heading blank-line formatting only",
+  "source": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\docs\\legacy-share-code-20261013.md",
+  "local": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/docs/legacy-share-code-20261013.md",
+  "beforeSha256": "0a7e3fa146bb41e398af8774cc75e22df6b6f8f6ffdd3621ae87f336b8fe1844",
+  "sourceAfterSha256": "e791d95f10f7f3c9aa2c921ee43224d649237b3d51ab617c0302e4007e2c0f95",
+  "localAfterSha256": "e791d95f10f7f3c9aa2c921ee43224d649237b3d51ab617c0302e4007e2c0f95",
+  "priorEvidenceReceipt": "docs-scanner-current-sync-4.json",
+  "sourceBusinessEdits": false,
+  "localCompileInputEdits": false,
+  "testsTypesBuildsExecuted": false
+}

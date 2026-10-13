@@ -39,6 +39,10 @@ import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOpe
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminLegacyRoleOperation from "@/controllers/api/v1/AdminLegacyRoleOperationController";
 import * as AdminLegacyAdmin from "@/controllers/api/v1/AdminLegacyAdminController";
+import * as AdminLegacySystemLog from "@/controllers/api/v1/AdminLegacySystemLogController";
+import * as AdminProductLabels from "@/controllers/api/v1/AdminProductLabelController";
+import * as AdminProductBrands from "@/controllers/api/v1/AdminProductBrandController";
+import * as AdminProductCategories from '@/controllers/api/v1/AdminProductCategoryController';
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
@@ -57,6 +61,8 @@ import * as AdminIntegralBatch from "@/controllers/api/v1/AdminIntegralBatchCont
 import * as AdminRechargeQuota from "@/controllers/api/v1/AdminRechargeQuotaController";
 import * as AdminSignDayConfig from "@/controllers/api/v1/AdminSignDayConfigController";
 import * as AdminPcBanner from "@/controllers/api/v1/AdminPcBannerController";
+import * as AdminOperationalGroup from '@/controllers/api/v1/AdminOperationalGroupDataController';
+import * as ErpController from '@/controllers/erp/ErpController';
 import * as AdminFabSettings from "@/controllers/api/v1/AdminFabSettingsController";
 import * as AdminThemeSettings from "@/controllers/api/v1/AdminThemeSettingsController";
 import * as AdminProductCategoryStyle from '@/controllers/api/v1/AdminProductCategoryStyleController';
@@ -126,6 +132,14 @@ export const adminapiRoutes = new Hono<{
   Variables: AppVariables;
 }>();
 const adminAuth = adminRuntimeAuthMiddleware();
+for (const path of ['/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',
+  '/setting/group_data', '/setting/group_data/*', '/setting/operational_group_data', '/setting/operational_group_data/*', '/erp/connections', '/erp/connections/*']) {
+  adminapiRoutes.use(path, async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    c.header('Pragma', 'no-cache');
+    await next();
+  });
+}
 // ─── 登录 (无 auth) ─────────────────────────────────────────
 adminapiRoutes.post("/login", AdminController.adminLogin);
 // 是否启用滑块验证码 (返回 false 则前端跳过滑块直接登录)
@@ -265,6 +279,38 @@ adminapiRoutes.post("/waybill/jobs/:id/close", adminAuth, WaybillJobController.a
 
 // ─── 商品管理 ───────────────────────────────────────────────
 adminapiRoutes.get("/product/list", adminAuth, AdminCrud.adminProductList);
+adminapiRoutes.get('/product/category', adminAuth, AdminProductCategories.list);
+adminapiRoutes.get('/product/category/tree/:type', adminAuth, AdminProductCategories.tree);
+adminapiRoutes.get('/product/category/cascader_list', adminAuth, AdminProductCategories.cascader);
+adminapiRoutes.get('/product/category/cascader_list/:type', adminAuth, AdminProductCategories.cascader);
+adminapiRoutes.get('/product/category/create', adminAuth, AdminProductCategories.createForm);
+adminapiRoutes.post('/product/category', adminAuth, AdminProductCategories.create);
+adminapiRoutes.put('/product/category/set_show/:id/:is_show', adminAuth, AdminProductCategories.setShow);
+adminapiRoutes.get('/product/category/:id', adminAuth, AdminProductCategories.editForm);
+adminapiRoutes.put('/product/category/:id', adminAuth, AdminProductCategories.update);
+adminapiRoutes.delete('/product/category/:id', adminAuth, AdminProductCategories.remove);
+adminapiRoutes.get("/product/label_cate", adminAuth, AdminProductLabels.categoryList);
+adminapiRoutes.get("/product/label_cate/create", adminAuth, AdminProductLabels.categoryCreateForm);
+adminapiRoutes.get("/product/label_cate/:id/edit", adminAuth, AdminProductLabels.categoryEditForm);
+adminapiRoutes.post("/product/label_cate", adminAuth, AdminProductLabels.categoryCreate);
+adminapiRoutes.put("/product/label_cate/:id", adminAuth, AdminProductLabels.categoryUpdate);
+adminapiRoutes.delete("/product/label_cate/:id", adminAuth, AdminProductLabels.categoryDelete);
+adminapiRoutes.get("/product/label", adminAuth, AdminProductLabels.list);
+adminapiRoutes.get("/product/product_label", adminAuth, AdminProductLabels.tree);
+adminapiRoutes.get('/product/brand', adminAuth, AdminProductBrands.list);
+adminapiRoutes.get('/product/brand/cascader_list', adminAuth, AdminProductBrands.cascader);
+adminapiRoutes.get('/product/brand/cascader_list/:type', adminAuth, AdminProductBrands.cascader);
+adminapiRoutes.post('/product/brand', adminAuth, AdminProductBrands.create);
+adminapiRoutes.put('/product/brand/set_show/:id/:is_show', adminAuth, AdminProductBrands.setShow);
+adminapiRoutes.put('/product/brand/:id', adminAuth, AdminProductBrands.update);
+adminapiRoutes.delete('/product/brand/:id', adminAuth, AdminProductBrands.remove);
+adminapiRoutes.get("/product/all_label", adminAuth, AdminProductLabels.all);
+adminapiRoutes.get("/product/label/form", adminAuth, AdminProductLabels.form);
+adminapiRoutes.post("/product/label/:id", adminAuth, AdminProductLabels.save);
+adminapiRoutes.put("/product/label/set_status/:id/:status", adminAuth, AdminProductLabels.setStatus);
+adminapiRoutes.put("/product/label/set_show/:id/:show", adminAuth, AdminProductLabels.setShow);
+adminapiRoutes.put("/product/label/dels", adminAuth, AdminProductLabels.batchDelete);
+adminapiRoutes.delete("/product/label/:id", adminAuth, AdminProductLabels.deleteLabel);
 adminapiRoutes.get("/product/editor/options", adminAuth, AdminCrud.adminProductEditorOptions);
 adminapiRoutes.get("/product/detail/:id", adminAuth, AdminCrud.adminProductDetail);
 adminapiRoutes.get("/product/virtual-alerts", adminAuth, VirtualProductInventory.adminAlerts);
@@ -668,6 +714,25 @@ adminapiRoutes.delete("/marketing/sign-day-config/:id", adminAuth, AdminSignDayC
 
 // Dedicated PC home group editor; generic setting grants cannot authorize it.
 adminapiRoutes.get("/setting/pc-banners", adminAuth, AdminPcBanner.list);
+adminapiRoutes.get('/setting/group_data/header', adminAuth, AdminOperationalGroup.header);
+adminapiRoutes.get('/setting/group_data/create', adminAuth, AdminOperationalGroup.createForm);
+adminapiRoutes.get('/setting/group_data', adminAuth, AdminOperationalGroup.list);
+adminapiRoutes.post('/setting/group_data', adminAuth, AdminOperationalGroup.create);
+adminapiRoutes.post('/setting/group_data/save_all', adminAuth, AdminOperationalGroup.saveAll);
+adminapiRoutes.get('/setting/group_data/:id/edit', adminAuth, AdminOperationalGroup.editForm);
+adminapiRoutes.put('/setting/group_data/set_status/:id/:status', adminAuth, AdminOperationalGroup.setStatus);
+adminapiRoutes.put('/setting/group_data/:id', adminAuth, AdminOperationalGroup.update);
+adminapiRoutes.delete('/setting/group_data/:id', adminAuth, AdminOperationalGroup.remove);
+adminapiRoutes.get('/setting/operational_group_data/options', adminAuth, AdminOperationalGroup.options);
+adminapiRoutes.get('/setting/operational_group_data/detail/:id', adminAuth, AdminOperationalGroup.detail);
+adminapiRoutes.get('/setting/operational_group_data/receipt/:configName/:requestId', adminAuth, AdminOperationalGroup.receipt);
+adminapiRoutes.get('/erp/connections', adminAuth, ErpController.erpConnections);
+adminapiRoutes.post('/erp/connections', adminAuth, ErpController.erpConnectionCreate);
+adminapiRoutes.put('/erp/connections/:id/bindings', adminAuth, ErpController.erpConnectionBind);
+adminapiRoutes.post('/erp/connections/:id/rotate', adminAuth, ErpController.erpConnectionRotate);
+adminapiRoutes.post('/erp/connections/:id/disable', adminAuth, ErpController.erpConnectionDisable);
+adminapiRoutes.post('/erp/connections/:id/revoke', adminAuth, ErpController.erpConnectionRevoke);
+adminapiRoutes.post('/erp/connections/:id/auth', adminAuth, ErpController.erpConnectionAuth);
 adminapiRoutes.get("/setting/pc-banners/request/:requestId", adminAuth, AdminPcBanner.receipt);
 adminapiRoutes.get("/setting/pc-banners/:id", adminAuth, AdminPcBanner.detail);
 adminapiRoutes.post("/setting/pc-banners", adminAuth, AdminPcBanner.create);
@@ -969,6 +1034,8 @@ adminapiRoutes.get("/article/attachment-options", adminAuth, AdminArticle.attach
 adminapiRoutes.get("/article/attachment-categories", adminAuth, AdminArticle.attachmentCategories);
 adminapiRoutes.get("/log/list", adminAuth, AdminCrud.adminLogList);
 adminapiRoutes.get("/log/admin-options", adminAuth, AdminCrud.adminLogOptions);
+adminapiRoutes.get("/system/log", adminAuth, AdminLegacySystemLog.list);
+adminapiRoutes.get("/system/log/search_admin", adminAuth, AdminLegacySystemLog.adminOptions);
 
 // ─── 分销管理 + 通知模板 + 短信配置 (M24) ─────────────────
 adminapiRoutes.get("/spread/list", adminAuth, AdminCrud.adminSpreadList);

@@ -149,6 +149,7 @@
         <!-- #ifdef H5 --><button v-if="ordinaryWechatBrowser()" :disabled="sharing" @tap="wechatShare">重新准备微信菜单分享</button><!-- #endif -->
         <view v-if="officialCodeLoading" role="status">正在生成微信商品码…</view><view v-if="officialCodeError" class="module-error" role="alert">{{officialCodeError}}<button v-if="authStore.isLoggedIn" size="mini" :disabled="officialCodeLoading" @tap="loadOfficialCode">重新生成微信商品码</button><button v-else size="mini" @tap="navigate('/pages/auth/login')">登录</button></view>
         <ProductSharePoster v-if="posterVisible && (!officialCodeKind() || officialCode) && (shareUrl || officialCode) && displayPrice" :url="shareUrl" :title="detail.store_name" :image="selectedSku?.image || detail.image" :price="displayPrice" :price-label="displayPriceLabel" :site-name="display.siteName" :tagline="display.posterTitle" :qr-image="officialCode"/>
+        <LegacyShareCode :type="0" :id="detail.id" title="生成可保存的商品二维码"/>
       </view></view>
 
       <!-- SKU 规格弹窗 -->
@@ -251,6 +252,7 @@
 import ThemePage from '@/components/ThemePage.vue';
 import ProductMedia from '@/components/productDetail/ProductMedia.vue';
 import ProductSharePoster from '@/components/productDetail/ProductSharePoster.vue';
+import LegacyShareCode from '@/components/LegacyShareCode.vue';
 import { ref, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsDetail } from "@/api/product";

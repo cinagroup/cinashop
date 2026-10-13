@@ -1,0 +1,37 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const cp = require('node:child_process');
+const root = path.join(__dirname,'cinashop-migration-20261013-HUPOBq');
+const worker = path.join(root,'workers-ts');
+const output = path.join(root,'validation-results');
+fs.mkdirSync(output,{recursive:true});
+const environment = {...process.env, TEMP:path.join(output,'temp'), TMP:path.join(output,'temp')};
+fs.mkdirSync(environment.TEMP,{recursive:true});
+delete environment.TEST_FINANCE_POSTGRES_URL;
+environment.WRANGLER_SEND_METRICS='false';
+const tag = process.argv[2];
+const kind = tag.replace(/-final(?:-retry\d*)?$/, '');
+const normal = ['node_modules/vitest/vitest.mjs','run','--config','vitest.config.ts'];
+let args, cwd=worker;
+switch(kind) {
+  case 'geo-unit': args=[...normal,'test/public-geocoding.test.ts','--maxWorkers=1']; break;
+  case 'admin-unit': args=[...normal,'test/admin-legacy-system-log.test.ts','test/admin-legacy-log-permission.test.ts','--maxWorkers=1']; break;
+  case 'runner-unit': args=[...normal,'test/local-finance-postgres-runner.test.ts','--maxWorkers=1']; break;
+  case 'shared-unit': args=[...normal,'test/admin-permission.test.ts','test/legacy-admin-permissions.test.ts','test/supplier-rbac-migration.test.ts','--maxWorkers=1']; break;
+  case 'type-unit': args=['--max-old-space-size=8192','node_modules/typescript/bin/tsc','--noEmit']; break;
+  case 'type-runtime': args=['--max-old-space-size=8192','node_modules/typescript/bin/tsc','-p','tsconfig.runtime-test.json','--noEmit']; break;
+  case 'type-uniapp': cwd=path.join(root,'view','uniapp-ts'); args=['node_modules/vue-tsc/bin/vue-tsc.js','--noEmit']; break;
+  case 'routes': environment.CINASHOP_PHP_ROOT=String.raw`\\tsclient\I\cinagroup\cinashop-php`; args=['node_modules/tsx/dist/cli.mjs','scripts/route-parity-audit.ts']; break;
+  case 'native': environment.TEST_FINANCE_LOCAL_CACHE_ROOT=path.join(root,'native-cache'); args=['scripts/run-local-finance-postgres.mjs','--schema-maintenance','--verbose-tests','C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin','test/admin-legacy-system-log.test.ts','test/admin-legacy-system-log-native.test.ts','test/supplier-product-catalog.test.ts']; break;
+  default: throw Error('Unknown exact validation tag');
+}
+const start = new Date().toISOString();
+const result=cp.spawnSync(process.execPath,args,{cwd,env:environment,encoding:'utf8',windowsHide:true,timeout:kind==='native'?650000:300000,maxBuffer:20*1024*1024});
+fs.writeFileSync(path.join(output,tag+'.stdout.log'),result.stdout??'');
+fs.writeFileSync(path.join(output,tag+'.stderr.log'),result.stderr??'');
+const record={tag,start,end:new Date().toISOString(),node:process.version,cwd,args,status:result.status,signal:result.signal,errorCode:result.error?.code??null,stdoutBytes:Buffer.byteLength(result.stdout??''),stderrBytes:Buffer.byteLength(result.stderr??'')};
+fs.writeFileSync(path.join(output,tag+'.result.json'),JSON.stringify(record,null,2));
+console.log(JSON.stringify(record));
+console.log((result.stdout??'').slice(-2500));
+console.error((result.stderr??'').slice(-2500));
+process.exitCode=result.status??1;

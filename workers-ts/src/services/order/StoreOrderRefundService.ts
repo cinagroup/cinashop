@@ -147,7 +147,7 @@ export interface ApplyOrderRefundInput {
   applyType: number;
   /** Server-only business policy. Authentication remains the caller's locked
    * authorizeApplication callback; a store manager is never a system_admin. */
-  privilegedActor?: "admin" | "store-manager" | "customer-work";
+  privilegedActor?: "admin" | "store-manager" | "customer-work" | "erp";
   /** Trusted customer policy, never forwarded from public HTTP payloads. */
   selectorNamespace?: 'row';
   cartIds?: number[];
@@ -825,12 +825,12 @@ async function createOrderRefundApplication(
   options: RefundApplicationOptions,
 ): Promise<{ refundId: number } | OrderRefundApplicationQuote> {
   const { uid, orderId } = params;
-  if ((params.privilegedActor === 'store-manager' || params.privilegedActor === 'customer-work') && !params.authorizeApplication) {
+  if ((params.privilegedActor === 'store-manager' || params.privilegedActor === 'customer-work' || params.privilegedActor === 'erp') && !params.authorizeApplication) {
     throw new ValidateException('门店主动退款必须提供真实锁内管理身份授权');
   }
   if (
     ![1, 2].includes(params.applyType) &&
-    !(params.applyType === 4 && (params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work"))
+    !(params.applyType === 4 && (params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work" || params.privilegedActor === "erp"))
   ) {
     throw new ValidateException("退款申请类型无效");
   }
@@ -973,8 +973,9 @@ async function createOrderRefundApplication(
     }
     const zeroCashierQuantityReturn=Boolean(options.cashierZeroRefund||params.manualRefundCapability)&&isManualRefundOrder(order)&&amountToCents(order.payPrice)===0;
     const customerRows=params.selectorNamespace==='row';
-    if(customerRows&&(params.privilegedActor!=='customer-work'||!params.authorizeApplication))throw new ValidateException('真实行退款选择策略缺少经营授权');
+    if(customerRows&&(!['customer-work','erp'].includes(params.privilegedActor??'')||!params.authorizeApplication))throw new ValidateException('真实行退款选择策略缺少经营授权');
     if(params.privilegedActor==='customer-work'&&!customerRows)throw new ValidateException('经营退款必须使用真实行标识');
+    if(params.privilegedActor==='erp'&&!customerRows)throw new ValidateException('ERP退款必须使用真实行标识');
     const canonicalCart=(cart:typeof cartInfos[number])=>customerRows?cart.id:Number(cart.cartId);
     const financialCartKey=(id:number)=>customerRows?cartInfos.find(x=>x.id===id)!.cartId:String(id);
     if (!cartInfos.length) throw new Error("订单缺少商品快照，不能安全申请退款");

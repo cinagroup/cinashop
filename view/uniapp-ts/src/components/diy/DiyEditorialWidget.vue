@@ -92,6 +92,8 @@
         <text class="follow-dialog-copy">活动福利，第一时间了解</text>
         <image class="follow-code" :src="followCode" mode="aspectFit" show-menu-by-longpress />
         <text class="follow-dialog-tip">长按二维码保存或识别</text>
+        <button size="mini" :loading="followPosterLoading" @tap="previewFollowPoster">生成并预览关注海报</button>
+        <text v-if="followPosterError" class="follow-dialog-tip" role="alert">{{followPosterError}}</text>
         <button class="follow-dialog-close" size="mini" @tap="followCodeOpen = false">关闭</button>
       </view>
     </view>
@@ -99,7 +101,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch, onUnmounted } from "vue";
+import { onHide, onShow } from '@dcloudio/uni-app';
+import { apiFollowPoster } from '@/api/legacyShare';
+import { readableShareImage } from '@/utils/shareImage';
 import type { DiyComponent } from "@/api/diy";
 import {
   asDiyRecord,
@@ -135,6 +140,16 @@ const props = defineProps<{ block: DiyComponent }>();
 const theme = useThemeStore();
 const followCodeOpen = ref(false);
 const followDismissed = ref(false);
+const followPosterLoading = ref(false), followPosterError = ref('');let followPosterEpoch=0,followDisposed=false,followActive=true;
+watch(followCodeOpen,open=>{if(!open){followPosterEpoch++;followPosterLoading.value=false;}},{flush:'sync'});onUnmounted(()=>{followDisposed=true;followPosterEpoch++;});onHide(()=>{followActive=false;followPosterEpoch++;followCodeOpen.value=false;followPosterLoading.value=false;});onShow(()=>{followActive=true;});
+async function previewFollowPoster() {
+  if (!followActive || followDisposed || !followCodeOpen.value || followPosterLoading.value) return;
+  const epoch=++followPosterEpoch;followPosterLoading.value = true; followPosterError.value = '';
+  try { const path = await apiFollowPoster(), file = await readableShareImage(path);
+    if (followActive&&!followDisposed&&epoch===followPosterEpoch&&followCodeOpen.value) {followCodeOpen.value=false;uni.previewImage({ urls: [file.path], current: file.path, complete: file.release });} else file.release();
+  } catch(e) { if (followActive&&!followDisposed&&epoch===followPosterEpoch&&followCodeOpen.value) followPosterError.value = e instanceof Error ? e.message : '关注海报生成失败，请重试'; }
+  finally { if(epoch===followPosterEpoch)followPosterLoading.value = false; }
+}
 
 function bounded(value: unknown, fallback: number, min: number, max: number): number {
   const parsed = Number(value);

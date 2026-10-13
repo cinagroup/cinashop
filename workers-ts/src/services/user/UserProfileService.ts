@@ -17,7 +17,7 @@ import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { userUnreadMessageCount } from "@/services/message/UserMessageVisibility";
-import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
+import { LegacyShareCodeService, type LegacyShareActor } from "@/services/other/LegacyShareCodeService";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { cacheGet, cacheSetIfAbsent, getRedis } from "@/utils/cache";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -381,9 +381,8 @@ export class UserProfileService {
     return `crmeb-fu致文本 Http:/ZБ${btoa(String(productId))}Б轉移至☞${siteName}☜【${rows[0].storeName}】`;
   }
 
-  async routineCode(uid: number): Promise<string> {
-    return await new WechatMiniProgramCodeService(this.container, this.env)
-      .createUserSpreadDataUrl(uid) ?? "";
+  async routineCode(actor: LegacyShareActor): Promise<string> {
+    return new LegacyShareCodeService(this.container, this.env).routineCode(actor);
   }
 
   async spreadInfo(uid: number): Promise<Record<string, unknown>> {

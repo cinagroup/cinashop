@@ -69,7 +69,8 @@ interface CartAddParams {
 
 /** Explicit scopes let migrated clients isolate checkout rows without changing
  * the unscoped legacy endpoint used by other clients during migration. */
-export type CartReadScope = { mode: "cart" } | { mode: "buy"; ids: number[] };
+export type CartReadScope = { mode: "cart" } | { mode: "buy"; ids: number[] }
+  | { mode: "compute"; ids: number[]; hypotheticalPaidMember?: boolean };
 
 async function lockCartUser(tx: DbClient, uid: number): Promise<void> {
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_ADVISORY_LOCK_NAMESPACE}, ${uid})`);
@@ -112,7 +113,7 @@ export class StoreCartService {
     private readonly env?: Env,
   ) {}
 
-  private async applyPromotions(uid: number, lines: OrderPromotionInputLine[], result: Record<string, unknown>[], legacy = false) {
+  private async applyPromotions(uid: number, lines: OrderPromotionInputLine[], result: Record<string, unknown>[], legacy = false, skipGifts = false) {
     if (!lines.length) return;
     // SQL remains the source when the cart service is used without Worker bindings.
     const configEnv = this.env ?? { CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } };
@@ -135,6 +136,7 @@ export class StoreCartService {
         item.vip_truePrice = line.membershipSavingsCents / line.quantity / 100;
       }
     }
+    if (skipGifts) return; // Computation prices gifts after its selected best coupon.
     // A cart has no chosen coupon or delivery method. Expose the currently
     // applicable benefit as a read-only preview; confirmation prices it again
     // with the selected coupon/shipping and binds the final quote token.
@@ -158,7 +160,7 @@ export class StoreCartService {
     }
   }
 
-  private async cartPricing(uid: number): Promise<{
+  private async cartPricing(uid: number, hypotheticalPaidMember = false): Promise<{
     levelDiscountPercent: number;
     levelName: string;
     paidMemberActive: boolean;
@@ -186,10 +188,10 @@ export class StoreCartService {
     return {
       levelDiscountPercent: discount,
       levelName: level && level.isShow === 1 && level.isDel === 0 ? level.name : '',
-      paidMemberActive: policy.paidMemberEnabled && isPaidMembershipActive(
+      paidMemberActive: policy.paidMemberEnabled && (hypotheticalPaidMember || isPaidMembershipActive(
         account,
         Math.floor(Date.now() / 1000),
-      ),
+      )),
       paidMemberPriceEnabled: policy.paidMemberPriceEnabled,
     };
   }
@@ -508,15 +510,15 @@ export class StoreCartService {
    * 关联商品 + SKU 信息, 计算小计
    */
   async list(uid: number, scope?: CartReadScope): Promise<unknown[]> {
-    if (scope?.mode === "buy" && (
+    if (scope && scope.mode !== "cart" && (
       !scope.ids.length || scope.ids.length > 100 ||
       new Set(scope.ids).size !== scope.ids.length ||
       scope.ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
     )) throw new ValidateException("请选择有效的立即购买商品");
     const carts = await this.container.storeCartDao.getUserCart(uid, scope
-      ? { isNew: scope.mode === "buy" ? 1 : 0, ids: scope.mode === "buy" ? scope.ids : undefined }
+      ? { isNew: scope.mode === "buy" ? 1 : 0, ids: scope.mode !== "cart" ? scope.ids : undefined }
       : undefined);
-    if (scope?.mode === "buy" && (
+    if (scope && scope.mode !== "cart" && (
       carts.length !== scope.ids.length || carts.some((cart) => cart.status !== 1 || cart.cartNum <= 0)
     )) throw new ValidateException("立即购买商品已失效或不属于当前用户");
     if (carts.length === 0) return [];
@@ -764,7 +766,7 @@ export class StoreCartService {
       // Full-payment presales share checkout's base-SKU membership pricing.
       // This remains a read-only goods subtotal, not a payable/reserved quote.
       if ((cart.type === 0 || cart.type === 6) && cart.activityId === 0) {
-        pricing ??= await this.cartPricing(uid);
+        pricing ??= await this.cartPricing(uid, scope?.mode === "compute" && scope.hypotheticalPaidMember === true);
         const quoted = calculateMemberUnitPriceCents({
           basePriceCents: rawCents, levelDiscountPercent: pricing.levelDiscountPercent,
           paidMemberPriceCents: decimalToCents(sku?.vipPrice ?? product.vipPrice),
@@ -775,6 +777,9 @@ export class StoreCartService {
         if (priceType === 'level') levelName = pricing.levelName;
       }
       const lineCents = unitCents * cart.cartNum;
+      if (!Number.isSafeInteger(rawCents * cart.cartNum)) {
+        throw new ValidateException('购物车金额超出安全范围');
+      }
       if (cart.type === 0 && cart.activityId === 0 && sku && cart.cartNum > 0) promotionLines.push({
         key: cart.id, productId: product.id, skuUnique: sku.unique, quantity: cart.cartNum,
         rawUnitPriceCents: rawCents, memberUnitPriceCents: unitCents,
@@ -806,15 +811,15 @@ export class StoreCartService {
           productType: product.productType,
         },
         // 小计 = 单价 * 数量
-        sumPrice: (price * cart.cartNum).toFixed(2),
+        sumPrice: centsToDecimal(rawCents * cart.cartNum),
       });
     }
-    if (scope?.mode === "buy") {
+    if (scope && scope.mode !== "cart") {
       if (result.some((item) => !item.isValid)) {
         throw new ValidateException("立即购买商品或规格已失效，请重新选择");
       }
       const byId = new Map(result.map((item) => [item.id, item]));
-      await this.applyPromotions(uid, promotionLines, result);
+      await this.applyPromotions(uid, promotionLines, result, false, scope.mode === "compute");
       return scope.ids.map((id) => byId.get(id)!);
     }
     await this.applyPromotions(uid, promotionLines, result);

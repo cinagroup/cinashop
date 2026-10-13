@@ -1,0 +1,14 @@
+{
+  "status": "resolved_in_local_candidate",
+  "verifiedAt": "2026-10-13T03:36:55.1321323Z",
+  "originalEvidence": "historical-timezone-gap.json",
+  "serviceSha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+  "ordinaryTestSha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+  "nativeTestSha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+  "ordinaryFilePassCount": 19,
+  "nativeThreeFilePassCount": 41,
+  "nativeIndependentOracle": "PostgreSQL AT TIME ZONE Asia/Shanghai",
+  "evidence": "validation-summary.json",
+  "remaining": "Worker Intl/runtime, production history and full frontend acceptance remain outside local proof",
+  "priorEvidencePreserved": true
+}

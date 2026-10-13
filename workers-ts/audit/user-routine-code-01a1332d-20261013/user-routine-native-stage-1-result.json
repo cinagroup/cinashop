@@ -1,0 +1,48 @@
+{
+  "finishedAt": "2026-10-13T08:37:26.642Z",
+  "exit": 0,
+  "signal": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-stage-1.log",
+  "commandFile": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-stage-1-command.json",
+  "roleIdentity": {
+    "data": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/user-routine-native-owned-20261013/finance-postgres-45dOyn/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 60390,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": false,
+    "createdb": true
+  },
+  "tests": "17 passed (17)",
+  "duration": "27.25s (transform 19.21s, setup 0ms, import 24.00s, tests 2.87s, environment 0ms)",
+  "inputCount": 3090,
+  "beforeDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "afterDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "localInputDrift": [],
+  "sourceBaselineDrift": [],
+  "stop": {
+    "executed": true,
+    "fixtureDatabaseAndRolesZero": true,
+    "stoppedMarker": true,
+    "checkedAt": "2026-10-13T08:37:26.641Z",
+    "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-owned-20261013\\finance-postgres-45dOyn",
+    "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+    "args": [
+      "status",
+      "-D",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-owned-20261013\\finance-postgres-45dOyn\\data"
+    ],
+    "exit": 3,
+    "signal": null,
+    "stdout": "pg_ctl: no server running\r\n",
+    "stderr": "",
+    "error": null
+  },
+  "limits": [
+    "Single immutable 17-case suite; no prior unrelated scope rerun",
+    "Ordinary non-super LOGIN owns fixture DB/tables; not SELECT-only or production minimum ACL",
+    "Controlled provider images; no live WeChat service acceptance",
+    "No source writes or helper/runner/test changes"
+  ]
+}

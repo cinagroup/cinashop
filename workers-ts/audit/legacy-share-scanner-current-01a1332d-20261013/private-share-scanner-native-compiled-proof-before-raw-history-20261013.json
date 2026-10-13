@@ -1,0 +1,306 @@
+{
+  "at": "2026-10-13T06:27:33.193Z",
+  "pass": true,
+  "runtime": "Actual compiled MP-WEIXIN helpers; global.URL and global.URLSearchParams undefined for all protocol checks. Real SFC lifecycle/API independently verified by 14 test cases. No physical camera/provider device test.",
+  "checks": [
+    {
+      "name": "actual compiled mini pure path scene decode",
+      "pass": true
+    },
+    {
+      "name": "actual compiled H5 shape uses server origin in native without Web globals",
+      "pass": true
+    },
+    {
+      "name": "two matching tokens accepted",
+      "pass": true
+    },
+    {
+      "name": "two conflicting tokens rejected",
+      "pass": true
+    },
+    {
+      "name": "old raw code conflicts with new registered path",
+      "pass": true
+    },
+    {
+      "name": "limited official WX wrapper accepted",
+      "pass": true
+    },
+    {
+      "name": "wrong wrapper domain and parameters denied",
+      "pass": true
+    },
+    {
+      "name": "server origin mismatch cannot yield code",
+      "pass": true
+    },
+    {
+      "name": "wrong returned realm cannot yield code",
+      "pass": true
+    },
+    {
+      "name": "public type cannot yield private code",
+      "pass": true
+    },
+    {
+      "name": "decoder noauth failure cannot yield code",
+      "pass": true
+    },
+    {
+      "name": "late page or session yields null after decoder",
+      "pass": true
+    },
+    {
+      "name": "owner order accepted only through mature target read preserving zeros",
+      "pass": true
+    },
+    {
+      "name": "mature persisted member characters pass only JSON plus session-bound in-memory handoff",
+      "pass": true
+    },
+    {
+      "name": "member outer trim control undefined and twelve digit collision cannot produce a handoff",
+      "pass": true
+    },
+    {
+      "name": "old mini encoded member scene remains portable",
+      "pass": true
+    },
+    {
+      "name": "old registered relative operator path remains portable",
+      "pass": true
+    },
+    {
+      "name": "old foreign domain remains rejected",
+      "pass": true
+    }
+  ],
+  "graph": {
+    "entries": [
+      "pages/user/spread.js",
+      "components/SpreadPoster.js",
+      "components/LegacyShareCode.js",
+      "components/diy/DiyEditorialWidget.js",
+      "pages/share/landing.js",
+      "pages/operator/writeoff.js",
+      "pages/customer-work/scanning.js",
+      "pages/delivery/scanning.js"
+    ],
+    "vendorExcluded": "common/vendor.js is Uni platform runtime; application import graph scanned independently",
+    "files": [
+      {
+        "path": "api/customerWork.js",
+        "sha256": "2bb8f99528d907e5948343b4ce81813d6199a5d7909ba2d11550661ed7aa81d1",
+        "webGlobals": false
+      },
+      {
+        "path": "api/customerWorkWriteoff.js",
+        "sha256": "35f6ef516f8a81b917c85046499410dd506dd1944ec37e131719054b2950103e",
+        "webGlobals": false
+      },
+      {
+        "path": "api/deliveryWorkbench.js",
+        "sha256": "a64d495648ffc9203a1a114bf064cf67d419ee24c64895e1a59d66c9aae609be",
+        "webGlobals": false
+      },
+      {
+        "path": "api/diy.js",
+        "sha256": "059bfbffa31ec26c614a027c6252b3950ac9c447d1bf0f6403e0d1c8b72a4ef3",
+        "webGlobals": false
+      },
+      {
+        "path": "api/finance.js",
+        "sha256": "486e3c4e9216bdbe2a8b073ee80c712ba5aaef17d66faabf6e35f90b42666168",
+        "webGlobals": false
+      },
+      {
+        "path": "api/legacyShare.js",
+        "sha256": "77c53632e7682a45a94c8c07f4425ae426ad932a10276281892a8e9dabfe325f",
+        "webGlobals": false
+      },
+      {
+        "path": "api/order.js",
+        "sha256": "fdbcbda9950319cc921611d1aaefc14256932370f757f4f5aab73a49496215a1",
+        "webGlobals": false
+      },
+      {
+        "path": "api/theme.js",
+        "sha256": "b70868f37ee36b96bf4adb273ce3d3660df8221dc775b428c5067e2adb19f2cd",
+        "webGlobals": false
+      },
+      {
+        "path": "api/userCenter.js",
+        "sha256": "5e530ca36e25b52bf6df71af6439acd9c71953d8426487e03d328b8c37d70ad0",
+        "webGlobals": false
+      },
+      {
+        "path": "components/LegacyShareCode.js",
+        "sha256": "f242c0186f49376e6dab1caca8f1122b9ec22c87dd23bfbf28e56142c652f47d",
+        "webGlobals": false
+      },
+      {
+        "path": "components/SpreadPoster.js",
+        "sha256": "61e37f6c361ae91c45c7447cbe8df30ecefd74d626b56e4bae48767b1477c823",
+        "webGlobals": false
+      },
+      {
+        "path": "components/diy/DiyEditorialWidget.js",
+        "sha256": "67c3f7e01afbd1e65e4a274971299198117d2fbeb0821721762b43b22e7fd03f",
+        "webGlobals": false
+      },
+      {
+        "path": "composables/useCustomerWork.js",
+        "sha256": "c711952e0c04afa817acea3d7689a5e0d1ec0d144fc42361663c82058ff7ec0d",
+        "webGlobals": false
+      },
+      {
+        "path": "composables/useCustomerWorkWriteoffOperations.js",
+        "sha256": "cf57c3d70d0ed4242988f3ca668d0b1a67d585e437d5e52335d2d1693b141612",
+        "webGlobals": false
+      },
+      {
+        "path": "composables/useDeliveryWorkbench.js",
+        "sha256": "7b8bcd5ec47c48a394ff8ca7a5f802498f721fadaf1557fe7f53d9767b01840e",
+        "webGlobals": false
+      },
+      {
+        "path": "composables/useShareReferral.js",
+        "sha256": "f3f6fec3559ee610bbb4d47baefbffd8c41f727b24e2daf13383618ff37775c6",
+        "webGlobals": false
+      },
+      {
+        "path": "composables/useSpreadPoster.js",
+        "sha256": "f540428eeaee21724b21d878e99a61074d69ec888a677eac3b7a5029262960eb",
+        "webGlobals": false
+      },
+      {
+        "path": "config/navigation.js",
+        "sha256": "d2b1cd51e9c4aabd72d6ab5466681c36c94f6d9421ea72a64393b18104d7a6a2",
+        "webGlobals": false
+      },
+      {
+        "path": "pages/customer-work/scanning.js",
+        "sha256": "2ebb292274e2b69bc8bddfeb75519105ceb6c721ca14b9251d59097ace7bcb60",
+        "webGlobals": false
+      },
+      {
+        "path": "pages/delivery/scanning.js",
+        "sha256": "d633d49dbffbef95196a2d204134813466d0f01dc6143bd1e8cf087e0ee0566e",
+        "webGlobals": false
+      },
+      {
+        "path": "pages/operator/writeoff.js",
+        "sha256": "c08c57996a12f937ee7454023416dda9269125d4d6aa51e1afb295fef4fb47bb",
+        "webGlobals": false
+      },
+      {
+        "path": "pages/share/landing.js",
+        "sha256": "4382606fd3ed88f49ec612abbdb693dc4ca0ce3f17e55d45b8da3398ab806ed5",
+        "webGlobals": false
+      },
+      {
+        "path": "pages/user/spread.js",
+        "sha256": "19e4f89c5b0e6e3c8ba8bfff4aed955a7edd698e707ec70b930d9b275b430682",
+        "webGlobals": false
+      },
+      {
+        "path": "stores/auth.js",
+        "sha256": "554b3a6780b9c34e017599bcc254d96b7130e2589fe3965a35e3c610195f7b2b",
+        "webGlobals": false
+      },
+      {
+        "path": "stores/theme.js",
+        "sha256": "192c94dcecf29d969328d19cc8c158ec56ba5c9368ca2ae789f7c44a5e83da6e",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/customerWork.js",
+        "sha256": "a15bfc8a33694db251ad747d7e480ad142d2613d0e8ae39175dbfb8e513f546b",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/customerWorkFulfillment.js",
+        "sha256": "0dbd43acc0512f1e9e1789220d2bea6d29e62b5ddf07d0ce4d11eab7ccc0991c",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/customerWorkFulfillmentContract.js",
+        "sha256": "d88a8819db7bea161628906ba6979ff0d5cdebd35cd163f0d575436060f5c6d9",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/customerWorkWriteoff.js",
+        "sha256": "dba90a176301ada028d4a799db6d175c9db9b093ed3a1509bb9b6a629bb20c6b",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/deliveryWorkbench.js",
+        "sha256": "8362cbf82090735d3e3bf421e8983fb5718780c447a5199a94134f1fa0f71e32",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/diy.js",
+        "sha256": "543f47e28f22a2d8614928948035f3168c2ea2062c8d12f2f22b3f105e275d88",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/diyTheme.js",
+        "sha256": "edc5aea2d407887236bdd893cb26c6b2c72ca5ab8f184062b24195973ecbb6c8",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/legacyShare.js",
+        "sha256": "d14bd18b0815145a41ace9d7163ed9129268312d3aad7d582cc805670b4c3c6b",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/merchantIntentHash.js",
+        "sha256": "9f1ec3380c1bd17d3453da74026b2343964d58444d65e23a648042beb070650f",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/merchantOrders.js",
+        "sha256": "09629a814751691e3059ccfaa4a9f43f945179f1cb2dd8be1ee47660413fefce",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/operatorScanCode.js",
+        "sha256": "92973182cbe8dbe6e87c139e49dfcfd05d2d55770b110d2e4726b5e079bea99c",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/privateShareScan.js",
+        "sha256": "6a101af7c5bf1388e7fdcfc0e83115383b647ad45d0ec564cd1ce42364a20d69",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/request.js",
+        "sha256": "4fc682956a528bdb869137f7070d3c4c8f20e20c2f786262a4310223fa0acd81",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/shareImage.js",
+        "sha256": "f15c74ae968dfca820e9f3746e6ef3dc14d995ea9d4120579d4a258de51e0062",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/shareReferral.js",
+        "sha256": "f6428a5472ff20d72d82f5eba880be41bbdb334a5b3e4998d1b30f320e1f8b1c",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/shareScanTransfer.js",
+        "sha256": "963fe6eb3ad48329a1e4a6ae33c011b1a2f155f1915a4aabd63f0e24d2df082b",
+        "webGlobals": false
+      },
+      {
+        "path": "utils/userCenter.js",
+        "sha256": "c936215b1329a829f317d4dc3ec94e47c5067cca64f32c320b1b262aad6bd688",
+        "webGlobals": false
+      }
+    ],
+    "webGlobalFiles": []
+  },
+  "directGraphWithoutWebGlobals": true
+}

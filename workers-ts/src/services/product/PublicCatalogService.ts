@@ -41,6 +41,8 @@ import { UserCenterPublicReadService } from '@/services/content/UserCenterPublic
 import { publicOrdinaryProductIdentitySql } from './OrdinaryProductReadData';
 import { readDetailDescription,renderDetailDescription,readDetailPackages } from './ProductDetailDesignData';
 import { publicProductPictures,renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { resolveProductLabelIcons } from './ProductLabelAssetPolicy';
+import { isOperationalGroupName, operationalGroupPublicPictures, renderOperationalGroupPictures } from '@/services/content/OperationalGroupDataAssetPolicy';
 import { presaleProductVisibility, readPresaleCatalogAccount, validatePresaleCatalogUid, withPresaleCatalogSnapshot } from '@/services/activity/PresaleCatalogSnapshot';
 
 const MAX_LIMIT = 100;
@@ -194,7 +196,9 @@ export class PublicCatalogService {
     const unique = [...new Set(names)].filter(Boolean).slice(0, 100);
     const result = Object.fromEntries(unique.map((name) => [name, []])) as Record<string, Record<string, unknown>[]>;
     if (!unique.length) return result;
-    const rows = await this.container.db
+    const snapshot = await withTx(this.container, async (tx) => {
+    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+    const rows = await tx
       .select({
         configName: systemGroup.configName,
         id: systemGroupData.id,
@@ -208,17 +212,29 @@ export class PublicCatalogService {
       .innerJoin(systemGroup, eq(systemGroupData.gid, systemGroup.id))
       .where(and(inArray(systemGroup.configName, unique), eq(systemGroupData.status, 1)))
       .orderBy(desc(systemGroupData.sort), asc(systemGroupData.id));
-    for (const row of rows) {
+    const parsedRows = rows.flatMap(row => {
       const parsed = parseLegacyGroupValue(row.value);
-      if (!parsed) continue;
+      return parsed ? [{ ...row, parsed }] : [];
+    });
+    const operational = parsedRows.filter(row => isOperationalGroupName(row.configName));
+    const references = await operationalGroupPublicPictures(tx, operational.map(row => ({ config_name: row.configName, img: row.parsed.img })));
+    return { rows: parsedRows, operationalIds: operational.map(row => row.id), references };
+    });
+    const rendered = await renderOperationalGroupPictures(this.env.APP_KEY, snapshot.references);
+    const images = new Map(snapshot.operationalIds.map((id, index) => [id, rendered[index]]));
+    for (const row of snapshot.rows) {
       result[row.configName]?.push({
-        ...parsed,
+        ...row.parsed,
+        ...(isOperationalGroupName(row.configName) ? { img: images.get(row.id) ?? '' } : {}),
         id: row.id,
         gid: row.gid,
         sort: row.sort,
         status: row.status,
         add_time: row.addTime,
       });
+    }
+    for (const name of unique.filter(isOperationalGroupName)) {
+      result[name]?.sort((left, right) => Number(right.sort) - Number(left.sort) || Number(right.id) - Number(left.id));
     }
     return result;
   }
@@ -438,6 +454,7 @@ export class PublicCatalogService {
         style_type: storeProductLabel.styleType, color: storeProductLabel.color,
         bg_color: storeProductLabel.bgColor, border_color: storeProductLabel.borderColor,
         icon: storeProductLabel.icon,
+        type: storeProductLabel.type, relationId: storeProductLabel.relationId,
       }).from(storeProductLabel).where(and(inArray(storeProductLabel.id, labelIds), eq(storeProductLabel.status, 1), eq(storeProductLabel.isShow, 1))) : [],
       this.container.db.selectDistinct({
         id: storePromotions.id, promotions_type: storePromotions.promotionsType,
@@ -451,7 +468,9 @@ export class PublicCatalogService {
         eq(storePromotions.isDel, 0), lte(storePromotions.startTime, now), gte(storePromotions.stopTime, now),
       )),
     ]);
-    return { promotions, brand: brands, store_label: labels };
+    const icons = await resolveProductLabelIcons(this.container.db, this.env.APP_KEY, labels);
+    const publicLabels = labels.map(({ type: _type, relationId: _owner, ...label }, index) => ({ ...label, icon: icons[index] }));
+    return { promotions, brand: brands, store_label: publicLabels };
   }
 
   async rankCategory() {
@@ -638,12 +657,14 @@ export class PublicCatalogService {
         style_type: storeProductLabel.styleType, color: storeProductLabel.color,
         bg_color: storeProductLabel.bgColor, border_color: storeProductLabel.borderColor,
         icon: storeProductLabel.icon,
+        type: storeProductLabel.type, relationId: storeProductLabel.relationId,
       }).from(storeProductLabel).where(and(
         inArray(storeProductLabel.id, labelIds), eq(storeProductLabel.status, 1), eq(storeProductLabel.isShow, 1),
       )) : [],
     ]);
     const brandMap = new Map(brands.map((item) => [item.id, item.name]));
-    const labelMap = new Map(labels.map((item) => [item.id, item]));
+    const icons = await resolveProductLabelIcons(this.container.db, this.env.APP_KEY, labels);
+    const labelMap = new Map(labels.map(({ type: _type, relationId: _owner, ...label }, index) => [label.id, { ...label, icon: icons[index] }]));
     return list.map((item) => ({
       ...item,
       brand_name: brandMap.get(int(item.brand_id)) ?? "",

@@ -152,6 +152,9 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
     matches: ["city_delivery/records", "city_delivery/stores"], manage: false },
   { key: "pc_home_banner", label: "PC首页轮播", path: "/setting/pc-banner",
     matches: ["setting/pc-banners"], manage: true },
+  { key: 'operational_group', label: '运营图片配置', path: '/setting/operational-groups',
+    matches: ['setting/group_data', 'setting/operational_group_data'], manage: true },
+  { key: 'erp.connection', label: 'ERP连接', path: '/operations/erp', matches: ['erp/connections'], manage: true },
   { key: "fab_settings", label: "悬浮按钮", path: "/setting/fab",
     matches: ["setting/fab"], manage: true },
   { key: "theme_settings", label: "主题风格", path: "/setting/theme-style",
@@ -276,6 +279,7 @@ permissionKeys.add("order.assisted");
 permissionKeys.add("integral_log.export");
 permissionKeys.add("bill.export");
 permissionKeys.add("system.legacy_admin_view");
+permissionKeys.add('erp.connection.secret.read');
 permissionKeys.add("system.legacy_admin_form_view");
 permissionKeys.add("system.legacy_admin_manage");
 permissionKeys.add("system.legacy_role_view");
@@ -288,8 +292,22 @@ permissionKeys.add("system.legacy_role_delete");
 // delegated. Preview parses the requested action and checks its exact grant.
 const legacyRolePreviewPermission = "system.legacy_role_operation_preview";
 
+// Read admission for product editors. This is not a selectable role rule: a
+// product reader or label reader may fetch options, but cannot manage labels.
+export const PRODUCT_LABEL_SELECTION_PERMISSION = "label.product_selection_view";
+export const PRODUCT_BRAND_SELECTION_PERMISSION = "brand.product_selection_view";
+export const PRODUCT_CATEGORY_SELECTION_PERMISSION = 'category.product_selection_view';
+
 /** Canonical grants cover narrower legacy contracts; legacy grants stay within their own workflow. */
 export function hasAdminPermission(granted: ReadonlySet<string>, required: string): boolean {
+  if (required === PRODUCT_CATEGORY_SELECTION_PERMISSION) return granted.has(required)
+    || granted.has('product.view') || granted.has('product.manage') || granted.has('category.view') || granted.has('category.manage');
+  if (required === PRODUCT_BRAND_SELECTION_PERMISSION) return granted.has(required)
+    || granted.has("product.view") || granted.has("product.manage")
+    || granted.has("brand.view") || granted.has("brand.manage");
+  if (required === PRODUCT_LABEL_SELECTION_PERMISSION) return granted.has(required)
+    || granted.has("product.view") || granted.has("product.manage")
+    || granted.has("label.view") || granted.has("label.manage");
   if (required === legacyRolePreviewPermission) return granted.has("system.manage")
     || granted.has("system.legacy_role_status") || granted.has("system.legacy_role_delete");
   if (granted.has(required)) return true;
@@ -381,8 +399,99 @@ function legacyRolePermission(method: string, route: string): string | null {
   return null;
 }
 
+function isProductLabelRoute(route: string): boolean {
+  return /^(?:product\/(?:label|label_cate|product_label|all_label)|product_label)(?:\/|$)/.test(route);
+}
+
+function isProductBrandRoute(route: string): boolean {
+  return /^(?:product\/brand|brand)(?:\/|$)/.test(route);
+}
+
+function isProductCategoryRoute(route: string): boolean { return /^(?:product\/category|category)(?:\/|$)/.test(route); }
+function productCategoryPermission(method: string, route: string): string | null {
+  const read = method === 'GET' || method === 'HEAD';
+  if (read && ['product/category', 'category/list', 'product/category/create'].includes(route)) return 'category.view';
+  if (read && (/^product\/category\/tree\/(?:\d{1,10}|:type|<type>)$/.test(route)
+    || /^product\/category\/cascader_list(?:\/(?:\d{1,10}|:type|<type>|<type\?>))?$/.test(route))) return PRODUCT_CATEGORY_SELECTION_PERMISSION;
+  if (method === 'POST' && ['product/category', 'category/save'].includes(route)) return 'category.manage';
+  const parts = route.split('/');
+  if (parts.length === 3 && parts[0] === 'product' && parts[1] === 'category' && legacyAdminId(parts[2])) {
+    if (read) return 'category.view';
+    if (['PUT', 'DELETE'].includes(method)) return 'category.manage';
+  }
+  if (method === 'DELETE' && parts.length === 3 && parts[0] === 'category' && parts[1] === 'del' && legacyAdminId(parts[2])) return 'category.manage';
+  if (method === 'PUT' && parts.length === 5 && parts[0] === 'product' && parts[1] === 'category' && parts[2] === 'set_show'
+    && legacyAdminId(parts[3]) && ['0', '1', ':is_show', '<is_show>'].includes(parts[4])) return 'category.manage';
+  return null;
+}
+
+function productBrandPermission(method: string, route: string): string | null {
+  const read = method === "GET" || method === "HEAD";
+  if (read && ["product/brand", "brand/list"].includes(route)) return "brand.view";
+  if (read && (route === "product/brand/cascader_list"
+    || /^product\/brand\/cascader_list\/(?:[12]|:type|<type>|<type\?>)$/.test(route))) return PRODUCT_BRAND_SELECTION_PERMISSION;
+  if (method === "POST" && ["product/brand", "brand/save"].includes(route)) return "brand.manage";
+  const parts = route.split("/");
+  if (parts.length === 3 && parts[0] === "product" && parts[1] === "brand"
+    && legacyAdminId(parts[2]) && ["PUT", "DELETE"].includes(method)) return "brand.manage";
+  if (method === "PUT" && parts.length === 5 && parts[0] === "product" && parts[1] === "brand"
+    && parts[2] === "set_show" && legacyAdminId(parts[3])
+    && ["0", "1", ":is_show", "<is_show>"].includes(parts[4])) return "brand.manage";
+  if (method === "DELETE" && parts.length === 3 && parts[0] === "brand" && parts[1] === "del"
+    && legacyAdminId(parts[2])) return "brand.manage";
+  return null;
+}
+
+function productLabelPermission(method: string, route: string): string | null {
+  const read = method === "GET" || method === "HEAD";
+  if (read && ["product/product_label", "product/all_label"].includes(route)) return PRODUCT_LABEL_SELECTION_PERMISSION;
+  if (read && ["product/label", "product/label/form", "product/label_cate", "product/label_cate/create", "product_label/list"].includes(route)) return "label.view";
+  const parts = route.split("/");
+  if (parts[0] === "product" && parts[1] === "label_cate") {
+    if (read && parts.length === 4 && legacyAdminId(parts[2]) && parts[3] === "edit") return "label.view";
+    if (method === "POST" && parts.length === 2) return "label.manage";
+    if (["PUT", "DELETE"].includes(method) && parts.length === 3 && legacyAdminId(parts[2])) return "label.manage";
+  }
+  if (parts[0] === "product" && parts[1] === "label") {
+    if (method === "PUT" && route === "product/label/dels") return "label.manage";
+    if (parts.length === 3 && ((method === "POST" && parts[2] === "0") || ["POST", "DELETE"].includes(method) && legacyAdminId(parts[2]))) return "label.manage";
+    if (method === "PUT" && parts.length === 5 && ["set_status", "set_show"].includes(parts[2]) && legacyAdminId(parts[3])
+      && ["0", "1", parts[2] === "set_status" ? ":status" : ":show", parts[2] === "set_status" ? "<status>" : "<show>"].includes(parts[4])) return "label.manage";
+  }
+  if (method === "POST" && route === "product_label/save") return "label.manage";
+  if (method === "DELETE" && parts.length === 3 && parts[0] === "product_label" && parts[1] === "del" && legacyAdminId(parts[2])) return "label.manage";
+  return null;
+}
+
 export function requiredAdminPermission(method: string, routePath: string): string | null {
+  if (routePath.startsWith('/erpapi/')) {
+    if (!['GET', 'HEAD'].includes(method.toUpperCase())) return null;
+    if (routePath === '/erpapi/auth/access_token') return 'erp.connection.secret.read';
+    return ['/erpapi/auth', '/erpapi/product/syncProduct'].includes(routePath) ? 'erp.connection.manage' : null;
+  }
+  // The earlier mobile editor has a distinct /api/admin selection contract.
+  if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;
   const route = normalizeAdminRoute(routePath);
+  if (route === 'erp/connections' || route.startsWith('erp/connections/')) {
+    if (['GET', 'HEAD'].includes(method.toUpperCase()) && route === 'erp/connections') return 'erp.connection.view';
+    if (method.toUpperCase() === 'POST' && route === 'erp/connections') return 'erp.connection.manage';
+    const id = '(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:id|<id>)';
+    if (method.toUpperCase() === 'PUT' && new RegExp(`^erp/connections/${id}/bindings$`).test(route)) return 'erp.connection.manage';
+    if (method.toUpperCase() === 'POST' && new RegExp(`^erp/connections/${id}/(?:auth|rotate|disable|revoke)$`).test(route)) return 'erp.connection.manage';
+    return null;
+  }
+  if (isOperationalGroupRoute(route)) return operationalGroupPermission(method.toUpperCase(), route);
+  if (isProductCategoryRoute(route)) return productCategoryPermission(method.toUpperCase(), route);
+  if (isProductBrandRoute(route)) return productBrandPermission(method.toUpperCase(), route);
+  // These legacy product URLs belong to the independent label workflow.
+  // Resource read/:id remains unproved; unknown verbs and children fail closed.
+  if (isProductLabelRoute(route)) return productLabelPermission(method.toUpperCase(), route);
+  // Legacy log queries share the existing read grant. No legacy log writer
+  // or constructor-triggered cleanup is exposed by these compatibility URLs.
+  if (route === "system/log" || route.startsWith("system/log/")) {
+    return ["GET", "HEAD"].includes(method.toUpperCase())
+      && ["system/log", "system/log/search_admin"].includes(route) ? "log.view" : null;
+  }
   // Only authenticated owners may recover their own immutable operation key.
   // Recovery service admits live identity independently of current role grants.
   if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
@@ -549,8 +658,11 @@ export function assertDelegablePermissions(
 
 function menuPathPermission(menuPath: string): string | null {
   const route = menuPath.trim().toLowerCase();
+  if (route === "/admin/product/product_brand") return "brand.view";
+  if (["/label/products", "/admin/product/label"].includes(route)) return "label.view";
   if (route === "/system/legacy-staff") return "system.legacy_admin_view";
   if (route === "/system/legacy-roles") return "system.legacy_role_view";
+  if (route === '/admin/product/product_classify') return 'category.view';
   if (route === "/admin/setting/system_admin/index") return "system.legacy_admin_view";
   if (route === "/admin/setting/system_role/index") return "system.legacy_role_view";
   if(route==='/admin/setting/membership_level/index')return 'agent_level.view';
@@ -588,6 +700,7 @@ function menuPathPermission(menuPath: string): string | null {
   if (/^\/admin\/marketing\/activity_background\/create(?:\/[^/]+)?$/.test(route)) return "activity_background.manage";
   if (route === "/admin/setting/store_service/feedback") return "feedback.view";
   if (route === "/admin/setting/store_service/speechcraft") return "speechcraft.view";
+  if (route === "/admin/system/maintain/system_log/index") return "log.view";
   if (route === "/admin/finance/finance/bill") return "bill.view";
   if (/^\/admin\/supplier\/bill\/index(?:\/[^/]+)?$/.test(route)) return "supplier_bill.view";
   if (["/marketing/coupon-templates", "/admin/marketing/store_coupon/index"].includes(route)) return "coupon_template.view";
@@ -602,7 +715,7 @@ function menuPathPermission(menuPath: string): string | null {
 
 /** These identities have an audited binding. A rejected binding cannot become
  * an opaque grant merely because it resolves to no current permission keys. */
-const auditedLegacyMenuIds = new Set([1035, 1075, 1490, 1592, 1593, 1594]);
+const auditedLegacyMenuIds = new Set([1035, 1075, 1338, 1380, 1490, 1592, 1593, 1594]);
 const auditedLegacyPageAuth = new Set([
   'setting-system-list', 'setting-system-role', 'admin-statistic-capital',
   'agent-division-statistics', 'admin-supplier-supplier_list', 'admin-supplier-capital-index',
@@ -619,10 +732,110 @@ const auditedLegacyPageAuth = new Set([
   'marketing-discount-add_pieces', 'marketing-discount-give', 'marketing-discount-add_give',
   'marketing-store_integral-create', 'admin-setting-store_service-feedback',
   'admin-setting-store_service-speechcraft', 'finance-finance-bill',
+  'system-maintain-system-log',
+  'admin-storeProduct-label',
+  'admin-store-storeBrand-index',
 ]);
 
 type LegacyAdminMenuMetadata = Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>;
+function isOperationalGroupRoute(route: string) {
+  return /^(?:setting\/group_data|setting\/operational_group_data)(?:\/|$)/.test(route);
+}
+function operationalGroupPermission(method: string, route: string): string | null {
+  const id = '(?:[1-9][0-9]{0,9}|:id|<id>)';
+  if (['GET', 'HEAD'].includes(method) && (['setting/group_data', 'setting/group_data/header', 'setting/group_data/create', 'setting/operational_group_data/options'].includes(route)
+    || new RegExp(`^setting/group_data/${id}/edit$`).test(route)
+    || new RegExp(`^setting/operational_group_data/detail/${id}$`).test(route)
+    || /^setting\/operational_group_data\/receipt\/[^/]+\/[^/]+$/.test(route))) return 'operational_group.view';
+  if (method === 'POST' && ['setting/group_data', 'setting/group_data/save_all'].includes(route)) return 'operational_group.manage';
+  if (['PUT', 'DELETE'].includes(method) && new RegExp(`^setting/group_data/${id}$`).test(route)) return 'operational_group.manage';
+  if (method === 'PUT' && new RegExp(`^setting/group_data/set_status/${id}/(?:[01]|:status|<status>)$`).test(route)) return 'operational_group.manage';
+  return null;
+}
+const operationalGroupMenuTuples: Record<number, readonly [string, string]> = {
+  481: ['GET', 'setting/group_data/header'], 482: ['GET', 'setting/group_data'],
+  484: ['GET', 'setting/group_data/create'], 485: ['POST', 'setting/group_data'],
+  486: ['GET', 'setting/group_data/<id>/edit'], 487: ['PUT', 'setting/group_data/<id>'],
+  488: ['DELETE', 'setting/group_data/<id>'], 489: ['PUT', 'setting/group_data/set_status/<id>/<status>'],
+};
+function operationalGroupMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const route = normalizeAdminRoute(menu.apiUrl), tuple = operationalGroupMenuTuples[menu.id];
+  if (!tuple && menu.id !== 483 && !isOperationalGroupRoute(route)
+    && menu.uniqueAuth !== 'operational_group.view' && menu.uniqueAuth !== 'operational_group.manage'
+    && menu.menuPath !== '/setting/operational-groups') return { protected: false, permission: null };
+  const valid = !!tuple && menu.authType === 2 && menu.menuPath === '' && menu.uniqueAuth === ''
+    && menu.apiUrl === tuple[1] && menu.methods === tuple[0];
+  return { protected: true, permission: valid ? operationalGroupPermission(tuple[0], tuple[1]) : null };
+}
+/** No old numeric menu tuple grants the independently enrolled ERP domain. */
+function unprovedErpMenuClaim(menu: LegacyAdminMenuMetadata): boolean {
+  return /^(?:\/erpapi(?:\/|$)|erpapi\/)/i.test(menu.apiUrl.trim())
+    || /^(?:erp\/connections)(?:\/|$)/.test(normalizeAdminRoute(menu.apiUrl))
+    || menu.uniqueAuth.trim().toLowerCase().startsWith('erp.connection.')
+    || menu.menuPath.trim().toLowerCase() === '/operations/erp';
+}
+const productCategoryMenuTuples: Record<number, { method: string; route: string; path: string; auth?: string }> = {
+  170: { method: 'GET', route: 'product/category', path: '/adminproduct/category' },
+  171: { method: 'DELETE', route: 'product/category/<id>', path: '/adminproduct/category/<id>' },
+  172: { method: 'PUT', route: 'product/category/<id>', path: '/adminproduct/category/<id>' },
+  173: { method: 'POST', route: 'product/category', path: '/adminproduct/category', auth: 'product-save-cate' },
+  174: { method: 'PUT', route: 'product/category/set_show/<id>/<is_show>', path: '/adminproduct/category/set_show/<id>/<is_show>' },
+  176: { method: 'GET', route: 'product/category/create', path: '/admincategory/create' },
+  177: { method: 'GET', route: 'product/category/<id>', path: '/admincategory/<id>/edit' },
+  178: { method: 'GET', route: 'product/category/tree/<type>', path: '/admincategory/tree/:type' },
+  376: { method: 'GET', route: 'product/category/tree/<type>', path: '' },
+  387: { method: 'GET', route: 'product/category/tree/<type>', path: '' },
+  398: { method: 'GET', route: 'product/category/tree/<type>', path: '' },
+  411: { method: 'GET', route: 'product/category/tree/<type>', path: '' },
+  912: { method: 'GET', route: 'product/category/cascader_list/<type?>', path: '' },
+  940: { method: 'GET', route: 'product/category/tree/<type>', path: '' },
+};
+function productCategoryMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const route = normalizeAdminRoute(menu.apiUrl), path = menu.menuPath.trim().toLowerCase(), auth = menu.uniqueAuth.trim().toLowerCase();
+  const page = menu.id === 3 || path === '/admin/product/product_classify' || auth === 'admin-store-storecategory-index';
+  if (!page && menu.id !== 175 && !productCategoryMenuTuples[menu.id] && !isProductCategoryRoute(route)) return { protected: false, permission: null };
+  if (page) return { protected: true, permission: menu.id === 3 && menu.authType === 1 && menu.menuPath === '/admin/product/product_classify'
+    && menu.uniqueAuth === 'admin-store-storeCategory-index' && menu.apiUrl === '' && menu.methods === '' ? 'category.view' : null };
+  if (menu.id === 175) return { protected: true, permission: null };
+  const tuple = productCategoryMenuTuples[menu.id], method = menu.methods.trim().toUpperCase();
+  const canonical = menu.menuPath === '' && menu.uniqueAuth === '';
+  const original = tuple && menu.menuPath === tuple.path && menu.uniqueAuth === (tuple.auth ?? '');
+  const identity = !tuple || method === tuple.method && route === tuple.route;
+  const valid = menu.authType === 2 && !/\s/.test(menu.apiUrl.trim()) && identity && (canonical || original);
+  return { protected: true, permission: valid ? productCategoryPermission(method, route) : null };
+}
+function productBrandMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const path = menu.menuPath.trim().toLowerCase(), auth = menu.uniqueAuth.trim().toLowerCase();
+  const route = normalizeAdminRoute(menu.apiUrl);
+  const pageClaim = menu.id === 1338 || path === '/admin/product/product_brand' || auth === 'admin-store-storebrand-index';
+  if (!pageClaim && !isProductBrandRoute(route)) return { protected: false, permission: null };
+  if (pageClaim) {
+    const valid = menu.id === 1338 && menu.authType === 1 && menu.menuPath === '/admin/product/product_brand'
+      && menu.uniqueAuth === 'admin-store-storeBrand-index' && menu.apiUrl === '' && menu.methods === '';
+    return { protected: true, permission: valid ? 'brand.view' : null };
+  }
+  const method = menu.methods.trim().toUpperCase();
+  const valid = menu.authType === 2 && menu.menuPath === '' && menu.uniqueAuth === ''
+    && !/\s/.test(menu.apiUrl.trim()) && ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'].includes(method);
+  return { protected: true, permission: valid ? productBrandPermission(method, route) : null };
+}
+function productLabelMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const path = menu.menuPath.trim().toLowerCase(), auth = menu.uniqueAuth.trim().toLowerCase();
+  const route = normalizeAdminRoute(menu.apiUrl);
+  const pageClaim = menu.id === 1380 || path === '/admin/product/label' || auth === 'admin-storeproduct-label';
+  if (!pageClaim && !isProductLabelRoute(route)) return { protected: false, permission: null };
+  if (pageClaim) {
+    // Install seed 1380 binds the page and auth string; it is a read grant.
+    const valid = menu.id === 1380 && menu.authType === 1 && menu.menuPath === '/admin/product/label'
+      && menu.uniqueAuth === 'admin-storeProduct-label' && menu.apiUrl === '' && menu.methods === '';
+    return { protected: true, permission: valid ? 'label.view' : null };
+  }
+  const method = menu.methods.trim().toUpperCase();
+  const valid = menu.authType === 2 && menu.menuPath === '' && menu.uniqueAuth === ''
+    && !/\s/.test(menu.apiUrl.trim()) && ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'].includes(method);
+  return { protected: true, permission: valid ? productLabelPermission(method, route) : null };
+}
 const legacyAdminActionIds = new Set([20,331,332,333,334,335,336,337,610,635]);
 const legacyAdminCapabilities = new Set(['system.legacy_admin_view','system.legacy_admin_form_view','system.legacy_admin_manage']);
 /** A protected identity/path/auth/API claim must match its complete proved
@@ -709,7 +922,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (unprovedErpMenuClaim(menu) || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -869,6 +1082,13 @@ export class AdminPermissionService {
                 and(eq(systemMenus.id, 1592), eq(systemMenus.uniqueAuth, 'admin-setting-pages-home'), eq(systemMenus.menuPath, '/admin/setting/pages/home')),
                 and(eq(systemMenus.uniqueAuth, "setting-system-fab"),
                   eq(systemMenus.menuPath, "/admin/setting/pages/fab")),
+                and(eq(systemMenus.uniqueAuth, "system-maintain-system-log"),
+                  eq(systemMenus.menuPath, "/admin/system/maintain/system_log/index")),
+                and(eq(systemMenus.id, 1380), eq(systemMenus.uniqueAuth, "admin-storeProduct-label"),
+                  eq(systemMenus.menuPath, "/admin/product/label")),
+                and(eq(systemMenus.id, 3), eq(systemMenus.uniqueAuth, 'admin-store-storeCategory-index'), eq(systemMenus.menuPath, '/admin/product/product_classify')),
+                and(eq(systemMenus.id, 1338), eq(systemMenus.uniqueAuth, "admin-store-storeBrand-index"),
+                  eq(systemMenus.menuPath, "/admin/product/product_brand")),
                 and(inArray(systemMenus.id, [1035, 1075]), eq(systemMenus.uniqueAuth, "admin-setting-theme_style"),
                   eq(systemMenus.menuPath, "/admin/setting/theme_style")),
                 and(eq(systemMenus.uniqueAuth, "/admin/setting/membership_level/index"),
@@ -1033,6 +1253,13 @@ export class AdminPermissionService {
                 and(eq(systemMenus.id, 1592), eq(systemMenus.uniqueAuth, 'admin-setting-pages-home'), eq(systemMenus.menuPath, '/admin/setting/pages/home')),
                 and(eq(systemMenus.uniqueAuth, "setting-system-fab"),
                   eq(systemMenus.menuPath, "/admin/setting/pages/fab")),
+                and(eq(systemMenus.uniqueAuth, "system-maintain-system-log"),
+                  eq(systemMenus.menuPath, "/admin/system/maintain/system_log/index")),
+                and(eq(systemMenus.id, 1380), eq(systemMenus.uniqueAuth, "admin-storeProduct-label"),
+                  eq(systemMenus.menuPath, "/admin/product/label")),
+                and(eq(systemMenus.id, 3), eq(systemMenus.uniqueAuth, 'admin-store-storeCategory-index'), eq(systemMenus.menuPath, '/admin/product/product_classify')),
+                and(eq(systemMenus.id, 1338), eq(systemMenus.uniqueAuth, "admin-store-storeBrand-index"),
+                  eq(systemMenus.menuPath, "/admin/product/product_brand")),
                 and(inArray(systemMenus.id, [1035, 1075]), eq(systemMenus.uniqueAuth, "admin-setting-theme_style"),
                   eq(systemMenus.menuPath, "/admin/setting/theme_style")),
                 and(eq(systemMenus.uniqueAuth, "/admin/setting/membership_level/index"),
@@ -1098,6 +1325,27 @@ export class AdminPermissionService {
     if (allowedLegacyIds.size) {
       for (const menu of menus) {
         if (!allowedLegacyIds.has(menu.id)) continue;
+        if (unprovedErpMenuClaim(menu)) continue;
+        const operationalBinding = operationalGroupMenuBinding(menu);
+        if (operationalBinding.protected) {
+          if (operationalBinding.permission) resolved.add(operationalBinding.permission);
+          continue;
+        }
+        const categoryBinding = productCategoryMenuBinding(menu);
+        if (categoryBinding.protected) {
+          if (categoryBinding.permission) resolved.add(categoryBinding.permission);
+          continue;
+        }
+        const brandBinding = productBrandMenuBinding(menu);
+        if (brandBinding.protected) {
+          if (brandBinding.permission) resolved.add(brandBinding.permission);
+          continue;
+        }
+        const labelBinding = productLabelMenuBinding(menu);
+        if (labelBinding.protected) {
+          if (labelBinding.permission) resolved.add(labelBinding.permission);
+          continue;
+        }
         const legacyAdmin = legacyAdminMenuBinding(menu);
         if (legacyAdmin.protected) {
           if (legacyAdmin.permission) resolved.add(legacyAdmin.permission);
@@ -1106,6 +1354,16 @@ export class AdminPermissionService {
         const legacyRole = legacyRoleMenuBinding(menu);
         if (legacyRole.protected) {
           if (legacyRole.permission) resolved.add(legacyRole.permission);
+          continue;
+        }
+        // This is the server operation-log page, separate from Vuex's local
+        // frontend log. Its legacy page/auth tuple grants only log reads.
+        if (menu.menuPath === "/admin/system/maintain/system_log/index"
+          || menu.uniqueAuth === "system-maintain-system-log") {
+          if (menu.authType === 1 && menu.menuPath === "/admin/system/maintain/system_log/index"
+            && menu.uniqueAuth === "system-maintain-system-log" && menu.apiUrl === "" && menu.methods === "") {
+            resolved.add("log.view");
+          }
           continue;
         }
         if (menu.id === 1592 || menu.menuPath === '/admin/setting/pages/home' || menu.uniqueAuth === 'admin-setting-pages-home') {

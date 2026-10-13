@@ -8,6 +8,11 @@ import * as ProductShippingOptions from '@/controllers/supplier/SupplierProductS
 import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
 import * as SupplierExportController from "@/controllers/supplier/SupplierExportController";
 import * as SupplierProductReplyController from "@/controllers/supplier/SupplierProductReplyController";
+import * as SupplierProductCatalogController from "@/controllers/supplier/SupplierProductCatalogController";
+import * as SupplierCategory from "@/controllers/supplier/SupplierProductCategoryController";
+import * as SupplierBatch from "@/controllers/supplier/SupplierProductBatchController";
+import * as SupplierLabels from '@/controllers/supplier/SupplierProductLabelController';
+import * as SupplierProductRules from '@/controllers/supplier/SupplierProductRuleController';
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
@@ -30,6 +35,21 @@ supplierapiRoutes.use('/setting/shipping_templates/*', ShippingCreation.privateR
 supplierapiRoutes.use('/product/product/shipping-template-options', ShippingCreation.privateResponse);
 supplierapiRoutes.use('/product/product/shipping-template-options/*', ShippingCreation.privateResponse);
 supplierapiRoutes.use('/product/product/get_template', ShippingCreation.privateResponse);
+supplierapiRoutes.use("/product/product_label", SupplierProductCatalogController.privateResponse);
+supplierapiRoutes.use('/product/all_label', SupplierLabels.privateResponse);
+supplierapiRoutes.use('/product/label/*', SupplierLabels.privateResponse);
+supplierapiRoutes.use("/product/brand/cascader_list", SupplierProductCatalogController.privateResponse);
+supplierapiRoutes.use("/product/brand/cascader_list/*", SupplierProductCatalogController.privateResponse);
+supplierapiRoutes.use("/product/category", SupplierCategory.privateResponse);
+supplierapiRoutes.use("/product/category/*", SupplierCategory.privateResponse);
+supplierapiRoutes.use('/product/batch_process', SupplierBatch.privateResponse);
+supplierapiRoutes.use('/product/batch_process/*', SupplierBatch.privateResponse);
+supplierapiRoutes.use('/product/product/batch-selection', SupplierBatch.privateResponse);
+supplierapiRoutes.use('/product/product/batch-selection/*', SupplierBatch.privateResponse);
+supplierapiRoutes.use('/product/product/rule', SupplierProductRules.privateResponse);
+supplierapiRoutes.use('/product/product/rule/*', SupplierProductRules.privateResponse);
+supplierapiRoutes.use('/product/product/get_rule', SupplierProductRules.privateResponse);
+supplierapiRoutes.use('/product/product/get_rule/*', SupplierProductRules.privateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -155,13 +175,24 @@ supplierapiRoutes.post("/waybill/jobs/:id/close", WaybillJobController.supplierC
 
 supplierapiRoutes.get("/product/product/list", SupplierController.productList);
 supplierapiRoutes.get("/product/product", SupplierController.productList);
-supplierapiRoutes.get("/product/category", SupplierController.categoryTree);
-supplierapiRoutes.get("/product/category/tree", SupplierController.categoryTree);
-supplierapiRoutes.get("/product/category/tree/:type", SupplierController.categoryTree);
-supplierapiRoutes.get("/product/category/cascader_list/:type", SupplierController.categoryTree);
+supplierapiRoutes.get("/product/category", SupplierCategory.list);
+supplierapiRoutes.get("/product/category/tree", SupplierCategory.modernTree);
+supplierapiRoutes.get("/product/category/tree/:type", SupplierCategory.tier);
+supplierapiRoutes.get("/product/category/cascader_list", SupplierCategory.cascader);
+supplierapiRoutes.get("/product/category/cascader_list/:type", SupplierCategory.cascader);
+supplierapiRoutes.get("/product/category/create", SupplierCategory.createForm);
+supplierapiRoutes.get("/product/category/:id/detail", SupplierCategory.modernDetail);
 supplierapiRoutes.get("/product/get_all_unit", SupplierController.productUnits);
 supplierapiRoutes.get("/product/all_ensure", SupplierController.productEnsures);
 supplierapiRoutes.get("/product/all_specs", SupplierController.productSpecsAll);
+supplierapiRoutes.get("/product/product_label", SupplierProductCatalogController.labels);
+supplierapiRoutes.get('/product/all_label', SupplierLabels.all);
+supplierapiRoutes.get('/product/label/catalog', SupplierLabels.catalog);
+supplierapiRoutes.get('/product/label/form', SupplierLabels.form);
+supplierapiRoutes.post('/product/label/:id', SupplierLabels.save);
+supplierapiRoutes.delete('/product/label/:id', SupplierLabels.remove);
+supplierapiRoutes.get("/product/brand/cascader_list", SupplierProductCatalogController.brands);
+supplierapiRoutes.get("/product/brand/cascader_list/:type", SupplierProductCatalogController.brands);
 supplierapiRoutes.get("/form/info/:id", SupplierController.systemFormInfo);
 supplierapiRoutes.get("/form/all_system_form", SupplierController.systemFormAll);
 supplierapiRoutes.get("/product/product/get_rule", SupplierController.productRuleTemplates);
@@ -177,13 +208,13 @@ supplierapiRoutes.delete(
   "/product/product/rule/delete/:id",
   SupplierController.productRuleDelete,
 );
-supplierapiRoutes.post("/product/category", SupplierController.saveCategory);
-supplierapiRoutes.get("/product/category/:id", SupplierController.categoryDetail);
-supplierapiRoutes.put("/product/category/:id", SupplierController.saveCategory);
-supplierapiRoutes.delete("/product/category/:id", SupplierController.deleteCategory);
+supplierapiRoutes.post("/product/category", SupplierCategory.create);
+supplierapiRoutes.get("/product/category/:id", SupplierCategory.editForm);
+supplierapiRoutes.put("/product/category/:id", SupplierCategory.update);
+supplierapiRoutes.delete("/product/category/:id", SupplierCategory.remove);
 supplierapiRoutes.put(
   "/product/category/set_show/:id/:is_show",
-  SupplierController.setCategoryShow,
+  SupplierCategory.setShow,
 );
 supplierapiRoutes.get("/product/product/attrs/:id", SupplierController.productDetail);
 supplierapiRoutes.get("/product/product/virtual-alerts", VirtualProductInventory.supplierAlerts);
@@ -204,7 +235,8 @@ supplierapiRoutes.put("/product/product/batch_show/:is_show", SupplierController
 supplierapiRoutes.put("/product/product/show", SupplierController.batchSetProductShow);
 supplierapiRoutes.put("/product/product/product_show", SupplierController.batchProductShow);
 supplierapiRoutes.put("/product/product/product_unshow", SupplierController.batchProductUnshow);
-supplierapiRoutes.post("/product/batch_process", SupplierController.batchSetProductShow);
+supplierapiRoutes.get('/product/product/batch-selection', SupplierBatch.selection);
+supplierapiRoutes.post("/product/batch_process", SupplierBatch.apply);
 supplierapiRoutes.post("/product/generate_attr/:id/:type", SupplierController.generateProductAttrs);
 supplierapiRoutes.post("/product/product", SupplierController.createProduct);
 supplierapiRoutes.post("/product/product/:id", SupplierController.saveProduct);

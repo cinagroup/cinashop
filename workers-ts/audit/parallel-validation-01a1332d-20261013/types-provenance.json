@@ -1,0 +1,140 @@
+{
+  "verifiedAt": "2026-10-13T03:39:50.688Z",
+  "source": "Coordinating integration root actual execution evidence; no typecheck rerun in this agent.",
+  "validForIntegrationFinalScope": true,
+  "unitStatus": 0,
+  "runtimeStatus": 0,
+  "beforeCheckedAt": "2026-10-13T03:29:49.999Z",
+  "afterCheckedAt": "2026-10-13T03:33:11.428Z",
+  "inputCount": 3896,
+  "sourceDigest": "70113864d3905ea6e8a009d75c98445a6bf58d4c73095f7f6f3f5f593a923aa4",
+  "mismatchCount": 0,
+  "commonInputCount": 3874,
+  "commonSourceLockMismatchCount": 0,
+  "documentaryDifferences": [],
+  "requiredProof": [
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacySystemLogService.ts",
+      "sha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log.test.ts",
+      "sha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log-native.test.ts",
+      "sha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminLegacySystemLogController.ts",
+      "sha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109"
+    },
+    {
+      "path": "workers-ts/src/services/system/PublicGeocodingService.ts",
+      "sha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicGeocodingController.ts",
+      "sha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCatalogService.ts",
+      "sha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductCatalogController.ts",
+      "sha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-log-permission.test.ts",
+      "sha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db"
+    },
+    {
+      "path": "workers-ts/test/public-geocoding.test.ts",
+      "sha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-catalog.test.ts",
+      "sha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f"
+    },
+    {
+      "path": "workers-ts/package-lock.json",
+      "sha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a"
+    },
+    {
+      "path": "workers-ts/tsconfig.json",
+      "sha256": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20"
+    },
+    {
+      "path": "workers-ts/tsconfig.runtime-test.json",
+      "sha256": "92b77a20c54c0eb72e1d5e638339548f1af5196fedb4d079580f93e3e7fcbc4b"
+    },
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059"
+    },
+    {
+      "path": "view/admin-ts/package-lock.json",
+      "sha256": "0e6d88770c9eeb6abb10c59e8b66d6a7bda3fe5c7b4caa1388e4d7f6a191ffaf"
+    },
+    {
+      "path": "view/uniapp-ts/package-lock.json",
+      "sha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8"
+    },
+    {
+      "path": "view/kefu-ts/package-lock.json",
+      "sha256": "d57f3346a991315c62ef6a8e4ed42977c416e3d14bd2a7c54f4c97df3ac39ba7"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "integrated-types/parallel-migration-named-zone-before-20261013.json",
+      "bytes": 621034,
+      "sha256": "d445ff5ba4f8bbbaf5f6aebe59c6aca68d276b30eb6fdfa6676e976bd80b3bb7"
+    },
+    {
+      "path": "integrated-types/parallel-migration-named-zone-after-20261013.json",
+      "bytes": 621034,
+      "sha256": "cdb604df2833251dce884fccb40fa30160420246a73d88ee6c8eb2ca32d826e8"
+    },
+    {
+      "path": "integrated-types/parallel-zone-typecheck-exits-20261013.json",
+      "bytes": 24,
+      "sha256": "c0eb9b119cee5621a690465272fdd7ee2b62c9100570b8053e63bb2179984bfe"
+    },
+    {
+      "path": "integrated-types/parallel-zone-typecheck-unit-20261013.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "integrated-types/parallel-zone-typecheck-runtime-20261013.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

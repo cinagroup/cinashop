@@ -1,0 +1,133 @@
+{
+  "createdAtUtc": "2026-10-13T06:26:49.445Z",
+  "command": {
+    "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin test/cart-computation-http.test.ts test/supplier-product-batch-http.test.ts test/modern-cart-membership-price.test.ts test/order-coupon-picker.test.ts test/order-full-discount-checkout.test.ts test/order-full-gift-checkout.test.ts test/order-nth-discount-checkout.test.ts test/order-time-discount-checkout.test.ts",
+    "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts",
+    "startedAtUtc": "2026-10-13T06:23:13.4004052Z",
+    "endedAtUtc": "2026-10-13T06:26:11.2961786Z",
+    "exitCode": 0,
+    "durationSeconds": 177.884,
+    "testFiles": [
+      "test/cart-computation-http.test.ts",
+      "test/supplier-product-batch-http.test.ts",
+      "test/modern-cart-membership-price.test.ts",
+      "test/order-coupon-picker.test.ts",
+      "test/order-full-discount-checkout.test.ts",
+      "test/order-full-gift-checkout.test.ts",
+      "test/order-nth-discount-checkout.test.ts",
+      "test/order-time-discount-checkout.test.ts"
+    ],
+    "testFilesCount": 8,
+    "caseFilter": null,
+    "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final.log",
+    "logSha256": "7D0B3D384AC1C80FA81B89CEB4207FAA09DE77B0149CAC3F7D2CB0A40B56BDD8",
+    "sourceProofBeforePath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final-sourceproof-before.json"
+  },
+  "runnerVersion": "postgres (PostgreSQL) 16.15",
+  "vitestVersion": "RUN  v4.1.11 C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts",
+  "nativeHostIdentity": {
+    "data": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/.cache/finance-postgres-0egdl9/data",
+    "version": "160015",
+    "host": "127.0.0.1",
+    "port": 64118,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "superuser": true,
+    "createdb": true
+  },
+  "uniqueTaskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-0egdl9",
+  "ownedDataDirectory": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-0egdl9\\data",
+  "rawSummary": {
+    "testFilesSummary": "Test Files  8 passed (8)",
+    "testsSummary": "Tests  146 passed (146)",
+    "vitestDuration": "Duration  166.45s (transform 21.78s, setup 0ms, import 43.24s, tests 120.84s, environment 1ms)"
+  },
+  "observedCases": {
+    "passed": 146,
+    "failed": 0,
+    "skipped": 0,
+    "perFile": [
+      {
+        "file": "test/cart-computation-http.test.ts",
+        "passedCases": 45,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-http.test.ts",
+        "passedCases": 26,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/modern-cart-membership-price.test.ts",
+        "passedCases": 24,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-coupon-picker.test.ts",
+        "passedCases": 23,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-full-discount-checkout.test.ts",
+        "passedCases": 7,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-full-gift-checkout.test.ts",
+        "passedCases": 6,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-nth-discount-checkout.test.ts",
+        "passedCases": 7,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-time-discount-checkout.test.ts",
+        "passedCases": 8,
+        "failedCases": 0,
+        "skippedCases": 0
+      }
+    ]
+  },
+  "fixtures": {
+    "remainingDatabases": 0,
+    "remainingRoles": 0,
+    "marker": "FINANCE_LOCAL_FIXTURES remaining=0",
+    "evidence": "Runner queries pg_database and pg_roles, asserts both are [], then emits FINANCE_LOCAL_FIXTURES remaining=0; runner input hash is in the source proof."
+  },
+  "shutdown": {
+    "runnerMarker": "FINANCE_LOCAL_STOPPED C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-0egdl9",
+    "independentCommand": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe -D C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-0egdl9\\data status",
+    "independentExitCode": 3,
+    "independentOutput": "pg_ctl: no server running",
+    "independentError": null,
+    "statusLogPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final-pg-status.log",
+    "statusLogSha256": "61FFE57F8F18BA21CA02377F4984A9EFB8C3DC2C7FD29287F02A62CA991D1713"
+  },
+  "sourceProof": {
+    "beforePath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final-sourceproof-before.json",
+    "beforeSha256": "4FFF46B4591DC77F32BFC775B0FE0265F7A2E6FEC19A0A13BE540CD7B3AFB253",
+    "afterPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final-sourceproof-after.json",
+    "afterSha256": "F969E6A6CF114C7DBF50531F9D91FA9C7EBF3DC29859D4B9628AB825BC55B64E",
+    "fileCount": 87,
+    "beforeMismatchCount": 0,
+    "afterMismatchCount": 0,
+    "sourceDriftCount": 0,
+    "sourceDrift": []
+  },
+  "files": {
+    "logPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final.log",
+    "logSha256": "7D0B3D384AC1C80FA81B89CEB4207FAA09DE77B0149CAC3F7D2CB0A40B56BDD8",
+    "commandPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final-command-receipt.json",
+    "commandSha256": "233A7590E9E5C4CD7DD7FD9AD6A3E23ADC3A5E4614D45AAA447021F23151E25A"
+  },
+  "complete": true
+}

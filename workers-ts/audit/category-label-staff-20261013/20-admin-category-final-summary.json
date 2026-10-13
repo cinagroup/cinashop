@@ -1,0 +1,273 @@
+{
+  "createdAt": "2026-10-13T09:08:04.4492154Z",
+  "module": "Admin platform product category complete readable workflow",
+  "status": "Local candidate verified; not published",
+  "artifactRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation",
+  "parentReportedFreeze": {
+    "source": "Parent direct coordination message; not independently recomputed here",
+    "digest": "b90973003c0635375e8075e7fd76db30345befb4efb1ee4c0c04f1da60d2e7bb",
+    "inputCount": 4031
+  },
+  "ownedFreeze": {
+    "latestNativeTestSha256": "0D440D3F601B4C513FCB73EEFC76B4210718060B1826005DE6F2DB22F883BC40",
+    "manifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-agent-freeze.json",
+    "frozenAt": "2026-10-13T08:46:21.587281Z",
+    "fileCount": 14,
+    "manifestSha256": "959139270F7F5CD7AB04652AA98E7299F4DCA14B3D418D361FA85129FC1D8E1B"
+  },
+  "scope": {
+    "canonicalImages": "Permanent pic/big_pic references; public preview projection with platform attachment authority",
+    "readablePhpContracts": 9,
+    "workflow": "List/filter/lazy tree/form/create/edit/three-level used-subtree move/self+direct-child show/reference-protected hard delete",
+    "optionalCascaderRegistration": "Both no-type and typed forms; type ignored by readable PHP",
+    "platformOwner": "type=0, relation_id=0; no store_id column",
+    "contractDocument": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\docs\\admin-product-category-catalog-20261013.md",
+    "opaqueOpen": "PUT product/category/set_category/:id inherits loader-encrypted BaseController; do not invent or retire"
+  },
+  "verification": {
+    "automatedDistinctCases": 35,
+    "typeBuildBrowserReceipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-final-frontend-receipt.json",
+    "adminTypecheck": {
+      "exit": 0,
+      "command": "node node_modules/vue-tsc/bin/vue-tsc.js --noEmit",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-admin-typecheck-final.log"
+    },
+    "adminProductionBuild": {
+      "exit": 0,
+      "command": "node node_modules/vite/bin/vite.js build",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-admin-build-final.log"
+    },
+    "ordinaryBusiness": {
+      "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-business-http.json",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-business-http.log",
+      "failed": 0,
+      "passed": 14,
+      "file": "workers-ts/test/admin-product-category.test.ts",
+      "exit": 0,
+      "parsedStatus": true
+    },
+    "workerUnitRuntimeTypes": "Parent currently integrating final frozen inputs; not claimed as agent verification",
+    "native": {
+      "passed": 7,
+      "proof": "Independent LOGIN/column-only menu ACL, both product lock orders, current actor/menu blocking, real StoreCart+confirmed checkout old ancestry invalidation, new coupon exact amount, unchanged orders/wallet/stock/coupons/claim evidence",
+      "version": "PostgreSQL16.15",
+      "earlierCompleteThreeFiles": [
+        "admin-product-category.test.ts",
+        "admin-product-category-http.test.ts",
+        "admin-product-category-native.test.ts"
+      ],
+      "earlierCompleteThreeFilePassed": 25,
+      "overlapWithOrdinary": 18,
+      "additionalDistinctCases": 7,
+      "exit": 0,
+      "file": "workers-ts/test/admin-product-category-native.test.ts",
+      "earlierCompleteThreeFileLog": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-pg-final.log",
+      "failed": 0,
+      "finalLog": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-native-final-claim-evidence.log",
+      "finalTestOnlyEvidence": "Same 7 native cases replayed after adding actual manual-claim table, before/after zero rows; no additional unique credit"
+    },
+    "registeredApplicationHttp": {
+      "passed": 4,
+      "boundaries": "Actual createApp/JWT/role/controller/SQL; only DI and admin connection factory injected; private/no-store/Pragma/session-close/anonymous/view-only/stale DELETE checked",
+      "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-front-http-final.json",
+      "exit": 0,
+      "file": "workers-ts/test/admin-product-category-http.test.ts",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-front-http-final.log",
+      "failed": 0,
+      "parsedStatus": true
+    },
+    "browser": {
+      "httpErrors": 0,
+      "url": "http://127.0.0.1:5216/category",
+      "externalBlocked": 0,
+      "consoleWarnings": 0,
+      "fixtureBoundary": "Synthetic API/cache fixtures; backend SQL/JWT/independent-session proof is in separate tests",
+      "consoleErrors": 0,
+      "passed": true,
+      "script": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-playwright.cjs",
+      "flows": [
+        "desktop page identity, meaningful roots, images columns, no overlay",
+        "lazy three-level read, fourth level disabled, self/subtree/hidden parent exclusion",
+        "create all three levels through complete source forms",
+        "move complete subtree with refreshed lazy ancestry",
+        "complete dual-image form preserves canonical reference and renders supplied preview",
+        "self/direct-child show policy preserves grandchild flag",
+        "child and reference delete rejections, leaf and parent deletion",
+        "name and display filters",
+        "definite conflict preserves dialog and draft",
+        "unknown retry inside retained modal sends immutable original revision and draft",
+        "read-only proof handles empty pictures and closes committed unknown draft",
+        "mobile modal images/controls/footer contained with table internal scrolling",
+        "mobile recovery buttons are genuinely clickable in modal",
+        "400011 removes rows/draft and latches cached authority",
+        "refreshed read-only identity restores reads and disables writes",
+        "fresh view-only session retains complete hierarchy reads without writer controls"
+      ],
+      "screenshots": [
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-desktop.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-mobile.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-mobile-form.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-mobile-pending.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-readonly-mobile.png",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-viewonly-desktop.png"
+      ],
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "syntheticMutationCount": 18,
+      "exit": 0,
+      "visualInspection": "Desktop, mobile form/recovery and final Chinese filter placeholder inspected",
+      "browserPlugin": "Absent; existing local Playwright/Chromium1217 used, no dependencies installed",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-playwright.log",
+      "flowCount": 16,
+      "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-browser-result.json"
+    },
+    "compiledVueFrontend": {
+      "passed": 10,
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-front-final.log",
+      "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-front-final.json",
+      "exit": 0,
+      "file": "workers-ts/test/admin-product-category-frontend.test.ts",
+      "failed": 0,
+      "parsedTotal": 10,
+      "parsedPassed": 10
+    }
+  },
+  "cleanup": {
+    "nativeFinal": {
+      "pgCtlStatusExit": 3,
+      "remainingFixtures": 0,
+      "listenerCount": 0,
+      "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-native-final-cleanup.json",
+      "port": 54999
+    },
+    "rootLiveServer": "Not touched",
+    "browser": "Script finally closes owned browser/contexts; exit0",
+    "devServer": {
+      "port": 5216,
+      "listenerCount": 0,
+      "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-server-stopped.json",
+      "pid": 22840
+    },
+    "earlierThreeFilePg": {
+      "pgCtlStatusExit": 3,
+      "remainingFixtures": 0,
+      "listenerCount": 0,
+      "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-pg-cleanup.json",
+      "port": 53534
+    }
+  },
+  "books": {
+    "previousWave": {
+      "doNotOverwrite": true,
+      "differentTests": 530,
+      "ordinaryPassed": 494,
+      "nativePassed": 186,
+      "inputCount": 3987,
+      "nativeOrdinaryOverlap": 150,
+      "ordinaryNativeSkipped": 36
+    },
+    "completionRule": {
+      "file": "MIGRATION_AUDIT.md",
+      "meaning": "Complete domain requires route/permission/state mapping, applicable data scope validation, failure/concurrency and real frontend proof, staging Cloudflare/third-party evidence; source presence is insufficient",
+      "line": 7642
+    },
+    "actualCheckboxStats": [
+      {
+        "file": "\\\\tsclient\\I\\cinagroup\\cinashop\\MIGRATION_CHECKLIST.md",
+        "completed": 249,
+        "open": 155,
+        "total": 404,
+        "newIncrementInsertionBeforeLine": 3,
+        "existingLatestHeading": "## 当前增量：三级品牌、供应商四类批处理与购物车预算（2026-10-13，本地候选已验证，未发布）",
+        "checksum": "82B9F0972045D758F2AD3C9DED5D9BC17137AF190C98347AA235F74BD7980C5C"
+      },
+      {
+        "file": "\\\\tsclient\\I\\cinagroup\\cinashop\\MIGRATION_AUDIT.md",
+        "completed": 50,
+        "open": 38,
+        "total": 88,
+        "newIncrementInsertionBeforeLine": 3,
+        "existingLatestHeading": "## 当前增量：三级品牌、供应商四类批处理与购物车预算（2026-10-13，本地候选已验证，未发布）",
+        "checksum": "7E2C34276FD1278384D3E6F17B476C6A937C971ADA98364B711F3DA143BDB4F4"
+      }
+    ],
+    "recommendedStatusPlacement": "Insert fourth-wave local-candidate increment after document title, before current line3; retain historical 3987/530 blocks and existing checkbox rows",
+    "staticPromotionRule": "Count exact registered executable URLs separately; do not infer full business completion from aliases/routes or reduce other domain gaps without fresh audit evidence",
+    "publishedLatestStatic": {
+      "php": 1904,
+      "matched": 955,
+      "adminMissing": 871,
+      "controlledUnavailable": 21,
+      "retired": 17,
+      "ts": 2435,
+      "executable": 934,
+      "erpMissing": 8,
+      "supplierMissing": 46,
+      "actionableMissing": 932,
+      "source": "MIGRATION_AUDIT.md:7; previous third-wave freeze, not current fourth-wave audit",
+      "apiMissing": 7
+    },
+    "parentItemsRemainOpen": [
+      {
+        "scope": "Complete product operations includes SKU/specs/attributes/inventory/reviews/freight/virtual/batch domains",
+        "id": "ADM-003",
+        "file": "MIGRATION_CHECKLIST.md",
+        "line": 1802
+      },
+      {
+        "scope": "All Admin legacy screens; static route/Vue file counts are not semantic coverage",
+        "id": "FE-001",
+        "file": "MIGRATION_CHECKLIST.md",
+        "line": 1854
+      },
+      {
+        "scope": "Real nonempty data and positive/negative roles E2E for every enabled domain",
+        "id": "DATA-006",
+        "file": "MIGRATION_CHECKLIST.md",
+        "line": 1623
+      },
+      {
+        "scope": "Production complete schema/ACL/function/trigger/RLS/view parity",
+        "id": "DB-009",
+        "file": "MIGRATION_CHECKLIST.md",
+        "line": 1580
+      },
+      {
+        "scope": "Default admin/token cutover and APP_KEY production verification",
+        "id": "CORE-005",
+        "file": "MIGRATION_CHECKLIST.md",
+        "line": 1650
+      },
+      {
+        "scope": "Exact current candidate CI, publishing approvals, production remote evidence and observation",
+        "lines": [
+          2038,
+          2039,
+          2040,
+          2041
+        ],
+        "id": "REL-001..004",
+        "file": "MIGRATION_CHECKLIST.md"
+      }
+    ]
+  },
+  "knownLimitations": [
+    "Opaque set_category remains unresolved",
+    "Old first-party Vue R2 image rendering has no E2E; new Vue uses preview fields",
+    "Synthetic browser interfaces do not prove live DB/JWT or concurrency",
+    "Injected HTTP connection factory does not prove Hyperdrive deployment/runtime LOGIN",
+    "Real provider/device/production authority/data/capacity/current full CI/publishing remain open"
+  ],
+  "diagnosticEvidence": [
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-native-initial.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-admin-typecheck.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-admin-build.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-frontend.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\initial-category-playwright.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\second-category-playwright.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\third-category-playwright.log"
+  ],
+  "operations": "Read-only collection; wrote only this independent JSON artifact. No frozen source/doc/manifest edits, commits, pushes, deployment or production operations."
+}

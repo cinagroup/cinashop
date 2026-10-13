@@ -1,0 +1,42 @@
+{
+  "scope": "local-only candidate snapshot; not asserted equal to current frozen UNC business functionality",
+  "checkedAt": "2026-10-13T04:33:50.5781228Z",
+  "inputs": [
+    {
+      "path": "src/services/other/LegacyPrivateScanTarget.ts",
+      "sha256": "AE701C2107D558D4868BC80DD4F3B638A49C4E7CBA2DDA91B8CD024580D6C544"
+    },
+    {
+      "path": "test/legacy-share-private-scan.test.ts",
+      "sha256": "7B5D874D284DABB6112CA5FFB2A1974EFC948E07464C58FD6E9EC09BB87D1539"
+    },
+    {
+      "path": "test/legacy-share-private-scan-native.test.ts",
+      "sha256": "F957D4AA35D01EDCA7B61EFDD17BCDEAE4F15AEFD28BDF2544EF0CB3396E891C"
+    },
+    {
+      "path": "test/legacy-share-private-scan-flow.test.ts",
+      "sha256": "81BB32D0ABCC131966E96E30E4A30E745E5702B1CAEDD6A7900AC122DEBFF6C0"
+    },
+    {
+      "path": "test/helpers/legacyPrivateScanFixture.ts",
+      "sha256": "D5703791FF94D4129CCC4C523ACBF5100F4A5EBB1CCA27597521EFB0B81C0651"
+    },
+    {
+      "path": "src/services/other/LegacyShareCodeService.ts",
+      "sha256": "F0D5441C5779471DCBC9AE7558E3EC2DB90ECE5CF113DE13C7168592E79D2335"
+    },
+    {
+      "path": "src/services/other/LegacyShareCodeProtocol.ts",
+      "sha256": "9431FB2E51A53440C0C9F36E6D3083845E7F8939F1E5A7A15A617001495E2987"
+    },
+    {
+      "path": "package.json",
+      "sha256": "31A2A5CEE00A74BD2ADBC1D6AECC7FD19B63B9BABE20449E6D102E1D14D0C059"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "DB479340E0C5A43858219F24F7633DE4848C7AAE8A280EE9B77D1D94DCE7015A"
+    }
+  ]
+}

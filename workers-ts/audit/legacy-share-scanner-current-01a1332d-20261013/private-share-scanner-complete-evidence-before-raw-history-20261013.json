@@ -1,0 +1,501 @@
+{
+  "completedAt": "2026-10-13T06:36:29.109Z",
+  "scope": "Final new private-share scanner increment; first-phase promotion/follow/referral evidence is explicitly historical.",
+  "source": "//tsclient/I/cinagroup/cinashop/view/uniapp-ts",
+  "local": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/view/uniapp-ts",
+  "sourceFrozen": true,
+  "counts": {
+    "guardedSourceFiles": 9,
+    "frozenScopedInputs": 65,
+    "runtimeFormalCases": 59,
+    "runtimeBreakdown": {
+      "legacyShare": 27,
+      "legacyOperator": 18,
+      "newPrivateScannerThematicCases": 14
+    },
+    "compiledMiniProtocolChecks": 18,
+    "applicationImportGraphFiles": 42,
+    "applicationGraphWebGlobals": 0,
+    "browserChecks": 26,
+    "browserScreenshots": 6,
+    "typesExitCode": 0,
+    "platformBuildsPassed": [
+      "h5",
+      "mp-weixin",
+      "app"
+    ]
+  },
+  "newScannerCoverage": [
+    "Actual three SFC scan() handlers are bound by existing template buttons; only native camera I/O is stubbed with MP conditional preprocessing, real Vue/Pinia/request/qualified read modules execute.",
+    "Registered mini q/scene and exact matching token pairs; conflicting tokens and raw old result versus new path reject before decode.",
+    "Absolute incoming H5 origin must equal fresh server-authoritative strict h5_origin; no external scan navigation or fetch.",
+    "Only private types90/91, spid0, explicit member/order namespace and real current workbench realm or owner; owner still uses qualified business read.",
+    "Actual staff and delivery scanner plus memory landing inputs preserve A B, A#B, A\\B, A?B, A&B, A/B through exact JSON and fresh read guards. Staff selected-order member_info stays typed; delivery rejects wrong lookup_kind.",
+    "Manual code edits retire exact typed hints; UID/token/session, role, scope, page visibility and generation fence delayed responses. Three actual pages show zero late fill/read/write on lifecycle changes.",
+    "Customer explicit manual ASCII twelve-digit and literal undefined member reads preserve old compatibility; QR90 generation/decoder/transfer separately reject these mature-invalid private codes.",
+    "Read-only new scanner cases assert zero financial calls and zero code navigation/storage; old financial regression cases retain the original endpoints and explicit user flow."
+  ],
+  "contracts": {
+    "oldGetQrcode": "Unchanged four fields routineUrl,wechatUrl,site_name,nickname.",
+    "sceneAddition": "h5_origin canonical HTTPS DNS root, supplied by authoritative server.",
+    "nativeLanding": "physical pages/share/landing; q=<24 lowercase hex>; scene=q%3D<token>.",
+    "memberPrivate": "length1..32, unchanged trim, not undefined, no controls0000..001f/007f and not12 digits; internal ordinary space/#/backslash/?/&/slash preserved in JSON/in-memory.",
+    "orderPrivate": "exact12 decimal digits preserving leading zero.",
+    "transfer": "current UID/token/sessionVersion + precise registered target, one-use and30s, in-memory only.",
+    "noChanges": "No Worker/routes/dependency locks/global deliveryCode/permission UI/financial execute changes by this increment."
+  },
+  "inputs": {
+    "before": {
+      "file": "private-share-scanner-inputs-before-20261013.json",
+      "sha256": "8f6783797e2e7fa1bf865afb4569c5b6b209c748607d61903d6d472fbae70a28"
+    },
+    "after": {
+      "file": "private-share-scanner-inputs-after-20261013.json",
+      "sha256": "f4844d74fac002be1a8a770a869263f2f6498fffcd0782db133d9af66f67e0e7"
+    },
+    "writeback": {
+      "file": "private-share-scanner-inputs-writeback-20261013.json",
+      "sha256": "2ae5b3d3fca761bb49294986f74a41a36c560d27eb0c68bdf99680ac32f79364"
+    },
+    "commonSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd",
+    "targets": [
+      {
+        "path": "src/utils/legacyShare.ts",
+        "sourceSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04",
+        "localSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04"
+      },
+      {
+        "path": "src/api/legacyShare.ts",
+        "sourceSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77",
+        "localSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77"
+      },
+      {
+        "path": "src/utils/operatorScanCode.ts",
+        "sourceSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637",
+        "localSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637"
+      },
+      {
+        "path": "src/pages/operator/writeoff.vue",
+        "sourceSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c",
+        "localSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c"
+      },
+      {
+        "path": "src/pages/customer-work/scanning.vue",
+        "sourceSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860",
+        "localSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860"
+      },
+      {
+        "path": "src/pages/delivery/scanning.vue",
+        "sourceSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96",
+        "localSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96"
+      },
+      {
+        "path": "src/utils/privateShareScan.ts",
+        "sourceSha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2",
+        "localSha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2"
+      },
+      {
+        "path": "scripts/private-share-scanner-runtime.test.cjs",
+        "sourceSha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d",
+        "localSha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d"
+      },
+      {
+        "path": "src/utils/shareScanTransfer.ts",
+        "sourceSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c",
+        "localSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "command": "node --test scripts/legacy-share-runtime.test.cjs scripts/operator-writeoff-runtime.test.cjs scripts/private-share-scanner-runtime.test.cjs",
+      "log": "private-share-scanner-runtime-common-final-20261013.log",
+      "stdoutSha256": "bb1d37d1fa7cca0067401ab48e85be5f8a6123977cc4d2334f201dccafcc9de9",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "log": "private-share-scanner-typecheck-common-final-20261013.log",
+      "stdoutSha256": "9cea822dc34c22852dffebca0ac664a0262dedbbf4c9672bb4ce233f1d2ca966",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:h5",
+      "log": "private-share-scanner-build-h5-common-final-20261013.log",
+      "stdoutSha256": "11306c8f56e8ab08c9f61498a97d564b2c174cf0458274088ef37a147358382b",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:mp-weixin",
+      "log": "private-share-scanner-build-mini-common-final-20261013.log",
+      "stdoutSha256": "1e8b4294585053946e6f528f76d2e1e6db7cf8e89384b5a390baf2c7b1c0982d",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:app",
+      "log": "private-share-scanner-build-app-common-final-20261013.log",
+      "stdoutSha256": "04a5c343c122373d77bb5b54d83b8cc2c6798e81f49eaee697dd3d34325a7dec",
+      "exitCode": 0
+    },
+    {
+      "command": "node private-share-scanner-browser-qa.mjs",
+      "log": "private-share-scanner-browser-common-final-20261013.log",
+      "stdoutSha256": "8d4342fc79b9398cfc91e007477f672af2958f48d576093d3e9a3871d3dc90c9",
+      "exitCode": 0
+    },
+    {
+      "command": "node private-share-scanner-native-compiled-proof.cjs",
+      "log": "private-share-scanner-native-compiled-common-final-20261013.log",
+      "stdoutSha256": "b9010569101ad18d49e24df06e744f259d52c6989c4f7690cfa14a9240070468",
+      "exitCode": 0
+    }
+  ],
+  "compiledMini": {
+    "proof": "private-share-scanner-native-compiled-proof-20261013.json",
+    "actualURLGlobalsDisabled": true,
+    "pages": 130,
+    "homeRemainsFirst": true,
+    "registeredLanding": true,
+    "physical": [
+      {
+        "path": "app.json",
+        "sha256": "dd59c99899fcccc91af5aac326c25742d294e67bf6a83b0f9003d18054fabd4f"
+      },
+      {
+        "path": "pages/share/landing.js",
+        "sha256": "4382606fd3ed88f49ec612abbdb693dc4ca0ce3f17e55d45b8da3398ab806ed5"
+      },
+      {
+        "path": "pages/share/landing.wxml",
+        "sha256": "401871c97a2fb0c2856b07be5da5353cd868e9010bce52ec8999a8da70569469"
+      },
+      {
+        "path": "pages/share/landing.wxss",
+        "sha256": "68bb0d7a2669857734c7a442ee524845ad2877fb04c9c68b23d55595a8dbaf43"
+      },
+      {
+        "path": "pages/operator/writeoff.js",
+        "sha256": "c08c57996a12f937ee7454023416dda9269125d4d6aa51e1afb295fef4fb47bb"
+      },
+      {
+        "path": "pages/operator/writeoff.wxml",
+        "sha256": "c4db6c2c8e43d68eea0fbc931e3950a2be9df448f71a3ca99322b6e832bd01fe"
+      },
+      {
+        "path": "pages/customer-work/scanning.js",
+        "sha256": "2ebb292274e2b69bc8bddfeb75519105ceb6c721ca14b9251d59097ace7bcb60"
+      },
+      {
+        "path": "pages/customer-work/scanning.wxml",
+        "sha256": "7bd47ded5f29143a6c7d59d25432f94d303b9550b0e8370afa860a6d698527dc"
+      },
+      {
+        "path": "pages/delivery/scanning.js",
+        "sha256": "d633d49dbffbef95196a2d204134813466d0f01dc6143bd1e8cf087e0ee0566e"
+      },
+      {
+        "path": "pages/delivery/scanning.wxml",
+        "sha256": "78628c6c0f14bf30efedcb82239b3b323cec6f93e8a93096b7871443d129654b"
+      }
+    ],
+    "graph": {
+      "entries": [
+        "pages/user/spread.js",
+        "components/SpreadPoster.js",
+        "components/LegacyShareCode.js",
+        "components/diy/DiyEditorialWidget.js",
+        "pages/share/landing.js",
+        "pages/operator/writeoff.js",
+        "pages/customer-work/scanning.js",
+        "pages/delivery/scanning.js"
+      ],
+      "vendorExcluded": "common/vendor.js is Uni platform runtime; application import graph scanned independently",
+      "files": [
+        {
+          "path": "api/customerWork.js",
+          "sha256": "2bb8f99528d907e5948343b4ce81813d6199a5d7909ba2d11550661ed7aa81d1",
+          "webGlobals": false
+        },
+        {
+          "path": "api/customerWorkWriteoff.js",
+          "sha256": "35f6ef516f8a81b917c85046499410dd506dd1944ec37e131719054b2950103e",
+          "webGlobals": false
+        },
+        {
+          "path": "api/deliveryWorkbench.js",
+          "sha256": "a64d495648ffc9203a1a114bf064cf67d419ee24c64895e1a59d66c9aae609be",
+          "webGlobals": false
+        },
+        {
+          "path": "api/diy.js",
+          "sha256": "059bfbffa31ec26c614a027c6252b3950ac9c447d1bf0f6403e0d1c8b72a4ef3",
+          "webGlobals": false
+        },
+        {
+          "path": "api/finance.js",
+          "sha256": "486e3c4e9216bdbe2a8b073ee80c712ba5aaef17d66faabf6e35f90b42666168",
+          "webGlobals": false
+        },
+        {
+          "path": "api/legacyShare.js",
+          "sha256": "77c53632e7682a45a94c8c07f4425ae426ad932a10276281892a8e9dabfe325f",
+          "webGlobals": false
+        },
+        {
+          "path": "api/order.js",
+          "sha256": "fdbcbda9950319cc921611d1aaefc14256932370f757f4f5aab73a49496215a1",
+          "webGlobals": false
+        },
+        {
+          "path": "api/theme.js",
+          "sha256": "b70868f37ee36b96bf4adb273ce3d3660df8221dc775b428c5067e2adb19f2cd",
+          "webGlobals": false
+        },
+        {
+          "path": "api/userCenter.js",
+          "sha256": "5e530ca36e25b52bf6df71af6439acd9c71953d8426487e03d328b8c37d70ad0",
+          "webGlobals": false
+        },
+        {
+          "path": "components/LegacyShareCode.js",
+          "sha256": "f242c0186f49376e6dab1caca8f1122b9ec22c87dd23bfbf28e56142c652f47d",
+          "webGlobals": false
+        },
+        {
+          "path": "components/SpreadPoster.js",
+          "sha256": "61e37f6c361ae91c45c7447cbe8df30ecefd74d626b56e4bae48767b1477c823",
+          "webGlobals": false
+        },
+        {
+          "path": "components/diy/DiyEditorialWidget.js",
+          "sha256": "67c3f7e01afbd1e65e4a274971299198117d2fbeb0821721762b43b22e7fd03f",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useCustomerWork.js",
+          "sha256": "c711952e0c04afa817acea3d7689a5e0d1ec0d144fc42361663c82058ff7ec0d",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useCustomerWorkWriteoffOperations.js",
+          "sha256": "cf57c3d70d0ed4242988f3ca668d0b1a67d585e437d5e52335d2d1693b141612",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useDeliveryWorkbench.js",
+          "sha256": "7b8bcd5ec47c48a394ff8ca7a5f802498f721fadaf1557fe7f53d9767b01840e",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useShareReferral.js",
+          "sha256": "f3f6fec3559ee610bbb4d47baefbffd8c41f727b24e2daf13383618ff37775c6",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useSpreadPoster.js",
+          "sha256": "f540428eeaee21724b21d878e99a61074d69ec888a677eac3b7a5029262960eb",
+          "webGlobals": false
+        },
+        {
+          "path": "config/navigation.js",
+          "sha256": "d2b1cd51e9c4aabd72d6ab5466681c36c94f6d9421ea72a64393b18104d7a6a2",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/customer-work/scanning.js",
+          "sha256": "2ebb292274e2b69bc8bddfeb75519105ceb6c721ca14b9251d59097ace7bcb60",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/delivery/scanning.js",
+          "sha256": "d633d49dbffbef95196a2d204134813466d0f01dc6143bd1e8cf087e0ee0566e",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/operator/writeoff.js",
+          "sha256": "c08c57996a12f937ee7454023416dda9269125d4d6aa51e1afb295fef4fb47bb",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/share/landing.js",
+          "sha256": "4382606fd3ed88f49ec612abbdb693dc4ca0ce3f17e55d45b8da3398ab806ed5",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/user/spread.js",
+          "sha256": "19e4f89c5b0e6e3c8ba8bfff4aed955a7edd698e707ec70b930d9b275b430682",
+          "webGlobals": false
+        },
+        {
+          "path": "stores/auth.js",
+          "sha256": "554b3a6780b9c34e017599bcc254d96b7130e2589fe3965a35e3c610195f7b2b",
+          "webGlobals": false
+        },
+        {
+          "path": "stores/theme.js",
+          "sha256": "192c94dcecf29d969328d19cc8c158ec56ba5c9368ca2ae789f7c44a5e83da6e",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWork.js",
+          "sha256": "a15bfc8a33694db251ad747d7e480ad142d2613d0e8ae39175dbfb8e513f546b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWorkFulfillment.js",
+          "sha256": "0dbd43acc0512f1e9e1789220d2bea6d29e62b5ddf07d0ce4d11eab7ccc0991c",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWorkFulfillmentContract.js",
+          "sha256": "d88a8819db7bea161628906ba6979ff0d5cdebd35cd163f0d575436060f5c6d9",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWorkWriteoff.js",
+          "sha256": "dba90a176301ada028d4a799db6d175c9db9b093ed3a1509bb9b6a629bb20c6b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/deliveryWorkbench.js",
+          "sha256": "8362cbf82090735d3e3bf421e8983fb5718780c447a5199a94134f1fa0f71e32",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/diy.js",
+          "sha256": "543f47e28f22a2d8614928948035f3168c2ea2062c8d12f2f22b3f105e275d88",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/diyTheme.js",
+          "sha256": "edc5aea2d407887236bdd893cb26c6b2c72ca5ab8f184062b24195973ecbb6c8",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/legacyShare.js",
+          "sha256": "d14bd18b0815145a41ace9d7163ed9129268312d3aad7d582cc805670b4c3c6b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/merchantIntentHash.js",
+          "sha256": "9f1ec3380c1bd17d3453da74026b2343964d58444d65e23a648042beb070650f",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/merchantOrders.js",
+          "sha256": "09629a814751691e3059ccfaa4a9f43f945179f1cb2dd8be1ee47660413fefce",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/operatorScanCode.js",
+          "sha256": "92973182cbe8dbe6e87c139e49dfcfd05d2d55770b110d2e4726b5e079bea99c",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/privateShareScan.js",
+          "sha256": "6a101af7c5bf1388e7fdcfc0e83115383b647ad45d0ec564cd1ce42364a20d69",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/request.js",
+          "sha256": "4fc682956a528bdb869137f7070d3c4c8f20e20c2f786262a4310223fa0acd81",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/shareImage.js",
+          "sha256": "f15c74ae968dfca820e9f3746e6ef3dc14d995ea9d4120579d4a258de51e0062",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/shareReferral.js",
+          "sha256": "f6428a5472ff20d72d82f5eba880be41bbdb334a5b3e4998d1b30f320e1f8b1c",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/shareScanTransfer.js",
+          "sha256": "963fe6eb3ad48329a1e4a6ae33c011b1a2f155f1915a4aabd63f0e24d2df082b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/userCenter.js",
+          "sha256": "c936215b1329a829f317d4dc3ec94e47c5067cca64f32c320b1b262aad6bd688",
+          "webGlobals": false
+        }
+      ],
+      "webGlobalFiles": []
+    }
+  },
+  "browser": {
+    "proof": "private-share-scanner-browser-result-20261013.json",
+    "browserPath": "Browser plugin not available; regular Playwright with existing Chrome",
+    "origin": "https://127.0.0.1:18743",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1280,
+        "height": 900
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "checks": [
+      "page identity",
+      "nonblank content",
+      "no framework overlay",
+      "no application console errors",
+      "real controls/requests/state",
+      "responsive screenshots"
+    ],
+    "console": "Only existing vue-router direct-import deprecation warnings. Unrelated external CDN assets isolated, no production access.",
+    "screens": [
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-desktop-customer-success.png",
+        "sha256": "afde564ef9e5e1f5d89ec2b17124c1e8b98627b57a6b72f82c41022d0322d6b6"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-desktop-member-space.png",
+        "sha256": "cc59fc9777289a27c933dfa75aad5a64c73ad373cf1389eaf3e96ecfffdd2a2d"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-desktop-origin-denied.png",
+        "sha256": "3ebb609c6196154d8ec13efc5049e6dbacc2dd980bdde0cd6432ac993d3b0643"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-mobile-customer-success.png",
+        "sha256": "4523ccb6d09fee215f6f98fb437f2f80807ac901339e1b84d69189d388137761"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-mobile-member-space.png",
+        "sha256": "7371794802fd9e9dd3fca666640aaa18376cd8dd96164af81ee110ff417a3358"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-mobile-origin-denied.png",
+        "sha256": "e63f62cb9aa75cd0c50cf05f0e9ef2ba9107d0cf34a2a916e73c945493e4ed22"
+      }
+    ],
+    "syntheticBoundary": "Provider, auth, business API and WeChat scan SDK result are synthetic; localhost TLS certificate is temporary and ignored only in test; compiled H5 customer scanner page, controls, owned requests, exact member JSON, explicit namespace, origin rejection and hide cleanup are real. Actual three native scanner buttons are independently exercised in the SFC suite; physical camera and live provider remain unverified. No live WeChat or production writes."
+  },
+  "dependencyProof": "legacy-share-uni-dependency-proof-20261013.json (same lock/version/vendor bytes; no installation/dependency edits)",
+  "history": {
+    "firstPhaseComplete": "legacy-share-complete-evidence-20261013.json",
+    "firstPhasePortableWriteback": "legacy-share-portable-writeback-20261013.json (9 files,27runtime/14compiled/22browser historically; not borrowed for this scanner scope)",
+    "sourceDriftCaught": "common changed fromcabeb to f467; after guard stopped before any source write, final59/types/three builds/browser/compiled proof rerun on f467.",
+    "fixtures": [
+      "SDK preload was erased by actual Uni bootstrap window.wx={}; inject synthetic SDK after bootstrap, retain prior MIME/error diagnosis JSON.",
+      "Expected scoped lookup JSON initially omitted existing version/scope_key; assertion corrected to exact real protocol, no product edit.",
+      "MP compilation tree-shakes class constructor export; actual exported singleton shareScanTransfer used for compiled proof, prior attempt retained."
+    ],
+    "priorFailureArtifacts": [
+      "private-share-scanner-browser-failed-20261013-namespace-first.json",
+      "private-share-scanner-browser-failed-20261013-sdk-fixture.json",
+      "private-share-scanner-browser-failed-body-fixture-history-20261013.json",
+      "private-share-scanner-native-compiled-typed-final-20261013.log",
+      "private-share-scanner-inputs-before-common-cabeb-history-20261013.json"
+    ],
+    "olderBroadRegression": "Historical250 cases had2 existing fixture failures; current59 targeted suite is fully green, does not assert broad suite green."
+  },
+  "remainingBoundary": "No live WeChat credential/provider or physical device camera test. Conservative WX_CODE official wrapper accepted only as a format hint with authorized registered path; real device raw packaging remains unverified. Cross-project full source audit is coordinated separately."
+}

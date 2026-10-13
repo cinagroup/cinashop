@@ -6,8 +6,24 @@ const row = (id = 1, price = '17.59') => ({ id, productId: 70, cartNum: 2, type:
   productInfo: { price: '19.99', otPrice: '25.00', storeName: '本地商品', image: '', stock: 8, suk: '红色', systemFormId: 0, productType: 0 },
   sumPrice: '39.98', truePrice: price, trueSumPrice: ((Number(price.replace('.', '')) * 2) / 100).toFixed(2), priceType: price === '19.99' ? '' : 'level', levelName: price === '19.99' ? '' : '银卡' });
 function setup(override = () => undefined) {
-  return runtime({ component: 'pages/cart/index.vue', send: call => override(call) ?? (call.url.endsWith('/cart/list')
-    ? { data: [row(), { ...row(2), isValid: false, productInfo: null }] } : { data: null }) });
+  let cartRows=[];
+  return runtime({ component: 'pages/cart/index.vue', send: async call => {
+    const overridden=override(call);
+    if(overridden!==undefined){const result=await overridden;if(call.url.endsWith('/cart/list')&&Array.isArray(result?.data))cartRows=result.data;return result;}
+    if(call.url.endsWith('/cart/list')){cartRows=[row(),{...row(2),isValid:false,productInfo:null}];return {data:cartRows};}
+    if(call.url.endsWith('/cart/compute')){
+      const ids=call.data.cartId.split(',').map(Number),selected=ids.map(id=>cartRows.find(item=>item.id===id));
+      const cents=value=>Number(String(value).replace('.',''));
+      const raw=selected.reduce((sum,item)=>sum+cents(item.sumPrice),0),pay=selected.reduce((sum,item)=>sum+cents(item.trueSumPrice),0);
+      const promotions=selected.reduce((sum,item)=>sum+(item.promotion?.promotionSavingsCents??0),0);
+      return {data:{promotions:[],coupon:[],deduction:{product_type:0,type:0,activity_id:0,sum_price:raw/100,vip_price:(raw-pay-promotions)/100,
+        promotions_price:promotions/100,coupon_price:0,first_order_price:0,pay_price:pay/100},svip_status:false,svip_price:0,
+        budget:{requiresCouponClaim:false,couponIssueId:0,couponUserId:0,gifts:[],requiredIntegral:0,hypotheticalPaidMemberPayPrice:null,
+          selection:selected.map(item=>({id:item.id,productId:item.productId,cartNum:item.cartNum,unique:item.unique,type:item.type,activityId:item.activityId??0})),
+          excludes:['shipping','integral','payment'],needsCheckoutRequote:true}}};
+    }
+    return {data:null};
+  } });
 }
 const promotion = (id = 1) => ({ key: id, productId: 70, quantity: 3, unitPriceCents: null, totalPriceCents: 2900,
   promotionSavingsCents: 100, segments: [
@@ -19,7 +35,7 @@ const promotionRow = () => ({ ...row(), cartNum: 3, productInfo: { ...row().prod
 test('actual mobile cart selects only valid rows and uses membership totals', async () => {
   const r = setup(); try { await r.start(); const p = r.checkout; p.toggleAll();
     assert.equal(p.cartStore.totalPrice, '35.18'); assert.equal(p.allChecked.value, true);
-    p.toggle(2); assert.equal(p.cartStore.items[1].checked, false); p.goCheckout();
+    p.toggle(2); assert.equal(p.cartStore.items[1].checked, false); await tick(); assert.equal(p.budgetReady.value,true); await p.goCheckout();
     assert.deepEqual(r.navigations, ['/pages/order/confirm']);
     r.hooks.onHide(); assert.deepEqual(p.cartStore.checkedItems.map(row => row.id), [1]);
     assert.equal(p.blocked.value, true); p.goCheckout(); assert.equal(r.navigations.length, 1);

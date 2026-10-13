@@ -1,0 +1,166 @@
+{
+  "generatedUtc": "2026-10-13T04:46:47.000945Z",
+  "status": "local frozen functional candidate; UNC narrow typefix only",
+  "ordinaryTests": 93,
+  "ordinaryExit": 0,
+  "inputManifest": "targeted-local-candidate-inputs-6.json",
+  "afterManifest": "targeted-local-candidate-inputs-6-after.json",
+  "rows": [
+    {
+      "relative": "src/services/other/LegacyShareCodeProtocol.ts",
+      "sourceSha256": "9431fb2e51a53440c0c9f36e6d3083845e7f8939f1e5a7a15a617001495e2987",
+      "candidateSha256": "9431fb2e51a53440c0c9f36e6d3083845e7f8939f1e5a7a15a617001495e2987",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:27:28.8633388Z"
+    },
+    {
+      "relative": "src/services/other/LegacyShareCodeService.ts",
+      "sourceSha256": "b4d43dbc997e1f164cb04ffd19f8b20f82d5e3bc7a1cbb76cef032336ad7763d",
+      "candidateSha256": "d28e07860024f1b3e0a613defcd73250080f13af69e07f0a5a8fe2511ac49992",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:41:27.5339479Z"
+    },
+    {
+      "relative": "src/services/other/LegacyPrivateScanTarget.ts",
+      "sourceSha256": "1806881f842d39e40829ce5589fbcccf05d49781bdd911e3cedbaa87751d6a51",
+      "candidateSha256": "ae701c2107d558d4868bc80dd4f3b638a49c4e7cba2dda91b8cd024580d6c544",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:33:04.6847886Z"
+    },
+    {
+      "relative": "src/services/other/LegacyShareBudget.ts",
+      "sourceSha256": "c77c6836e57075ed88139445e85df981174652935b587646cb87a899132b86bd",
+      "candidateSha256": "c77c6836e57075ed88139445e85df981174652935b587646cb87a899132b86bd",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:10:01.8295786Z"
+    },
+    {
+      "relative": "src/services/other/LegacyShareProviderRead.ts",
+      "sourceSha256": "18442850071a97abc2532103c247ee4880896eac899c2c8c538fee37d22129fb",
+      "candidateSha256": "18442850071a97abc2532103c247ee4880896eac899c2c8c538fee37d22129fb",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:10:46.3089872Z"
+    },
+    {
+      "relative": "src/controllers/api/v1/LegacyShareCodeController.ts",
+      "sourceSha256": "ab71aafc3aa233a65df586129527b3a45ee930c8105fe8283888244d75952db1",
+      "candidateSha256": "ab71aafc3aa233a65df586129527b3a45ee930c8105fe8283888244d75952db1",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:15:18.1494169Z"
+    },
+    {
+      "relative": "src/services/wechat/OfficialAccountQrcodeService.ts",
+      "sourceSha256": "caecc1d18b7ea77b0214addca594a800bde6da9b4b242545ac1d27b11bfcf0fa",
+      "candidateSha256": "d960526a90a709228a2ef1ba11fc4e60b098e314f4a3272e1b5345e7bd96aa7d",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:38:15.6959718Z"
+    },
+    {
+      "relative": "src/services/wechat/WechatMiniProgramCodeService.ts",
+      "sourceSha256": "dbc24a5242f60f9774d08eca90dbbf048aa8e4d0144ad76745b4c00ebacbcf24",
+      "candidateSha256": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:41:26.2117823Z"
+    },
+    {
+      "relative": "src/services/wechat/ProductShareProviderPolicy.ts",
+      "sourceSha256": "fd645a5b1723c020e4554001879065b94b55395a012f00c34edc96bc46a0c4c6",
+      "candidateSha256": "fd645a5b1723c020e4554001879065b94b55395a012f00c34edc96bc46a0c4c6",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:09:16.116719Z"
+    },
+    {
+      "relative": "src/services/wechat/WechatCallbackService.ts",
+      "sourceSha256": "8d6f615e775abf7f16dc7f04357d9415aecba35339b437653833365f4637a3b1",
+      "candidateSha256": "8d6f615e775abf7f16dc7f04357d9415aecba35339b437653833365f4637a3b1",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:17:11.5610352Z"
+    },
+    {
+      "relative": "test/legacy-share-code.test.ts",
+      "sourceSha256": "e8ed9fe3ca832d03cdc24b79630431580dc671d2616aaefd78ec2a4519df5e47",
+      "candidateSha256": "3e94b964bf1ed54a43c88618de2b75894f320f3b9cb6a9b596c0bd881d4a9b24",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:39:06.8425287Z"
+    },
+    {
+      "relative": "test/legacy-share-provider-budget.test.ts",
+      "sourceSha256": "51dc70f1dfc14a9aba1da2d0999c58bfb0cc5ca4b01f23226be7ba71834531d9",
+      "candidateSha256": "51dc70f1dfc14a9aba1da2d0999c58bfb0cc5ca4b01f23226be7ba71834531d9",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:10:46.8762659Z"
+    },
+    {
+      "relative": "test/legacy-share-code-native.test.ts",
+      "sourceSha256": "8dfdaaee3d6cc0207c7aaf5e46ecacb633e2d589087a9d9855a598b04d757b5f",
+      "candidateSha256": "8dfdaaee3d6cc0207c7aaf5e46ecacb633e2d589087a9d9855a598b04d757b5f",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:14:00.5357454Z"
+    },
+    {
+      "relative": "test/legacy-share-callback.test.ts",
+      "sourceSha256": null,
+      "candidateSha256": "d553367f3bf31c0c7ea87b11f57e2dcb1918e6bab382f92685dbd17441a75826",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:35:19.6135694Z"
+    },
+    {
+      "relative": "test/legacy-share-private-mini.test.ts",
+      "sourceSha256": null,
+      "candidateSha256": "6a13a6e058a3b0c72caee41b4ac50095a2f1de5b836ba73acc963d4f7f0b24cb",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:41:43.751598Z"
+    },
+    {
+      "relative": "test/legacy-share-http.test.ts",
+      "sourceSha256": null,
+      "candidateSha256": "22edec71d3ed0b0f4d74ed1aea579057d433e5b0d205a94c46d9f394458fc719",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:43:35.7781953Z"
+    },
+    {
+      "relative": "test/legacy-share-private-scan.test.ts",
+      "sourceSha256": "b98215444e75ab435f3442506be6ba5a570e7664edc02c13337beee6850b3c55",
+      "candidateSha256": "7b5d874d284dabb6112ca5ffb2a1974efc948e07464c58fd6e9ec09bb87d1539",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:33:05.0695531Z"
+    },
+    {
+      "relative": "test/legacy-share-private-scan-native.test.ts",
+      "sourceSha256": "5aca8ab993e5d8ad48c3a81e3609775443717d5368688e9756cc0ff71c90d2f0",
+      "candidateSha256": "f957d4aa35d01edca7b61efdd17bcdeae4f15aefd28bdf2544ef0cb3396e891c",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:33:05.4728292Z"
+    },
+    {
+      "relative": "test/legacy-share-private-scan-flow.test.ts",
+      "sourceSha256": null,
+      "candidateSha256": "841cc12b87a101c22b2e578af0aa632e738b4a3e57562aa43fe38159bc535ecc",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:35:50.0964944Z"
+    },
+    {
+      "relative": "test/helpers/legacyPrivateScanFixture.ts",
+      "sourceSha256": "d5703791ff94d4129ccc4c523acbf5100f4a5ebb1cca27597521efb0b81c0651",
+      "candidateSha256": "d5703791ff94d4129ccc4c523acbf5100f4a5ebb1cca27597521efb0b81c0651",
+      "same": true,
+      "candidateModifiedUtc": "2026-10-13T04:27:47.6289104Z"
+    },
+    {
+      "relative": "test/wechat-qrcode-migration.test.ts",
+      "sourceSha256": "22e16c61297a55b20c4d06e3e4534eea3e7917181ae3a48d76b2eea09a46a1a0",
+      "candidateSha256": "eeca57363cebc2f094ec4f2a21851b2f63196e1ed6043331c28da746ae0709a5",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:30:59.3526721Z"
+    },
+    {
+      "relative": "docs/legacy-share-code-20261013.md",
+      "sourceSha256": null,
+      "candidateSha256": "dde92f69cbceb05bca7fb4e37f1eb75ac1d30591a4bc27fafc6bbc1509410250",
+      "same": false,
+      "candidateModifiedUtc": "2026-10-13T04:51:52.5811189Z"
+    }
+  ],
+  "nativeCandidateTests": 48,
+  "nativeCandidateExit": 0
+}

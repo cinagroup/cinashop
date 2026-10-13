@@ -308,6 +308,10 @@
           <el-icon><PriceTag /></el-icon>
           <span>标签管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/label')" index="/label/products" aria-label="商品标签管理">
+          <el-icon><PriceTag /></el-icon>
+          <span>商品标签管理</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/content/article')" index="/content/article">
           <el-icon><Document /></el-icon>
           <span>CMS 文章</span>
@@ -375,6 +379,10 @@
         <el-menu-item v-if="canMenu('/setting/pc-banner')" index="/setting/pc-banner" aria-label="PC首页轮播">
           <el-icon><Monitor /></el-icon>
           <span>PC首页轮播</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/setting/operational-groups')" index="/setting/operational-groups" aria-label="运营图片配置">
+          <el-icon><Picture /></el-icon>
+          <span>运营图片配置</span>
         </el-menu-item>
         <el-menu-item v-if="canMenu('/setting/product-category-style')" index="/setting/product-category-style" aria-label="商品分类页面">
           <el-icon><Tickets /></el-icon>
@@ -460,6 +468,7 @@ function canMenu(path: string): boolean {
 
 const activeMenu = computed(() => {
   const path = route.path;
+  if (path === "/label/products" || path === "/admin/product/label") return "/label/products";
   if (path.startsWith("/product")) return "/product";
   if (path === "/order/offline") return "/order/offline";
   if (path === "/order/invoice") return "/order/invoice";
@@ -546,6 +555,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/setting/city-delivery-records")) return "/setting/city-delivery-records";
   if (path.startsWith("/setting/city-delivery-settings") || path === "/admin/setting/city/delivery/setting") return "/setting/city-delivery-settings";
   if (path.startsWith("/setting/pc-banner")) return "/setting/pc-banner";
+  if (path.startsWith('/setting/operational-groups')) return '/setting/operational-groups';
   if (path.startsWith("/setting/product-category-style") || path === "/admin/setting/pages/product_category") return "/setting/product-category-style";
   if (path.startsWith("/setting/product-detail-design") || path === "/admin/setting/pages/product_detail") return "/setting/product-detail-design";
   if (path.startsWith("/setting/user-center-design") || path === "/admin/setting/pages/home") return "/setting/user-center-design";

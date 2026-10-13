@@ -1,0 +1,98 @@
+{
+  "scope": "division-staff-final-17",
+  "frozenAt": "2026-10-13T09:06:40.3841114Z",
+  "files": [
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffInput.ts",
+      "sha256": "2edffeb1703bf7a178c3e2d9cc23e7e493f44301003f181085ae4fa6be2591d3",
+      "bytes": 5202
+    },
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffService.ts",
+      "sha256": "814d235807151d7307b46c314c8566b543e7a99ea8659eb991b303e230a5e1dc",
+      "bytes": 18964
+    },
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffInvitePolicy.ts",
+      "sha256": "cdfe756ae02d5ee138ea089a79b3f903d7d684b1a30138475916ea24b9e8a462",
+      "bytes": 1374
+    },
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffInviteService.ts",
+      "sha256": "d3cf57ea9a7ee82891ce110970ab0012aa94260b861ffc9bfb2afbf1d1d93db1",
+      "bytes": 11435
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/DivisionStaffController.ts",
+      "sha256": "48080e57dea5c9d6e03f3e9e93fd65c50b1bf541206588ba6daa2ea2aad50e1b",
+      "bytes": 3865
+    },
+    {
+      "path": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+      "sha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b",
+      "bytes": 27042
+    },
+    {
+      "path": "workers-ts/test/helpers/divisionStaffFixture.ts",
+      "sha256": "1d1829ca445a1cf84bc2c4b7e83076c6d0a0cc5af9e45cfbbc5acbfa597cccf2",
+      "bytes": 5835
+    },
+    {
+      "path": "workers-ts/test/division-staff-input.test.ts",
+      "sha256": "72e606403318ce86c05dc911fd8a269c52684c23596fa68cd473335f8eeb1e01",
+      "bytes": 3203
+    },
+    {
+      "path": "workers-ts/test/division-staff-http.test.ts",
+      "sha256": "a1d46824bf8e80aebc924d803d03bef7a328bd41439ff130cbeeabea9a130f9d",
+      "bytes": 18495
+    },
+    {
+      "path": "workers-ts/test/division-staff-invite.test.ts",
+      "sha256": "49cdce492104dcd19bf1ae67947be68d80a3ea63e9445eb13e2f1fce32885101",
+      "bytes": 13503
+    },
+    {
+      "path": "workers-ts/test/division-staff-frontend.test.ts",
+      "sha256": "f45644602bbd9d75319097df7a6864c8f1338de72d651f30026deb937c96f8bc",
+      "bytes": 15958
+    },
+    {
+      "path": "workers-ts/test/division-staff-postgres.test.ts",
+      "sha256": "ba0fc7874e50b5557890e672d303392525f3c4bfb098f2c633fc6610b7683d35",
+      "bytes": 9154
+    },
+    {
+      "path": "view/common/divisionStaff.ts",
+      "sha256": "b3b2b0a954eb806963f30a347c4847c364c39144f80b962516081890f8f229be",
+      "bytes": 9775
+    },
+    {
+      "path": "view/uniapp-ts/src/api/divisionStaff.ts",
+      "sha256": "610706dc034b8ef12940d9bb7aa219220b53468c03ddc6527865bb55c722521f",
+      "bytes": 3231
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/staff_list.vue",
+      "sha256": "91c3f1e0e3bbdfe0603077d080f8b2450b19c747bbdf92d2e2f8566e4ebdf559",
+      "bytes": 9916
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/bind.vue",
+      "sha256": "f5281d8b6c57d4b0b7960d5d767155fbb053b3353789e90371bb72d7aa682661",
+      "bytes": 5117
+    },
+    {
+      "path": "workers-ts/docs/division-staff-contract-20261013.md",
+      "sha256": "2340c062eb49277bdce374b8392fe6654ae6da1190caf29ca048e61ba5e51894",
+      "bytes": 9148
+    }
+  ],
+  "amendment": {
+    "previousFrozenAt": "2026-10-13T08:47:55.576535Z",
+    "previousManifestSha256": "850d742f0015b6a4a741f9428f6ca9fbec91b5ce39e60ef109a97ff29c34d17f",
+    "previousManifestPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-pre-head-freeze.json",
+    "changedOnly": "workers-ts/src/controllers/api/v1/DivisionStaffController.ts",
+    "reason": "Raw HEAD handler rejection protects legacy GET from Hono implicit GET dispatch"
+  }
+}

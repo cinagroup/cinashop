@@ -1,4 +1,5 @@
 import { resolveCustomerWorkPageRoute } from '../../../common/customerWorkRoute';
+import { divisionStaffInviteReturnPath, parseDivisionStaffInviteRoute } from '../../../common/divisionStaff';
 export type LegacyRouteCoverage = "candidate_covered" | "partial_replacement";
 
 export interface LegacyRouteRule {
@@ -14,6 +15,7 @@ export interface LegacyRouteRule {
  */
 export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/customer-work/index",
+  "/pages/share/landing",
   "/pages/customer-work/statistics",
   "/pages/customer-work/cashierRecords",
   "/pages/customer-work/cashierRecord",
@@ -111,6 +113,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/users/agent/state",
   "/pages/users/agent/record",
   "/pages/users/agent/staff_list",
+  '/pages/users/agent/bind',
   "/pages/user/bank",
   "/pages/user/payPassword",
   "/pages/user/vipOpen",
@@ -357,6 +360,19 @@ function resolveLegacyActivityDetail(query: string): string {
 export function resolveRegisteredPageRoute(path: string, query = ""): string {
   const work = resolveCustomerWorkPageRoute(path, query);
   if (work !== null) return work;
+  if (path === '/pages/users/user_spread_user/index' && query) {
+    if (query.length > 1024) return '';
+    const values: Record<string, string> = {}; let invitation = false;
+    try {
+      for (const part of query.split('&')) {
+        const offset = part.indexOf('='), key = decodeURIComponent(offset < 0 ? part : part.slice(0, offset));
+        if (Object.prototype.hasOwnProperty.call(values, key)) return '';
+        values[key] = decodeURIComponent(offset < 0 ? '' : part.slice(offset + 1));
+        if (['scene', 'a', 'agent_code', 'agent_id', 'id', 'spid'].includes(key)) invitation = true;
+      }
+      if (invitation) return divisionStaffInviteReturnPath(parseDivisionStaffInviteRoute(values));
+    } catch { return ''; }
+  }
   if (path === "/pages/activity/goods_details/index") return resolveLegacyActivityDetail(query);
   if (path === "/pages/activity/integralDetail") return resolveLegacyActivityDetail(`${query}&type=4`);
   const rule = LEGACY_ROUTE_RULES[path];

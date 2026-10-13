@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
-import { eq, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainerFromDb, withTx, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
@@ -217,7 +217,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real full-ORM ca
 
   it('the actual supplier save rolls back on busy SKU and succeeds after explicit refresh', async () => {
     await f.db.update(storeProduct).set({ type: 2, relationId: 51 }).where(eq(storeProduct.id, 70));
-    await f.db.update(storeProductCategory).set({ type: 2, relationId: 51 }).where(eq(storeProductCategory.id, 9));
+    // A Supplier leaf must retain a complete same-owner parent chain. Moving
+    // only leaf 9 out of platform parents 7/8 makes this an invalid catalog
+    // before the actual SKU lock scenario can be exercised.
+    await f.db.update(storeProductCategory).set({ type: 2, relationId: 51 }).where(inArray(storeProductCategory.id, [7, 8, 9]));
     const body = { ...skuBody, product_type: 0, store_name: 'supplier edited', slider_image: ['/api/qa/image.svg'],
       freight: 1, attrs: [{ ...skuBody.attrs[0], settle_price: '1.00' }], description: 'new supplier description' };
     const before = await state();
@@ -249,7 +252,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real full-ORM ca
   }, 20_000);
 
   it.each(['admin', 'supplier'] as const)('preserves actual new-product SKU creation for %s', async actor => {
-    if (actor === 'supplier') await f.db.update(storeProductCategory).set({ type: 2, relationId: 51 }).where(eq(storeProductCategory.id, 9));
+    if (actor === 'supplier') await f.db.update(storeProductCategory).set({ type: 2, relationId: 51 }).where(inArray(storeProductCategory.id, [7, 8, 9]));
     const body = { ...skuBody, store_name: 'new isolated product', slider_image: ['/api/qa/image.svg'], product_type: 0, freight: 1,
       attrs: [{ ...skuBody.attrs[0], unique: '', settle_price: '1.00', stock: 3 }] };
     const r = await request(app(f.db), actor === 'admin' ? '/admin/product/add' : '/supplier/product/0', body);

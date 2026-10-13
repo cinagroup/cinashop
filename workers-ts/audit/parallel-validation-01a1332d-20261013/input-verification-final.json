@@ -1,0 +1,169 @@
+{
+  "verifiedAt": "2026-10-13T03:14:02.066Z",
+  "source": "\\\\tsclient\\I\\cinagroup\\cinashop",
+  "target": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq",
+  "baseInputCount": 4064,
+  "baseVerification": "input-verification.json",
+  "baseMismatches": 4,
+  "resolvedFinalScopeCount": 31,
+  "currentMismatchCount": 0,
+  "finalInputCount": 4076,
+  "manifestSha256": "b31e6cbc790ce8a2cd73e9d56ab33e4aba75656a1ce50f99f6230adf6240df67",
+  "finalScope": [
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacySystemLogService.ts",
+      "sourceSha256": "9d9a40575abeb3dbec082a24675b39e6563d3f595d8e3e8a6dbb99c8a88653bb",
+      "copySha256": "9d9a40575abeb3dbec082a24675b39e6563d3f595d8e3e8a6dbb99c8a88653bb"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminLegacySystemLogController.ts",
+      "sourceSha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "copySha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sourceSha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "copySha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109"
+    },
+    {
+      "path": "workers-ts/src/services/system/PublicGeocodingService.ts",
+      "sourceSha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "copySha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicGeocodingController.ts",
+      "sourceSha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "copySha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCatalogService.ts",
+      "sourceSha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "copySha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductCatalogController.ts",
+      "sourceSha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "copySha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sourceSha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "copySha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sourceSha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "copySha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sourceSha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "copySha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log.test.ts",
+      "sourceSha256": "0fe9fa584b80da35f8279d5fe0c4b8be28d755487dfccef61828336abae886f4",
+      "copySha256": "0fe9fa584b80da35f8279d5fe0c4b8be28d755487dfccef61828336abae886f4"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log-native.test.ts",
+      "sourceSha256": "35d75c73dee68cfb6b4d91570148ea9eb6a7176ebbb187c906e8206739208360",
+      "copySha256": "35d75c73dee68cfb6b4d91570148ea9eb6a7176ebbb187c906e8206739208360"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-log-permission.test.ts",
+      "sourceSha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "copySha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db"
+    },
+    {
+      "path": "workers-ts/test/public-geocoding.test.ts",
+      "sourceSha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "copySha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-catalog.test.ts",
+      "sourceSha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "copySha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sourceSha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "copySha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sourceSha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "copySha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f"
+    },
+    {
+      "path": "workers-ts/docs/admin-legacy-system-log-20261013.md",
+      "sourceSha256": "31a2e7e3b229a381270a02a9b1afa20d63ad6114ce6d1a215c1223f326a24ff2",
+      "copySha256": "31a2e7e3b229a381270a02a9b1afa20d63ad6114ce6d1a215c1223f326a24ff2"
+    },
+    {
+      "path": "workers-ts/docs/supplier-product-selection-catalogs.md",
+      "sourceSha256": "6facd65d8feb60a61555303c70cdb33d0f5eab52104c8229555882b3d7615c93",
+      "copySha256": "6facd65d8feb60a61555303c70cdb33d0f5eab52104c8229555882b3d7615c93"
+    },
+    {
+      "path": "view/admin-ts/functions/adminapi/[[path]].ts",
+      "sourceSha256": "8e1953a029ba1923d765aa8fbb11828a176f340e8fc3c11fae5e580427f1d899",
+      "copySha256": "8e1953a029ba1923d765aa8fbb11828a176f340e8fc3c11fae5e580427f1d899"
+    },
+    {
+      "path": "view/admin-ts/functions/api/assets/[id].ts",
+      "sourceSha256": "4e25eeb0b18f87a361f9c9b14d83e8e58b91bff567ba2c04ea91d3f2eef2646f",
+      "copySha256": "4e25eeb0b18f87a361f9c9b14d83e8e58b91bff567ba2c04ea91d3f2eef2646f"
+    },
+    {
+      "path": "view/admin-ts/functions/api/site_config.ts",
+      "sourceSha256": "460923632985baf0f9303375db75819333a59bc9f4c86241bd109b4e753c9137",
+      "copySha256": "460923632985baf0f9303375db75819333a59bc9f4c86241bd109b4e753c9137"
+    },
+    {
+      "path": "view/kefu-ts/functions/kefuapi/[[path]].ts",
+      "sourceSha256": "68ed37b446ac464dbf2b685771aac557ce1b72b138cec17da0cf3939f8bf002e",
+      "copySha256": "68ed37b446ac464dbf2b685771aac557ce1b72b138cec17da0cf3939f8bf002e"
+    },
+    {
+      "path": "view/pc-ts/functions/api/[[path]].ts",
+      "sourceSha256": "ad61bf0762043623bc7032ac111d56e91c0d1c50e3660c1a80b171bd768dd19e",
+      "copySha256": "ad61bf0762043623bc7032ac111d56e91c0d1c50e3660c1a80b171bd768dd19e"
+    },
+    {
+      "path": "view/pc-ts/functions/kefuapi/[[path]].ts",
+      "sourceSha256": "a659cb1fbd33c4886a7c0df9f40fcef6db3c15c840d6ea8fcf24c5d5d10de0bd",
+      "copySha256": "a659cb1fbd33c4886a7c0df9f40fcef6db3c15c840d6ea8fcf24c5d5d10de0bd"
+    },
+    {
+      "path": "view/pc-ts/functions/offline-payment-return.ts",
+      "sourceSha256": "1c1e9366ce36138d6f82c16aa5a54365d8fecd3cbf06927f417dd22b9f08d0ee",
+      "copySha256": "1c1e9366ce36138d6f82c16aa5a54365d8fecd3cbf06927f417dd22b9f08d0ee"
+    },
+    {
+      "path": "view/supplier-ts/functions/api/assets/[id].ts",
+      "sourceSha256": "e80c351283edae18b29e1446760662fda7f6007dc18f41aa6c8959e75d7dc6d5",
+      "copySha256": "e80c351283edae18b29e1446760662fda7f6007dc18f41aa6c8959e75d7dc6d5"
+    },
+    {
+      "path": "view/supplier-ts/functions/supplierapi/[[path]].ts",
+      "sourceSha256": "8bf993452595d060f6f34056c75d98d61022215cbaf2ecc2c8769ca4099f26c9",
+      "copySha256": "8bf993452595d060f6f34056c75d98d61022215cbaf2ecc2c8769ca4099f26c9"
+    },
+    {
+      "path": "view/uniapp-ts/functions/api/[[path]].ts",
+      "sourceSha256": "35df5a032031c59b53f62fab0b7f7ec2dffda02ee941d8db30686cccb2c47cb3",
+      "copySha256": "35df5a032031c59b53f62fab0b7f7ec2dffda02ee941d8db30686cccb2c47cb3"
+    },
+    {
+      "path": "view/uniapp-ts/functions/offline-payment-return.ts",
+      "sourceSha256": "d6f21501f8adebf11533a2b4a1229ac5c99c61f4c9503ecf94b5d0b8c57ff1d2",
+      "copySha256": "d6f21501f8adebf11533a2b4a1229ac5c99c61f4c9503ecf94b5d0b8c57ff1d2"
+    },
+    {
+      "path": "workers-ts/audit/observability-policy.json",
+      "sourceSha256": "d73304037d0e45d0957aca0c5e0b9f9558ac98aeb715d525e28bc996a9056f57",
+      "copySha256": "d73304037d0e45d0957aca0c5e0b9f9558ac98aeb715d525e28bc996a9056f57"
+    }
+  ]
+}

@@ -66,6 +66,13 @@ export async function lockProductWrite(tx: DbClient, productId: number): Promise
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_WRITE_LOCK_NAMESPACE}, ${productId})`);
 }
 
+/** Catalog moves already hold brand rows. Do not wait backwards on a product
+ * writer that may be acquiring those same brand rows after its product lock. */
+export async function tryLockProductWrite(tx: DbClient, productId: number): Promise<boolean> {
+  const rows = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(${PRODUCT_WRITE_LOCK_NAMESPACE}, ${productId}) AS locked`) as unknown as Array<{ locked: boolean }>;
+  return rows[0]?.locked === true;
+}
+
 export interface ProductAssociations {
   categoryIds: number[];
   brandIds: number[];

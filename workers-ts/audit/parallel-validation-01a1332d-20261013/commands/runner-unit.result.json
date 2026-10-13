@@ -1,0 +1,20 @@
+{
+  "tag": "runner-unit",
+  "start": "2026-10-13T03:07:25.816Z",
+  "end": "2026-10-13T03:09:28.305Z",
+  "node": "v24.14.1",
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "args": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "test/local-finance-postgres-runner.test.ts",
+    "--maxWorkers=1"
+  ],
+  "status": 1,
+  "signal": null,
+  "errorCode": null,
+  "stdoutBytes": 512,
+  "stderrBytes": 2557
+}

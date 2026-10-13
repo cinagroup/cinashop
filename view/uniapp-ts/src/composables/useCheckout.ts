@@ -13,6 +13,7 @@ import { parseCheckoutSelection, checkoutRequiresAddress, checkoutSupportsIntegr
 import { CheckoutIntentJournal, type CheckoutIntent } from "../../../common/checkoutIntent";
 import { prepareOrderSystemFormSubmission } from "../../../common/order-system-form";
 import type { BargainShippingSelection } from '../../../common/bargainShipping';
+import { CartCouponPreselection } from '../../../common/cartCouponPreselection';
 
 export function useCheckout() {
   const auth = useAuthStore(), cart = useCartStore();
@@ -30,6 +31,7 @@ export function useCheckout() {
   let query: Record<string, unknown> = {}, checkedIds: number[] = [], generation = 0;
   let uncertain = false;
   let resumeForm = false;
+  let cartCouponPreselection: CartCouponPreselection | null = null, cartCouponError = '';
   const locked = computed(() => loading.value || shippingLoading.value || !!pending.value || !visible.value || !auth.isLoggedIn);
   // Native image selection can hide the page. Do not invalidate its owned form on that hide.
   const formLocked = computed(() => loading.value || !!pending.value || !auth.isLoggedIn);
@@ -114,9 +116,12 @@ export function useCheckout() {
       if (pending.value) { uncertain = true; return; }
       uncertain = false;
       const selection = parseCheckoutSelection(query);
+      if (cartCouponError) throw new Error(cartCouponError);
+      if (query.couponId !== undefined && selection.mode !== 'cart') throw new Error('购物车优惠券不能用于立即购买');
       const rows = await checkoutApi.items(selection, checkedIds);
       if (current !== generation) return;
       const type = rows[0].type;
+      if (query.couponId !== undefined && type !== 0) throw new Error('活动购物车不能预选普通优惠券');
       if (rows.some((row) => row.type !== type)) throw new Error("不同活动商品请分开结算");
       if (type === 7) {
         const rawId = query.newcomerId;
@@ -202,14 +207,22 @@ export function useCheckout() {
       }
     } finally { submitting.value = false; if (visible.value && current !== generation) void load(); }
   }
-  function suspend() { resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
+  function suspend() { cartCouponPreselection?.revoke(); resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
   watch(() => couponScope.value?.fingerprint ?? "", () => {
+    cartCouponPreselection?.bind(couponScope.value, { uid: auth.uid, version: auth.sessionVersion }, items.value.map(row => row.id),
+      !items.value.length || items.value.every(row => row.type === 0 && row.isNew === 0));
     if (pending.value) { couponSession.pause(); return; }
     couponId.value = 0; couponSession.reset();
     if (couponScope.value && !locked.value) void couponSession.load(couponScope.value);
   }, { flush: "sync" });
+  watch(coupons, state => {
+    const suggestion = cartCouponPreselection?.accept(state);
+    if (suggestion?.couponId) selectCoupon(suggestion.couponId);
+    else if (suggestion?.loadMore) void loadCoupons(true);
+  }, { flush: 'sync' });
   watch(options, () => { void refreshQuote(); }, { flush: "sync" });
   watch(() => auth.sessionVersion, () => {
+    cartCouponPreselection?.revoke();
     generation++; quoteSession.reset(); couponSession.reset(); pending.value = null; items.value = [];
     shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
     customForm.value = []; formRevision.value++; formName.value = ""; uploads.value = 0;
@@ -217,7 +230,13 @@ export function useCheckout() {
     addressId.value = 0; storeId.value = 0; couponId.value = 0; useIntegral.value = false;
     error.value = "登录状态已变化，请重新加载结算";
   });
-  onLoad((params) => { query = params ?? {}; checkedIds = cart.checkedItems.map((row) => row.id); });
+  onLoad((params) => {
+    query = params ?? {}; checkedIds = cart.checkedItems.map((row) => row.id);
+    if (query.couponId !== undefined) {
+      try { cartCouponPreselection = new CartCouponPreselection(query.couponId, { uid: auth.uid, version: auth.sessionVersion }, checkedIds); }
+      catch (error) { cartCouponError = message(error, '购物车优惠券参数无效'); }
+    }
+  });
   onShow(() => {
     visible.value = true;
     if (resumeForm && items.value.length && !error.value) { resumeForm = false; void refreshQuote(activity.value.type === 2); void loadCoupons(); }

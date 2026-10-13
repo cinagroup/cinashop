@@ -1,0 +1,161 @@
+{
+  "name": "catalog",
+  "startedAt": "2026-10-13T09:28:32.908Z",
+  "completedAt": "2026-10-13T09:32:33.682Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+    "test/checkout-catalog-management.test.ts"
+  ],
+  "code": 0,
+  "signal": null,
+  "files": [
+    "test/checkout-catalog-management.test.ts"
+  ],
+  "actualFiles": [
+    "test/checkout-catalog-management.test.ts"
+  ],
+  "complete": true,
+  "passed": 25,
+  "failed": 0,
+  "skipped": 0,
+  "summaryPassed": 25,
+  "cases": [
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > refuses the SKU editor reverse wait without a database deadlock and preserves the buyer",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late product edit (category)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late product edit (equivalent)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late product edit (display)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late product edit (sku-price)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late Out category operation (move)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late Out category operation (display)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late Out category operation (show)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > checks an actual late Out category operation (referenced-delete)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > refuses checkout while a real Out tree move holds categories and waits for relation repair",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > rolls back the entire actual product editor on a final SQL failure",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > rolls back the entire actual tree editor on a final SQL failure",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > holds actual later product save until checkout commit",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > holds actual later product save until checkout rollback",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > holds actual later tree save until checkout commit",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > holds actual later tree save until checkout rollback",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > Out deletion waits for buyer inventory and then still refuses the live product reference",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > only translates SKU lock unavailability, never other SQL errors (55P03)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > only translates SKU lock unavailability, never other SQL errors (40P01)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > only translates SKU lock unavailability, never other SQL errors (57014)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > only translates SKU lock unavailability, never other SQL errors (08006)",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > the actual supplier save rolls back on busy SKU and succeeds after explicit refresh",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > a later occupied SKU rolls back earlier acquired SKU locks and all editor writes",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > preserves actual new-product SKU creation for admin",
+      "status": "passed"
+    },
+    {
+      "file": "test/checkout-catalog-management.test.ts",
+      "fullName": "real full-ORM catalog management versus checkout > preserves actual new-product SKU creation for supplier",
+      "status": "passed"
+    }
+  ],
+  "log": ".cache/category-label-staff-native-catalog-final.log",
+  "logSha256": "28d4397785c3d7bba0c16ac59c34bc544660b4e5e6c73258e26641be206ea3ba",
+  "cleanup": {
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "ownedCluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-LeN8AG",
+    "independentPgCtlStatus": 3,
+    "statusOutput": "pg_ctl: no server running"
+  }
+}

@@ -84,6 +84,9 @@ function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<Retu
   return { eligibleSubtotalCents, lineEligibleCents, priceCents: calculateCouponDiscountCents({ discountType: issue.type, couponPrice: coupon.couponPrice, eligibleSubtotalCents }) };
 }
 
+/** Cart budgets use the same integer discount and scope admission as checkout. */
+export { evaluateCoupon as evaluateOrderCoupon };
+
 /** Authoritative single-coupon resolution shared by quote, create and the order picker. */
 export async function resolveOrderCoupon(container: Container, uid: number, couponId: number | undefined, items: readonly PricedCouponItem[]) {
   if (!couponId) return { priceCents: 0, row: null, quoteFacts: null, template: null, lineEligibleCents: null };

@@ -23,6 +23,7 @@ import { adminRefundOperationRoutes } from "@/routes/admin-refund-operations";
 import { adminRefundCreationRoutes } from "@/routes/admin-refund-creation";
 import { supplierapiRoutes } from "@/routes/supplierapi";
 import { outapiRoutes } from "@/routes/outapi";
+import { erpapiRoutes } from '@/routes/erpapi';
 import { kefuapiRoutes } from "@/routes/kefuapi";
 import type { AppVariables, Env } from "@/env";
 
@@ -68,6 +69,7 @@ export function createApp() {
 
   // 8. PHP-compatible third-party API routes use a separate token/ACL domain.
   app.route("/outapi", outapiRoutes);
+  app.route('/erpapi', erpapiRoutes);
 
   // 9. Dedicated customer-service token and data scope (/kefuapi/*).
   app.route("/kefuapi", kefuapiRoutes);

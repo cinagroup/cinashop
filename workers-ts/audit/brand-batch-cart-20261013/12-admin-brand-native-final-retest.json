@@ -1,0 +1,9 @@
+{
+  "File": "test/admin-product-brand-native.test.ts",
+  "Started": "2026-10-13T06:13:07.0365009Z",
+  "Exit": 0,
+  "SourceSHA256": "14AAEB8350B713EBAD6F54E38A4C3CD808254C8444B10B25183825B01F615123",
+  "PreviousFailurePreserved": "commerce-wave-native-final.log",
+  "Completed": "2026-10-13T06:13:33.0088068Z",
+  "MirrorSHA256": "14AAEB8350B713EBAD6F54E38A4C3CD808254C8444B10B25183825B01F615123"
+}

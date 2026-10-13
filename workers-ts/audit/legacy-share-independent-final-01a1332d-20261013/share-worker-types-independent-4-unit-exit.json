@@ -1,0 +1,15 @@
+{
+  "label": "unit",
+  "command": [
+    "--max-old-space-size=6144",
+    "node_modules/typescript/bin/tsc",
+    "--noEmit"
+  ],
+  "startedAt": "2026-10-13T07:40:01.385Z",
+  "finishedAt": "2026-10-13T07:42:37.506Z",
+  "exitCode": 2,
+  "signal": null,
+  "error": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-worker-types-independent-4-unit.txt",
+  "logSha256": "00192a116453f63ebb5d2052a2e9ef40054ab389e7df44aca8c194a860aa0b6f"
+}

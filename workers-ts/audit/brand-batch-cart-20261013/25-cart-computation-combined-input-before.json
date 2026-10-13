@@ -1,0 +1,2170 @@
+{
+  "at": "2026-10-13T06:37:31.508Z",
+  "root": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation",
+  "files": [
+    {
+      "path": "view/common/articleRichText.ts",
+      "sha256": "c851d407b00cc79185001817e0ec71b8ee77b5d2060aab7273084245c63ad567"
+    },
+    {
+      "path": "view/common/assistedCheckout.ts",
+      "sha256": "79d6135d9f08b12e29a02dd83553cb104612a7d750f06334943c4bc44fd3b92e"
+    },
+    {
+      "path": "view/common/assistedForm.ts",
+      "sha256": "4ea8d544f5c74988ae5d0e3b47ecb84ac94785b9f7923ed22ea0d49ef32318cb"
+    },
+    {
+      "path": "view/common/bargainPurchase.ts",
+      "sha256": "33806ae531e098fa71f6a4102207378010eb667136ab51fd409d719eb222d756"
+    },
+    {
+      "path": "view/common/bargainShipping.ts",
+      "sha256": "55067ce311df6d395e56541a839241c4ffcf7f8233caa540a8cd379b2ffa78c9"
+    },
+    {
+      "path": "view/common/cartComputation.ts",
+      "sha256": "e09ad5200a80278c89b277f9db20ed2c4980f3a1aeb8541ca7e17e2f411e4b81"
+    },
+    {
+      "path": "view/common/cartCouponPreselection.ts",
+      "sha256": "c58f1ec5fecdc22b7cc84fcab33b0ba9ca14259ea72ee927eb858bcb48db0f35"
+    },
+    {
+      "path": "view/common/cartPrice.ts",
+      "sha256": "0cba0cee75855b0757a5ef978afcc0ef9264594de452ab027f1f6d6eec52aaa8"
+    },
+    {
+      "path": "view/common/cartState.ts",
+      "sha256": "6662611b06ec66f677cdad714417e5bc1c17f2dfa46867f9532bc197f75ef9e1"
+    },
+    {
+      "path": "view/common/categoryCatalog.ts",
+      "sha256": "cf84cba0693bb5727921e988b27fa03c1a579b170c7a79e3e87e149b72246dc0"
+    },
+    {
+      "path": "view/common/checkoutApi.ts",
+      "sha256": "06bbc6c60566ccad09f016d4c569e53c2299ac1f2e5602d4036387e22c7baba9"
+    },
+    {
+      "path": "view/common/checkoutIntent.ts",
+      "sha256": "58274921de409213c29bf32c980db6dce05a1dd8ced4c59db5e3f6d164f3eda0"
+    },
+    {
+      "path": "view/common/checkoutQuote.ts",
+      "sha256": "fbd4fab00e4035a8051b09d443a856994f9a8bf72a239d03b9ce791999564954"
+    },
+    {
+      "path": "view/common/checkoutSelection.ts",
+      "sha256": "fdfbbc85a0be1fb9e8d262ea15939e43b28d213a2ab2dbb46df758e6bb449e07"
+    },
+    {
+      "path": "view/common/cityDeliverySettings.ts",
+      "sha256": "c011782c02ae60b79efc6970b17fd0ce235dffb5dc22a1e07e8888f2081630b5"
+    },
+    {
+      "path": "view/common/combinationPurchase.ts",
+      "sha256": "2978ded4c67e4e23136437cde107ae2beb9dd860f594375fc01fe5bbdd952f05"
+    },
+    {
+      "path": "view/common/couponProducts.ts",
+      "sha256": "397299621eb491ba8f5c491c8fe55e8a83757361c4de3c6170fb6ecceb0ab50a"
+    },
+    {
+      "path": "view/common/couponProductSearch.ts",
+      "sha256": "18ece91d57c8fb7a117d74a95f4cf8774acc18bed3e665d86b1f503a479bd3f8"
+    },
+    {
+      "path": "view/common/couponScopeDescription.ts",
+      "sha256": "1d5d6610fabb5f9ed27560e57b7bc27bc834968010e72ee4f431a4bbdf888202"
+    },
+    {
+      "path": "view/common/couponWallet.ts",
+      "sha256": "076b422da2612aa719a148c253c936a11099d5d032d1fda4891dabeaa4c0c186"
+    },
+    {
+      "path": "view/common/customerWorkFinancial.ts",
+      "sha256": "398d67e7808eef762db94e14ecad30e9bfd9a9377d12ff8124a31c20ddf0f4ea"
+    },
+    {
+      "path": "view/common/customerWorkIntent.ts",
+      "sha256": "568948e6489f8b4c43d1254a96fd1c02a9bf8b3858d9c9189ed9bdc60c2d1d96"
+    },
+    {
+      "path": "view/common/customerWorkRoute.ts",
+      "sha256": "114839d77d879e6db2e4f94d6a5026010f8f224096e7449e71b32ba625f700c3"
+    },
+    {
+      "path": "view/common/customerWorkWriteoff.ts",
+      "sha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd"
+    },
+    {
+      "path": "view/common/deliveryWorkbench.ts",
+      "sha256": "84d352e1975c91d1dc7c2c8a0617819569c5b3146e45d3d9877c355a5068c7a5"
+    },
+    {
+      "path": "view/common/deliveryWriteoff.ts",
+      "sha256": "30b77d6e4fc73fd6252f6198e0cf1cb9c5cf1b8cf37235b0fd01a0215792ab80"
+    },
+    {
+      "path": "view/common/echarts-tooltip.test.mjs",
+      "sha256": "1e31e902c9bdcdc217d3187f5f26656188baec6c7870e08c368254a245851106"
+    },
+    {
+      "path": "view/common/integralPurchase.ts",
+      "sha256": "25a9d7a05ba525f4c4a5d0cd6e7822e77902b3bdf0c7f34f15b4afba8385239f"
+    },
+    {
+      "path": "view/common/merchantManagement.ts",
+      "sha256": "3bc62d2cc14570c696469040ab5a4cec7948e0b16d4def3a35b3fe3abeb52cfa"
+    },
+    {
+      "path": "view/common/mocker-security.test.mjs",
+      "sha256": "cd0df15c3fe1322cc0dfe0b0512f7e42d910d7868993d0001834004f1c7ad300"
+    },
+    {
+      "path": "view/common/nanoid-behavior-probe.mjs",
+      "sha256": "874c710b8b4886ea0793419af8f698a8181e77edaf1f19ad405ade488e4fae48"
+    },
+    {
+      "path": "view/common/newcomerPurchaseRecovery.ts",
+      "sha256": "e5a6ffd4d3c7d9dd6c7692ea598cf29fe375073c1cdb909640567606384c2373"
+    },
+    {
+      "path": "view/common/offlineBrowser.ts",
+      "sha256": "8710b6619ec9a497d6edbf2ed8dbde5a7b671fad1081516c50ca31c516f57f4d"
+    },
+    {
+      "path": "view/common/offlineCashier.ts",
+      "sha256": "1c9f8c8eeb2880d1858526b030ad0e215dba2fd604f788097d1e43cfb378b0d7"
+    },
+    {
+      "path": "view/common/offlineReturn.ts",
+      "sha256": "e3101552c6c1c09e6786fef2173a020e619c5fa5dcb9551467c2cfa0d4494cc9"
+    },
+    {
+      "path": "view/common/order-system-form.ts",
+      "sha256": "7d2d9ffd138920f7106c22500953d2b4208089b5ab8f07de43532681549400b2"
+    },
+    {
+      "path": "view/common/orderCoupons.ts",
+      "sha256": "fa10e33c7b83cb1fc55b61c14f16a5d6a7e26115af31cb85ff62f19e79b8100b"
+    },
+    {
+      "path": "view/common/orderDeletion.ts",
+      "sha256": "efc65cda6d93432b3beafd709abba7099e733d4200fd2e9feb222c5c79fc032d"
+    },
+    {
+      "path": "view/common/orderDetailIdentity.ts",
+      "sha256": "8a6e1c0478f9b1b83ce75d12650aaf68769fa5981e138544e37ddd0d0caf3531"
+    },
+    {
+      "path": "view/common/orderListState.ts",
+      "sha256": "bd1b81e0ac9447433a12a21b89cbd7cc987a13dba3c2570747a799b0ab628c27"
+    },
+    {
+      "path": "view/common/pinkCancellation.ts",
+      "sha256": "283515bb544907ed2999e49f6afb7e023e42b1cde3ba7755be6d1b331c134bf8"
+    },
+    {
+      "path": "view/common/pinkStatus.ts",
+      "sha256": "60de0f13f5084886c66516d9286e440d1087aaad635d3b4dde623a0da66b69c2"
+    },
+    {
+      "path": "view/common/preparedProductCart.ts",
+      "sha256": "9d0f9625c6f64c31fd58be9c6af06525058550888a2d309d4d7364a37c6ba42b"
+    },
+    {
+      "path": "view/common/presaleCatalog.ts",
+      "sha256": "a2fa828e0a64ad537c9e6915fe47838f6634e042dc4fe5f69e2c646e2907a8e1"
+    },
+    {
+      "path": "view/common/presalePurchase.ts",
+      "sha256": "5597be18c87dad1743a34547ea1e81a3adf3318c56538b8a593b41be14e07d4d"
+    },
+    {
+      "path": "view/common/productCategoryStyle.ts",
+      "sha256": "73de1ec7da735f392e985cbcc65c98e7602785ab3b6ac2bb3a9844c164f4987e"
+    },
+    {
+      "path": "view/common/productCategoryStyleController.ts",
+      "sha256": "2a711dacb29a77f23d597d68e4eb84ec865e6ec548b8229f187fa1e26e67a08a"
+    },
+    {
+      "path": "view/common/productDetailDesign.ts",
+      "sha256": "e417df32d062659b3800f05688a3163ee18c76a544f2273433e7563bd0e5fec5"
+    },
+    {
+      "path": "view/common/productDetailDesignController.ts",
+      "sha256": "9b3a173a179b4acfa8822b1bb2f91cf80a4555d4bc4c10822f43f80571c7633a"
+    },
+    {
+      "path": "view/common/productDetailRoute.ts",
+      "sha256": "8844c5af87b2a8f541341ac57f7322ef5dc60a5b45037bb1559dd2a01c72e82d"
+    },
+    {
+      "path": "view/common/productMediaReference.ts",
+      "sha256": "2496e64ec6ee7f2a3165b0b2a1fe77bfa9e6667a0107d9b0041f53bff17581e2"
+    },
+    {
+      "path": "view/common/refundApplication.ts",
+      "sha256": "e4de0baf8ae0e33aeb8ab68b63184207ae6cb25931b608151b020f251fa5a9c3"
+    },
+    {
+      "path": "view/common/refundHistory.ts",
+      "sha256": "c5dec2e4010ce47cf08fbd748cf6521702ff17aab3abf38626c902bfadd47160"
+    },
+    {
+      "path": "view/common/refundReader.ts",
+      "sha256": "e24ff3c7b0f52e230f1e595b7ac9b256adbd03b8814f0466c5d8a131369a6338"
+    },
+    {
+      "path": "view/common/refundRecords.ts",
+      "sha256": "f4c01d6f641462718a0cf2fff1414564b19dff65224bdb2cf9e705fae4297624"
+    },
+    {
+      "path": "view/common/refundReturn.ts",
+      "sha256": "c6ec7179be5990bb0580c7346e63adafe6ffa99cb989bad59e8441c1fe80576e"
+    },
+    {
+      "path": "view/common/seckillPurchase.ts",
+      "sha256": "8672ddc053de499edf198bcce4e81d8eb710d93c1661ecd5d88c88589338c921"
+    },
+    {
+      "path": "view/common/skuMembershipPrice.ts",
+      "sha256": "9c7dd27dadfe26e0aaa0a04cabd0cd903b848571206d041ca6fb4b63816b39f4"
+    },
+    {
+      "path": "view/common/staff-notifications.ts",
+      "sha256": "94814c5d860f9af4dc85ba75b3b32931bdee34792b3bbf6229d8cfa1f9adff34"
+    },
+    {
+      "path": "view/common/theme.ts",
+      "sha256": "7bd38e3b6552d71b73d79dfc6047b25e9f96b21335e17b0c7ceeca5e20ba993d"
+    },
+    {
+      "path": "view/common/toolchain-security.test.mjs",
+      "sha256": "3b217553b169dfa9de2dd7e249ee0c4971c5f87c03bf747e38a50a07762fa75a"
+    },
+    {
+      "path": "view/common/userCenterDesign.ts",
+      "sha256": "786ad49d4776613bfee4eb3f04f9e87a03657586c814c240cf306c89ddd50862"
+    },
+    {
+      "path": "view/common/userCenterDesignController.ts",
+      "sha256": "0786bfb30c53d499ef3582ec792d979a2e5dd78b2c5da8d4357d926c4a22c24e"
+    },
+    {
+      "path": "view/uniapp-ts/index.html",
+      "sha256": "e54bbd5ab63aad4b1360f67c21138c24049fff6bc0a93187c020d8834e7d0017"
+    },
+    {
+      "path": "view/uniapp-ts/package-lock.json",
+      "sha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "4f8f9b650103b6946c8332094013ba0cef97ab887f88328a64961108974b5238"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/agent-self-service-h5-mock.mjs",
+      "sha256": "8c47c001ddc8d3c598c8c7655fdb75f5c0977ae73790ad99257b3e40562c53f8"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/agent-self-service-runtime.test.cjs",
+      "sha256": "14b374bdaada5e937826f067e3e3f0e76dd008db406290ae99edd973359d4a83"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/assisted-cashier-runtime.test.cjs",
+      "sha256": "c486489abb6c27550fe733c1cf5b19c18112612b1e3c22686828852867d3af37"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/assisted-checkout-runtime.test.cjs",
+      "sha256": "b36bcf95fd132e7f8871fa5c82e6b1c2613d7251ba9869354f4d5142df53ccfc"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/assisted-detail-runtime.test.cjs",
+      "sha256": "8735645051b7b978a4035acf86d6e7e6726ffcb7607ae3a1d8f4a7b2e2cb641f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/assisted-records-runtime.test.cjs",
+      "sha256": "b48a5ae257767b3e99ab9513c9d282cdf12aa8492c3f7064ed8832e9eced2876"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/assisted-selection-runtime.test.cjs",
+      "sha256": "778fe527a7d6733c402a37c617f2c4b75079b65a56a4eaa91eef72267116b9bc"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/automator-qr-dependency-audit.md",
+      "sha256": "4d9a38a68017666bd5aebdbe2822f6ca37b470bf4bf8b5b9cd7fff771e7683d5"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/automator-qr-dependency.test.cjs",
+      "sha256": "8ebc07abec3f9318992692d02643d0d6de2eb8474e55660d44591fc35e1af390"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/bargain-runtime.test.cjs",
+      "sha256": "f48fe554877b6aabdd2eb01d098c960a0e4481cba3a1631ac11adbc044ae0d60"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/build-artifacts.test.cjs",
+      "sha256": "4ea6263236f25abd75bb743f3771cda7612c89b035e80400d435110535e588cf"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+      "sha256": "c4ed1fe6410a8e18d72ac9c51aa49f71635eb73576bf1916dce921f8e857db7b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/build-vue-ssr-safety-backport.cjs",
+      "sha256": "07361c9e8e83dcf17b78370cd2b1583cd949721906c6e20434ae86983eebf649"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/cart-runtime.test.cjs",
+      "sha256": "e5ace6e2a5bc2c79de8bb877844dcb4709252fce6513d488194e3402d0148172"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/category-catalog-runtime.test.cjs",
+      "sha256": "87bbe5998aed7ed42aca425b6f5bc0feadb6ed7d8bf2d553dad285c92b8bd4ae"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/checkout-runtime.test.cjs",
+      "sha256": "31d919f485f09969d9e40981412c438829e5080c89612aeec6b3c092f6b8d767"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/combination-runtime.test.cjs",
+      "sha256": "ea6ad41cbdd8256973425d5a581ed344c71cc9c53e2b512d6e5699757b3e4185"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-deep-links-runtime.test.cjs",
+      "sha256": "8016999da15556e161a751f8615526660ea0901955991e9c5e1b364fce40a732"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/coupon-products-runtime.test.cjs",
+      "sha256": "9674cf120b851d06dc1d03e1e4e53ed66d7850356ed488ea539ff6c9cb31568b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-images-protocol.test.cjs",
+      "sha256": "4634fa75e63ec44fca7a408bd1d2fb8d379a2510a548e4bcaa77d873683ee71f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-images-runtime.test.cjs",
+      "sha256": "c7789e5b84d6b20dd41d6622a5570282512fcb4b1b30eaf4febc8528b6f7af5b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-protocol.test.cjs",
+      "sha256": "8d0918574f9100e72cd8f9155d818e562d5d968e60dd8a93def34bbc445885b4"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-read-runtime.test.cjs",
+      "sha256": "2a8c3239e3da96a3d7611801fa773ccdd7a616f4d351ca82539f356abfee8573"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-runtime.test.cjs",
+      "sha256": "59e999dabf716cc06196cd3ffa1023eb260eb6d4cacb7c37609f481963c1bb3f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-fulfillment-runtime.test.cjs",
+      "sha256": "9451bae24f613c698ba910b7b251bc987a5c446997d79e0e5c8768a20a40bdbb"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-runtime.test.cjs",
+      "sha256": "e222a8730ba4858992bb619cd7b8e161179c52c015572300ed0d4d6440a9a09a"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+      "sha256": "617dc1c816e05e925a1bf556e8fbf45a4bf32586ce951f92f64040312d19e980"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/d3-advisory-gate.cjs",
+      "sha256": "bf3ee4a048c1385474ba22859f76654c41844fd8b6db574a3b807af395da2b0a"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+      "sha256": "26e117e8cf5206d60992941bb22f7f14ffa39ea0c763da0fffdc05498120bd72"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/d3-postcss-dir-glob-boundary.test.cjs",
+      "sha256": "bc19e258135004bf7dd113956b3393fd039eec0519fd682cd11b7e05aca855e4"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+      "sha256": "8f797f0987e3ef780ff1e915db9c43f96891e065b04efde13931f3ad05ef19d7"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/delivery-workbench-runtime.cjs",
+      "sha256": "7d43482205e05e9e8c3b39b4dd424ae365530b4a57dfeea1a6f7860c82cb4d3c"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/delivery-workbench-runtime.test.cjs",
+      "sha256": "cb696951e8ca1c043f00d1654d869ef557f63990422d4b515216cdbcdbdfc132"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/dev-server-security.test.cjs",
+      "sha256": "335ddd1a32e84e3cc89bae5fe5aac6bc2c525e033ba4bb81e227158138c70521"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/distributor-levels-runtime.test.cjs",
+      "sha256": "eaef59eba30649e01129c3df3555cc4834f0915502e735f0ac7cd91d530f584f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/encrypted-uni-modules-admzip-audit.md",
+      "sha256": "49ad3f1adea4aaa1007414bd3e3c03c52f839ac5235af7cf2f7504ccb42f517a"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/encrypted-uni-modules-admzip.test.cjs",
+      "sha256": "fa6db8035c2867fcaa8e424ef3a1a63c9f4affdd11fd9b1f172baef89aefcace"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/esbuild-server-security.test.cjs",
+      "sha256": "90c213feb8d7d978eb48d26aa396caf706b7842d11f9e36982a3114e33ea787a"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/express-qs-ssr-boundary-audit.md",
+      "sha256": "da5a90f3642af6c58f6d021c6eb2cdbf957d1fbc50a6843e6492699df30a6fe9"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/express-qs-ssr-boundary.test.cjs",
+      "sha256": "7a5acfabb1e87a3b20db6d722505ac9c3b7d0bb7ffeed9c841c11f8e7f78fb94"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/fab-runtime.test.cjs",
+      "sha256": "d2b260a8240ef1dadf66b6fff72c4fabfc38de6daa2019040dbef468e6c83cce"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/feedback-lifecycle-runtime.test.cjs",
+      "sha256": "f38ed4ebbbd98783514709139f02afb5f7f0efdcc4ffae8c6a2d4ee858a4ebfb"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/feedback-work-runtime.test.cjs",
+      "sha256": "1e57b6622ed10fd2e63b7c02c1f57b71a7b104e84163881127652ad1cb4bfb91"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/fixtures/product-detail-design-original-manifest-20261002.json",
+      "sha256": "068c7b3a6b883f13f1eb74b84cf0e4c4cd7036d25a082d4dab799aff0770873e"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/governance-agreements-runtime.test.cjs",
+      "sha256": "a9728abca3c7f3873f58bfd4920a112c3dcef0d390a8b93b95d9ddec6110be6e"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/h5-ssr-guard.cjs",
+      "sha256": "3c4ba957dd73f533b6c5e93d78d025308727ed2c949eaf97c5fd7d3b7a761e99"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/h5-ssr-guard.test.cjs",
+      "sha256": "9d5acac0fa4136b576423ace6fc677c02dd6b9c558b6f111a5cf4cdcfb3bf238"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/integral-purchase-runtime.test.cjs",
+      "sha256": "10362b98393316976cb0ed37244570e0cc90ec56e971450e800e7e53b9686052"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/jest-jsdom-once-boundary-audit.md",
+      "sha256": "e3127d2341405b9b56a2563130c6b6e615e164a1ac9d1821560f7222d0256fd8"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/jest-jsdom-once-boundary.test.cjs",
+      "sha256": "c24cacfa4ac41c8773dec00c051ac5bbcf1ab333d2fe3d686a74bc5b03bacf54"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/legacy-share-runtime.test.cjs",
+      "sha256": "09000412322b574208f7175daa2703054c930b4103af7b528772da53a8f3a1e1"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/member-code-runtime.test.cjs",
+      "sha256": "7228e04c79e9d50b8e75ab84e8e5d3901c13e57458bb7081b0c65f8337395526"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/merchant-orders-runtime.cjs",
+      "sha256": "6429537e5a6dbef6ac2b49635a74689f328aea24bee94dced9069a2251299560"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/merchant-orders-runtime.test.cjs",
+      "sha256": "bd240614ff289ea16e8eaeb49e201075d0107a8c17b03ae7c04aa9e7ba4795ba"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/newcomer-runtime.test.cjs",
+      "sha256": "de5825abab4a46902643146340075817951f4d0787488d944741977e0eabff88"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/offline-cashier-runtime.test.cjs",
+      "sha256": "15decc1580063addd669266767a734ebbd3849a0c3ff6c157ac5d16deb07c75b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/operator-writeoff-runtime.test.cjs",
+      "sha256": "ec3b40f339d0529d2e730e4bf22b86397b6af3a5b5c736da2ca410b773c77b51"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+      "sha256": "247fca6394c755ddd264e446901d4a6f5f9038891bb7c6d94451706910c8bbb0"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-list-lifecycle.test.cjs",
+      "sha256": "e5ecdf338b277c4f77a87b547a50dba59f43fc5b86e9db9e207f423cf29d0d96"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-pay-result.test.cjs",
+      "sha256": "620236a18456ba0739df20aa969401486990692b5ec2c38e0cb05eed21db740f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/pink-cancellation-runtime.test.cjs",
+      "sha256": "572201cbf365e04d41284886a3d3893e29cf89278317726c55881527f81d2e72"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/pink-status-runtime.test.cjs",
+      "sha256": "4465767b7dca0016025e02d48464a333b7264d477d3519b6a834ef25537442f4"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/postcss-dir-boundary.cjs",
+      "sha256": "911d0ec900922bf496dc8806fbcc9095e99b7ed215ccf16848dd8c6b2e9e436d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/postcss-dir-boundary.d.cts",
+      "sha256": "624e21ac19dd7d3c8d619538067f57a379d87416483b29a06d751313bd361b9b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/postcss-selector-parser-compat.test.cjs",
+      "sha256": "20c69571a8fb63b7e62fff6579362eeae0c8d565f2e70c3815116160f4ad9495"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/presale-catalog-runtime.test.cjs",
+      "sha256": "010b084788908a832a36f1b2cfec7b4559b2af6548a4dc92e6d8bb36176dd428"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/presale-runtime.test.cjs",
+      "sha256": "cf79e81e9b0eb5a8a7c63eb1eca85cacf19f273d86082af0e92fb5fda840521f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/private-share-scanner-runtime.test.cjs",
+      "sha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-detail-design-runtime.test.cjs",
+      "sha256": "8f1105dc6fe6d39ffb7afa3fdb2c98143419c26bc2a5ca3da03c344c261ffd47"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-detail-lifecycle.test.cjs",
+      "sha256": "9568c904c29c60dfb9ea1aea1bd77ef9fa253344c72680892f1952db9d9c164d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-rank-runtime.test.cjs",
+      "sha256": "f474bd97f9ee2c7272bc702681d2110d3a55ffd1b5825c932c519755463270cf"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/product-sku-runtime.test.cjs",
+      "sha256": "eb5957b5ef7d5a0b882e9ab52c22b7ca501ca0a6b2f6bf47ec780a7b08facc35"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/refund-apply-lifecycle.test.cjs",
+      "sha256": "3c7a454b94844894b2dde87fabc34c9c8cd3b64e5cf9c150be41159564f92590"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/refund-records-lifecycle.test.cjs",
+      "sha256": "346e09d0b13753a399c3f5e7b97eeaa881e00913c590ea6d188ff94b767a2862"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/release-upgrade-preflight.cjs",
+      "sha256": "421010f1f8ab98ec1ee67f54968130088646d30ac4b9d2c037cc20048c47f6db"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/release-upgrade-preflight.test.cjs",
+      "sha256": "342fe69a5764f608b68269d21e39dea8a4a162937e642ac9daa0e25ba8c0c485"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/runtime-i18n-audit.cjs",
+      "sha256": "95518df726a6a039d6077ec547cdc958ba7895542d9bd6554f7d4a948b3f28f4"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/runtime-i18n-audit.test.cjs",
+      "sha256": "04587998c85d3a211abefb7ba42637cf7ec45007604a65a7112d859c22d9e33d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/seckill-runtime.test.cjs",
+      "sha256": "ec9d513ad13ea1dc278cc3f7789d4d895f8ce418f00205435400b83f59f83873"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-work-financial-runtime.mjs",
+      "sha256": "aac2c77166616e0948b85ed91551977d19b6c189a9157a90728f137f8ac73b32"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-work-products-runtime.mjs",
+      "sha256": "a18ef69a6b51952bd7392954934fb95750a63f5b6aa0328e6bc8849859ba4af7"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-work-users-runtime.mjs",
+      "sha256": "7f4d07391ea901ad79a9cad0e295492684e2f6014c2c19c229496770a8ef7230"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-work-writeoff-runtime.mjs",
+      "sha256": "4c46675fa5b894a8815c557a90f6bfbd801dd9f630a7be4fab0369fef8bfe493"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/theme-runtime.test.cjs",
+      "sha256": "145ab993de5f4902b25b79e430a924a6408a41a5811f8a6e8038f8870499d2bd"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+      "sha256": "64266c1c9258b16e4e78e5d1974d0d7ff0aa716af08f09f88dfb498fadfbd844"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/user-center-runtime.cjs",
+      "sha256": "2785d2a2f320a7af1af3940e1c4b6b2eaf88802d1ea46042ab93089e73248eda"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/user-center-runtime.test.cjs",
+      "sha256": "a7ab1ee23ac958f03d9f214040e7ac4d12c0ec03e88a96dd9588504d45935dd2"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/user-collections-runtime.test.cjs",
+      "sha256": "9515f239e1ca9e9a8090219c7526436f54c0bb99224916c565482b59a058dbf5"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/visit-history-runtime.test.cjs",
+      "sha256": "a7701ddf4bcf0a945324be75045353d39ae51f882a21b791fa0060a2fda45039"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/vite-esbuild-compatibility.test.cjs",
+      "sha256": "1d79dfd4b7d26f5e8bc494acab908cc0f2d58e7bbdf90eb56d52df69ea4ea255"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/vite-fs-allow-test-helper.cjs",
+      "sha256": "a6968f1c83e37aeee56f868e363d3cd56e2650b2ab10a13dde9fa8841ee9b20b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/vite-path-security.test.cjs",
+      "sha256": "8db702f61bbfc23784b7e20878042ef3cd66d2f27d363126e6a07dbe0219d409"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/vite-safety-package.test.cjs",
+      "sha256": "0d940ff7b5e107b2b0499b1c734f2d3f6051cd55b4b0f6d5def34fbb916c7a48"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/vite-windows-path-security.test.cjs",
+      "sha256": "c23a61caee1137ae8d1053cdd32120eca80af6a16d5963d03e5016f4416f9d9b"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/vue-ssr-safety-package.test.cjs",
+      "sha256": "7070d27ad184cc436fb1821d94df50a5de79b06ebdae5d480e397eb7f9664f92"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/wallet-runtime.test.cjs",
+      "sha256": "18ea4c7cf4d37c8e3105b038f7f595751ad44fb4b73f4d6b8ca35b8287f49ffd"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/activity.ts",
+      "sha256": "c0724336df519cd02f711d0560dc44781277f504e70a21e5f0ced12d2f66534b"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/adminRequest.ts",
+      "sha256": "41f256e4beecb5e8af7b6960263359236ad9223053c502b760e1aa203fbfb4a9"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/agentSelfService.ts",
+      "sha256": "0a050275cf46a730602f574ef459827dca78914e3172edbf8dd51e7a373350a7"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/article.ts",
+      "sha256": "92d59efb51abfe890cfa4d3377064d87309ca641a4b67aa4ee57caafbd2bca36"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/assistedCashier.ts",
+      "sha256": "a6a436aff800cbd576a9999b5ec0ad638b0d3de880a592cb88a339c7e0aaaaa2"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/assistedCheckout.ts",
+      "sha256": "c583418f90b955daafaaea51ab1b76ce5de203132c75fc0dddf465d4bb4de7c6"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/assistedDetail.ts",
+      "sha256": "e438b5a387e4dbac27b4dcf33f0cd00edcf4c735eb1782468c553a35a8c9cddf"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/assistedRecords.ts",
+      "sha256": "44de7da9935c4bf7d30f08d2be7c06ef676b4fcb8beb3d3fd876cb6aabaf3d91"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/assistedSelection.ts",
+      "sha256": "7bf39b997d1354dac03631dc86b068b2147b38388953553862fbd3d4a64e1929"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/auth.ts",
+      "sha256": "387eb7b39708d601b5fdbc3656b6bde9fa855a8c6566d33c0c954f4b3096ed8d"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/bargain.ts",
+      "sha256": "0e12cead82f8b0980de84817a987f43cb3e17d4134d62adc798bbbb1187a8504"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/cartComputation.ts",
+      "sha256": "e69d841a255cb4c2fb50bc3da1849b56224d12e410048166631b3756f872d27a"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/checkout.ts",
+      "sha256": "577d19c5725e7f9960a92567a101e77c5d1e5d87930d7491956f29e65d63c399"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/combination.ts",
+      "sha256": "ffa6b5b18e1ebb05f7fe20ad84cad3142714f05a80fde41f46ecc83008fd6c54"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/community.ts",
+      "sha256": "9fb81e728b01c8c51de22618052d290360b7b235eebcbfa01a66124555e49be8"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/couponProducts.ts",
+      "sha256": "baf36bc2174126c00d39cf66233bf0b3fc83d7e249b70bd8343d8d9f26606ef8"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/couponWallet.ts",
+      "sha256": "d32fdb6dfbe3086342369985af4d9b592f703ef9bb65f445b2d09fa768907e70"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWork.ts",
+      "sha256": "6991b0e107a1990463059d45ae2d914f7a4502c3113e078db08e7f1ae1989616"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkCashier.ts",
+      "sha256": "0831a5a804742a18d042b15038c878587d0189f916ad118ee6d9b6e86d2a0de6"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkCashierImages.ts",
+      "sha256": "bb2b0a5e1a21b1f27c03fd23caa5e44add846dd6ec2c41d741b8c4963a6e2901"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkCashierRead.ts",
+      "sha256": "b632d12ae12c6bc3f949e0e91aa977595b64b0ddada257d3e947d024b18c1969"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkFinancial.ts",
+      "sha256": "412e96eb06166b3e43d8a467420bdd0eff74814a15462c343ae6d92a080d2723"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkOperations.ts",
+      "sha256": "e83692a7008ce11dad64b1d6da742d8fa46ebc74355c2b72c84ec992906d3362"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkProducts.ts",
+      "sha256": "aefd8e16673453789322f6d85b5978eb38ebe8ba94fd9fd2b6d4be98d540b6dd"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkUsers.ts",
+      "sha256": "7d9a15b46e624ed417bae9eb70cc5a0289363f74982181e35d123b397d70de25"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkWriteoff.ts",
+      "sha256": "99b9483b429f15ffd439ee0e121c957ed885cb73efac4f1f1b936a11a529095f"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/deliveryWorkbench.ts",
+      "sha256": "eed7436636d8facd21a81734f416f9446131b64b8414125cfc4576f3102cc883"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/distributorLevels.ts",
+      "sha256": "5cf877a1fcb67679fb34afa72b194035087513c09cc9a1e899f1fc0f34bd8ace"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/diy.ts",
+      "sha256": "5d8ef62ad8e1b518d8d3bb1dd2fc2e0476f0c9b38ef87089c09a6e4cf41882d7"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/feedback.ts",
+      "sha256": "92fd8fcd158a358ed0a32639819a420d05afc08c827e0dcfe8cb32ea1a0fc6ca"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/finance.ts",
+      "sha256": "89af1a2dda24ad3f4d56a2ebeccee4eb8c41a8cc0550c2c2d11699c12b8c7a40"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/governanceAgreements.ts",
+      "sha256": "2c98ec3e4b5387a825e609259dc4f522d92cffa2184ef424ace37a864e0cf093"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/legacyContent.ts",
+      "sha256": "0a5483ee4bb1189ba72e6e3a84a15c7445a7dc88875e9115b1915c6d2330d8af"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/legacyShare.ts",
+      "sha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/lottery.ts",
+      "sha256": "b18e59c4495261a5d468b0818f820ae89aa752c2eaa4a47c5df000ecf8ae4fd8"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/memberCode.ts",
+      "sha256": "e4cb0a63219ddbd07de71ee17f4f90b084382a2c1749c072b011aedb8ec307c4"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/membership.ts",
+      "sha256": "a6feee3af82aef876ed118adeb81f4ea2a100e2b817a6fa7136ab5ce9890d765"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/merchantOrders.ts",
+      "sha256": "99ff75b822056f668f5859d0bdb36e54e3c923f67098dccfa7d60d8aa203e717"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/newcomer.ts",
+      "sha256": "7b69c4fbec7d22e5c2ff9151cfdb79b6c87f77e0ef74f76746d27b15960b9276"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/offline.ts",
+      "sha256": "cd268212c5ca33d6e5a319d3595398cee2b24dff974e64702b631ccaeab6da72"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/order.ts",
+      "sha256": "5568f181fd9201c03f9456fd7a14fe80d6b381fd44a0d7b4f053522c334d43b8"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/presale.ts",
+      "sha256": "75ddc08c5401b90b3e9ecdf11d6e140e724e8e5f731a950b30ffddd771fb961e"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/product.ts",
+      "sha256": "964f3948d1fb4dc3ceff00f8a0220aff3f6f917624d9b860f5f3800893f947b7"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/productDetail.ts",
+      "sha256": "99fd985c52fd0351c98324e93557bc1fbf675d993e8225a7fadb9bee7fff97db"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/productDetailDesign.ts",
+      "sha256": "72dfb3cbb58f51cd19173a47b967e38be3e6de265c421bad58038f5dc93879e5"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/productRank.ts",
+      "sha256": "5db9996e0ef6b398828f61b55a55717e941c0bb4770551986af0343e20e38956"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/public.ts",
+      "sha256": "7d497ff13d0bf9bc84f63018577540f68291523e8df3603760cb4fab47deb812"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/refundReturn.ts",
+      "sha256": "0ee2a47621e85f1ca88e43382573ab6807ad1a53ce7f2f39972159436239156a"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/reply.ts",
+      "sha256": "118eda0583eaf32d5baa5d02abe9ba89a186550daee764c657245d6c47f6a63e"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/seckill.ts",
+      "sha256": "ea5c9c2e3f3723895e7a133a81369379f8e044bdd0d4a225ef86c35d8cbce0c5"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/supplierApplication.ts",
+      "sha256": "4b3222d9bcca184843b9c69e414139b8033f9bfc8be00dde3e04659ab2aae7fe"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/theme.ts",
+      "sha256": "d06307fd96b39fae3b934d3a725dd4333c86b046b7b518b94448e1af84de8a30"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/userCenter.ts",
+      "sha256": "799fa3fab73f519b976497250de0ec84f5259a748626ce3880b816d5844b1e18"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/visitHistory.ts",
+      "sha256": "be24b52c9c750aa090f5ac0587517965818725d2926e974ccbcbe77efa61f7b2"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/work.ts",
+      "sha256": "223e24b3c7c893b1a8dc527a7f3858597922fc643ef655f31e345d1877d3176f"
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "7a4676387a6cefed537f85c24c33b1dcf6397b13578c4b4cc764c3b33f6e93e6"
+    },
+    {
+      "path": "view/uniapp-ts/src/components.d.ts",
+      "sha256": "130f9926b0863e8dc822ad7c6cdf69b18f6b123a0660ea3ce4389f9ec8b7b731"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/ActivityPurchase.vue",
+      "sha256": "97e67035c1c8242a82ab4f03442c581ba0309b5d5ff92bb92c2766add5c8cc45"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/AgentApplicationForm.vue",
+      "sha256": "2e3c58f38c4018708a12dce6248018a15bfbae1d6df92e3dd076c197a5521811"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/AssistedPaymentQr.vue",
+      "sha256": "8ac14346ac586616692f7880a057454cf7280868f36e7f5b6a42f772b1ef6e08"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/category/CategoryCartSheet.vue",
+      "sha256": "d1a0b058b0f9593aa18701f3dd7b51cd2dfa463ea64f840dc86cc09a03e35456"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/category/CategoryProductCard.vue",
+      "sha256": "422899c294c740bfec5d67e8872e58529fc12115eff947ad5df6b0d1cacf9f01"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/category/CategorySkuSelection.vue",
+      "sha256": "1b47fe44a95ff9f8d98a03f49ba720844020178dba2393bfe97f6bd9f79430b8"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/community/CommunityDeepLinkFeed.vue",
+      "sha256": "c21d11c591551bfcb788a420383a71d23456a78df228d2404cbba82995057bbb"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkFinancialDialog.vue",
+      "sha256": "455403e0c2a71da4a981377e7d4740be533818daf13f9b87d3916848381988d0"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkFinancialRecoveryPanel.vue",
+      "sha256": "13fc04e925ba58f9003f3a4bade25b97cfd69d4cfc668b189fc66f97ffad9c97"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkOperationPanel.vue",
+      "sha256": "9c0b2a4f1cc34b52d1cfa6ba909d931edf385d7a2a815b82d86fe61782bf81f8"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkProductEditor.vue",
+      "sha256": "ff3ea84ac721553a1bfb53b8c4040438345100eedeb6dd69be51d75cd5e54cb2"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkProductRecoveryPanel.vue",
+      "sha256": "1603fa9dd772f9296f88e4ccd4e942aebbaf9c4b89bd210941db957ad6020379"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkProductTaxonomyDialog.vue",
+      "sha256": "5615a5c1ec4881b3a7be5377b2c7481ac59a43495b3fc71649b424d0b4c66f98"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkRecoveryPanel.vue",
+      "sha256": "08b0fde6cbd1f64d35ae7b2bf383a23ab8d4035315c52bf11e117a1cd2c9f784"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkShell.vue",
+      "sha256": "145f569935299de8a3e82b82d709dc574bbdbce27d86015b2aa3f4c28511f263"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkUserAssignmentDialog.vue",
+      "sha256": "9fc6229041653fb7a32c377fda86d5beb3b1a59424d0a5288573d550c4dee3b0"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkUserCouponDialog.vue",
+      "sha256": "b0c0e694745f4f13a4be05d9cf50b572c428b8a26c94f9d236d0b72b87da1744"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkUserFilterDialog.vue",
+      "sha256": "0088986a2c7b62971b9299fa4d7bb0569121a3136908c3759a83c25d43abe08a"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkUserFinanceDialog.vue",
+      "sha256": "663f16677a301334c9adb9e00c8687a3ab0e1570e390a0606c3db769256fa701"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkUserMembershipDialog.vue",
+      "sha256": "1caa473079089c9476d34752f589a2b3dea3e53d1696465831f3d05651496d2d"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkUserRecoveryPanel.vue",
+      "sha256": "cc04bdde1a244d9a27e51b7d973f6d1208d8129f433de600cd04c7f17faa1ca1"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerWorkWriteoffRecoveryPanel.vue",
+      "sha256": "b043b2962151cb401f7dc1284947d5c8fb262b8c50c7c51e07d8526b0bff7aac"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/deliveryWorkbench/DeliveryCart.vue",
+      "sha256": "87ba998953539ef983db3faaa2d138822a9ace6fb22d2d031c9404e2cbdd0d9b"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/deliveryWorkbench/DeliveryOperationPanel.vue",
+      "sha256": "88315c1c1c462fc6c058e032ef32d59e88be9137bae4eb3401902ce981c2fcbd"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/deliveryWorkbench/DeliveryShell.vue",
+      "sha256": "b30242d9c8b90ab1189122c713bc393f23c33c09ddd09a10f3ee7d8cd9b40e05"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue",
+      "sha256": "ecafdc993f6c5df2cf867ab692e1e8107caa085be25f9cec9df1359a8fc4dca0"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue",
+      "sha256": "d53c0c810538b972641c32a7ca5b30e4d7e0d2ea0f4304b0cf5ac67c488d69aa"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+      "sha256": "3a66ebf56d12e07590c0c93915510db4715c94b316edb7651551ef1cd1bb096c"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyMediaCarousel.vue",
+      "sha256": "82eb73f7fcd89ea654b31a6f0b69ec6548c4d364354848ec2125dc2b3699f52c"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiySuspendedNavigation.vue",
+      "sha256": "bc23fa878e622efb55067d54ce54b3af0d986506e20e684cbf0fa09e12e76aa5"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/IntegralSharePoster.vue",
+      "sha256": "2a7a5368411d11467b794055d652546a0fd58c64020cb3c41be7d48b0717307b"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/IntegralSkuSelection.vue",
+      "sha256": "dea2e72ad4897c119e5d230f13aa09d2c33eed554fc3cba68aaabbfc73a2915e"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/LegacyShareCode.vue",
+      "sha256": "e5266c89683968feda9c5e26df23d178543a5645e4128962a66c72182a849462"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/MemberCodeQr.vue",
+      "sha256": "566009f328d2e314197b2353b5f2183c7f8b03b7c5e56a4497bcfee0d877fbfd"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/merchantOrders/MerchantActions.vue",
+      "sha256": "acff0de6e8fef12d28b41fe53bf576075cd73744b54b2da999e1ad2f417bdf6f"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/merchantOrders/MerchantCart.vue",
+      "sha256": "f3e18f664b40258df935eff5cdf91048ecc7b2c54c5b6ce3a84ab07953bc94e6"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/merchantOrders/MerchantOperationPanel.vue",
+      "sha256": "3c58aae8dab0d14530cecac7563b072c5d091575075ab32e8bff16693d5633a3"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/merchantOrders/MerchantShell.vue",
+      "sha256": "a099cafa93c8e3730bcbe3920b99257af69a0803a74c41dff220cb1b3df0ddd6"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/OfflineCashierView.vue",
+      "sha256": "0c9f892be04b7f44dd0021475ac7ec7070ee158120a2d739a58809ad32ce99ea"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/productDetail/ActivityDetailContent.vue",
+      "sha256": "2315c036f4486a73936b621a62c64346b249a9e08ff3c1325a92536cf39c6223"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/productDetail/ActivityDetailMenu.vue",
+      "sha256": "e4d220715b6d86d3a67b4ec8bc7b3bedd3cd0138c4f9a184d3c5aa79d3ab2a2c"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/productDetail/ProductMedia.vue",
+      "sha256": "c07b92d3688f4f51e29a27fcad2a6a1cd8f28b557fdf92534da456339fac738e"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/productDetail/ProductSharePoster.vue",
+      "sha256": "50c0ad40b43f6da920fe6bd6855f558e4bc074007e40fa52e73091604c5b0be6"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/SpreadPoster.vue",
+      "sha256": "c9ddff61b3d2e3ef30cf0b97b18eb6fb7c90d260ce9c26a485b8f70bc2395887"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/SystemFormFields.vue",
+      "sha256": "3575222cc3eb0ac2e49ec5a37f744d90b96de1a0b1cc904f7450fbcd4d302df4"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/ThemePage.vue",
+      "sha256": "c9105bbc13439df895dfc394cd3fe5fa30886bc11869c29c37991f4e55aace67"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/userCenter/UserCenterMenus.vue",
+      "sha256": "3f5b621408de45fcdd97d6943b34427fde408442428092b096d4eafbc92ae5da"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/VisitRecommendationImage.vue",
+      "sha256": "fe25ca0a31e55845a298bee602e6f5180103d3d8d1e9330adb76b41dfd8b4884"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/work/WorkNav.vue",
+      "sha256": "fea58bf483d5080b2a43d908155133e9ad0bd3d4c320ce1bdf9d3ed72a9fbdaf"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useActivityDetailDesign.ts",
+      "sha256": "fa9c43b5619c0707ba1ac7cf1d2e87e19e3564a855ff48bba053ba2dda271375"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useAssistedBuyers.ts",
+      "sha256": "1de69db25ba4bea6425f20b435d4d20795ea8c9bb971f9485d25b4f6ff9e89e6"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useAssistedCashier.ts",
+      "sha256": "f386125db07dccbb77f01dafd5ff08c0a91e77a54d3dc8fa409a17b23606704e"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useAssistedCheckout.ts",
+      "sha256": "d80f6419fcab2d4647c8be5bf67a9e779ed5f9cba55bdbfffbe8aa6c4fae1d42"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useAssistedDetail.ts",
+      "sha256": "9d17cf688607ebdc8e70a2121d716444f7700692abdbd03c536ed2c9c2583707"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useAssistedRecords.ts",
+      "sha256": "5e2758b81333ee6581998c226efa55843d81162cf8d86e723c38c9574639cf6c"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useAssistedShopping.ts",
+      "sha256": "093cab45847a88f7099f1b4b43c79d1b7b0bc34b0eac6b7a660841f086e96e3d"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useBargainPurchase.ts",
+      "sha256": "64c0ef5ee683f065294f4c458a03350e9281dfac0a9a66579397c5228a1a0546"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCategoryCatalog.ts",
+      "sha256": "27f72c29cf2bd8b3d591ad5055b5f1228428be40f5995bc7943ab9e5e59468d7"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCategoryPurchase.ts",
+      "sha256": "45e6ff2ac4e662728aa7d2c7ce12ef13e169f8be66369fa257687a828382aece"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCheckout.ts",
+      "sha256": "95d62533d250124f927ae7d51dd114518c7e4ac25bd835bb0f0ae83928ddc6d2"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCombinationPurchase.ts",
+      "sha256": "4eb9f4e836718c746b9ca04abc1ce10c37f897110c8166af9601e7453380b4ce"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityDeepLink.ts",
+      "sha256": "5eb925beebcd858a8a115bd8d9b5401089ad1a91cf996de3a08c53aadbaada80"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCouponProducts.ts",
+      "sha256": "ab448820eb9e0a7284f4728999a1489ac9eff57266567305988995dfe4cec80b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCouponWallet.ts",
+      "sha256": "91b8d0c45abf01bb3d4bf1c23c9dd9d950795e0f27208abef8d6576a2706cdce"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerCashierCatalog.ts",
+      "sha256": "6c84102b54a08504c076a2faff9d009995baa81f11b4140eceacb0c7c93ac0af"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerCashierImages.ts",
+      "sha256": "3bbb7c9e09315503470f5c6494be12d727d3c660be8f602f208639cff7134eb1"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerCashierRead.ts",
+      "sha256": "1f443b46e6303e7e83ce807f054c59dda594396ced5d1ff46d0964570532d47c"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWork.ts",
+      "sha256": "2a391f1eb84dc1babd4bce7ec9f6deab9ef418995d88d645b383a448a377696f"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkCashier.ts",
+      "sha256": "2e447bc42f6094cb8f5e42f9eafe695e58d77daf4dde67e40ac823cc584cc29b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkFinancialOperations.ts",
+      "sha256": "1a237865c17de8c3a2a7aa838ad59ed7a1dd4479aa183a5ebe9b2780c0047b76"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkOperations.ts",
+      "sha256": "5c09ae41c120564fe27b0b40cf5e710a2bcef11fb663f68d63f3ec9c2c30c532"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkProductOperations.ts",
+      "sha256": "0147c6b4647b22d5adced44b6535e0f23cb0898cd8bb213dc41a17c226391ac6"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkUserOperations.ts",
+      "sha256": "6f0eb7a841ac730c7c99ba4c73dbe9477c59480b49ae260a0425d96f1663650c"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkWriteoffOperations.ts",
+      "sha256": "290b8b5ae5c70c3caf4881a36bee63d0276319230630f518677ea793bc1c37d9"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useDeliveryWorkbench.ts",
+      "sha256": "3de2ecb1f66c9f5350bec541de055361a304e53dd61c412e59c952fa4d40e75b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useFeedback.ts",
+      "sha256": "d289f7a255a124bdca1ee271c521b04ccbb99671346c63aa0591bc6813a9d3a0"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useGovernanceAgreement.ts",
+      "sha256": "c899d0551551f9693d5dabe453752110c6bbe507f1033212dad8f16eb038b02d"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useIntegralCollection.ts",
+      "sha256": "768ecd35399970251cad4ed44c55c2ace208fc81959360200b93ca2f0020a8cc"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useIntegralPurchase.ts",
+      "sha256": "93618a50f81fe8a0b2c453b3931c23712cdcb76ac5e885f8cebaefb73f7fa69f"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useIntegralReferral.ts",
+      "sha256": "69999604663f6bbd68cfa84c1c557438fc23e4eb8d4ff1b96075e6a9f5ec91db"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useMemberCode.ts",
+      "sha256": "3c3abbda679c2fd227f9743458b1e11f123c2575764464388dd06645d903294f"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useMerchantOrders.ts",
+      "sha256": "472cf100f37cfdce84bcd6f670195163612e908045c9057e7b2a0343a8508fff"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useNewcomerGift.ts",
+      "sha256": "991e283c3f9cc208ba223ae12b4c528d9233c907651ce258d4bf431c89e98319"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useNewcomerProduct.ts",
+      "sha256": "daffa726f2556b8880e41c13c630057b1e0450f5c5a14090891c81b131702646"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useOfflineCashier.ts",
+      "sha256": "55e199cdabfb7b5d1a2c4b8e366e685aa5b58d5895bf5d9b2f7179b4738aae5b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useOrdinaryCollection.ts",
+      "sha256": "66c5457f6fd84cfcf00a4424a9db7619e52ac67d5dba54f76f35223e600c613b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useOrdinaryReferral.ts",
+      "sha256": "be574ce3181dddfb7d8f2975908bb4793038af15527193cb2eec4e095184633a"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/usePinkStatus.ts",
+      "sha256": "d40c919ce79a410a502931509f6f51a2172a0f2e027d3d597b376611278b1608"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/usePresaleCatalog.ts",
+      "sha256": "9f76189d86d6cc91d90d38d48b76b2dd3d7faa6ce9f031850f307745a3c4266c"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/usePresalePurchase.ts",
+      "sha256": "05e08bd5f89087aae3734723896ab1907d474973a3c39210b879b3e4c295e38a"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useProductRank.ts",
+      "sha256": "5cd0a07d0df773bd4e0da56ce292d75263313015b200f95506d5fe2a9cae5f40"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useRefundRecords.ts",
+      "sha256": "083f85d1db37213e9e791425677f19178cf2de93560263b6b015cab648d7202b"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useSeckillPurchase.ts",
+      "sha256": "cad27a83cc974be6e813ae826740c0289696e7047c582fd72869670bdd6337fa"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useShareReferral.ts",
+      "sha256": "13c47eeca0c7946948b77b2e487ee58988ddbe5f63187626d32f73e2b9487294"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useSpreadPoster.ts",
+      "sha256": "0d9fe4f4cea17009733254bae9bbc1ec60592e952a4b4091157c3f08d033dc51"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useUserCenter.ts",
+      "sha256": "46c267c60055e7007633a05ea12222e864cb850f846d777629e04acbd3829cfa"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useUserCollections.ts",
+      "sha256": "e72ac33137bdb5c6f2bd673980c60fd22c14ba89ccdeeb150df128f296b8abbd"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useVisitHistory.ts",
+      "sha256": "bd503c418d4b97a5d55ce56c02d15654004f18a516cace03c9123ef6d6a415c1"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useWorkAccess.ts",
+      "sha256": "d7a2a19ae7e83b63423834ee07bcd9576c1a4122af5e96f15fad9a85188ab162"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/workContext.ts",
+      "sha256": "623c17a8d4ddb56761db11b17b291b210ac3e3a1f42d213cc901463be06e32eb"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "c752719ee3339f254a1ae56be25ab5cca62a2509cf559f76761c4802f4b0364f"
+    },
+    {
+      "path": "view/uniapp-ts/src/main.ts",
+      "sha256": "c3e2d6230652d72ea405fb0af7542775ab5ba4dbe593c240eb143583fb269712"
+    },
+    {
+      "path": "view/uniapp-ts/src/manifest.json",
+      "sha256": "5a697c6dd488e3a83497e74ececf4ce053f288150ea10c4f7025de181e2d03a0"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "609ab8c3352728d01821af5161d5f6f357da13340295f14f540a79f6f67537da"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/bargainDetail.vue",
+      "sha256": "5c97ddbe2f3d53055a641d6c039032ea1e3908775c003c666b9108c3d53c15d1"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/detail.vue",
+      "sha256": "4f3e60aa8137369434ea0f4e9d8a6bbc5d34dfd440c475490cba33dc611907f4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/goods_combination_status/index.vue",
+      "sha256": "2c7c6e205f2432e273eaa1c61a9419f4e53bfbfaae838a4c70eb001e3007e0c1"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/index.vue",
+      "sha256": "b0e395dc23e030fce834898a623507fbdbe39edbc2fe4b49075b0b4cb524ff10"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/integralDetail.vue",
+      "sha256": "b23a4c9e924127fab2122fe4870da4d697cf321c9a240fb6636fcde16e0ba340"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/lottery.vue",
+      "sha256": "8fa19f8bab39b50a45d0401d0e013794c7f2a32558428f5ee56ff46ce78b781b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/lotteryRecords.vue",
+      "sha256": "792a432ad4bd5a8093b5218b6fd1d0c41dbe9072c2c0db46ff1024c8acbdf83e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/new_customer/index.vue",
+      "sha256": "ad401d45efa9c56b8776fb4c96439536949715f5e9348b273592414862b5cc92"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/newcomerDetail.vue",
+      "sha256": "408c7cd5174ec7935aee664ed438e184ca35a777dfea4c8ad0a8fee250fe1739"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/presale.vue",
+      "sha256": "4d60603b148ae6bd99cca50024492874073547bca8c7672c33de1e509ba2dd74"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/presaleDetail.vue",
+      "sha256": "0f31cb77f102db4160c614ee6b27d28d45b9f3ee2863b6eb1060db65b7272488"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/seckillDetail.vue",
+      "sha256": "ec5edc3eb506b2107303f60061a17f5e29d4a589d97a6ab955731d8c6a3e5611"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/annex/offline_pay/index.vue",
+      "sha256": "337d24b49c482e88cabc31e0d6dc329fe6e5bcf66f3b75c809502a6dc759deea"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/annex/offline_result/index.vue",
+      "sha256": "4255ce1b4375f046d28a16cae908460db3fbb18ec8b6c334d907a8b93cfed06b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/annex/vip_active/index.vue",
+      "sha256": "e05d2b276afc47d036973ffb13b96f9eab86333ebd06544ef8aca462d38a4b3d"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/article/detail.vue",
+      "sha256": "73e7165bda36d891437ae1f362ae40a9990a1fa30fc5741533f433f4ae0fd7d3"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/article/list.vue",
+      "sha256": "ed6fea97a31c543ecb846c5fdedce2c1dbc7684a2dddc10dbe8ac8d31f942c38"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/auth/login.vue",
+      "sha256": "7f01705c9204260e8e92c96502078bd414b3dd991d4187447fef94ca1eb92db2"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/auth/register.vue",
+      "sha256": "ee175c5cf0c5a38b8c3cd22b7354e89ea86da40c9349478d3d3aedfe5450469e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/auth/reset.vue",
+      "sha256": "fbb2a06df9265b7157418545e01eac74a68be049bd58666868126b8362b66223"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/auth/scanLogin.vue",
+      "sha256": "502da47d53fdd2d2e9b4527ef1ad85795fc08e8ea6920c1e61119cb97be4d70b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/auth/smsChallenge.vue",
+      "sha256": "0d6faff1da8788573d7e89d1a074cd20634322ab79c4928da2c4504221d9817e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/cashier/index.vue",
+      "sha256": "b463ded7891f880686da490ede1ff5171dd28a9a1d17e2f9f243faae36390e05"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/goods_list/index.vue",
+      "sha256": "986df9cf60be097761ea7e6577d6b838071b6d17bcf8759c6c71538d0e435caf"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/order_confirm/index.vue",
+      "sha256": "e629553a5df70ea6540ad3cb074bf66f395475178c1f2c3f52cc2b6b286803b2"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/order_detail/index.vue",
+      "sha256": "1a472364b8c1bade2571425b0ff5537f69d2649969aa5734a69d0d60b8e82adc"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/record/index.vue",
+      "sha256": "a0e14d4b6584d31307dd5f5a25651a54b5f762701bc9f26458eb0dfc203afb84"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/selection.css",
+      "sha256": "acd8cb69be288276d40f29cac4bb253075c4c837479adc4f74977ba1356b5886"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/behalf/user_list/index.vue",
+      "sha256": "b0af1178e6f42da96afc7ba31853e40dd4bcb4d1a49374f1b8832dd98aa13e5f"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/cart/index.vue",
+      "sha256": "b2e29d861e88b77607dd1710cca5e6144e2b4d41e0bfdb223736819a2c2de115"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/columnGoods/live_list/index.vue",
+      "sha256": "2209fb2254405999e407f86c0c38fd09a2daeb3363c1a85e274499e743d5463f"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/columnGoods/rank/index.vue",
+      "sha256": "7dc11501b17992554c230ec7ea35a3b9f28ac299ef8174402e210e02a94f79e0"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/common/fabWebView.vue",
+      "sha256": "c08bac346b31c5214d9ce1d43a27bafd4085cb2def9177af42844f210c7cbfa6"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashier.vue",
+      "sha256": "246b2613a082dbc95c677ab281f5d8a7d4ef9c3b442b9f64ac0935fd8d902e89"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashierRecord.vue",
+      "sha256": "88bcbeab3f440d222961abc897bfe86481276c8b2d93f370535979def33356c4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashierRecords.vue",
+      "sha256": "12ecf661f5323d7585acb107e46b233850e59de46a2b69f185f2bacb21b58e88"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/delivery.vue",
+      "sha256": "6c1296c29bffbff07618ae8496ae31fe1d5c1ce1baf4c917dd3cc838dc0907da"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/index.vue",
+      "sha256": "38be5f22bb7657ae1b236b61dd91bf079deccbaed005956e93d8969bdcc486d4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/logistics.vue",
+      "sha256": "defd1858557933ce7c24bb48eb52faa9dbf4778f66d855d13a29930dac1b8f6a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/orderDetail.vue",
+      "sha256": "6fc1d16d297bbd231d6350bd97a3ef465ca2b8afd94d14b381921f8e34b61901"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/orders.vue",
+      "sha256": "ae87c25ac3f6c437d7d3239821a58a9959af47dd658e6dba5b69b05db1e3e997"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/products.vue",
+      "sha256": "e6564ebff06631e224b68a5a4bdb18ad77d0731bb8ec7185b51394e51599f34b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/productSkus.vue",
+      "sha256": "5c9ebd87ab4ba796e84d5f15bac8dd623ed55942bb7e7be9e9e772b99c94c8d6"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refund.vue",
+      "sha256": "cb575c271afbac39d21ff31e92203e16db508a43022b87de9a2fd3f2139c1a32"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refundDetail.vue",
+      "sha256": "b0341339a6a950c8c34a6a409d260a49164b83c75d51bb100f085c4dd909ae25"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refunds.vue",
+      "sha256": "00d039a92e4ec9239d9d167959d903030ffabe27e444e69af85fa1d33a864284"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/scanning.vue",
+      "sha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/statistics.vue",
+      "sha256": "31556009c7f4b56eaa1589f0dfe00d3fe88bcc0e579a1b12bac980adad3af51a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/userDetail.vue",
+      "sha256": "d10f80666e7245e46e6370808ff863f6577ed34e97b6e8f68680e10355494f2f"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/users.vue",
+      "sha256": "6955989798b7feb9281da2ba1803d8fc1b4bb5c4d59a247e1712987c313fd9a8"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/writeoff.vue",
+      "sha256": "e6cb7c8bffc7f0bbd21b2b0d66b00f82bf130260d8a5b2ba4249d0f0a2c997d4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/writeoffRecords.vue",
+      "sha256": "6a46bd3c4a8a9be5e362c0abfdaaccb4ee384c1531a31aafb954fc240fa93b5b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/writeoffResult.vue",
+      "sha256": "c236bfbf84a24ff0e3e9e7bb2e28605f212218a541cfc4a9800d3736f4872690"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/delivery/index.vue",
+      "sha256": "743f31bfbb3e7e6d3b9d18697f6bdfab11bcf4685da08b7eaf4c0da1b4434ee6"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/delivery/orderDetail.vue",
+      "sha256": "766edea843f8af251fb38bd3296bb4532d01bc605b229b73d03fb9a9e7e141fc"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/delivery/scanDetail.vue",
+      "sha256": "f92b5b09e168bd835407abb82830ff53de93606e97b03e8f80d3b12e8a242823"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/delivery/scanning.vue",
+      "sha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/discoverSearch/index.vue",
+      "sha256": "ebd55be5793292ffd22161ec7e2699e051fd0c62f3cd4310ac76dee4f46dc6f8"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/discoverTopic/index.vue",
+      "sha256": "810a09cce583ac805652255c921ab7c4bd986d22846b9cc197d1a62419a79e75"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/discoverVideo/app.vue",
+      "sha256": "327bbcd65f5dc3a716cdfcf1c176c7c289863898a3b7fe2c52aa21e6d107633e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/discoverVideo/index.vue",
+      "sha256": "841cc6ca59ddba73ad1909b4a1d06cb53b18dde6b7e983c49f85b2db4f826727"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "84fb0ad608c5e708d4510d9180d924773f2c442da3dda8cab67c3057ffd94e04"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/people.vue",
+      "sha256": "92ac6ced70ff4fdf59a2a0a5248eaa18ca890f046d820cda1b60f44032a3e50b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/diy/detail.vue",
+      "sha256": "d45ff6fb30410725d15ba9a773540b7be5540ecace14f1a307e7dd7fb25a31df"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/extension/customer_list/feedback.vue",
+      "sha256": "f1be44dcb6b4d6706bf99661a22fc22d5c0d8dd7045a7bb4beb43e966c252620"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/cate.vue",
+      "sha256": "5cebba96266c36fc52e107731aead91120e6a3c8a9e2194f939aefecb373a820"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/commentDetail.vue",
+      "sha256": "b92a0af58ada1905e3a45646f2c4de2f2a5f1ac9fff050f66ecf523144f22f5e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/commentList.vue",
+      "sha256": "40dbda27b420b26515476bf5e1bc1057a5196b92fed3f673668bbb2f9215c5a9"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/detail.vue",
+      "sha256": "cfa6158931de93714457ed0c7e44b04cd0266d6578f667bdf1134c93217f0e7b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/list.vue",
+      "sha256": "250a260dcabb7cffa1de6af916adba061d03c8130643e794d1a7f3bd638d66de"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/productCommunity.vue",
+      "sha256": "c8235cdf52641f86da8bbc53174c60ffda9c49f3526a99276547a2a79c0ba036"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/search.vue",
+      "sha256": "538a8b4e6b0a186b554021ef01156700be67bf49f20d0ab23ef09f2edc9108a9"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/index/index.vue",
+      "sha256": "849d905e071c1d801b7e4bafd2fb1be2db6816c4a8563201bef88a688a5845b9"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/delivery.vue",
+      "sha256": "2eb30eaf18a90200e3950b69095e651a7526870143985d38545dd0ace17a0925"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/logistics.vue",
+      "sha256": "f626bbb3028a53308d6a9bdd725031eee86a1556481b413f5b33d59d64a9f89c"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/orderDetail.vue",
+      "sha256": "56788d854a2bc1d5d11747cb05c34ed542cf20f8f159c41861216288c7cf712b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/orders.vue",
+      "sha256": "a7f5486d22b5fe2b799e7d8f61d05fb1a33b2ec6fe6a591108d0ed5eee05e245"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/refund.vue",
+      "sha256": "6a08b15b774319b635c603a6df97b5a64dfe65b32b22e58ecae80dec2c39f583"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/merchant/statistics.vue",
+      "sha256": "13af199aa1c59a05c16a148735bd3696590f12b01711d3dd6380455a73ae49a2"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/operator/writeoff.vue",
+      "sha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/confirm.vue",
+      "sha256": "8c0970475dc8143d372bf5601a30131b1c7a09e9371f3a535958ceef1dc75fc2"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "d01fee6c234c02196db9f3e0de2b0ce586c59a94c627d3917af4e6138d33c6c4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "b92386da658d14823529e8d94cdbabe7e2bad242ac0f7b280e5baf2d3a26aff3"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/list.vue",
+      "sha256": "3fa416d061146c6aeb0513c68277909c95094a685378a64ee15bf81643b1bb1e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/payResult.vue",
+      "sha256": "0a6ef0f242a73f056b02bb447f435c2da03a8e2988d0df6d35b53b31ab094aa5"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/refundApply.vue",
+      "sha256": "6019680aabf46521787921f82e0574aff979419e197ff4a5481817e77aaa8c4d"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/refundDetail.vue",
+      "sha256": "26a108f78247d159bfde58452663c5734b2abe1b9ba8a7338623fb36bced7533"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/refundList.vue",
+      "sha256": "5d38ce54b35b7c088209865aa2aeded5fdd99dc922f302657bbb21f8639302bd"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/reply.vue",
+      "sha256": "2ad9142423c50585782e2de82bb6e211728c70e3fb6d7974af36a627e0feac34"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/share/landing.vue",
+      "sha256": "acd2b888107e1c28e3f7ae8e3a5e826be469beb1f58a4c0c80779adee8013235"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/address.vue",
+      "sha256": "932a469cb5b9a768c28b7c38b89b9caa77c77bb3d8ff3f08d77567687fd1da49"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/agreements.vue",
+      "sha256": "b4178e590d3253c3759b4d5d627119e451348ecc33b5c6b201d248a78ea4f8ef"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/balanceLogs.vue",
+      "sha256": "3091442221d0f6da3abfdfca531b19c40dd0a28582cef062e5569cc1688d0b94"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/bank.vue",
+      "sha256": "12a9ad7e09ea05c18bfbb6e7c15504402efc8f9d1472719e68f13acdbde7faee"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/changePassword.vue",
+      "sha256": "360a9c442202efe9f76693db0c1e54588dd148db6acd0810690f44722e7bff20"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/collect.vue",
+      "sha256": "d4edbece31559aab20b3272c422848b366436906f7c2d75154942a969195352e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/coupon.vue",
+      "sha256": "73ef52ebb21907719a585f0589650c8a755144970f141f0749b0856d9b5c178a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/couponCenter.vue",
+      "sha256": "802f95a66f2779af323fb58847341169a090aeb7859059bbb6ea73122aada3a4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/couponProducts.vue",
+      "sha256": "a6c95cbe067589d61d530056553db8cbc844171f1f515d43a70c8f08268e7b91"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/finance.vue",
+      "sha256": "eaf0f862e7c188c00e3aa6fca00578f4e3c9f4ce906728c89afc84b74d03ef32"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/index.vue",
+      "sha256": "56ef989d311ea33612c5f2d16953563d916949ae20d5f3b0d293e38840d277b0"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/integral.vue",
+      "sha256": "e21f9cdbcab7134769389fa6f92ed70a21608767a2a82a4b8474b7f6b7e95162"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/integralLogs.vue",
+      "sha256": "f9a3b00d6410a6ce6d1a575fe28c2a967478df4297051767f8bd1af4f3b4a2a4"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/invoice.vue",
+      "sha256": "5d2afdd8dca6fa0b17904ee8f80335bb7b93af1cb97d10b2c5a055264c1bc5af"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/kefu.vue",
+      "sha256": "92b2d4e39fba4c7b9951266a00ec0ab23a213fcb8c6e573bc52467119ba54eb1"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/legalContent.vue",
+      "sha256": "d1b3dadcd7a32fadbd4df8139ac552916dd87b76d1a42a17b9162e174bc0ba0f"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/level.vue",
+      "sha256": "25cbbfb5c0588bcbe43bd7f3f1fd9fb83e0393147ef578e0f016b055a1c1b35e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/memberCode.vue",
+      "sha256": "a8c1bda1a038bb2b6d5a9e8041d8aceaefc00ee9aa0928f3521c4f1ee4e06642"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/message.vue",
+      "sha256": "5d7baddddf807e8715dfd550f11440ef7b6fb48d1e4460129988e7d569245988"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/messageDetail.vue",
+      "sha256": "3add516ec665ea90dc62d28db52daf066c330179cff9da280d0202ba97673258"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/payPassword.vue",
+      "sha256": "0cbf0ccd8f241b57b0c5ef893e7d1673db554d79bf8ce5915d14f0d29de1427a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/phone.vue",
+      "sha256": "7d7dd883e2ca50c9b0344dd23129e0519fbb191561cdbd070e1d23233635d840"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/profile.vue",
+      "sha256": "721a7558c5bafa6b271f9ddfcac2a8a965acb3ecb099fc5cfacbf449401302f1"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/recharge.vue",
+      "sha256": "681a5afd59abec9b543d211866713345e87fc5373fb38d960f9334b86def32b0"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/sign.vue",
+      "sha256": "54c4571c6e6c43b4dda251ed83d084f73c331432eeb9cbc01a8178fb9518f3b6"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/spread.vue",
+      "sha256": "774db03e3777b86f85559307b6b161c2c3d1ee8d2e5946d04082034dfb8eb450"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/supplierApply.vue",
+      "sha256": "f6cd70e52e210fa05357e6109fb48c9f37c9986ba067663f54ec21c77464eff6"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/vipOpen.vue",
+      "sha256": "10739e76703f434a4455bcad2575ee55a1172ed97111671fc47f078b1745da07"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/visitHistory.vue",
+      "sha256": "b9bbcf3bbeabcbdcf2c438e9aee14db8a19a7191eedf0ef6e95d5397416d3f41"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/apply.vue",
+      "sha256": "307feba089c84d6ad2acdd51236016e175632d3c97e28e3dd4401308688a078f"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/record.vue",
+      "sha256": "d55edca0b137cf1d23f2909efea40956956164d8887da3b7b9c55c1939dbf82f"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/staff_list.vue",
+      "sha256": "55229d1dbb41be578c6859ed02c4b938066d0a3a9480d52b0564311c42856ada"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/state.vue",
+      "sha256": "bdb790a7cb982e2b7578b0edc10a138842df79b98eadcf123e8cb8548c1027ea"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/distributor/apply.vue",
+      "sha256": "702f407c618ece2fa4649f8b9e4834a36e4bf5e8208d5b2e0f6dbe43cad7ff36"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/user_distribution_level/index.vue",
+      "sha256": "9e99f957e28fb7fc3664b51cb499f898ef6fa0ac72044f06084b0cdc986629d3"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/user_member_code/index.vue",
+      "sha256": "4fe51a1e9bdb3d7a234aadc2cdd9c5f21a88baac57ce5c3c9e73e3abc53cf93d"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/work/groupInfo/index.vue",
+      "sha256": "c821f8333c10fcd3105fa4109b7c780f3037b28a33bf481a6796dcea513aef4e"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/work/orderDetail/index.vue",
+      "sha256": "0a6d40aa18c624bc3dadd5e23e02445906964c2e9e0b97954054a0ba953a5880"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/work/orderList/index.vue",
+      "sha256": "47b2769ba5b7b975811904b37ddf59a8399bc0d0c854d3c7fd0225bd5279bb29"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/work/record/index.vue",
+      "sha256": "8e24058382718081a67ddd6e91c591547dd0bdb7a2c1e3b4b475eb555693cbb2"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/work/userInfo/index.vue",
+      "sha256": "17c45ef22e81975b0388f851be1cb26e42a4b4a65a4ea0aa38051e9ac4620d3f"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/logo.png",
+      "sha256": "1434d0a85a9b265e01fc3f1e2dc15438ef3e2ed571dfba2304954ec58528eee2"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/adminSession.ts",
+      "sha256": "7bd1c62e6f784cbc527f93e765361e169b04e9d2e01d4833ee8f9d20c615a8f7"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/assistedDraft.ts",
+      "sha256": "4fe89f017dcfa19ce3926c4d8c157c6fc14148583e38a89a7258a0e034367190"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/auth.ts",
+      "sha256": "746ef8b6368888fd2d6d7046cb335bdab2eae4aee7af65bc015104ce1516c2ec"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/cart.ts",
+      "sha256": "6825ffc4402dba7e99dd8228d9899bdac619f05402eb45589af01090bbc7aec0"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/session.ts",
+      "sha256": "1505684f03edf74b831995e1afb2daf193ef5a7f132662a22a1199c2a046e225"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/theme.ts",
+      "sha256": "034b01103e9e230b5c318e7e273a1d84ea955eaa7fe465f62f231ff7e7b0b652"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/api.ts",
+      "sha256": "70de8a9b61c2519f7b28c222e218d3116551be074a48e9cafe31852240b92a9e"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWork.ts",
+      "sha256": "1b4b11db755a249fbba684de5e74fe5697d877a10fdcb4c5ad16846024f7b31d"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashier.ts",
+      "sha256": "0d08f0fe849c1c739caafe4ea9c39b116272cb84c96c079b4565ffccf41ab6c3"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashierCatalog.ts",
+      "sha256": "a909dad5442d580db95e74fbe1b6857e5e94090d863f4949ee83fca60a2c1f7a"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashierImages.ts",
+      "sha256": "8b0bb0d847ce3ca7278370e48ba8439c128cffef6e35642c8640d7efac145e65"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashierRead.ts",
+      "sha256": "fc24508be62fc256bbe031898dd4b2c2572e9f9d4c78752635fa7bbc3a985ef9"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkFinancial.ts",
+      "sha256": "620e25bd086283c24e97d887b85f8cdc71bd30079ed28169f784b83557535250"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkFulfillment.ts",
+      "sha256": "6b318566c08e42f21d744ae99434374b70167873faf05264523383dfa55ef466"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkProducts.ts",
+      "sha256": "4ad5e619b3eb3eb5891632416b5416e7b7c8655431ec4280753bd718648d920e"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkUsers.ts",
+      "sha256": "44e09e0cae05bfbf5974e336056302f60d207e6802c6a361f83c98ba7ec6a32b"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkWriteoff.ts",
+      "sha256": "b97c7ab14fb7a678a6748e988f35afb9a4ab2481b9f5624aea6967e2dd85c975"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/deliveryWorkbench.ts",
+      "sha256": "e9779bb44050679bb7cc893aa51c21b4620b65788078ad686c592f0ea87defa8"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/merchantOrders.ts",
+      "sha256": "1748eb8417a3addef21d9481357f78a46d7bede3c2ebb806365d2cf3daa6d539"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/order.ts",
+      "sha256": "e06b88c0832adcb93dc9c29d8807b1543aecc163733c75b85d6f404c5c128ce4"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/product.ts",
+      "sha256": "d98bd1018c1d4bd228bf3ca0f3583fd7e1c0498213d55c2a013e1493406d9494"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/productDetailDesign.ts",
+      "sha256": "752675c7e1811124e434f697441f7761a4e4b986ed3a1906ffdb20ae7164a3aa"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/qrcode-terminal.d.ts",
+      "sha256": "b513b5ece217538c7dbfd59959f9ef22c0f59d361d667a493874176ee6364f41"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/systemForm.ts",
+      "sha256": "b998e2f93a65d785b0139d0b63a05d4330856aa6ee95b78bfb6c6f0fb9d5b5c8"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/userCenter.ts",
+      "sha256": "5cc5d1b8e4ee4f1b08bb746e4ddce64379190ffa8d9a49df60cdf8abc24bef79"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/articleRichText.ts",
+      "sha256": "88fca0145179f259414d169ae067ed2eda748f95b58fc73f0ee01ce4b8c21b04"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/assistedIntent.ts",
+      "sha256": "54978c80e2935172e62f3a0c1304ffabd179ea539d41dc32240d2c33e7292762"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/communityMedia.ts",
+      "sha256": "b68ff506627acbf463a3f2f2f66a7377852e6b9773a23bb81aa37bc2a67a7ce1"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerCashierAppImageFile.ts",
+      "sha256": "da35374dac50784ee2c29ee974fec9fd9502eed7f5a10000af9a93ab9079e17b"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWork.test.ts",
+      "sha256": "462c2e2a627ea8d2026bd6796fdb9f1237fd354f628224162304333441ff4bd9"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWork.ts",
+      "sha256": "fe377ffe67621cad8f0c361a8c8e5586b2024513df026964601df2fe4ae0ec77"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashier.ts",
+      "sha256": "1e6e2aa11e7c646a304261ff1f8a569aba0375e853188f620609c1c4de2ed6b3"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashierCatalog.ts",
+      "sha256": "f1794ea6f0eb144f976ab39128107c3c804d48b10cad8eb62e3b2571ff209115"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashierImages.ts",
+      "sha256": "877d7b71b3ba56784d5db25b3f09beb4fba727e4d2b04e2b04d0c70b15708064"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashierRead.ts",
+      "sha256": "3052122b9f68544fdf472dffc057f046d5afed8188dd04631abf1d704af0f10c"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkFinancial.test.ts",
+      "sha256": "e77d4aa230f4f407aeb3baa52d2f5270fcaf1f48f2f738f73d344956d8920cf8"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkFinancial.ts",
+      "sha256": "1b03afb52eb95e79a60a6fa55c0bf77580c59754538b463bdf147b9f331d76ba"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkFulfillment.test.ts",
+      "sha256": "4c08010f58870be960e82713208a7f09feb9a5a251f5d6814d7fba9e64a819be"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkFulfillment.ts",
+      "sha256": "66e6eac81f47c745508ced9ba669ad510f3540bc326c1c40680b3b6781cf4b6f"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkFulfillmentContract.ts",
+      "sha256": "4e439b3c81ff7d24a27583de5280ca34780bb81ff493c80b106739d6bc15c147"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkProducts.test.ts",
+      "sha256": "8745d6b1677873df920c89dd3793f571686b919d2ba1e3adcb59866dcce56946"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkProducts.ts",
+      "sha256": "6867705b97419ad6ba184550355f1084ac621ddddd4608e05667873f88836c87"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkProductsContract.ts",
+      "sha256": "67dfc0b02dbdd9b000180d2e23e54d10b70fa2cc2d1f21821c343e0f34a182a0"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkUsers.test.ts",
+      "sha256": "42ab113b48a086a1ebbe43ac2e2fd3ddca83bd65a3576659136b71c2c123097a"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkUsers.ts",
+      "sha256": "a542bfbd5e8f34541fe0602454715369bf3fb2aa03aafd641af574d32ca4124a"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkUsersContract.ts",
+      "sha256": "6bc20b287632003541f17da8b49742ababab6c6ada5d9adf62d9812b8346520d"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkWechatScan.ts",
+      "sha256": "d59fdbe3376384aa1d906a5f3de89121066653e1e0bd0e54dbbcfb2e1a8ece4f"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkWriteoff.test.ts",
+      "sha256": "4a37547d14ec396f90d7dbcdec485fdfb1434d8f206ffdcba0665afcf2cf5053"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkWriteoff.ts",
+      "sha256": "f64e03896dd81016337b8f534d6f4bb815ccbd61146ce1fc35365f0212c34e3e"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/deliveryWorkbench.ts",
+      "sha256": "7cfa4483025218642285ea7be48583c473a599160aee2e0bfc6f9381f02489d7"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/diy.ts",
+      "sha256": "7a394c9892ef707b88b90e8381c4b9b0e879ea4527cdc7d02055a22b24cdeb21"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/diySuspended.ts",
+      "sha256": "f6543632fdb6adb33bc8c4e469ae6f8f212245a2a53f4d314b05da262c8cb41d"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/diyTheme.ts",
+      "sha256": "cb43fefb2b03d909e1f96f4e61dbd0205f5e728726d71767b5eeb523677b093b"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/fab.ts",
+      "sha256": "9f3eafa88c73b561da3db56e6c85772a34d2a69e40e307ace8ef9a747f6b84eb"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/integralShare.ts",
+      "sha256": "a18799f1823744d40c887c586bbefed8ca384943f853e46b1b03a2bbd17e26ba"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/legacyShare.ts",
+      "sha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/merchantIntentHash.ts",
+      "sha256": "e47ac73e9393fcb3fcd39bfc53ba0d9af7f31215f0e704365c77e9194f111437"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/merchantOrders.ts",
+      "sha256": "2966de6f399a851ae57466051dfdb0a4ad16fc221fc40594b97795b43b842690"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/offlinePayment.ts",
+      "sha256": "eb37a9f873434129779822c100acd3e8ce44c5ef4b21bf0f5f174d271873c59c"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/operatorScanCode.ts",
+      "sha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/ordinaryShare.ts",
+      "sha256": "204721784c508607f028a6a86ba5f66675c869c56d8f2a90d9b0a6c83c94e09e"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/ordinaryWechatShare.ts",
+      "sha256": "b408b04d6e687cf554173dafe5d2b552bd716944edf8f9cb257113f8261b8d62"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/privateShareScan.ts",
+      "sha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/productDetailDesign.ts",
+      "sha256": "e1a8a6b47b51cbe82d8f80c8e8ee1a621fc3763478ae31a4d12b22fb6672337f"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/region.ts",
+      "sha256": "0b161138150bf06b5afe7958806977cac9d0fb40ced7c61756fe96d3d1cf2d73"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/request.ts",
+      "sha256": "0b63a825bb956ec0dc6e0005d688aff3af8119fcd42e7caada28c1c1734d5673"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/shareImage.ts",
+      "sha256": "19919993dbdd3403c08aca11f3469b0daa6763da825567546cabf3d05c317254"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/shareReferral.ts",
+      "sha256": "c442507adc80740811348fd73a5d127dd7048a67b98e7441d66986f97bca839a"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/shareScanTransfer.ts",
+      "sha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/smsChallenge.ts",
+      "sha256": "f6272fc31b47a4d1ea58923eccd2dea669205d925a0b87a10c484d5ea7a8f185"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/userCenter.ts",
+      "sha256": "eae0376dcf15c2231ce2b154e032aba49077d6338ac4b4fd73649e6e7dbe0b69"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/withdrawal.ts",
+      "sha256": "e1e870e7c2d7ce0555cd5ecc25bae22c6b4fe399d4cc32d2f37ff15afb364e44"
+    },
+    {
+      "path": "view/uniapp-ts/tsconfig.json",
+      "sha256": "e6d07bfad491daff338e0ecf32e4b7cd1976f87f2e663f1619ace6612df86299"
+    },
+    {
+      "path": "view/uniapp-ts/vite.config.ts",
+      "sha256": "74028c9a59e2046d4e371601ef544b15ba5764cf20dc8a2575c5ebcdad01b6c0"
+    },
+    {
+      "path": "view/uniapp-ts/vite.runtime-audit.config.ts",
+      "sha256": "ef6094f76b691039ce7b3542080fe7f46b512bd5e1fd467036d88e294d9ce3f5"
+    },
+    {
+      "path": "view/uniapp-ts/vitest.config.ts",
+      "sha256": "c8b1d35facb67fc1ff955f4f5bea3c9de7b2dbad9996bc45009423651ffc32bd"
+    }
+  ],
+  "dependencies": {
+    "vue": {
+      "version": "3.4.21",
+      "packageJsonSha256": "5c464211ecee1a688f8c6bc88bf04fbd414ed54b242a158826c1b883fd336a64"
+    },
+    "typescript": {
+      "version": "5.9.3",
+      "packageJsonSha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+    },
+    "vue-tsc": {
+      "version": "2.2.12",
+      "packageJsonSha256": "1651176df561df8cac64bd333e1bf500923af5e089f13627b370f0ca6c7f6479"
+    },
+    "vite": {
+      "version": "5.4.21",
+      "packageJsonSha256": "18c96c04fef270fdf3dcf1645486fe8ab1e3cf0fb9a87ad9b4f93081e1bdc516"
+    },
+    "@dcloudio/vite-plugin-uni": {
+      "version": "3.0.0-4020920240930001",
+      "packageJsonSha256": "79e9aca182f20e9dab24f8a27d46122fa3a4228361737d9d11dcee3cf4ed0b2c"
+    },
+    "@dcloudio/uni-app": {
+      "version": "3.0.0-4020920240930001",
+      "packageJsonSha256": "7550ad9f1b0e7ae5e3897477ae9cd0cc1e99eaa1e69ceea09d4b138df7de055c"
+    },
+    "@dcloudio/uni-h5": {
+      "version": "3.0.0-4020920240930001",
+      "packageJsonSha256": "d53adcf8817c1079f0cb247cf22a2e36dd4dbe00c6d5a90c8fadff4457429d0c"
+    },
+    "@dcloudio/uni-mp-weixin": {
+      "version": "3.0.0-4020920240930001",
+      "packageJsonSha256": "42581c523ed94b97d6549c34a8bf5f899af18d4fc322e357594c41fe3e6d2aae"
+    },
+    "@dcloudio/uni-app-plus": {
+      "version": "3.0.0-4020920240930001",
+      "packageJsonSha256": "834605f26dbcad48f305347e7b67583018f11eb1a88124911cb9530887f320da"
+    }
+  },
+  "lockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+  "aggregateSha256": "5e2179e55394f52ea4c6dd4e420f278a0546335dc2508a7dd121712b4720d513"
+}

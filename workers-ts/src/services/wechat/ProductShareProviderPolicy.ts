@@ -1,4 +1,5 @@
 import { ValidateException } from '@/utils/errors';
+import { readLegacyShareProvider } from '@/services/other/LegacyShareProviderRead';
 const JSON_LIMIT=64*1024,IMAGE_LIMIT=1024*1024;
 /** New product-sharing requests have a fixed provider, deadline and streamed
  * byte budget. Other WeChat consumers retain their existing service contract. */
@@ -6,7 +7,7 @@ export function boundedProductShareFetch(fetcher:typeof fetch):typeof fetch {
   return async(input,init)=>{
     const url=new URL(input instanceof Request?input.url:String(input));
     if(url.origin!=='https://api.weixin.qq.com'||!['/cgi-bin/token','/cgi-bin/qrcode/create','/wxa/getwxacodeunlimit'].includes(url.pathname))throw new ValidateException('商品分享接口地址无效');
-    const response=await fetcher(input,{...init,signal:AbortSignal.timeout(10000),redirect:'error'});
+    const response=await readLegacyShareProvider(fetcher,input,init,{json:JSON_LIMIT,image:IMAGE_LIMIT});
     const type=response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase()??'';
     const image=['image/png','image/jpeg'].includes(type),limit=image?IMAGE_LIMIT:JSON_LIMIT;
     const size=Number(response.headers.get('Content-Length')??0);

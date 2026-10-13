@@ -1,0 +1,85 @@
+{
+  "retainedAt": "2026-10-13T09:15:02.245Z",
+  "sourceDigest": "b90973003c0635375e8075e7fd76db30345befb4efb1ee4c0c04f1da60d2e7bb",
+  "ordinary": {
+    "files": 63,
+    "passed": 961,
+    "nativeSkipped": 85,
+    "failed": 1
+  },
+  "native": {
+    "files": 33,
+    "passed": 452,
+    "failed": 3,
+    "completeCommandExit": 1,
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "independentPgCtlStatus": 3
+  },
+  "workerTypes": {
+    "unit": 0,
+    "runtime": 0
+  },
+  "note": "Superseded by controller raw-HEAD protection, retained unknown-label attempt, and same-owner Supplier category fixture repair. No aggregate final credit claimed.",
+  "artifacts": [
+    {
+      "file": "category-label-staff-diff-check-final.log",
+      "bytes": 4470,
+      "sha256": "b5359d501036b1e525f2e079c44d2ff3f31147495b157a74236b40dc62be0c0a"
+    },
+    {
+      "file": "category-label-staff-native-final-receipt.json",
+      "bytes": 129514,
+      "sha256": "6bb36db1f5da2a5996ad81ccf48598ec14661f65cfa9eb6a4bef20d718a87536"
+    },
+    {
+      "file": "category-label-staff-native-final.log",
+      "bytes": 119742,
+      "sha256": "73870aa8d8d249c37c690d556a09a51201e52f0c6dcfd008df506722a34f2846"
+    },
+    {
+      "file": "category-label-staff-owner-before.json",
+      "bytes": 9213,
+      "sha256": "041ff79319dff8110720b7e7f670bbfe690c93ec1f2328feb7798783675f786b"
+    },
+    {
+      "file": "category-label-staff-route-audit-final.json",
+      "bytes": 1321676,
+      "sha256": "96786ce4f0dcbe038b750d8332e36dd13f907ab1a8738614e3638bfb4a2ff1e2"
+    },
+    {
+      "file": "category-label-staff-source-final-before.json",
+      "bytes": 642445,
+      "sha256": "8782f10f32b54ee80fcb557c3bd2874fd6030cfe678069c88566cde6550f8408"
+    },
+    {
+      "file": "category-label-staff-tests-final-receipt.json",
+      "bytes": 9379,
+      "sha256": "1ced554cadc28260efd18e7df40ff1085f6f3f60293a1947dd1b598c7c0314f0"
+    },
+    {
+      "file": "category-label-staff-tests-final.json",
+      "bytes": 451727,
+      "sha256": "106a017e1ebcc3150245d0353babc0416c76feca5854ee1b190c622fa169e5c4"
+    },
+    {
+      "file": "category-label-staff-tests-final.log",
+      "bytes": 184,
+      "sha256": "980ac337c75897e875c900c76cf9e836b6035150cbffebbfa8e34c57c67cf8dd"
+    },
+    {
+      "file": "category-label-staff-worker-runtime-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "category-label-staff-worker-types-final.json",
+      "bytes": 1128,
+      "sha256": "4a3564b9ed58c1a40eca3ea2570e9cc70be6eb12fb0f3518995fa0667650f90c"
+    },
+    {
+      "file": "category-label-staff-worker-unit-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

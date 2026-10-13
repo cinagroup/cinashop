@@ -215,11 +215,44 @@ export interface ProductCategory {
   path: string;
   level: number;
   pic: string;
+  big_pic: string;
   sort: number;
   is_show: number;
   add_time: number;
   children: ProductCategory[];
+  revision?: string;
 }
+
+export interface ProductCategoryPayload {
+  pid: number;
+  cate_name: string;
+  pic: string;
+  big_pic: string;
+  sort: number;
+  is_show: number;
+  expected_revision?: string;
+}
+
+export interface SupplierProductBatchSelection {
+  all: 0 | 1;
+  ids: number[];
+  where: Record<string, unknown>;
+}
+export interface SupplierProductBatchFact {
+  id: number; type: number; relation_id: number; product_type: number; store_name: string;
+  is_del: number; is_show: number; is_verify: number; cate_id: string; delivery_type: string;
+  system_form_id: number; freight: number; postage: string; temp_id: number;
+}
+export interface SupplierProductBatchFacts {
+  ids: number[]; count: number; revision: string; products: SupplierProductBatchFact[];
+  relations: Array<{ product_id: number; relation_id: number; relation_pid: number; status: number }>;
+}
+export interface SupplierProductBatchPayload extends SupplierProductBatchSelection {
+  type: 1 | 3 | 7 | 8;
+  data: { cate_id?: number[]; delivery_type?: number[]; system_form_id?: number; freight?: 1 | 2 | 3; postage?: string; temp_id?: number };
+  expected_revision: string;
+}
+export interface SupplierProductBatchReceipt extends SupplierProductBatchFacts { updated: number; verified: true }
 
 export interface ProductDimension {
   value: string;
@@ -277,6 +310,7 @@ export interface ProductDetail {
   unit_name: string;
   bar_code: string;
   cate_id: number[];
+  store_label_id?: number[] | string;
   slider_image: string[];
   description: string;
   spec_type: 0 | 1;

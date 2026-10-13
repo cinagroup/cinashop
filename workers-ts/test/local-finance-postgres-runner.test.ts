@@ -147,7 +147,15 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.stdout).toBe('');
     expect(result.stderr).toContain(error);
   });
-  it.each(['admin-refund-operation-http','runtime-business-login','assisted-purchase-runtime-postgres','assisted-purchase-flow-postgres','admin-user-list-postgres','admin-runtime-login','presale-runtime-permissions','membership-pricing-policy','purchase-quota-refund-receipt-postgres','purchase-quota-payment-ledger-postgres','unpaid-mixed-order-cancellation-postgres','purchase-origin-evidence-postgres','purchase-origin-installation',
+  it.each(['admin-legacy-system-log','admin-legacy-system-log-native','supplier-product-catalog',
+    'admin-product-label','admin-product-label-http','admin-product-label-native','admin-product-label-permission',
+    'public-product-label-icons','supplier-product-category-http','supplier-product-category-concurrency-postgres',
+    'supplier-product-category-permission','legacy-share-private-scan','legacy-share-private-scan-native','wechat-follow-poster','wechat-follow-poster-native',
+    'legacy-share-code','legacy-share-code-native',
+    'admin-product-brand','admin-product-brand-http','admin-product-brand-native','admin-product-brand-permission',
+    'supplier-product-batch-http','supplier-product-batch-concurrency-postgres','supplier-product-batch-permission',
+    'legacy-share-registered-http','user-spread-poster-data','user-spread-poster-data-native','cart-computation-http',
+    'admin-refund-operation-http','runtime-business-login','assisted-purchase-runtime-postgres','assisted-purchase-flow-postgres','admin-user-list-postgres','admin-runtime-login','presale-runtime-permissions','membership-pricing-policy','purchase-quota-refund-receipt-postgres','purchase-quota-payment-ledger-postgres','unpaid-mixed-order-cancellation-postgres','purchase-origin-evidence-postgres','purchase-origin-installation',
     'purchase-cancellation-evidence-postgres',
     'purchase-cancellation-installation','customer-cashier-abandon-postgres','customer-work-cash-refund-postgres',
     'finance-fixture-advisory-isolation','checkout-line-finance','checkout-coupon-template-authority','checkout-membership-boundary',
@@ -158,5 +166,14 @@ describe('local PostgreSQL runner command boundary', () => {
       {cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
     expect(result.error).toBeUndefined();expect(result.status).not.toBe(0);expect(result.stdout).toBe('');
     expect(result.stderr).not.toContain('Schema maintenance accepts only');expect(result.stderr).toContain('ENOENT');
+  });
+});
+
+describe('explicit category, Supplier label and employee isolated maintenance admission', () => {
+  it.each(['admin-product-category-permission', 'admin-product-category', 'admin-product-category-http', 'admin-product-category-native', 'supplier-product-label-http', 'supplier-product-label-binding-http', 'supplier-product-label-native', 'division-staff-http', 'division-staff-method-http', 'division-staff-invite', 'division-staff-postgres'])('admits complete reviewed %s files before binary validation', name => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', `test/${name}.test.ts`],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).not.toContain('Schema maintenance accepts only'); expect(result.stderr).toContain('ENOENT');
   });
 });

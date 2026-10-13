@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-13T07:28:35.3969573Z",
+  "completedAt": "2026-10-13T07:28:35.6208456Z",
+  "writer": "/root/backend_gap",
+  "scope": "Authorized two-file guarded source writeback",
+  "files": [
+    {
+      "relative": "src/services/store/DeliveryOrderWriteoffService.ts",
+      "sourcePath": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\src\\services\\store\\DeliveryOrderWriteoffService.ts",
+      "localPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\store\\DeliveryOrderWriteoffService.ts",
+      "sourceBeforeSha256": "70f0f064795f3f21f530e26b7fd97c6ace2653694d3a595b766ad89411463f3d",
+      "sourceAfterSha256": "4228c7130bf8284479ba4a5e6ffc045b1f9c8f000af143f925cdfc12c421b09f",
+      "localCandidateSha256": "4228c7130bf8284479ba4a5e6ffc045b1f9c8f000af143f925cdfc12c421b09f",
+      "exactTestedBytes": true
+    },
+    {
+      "relative": "test/delivery-workbench-writeoff-postgres.test.ts",
+      "sourcePath": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\test\\delivery-workbench-writeoff-postgres.test.ts",
+      "localPath": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\delivery-workbench-writeoff-postgres.test.ts",
+      "sourceBeforeSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3",
+      "sourceAfterSha256": "3a2348cf3fed975ce67f6d32b1a8353f67ef9269aaa6b9f980ce073c62b363b3",
+      "localCandidateSha256": "3a2348cf3fed975ce67f6d32b1a8353f67ef9269aaa6b9f980ce073c62b363b3",
+      "exactTestedBytes": true
+    }
+  ],
+  "serviceTwoAnchorReplacements": 2,
+  "serviceReverseProof": true,
+  "serviceBomPreserved": true,
+  "serviceOtherTextPreserved": true,
+  "originalRuntimeCrudPlanUnchanged14": true,
+  "auxiliary5FixtureTables": "SELECT only, actual I/U/D privileges false in candidate native evidence",
+  "productionGrantsChanged": false,
+  "actorScopeTransactionQueriesTargetRevisionWritesChanged": false,
+  "nativeCandidatePassed": 4,
+  "nativeCandidateSkipped": 70,
+  "nativeCandidateExit": 0,
+  "nativeCandidateSeconds": 23.8,
+  "nativeProof": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\delivery-shared-read-key-01a1332d-20261013\\delivery-shared-read-key-candidate-summary.json",
+  "nativeProofSha256": "2fbc9e27ee4675ee808d8db907dd61e86d4d13cb278117bd8d2db70b21dccd93",
+  "globalTypesPassed": false,
+  "fullFinancialSuitesPassed": false,
+  "frontendCandidateMergedByThisWriter": false,
+  "allOtherSourcesTouched": false,
+  "note": "Native selected four cases attach to current two guarded files by identical tested bytes; 70 skipped cases uncredited. Earlier source proofs remain historical."
+}

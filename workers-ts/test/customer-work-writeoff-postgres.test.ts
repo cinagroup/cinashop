@@ -5,7 +5,7 @@ import {customerWorkWriteoffFixture} from './helpers/customerWorkWriteoffFixture
 import {createContainerFromDb,type DbClient} from '../src/lib/di';
 import {storeOrder,storeOrderCartInfo,storeOrderWriteoff,storeOrderRefund,storeOrderStatus,storeOrderOutbox,storeService,storeServiceRecord,storePink,storeProduct,storeProductAttrValue,systemConfig,user,userBill,userBrokerage,supplierFlowingWater,supplierTransactions,systemSupplier,storePromotions,storeOrderPromotions} from '../src/models/schema';
 import {CustomerWorkWriteoffService} from '../src/services/customer-work/CustomerWorkWriteoffService';
-import {CUSTOMER_WRITEOFF_READ_VERSION,prepareWriteoff,type WriteoffInput} from '../src/services/customer-work/CustomerWorkWriteoffProtocol';
+import {CUSTOMER_WRITEOFF_READ_VERSION,prepareWriteoff,writeoffLookup,type WriteoffInput} from '../src/services/customer-work/CustomerWorkWriteoffProtocol';
 import {customerWriteoffLinePrice} from '../src/services/customer-work/CustomerWorkWriteoffSalePrice';
 import {authorizeCustomerWorkActor} from '../src/services/customer-work/CustomerWorkScope';
 import {StoreMobileOrderService} from '../src/services/store/StoreMobileOrderService';
@@ -22,7 +22,7 @@ import {ApiException} from '../src/utils/errors';
 import * as Controller from '../src/controllers/api/v1/CustomerWorkWriteoffController';
 import type {Env,AppVariables} from '../src/env';
 import {storeOrderRefundSplit} from '../src/models/schema/order_refund_split';
-import type {CustomerWorkWriteoffRowEvidence} from '../../view/common/customerWorkWriteoff';
+import {writeoffLookupValue,type CustomerWorkWriteoffRowEvidence} from '../../view/common/customerWorkWriteoff';
 
 /** Every N01..N32 binding is exercised against a registered owned PG16
  * database and independently authenticated ordinary LOGIN. No provider HTTP,
@@ -63,6 +63,39 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native ordinary 
  async function refundWriteoffRace(){await f.reset();const o=await f.ordinary(),row=(await carts(o.id))[0],body=await f.input(o.id),results=await f.withPeer(async peer=>Promise.allSettled([execute(body),applyOrderRefundWithMaterialization(createContainerFromDb(peer),{uid:11,orderId:o.orderId,applyType:4,privilegedActor:'customer-work',selectorNamespace:'row',refundReason:'独立LOGIN真实退款竞争',refundExplain:'同支付结算锁',cartSelections:[{cartId:row.id,cartNum:1}],authorizeApplication:async(db,current)=>{await authorizeCustomerWorkActor(db,f.actor());expect(current.id).toBe(o.id);}},0)]));const successes=results.filter(r=>r.status==='fulfilled'&&('refundId' in r.value||'receipt' in r.value&&r.value.receipt?.outcome==='written-off'));expect(successes).toHaveLength(1);const applications=await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,o.id));expect((await records(o.id)).length+applications.length).toBe(1);}
  async function windowEdges(id:number,start:number,end:number){const clock=vi.spyOn(Date,'now');try{for(const at of [start,end]){clock.mockReturnValue(at*1000);expect((await target(id)).actions.writeoff.available).toBe(true);const row=(await carts(id))[0];expect((await execute(await f.input(id,[{cart_row_id:row.id,writeoff_num:1}]))).execution?.verified).toBe(true);}for(const at of [start-1,end+1]){clock.mockReturnValue(at*1000);expect((await target(id)).actions.writeoff.available).toBe(false);await rejected(async()=>execute(await f.input(id,[{cart_row_id:(await carts(id))[0].id,writeoff_num:1}])));}}finally{clock.mockRestore();}}
 
+ it('READ_COMPAT_CUSTOMER explicit persisted member codes retain exact SQL read authority and strict write intent',async()=>{
+  const [identity]=await f.db.execute(sql`SELECT current_user AS current,session_user AS session,(SELECT rolsuper FROM pg_roles WHERE rolname=current_user) AS super`);
+  expect(identity).toEqual({current:f.role,session:f.role,super:false});
+  const scope=await f.scope(),input=await f.input(),read=(value:string,namespace:'auto'|'member-barcode'|'order-code'='member-barcode')=>({version:CUSTOMER_WRITEOFF_READ_VERSION,scope_key:scope.scope_key,namespace,value});
+  const snapshot=async()=>({effects:await f.effects(),users:await f.db.select().from(user).orderBy(user.uid),bills:await f.db.select().from(userBill).orderBy(userBill.id),brokerage:await f.db.select().from(userBrokerage).orderBy(userBrokerage.id),flows:await f.db.select().from(supplierFlowingWater).orderBy(supplierFlowingWater.id),transactions:await f.db.select().from(supplierTransactions).orderBy(supplierTransactions.id),statuses:await f.db.select().from(storeOrderStatus).orderBy(storeOrderStatus.id),outbox:await f.db.select().from(storeOrderOutbox).orderBy(storeOrderOutbox.id),operations:await receiptRows()});
+  const original=await snapshot();
+  for(const code of ['A B','A#B','A\\B','A?B','A&B','A/B']){
+   await f.maintenanceDb.update(user).set({barCode:code}).where(eq(user.uid,11));const before=await snapshot();
+   expect(writeoffLookupValue('member-barcode',code)).toBe(true);expect(writeoffLookup(read(code)).value).toBe(code);
+   const result=await service.reader.lookup(f.actor(),read(code));expect(result.data.lookup_kind).toBe('member-barcode');
+   expect(result.data.orders.map(row=>row.id).sort((a,b)=>a-b)).toEqual([1,2,3]);expect(result.data.orders.every(row=>row.uid===11)).toBe(true);
+   await expect(service.reader.lookup(f.actor(),read(code+'X'))).rejects.toThrow();
+   await expect(service.reader.lookup(f.actor(102),read(code))).rejects.toThrow();
+   await expect(service.reader.lookup(f.actor(),{...read(code),scope_key:'0'.repeat(64)})).rejects.toThrow();
+   expect(writeoffLookupValue('auto',code)).toBe(false);await expect(service.reader.lookup(f.actor(),read(code,'auto'))).rejects.toThrow();
+   await expect(prepareWriteoff(context(),{...input,payload:{...input.payload,code}})).rejects.toThrow('12位');
+   expect(await snapshot()).toEqual(before);
+  }
+  for(const code of [' A B','A B ','A\u0000B','A\nB']){
+   expect(writeoffLookupValue('member-barcode',code)).toBe(false);await expect(service.reader.lookup(f.actor(),read(code))).rejects.toThrow();
+  }
+  await f.maintenanceDb.update(user).set({barCode:'ASCII-LOCAL'}).where(eq(user.uid,11));const finalBefore=await snapshot();
+  expect((await service.reader.lookup(f.actor(),read('ASCII-LOCAL','auto'))).data.orders.map(row=>row.id).sort((a,b)=>a-b)).toEqual([1,2,3]);
+  expect((await service.reader.lookup(f.actor(),read('123456789001','order-code'))).data.orders.map(row=>row.id)).toEqual([1]);
+  expect((await service.reader.lookup(f.actor(),read('123456789001','auto'))).data.orders.map(row=>row.id)).toEqual([1]);
+  expect(await snapshot()).toEqual(finalBefore);
+  await f.maintenanceDb.update(user).set({barCode:'123456789001'}).where(eq(user.uid,11));const beforeExplicit=await snapshot();
+  expect(writeoffLookupValue('member-barcode','123456789001')).toBe(true);
+  expect((await service.reader.lookup(f.actor(),read('123456789001'))).data.orders.map(row=>row.id).sort((a,b)=>a-b)).toEqual([1,2,3]);
+  await expect(service.reader.lookup(f.actor(),read('123456789001','auto'))).rejects.toThrow('歧义');expect(await snapshot()).toEqual(beforeExplicit);
+  const withoutBarcode=(value:Awaited<ReturnType<typeof snapshot>>)=>({...value,users:value.users.map(({barCode:_,...account})=>account)});
+  expect(withoutBarcode(await snapshot())).toEqual(withoutBarcode(original));expect(await receiptRows()).toEqual([]);
+ },60000);
  it('N01 genuine unique customer1/chat0 UserJWT uses an independent ordinary LOGIN and actual core',async()=>{const[role]=await f.db.execute<{current:string;session:string;super:boolean;forge:boolean}>(sql`SELECT current_user AS current,session_user AS session,(SELECT rolsuper FROM pg_roles WHERE rolname=current_user) AS super,has_column_privilege(current_user,'store_service','customer','UPDATE') AS forge`);expect(role).toEqual({current:f.role,session:f.role,super:false,forge:false});const result=await execute(await f.input(1,[{cart_row_id:1,writeoff_num:2}]));expect(result.receipt).toMatchObject({actor_uid:101,service_id:1,outcome:'partial-writtenoff'});expect(result.execution).toMatchObject({state:'SQL_COMMITTED',verified:true,committed:true});expect((await records())[0]).toMatchObject({uid:11,staffId:0,isAdmin:0,adminId:0,writeoffNum:2,writeoffPrice:'10.00'});});
  it('N02 rejects role/account/delete/duplicate, expired digest and changed original scope',async()=>{for(const patch of [{customer:0},{accountStatus:0},{isDel:1},{merId:8}]){const body=await f.input();await f.maintenanceDb.update(storeService).set(patch).where(eq(storeService.id,1));await rejected(()=>execute(body));await f.maintenanceDb.update(storeService).set({customer:1,accountStatus:1,isDel:0,merId:0}).where(eq(storeService.id,1));}const body=await f.input();await f.maintenanceDb.insert(storeService).values({id:8,uid:101,customer:1,accountStatus:1,status:0});await rejected(()=>execute(body));await f.maintenanceDb.delete(storeService).where(eq(storeService.id,8));for(const actor of [{...f.actor(),auth_version:md5('wrong')},{...f.actor(),expires_at:1}])await rejected(()=>service.execute({actor,request_key:crypto.randomUUID()},body));await f.maintenanceDb.update(user).set({deleteTime:new Date()}).where(eq(user.uid,101));await rejected(()=>execute(body));});
  it('N03 rejects legacy auth0 and every client operator/forged kind without granting another realm',async()=>{const old=new StoreMobileOrderService(f.container,f.env);await expect(old.writeoffInfo(101,0,'123456789001',f.actor())).rejects.toThrow('仅支持手机订单管理员或配送员');const body=await f.input();for(const field of ['actor','adminId','staffId','delivery_id','kind'])await rejected(()=>service.execute(context(),{...body,[field]:field==='kind'?'admin':1}));expect(await receiptRows()).toEqual([]);});

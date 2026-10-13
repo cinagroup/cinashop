@@ -1,0 +1,11 @@
+const fs=require('fs'),path=require('path'),assert=require('assert/strict'),Module=require('module'),crypto=require('crypto'),visual=__dirname,local=visual+'/cinashop-migration-20261013-HUPOBq/view/uniapp-ts';
+require('./private-share-scanner-no-web-globals.cjs');assert.equal(global.URL,undefined);assert.equal(global.URLSearchParams,undefined);
+const file=local+'/scripts/private-share-scanner-runtime.test.cjs',original=fs.readFileSync(file,'utf8');
+let source=original.replace("lookup_fingerprint:u.writeoffLookupFingerprint(call.data.namespace,call.data.value),orders:[]","lookup_fingerprint:u.writeoffLookupFingerprint(call.data.namespace,call.data.value),orders:[r.load(path.join(root,'src/utils/customerWorkWriteoff.test.ts')).writeoffTarget()]")
+ .replace("assert.equal(r.calls.find(c=>c.url.endsWith('/writeoff/lookup')).data.namespace,'member-barcode');","assert.equal(r.calls.find(c=>c.url.endsWith('/writeoff/lookup')).data.namespace,'member-barcode');assert.equal(r.page.result.value.orders.length,1);assert.equal(r.page.result.value.orders[0].carts.length,1);assert.equal(r.page.result.value.orders[0].carts[0].image,'/static/logo.png');")
+ .replace("lookup_kind:kind,list:[]","lookup_kind:kind,list:[D.preview(101)]")
+ .replace("assert.equal(r.page.pageError.value,'');if(type===90)","assert.equal(r.page.pageError.value,'');assert.equal(r.page.previews.value.length,1);assert.equal(r.page.previews.value[0].cart_info.length,1);if(type===90)")
+ .replace("cart_info:[{id:1,write_surplus_times:1}]","cart_info:[{id:1,write_surplus_times:1,write_times:1,cart_info:{productInfo:{storeName:'真实扫码商品',image:'/static/logo.png',attrInfo:{suk:'原规格',image:'/static/logo.png'}}}}]");
+assert.notEqual(source,original);assert.ok(source.includes('orders:[r.load'));assert.ok(source.includes('list:[D.preview(101)]'));
+const instance=new Module(file,module);instance.filename=file;instance.paths=Module._nodeModulePaths(path.dirname(file));instance._compile(source,file);
+console.log(JSON.stringify({validation:'same fourteen real SFC scenarios; only synthetic response/provider fixtures replaced with full valid customer/delivery rows, without global Web constructors',originalTestSha256:crypto.createHash('sha256').update(original).digest('hex'),fixtureOverlaySha256:crypto.createHash('sha256').update(source).digest('hex'),productionSourceEdited:false}));

@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { cartList } from '../src/controllers/api/v1/OrderController';
 import { StoreCartService } from '../src/services/order/StoreCartService';
+import { normalizeCartList } from '../../view/common/cartPrice';
 import { memberRight, storeCart, storeProduct, storeProductAttrValue, systemUserLevel, user } from '../src/models/schema';
 
 interface CartQuoteRow {
@@ -91,6 +92,35 @@ describe('modern cart current-user prices, actual HTTP handler and PostgreSQL', 
       body: JSON.stringify({ cartIds: [3], addressId: 11, type: 0 }) }, f.env);
     const body = await response.json() as { status: number; data: { priceGroup: { pay_price: string } } };
     expect(body.status).toBe(200); expect(cart[0].trueSumPrice).toBe(body.data.priceGroup.pay_price);
+  });
+  it('keeps schema-valid high-value cart/buy HTTP subtotals exact and accepted by the real consumer and confirmation', async () => {
+    await f.setConfig({ member_func_status: '0', member_card_status: '0', svip_price_status: '0' });
+    await f.db.update(storeProduct).set({ price: '9999999900.79', stock: 4000 });
+    await f.db.update(storeProductAttrValue).set({ price: '9999999900.79', stock: 4000 }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.update(storeCart).set({ cartNum: 3478 }).where(eq(storeCart.id, 1));
+    await f.db.update(storeCart).set({ cartNum: 3478 }).where(eq(storeCart.id, 3));
+    const before = await f.snapshot(), expected = '34779999654947.62';
+    const cart = await rows('scope=cart');
+    expect(normalizeCartList(cart).find(row => row.id === 1)).toMatchObject({ sumPrice: expected, trueSumPrice: expected });
+    const [buy] = await rows('scope=buy&ids=3');
+    expect(buy).toMatchObject({ sumPrice: expected, trueSumPrice: expected, productInfo: { price: '9999999900.79' } });
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: {
+      'content-type': 'application/json', 'x-fixture-user': '11' },
+      body: JSON.stringify({ cartIds: [3], addressId: 11, type: 0, useIntegral: false }) }, f.env);
+    const body = await response.json() as { status: number; msg: string; data: { priceGroup: { totalPrice: string; pay_price: string } } };
+    expect(body.status, body.msg).toBe(200); expect(body.data.priceGroup.pay_price).toBe(expected);
+    expect(await f.snapshot()).toEqual(before);
+  });
+  it.each(['scope=cart', 'scope=buy&ids=3'])('rejects unsafe raw cents even when membership makes the goods quote safe (%s)', async scope => {
+    await f.db.update(user).set({ isEverLevel: 1 }).where(eq(user.uid, 11));
+    await f.db.update(storeProduct).set({ price: '9999999999.99', stock: 40000 });
+    await f.db.update(storeProductAttrValue).set({ price: '9999999999.99', stock: 40000, vipPrice: '1.00' });
+    await f.db.update(storeCart).set({ cartNum: 32767 });
+    const before = await f.snapshot();
+    const response = await f.app.request(`/api/cart/list?${scope}`, { headers: { 'x-fixture-user': '11' } }, f.env);
+    const body = await response.json() as { status: number; msg: string; data: unknown };
+    expect(body.status).not.toBe(200); expect(body.msg).toBe('购物车金额超出安全范围'); expect(body.data).toBeNull();
+    expect(await f.snapshot()).toEqual(before);
   });
   it('invalid SKU rows cannot have a fabricated payable quote', async () => {
     await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.id, 1));

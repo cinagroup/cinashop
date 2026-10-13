@@ -1,0 +1,17 @@
+{
+  "tag": "type-unit",
+  "start": "2026-10-13T03:05:49.718Z",
+  "end": "2026-10-13T03:10:26.333Z",
+  "node": "v24.14.1",
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "args": [
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "--noEmit"
+  ],
+  "status": 2,
+  "signal": null,
+  "errorCode": null,
+  "stdoutBytes": 1724,
+  "stderrBytes": 0
+}

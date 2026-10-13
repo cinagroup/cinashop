@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-10-13T13:55:59.9350459+08:00",
+  "cwd": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/view/supplier-ts",
+  "installedVue": "3.5.42",
+  "lockedVue": "3.5.42",
+  "hashes": [
+    {
+      "file": "view/supplier-ts/src/components/ProductBatchDialog.vue",
+      "sourceHash": "9FE5A5E6544ABEB5E31A5768B6F3BEDB1D996E94C3971C69C1338D8CBD32A3A8",
+      "mirrorHash": "9FE5A5E6544ABEB5E31A5768B6F3BEDB1D996E94C3971C69C1338D8CBD32A3A8",
+      "equal": true
+    },
+    {
+      "file": "view/supplier-ts/src/utils/productBatch.ts",
+      "sourceHash": "5A1D802ACCE858EC471AB49DC3A3A02E1FEA5B21D5452C57008DBCEFBB73B277",
+      "mirrorHash": "5A1D802ACCE858EC471AB49DC3A3A02E1FEA5B21D5452C57008DBCEFBB73B277",
+      "equal": true
+    },
+    {
+      "file": "view/supplier-ts/src/pages/Products.vue",
+      "sourceHash": "21E1BFE023806278E3EDDC3312E8D477252C6C9BA3A6A5E7E6758F715913F912",
+      "mirrorHash": "21E1BFE023806278E3EDDC3312E8D477252C6C9BA3A6A5E7E6758F715913F912",
+      "equal": true
+    },
+    {
+      "file": "view/supplier-ts/src/api/supplier.ts",
+      "sourceHash": "EE473DC0FBEB472A1BB7693B1B8D66649CEBC032055B8628224C5A5067E7BBE6",
+      "mirrorHash": "EE473DC0FBEB472A1BB7693B1B8D66649CEBC032055B8628224C5A5067E7BBE6",
+      "equal": true
+    },
+    {
+      "file": "view/supplier-ts/src/types.ts",
+      "sourceHash": "61653C6F125EBB8DE50C7BC5D96EC7F959E168BE071E3BF8582AE026E55F9ABD",
+      "mirrorHash": "61653C6F125EBB8DE50C7BC5D96EC7F959E168BE071E3BF8582AE026E55F9ABD",
+      "equal": true
+    },
+    {
+      "file": "workers-ts/test/supplier-product-batch-frontend.test.ts",
+      "sourceHash": "FDE5B90EC51EC7344EB5C6A41A32862A56DE8923F8DBF45E618E96576437FFF1",
+      "mirrorHash": "FDE5B90EC51EC7344EB5C6A41A32862A56DE8923F8DBF45E618E96576437FFF1",
+      "equal": true
+    },
+    {
+      "file": "view/supplier-ts/package.json",
+      "sourceHash": "5738A29A2CECDA6F91D5C55F8371873F6427A26D771896BF292706F1455E4F43",
+      "mirrorHash": "5738A29A2CECDA6F91D5C55F8371873F6427A26D771896BF292706F1455E4F43",
+      "equal": true
+    },
+    {
+      "file": "view/supplier-ts/package-lock.json",
+      "sourceHash": "266B2EB7688C18857155C279B3D13C420EB18D031BB546762C625CFFCA777603",
+      "mirrorHash": "266B2EB7688C18857155C279B3D13C420EB18D031BB546762C625CFFCA777603",
+      "equal": true
+    }
+  ],
+  "evidence": [
+    {
+      "file": "supplier-batch-playwright.cjs",
+      "sha256": "5397C593BA223BBC5C9DE982524F2C3BF03D42257C824950416DED1A2C27A0B5"
+    },
+    {
+      "file": "supplier-batch-desktop.png",
+      "sha256": "499C88C63F3C9BBA576644C5DE2C100CDBC56E6DC22A83D63DB1EF2D0C61D554"
+    },
+    {
+      "file": "supplier-batch-mobile-form.png",
+      "sha256": "45FBE0CC709EAD1897AF14DE9C5DC2EF2E951E6463279C5D8B98CCA4E2C81BEC"
+    },
+    {
+      "file": "supplier-batch-mobile-verified.png",
+      "sha256": "AB769F6B8D60FB7F9E8CE6A45023295164C440CE0792CB8F42C158C2D517217F"
+    },
+    {
+      "file": "supplier-batch-readonly.png",
+      "sha256": "758DC0096254C41300ABA434E353C478179993AF0ED534F09C18D34CDB7B3C6D"
+    }
+  ],
+  "browser": "regular Playwright; Browser plugin not available",
+  "browserBoundary": "localhost preview simulation; database evidence separate",
+  "sourceUnchanged": true
+}

@@ -1,0 +1,22 @@
+{
+  "publishedAt": "2026-10-13T06:24:03.000Z",
+  "cases": [
+    {
+      "path": "workers-ts/test/customer-work-writeoff-postgres.test.ts",
+      "sourceBefore": "8f2dc7a0285bef3d935255cca2d22bb1eb9139542e89ccf9d3eee4949c92a965",
+      "localCandidate": "2dd9bca5e9b3ae13d8477011d37ee32ac10b4283e6685fd445333bb2c9505a12",
+      "case": "READ_COMPAT_CUSTOMER explicit persisted member codes retain exact SQL read authority and strict write intent",
+      "sourceAfter": "2dd9bca5e9b3ae13d8477011d37ee32ac10b4283e6685fd445333bb2c9505a12"
+    },
+    {
+      "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+      "sourceBefore": "6ee214e9ed81de12e2d445f946b43f16448dfe5e49fc888df7468314cafa655b",
+      "localCandidate": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3",
+      "case": "READ_COMPAT_DELIVERY persisted member codes retain exact assigned SQL read scope and strict financial intent",
+      "sourceAfter": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+    }
+  ],
+  "sourceGateCodeEdited": false,
+  "nativeExecuted": false,
+  "scope": "Two additional targeted READ compatibility cases; existing Native105 is previous gate input history"
+}

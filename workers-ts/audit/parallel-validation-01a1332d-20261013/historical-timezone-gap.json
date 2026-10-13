@@ -1,0 +1,20 @@
+{
+  "status": "open",
+  "observedAt": "2026-10-13T03:16:16.4680790Z",
+  "source": {
+    "path": "src/services/admin/AdminLegacySystemLogService.ts",
+    "sha256": "9d9a40575abeb3dbec082a24675b39e6563d3f595d8e3e8a6dbb99c8a88653bb"
+  },
+  "phpConfig": "cinashop-php/config/app.php:38 default_timezone=Asia/Shanghai",
+  "phpOperation": "ModelTrait::searchTimeAttr strtotime on custom date endpoints",
+  "input": "1990/07/01 00:00:00",
+  "actualFixedOffsetSeconds": 646761600,
+  "actualAsShanghai": "1990-07-01 01:00:00",
+  "expectedNamedZoneSeconds": 646758000,
+  "expectedAsShanghai": "1990-07-01 00:00:00",
+  "discrepancySeconds": 3600,
+  "evidence": "Node v24.14.1 Intl.DateTimeFormat Asia/Shanghai; dateValue uses Date.UTC - 8h",
+  "limits": "Historical custom log filters only. Current 2026 dates use UTC+8. Not a production observation.",
+  "mutation": "none; shared source frozen",
+  "owner": "coordinating integration chat 01a13321-41f8-7ea2-9370-103a58344561"
+}

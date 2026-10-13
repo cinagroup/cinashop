@@ -1,0 +1,98 @@
+{
+  "status": "frozen",
+  "at": "2026-10-13T08:28:38.605Z",
+  "owner": "supplier_migration",
+  "entries": [
+    {
+      "file": "workers-ts/src/services/supplier/SupplierProductLabelInput.ts",
+      "bytes": 2433,
+      "sha256": "fd274dee17917f466b1ea489d55c2cfe2040cd9cbb4500e966f2e2705e0e8b17"
+    },
+    {
+      "file": "workers-ts/src/services/supplier/SupplierProductLabelService.ts",
+      "bytes": 17417,
+      "sha256": "0423b63f04f0b9bc574161e9af7e70a5dadb0583184009ab137055dcfa65418b"
+    },
+    {
+      "file": "workers-ts/src/controllers/supplier/SupplierProductLabelController.ts",
+      "bytes": 2987,
+      "sha256": "7418c6a97718b2456689edaa5e28afaa3a9572da9898d67f85d440a43413c69d"
+    },
+    {
+      "file": "workers-ts/test/helpers/supplierProductLabels.ts",
+      "bytes": 4407,
+      "sha256": "632cc4bae78cfcd8eeafa493f9ab466b8b16bcc3bd0f4b9d43d68aff80f26b44"
+    },
+    {
+      "file": "workers-ts/test/supplier-product-label-http.test.ts",
+      "bytes": 15093,
+      "sha256": "dd0841b62274b4e6f89ffad640eeab329c9a40c373e0c60f4e0d5c3847d4c94f"
+    },
+    {
+      "file": "workers-ts/test/supplier-product-label-native.test.ts",
+      "bytes": 12004,
+      "sha256": "2ecf7a823f9d3e9f7acc978e2a9bf7a509649b95484bd98c5c7da4f3eba60818"
+    },
+    {
+      "file": "workers-ts/test/supplier-product-label-frontend.test.ts",
+      "bytes": 14567,
+      "sha256": "6dca3320bfae8b2402486f6b5d3bbac83baf1b25e4bd13f16d0871bcf1d09760"
+    },
+    {
+      "file": "workers-ts/src/services/supplier/SupplierProductCatalogService.ts",
+      "bytes": 7621,
+      "sha256": "e340f318dc4e44c6ae9c88cae8e8c21796729386282b0a9300e0500e1e9370bf"
+    },
+    {
+      "file": "workers-ts/test/supplier-product-catalog.test.ts",
+      "bytes": 15831,
+      "sha256": "096f4da3d79cf5b714b61681031de34d8f78e1231a0770b8898f91c283dd7361"
+    },
+    {
+      "file": "view/supplier-ts/src/pages/ProductLabels.vue",
+      "bytes": 15043,
+      "sha256": "358b71a8533c1add7479929a3fa6e5c3c30e1904272c86665ed02423ff9d2cfd"
+    },
+    {
+      "file": "view/supplier-ts/src/api/productLabels.ts",
+      "bytes": 1777,
+      "sha256": "3be06379956436b67dcfcc2085e903d3cb008e17f6679a4409a8004a01406ef8"
+    },
+    {
+      "file": "view/supplier-ts/src/types/productLabels.ts",
+      "bytes": 1546,
+      "sha256": "5de997d2141659acaec8618b6154fd9160ea1095d837909f7c8d0d05682e332e"
+    },
+    {
+      "file": "view/supplier-ts/src/utils/productLabels.ts",
+      "bytes": 6191,
+      "sha256": "0228bd96abb2b66f571a7e5cb4e01b1c8c4bfabc68d62eda977802a0b788b04d"
+    },
+    {
+      "file": "workers-ts/docs/supplier-product-label-management.md",
+      "bytes": 7309,
+      "sha256": "3f113e0c59aab7c3a511aa02eaaafa2a3a9db3a4439ed9bb9b2bfc35f0da0df3"
+    }
+  ],
+  "nativeDevelopment": {
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-native-development.log",
+    "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-validation\\.cache\\finance-postgres-jedr4r",
+    "pgStatus": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-native-development-pg-status.log",
+    "passed": 9,
+    "skipped": 0,
+    "exit": 0,
+    "cleanup": "fixture databases and roles 0; STOPPED; independent pg_ctl status exit 3"
+  },
+  "ordinaryDevelopment": {
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-development-tests-v2.log",
+    "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-development-tests-v2.json",
+    "passed": 52,
+    "files": 3
+  },
+  "frontendAfterMobileCSS": {
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-development-frontend-v3.log",
+    "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-development-frontend-v3.json",
+    "passed": 15,
+    "files": 1
+  }
+}

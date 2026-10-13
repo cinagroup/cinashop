@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-10-13T03:13:22.103Z",
+  "phpRoot": "\\\\tsclient\\I\\cinagroup\\cinashop-php",
+  "workerRoot": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts",
+  "totals": {
+    "php": 1904,
+    "ts": 2403,
+    "matched": 930,
+    "executableMatched": 909,
+    "unavailable": 21,
+    "missing": 974,
+    "retired": 17,
+    "actionableMissing": 957,
+    "coveragePercent": 48.8,
+    "executableCoveragePercent": 47.7,
+    "effectiveExecutableCoveragePercent": 48.2
+  },
+  "surfaces": [
+    {
+      "surface": "api",
+      "php": 457,
+      "ts": 1311,
+      "matched": 445,
+      "executableMatched": 439,
+      "unavailable": 6,
+      "missing": 12,
+      "retired": 2,
+      "actionableMissing": 10
+    },
+    {
+      "surface": "admin",
+      "php": 1153,
+      "ts": 814,
+      "matched": 261,
+      "executableMatched": 246,
+      "unavailable": 15,
+      "missing": 892,
+      "retired": 0,
+      "actionableMissing": 892
+    },
+    {
+      "surface": "supplier",
+      "php": 182,
+      "ts": 167,
+      "matched": 123,
+      "executableMatched": 123,
+      "unavailable": 0,
+      "missing": 59,
+      "retired": 12,
+      "actionableMissing": 47
+    },
+    {
+      "surface": "kefu",
+      "php": 63,
+      "ts": 70,
+      "matched": 60,
+      "executableMatched": 60,
+      "unavailable": 0,
+      "missing": 3,
+      "retired": 3,
+      "actionableMissing": 0
+    },
+    {
+      "surface": "out",
+      "php": 41,
+      "ts": 41,
+      "matched": 41,
+      "executableMatched": 41,
+      "unavailable": 0,
+      "missing": 0,
+      "retired": 0,
+      "actionableMissing": 0
+    },
+    {
+      "surface": "erp",
+      "php": 8,
+      "ts": 0,
+      "matched": 0,
+      "executableMatched": 0,
+      "unavailable": 0,
+      "missing": 8,
+      "retired": 0,
+      "actionableMissing": 8
+    }
+  ],
+  "targetedStillMissing": [],
+  "limitations": [
+    "Static route registration coverage does not prove response, permission, state-machine, data, or third-party parity.",
+    "PHP line and block comments are masked before parsing, so disabled route declarations do not count as authority.",
+    "ThinkPHP resource routes are expanded to the standard seven REST actions after only/except filters.",
+    "Wildcard 501 fallbacks never count as migrated routes.",
+    "Routes wired to handlers named *Unavailable or containing an inline 501 are registered but not executable.",
+    "Retired routes remain in the raw PHP denominator and missing count; effective coverage excludes only manifest entries with source evidence and a replacement."
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "status": "passed",
+  "at": "2026-10-13T09:23:37.067Z",
+  "owner": "supplier_migration",
+  "source": {
+    "ownedFiles": 14,
+    "ownedDrift": 0,
+    "ownedFreeze": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-owned-freeze.json",
+    "uiFiles": 13,
+    "uiDrift": 0,
+    "uiGuard": [
+      {
+        "file": "src/pages/ProductLabels.vue",
+        "sha256": "358b71a8533c1add7479929a3fa6e5c3c30e1904272c86665ed02423ff9d2cfd"
+      },
+      {
+        "file": "src/api/productLabels.ts",
+        "sha256": "3be06379956436b67dcfcc2085e903d3cb008e17f6679a4409a8004a01406ef8"
+      },
+      {
+        "file": "src/types/productLabels.ts",
+        "sha256": "5de997d2141659acaec8618b6154fd9160ea1095d837909f7c8d0d05682e332e"
+      },
+      {
+        "file": "src/utils/productLabels.ts",
+        "sha256": "0228bd96abb2b66f571a7e5cb4e01b1c8c4bfabc68d62eda977802a0b788b04d"
+      },
+      {
+        "file": "src/pages/ProductForm.vue",
+        "sha256": "fe6501332924dbbb56c4c1452c3591e1b88a82a7ef6076faf71de7a06270bfc3"
+      },
+      {
+        "file": "src/components/SupplierProductLabelPicker.vue",
+        "sha256": "cdf6000bd18b81fc5cec586405285dd1492464bf1820114fbf9af0c29d4cd88f"
+      },
+      {
+        "file": "src/api/supplier.ts",
+        "sha256": "ee473dc0fbeb472a1bb7693b1b8d66649cebc032055b8628224c5a5067e7bbe6"
+      },
+      {
+        "file": "src/types.ts",
+        "sha256": "3f55c2d51fc2b4fceb3de43a6bc172f375dd1f4f6a2b0da5076f88e60cbdc9dc"
+      },
+      {
+        "file": "src/api/http.ts",
+        "sha256": "e86082b6d19d2a001245628dd3993d943bcec53b36276ed93a5fa80f1fa8b06e"
+      },
+      {
+        "file": "src/utils/supplierSession.ts",
+        "sha256": "2603f5778620eb36576e027082a73c97f1adec253452fa93244504ed91eab372"
+      },
+      {
+        "file": "src/stores/auth.ts",
+        "sha256": "d832f930bed56d195bfe552fab08b1f6a50ac8712b8b8b098d77caca03288116"
+      },
+      {
+        "file": "src/router.ts",
+        "sha256": "d95d98d869da0beb70180c7147f2d9e619b4e79bf9dec5b35018766750848d83"
+      },
+      {
+        "file": "src/components/AppShell.vue",
+        "sha256": "5100dc49c25484ce28b96bfcf2d62bf22121b14d79502cff223d63cf4d4cf31c"
+      }
+    ],
+    "lockSha256": "266b2eb7688c18857155c279b3d13c420eb18d031bb546762c625cffca777603",
+    "vueVersion": "3.5.42"
+  },
+  "types": {
+    "command": "node node_modules/vue-tsc/bin/vue-tsc.js -p tsconfig.app.json --noEmit",
+    "exit": 0,
+    "durationSeconds": 25.6319116,
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-vue-types-recovery-final-v2.log"
+  },
+  "build": {
+    "command": "npm run build equivalent: vue-tsc -b && vite build",
+    "typesExit": 0,
+    "buildExit": 0,
+    "durationSeconds": 37.1518093,
+    "mirror": "supplier-label-validation/view/supplier-ts",
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-build-recovery-final-v2.log",
+    "warning": "Vite standard pre-existing chunk-size advisory; build exit 0"
+  },
+  "browser": {
+    "command": "node supplier-label-playwright-recovery-final.cjs",
+    "exit": 0,
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-recovery-final-v4.log",
+    "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-verification-recovery-final.json",
+    "surfaces": 4,
+    "unexpectedConsoleErrors": 0,
+    "consoleWarnings": 0,
+    "expectedSynthetic409ResourceConsole": 1,
+    "evidence": [
+      {
+        "viewport": "1440x1000",
+        "checks": [
+          "source guard",
+          "identity/title",
+          "create and fresh reread",
+          "edit",
+          "malformed receipt recovered by GET only",
+          "search",
+          "delete cancel",
+          "delete confirmation and reread"
+        ],
+        "consoleErrors": 0,
+        "consoleWarnings": 0
+      },
+      {
+        "viewport": "390x844",
+        "checks": [
+          "page has no horizontal overflow",
+          "responsive dialog within viewport",
+          "create",
+          "reread",
+          "button reachable"
+        ],
+        "consoleErrors": 0,
+        "consoleWarnings": 0
+      },
+      {
+        "viewport": "1024x800",
+        "checks": [
+          "view-only catalog",
+          "search",
+          "no write controls or write request"
+        ],
+        "consoleErrors": 0,
+        "consoleWarnings": 0
+      },
+      {
+        "viewport": "1440x1000 ProductForm",
+        "checks": [
+          "unchanged labels omitted from actual save payload",
+          "old unlisted label preserved without explicit reassignment",
+          "inline actual create",
+          "disabled platform groups excluded",
+          "fresh catalog and tree selection",
+          "unavailable original label blocks save after selection changed",
+          "explicit removal of unavailable label before save",
+          "removed unavailable label cannot be reselected",
+          "actual save carries only valid original and new IDs",
+          "explicit clear submits empty assignment",
+          "known atomic duplicate rejection permits correction",
+          "synthetic HTTP409/body409 through actual Axios permits correction; not a native SQL conflict proof",
+          "unknown POST close and reopen retains attempt without any request",
+          "unknown attempt recovers with GET and only one POST",
+          "permission withdrawal invalidates dialog and blocks save"
+        ],
+        "consoleErrors": 0,
+        "consoleWarnings": 0,
+        "expectedHttp409ResourceConsole": [
+          "Failed to load resource: the server responded with a status of 409 (Conflict)"
+        ],
+        "contextRace": "covered by Root complete SFC14; no browser race credit"
+      }
+    ],
+    "transport": "Synthetic loopback responses through actual Axios/Vue/Chromium; HTTP409/body409 tests client refusal handling, not native SQL conflict. Context race covered by Root complete SFC14; no browser context-race claim."
+  },
+  "nativeDevelopment": {
+    "file": "workers-ts/test/supplier-product-label-native.test.ts",
+    "passed": 9,
+    "skipped": 0,
+    "exit": 0,
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-native-development.log",
+    "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-validation\\.cache\\finance-postgres-jedr4r",
+    "pgStatus": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-native-development-pg-status.log",
+    "cleanup": "fixture DBs/roles 0; STOPPED; independent pg_ctl exit 3",
+    "boundary": "Development evidence; Root unified frozen-source native verification is separate and not borrowed here."
+  },
+  "review": {
+    "scope": "Readonly Supplier label binding helper, ProductManagement conditional actor/lock sequence, Picker availability/omit/clear/recovery, final employee account guards",
+    "sourceEdited": false,
+    "remainingMustFix": [],
+    "closedFindings": [
+      "QR creation rechecks full locked agent account",
+      "Employee bind and writes recheck all locked non-target parent accounts",
+      "Unknown inline creation survives close/reopen and context switch",
+      "Known atomic legacy errors and matching genuine Axios HTTP errors permit explicit correction"
+    ],
+    "testBoundary": "Browser validates close/reopen and HTTP transport; Root complete picker SFC14 owns context races and mismatched HTTP/body rejection cases."
+  },
+  "retainedPreviousReceipts": [
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-final-ui-receipt.json",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-verification.json",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-final-build-result.json",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-build-recovery-final-result.json"
+  ],
+  "retainedFailures": [
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-recovery-final.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-recovery-final-v2.log",
+    "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-browser-recovery-final-v3.log"
+  ]
+}

@@ -1,0 +1,486 @@
+{
+  "passed": true,
+  "url": "http://127.0.0.1:5215/brand",
+  "browser": "Playwright existing runtime / Chromium1217",
+  "browserPlugin": "Browser plugin not available",
+  "data": "synthetic API fixtures; unknown ack simulated by malformed receipt; does not prove real DB/JWT or concurrency",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "checks": [
+    "desktop identity, meaningful list and no overlay",
+    "lazy three levels, direct count, third-level child disabled and hidden/deep parent policy",
+    "create root, child and third-level then reload lazy children",
+    "edit and move, verified hierarchy and lazy-cache refresh",
+    "single display toggle preserves descendant state; hidden branch absent from selector",
+    "parent and usage rejection; delete leaf, child and parent safely",
+    "name filter and explicit refresh",
+    "definite rejection keeps draft and dialog",
+    "unknown malformed acknowledgment freezes draft; exact original retry succeeds",
+    "committed synthetic unknown outcome reconciles without duplicate POST and closes draft",
+    "mobile 390x844 table-contained scrolling and form/footer containment",
+    "mobile two-level parent selector remains inside viewport",
+    "mobile unknown result has clickable recovery actions inside modal",
+    "server 400011 clears draft, rows and writable controls; same cached identity stays latched",
+    "refreshed read-only session restores reads and removes writer actions",
+    "fresh view-only entry has meaningful lazy reads and no write actions"
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "浏览器主品牌",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          100
+        ],
+        "brand_name": "浏览器子品牌",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          100,
+          101
+        ],
+        "brand_name": "浏览器末级",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/102",
+      "body": {
+        "fid": [
+          100,
+          101
+        ],
+        "brand_name": "浏览器改名",
+        "sort": 0,
+        "is_show": 1,
+        "id": 102
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/102",
+      "body": {
+        "fid": [
+          4
+        ],
+        "brand_name": "浏览器改名",
+        "sort": 0,
+        "is_show": 1,
+        "id": 102
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/set_show/4/0"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/set_show/4/1"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/100",
+      "status": 400
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/3",
+      "status": 400
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/102",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/101",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/100",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "保留冲突草稿",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "未知回执重试",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "未知回执重试",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "未知回执核对",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "手机核对创建",
+        "sort": 0,
+        "is_show": 1
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand",
+      "body": {
+        "fid": [
+          0
+        ],
+        "brand_name": "撤权保存草稿",
+        "sort": 0,
+        "is_show": 1
+      }
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/new_push"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/102"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/102"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/set_show/4/0"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/brand/set_show/4/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/100"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/3"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/102"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/101"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/product/brand/100"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/brand/list"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/brand/list"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand/cascader_list/1"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/new_push"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/product/brand"
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "blocked": [],
+  "failedResponses": []
+}

@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-13T09:58:08.077Z",
+  "finishedAt": "2026-10-13T09:58:08.604Z",
+  "coordinatedRelease": true,
+  "sourceWritebackCompleted": true,
+  "wholeCurrentSourceFrozen": false,
+  "validatedLocalInputCount": 3090,
+  "validatedLocalDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "source": "\\\\tsclient\\I\\cinagroup\\cinashop",
+  "local": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq",
+  "rows": [
+    {
+      "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "sourceBeforeSha256": "6ec935e413ba1d677449afc8c6bc1386466728507019f8ca1fb3e25b93a2aa81",
+      "candidateSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9",
+      "sourceAfterSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+    },
+    {
+      "path": "workers-ts/src/services/user/UserProfileService.ts",
+      "sourceBeforeSha256": "995668fec37e707cf12940faf841d6f178f481ec3790f9717c57d79cc1fa4fc8",
+      "candidateSha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c",
+      "sourceAfterSha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "sourceBeforeSha256": "510ed3618643c4c177ca94bd0632800e11bb8610d0563877bcf0cd149331ff51",
+      "candidateSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a",
+      "sourceAfterSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+    },
+    {
+      "path": "workers-ts/test/legacy-user-routine-code.test.ts",
+      "sourceBeforeSha256": null,
+      "candidateSha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c",
+      "sourceAfterSha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+    }
+  ],
+  "limits": [
+    "Only these four Source files were copied.",
+    "Unrelated current Main changes and its newer Mini import graph are not covered by independent frozen LOCAL type checks.",
+    "No shared route, provider method, production configuration or deployment changes."
+  ]
+}

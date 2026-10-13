@@ -177,7 +177,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual shipping 
     expect((await http(f.db, '/activity', { type: kind, id: 1, productId: 100 })).body.status).toBe(200);
     expect((await http(f.db, '/activity', { type: kind, id: 1, storeName: 'rename only' })).body.status).toBe(200);
     expect((await f.query(`SELECT product_id,temp_id FROM store_${kind} WHERE id=1`)).rows).toEqual([{ product_id: 100, temp_id: 10 }]);
-  });
+    // The combination branch creates and closes another complete, owned PG16
+    // fixture inside this case. Keep that setup within a bounded test budget;
+    // the services' statement/lock timeouts and every assertion stay intact.
+  }, 20_000);
   it('rolls back supplier rule removal when the later parent update fails', async () => {
     await f.exec(`CREATE FUNCTION qa_refuse_retirement() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
       RAISE EXCEPTION 'private-shipping-sql-marker'; END $$;

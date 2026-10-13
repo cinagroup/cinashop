@@ -1,0 +1,167 @@
+{
+  "scope": "division-staff-owned-final-17",
+  "frozenAt": "2026-10-13T08:47:55.576535Z",
+  "createdAt": "2026-10-13T08:55:34.6469243Z",
+  "ownedFiles": [
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffInput.ts",
+      "sha256": "2edffeb1703bf7a178c3e2d9cc23e7e493f44301003f181085ae4fa6be2591d3",
+      "bytes": 5202
+    },
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffService.ts",
+      "sha256": "814d235807151d7307b46c314c8566b543e7a99ea8659eb991b303e230a5e1dc",
+      "bytes": 18964
+    },
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffInvitePolicy.ts",
+      "sha256": "cdfe756ae02d5ee138ea089a79b3f903d7d684b1a30138475916ea24b9e8a462",
+      "bytes": 1374
+    },
+    {
+      "path": "workers-ts/src/services/division/DivisionStaffInviteService.ts",
+      "sha256": "d3cf57ea9a7ee82891ce110970ab0012aa94260b861ffc9bfb2afbf1d1d93db1",
+      "bytes": 11435
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/DivisionStaffController.ts",
+      "sha256": "3743884b4b9c54c0343bd9177e587221ee8ee2c031ac632d8a77c64f20936b70",
+      "bytes": 3667
+    },
+    {
+      "path": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+      "sha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b",
+      "bytes": 27042
+    },
+    {
+      "path": "workers-ts/test/helpers/divisionStaffFixture.ts",
+      "sha256": "1d1829ca445a1cf84bc2c4b7e83076c6d0a0cc5af9e45cfbbc5acbfa597cccf2",
+      "bytes": 5835
+    },
+    {
+      "path": "workers-ts/test/division-staff-input.test.ts",
+      "sha256": "72e606403318ce86c05dc911fd8a269c52684c23596fa68cd473335f8eeb1e01",
+      "bytes": 3203
+    },
+    {
+      "path": "workers-ts/test/division-staff-http.test.ts",
+      "sha256": "a1d46824bf8e80aebc924d803d03bef7a328bd41439ff130cbeeabea9a130f9d",
+      "bytes": 18495
+    },
+    {
+      "path": "workers-ts/test/division-staff-invite.test.ts",
+      "sha256": "49cdce492104dcd19bf1ae67947be68d80a3ea63e9445eb13e2f1fce32885101",
+      "bytes": 13503
+    },
+    {
+      "path": "workers-ts/test/division-staff-frontend.test.ts",
+      "sha256": "f45644602bbd9d75319097df7a6864c8f1338de72d651f30026deb937c96f8bc",
+      "bytes": 15958
+    },
+    {
+      "path": "workers-ts/test/division-staff-postgres.test.ts",
+      "sha256": "ba0fc7874e50b5557890e672d303392525f3c4bfb098f2c633fc6610b7683d35",
+      "bytes": 9154
+    },
+    {
+      "path": "view/common/divisionStaff.ts",
+      "sha256": "b3b2b0a954eb806963f30a347c4847c364c39144f80b962516081890f8f229be",
+      "bytes": 9775
+    },
+    {
+      "path": "view/uniapp-ts/src/api/divisionStaff.ts",
+      "sha256": "610706dc034b8ef12940d9bb7aa219220b53468c03ddc6527865bb55c722521f",
+      "bytes": 3231
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/staff_list.vue",
+      "sha256": "91c3f1e0e3bbdfe0603077d080f8b2450b19c747bbdf92d2e2f8566e4ebdf559",
+      "bytes": 9916
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/users/agent/bind.vue",
+      "sha256": "f5281d8b6c57d4b0b7960d5d767155fbb053b3353789e90371bb72d7aa682661",
+      "bytes": 5117
+    },
+    {
+      "path": "workers-ts/docs/division-staff-contract-20261013.md",
+      "sha256": "2340c062eb49277bdce374b8392fe6654ae6da1190caf29ca048e61ba5e51894",
+      "bytes": 9148
+    }
+  ],
+  "ordinary": {
+    "exitCode": 0,
+    "total": 153,
+    "passed": 145,
+    "nativeSkipped": 8,
+    "failed": 0,
+    "files": [
+      "division-staff-input.test.ts",
+      "division-staff-http.test.ts",
+      "division-staff-invite.test.ts",
+      "division-staff-frontend.test.ts",
+      "division-staff-navigation.test.ts",
+      "division-staff-postgres.test.ts"
+    ],
+    "json": "division-staff-agent-final-tests.json",
+    "raw": "division-staff-agent-final-tests.log"
+  },
+  "native": {
+    "exitCode": 0,
+    "passed": 82,
+    "files": [
+      "division-staff-http.test.ts",
+      "division-staff-invite.test.ts",
+      "division-staff-postgres.test.ts"
+    ],
+    "server": "PostgreSQL16.15",
+    "cleanupAndStop": true,
+    "independentPgCtlStatus": 3,
+    "expirySqlWaitCaseMs": 2302,
+    "raw": "division-staff-agent-final-native.log",
+    "note": "Ordinary and native runs used shared v1 before Root HEAD-only protection; Root final integration owns the extra real HEAD method case."
+  },
+  "uniapp": {
+    "fullVueTscExit": 0,
+    "h5Exit": 0,
+    "mpWeixinExit": 0,
+    "appExit": 0,
+    "lockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+    "vueBaseVersion": "3.4.21",
+    "h5VueVersion": "3.5.42",
+    "note": "Complete Uni build/type of isolated mirror with all17 owned files frozen; Root final combined source mirror covers other owners concurrently frozen pages."
+  },
+  "browser": {
+    "ok": true,
+    "checks": [
+      "real employee list, exact historical SQL counts/commission, existing assets/order history",
+      "strict lower ratio rejected at40, actual immutable revision write11 and fresh current list",
+      "confirmed DELETE unlinks exact same-agent family, preserves foreign account and history, then real list refresh",
+      "real signed image endpoint with synthetic bounded raster transport usesQRid901 not UID22 and registered page",
+      "actual auth clear removes in-flight list and invitation without stale revival",
+      "modern a scene previews actual QR authority then explicit confirmed write and actual bound reread",
+      "original id/spid scene automatically binds exactly once after target preview, preserving QRid!=UID",
+      "real LoginUI hide/actual auth setLogin/navigateBack restores legacy id/spid auto-bind once with genuine signed JWT"
+    ],
+    "errors": [],
+    "browserAvailability": "Browser plugin unavailable; bundled existing Playwright/Chromium1217",
+    "boundary": "Real complete H5 build/pages/API/current SQL authority and genuine JWT; synthetic fixture credential exchange/theme; disposable memory SQL (no native lock proof); fixed synthetic PNG provider transport (no physical QR or live WeChat); no production or payment",
+    "screenshots": [
+      "division-staff-desktop.png",
+      "division-staff-mobile.png",
+      "division-staff-mobile-invite.png",
+      "division-staff-mobile-bound.png",
+      "division-staff-mobile-login-restored.png"
+    ]
+  },
+  "browserSharedV1Sha256": "c4e39bc81a03419edde1ab3bff2754368bd0473de9640b28871e938a0761c11a",
+  "sourceAndMirrorMatch": 17,
+  "distinctCases": 153,
+  "boundaries": [
+    "No production operations",
+    "No live WeChat or physical device scan",
+    "Synthetic credential exchange/theme/provider PNG with actual JWT/SQL/API/page lifecycle",
+    "Native independent-session proof separate from memory browser",
+    "No commits, pushes, deployment or production schema changes"
+  ]
+}

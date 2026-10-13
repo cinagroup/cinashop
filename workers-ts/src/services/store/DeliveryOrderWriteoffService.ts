@@ -3,11 +3,11 @@ import { createContainerFromDb, type Container, type DbClient } from '@/lib/di';
 import type { Env } from '@/env';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storePink, user } from '@/models/schema';
 import { ValidateException, NotFoundException } from '@/utils/errors';
-import { StoreOrderWriteoffService, calculateWriteoffLinePrice, normalizePickupVerifyCode } from '@/services/order/StoreOrderWriteoffService';
+import { StoreOrderWriteoffService, calculateWriteoffLinePrice, normalizePickupVerifyCode, normalizeMemberWriteoffCode } from '@/services/order/StoreOrderWriteoffService';
 import { assertPresaleDispatchReady, readPresaleDispatchReadiness } from '@/services/activity/PresaleFulfillmentSnapshot';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { cartProjection } from '@/services/kefu/KefuOrderService';
-import { outRequestHash } from '@/services/out/OutIdempotency';
+import { deliveryReadConsistencyKey } from './DeliveryReadService';
 import { decimalToCents, lockOrderSettlementUsers } from '@/services/order/OrderBrokerageService';
 import { loadRefundLineCompensation } from '@/services/order/RefundLineCompensation';
 import { deliveryOperationReadiness } from '@/migrations/runDeliveryOrderOperation';
@@ -87,7 +87,8 @@ function lookup(value: unknown) {
   if (body.version !== DELIVERY_WORKBENCH_VERSION || typeof body.scope_key !== 'string' || !/^[a-f0-9]{64}$/.test(body.scope_key)) throw new ValidateException('配送查询合同无效');
   const selected = selection(body);
   if (!hasCode) { if (typeof body.order_id !== 'number') throw new ValidateException('订单须为严格整数'); return { selected, scopeKey: body.scope_key, orderId: deliveryId(body.order_id), code: null }; }
-  if (typeof body.code !== 'string' || body.code.length < 1 || body.code.length > 32 || body.code.trim() !== body.code || /[\u0000-\u0020\u007f]/u.test(body.code)) throw new ValidateException('请输入有效订单码或会员码');
+  if (typeof body.code !== 'string') throw new ValidateException('请输入有效订单码或会员码');
+  if (!/^\d{12}$/u.test(body.code)) normalizeMemberWriteoffCode(body.code);
   return { selected, scopeKey: body.scope_key, orderId: null, code: body.code };
 }
 function shanghaiTime(epoch: number) { return new Date((epoch + 8 * 3600) * 1000).toISOString().slice(0, 19).replace('T', ' '); }
@@ -125,7 +126,7 @@ export class DeliveryOrderWriteoffService {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ,READ ONLY`);
       await tx.execute(sql`SET LOCAL search_path=public,pg_temp`);
       const db = tx as unknown as DbClient, scope = await requireDeliveryScope(db, actor, selected, { expectedScopeKey: scopeKey }), result = await callback(db, scope);
-      return { version: DELIVERY_WORKBENCH_VERSION, actor_uid: actor.uid, scope_key: scope.scope_key, scope: selected, consistency_key: await outRequestHash({ version: 'delivery-writeoff-read-v1', scope: selected, scope_key: scope.scope_key, facts: result.facts }), data: result.data, issues: scope.issues };
+      return { version: DELIVERY_WORKBENCH_VERSION, actor_uid: actor.uid, scope_key: scope.scope_key, scope: selected, consistency_key: await deliveryReadConsistencyKey(db, scope), data: result.data, issues: scope.issues };
     });
   }
   async info(actor: DeliveryActor, value: unknown): Promise<DeliveryWorkbenchEnvelope<DeliveryWriteoffPreviews>> {

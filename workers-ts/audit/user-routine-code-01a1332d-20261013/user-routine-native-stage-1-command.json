@@ -1,0 +1,47 @@
+{
+  "startedAt": "2026-10-13T08:36:44.773Z",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "nodeVersion": "v24.14.1",
+  "args": [
+    "scripts/run-local-finance-postgres.mjs",
+    "--verbose-tests",
+    "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+    "test/legacy-user-routine-code.test.ts"
+  ],
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "trustedBinaries": [
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\postgres.exe",
+      "sha256": "324ac242d623edcf82822f0c59c5dc2f8e74049d9dbb7ebc738bdaf5824e2ae6",
+      "version": "postgres (PostgreSQL) 16.15",
+      "exit": 0
+    },
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\initdb.exe",
+      "sha256": "b70c70d844a67f8a55dbd1b654b21ada180b517a6c21d601caa0914f834216fe",
+      "version": "initdb (PostgreSQL) 16.15",
+      "exit": 0
+    },
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+      "sha256": "7d32e936b982b3338ce5b304c4c5474bbbd9fd5042bd4f6ba58149dc9ce82f92",
+      "version": "pg_ctl (PostgreSQL) 16.15",
+      "exit": 0
+    },
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\psql.exe",
+      "sha256": "e7acd0437ac9a15e4821c39dac3e51939a0d16e09ea0d9bb106ad2c8645626ac",
+      "version": "psql (PostgreSQL) 16.15",
+      "exit": 0
+    }
+  ],
+  "env": {
+    "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-owned-20261013",
+    "TEST_FINANCE_POSTGRES_URL": "cleared; assigned solely by owned runner without recording credentials",
+    "TEMP": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-stage-1-temp",
+    "TMP": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-stage-1-temp"
+  },
+  "databaseRole": "finance_test LOGIN CREATEDB NOSUPERUSER NOCREATEROLE NOREPLICATION; owns isolated fixture DB/tables",
+  "schemaMaintenance": false,
+  "sourceWrites": false
+}

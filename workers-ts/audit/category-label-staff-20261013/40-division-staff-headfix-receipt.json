@@ -1,0 +1,23 @@
+{
+  "scope": "division-staff-raw-head-only-amendment",
+  "at": "2026-10-13T09:08:33.4742210Z",
+  "frozenAt": "2026-10-13T09:06:40.3841114Z",
+  "freezeManifest": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\.cache\\division-staff-agent-final-freeze.json",
+  "freezeManifestSha256": "cb8947a1ddb124a858c7bdb7ebb27c75f3422b3222dce15b4dbcbef25d86cd1d",
+  "previousManifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-pre-head-freeze.json",
+  "changedOnly": "workers-ts/src/controllers/api/v1/DivisionStaffController.ts",
+  "controllerSha256": "48080e57dea5c9d6e03f3e9e93fd65c50b1bf541206588ba6daa2ea2aad50e1b",
+  "sourceAndMirrorMatch": 17,
+  "command": "node node_modules/vitest/vitest.mjs run test/division-staff-method-http.test.ts test/division-staff-http.test.ts --maxWorkers=1 --reporter=default --reporter=json --outputFile=.cache/division-staff-headfix-tests.json",
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts",
+  "exitCode": 0,
+  "total": 53,
+  "passed": 53,
+  "failed": 0,
+  "skipped": 0,
+  "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-tests.json",
+  "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-tests.log",
+  "testedSharedV1Sha256": "c4e39bc81a03419edde1ab3bff2754368bd0473de9640b28871e938a0761c11a",
+  "headProof": "Actual createApp with genuine customer JWT: raw HEAD uses Hono GET dispatch, handler returns405 with private/no-store headers and complete account/order/brokerage/QR snapshot unchanged; subsequent real GET succeeds and unlinks the actual employee.",
+  "scopeNote": "Previous validation JSON, build/browser/native evidence retained unchanged. Only raw HEAD handler amendment; complete new Root integrated source checks own global acceptance."
+}

@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-13T04:49:19.5782918Z",
+  "stoppedMarker": true,
+  "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-native-20261013\\finance-postgres-F8jyL5",
+  "exit": 3,
+  "fixturesRemainingZero": true,
+  "output": "pg_ctl: no server running",
+  "inputDrift": 0,
+  "command": "pg_ctl status -D <owned cluster data>"
+}

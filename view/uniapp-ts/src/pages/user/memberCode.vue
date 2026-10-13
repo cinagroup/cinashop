@@ -23,6 +23,7 @@
           <view @tap="go('/pages/user/integral')"><text>积分</text><text class="asset-number">{{ snapshot.menu.profile.integral }}</text></view>
         </view>
         <button v-if="snapshot.menu.capabilities.member" @tap="go('/pages/user/level')">查看会员等级与权益</button>
+        <LegacyShareCode v-if="snapshot.menu.capabilities.member" :type="90" :id="auth.uid" title="生成会员核销查询二维码"/>
       </template>
       <view v-else-if="!loading && !auth.isLoggedIn" class="message"><text>登录后出示会员码</text><button @tap="login">前往登录</button></view>
     </view>
@@ -30,6 +31,7 @@
 </template>
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import LegacyShareCode from '@/components/LegacyShareCode.vue';
 import { useUserCenter } from '@/composables/useUserCenter';
 import { userCenterCountdown } from '@/utils/userCenter';
 const {auth,snapshot,loading,error,load,login,go,codeLoading,codeError,code,codeDeadline,clock,qrRows,showBalance,getMemberCode}=useUserCenter({autoMemberCode:true});

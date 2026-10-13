@@ -1,0 +1,192 @@
+{
+  "globalsDisabled": [
+    "URL",
+    "URLSearchParams"
+  ],
+  "inputs": [
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\pages\\delivery\\scanning.vue",
+      "sha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\utils\\privateShareScan.ts",
+      "sha256": "d95cfa068c1180d96f668c48d68726a339142b69b3854c1d878b1451d22e1b19"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\utils\\legacyShare.ts",
+      "sha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\utils\\shareScanTransfer.ts",
+      "sha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\composables\\useDeliveryWorkbench.ts",
+      "sha256": "3de2ecb1f66c9f5350bec541de055361a304e53dd61c412e59c952fa4d40e75b"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\utils\\deliveryWorkbench.ts",
+      "sha256": "7cfa4483025218642285ea7be48583c473a599160aee2e0bfc6f9381f02489d7"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\api\\deliveryWorkbench.ts",
+      "sha256": "eed7436636d8facd21a81734f416f9446131b64b8414125cfc4576f3102cc883"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\src\\api\\legacyShare.ts",
+      "sha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts\\scripts\\user-center-runtime.cjs",
+      "sha256": "2785d2a2f320a7af1af3940e1c4b6b2eaf88802d1ea46042ab93089e73248eda"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-context-baseline-2-sanitized-envelopes.json",
+      "sha256": "8da31f82d11100d9763d94d632e3f45d8f91f902f8e6966d7e277b6379f95757"
+    },
+    {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-context-candidate-sanitized-envelopes.json",
+      "sha256": "5956c68516e51fd05bb29d38373bb691c55202b40c6530ae200f11a214562c31"
+    }
+  ],
+  "rows": [
+    {
+      "producer": "baseline-2",
+      "selected": {
+        "kind": "platform",
+        "delivery_id": 501,
+        "store_id": 0
+      },
+      "method": "info",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+      "actualReadKey": "642f61f4d9ae7c300885c62707aa33c9d64d5ad07a51544c4e37e4b3047df929",
+      "accepted": false,
+      "previewOrders": 0,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "baseline-2",
+      "selected": {
+        "kind": "platform",
+        "delivery_id": 501,
+        "store_id": 0
+      },
+      "method": "records",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+      "actualReadKey": "af195b54dd38d1c57fc311bd7e94850c83e7a55ec0b2db1717c04b943f1fb5d9",
+      "accepted": false,
+      "previewOrders": 0,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "baseline-2",
+      "selected": {
+        "kind": "store",
+        "delivery_id": 502,
+        "store_id": 77
+      },
+      "method": "info",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+      "actualReadKey": "ae0f8e2df2260cf2daee438daa1b974277dc6602f8c7071c7553fb34d7cb892b",
+      "accepted": false,
+      "previewOrders": 0,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "baseline-2",
+      "selected": {
+        "kind": "store",
+        "delivery_id": 502,
+        "store_id": 77
+      },
+      "method": "records",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+      "actualReadKey": "149a0a7bc5452d801432ba262f3856d3b30e761b3ccb30ad11ee491a0e108a0d",
+      "accepted": false,
+      "previewOrders": 0,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "candidate",
+      "selected": {
+        "kind": "platform",
+        "delivery_id": 501,
+        "store_id": 0
+      },
+      "method": "info",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+      "actualReadKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+      "accepted": true,
+      "previewOrders": 1,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "candidate",
+      "selected": {
+        "kind": "platform",
+        "delivery_id": 501,
+        "store_id": 0
+      },
+      "method": "records",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+      "actualReadKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+      "accepted": true,
+      "previewOrders": 0,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "candidate",
+      "selected": {
+        "kind": "store",
+        "delivery_id": 502,
+        "store_id": 77
+      },
+      "method": "info",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+      "actualReadKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+      "accepted": true,
+      "previewOrders": 1,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    },
+    {
+      "producer": "candidate",
+      "selected": {
+        "kind": "store",
+        "delivery_id": 502,
+        "store_id": 77
+      },
+      "method": "records",
+      "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+      "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+      "actualReadKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+      "accepted": true,
+      "previewOrders": 0,
+      "financialWrites": 0,
+      "navigations": 0,
+      "codeInNavigation": false
+    }
+  ],
+  "sourceUnchanged": true,
+  "boundary": "Producer envelopes preserved byte-for-byte; only network/native scan and local auth I/O synthetic. Sanitized fixture code and display fields already supplied by SQL producer, no hash/key/row mutation. Real WeChat hardware not invoked."
+}

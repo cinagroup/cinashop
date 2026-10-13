@@ -1,0 +1,40 @@
+{
+  "closedAt": "2026-10-13T09:51:19.159Z",
+  "sourceDigest": "06a609b8078a22be557651f401c6920c2a120e9ad63de7f8554c663ca35f445c",
+  "sourceCount": 4031,
+  "uniquePassed": 1130,
+  "oldAndNewArchivedReceiptsMatch": true,
+  "checkboxesUnchanged": true,
+  "documentDiffCheckExitCode": 0,
+  "documentHashes": [
+    {
+      "file": "docs/parallel-category-label-staff-migration-20261013.md",
+      "bytes": 6835,
+      "sha256": "4808dff6f68c7a68938ea9da1ead76e12fb58d9eaf269a56b7d82021e1315822"
+    },
+    {
+      "file": "../MIGRATION_CHECKLIST.md",
+      "bytes": 977259,
+      "sha256": "1e416cb58de644e736cdaf4416cc49e41517277f3c808819f1a900aba5e700e3"
+    },
+    {
+      "file": "../MIGRATION_AUDIT.md",
+      "bytes": 1988114,
+      "sha256": "3ad0ae62009413ae2182203cfdf539bb6a9d29bb5c62a736a859faac0d48e191"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "audit/category-label-staff-20261013/archive-verification.json",
+      "bytes": 546,
+      "sha256": "e26916d0495079b33c8115312a5fe0a2046e7b5d5ef768b488446a45369723ad"
+    },
+    {
+      "file": "audit/category-label-staff-20261013/document-diff-check-final.log",
+      "bytes": 4698,
+      "sha256": "ff55690a158c97ab0edfe60a00f877f773c048c1f7dd7bc6a65f691c42efb84a"
+    }
+  ],
+  "goalStatus": "active",
+  "publication": "unreleased"
+}

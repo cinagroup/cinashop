@@ -1,0 +1,181 @@
+{
+  "inputs": [
+    {
+      "path": "src/services/other/LegacyPrivateScanTarget.ts",
+      "match": true,
+      "beforeSha256": "AE701C2107D558D4868BC80DD4F3B638A49C4E7CBA2DDA91B8CD024580D6C544",
+      "afterSha256": "AE701C2107D558D4868BC80DD4F3B638A49C4E7CBA2DDA91B8CD024580D6C544"
+    },
+    {
+      "path": "src/services/other/LegacyShareCodeService.ts",
+      "match": true,
+      "beforeSha256": "D28E07860024F1B3E0A613DEFCD73250080F13AF69E07F0A5A8FE2511AC49992",
+      "afterSha256": "D28E07860024F1B3E0A613DEFCD73250080F13AF69E07F0A5A8FE2511AC49992"
+    },
+    {
+      "path": "src/services/other/LegacyShareCodeProtocol.ts",
+      "match": true,
+      "beforeSha256": "9431FB2E51A53440C0C9F36E6D3083845E7F8939F1E5A7A15A617001495E2987",
+      "afterSha256": "9431FB2E51A53440C0C9F36E6D3083845E7F8939F1E5A7A15A617001495E2987"
+    },
+    {
+      "path": "src/services/wechat/OfficialAccountQrcodeService.ts",
+      "match": true,
+      "beforeSha256": "D960526A90A709228A2EF1BA11FC4E60B098E314F4A3272E1B5345E7BD96AA7D",
+      "afterSha256": "D960526A90A709228A2EF1BA11FC4E60B098E314F4A3272E1B5345E7BD96AA7D"
+    },
+    {
+      "path": "src/services/wechat/WechatMiniProgramCodeService.ts",
+      "match": true,
+      "beforeSha256": "297852182A23A2280E622E0C8C2F5FE3D780C9E22D7916013BD90E3211DFFFFA",
+      "afterSha256": "297852182A23A2280E622E0C8C2F5FE3D780C9E22D7916013BD90E3211DFFFFA"
+    },
+    {
+      "path": "src/services/wechat/WechatFollowPosterService.ts",
+      "match": true,
+      "beforeSha256": "8169957760C95952E98F6DD8FD4D0CBB2F0D2E46F0C62F4D7C52C2703E45AD2B",
+      "afterSha256": "8169957760C95952E98F6DD8FD4D0CBB2F0D2E46F0C62F4D7C52C2703E45AD2B"
+    },
+    {
+      "path": "src/services/wechat/WechatFollowBackground.ts",
+      "match": true,
+      "beforeSha256": "7B6C45CAC63A626025C41EE70370EE99863C986394FB17720010D6A6534109D5",
+      "afterSha256": "7B6C45CAC63A626025C41EE70370EE99863C986394FB17720010D6A6534109D5"
+    },
+    {
+      "path": "test/legacy-share-private-scan.test.ts",
+      "match": true,
+      "beforeSha256": "7B5D874D284DABB6112CA5FFB2A1974EFC948E07464C58FD6E9EC09BB87D1539",
+      "afterSha256": "7B5D874D284DABB6112CA5FFB2A1974EFC948E07464C58FD6E9EC09BB87D1539"
+    },
+    {
+      "path": "test/legacy-share-private-scan-native.test.ts",
+      "match": true,
+      "beforeSha256": "F957D4AA35D01EDCA7B61EFDD17BCDEAE4F15AEFD28BDF2544EF0CB3396E891C",
+      "afterSha256": "F957D4AA35D01EDCA7B61EFDD17BCDEAE4F15AEFD28BDF2544EF0CB3396E891C"
+    },
+    {
+      "path": "test/legacy-share-code-native.test.ts",
+      "match": true,
+      "beforeSha256": "8DFDAAEE3D6CC0207C7AAF5E46ECACB633E2D589087A9D9855A598B04D757B5F",
+      "afterSha256": "8DFDAAEE3D6CC0207C7AAF5E46ECACB633E2D589087A9D9855A598B04D757B5F"
+    },
+    {
+      "path": "test/wechat-follow-poster-native.test.ts",
+      "match": true,
+      "beforeSha256": "AFD00AAAEC4BF9681AE660949E818118C21865F2A9415F9287675306668D4CE0",
+      "afterSha256": "AFD00AAAEC4BF9681AE660949E818118C21865F2A9415F9287675306668D4CE0"
+    },
+    {
+      "path": "test/product-share-code-postgres.test.ts",
+      "match": true,
+      "beforeSha256": "D33420A7430B3BF702E51D05F46D5CF01468F09B287D27A3D3685637C0F38E26",
+      "afterSha256": "D33420A7430B3BF702E51D05F46D5CF01468F09B287D27A3D3685637C0F38E26"
+    },
+    {
+      "path": "test/helpers/legacyPrivateScanFixture.ts",
+      "match": true,
+      "beforeSha256": "D5703791FF94D4129CCC4C523ACBF5100F4A5EBB1CCA27597521EFB0B81C0651",
+      "afterSha256": "D5703791FF94D4129CCC4C523ACBF5100F4A5EBB1CCA27597521EFB0B81C0651"
+    },
+    {
+      "path": "test/helpers/financePostgres.ts",
+      "match": true,
+      "beforeSha256": "77039D57FB741858AE1C70C7EC8EBA81A93013973C20EE81F583CD4B9016B88F",
+      "afterSha256": "77039D57FB741858AE1C70C7EC8EBA81A93013973C20EE81F583CD4B9016B88F"
+    },
+    {
+      "path": "test/helpers/kefuSequenceRunnerDatabase.ts",
+      "match": true,
+      "beforeSha256": "83E61D44AEA65DEEEF0C5190A7DEC97CA2143FCA284AB1E74CB6B23C848B8647",
+      "afterSha256": "83E61D44AEA65DEEEF0C5190A7DEC97CA2143FCA284AB1E74CB6B23C848B8647"
+    },
+    {
+      "path": "scripts/run-local-finance-postgres.mjs",
+      "match": true,
+      "beforeSha256": "C19E6ED6EA2C5153395AA8316699CF5E1B07439848E0F9A845F4E678BEDB4B92",
+      "afterSha256": "C19E6ED6EA2C5153395AA8316699CF5E1B07439848E0F9A845F4E678BEDB4B92"
+    },
+    {
+      "path": "scripts/local-finance-cache-path.mjs",
+      "match": true,
+      "beforeSha256": "561C36F99370E681B4D0F8E4ECB10B0877F21C2A89DF332EC4AF18AEA802DD06",
+      "afterSha256": "561C36F99370E681B4D0F8E4ECB10B0877F21C2A89DF332EC4AF18AEA802DD06"
+    },
+    {
+      "path": "src/lib/di.ts",
+      "match": true,
+      "beforeSha256": "2FA777BEAADE9311FCFA0D9EF5BC82F9C59A9F3F48311252761DB4E0DF770AC6",
+      "afterSha256": "2FA777BEAADE9311FCFA0D9EF5BC82F9C59A9F3F48311252761DB4E0DF770AC6"
+    },
+    {
+      "path": "src/services/order/StoreOrderWriteoffService.ts",
+      "match": true,
+      "beforeSha256": "E01DD1957009CE3A8DFC338415912BEF6F46D449F913814D01088041FDD364C8",
+      "afterSha256": "E01DD1957009CE3A8DFC338415912BEF6F46D449F913814D01088041FDD364C8"
+    },
+    {
+      "path": "src/services/customer-work/CustomerWorkScope.ts",
+      "match": true,
+      "beforeSha256": "63623CB6AFA59825147F3CDE8FDC7E3307557025EF82D999F75CFC11043ED44A",
+      "afterSha256": "63623CB6AFA59825147F3CDE8FDC7E3307557025EF82D999F75CFC11043ED44A"
+    },
+    {
+      "path": "src/services/customer-work/CustomerWorkWriteoffReadService.ts",
+      "match": true,
+      "beforeSha256": "4479C2B0D5A948B3DB5415C2081B16A40620C4D1C41E5CD147D791ECC43B9389",
+      "afterSha256": "4479C2B0D5A948B3DB5415C2081B16A40620C4D1C41E5CD147D791ECC43B9389"
+    },
+    {
+      "path": "src/services/customer-work/CustomerWorkWriteoffProtocol.ts",
+      "match": true,
+      "beforeSha256": "B887BF272A4242E095B136EE9E63E5AA61386C617A136665E3FF8DCD9783451B",
+      "afterSha256": "B887BF272A4242E095B136EE9E63E5AA61386C617A136665E3FF8DCD9783451B"
+    },
+    {
+      "path": "src/services/order/CashierSecondCardOrigin.ts",
+      "match": true,
+      "beforeSha256": "34D85F6B33DFBFE5CE5587C74141EAB14019618D6EA7163F3FFC8BD37CC6B343",
+      "afterSha256": "34D85F6B33DFBFE5CE5587C74141EAB14019618D6EA7163F3FFC8BD37CC6B343"
+    },
+    {
+      "path": "src/services/activity/PresaleFulfillmentSnapshot.ts",
+      "match": true,
+      "beforeSha256": "7566126DF220E97D5313A7252F6224A3EE60FDCAB940C0078593FF0944EABEEE",
+      "afterSha256": "7566126DF220E97D5313A7252F6224A3EE60FDCAB940C0078593FF0944EABEEE"
+    },
+    {
+      "path": "src/services/user/MemberBarcodeService.ts",
+      "match": true,
+      "beforeSha256": "6314450AB756CBDC9A5881A8C05C4DAC4C92EF21411EDF544A3455A30632E0BA",
+      "afterSha256": "6314450AB756CBDC9A5881A8C05C4DAC4C92EF21411EDF544A3455A30632E0BA"
+    },
+    {
+      "path": "src/migrations/memberBarcodeIndex.ts",
+      "match": true,
+      "beforeSha256": "8C7F538BA472C2EAFD2F17FC844C0F1A0F72411B7159E5C8E1FA8B6A0D746A3A",
+      "afterSha256": "8C7F538BA472C2EAFD2F17FC844C0F1A0F72411B7159E5C8E1FA8B6A0D746A3A"
+    },
+    {
+      "path": "src/migrations/runMemberBarcodeIndex.ts",
+      "match": true,
+      "beforeSha256": "D864E982FD89B22484C3EDA9A82A0C23C20947CD0DAD4B98618DD2098519FBDD",
+      "afterSha256": "D864E982FD89B22484C3EDA9A82A0C23C20947CD0DAD4B98618DD2098519FBDD"
+    },
+    {
+      "path": "package.json",
+      "match": true,
+      "beforeSha256": "31A2A5CEE00A74BD2ADBC1D6AECC7FD19B63B9BABE20449E6D102E1D14D0C059",
+      "afterSha256": "31A2A5CEE00A74BD2ADBC1D6AECC7FD19B63B9BABE20449E6D102E1D14D0C059"
+    },
+    {
+      "path": "package-lock.json",
+      "match": true,
+      "beforeSha256": "DB479340E0C5A43858219F24F7633DE4848C7AAE8A280EE9B77D1D94DCE7015A",
+      "afterSha256": "DB479340E0C5A43858219F24F7633DE4848C7AAE8A280EE9B77D1D94DCE7015A"
+    }
+  ],
+  "checkedAt": "2026-10-13T04:49:19.1257408Z",
+  "scope": "Local module candidate PG proof; differences from frozen shared source explicitly retained",
+  "drift": []
+}

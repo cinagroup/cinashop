@@ -68,6 +68,12 @@ export interface FulfillmentExecutionOptions {
   /** Exact actual payment-root store when a physical allocation child differs. */
   expectedRootStoreId?: number;
   replay?: FulfillmentReplayOptions;
+  /** Independent trusted principal ledger; never translated to an Out account.
+   * Both hooks are SQL-only, after complete order locks and before commit. */
+  trustedReplay?: {
+    find: (tx: DbClient, scope: FulfillmentAuthorizationScope) => Promise<FulfillmentExecutionResult | undefined>;
+    record: (tx: DbClient, result: Omit<FulfillmentExecutionResult, 'idempotent'>) => Promise<void>;
+  };
   /** The matching active job is allowed through; every other active job blocks manual fulfillment. */
   waybillJobId?: number;
   /** Only the matching durable city task may finalize its admitted effect. */
@@ -805,6 +811,9 @@ export class SupplierFulfillmentService {
       );
       const replay = await findFulfillmentReplay(tx, root.id, options.replay);
       if (replay) return replay;
+      const trustedReplay = await options.trustedReplay?.find(tx, { requestedOrderId: orderId,
+        rootOrderId: root.id, customerUid: root.uid, supplierId });
+      if (trustedReplay) return trustedReplay;
       await assertNoConflictingCustomerCityJob(tx, root.id, options.cityDeliveryJobId);
       await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
       if (!active) throw new ValidateException("该订单已全部发货");
@@ -832,6 +841,7 @@ export class SupplierFulfillmentService {
       };
       await recordFulfillmentAudit(tx, root.id, options.audit);
       await recordFulfillmentReplay(tx, root.id, options.replay, result);
+      await options.trustedReplay?.record(tx, result);
       return { ...result, idempotent: false };
     });
   }
@@ -864,6 +874,9 @@ export class SupplierFulfillmentService {
       );
       const replay = await findFulfillmentReplay(tx, root.id, options.replay);
       if (replay) return replay;
+      const trustedReplay = await options.trustedReplay?.find(tx, { requestedOrderId: orderId,
+        rootOrderId: root.id, customerUid: root.uid, supplierId });
+      if (trustedReplay) return trustedReplay;
       await assertNoConflictingCustomerCityJob(tx, root.id, options.cityDeliveryJobId);
       await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
       if (!active) throw new ValidateException("该订单已全部发货");
@@ -935,6 +948,7 @@ export class SupplierFulfillmentService {
         const result = { split: false, order_id: active.id, remaining_order_id: null };
         await recordFulfillmentAudit(tx, root.id, options.audit);
         await recordFulfillmentReplay(tx, root.id, options.replay, result);
+        await options.trustedReplay?.record(tx, result);
         return { ...result, idempotent: false };
       }
 
@@ -1227,6 +1241,7 @@ export class SupplierFulfillmentService {
       };
       await recordFulfillmentAudit(tx, root.id, options.audit);
       await recordFulfillmentReplay(tx, root.id, options.replay, result);
+      await options.trustedReplay?.record(tx, result);
       return { ...result, idempotent: false };
     });
   }

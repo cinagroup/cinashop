@@ -1,7 +1,5 @@
 import {
   and,
-  asc,
-  desc,
   eq,
   inArray,
   sql,
@@ -14,7 +12,6 @@ import {
   storeCart,
   storeProduct,
   storeProductAttrValue,
-  storeProductCategory,
   storeProductDescription,
   storeProductRelation,
   storeProductStockRecord,
@@ -36,6 +33,12 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { Env } from '@/env';
 import { lockSupplierProductMedia, prepareSupplierProductMediaInput, projectSupplierProductMedia,
   supplierProductEditingHtml, supplierProductEditingMediaReference } from './SupplierProductMediaService';
+import { SupplierProductCategoryService, lockSupplierCategoryScope, assertSupplierProductCategoryBindings,
+  type SupplierCategoryActor } from './SupplierProductCategoryService';
+import { assertSupplierProductLabelBindings, replaceSupplierProductLabelBindings, supplierProductLabelInput } from './SupplierProductLabelBindings';
+import { SupplierProductLabelService, type SupplierProductLabelActor } from './SupplierProductLabelService';
+import { tryLockProductWrite } from '@/services/product/ProductAssociationService';
+import { HttpApiException } from '@/utils/errors';
 
 export {
   buildSkuCombinations,
@@ -340,14 +343,6 @@ function minMoney(values: string[]): string {
   return values.reduce((minimum, value) => (moneyCents(value) < moneyCents(minimum) ? value : minimum));
 }
 
-function buildCategoryTree<T extends { id: number; pid: number }>(rows: T[]): Array<T & { children: T[] }> {
-  const byParent = new Map<number, T[]>();
-  for (const row of rows) byParent.set(row.pid, [...(byParent.get(row.pid) ?? []), row]);
-  const walk = (pid: number): Array<T & { children: T[] }> =>
-    (byParent.get(pid) ?? []).map((row) => ({ ...row, children: walk(row.id) }));
-  return walk(0);
-}
-
 export class SupplierProductManagementService {
   constructor(private readonly container: Container, private readonly env?: Pick<Env, 'APP_KEY'>) {}
 
@@ -366,218 +361,27 @@ export class SupplierProductManagementService {
   }
 
   async categoryTree(supplierId: number, includeHidden = true) {
-    const conditions = [
-      eq(storeProductCategory.type, SUPPLIER_TYPE),
-      eq(storeProductCategory.relationId, supplierId),
-    ];
-    if (!includeHidden) conditions.push(eq(storeProductCategory.isShow, 1));
-    const rows = await this.container.db
-      .select({
-        id: storeProductCategory.id,
-        pid: storeProductCategory.pid,
-        cate_name: storeProductCategory.cateName,
-        path: storeProductCategory.path,
-        level: storeProductCategory.level,
-        pic: storeProductCategory.pic,
-        sort: storeProductCategory.sort,
-        is_show: storeProductCategory.isShow,
-        add_time: storeProductCategory.addTime,
-      })
-      .from(storeProductCategory)
-      .where(and(...conditions))
-      .orderBy(asc(storeProductCategory.level), desc(storeProductCategory.sort), asc(storeProductCategory.id));
-    return buildCategoryTree(rows);
+    return new SupplierProductCategoryService(this.container).modernTree(supplierId, includeHidden);
   }
 
   async categoryDetail(supplierId: number, categoryId: number) {
-    const row = (
-      await this.container.db
-        .select({
-          id: storeProductCategory.id,
-          pid: storeProductCategory.pid,
-          cate_name: storeProductCategory.cateName,
-          path: storeProductCategory.path,
-          level: storeProductCategory.level,
-          pic: storeProductCategory.pic,
-          sort: storeProductCategory.sort,
-          is_show: storeProductCategory.isShow,
-        })
-        .from(storeProductCategory)
-        .where(
-          and(
-            eq(storeProductCategory.id, categoryId),
-            eq(storeProductCategory.type, SUPPLIER_TYPE),
-            eq(storeProductCategory.relationId, supplierId),
-          ),
-        )
-        .limit(1)
-    )[0];
-    if (!row) throw new NotFoundException("分类不存在或不属于当前供应商");
-    return row;
+    return new SupplierProductCategoryService(this.container).modernDetail(supplierId, categoryId);
   }
 
-  async saveCategory(supplierId: number, categoryId: number, input: UnknownRecord) {
-    const cateName = requiredString(firstValue(input, "cate_name", "cateName"), "分类名称", 100);
-    const pid = integerValue(input.pid, "上级分类", 0);
-    const pic = optionalString(input.pic, "分类图片", 512);
-    const sort = integerValue(input.sort, "分类排序", 0, 1_000_000);
-    const isShow = flagValue(firstValue(input, "is_show", "isShow"), "分类状态", 1);
-    return withTx(this.container, async (tx) => {
-      await this.lockProduct(tx, supplierId, categoryId);
-      const all = await tx
-        .select()
-        .from(storeProductCategory)
-        .where(
-          and(
-            eq(storeProductCategory.type, SUPPLIER_TYPE),
-            eq(storeProductCategory.relationId, supplierId),
-          ),
-        );
-      const existing = categoryId > 0 ? all.find((row) => row.id === categoryId) : undefined;
-      if (categoryId > 0 && !existing) throw new NotFoundException("分类不存在或不属于当前供应商");
-      const parent = pid > 0 ? all.find((row) => row.id === pid) : undefined;
-      if (pid > 0 && !parent) throw new ValidateException("上级分类不存在或不属于当前供应商");
-      if (categoryId > 0 && (pid === categoryId || parent?.path.split(",").includes(String(categoryId)))) {
-        throw new ValidateException("不能将分类移动到自身或其子分类下");
-      }
-      const level = parent ? parent.level + 1 : 0;
-      if (level > 2) throw new ValidateException("商品分类最多三级");
-      const path = parent ? [parent.path, String(parent.id)].filter(Boolean).join(",") : "";
-      const now = Math.floor(Date.now() / 1000);
-      let savedId = categoryId;
-      if (existing) {
-        await tx
-          .update(storeProductCategory)
-          .set({ pid, cateName, pic, sort, isShow, path, level })
-          .where(eq(storeProductCategory.id, categoryId));
-      } else {
-        const inserted = await tx
-          .insert(storeProductCategory)
-          .values({
-            pid,
-            type: SUPPLIER_TYPE,
-            relationId: supplierId,
-            cateName,
-            pic,
-            sort,
-            isShow,
-            path,
-            level,
-            addTime: now,
-          })
-          .returning({ id: storeProductCategory.id });
-        savedId = inserted[0].id;
-      }
-
-      if (existing && (existing.path !== path || existing.level !== level)) {
-        const children = new Map<number, typeof all>();
-        for (const row of all) children.set(row.pid, [...(children.get(row.pid) ?? []), row]);
-        const affectedCategoryIds = [categoryId];
-        const updateChildren = async (parentId: number, parentPath: string, parentLevel: number): Promise<void> => {
-          for (const child of children.get(parentId) ?? []) {
-            const childLevel = parentLevel + 1;
-            if (childLevel > 2) throw new ValidateException("移动后分类层级将超过三级");
-            const childPath = [parentPath, String(parentId)].filter(Boolean).join(",");
-            await tx
-              .update(storeProductCategory)
-              .set({ path: childPath, level: childLevel })
-              .where(eq(storeProductCategory.id, child.id));
-            affectedCategoryIds.push(child.id);
-            await updateChildren(child.id, childPath, childLevel);
-          }
-        };
-        await updateChildren(categoryId, path, level);
-        await tx
-          .update(storeProductRelation)
-          .set({ relationPid: storeProductCategory.pid })
-          .from(storeProductCategory)
-          .where(
-            and(
-              eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
-              eq(storeProductRelation.relationId, storeProductCategory.id),
-              inArray(storeProductCategory.id, affectedCategoryIds),
-            ),
-          );
-      }
-      return { id: savedId };
-    });
+  async saveCategory(supplierId: number, categoryId: number, input: UnknownRecord, actor?: SupplierCategoryActor) {
+    return new SupplierProductCategoryService(this.container).save(supplierId, categoryId, input, actor);
   }
 
-  async deleteCategory(supplierId: number, categoryId: number) {
-    await withTx(this.container, async (tx) => {
-      await this.lockProduct(tx, supplierId, categoryId);
-      const rows = await tx
-        .select({ id: storeProductCategory.id })
-        .from(storeProductCategory)
-        .where(
-          and(
-            eq(storeProductCategory.id, categoryId),
-            eq(storeProductCategory.type, SUPPLIER_TYPE),
-            eq(storeProductCategory.relationId, supplierId),
-          ),
-        )
-        .limit(1);
-      if (!rows[0]) throw new NotFoundException("分类不存在或不属于当前供应商");
-      const children = await tx
-        .select({ id: storeProductCategory.id })
-        .from(storeProductCategory)
-        .where(
-          and(
-            eq(storeProductCategory.pid, categoryId),
-            eq(storeProductCategory.type, SUPPLIER_TYPE),
-            eq(storeProductCategory.relationId, supplierId),
-          ),
-        )
-        .limit(1);
-      if (children[0]) throw new ValidateException("请先删除下级分类");
-      const relation = await tx
-        .select({ id: storeProductRelation.id })
-        .from(storeProductRelation)
-        .innerJoin(storeProduct, eq(storeProduct.id, storeProductRelation.productId))
-        .where(
-          and(
-            eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
-            eq(storeProductRelation.relationId, categoryId),
-            eq(storeProduct.type, SUPPLIER_TYPE),
-            eq(storeProduct.relationId, supplierId),
-            eq(storeProduct.isDel, 0),
-          ),
-        )
-        .limit(1);
-      if (relation[0]) throw new ValidateException("分类下仍有商品，不能删除");
-      await tx.delete(storeProductCategory).where(eq(storeProductCategory.id, categoryId));
-    });
+  async deleteCategory(supplierId: number, categoryId: number, actor?: SupplierCategoryActor) {
+    await new SupplierProductCategoryService(this.container).delete(supplierId, categoryId, undefined, actor);
   }
 
-  async setCategoryShow(supplierId: number, categoryId: number, isShow: number) {
-    if (isShow !== 0 && isShow !== 1) throw new ValidateException("分类状态错误");
-    const rows = await this.container.db
-      .update(storeProductCategory)
-      .set({ isShow })
-      .where(
-        and(
-          eq(storeProductCategory.id, categoryId),
-          eq(storeProductCategory.type, SUPPLIER_TYPE),
-          eq(storeProductCategory.relationId, supplierId),
-        ),
-      )
-      .returning({ id: storeProductCategory.id });
-    if (!rows[0]) throw new NotFoundException("分类不存在或不属于当前供应商");
+  async setCategoryShow(supplierId: number, categoryId: number, isShow: number, actor?: SupplierCategoryActor) {
+    await new SupplierProductCategoryService(this.container).setShow(supplierId, categoryId, isShow, undefined, actor);
   }
 
   private async assertCategories(tx: DbClient, supplierId: number, cateIds: number[]) {
-    const rows = await tx
-      .select()
-      .from(storeProductCategory)
-      .where(
-        and(
-          inArray(storeProductCategory.id, cateIds),
-          eq(storeProductCategory.type, SUPPLIER_TYPE),
-          eq(storeProductCategory.relationId, supplierId),
-        ),
-      );
-    if (rows.length !== cateIds.length) throw new ValidateException("商品分类不存在或不属于当前供应商");
-    return rows;
+    return assertSupplierProductCategoryBindings(tx, supplierId, cateIds);
   }
 
   private async assertShippingTemplate(tx: DbClient, supplierId: number, input: SupplierProductInput) {
@@ -586,9 +390,22 @@ export class SupplierProductManagementService {
       ownerType: SUPPLIER_TYPE, relationId: supplierId }]);
   }
 
-  async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {
+  async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord, actor?: SupplierProductLabelActor) {
     const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(rawInput));
+    const labelIds = supplierProductLabelInput(rawInput);
+    const labelAuthority = new SupplierProductLabelService(this.container);
+    const labelPath = `/supplierapi/product/product/${productId}`;
     return withTx(this.container, async (tx) => {
+      // Category moves/deletes and Supplier product bindings serialize before
+      // any product/SKU/bargain lock, so no stale parent or missing category can
+      // be committed while classification management is changing the tree.
+      await lockSupplierCategoryScope(tx, supplierId);
+      if (labelIds !== undefined) {
+        await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+        await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
+        await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+        await assertSupplierProductLabelBindings(tx, supplierId, labelIds);
+      }
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
         await lockBargainSourceProductChange(tx, productId);
@@ -597,6 +414,9 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
+      if (labelIds !== undefined && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+        throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
+      }
       const existing = productId > 0
         ? (
             await tx
@@ -713,6 +533,10 @@ export class SupplierProductManagementService {
         skus: input.skus.map((sku) => ({ ...sku, ...DEFAULT_SECOND_CARD_CONFIGURATION })),
       }, now);
       if (!existing) await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
+      if (labelIds !== undefined) {
+        await replaceSupplierProductLabelBindings(tx, supplierId, savedProductId, labelIds);
+        await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     });
   }
@@ -757,6 +581,7 @@ export class SupplierProductManagementService {
       unit_name: product.unitName,
       bar_code: product.barCode,
       cate_id: relations.map((relation) => relation.relation_id),
+      store_label_id: product.storeLabelId,
       slider_image: (() => {
         try {
           const parsed: unknown = JSON.parse(product.sliderImage);

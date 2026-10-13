@@ -1,0 +1,32 @@
+{
+  "completedAt": "2026-10-13T05:49:13.783Z",
+  "exit": 0,
+  "signal": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-native-eight-final-stage-1.log",
+  "command": "share-native-eight-final-stage-1-command.json",
+  "localInputCount": 2914,
+  "localBeforeDigest": "c8e9f628e20afb4a04f3d144112569ad667f7cb35a5375741880abf2db20c5eb",
+  "localAfterDigest": "c8e9f628e20afb4a04f3d144112569ad667f7cb35a5375741880abf2db20c5eb",
+  "localInputChanges": [],
+  "directSourceBeforeMismatches": [],
+  "directSourceAfterMismatches": [],
+  "stop": {
+    "executed": true,
+    "fixtureDatabasesAndRolesZero": true,
+    "stoppedMarker": true,
+    "checkedAt": "2026-10-13T05:49:13.782Z",
+    "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-native-eight-owned-20261013\\finance-postgres-NODtre",
+    "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+    "args": [
+      "status",
+      "-D",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-native-eight-owned-20261013\\finance-postgres-NODtre\\data"
+    ],
+    "exit": 3,
+    "signal": null,
+    "stdout": "pg_ctl: no server running\r\n",
+    "stderr": "",
+    "error": null
+  },
+  "passed": "105 passed (105)"
+}

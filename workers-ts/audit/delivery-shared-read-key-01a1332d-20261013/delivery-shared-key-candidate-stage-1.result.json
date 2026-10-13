@@ -1,0 +1,53 @@
+{
+  "completedAt": "2026-10-13T07:16:02.083Z",
+  "exit": 0,
+  "signal": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-shared-key-candidate-stage-1.log",
+  "tests": "4 passed | 70 skipped (74)",
+  "localCount": 2982,
+  "localBeforeDigest": "c2a0f2d418fd3686ffd9736740493cfd464fcd50ae38390b277a31259f454089",
+  "localAfterDigest": "c2a0f2d418fd3686ffd9736740493cfd464fcd50ae38390b277a31259f454089",
+  "localInputChanges": [],
+  "sourceBeforeMismatches": [
+    {
+      "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+      "localSha256": "3a2348cf3fed975ce67f6d32b1a8353f67ef9269aaa6b9f980ce073c62b363b3",
+      "sourceSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+    },
+    {
+      "path": "workers-ts/src/services/store/DeliveryOrderWriteoffService.ts",
+      "localSha256": "4228c7130bf8284479ba4a5e6ffc045b1f9c8f000af143f925cdfc12c421b09f",
+      "sourceSha256": "70f0f064795f3f21f530e26b7fd97c6ace2653694d3a595b766ad89411463f3d"
+    }
+  ],
+  "sourceAfterMismatches": [
+    {
+      "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+      "localSha256": "3a2348cf3fed975ce67f6d32b1a8353f67ef9269aaa6b9f980ce073c62b363b3",
+      "sourceSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+    },
+    {
+      "path": "workers-ts/src/services/store/DeliveryOrderWriteoffService.ts",
+      "localSha256": "4228c7130bf8284479ba4a5e6ffc045b1f9c8f000af143f925cdfc12c421b09f",
+      "sourceSha256": "70f0f064795f3f21f530e26b7fd97c6ace2653694d3a595b766ad89411463f3d"
+    }
+  ],
+  "stop": {
+    "executed": true,
+    "fixtureDatabasesAndRolesZero": true,
+    "stoppedMarker": true,
+    "checkedAt": "2026-10-13T07:16:02.082Z",
+    "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-shared-key-candidate-owned-20261013\\finance-postgres-Cuu84Z",
+    "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+    "args": [
+      "status",
+      "-D",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-shared-key-candidate-owned-20261013\\finance-postgres-Cuu84Z\\data"
+    ],
+    "exit": 3,
+    "signal": null,
+    "stdout": "pg_ctl: no server running\r\n",
+    "stderr": "",
+    "error": null
+  }
+}

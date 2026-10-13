@@ -1,0 +1,162 @@
+{
+  "recordedAt": "2026-10-13T03:36:20.5519147Z",
+  "status": "local_candidate_verified_not_released",
+  "goal": "active",
+  "source": {
+    "afterReceipt": "parallel-migration-named-zone-after-20261013.json",
+    "beforeReceipt": "parallel-migration-named-zone-before-20261013.json",
+    "after": "70113864d3905ea6e8a009d75c98445a6bf58d4c73095f7f6f3f5f593a923aa4",
+    "matches": true,
+    "count": 3896,
+    "before": "70113864d3905ea6e8a009d75c98445a6bf58d4c73095f7f6f3f5f593a923aa4"
+  },
+  "localTests": {
+    "conditionalNativeSkipped": 2,
+    "failed": 0,
+    "files": [
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/admin-legacy-log-permission.test.ts",
+        "passed": 3,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/admin-legacy-system-log-native.test.ts",
+        "passed": 0,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/admin-legacy-system-log.test.ts",
+        "passed": 16,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/admin-permission.test.ts",
+        "passed": 24,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/admin-system-log-frontend.test.ts",
+        "passed": 5,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/local-finance-postgres-runner.test.ts",
+        "passed": 126,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/public-geocoding.test.ts",
+        "passed": 58,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/supplier-product-catalog.test.ts",
+        "passed": 23,
+        "status": "passed"
+      },
+      {
+        "skipped": 0,
+        "file": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/migration-validation/workers-ts/test/supplier-rbac-migration.test.ts",
+        "passed": 10,
+        "status": "passed"
+      }
+    ],
+    "receipt": "parallel-migration-zone-tests-20261013.json",
+    "exit": 0,
+    "passed": 265
+  },
+  "nativeTests": {
+    "skipped": 0,
+    "passed": 41,
+    "exit": 0,
+    "clusterStopped": true,
+    "coordinatorThread": "01a1332d-ffe1-7932-a2c8-d314f67cd722",
+    "stdout": "parallel-migration-native-final-20261013.log",
+    "receipt": "parallel-migration-native-final-20261013.json",
+    "postgres": "16.15",
+    "sourceChecks": "parallel-validation-01a1332d-20261013/post-execution-shared-source-check.json",
+    "sourceMatches": true,
+    "interpretation": "Native repeats 16 Admin and 23 Supplier cases in a different database environment; its two independent-session cases were skipped by the ordinary command and now passed. Do not sum 265 and 41 as unique cases.",
+    "failed": 0,
+    "manifest": "parallel-validation-01a1332d-20261013/input-manifest-integration-final.json",
+    "fixtureRemaining": 0,
+    "files": 3
+  },
+  "distinctCaseCount": 267,
+  "typecheck": {
+    "runtime": 0,
+    "unit": 0
+  },
+  "typecheckReceipt": "parallel-zone-typecheck-exits-20261013.json",
+  "routes": {
+    "after": {
+      "php": 1904,
+      "ts": 2403,
+      "matched": 930,
+      "executableMatched": 909,
+      "unavailable": 21,
+      "missing": 974,
+      "retired": 17,
+      "actionableMissing": 957,
+      "coveragePercent": 48.8,
+      "executableCoveragePercent": 47.7,
+      "effectiveExecutableCoveragePercent": 48.2
+    },
+    "tsGetRegistrationsAdded": 6,
+    "targetedStillMissing": [],
+    "phpContractsAdded": 5,
+    "before": {
+      "php": 1904,
+      "ts": 2397,
+      "matched": 925,
+      "executableMatched": 904,
+      "unavailable": 21,
+      "missing": 979,
+      "retired": 17,
+      "actionableMissing": 962,
+      "coveragePercent": 48.6,
+      "executableCoveragePercent": 47.5,
+      "effectiveExecutableCoveragePercent": 47.9
+    }
+  },
+  "checklist": {
+    "checkboxesChanged": 0,
+    "complete": 249,
+    "total": 404,
+    "open": 155
+  },
+  "earlierEvidence": [
+    "parallel-php-ts-migration-before-timezone-20261013.json",
+    "parallel-migration-initial-tests-20261013.json",
+    "parallel-migration-drift-tests-20261013.json",
+    "parallel-migration-source-drift-20261013.json",
+    "parallel-migration-frozen-core-tests-20261013.json",
+    "parallel-migration-frontend-startup-20261013.json",
+    "parallel-validation-01a1332d-20261013/validation-summary.json"
+  ],
+  "fixes": [
+    "Reviewed legacy page grant included in both SQL permission prefilters",
+    "Actual Admin route connection factory supplied by fixture without changing production boundary",
+    "Expiry observer uses independent proxies and does not mutate PGlite transaction adapter",
+    "Explicit TextDecoder ignoreBOM:false for Cloudflare runtime types",
+    "Native SQL errors asserted through Drizzle cause.code",
+    "Named Shanghai timezone replaces fixed UTC+8, including calendar and rolling bounds; gap/fold clocks rejected"
+  ],
+  "limits": [
+    "Native service proof and registered route fixture do not prove production Admin LOGIN or Hyperdrive",
+    "Geocoding config/provider and DO budgets are synthetic; no real Tencent or Cloudflare acceptance",
+    "Modern frontend uses a custom Vue renderer and synthetic Axios, not a real browser or complete old-client session",
+    "Named-zone ambiguous/nonexistent historical clocks are deliberately rejected instead of copying PHP normalization",
+    "No production DDL/business-data write, commit, push or deployment; whole-project CI, real roles/data/provider/capacity and parent migration gates remain open"
+  ],
+  "coordination": "User authorized peer coordination; shared source frozen, main records owned by this root. Other work continues in isolated directories.",
+  "localDependencyNotes": "Code copies verified byte-for-byte. Repository locks/dependencies unchanged; UniApp missing Vue types copied from existing local Vue3.4.21 matching its current lock. Existing Admin dependency packages supplied to local frontend verification."
+}

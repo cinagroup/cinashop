@@ -1,0 +1,17 @@
+{
+  "completedAt": "2026-10-13T07:55:10.5392964Z",
+  "scope": "Owned legacy share doc only, current scanner evidence update",
+  "source": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\docs\\legacy-share-code-20261013.md",
+  "local": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\docs\\legacy-share-code-20261013.md",
+  "beforeSha256": "b28719aff42838849122d8a31d73deb8350e522413fc1ad143b1368e28ea42ac",
+  "sourceAfterSha256": "0a7e3fa146bb41e398af8774cc75e22df6b6f8f6ffdd3621ae87f336b8fe1844",
+  "localAfterSha256": "0a7e3fa146bb41e398af8774cc75e22df6b6f8f6ffdd3621ae87f336b8fe1844",
+  "evidenceExport": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\legacy-share-scanner-current-01a1332d-20261013\\scanner-current-export-summary.json",
+  "evidenceExportSha256": "ce562d5e2a7921a894956c63c7c1afa75c4adefc550cb7b3b1529ef95efd769b",
+  "sourceBusinessEdits": false,
+  "localCompileInputEdits": false,
+  "testsTypesBuildsExecuted": false,
+  "currentWorkerTypesPending": true,
+  "currentWorkerOrdinaryPending": true,
+  "rootWechatSharingDocEdited": false
+}

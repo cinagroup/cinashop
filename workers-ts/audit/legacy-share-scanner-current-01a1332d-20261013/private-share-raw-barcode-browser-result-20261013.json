@@ -1,0 +1,180 @@
+{
+  "browserPath": "Browser plugin not available; regular Playwright with existing Chrome",
+  "syntheticBoundary": "Provider, auth, business API and WeChat scan SDK result are synthetic; localhost TLS certificate is temporary and ignored only in test; compiled H5 customer scanner page, controls, owned requests, exact member JSON, explicit namespace, origin rejection and hide cleanup are real. Actual three native scanner buttons are independently exercised in the SFC suite; physical camera and live provider remain unverified. No live WeChat or production writes.",
+  "checks": [
+    {
+      "name": "actual login UI establishes scanner account",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "actual H5 WeChat scanner button decodes private landing URL through owned API then explicit member read namespace",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "rendered private member space is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "rendered private member hash is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "rendered private member backslash is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "rendered private member question is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "rendered private member ampersand is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "rendered private member slash is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "existing explicit member manual twelve digit read remains compatible; QR90 separately rejects it",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "existing explicit member manual ASCII sentinel read remains compatible; QR90 separately rejects it",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "real scanner UI rejects decoded origin mismatch without filling or reading business target",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "same-document hide aborts delayed decoder and actual customer page returns with zero code and no additional lookup",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "page identity, nonblank, overlay and console checks pass",
+      "pass": true,
+      "viewport": "desktop",
+      "url": "https://127.0.0.1:18743/#/pages/customer-work/scanning",
+      "title": "客户扫码核销"
+    },
+    {
+      "name": "actual login UI establishes scanner account",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "actual H5 WeChat scanner button decodes private landing URL through owned API then explicit member read namespace",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "rendered private member space is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "rendered private member hash is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "rendered private member backslash is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "rendered private member question is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "rendered private member ampersand is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "rendered private member slash is exact JSON in explicit read namespace with zero writes",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "existing explicit member manual twelve digit read remains compatible; QR90 separately rejects it",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "existing explicit member manual ASCII sentinel read remains compatible; QR90 separately rejects it",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "real scanner UI rejects decoded origin mismatch without filling or reading business target",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "same-document hide aborts delayed decoder and actual customer page returns with zero code and no additional lookup",
+      "pass": true,
+      "viewport": "mobile"
+    },
+    {
+      "name": "page identity, nonblank, overlay and console checks pass",
+      "pass": true,
+      "viewport": "mobile",
+      "url": "https://127.0.0.1:18743/#/pages/customer-work/scanning",
+      "title": "客户扫码核销"
+    }
+  ],
+  "screens": [
+    "private-share-raw-barcode-desktop-customer-success.png",
+    "private-share-raw-barcode-desktop-member-space.png",
+    "private-share-raw-barcode-desktop-origin-denied.png",
+    "private-share-raw-barcode-mobile-customer-success.png",
+    "private-share-raw-barcode-mobile-member-space.png",
+    "private-share-raw-barcode-mobile-origin-denied.png"
+  ],
+  "events": [
+    {
+      "viewport": "desktop",
+      "type": "warning",
+      "text": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    },
+    {
+      "viewport": "desktop",
+      "type": "warning",
+      "text": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    },
+    {
+      "viewport": "desktop",
+      "type": "isolated-external-asset",
+      "host": "cdn.dcloud.net.cn"
+    },
+    {
+      "viewport": "mobile",
+      "type": "warning",
+      "text": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    },
+    {
+      "viewport": "mobile",
+      "type": "warning",
+      "text": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    },
+    {
+      "viewport": "mobile",
+      "type": "isolated-external-asset",
+      "host": "cdn.dcloud.net.cn"
+    }
+  ]
+}

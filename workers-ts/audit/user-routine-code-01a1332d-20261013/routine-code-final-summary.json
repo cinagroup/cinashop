@@ -1,0 +1,618 @@
+{
+  "archivedAt": "2026-10-13T08:48:39.466Z",
+  "scope": "Complete immutable LOCAL routine-code migration candidate; Source writeback is waiting for the coordinator to release its existing freeze.",
+  "sourceWritebackCompleted": true,
+  "wholeCurrentSourceFrozen": false,
+  "localInputCount": 3090,
+  "localBeforeDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "localAfterDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "localInputDrift": [],
+  "ownedInputs": [
+    {
+      "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "sha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+    },
+    {
+      "path": "workers-ts/src/services/user/UserProfileService.ts",
+      "sha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "sha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+    },
+    {
+      "path": "workers-ts/test/legacy-user-routine-code.test.ts",
+      "sha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+    }
+  ],
+  "ordinary": {
+    "files": 16,
+    "total": 194,
+    "passed": 194,
+    "failed": 0,
+    "pending": 0,
+    "startedAt": "2026-10-13T08:25:16.884Z",
+    "finishedAt": "2026-10-13T08:26:31.452Z",
+    "components": {
+      "originalSharing": 167,
+      "newAlias": 17,
+      "profile": 5,
+      "existingMini": 5
+    }
+  },
+  "types": [
+    {
+      "label": "unit",
+      "command": [
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T08:27:54.988Z",
+      "finishedAt": "2026-10-13T08:29:47.146Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-types-local-1-unit.txt",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "runtime",
+      "command": [
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T08:29:47.149Z",
+      "finishedAt": "2026-10-13T08:30:44.216Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-types-local-1-runtime.txt",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "native": {
+    "sameNewAliasCases": 17,
+    "actualPassed": 17,
+    "version": "PostgreSQL 16.15",
+    "ordinaryRole": {
+      "data": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/user-routine-native-owned-20261013/finance-postgres-45dOyn/data",
+      "version": "160015",
+      "host": "127.0.0.1",
+      "port": 60390,
+      "database": "cinashop_finance_test",
+      "role": "finance_test",
+      "superuser": false,
+      "createdb": true
+    },
+    "fixtureOwner": true,
+    "productionMinimumAclProven": false,
+    "vitestDuration": "27.25s (transform 19.21s, setup 0ms, import 24.00s, tests 2.87s, environment 0ms)",
+    "wallSeconds": 41.869,
+    "stop": {
+      "executed": true,
+      "fixtureDatabaseAndRolesZero": true,
+      "stoppedMarker": true,
+      "checkedAt": "2026-10-13T08:37:26.641Z",
+      "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-owned-20261013\\finance-postgres-45dOyn",
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-native-owned-20261013\\finance-postgres-45dOyn\\data"
+      ],
+      "exit": 3,
+      "signal": null,
+      "stdout": "pg_ctl: no server running\r\n",
+      "stderr": "",
+      "error": null
+    }
+  },
+  "sourceBoundary": "The three current Source baselines remain original. Current Main Mini provider imports/method, registered pages and native runner differ from frozen LOCAL and are not borrowed as whole Source validation.",
+  "externalBoundary": "No live WeChat, physical device scanning, production configuration or deployment acceptance.",
+  "retainedHistory": [
+    {
+      "file": "user-routine-alias-preflight-1.json",
+      "meaning": "wrapper field mismatch before Vitest; zero tests"
+    },
+    {
+      "file": "user-routine-alias-candidate-stage-2-result.json",
+      "meaning": "16pass but overlength password fixture did not mutate SQL; revoked-password credit excluded"
+    },
+    {
+      "file": "user-routine-alias-candidate-stage-3-result.json",
+      "meaning": "14pass/2fail; actual SQL revocation succeeded; test expected wrong mature auth code"
+    },
+    {
+      "file": "user-routine-alias-candidate-stage-4-result.json",
+      "meaning": "16pass before official-account independence narrow source change; historical scope only"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "user-routine-candidate-local-prepare.json",
+      "bytes": 1989,
+      "sha256": "668b951dbcea1910912c0977beee3ba625457c8b5869db257b3331370eb97384"
+    },
+    {
+      "path": "user-routine-alias-candidate-summary.json",
+      "bytes": 7443,
+      "sha256": "52995a628e8efddcd122b37a97e6650b3bcfea2e846c7b84365da551ca2898f3"
+    },
+    {
+      "path": "user-routine-native-summary.json",
+      "bytes": 4242,
+      "sha256": "1880ecb7fee8166834df1592791d895f0ca5f1e0d90bc03f6e27d9f718e8e892"
+    },
+    {
+      "path": "user-routine-types-local-before-1.json",
+      "bytes": 533139,
+      "sha256": "6a7f6455222b396d823f6334102430256ece1a00ecb7822308919544b689b12a"
+    },
+    {
+      "path": "user-routine-types-local-after-1.json",
+      "bytes": 533139,
+      "sha256": "560f2ac6f109e2d705d4ef406ae5ef2472a8a40d70774b9a7e4f163d1f29c46d"
+    },
+    {
+      "path": "user-routine-types-local-1-result.json",
+      "bytes": 26727,
+      "sha256": "56c5ffd067aef6ad47da98d8bd8985b8ec51bef1e76a92a4a1ec0f02d84c53f7"
+    },
+    {
+      "path": "user-routine-types-local-1-unit-exit.json",
+      "bytes": 491,
+      "sha256": "0886061e886ce8354c3577c8a7142a453801054cf8c4d6c1baa6c79426d3db0a"
+    },
+    {
+      "path": "user-routine-types-local-1-runtime-exit.json",
+      "bytes": 541,
+      "sha256": "ebc352900a848d356d38243a8efc5e166c53f9d02924722308bb1c6b2fe4c4d6"
+    },
+    {
+      "path": "user-routine-types-local-1-unit.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "user-routine-types-local-1-runtime.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "user-routine-regression-local-1-result.json",
+      "bytes": 5044,
+      "sha256": "58f8c61e5bce56530c4e7dbfd9dbc9c65496c0e76f155309b944dbd23c30e030"
+    },
+    {
+      "path": "user-routine-regression-local-1-before.json",
+      "bytes": 533139,
+      "sha256": "2fd46a590ab9712c3e3777ed00e5f5156a2a37d6907e9663b6df7f8f5a98285c"
+    },
+    {
+      "path": "user-routine-regression-local-1-after.json",
+      "bytes": 533139,
+      "sha256": "3272e4dcedcdf911549613839c5576a39c85a9b5efb279485f461c50d6c24af8"
+    },
+    {
+      "path": "user-routine-regression-local-1-vitest.json",
+      "bytes": 83701,
+      "sha256": "8f22a950a8728c4568178577f4fce12727845bd0d9d7a126105c4f797d56dc9d"
+    },
+    {
+      "path": "user-routine-regression-local-1.log",
+      "bytes": 151,
+      "sha256": "2e3fb807392ffa846c128fde4cf9dcc394a04a14ddf550197b923a9aa4c5de51"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-result.json",
+      "bytes": 1400,
+      "sha256": "2659e728fad017b0fc4595910c688d36f8575b76d2b75ad9473a123449d786d9"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-command.json",
+      "bytes": 1216,
+      "sha256": "3c054e33f82c0631f629c526ac30f463a45a8d9e46c95dc000526df27ac59a4b"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-before.json",
+      "bytes": 522375,
+      "sha256": "00d9882553d85380df69993b662b4657a489cecb3180ce0fd2cbc8dd1d8f5ccb"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-after.json",
+      "bytes": 522375,
+      "sha256": "8feedea0d13a90954a79238837c1fe3c796c5468dd79386ce41d37ae1297f057"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-vitest.json",
+      "bytes": 8917,
+      "sha256": "166a57145c3181b35bb8865e1564c5915aa6f07086610c399d6ca757e66a8cd9"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5.log",
+      "bytes": 3533,
+      "sha256": "34f885597d43bb4b90d22d464f83c43129aa781e304c42d4005683fc942ec574"
+    },
+    {
+      "path": "user-routine-native-stage-1-result.json",
+      "bytes": 2267,
+      "sha256": "c9fc54365785e0dbf1fab3a9dd1ed29ed3f4c928c6dd1c5ec8b97167ba842d59"
+    },
+    {
+      "path": "user-routine-native-stage-1-command.json",
+      "bytes": 2726,
+      "sha256": "878c8618cac95811996d4a73b6fbd611e5d12cf29d4cb7c8ff17183bf8f74bdd"
+    },
+    {
+      "path": "user-routine-native-stage-1-before.json",
+      "bytes": 521990,
+      "sha256": "5c97ebe12d38b468791e6cab40a397edcabfb02e56faf7c601fa93784bad2973"
+    },
+    {
+      "path": "user-routine-native-stage-1-after.json",
+      "bytes": 521990,
+      "sha256": "e713bc19e3ee7da3dac979a6cfd23bb37213899321669374376692832839e16c"
+    },
+    {
+      "path": "user-routine-native-stage-1-independent-stop.json",
+      "bytes": 798,
+      "sha256": "578084685dcfee8297bd9c459acc2b0451ca38e7881fb8cc822a1ddcc565ee64"
+    },
+    {
+      "path": "user-routine-native-stage-1.log",
+      "bytes": 8217,
+      "sha256": "9d88cda9c9fe0d1da787057f94d4073ed10ffc9b5bba7285a70f298542ae79c9"
+    },
+    {
+      "path": "writeback-user-routine-candidate.cjs",
+      "bytes": 4582,
+      "sha256": "a436660377f40ddd7bd444943d61d40b9beb76b97dc68747a9de3b2d43f2358b"
+    },
+    {
+      "path": "inspect-user-routine-writeback-inputs.cjs",
+      "bytes": 1672,
+      "sha256": "051fa7a2b75318320161488323035b2b8398717c659be9136cb216f01a1b2b32"
+    },
+    {
+      "path": "prepare-user-routine-candidate.cjs",
+      "bytes": 5407,
+      "sha256": "05f2f6495c8588c4f2e799a6cdd80dc7249c03afeb1ac4e7b8d00a7c9ae2eec9"
+    },
+    {
+      "path": "run-user-routine-regression.cjs",
+      "bytes": 1106,
+      "sha256": "b8941a477994c801a82acd53e91dc98c667e7156f68ef7b23ab9a4401f93d94f"
+    },
+    {
+      "path": "run-user-routine-regression-generated.cjs",
+      "bytes": 3390,
+      "sha256": "0368023d3f41d9792f20ed2be0c2cd6c40b3386a1a5a290f38a66b08ec7380b5"
+    },
+    {
+      "path": "user-routine-alias-preflight-1.json",
+      "bytes": 368,
+      "sha256": "4030486bb14b023ea8134fb0f0a3bbe0146cfc2368ce31d7c1a85a55f1fc43d0"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-2-result.json",
+      "bytes": 1400,
+      "sha256": "865a0dd15d75a58a9252f5db9b6e6977cb54ae52dbdb6bcdc182f1374c933d81"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-3-result.json",
+      "bytes": 1401,
+      "sha256": "17589d50f8ec9875be8512def308c8f46f54df97c3c798a21ed3d9a1c99daf27"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-4-result.json",
+      "bytes": 1400,
+      "sha256": "260563ca0e2cc73ec598d93169015cc4fee22586926f39d1cafef149e5cf80d4"
+    },
+    {
+      "path": "candidate/workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "bytes": 26058,
+      "sha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+    },
+    {
+      "path": "candidate/workers-ts/src/services/user/UserProfileService.ts",
+      "bytes": 23321,
+      "sha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+    },
+    {
+      "path": "candidate/workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "bytes": 5798,
+      "sha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+    },
+    {
+      "path": "candidate/workers-ts/test/legacy-user-routine-code.test.ts",
+      "bytes": 18695,
+      "sha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+    },
+    {
+      "path": "candidate/workers-ts/docs/user-routine-code-migration-20261013.md",
+      "bytes": 16159,
+      "sha256": "772f8fc57177ec850e16cf71d9802b1ccc1da8b78a215e37744112c45e8b595b"
+    }
+  ],
+  "archivedToSourceAt": "2026-10-13T09:59:17.570Z",
+  "sourceWriteback": {
+    "startedAt": "2026-10-13T09:58:08.077Z",
+    "finishedAt": "2026-10-13T09:58:08.604Z",
+    "coordinatedRelease": true,
+    "sourceWritebackCompleted": true,
+    "wholeCurrentSourceFrozen": false,
+    "validatedLocalInputCount": 3090,
+    "validatedLocalDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+    "source": "\\\\tsclient\\I\\cinagroup\\cinashop",
+    "local": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq",
+    "rows": [
+      {
+        "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+        "sourceBeforeSha256": "6ec935e413ba1d677449afc8c6bc1386466728507019f8ca1fb3e25b93a2aa81",
+        "candidateSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9",
+        "sourceAfterSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+      },
+      {
+        "path": "workers-ts/src/services/user/UserProfileService.ts",
+        "sourceBeforeSha256": "995668fec37e707cf12940faf841d6f178f481ec3790f9717c57d79cc1fa4fc8",
+        "candidateSha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c",
+        "sourceAfterSha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+        "sourceBeforeSha256": "510ed3618643c4c177ca94bd0632800e11bb8610d0563877bcf0cd149331ff51",
+        "candidateSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a",
+        "sourceAfterSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+      },
+      {
+        "path": "workers-ts/test/legacy-user-routine-code.test.ts",
+        "sourceBeforeSha256": null,
+        "candidateSha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c",
+        "sourceAfterSha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+      }
+    ],
+    "limits": [
+      "Only these four Source files were copied.",
+      "Unrelated current Main changes and its newer Mini import graph are not covered by independent frozen LOCAL type checks.",
+      "No shared route, provider method, production configuration or deployment changes."
+    ]
+  },
+  "sourceDoc": {
+    "path": "workers-ts/docs/user-routine-code-migration-20261013.md",
+    "sha256": "10ada4763c2fc6a75facd84392f647726e8e7131a60c841878ac96e2c8d6b23b",
+    "derivedFromArchivedDraftSha256": "772f8fc57177ec850e16cf71d9802b1ccc1da8b78a215e37744112c45e8b595b"
+  },
+  "wholeCurrentSourceTypeChecksPassed": false,
+  "limits": [
+    "Independent LOCAL 3090 snapshot and its four owned candidate Source files are qualified.",
+    "The active coordinator current whole repository and newer Mini imports/pages are not credited by this local snapshot.",
+    "Cash registration rewards and referral binding policy are independent future migration scopes.",
+    "No deployment, live provider or physical device acceptance."
+  ],
+  "sourceArchivedArtifacts": [
+    {
+      "path": "user-routine-candidate-local-prepare.json",
+      "bytes": 1989,
+      "sha256": "668b951dbcea1910912c0977beee3ba625457c8b5869db257b3331370eb97384"
+    },
+    {
+      "path": "user-routine-alias-candidate-summary.json",
+      "bytes": 7443,
+      "sha256": "52995a628e8efddcd122b37a97e6650b3bcfea2e846c7b84365da551ca2898f3"
+    },
+    {
+      "path": "user-routine-native-summary.json",
+      "bytes": 4242,
+      "sha256": "1880ecb7fee8166834df1592791d895f0ca5f1e0d90bc03f6e27d9f718e8e892"
+    },
+    {
+      "path": "user-routine-types-local-before-1.json",
+      "bytes": 533139,
+      "sha256": "6a7f6455222b396d823f6334102430256ece1a00ecb7822308919544b689b12a"
+    },
+    {
+      "path": "user-routine-types-local-after-1.json",
+      "bytes": 533139,
+      "sha256": "560f2ac6f109e2d705d4ef406ae5ef2472a8a40d70774b9a7e4f163d1f29c46d"
+    },
+    {
+      "path": "user-routine-types-local-1-result.json",
+      "bytes": 26727,
+      "sha256": "56c5ffd067aef6ad47da98d8bd8985b8ec51bef1e76a92a4a1ec0f02d84c53f7"
+    },
+    {
+      "path": "user-routine-types-local-1-unit-exit.json",
+      "bytes": 491,
+      "sha256": "0886061e886ce8354c3577c8a7142a453801054cf8c4d6c1baa6c79426d3db0a"
+    },
+    {
+      "path": "user-routine-types-local-1-runtime-exit.json",
+      "bytes": 541,
+      "sha256": "ebc352900a848d356d38243a8efc5e166c53f9d02924722308bb1c6b2fe4c4d6"
+    },
+    {
+      "path": "user-routine-types-local-1-unit.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "user-routine-types-local-1-runtime.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "user-routine-regression-local-1-result.json",
+      "bytes": 5044,
+      "sha256": "58f8c61e5bce56530c4e7dbfd9dbc9c65496c0e76f155309b944dbd23c30e030"
+    },
+    {
+      "path": "user-routine-regression-local-1-before.json",
+      "bytes": 533139,
+      "sha256": "2fd46a590ab9712c3e3777ed00e5f5156a2a37d6907e9663b6df7f8f5a98285c"
+    },
+    {
+      "path": "user-routine-regression-local-1-after.json",
+      "bytes": 533139,
+      "sha256": "3272e4dcedcdf911549613839c5576a39c85a9b5efb279485f461c50d6c24af8"
+    },
+    {
+      "path": "user-routine-regression-local-1-vitest.json",
+      "bytes": 83701,
+      "sha256": "8f22a950a8728c4568178577f4fce12727845bd0d9d7a126105c4f797d56dc9d"
+    },
+    {
+      "path": "user-routine-regression-local-1.log",
+      "bytes": 151,
+      "sha256": "2e3fb807392ffa846c128fde4cf9dcc394a04a14ddf550197b923a9aa4c5de51"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-result.json",
+      "bytes": 1400,
+      "sha256": "2659e728fad017b0fc4595910c688d36f8575b76d2b75ad9473a123449d786d9"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-command.json",
+      "bytes": 1216,
+      "sha256": "3c054e33f82c0631f629c526ac30f463a45a8d9e46c95dc000526df27ac59a4b"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-before.json",
+      "bytes": 522375,
+      "sha256": "00d9882553d85380df69993b662b4657a489cecb3180ce0fd2cbc8dd1d8f5ccb"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-after.json",
+      "bytes": 522375,
+      "sha256": "8feedea0d13a90954a79238837c1fe3c796c5468dd79386ce41d37ae1297f057"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5-vitest.json",
+      "bytes": 8917,
+      "sha256": "166a57145c3181b35bb8865e1564c5915aa6f07086610c399d6ca757e66a8cd9"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-5.log",
+      "bytes": 3533,
+      "sha256": "34f885597d43bb4b90d22d464f83c43129aa781e304c42d4005683fc942ec574"
+    },
+    {
+      "path": "user-routine-native-stage-1-result.json",
+      "bytes": 2267,
+      "sha256": "c9fc54365785e0dbf1fab3a9dd1ed29ed3f4c928c6dd1c5ec8b97167ba842d59"
+    },
+    {
+      "path": "user-routine-native-stage-1-command.json",
+      "bytes": 2726,
+      "sha256": "878c8618cac95811996d4a73b6fbd611e5d12cf29d4cb7c8ff17183bf8f74bdd"
+    },
+    {
+      "path": "user-routine-native-stage-1-before.json",
+      "bytes": 521990,
+      "sha256": "5c97ebe12d38b468791e6cab40a397edcabfb02e56faf7c601fa93784bad2973"
+    },
+    {
+      "path": "user-routine-native-stage-1-after.json",
+      "bytes": 521990,
+      "sha256": "e713bc19e3ee7da3dac979a6cfd23bb37213899321669374376692832839e16c"
+    },
+    {
+      "path": "user-routine-native-stage-1-independent-stop.json",
+      "bytes": 798,
+      "sha256": "578084685dcfee8297bd9c459acc2b0451ca38e7881fb8cc822a1ddcc565ee64"
+    },
+    {
+      "path": "user-routine-native-stage-1.log",
+      "bytes": 8217,
+      "sha256": "9d88cda9c9fe0d1da787057f94d4073ed10ffc9b5bba7285a70f298542ae79c9"
+    },
+    {
+      "path": "writeback-user-routine-candidate.cjs",
+      "bytes": 4582,
+      "sha256": "a436660377f40ddd7bd444943d61d40b9beb76b97dc68747a9de3b2d43f2358b"
+    },
+    {
+      "path": "inspect-user-routine-writeback-inputs.cjs",
+      "bytes": 1672,
+      "sha256": "051fa7a2b75318320161488323035b2b8398717c659be9136cb216f01a1b2b32"
+    },
+    {
+      "path": "prepare-user-routine-candidate.cjs",
+      "bytes": 5407,
+      "sha256": "05f2f6495c8588c4f2e799a6cdd80dc7249c03afeb1ac4e7b8d00a7c9ae2eec9"
+    },
+    {
+      "path": "run-user-routine-regression.cjs",
+      "bytes": 1106,
+      "sha256": "b8941a477994c801a82acd53e91dc98c667e7156f68ef7b23ab9a4401f93d94f"
+    },
+    {
+      "path": "run-user-routine-regression-generated.cjs",
+      "bytes": 3390,
+      "sha256": "0368023d3f41d9792f20ed2be0c2cd6c40b3386a1a5a290f38a66b08ec7380b5"
+    },
+    {
+      "path": "user-routine-alias-preflight-1.json",
+      "bytes": 368,
+      "sha256": "4030486bb14b023ea8134fb0f0a3bbe0146cfc2368ce31d7c1a85a55f1fc43d0"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-2-result.json",
+      "bytes": 1400,
+      "sha256": "865a0dd15d75a58a9252f5db9b6e6977cb54ae52dbdb6bcdc182f1374c933d81"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-3-result.json",
+      "bytes": 1401,
+      "sha256": "17589d50f8ec9875be8512def308c8f46f54df97c3c798a21ed3d9a1c99daf27"
+    },
+    {
+      "path": "user-routine-alias-candidate-stage-4-result.json",
+      "bytes": 1400,
+      "sha256": "260563ca0e2cc73ec598d93169015cc4fee22586926f39d1cafef149e5cf80d4"
+    },
+    {
+      "path": "candidate/workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "bytes": 26058,
+      "sha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+    },
+    {
+      "path": "candidate/workers-ts/src/services/user/UserProfileService.ts",
+      "bytes": 23321,
+      "sha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+    },
+    {
+      "path": "candidate/workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "bytes": 5798,
+      "sha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+    },
+    {
+      "path": "candidate/workers-ts/test/legacy-user-routine-code.test.ts",
+      "bytes": 18695,
+      "sha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+    },
+    {
+      "path": "candidate/workers-ts/docs/user-routine-code-migration-20261013.md",
+      "bytes": 16159,
+      "sha256": "772f8fc57177ec850e16cf71d9802b1ccc1da8b78a215e37744112c45e8b595b"
+    },
+    {
+      "path": "local-final-summary.json",
+      "bytes": 12695,
+      "sha256": "e4c771f16e6cd35afbdc8ccd455ea00d221041e59c9f07120000805992ca3da7"
+    },
+    {
+      "path": "user-routine-source-writeback.json",
+      "bytes": 2221,
+      "sha256": "0d3a071c5f7cda027ce0039a93c3db8495b56a52fb6b1d9a1e3f26b98f67730d"
+    },
+    {
+      "path": "export-user-routine-source-proof.cjs",
+      "bytes": 8396,
+      "sha256": "57a284f7852c4fe54df1f4346d18abde22dffc0a746ba59ca02e6e26bf6eb2fb"
+    }
+  ]
+}

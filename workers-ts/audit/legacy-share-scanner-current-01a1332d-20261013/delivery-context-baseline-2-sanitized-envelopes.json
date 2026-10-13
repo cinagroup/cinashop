@@ -1,0 +1,278 @@
+{
+  "format": "sanitized-owned-delivery-read-envelope-v1",
+  "fixture_actor_uid": 501,
+  "financialExecutionPerformed": false,
+  "sanitization": "fixture display text/code redacted; avatar/image cleared; no password/auth/token; computed keys and UID/scopes unchanged",
+  "reports": [
+    {
+      "selected": {
+        "kind": "platform",
+        "delivery_id": 501,
+        "store_id": 0
+      },
+      "context": {
+        "version": "delivery-workbench-v1",
+        "actor_uid": 501,
+        "scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "scope": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "consistency_key": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "data": {
+          "contexts": [
+            {
+              "kind": "platform",
+              "store_id": 0,
+              "delivery_id": 501,
+              "name": "fixture-display",
+              "nickname": "fixture-display",
+              "phone": "fixture-display",
+              "avatar": ""
+            },
+            {
+              "kind": "store",
+              "store_id": 77,
+              "delivery_id": 502,
+              "name": "fixture-display",
+              "nickname": "fixture-display",
+              "phone": "fixture-display",
+              "avatar": ""
+            },
+            {
+              "kind": "store",
+              "store_id": 78,
+              "delivery_id": 503,
+              "name": "fixture-display",
+              "nickname": "fixture-display",
+              "phone": "fixture-display",
+              "avatar": ""
+            }
+          ],
+          "conflicts": [],
+          "selected": {
+            "kind": "platform",
+            "delivery_id": 501,
+            "store_id": 0
+          }
+        },
+        "issues": []
+      },
+      "info": {
+        "version": "delivery-workbench-v1",
+        "actor_uid": 501,
+        "scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "scope": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "consistency_key": "642f61f4d9ae7c300885c62707aa33c9d64d5ad07a51544c4e37e4b3047df929",
+        "data": {
+          "list": [
+            {
+              "id": 1,
+              "order_id": "assigned-1",
+              "store_id": 77,
+              "revision": "65f563f5bd0c144a978432e76516fc6874b6fe66bedaf6f5fd60ff05b7e14622",
+              "verify_code": "000000000001",
+              "status": 1,
+              "total_num": 1,
+              "product_type": 0,
+              "writeoff_count": 0,
+              "actions": {
+                "writeoff": {
+                  "available": false,
+                  "reason": "商品没有当前可核销的剩余次数"
+                }
+              },
+              "cart_info": [
+                {
+                  "id": 1,
+                  "cart_id": "delivery-cart-1",
+                  "cart_num": 1,
+                  "product_id": 70,
+                  "product_type": 0,
+                  "is_gift": 0,
+                  "write_times": 0,
+                  "write_surplus_times": 0,
+                  "write_start": 0,
+                  "write_end": 0,
+                  "cart_info": {
+                    "productInfo": {
+                      "id": 70,
+                      "store_name": "fixture-display",
+                      "image": "",
+                      "attrInfo": {
+                        "suk": "红色",
+                        "image": "",
+                        "price": "12.34"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "lookup_kind": "order-code"
+        },
+        "issues": []
+      },
+      "records": {
+        "version": "delivery-workbench-v1",
+        "actor_uid": 501,
+        "scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "scope": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "consistency_key": "af195b54dd38d1c57fc311bd7e94850c83e7a55ec0b2db1717c04b943f1fb5d9",
+        "data": {
+          "list": [],
+          "count": 0,
+          "page": 1,
+          "limit": 15,
+          "has_more": false
+        },
+        "issues": []
+      }
+    },
+    {
+      "selected": {
+        "kind": "store",
+        "delivery_id": 502,
+        "store_id": 77
+      },
+      "context": {
+        "version": "delivery-workbench-v1",
+        "actor_uid": 501,
+        "scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "scope": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "consistency_key": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "data": {
+          "contexts": [
+            {
+              "kind": "platform",
+              "store_id": 0,
+              "delivery_id": 501,
+              "name": "fixture-display",
+              "nickname": "fixture-display",
+              "phone": "fixture-display",
+              "avatar": ""
+            },
+            {
+              "kind": "store",
+              "store_id": 77,
+              "delivery_id": 502,
+              "name": "fixture-display",
+              "nickname": "fixture-display",
+              "phone": "fixture-display",
+              "avatar": ""
+            },
+            {
+              "kind": "store",
+              "store_id": 78,
+              "delivery_id": 503,
+              "name": "fixture-display",
+              "nickname": "fixture-display",
+              "phone": "fixture-display",
+              "avatar": ""
+            }
+          ],
+          "conflicts": [],
+          "selected": {
+            "kind": "store",
+            "delivery_id": 502,
+            "store_id": 77
+          }
+        },
+        "issues": []
+      },
+      "info": {
+        "version": "delivery-workbench-v1",
+        "actor_uid": 501,
+        "scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "scope": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "consistency_key": "ae0f8e2df2260cf2daee438daa1b974277dc6602f8c7071c7553fb34d7cb892b",
+        "data": {
+          "list": [
+            {
+              "id": 1,
+              "order_id": "assigned-1",
+              "store_id": 77,
+              "revision": "65f563f5bd0c144a978432e76516fc6874b6fe66bedaf6f5fd60ff05b7e14622",
+              "verify_code": "000000000001",
+              "status": 1,
+              "total_num": 1,
+              "product_type": 0,
+              "writeoff_count": 0,
+              "actions": {
+                "writeoff": {
+                  "available": false,
+                  "reason": "商品没有当前可核销的剩余次数"
+                }
+              },
+              "cart_info": [
+                {
+                  "id": 1,
+                  "cart_id": "delivery-cart-1",
+                  "cart_num": 1,
+                  "product_id": 70,
+                  "product_type": 0,
+                  "is_gift": 0,
+                  "write_times": 0,
+                  "write_surplus_times": 0,
+                  "write_start": 0,
+                  "write_end": 0,
+                  "cart_info": {
+                    "productInfo": {
+                      "id": 70,
+                      "store_name": "fixture-display",
+                      "image": "",
+                      "attrInfo": {
+                        "suk": "红色",
+                        "image": "",
+                        "price": "12.34"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "lookup_kind": "order-code"
+        },
+        "issues": []
+      },
+      "records": {
+        "version": "delivery-workbench-v1",
+        "actor_uid": 501,
+        "scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "scope": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "consistency_key": "149a0a7bc5452d801432ba262f3856d3b30e761b3ccb30ad11ee491a0e108a0d",
+        "data": {
+          "list": [],
+          "count": 0,
+          "page": 1,
+          "limit": 15,
+          "has_more": false
+        },
+        "issues": []
+      }
+    }
+  ]
+}

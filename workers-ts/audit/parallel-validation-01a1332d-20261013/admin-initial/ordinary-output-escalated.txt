@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts
+
+ ❯ |regular-unit| test/admin-legacy-system-log.test.ts (12 tests | 1 failed) 3799ms
+     × rejects invalid, stale and expired direct identities and expiration during a read 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |regular-unit| test/admin-legacy-system-log.test.ts > legacy operation log read contract > rejects invalid, stale and expired direct identities and expiration during a read
+AssertionError: expected [Function] to throw error including '登录已过期' but got 'Unexpected PGlite raw query result'
+
+Expected: "登录已过期"
+Received: "Unexpected PGlite raw query result"
+
+ ❯ test/admin-legacy-system-log.test.ts:230:87
+    228|       } }));
+    229|     }));
+    230|     try { await expect(service.list(new URLSearchParams(), { ...actor(…
+       |                                                                                       ^
+    231|     finally { spy.mockRestore(); vi.mocked(Date.now).mockRestore?.(); }
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 14 passed (15)
+   Start at  11:05:15
+   Duration  23.59s (transform 12.06s, setup 0ms, import 17.11s, tests 5.88s, environment 0ms)
+

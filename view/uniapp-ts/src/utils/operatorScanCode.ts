@@ -1,4 +1,5 @@
 export type OperatorScanCode = { kind: "order" | "member"; code: string };
+import {shareUri} from './legacyShare';
 
 const SCAN_PATHS = new Set([
   "/pages/admin/order_cancellation/index", // inherited member-code QR target
@@ -17,7 +18,7 @@ export function operatorScanSiteOrigins(): string[] {
   const origin = window.location?.origin;
   if (typeof origin !== "string") return [];
   try {
-    const url = new URL(origin);
+    const url = shareUri(origin);
     return ["http:", "https:"].includes(url.protocol) && url.origin === origin ? [origin] : [];
   } catch { return []; }
 }
@@ -31,14 +32,13 @@ export function parseOperatorScanCode(value: unknown, allowedSiteOrigins: readon
   if (text.startsWith("//")) return null;
   const hasScheme = /^[a-z][a-z0-9+.-]*:/iu.test(text);
   if (hasScheme && !/^https?:\/\//iu.test(text)) return null;
-  let url: URL;
+  let url;
   try {
-    url = new URL(text, "https://operator-scan.invalid");
+    url = shareUri(text.startsWith('pages/')?'/'+text:text, "https://operator-scan.invalid");
   } catch {
     return null;
   }
-  if (hasScheme && (url.username || url.password
-    || !allowedSiteOrigins.some((allowed) => allowed === url.origin))) return null;
+  if (hasScheme && !allowedSiteOrigins.some((allowed) => allowed === url.origin)) return null;
   if (!SCAN_PATHS.has(url.pathname) || !["http:", "https:"].includes(url.protocol)) return null;
   const codes = url.searchParams.getAll("code");
   const scenes = url.searchParams.getAll("scene");
@@ -50,9 +50,12 @@ export function parseOperatorScanCode(value: unknown, allowedSiteOrigins: readon
 
 function parseDecodedScene(decoded: string): OperatorScanCode | null {
   if (!decoded || decoded.length > 256 || decoded.includes("%")) return null;
-  const query = new URLSearchParams(decoded);
-  if (query.getAll("code").length !== 1) return null;
-  return codeValue(query.get("code") ?? "");
+  // Already-decoded scene is query text: a literal # belongs to its value.
+  const codes = decoded.replace(/^\?/u, '').split('&').flatMap(pair => {
+    const at = pair.indexOf('='), key = (at < 0 ? pair : pair.slice(0, at)).replace(/\+/gu, ' ');
+    return key === 'code' ? [(at < 0 ? '' : pair.slice(at + 1)).replace(/\+/gu, ' ')] : [];
+  });
+  return codes.length === 1 ? codeValue(codes[0]) : null;
 }
 
 /** Mini Program scene contains only URL query pairs for its published page. */

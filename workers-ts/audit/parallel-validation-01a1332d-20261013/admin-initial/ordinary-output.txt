@@ -1,0 +1,22 @@
+
+ RUN  v4.1.11 C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts
+
+ ❯ |regular-unit| test/admin-legacy-system-log.test.ts (0 test)
+ ❯ |regular-unit| test/admin-legacy-log-permission.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |regular-unit| test/admin-legacy-log-permission.test.ts [ test/admin-legacy-log-permission.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\cina\AppData\Local\Packages\sandbox.{e7c3ccec-7b33-4ec2-9a19-834351abd3aa}\AC\Temp\pUM_2GFXlmMuxmp2OB4Q2\ssr\.tmp-1791860661845-i1n44r898jf' -> 'C:\Users\cina\AppData\Local\Packages\sandbox.{e7c3ccec-7b33-4ec2-9a19-834351abd3aa}\AC\Temp\pUM_2GFXlmMuxmp2OB4Q2\ssr\e6b004d02bf6ca797d1d295fdaf07681b6bc19d6'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |regular-unit| test/admin-legacy-system-log.test.ts [ test/admin-legacy-system-log.test.ts ]
+Error: EPERM: operation not permitted, rename 'C:\Users\cina\AppData\Local\Packages\sandbox.{e7c3ccec-7b33-4ec2-9a19-834351abd3aa}\AC\Temp\pUM_2GFXlmMuxmp2OB4Q2\ssr\.tmp-1791860661163-j5plrsics8a' -> 'C:\Users\cina\AppData\Local\Packages\sandbox.{e7c3ccec-7b33-4ec2-9a19-834351abd3aa}\AC\Temp\pUM_2GFXlmMuxmp2OB4Q2\ssr\c619c8a4f57daa74543c8fa6a0fc2c1968b9a508'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  11:04:20
+   Duration  1.38s (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

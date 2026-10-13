@@ -1,0 +1,5 @@
+{
+  "exitCode": 0,
+  "command": "vue-tsc -p tsconfig.app.json --noEmit",
+  "finishedAt": "2026-10-13T04:57:31.2238164Z"
+}

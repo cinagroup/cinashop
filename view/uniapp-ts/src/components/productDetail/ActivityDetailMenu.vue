@@ -1,12 +1,16 @@
-<template><view class="activity-menu"><template v-for="id in menu" :key="id"><!-- #ifdef MP-WEIXIN --><button v-if="id===1" class="menu-item" open-type="share">分享</button><view v-else class="menu-item" @tap="act(id)">{{names[id]}}</view><!-- #endif --><!-- #ifndef MP-WEIXIN --><view class="menu-item" @tap="act(id)">{{names[id]}}</view><!-- #endif --></template><view v-if="error" class="menu-error" role="alert">{{error}}</view></view></template>
+<template><view class="activity-menu"><template v-for="id in menu" :key="id"><!-- #ifdef MP-WEIXIN --><button v-if="id===1" class="menu-item" open-type="share">分享</button><view v-else class="menu-item" @tap="act(id)">{{names[id]}}</view><!-- #endif --><!-- #ifndef MP-WEIXIN --><view class="menu-item" @tap="act(id)">{{names[id]}}</view><!-- #endif --></template><button v-if="active&&menu.includes(1)&&shareDescriptor" class="menu-item" @tap="shareCodeOpen=true">二维码</button><view v-if="error" class="menu-error" role="alert">{{error}}</view><view v-if="shareCodeOpen&&active&&shareDescriptor" class="share-overlay" @tap="shareCodeOpen=false"><view class="share-dialog" @tap.stop><text>{{title}}</text><LegacyShareCode :type="shareDescriptor.type" :id="shareDescriptor.id" title="生成活动分享二维码"/><button @tap="shareCodeOpen=false">关闭</button></view></view></view></template>
 <script setup lang="ts">
-import { ref,watch,onUnmounted } from 'vue';
+import { ref,computed,watch,onUnmounted } from 'vue';
+import LegacyShareCode from '@/components/LegacyShareCode.vue';
+import { activityShareDescriptor } from '@/utils/legacyShare';
 import { useAuthStore } from '@/stores/auth';
 import { apiGoodsDetail } from '@/api/product';
 import { http } from '@/utils/request';
 import { integralSiteOrigin } from '../../../../common/integralPurchase';
 import { shareOrdinaryInApp } from '@/utils/ordinaryShare';
 const props=defineProps<{menu:number[];productId:number;path:string;title:string;image:string;active:boolean}>();
+const shareCodeOpen=ref(false),shareDescriptor=computed(()=>activityShareDescriptor(props.path));
+watch(()=>[props.active,props.path],()=>{shareCodeOpen.value=false;},{flush:'sync'});
 const names=['首页','分享','客服','收藏','购物车'],auth=useAuthStore(),error=ref('');let generation=0,disposed=false,busy=false;
 watch(()=>[props.active,props.productId,props.path,auth.sessionVersion,auth.token,auth.uid],()=>{generation++;busy=false;error.value='';},{flush:'sync'});
 async function act(id:number){if(disposed||!props.active||!props.menu.includes(id)||busy)return;const epoch=generation,actor={version:auth.sessionVersion,uid:auth.uid,token:auth.token};
@@ -31,4 +35,4 @@ async function act(id:number){if(disposed||!props.active||!props.menu.includes(i
 }
 onUnmounted(()=>{disposed=true;generation++;});
 </script>
-<style scoped>.activity-menu{display:flex;flex-wrap:wrap;align-items:center;gap:18rpx;margin-bottom:12rpx;width:100%;flex-basis:100%}.menu-item{flex:1;min-width:66rpx;text-align:center;font-size:23rpx;padding:10rpx}.menu-error{width:100%;font-size:24rpx;color:#a72823}</style>
+<style scoped>.activity-menu{display:flex;flex-wrap:wrap;align-items:center;gap:18rpx;margin-bottom:12rpx;width:100%;flex-basis:100%}.menu-item{flex:1;min-width:66rpx;text-align:center;font-size:23rpx;padding:10rpx}.menu-error{width:100%;font-size:24rpx;color:#a72823}.share-overlay{position:fixed;inset:0;z-index:1200;background:#0008;display:flex;align-items:center;justify-content:center;padding:30rpx}.share-dialog{background:#fff;width:620rpx;max-width:100%;max-height:85vh;overflow:auto;border-radius:24rpx;padding:24rpx;box-sizing:border-box}</style>

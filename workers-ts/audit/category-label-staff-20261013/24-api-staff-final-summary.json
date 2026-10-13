@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "scope": "Employee complete lifecycle with controller-only raw HEAD amendment",
+  "createdAt": "2026-10-13T09:11:09.991052Z",
+  "source": {
+    "currentFreeze": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\.cache\\division-staff-agent-final-freeze.json",
+    "frozenAt": "2026-10-13T09:06:40.3841114Z",
+    "manifestSha256": "cb8947a1ddb124a858c7bdb7ebb27c75f3422b3222dce15b4dbcbef25d86cd1d",
+    "ownedFiles": 17,
+    "sourceAndMirrorExactMatch": 17,
+    "originalFreeze": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-pre-head-freeze.json",
+    "originalFreezeSha256": "850d742f0015b6a4a741f9428f6ca9fbec91b5ce39e60ef109a97ff29c34d17f",
+    "changedOnly": "workers-ts/src/controllers/api/v1/DivisionStaffController.ts",
+    "currentControllerSha256": "48080e57dea5c9d6e03f3e9e93fd65c50b1bf541206588ba6daa2ea2aad50e1b",
+    "originalValidation": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-validation.json",
+    "originalAfterGuard": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-after-guard.json",
+    "rootPreAmendmentSnapshot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-root-pre-head-snapshot.json",
+    "rootPreAmendmentInputs": 4031,
+    "rootPreAmendmentDigest": "b90973003c0635375e8075e7fd76db30345befb4efb1ee4c0c04f1da60d2e7bb",
+    "integrationBoundary": "Root pre-amendment 4031/b909 snapshot is superseded by the raw HEAD controller change. Root refrozen global before/after and complete regressions own final integration evidence.",
+    "rootPreAmendmentSnapshotSha256": "8782f10f32b54ee80fcb557c3bd2874fd6030cfe678069c88566cde6550f8408"
+  },
+  "tests": {
+    "originalOrdinary": {
+      "passed": 145,
+      "nativeSkipped": 8,
+      "failed": 0,
+      "total": 153,
+      "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-tests.json",
+      "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-tests.log"
+    },
+    "originalNative": {
+      "passed": 82,
+      "files": [
+        "division-staff-http.test.ts:52",
+        "division-staff-invite.test.ts:22",
+        "division-staff-postgres.test.ts:8"
+      ],
+      "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-native.log",
+      "scope": "Original frozen controller, unchanged core services/inputs; current HTTP52 rerun after HEAD amendment; Root owns combined final rerun"
+    },
+    "headAmendment": {
+      "passed": 53,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "files": [
+        "division-staff-method-http.test.ts:1",
+        "division-staff-http.test.ts:52"
+      ],
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts",
+      "command": "node node_modules/vitest/vitest.mjs run test/division-staff-method-http.test.ts test/division-staff-http.test.ts --maxWorkers=1 --reporter=default --reporter=json --outputFile=.cache/division-staff-headfix-tests.json",
+      "receipt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-receipt.json",
+      "json": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-tests.json",
+      "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-headfix-tests.log"
+    },
+    "deduplication": "Original 145 ordinary +8 native-only =153 distinct; Root new HEAD test adds1 (154 possible employee cases). Repeated HTTP52/invite22 and the 53-case amendment are not new independent credits; full current integrated status comes from Root."
+  },
+  "uniapp": {
+    "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\view\\uniapp-ts",
+    "commands": [
+      {
+        "command": "node node_modules/vue-tsc/bin/vue-tsc.js --noEmit",
+        "exitCode": 0,
+        "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-vue-tsc.log"
+      },
+      {
+        "command": "node scripts/h5-ssr-guard.cjs build",
+        "exitCode": 0,
+        "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-build-h5.log"
+      },
+      {
+        "command": "node node_modules/@dcloudio/vite-plugin-uni/bin/uni.js build -p mp-weixin",
+        "exitCode": 0,
+        "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-build-mp.log"
+      },
+      {
+        "command": "node node_modules/@dcloudio/vite-plugin-uni/bin/uni.js build -p app",
+        "exitCode": 0,
+        "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-build-app.log"
+      }
+    ],
+    "lockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+    "vueBaseVersion": "3.4.21",
+    "h5VueVersion": "3.5.42",
+    "boundary": "Full isolated UniApp frontend build/type, MP/App sequential. All frontend files remain byte-identical after controller-only HEAD amendment; no frontend checks rerun or credited as global merged input checks."
+  },
+  "browser": {
+    "result": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-browser-result.json",
+    "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-browser.log",
+    "serverRaw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final2-browser-server.log",
+    "server": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-browser-server.mts",
+    "script": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-browser-check.cjs",
+    "command": "node C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-browser-check.cjs",
+    "exitCode": 0,
+    "viewports": [
+      "1280x900",
+      "390x844"
+    ],
+    "flows": [
+      "real employee list, exact historical SQL counts/commission, existing assets/order history",
+      "strict lower ratio rejected at40, actual immutable revision write11 and fresh current list",
+      "confirmed DELETE unlinks exact same-agent family, preserves foreign account and history, then real list refresh",
+      "real signed image endpoint with synthetic bounded raster transport usesQRid901 not UID22 and registered page",
+      "actual auth clear removes in-flight list and invitation without stale revival",
+      "modern a scene previews actual QR authority then explicit confirmed write and actual bound reread",
+      "original id/spid scene automatically binds exactly once after target preview, preserving QRid!=UID",
+      "real LoginUI hide/actual auth setLogin/navigateBack restores legacy id/spid auto-bind once with genuine signed JWT"
+    ],
+    "errors": [],
+    "screenshots": [
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-desktop.png",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-mobile.png",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-mobile-invite.png",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-mobile-bound.png",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\division-staff-mobile-login-restored.png"
+    ],
+    "boundary": "Real complete H5 build/pages/API/current SQL authority and genuine JWT; synthetic fixture credential exchange/theme; disposable memory SQL (no native lock proof); fixed synthetic PNG provider transport (no physical QR or live WeChat); no production or payment",
+    "browserAvailability": "Browser plugin unavailable; bundled existing Playwright/Chromium1217",
+    "ownedLoopbackServerStopped": true,
+    "testedSharedV1Sha256": "c4e39bc81a03419edde1ab3bff2754368bd0473de9640b28871e938a0761c11a"
+  },
+  "postgres": {
+    "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin test/division-staff-http.test.ts test/division-staff-invite.test.ts test/division-staff-postgres.test.ts",
+    "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts",
+    "exitCode": 0,
+    "server": "PostgreSQL16.15",
+    "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-native.log",
+    "ownedData": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\finance-postgres-MYjDo3\\data",
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "runnerMarker": "FINANCE_LOCAL_STOPPED",
+    "independentStatusCommand": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe status -D C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\finance-postgres-MYjDo3\\data",
+    "independentStatusExit": 3,
+    "independentStatusRaw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\.cache\\division-staff-agent-final-native-stopped.log",
+    "independentStatusText": "pg_ctl: no server running",
+    "actualExpiryAfterSqlWaitCaseMs": 2302
+  },
+  "review": {
+    "head": {
+      "test": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\test\\division-staff-method-http.test.ts",
+      "testSha256": "b9030ff690d595f0dc7c064994880855cd6e4c346c328e6d2bd458f67eb7ac3a",
+      "frameworkDispatch": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\api-staff-validation\\workers-ts\\node_modules\\hono\\dist\\hono-base.js:263",
+      "finding": "Raw HEAD dispatches through GET before router matching, so method-only HEAD registration alone was ineffective.",
+      "resolution": "Controller tests the original c.req.method before any body parsing/employee service write; actual createApp/JWT HEAD405/private headers/full snapshot0effect followed by actualGETsuccess passes.",
+      "status": "Resolved; current complete two-file rerun53/53"
+    },
+    "navigation": {
+      "test": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\test\\division-staff-navigation.test.ts",
+      "testSha256": "ec40734f7e4675ea14a23df228ab7b89f54bb92c8ae2ba844ca5ab7655265dab",
+      "cases": 4,
+      "existingPassed": 4,
+      "source": "\\\\tsclient\\I\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\config\\navigation.ts:360",
+      "pageRegistration": "\\\\tsclient\\I\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\pages.json:498",
+      "verified": [
+        "No invite: old spread route remains finance, preserving menu query",
+        "Old numeric/id-spid scenes return old id/spid autoBind intent; spid is expected preview UID, never authority",
+        "Modern a=QRid remains explicit; H5 agent_id retains separate UID meaning",
+        "Mixed/duplicate/malformed/unbounded invite parameters reject"
+      ]
+    },
+    "login": {
+      "source": "\\\\tsclient\\I\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\pages\\users\\agent\\bind.vue",
+      "unit": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\test\\division-staff-frontend.test.ts:139",
+      "browserFlow": 8,
+      "verified": [
+        "Login button explicitly retains unattempted legacy intent through hide/auth identity update/navigateBack",
+        "Current genuine preview checks real QR row and expected agent UID before exactly one automatic write",
+        "Ordinary owner/session replacement withdraws late reads/autoBinding; modern confirmation stays explicit",
+        "Ambiguous committed write rereads relationship without automatic resubmission"
+      ],
+      "finding": "No missing behavior found in this reviewed scope"
+    }
+  },
+  "limitations": [
+    "No production database, credentials or mutation",
+    "No live WeChat call, physical device or scanability claim; synthetic bounded PNG transport",
+    "Memory browser does not prove native locks; separate PG suite does",
+    "Root final integrated full-source checks supersede pre-HEAD baseline source digest"
+  ]
+}

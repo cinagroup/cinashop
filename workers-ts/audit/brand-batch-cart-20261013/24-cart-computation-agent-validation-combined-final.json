@@ -1,0 +1,137 @@
+{
+  "at": "2026-10-13T06:45:08.548Z",
+  "scope": "Final merged UniApp scanner/page/helper and cart sources after root final sync; no source edits",
+  "beforeInputFile": "cart-computation-combined-input-before.json",
+  "afterInputFile": "cart-computation-combined-input-after.json",
+  "input": {
+    "count": 531,
+    "beforeSha256": "5e2179e55394f52ea4c6dd4e420f278a0546335dc2508a7dd121712b4720d513",
+    "afterSha256": "5e2179e55394f52ea4c6dd4e420f278a0546335dc2508a7dd121712b4720d513",
+    "unchanged": true,
+    "sourceCopyInputHashesMatch": true,
+    "lockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+    "actualDependencies": {
+      "vue": {
+        "version": "3.4.21",
+        "packageJsonSha256": "5c464211ecee1a688f8c6bc88bf04fbd414ed54b242a158826c1b883fd336a64"
+      },
+      "typescript": {
+        "version": "5.9.3",
+        "packageJsonSha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+      },
+      "vue-tsc": {
+        "version": "2.2.12",
+        "packageJsonSha256": "1651176df561df8cac64bd333e1bf500923af5e089f13627b370f0ca6c7f6479"
+      },
+      "vite": {
+        "version": "5.4.21",
+        "packageJsonSha256": "18c96c04fef270fdf3dcf1645486fe8ab1e3cf0fb9a87ad9b4f93081e1bdc516"
+      },
+      "@dcloudio/vite-plugin-uni": {
+        "version": "3.0.0-4020920240930001",
+        "packageJsonSha256": "79e9aca182f20e9dab24f8a27d46122fa3a4228361737d9d11dcee3cf4ed0b2c"
+      },
+      "@dcloudio/uni-app": {
+        "version": "3.0.0-4020920240930001",
+        "packageJsonSha256": "7550ad9f1b0e7ae5e3897477ae9cd0cc1e99eaa1e69ceea09d4b138df7de055c"
+      },
+      "@dcloudio/uni-h5": {
+        "version": "3.0.0-4020920240930001",
+        "packageJsonSha256": "d53adcf8817c1079f0cb247cf22a2e36dd4dbe00c6d5a90c8fadff4457429d0c"
+      },
+      "@dcloudio/uni-mp-weixin": {
+        "version": "3.0.0-4020920240930001",
+        "packageJsonSha256": "42581c523ed94b97d6549c34a8bf5f899af18d4fc322e357594c41fe3e6d2aae"
+      },
+      "@dcloudio/uni-app-plus": {
+        "version": "3.0.0-4020920240930001",
+        "packageJsonSha256": "834605f26dbcad48f305347e7b67583018f11eb1a88124911cb9530887f320da"
+      }
+    }
+  },
+  "fullUniappVerification": {
+    "completeVueTscExit": 0,
+    "h5ProductionBuildExit": 0,
+    "mpWeixinProductionBuildExit": 0,
+    "appProductionBuildExit": 0,
+    "buildsRunSerially": true,
+    "logs": [
+      "workers-ts/.cache/cart-computation-agent-uniapp-types-combined-final.log",
+      "workers-ts/.cache/cart-computation-agent-build-h5-combined-final.log",
+      "workers-ts/.cache/cart-computation-agent-build-mp-combined-final.log",
+      "workers-ts/.cache/cart-computation-agent-build-app-combined-final.log"
+    ]
+  },
+  "browser": {
+    "ok": true,
+    "browserAvailability": "Browser plugin not available; bundled Playwright with previously installed Chromium1217",
+    "environment": {
+      "base": "http://127.0.0.1:5294",
+      "viewports": [
+        "1280x900",
+        "390x844"
+      ]
+    },
+    "boundary": "Synthetic initial login/profile/theme; genuine signed JWT and actual registered cart budget/manual coupon receive/order picker/quote against disposable PGlite; no native locking proof, production, provider, creation or payment",
+    "checks": [
+      "meaningful real cart, correct page identity, no framework overlay",
+      "one selected row computes exact 36.98 budget with no coupon grant",
+      "real quantity update recomputes selected row instead of keeping old amount",
+      "explicit CTA grants one real owned coupon then real eligible picker selects it and actual confirmation re-quotes 3.00; no order/payment",
+      "delivery scope change clears the one-time owned coupon suggestion and re-quotes",
+      "two rapid quantity writes discard late 106.95 quote and render only latest 126.94; navigation blocked while quote is pending",
+      "real same-UID auth store setLogin clears selection and discards the in-flight old budget"
+    ],
+    "errors": [],
+    "warnings": [
+      "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    ],
+    "counts": {
+      "cartBudgetRequests": 8,
+      "couponClaims": 1,
+      "ownedCoupons": 1,
+      "orders": 0,
+      "createCaptures": 0
+    },
+    "screenshots": [
+      "cart-budget-combined-final-desktop.png",
+      "cart-budget-combined-final-mobile.png",
+      "cart-budget-combined-final-mobile-confirm.png",
+      "cart-budget-combined-final-mobile-quantity.png",
+      "cart-budget-combined-final-mobile-auth-withdrawn.png"
+    ]
+  },
+  "screenshotVisualReview": "All five combined screenshots inspected: meaningful content, correct identity, no framework overlay or horizontal overflow",
+  "screenshotHashes": [
+    {
+      "file": "cart-budget-combined-final-desktop.png",
+      "sha256": "2fe0c74b0739a65e1899f88347bf5db6c3e8b61e7e8ff501fe1ccb8e4d07ef7e"
+    },
+    {
+      "file": "cart-budget-combined-final-mobile.png",
+      "sha256": "938ba2ff07c0e3aeb014550460876c9928402b8787acfae0daea1f4d33c34613"
+    },
+    {
+      "file": "cart-budget-combined-final-mobile-confirm.png",
+      "sha256": "a4d58a57a6c787a2ee3b7d2b85b73f8ec2268a94695bba27599e326fedd9fdd8"
+    },
+    {
+      "file": "cart-budget-combined-final-mobile-quantity.png",
+      "sha256": "f886642cad59848ed71076e60a7dc15a759765cfad7aaf9b966a4834d8db1f63"
+    },
+    {
+      "file": "cart-budget-combined-final-mobile-auth-withdrawn.png",
+      "sha256": "e3372662014324631fa2f8eb8daa7a3fc647441aefe4b2e3ad4ec858a00903bb"
+    }
+  ],
+  "browserRaw": "cart-computation-browser-check-combined-final.log",
+  "browserFixtureRaw": "workers-ts/.cache/cart-computation-agent-browser-server-combined-final.log",
+  "fixtureShutdown": true,
+  "fixtureProcessExit": 0,
+  "testAccounting": "This pass reran full UniApp type/build/browser only. Previous money-final121, runtime48 and native146 keep their own scope and are not counted again.",
+  "limitations": [
+    "Initial login/profile/theme are synthetic; registered JWT/cart budget/manual receive/order picker/quote use disposable SQL",
+    "Browser is not native PostgreSQL concurrency/locking proof",
+    "No production/provider connections, order creation or payment; final checkout re-quotes budget"
+  ]
+}

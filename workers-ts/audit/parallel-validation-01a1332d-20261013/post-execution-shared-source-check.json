@@ -1,0 +1,125 @@
+{
+  "verifiedAt": "2026-10-13T03:41:33.355Z",
+  "files": [
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacySystemLogService.ts",
+      "coordinatedSha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "sourceSha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "copySha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminLegacySystemLogController.ts",
+      "coordinatedSha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "sourceSha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "copySha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "coordinatedSha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "sourceSha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "copySha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/services/system/PublicGeocodingService.ts",
+      "coordinatedSha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "sourceSha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "copySha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicGeocodingController.ts",
+      "coordinatedSha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "sourceSha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "copySha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCatalogService.ts",
+      "coordinatedSha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "sourceSha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "copySha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductCatalogController.ts",
+      "coordinatedSha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "sourceSha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "copySha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "coordinatedSha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "sourceSha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "copySha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "coordinatedSha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "sourceSha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "copySha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "coordinatedSha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "sourceSha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "copySha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log.test.ts",
+      "coordinatedSha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "sourceSha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "copySha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log-native.test.ts",
+      "coordinatedSha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "sourceSha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "copySha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-log-permission.test.ts",
+      "coordinatedSha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "sourceSha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "copySha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/test/public-geocoding.test.ts",
+      "coordinatedSha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "sourceSha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "copySha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-catalog.test.ts",
+      "coordinatedSha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "sourceSha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "copySha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "coordinatedSha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "sourceSha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "copySha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "matchesFreeze": true
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "coordinatedSha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "sourceSha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "copySha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "matchesFreeze": true
+    }
+  ],
+  "driftCount": 0
+}

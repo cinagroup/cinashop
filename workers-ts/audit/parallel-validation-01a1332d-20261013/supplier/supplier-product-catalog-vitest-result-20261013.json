@@ -1,0 +1,7 @@
+{
+  "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts test/supplier-product-catalog.test.ts --maxWorkers=1",
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "testBackend": "PGlite",
+  "nativeTestVariableCleared": true,
+  "exitCode": 1
+}

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts
+
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  11:09:51
+   Duration  57.05s (transform 38.31s, setup 0ms, import 46.76s, tests 8.15s, environment 0ms)
+

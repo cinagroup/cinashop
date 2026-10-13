@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "checks": [
+    "real employee list, exact historical SQL counts/commission, existing assets/order history",
+    "strict lower ratio rejected at40, actual immutable revision write11 and fresh current list",
+    "confirmed DELETE unlinks exact same-agent family, preserves foreign account and history, then real list refresh",
+    "real signed image endpoint with synthetic bounded raster transport usesQRid901 not UID22 and registered page",
+    "actual auth clear removes in-flight list and invitation without stale revival",
+    "modern a scene previews actual QR authority then explicit confirmed write and actual bound reread",
+    "original id/spid scene automatically binds exactly once after target preview, preserving QRid!=UID",
+    "real LoginUI hide/actual auth setLogin/navigateBack restores legacy id/spid auto-bind once with genuine signed JWT"
+  ],
+  "errors": [],
+  "browserAvailability": "Browser plugin unavailable; bundled existing Playwright/Chromium1217",
+  "boundary": "Real complete H5 build/pages/API/current SQL authority and genuine JWT; synthetic fixture credential exchange/theme; disposable memory SQL (no native lock proof); fixed synthetic PNG provider transport (no physical QR or live WeChat); no production or payment",
+  "screenshots": [
+    "division-staff-desktop.png",
+    "division-staff-mobile.png",
+    "division-staff-mobile-invite.png",
+    "division-staff-mobile-bound.png",
+    "division-staff-mobile-login-restored.png"
+  ]
+}

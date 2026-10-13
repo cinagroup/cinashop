@@ -1,0 +1,145 @@
+{
+  "scope": "Frozen local implementation candidate proof. Shared workspace still contains only approved Env type fixes; this is not final merged-source validation.",
+  "recordedAt": "2026-10-13T04:57:17.353Z",
+  "localRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "ordinary": {
+    "files": 10,
+    "passed": 93,
+    "exit": 0,
+    "record": "backend-targeted-local-candidate-output-6.txt",
+    "inputCount": 29,
+    "inputDrift": 0
+  },
+  "native": {
+    "files": 5,
+    "passed": 48,
+    "exit": 0,
+    "record": "private-share-pg-candidate-1.log",
+    "command": [
+      "node",
+      "scripts/run-local-finance-postgres.mjs",
+      "--schema-maintenance",
+      "--verbose-tests",
+      "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+      "test/legacy-share-private-scan.test.ts",
+      "test/legacy-share-private-scan-native.test.ts",
+      "test/legacy-share-code-native.test.ts",
+      "test/wechat-follow-poster-native.test.ts",
+      "test/product-share-code-postgres.test.ts"
+    ],
+    "localCacheRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-native-20261013",
+    "cases": {
+      "privateBusiness": 35,
+      "privateRuntimeRole": 3,
+      "cacheLease": 3,
+      "followRuntimeRole": 2,
+      "existingProductShare": 5
+    },
+    "version": "PostgreSQL16.15",
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "independentStopExit": 3,
+    "independentStopRecord": "private-share-pg-candidate-independent-stop-retry.json",
+    "inputCount": 29,
+    "inputDrift": 0
+  },
+  "lockSha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+  "versions": {
+    "node": "v24.14.1",
+    "vitest": "4.1.11",
+    "typescript": "5.9.3",
+    "postgres": "3.4.9"
+  },
+  "differsFromSharedAtRun": [
+    "src/services/other/LegacyPrivateScanTarget.ts",
+    "src/services/other/LegacyShareCodeService.ts",
+    "src/services/wechat/OfficialAccountQrcodeService.ts",
+    "src/services/wechat/WechatMiniProgramCodeService.ts",
+    "test/legacy-share-private-scan.test.ts",
+    "test/legacy-share-private-scan-native.test.ts"
+  ],
+  "candidateOrdinaryPassed": true,
+  "candidateNativePassed": true,
+  "currentWorkspaceValidated": false,
+  "workerTypesOnFinalFunctionalSource": null,
+  "workerRuntimeOnFinalFunctionalSource": null,
+  "requiredValidationPassed": false,
+  "pending": [
+    "Adopt the reviewed functional candidate after the shared freeze is released.",
+    "Rerun final merged input scope and Worker types/runtime; do not borrow this candidate proof for different hashes."
+  ],
+  "boundaries": [
+    "Provider responses are controlled synthetic fixtures; real WeChat credentials/publishing were not used.",
+    "Native follow proves real PostgreSQL ACL/snapshot/concurrency; image/storage bindings are synthetic and do not prove real Cloudflare raster rendering.",
+    "29 native inputs are an explicitly listed key dependency manifest, not a complete transitive repository manifest."
+  ],
+  "evidence": [
+    {
+      "name": "private-env-type-only-freeze.json",
+      "sha256": "f41428580a7c48399e51df8c88e3e089c1b0984210aebbfb9d7546f5e2fe7797"
+    },
+    {
+      "name": "private-scan-flow-candidate-1.log",
+      "sha256": "e23de2a5315d1c49b98054309c80372767202db97b8dd8d718ab679ee7e664af"
+    },
+    {
+      "name": "private-scan-flow-candidate-1.result.json",
+      "sha256": "80ed16b3d7fc094556e647e68facd270b6dc562d1e5f436c52b99e28a5b83f5c"
+    },
+    {
+      "name": "private-scan-flow-candidate-2.log",
+      "sha256": "32a2b11f2f345649041e9ef18b2074d8510ceb4baa731ba2a7ea485ab323f40b"
+    },
+    {
+      "name": "private-scan-flow-candidate-2.result.json",
+      "sha256": "1e092dd0d9b4ef17247860cb3f2bd4c9ad17cf23c5899413a2b8a9ec85dbff71"
+    },
+    {
+      "name": "private-scan-flow-candidate-inputs.json",
+      "sha256": "a71dd1d8463480a893407c710b9e8f775cf43a7b9998426dd19240e94543f80f"
+    },
+    {
+      "name": "private-share-pg-candidate-1.log",
+      "sha256": "d3b0bd46193374cea65103f4231ddd405284d44bc95b7e06922ccbec0ee04aca"
+    },
+    {
+      "name": "private-share-pg-candidate-1.result.json",
+      "sha256": "42c6e78d027db187be068701702acf32bbf687077333819d8bf1f90841865c26"
+    },
+    {
+      "name": "private-share-pg-candidate-inputs-before.json",
+      "sha256": "91221d2c38f6fa713b54243cd22d2aedd70391c454b176f77c2e11598c6bfb86"
+    },
+    {
+      "name": "private-share-pg-candidate-inputs-after.json",
+      "sha256": "7fd6caecf933d2aa8e74f66f6572ed4461fe7c288c5dadfe53b4c89abb945cbd"
+    },
+    {
+      "name": "private-share-pg-candidate-independent-stop.json",
+      "sha256": "8e29b3e013409a2c08bfc90027fa9b2173f1f0cc1bec5180cf0560c2f775e870"
+    },
+    {
+      "name": "private-share-pg-candidate-independent-stop-retry.json",
+      "sha256": "bb0cc661688c69d3957455ba1172c09ee07b747c852bb4a573d1296c94b2e734"
+    },
+    {
+      "name": "backend-targeted-local-candidate-output-6.txt",
+      "sha256": "3c417d2811ca68120b5e8a23666b7680512fb1c433adf7a0d8af406893bc1b0a"
+    },
+    {
+      "name": "backend-targeted-local-candidate-exit-6.txt",
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "name": "backend-targeted-local-candidate-inputs-6.json",
+      "sha256": "08aaf08d6ba59db9e77f6f06b1e82615d4b8d51b096194d3ff5ef51b4a79aa75"
+    },
+    {
+      "name": "backend-targeted-local-candidate-inputs-6-after.json",
+      "sha256": "2f685b5178eb90c4eeba455660db8fd54bad31eb7d17814d4192e6031e57336e"
+    },
+    {
+      "name": "backend-review-ready-candidate.json",
+      "sha256": "d30b96da1457d31a8b7296c13a344bbe1e87c2cbc1018755cefb3c598918386f"
+    }
+  ]
+}

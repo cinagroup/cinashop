@@ -10,6 +10,7 @@
  * 所有接口需要 admin token (adminAuthMiddleware)
  */
 import type { Context } from "hono";
+import * as AdminProductCategories from './AdminProductCategoryController';
 import { jsonOk, jsonFail } from "@/utils/json";
 import type { AppVariables, Env } from "@/env";
 import { AdminPermissionService } from "@/services/admin/AdminPermissionService";
@@ -1008,48 +1009,17 @@ export async function adminConfigGet(c: C) {
 
 /** GET /api/admin/category/list — 分类列表 (树形) */
 export async function adminCategoryList(c: C) {
-  const container = c.get("container");
-  const list = await container.storeProductCategoryDao.getTierList({});
-  return jsonOk(c, list);
+  return AdminProductCategories.modernList(c);
 }
 
 /** POST /api/admin/category/save — 新增/编辑分类 */
 export async function adminCategorySave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    pid?: number;
-    cate_name?: string;
-    pic?: string;
-    sort?: number;
-    is_show?: number;
-  };
-  const container = c.get("container");
-  if (body.id) {
-    await container.storeProductCategoryDao.update(body.id, {
-      pid: body.pid ?? 0,
-      cateName: body.cate_name ?? "",
-      pic: body.pic ?? "",
-      sort: body.sort ?? 0,
-      isShow: body.is_show ?? 1,
-    });
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  const row = await container.storeProductCategoryDao.save({
-    pid: body.pid ?? 0,
-    cateName: body.cate_name ?? "",
-    pic: body.pic ?? "",
-    sort: body.sort ?? 0,
-    isShow: body.is_show ?? 1,
-  });
-  return jsonOk(c, { id: row.id }, "创建成功");
+  return AdminProductCategories.modernSave(c);
 }
 
 /** DELETE /api/admin/category/del/:id — 删除分类 */
 export async function adminCategoryDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  await container.storeProductCategoryDao.delete(id);
-  return jsonOk(c, null, "删除成功");
+  return AdminProductCategories.modernDelete(c);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1384,58 +1354,20 @@ export async function adminSeckillTimes(c: C) {
 
 /** GET /api/admin/brand/list — 品牌列表 */
 export async function adminBrandList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { storeBrand } = await import("@/models/schema");
-  const rows = await container.db
-    .select()
-    .from(storeBrand)
-    .where(sql`${storeBrand.isDel} = 0`)
-    .orderBy(sql`${storeBrand.sort} DESC, ${storeBrand.id} DESC`)
-    .limit(100);
-  return jsonOk(c, rows);
+  const brands = await import('./AdminProductBrandController');
+  return brands.modernList(c);
 }
 
 /** POST /api/admin/brand/save — 新增/编辑品牌 */
 export async function adminBrandSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    brand_name?: string;
-    sort?: number;
-    is_show?: number;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { storeBrand } = await import("@/models/schema");
-  if (body.id) {
-    await container.db
-      .update(storeBrand)
-      .set({ brandName: body.brand_name ?? "", sort: body.sort ?? 0, isShow: body.is_show ?? 1 })
-      .where(eq(storeBrand.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  const now = Math.floor(Date.now() / 1000);
-  const row = await container.db
-    .insert(storeBrand)
-    .values({
-      brandName: body.brand_name ?? "新品牌",
-      pid: 0,
-      fid: "",
-      storeId: 0,
-      sort: body.sort ?? 0,
-      isShow: body.is_show ?? 1,
-      addTime: now,
-      isDel: 0,
-    })
-    .returning({ id: storeBrand.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
+  const brands = await import('./AdminProductBrandController');
+  return brands.modernSave(c);
 }
 
 /** DELETE /api/admin/brand/del/:id — 删除品牌 */
 export async function adminBrandDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  await productAssociations(c).deleteBrand(id);
-  return jsonOk(c, null, "删除成功");
+  const brands = await import('./AdminProductBrandController');
+  return brands.modernDelete(c);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2125,46 +2057,20 @@ export async function adminActivityDel(c: C) {
 
 /** GET /api/admin/product_label/list — 商品标签列表 */
 export async function adminProductLabelList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { storeProductLabel } = await import("@/models/schema");
-  const rows = await container.db
-    .select()
-    .from(storeProductLabel)
-    .orderBy(sql`${storeProductLabel.sort} DESC, ${storeProductLabel.id} DESC`);
-  return jsonOk(c, rows);
+  const labels = await import('./AdminProductLabelController');
+  return labels.modernList(c);
 }
 
 /** POST /api/admin/product_label/save — 商品标签增改 */
 export async function adminProductLabelSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number; labelName?: string; color?: string; bgColor?: string; sort?: number; status?: number;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { storeProductLabel } = await import("@/models/schema");
-  const now = Math.floor(Date.now() / 1000);
-  if (body.id) {
-    await container.db.update(storeProductLabel).set({
-      labelName: body.labelName ?? "", color: body.color ?? "", bgColor: body.bgColor ?? "",
-      sort: body.sort ?? 0, status: body.status ?? 1,
-    }).where(eq(storeProductLabel.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  if (!body.labelName) return jsonFail(c, "请输入标签名");
-  const row = await container.db.insert(storeProductLabel).values({
-    labelName: body.labelName, color: body.color ?? "", bgColor: body.bgColor ?? "",
-    sort: body.sort ?? 0, status: body.status ?? 1, type: 0, relationId: 0, labelCate: 0,
-    styleType: 1, borderColor: "", icon: "", isShow: 1, addTime: now,
-  }).returning({ id: storeProductLabel.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
+  const labels = await import('./AdminProductLabelController');
+  return labels.modernSave(c);
 }
 
 /** DELETE /api/admin/product_label/del/:id */
 export async function adminProductLabelDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  await productAssociations(c).deleteProductLabel(id);
-  return jsonOk(c, null, "删除成功");
+  const labels = await import('./AdminProductLabelController');
+  return labels.modernDelete(c);
 }
 
 /** GET /api/admin/user_label/list — 用户标签列表 */

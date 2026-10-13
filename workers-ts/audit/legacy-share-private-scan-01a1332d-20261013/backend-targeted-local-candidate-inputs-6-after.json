@@ -1,0 +1,176 @@
+[
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\other\\LegacyShareCodeProtocol.ts",
+    "before": "9431fb2e51a53440c0c9f36e6d3083845e7f8939f1e5a7a15a617001495e2987",
+    "after": "9431fb2e51a53440c0c9f36e6d3083845e7f8939f1e5a7a15a617001495e2987",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\other\\LegacyShareCodeService.ts",
+    "before": "d28e07860024f1b3e0a613defcd73250080f13af69e07f0a5a8fe2511ac49992",
+    "after": "d28e07860024f1b3e0a613defcd73250080f13af69e07f0a5a8fe2511ac49992",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\other\\LegacyPrivateScanTarget.ts",
+    "before": "ae701c2107d558d4868bc80dd4f3b638a49c4e7cba2dda91b8cd024580d6c544",
+    "after": "ae701c2107d558d4868bc80dd4f3b638a49c4e7cba2dda91b8cd024580d6c544",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\other\\LegacyShareBudget.ts",
+    "before": "c77c6836e57075ed88139445e85df981174652935b587646cb87a899132b86bd",
+    "after": "c77c6836e57075ed88139445e85df981174652935b587646cb87a899132b86bd",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\other\\LegacyShareProviderRead.ts",
+    "before": "18442850071a97abc2532103c247ee4880896eac899c2c8c538fee37d22129fb",
+    "after": "18442850071a97abc2532103c247ee4880896eac899c2c8c538fee37d22129fb",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\controllers\\api\\v1\\LegacyShareCodeController.ts",
+    "before": "ab71aafc3aa233a65df586129527b3a45ee930c8105fe8283888244d75952db1",
+    "after": "ab71aafc3aa233a65df586129527b3a45ee930c8105fe8283888244d75952db1",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\wechat\\OfficialAccountQrcodeService.ts",
+    "before": "d960526a90a709228a2ef1ba11fc4e60b098e314f4a3272e1b5345e7bd96aa7d",
+    "after": "d960526a90a709228a2ef1ba11fc4e60b098e314f4a3272e1b5345e7bd96aa7d",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\wechat\\WechatMiniProgramCodeService.ts",
+    "before": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+    "after": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\wechat\\ProductShareProviderPolicy.ts",
+    "before": "fd645a5b1723c020e4554001879065b94b55395a012f00c34edc96bc46a0c4c6",
+    "after": "fd645a5b1723c020e4554001879065b94b55395a012f00c34edc96bc46a0c4c6",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\wechat\\WechatCallbackService.ts",
+    "before": "8d6f615e775abf7f16dc7f04357d9415aecba35339b437653833365f4637a3b1",
+    "after": "8d6f615e775abf7f16dc7f04357d9415aecba35339b437653833365f4637a3b1",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\services\\MigrationService.ts",
+    "before": "d3e79c9e3db9bedb0e085cd2607c734dcb96a13cc7e98d1ca60b762dae148bb1",
+    "after": "d3e79c9e3db9bedb0e085cd2607c734dcb96a13cc7e98d1ca60b762dae148bb1",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\src\\middleware\\auth.ts",
+    "before": "c02ddab193b88d8942a3aac6dde15c1e6328f217b1e5961b6a1b94a1bc197be1",
+    "after": "c02ddab193b88d8942a3aac6dde15c1e6328f217b1e5961b6a1b94a1bc197be1",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\migrations\\0072_wechat_qrcode.sql",
+    "before": "5971b0ac45b17ddb163b7779b751291d2b21f2d029fbfe96587e136fb5d8cf17",
+    "after": "5971b0ac45b17ddb163b7779b751291d2b21f2d029fbfe96587e136fb5d8cf17",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-code.test.ts",
+    "before": "3e94b964bf1ed54a43c88618de2b75894f320f3b9cb6a9b596c0bd881d4a9b24",
+    "after": "3e94b964bf1ed54a43c88618de2b75894f320f3b9cb6a9b596c0bd881d4a9b24",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-provider-budget.test.ts",
+    "before": "51dc70f1dfc14a9aba1da2d0999c58bfb0cc5ca4b01f23226be7ba71834531d9",
+    "after": "51dc70f1dfc14a9aba1da2d0999c58bfb0cc5ca4b01f23226be7ba71834531d9",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-callback.test.ts",
+    "before": "d553367f3bf31c0c7ea87b11f57e2dcb1918e6bab382f92685dbd17441a75826",
+    "after": "d553367f3bf31c0c7ea87b11f57e2dcb1918e6bab382f92685dbd17441a75826",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-private-mini.test.ts",
+    "before": "6a13a6e058a3b0c72caee41b4ac50095a2f1de5b836ba73acc963d4f7f0b24cb",
+    "after": "6a13a6e058a3b0c72caee41b4ac50095a2f1de5b836ba73acc963d4f7f0b24cb",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-http.test.ts",
+    "before": "22edec71d3ed0b0f4d74ed1aea579057d433e5b0d205a94c46d9f394458fc719",
+    "after": "22edec71d3ed0b0f4d74ed1aea579057d433e5b0d205a94c46d9f394458fc719",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-private-scan.test.ts",
+    "before": "7b5d874d284dabb6112ca5ffb2a1974efc948e07464c58fd6e9ec09bb87d1539",
+    "after": "7b5d874d284dabb6112ca5ffb2a1974efc948e07464c58fd6e9ec09bb87d1539",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\legacy-share-private-scan-flow.test.ts",
+    "before": "841cc12b87a101c22b2e578af0aa632e738b4a3e57562aa43fe38159bc535ecc",
+    "after": "841cc12b87a101c22b2e578af0aa632e738b4a3e57562aa43fe38159bc535ecc",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\helpers\\legacyPrivateScanFixture.ts",
+    "before": "d5703791ff94d4129ccc4c523acbf5100f4a5ebb1cca27597521efb0b81c0651",
+    "after": "d5703791ff94d4129ccc4c523acbf5100f4a5ebb1cca27597521efb0b81c0651",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\helpers\\financePostgres.ts",
+    "before": "77039d57fb741858ae1c70c7ec8eba81a93013973c20ee81f583cd4b9016b88f",
+    "after": "77039d57fb741858ae1c70c7ec8eba81a93013973c20ee81f583cd4b9016b88f",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\product-share-code.test.ts",
+    "before": "b74a89b2e4a9f419ec9441d33a4836e640eefbcd7a40dfe7f553f4d675e8dbf2",
+    "after": "b74a89b2e4a9f419ec9441d33a4836e640eefbcd7a40dfe7f553f4d675e8dbf2",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\wechat-callback-pipeline.test.ts",
+    "before": "cafc66ead3074e25499c7aa5a92c126d4e19ee6af01d3de2ae1d0fff51be4090",
+    "after": "cafc66ead3074e25499c7aa5a92c126d4e19ee6af01d3de2ae1d0fff51be4090",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\test\\wechat-qrcode-migration.test.ts",
+    "before": "eeca57363cebc2f094ec4f2a21851b2f63196e1ed6043331c28da746ae0709a5",
+    "after": "eeca57363cebc2f094ec4f2a21851b2f63196e1ed6043331c28da746ae0709a5",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\vitest.config.ts",
+    "before": "46f000c4caab4c542ec9a33a1abad3cb833d33d659be3106dd7cfe3c19ea9b16",
+    "after": "46f000c4caab4c542ec9a33a1abad3cb833d33d659be3106dd7cfe3c19ea9b16",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\tsconfig.json",
+    "before": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+    "after": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\package.json",
+    "before": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+    "after": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts\\package-lock.json",
+    "before": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+    "after": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+    "unchanged": true
+  }
+]

@@ -1,0 +1,111 @@
+{
+  "checkedAt": "2026-10-13T04:49:27.913Z",
+  "root": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\view\\uniapp-ts",
+  "localLockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+  "sourceLockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+  "declaredKeys": [
+    {
+      "name": "vue",
+      "locked": "3.4.21",
+      "installed": "3.4.21",
+      "matches": true
+    },
+    {
+      "name": "@vue/compiler-sfc",
+      "locked": "3.4.21",
+      "installed": "3.4.21",
+      "matches": true
+    },
+    {
+      "name": "vue-tsc",
+      "locked": "2.2.12",
+      "installed": "2.2.12",
+      "matches": true
+    },
+    {
+      "name": "typescript",
+      "locked": "5.9.3",
+      "installed": "5.9.3",
+      "matches": true
+    },
+    {
+      "name": "vite",
+      "locked": "5.4.21",
+      "installed": "5.4.21",
+      "matches": true
+    },
+    {
+      "name": "terser",
+      "locked": "5.49.2",
+      "installed": "5.49.2",
+      "matches": true
+    },
+    {
+      "name": "@dcloudio/uni-app",
+      "locked": "3.0.0-4020920240930001",
+      "installed": "3.0.0-4020920240930001",
+      "matches": true
+    },
+    {
+      "name": "@dcloudio/uni-h5",
+      "locked": "3.0.0-4020920240930001",
+      "installed": "3.0.0-4020920240930001",
+      "matches": true
+    },
+    {
+      "name": "@dcloudio/uni-mp-weixin",
+      "locked": "3.0.0-4020920240930001",
+      "installed": "3.0.0-4020920240930001",
+      "matches": true
+    },
+    {
+      "name": "@dcloudio/uni-app-plus",
+      "locked": "3.0.0-4020920240930001",
+      "installed": "3.0.0-4020920240930001",
+      "matches": true
+    },
+    {
+      "name": "@dcloudio/vite-plugin-uni",
+      "locked": "3.0.0-4020920240930001",
+      "installed": "3.0.0-4020920240930001",
+      "matches": true
+    },
+    {
+      "name": "@dcloudio/uni-cli-shared",
+      "locked": "3.0.0-4020920240930001",
+      "installed": "3.0.0-4020920240930001",
+      "matches": true
+    },
+    {
+      "name": "vue-router (uni-h5 nested)",
+      "locked": "4.6.4",
+      "installed": "4.6.4",
+      "matches": true
+    }
+  ],
+  "installedLockPackagesChecked": 786,
+  "allInstalledVersionMismatches": [],
+  "vendoredByteProof": [
+    {
+      "name": "vite",
+      "tarfile": "vendor/vite-5.4.21-safety-backport.tgz",
+      "lockIntegrityMatches": true,
+      "packageFilesChecked": 31,
+      "installedFileMismatches": []
+    },
+    {
+      "name": "@vue/shared",
+      "tarfile": "vendor/vue-shared-3.4.21-safety-backport.tgz",
+      "lockIntegrityMatches": true,
+      "packageFilesChecked": 8,
+      "installedFileMismatches": []
+    },
+    {
+      "name": "@vue/server-renderer",
+      "tarfile": "vendor/vue-server-renderer-3.4.21-safety-backport.tgz",
+      "lockIntegrityMatches": true,
+      "packageFilesChecked": 10,
+      "installedFileMismatches": []
+    }
+  ]
+}

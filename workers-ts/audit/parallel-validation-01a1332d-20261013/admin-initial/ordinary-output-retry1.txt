@@ -1,0 +1,100 @@
+failed to load config from C:\Users\cina\.codex\visualizations\2026\10\13\01a1332d-ffe1-7932-a2c8-d314f67cd722\cinashop-migration-20261013-HUPOBq\workers-ts\vitest.config.ts
+failed to load config from C:\Users\cina\.codex\visualizations\2026\10\13\01a1332d-ffe1-7932-a2c8-d314f67cd722\cinashop-migration-20261013-HUPOBq\workers-ts\vitest.config.ts
+failed to load config from C:\Users\cina\.codex\visualizations\2026\10\13\01a1332d-ffe1-7932-a2c8-d314f67cd722\cinashop-migration-20261013-HUPOBq\workers-ts\vitest.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+AggregateError: Failed to initialize projects. There were errors during projects setup. See below for more details.
+    at resolveProjects (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:11232:27)
+    at Vitest._setServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:13217:20)
+    at BasicMinimalPluginContext.handler (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14258:5)
+    at _createServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:26562:84)
+    at createViteServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:8902:17)
+    at createVitest (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14288:18)
+    at prepareVitest (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14655:14)
+    at startVitest (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14598:14)
+    at start (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cac.uFydS1Z4.js:2340:15)
+    at CAC.run (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cac.uFydS1Z4.js:2318:2) {
+  [errors]: [
+    Error: Build failed with 1 error:
+    
+    [plugin externalize-deps]
+    Error: EPERM: operation not permitted, realpath 'C:\Users\cina\.codex\visualizations\2026\10\13\01a1332d-ffe1-7932-a2c8-d314f67cd722\cinashop-migration-20261013-HUPOBq\workers-ts\node_modules\vite\dist\node\module-runner.js'
+        at node:fs:2837:18
+        at getRealPath (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33169:36)
+        at tryResolveRealFileOrType (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33163:9)
+        at tryCleanFsResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32912:21)
+        at tryFsResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32905:14)
+        at resolveDeepImport (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33125:20)
+        at tryNodeResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32977:70)
+        at nodeResolveWithVite (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33186:9)
+        at PluginContextImpl.handler (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36965:19)
+        at plugin (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/bindingify-input-options-CMab5gbt.mjs:1457:30)
+        at aggregateBindingErrorsIntoJsError (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:48:18)
+        at unwrapBindingResult (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:18:128)
+        at RolldownBuild.#build (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/rolldown-I5b6h5Km.mjs:132:34)
+        at bundleConfigFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:37017:17)
+        at bundleAndLoadConfigFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36918:18)
+        at loadConfigFromFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36879:42)
+        at resolveConfig (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36488:22)
+        at _createServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:26319:65)
+        at createViteServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:8902:17)
+        at initializeProject (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:11118:2) {
+      errors: [Getter/Setter]
+    },
+    Error: Build failed with 1 error:
+    
+    [plugin externalize-deps]
+    Error: EPERM: operation not permitted, realpath 'C:\Users\cina\.codex\visualizations\2026\10\13\01a1332d-ffe1-7932-a2c8-d314f67cd722\cinashop-migration-20261013-HUPOBq\workers-ts\node_modules\vite\dist\node\module-runner.js'
+        at node:fs:2837:18
+        at getRealPath (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33169:36)
+        at tryResolveRealFileOrType (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33163:9)
+        at tryCleanFsResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32912:21)
+        at tryFsResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32905:14)
+        at resolveDeepImport (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33125:20)
+        at tryNodeResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32977:70)
+        at nodeResolveWithVite (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33186:9)
+        at PluginContextImpl.handler (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36965:19)
+        at plugin (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/bindingify-input-options-CMab5gbt.mjs:1457:30)
+        at aggregateBindingErrorsIntoJsError (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:48:18)
+        at unwrapBindingResult (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:18:128)
+        at RolldownBuild.#build (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/rolldown-I5b6h5Km.mjs:132:34)
+        at bundleConfigFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:37017:17)
+        at bundleAndLoadConfigFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36918:18)
+        at loadConfigFromFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36879:42)
+        at resolveConfig (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36488:22)
+        at _createServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:26319:65)
+        at createViteServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:8902:17)
+        at initializeProject (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:11118:2) {
+      errors: [Getter/Setter]
+    },
+    Error: Build failed with 1 error:
+    
+    [plugin externalize-deps]
+    Error: EPERM: operation not permitted, realpath 'C:\Users\cina\.codex\visualizations\2026\10\13\01a1332d-ffe1-7932-a2c8-d314f67cd722\cinashop-migration-20261013-HUPOBq\workers-ts\node_modules\vite\dist\node\module-runner.js'
+        at node:fs:2837:18
+        at getRealPath (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33169:36)
+        at tryResolveRealFileOrType (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33163:9)
+        at tryCleanFsResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32912:21)
+        at tryFsResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32905:14)
+        at resolveDeepImport (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33125:20)
+        at tryNodeResolve (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:32977:70)
+        at nodeResolveWithVite (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:33186:9)
+        at PluginContextImpl.handler (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36965:19)
+        at plugin (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/bindingify-input-options-CMab5gbt.mjs:1457:30)
+        at aggregateBindingErrorsIntoJsError (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:48:18)
+        at unwrapBindingResult (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:18:128)
+        at RolldownBuild.#build (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/rolldown/dist/shared/rolldown-I5b6h5Km.mjs:132:34)
+        at bundleConfigFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:37017:17)
+        at bundleAndLoadConfigFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36918:18)
+        at loadConfigFromFile (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36879:42)
+        at resolveConfig (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:36488:22)
+        at _createServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vite/dist/node/chunks/node.js:26319:65)
+        at createViteServer (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:8902:17)
+        at initializeProject (file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:11118:2) {
+      errors: [Getter/Setter]
+    }
+  ]
+}
+
+
+

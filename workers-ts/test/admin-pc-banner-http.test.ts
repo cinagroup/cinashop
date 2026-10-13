@@ -27,13 +27,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered PC ba
   beforeEach(async () => {
     f = await pcBannerFixture();
     await f.db.insert(systemMenus).values([
-      { id: 481, type: 1, authType: 1, access: 1, uniqueAuth: 'setting-system-group_data-pc', menuPath: '/admin/setting/system_group_data/pc/:id' },
+      // Synthetic PC page metadata must not reuse actual seed 481, the
+      // operational-group header API with a different protected identity.
+      { id: 800481, type: 1, authType: 1, access: 1, uniqueAuth: 'setting-system-group_data-pc', menuPath: '/admin/setting/system_group_data/pc/:id' },
       { id: 482, type: 1, authType: 1, access: 1, uniqueAuth: 'setting-system-group_data-pc', menuPath: '/admin/setting/system_group_data/slide/66' },
       { id: 483, type: 1, authType: 1, access: 1, uniqueAuth: 'setting-system-group_data', menuPath: '/admin/setting/system_group_data/pc/66' },
       { id: 1036, type: 1, authType: 1, access: 1, uniqueAuth: 'setting-config-pc', menuPath: '/admin/setting/system_config/pc' },
       { id: 484, type: 1, authType: 2, access: 1, apiUrl: 'setting/group_data', methods: 'POST' },
     ]);
-    const rules: Record<string, string> = { manager: 'pc_home_banner.manage', reader: 'pc_home_banner.view', legacy: '481', generic: 'config.manage',
+    const rules: Record<string, string> = { manager: 'pc_home_banner.manage', reader: 'pc_home_banner.view', legacy: '800481', generic: 'config.manage',
       wrongPath: '482', wrongAuth: '483', pcMall: '1036', second: 'pc_home_banner.manage', genericGroup: '484' };
     await f.db.insert(systemRole).values(Object.entries(actors).map(([name, id]) => ({ id, type: 1, roleName: name, rules: rules[name] })));
     await f.db.insert(systemAdmin).values(Object.entries(actors).map(([name, id]) => ({ id, account: `pc-banner-${name}`, pwd: 'owned-pc-banner-password',

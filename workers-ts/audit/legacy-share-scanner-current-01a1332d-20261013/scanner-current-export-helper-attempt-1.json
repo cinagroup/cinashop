@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-13T07:52:39.6440996Z",
+  "classification": "Audit helper metadata recursion, not a product/test failure",
+  "command": "archive-scanner-current-proof.ps1",
+  "sessionId": 25747,
+  "exit": 1,
+  "terminatedByCtrlC": true,
+  "rawOutput": "",
+  "reason": "PowerShell ConvertFrom-Json converted ISO strings to DateTime; recursive object walker needed an explicit JSON-object-only gate",
+  "sourceOrLocalCompileInputWritten": false,
+  "exportPhaseReached": false,
+  "correctedHelperSha256": "130b3e867832b3dcfc8c27a49ee14ac31d4bc8d50ef4284456bbe29ed05c013e"
+}

@@ -29,6 +29,7 @@
     </view>
 
     <!-- 订单信息 -->
+    <LegacyShareCode v-if="isWriteoffPending && order.verify_code" :type="91" :id="order.id" :order-id="order.order_id" title="生成本订单核销查询二维码"/>
     <view class="section">
       <view class="info-row"><text class="label">订单号</text><text>{{ order.order_id }}</text></view>
       <view class="info-row"><text class="label">下单时间</text><text>{{ formatTime(order.add_time) }}</text></view>
@@ -206,6 +207,7 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import LegacyShareCode from '@/components/LegacyShareCode.vue';
 import { ref, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiOrderCashier, apiOrderDetail, apiOrderPay } from "@/api/order";

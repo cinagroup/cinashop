@@ -1,0 +1,43 @@
+{
+  "completedAt": "2026-10-13T07:11:00.084Z",
+  "exit": 1,
+  "signal": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\read-compat-context-baseline-stage-2.log",
+  "tests": "1 failed | 40 skipped (41)",
+  "localCount": 2982,
+  "localBeforeDigest": "2ca8c045e0b94a70f35a4a87f8d2176fa2e4530a8c2cb1e4bfb6615294696797",
+  "localAfterDigest": "2ca8c045e0b94a70f35a4a87f8d2176fa2e4530a8c2cb1e4bfb6615294696797",
+  "localInputChanges": [],
+  "sourceBeforeMismatches": [
+    {
+      "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+      "localSha256": "95d0bfa7c463d29b4b8fa37c6542a96f62bae9984f2825481c0ea10ccf0a2406",
+      "sourceSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+    }
+  ],
+  "sourceAfterMismatches": [
+    {
+      "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+      "localSha256": "95d0bfa7c463d29b4b8fa37c6542a96f62bae9984f2825481c0ea10ccf0a2406",
+      "sourceSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+    }
+  ],
+  "stop": {
+    "executed": true,
+    "fixtureDatabasesAndRolesZero": true,
+    "stoppedMarker": true,
+    "checkedAt": "2026-10-13T07:11:00.084Z",
+    "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\read-compat-context-baseline-owned-20261013\\finance-postgres-PvE7rF",
+    "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+    "args": [
+      "status",
+      "-D",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\read-compat-context-baseline-owned-20261013\\finance-postgres-PvE7rF\\data"
+    ],
+    "exit": 3,
+    "signal": null,
+    "stdout": "pg_ctl: no server running\r\n",
+    "stderr": "",
+    "error": null
+  }
+}

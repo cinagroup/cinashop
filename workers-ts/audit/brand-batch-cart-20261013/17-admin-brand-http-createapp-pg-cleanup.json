@@ -1,0 +1,8 @@
+{
+  "NoListener": true,
+  "StatusExit": 3,
+  "Port": 56482,
+  "Status": "pg_ctl: no server running",
+  "Cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\.cache\\finance-postgres-qznC5Z",
+  "Verified": "2026-10-13T06:24:12.2987720Z"
+}

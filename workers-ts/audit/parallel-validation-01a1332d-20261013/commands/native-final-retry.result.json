@@ -1,0 +1,21 @@
+{
+  "tag": "native-final-retry",
+  "start": "2026-10-13T03:32:17.951Z",
+  "end": "2026-10-13T03:32:40.883Z",
+  "node": "v24.14.1",
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "args": [
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+    "test/admin-legacy-system-log.test.ts",
+    "test/admin-legacy-system-log-native.test.ts",
+    "test/supplier-product-catalog.test.ts"
+  ],
+  "status": 0,
+  "signal": null,
+  "errorCode": null,
+  "stdoutBytes": 9700,
+  "stderrBytes": 0
+}

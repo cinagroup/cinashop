@@ -1,0 +1,194 @@
+{
+  "recordedAt": "2026-10-13T07:19:27.503Z",
+  "scope": "LOCAL delivery shared read snapshot candidate; source still frozen before acceptance",
+  "baselineObserverFailure": {
+    "prefix": "read-compat-context-baseline-stage-1",
+    "exit": 1,
+    "durationSeconds": 22.43,
+    "classification": "Test observer whitespace false-negative; product-failure credit explicitly false"
+  },
+  "baselineProductFailure": {
+    "prefix": "read-compat-context-baseline-stage-2",
+    "exit": 1,
+    "durationSeconds": 19.61,
+    "classification": "Actual SQL read context/info consistency-key mismatch after real current actor,scope,R/R snapshot,nonempty preview/cart and no-DML checks succeeded"
+  },
+  "candidate": {
+    "prefix": "delivery-shared-key-candidate-stage-1",
+    "exit": 0,
+    "files": 2,
+    "testsPassed": 4,
+    "testsSkipped": 70,
+    "durationSeconds": 23.8,
+    "inputCount": 2982,
+    "beforeDigest": "c2a0f2d418fd3686ffd9736740493cfd464fcd50ae38390b277a31259f454089",
+    "afterDigest": "c2a0f2d418fd3686ffd9736740493cfd464fcd50ae38390b277a31259f454089",
+    "localDrift": 0,
+    "authorizedLocalOnlyFiles": [
+      {
+        "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+        "localSha256": "3a2348cf3fed975ce67f6d32b1a8353f67ef9269aaa6b9f980ce073c62b363b3",
+        "sourceSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+      },
+      {
+        "path": "workers-ts/src/services/store/DeliveryOrderWriteoffService.ts",
+        "localSha256": "4228c7130bf8284479ba4a5e6ffc045b1f9c8f000af143f925cdfc12c421b09f",
+        "sourceSha256": "70f0f064795f3f21f530e26b7fd97c6ace2653694d3a595b766ad89411463f3d"
+      }
+    ],
+    "sourceDriftOutsideAuthorizedCandidate": [],
+    "stop": {
+      "executed": true,
+      "fixtureDatabasesAndRolesZero": true,
+      "stoppedMarker": true,
+      "checkedAt": "2026-10-13T07:16:02.082Z",
+      "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-shared-key-candidate-owned-20261013\\finance-postgres-Cuu84Z",
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+      "args": [
+        "status",
+        "-D",
+        "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-shared-key-candidate-owned-20261013\\finance-postgres-Cuu84Z\\data"
+      ],
+      "exit": 3,
+      "signal": null,
+      "stdout": "pg_ctl: no server running\r\n",
+      "stderr": "",
+      "error": null
+    }
+  },
+  "producer": {
+    "filename": "delivery-context-candidate-sanitized-envelopes.json",
+    "fixtureActor": 501,
+    "scopes": [
+      {
+        "kind": "platform",
+        "delivery_id": 501,
+        "store_id": 0
+      },
+      {
+        "kind": "store",
+        "delivery_id": 502,
+        "store_id": 77
+      }
+    ],
+    "keysActuallyEqual": true,
+    "financialExecutionPerformed": false,
+    "sanitization": "fixture display text/code redacted; avatar/image cleared; no password/auth/token; computed keys and UID/scopes unchanged"
+  },
+  "fixturePermissions": [
+    "New independent mature read LOGIN: only existing SELECT slice plus test-only SELECT on physical writeoff and ledger tables",
+    "Original runtime keeps its original14-table CRUD plan; 5shared CTE tables are additional true ORM fixture schema with only explicit SELECT",
+    "Actual assertions confirm no INSERT/UPDATE/DELETE on all5 auxiliary tables and the independent SELECT fixture ledger"
+  ],
+  "receipts": [
+    {
+      "filename": "read-compat-context-baseline-stage-1.log",
+      "bytes": 11297,
+      "sha256": "101579fbf38604a9fdb54f25ec05701ca45abbba40cc2e12b2c1ecf3c879e3ef"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-1.result.json",
+      "bytes": 1963,
+      "sha256": "85e3de7c901b76379646c8b83ea8e8438c569a99229edee6d12ad9352a62bd21"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-1-command.json",
+      "bytes": 2679,
+      "sha256": "41ddc3cdb2905d25772facc03f9c399aed5c2950e176449510731adbe0ce6bec"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-1-before.json",
+      "bytes": 510749,
+      "sha256": "67616cb98185eb3132f8eb60c2fc25b88d5056e12ead773ca91f161c971bb5c1"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-1-after.json",
+      "bytes": 510749,
+      "sha256": "60745910fab4b236a083149fbe6e3e1b3832514eb6211385a1ab2a1a9a85be60"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-1-independent-stop.json",
+      "bytes": 817,
+      "sha256": "d43cba7d230e71ef32c4a75db1564a7f9bbf3106751236161c084dd9c3db6958"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-2.log",
+      "bytes": 11624,
+      "sha256": "af42d2b54bb75699cdb80af1e474395e0fe7f71e3780ab76e7747b72b95d9541"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-2.result.json",
+      "bytes": 1963,
+      "sha256": "d41f555b73b79a6d697fc435defda37fcc1875102ab00f839e42458358bd2faf"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-2-command.json",
+      "bytes": 2679,
+      "sha256": "d2ce3f6059e048bd536e20e63ee8a6c9a2ddaf3801ce8d7b2a2a7211361f6d8e"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-2-before.json",
+      "bytes": 510749,
+      "sha256": "3ff6db646fb52e60637a1ddce7c3e793cc4e738a0af840726df3dd09dc42b596"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-2-after.json",
+      "bytes": 510749,
+      "sha256": "6f69c32b87f52f4be1ab97b0706a2fdee4b060188c41e962ca3369980621b49b"
+    },
+    {
+      "filename": "read-compat-context-baseline-stage-2-independent-stop.json",
+      "bytes": 817,
+      "sha256": "caa86eb662b324d7e6285b87c1457637aca672ff53c005948f8ced863810fa9f"
+    },
+    {
+      "filename": "delivery-shared-key-candidate-stage-1.log",
+      "bytes": 20071,
+      "sha256": "df87ff30209950fbec8e54f58c7ee322615064abb9919ad6e1640164c949d47b"
+    },
+    {
+      "filename": "delivery-shared-key-candidate-stage-1.result.json",
+      "bytes": 2506,
+      "sha256": "8e7c1902fefa64ff3d6818ad943a35e1c195cbcacddee3eb9c704c627a68d338"
+    },
+    {
+      "filename": "delivery-shared-key-candidate-stage-1-command.json",
+      "bytes": 3482,
+      "sha256": "a42c8621fe4ee05219e43eb3b1e8c637b12551ddb74ca99e9c370769ac7bff8c"
+    },
+    {
+      "filename": "delivery-shared-key-candidate-stage-1-before.json",
+      "bytes": 511283,
+      "sha256": "0187f641d8f79c1e854da99258aad124cfb9d9e2d3b6586145ae610c664a7e4f"
+    },
+    {
+      "filename": "delivery-shared-key-candidate-stage-1-after.json",
+      "bytes": 511283,
+      "sha256": "02feaad4b9a323b9d701a79e669d6c8709bc8816ebd1bb6544aa79e86da1ef89"
+    },
+    {
+      "filename": "delivery-shared-key-candidate-stage-1-independent-stop.json",
+      "bytes": 819,
+      "sha256": "301f36d86ee7f171a55d743436c1c415881f29cb4ef3765e5d8a051cbdd39ceb"
+    },
+    {
+      "filename": "delivery-context-baseline-2-sanitized-envelopes.json",
+      "bytes": 8507,
+      "sha256": "8da31f82d11100d9763d94d632e3f45d8f91f902f8e6966d7e277b6379f95757"
+    },
+    {
+      "filename": "delivery-context-candidate-sanitized-envelopes.json",
+      "bytes": 8507,
+      "sha256": "5956c68516e51fd05bb29d38373bb691c55202b40c6530ae200f11a214562c31"
+    }
+  ],
+  "candidateNativeSelectedPassed": true,
+  "currentSourceValidated": false,
+  "globalTypesPassed": false,
+  "frontendSfcConsumptionPassed": false,
+  "limits": [
+    "Full financial suites are unexecuted; 70 skipped cases are uncredited",
+    "Earlier Native105 and Native3 receipts stay separate historical input scopes",
+    "No helper,production grants,runner or shared service edits were made by this evidence exporter"
+  ]
+}

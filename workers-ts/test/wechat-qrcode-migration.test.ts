@@ -51,7 +51,7 @@ describe("official-account QR and channel-code migration", () => {
     const embedded = service.match(
       /private migration_0079\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1]?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, '\n')).toBe(migration.replace(/\r\n/g, '\n'));
     expect(migration).not.toMatch(/FOREIGN KEY\s*\(|REFERENCES\s+"/i);
     expect(migration.match(/CREATE UNIQUE INDEX/gi)).toHaveLength(1);
     expect(migration).toContain('ON "qrcode" ("third_type", "third_id")');

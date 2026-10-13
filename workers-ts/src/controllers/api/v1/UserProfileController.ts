@@ -2,6 +2,9 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { UserProfileService } from "@/services/user/UserProfileService";
 import { MemberBarcodeService } from "@/services/user/MemberBarcodeService";
+import { UserSpreadPosterDataService } from "@/services/user/UserSpreadPosterDataService";
+import { assertLegacyShareActor, type LegacyShareActor } from "@/services/other/LegacyShareCodeService";
+import { enforceLegacyShareBudget } from "@/services/other/LegacyShareBudget";
 import { ScanLoginService } from "@/services/auth/ScanLoginService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
@@ -76,14 +79,24 @@ export async function shareWords(c: C) {
   return response(c, async () => ({ key_words: await service(c).shareWords(productId) }));
 }
 
-/** GET /api/user/routine_code — cached WeChat mini-program spread code. */
+/** GET /api/user/routine_code — signed mini-program spread image for the current user. */
 export async function routineCode(c: C) {
-  return response(c, async () => ({ url: await service(c).routineCode(uid(c)) }));
+  privateCodeResponse(c);
+  c.header("Pragma", "no-cache");
+  if (new URL(c.req.url).searchParams.size) throw new ValidateException("分销小程序码接口不接受查询参数");
+  const actor: LegacyShareActor = { uid: uid(c), authVersion: c.get("socketAuthVersion") ?? "", expiresAt: c.get("socketTokenExp") ?? 0 };
+  assertLegacyShareActor(actor);
+  await enforceLegacyShareBudget(c.env, c.req.header("CF-Connecting-IP"));
+  return response(c, async () => ({ url: new URL(await service(c).routineCode(actor), c.req.url).href }));
 }
 
 /** GET /api/user/spread_info — poster and safe user identity data. */
 export async function spreadInfo(c: C) {
-  return response(c, () => service(c).spreadInfo(uid(c)));
+  privateCodeResponse(c);
+  if (new URL(c.req.url).searchParams.size) throw new ValidateException('推广海报接口不接受查询参数');
+  return response(c, () => new UserSpreadPosterDataService(c.get('container'), c.env).read({
+    uid: uid(c), authVersion: c.get('socketAuthVersion') ?? '', expiresAt: c.get('socketTokenExp') ?? 0,
+  }));
 }
 
 function scanCode(c: C): string {

@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-10-13T10:04:08.691Z",
+  "scope": "Accepted four-file routine-code Source integration with independently verified same-byte archived LOCAL proof",
+  "sourceWritebackCompleted": true,
+  "sourceWritebackFinishedAt": "2026-10-13T09:58:08.604Z",
+  "verifiedArchivedFiles": 44,
+  "archivedSummary": {
+    "path": "routine-code-final-summary.json",
+    "sha256": "f904da4f06659a7ee3095f65becfa5bcc1eda0fa201ff06dade1adcae8652d94"
+  },
+  "metadataClarification": "The final summary inherited its scope text from the preserved historical LOCAL draft. That historical waiting text is superseded by its actual sourceWritebackCompleted=true, dated receipt and this accepted-Source confirmation; the immutable prior summary is preserved.",
+  "acceptedSourceFiles": [
+    {
+      "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "expectedSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9",
+      "actualSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+    },
+    {
+      "path": "workers-ts/src/services/user/UserProfileService.ts",
+      "expectedSha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c",
+      "actualSha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "expectedSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a",
+      "actualSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+    },
+    {
+      "path": "workers-ts/test/legacy-user-routine-code.test.ts",
+      "expectedSha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c",
+      "actualSha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+    }
+  ],
+  "sourceDoc": {
+    "path": "workers-ts/docs/user-routine-code-migration-20261013.md",
+    "sha256": "10ada4763c2fc6a75facd84392f647726e8e7131a60c841878ac96e2c8d6b23b",
+    "derivedFromArchivedDraftSha256": "772f8fc57177ec850e16cf71d9802b1ccc1da8b78a215e37744112c45e8b595b"
+  },
+  "rootSharingDocSha256": "27da37e4bc57d4b5d56bae1d54969c29aee28e0d156429a8392785e9e8b12c0f",
+  "ordinaryUniqueTests": 194,
+  "aliasCasesIncludedInOrdinary": 17,
+  "sameAliasNativeEngineCases": 17,
+  "wholeCurrentSourceTypeChecksPassed": false,
+  "compilerOrProviderInvokedByArchiveVerification": false,
+  "verifierSha256": "1a021ae7903efc2628d821a05a3241917e815644726889e019e712ece0cb571f"
+}

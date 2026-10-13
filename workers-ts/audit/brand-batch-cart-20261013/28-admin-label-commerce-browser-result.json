@@ -1,0 +1,159 @@
+{
+  "passed": true,
+  "url": "http://127.0.0.1:5215/label/products",
+  "browser": "Playwright 1.62.1 / installed Chromium1217",
+  "browserPlugin": "not available",
+  "data": "synthetic browser fixtures; database and JWT proven separately",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "checks": [
+    "page identity / meaningful content / no overlay",
+    "create group -> select group -> save complete text label",
+    "enablement toggle leaves public display independent",
+    "image style -> canonical picture -> rendered preview",
+    "definite rejection keeps draft and dialog available",
+    "batch delete -> confirmation -> verified refreshed list",
+    "390px viewport / dialog containment / form controls",
+    "retained label modal exposes real clickable retry with original payload",
+    "retained label modal proof closes without repeating the write",
+    "retained category modal exposes real clickable retry with original payload",
+    "retained category modal proof closes without repeating the write",
+    "server permission revocation clears draft and disables stale cached writer controls",
+    "live read-only role transition removes writers and disables switches"
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "endpoint": "/product/label_cate",
+      "body": {
+        "name": "浏览器新分组",
+        "sort": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/label/0",
+      "body": {
+        "label_cate": 20,
+        "label_name": "浏览器文字标签",
+        "style_type": 1,
+        "color": "#e93323",
+        "bg_color": "#fff5f4",
+        "border_color": "",
+        "icon": "",
+        "is_show": 1,
+        "status": 1,
+        "sort": 0
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/label/set_status/100/0"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/label/0",
+      "body": {
+        "label_cate": 20,
+        "label_name": "浏览器图片标签",
+        "style_type": 2,
+        "color": "#e93323",
+        "bg_color": "#fff5f4",
+        "border_color": "",
+        "icon": "/images/label-fixture.svg",
+        "is_show": 1,
+        "status": 1,
+        "sort": 0
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/label/dels",
+      "body": {
+        "ids": [
+          100
+        ],
+        "all": 0,
+        "where": ""
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/label/101",
+      "body": {
+        "label_cate": 20,
+        "label_name": "未知结果原标签",
+        "style_type": 2,
+        "color": "#e93323",
+        "bg_color": "#fff5f4",
+        "border_color": "",
+        "icon": "/images/label-fixture.svg",
+        "is_show": 1,
+        "status": 1,
+        "sort": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/label/101",
+      "body": {
+        "label_cate": 20,
+        "label_name": "未知结果原标签",
+        "style_type": 2,
+        "color": "#e93323",
+        "bg_color": "#fff5f4",
+        "border_color": "",
+        "icon": "/images/label-fixture.svg",
+        "is_show": 1,
+        "status": 1,
+        "sort": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/label/0",
+      "body": {
+        "label_cate": 20,
+        "label_name": "服务器已存原标签",
+        "style_type": 1,
+        "color": "#e93323",
+        "bg_color": "#fff5f4",
+        "border_color": "",
+        "icon": "",
+        "is_show": 1,
+        "status": 1,
+        "sort": 0
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/label_cate/20",
+      "body": {
+        "name": "未知结果原分组",
+        "sort": 0
+      }
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/product/label_cate/20",
+      "body": {
+        "name": "未知结果原分组",
+        "sort": 0
+      }
+    },
+    {
+      "method": "POST",
+      "endpoint": "/product/label_cate",
+      "body": {
+        "name": "服务器已存原分组",
+        "sort": 0
+      }
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "blocked": [],
+  "failedResponses": []
+}

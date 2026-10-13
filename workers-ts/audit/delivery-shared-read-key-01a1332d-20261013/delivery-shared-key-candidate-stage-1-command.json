@@ -1,0 +1,63 @@
+{
+  "startedAt": "2026-10-13T07:15:09.751Z",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--case",
+    "READ_COMPAT_DELIVERY_CONTEXT actual context and qualified writeoff readers share the same readonly snapshot",
+    "--case",
+    "READ_COMPAT_CUSTOMER explicit persisted member codes retain exact SQL read authority and strict write intent",
+    "--case",
+    "READ_COMPAT_DELIVERY persisted member codes retain exact assigned SQL read scope and strict financial intent",
+    "--case",
+    "N04 treats colliding twelve digit member and order codes as explicit distinct namespaces",
+    "--verbose-tests",
+    "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+    "test/customer-work-writeoff-postgres.test.ts",
+    "test/delivery-workbench-writeoff-postgres.test.ts"
+  ],
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "nodeVersion": "v24.14.1",
+  "trustedBinaries": [
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\postgres.exe",
+      "sha256": "324ac242d623edcf82822f0c59c5dc2f8e74049d9dbb7ebc738bdaf5824e2ae6",
+      "version": "postgres (PostgreSQL) 16.15",
+      "exit": 0
+    },
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\initdb.exe",
+      "sha256": "b70c70d844a67f8a55dbd1b654b21ada180b517a6c21d601caa0914f834216fe",
+      "version": "initdb (PostgreSQL) 16.15",
+      "exit": 0
+    },
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+      "sha256": "7d32e936b982b3338ce5b304c4c5474bbbd9fd5042bd4f6ba58149dc9ce82f92",
+      "version": "pg_ctl (PostgreSQL) 16.15",
+      "exit": 0
+    },
+    {
+      "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\psql.exe",
+      "sha256": "e7acd0437ac9a15e4821c39dac3e51939a0d16e09ea0d9bb106ad2c8645626ac",
+      "version": "psql (PostgreSQL) 16.15",
+      "exit": 0
+    }
+  ],
+  "selectedCases": [
+    "READ_COMPAT_DELIVERY_CONTEXT actual context and qualified writeoff readers share the same readonly snapshot",
+    "READ_COMPAT_CUSTOMER explicit persisted member codes retain exact SQL read authority and strict write intent",
+    "READ_COMPAT_DELIVERY persisted member codes retain exact assigned SQL read scope and strict financial intent",
+    "N04 treats colliding twelve digit member and order codes as explicit distinct namespaces"
+  ],
+  "selectedTests": [
+    "test/customer-work-writeoff-postgres.test.ts",
+    "test/delivery-workbench-writeoff-postgres.test.ts"
+  ],
+  "env": {
+    "TEST_FINANCE_LOCAL_CACHE_ROOT": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-shared-key-candidate-owned-20261013",
+    "TEST_FINANCE_POSTGRES_URL": "cleared then assigned only by owned runner"
+  },
+  "existingNative105Borrowed": false
+}

@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "testsExecuted": 0,
+  "stage": "evidence wrapper before Vitest spawn",
+  "reason": "TypeError: Cannot read properties of undefined (reading 'map') at run-user-routine-alias-candidate.cjs:5:106; existing 3089 manifest uses files, not localInputs.",
+  "correction": "Read baseline.files; no source, test, dependency or frozen business input changed."
+}

@@ -3,7 +3,8 @@ import { withTx, type Container } from '@/lib/di';
 import type { Env } from '@/env';
 import { storeProductCategory } from '@/models/schema';
 import { themeDeadlines, themeHash } from '@/services/content/ThemeReadService';
-import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { publicProductCategoryPictures } from './ProductCategoryAssetPolicy';
 import { integralDetailText } from '@/services/activity/IntegralProductDetailData';
 import { ValidateException } from '@/utils/errors';
 import { publicCategoryIdentitySql } from './PublicCategoryPolicy';
@@ -25,7 +26,7 @@ export class StoreCategoryService {
       const accepted = new Map<number, typeof safe[number]>();
       for (let level = 0; level < 3; level++) for (const row of safe) if (row.level === level && (level === 0 || accepted.has(row.pid))) accepted.set(row.id, row);
       const published = rows.filter(row => accepted.has(row.id));
-      const references = await publicProductPictures(tx, published.flatMap(row => [{ image: row.pic, type: 0, relationId: 0 }, { image: row.bigPic, type: 0, relationId: 0 }]));
+      const references = await publicProductCategoryPictures(tx, published.flatMap(row => [{ image: row.pic, type: 0, relationId: 0 }, { image: row.bigPic, type: 0, relationId: 0 }]));
       return { rows: published, references, revision: await themeHash(rows) };
     });
   }

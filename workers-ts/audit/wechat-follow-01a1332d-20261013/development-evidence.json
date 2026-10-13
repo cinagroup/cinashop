@@ -1,0 +1,62 @@
+{
+  "scope": "Development-stage WechatFollowPoster direct inputs; not a transitive or entire-workspace source manifest",
+  "suite": "test/wechat-follow-poster.test.ts",
+  "success": true,
+  "passed": 19,
+  "failed": 0,
+  "nativeStatus": "not executed",
+  "renderer": "synthetic Images/R2; geometry contract only",
+  "routesRegistered": false,
+  "productionRequests": false,
+  "firstFailure": "Original first run 18 passed/1 failed: test used unavailable fixture.snapshot(); raw output retained in tool transcript, fixed by real SQL row snapshots",
+  "inputs": [
+    {
+      "path": "src/services/wechat/WechatFollowBackground.ts",
+      "sourceSha256": "7b6c45cac63a626025c41ee70370ee99863c986394fb17720010d6a6534109d5",
+      "localSha256": "7b6c45cac63a626025c41ee70370ee99863c986394fb17720010d6a6534109d5",
+      "matches": true
+    },
+    {
+      "path": "src/services/wechat/WechatFollowPosterService.ts",
+      "sourceSha256": "c26217cabda1ceae2d6dbc1e3c2a744b8c730ae7a668c369e49b90640c8643b4",
+      "localSha256": "c26217cabda1ceae2d6dbc1e3c2a744b8c730ae7a668c369e49b90640c8643b4",
+      "matches": true
+    },
+    {
+      "path": "src/controllers/api/v1/WechatFollowPosterController.ts",
+      "sourceSha256": "06c4d3c65e2bf09bb1bbe619aaaea4cf0f731691d33fc6b8000a0cf517b47f86",
+      "localSha256": "06c4d3c65e2bf09bb1bbe619aaaea4cf0f731691d33fc6b8000a0cf517b47f86",
+      "matches": true
+    },
+    {
+      "path": "test/wechat-follow-poster.test.ts",
+      "sourceSha256": "ad373f01a02691eb8d4c4be3f4300ea287db582854a95d842f7a96320c5ef9eb",
+      "localSha256": "ad373f01a02691eb8d4c4be3f4300ea287db582854a95d842f7a96320c5ef9eb",
+      "matches": true
+    },
+    {
+      "path": "src/env.ts",
+      "sourceSha256": "3a1dab87756a0cdb8761b49d35b72f53d1ce02ff8d527881f3f9f04d7b0d1c2e",
+      "localSha256": "3a1dab87756a0cdb8761b49d35b72f53d1ce02ff8d527881f3f9f04d7b0d1c2e",
+      "matches": true
+    },
+    {
+      "path": "package.json",
+      "sourceSha256": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+      "localSha256": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+      "matches": true
+    },
+    {
+      "path": "package-lock.json",
+      "sourceSha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "localSha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "matches": true
+    },
+    {
+      "path": "vitest.config.ts",
+      "sourceSha256": "46f000c4caab4c542ec9a33a1abad3cb833d33d659be3106dd7cfe3c19ea9b16",
+      "localSha256": "46f000c4caab4c542ec9a33a1abad3cb833d33d659be3106dd7cfe3c19ea9b16",
+      "matches": true
+    }
+  ]
+}

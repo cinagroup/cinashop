@@ -4,9 +4,11 @@ import type { Container } from "@/lib/di";
 import { user } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
-import { ValidateException } from "@/utils/errors";
+import { ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { boundedProductShareFetch } from './ProductShareProviderPolicy';
 import { OFFLINE_MINI_PAGE, offlineMiniScanImage } from '@/services/order/OfflineScanCode';
+import { DIVISION_STAFF_INVITE_PAGE, readDivisionStaffWechatCredentials } from '@/services/division/DivisionStaffInvitePolicy';
+import { legacyShareDataImage } from '@/services/other/LegacyShareCodeProtocol';
 
 const INVITE_SIGNATURE_TTL_SECONDS = 10 * 60;
 const CODE_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -128,6 +130,25 @@ export class WechatMiniProgramCodeService {
     private readonly fetcher: typeof fetch = fetch,
   ) {}
 
+  /** Employee-only provider adapter: the scene is a real qrcode record ID.
+   * Existing generic, product and invitation methods keep their behavior. */
+  async createDivisionStaffInviteDataUrl(qrcodeId: number, expectedAppId: string): Promise<string> {
+    if (!Number.isSafeInteger(qrcodeId) || qrcodeId <= 0 || qrcodeId > 2147483647) throw new ValidateException('员工二维码ID错误');
+    const { appId, secret } = await readDivisionStaffWechatCredentials(this.container.db);
+    if (appId !== expectedAppId) throw new ServiceUnavailableException('员工邀请小程序账户已变化，请重新读取');
+    const scene = `a=${qrcodeId}`;
+    const bounded = new WechatMiniProgramCodeService(this.container, this.env, boundedProductShareFetch(this.fetcher));
+    try {
+      const code = await bounded.fetchWithTokenRefresh(appId, secret,
+        token => bounded.fetchUnlimitedCode(token, scene, DIVISION_STAFF_INVITE_PAGE, '员工邀请'));
+      const result = `data:${code.contentType};base64,${bytesToBase64(code.bytes)}`;
+      legacyShareDataImage(result);
+      return result;
+    } catch {
+      throw new ServiceUnavailableException('员工邀请码暂时无法生成，请稍后重试');
+    }
+  }
+
   async createAgentInviteUrl(
     uid: number,
     requestUrl: string,
@@ -219,6 +240,20 @@ export class WechatMiniProgramCodeService {
     const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
     await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
     return `data:${encoded.contentType};base64,${encoded.base64}`;
+  }
+
+  /** The released opaque landing page, bound to the authoritative SQL AppID. */
+  async createLegacyShareLandingDataUrl(token: string, expectedAppId: string): Promise<string | null> {
+    if (!/^[a-f0-9]{24}$/.test(token)) throw new ValidateException('分享小程序场景错误');
+    const values = await new SystemConfigService(this.container, this.env).getMany(['routine_appId', 'routine_appsecret']);
+    const appId = values.routine_appId?.trim() ?? '', secret = values.routine_appsecret?.trim() ?? '';
+    if (appId !== expectedAppId) throw new ValidateException('分享小程序账户配置已变化，请稍后重试');
+    if (!expectedAppId) return null;
+    if (!secret) throw new ServiceUnavailableException('分享小程序凭据暂不可用，请稍后重试');
+    const bounded = new WechatMiniProgramCodeService(this.container, this.env, boundedProductShareFetch(this.fetcher));
+    const code = await bounded.fetchWithTokenRefresh(appId, secret,
+      accessToken => bounded.fetchUnlimitedCode(accessToken, `q=${token}`, 'pages/share/landing', '分享落地'));
+    return `data:${code.contentType};base64,${bytesToBase64(code.bytes)}`;
   }
 
   /** Current registered ordinary detail page, with the authenticated referrer. */

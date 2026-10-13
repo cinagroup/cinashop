@@ -1,0 +1,33 @@
+{
+  "verifiedAt": "2026-10-13T03:11:46.798Z",
+  "source": "\\\\tsclient\\I\\cinagroup\\cinashop",
+  "target": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq",
+  "fileCount": 4064,
+  "mismatchCount": 4,
+  "updatedEntries": [
+    "workers-ts/src/services/admin/AdminLegacySystemLogService.ts"
+  ],
+  "mismatches": [
+    {
+      "path": "workers-ts/docs/admin-legacy-system-log-20261013.md",
+      "sourceSha256": "31a2e7e3b229a381270a02a9b1afa20d63ad6114ce6d1a215c1223f326a24ff2",
+      "copySha256": "6f79ff217586e8f8eeff3fff05b8c6fe6f233048aef8e4dcf9d687471f4e4cb2"
+    },
+    {
+      "path": "workers-ts/docs/supplier-product-selection-catalogs.md",
+      "sourceSha256": "6facd65d8feb60a61555303c70cdb33d0f5eab52104c8229555882b3d7615c93",
+      "copySha256": "076551540e66a1020b9bc4c930a5d0389fb610c69b618b462af0099c0b7175e1"
+    },
+    {
+      "path": "workers-ts/src/services/system/PublicGeocodingService.ts",
+      "sourceSha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "copySha256": "6152aa22a1ca6610b124c56f9db10fd5b35cf9644d793cdbc814dfedda19a072"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-system-log.test.ts",
+      "sourceSha256": "0fe9fa584b80da35f8279d5fe0c4b8be28d755487dfccef61828336abae886f4",
+      "copySha256": "c0f21c348c040420fe7f8c626ec6148be4dd96b06a018881e309aeabe26e72b9"
+    }
+  ],
+  "manifestSha256": "230e862c04e5dc8a7d38a9b3d7a31a272a5175b22cce22b52ffdb0a2ade168b1"
+}

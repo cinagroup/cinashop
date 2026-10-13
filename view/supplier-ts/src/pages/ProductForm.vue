@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { prepareSupplierProductRuleApplication } from '@/utils/productRules';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -15,6 +16,7 @@ import {
 import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku } from "@/types";
 import ShippingTemplatePicker from '@/components/ShippingTemplatePicker.vue';
 import ProductImagePicker from '@/components/ProductImagePicker.vue';
+import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.vue';
 import type { SupplierAttachment } from '@/api/attachments';
 import { escapeProductText, formatProductDescription, productDescriptionPreview, productImagePreview, type ProductMediaPreview } from '@/utils/productMedia';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
@@ -33,6 +35,8 @@ const retiredAttrs = ref<ProductSku[]>([]);
 const selectedActiveSkuIds = ref<number[]>([]);
 const selectedRetiredSkuIds = ref<number[]>([]);
 const categories = ref<ProductCategory[]>([]);
+const selectedLabelIds = ref<number[]>([]), labelsChanged = ref(false);
+const labelAvailability = ref({ ids: [] as number[], ready: false });
 const ruleTemplates = ref<ProductRuleTemplate[]>([]);
 const selectedRuleId = ref<number | null>(null);
 const mediaPickerOpen = ref(false), mediaGeneration = ref(0), showDescriptionPreview = ref(false);
@@ -168,6 +172,8 @@ function initialForm(): ProductDetail {
 
 const form = reactive<ProductDetail>(initialForm());
 function resetProductForm() {
+  selectedLabelIds.value = []; labelsChanged.value = false;
+  labelAvailability.value = { ids: [], ready: false };
   for (const key of Object.keys(form)) Reflect.deleteProperty(form, key);
   Object.assign(form, initialForm());
 }
@@ -188,6 +194,8 @@ function editableSku(sku: ProductSku): ProductSku {
 function applyProductDetail(detail: ProductDetail) {
   invalidateMediaTarget();
   Object.assign(form, { ...detail, attrs: detail.attrs.map(editableSku) });
+  const labels = Array.isArray(detail.store_label_id) ? detail.store_label_id : String(detail.store_label_id ?? '').split(',').filter(Boolean).map(Number);
+  selectedLabelIds.value = [...new Set(labels.filter(id => Number.isSafeInteger(id) && id > 0))]; labelsChanged.value = false;
   retiredAttrs.value = (detail.retired_attrs ?? []).map(editableSku);
   mediaPreviews.value = detail.media?.version === 1 ? detail.media.previews : {};
   failedPreviewSources.value = new Set();
@@ -316,16 +324,16 @@ function regenerateSkus(showMessage = true) {
   if (showMessage) ElMessage.success(`已生成 ${form.attrs.length} 个 SKU`);
 }
 
-watch(
-  () => form.spec_type,
-  (value) => {
-    if (value === 0) regenerateSkus(false);
-    else if (form.items.length === 1 && form.items[0].value === "规格") {
+function changeSpecType(value: unknown) {
+  if (!canManageProducts.value || !mediaSession.isCurrent() || loading.value || saving.value || (value !== 0 && value !== 1)) return;
+  form.spec_type = value;
+  if (value === 0) regenerateSkus(false);
+  else if (form.items.length === 1 && form.items[0].value === '规格' && form.items[0].detail.length === 1 && form.items[0].detail[0] === '默认') {
+      invalidateMediaTarget();
       form.items = [{ value: "颜色", detail: [] }];
       form.attrs = [];
-    }
-  },
-);
+  }
+}
 
 watch(
   () => form.product_type,
@@ -389,10 +397,12 @@ async function applyProductRule() {
       { type: "warning", confirmButtonText: "确认套用", cancelButtonText: "取消" },
     );
     if (generation !== formReadGeneration || id !== productId.value || !mediaSession.isCurrent()) return;
+    const candidate = prepareSupplierProductRuleApplication(template.spec);
+    const attrs = candidate.details.map((detail) => blankSku(detail));
+    invalidateMediaTarget();
+    form.items = candidate.items;
+    form.attrs = attrs;
     form.spec_type = 1;
-    form.items = template.spec.map((dimension) => ({ value: dimension.value, detail: [...dimension.detail] }));
-    form.attrs = [];
-    regenerateSkus(false);
     ElMessage.success(`已套用“${template.rule_name}”，生成 ${form.attrs.length} 个 SKU`);
   } catch (error) {
     if (error !== "cancel" && error !== "close") {
@@ -412,6 +422,8 @@ function removeSlider(index: number) {
 }
 
 function validateForm() {
+  if (labelsChanged.value && !labelAvailability.value.ready) return '请刷新商品标签后再保存标签修改';
+  if (labelsChanged.value && labelAvailability.value.ids.length) return '请先移除暂不可选的原标签，再保存标签修改';
   if (!form.store_name.trim()) return "请填写商品名称";
   if (!form.cate_id.length) return "请选择商品分类";
   if (!form.slider_image.some((item) => item.trim())) return "请至少填写一张商品图片地址";
@@ -445,8 +457,8 @@ async function submit() {
       ...sku,
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
-    const { media: _preview, ...editableForm } = form;
-    const result = await saveProduct(id, { ...editableForm, attrs });
+    const { media: _preview, store_label_id: _originalLabels, ...editableForm } = form;
+    const result = await saveProduct(id, { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}) });
     if (generation !== formSaveGeneration || !mediaSession.isCurrent() || productId.value !== id && id !== 0) return;
     ElMessage.success(`商品 #${result.id} 已保存并进入待审核状态`);
     await router.push(form.product_type === 1 ? `/products/${result.id}/virtual-inventory` : "/products");
@@ -523,6 +535,7 @@ onMounted(load);
                 <el-tree-select v-model="form.cate_id" :data="categories" :props="treeProps" multiple check-strictly show-checkbox clearable style="width: 100%" placeholder="选择本供应商分类" />
               </el-form-item>
               <el-form-item label="计量单位"><el-input v-model="form.unit_name" maxlength="32" /></el-form-item>
+              <el-form-item class="wide" label="商品标签"><SupplierProductLabelPicker :model-value="selectedLabelIds" :context="productId" :disabled="loading || saving || !canManageProducts" @update:model-value="selectedLabelIds = $event; labelsChanged = true" @availability="labelAvailability = $event" /></el-form-item>
               <el-form-item label="搜索关键词"><el-input v-model="form.keyword" maxlength="256" placeholder="多个关键词可用逗号分隔" /></el-form-item>
               <el-form-item label="商品条码"><el-input v-model="form.bar_code" maxlength="15" /></el-form-item>
             </div>
@@ -563,7 +576,7 @@ onMounted(load);
             :closable="false"
             description="请先勾选完整规格组合执行退役；购物车、未支付订单、活动、赠品、抽奖或门店仍引用时系统会阻止操作。"
           />
-          <el-radio-group v-model="form.spec_type" class="spec-type-group"><el-radio-button :value="0">单规格</el-radio-button><el-radio-button :value="1">多规格</el-radio-button></el-radio-group>
+          <el-radio-group :model-value="form.spec_type" :disabled="loading || saving || !canManageProducts" class="spec-type-group" @change="changeSpecType"><el-radio-button :value="0">单规格</el-radio-button><el-radio-button :value="1">多规格</el-radio-button></el-radio-group>
           <div v-if="form.spec_type === 1" class="dimension-editor">
             <div class="rule-template-bar">
               <el-select v-model="selectedRuleId" clearable filterable placeholder="选择当前供应商的规格模板">

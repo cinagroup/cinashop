@@ -1,0 +1,127 @@
+{
+  "recordedAt": "2026-10-13T05:50:19.605Z",
+  "scope": "Eight listed PostgreSQL16 files on frozen physical snapshot; real providers and Cloudflare JPEG encoder not claimed",
+  "tests": [
+    {
+      "file": "test/legacy-share-private-scan.test.ts",
+      "passed": 35
+    },
+    {
+      "file": "test/legacy-share-private-scan-native.test.ts",
+      "passed": 3
+    },
+    {
+      "file": "test/legacy-share-code-native.test.ts",
+      "passed": 3
+    },
+    {
+      "file": "test/wechat-follow-poster-native.test.ts",
+      "passed": 2
+    },
+    {
+      "file": "test/product-share-code-postgres.test.ts",
+      "passed": 5
+    },
+    {
+      "file": "test/user-spread-poster-data.test.ts",
+      "passed": 46
+    },
+    {
+      "file": "test/user-spread-poster-data-native.test.ts",
+      "passed": 2
+    },
+    {
+      "file": "test/legacy-share-registered-http.test.ts",
+      "passed": 9
+    }
+  ],
+  "filesPassed": 8,
+  "testsPassed": 105,
+  "exit": 0,
+  "durationSeconds": 85.09,
+  "localInputCount": 2914,
+  "executionBeforeDigest": "c8e9f628e20afb4a04f3d144112569ad667f7cb35a5375741880abf2db20c5eb",
+  "executionAfterDigest": "c8e9f628e20afb4a04f3d144112569ad667f7cb35a5375741880abf2db20c5eb",
+  "entireLocalInputChanges": [],
+  "directSourceInputCount": 33,
+  "directSourceBeforeMismatches": [],
+  "directSourceAfterMismatches": [],
+  "actualRouteSourceSupplement": {
+    "checkedAt": "2026-10-13T05:50:19.607Z",
+    "files": [
+      {
+        "path": "workers-ts/src/routes/index.ts",
+        "executionBeforeSha256": "51731d953000ff323ef1c40d3720763ed6f76f6f8abf74caa8978eae65d73611",
+        "executionAfterSha256": "51731d953000ff323ef1c40d3720763ed6f76f6f8abf74caa8978eae65d73611",
+        "currentSourceSha256": "51731d953000ff323ef1c40d3720763ed6f76f6f8abf74caa8978eae65d73611",
+        "matchesExecutedSnapshot": true
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "executionBeforeSha256": "7a958094aaa75b7af952ddb30fd7f8daa6ab37fae0eea58052c42a8e0081c69f",
+        "executionAfterSha256": "7a958094aaa75b7af952ddb30fd7f8daa6ab37fae0eea58052c42a8e0081c69f",
+        "currentSourceSha256": "7a958094aaa75b7af952ddb30fd7f8daa6ab37fae0eea58052c42a8e0081c69f",
+        "matchesExecutedSnapshot": true
+      }
+    ],
+    "comparisonIsPostExecution": true
+  },
+  "cleanup": {
+    "executed": true,
+    "fixtureDatabasesAndRolesZero": true,
+    "stoppedMarker": true,
+    "checkedAt": "2026-10-13T05:49:13.782Z",
+    "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-native-eight-owned-20261013\\finance-postgres-NODtre",
+    "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+    "args": [
+      "status",
+      "-D",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-native-eight-owned-20261013\\finance-postgres-NODtre\\data"
+    ],
+    "exit": 3,
+    "signal": null,
+    "stdout": "pg_ctl: no server running\r\n",
+    "stderr": "",
+    "error": null
+  },
+  "receipts": [
+    {
+      "filename": "share-native-eight-final-stage-1.log",
+      "bytes": 22518,
+      "sha256": "8ba6138200831dac51425492dd957760493ed97c546e46c8284720806d25bd38"
+    },
+    {
+      "filename": "share-native-eight-final-stage-1.result.json",
+      "bytes": 1467,
+      "sha256": "24e6394a465d4aa27250f75b1b97506573f806e04255cdce1dabe71be8ef3407"
+    },
+    {
+      "filename": "share-native-eight-final-stage-1-command.json",
+      "bytes": 3055,
+      "sha256": "8901b8030ef00b8478c6cff2d69575fdc64eb710f20057baba639d53c0bb0562"
+    },
+    {
+      "filename": "share-native-eight-final-stage-1-before.json",
+      "bytes": 503370,
+      "sha256": "36aeec3dc2b1eb1f9f6ed244aa9e47d5ebf49b400322297944ae679a4e95268c"
+    },
+    {
+      "filename": "share-native-eight-final-stage-1-after.json",
+      "bytes": 503370,
+      "sha256": "ae0ad0a41e7647f978c34dd5b2e3757d8e7fe7fdd4d6e10673aa7ddbe6b868c9"
+    },
+    {
+      "filename": "share-native-eight-final-stage-1-independent-stop.json",
+      "bytes": 797,
+      "sha256": "76ef8103590bce29bffaf9f110795b971527936ae2e231ac7456883d285be780"
+    }
+  ],
+  "nativeEightSnapshotPassed": true,
+  "finalCombinedTypeRuntimeBrowserValidationPassed": false,
+  "limits": [
+    "Types phase2 had unrelated Cart/brand diagnostics and was not passed; runtime types were not run",
+    "Future Cart/brand source or frontend scanning changes require their own physical snapshot evidence",
+    "RegisteredHTTP Images output was controlled; native service authorization and SQL/provider/cache behavior were real fixture operations",
+    "This gate does not borrow prior93/48 results and does not claim live WeChat or deployed Worker acceptance"
+  ]
+}

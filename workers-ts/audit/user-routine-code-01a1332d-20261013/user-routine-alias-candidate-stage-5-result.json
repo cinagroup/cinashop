@@ -1,0 +1,32 @@
+{
+  "finishedAt": "2026-10-13T08:21:42.349Z",
+  "exit": 0,
+  "signal": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5.log",
+  "report": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-vitest.json",
+  "commandFile": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-command.json",
+  "inputCount": 3090,
+  "beforeDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "afterDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "localInputDrift": [],
+  "sourceBaselineDrift": [],
+  "actual": {
+    "success": true,
+    "total": 17,
+    "passed": 17,
+    "failed": 0,
+    "pending": 0,
+    "suites": [
+      {
+        "name": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/test/legacy-user-routine-code.test.ts",
+        "status": "passed",
+        "caseCount": 17
+      }
+    ]
+  },
+  "limits": [
+    "LOCAL three-source candidate and independent new test only",
+    "No native PostgreSQL run or full typecheck",
+    "Controlled provider transport with actual PNG; live WeChat acceptance is untested"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "browserAvailability": "Browser plugin not available; bundled Playwright with previously installed Chromium1217",
+  "environment": {
+    "base": "http://127.0.0.1:5294",
+    "viewports": [
+      "1280x900",
+      "390x844"
+    ]
+  },
+  "boundary": "Synthetic initial login/profile/theme; genuine signed JWT and actual registered cart budget/manual coupon receive/order picker/quote against disposable PGlite; no native locking proof, production, provider, creation or payment",
+  "checks": [
+    "meaningful real cart, correct page identity, no framework overlay",
+    "one selected row computes exact 36.98 budget with no coupon grant",
+    "real quantity update recomputes selected row instead of keeping old amount",
+    "explicit CTA grants one real owned coupon then real eligible picker selects it and actual confirmation re-quotes 3.00; no order/payment",
+    "delivery scope change clears the one-time owned coupon suggestion and re-quotes",
+    "two rapid quantity writes discard late 106.95 quote and render only latest 126.94; navigation blocked while quote is pending",
+    "real same-UID auth store setLogin clears selection and discards the in-flight old budget"
+  ],
+  "errors": [],
+  "warnings": [
+    "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+  ],
+  "counts": {
+    "cartBudgetRequests": 8,
+    "couponClaims": 1,
+    "ownedCoupons": 1,
+    "orders": 0,
+    "createCaptures": 0
+  },
+  "screenshots": [
+    "cart-budget-combined-final-desktop.png",
+    "cart-budget-combined-final-mobile.png",
+    "cart-budget-combined-final-mobile-confirm.png",
+    "cart-budget-combined-final-mobile-quantity.png",
+    "cart-budget-combined-final-mobile-auth-withdrawn.png"
+  ]
+}

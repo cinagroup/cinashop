@@ -1,0 +1,111 @@
+{
+  "recordedAt": "2026-10-13T08:22:49.750Z",
+  "scope": "LOCAL 3-source candidate plus 1 new actual SQL/JWT registered-route test",
+  "requiredFocusedTestsPassed": true,
+  "sourceWritebackCompleted": false,
+  "fullTypesPassed": false,
+  "nativePostgresExecuted": false,
+  "result": {
+    "finishedAt": "2026-10-13T08:21:42.349Z",
+    "exit": 0,
+    "signal": null,
+    "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5.log",
+    "report": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-vitest.json",
+    "commandFile": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-command.json",
+    "inputCount": 3090,
+    "beforeDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+    "afterDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+    "localInputDrift": [],
+    "sourceBaselineDrift": [],
+    "actual": {
+      "success": true,
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "pending": 0,
+      "suites": [
+        {
+          "name": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/workers-ts/test/legacy-user-routine-code.test.ts",
+          "status": "passed",
+          "caseCount": 17
+        }
+      ]
+    },
+    "limits": [
+      "LOCAL three-source candidate and independent new test only",
+      "No native PostgreSQL run or full typecheck",
+      "Controlled provider transport with actual PNG; live WeChat acceptance is untested"
+    ]
+  },
+  "vitestDuration": "18.13s (transform 11.56s, setup 0ms, import 14.45s, tests 3.50s, environment 0ms)",
+  "ownedInputs": [
+    {
+      "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "sha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9"
+    },
+    {
+      "path": "workers-ts/src/services/user/UserProfileService.ts",
+      "sha256": "429c09b70d9d061e7df693e811ad58913060e4f85362422ac5a26aba29f7666c"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "sha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a"
+    },
+    {
+      "path": "workers-ts/test/legacy-user-routine-code.test.ts",
+      "sha256": "c8738311b00198f93c3aa36e8c962d9760bcdca4d3d6394cf740a5853aff910c"
+    }
+  ],
+  "command": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-command.json",
+  "before": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-before.json",
+  "after": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-after.json",
+  "raw": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5.log",
+  "caseNames": [
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT returns only a signed actual PNG whose opaque released-page scene resolves the authenticated referral",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT ignores an official-account browser and forever configuration without requesting any official provider",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rejects missing authoritative SQL AppID before stale KV, provider or cache writes",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rejects blank authoritative SQL AppID before stale KV, provider or cache writes",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT preserves the generic -1 contract when mini is disabled instead of changing get_qrcode behavior",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT keeps the printed mini target permanent in a separate namespace while generic -1 remains temporary",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT keeps the permanent mini referral readable when unrelated official-account settings change",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rejects a wrong cached AppID with 400 before contacting a provider or publishing a ready artifact",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT keeps missing mini credentials unavailable without publishing a website-only success",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT reuses the valid artifact while refreshing its image signature and rejects expiry, tampering and owner deactivation",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rejects missing, malformed, expired and password-revoked genuine JWTs before quota or provider work",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rejects query parameters before quota and ignores no caller-controlled uid or object override",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT fails closed on refused or malformed budgets before cache and provider work",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT refreshes a rejected provider token once, then returns 503 without publishing a partial artifact",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rejects declared PNG bytes that are not a real raster instead of publishing or returning a signed URL",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rechecks current owner status after provider work and never publishes the revoked artifact",
+    "registered user routine-code mini-required alias with genuine SQL and UserJWT rechecks current owner password after provider work and never publishes the revoked artifact"
+  ],
+  "toolVersions": {
+    "node": "v24.14.1",
+    "vitest": "4.1.11",
+    "typescript": "5.9.3"
+  },
+  "history": [
+    {
+      "file": "user-routine-alias-preflight-1.json",
+      "meaning": "wrapper field mismatch before Vitest; zero tests"
+    },
+    {
+      "file": "user-routine-alias-candidate-stage-2-result.json",
+      "meaning": "16pass but overlength password fixture did not mutate SQL; revoked-password credit excluded"
+    },
+    {
+      "file": "user-routine-alias-candidate-stage-3-result.json",
+      "meaning": "14pass/2fail; actual SQL revocation succeeded; test expected wrong mature auth code"
+    },
+    {
+      "file": "user-routine-alias-candidate-stage-4-result.json",
+      "meaning": "16pass before official-account independence narrow source change; historical scope only"
+    }
+  ],
+  "limitations": [
+    "Controlled provider responses with real PNG; no live WeChat request",
+    "Password rotation stops alias generation and publish, but old signed image is not immediately password-bound",
+    "Signed download expires after 900 seconds; permanent opaque target and cache rows expire0",
+    "Source/Main current global changes are not covered by this local-only input manifest"
+  ]
+}

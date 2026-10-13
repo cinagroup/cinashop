@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T09:20:53.246Z",
+      "completedAt": "2026-10-13T09:24:31.967Z",
+      "durationMs": 218720,
+      "code": 0,
+      "signal": null,
+      "log": ".cache/category-label-staff-worker-unit-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "runtime",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T09:24:32.003Z",
+      "completedAt": "2026-10-13T09:26:50.250Z",
+      "durationMs": 138247,
+      "code": 0,
+      "signal": null,
+      "log": ".cache/category-label-staff-worker-runtime-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

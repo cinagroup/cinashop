@@ -1,0 +1,112 @@
+{
+  "scope": "Independent LOCAL personal routine alias plus complete QR/follow/media/registered createApp HTTP, profile and existing mini-program regression; current Source remains active and alias candidates are not written to Source.",
+  "node": "v24.14.1",
+  "nodePath": "C:\\Program Files\\nodejs\\node.exe",
+  "startedAt": "2026-10-13T08:25:16.884Z",
+  "finishedAt": "2026-10-13T08:26:31.452Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "test/legacy-share-code.test.ts",
+    "test/legacy-share-provider-budget.test.ts",
+    "test/legacy-share-private-scan.test.ts",
+    "test/legacy-share-private-scan-flow.test.ts",
+    "test/legacy-share-private-mini.test.ts",
+    "test/legacy-share-http.test.ts",
+    "test/legacy-share-registered-http.test.ts",
+    "test/legacy-share-callback.test.ts",
+    "test/wechat-callback-pipeline.test.ts",
+    "test/wechat-qrcode-migration.test.ts",
+    "test/product-share-code.test.ts",
+    "test/wechat-follow-poster.test.ts",
+    "test/user-spread-poster-data.test.ts",
+    "test/legacy-user-routine-code.test.ts",
+    "test/user-profile-migration.test.ts",
+    "test/wechat-mini-program-code.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=json",
+    "--outputFile=C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-regression-local-1-vitest.json"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "selectedFiles": [
+    "test/legacy-share-code.test.ts",
+    "test/legacy-share-provider-budget.test.ts",
+    "test/legacy-share-private-scan.test.ts",
+    "test/legacy-share-private-scan-flow.test.ts",
+    "test/legacy-share-private-mini.test.ts",
+    "test/legacy-share-http.test.ts",
+    "test/legacy-share-registered-http.test.ts",
+    "test/legacy-share-callback.test.ts",
+    "test/wechat-callback-pipeline.test.ts",
+    "test/wechat-qrcode-migration.test.ts",
+    "test/product-share-code.test.ts",
+    "test/wechat-follow-poster.test.ts",
+    "test/user-spread-poster-data.test.ts",
+    "test/legacy-user-routine-code.test.ts",
+    "test/user-profile-migration.test.ts",
+    "test/wechat-mini-program-code.test.ts"
+  ],
+  "localInputCount": 3090,
+  "beforeDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "afterDigest": "767c94533f7fabd24d9cc784d50e4a7086dbb355dfb40115bf1ae757b063ca3a",
+  "inputDrift": [],
+  "ownSourceMismatchesBefore": [],
+  "ownSourceMismatchesAfter": [],
+  "relatedSourceMismatchesBefore": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "localSha256": "bd3a9826748d7301b08cd9a734c351ce5c6f6e19ba4134f0ad18fb6d5ba721d2",
+      "sourceSha256": "01260f30e186f6386b0ac901ec84dffd43c677f8c4244eee5eba5a81f2eac1ab"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "localSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a",
+      "sourceSha256": "510ed3618643c4c177ca94bd0632800e11bb8610d0563877bcf0cd149331ff51"
+    },
+    {
+      "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "localSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9",
+      "sourceSha256": "6ec935e413ba1d677449afc8c6bc1386466728507019f8ca1fb3e25b93a2aa81"
+    },
+    {
+      "path": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+      "localSha256": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+      "sourceSha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b"
+    }
+  ],
+  "relatedSourceMismatchesAfter": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "localSha256": "bd3a9826748d7301b08cd9a734c351ce5c6f6e19ba4134f0ad18fb6d5ba721d2",
+      "sourceSha256": "01260f30e186f6386b0ac901ec84dffd43c677f8c4244eee5eba5a81f2eac1ab"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/UserProfileController.ts",
+      "localSha256": "2864d9a4cbb9bb09208cab6af51fdf7ff6cff5e9331c218429a1e6427e23531a",
+      "sourceSha256": "510ed3618643c4c177ca94bd0632800e11bb8610d0563877bcf0cd149331ff51"
+    },
+    {
+      "path": "workers-ts/src/services/other/LegacyShareCodeService.ts",
+      "localSha256": "7d0809d71d8a36045acac6a4016717fb836bc62b489d819c529107bf0e9ca8f9",
+      "sourceSha256": "6ec935e413ba1d677449afc8c6bc1386466728507019f8ca1fb3e25b93a2aa81"
+    },
+    {
+      "path": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+      "localSha256": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+      "sourceSha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b"
+    }
+  ],
+  "numTotalTests": 194,
+  "numPassedTests": 194,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "success": true,
+  "rawLogSha256": "2e3fb807392ffa846c128fde4cf9dcc394a04a14ddf550197b923a9aa4c5de51",
+  "reportSha256": "8f22a950a8728c4568178577f4fce12727845bd0d9d7a126105c4f797d56dc9d"
+}

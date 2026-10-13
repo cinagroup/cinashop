@@ -1,0 +1,210 @@
+{
+  "at": "2026-10-13T09:37:21.332Z",
+  "results": [
+    {
+      "owner": "admin",
+      "manifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation\\category-agent-freeze.json",
+      "manifestSha256": "959139270f7f5cd7ab04652aa98e7299f4dca14b3d418d361fa85129fc1d8e1b",
+      "count": 14,
+      "files": [
+        {
+          "file": "workers-ts/src/services/admin/AdminProductCategoryInput.ts",
+          "sha256": "dd24053fca0f728d3ac9ec152230e009b565f630b1336afcbc151e21f7b1a1bb"
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminProductCategoryService.ts",
+          "sha256": "baa65e75570367844d2966fe3f2aed2642f4927f8ee4aade716fc19f4b195aeb"
+        },
+        {
+          "file": "workers-ts/src/services/product/ProductCategoryAssetPolicy.ts",
+          "sha256": "b28f04fbd5b2ca703251a3c1dacd56195d230cc77947d810afb0f6e32566c1be"
+        },
+        {
+          "file": "workers-ts/src/controllers/api/v1/AdminProductCategoryController.ts",
+          "sha256": "b88a6de7135e5f34a5719986228722184f94746f74e83a5400434cd2d71df0b8"
+        },
+        {
+          "file": "workers-ts/test/helpers/adminProductCategories.ts",
+          "sha256": "2faa013f72cd5f232d0669559adfe3be0976dbd6d5fdda5f1ed96fc61a55b363"
+        },
+        {
+          "file": "workers-ts/test/admin-product-category.test.ts",
+          "sha256": "3e725d874e26b308ea80da965eebac7ebcde6187cedf07fb0db040bc1a7c60b9"
+        },
+        {
+          "file": "workers-ts/test/admin-product-category-http.test.ts",
+          "sha256": "8f8a0c2bb1f2343a9103e5143eb307d5714f7f0c585356e62404f6a4bfd69881"
+        },
+        {
+          "file": "workers-ts/test/admin-product-category-native.test.ts",
+          "sha256": "0d440d3f601b4c513fcb73eefc76b4210718060b1826005de6f2db22f883bc40"
+        },
+        {
+          "file": "workers-ts/test/admin-product-category-frontend.test.ts",
+          "sha256": "ec38cbb435c81fdb806aa9ce5c24566c44fe5fac8c5820ffc9688f5f180e0b03"
+        },
+        {
+          "file": "view/admin-ts/src/pages/category/CategoryList.vue",
+          "sha256": "d052c4a40b5824b894555e98edc15ec980d4f83c05c4455219123c84f5a90318"
+        },
+        {
+          "file": "view/admin-ts/src/api/productCategoryCatalog.ts",
+          "sha256": "0caf1d234dfbb0a4e083a3a6b831e551c20b4fe327fc6ccedf08c3a3e6640422"
+        },
+        {
+          "file": "view/admin-ts/src/types/productCategoryCatalog.ts",
+          "sha256": "b87ba9ea10c842bfc5fed52c94f11775311c10c2288f810654feda3d37a5dff7"
+        },
+        {
+          "file": "view/admin-ts/src/utils/productCategoryCatalogState.ts",
+          "sha256": "f28e313b01127c66b002db948ad31cdca4a4650137c5aa19f3582d090afd6f90"
+        },
+        {
+          "file": "workers-ts/docs/admin-product-category-catalog-20261013.md",
+          "sha256": "4e04c84829e8335f5ef255de3be8951b30c4adb3c8d437d810f40b542aca7cd9"
+        }
+      ]
+    },
+    {
+      "owner": "supplier",
+      "manifest": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-label-owned-freeze.json",
+      "manifestSha256": "41a2c0131d4aa15d954cce1853ba95c3c2ae40e73fe16f0050f23b58aad95a78",
+      "count": 14,
+      "files": [
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductLabelInput.ts",
+          "sha256": "fd274dee17917f466b1ea489d55c2cfe2040cd9cbb4500e966f2e2705e0e8b17"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductLabelService.ts",
+          "sha256": "0423b63f04f0b9bc574161e9af7e70a5dadb0583184009ab137055dcfa65418b"
+        },
+        {
+          "file": "workers-ts/src/controllers/supplier/SupplierProductLabelController.ts",
+          "sha256": "7418c6a97718b2456689edaa5e28afaa3a9572da9898d67f85d440a43413c69d"
+        },
+        {
+          "file": "workers-ts/test/helpers/supplierProductLabels.ts",
+          "sha256": "632cc4bae78cfcd8eeafa493f9ab466b8b16bcc3bd0f4b9d43d68aff80f26b44"
+        },
+        {
+          "file": "workers-ts/test/supplier-product-label-http.test.ts",
+          "sha256": "dd0841b62274b4e6f89ffad640eeab329c9a40c373e0c60f4e0d5c3847d4c94f"
+        },
+        {
+          "file": "workers-ts/test/supplier-product-label-native.test.ts",
+          "sha256": "2ecf7a823f9d3e9f7acc978e2a9bf7a509649b95484bd98c5c7da4f3eba60818"
+        },
+        {
+          "file": "workers-ts/test/supplier-product-label-frontend.test.ts",
+          "sha256": "6dca3320bfae8b2402486f6b5d3bbac83baf1b25e4bd13f16d0871bcf1d09760"
+        },
+        {
+          "file": "workers-ts/src/services/supplier/SupplierProductCatalogService.ts",
+          "sha256": "e340f318dc4e44c6ae9c88cae8e8c21796729386282b0a9300e0500e1e9370bf"
+        },
+        {
+          "file": "workers-ts/test/supplier-product-catalog.test.ts",
+          "sha256": "096f4da3d79cf5b714b61681031de34d8f78e1231a0770b8898f91c283dd7361"
+        },
+        {
+          "file": "view/supplier-ts/src/pages/ProductLabels.vue",
+          "sha256": "358b71a8533c1add7479929a3fa6e5c3c30e1904272c86665ed02423ff9d2cfd"
+        },
+        {
+          "file": "view/supplier-ts/src/api/productLabels.ts",
+          "sha256": "3be06379956436b67dcfcc2085e903d3cb008e17f6679a4409a8004a01406ef8"
+        },
+        {
+          "file": "view/supplier-ts/src/types/productLabels.ts",
+          "sha256": "5de997d2141659acaec8618b6154fd9160ea1095d837909f7c8d0d05682e332e"
+        },
+        {
+          "file": "view/supplier-ts/src/utils/productLabels.ts",
+          "sha256": "0228bd96abb2b66f571a7e5cb4e01b1c8c4bfabc68d62eda977802a0b788b04d"
+        },
+        {
+          "file": "workers-ts/docs/supplier-product-label-management.md",
+          "sha256": "3f113e0c59aab7c3a511aa02eaaafa2a3a9db3a4439ed9bb9b2bfc35f0da0df3"
+        }
+      ]
+    },
+    {
+      "owner": "api",
+      "manifest": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\.cache\\division-staff-agent-final-freeze.json",
+      "manifestSha256": "cb8947a1ddb124a858c7bdb7ebb27c75f3422b3222dce15b4dbcbef25d86cd1d",
+      "count": 17,
+      "files": [
+        {
+          "file": "workers-ts/src/services/division/DivisionStaffInput.ts",
+          "sha256": "2edffeb1703bf7a178c3e2d9cc23e7e493f44301003f181085ae4fa6be2591d3"
+        },
+        {
+          "file": "workers-ts/src/services/division/DivisionStaffService.ts",
+          "sha256": "814d235807151d7307b46c314c8566b543e7a99ea8659eb991b303e230a5e1dc"
+        },
+        {
+          "file": "workers-ts/src/services/division/DivisionStaffInvitePolicy.ts",
+          "sha256": "cdfe756ae02d5ee138ea089a79b3f903d7d684b1a30138475916ea24b9e8a462"
+        },
+        {
+          "file": "workers-ts/src/services/division/DivisionStaffInviteService.ts",
+          "sha256": "d3cf57ea9a7ee82891ce110970ab0012aa94260b861ffc9bfb2afbf1d1d93db1"
+        },
+        {
+          "file": "workers-ts/src/controllers/api/v1/DivisionStaffController.ts",
+          "sha256": "48080e57dea5c9d6e03f3e9e93fd65c50b1bf541206588ba6daa2ea2aad50e1b"
+        },
+        {
+          "file": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+          "sha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b"
+        },
+        {
+          "file": "workers-ts/test/helpers/divisionStaffFixture.ts",
+          "sha256": "1d1829ca445a1cf84bc2c4b7e83076c6d0a0cc5af9e45cfbbc5acbfa597cccf2"
+        },
+        {
+          "file": "workers-ts/test/division-staff-input.test.ts",
+          "sha256": "72e606403318ce86c05dc911fd8a269c52684c23596fa68cd473335f8eeb1e01"
+        },
+        {
+          "file": "workers-ts/test/division-staff-http.test.ts",
+          "sha256": "a1d46824bf8e80aebc924d803d03bef7a328bd41439ff130cbeeabea9a130f9d"
+        },
+        {
+          "file": "workers-ts/test/division-staff-invite.test.ts",
+          "sha256": "49cdce492104dcd19bf1ae67947be68d80a3ea63e9445eb13e2f1fce32885101"
+        },
+        {
+          "file": "workers-ts/test/division-staff-frontend.test.ts",
+          "sha256": "f45644602bbd9d75319097df7a6864c8f1338de72d651f30026deb937c96f8bc"
+        },
+        {
+          "file": "workers-ts/test/division-staff-postgres.test.ts",
+          "sha256": "ba0fc7874e50b5557890e672d303392525f3c4bfb098f2c633fc6610b7683d35"
+        },
+        {
+          "file": "view/common/divisionStaff.ts",
+          "sha256": "b3b2b0a954eb806963f30a347c4847c364c39144f80b962516081890f8f229be"
+        },
+        {
+          "file": "view/uniapp-ts/src/api/divisionStaff.ts",
+          "sha256": "610706dc034b8ef12940d9bb7aa219220b53468c03ddc6527865bb55c722521f"
+        },
+        {
+          "file": "view/uniapp-ts/src/pages/users/agent/staff_list.vue",
+          "sha256": "91c3f1e0e3bbdfe0603077d080f8b2450b19c747bbdf92d2e2f8566e4ebdf559"
+        },
+        {
+          "file": "view/uniapp-ts/src/pages/users/agent/bind.vue",
+          "sha256": "f5281d8b6c57d4b0b7960d5d767155fbb053b3353789e90371bb72d7aa682661"
+        },
+        {
+          "file": "workers-ts/docs/division-staff-contract-20261013.md",
+          "sha256": "2340c062eb49277bdce374b8392fe6654ae6da1190caf29ca048e61ba5e51894"
+        }
+      ]
+    }
+  ],
+  "mismatches": []
+}

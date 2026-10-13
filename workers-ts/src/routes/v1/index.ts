@@ -12,9 +12,13 @@ import { memberWriteoffRateLimit } from "@/middleware/member-writeoff-rate-limit
 import * as LoginController from "@/controllers/api/v1/LoginController";
 import * as AppleAuthController from "@/controllers/api/v1/AppleAuthController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
+import * as PublicGeocodingController from "@/controllers/api/v1/PublicGeocodingController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as ProductShareCode from '@/controllers/api/v1/ProductShareCodeController';
+import * as LegacyShareCode from '@/controllers/api/v1/LegacyShareCodeController';
+import * as WechatFollowPoster from '@/controllers/api/v1/WechatFollowPosterController';
 import * as OrderController from "@/controllers/api/v1/OrderController";
+import { cartCompute } from '@/controllers/api/v1/CartComputationController';
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as StoreMobileDelivery from "@/controllers/api/v1/StoreMobileDeliveryController";
 import * as DeliveryWorkbenchWriteoff from "@/controllers/api/v1/DeliveryWorkbenchWriteoffController";
@@ -100,6 +104,7 @@ import * as AdminLevelActivation from '@/controllers/api/v1/AdminLevelActivation
 import * as AdminPaidMembershipConfig from '@/controllers/api/v1/AdminPaidMembershipConfigController';
 import * as AdminCombinationStatistics from "@/controllers/api/v1/AdminCombinationStatisticsController";
 import * as DivisionController from "@/controllers/api/v1/DivisionController";
+import * as DivisionStaff from '@/controllers/api/v1/DivisionStaffController';
 import * as AgentLevelController from "@/controllers/api/v1/AgentLevelController";
 import * as ProductExperienceController from "@/controllers/api/v1/ProductExperienceController";
 import * as AdminProductWords from "@/controllers/api/v1/AdminProductWordsController";
@@ -138,6 +143,17 @@ export const v1Routes = new Hono<{
   Variables: AppVariables & { container: import("@/lib/di").Container };
 }>();
 
+// Apply the private response boundary before station and optional identity
+// checks, so rejected requests cannot be cached as public share data.
+for (const path of ['/get_qrcode/*', '/share/scene/*', '/share/code/image/*', '/wechat/follow', '/wechat/follow/image/*', '/admin/brand/*', '/admin/category/*', '/cart/compute']) {
+  v1Routes.use(path, async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    c.header('Pragma', 'no-cache');
+    c.header('Referrer-Policy', 'no-referrer');
+    await next();
+  });
+}
+
 // ─── 登录类 (无需 auth) ───────────────────────────────────────
 v1Routes.post("/login", LoginController.login);
 v1Routes.post("/login/mobile", LoginController.mobile);
@@ -168,7 +184,9 @@ v1Routes.post("/pc/oauth_state", PcCompatibilityController.oauthState);
 v1Routes.get("/pc/wechat_auth", PcCompatibilityController.wechatAuth);
 
 // ─── 无需授权接口 ─────────────────────────────────────────────
+v1Routes.get("/geoLbscoder", stationOpenMiddleware(), PublicGeocodingController.geoLbscoder);
 v1Routes.get("/site_config", PublicController.getSiteConfig);
+v1Routes.get('/get_script', PublicController.getScript);
 v1Routes.get("/share", PublicController.share);
 v1Routes.get("/get_copyright", PublicController.getCopyright);
 v1Routes.get("/search/hot_keyword", PublicController.hotKeywords);
@@ -181,6 +199,13 @@ v1Routes.get("/navigation/:template_name", PublicController.navigation);
 v1Routes.get("/user/service/get_adv", authMiddleware({ force: false }), PublicController.getKfAdv);
 v1Routes.get("/kefu/tourist/adv", PublicController.getKfAdv);
 v1Routes.get("/assets/:id", AttachmentController.asset);
+// Generated image capabilities follow the existing asset read boundary:
+// validate their signature before quota/SQL, independently of station/login.
+v1Routes.get('/share/code/image/:token/:channel', LegacyShareCode.image);
+v1Routes.get('/wechat/follow/image/:revision', WechatFollowPoster.image);
+v1Routes.get('/get_qrcode/:type/:id', stationOpenMiddleware(), authMiddleware({ force: false }), LegacyShareCode.code);
+v1Routes.get('/share/scene/:token', stationOpenMiddleware(), authMiddleware({ force: false }), LegacyShareCode.scene);
+v1Routes.get('/wechat/follow', stationOpenMiddleware(), authMiddleware({ force: false }), WechatFollowPoster.follow);
 v1Routes.get(
   "/wechat/get_logo",
   stationOpenMiddleware(),
@@ -482,6 +507,7 @@ v1Routes.post("/cart/add", authMiddleware({ force: true }), OrderController.cart
 v1Routes.post("/cart/add/newcomer-replay", authMiddleware({ force: true }), OrderController.cartAddNewcomerReplay);
 v1Routes.get("/cart/add/newcomer-replay-key", authMiddleware({ force: true }), OrderController.cartAddNewcomerReplayKey);
 v1Routes.get("/cart/list", authMiddleware({ force: true }), OrderController.cartList);
+v1Routes.post('/cart/compute', stationOpenMiddleware(), authMiddleware({ force: true }), cartCompute);
 v1Routes.post("/cart/num", authMiddleware({ force: true }), OrderController.cartNum);
 v1Routes.post("/cart/del", authMiddleware({ force: true }), OrderController.cartDel);
 v1Routes.get("/cart/count", authMiddleware({ force: true }), OrderController.cartCount);
@@ -888,12 +914,18 @@ v1Routes.get("/user/commission/list/:type", stationOpenMiddleware, authMiddlewar
 v1Routes.post("/extract/cash", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.extractCash);
 v1Routes.get("/user/extract/list", authMiddleware({ force: true }), UserFinanceController.extractList);
 // 事业部代理申请与代理商员工关系。删除接口改用 DELETE/POST，拒绝沿用 PHP 的状态变更 GET。
+for (const path of ['/division/agent/staff_list', '/division/agent/staff_percent', '/division/agent/staff/*', '/division/agent/del_staff/*', '/division/agent/spread', '/division/agent/spread/code', '/division/agent/spread/code/*', '/division/agent/bind_info']) {
+  v1Routes.use(path, async (c, next) => { c.header('Cache-Control', 'private, no-store, max-age=0'); c.header('Pragma', 'no-cache'); c.header('Referrer-Policy', 'no-referrer'); await next(); });
+}
 v1Routes.get("/division/agent/apply/info", authMiddleware({ force: true }), DivisionController.applyInfo);
 v1Routes.post("/division/agent/apply/:id", authMiddleware({ force: true }), DivisionController.applyAgent);
 v1Routes.get("/division/agent/staff_list", authMiddleware({ force: true }), DivisionController.staffList);
 v1Routes.post("/division/agent/staff_percent", authMiddleware({ force: true }), DivisionController.staffPercent);
 v1Routes.delete("/division/agent/staff/:uid", authMiddleware({ force: true }), DivisionController.delStaff);
 v1Routes.post("/division/agent/del_staff/:uid", authMiddleware({ force: true }), DivisionController.delStaff);
+// delStaff rejects the raw HEAD method because Hono dispatches it as GET.
+v1Routes.get('/division/agent/del_staff/:uid', authMiddleware({ force: true }), DivisionController.delStaff);
+v1Routes.get('/division/agent/bind_info', authMiddleware({ force: true }), DivisionStaff.bindInfo);
 v1Routes.get("/division/agent/spread/code", authMiddleware({ force: true }), DivisionController.agentSpreadCode);
 v1Routes.get("/division/agent/spread/code/image/:uid", DivisionController.agentSpreadCodeImage);
 v1Routes.post("/division/agent/spread", authMiddleware({ force: true }), DivisionController.agentSpread);

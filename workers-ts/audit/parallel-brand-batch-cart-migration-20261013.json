@@ -1,0 +1,607 @@
+{
+  "generatedAt": "2026-10-13T06:53:07.207Z",
+  "status": "verified-local-candidate-unreleased",
+  "goal": "PHP to TypeScript migration remains active",
+  "scope": [
+    "Admin three-level brand lifecycle and referenced subtree moves",
+    "Supplier category/logistics/form/freight bulk operations",
+    "Read-only selected cart computation, explicit coupon claim and owned checkout suggestion",
+    "Label retained-modal retry and reconciliation"
+  ],
+  "source": {
+    "count": 3987,
+    "digest": "41422dcee3fd6fbe066fada47e7ddac26b2b9f185ce9041e167a3ed92de081a9",
+    "before": "2026-10-13T06:37:31.615Z",
+    "after": "2026-10-13T06:48:43.320Z",
+    "mismatches": [],
+    "inputs": "audit/brand-batch-cart-20261013/04-commerce-wave-source-final-after.json"
+  },
+  "ordinary": {
+    "files": 28,
+    "total": 530,
+    "passed": 494,
+    "nativeConditionalSkips": 36,
+    "failed": 0,
+    "exitCode": 0,
+    "suites": [
+      {
+        "file": "admin-permission.test.ts",
+        "passed": 24,
+        "skipped": 0
+      },
+      {
+        "file": "admin-product-brand-frontend.test.ts",
+        "passed": 12,
+        "skipped": 0
+      },
+      {
+        "file": "admin-product-brand-http.test.ts",
+        "passed": 4,
+        "skipped": 0
+      },
+      {
+        "file": "admin-product-brand-native.test.ts",
+        "passed": 0,
+        "skipped": 5
+      },
+      {
+        "file": "admin-product-brand-permission.test.ts",
+        "passed": 6,
+        "skipped": 0
+      },
+      {
+        "file": "admin-product-brand.test.ts",
+        "passed": 12,
+        "skipped": 0
+      },
+      {
+        "file": "admin-product-label-frontend.test.ts",
+        "passed": 14,
+        "skipped": 0
+      },
+      {
+        "file": "cart-computation-frontend.test.ts",
+        "passed": 28,
+        "skipped": 0
+      },
+      {
+        "file": "cart-computation-http.test.ts",
+        "passed": 44,
+        "skipped": 1
+      },
+      {
+        "file": "cart-computation-input.test.ts",
+        "passed": 25,
+        "skipped": 0
+      },
+      {
+        "file": "local-finance-postgres-runner.test.ts",
+        "passed": 151,
+        "skipped": 0
+      },
+      {
+        "file": "modern-cart-membership-price.test.ts",
+        "passed": 24,
+        "skipped": 0
+      },
+      {
+        "file": "order-cart-pink-migration.test.ts",
+        "passed": 5,
+        "skipped": 0
+      },
+      {
+        "file": "order-coupon-picker.test.ts",
+        "passed": 23,
+        "skipped": 0
+      },
+      {
+        "file": "order-full-discount-checkout.test.ts",
+        "passed": 2,
+        "skipped": 5
+      },
+      {
+        "file": "order-full-gift-checkout.test.ts",
+        "passed": 1,
+        "skipped": 5
+      },
+      {
+        "file": "order-nth-discount-checkout.test.ts",
+        "passed": 2,
+        "skipped": 5
+      },
+      {
+        "file": "order-promotion-quote.test.ts",
+        "passed": 13,
+        "skipped": 0
+      },
+      {
+        "file": "order-time-discount-checkout.test.ts",
+        "passed": 4,
+        "skipped": 4
+      },
+      {
+        "file": "supplier-product-batch-concurrency-postgres.test.ts",
+        "passed": 0,
+        "skipped": 11
+      },
+      {
+        "file": "supplier-product-batch-frontend.test.ts",
+        "passed": 21,
+        "skipped": 0
+      },
+      {
+        "file": "supplier-product-batch-http.test.ts",
+        "passed": 26,
+        "skipped": 0
+      },
+      {
+        "file": "supplier-product-batch-permission.test.ts",
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "file": "supplier-rbac-migration.test.ts",
+        "passed": 10,
+        "skipped": 0
+      },
+      {
+        "file": "uniapp-checkout-contract.test.ts",
+        "passed": 25,
+        "skipped": 0
+      },
+      {
+        "file": "uniapp-checkout-postgres.test.ts",
+        "passed": 4,
+        "skipped": 0
+      },
+      {
+        "file": "v2-cart-compatibility-migration.test.ts",
+        "passed": 5,
+        "skipped": 0
+      },
+      {
+        "file": "v2-coupon-compatibility-migration.test.ts",
+        "passed": 7,
+        "skipped": 0
+      }
+    ]
+  },
+  "native": {
+    "files": 14,
+    "passed": 186,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "file": "test/admin-product-brand.test.ts",
+        "passedCases": 12,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/admin-product-brand-permission.test.ts",
+        "passedCases": 6,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-concurrency-postgres.test.ts",
+        "passedCases": 11,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-permission.test.ts",
+        "passedCases": 2,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/cart-computation-http.test.ts",
+        "passedCases": 45,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/supplier-product-batch-http.test.ts",
+        "passedCases": 26,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/modern-cart-membership-price.test.ts",
+        "passedCases": 24,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-coupon-picker.test.ts",
+        "passedCases": 23,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-full-discount-checkout.test.ts",
+        "passedCases": 7,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-full-gift-checkout.test.ts",
+        "passedCases": 6,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-nth-discount-checkout.test.ts",
+        "passedCases": 7,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/order-time-discount-checkout.test.ts",
+        "passedCases": 8,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/admin-product-brand-native.test.ts",
+        "passedCases": 5,
+        "failedCases": 0,
+        "skippedCases": 0
+      },
+      {
+        "file": "test/admin-product-brand-http.test.ts",
+        "passedCases": 4,
+        "failedCases": 0,
+        "skippedCases": 0
+      }
+    ],
+    "retainedCompleteFiles": {
+      "files": 4,
+      "passed": 31,
+      "source": "Original 110/111 command: only these four complete passing files, whose exercised business/test/fixture inputs remain unchanged; the command itself stays failed."
+    },
+    "newMoneyCompleteCommand": {
+      "files": 8,
+      "passed": 146,
+      "exitCode": 0
+    },
+    "correctedBrandNative": {
+      "files": 1,
+      "passed": 5,
+      "exitCode": 0
+    },
+    "registeredBrandHttp": {
+      "files": 1,
+      "passed": 4,
+      "exitCode": 0
+    },
+    "ordinaryOverlap": 150,
+    "nativeOnly": 36,
+    "uniquePassed": 530,
+    "explanation": "186 different complete-file native cases; 150 match passing ordinary case definitions and are not added twice. All 36 ordinary native skips passed on PG16. Individual commands and first failure are preserved."
+  },
+  "workerTypes": [
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T06:39:35.233Z",
+      "completedAt": "2026-10-13T06:43:20.901Z",
+      "durationMs": 225667,
+      "code": 0,
+      "signal": null,
+      "log": ".cache/commerce-wave-worker-unit-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "runtime",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--max-old-space-size=6144",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "startedAt": "2026-10-13T06:43:20.912Z",
+      "completedAt": "2026-10-13T06:45:10.802Z",
+      "durationMs": 109890,
+      "code": 0,
+      "signal": null,
+      "log": ".cache/commerce-wave-worker-runtime-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "frontend": {
+    "admin": {
+      "vue": "3.5.42",
+      "completeTypesExit": 0,
+      "productionBuildExit": 0,
+      "brandBrowserFlows": 16,
+      "labelBrowserFlows": 13,
+      "consoleErrors": 0,
+      "consoleWarnings": 0
+    },
+    "supplier": {
+      "vue": "3.5.42",
+      "completeTypesExit": 0,
+      "productionBuildExit": 0,
+      "browserSessions": 3,
+      "consoleErrors": 0,
+      "consoleWarnings": 0
+    },
+    "uniapp": {
+      "vue": "3.4.21",
+      "completeTypesExit": 0,
+      "productionBuilds": [
+        "H5",
+        "MP-Weixin",
+        "App"
+      ],
+      "productionBuildExitCodes": [
+        0,
+        0,
+        0
+      ],
+      "combinedInputCount": 531,
+      "combinedInputDigest": "5e2179e55394f52ea4c6dd4e420f278a0546335dc2508a7dd121712b4720d513",
+      "existingRuntimePassed": 48,
+      "cartBrowserFlows": 7,
+      "consoleErrors": 0,
+      "consoleWarnings": [
+        "Existing DCloud vue-router deprecated entry import"
+      ],
+      "realCouponClaims": 1,
+      "ownedCoupons": 1,
+      "ordersCreated": 0,
+      "payments": 0
+    },
+    "boundary": "Installed Playwright/Chromium; browser plugin unavailable. Admin/Supplier synthetic APIs; cart actual signed JWT/registered handlers/disposable PGlite with synthetic login/profile/theme. MP/App are build evidence, not device acceptance."
+  },
+  "staticRoutes": {
+    "php": 1904,
+    "ts": 2435,
+    "matched": 955,
+    "executableMatched": 934,
+    "unavailable": 21,
+    "missing": 949,
+    "retired": 17,
+    "actionableMissing": 932,
+    "coveragePercent": 50.2,
+    "executableCoveragePercent": 49.1,
+    "effectiveExecutableCoveragePercent": 49.5,
+    "newVerifiedRootLegacyContracts": 7,
+    "peerQrRegisteredContracts": 2,
+    "explanation": "Six Admin brand PHP records (seven TS registrations due to optional type), one cart compute PHP contract; supplier batch URL already existed, behavior restored. QR/follow two registrations belong to the peer, whose separate evidence is not merged into root test counts."
+  },
+  "failuresPreserved": [
+    "Root lock-helper ASI parse error fixed before final checks",
+    "Vue reactive pending structuredClone DataCloneError fixed with DTO copy and rendered modal recovery",
+    "Supplier fixture forms incorrectly inactive; explicit active fixture fixed without relaxing mature form parser",
+    "Supplier missing/re-written audit receipt and nonselected-field triggers now rollback",
+    "Binary-float cart raw subtotal one cent error for numeric(12,2) SKU fixed across cart/buy/compute; mature safe-cent DTO reused",
+    "Partial dependency entities resolution failure fixed with strict UniApp npm ci",
+    "Brand native audit fixture awaited a writer blocked by its own retained audit barrier; corrected handshake, unchanged production lock budgets",
+    "Outside-repository image-locator QA failure fixed and rerun"
+  ],
+  "cleanup": {
+    "ownedNativeClusters": [
+      "finance-postgres-GYBs5K",
+      "finance-postgres-dEnvLV",
+      "finance-postgres-qznC5Z",
+      "finance-postgres-0egdl9"
+    ],
+    "fixtureDatabases": 0,
+    "fixtureRoles": 0,
+    "independentPgCtlStatusExitCodes": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "adminServerStopped": true,
+    "supplierServerStopped": true,
+    "cartServerStopped": true
+  },
+  "limitations": [
+    "Whole migration remains open: Checklist404/249done/155open",
+    "Two opaque inherited catalog endpoints remain open, not registered or retired",
+    "Peer QR/media/native-read/scanner validation has separate snapshots and is not included in root 530 unique tests",
+    "MP/App device execution, full scanner runtime in vendor bundle, real providers, production privileges/data/CI/deployment remain open",
+    "No production DDL or business writes, commit, push or deployment"
+  ],
+  "receipts": [
+    {
+      "file": "audit/brand-batch-cart-20261013/01-commerce-wave-tests-combined-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-tests-combined-final.json",
+      "bytes": 225542,
+      "sha256": "6be7b5d56802c19c4c743df45023fe2237b0fe8868dcd1645e0477090e3b3dc2"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/02-commerce-wave-tests-combined-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-tests-combined-final.log",
+      "bytes": 187,
+      "sha256": "7e760b8ba221de1fc579208416a66979eb196c351e28b09ac66916557125eb2b"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/03-commerce-wave-source-final-before.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-source-final-before.json",
+      "bytes": 635457,
+      "sha256": "8b52a00446ce638695f2cc60d287d03e31e49e595de056ba9e0c32c3b2a08532"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/04-commerce-wave-source-final-after.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-source-final-after.json",
+      "bytes": 635457,
+      "sha256": "dba993c817166f5a085fe0323f95ebf5c8d80d4dec9c225a71c23a06edcc3e27"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/05-commerce-wave-worker-types-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-worker-types-final.json",
+      "bytes": 1114,
+      "sha256": "23fc18213bfb7961f0c3804496cc0807be7b77d56accfa046d4919efc5c31c37"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/06-commerce-wave-worker-unit-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-worker-unit-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/07-commerce-wave-worker-runtime-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\migration-validation\\workers-ts\\.cache\\commerce-wave-worker-runtime-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/08-commerce-wave-native-final-verification.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final-verification.json",
+      "bytes": 6758,
+      "sha256": "c25f1c5db4c40b14db765a36b0be9351ec97b78cc470a60a50500ddbf6e25e44"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/09-commerce-wave-native-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-final.log",
+      "bytes": 32873,
+      "sha256": "07dc16710705494ecb08f78e1438cf8bfebce8c2d8960c88eece149c7b0f76fa"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/10-commerce-wave-native-money-final-verification.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final-verification.json",
+      "bytes": 6715,
+      "sha256": "b4d634ae190347c93d2bc0b8aa809dc6a3e6b711cb7e301d5845edf8d7e2cf1c"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/11-commerce-wave-native-money-final.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\commerce-wave-native-money-final.log",
+      "bytes": 37799,
+      "sha256": "7d0b3d384ac1c80fa81b89ceb4207faa09de77b0149cac3f7d2cb0a40b56bdd8"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/12-admin-brand-native-final-retest.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-native-final-retest.json",
+      "bytes": 406,
+      "sha256": "a7fac86b84802b662f2e0c66c8cac653e04d17c2a664bc95453b6c36dd0bf9a6"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/13-admin-brand-native-final-retest.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-native-final-retest.log",
+      "bytes": 2226,
+      "sha256": "392479bd1deb0e21da5a81170174e33ac1c72413792f3948bdb7b8a04fcd0722"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/14-admin-brand-native-final-retest-cleanup.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-native-final-retest-cleanup.json",
+      "bytes": 319,
+      "sha256": "3463432342e38bb15e9246708851e7e8d1db8f8c25b182d71f189b3d904a7a69"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/15-admin-brand-http-createapp-pg-receipt.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-http-createapp-pg-receipt.json",
+      "bytes": 339,
+      "sha256": "a8d2f1d46cb46e153e70137173706762cb0d9a08bff2bef843fce6c7f1b3b14f"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/16-admin-brand-http-createapp-pg.log",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-http-createapp-pg.log",
+      "bytes": 2062,
+      "sha256": "149e730495e52479b705df59de2d15249fea8f4e57adc0d48120728345b77bda"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/17-admin-brand-http-createapp-pg-cleanup.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-http-createapp-pg-cleanup.json",
+      "bytes": 319,
+      "sha256": "7428456aa4961757eede01c943e153bfd038fc078f4d3721a19fc8ee7141cfa2"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/18-build-result-all-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-validation-final\\build-result-all-final.json",
+      "bytes": 347,
+      "sha256": "ee0a4c059aa9ff3631ff87eec8d2121893de42ef72e769648a1c500c7bacc118"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/19-browser-result.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-validation-final\\browser-result.json",
+      "bytes": 10111,
+      "sha256": "37f8efdc0e1fcdb1b9fdd08737bdc0698fa62b3f85ae444a52a194ec2b4809e6"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/20-devserver-stop.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-brand-validation-final\\devserver-stop.json",
+      "bytes": 108,
+      "sha256": "c913e585775ed8c343d0ea471f210b30b6ac94435968475678de6736e8921b86"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/21-supplier-batch-final-verification.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-batch-final-verification.json",
+      "bytes": 1739,
+      "sha256": "6f06d1561996308459af2d13393c20b7381120516dd64b7d04ab552fee083fc3"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/22-supplier-batch-final-sourceproof.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\supplier-batch-final-sourceproof.json",
+      "bytes": 3386,
+      "sha256": "0fb31594a9fe0c12b8dc5f38adcd68f5471111a08c7adb0612c41d70bb777958"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/23-cart-computation-agent-validation-money-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\cart-computation-agent-validation-money-final.json",
+      "bytes": 6564,
+      "sha256": "7a1be3b82489221c1f06a95a031e9dd1d301dd10180251b0ef9f429d088e2387"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/24-cart-computation-agent-validation-combined-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\cart-computation-agent-validation-combined-final.json",
+      "bytes": 6282,
+      "sha256": "2bb3247004eac998b2fab38442a15b3c2fb4eac74a318ef56bd64d43e10017aa"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/25-cart-computation-combined-input-before.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\cart-computation-combined-input-before.json",
+      "bytes": 87278,
+      "sha256": "5ac7ef19fa9159b97e6eee5f85290fd0db4014d065d57e46fbde87f13a0b08b8"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/26-cart-computation-combined-input-after.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\cart-computation-combined-input-after.json",
+      "bytes": 87337,
+      "sha256": "5118844b70e1f5a930e2686bbf4b198844986adc434ac0e67d93bcbd21f71d74"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/27-cart-computation-browser-result-combined-final.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\cart-computation-browser-result-combined-final.json",
+      "bytes": 1774,
+      "sha256": "1ab1fdc1915327d2681ed0102014a1fe518c981e251d9c3ccd9b1e71b4165f72"
+    },
+    {
+      "file": "audit/brand-batch-cart-20261013/28-admin-label-commerce-browser-result.json",
+      "original": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-label-commerce-browser-result.json",
+      "bytes": 4120,
+      "sha256": "3ce8a0ce1530a3489b7f34f900ccbae9a57e54f909bf0f0e2cea18dc383e70e4"
+    }
+  ],
+  "gitDiffCheck": {
+    "exitCode": 0,
+    "log": "audit/brand-batch-cart-20261013/29-commerce-wave-diffcheck-final.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "checkboxes": {
+    "checklist": {
+      "total": 404,
+      "done": 249,
+      "open": 155
+    },
+    "audit": {
+      "total": 88,
+      "done": 50,
+      "open": 38
+    }
+  }
+}

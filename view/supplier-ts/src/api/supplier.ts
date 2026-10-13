@@ -2,6 +2,7 @@ import { ApiError, apiRequest } from "./http";
 import { parseSupplierRefundDetail } from '@/utils/refundDetail';
 import { parsePickingSheets } from '@/utils/pickingSheet';
 import type { SupplierProfilePatch } from '@/utils/supplierProfilePatch';
+import { productImagePreview } from '@/utils/productMedia';
 import type {
   DashboardStats,
   ExpressCompany,
@@ -20,6 +21,11 @@ import type {
   ProductRow,
   ProductBatchResult,
   ProductCategory,
+  ProductCategoryPayload,
+  SupplierProductBatchSelection,
+  SupplierProductBatchFacts,
+  SupplierProductBatchPayload,
+  SupplierProductBatchReceipt,
   ProductDetail,
   ProductRulePayload,
   ProductRuleTemplate,
@@ -111,14 +117,15 @@ const previewCategories: ProductCategory[] = [
     path: "",
     level: 0,
     pic: "",
+    big_pic: "",
     sort: 100,
     is_show: 1,
     add_time: 1786100000,
     children: [
-      { id: 12, pid: 11, cate_name: "杯壶", path: "11", level: 1, pic: "", sort: 90, is_show: 1, add_time: 1786100100, children: [] },
+      { id: 12, pid: 11, cate_name: "杯壶", path: "11", level: 1, pic: "", big_pic: "", sort: 90, is_show: 1, add_time: 1786100100, children: [] },
     ],
   },
-  { id: 21, pid: 0, cate_name: "数码配件", path: "", level: 0, pic: "", sort: 80, is_show: 1, add_time: 1786100200, children: [] },
+  { id: 21, pid: 0, cate_name: "数码配件", path: "", level: 0, pic: "", big_pic: "", sort: 80, is_show: 1, add_time: 1786100200, children: [] },
 ];
 
 const previewProductDetails = new Map<number, ProductDetail>([
@@ -436,6 +443,74 @@ export async function getProducts(params: Record<string, string | number>): Prom
   return apiRequest<PageResult<ProductRow>>({ method: "GET", url: "/product/product/list", params });
 }
 
+const previewBatchExtra = new Map<number, { delivery_type: string; system_form_id: number }>();
+async function previewBatchFacts(selection: SupplierProductBatchSelection): Promise<SupplierProductBatchFacts> {
+  const filter = selection.where;
+  const rows = previewProducts.filter(row => !selection.all ? selection.ids.includes(row.id)
+    : (!filter.store_name || row.store_name.includes(String(filter.store_name)))
+      && (filter.is_show === '' || filter.is_show === undefined || row.is_show === Number(filter.is_show))
+      && (filter.is_verify === '' || filter.is_verify === undefined || row.is_verify === Number(filter.is_verify)));
+  if (!rows.length || rows.length > 100 || (!selection.all && rows.length !== new Set(selection.ids).size)) throw new Error('请选择1至100个示例商品');
+  const products = rows.sort((a, b) => a.id - b.id).map(row => {
+    const detail = previewProductDetails.get(row.id) ?? defaultPreviewDetail(row.id);
+    return { id: row.id, type: 2, relation_id: 20, product_type: row.product_type, store_name: row.store_name,
+      is_del: 0, is_show: row.is_show, is_verify: row.is_verify, cate_id: [...detail.cate_id].sort((a, b) => a - b).join(','),
+      delivery_type: previewBatchExtra.get(row.id)?.delivery_type ?? '1', system_form_id: previewBatchExtra.get(row.id)?.system_form_id ?? 0,
+      freight: detail.freight, postage: detail.postage, temp_id: detail.temp_id };
+  });
+  const categories = previewCategoryRows();
+  const relations = products.flatMap(row => row.cate_id.split(',').filter(Boolean).map(Number).map(id => ({
+    product_id: row.id, relation_id: id, relation_pid: categories.find(category => category.id === id)?.pid ?? 0, status: row.is_show })));
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ products, relations })));
+  return { products, relations, ids: products.map(row => row.id), count: products.length,
+    revision: [...new Uint8Array(bytes)].map(part => part.toString(16).padStart(2, '0')).join('') };
+}
+export async function getSupplierProductBatchSelection(selection: SupplierProductBatchSelection, signal?: AbortSignal): Promise<SupplierProductBatchFacts> {
+  signal?.throwIfAborted();
+  if (previewMode) return previewBatchFacts(selection);
+  return apiRequest<SupplierProductBatchFacts>({ method: 'GET', url: '/product/product/batch-selection',
+    params: { all: selection.all, ids: selection.ids.join(','), where: JSON.stringify(selection.where) }, signal });
+}
+export async function applySupplierProductBatch(payload: SupplierProductBatchPayload, signal?: AbortSignal): Promise<SupplierProductBatchReceipt> {
+  signal?.throwIfAborted();
+  if (!previewMode) return apiRequest<SupplierProductBatchReceipt>({ method: 'POST', url: '/product/batch_process', data: payload, signal });
+  const before = await previewBatchFacts(payload);
+  if (payload.expected_revision !== before.revision) throw new Error('示例商品已变化，请刷新后重试');
+  const data = payload.data;
+  if ([3, 8].includes(payload.type) && before.products.some(row => row.product_type !== 0)) throw new Error('物流和运费仅支持实物商品');
+  if (payload.type === 1) {
+    const ids = [...new Set(data.cate_id ?? [])].sort((a, b) => a - b), categories = previewCategoryRows();
+    if (!ids.length || ids.length > 20 || ids.join(',').length > 64) throw new Error('请选择有效分类');
+    if (ids.some(id => { const category = categories.find(row => row.id === id);
+      return !category?.is_show || category.path.split(',').filter(Boolean).some(parent => !categories.find(row => row.id === Number(parent))?.is_show); })) throw new Error('分类不存在或已停用');
+  } else if (payload.type === 3) {
+    if (!data.delivery_type?.length || data.delivery_type.some(value => ![1, 2, 3].includes(value))) throw new Error('请选择物流方式');
+  } else if (payload.type === 7) {
+    if (data.system_form_id !== 0 && data.system_form_id !== 50) throw new Error('示例表单不存在');
+  } else if (data.freight === 3) {
+    if (!previewShippingTemplates[data.temp_id! - 1]) throw new Error('示例运费模板不存在');
+  } else if (data.freight === 2 && !/^(?:0|[1-9]\d{0,9})\.\d{2}$/.test(data.postage ?? '')) throw new Error('固定运费格式错误');
+  for (const row of before.products) {
+    const detail = clonePreviewDetail(previewProductDetails.get(row.id) ?? defaultPreviewDetail(row.id));
+    const extra = { delivery_type: row.delivery_type, system_form_id: row.system_form_id };
+    if (payload.type === 1) detail.cate_id = [...new Set(data.cate_id!)].sort((a, b) => a - b);
+    else if (payload.type === 3) extra.delivery_type = [...new Set(data.delivery_type!)].sort((a, b) => a - b).join(',');
+    else if (payload.type === 7) extra.system_form_id = data.system_form_id!;
+    else Object.assign(detail, { freight: data.freight, postage: data.freight === 2 ? data.postage : '0.00', temp_id: data.freight === 3 ? data.temp_id : 0 });
+    previewProductDetails.set(row.id, detail); previewBatchExtra.set(row.id, extra);
+  }
+  return { ...await previewBatchFacts({ all: 0, ids: before.ids, where: {} }), updated: before.count, verified: true };
+}
+export async function getSupplierBatchForms(signal?: AbortSignal): Promise<Array<{ id: number; name: string }>> {
+  if (previewMode) return [{ id: 50, name: '示例订单留言' }];
+  return apiRequest({ method: 'GET', url: '/form/all_system_form', signal });
+}
+export async function getSupplierBatchFormFields(id: number, signal?: AbortSignal): Promise<Array<{ title: string; name: string; require: boolean }>> {
+  if (previewMode) { if (id !== 50) throw new Error('示例表单不存在'); return [{ title: '订单留言', name: '文本框', require: false }]; }
+  const result = await apiRequest<{ info: { value: Array<{ title: string; name: string; require: boolean }> } }>({ method: 'GET', url: `/form/info/${id}`, params: { type: 1 }, signal });
+  return result.info.value;
+}
+
 export async function getProductRuleTemplates(): Promise<ProductRuleTemplate[]> {
   if (previewMode) return previewProductRules.map(cloneProductRule);
   return apiRequest<ProductRuleTemplate[]>({ method: "GET", url: "/product/product/get_rule" });
@@ -618,27 +693,109 @@ export async function setProductShow(id: number, isShow: number) {
   return apiRequest<null>({ method: "PUT", url: `/product/product/set_show/${id}/${isShow}` });
 }
 
-export async function getProductCategories(): Promise<ProductCategory[]> {
-  if (previewMode) return JSON.parse(JSON.stringify(previewCategories)) as ProductCategory[];
-  return apiRequest<ProductCategory[]>({ method: "GET", url: "/product/category" });
+let previewCategoryRevision = 1;
+function previewCategoryRows(): ProductCategory[] {
+  const rows: ProductCategory[] = [];
+  const walk = (items: ProductCategory[]) => {
+    for (const item of items) {
+      rows.push({ ...item, children: [], revision: `preview-category-${previewCategoryRevision}` });
+      walk(item.children);
+    }
+  };
+  walk(previewCategories);
+  return rows;
 }
-
-export async function saveProductCategory(id: number, data: Record<string, unknown>) {
+function previewCategoryTree(rows: ProductCategory[]): ProductCategory[] {
+  const build = (pid: number, ancestors: number[]): ProductCategory[] => rows
+    .filter(row => row.pid === pid)
+    .sort((a, b) => b.sort - a.sort || b.id - a.id)
+    .map(row => ({ ...row, path: ancestors.join(','), level: ancestors.length,
+      revision: `preview-category-${previewCategoryRevision}`, children: build(row.id, [...ancestors, row.id]) }));
+  return build(0, []);
+}
+function commitPreviewCategories(rows: ProductCategory[]) {
+  previewCategoryRevision += 1;
+  previewCategories.splice(0, previewCategories.length, ...previewCategoryTree(rows));
+}
+function previewCategory(id: number, rows = previewCategoryRows()) {
+  const row = rows.find(item => item.id === id);
+  if (!row) throw new Error('分类不存在，请刷新后重试');
+  return row;
+}
+function checkPreviewCategoryRevision(row: ProductCategory, revision?: string) {
+  if (!revision || row.revision !== revision) throw new Error('分类已被其他操作修改，请刷新后重试');
+}
+function previewCategoryDescendants(id: number, rows: ProductCategory[]) {
+  const ids = new Set([id]);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const row of rows) if (ids.has(row.pid) && !ids.has(row.id)) { ids.add(row.id); changed = true; }
+  }
+  return ids;
+}
+export async function getProductCategories(): Promise<ProductCategory[]> {
+  if (previewMode) return previewCategoryTree(previewCategoryRows());
+  return apiRequest<ProductCategory[]>({ method: "GET", url: "/product/category/tree" });
+}
+export async function getProductCategoryDetail(id: number): Promise<ProductCategory> {
+  if (previewMode) return previewCategory(id);
+  const detail = await apiRequest<Omit<ProductCategory, 'children'>>({ method: "GET", url: `/product/category/${id}/detail` });
+  return { ...detail, children: [] };
+}
+export async function saveProductCategory(id: number, data: ProductCategoryPayload) {
   if (previewMode) {
-    const newId = id || Math.max(...previewCategories.flatMap((item) => [item.id, ...item.children.map((child) => child.id)])) + 1;
-    if (!id) previewCategories.push({ id: newId, pid: Number(data.pid ?? 0), cate_name: String(data.cate_name ?? "新分类"), path: "", level: 0, pic: String(data.pic ?? ""), sort: Number(data.sort ?? 0), is_show: Number(data.is_show ?? 1), add_time: Math.floor(Date.now() / 1000), children: [] });
+    const rows = previewCategoryRows(), previous = id ? previewCategory(id, rows) : undefined;
+    if (previous) checkPreviewCategoryRevision(previous, data.expected_revision);
+    const name = data.cate_name.trim();
+    if (!name || [...name].length > 30) throw new Error('分类名称需为1至30个字符');
+    if (data.pic.length > 512 || data.big_pic.length > 255) throw new Error('分类图片地址超长');
+    if ([data.pic, data.big_pic].some(reference => reference && !productImagePreview(reference, {}))) throw new Error('图片地址需为HTTPS或安全公共站内路径');
+    if (!Number.isSafeInteger(data.pid) || data.pid < 0 || !Number.isInteger(data.sort) || data.sort < 0 || data.sort > 1_000_000 || ![0, 1].includes(data.is_show)) throw new Error('分类参数无效');
+    const descendants = previous ? previewCategoryDescendants(id, rows) : new Set<number>();
+    if (descendants.has(data.pid)) throw new Error('上级分类不能是自身或下级');
+    const parent = data.pid ? previewCategory(data.pid, rows) : undefined;
+    if (parent && !parent.is_show && data.is_show === 1) throw new Error('父级分类已停用，不能启用下级分类');
+    const depth = parent ? parent.level + 1 : 0;
+    const height = previous ? Math.max(...rows.filter(row => descendants.has(row.id)).map(row => row.level - previous.level)) : 0;
+    if (depth + height > 2) throw new Error('分类最多三级');
+    if (rows.some(row => row.id !== id && row.pid === data.pid && row.cate_name === name)) throw new Error('同一上级下分类名称不能重复');
+    const newId = id || Math.max(0, ...rows.map(row => row.id)) + 1;
+    const value: ProductCategory = { id: newId, pid: data.pid, cate_name: name, path: '', level: depth,
+      pic: data.pic, big_pic: data.big_pic, sort: data.sort, is_show: data.is_show,
+      add_time: previous?.add_time ?? Math.floor(Date.now() / 1000), children: [] };
+    if (previous) {
+      const statusChanged = previous.is_show !== data.is_show;
+      Object.assign(previous, value);
+      if (statusChanged) for (const row of rows) if (descendants.has(row.id)) row.is_show = data.is_show;
+    } else rows.push(value);
+    commitPreviewCategories(rows);
     return { id: newId };
   }
   return apiRequest<{ id: number }>({ method: id ? "PUT" : "POST", url: id ? `/product/category/${id}` : "/product/category", data });
 }
-
-export async function deleteProductCategory(id: number) {
+export async function deleteProductCategory(id: number, expectedRevision?: string) {
   if (previewMode) {
-    const index = previewCategories.findIndex((item) => item.id === id);
-    if (index >= 0) previewCategories.splice(index, 1);
+    const rows = previewCategoryRows(), row = previewCategory(id, rows);
+    checkPreviewCategoryRevision(row, expectedRevision);
+    if (rows.some(item => item.pid === id)) throw new Error('请先删除下级分类');
+    if (previewProducts.some(product => (previewProductDetails.get(product.id) ?? defaultPreviewDetail(product.id)).cate_id.includes(id))) throw new Error('示例商品仍引用此分类');
+    commitPreviewCategories(rows.filter(item => item.id !== id));
     return null;
   }
-  return apiRequest<null>({ method: "DELETE", url: `/product/category/${id}` });
+  return apiRequest<null>({ method: "DELETE", url: `/product/category/${id}`, data: { expected_revision: expectedRevision } });
+}
+export async function setProductCategoryShow(id: number, isShow: number, expectedRevision?: string) {
+  if (previewMode) {
+    const rows = previewCategoryRows(), row = previewCategory(id, rows);
+    checkPreviewCategoryRevision(row, expectedRevision);
+    if (![0, 1].includes(isShow)) throw new Error('分类状态无效');
+    if (isShow && row.pid && !previewCategory(row.pid, rows).is_show) throw new Error('父级分类已停用，不能启用下级分类');
+    const descendants = previewCategoryDescendants(id, rows);
+    for (const item of rows) if (descendants.has(item.id)) item.is_show = isShow;
+    commitPreviewCategories(rows);
+    return null;
+  }
+  return apiRequest<null>({ method: "PUT", url: `/product/category/set_show/${id}/${isShow}`, data: { expected_revision: expectedRevision } });
 }
 
 export async function getProductDetail(id: number): Promise<ProductDetail> {

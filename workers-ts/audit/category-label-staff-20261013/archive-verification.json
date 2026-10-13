@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-13T09:47:44.201Z",
+  "mismatches": [],
+  "results": [
+    {
+      "ledger": "audit/parallel-brand-batch-cart-migration-20261013.json",
+      "receipts": 28
+    },
+    {
+      "ledger": "audit/parallel-category-label-staff-migration-20261013.json",
+      "receipts": 63
+    }
+  ],
+  "checkboxCounts": [
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "done": 249,
+      "open": 155
+    },
+    {
+      "file": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "done": 50,
+      "open": 38
+    }
+  ]
+}

@@ -97,3 +97,5 @@ export * from "../candidates/offline_order_balance";
 export * from "../candidates/offline_order_query_evidence";
 export * from "../candidates/offline_order_external_payment";
 export * from "../candidates/offline_order_payment_dispatch";
+// ERP state has a separate reviewed maintenance migration and readiness gate.
+export * from '../erp';

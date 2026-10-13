@@ -2,6 +2,7 @@ import { ValidateException } from '@/utils/errors';
 import { outRequestHash,normalizeOutRequestKey } from '@/services/out/OutIdempotency';
 import { freezeCustomerActor,freezeCustomerJson,type CustomerJson } from './CustomerWorkOperationRequest';
 import type { CustomerWorkActor } from './CustomerWorkScope';
+import { normalizeMemberWriteoffCode } from '@/services/order/StoreOrderWriteoffService';
 
 export const CUSTOMER_WRITEOFF_VERSION='customer-work-writeoff-operation-v1' as const;
 export const CUSTOMER_WRITEOFF_READ_VERSION='customer-work-writeoff-read-v1' as const;
@@ -41,4 +42,4 @@ export async function prepareWriteoff(context:WriteoffContext,value:unknown):Pro
  const actor=freezeCustomerActor(context.actor),key=normalizeOutRequestKey(context.request_key),input=writeoffInput(value);
  return Object.freeze({actor,key,kind:CUSTOMER_WRITEOFF_KIND,input,hash:await outRequestHash({version:CUSTOMER_WRITEOFF_VERSION,actor_uid:actor.uid,kind:CUSTOMER_WRITEOFF_KIND,input})});
 }
-export function writeoffLookup(value:unknown){const r=writeoffRecord(freezeCustomerJson(value),['version','scope_key','namespace','value']);if(r.version!==CUSTOMER_WRITEOFF_READ_VERSION||typeof r.namespace!=='string'||!['auto','order-code','member-barcode','legacy-order-id'].includes(r.namespace))throw new ValidateException('核销查询协议无效');const namespace=r.namespace as WriteoffNamespace,text=writeoffText(r.value,32);if(namespace==='legacy-order-id'&&(!/^[1-9]\d{0,9}$/.test(text)||Number(text)>2147483647))throw new ValidateException('旧入口必须提供真实订单行标识');if(namespace==='order-code')writeoffCode(text);if(['auto','member-barcode'].includes(namespace)&&!/^[A-Za-z0-9_-]+$/.test(text))throw new ValidateException('核销查询码须为严格ASCII标识');return{version:CUSTOMER_WRITEOFF_READ_VERSION,scope_key:writeoffHash(r.scope_key),namespace,value:text};}
+export function writeoffLookup(value:unknown){const r=writeoffRecord(freezeCustomerJson(value),['version','scope_key','namespace','value']);if(r.version!==CUSTOMER_WRITEOFF_READ_VERSION||typeof r.namespace!=='string'||!['auto','order-code','member-barcode','legacy-order-id'].includes(r.namespace))throw new ValidateException('核销查询协议无效');const namespace=r.namespace as WriteoffNamespace,text=writeoffText(r.value,32);if(namespace==='legacy-order-id'&&(!/^[1-9]\d{0,9}$/.test(text)||Number(text)>2147483647))throw new ValidateException('旧入口必须提供真实订单行标识');if(namespace==='order-code')writeoffCode(text);if(namespace==='member-barcode'&&!/^[A-Za-z0-9_-]+$/.test(text))normalizeMemberWriteoffCode(text);if(namespace==='auto'&&!/^[A-Za-z0-9_-]+$/.test(text))throw new ValidateException('核销查询码须为严格ASCII标识');return{version:CUSTOMER_WRITEOFF_READ_VERSION,scope_key:writeoffHash(r.scope_key),namespace,value:text};}

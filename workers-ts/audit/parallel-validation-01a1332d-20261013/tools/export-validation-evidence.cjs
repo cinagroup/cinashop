@@ -1,0 +1,50 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const source=String.raw`\\tsclient\I\cinagroup\cinashop`,local=path.join(__dirname,'cinashop-migration-20261013-HUPOBq');
+const out=path.join(source,'workers-ts/audit/parallel-validation-01a1332d-20261013');
+const results=path.join(local,'validation-results'),hash=x=>crypto.createHash('sha256').update(x).digest('hex');
+fs.mkdirSync(out,{recursive:true});
+const copied=[];
+const copy=(from,name)=>{if(!fs.existsSync(from))return;const dest=path.join(out,name);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(from,dest);copied.push({path:name,sha256:hash(fs.readFileSync(dest))});};
+for(const file of fs.readdirSync(results))if(/\.(?:log|json)$/.test(file))copy(path.join(results,file),'commands/'+file);
+for(const file of ['input-manifest.json','input-manifest-final.json','input-manifest-integration-final.json','input-verification.json','input-verification-final.json','toolchain-locks.json'])copy(path.join(local,file),file);
+copy(path.join(local,'geocoding-unit.log'),'initial/geocoding-sandbox.log');
+for(const file of fs.readdirSync(__dirname))if(/^supplier-product-catalog-(?:vitest|inputs).+20261013\.(?:log|json)$/.test(file))copy(path.join(__dirname,file),'supplier/'+file);
+const admin=path.join(local,'audit/legacy-system-log');
+if(fs.existsSync(admin))for(const file of fs.readdirSync(admin))if(/\.txt$/.test(file))copy(path.join(admin,file),'admin-initial/'+file);
+for(const file of ['prepare-migration-validation.cjs','verify-migration-inputs.cjs','add-validation-functions.cjs','finalize-validation-inputs.cjs','sync-integration-freeze.cjs','record-validation-tooling.cjs','import-integration-type-evidence.cjs','run-migration-validation.cjs','export-validation-evidence.cjs'])copy(path.join(__dirname,file),'tools/'+file);
+const records=fs.readdirSync(results).filter(x=>x.endsWith('.result.json')).map(file=>{
+  const result=JSON.parse(fs.readFileSync(path.join(results,file),'utf8'));
+  const stdout=fs.readFileSync(path.join(results,result.tag+'.stdout.log'),'utf8');
+  const line=stdout.split(/\r?\n/).filter(x=>/^\s*Tests\s/.test(x)).at(-1)??'';
+  const passed=line.match(/(\d+) passed/)?.[1],failed=line.match(/(\d+) failed/)?.[1],skipped=line.match(/(\d+) skipped/)?.[1];
+  return {...result,passed:passed?Number(passed):0,failed:failed?Number(failed):0,skipped:skipped?Number(skipped):0,summaryLine:line.trim(),stdout:'commands/'+result.tag+'.stdout.log',stderr:'commands/'+result.tag+'.stderr.log'};
+});
+const routeRecord=records.find(r=>r.tag==='routes-final')??records.find(r=>r.tag==='routes');
+let route;
+if(routeRecord?.status===0){route=JSON.parse(fs.readFileSync(path.join(results,routeRecord.tag+'.stdout.log'),'utf8'));fs.writeFileSync(path.join(out,'route-parity-parallel-followup-20261013.json'),JSON.stringify(route,null,2)+'\n');}
+const finalCoordination=path.join(out,'coordination-freeze-final.json');
+const coordination=JSON.parse(fs.readFileSync(fs.existsSync(finalCoordination)?finalCoordination:path.join(out,'coordination-freeze.json'),'utf8'));
+const frozen=coordination.files.map(file=>{
+  const relative='workers-ts/'+file.path,sourceSha256=hash(fs.readFileSync(path.join(source,relative))),copySha256=hash(fs.readFileSync(path.join(local,relative)));
+  return {path:relative,coordinatedSha256:file.sha256,sourceSha256,copySha256,matchesFreeze:sourceSha256===file.sha256&&copySha256===file.sha256};
+});
+fs.writeFileSync(path.join(out,'post-execution-shared-source-check.json'),JSON.stringify({verifiedAt:new Date().toISOString(),files:frozen,driftCount:frozen.filter(x=>!x.matchesFreeze).length},null,2));
+const doc='workers-ts/docs/php-ts-parallel-migration-20261013.md',docSource=path.join(source,doc),docCopy=path.join(local,doc);
+if(fs.existsSync(docSource))fs.writeFileSync(path.join(out,'post-snapshot-documentation.json'),JSON.stringify({observedAt:new Date().toISOString(),path:doc,sourceSha256:hash(fs.readFileSync(docSource)),snapshotSha256:fs.existsSync(docCopy)?hash(fs.readFileSync(docCopy)):null,note:'Root reported a documentary historical-timezone follow-up after the input snapshot. This does not change the frozen runtime/test inputs; the snapshot must not be described as every current repository file remaining unchanged.'},null,2));
+const supplierMeta=path.join(__dirname,'supplier-product-catalog-vitest-retry-result-20261013.json');
+const supplier=fs.existsSync(supplierMeta)?JSON.parse(fs.readFileSync(supplierMeta,'utf8')):null;
+const finalChecks=['geo-unit-final','admin-unit-final-retry','shared-unit-final','runner-unit-final','routes-final'].map(tag=>{const record=records.find(x=>x.tag===tag);return{tag,status:record?.status??null,passed:record?.passed??null,failed:record?.failed??null,skipped:record?.skipped??null};});
+const native=records.find(x=>x.tag==='native-final-retry')??records.find(x=>x.tag==='native-final');finalChecks.push({tag:native?.tag??'native-final',status:native?.status??null,passed:native?.passed??null,failed:native?.failed??null,skipped:native?.skipped??null});
+const supplierOutput=path.join(__dirname,'supplier-product-catalog-vitest-retry-20261013.log');const supplierPassed=fs.existsSync(supplierOutput)?fs.readFileSync(supplierOutput,'utf8').match(/Tests\s+(\d+) passed/)?.[1]:null;
+finalChecks.push({tag:'supplier-unit',status:supplier?.exitCode??null,passed:supplierPassed?Number(supplierPassed):null,failed:supplier?.exitCode===0?0:null});
+for(const record of records)if(record.tag.startsWith('type-')){record.validForIntegrationFinalScope=false;record.scopeNote='Executed before the final Admin historical-timezone integration source freeze. Preserved as prior-scope evidence only.';}
+const provenanceFile=path.join(out,'types-provenance.json');const provenance=fs.existsSync(provenanceFile)?JSON.parse(fs.readFileSync(provenanceFile,'utf8')):null;
+const types={ownership:'coordinating integration root',status:provenance?.validForIntegrationFinalScope?'verified current-scope actual execution evidence':'current-scope evidence not recorded by this validation agent',unitStatus:provenance?.unitStatus??null,runtimeStatus:provenance?.runtimeStatus??null,provenance:provenance?'types-provenance.json':null,inputCount:provenance?.inputCount??null,sourceDigest:provenance?.sourceDigest??null,commonInputCount:provenance?.commonInputCount??null,requiredScope:{adminService:'54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b',adminTest:'d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1',nativeTest:'ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a'}};
+finalChecks.push({tag:'type-unit-integrated',status:types.unitStatus,provenance:types.provenance},{tag:'type-runtime-integrated',status:types.runtimeStatus,provenance:types.provenance});
+const nativeOutput=native?fs.readFileSync(path.join(results,native.tag+'.stdout.log'),'utf8'):'';
+const nativeCleanup={sourceTag:native?.tag??null,fixtureDatabasesAndRolesRemainingZero:nativeOutput.includes('FINANCE_LOCAL_FIXTURES remaining=0'),ownedClusterStopped:/FINANCE_LOCAL_STOPPED .+/.test(nativeOutput),stoppedMarker:nativeOutput.match(/FINANCE_LOCAL_STOPPED (.+)/)?.[1]?.trim()??null};
+const allOwnedValidationPassed=finalChecks.filter(x=>!x.tag.endsWith('-integrated')).every(x=>x.status===0)&&frozen.every(x=>x.matchesFreeze)&&nativeCleanup.fixtureDatabasesAndRolesRemainingZero&&nativeCleanup.ownedClusterStopped;
+const testCounts={ordinaryPassed:finalChecks.filter(x=>x.tag.includes('unit')&&!x.tag.endsWith('-integrated')).reduce((sum,x)=>sum+(x.passed??0),0),nativePassed:native?.passed??null};
+const summary={generatedAt:new Date().toISOString(),thread:'01a1332d-ffe1-7932-a2c8-d314f67cd722',validationScope:'Final parallel follow-up source freeze, owned target regression groups and coordinated unit/runtime typechecks.',localRoot:local,evidenceRoot:out,finalChecks,testCounts,allOwnedValidationPassed,allRequiredValidationPassed:allOwnedValidationPassed&&provenance?.validForIntegrationFinalScope===true&&types.unitStatus===0&&types.runtimeStatus===0,types,nativeCleanup,records,supplier,route:route?{sourceTag:routeRecord.tag,phpRoot:route.phpRoot,totals:route.totals}:null,sharedSourceDriftCount:frozen.filter(x=>!x.matchesFreeze).length,copied};
+fs.writeFileSync(path.join(out,'validation-summary.json'),JSON.stringify(summary,null,2));
+console.log(JSON.stringify({evidenceRoot:out,recordCount:records.length,sharedSourceDriftCount:summary.sharedSourceDriftCount,route:summary.route}));

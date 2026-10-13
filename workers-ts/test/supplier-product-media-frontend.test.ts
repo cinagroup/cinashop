@@ -48,6 +48,7 @@ const rawImage = (id = 1) => ({ att_id: id, pid: 0, type: 4, file_type: 1, modul
 const sku = (id = 1) => ({ id, unique: `sku${id}`, suk: '默认', detail: { 规格: '默认' }, image: '', price: '2.00', settle_price: '1.00', cost: '0.00', ot_price: '0.00', vip_price: '0.00', stock: 5, bar_code: '', weight: '0.00', volume: '0.00', brokerage: '0.00', brokerage_two: '0.00', code: '' });
 const product = (id = 5) => ({ id, product_type: 0, store_name: '本地商品', store_info: '', keyword: '', unit_name: '件', bar_code: '', cate_id: [1], slider_image: ['https://images.invalid/original.png'], description: '既有说明', spec_type: 0, items: [{ value: '规格', detail: ['默认'] }], attrs: [sku()], freight: 1, postage: '0.00', temp_id: 0, is_postage: 1, is_support_refund: 1, is_limit: 0, limit_type: 1, limit_num: 1, sort: 0, ficti: 0, video_link: '' });
 const gate = () => { let resolve!: (value: any) => void; return { promise: new Promise<any>(r => resolve = r), resolve }; };
+const rule = (spec: Array<{ value: string; detail: string[] }>) => ({ id: 201, type: 2, relation_id: 20, rule_name: '真实规格模板', rule_value: spec, spec });
 async function flush() { for (let i = 0; i < 30; i++) { await Promise.resolve(); await runtime.nextTick(); } }
 async function mount(which: 'Form' | 'Picker' = 'Form', override: (config: any) => unknown = () => undefined) {
   const calls: any[] = [], emitted: any[] = []; let view: any;
@@ -82,6 +83,73 @@ it('appends stable references, reorders the main image, and excludes tickets and
     const writes = f.calls.filter(c => c.method === 'post'); expect(writes).toHaveLength(1);
     const payload = JSON.parse(writes[0].data); expect(payload.slider_image[0]).toBe('/api/assets/2');
     expect(JSON.stringify(payload)).not.toContain('signature='); expect(payload.media).toBeUndefined();
+  } finally { f.close(); }
+});
+it('keeps the complete priced product draft and open media target when a 15 by 15 template exceeds 200 SKUs', async () => {
+  const template = rule([{ value: '颜色', detail: Array.from({ length: 15 }, (_, index) => `色${index}`) }, { value: '尺码', detail: Array.from({ length: 15 }, (_, index) => `码${index}`) }]);
+  const f = await mount('Form', config => config.url === '/product/product/get_rule' ? [template] : undefined);
+  try {
+    f.view.form.attrs[0].image = '/api/assets/7'; f.view.form.attrs[0].price = '123.45'; f.view.form.attrs[0].stock = 78;
+    f.view.form.description = '未保存正文'; f.view.openMedia('slider'); f.view.selectedRuleId.value = 201;
+    const before = JSON.stringify(f.view.form), generation = f.view.mediaGeneration.value, target = f.view.mediaTarget.value;
+    await f.view.applyProductRule(); await flush();
+    expect(JSON.stringify(f.view.form)).toBe(before); expect(f.view.mediaGeneration.value).toBe(generation);
+    expect(f.view.mediaTarget.value).toBe(target); expect(f.view.mediaPickerOpen.value).toBe(true);
+    expect(runtime.dialog.messages.at(-1)).toBe('SKU组合不能超过200项'); expect(f.calls.filter(call => call.method === 'post')).toEqual([]);
+  } finally { f.close(); }
+});
+it('applies a valid copied template atomically and retains legacy price/stock reset semantics', async () => {
+  const template = rule([{ value: '颜色', detail: ['红', '蓝'] }, { value: '尺码', detail: ['S', 'M'] }]);
+  const f = await mount('Form', config => config.url === '/product/product/get_rule' ? [template] : undefined);
+  try {
+    f.view.selectedRuleId.value = 201; f.view.openMedia('slider'); await f.view.applyProductRule(); await flush();
+    expect(f.view.form.spec_type).toBe(1); expect(f.view.form.items).toEqual(template.spec);
+    expect(f.view.form.attrs.map((item: any) => item.suk)).toEqual(['红,S', '红,M', '蓝,S', '蓝,M']);
+    expect(f.view.form.attrs.every((item: any) => item.price === '0.00' && item.stock === 0 && item.image === '' && !item.id)).toBe(true);
+    expect(f.view.mediaPickerOpen.value).toBe(false); expect(f.view.form.store_name).toBe('本地商品');
+    expect(template.spec[0].detail).toEqual(['红', '蓝']); expect(f.calls.filter(call => call.method === 'post')).toEqual([]);
+  } finally { f.close(); }
+});
+it('preserves priced SKUs when reading a legitimate multi-spec product whose dimension is named 规格', async () => {
+  const detail = { ...product(), spec_type: 1, items: [{ value: '规格', detail: ['默认'] }] };
+  const f = await mount('Form', config => config.url === '/product/product/5' ? detail : undefined);
+  try { await flush(); expect(f.view.form.items).toEqual(detail.items); expect(f.view.form.attrs[0]).toMatchObject({ id: 1, price: '2.00', stock: 5, suk: '默认' }); }
+  finally { f.close(); }
+});
+it('retains an applied single-dimension template named 规格 after reactive updates', async () => {
+  const template = rule([{ value: '规格', detail: ['默认'] }]);
+  const f = await mount('Form', config => config.url === '/product/product/get_rule' ? [template] : undefined);
+  try { f.view.selectedRuleId.value = 201; await f.view.applyProductRule(); await flush();
+    expect(f.view.form.spec_type).toBe(1); expect(f.view.form.items).toEqual(template.spec);
+    expect(f.view.form.attrs).toHaveLength(1); expect(f.view.form.attrs[0]).toMatchObject({ suk: '默认', price: '0.00', stock: 0 });
+  } finally { f.close(); }
+});
+it('initializes an empty multi-spec editor only for a deliberate radio change and preserves saved draft on blocked changes', async () => {
+  const f = await mount();
+  try { const before = JSON.stringify(f.view.form); f.view.saving.value = true; f.view.changeSpecType(1);
+    expect(JSON.stringify(f.view.form)).toBe(before); f.view.saving.value = false; f.view.changeSpecType(1); await flush();
+    expect(f.view.form.items).toEqual([{ value: '颜色', detail: [] }]); expect(f.view.form.attrs).toEqual([]);
+    f.view.changeSpecType(0); expect(f.view.form.attrs).toHaveLength(1);
+  } finally { f.close(); }
+});
+it('ignores a template confirmation completed after actual product navigation', async () => {
+  const template = rule([{ value: '颜色', detail: ['红'] }]), wait = gate();
+  const f = await mount('Form', config => config.url === '/product/product/get_rule' ? [template] : undefined);
+  try {
+    f.view.selectedRuleId.value = 201; runtime.dialog.ElMessageBox.confirm = () => wait.promise;
+    const applying = f.view.applyProductRule(); await flush();
+    await f.router.push('/products/6/edit'); const afterNavigation = JSON.stringify(f.view.form);
+    wait.resolve(undefined); await applying;
+    expect(JSON.stringify(f.view.form)).toBe(afterNavigation);
+    expect(runtime.dialog.messages.some((message: string) => message.startsWith('已套用'))).toBe(false);
+  } finally { wait.resolve(undefined); f.close(); }
+});
+it('a cancelled template confirmation preserves the draft without a success message', async () => {
+  const template = rule([{ value: '颜色', detail: ['红'] }]);
+  const f = await mount('Form', config => config.url === '/product/product/get_rule' ? [template] : undefined);
+  try { f.view.selectedRuleId.value = 201; const before = JSON.stringify(f.view.form);
+    runtime.dialog.ElMessageBox.confirm = async () => { throw 'cancel'; }; await f.view.applyProductRule();
+    expect(JSON.stringify(f.view.form)).toBe(before); expect(runtime.dialog.messages).toEqual([]);
   } finally { f.close(); }
 });
 it('enforces the 20-image form limit without partially applying an oversized selection', async () => {

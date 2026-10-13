@@ -1,0 +1,95 @@
+{
+  "native": 7,
+  "fileCount": 14,
+  "browser": 0,
+  "ordinary": 14,
+  "nativeCompleteFiles": 25,
+  "workerFullTypes": "root pending",
+  "frontend": 10,
+  "files": [
+    {
+      "file": "workers-ts/src/services/admin/AdminProductCategoryInput.ts",
+      "sourceSHA256": "DD24053FCA0F728D3AC9EC152230E009B565F630B1336AFCBC151E21F7B1A1BB",
+      "validationSHA256": "DD24053FCA0F728D3AC9EC152230E009B565F630B1336AFCBC151E21F7B1A1BB"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminProductCategoryService.ts",
+      "sourceSHA256": "BAA65E75570367844D2966FE3F2AED2642F4927F8EE4AADE716FC19F4B195AEB",
+      "validationSHA256": "BAA65E75570367844D2966FE3F2AED2642F4927F8EE4AADE716FC19F4B195AEB"
+    },
+    {
+      "file": "workers-ts/src/services/product/ProductCategoryAssetPolicy.ts",
+      "sourceSHA256": "B28F04FBD5B2CA703251A3C1DACD56195D230CC77947D810AFB0F6E32566C1BE",
+      "validationSHA256": "B28F04FBD5B2CA703251A3C1DACD56195D230CC77947D810AFB0F6E32566C1BE"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminProductCategoryController.ts",
+      "sourceSHA256": "B88A6DE7135E5F34A5719986228722184F94746F74E83A5400434CD2D71DF0B8",
+      "validationSHA256": "B88A6DE7135E5F34A5719986228722184F94746F74E83A5400434CD2D71DF0B8"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminProductCategories.ts",
+      "sourceSHA256": "2FAA013F72CD5F232D0669559ADFE3BE0976DBD6D5FDDA5F1ED96FC61A55B363",
+      "validationSHA256": "2FAA013F72CD5F232D0669559ADFE3BE0976DBD6D5FDDA5F1ED96FC61A55B363"
+    },
+    {
+      "file": "workers-ts/test/admin-product-category.test.ts",
+      "sourceSHA256": "3E725D874E26B308EA80DA965EEBAC7EBCDE6187CEDF07FB0DB040BC1A7C60B9",
+      "validationSHA256": "3E725D874E26B308EA80DA965EEBAC7EBCDE6187CEDF07FB0DB040BC1A7C60B9"
+    },
+    {
+      "file": "workers-ts/test/admin-product-category-http.test.ts",
+      "sourceSHA256": "8F8A0C2BB1F2343A9103E5143EB307D5714F7F0C585356E62404F6A4BFD69881",
+      "validationSHA256": "8F8A0C2BB1F2343A9103E5143EB307D5714F7F0C585356E62404F6A4BFD69881"
+    },
+    {
+      "file": "workers-ts/test/admin-product-category-native.test.ts",
+      "sourceSHA256": "0D440D3F601B4C513FCB73EEFC76B4210718060B1826005DE6F2DB22F883BC40",
+      "validationSHA256": "0D440D3F601B4C513FCB73EEFC76B4210718060B1826005DE6F2DB22F883BC40"
+    },
+    {
+      "file": "workers-ts/test/admin-product-category-frontend.test.ts",
+      "sourceSHA256": "EC38CBB435C81FDB806AA9CE5C24566C44FE5FAC8C5820FFC9688F5F180E0B03",
+      "validationSHA256": "EC38CBB435C81FDB806AA9CE5C24566C44FE5FAC8C5820FFC9688F5F180E0B03"
+    },
+    {
+      "file": "view/admin-ts/src/pages/category/CategoryList.vue",
+      "sourceSHA256": "D052C4A40B5824B894555E98EDC15EC980D4F83C05C4455219123C84F5A90318",
+      "validationSHA256": "D052C4A40B5824B894555E98EDC15EC980D4F83C05C4455219123C84F5A90318"
+    },
+    {
+      "file": "view/admin-ts/src/api/productCategoryCatalog.ts",
+      "sourceSHA256": "0CAF1D234DFBB0A4E083A3A6B831E551C20B4FE327FC6CCEDF08C3A3E6640422",
+      "validationSHA256": "0CAF1D234DFBB0A4E083A3A6B831E551C20B4FE327FC6CCEDF08C3A3E6640422"
+    },
+    {
+      "file": "view/admin-ts/src/types/productCategoryCatalog.ts",
+      "sourceSHA256": "B87BA9EA10C842BFC5FED52C94F11775311C10C2288F810654FEDA3D37A5DFF7",
+      "validationSHA256": "B87BA9EA10C842BFC5FED52C94F11775311C10C2288F810654FEDA3D37A5DFF7"
+    },
+    {
+      "file": "view/admin-ts/src/utils/productCategoryCatalogState.ts",
+      "sourceSHA256": "F28E313B01127C66B002DB948AD31CDCA4A4650137C5AA19F3582D090AFD6F90",
+      "validationSHA256": "F28E313B01127C66B002DB948AD31CDCA4A4650137C5AA19F3582D090AFD6F90"
+    },
+    {
+      "file": "workers-ts/docs/admin-product-category-catalog-20261013.md",
+      "sourceSHA256": "4E04C84829E8335F5EF255DE3BE8951B30C4ADB3C8D437D810F40B542ACA7CD9",
+      "validationSHA256": "4E04C84829E8335F5EF255DE3BE8951B30C4ADB3C8D437D810F40B542ACA7CD9"
+    }
+  ],
+  "browserFlows": 16,
+  "mirror": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a13321-41f8-7ea2-9370-103a58344561\\admin-category-validation",
+  "browserSyntheticMutations": 18,
+  "frozenAt": "2026-10-13T08:46:21.5872810Z",
+  "adminTypes": 0,
+  "adminBuild": 0,
+  "http": 4,
+  "nativeClaimEvidence": {
+    "exit": 0,
+    "pass": 7,
+    "log": "category-native-final-claim-evidence.log",
+    "manualClaimsBefore": 0,
+    "manualClaimsAfter": 0
+  }
+}

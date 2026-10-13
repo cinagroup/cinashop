@@ -1,0 +1,15 @@
+{
+  "label": "unit",
+  "command": [
+    "--max-old-space-size=6144",
+    "node_modules/typescript/bin/tsc",
+    "--noEmit"
+  ],
+  "startedAt": "2026-10-13T08:27:54.988Z",
+  "finishedAt": "2026-10-13T08:29:47.146Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-types-local-1-unit.txt",
+  "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,15 +1,26 @@
 <script setup lang="ts">
 import { useThemeStore } from "@/stores/theme";
+import { useShareReferral } from '@/composables/useShareReferral';
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
+// #ifdef H5
+import { loadStatisticsScript } from '../../common/statisticsScript';
+import { API_BASE } from '@/utils/request';
+// #endif
 
 const theme = useThemeStore();
-onLaunch(() => {
+const referrals = useShareReferral();
+onLaunch((options) => {
+  referrals.captureInbound(options);
   theme.syncPlatform();
   void theme.refresh();
+  // #ifdef H5
+  loadStatisticsScript(API_BASE);
+  // #endif
   console.log("CinaShop App Launch");
 });
 
-onShow(() => {
+onShow((options) => {
+  referrals.captureInbound(options);
   theme.syncPlatform();
   void theme.refresh();
   console.log("App Show");

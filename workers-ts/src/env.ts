@@ -44,6 +44,8 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   OFFLINE_H5_RETURN_ORIGIN?: string;
   /** Canonical public H5 origin for storefront sharing; independent of API/PC hosts. */
   PUBLIC_H5_ORIGIN?: string;
+  /** Explicit HTTPS image origins for imported public WeChat follow-code media. */
+  WECHAT_FOLLOW_IMAGE_ORIGINS?: string;
   /** 阿里云物流市场 AppCode；优先于旧 system_config 中的同名配置。 */
   ALIYUN_EXPRESS_APP_CODE?: string;
   /** Aliyun SMS RPC credentials; secrets must only be injected as Worker secrets. */
@@ -70,6 +72,10 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   DADA_SOURCE_ID?: string;
   /** Independent 32-byte base64url key for SQL city-delivery credentials and immutable intents. */
   CITY_DELIVERY_CONFIG_KEY?: string;
+  /** Independent 32-byte base64url key for ERP OAuth credentials sealed in SQL. */
+  ERP_CONFIG_KEY?: string;
+  /** Reviewed fixed HTTPS origin for ERP OAuth and capability callback URLs. */
+  ERP_CALLBACK_ORIGIN?: string;
   /** Explicit HTTPS public callback origin, validated before admission. */
   CUSTOMER_CITY_CALLBACK_ORIGIN?: string;
   /** Requires reviewed evidence that this commissioned UU V3 integration

@@ -1,0 +1,116 @@
+{
+  "checks": [
+    {
+      "name": "actual login UI establishes scanner account",
+      "pass": true,
+      "viewport": "desktop"
+    },
+    {
+      "name": "actual H5 WeChat scanner button decodes private landing URL through owned API then explicit member read namespace",
+      "pass": true,
+      "viewport": "desktop"
+    }
+  ],
+  "screens": [
+    "private-share-scanner-desktop-customer-success.png"
+  ],
+  "events": [
+    {
+      "viewport": "desktop",
+      "type": "warning",
+      "text": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    },
+    {
+      "viewport": "desktop",
+      "type": "warning",
+      "text": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    }
+  ],
+  "diagnostics": {
+    "url": "https://127.0.0.1:18743/#/pages/customer-work/scanning",
+    "text": "返回\n客户核销查询\n刷新\n扫码经营账号\n全站经营查询\n扫描或手动输入\n核销码与会员条码分别核对。自动查询遇到重号或两种命名空间碰撞时会拒绝，须明确选择后重新查询。\n自动核对\n订单核销码\n会员条码\n扫码\n查询订单\n会员待核销订单\n当前没有可核对的订单。\n工作台\n经营统计\n订单\n售后\n核销",
+    "calls": [
+      {
+        "endpoint": "/v2/diy/color_change/color_change",
+        "method": "GET",
+        "uid": 0,
+        "body": {}
+      },
+      {
+        "endpoint": "/login",
+        "method": "POST",
+        "uid": 0,
+        "body": {
+          "account": "13900110000",
+          "password": "synthetic-pass"
+        }
+      },
+      {
+        "endpoint": "/v2/diy/color_change/color_change",
+        "method": "GET",
+        "uid": 0,
+        "body": {}
+      },
+      {
+        "endpoint": "/mobile/work/context",
+        "method": "GET",
+        "uid": 11,
+        "body": {}
+      },
+      {
+        "endpoint": "/wechat/config",
+        "method": "GET",
+        "uid": 11,
+        "body": {}
+      },
+      {
+        "endpoint": "/share/scene/eeeeeeeeeeeeeeeeeeeeeeee",
+        "method": "GET",
+        "uid": 11,
+        "body": {}
+      },
+      {
+        "endpoint": "/mobile/work/writeoff/lookup",
+        "method": "POST",
+        "uid": 11,
+        "body": {
+          "namespace": "member-barcode",
+          "scope_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "value": "001234567",
+          "version": "customer-work-writeoff-read-v1"
+        }
+      },
+      {
+        "endpoint": "/mobile/work/context",
+        "method": "GET",
+        "uid": 11,
+        "body": {}
+      },
+      {
+        "endpoint": "/wechat/config",
+        "method": "GET",
+        "uid": 11,
+        "body": {}
+      },
+      {
+        "endpoint": "/share/scene/eeeeeeeeeeeeeeeeeeeeeeee",
+        "method": "GET",
+        "uid": 11,
+        "body": {}
+      },
+      {
+        "endpoint": "/mobile/work/writeoff/lookup",
+        "method": "POST",
+        "uid": 11,
+        "body": {
+          "namespace": "member-barcode",
+          "scope_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "value": "A B",
+          "version": "customer-work-writeoff-read-v1"
+        }
+      }
+    ]
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    namespace: 'member-barcode',\n+   scope_key: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',\n    value: 'A B',\n+   version: 'customer-work-writeoff-read-v1'\n  }\n",
+  "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    namespace: 'member-barcode',\n+   scope_key: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',\n    value: 'A B',\n+   version: 'customer-work-writeoff-read-v1'\n  }\n\n    at file:///C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/private-share-scanner-browser-qa.mjs:81:902"
+}

@@ -1,0 +1,24 @@
+{
+  "startedAt": "2026-10-13T08:21:21.793Z",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "nodeVersion": "v24.14.1",
+  "args": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "test/legacy-user-routine-code.test.ts",
+    "--maxWorkers=1",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-vitest.json"
+  ],
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "env": {
+    "TEMP": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-temp",
+    "TMP": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\user-routine-alias-candidate-stage-5-temp",
+    "TEST_FINANCE_POSTGRES_URL": "cleared; PGlite only"
+  },
+  "packageJsonSha": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+  "packageLockSha": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a"
+}

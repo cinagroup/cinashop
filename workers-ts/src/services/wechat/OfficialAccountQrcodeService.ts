@@ -91,6 +91,34 @@ export class OfficialAccountQrcodeService {
     private readonly fetcher: typeof fetch = fetch,
   ) {}
 
+  /** Versioned opaque legacy-share scene; permanence is explicit, not inferred
+   * from an untrusted UID or a broadening of the channel/reply type catalogue. */
+  async requestLegacyShare(scene: string, permanent: boolean, expectedAppId: string): Promise<{ ticket: string; url: string }> {
+    if (!/^ls:[a-f0-9]{24}:(?:0|[1-9]\d{0,9}):[a-f0-9]{24}$/.test(scene)
+      || new TextEncoder().encode(scene).length > 64 || permanent !== scene.includes(':0:')) {
+      throw new ValidateException('分享公众号场景错误');
+    }
+    const bounded = new OfficialAccountQrcodeService(this.container, this.env, boundedProductShareFetch(this.fetcher));
+    const create = async (token: string) => {
+      const url = new URL('https://api.weixin.qq.com/cgi-bin/qrcode/create'); url.searchParams.set('access_token', token);
+      const response = await bounded.fetcher(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...(permanent ? {} : { expire_seconds: 2592000 }),
+          action_name: permanent ? 'QR_LIMIT_STR_SCENE' : 'QR_STR_SCENE', action_info: { scene: { scene_str: scene } } }) });
+      const data = await readBoundedJson(response), ticket = typeof data.ticket === 'string' ? data.ticket : '';
+      if (!response.ok || !ticket || ticket.length > 255 || /[\u0000-\u001f\u007f]/u.test(ticket)) {
+        throw new OfficialAccountApiError(Number(data.errcode ?? response.status), '生成分享公众号码失败');
+      }
+      return { ticket, url: `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${encodeURIComponent(ticket)}` };
+    };
+    let token = await bounded.getAccessToken(false,expectedAppId);
+    try { return await create(token); }
+    catch (error) {
+      if (!(error instanceof OfficialAccountApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
+      await cacheDelete(`official_access_token:${expectedAppId}`, this.env);
+      token = await bounded.getAccessToken(true,expectedAppId); return create(token);
+    }
+  }
+
   /** Temporary signed product scene; no permanent queue or qrcode-table DML. */
   async requestTemporaryProduct(scene:string):Promise<string>{
     if(!/^p:[1-9]\d{0,9}:[1-9]\d{0,9}:\d{1,10}:[a-f\d]{24}$/.test(scene)||new TextEncoder().encode(scene).byteLength>64)throw new ValidateException('商品分享场景无效');
@@ -261,11 +289,12 @@ export class OfficialAccountQrcodeService {
     return value;
   }
 
-  private async getAccessToken(forceRefresh = false): Promise<string> {
+  private async getAccessToken(forceRefresh = false, expectedAppId?: string): Promise<string> {
     const config = new SystemConfigService(this.container, this.env);
     const values = await config.getMany(["wechat_appid", "wechat_appsecret"]);
     const appId = values.wechat_appid?.trim() ?? "";
     const secret = values.wechat_appsecret?.trim() ?? "";
+    if (expectedAppId !== undefined && appId !== expectedAppId) throw new ValidateException('分享公众号账户配置已变化，请稍后重试');
     if (!appId || !secret) throw new ValidateException("公众号 AppID 或 AppSecret 未配置");
     const cacheKey = `official_access_token:${appId}`;
     if (!forceRefresh) {

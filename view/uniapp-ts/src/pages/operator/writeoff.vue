@@ -113,7 +113,10 @@ import {
   type WriteoffOperatorProfile,
 } from "@/api/order";
 import { useAuthStore } from "@/stores/auth";
-import { operatorScanSiteOrigins, parseOperatorScanCode, parseOperatorScene } from "@/utils/operatorScanCode";
+import { operatorScanSiteOrigins, parseOperatorScanCode, parseOperatorScene, type OperatorScanCode } from "@/utils/operatorScanCode";
+import { shareScanTransfer } from '@/utils/shareScanTransfer';
+import { decodePrivateShareScan,privateShareScanCandidate } from '@/utils/privateShareScan';
+import { apiReadPrivateShareScene } from '@/api/legacyShare';
 
 type OperatorRole = "staff" | "delivery";
 
@@ -137,8 +140,14 @@ let pendingCodeSession = -1;
 let visible = false;
 let generation = 0;
 let profileRequestId = 0;
+let scanEpoch=0,scanRequests:UserCenterRequests|null=null;
+type MemberReadHint={value:string;uid:number;token:string;session:number;role:OperatorRole};
+let memberReadHint:MemberReadHint|null=null,pendingMemberReadHint:MemberReadHint|null=null;
+function memberHint(value:string):MemberReadHint{return{value,uid:auth.uid,token:auth.token,session:auth.sessionVersion,role:role.value};}
+function validMemberHint(hint:MemberReadHint,value=code.value){return visible&&!legacyAuto.value&&!deliveryMode()&&hint.value===value&&hint.uid===auth.uid&&hint.token===auth.token&&hint.session===auth.sessionVersion&&hint.role===role.value;}
+function readCode():OperatorScanCode|null{return memberReadHint&&validMemberHint(memberReadHint)?{kind:'member',code:memberReadHint.value}:parseOperatorScanCode(code.value,operatorScanSiteOrigins());}
 const legacyAuto=ref(false),legacyLoading=ref(false),legacyError=ref(''),legacyCustomer=ref(false),legacyDelivery=ref(false),legacyAuth=auth;let legacyQuery:Record<string,string>={},legacyVisible=false,legacyDisposed=false,legacyEpoch=0,legacyScope:UserCenterRequests|null=null;
-function clearLegacy(){legacyEpoch++;legacyScope?.abort();legacyScope=null;legacyCustomer.value=false;legacyDelivery.value=false;legacyLoading.value=false;legacyError.value='';profile.value=null;code.value='';pendingCode='';invalidatePrivate(true);}
+function clearLegacy(){legacyEpoch++;legacyScope?.abort();legacyScope=null;legacyCustomer.value=false;legacyDelivery.value=false;legacyLoading.value=false;legacyError.value='';profile.value=null;code.value='';pendingCode='';pendingMemberReadHint=null;invalidatePrivate(true);}
 async function loadLegacy(){if(!legacyAuto.value||!legacyVisible||legacyDisposed||legacyQuery.entry!=='legacy-auto')return;clearLegacy();if(!legacyAuth.isLoggedIn){legacyError.value='请登录后读取当前核销资格';return;}const epoch=legacyEpoch,scope=createUserCenterRequests(()=>legacyAuto.value&&legacyVisible&&!legacyDisposed&&legacyEpoch===epoch);legacyScope=scope;legacyLoading.value=true;try{const menu=parseUserCenterMenu(await scope.request('menu/user','GET',{},true),scope.owner.uid);if(!scope.active())return;legacyCustomer.value=menu.capabilities.work===true;legacyDelivery.value=menu.capabilities.deliveryWorkBench===true;}catch(failure){if(scope.active())legacyError.value=failure instanceof Error&&/[\u3400-\u9fff]/u.test(failure.message)?failure.message:'当前核销资格暂无法核对，请重新读取';}finally{if(scope.active())legacyLoading.value=false;scope.abort();if(legacyScope===scope)legacyScope=null;}}
 function chooseLegacy(kind:'customer'|'delivery'){if(!legacyAuto.value||!legacyVisible||legacyDisposed||legacyLoading.value||!legacyAuth.isLoggedIn||(kind==='customer'?!legacyCustomer.value:!legacyDelivery.value))return;try{let url='/pages/delivery/scanning';if(kind==='customer'){const page=(legacyQuery.next??'scanning') as CustomerWorkPage;url=page==='scanning'?customerWorkRoute('scanning',legacyQuery.code?{namespace:'auto',value:legacyQuery.code}:{}):customerWorkRoute(page,{legacyOrderId:legacyQuery.legacyOrderId!});}uni.navigateTo({url,fail:()=>{if(legacyVisible)legacyError.value='所选工作台暂时无法打开，请重新读取资格';}});}catch{legacyError.value='历史核销入口无效，请重新进入工作台';}}
 
@@ -185,7 +194,8 @@ function resetPreview() {
 }
 
 function invalidatePrivate(clearCode = false) {
-  generation++;
+  memberReadHint=null;
+  scanEpoch++;scanRequests?.abort();scanRequests=null;generation++;
   memberCandidates.value = [];
   resetPreview();
   loadingPreview.value = false;
@@ -243,16 +253,18 @@ async function loadProfile() {
     else if (!hasStaffRole.value && hasDeliveryRole.value) role.value = "delivery";
     else role.value = "staff";
     if (deliveryMode()) return openDelivery();
-    if (!result.can_writeoff || pendingCodeSession !== session) pendingCode = "";
+    if (!result.can_writeoff || pendingCodeSession !== session) {pendingCode = ""; pendingMemberReadHint=null;}
     if (pendingCode) {
+      const hint=pendingMemberReadHint;
       code.value = pendingCode;
-      pendingCode = "";
+      pendingCode = ""; pendingMemberReadHint=null;
+      if(hint&&validMemberHint(hint))memberReadHint=hint;
       await preview();
     }
   } catch (error) {
     if (!visible || auth.sessionVersion !== session || generation !== ownGeneration) return;
     profile.value = null;
-    pendingCode = "";
+    pendingCode = ""; pendingMemberReadHint=null;
     toast(error instanceof Error ? error.message : "身份核验失败");
   } finally {
     if (visible && auth.sessionVersion === session && profileRequestId === requestId) {
@@ -264,29 +276,23 @@ async function loadProfile() {
 function scan() {
   if (deliveryMode()) return openDelivery();
   if (!visible || !profile.value?.can_writeoff || executing.value || confirming.value) return;
-  const session = auth.sessionVersion, selectedRole = role.value, ownGeneration = generation;
-  uni.scanCode({
-    scanType: ["qrCode", "barCode"],
-    success: (result) => {
-      if (!visible || auth.sessionVersion !== session || role.value !== selectedRole || generation !== ownGeneration) return;
-      const origins = operatorScanSiteOrigins();
-      const parsed = parseOperatorScanCode((result as typeof result & { path?: string }).path, origins)
-        ?? parseOperatorScanCode(result.result, origins);
-      if (!parsed) return toast("扫码内容没有有效的订单码或会员码");
-      code.value = parsed.code;
-      void preview();
-    },
-    fail: (error) => {
-      if (visible && auth.sessionVersion === session && generation === ownGeneration
-        && !String(error.errMsg ?? "").includes("cancel")) toast("当前环境无法扫码，请手动输入码");
-    },
-  });
+  scanRequests?.abort();const version=++scanEpoch,session=auth.sessionVersion,uid=auth.uid,token=auth.token,selectedRole=role.value,ownGeneration=generation;
+  const valid=()=>visible&&!legacyAuto.value&&!deliveryMode()&&auth.isLoggedIn&&auth.uid===uid&&auth.token===token&&auth.sessionVersion===session&&role.value===selectedRole&&generation===ownGeneration&&scanEpoch===version;
+  const owner=createUserCenterRequests(valid);scanRequests=owner;
+  const finish=()=>{owner.abort();if(scanRequests===owner)scanRequests=null;};
+  uni.scanCode({scanType:['qrCode','barCode'],success:async result=>{
+    if(!valid()){finish();return;}try{
+      const shared=privateShareScanCandidate(result)?await decodePrivateShareScan(result,'staff',value=>apiReadPrivateShareScene(value,owner),valid):null;if(!valid())return;
+      const origins=operatorScanSiteOrigins(),parsed=shared?{kind:shared.namespace==='member-barcode'?'member':'order',code:shared.value}:parseOperatorScanCode((result as typeof result & {path?:string}).path,origins)??parseOperatorScanCode(result.result,origins);
+      if(!parsed)return toast('扫码内容没有有效的订单码或会员码');code.value=parsed.code;if(shared?.namespace==='member-barcode')memberReadHint=memberHint(shared.value);void preview();
+    }catch(failure){if(valid())toast(failure instanceof Error?failure.message:'分享扫码资料暂无法核对');}finally{finish();}
+  },fail:error=>{if(valid()&&!String(error.errMsg??'').includes('cancel'))toast('当前环境无法扫码，请手动输入码');scanEpoch++;finish();}});
 }
 
 async function preview() {
   if (deliveryMode()) return openDelivery();
   if (!visible || !profile.value?.can_writeoff || loadingPreview.value || executing.value || confirming.value) return;
-  const parsed = parseOperatorScanCode(code.value, operatorScanSiteOrigins());
+  const parsed = readCode();
   if (!parsed) return toast("请输入有效的订单码或会员码");
   code.value = parsed.code;
   const ownGeneration = ++generation, session = auth.sessionVersion, selectedRole = role.value;
@@ -321,7 +327,7 @@ async function preview() {
 async function previewMember(item: OperatorMemberOrderSummary) {
   if (!visible || loadingPreview.value || executing.value || confirming.value
     || !memberCandidates.value.some((candidate) => candidate.id === item.id && candidate.order_id === item.order_id)) return;
-  const parsed = parseOperatorScanCode(code.value, operatorScanSiteOrigins());
+  const parsed = readCode();
   if (!parsed || parsed.kind !== "member") return;
   const ownGeneration = ++generation, session = auth.sessionVersion, selectedRole = role.value;
   loadingPreview.value = true;
@@ -429,7 +435,9 @@ onLoad((query) => {
    // #endif
    legacyQuery=parseCustomerWriteoffLegacyChoice(input);}catch(failure){legacyError.value=failure instanceof Error?failure.message:'历史核销入口无效';legacyQuery={};}return;}
   requestedRole = query?.role === "delivery" ? "delivery" : query?.role === "staff" ? "staff" : null;
-  pendingCode = (parseOperatorScene(query?.scene)
+  const shareInput = requestedRole === 'staff' ? shareScanTransfer.take('/pages/operator/writeoff?role=staff',auth) : null;
+  pendingMemberReadHint=shareInput?.namespace==='member-barcode'?memberHint(shareInput.value):null;
+  pendingCode = shareInput?.value ?? (parseOperatorScene(query?.scene)
     ?? parseOperatorScanCode(query?.code, operatorScanSiteOrigins()))?.code ?? "";
   pendingCodeSession = auth.sessionVersion;
 });
@@ -443,15 +451,16 @@ onShow(() => {
   }
   visible = true;
   if (deliveryMode()) return openDelivery();
-  if (pendingCodeSession !== auth.sessionVersion) pendingCode = "";
+  if (pendingCodeSession !== auth.sessionVersion) {pendingCode = ""; pendingMemberReadHint=null;}
   void loadProfile();
 });
 
-onHide(() => { legacyVisible = false; if (legacyAuto.value) { clearLegacy(); delete legacyQuery.code; } visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
-onUnload(() => { legacyVisible = false; legacyDisposed = true; if (legacyAuto.value) { clearLegacy(); legacyQuery = {}; } visible = false; profileRequestId++; pendingCode = ""; profile.value = null; invalidatePrivate(true); });
+onHide(() => { legacyVisible = false; if (legacyAuto.value) { clearLegacy(); delete legacyQuery.code; } visible = false; profileRequestId++; pendingCode = ""; pendingMemberReadHint=null; profile.value = null; invalidatePrivate(true); });
+onUnload(() => { legacyVisible = false; legacyDisposed = true; if (legacyAuto.value) { clearLegacy(); legacyQuery = {}; } visible = false; profileRequestId++; pendingCode = ""; pendingMemberReadHint=null; profile.value = null; invalidatePrivate(true); });
 watch(code, () => invalidatePrivate(), { flush: "sync" });
+watch(()=>[auth.uid,auth.token,role.value],()=>{memberReadHint=null;pendingMemberReadHint=null;},{flush:'sync'});
 watch(() => auth.sessionVersion, () => {
-  pendingCode = "";
+  pendingCode = ""; pendingMemberReadHint=null;
   profile.value = null;
   writeUncertain.value = false;
   invalidatePrivate(true);
@@ -469,7 +478,7 @@ watch(() => auth.sessionVersion, () => {
 function deliveryMode() { return role.value === "delivery" || requestedRole === "delivery"; }
 function openDelivery() {
   if (!visible || legacyAuto.value) return;
-  role.value = "delivery"; requestedRole = "delivery"; pendingCode = "";
+  role.value = "delivery"; requestedRole = "delivery"; pendingCode = ""; pendingMemberReadHint=null;
   profileRequestId++; profile.value = null; invalidatePrivate(true); loadingProfile.value = false;
   const target = { url: "/pages/delivery/scanning", fail: () => { if (visible) toast("配送工作台暂时无法打开，请重试"); } };
   if (typeof uni.redirectTo === "function") uni.redirectTo(target); else uni.navigateTo(target);

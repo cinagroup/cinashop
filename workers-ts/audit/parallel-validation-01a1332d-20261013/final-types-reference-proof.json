@@ -1,0 +1,69 @@
+{
+  "verifiedAt": "2026-10-13T03:41:31.1706098Z",
+  "source": "coordinating integration root actual final typecheck",
+  "unit": 0,
+  "runtime": 0,
+  "inputCount": 3896,
+  "sameCount": true,
+  "sameDigest": true,
+  "sourceDigest": "70113864d3905ea6e8a009d75c98445a6bf58d4c73095f7f6f3f5f593a923aa4",
+  "beforeMismatchCount": 0,
+  "afterMismatchCount": 0,
+  "criticalInputs": [
+    {
+      "file": "src/services/admin/AdminLegacySystemLogService.ts",
+      "before": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "after": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "current": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "matches": true
+    },
+    {
+      "file": "test/admin-legacy-system-log.test.ts",
+      "before": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "after": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "current": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "matches": true
+    },
+    {
+      "file": "test/admin-legacy-system-log-native.test.ts",
+      "before": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "after": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "current": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "matches": true
+    },
+    {
+      "file": "package-lock.json",
+      "before": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "after": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "current": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "matches": true
+    },
+    {
+      "file": "package.json",
+      "before": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+      "after": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+      "current": "31a2a5cee00a74bd2adbc1d6aecc7fd19b63b9babe20449e6d102e1d14d0c059",
+      "matches": true
+    },
+    {
+      "file": "tsconfig.json",
+      "before": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+      "after": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+      "current": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+      "matches": true
+    },
+    {
+      "file": "tsconfig.runtime-test.json",
+      "before": "92b77a20c54c0eb72e1d5e638339548f1af5196fedb4d079580f93e3e7fcbc4b",
+      "after": "92b77a20c54c0eb72e1d5e638339548f1af5196fedb4d079580f93e3e7fcbc4b",
+      "current": "92b77a20c54c0eb72e1d5e638339548f1af5196fedb4d079580f93e3e7fcbc4b",
+      "matches": true
+    }
+  ],
+  "provenance": [
+    "parallel-zone-typecheck-exits-20261013.json",
+    "parallel-migration-named-zone-before-20261013.json",
+    "parallel-migration-named-zone-after-20261013.json"
+  ],
+  "claims": "final shared scope only; no reuse of initial failed unit or previous runtime scope"
+}

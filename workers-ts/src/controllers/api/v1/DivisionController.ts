@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { DivisionManagementService } from "@/services/division/DivisionManagementService";
-import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
+import * as DivisionStaff from './DivisionStaffController';
 import { SmsVerificationService } from "@/services/message/SmsVerificationService";
 import { ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
@@ -62,63 +62,25 @@ export async function applyAgent(c: C) {
 }
 
 export async function staffList(c: C) {
-  const q = c.req.query();
-  const service = new DivisionManagementService(c.get("container"));
-  return withValidation(c, () =>
-    service.staffList({
-      agentUid: uid(c),
-      keyword: q.keyword,
-      page: Number(q.page ?? 1),
-      limit: Number(q.limit ?? 20),
-    }),
-  );
+  return DivisionStaff.staffList(c);
 }
 
 export async function staffPercent(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    uid?: number;
-    division_percent?: number;
-  };
-  const service = new DivisionManagementService(c.get("container"));
-  return withValidation(
-    c,
-    async () => {
-      await service.updateStaffPercent(uid(c), Number(body.uid ?? 0), body.division_percent);
-      return null;
-    },
-    "设置成功",
-  );
+  return DivisionStaff.staffPercent(c);
 }
 
 export async function delStaff(c: C) {
-  const service = new DivisionManagementService(c.get("container"));
-  return withValidation(
-    c,
-    async () => {
-      await service.removeStaff(uid(c), Number(c.req.param("uid") ?? 0));
-      return null;
-    },
-    "删除成功",
-  );
+  return DivisionStaff.delStaff(c);
 }
 
 export async function agentSpread(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as { agent_id?: number; agent_code?: number };
-  const service = new DivisionManagementService(c.get("container"));
-  const agentUid = Number(body.agent_id ?? 0) || Number(body.agent_code ?? 0);
-  return withValidation(c, () => service.bindStaff(uid(c), agentUid), "绑定成功");
+  return DivisionStaff.agentSpread(c);
 }
 
 export async function agentSpreadCode(c: C) {
-  const service = new WechatMiniProgramCodeService(c.get("container"), c.env);
-  return withValidation(c, () => service.createAgentInviteUrl(uid(c), c.req.url));
+  return DivisionStaff.agentSpreadCode(c);
 }
 
 export async function agentSpreadCodeImage(c: C) {
-  const service = new WechatMiniProgramCodeService(c.get("container"), c.env);
-  return service.renderAgentInviteCode(
-    Number(c.req.param("uid") ?? 0),
-    Number(c.req.query("expires") ?? 0),
-    c.req.query("signature") ?? "",
-  );
+  return DivisionStaff.agentSpreadCodeImage(c);
 }

@@ -1,0 +1,814 @@
+{
+  "generatedAt": "2026-10-13T03:41:33.566Z",
+  "thread": "01a1332d-ffe1-7932-a2c8-d314f67cd722",
+  "validationScope": "Final parallel follow-up source freeze, owned target regression groups and coordinated unit/runtime typechecks.",
+  "localRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq",
+  "evidenceRoot": "\\\\tsclient\\I\\cinagroup\\cinashop\\workers-ts\\audit\\parallel-validation-01a1332d-20261013",
+  "finalChecks": [
+    {
+      "tag": "geo-unit-final",
+      "status": 0,
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "tag": "admin-unit-final-retry",
+      "status": 0,
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "tag": "shared-unit-final",
+      "status": 0,
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "tag": "runner-unit-final",
+      "status": 0,
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "tag": "routes-final",
+      "status": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "tag": "native-final-retry",
+      "status": 0,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "tag": "supplier-unit",
+      "status": 0,
+      "passed": 23,
+      "failed": 0
+    },
+    {
+      "tag": "type-unit-integrated",
+      "status": 0,
+      "provenance": "types-provenance.json"
+    },
+    {
+      "tag": "type-runtime-integrated",
+      "status": 0,
+      "provenance": "types-provenance.json"
+    }
+  ],
+  "testCounts": {
+    "ordinaryPassed": 268,
+    "nativePassed": 41
+  },
+  "allOwnedValidationPassed": true,
+  "allRequiredValidationPassed": true,
+  "types": {
+    "ownership": "coordinating integration root",
+    "status": "verified current-scope actual execution evidence",
+    "unitStatus": 0,
+    "runtimeStatus": 0,
+    "provenance": "types-provenance.json",
+    "inputCount": 3896,
+    "sourceDigest": "70113864d3905ea6e8a009d75c98445a6bf58d4c73095f7f6f3f5f593a923aa4",
+    "commonInputCount": 3874,
+    "requiredScope": {
+      "adminService": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "adminTest": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "nativeTest": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a"
+    }
+  },
+  "nativeCleanup": {
+    "sourceTag": "native-final-retry",
+    "fixtureDatabasesAndRolesRemainingZero": true,
+    "ownedClusterStopped": true,
+    "stoppedMarker": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\native-cache\\finance-postgres-pl2kzX"
+  },
+  "records": [
+    {
+      "tag": "admin-unit-final-retry",
+      "start": "2026-10-13T03:30:11.253Z",
+      "end": "2026-10-13T03:30:39.914Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/admin-legacy-system-log.test.ts",
+        "test/admin-legacy-log-permission.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 319,
+      "stderrBytes": 0,
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  19 passed (19)",
+      "stdout": "commands/admin-unit-final-retry.stdout.log",
+      "stderr": "commands/admin-unit-final-retry.stderr.log"
+    },
+    {
+      "tag": "admin-unit-final",
+      "start": "2026-10-13T03:14:05.160Z",
+      "end": "2026-10-13T03:14:34.248Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/admin-legacy-system-log.test.ts",
+        "test/admin-legacy-log-permission.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 319,
+      "stderrBytes": 0,
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  15 passed (15)",
+      "stdout": "commands/admin-unit-final.stdout.log",
+      "stderr": "commands/admin-unit-final.stderr.log"
+    },
+    {
+      "tag": "geo-unit-final",
+      "start": "2026-10-13T03:12:48.347Z",
+      "end": "2026-10-13T03:13:09.682Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/public-geocoding.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 319,
+      "stderrBytes": 0,
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  58 passed (58)",
+      "stdout": "commands/geo-unit-final.stdout.log",
+      "stderr": "commands/geo-unit-final.stderr.log"
+    },
+    {
+      "tag": "geo-unit",
+      "start": "2026-10-13T03:05:08.027Z",
+      "end": "2026-10-13T03:05:28.296Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/public-geocoding.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 319,
+      "stderrBytes": 0,
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  58 passed (58)",
+      "stdout": "commands/geo-unit.stdout.log",
+      "stderr": "commands/geo-unit.stderr.log"
+    },
+    {
+      "tag": "native-final-retry",
+      "start": "2026-10-13T03:32:17.951Z",
+      "end": "2026-10-13T03:32:40.883Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+        "test/admin-legacy-system-log.test.ts",
+        "test/admin-legacy-system-log-native.test.ts",
+        "test/supplier-product-catalog.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 9700,
+      "stderrBytes": 0,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  41 passed (41)",
+      "stdout": "commands/native-final-retry.stdout.log",
+      "stderr": "commands/native-final-retry.stderr.log"
+    },
+    {
+      "tag": "native-final",
+      "start": "2026-10-13T03:17:53.530Z",
+      "end": "2026-10-13T03:18:32.180Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+        "test/admin-legacy-system-log.test.ts",
+        "test/admin-legacy-system-log-native.test.ts",
+        "test/supplier-product-catalog.test.ts"
+      ],
+      "status": 1,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 9145,
+      "stderrBytes": 1691,
+      "passed": 36,
+      "failed": 1,
+      "skipped": 0,
+      "summaryLine": "Tests  1 failed | 36 passed (37)",
+      "stdout": "commands/native-final.stdout.log",
+      "stderr": "commands/native-final.stderr.log"
+    },
+    {
+      "tag": "routes-final",
+      "start": "2026-10-13T03:21:11.106Z",
+      "end": "2026-10-13T03:21:15.670Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/route-parity-audit.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 1311029,
+      "stderrBytes": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "",
+      "stdout": "commands/routes-final.stdout.log",
+      "stderr": "commands/routes-final.stderr.log"
+    },
+    {
+      "tag": "routes",
+      "start": "2026-10-13T03:07:25.920Z",
+      "end": "2026-10-13T03:08:52.735Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/route-parity-audit.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 1311029,
+      "stderrBytes": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "",
+      "stdout": "commands/routes.stdout.log",
+      "stderr": "commands/routes.stderr.log"
+    },
+    {
+      "tag": "runner-unit-final",
+      "start": "2026-10-13T03:16:44.850Z",
+      "end": "2026-10-13T03:17:02.758Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 319,
+      "stderrBytes": 0,
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  126 passed (126)",
+      "stdout": "commands/runner-unit-final.stdout.log",
+      "stderr": "commands/runner-unit-final.stderr.log"
+    },
+    {
+      "tag": "runner-unit",
+      "start": "2026-10-13T03:07:25.816Z",
+      "end": "2026-10-13T03:09:28.305Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 1,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 512,
+      "stderrBytes": 2557,
+      "passed": 125,
+      "failed": 1,
+      "skipped": 0,
+      "summaryLine": "Tests  1 failed | 125 passed (126)",
+      "stdout": "commands/runner-unit.stdout.log",
+      "stderr": "commands/runner-unit.stderr.log"
+    },
+    {
+      "tag": "shared-unit-final",
+      "start": "2026-10-13T03:15:47.937Z",
+      "end": "2026-10-13T03:16:35.699Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/admin-permission.test.ts",
+        "test/legacy-admin-permissions.test.ts",
+        "test/supplier-rbac-migration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 319,
+      "stderrBytes": 0,
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "Tests  42 passed (42)",
+      "stdout": "commands/shared-unit-final.stdout.log",
+      "stderr": "commands/shared-unit-final.stderr.log"
+    },
+    {
+      "tag": "shared-unit",
+      "start": "2026-10-13T03:06:43.638Z",
+      "end": "2026-10-13T03:08:16.455Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/admin-permission.test.ts",
+        "test/legacy-admin-permissions.test.ts",
+        "test/supplier-rbac-migration.test.ts",
+        "--maxWorkers=1"
+      ],
+      "status": 1,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 799,
+      "stderrBytes": 2776,
+      "passed": 38,
+      "failed": 4,
+      "skipped": 0,
+      "summaryLine": "Tests  4 failed | 38 passed (42)",
+      "stdout": "commands/shared-unit.stdout.log",
+      "stderr": "commands/shared-unit.stderr.log"
+    },
+    {
+      "tag": "type-runtime-final",
+      "start": "2026-10-13T03:19:06.581Z",
+      "end": "2026-10-13T03:20:41.981Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "status": 0,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "",
+      "stdout": "commands/type-runtime-final.stdout.log",
+      "stderr": "commands/type-runtime-final.stderr.log",
+      "validForIntegrationFinalScope": false,
+      "scopeNote": "Executed before the final Admin historical-timezone integration source freeze. Preserved as prior-scope evidence only."
+    },
+    {
+      "tag": "type-runtime",
+      "start": "2026-10-13T03:05:49.762Z",
+      "end": "2026-10-13T03:08:12.716Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "status": 2,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 1304,
+      "stderrBytes": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "",
+      "stdout": "commands/type-runtime.stdout.log",
+      "stderr": "commands/type-runtime.stderr.log",
+      "validForIntegrationFinalScope": false,
+      "scopeNote": "Executed before the final Admin historical-timezone integration source freeze. Preserved as prior-scope evidence only."
+    },
+    {
+      "tag": "type-unit",
+      "start": "2026-10-13T03:05:49.718Z",
+      "end": "2026-10-13T03:10:26.333Z",
+      "node": "v24.14.1",
+      "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+      "args": [
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "status": 2,
+      "signal": null,
+      "errorCode": null,
+      "stdoutBytes": 1724,
+      "stderrBytes": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "summaryLine": "",
+      "stdout": "commands/type-unit.stdout.log",
+      "stderr": "commands/type-unit.stderr.log",
+      "validForIntegrationFinalScope": false,
+      "scopeNote": "Executed before the final Admin historical-timezone integration source freeze. Preserved as prior-scope evidence only."
+    }
+  ],
+  "supplier": {
+    "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts test/supplier-product-catalog.test.ts --maxWorkers=1",
+    "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+    "testBackend": "PGlite",
+    "nativeTestVariableCleared": true,
+    "exitCode": 0
+  },
+  "route": {
+    "sourceTag": "routes-final",
+    "phpRoot": "\\\\tsclient\\I\\cinagroup\\cinashop-php",
+    "totals": {
+      "php": 1904,
+      "ts": 2403,
+      "matched": 930,
+      "executableMatched": 909,
+      "unavailable": 21,
+      "missing": 974,
+      "retired": 17,
+      "actionableMissing": 957,
+      "coveragePercent": 48.8,
+      "executableCoveragePercent": 47.7,
+      "effectiveExecutableCoveragePercent": 48.2
+    }
+  },
+  "sharedSourceDriftCount": 0,
+  "copied": [
+    {
+      "path": "commands/admin-unit-final-retry.result.json",
+      "sha256": "dca0f041b6d22f6751bd027d0a49b6307b50c4246609779e0c99400f7ff9ac5f"
+    },
+    {
+      "path": "commands/admin-unit-final-retry.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/admin-unit-final-retry.stdout.log",
+      "sha256": "42745180b1037d32896dae51509698ca5ea4baece412d5c7361d9c4d186aa1fd"
+    },
+    {
+      "path": "commands/admin-unit-final.result.json",
+      "sha256": "efd859fa90fede58c69afa8a4ff731ff952c711788c6e016ccaaf3f0ccb7d9a6"
+    },
+    {
+      "path": "commands/admin-unit-final.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/admin-unit-final.stdout.log",
+      "sha256": "6f15c27b481407dd9a27a16f1150c3067c4a0f5adee9ca428cf635e1bad516de"
+    },
+    {
+      "path": "commands/geo-unit-final.result.json",
+      "sha256": "77c8ee3a1a575afbb7f841b442040a85d7d8a7645aca7471288c607a2b4056de"
+    },
+    {
+      "path": "commands/geo-unit-final.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/geo-unit-final.stdout.log",
+      "sha256": "3db05e2eff089c9b795a46b02bc46c5044ba6aaf507b15581116bec6c0535013"
+    },
+    {
+      "path": "commands/geo-unit.result.json",
+      "sha256": "dbc2364aa3e9b91ed27382c6a6fb92c276a1b26f8209c0dc8889e149fa59e6b8"
+    },
+    {
+      "path": "commands/geo-unit.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/geo-unit.stdout.log",
+      "sha256": "d2532f8a8a155110124a2fe7c5ac311f1e9069d81af6c2e25fa8bdf839f8f32e"
+    },
+    {
+      "path": "commands/native-final-retry.result.json",
+      "sha256": "0320a53dd36f992c2a326f493c28e691107e1510b4f4532323171aeeacbdc441"
+    },
+    {
+      "path": "commands/native-final-retry.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/native-final-retry.stdout.log",
+      "sha256": "9ee6cfcd886c0a9e3196fc5fb608586d62458ccb4d70ded4060110113e6e2822"
+    },
+    {
+      "path": "commands/native-final.result.json",
+      "sha256": "1b4f87aeb367763b66891299a27fc76f52657c12b81e733a18c4cd2074846709"
+    },
+    {
+      "path": "commands/native-final.stderr.log",
+      "sha256": "9c728963e283dd5642e20c87d0bca20b56a2be6e68ac2e2bfc109472a4732955"
+    },
+    {
+      "path": "commands/native-final.stdout.log",
+      "sha256": "2e6d264378aaf3b5d5f8c7bf597cbc56d462a81a74d4fb1dabd43c01d0f36194"
+    },
+    {
+      "path": "commands/routes-final.result.json",
+      "sha256": "a9266b07e550f6df896b97fc1d69bedbe588081512312921a8d00e7a1e963526"
+    },
+    {
+      "path": "commands/routes-final.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/routes-final.stdout.log",
+      "sha256": "204645bb79837cb78245dbbb8a7604d9f31e78b3228a95fbe227057b81758976"
+    },
+    {
+      "path": "commands/routes.result.json",
+      "sha256": "0532b562f6a2642d8383ff229e7e58eb988e7bbfc3c9ef839d954ce57d47ae75"
+    },
+    {
+      "path": "commands/routes.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/routes.stdout.log",
+      "sha256": "373b1fd728702c5602d96b9e0ca7ec910847e128fd82949e2e627f4703b4e7ef"
+    },
+    {
+      "path": "commands/runner-unit-final.result.json",
+      "sha256": "2603a6c68d65a2bca870e79398720f67fe1c43cd3e5b4c3b890279254f7ecb8e"
+    },
+    {
+      "path": "commands/runner-unit-final.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/runner-unit-final.stdout.log",
+      "sha256": "b7f95889e3bd78f58f8ec0d0097f9048221daaea99dba333e75dee69924edf21"
+    },
+    {
+      "path": "commands/runner-unit.result.json",
+      "sha256": "f0a11a5d1b061d65bcdf31b9c754cc4a2e99a8d92f06d6e0358728af969dac7a"
+    },
+    {
+      "path": "commands/runner-unit.stderr.log",
+      "sha256": "e57dcc194f8f4625d8edc78bbaa2e434e833431d309f352107f946c0d6cbf4a7"
+    },
+    {
+      "path": "commands/runner-unit.stdout.log",
+      "sha256": "97a71d4f117b0e2dfcefb98c154174e1b0411b86df8f6bdcfa91cdf9dd793859"
+    },
+    {
+      "path": "commands/shared-unit-final.result.json",
+      "sha256": "cdc4b6506d9e29ae3ed288105671e8a1fd40630baeb83e49ac0c5199c1f16762"
+    },
+    {
+      "path": "commands/shared-unit-final.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/shared-unit-final.stdout.log",
+      "sha256": "e1c2b1feb8e24f9ecdd89011656f8d03b5134542e27420603b50e025b83638df"
+    },
+    {
+      "path": "commands/shared-unit.result.json",
+      "sha256": "a971db8c99d433b6db832242acd2cad34fd6ed16018fe8089d990126b89453a5"
+    },
+    {
+      "path": "commands/shared-unit.stderr.log",
+      "sha256": "f6996fcad4cea58001a21edeb64447a90c0aa4e171cea85129374b7dcdd6073d"
+    },
+    {
+      "path": "commands/shared-unit.stdout.log",
+      "sha256": "93dae7dbba2af1b67cd682d2868dd568c9e4256e2fb15dfca43b01e504c32c41"
+    },
+    {
+      "path": "commands/type-runtime-final.result.json",
+      "sha256": "a6a1a8d6e09ea5fe579c9b86dba5ff5e5847c18b4d8ecfcdeaf90041a8e947ad"
+    },
+    {
+      "path": "commands/type-runtime-final.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/type-runtime-final.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/type-runtime.result.json",
+      "sha256": "8fa2e4c9f3cbc984e4e153d88262a998eacfdd4fb31d572ec47b8fd0aaa063cc"
+    },
+    {
+      "path": "commands/type-runtime.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/type-runtime.stdout.log",
+      "sha256": "65d23845bece6ae8e51b0b1a6462ca65dffae64d344832b369d7d9bc179e89f3"
+    },
+    {
+      "path": "commands/type-unit.result.json",
+      "sha256": "104df1825ea7d380e799d1eda64193010efd20ab7b23d7a3904c52adce2a428e"
+    },
+    {
+      "path": "commands/type-unit.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "commands/type-unit.stdout.log",
+      "sha256": "f81683c632ab630173ff53eb5b284655508cafd297fc8153d9617aea8bb57353"
+    },
+    {
+      "path": "input-manifest.json",
+      "sha256": "93ec49a3e9d71531351fcaf8fedc402e446f4e1fb091b5c08f6af299c276c7b2"
+    },
+    {
+      "path": "input-manifest-final.json",
+      "sha256": "ae0d3723de3f4917b628babd2a322a85b3e8f63ec8e3c3f435ffc394073a66bd"
+    },
+    {
+      "path": "input-manifest-integration-final.json",
+      "sha256": "024e94c0b1bd55fedc42ef5b44c0f5aedf77bbc17ee273524a7bd4cc9f8a9603"
+    },
+    {
+      "path": "input-verification.json",
+      "sha256": "99fc62bde527781f18574906d2705794738c48d81693004c3ed9650843d2d3be"
+    },
+    {
+      "path": "input-verification-final.json",
+      "sha256": "bada707f8370e3e8d7ffa814510857e7c6c49d2b3012d19a854c20c83ab016d0"
+    },
+    {
+      "path": "toolchain-locks.json",
+      "sha256": "34988e1ff862920f06928ee15f7f88d03802e3f6cc7fbf9bfe59ed52e91c7c1f"
+    },
+    {
+      "path": "initial/geocoding-sandbox.log",
+      "sha256": "f77a718dc3c9c2f0547241fcb99a75d778225bb80cd227ca16841512c802395a"
+    },
+    {
+      "path": "supplier/supplier-product-catalog-inputs-20261013.json",
+      "sha256": "32dfba2df1ce1620d17eca640e41446147c8de14e88d9df11aa9dc22a7ead34e"
+    },
+    {
+      "path": "supplier/supplier-product-catalog-inputs-after-20261013.json",
+      "sha256": "c45273f0d68537192646cef6a7fcaae5daf964fd2c00e5e8ef4ddb8094621f91"
+    },
+    {
+      "path": "supplier/supplier-product-catalog-vitest-20261013.log",
+      "sha256": "f77a718dc3c9c2f0547241fcb99a75d778225bb80cd227ca16841512c802395a"
+    },
+    {
+      "path": "supplier/supplier-product-catalog-vitest-result-20261013.json",
+      "sha256": "3e2cfccae591eeb18b6c7a07555b78fce08c096025885b5173d3f683015dfdb1"
+    },
+    {
+      "path": "supplier/supplier-product-catalog-vitest-retry-20261013.log",
+      "sha256": "19b6c86d2c567d9d84b7a22ae608870cf94b2673e8e12bfa128b175cdee8b886"
+    },
+    {
+      "path": "supplier/supplier-product-catalog-vitest-retry-result-20261013.json",
+      "sha256": "0a08413338a70c7389c524af0c1fa531df95c2aed45d28ab1487de1891ba7587"
+    },
+    {
+      "path": "admin-initial/ordinary-exit-escalated.txt",
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "admin-initial/ordinary-exit-retry1.txt",
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "admin-initial/ordinary-exit-retry2.txt",
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "admin-initial/ordinary-exit.txt",
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "admin-initial/ordinary-output-escalated.txt",
+      "sha256": "3edc36a67dff8d5ad5520bcc15485ae0ee54d9478b6710ced8f76b5075283919"
+    },
+    {
+      "path": "admin-initial/ordinary-output-retry1.txt",
+      "sha256": "f77a718dc3c9c2f0547241fcb99a75d778225bb80cd227ca16841512c802395a"
+    },
+    {
+      "path": "admin-initial/ordinary-output-retry2.txt",
+      "sha256": "caf8b9569a05122875495c252beacc9691210b445aa3ec326662942207826451"
+    },
+    {
+      "path": "admin-initial/ordinary-output.txt",
+      "sha256": "f1aea81fb8737f47a1454b5dc01ed9930c8eba15cdadd6446d35090671e1c64f"
+    },
+    {
+      "path": "tools/prepare-migration-validation.cjs",
+      "sha256": "edccc609d23616de848584156da32c94acf189bb0cec37f2ec0784fac86738b3"
+    },
+    {
+      "path": "tools/verify-migration-inputs.cjs",
+      "sha256": "c98f3f7e0ff8ef45620fb31a2c1a1287497c6e8a2a2630b0bdaec948fb8e6603"
+    },
+    {
+      "path": "tools/add-validation-functions.cjs",
+      "sha256": "0ec10e5797c2558b402c2666e1721d51ec12df0d89719273f0411fd96587eed6"
+    },
+    {
+      "path": "tools/finalize-validation-inputs.cjs",
+      "sha256": "0b37a2dbff3747e1ff11c287be6bf69efbf077004f6eb642aa7a5599199c0020"
+    },
+    {
+      "path": "tools/sync-integration-freeze.cjs",
+      "sha256": "5a5eb24ceef7b6149ff83f3c61cc4a511d45c1289933b038ee9d6fa20e53245c"
+    },
+    {
+      "path": "tools/record-validation-tooling.cjs",
+      "sha256": "85602010fdc7373b2266197303be4ec45dd39ee48c36b46543601452c1872430"
+    },
+    {
+      "path": "tools/import-integration-type-evidence.cjs",
+      "sha256": "3ef6684954906119d2942865a56405324f4ab4474bd72bd8c70495d6b801d632"
+    },
+    {
+      "path": "tools/run-migration-validation.cjs",
+      "sha256": "66ffdafcf2722226d6745a939fe83dd2f08b9b21d8e6d52ece29503a8801b506"
+    },
+    {
+      "path": "tools/export-validation-evidence.cjs",
+      "sha256": "ba8f886f7cddadac651d1899ed6748fa57347537b69b12a75ddd8c066567a954"
+    }
+  ]
+}

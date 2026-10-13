@@ -39,6 +39,7 @@ import { findRechargeOrderByOrderId } from "@/services/payment/RechargePaymentSe
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { ProductShareCodeService } from '@/services/product/ProductShareCodeService';
+import { LegacyShareCodeService } from '@/services/other/LegacyShareCodeService';
 import { findMembershipOrderByOrderId } from "@/services/user/PaidMembershipService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { WechatAuthService, type OfficialSubscriberProfile } from "./WechatAuthService";
@@ -268,6 +269,8 @@ export class WechatCallbackService {
   private async resolveReply(callback: NormalizedWechatCallback): Promise<Record<string, unknown>> {
     if (callback.source !== "official") return { type: "none" };
     if(['subscribe','scan'].includes(callback.eventType)&&callback.payload.eventKey){
+      const legacyNews = await new LegacyShareCodeService(this.container,this.env).news(callback.payload.eventKey,String(callback.payload.ticket??''));
+      if (legacyNews) return legacyNews;
       const news=await new ProductShareCodeService(this.container,this.env).news(callback.payload.eventKey);
       if(news)return news;
     }
@@ -595,6 +598,12 @@ export class WechatCallbackService {
   private async bindScanReferral(event: WechatCallbackEvent, uid?: number): Promise<void> {
     const ticket = String(event.payload.ticket ?? "");
     if (!uid || !ticket) return;
+    const legacySpread = await new LegacyShareCodeService(this.container,this.env)
+      .referrer(String(event.payload.eventKey??event.eventKey??''),ticket);
+    if (legacySpread !== null) {
+      if (legacySpread > 0 && legacySpread !== uid) await new UserFinanceService(this.container).bindSpread(uid,legacySpread);
+      return;
+    }
     const channels = await withTx(this.container, (tx) => tx.select({ uid: wechatQrcode.uid }).from(qrcode)
         .innerJoin(wechatQrcode, and(eq(qrcode.thirdType, "wechatqrcode"), eq(qrcode.thirdId, wechatQrcode.id)))
         .where(and(eq(qrcode.ticket, ticket), eq(qrcode.status, 1), eq(wechatQrcode.isDel, 0)))

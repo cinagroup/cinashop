@@ -1,0 +1,156 @@
+{
+  "at": "2026-10-13T06:21:24.7985793Z",
+  "freezeAt": "2026-10-13T06:15:10.5264943Z",
+  "sourceFiles": [
+    {
+      "path": "workers-ts/src/services/order/CartComputationInput.ts",
+      "sha256": "498a2ed4f9a1961adf37a51d6d881ff3cd6bb7da6a84b0cd5fd6abd5824ad3fe"
+    },
+    {
+      "path": "workers-ts/src/services/order/CartComputationService.ts",
+      "sha256": "54b96aec11b808e4eb9104b9c895e6ceccc64c4f851ee1a2c42ba9e918de3060"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CartComputationController.ts",
+      "sha256": "7e42234dd220da1b64091a7d24c391c3227910c81693040769152c6c624004b9"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreCartService.ts",
+      "sha256": "1f4805361e0a6b61d83deff57d0ebf64172394aa357057579affde9f9dd1924f"
+    },
+    {
+      "path": "workers-ts/src/services/activity/OrderCouponService.ts",
+      "sha256": "2c86eabbd7735e0621c69e7fbfbc3e20ee8c1cc00e4207a55390d78ad0cd6198"
+    },
+    {
+      "path": "workers-ts/test/cart-computation-input.test.ts",
+      "sha256": "9ed67c5100ea8577de76184e38037e7396f9ea6136bbd2fa3ad5fdc58beebece"
+    },
+    {
+      "path": "workers-ts/test/cart-computation-http.test.ts",
+      "sha256": "969abcb40fc628d56489376088d3a63e9b18704509a14c2862514db374888248"
+    },
+    {
+      "path": "workers-ts/test/cart-computation-frontend.test.ts",
+      "sha256": "fe5d2f6906b8eeb9e5354b31aa4ab98cd77b5c12e57932b848db8124f17d0ac3"
+    },
+    {
+      "path": "workers-ts/test/helpers/cartComputationFixture.ts",
+      "sha256": "f055843d21460117d0b5f6465716a88044e4a515bf6b5798b81a62222d73a95c"
+    },
+    {
+      "path": "workers-ts/docs/cart-computation-contract-20261013.md",
+      "sha256": "8410cb7ab072b302230fb90eb83eb3f84f491ce097d3a8b9293c403723330802"
+    },
+    {
+      "path": "view/common/cartComputation.ts",
+      "sha256": "e09ad5200a80278c89b277f9db20ed2c4980f3a1aeb8541ca7e17e2f411e4b81"
+    },
+    {
+      "path": "view/common/cartCouponPreselection.ts",
+      "sha256": "c58f1ec5fecdc22b7cc84fcab33b0ba9ca14259ea72ee927eb858bcb48db0f35"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/cartComputation.ts",
+      "sha256": "e69d841a255cb4c2fb50bc3da1849b56224d12e410048166631b3756f872d27a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/cart/index.vue",
+      "sha256": "b2e29d861e88b77607dd1710cca5e6144e2b4d41e0bfdb223736819a2c2de115"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCheckout.ts",
+      "sha256": "95d62533d250124f927ae7d51dd114518c7e4ac25bd835bb0f0ae83928ddc6d2"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/cart-runtime.test.cjs",
+      "sha256": "e5ace6e2a5bc2c79de8bb877844dcb4709252fce6513d488194e3402d0148172"
+    },
+    {
+      "path": "workers-ts/test/modern-cart-membership-price.test.ts",
+      "sha256": "c70a399c8aad02888fbad8608ae34abec1cd996492037cf9944d4d4bcace727f"
+    }
+  ],
+  "sourceAndCopyHashMatch": true,
+  "tests": {
+    "raw": ".cache/cart-computation-agent-tests-money-final.log",
+    "passed": 121,
+    "skipped": 1,
+    "files": 4,
+    "total": 122,
+    "nativeBoundary": "ordinary disposable SQL; native-only READ ONLY case intentionally skipped; root owns current native/full Worker types and related12 files",
+    "failed": 0,
+    "json": ".cache/cart-computation-agent-tests-money-final.json"
+  },
+  "existingRuntime": {
+    "failed": 0,
+    "skipped": 0,
+    "scripts": [
+      "scripts/cart-runtime.test.cjs",
+      "scripts/checkout-runtime.test.cjs"
+    ],
+    "log": ".cache/cart-computation-agent-existing-runtime-money-final.log",
+    "passed": 48
+  },
+  "uniapp": {
+    "mpWeixinBuildExit": 0,
+    "appBuildExit": 0,
+    "logs": [
+      ".cache/cart-computation-agent-uniapp-types-money-final.log",
+      ".cache/cart-computation-agent-build-h5-money-final.log",
+      ".cache/cart-computation-agent-build-mp-money-final.log",
+      ".cache/cart-computation-agent-build-app-money-final.log"
+    ],
+    "vueTscExit": 0,
+    "h5BuildExit": 0
+  },
+  "browser": {
+    "ok": true,
+    "browserAvailability": "Browser plugin not available; bundled Playwright with previously installed Chromium1217",
+    "environment": {
+      "base": "http://127.0.0.1:5294",
+      "viewports": [
+        "1280x900",
+        "390x844"
+      ]
+    },
+    "boundary": "Synthetic initial login/profile/theme; genuine signed JWT and actual registered cart budget/manual coupon receive/order picker/quote against disposable PGlite; no native locking proof, production, provider, creation or payment",
+    "checks": [
+      "meaningful real cart, correct page identity, no framework overlay",
+      "one selected row computes exact 36.98 budget with no coupon grant",
+      "real quantity update recomputes selected row instead of keeping old amount",
+      "explicit CTA grants one real owned coupon then real eligible picker selects it and actual confirmation re-quotes 3.00; no order/payment",
+      "delivery scope change clears the one-time owned coupon suggestion and re-quotes",
+      "two rapid quantity writes discard late 106.95 quote and render only latest 126.94; navigation blocked while quote is pending",
+      "real same-UID auth store setLogin clears selection and discards the in-flight old budget"
+    ],
+    "errors": [],
+    "warnings": [
+      "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+    ],
+    "counts": {
+      "cartBudgetRequests": 8,
+      "couponClaims": 1,
+      "ownedCoupons": 1,
+      "orders": 0,
+      "createCaptures": 0
+    },
+    "screenshots": [
+      "cart-budget-desktop.png",
+      "cart-budget-mobile.png",
+      "cart-budget-mobile-confirm.png",
+      "cart-budget-mobile-quantity.png",
+      "cart-budget-mobile-auth-withdrawn.png"
+    ]
+  },
+  "browserRaw": "cart-computation-browser-check-money-final.log",
+  "browserFixtureRaw": "workers-ts/.cache/cart-computation-agent-browser-server-money-final.log",
+  "fixtureShutdown": true,
+  "pcCaller": "rg found no current PC consumer of cart/compute; no PC page change or new app",
+  "limitations": [
+    "Cart budget excludes shipping, integral deduction and payment; final checkout re-quotes",
+    "Unowned coupons require explicit receive and real returned ownership; SVIP saving is hypothetical",
+    "Synthetic browser login/profile/theme and disposable SQL, no native lock proof from browser",
+    "No production data/provider/network/order creation/payment"
+  ]
+}

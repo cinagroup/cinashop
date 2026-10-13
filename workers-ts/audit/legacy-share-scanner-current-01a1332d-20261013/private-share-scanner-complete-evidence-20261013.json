@@ -1,0 +1,1210 @@
+{
+  "completedAt": "2026-10-13T07:34:46.243Z",
+  "scope": "Current final private-sharing consumption increment, including narrow unknown native Barcode fallback repair. First-phase promotion/follow/referral and prior scanner snapshots retained as history.",
+  "source": "//tsclient/I/cinagroup/cinashop/view/uniapp-ts",
+  "local": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722/cinashop-migration-20261013-HUPOBq/view/uniapp-ts",
+  "sourceFrozen": false,
+  "counts": {
+    "guardedSourceFiles": 9,
+    "frozenScopedInputs": 65,
+    "runtimeFormalCases": 59,
+    "runtimeBreakdown": {
+      "legacyShare": 27,
+      "legacyOperator": 18,
+      "newPrivateScannerThematicCases": 14
+    },
+    "compiledMiniProtocolChecks": 19,
+    "applicationImportGraphFiles": 42,
+    "applicationGraphWebGlobals": 0,
+    "browserChecks": 26,
+    "browserScreenshots": 6,
+    "typesExitCode": 0,
+    "platformBuildsPassed": [
+      "h5",
+      "mp-weixin",
+      "app"
+    ],
+    "latestGuardedSourceWrites": 2,
+    "additionalGlobalsOffActualScannerCases": 14,
+    "additionalGlobalsOffPromotionFollowLandingCases": 7,
+    "actualPGEnvelopeSfcCases": 4,
+    "actualPGEnvelopeSfcReadPairs": 8
+  },
+  "newScannerCoverage": [
+    "Actual three SFC scan() handlers are bound by existing template buttons; only native camera I/O is stubbed with MP conditional preprocessing, real Vue/Pinia/request/qualified read modules execute.",
+    "Registered mini q/scene and exact matching token pairs; conflicting tokens and raw old result versus new path reject before decode.",
+    "Absolute incoming H5 origin must equal fresh server-authoritative strict h5_origin; no external scan navigation or fetch.",
+    "Only private types90/91, spid0, explicit member/order namespace and real current workbench realm or owner; owner still uses qualified business read.",
+    "Actual staff and delivery scanner plus memory landing inputs preserve A B, A#B, A\\B, A?B, A&B, A/B through exact JSON and fresh read guards. Staff selected-order member_info stays typed; delivery rejects wrong lookup_kind.",
+    "Manual code edits retire exact typed hints; UID/token/session, role, scope, page visibility and generation fence delayed responses. Three actual pages show zero late fill/read/write on lifecycle changes.",
+    "Customer explicit manual ASCII twelve-digit and literal undefined member reads preserve old compatibility; QR90 generation/decoder/transfer separately reject these mature-invalid private codes.",
+    "Read-only new scanner cases assert zero financial calls and zero code navigation/storage; old financial regression cases retain the original endpoints and explicit user flow."
+  ],
+  "contracts": {
+    "oldGetQrcode": "Unchanged four fields routineUrl,wechatUrl,site_name,nickname.",
+    "sceneAddition": "h5_origin canonical HTTPS DNS root, supplied by authoritative server.",
+    "nativeLanding": "physical pages/share/landing; q=<24 lowercase hex>; scene=q%3D<token>.",
+    "memberPrivate": "length1..32, unchanged trim, not undefined, no controls0000..001f/007f and not12 digits; internal ordinary space/#/backslash/?/&/slash preserved in JSON/in-memory.",
+    "orderPrivate": "exact12 decimal digits preserving leading zero.",
+    "transfer": "current UID/token/sessionVersion + precise registered target, one-use and30s, in-memory only.",
+    "noChanges": "No Worker/routes/dependency locks/global deliveryCode/permission UI/financial execute changes by this increment."
+  },
+  "inputs": {
+    "before": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-inputs-before-20261013.json",
+      "sha256": "dff520e2a836938b8db2f62e8346c512942ae94053f7ad99308aea8e50aa6f6e"
+    },
+    "after": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-inputs-after-20261013.json",
+      "sha256": "850f2a113c9a2531b8a2e4149f675c741c2ed9e74f86b6533b24d35a7e82c68f"
+    },
+    "writeback": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-inputs-writeback-20261013.json",
+      "sha256": "20fc2c319e94c93cb36bec9e6f1dc74d5380f4332721f56521c43a61e2507824"
+    },
+    "commonSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd",
+    "targets": [
+      {
+        "path": "src/utils/legacyShare.ts",
+        "priorSourceSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04",
+        "sourceSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04",
+        "localSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04"
+      },
+      {
+        "path": "src/api/legacyShare.ts",
+        "priorSourceSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77",
+        "sourceSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77",
+        "localSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77"
+      },
+      {
+        "path": "src/utils/operatorScanCode.ts",
+        "priorSourceSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637",
+        "sourceSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637",
+        "localSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637"
+      },
+      {
+        "path": "src/pages/operator/writeoff.vue",
+        "priorSourceSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c",
+        "sourceSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c",
+        "localSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c"
+      },
+      {
+        "path": "src/pages/customer-work/scanning.vue",
+        "priorSourceSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860",
+        "sourceSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860",
+        "localSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860"
+      },
+      {
+        "path": "src/pages/delivery/scanning.vue",
+        "priorSourceSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96",
+        "sourceSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96",
+        "localSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96"
+      },
+      {
+        "path": "src/utils/privateShareScan.ts",
+        "priorSourceSha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2",
+        "sourceSha256": "d95cfa068c1180d96f668c48d68726a339142b69b3854c1d878b1451d22e1b19",
+        "localSha256": "d95cfa068c1180d96f668c48d68726a339142b69b3854c1d878b1451d22e1b19"
+      },
+      {
+        "path": "scripts/private-share-scanner-runtime.test.cjs",
+        "priorSourceSha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d",
+        "sourceSha256": "3103de60f551c3eefe7774488206b23b7e8c1cc4194962e1b84a97edf8b1ab94",
+        "localSha256": "3103de60f551c3eefe7774488206b23b7e8c1cc4194962e1b84a97edf8b1ab94"
+      },
+      {
+        "path": "src/utils/shareScanTransfer.ts",
+        "priorSourceSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c",
+        "sourceSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c",
+        "localSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c"
+      }
+    ],
+    "all65SourceScopedInput": [
+      {
+        "path": "index.html",
+        "priorSourceSha256": "e54bbd5ab63aad4b1360f67c21138c24049fff6bc0a93187c020d8834e7d0017",
+        "sourceSha256": "e54bbd5ab63aad4b1360f67c21138c24049fff6bc0a93187c020d8834e7d0017",
+        "localSha256": "e54bbd5ab63aad4b1360f67c21138c24049fff6bc0a93187c020d8834e7d0017"
+      },
+      {
+        "path": "src/App.vue",
+        "priorSourceSha256": "7a4676387a6cefed537f85c24c33b1dcf6397b13578c4b4cc764c3b33f6e93e6",
+        "sourceSha256": "7a4676387a6cefed537f85c24c33b1dcf6397b13578c4b4cc764c3b33f6e93e6",
+        "localSha256": "7a4676387a6cefed537f85c24c33b1dcf6397b13578c4b4cc764c3b33f6e93e6"
+      },
+      {
+        "path": "src/pages.json",
+        "priorSourceSha256": "609ab8c3352728d01821af5161d5f6f357da13340295f14f540a79f6f67537da",
+        "sourceSha256": "609ab8c3352728d01821af5161d5f6f357da13340295f14f540a79f6f67537da",
+        "localSha256": "609ab8c3352728d01821af5161d5f6f357da13340295f14f540a79f6f67537da"
+      },
+      {
+        "path": "src/config/navigation.ts",
+        "priorSourceSha256": "c752719ee3339f254a1ae56be25ab5cca62a2509cf559f76761c4802f4b0364f",
+        "sourceSha256": "c752719ee3339f254a1ae56be25ab5cca62a2509cf559f76761c4802f4b0364f",
+        "localSha256": "c752719ee3339f254a1ae56be25ab5cca62a2509cf559f76761c4802f4b0364f"
+      },
+      {
+        "path": "src/utils/legacyShare.ts",
+        "priorSourceSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04",
+        "sourceSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04",
+        "localSha256": "b75c3eeeb0beaec4d3951dec4ca0a52dae160f06cf85134e4d369076014caf04"
+      },
+      {
+        "path": "src/utils/shareReferral.ts",
+        "priorSourceSha256": "c442507adc80740811348fd73a5d127dd7048a67b98e7441d66986f97bca839a",
+        "sourceSha256": "c442507adc80740811348fd73a5d127dd7048a67b98e7441d66986f97bca839a",
+        "localSha256": "c442507adc80740811348fd73a5d127dd7048a67b98e7441d66986f97bca839a"
+      },
+      {
+        "path": "src/utils/shareImage.ts",
+        "priorSourceSha256": "19919993dbdd3403c08aca11f3469b0daa6763da825567546cabf3d05c317254",
+        "sourceSha256": "19919993dbdd3403c08aca11f3469b0daa6763da825567546cabf3d05c317254",
+        "localSha256": "19919993dbdd3403c08aca11f3469b0daa6763da825567546cabf3d05c317254"
+      },
+      {
+        "path": "src/api/legacyShare.ts",
+        "priorSourceSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77",
+        "sourceSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77",
+        "localSha256": "5aa0947a5161acb2f9ecd231ca7dde8e813aa8bbd7e947010d08ed24c0852e77"
+      },
+      {
+        "path": "src/composables/useShareReferral.ts",
+        "priorSourceSha256": "13c47eeca0c7946948b77b2e487ee58988ddbe5f63187626d32f73e2b9487294",
+        "sourceSha256": "13c47eeca0c7946948b77b2e487ee58988ddbe5f63187626d32f73e2b9487294",
+        "localSha256": "13c47eeca0c7946948b77b2e487ee58988ddbe5f63187626d32f73e2b9487294"
+      },
+      {
+        "path": "src/composables/useSpreadPoster.ts",
+        "priorSourceSha256": "0d9fe4f4cea17009733254bae9bbc1ec60592e952a4b4091157c3f08d033dc51",
+        "sourceSha256": "0d9fe4f4cea17009733254bae9bbc1ec60592e952a4b4091157c3f08d033dc51",
+        "localSha256": "0d9fe4f4cea17009733254bae9bbc1ec60592e952a4b4091157c3f08d033dc51"
+      },
+      {
+        "path": "src/components/SpreadPoster.vue",
+        "priorSourceSha256": "c9ddff61b3d2e3ef30cf0b97b18eb6fb7c90d260ce9c26a485b8f70bc2395887",
+        "sourceSha256": "c9ddff61b3d2e3ef30cf0b97b18eb6fb7c90d260ce9c26a485b8f70bc2395887",
+        "localSha256": "c9ddff61b3d2e3ef30cf0b97b18eb6fb7c90d260ce9c26a485b8f70bc2395887"
+      },
+      {
+        "path": "src/components/LegacyShareCode.vue",
+        "priorSourceSha256": "e5266c89683968feda9c5e26df23d178543a5645e4128962a66c72182a849462",
+        "sourceSha256": "e5266c89683968feda9c5e26df23d178543a5645e4128962a66c72182a849462",
+        "localSha256": "e5266c89683968feda9c5e26df23d178543a5645e4128962a66c72182a849462"
+      },
+      {
+        "path": "src/pages/share/landing.vue",
+        "priorSourceSha256": "acd2b888107e1c28e3f7ae8e3a5e826be469beb1f58a4c0c80779adee8013235",
+        "sourceSha256": "acd2b888107e1c28e3f7ae8e3a5e826be469beb1f58a4c0c80779adee8013235",
+        "localSha256": "acd2b888107e1c28e3f7ae8e3a5e826be469beb1f58a4c0c80779adee8013235"
+      },
+      {
+        "path": "src/pages/user/spread.vue",
+        "priorSourceSha256": "774db03e3777b86f85559307b6b161c2c3d1ee8d2e5946d04082034dfb8eb450",
+        "sourceSha256": "774db03e3777b86f85559307b6b161c2c3d1ee8d2e5946d04082034dfb8eb450",
+        "localSha256": "774db03e3777b86f85559307b6b161c2c3d1ee8d2e5946d04082034dfb8eb450"
+      },
+      {
+        "path": "src/pages/user/memberCode.vue",
+        "priorSourceSha256": "a8c1bda1a038bb2b6d5a9e8041d8aceaefc00ee9aa0928f3521c4f1ee4e06642",
+        "sourceSha256": "a8c1bda1a038bb2b6d5a9e8041d8aceaefc00ee9aa0928f3521c4f1ee4e06642",
+        "localSha256": "a8c1bda1a038bb2b6d5a9e8041d8aceaefc00ee9aa0928f3521c4f1ee4e06642"
+      },
+      {
+        "path": "src/pages/order/detail.vue",
+        "priorSourceSha256": "d01fee6c234c02196db9f3e0de2b0ce586c59a94c627d3917af4e6138d33c6c4",
+        "sourceSha256": "d01fee6c234c02196db9f3e0de2b0ce586c59a94c627d3917af4e6138d33c6c4",
+        "localSha256": "d01fee6c234c02196db9f3e0de2b0ce586c59a94c627d3917af4e6138d33c6c4"
+      },
+      {
+        "path": "src/pages/goods/detail.vue",
+        "priorSourceSha256": "cfa6158931de93714457ed0c7e44b04cd0266d6578f667bdf1134c93217f0e7b",
+        "sourceSha256": "cfa6158931de93714457ed0c7e44b04cd0266d6578f667bdf1134c93217f0e7b",
+        "localSha256": "cfa6158931de93714457ed0c7e44b04cd0266d6578f667bdf1134c93217f0e7b"
+      },
+      {
+        "path": "src/components/productDetail/ActivityDetailMenu.vue",
+        "priorSourceSha256": "e4d220715b6d86d3a67b4ec8bc7b3bedd3cd0138c4f9a184d3c5aa79d3ab2a2c",
+        "sourceSha256": "e4d220715b6d86d3a67b4ec8bc7b3bedd3cd0138c4f9a184d3c5aa79d3ab2a2c",
+        "localSha256": "e4d220715b6d86d3a67b4ec8bc7b3bedd3cd0138c4f9a184d3c5aa79d3ab2a2c"
+      },
+      {
+        "path": "src/components/diy/DiyEditorialWidget.vue",
+        "priorSourceSha256": "d53c0c810538b972641c32a7ca5b30e4d7e0d2ea0f4304b0cf5ac67c488d69aa",
+        "sourceSha256": "d53c0c810538b972641c32a7ca5b30e4d7e0d2ea0f4304b0cf5ac67c488d69aa",
+        "localSha256": "d53c0c810538b972641c32a7ca5b30e4d7e0d2ea0f4304b0cf5ac67c488d69aa"
+      },
+      {
+        "path": "scripts/legacy-share-runtime.test.cjs",
+        "priorSourceSha256": "09000412322b574208f7175daa2703054c930b4103af7b528772da53a8f3a1e1",
+        "sourceSha256": "09000412322b574208f7175daa2703054c930b4103af7b528772da53a8f3a1e1",
+        "localSha256": "09000412322b574208f7175daa2703054c930b4103af7b528772da53a8f3a1e1"
+      },
+      {
+        "path": "scripts/uni-store-runtime.cjs",
+        "priorSourceSha256": "64266c1c9258b16e4e78e5d1974d0d7ff0aa716af08f09f88dfb498fadfbd844",
+        "sourceSha256": "64266c1c9258b16e4e78e5d1974d0d7ff0aa716af08f09f88dfb498fadfbd844",
+        "localSha256": "64266c1c9258b16e4e78e5d1974d0d7ff0aa716af08f09f88dfb498fadfbd844"
+      },
+      {
+        "path": "src/utils/shareScanTransfer.ts",
+        "priorSourceSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c",
+        "sourceSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c",
+        "localSha256": "840c43956841f9031119031bfbffa1f9e6c5d92bd02a5276b1994095d2e3660c"
+      },
+      {
+        "path": "src/pages/customer-work/scanning.vue",
+        "priorSourceSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860",
+        "sourceSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860",
+        "localSha256": "43e92c4d5e55d63cc118e7824c8d28cfc71b0cfecbfea279ddea3dc608b9c860"
+      },
+      {
+        "path": "src/pages/operator/writeoff.vue",
+        "priorSourceSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c",
+        "sourceSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c",
+        "localSha256": "72f2478a3c378ec9e99b43b3cb512e3f14c92107c39b7b5b1363524f3955b60c"
+      },
+      {
+        "path": "src/pages/delivery/scanning.vue",
+        "priorSourceSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96",
+        "sourceSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96",
+        "localSha256": "b92ce12bd5b51d05492072d757e529f40eef218f281d750171ba9c1e697fcc96"
+      },
+      {
+        "path": "package.json",
+        "priorSourceSha256": "4f8f9b650103b6946c8332094013ba0cef97ab887f88328a64961108974b5238",
+        "sourceSha256": "4f8f9b650103b6946c8332094013ba0cef97ab887f88328a64961108974b5238",
+        "localSha256": "4f8f9b650103b6946c8332094013ba0cef97ab887f88328a64961108974b5238"
+      },
+      {
+        "path": "package-lock.json",
+        "priorSourceSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+        "sourceSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+        "localSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8"
+      },
+      {
+        "path": "vite.config.ts",
+        "priorSourceSha256": "74028c9a59e2046d4e371601ef544b15ba5764cf20dc8a2575c5ebcdad01b6c0",
+        "sourceSha256": "74028c9a59e2046d4e371601ef544b15ba5764cf20dc8a2575c5ebcdad01b6c0",
+        "localSha256": "74028c9a59e2046d4e371601ef544b15ba5764cf20dc8a2575c5ebcdad01b6c0"
+      },
+      {
+        "path": "tsconfig.json",
+        "priorSourceSha256": "e6d07bfad491daff338e0ecf32e4b7cd1976f87f2e663f1619ace6612df86299",
+        "sourceSha256": "e6d07bfad491daff338e0ecf32e4b7cd1976f87f2e663f1619ace6612df86299",
+        "localSha256": "e6d07bfad491daff338e0ecf32e4b7cd1976f87f2e663f1619ace6612df86299"
+      },
+      {
+        "path": "src/utils/operatorScanCode.ts",
+        "priorSourceSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637",
+        "sourceSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637",
+        "localSha256": "29f88009f98eeff3fe1c6df31be35de74282f17d0bfc1aec6cdc671e27dbf637"
+      },
+      {
+        "path": "src/utils/privateShareScan.ts",
+        "priorSourceSha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2",
+        "sourceSha256": "d95cfa068c1180d96f668c48d68726a339142b69b3854c1d878b1451d22e1b19",
+        "localSha256": "d95cfa068c1180d96f668c48d68726a339142b69b3854c1d878b1451d22e1b19"
+      },
+      {
+        "path": "scripts/private-share-scanner-runtime.test.cjs",
+        "priorSourceSha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d",
+        "sourceSha256": "3103de60f551c3eefe7774488206b23b7e8c1cc4194962e1b84a97edf8b1ab94",
+        "localSha256": "3103de60f551c3eefe7774488206b23b7e8c1cc4194962e1b84a97edf8b1ab94"
+      },
+      {
+        "path": "scripts/operator-writeoff-runtime.test.cjs",
+        "priorSourceSha256": "ec3b40f339d0529d2e730e4bf22b86397b6af3a5b5c736da2ca410b773c77b51",
+        "sourceSha256": "ec3b40f339d0529d2e730e4bf22b86397b6af3a5b5c736da2ca410b773c77b51",
+        "localSha256": "ec3b40f339d0529d2e730e4bf22b86397b6af3a5b5c736da2ca410b773c77b51"
+      },
+      {
+        "path": "scripts/user-center-runtime.cjs",
+        "priorSourceSha256": "2785d2a2f320a7af1af3940e1c4b6b2eaf88802d1ea46042ab93089e73248eda",
+        "sourceSha256": "2785d2a2f320a7af1af3940e1c4b6b2eaf88802d1ea46042ab93089e73248eda",
+        "localSha256": "2785d2a2f320a7af1af3940e1c4b6b2eaf88802d1ea46042ab93089e73248eda"
+      },
+      {
+        "path": "scripts/customer-work-runtime.test.cjs",
+        "priorSourceSha256": "e222a8730ba4858992bb619cd7b8e161179c52c015572300ed0d4d6440a9a09a",
+        "sourceSha256": "e222a8730ba4858992bb619cd7b8e161179c52c015572300ed0d4d6440a9a09a",
+        "localSha256": "e222a8730ba4858992bb619cd7b8e161179c52c015572300ed0d4d6440a9a09a"
+      },
+      {
+        "path": "scripts/delivery-workbench-runtime.cjs",
+        "priorSourceSha256": "7d43482205e05e9e8c3b39b4dd424ae365530b4a57dfeea1a6f7860c82cb4d3c",
+        "sourceSha256": "7d43482205e05e9e8c3b39b4dd424ae365530b4a57dfeea1a6f7860c82cb4d3c",
+        "localSha256": "7d43482205e05e9e8c3b39b4dd424ae365530b4a57dfeea1a6f7860c82cb4d3c"
+      },
+      {
+        "path": "src/api/userCenter.ts",
+        "priorSourceSha256": "799fa3fab73f519b976497250de0ec84f5259a748626ce3880b816d5844b1e18",
+        "sourceSha256": "799fa3fab73f519b976497250de0ec84f5259a748626ce3880b816d5844b1e18",
+        "localSha256": "799fa3fab73f519b976497250de0ec84f5259a748626ce3880b816d5844b1e18"
+      },
+      {
+        "path": "src/stores/auth.ts",
+        "priorSourceSha256": "746ef8b6368888fd2d6d7046cb335bdab2eae4aee7af65bc015104ce1516c2ec",
+        "sourceSha256": "746ef8b6368888fd2d6d7046cb335bdab2eae4aee7af65bc015104ce1516c2ec",
+        "localSha256": "746ef8b6368888fd2d6d7046cb335bdab2eae4aee7af65bc015104ce1516c2ec"
+      },
+      {
+        "path": "src/utils/request.ts",
+        "priorSourceSha256": "0b63a825bb956ec0dc6e0005d688aff3af8119fcd42e7caada28c1c1734d5673",
+        "sourceSha256": "0b63a825bb956ec0dc6e0005d688aff3af8119fcd42e7caada28c1c1734d5673",
+        "localSha256": "0b63a825bb956ec0dc6e0005d688aff3af8119fcd42e7caada28c1c1734d5673"
+      },
+      {
+        "path": "src/utils/customerWorkWechatScan.ts",
+        "priorSourceSha256": "d59fdbe3376384aa1d906a5f3de89121066653e1e0bd0e54dbbcfb2e1a8ece4f",
+        "sourceSha256": "d59fdbe3376384aa1d906a5f3de89121066653e1e0bd0e54dbbcfb2e1a8ece4f",
+        "localSha256": "d59fdbe3376384aa1d906a5f3de89121066653e1e0bd0e54dbbcfb2e1a8ece4f"
+      },
+      {
+        "path": "src/utils/ordinaryWechatShare.ts",
+        "priorSourceSha256": "b408b04d6e687cf554173dafe5d2b552bd716944edf8f9cb257113f8261b8d62",
+        "sourceSha256": "b408b04d6e687cf554173dafe5d2b552bd716944edf8f9cb257113f8261b8d62",
+        "localSha256": "b408b04d6e687cf554173dafe5d2b552bd716944edf8f9cb257113f8261b8d62"
+      },
+      {
+        "path": "src/utils/customerWorkWriteoff.ts",
+        "priorSourceSha256": "f64e03896dd81016337b8f534d6f4bb815ccbd61146ce1fc35365f0212c34e3e",
+        "sourceSha256": "f64e03896dd81016337b8f534d6f4bb815ccbd61146ce1fc35365f0212c34e3e",
+        "localSha256": "f64e03896dd81016337b8f534d6f4bb815ccbd61146ce1fc35365f0212c34e3e"
+      },
+      {
+        "path": "src/composables/useCustomerWork.ts",
+        "priorSourceSha256": "2a391f1eb84dc1babd4bce7ec9f6deab9ef418995d88d645b383a448a377696f",
+        "sourceSha256": "2a391f1eb84dc1babd4bce7ec9f6deab9ef418995d88d645b383a448a377696f",
+        "localSha256": "2a391f1eb84dc1babd4bce7ec9f6deab9ef418995d88d645b383a448a377696f"
+      },
+      {
+        "path": "src/composables/useDeliveryWorkbench.ts",
+        "priorSourceSha256": "3de2ecb1f66c9f5350bec541de055361a304e53dd61c412e59c952fa4d40e75b",
+        "sourceSha256": "3de2ecb1f66c9f5350bec541de055361a304e53dd61c412e59c952fa4d40e75b",
+        "localSha256": "3de2ecb1f66c9f5350bec541de055361a304e53dd61c412e59c952fa4d40e75b"
+      },
+      {
+        "path": "../common/customerWorkWriteoff.ts",
+        "priorSourceSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd",
+        "sourceSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd",
+        "localSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd"
+      },
+      {
+        "path": "../common/deliveryWorkbench.ts",
+        "priorSourceSha256": "84d352e1975c91d1dc7c2c8a0617819569c5b3146e45d3d9877c355a5068c7a5",
+        "sourceSha256": "84d352e1975c91d1dc7c2c8a0617819569c5b3146e45d3d9877c355a5068c7a5",
+        "localSha256": "84d352e1975c91d1dc7c2c8a0617819569c5b3146e45d3d9877c355a5068c7a5"
+      },
+      {
+        "path": "../common/userCenterDesign.ts",
+        "priorSourceSha256": "786ad49d4776613bfee4eb3f04f9e87a03657586c814c240cf306c89ddd50862",
+        "sourceSha256": "786ad49d4776613bfee4eb3f04f9e87a03657586c814c240cf306c89ddd50862",
+        "localSha256": "786ad49d4776613bfee4eb3f04f9e87a03657586c814c240cf306c89ddd50862"
+      },
+      {
+        "path": "src/api/customerWork.ts",
+        "priorSourceSha256": "6991b0e107a1990463059d45ae2d914f7a4502c3113e078db08e7f1ae1989616",
+        "sourceSha256": "6991b0e107a1990463059d45ae2d914f7a4502c3113e078db08e7f1ae1989616",
+        "localSha256": "6991b0e107a1990463059d45ae2d914f7a4502c3113e078db08e7f1ae1989616"
+      },
+      {
+        "path": "src/api/customerWorkWriteoff.ts",
+        "priorSourceSha256": "99b9483b429f15ffd439ee0e121c957ed885cb73efac4f1f1b936a11a529095f",
+        "sourceSha256": "99b9483b429f15ffd439ee0e121c957ed885cb73efac4f1f1b936a11a529095f",
+        "localSha256": "99b9483b429f15ffd439ee0e121c957ed885cb73efac4f1f1b936a11a529095f"
+      },
+      {
+        "path": "src/api/deliveryWorkbench.ts",
+        "priorSourceSha256": "eed7436636d8facd21a81734f416f9446131b64b8414125cfc4576f3102cc883",
+        "sourceSha256": "eed7436636d8facd21a81734f416f9446131b64b8414125cfc4576f3102cc883",
+        "localSha256": "eed7436636d8facd21a81734f416f9446131b64b8414125cfc4576f3102cc883"
+      },
+      {
+        "path": "src/api/diy.ts",
+        "priorSourceSha256": "5d8ef62ad8e1b518d8d3bb1dd2fc2e0476f0c9b38ef87089c09a6e4cf41882d7",
+        "sourceSha256": "5d8ef62ad8e1b518d8d3bb1dd2fc2e0476f0c9b38ef87089c09a6e4cf41882d7",
+        "localSha256": "5d8ef62ad8e1b518d8d3bb1dd2fc2e0476f0c9b38ef87089c09a6e4cf41882d7"
+      },
+      {
+        "path": "src/api/finance.ts",
+        "priorSourceSha256": "89af1a2dda24ad3f4d56a2ebeccee4eb8c41a8cc0550c2c2d11699c12b8c7a40",
+        "sourceSha256": "89af1a2dda24ad3f4d56a2ebeccee4eb8c41a8cc0550c2c2d11699c12b8c7a40",
+        "localSha256": "89af1a2dda24ad3f4d56a2ebeccee4eb8c41a8cc0550c2c2d11699c12b8c7a40"
+      },
+      {
+        "path": "src/api/order.ts",
+        "priorSourceSha256": "5568f181fd9201c03f9456fd7a14fe80d6b381fd44a0d7b4f053522c334d43b8",
+        "sourceSha256": "5568f181fd9201c03f9456fd7a14fe80d6b381fd44a0d7b4f053522c334d43b8",
+        "localSha256": "5568f181fd9201c03f9456fd7a14fe80d6b381fd44a0d7b4f053522c334d43b8"
+      },
+      {
+        "path": "src/api/theme.ts",
+        "priorSourceSha256": "d06307fd96b39fae3b934d3a725dd4333c86b046b7b518b94448e1af84de8a30",
+        "sourceSha256": "d06307fd96b39fae3b934d3a725dd4333c86b046b7b518b94448e1af84de8a30",
+        "localSha256": "d06307fd96b39fae3b934d3a725dd4333c86b046b7b518b94448e1af84de8a30"
+      },
+      {
+        "path": "src/composables/useCustomerWorkWriteoffOperations.ts",
+        "priorSourceSha256": "290b8b5ae5c70c3caf4881a36bee63d0276319230630f518677ea793bc1c37d9",
+        "sourceSha256": "290b8b5ae5c70c3caf4881a36bee63d0276319230630f518677ea793bc1c37d9",
+        "localSha256": "290b8b5ae5c70c3caf4881a36bee63d0276319230630f518677ea793bc1c37d9"
+      },
+      {
+        "path": "src/stores/theme.ts",
+        "priorSourceSha256": "034b01103e9e230b5c318e7e273a1d84ea955eaa7fe465f62f231ff7e7b0b652",
+        "sourceSha256": "034b01103e9e230b5c318e7e273a1d84ea955eaa7fe465f62f231ff7e7b0b652",
+        "localSha256": "034b01103e9e230b5c318e7e273a1d84ea955eaa7fe465f62f231ff7e7b0b652"
+      },
+      {
+        "path": "src/utils/customerWork.ts",
+        "priorSourceSha256": "fe377ffe67621cad8f0c361a8c8e5586b2024513df026964601df2fe4ae0ec77",
+        "sourceSha256": "fe377ffe67621cad8f0c361a8c8e5586b2024513df026964601df2fe4ae0ec77",
+        "localSha256": "fe377ffe67621cad8f0c361a8c8e5586b2024513df026964601df2fe4ae0ec77"
+      },
+      {
+        "path": "src/utils/customerWorkFulfillment.ts",
+        "priorSourceSha256": "66e6eac81f47c745508ced9ba669ad510f3540bc326c1c40680b3b6781cf4b6f",
+        "sourceSha256": "66e6eac81f47c745508ced9ba669ad510f3540bc326c1c40680b3b6781cf4b6f",
+        "localSha256": "66e6eac81f47c745508ced9ba669ad510f3540bc326c1c40680b3b6781cf4b6f"
+      },
+      {
+        "path": "src/utils/customerWorkFulfillmentContract.ts",
+        "priorSourceSha256": "4e439b3c81ff7d24a27583de5280ca34780bb81ff493c80b106739d6bc15c147",
+        "sourceSha256": "4e439b3c81ff7d24a27583de5280ca34780bb81ff493c80b106739d6bc15c147",
+        "localSha256": "4e439b3c81ff7d24a27583de5280ca34780bb81ff493c80b106739d6bc15c147"
+      },
+      {
+        "path": "src/utils/deliveryWorkbench.ts",
+        "priorSourceSha256": "7cfa4483025218642285ea7be48583c473a599160aee2e0bfc6f9381f02489d7",
+        "sourceSha256": "7cfa4483025218642285ea7be48583c473a599160aee2e0bfc6f9381f02489d7",
+        "localSha256": "7cfa4483025218642285ea7be48583c473a599160aee2e0bfc6f9381f02489d7"
+      },
+      {
+        "path": "src/utils/diy.ts",
+        "priorSourceSha256": "7a394c9892ef707b88b90e8381c4b9b0e879ea4527cdc7d02055a22b24cdeb21",
+        "sourceSha256": "7a394c9892ef707b88b90e8381c4b9b0e879ea4527cdc7d02055a22b24cdeb21",
+        "localSha256": "7a394c9892ef707b88b90e8381c4b9b0e879ea4527cdc7d02055a22b24cdeb21"
+      },
+      {
+        "path": "src/utils/diyTheme.ts",
+        "priorSourceSha256": "cb43fefb2b03d909e1f96f4e61dbd0205f5e728726d71767b5eeb523677b093b",
+        "sourceSha256": "cb43fefb2b03d909e1f96f4e61dbd0205f5e728726d71767b5eeb523677b093b",
+        "localSha256": "cb43fefb2b03d909e1f96f4e61dbd0205f5e728726d71767b5eeb523677b093b"
+      },
+      {
+        "path": "src/utils/merchantIntentHash.ts",
+        "priorSourceSha256": "e47ac73e9393fcb3fcd39bfc53ba0d9af7f31215f0e704365c77e9194f111437",
+        "sourceSha256": "e47ac73e9393fcb3fcd39bfc53ba0d9af7f31215f0e704365c77e9194f111437",
+        "localSha256": "e47ac73e9393fcb3fcd39bfc53ba0d9af7f31215f0e704365c77e9194f111437"
+      },
+      {
+        "path": "src/utils/merchantOrders.ts",
+        "priorSourceSha256": "2966de6f399a851ae57466051dfdb0a4ad16fc221fc40594b97795b43b842690",
+        "sourceSha256": "2966de6f399a851ae57466051dfdb0a4ad16fc221fc40594b97795b43b842690",
+        "localSha256": "2966de6f399a851ae57466051dfdb0a4ad16fc221fc40594b97795b43b842690"
+      },
+      {
+        "path": "src/utils/userCenter.ts",
+        "priorSourceSha256": "eae0376dcf15c2231ce2b154e032aba49077d6338ac4b4fd73649e6e7dbe0b69",
+        "sourceSha256": "eae0376dcf15c2231ce2b154e032aba49077d6338ac4b4fd73649e6e7dbe0b69",
+        "localSha256": "eae0376dcf15c2231ce2b154e032aba49077d6338ac4b4fd73649e6e7dbe0b69"
+      }
+    ],
+    "sourceHashesBeforeWrite": [
+      {
+        "path": "src/utils/privateShareScan.ts",
+        "priorSourceSha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2",
+        "sourceSha256": "eb112ced0ce7f67ebda03f9a430921281da72c0f997a4bbdfec6b6159fb166c2",
+        "localSha256": "d95cfa068c1180d96f668c48d68726a339142b69b3854c1d878b1451d22e1b19"
+      },
+      {
+        "path": "scripts/private-share-scanner-runtime.test.cjs",
+        "priorSourceSha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d",
+        "sourceSha256": "dc274ef36c24173b7b1e48f54a5cda89105094f773a1800d9b536599f828803d",
+        "localSha256": "3103de60f551c3eefe7774488206b23b7e8c1cc4194962e1b84a97edf8b1ab94"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "command": "node --test scripts/legacy-share-runtime.test.cjs scripts/operator-writeoff-runtime.test.cjs scripts/private-share-scanner-runtime.test.cjs",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-runtime-20261013.log",
+      "stdoutSha256": "dbb8cf387395eee89144c776b8ba7bf93705771cd3ca7bb206da55f2ecde8c86",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-typecheck-20261013.log",
+      "stdoutSha256": "9cea822dc34c22852dffebca0ac664a0262dedbbf4c9672bb4ce233f1d2ca966",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:h5 (same command elevated after sandbox resolution failure)",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-build-h5-elevated-20261013.log",
+      "stdoutSha256": "11306c8f56e8ab08c9f61498a97d564b2c174cf0458274088ef37a147358382b",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:mp-weixin",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-build-mini-20261013.log",
+      "stdoutSha256": "1e8b4294585053946e6f528f76d2e1e6db7cf8e89384b5a390baf2c7b1c0982d",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:app",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-build-app-20261013.log",
+      "stdoutSha256": "04a5c343c122373d77bb5b54d83b8cc2c6798e81f49eaee697dd3d34325a7dec",
+      "exitCode": 0
+    },
+    {
+      "command": "node private-share-raw-barcode-browser-qa.mjs",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-browser-20261013.log",
+      "stdoutSha256": "8d4342fc79b9398cfc91e007477f672af2958f48d576093d3e9a3871d3dc90c9",
+      "exitCode": 0
+    },
+    {
+      "command": "node private-share-scanner-native-compiled-proof.cjs",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-native-compiled-20261013.log",
+      "stdoutSha256": "13268e8ef536decf26686ec6c787c395a8257aed045ac857288814cbc2fb20b9",
+      "exitCode": 0
+    },
+    {
+      "command": "node --test private-share-scanner-full-rows-no-globals.cjs",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-scanner-raw-full-rows-candidate-20261013.log",
+      "stdoutSha256": "fc173db2b5e3576b0607825df9665a0be036cc8701483843b6c5eaf5dfd485eb",
+      "exitCode": 0
+    },
+    {
+      "command": "node --test private-share-delivery-actual-dto-sfc.cjs",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-delivery-actual-dto-sfc-20261013.log",
+      "stdoutSha256": "071671aead0277fecce47573434c87b94b9a7f3b1102e825660c6c0c0bc7dbbf",
+      "exitCode": 0
+    },
+    {
+      "command": "node --test --test-name-pattern=<seven actual promotion/poster/consumer/landing/follow cases> legacy-share-native-sfc-no-globals.cjs",
+      "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\legacy-share-native-sfc-no-globals-current-20261013.log",
+      "stdoutSha256": "dfefb778e7ac5fe707ab3d923b08a99901ee9698bb556303cb996c5dc6a2c103",
+      "exitCode": 0
+    }
+  ],
+  "compiledMini": {
+    "proof": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-scanner-native-compiled-proof-20261013.json",
+      "sha256": "aceb9bb08f21619b6284a5750ded234092ff06dba211914e08dcbd1dd05181b7"
+    },
+    "actualURLGlobalsDisabledDuringProtocolChecks": true,
+    "helperImportInitializationBoundary": "Compiled helper requires precede globals disabling. Full active SFC source imports are independently exercised with globals already absent by14+7+4 proofs.",
+    "pages": 130,
+    "homeRemainsFirst": true,
+    "registeredLanding": true,
+    "physical": [
+      {
+        "path": "app.json",
+        "sha256": "dd59c99899fcccc91af5aac326c25742d294e67bf6a83b0f9003d18054fabd4f"
+      },
+      {
+        "path": "pages/share/landing.js",
+        "sha256": "4382606fd3ed88f49ec612abbdb693dc4ca0ce3f17e55d45b8da3398ab806ed5"
+      },
+      {
+        "path": "pages/share/landing.wxml",
+        "sha256": "401871c97a2fb0c2856b07be5da5353cd868e9010bce52ec8999a8da70569469"
+      },
+      {
+        "path": "pages/share/landing.wxss",
+        "sha256": "68bb0d7a2669857734c7a442ee524845ad2877fb04c9c68b23d55595a8dbaf43"
+      },
+      {
+        "path": "pages/operator/writeoff.js",
+        "sha256": "c08c57996a12f937ee7454023416dda9269125d4d6aa51e1afb295fef4fb47bb"
+      },
+      {
+        "path": "pages/operator/writeoff.wxml",
+        "sha256": "c4db6c2c8e43d68eea0fbc931e3950a2be9df448f71a3ca99322b6e832bd01fe"
+      },
+      {
+        "path": "pages/customer-work/scanning.js",
+        "sha256": "2ebb292274e2b69bc8bddfeb75519105ceb6c721ca14b9251d59097ace7bcb60"
+      },
+      {
+        "path": "pages/customer-work/scanning.wxml",
+        "sha256": "7bd47ded5f29143a6c7d59d25432f94d303b9550b0e8370afa860a6d698527dc"
+      },
+      {
+        "path": "pages/delivery/scanning.js",
+        "sha256": "d633d49dbffbef95196a2d204134813466d0f01dc6143bd1e8cf087e0ee0566e"
+      },
+      {
+        "path": "pages/delivery/scanning.wxml",
+        "sha256": "78628c6c0f14bf30efedcb82239b3b323cec6f93e8a93096b7871443d129654b"
+      }
+    ],
+    "graph": {
+      "entries": [
+        "pages/user/spread.js",
+        "components/SpreadPoster.js",
+        "components/LegacyShareCode.js",
+        "components/diy/DiyEditorialWidget.js",
+        "pages/share/landing.js",
+        "pages/operator/writeoff.js",
+        "pages/customer-work/scanning.js",
+        "pages/delivery/scanning.js"
+      ],
+      "vendorExcluded": "common/vendor.js contains Uni runtime AND hoisted application common functions; separate JS graph excludes it, so zero globals in42 files does not establish whole bundle freedom from Web globals.",
+      "vendor": {
+        "path": "common/vendor.js",
+        "sha256": "631121a89137e088413838147e649143efecbf2c72ba66ea95d23b5740eee3ff",
+        "newURLCount": 11,
+        "newURLSearchParamsCount": 0,
+        "offsets": [
+          79928,
+          79998,
+          129343,
+          129658,
+          134181,
+          138883,
+          138953,
+          140096,
+          141153,
+          149334,
+          149673
+        ],
+        "hoistedSources": [
+          {
+            "function": "wu",
+            "source": "view/common/categoryCatalog.ts",
+            "newURL": 2
+          },
+          {
+            "function": "Pd/Td",
+            "source": "view/common/offlineReturn.ts",
+            "newURL": 2
+          },
+          {
+            "function": "Jd",
+            "source": "view/common/offlineCashier.ts",
+            "newURL": 1
+          },
+          {
+            "function": "ml/vl",
+            "source": "view/common/integralPurchase.ts",
+            "newURL": 3
+          },
+          {
+            "function": "Nl",
+            "source": "view/common/seckillPurchase.ts",
+            "newURL": 1
+          },
+          {
+            "function": "yp",
+            "source": "view/common/refundReturn.ts",
+            "newURL": 2
+          }
+        ],
+        "scopeBoundary": "These unrelated application helpers were not modified. The actual active scanner SFC globals-off tests cover full order/cart rows, not their unrelated payment/catalog/refund paths."
+      },
+      "files": [
+        {
+          "path": "api/customerWork.js",
+          "sha256": "2bb8f99528d907e5948343b4ce81813d6199a5d7909ba2d11550661ed7aa81d1",
+          "webGlobals": false
+        },
+        {
+          "path": "api/customerWorkWriteoff.js",
+          "sha256": "35f6ef516f8a81b917c85046499410dd506dd1944ec37e131719054b2950103e",
+          "webGlobals": false
+        },
+        {
+          "path": "api/deliveryWorkbench.js",
+          "sha256": "a64d495648ffc9203a1a114bf064cf67d419ee24c64895e1a59d66c9aae609be",
+          "webGlobals": false
+        },
+        {
+          "path": "api/diy.js",
+          "sha256": "059bfbffa31ec26c614a027c6252b3950ac9c447d1bf0f6403e0d1c8b72a4ef3",
+          "webGlobals": false
+        },
+        {
+          "path": "api/finance.js",
+          "sha256": "486e3c4e9216bdbe2a8b073ee80c712ba5aaef17d66faabf6e35f90b42666168",
+          "webGlobals": false
+        },
+        {
+          "path": "api/legacyShare.js",
+          "sha256": "77c53632e7682a45a94c8c07f4425ae426ad932a10276281892a8e9dabfe325f",
+          "webGlobals": false
+        },
+        {
+          "path": "api/order.js",
+          "sha256": "fdbcbda9950319cc921611d1aaefc14256932370f757f4f5aab73a49496215a1",
+          "webGlobals": false
+        },
+        {
+          "path": "api/theme.js",
+          "sha256": "b70868f37ee36b96bf4adb273ce3d3660df8221dc775b428c5067e2adb19f2cd",
+          "webGlobals": false
+        },
+        {
+          "path": "api/userCenter.js",
+          "sha256": "5e530ca36e25b52bf6df71af6439acd9c71953d8426487e03d328b8c37d70ad0",
+          "webGlobals": false
+        },
+        {
+          "path": "components/LegacyShareCode.js",
+          "sha256": "f242c0186f49376e6dab1caca8f1122b9ec22c87dd23bfbf28e56142c652f47d",
+          "webGlobals": false
+        },
+        {
+          "path": "components/SpreadPoster.js",
+          "sha256": "61e37f6c361ae91c45c7447cbe8df30ecefd74d626b56e4bae48767b1477c823",
+          "webGlobals": false
+        },
+        {
+          "path": "components/diy/DiyEditorialWidget.js",
+          "sha256": "67c3f7e01afbd1e65e4a274971299198117d2fbeb0821721762b43b22e7fd03f",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useCustomerWork.js",
+          "sha256": "c711952e0c04afa817acea3d7689a5e0d1ec0d144fc42361663c82058ff7ec0d",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useCustomerWorkWriteoffOperations.js",
+          "sha256": "cf57c3d70d0ed4242988f3ca668d0b1a67d585e437d5e52335d2d1693b141612",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useDeliveryWorkbench.js",
+          "sha256": "7b8bcd5ec47c48a394ff8ca7a5f802498f721fadaf1557fe7f53d9767b01840e",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useShareReferral.js",
+          "sha256": "f3f6fec3559ee610bbb4d47baefbffd8c41f727b24e2daf13383618ff37775c6",
+          "webGlobals": false
+        },
+        {
+          "path": "composables/useSpreadPoster.js",
+          "sha256": "f540428eeaee21724b21d878e99a61074d69ec888a677eac3b7a5029262960eb",
+          "webGlobals": false
+        },
+        {
+          "path": "config/navigation.js",
+          "sha256": "d2b1cd51e9c4aabd72d6ab5466681c36c94f6d9421ea72a64393b18104d7a6a2",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/customer-work/scanning.js",
+          "sha256": "2ebb292274e2b69bc8bddfeb75519105ceb6c721ca14b9251d59097ace7bcb60",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/delivery/scanning.js",
+          "sha256": "d633d49dbffbef95196a2d204134813466d0f01dc6143bd1e8cf087e0ee0566e",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/operator/writeoff.js",
+          "sha256": "c08c57996a12f937ee7454023416dda9269125d4d6aa51e1afb295fef4fb47bb",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/share/landing.js",
+          "sha256": "4382606fd3ed88f49ec612abbdb693dc4ca0ce3f17e55d45b8da3398ab806ed5",
+          "webGlobals": false
+        },
+        {
+          "path": "pages/user/spread.js",
+          "sha256": "19e4f89c5b0e6e3c8ba8bfff4aed955a7edd698e707ec70b930d9b275b430682",
+          "webGlobals": false
+        },
+        {
+          "path": "stores/auth.js",
+          "sha256": "554b3a6780b9c34e017599bcc254d96b7130e2589fe3965a35e3c610195f7b2b",
+          "webGlobals": false
+        },
+        {
+          "path": "stores/theme.js",
+          "sha256": "192c94dcecf29d969328d19cc8c158ec56ba5c9368ca2ae789f7c44a5e83da6e",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWork.js",
+          "sha256": "a15bfc8a33694db251ad747d7e480ad142d2613d0e8ae39175dbfb8e513f546b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWorkFulfillment.js",
+          "sha256": "0dbd43acc0512f1e9e1789220d2bea6d29e62b5ddf07d0ce4d11eab7ccc0991c",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWorkFulfillmentContract.js",
+          "sha256": "d88a8819db7bea161628906ba6979ff0d5cdebd35cd163f0d575436060f5c6d9",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/customerWorkWriteoff.js",
+          "sha256": "dba90a176301ada028d4a799db6d175c9db9b093ed3a1509bb9b6a629bb20c6b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/deliveryWorkbench.js",
+          "sha256": "8362cbf82090735d3e3bf421e8983fb5718780c447a5199a94134f1fa0f71e32",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/diy.js",
+          "sha256": "543f47e28f22a2d8614928948035f3168c2ea2062c8d12f2f22b3f105e275d88",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/diyTheme.js",
+          "sha256": "edc5aea2d407887236bdd893cb26c6b2c72ca5ab8f184062b24195973ecbb6c8",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/legacyShare.js",
+          "sha256": "d14bd18b0815145a41ace9d7163ed9129268312d3aad7d582cc805670b4c3c6b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/merchantIntentHash.js",
+          "sha256": "9f1ec3380c1bd17d3453da74026b2343964d58444d65e23a648042beb070650f",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/merchantOrders.js",
+          "sha256": "09629a814751691e3059ccfaa4a9f43f945179f1cb2dd8be1ee47660413fefce",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/operatorScanCode.js",
+          "sha256": "92973182cbe8dbe6e87c139e49dfcfd05d2d55770b110d2e4726b5e079bea99c",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/privateShareScan.js",
+          "sha256": "08d80d4f96eb21ae88f0b6ce17f15a4ab23f852dd741eb237c8770ce0098a341",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/request.js",
+          "sha256": "4fc682956a528bdb869137f7070d3c4c8f20e20c2f786262a4310223fa0acd81",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/shareImage.js",
+          "sha256": "f15c74ae968dfca820e9f3746e6ef3dc14d995ea9d4120579d4a258de51e0062",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/shareReferral.js",
+          "sha256": "f6428a5472ff20d72d82f5eba880be41bbdb334a5b3e4998d1b30f320e1f8b1c",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/shareScanTransfer.js",
+          "sha256": "963fe6eb3ad48329a1e4a6ae33c011b1a2f155f1915a4aabd63f0e24d2df082b",
+          "webGlobals": false
+        },
+        {
+          "path": "utils/userCenter.js",
+          "sha256": "c936215b1329a829f317d4dc3ec94e47c5067cca64f32c320b1b262aad6bd688",
+          "webGlobals": false
+        }
+      ],
+      "webGlobalFiles": []
+    }
+  },
+  "browser": {
+    "proof": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-browser-result-20261013.json",
+      "sha256": "300e0ca9f861e6a3992ecd933630d4bc150cfbe04a1487cd8b8246577f65c2ca"
+    },
+    "browserPath": "Browser plugin not available; regular Playwright with existing Chrome",
+    "origin": "https://127.0.0.1:18743",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1280,
+        "height": 900
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "checks": [
+      "page identity",
+      "nonblank content",
+      "no framework overlay",
+      "no application console errors",
+      "real controls/requests/state",
+      "responsive screenshots"
+    ],
+    "console": "Only existing vue-router direct-import deprecation warnings. Unrelated external CDN assets isolated, no production access.",
+    "screens": [
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-desktop-customer-success.png",
+        "sha256": "d4dec420ce428828e461ee39df1d252a4943f50e08869e39002e1d6f5c2a3390"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-desktop-member-space.png",
+        "sha256": "cc59fc9777289a27c933dfa75aad5a64c73ad373cf1389eaf3e96ecfffdd2a2d"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-desktop-origin-denied.png",
+        "sha256": "3ebb609c6196154d8ec13efc5049e6dbacc2dd980bdde0cd6432ac993d3b0643"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-mobile-customer-success.png",
+        "sha256": "4523ccb6d09fee215f6f98fb437f2f80807ac901339e1b84d69189d388137761"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-mobile-member-space.png",
+        "sha256": "7371794802fd9e9dd3fca666640aaa18376cd8dd96164af81ee110ff417a3358"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-mobile-origin-denied.png",
+        "sha256": "e63f62cb9aa75cd0c50cf05f0e9ef2ba9107d0cf34a2a916e73c945493e4ed22"
+      }
+    ],
+    "syntheticBoundary": "Provider, auth, business API and WeChat scan SDK result are synthetic; localhost TLS certificate is temporary and ignored only in test; compiled H5 customer scanner page, controls, owned requests, exact member JSON, explicit namespace, origin rejection and hide cleanup are real. Actual three native scanner buttons are independently exercised in the SFC suite; physical camera and live provider remain unverified. No live WeChat or production writes."
+  },
+  "dependencyProof": "legacy-share-uni-dependency-proof-20261013.json (same lock/version/vendor bytes; no installation/dependency edits)",
+  "history": {
+    "firstPhaseComplete": "legacy-share-complete-evidence-20261013.json",
+    "firstPhasePortableWriteback": "legacy-share-portable-writeback-20261013.json (9 files,27runtime/14compiled/22browser historically; not borrowed for this scanner scope)",
+    "sourceDriftCaught": "common changed fromcabeb to f467; after guard stopped before any source write, final59/types/three builds/browser/compiled proof rerun on f467.",
+    "fixtures": [
+      "SDK preload was erased by actual Uni bootstrap window.wx={}; inject synthetic SDK after bootstrap, retain prior MIME/error diagnosis JSON.",
+      "Expected scoped lookup JSON initially omitted existing version/scope_key; assertion corrected to exact real protocol, no product edit.",
+      "MP compilation tree-shakes class constructor export; actual exported singleton shareScanTransfer used for compiled proof, prior attempt retained."
+    ],
+    "priorFailureArtifacts": [
+      "private-share-scanner-browser-failed-20261013-namespace-first.json",
+      "private-share-scanner-browser-failed-20261013-sdk-fixture.json",
+      "private-share-scanner-browser-failed-body-fixture-history-20261013.json",
+      "private-share-scanner-native-compiled-typed-final-20261013.log",
+      "private-share-scanner-inputs-before-common-cabeb-history-20261013.json"
+    ],
+    "olderBroadRegression": "Historical250 cases had2 existing fixture failures; current59 targeted suite is fully green, does not assert broad suite green.",
+    "priorScannerComplete": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-scanner-complete-evidence-before-raw-history-20261013.json",
+      "sha256": "6dcfbcb3e822c1fe856f84014e68b142349e25e0bf64660d29b54189fa20433b"
+    },
+    "priorCompiledProof": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-scanner-native-compiled-proof-before-raw-history-20261013.json",
+      "sha256": "f95f74e97bc9bb9f7e7af1f3f49b3d279550091286e53dc4d51ebb07cdcadc0e"
+    },
+    "correction": "Prior compiled graph incorrectly described vendor as platform-only. Current vendor contains11 application-common newURL sites; their exact functions/sources now mapped.42 separate JS zero globals is a scoped static fact, not whole-bundle freedom. Active14+7+4 globals-off proofs establish this workflow only.",
+    "preservedFailureArtifacts": [
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-raw-barcode-build-h5-20261013.log",
+        "sha256": "76ab1c1b0442ba898cbdbc1be2e909943bdb62a5db6961c408bb5e51560191be"
+      },
+      {
+        "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\legacy-share-native-sfc-no-globals-20261013.log",
+        "sha256": "9dff875b13eae5a4d0124929aa1c1ccf8c1bf1979d6ed5a36acf5d6dc137ec3a"
+      }
+    ],
+    "failureExplanation": "Default sandbox H5 incorrectly reports terser missing although package exists; same command elevated passes without deps edit. First MP promotion fixture used relative legacy template/avatar rejected by correct native mapping; external fixture overlay uses backend-required absolute HTTPS, seven selected active cases pass. No product edits from either fixture failure."
+  },
+  "remainingBoundary": "No live WeChat credential/provider or physical device camera test. Conservative WX_CODE official wrapper accepted only as a format hint with authorized registered path; real device raw packaging remains unverified. Cross-project full source audit is coordinated separately.",
+  "scopedInputsUnchanged": true,
+  "latestRepair": {
+    "problem": "New opaque recognizer globally rejected backslash before existing legitimate native staff Barcode fallback.",
+    "change": "Unknown raw A\\B returns null to unchanged mature legacy parser; recognized share URI, mixed result/path conflicts, official wrapper, real realm and server origin remain strictly gated.",
+    "onlyTwoSourceFilesWritten": [
+      "src/utils/privateShareScan.ts",
+      "scripts/private-share-scanner-runtime.test.cjs"
+    ],
+    "independentReadonlyReview": "Parent and member_read_review both checked exact two small hunks and SHA before guard; no scope or URL acceptance expansion."
+  },
+  "activeNativeFlowProof": {
+    "scanner": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-scanner-raw-full-rows-candidate-20261013.log",
+      "sha256": "fc173db2b5e3576b0607825df9665a0be036cc8701483843b6c5eaf5dfd485eb"
+    },
+    "scannerScript": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-scanner-full-rows-no-globals.cjs",
+      "sha256": "8dca141cb8254ae2b2898b5ab8ff132c5d626d221f29062b3f242509982d5dcb"
+    },
+    "promotionFollowLanding": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\legacy-share-native-sfc-no-globals-current-20261013.log",
+      "sha256": "dfefb778e7ac5fe707ab3d923b08a99901ee9698bb556303cb996c5dc6a2c103"
+    },
+    "promotionFollowLandingScript": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\legacy-share-native-sfc-no-globals.cjs",
+      "sha256": "f4509edea1f2a48c8af86cc40aa1b35ca4c4454466cfb2269b80e6ac57543f7e"
+    },
+    "boundary": "Actual Vue/Pinia/SFC/request modules with MP directives applied, URL/URLSearchParams absent before application loading. Full nonempty order/cart/media rows in scanner synthetic API; native camera/filesystem I/O synthetic. Seven promotion/follow/landing fixtures use required absolute controlled media; only native I/O/API synthetic."
+  },
+  "actualDeliveryContractProof": {
+    "proof": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-delivery-actual-dto-sfc-proof.json",
+      "sha256": "20203aa8baa2338f90d3fbf7277ee21bea6b333e1289fe5dc47390718b0c0a88"
+    },
+    "script": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\private-share-delivery-actual-dto-sfc.cjs",
+      "sha256": "de8f8ec929afecf653a566f68221f580e95d6727ec5937388e937ee27b1cfb06"
+    },
+    "baseline": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-context-baseline-2-sanitized-envelopes.json",
+      "sha256": "8da31f82d11100d9763d94d632e3f45d8f91f902f8e6966d7e277b6379f95757"
+    },
+    "candidate": {
+      "file": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\delivery-context-candidate-sanitized-envelopes.json",
+      "sha256": "5956c68516e51fd05bb29d38373bb691c55202b40c6530ae200f11a214562c31"
+    },
+    "summary": "Actual SELECT-only PG actor501 platform501/0 and store502/77 producer DTOs consumed byte-for-byte by actual native scanning.vue/controller. Baseline context/read keys differ and bothinfo/records reject. Corrected producer keys match and complete order1/cart1+records accept. No producer field/hash mutation, financial calls or raw code navigation.",
+    "rows": [
+      {
+        "producer": "baseline-2",
+        "selected": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "method": "info",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "actualReadKey": "642f61f4d9ae7c300885c62707aa33c9d64d5ad07a51544c4e37e4b3047df929",
+        "accepted": false,
+        "previewOrders": 0,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "baseline-2",
+        "selected": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "method": "records",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "actualReadKey": "af195b54dd38d1c57fc311bd7e94850c83e7a55ec0b2db1717c04b943f1fb5d9",
+        "accepted": false,
+        "previewOrders": 0,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "baseline-2",
+        "selected": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "method": "info",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "actualReadKey": "ae0f8e2df2260cf2daee438daa1b974277dc6602f8c7071c7553fb34d7cb892b",
+        "accepted": false,
+        "previewOrders": 0,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "baseline-2",
+        "selected": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "method": "records",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "actualReadKey": "149a0a7bc5452d801432ba262f3856d3b30e761b3ccb30ad11ee491a0e108a0d",
+        "accepted": false,
+        "previewOrders": 0,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "candidate",
+        "selected": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "method": "info",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "actualReadKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "accepted": true,
+        "previewOrders": 1,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "candidate",
+        "selected": {
+          "kind": "platform",
+          "delivery_id": 501,
+          "store_id": 0
+        },
+        "method": "records",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "actualReadKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",
+        "accepted": true,
+        "previewOrders": 0,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "candidate",
+        "selected": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "method": "info",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "actualReadKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "accepted": true,
+        "previewOrders": 1,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      },
+      {
+        "producer": "candidate",
+        "selected": {
+          "kind": "store",
+          "delivery_id": 502,
+          "store_id": 77
+        },
+        "method": "records",
+        "actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",
+        "actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "actualReadKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",
+        "accepted": true,
+        "previewOrders": 0,
+        "financialWrites": 0,
+        "navigations": 0,
+        "codeInNavigation": false
+      }
+    ],
+    "boundary": "Producer envelopes preserved byte-for-byte; only network/native scan and local auth I/O synthetic. Sanitized fixture code and display fields already supplied by SQL producer, no hash/key/row mutation. Real WeChat hardware not invoked."
+  },
+  "cleanup": {
+    "browser": "Playwright browser and localhost TLS server closed infinally; six fresh screenshots retained. No trust-store changes.",
+    "source": "No further source edits after guarded two-file writeback. No Workerdependencies/locks/global deliveryCode/controller consistency bypass changes.",
+    "production": "No live WeChat provider/physical camera/production writes; actualPG producer supplied independently by validation under SELECT-only role."
+  }
+}

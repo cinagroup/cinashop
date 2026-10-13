@@ -1,0 +1,117 @@
+{
+  "recordedAt": "2026-10-13T06:26:35.330Z",
+  "selectedCases": [
+    "READ_COMPAT_CUSTOMER explicit persisted member codes retain exact SQL read authority and strict write intent",
+    "READ_COMPAT_DELIVERY persisted member codes retain exact assigned SQL read scope and strict financial intent",
+    "N04 treats colliding twelve digit member and order codes as explicit distinct namespaces"
+  ],
+  "selectedFiles": [
+    "test/customer-work-writeoff-postgres.test.ts",
+    "test/delivery-workbench-writeoff-postgres.test.ts"
+  ],
+  "filesPassed": 2,
+  "testsPassed": 3,
+  "testsSkipped": 70,
+  "exit": 0,
+  "durationSeconds": 21.91,
+  "physicalInputCount": 2977,
+  "physicalBeforeDigest": "a6163a7aad0cfdcc71c37426828926196cd5edeb303a1b7579c044ff01e22934",
+  "physicalAfterDigest": "a6163a7aad0cfdcc71c37426828926196cd5edeb303a1b7579c044ff01e22934",
+  "localInputChanges": [],
+  "sourceScopeCount": 21,
+  "sourceBeforeMismatches": [],
+  "sourceAfterMismatches": [],
+  "gateAndTestInputs": [
+    {
+      "path": "workers-ts/test/customer-work-writeoff-postgres.test.ts",
+      "localSha256": "2dd9bca5e9b3ae13d8477011d37ee32ac10b4283e6685fd445333bb2c9505a12",
+      "sourceSha256": "2dd9bca5e9b3ae13d8477011d37ee32ac10b4283e6685fd445333bb2c9505a12"
+    },
+    {
+      "path": "workers-ts/test/delivery-workbench-writeoff-postgres.test.ts",
+      "localSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3",
+      "sourceSha256": "12ad9f66ac2e5473e5e6601fb086d2c13dd3e187a2fee2001f9bdea49296f5f3"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkWriteoffProtocol.ts",
+      "localSha256": "6e2f1036dc21b89c1174069814f5346c788ff5318e01c7210a37ae0cfbe744cc",
+      "sourceSha256": "6e2f1036dc21b89c1174069814f5346c788ff5318e01c7210a37ae0cfbe744cc"
+    },
+    {
+      "path": "workers-ts/src/services/store/DeliveryOrderWriteoffService.ts",
+      "localSha256": "70f0f064795f3f21f530e26b7fd97c6ace2653694d3a595b766ad89411463f3d",
+      "sourceSha256": "70f0f064795f3f21f530e26b7fd97c6ace2653694d3a595b766ad89411463f3d"
+    },
+    {
+      "path": "view/common/customerWorkWriteoff.ts",
+      "localSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd",
+      "sourceSha256": "f46708c79c84ccc1c0db031e4e0d1caf5e1bac7b2b8243c32a4fa450c097ebdd"
+    }
+  ],
+  "stop": {
+    "executed": true,
+    "fixtureDatabasesAndRolesZero": true,
+    "stoppedMarker": true,
+    "checkedAt": "2026-10-13T06:25:15.050Z",
+    "cluster": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\read-compat-owned-20261013\\finance-postgres-ueml2P",
+    "executable": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin\\pg_ctl.exe",
+    "args": [
+      "status",
+      "-D",
+      "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\read-compat-owned-20261013\\finance-postgres-ueml2P\\data"
+    ],
+    "exit": 3,
+    "signal": null,
+    "stdout": "pg_ctl: no server running\r\n",
+    "stderr": "",
+    "error": null
+  },
+  "receipts": [
+    {
+      "filename": "read-compat-native-stage-1.log",
+      "bytes": 19664,
+      "sha256": "912666e8ab91ca1ca9bd3778e028ed6be113052a97f201f6c13ea80c66656e7c"
+    },
+    {
+      "filename": "read-compat-native-stage-1.result.json",
+      "bytes": 1377,
+      "sha256": "9a423685efa04339bcd0efbe01f823dfa996289bfcbc8036fc688c6bbcf08957"
+    },
+    {
+      "filename": "read-compat-native-stage-1-command.json",
+      "bytes": 3220,
+      "sha256": "83ef0b9b718b1802d9150b32c3f9e02acdca0b061ae811af51c313908e7dabba"
+    },
+    {
+      "filename": "read-compat-native-stage-1-before.json",
+      "bytes": 509141,
+      "sha256": "1cbad46f1f91dbdfd6f862f06617110aa40176b5f3183ef7f2475e1c35742537"
+    },
+    {
+      "filename": "read-compat-native-stage-1-after.json",
+      "bytes": 509141,
+      "sha256": "222b566f6b708e8dfd22e77dae947ad00c379b3f1b87ab99f567fc4163969995"
+    },
+    {
+      "filename": "read-compat-native-stage-1-independent-stop.json",
+      "bytes": 783,
+      "sha256": "42a666ac2d43acb6f181f17b12c7296c8a97a38dbf8208a81aea71bb0dd662a2"
+    },
+    {
+      "filename": "read-compat-cases-writeback.json",
+      "bytes": 1208,
+      "sha256": "ab56ec0156d7fe933eca9bb7651cda8342fc5eea81b9d84b5f4f4aac42253741"
+    }
+  ],
+  "readCompatibilitySelectedCasesPassed": true,
+  "fullFinancialSuitesPassed": false,
+  "finalGlobalTypesPassed": false,
+  "facts": [
+    "Both new cases use existing independent ordinary LOGIN runtimes and persisted member barcodes; exact SQL owner/assignment/current scopes remain enforced",
+    "Special member codes accepted only by explicit customer member namespace or delivery non12 member branch; customer auto remains ASCII",
+    "Legacy customer ASCII contracts including explicit12 member lookup are preserved; oldN04 collision/namespace case passes unchanged",
+    "Only fixture barcode updates are made within selected cases; financial write intent parsers reject special codes and no financial operation executes",
+    "Before/after full users,orders,carts,effects,ledger snapshots are equal around every read; overall normalized barcode-free snapshots match",
+    "Previous Native105 belongs to its earlier input snapshot and is not borrowed for these gates"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "verifiedAt": "2026-10-13T13:57:59.8004216+08:00",
+  "sourceUnchanged": true,
+  "uiAndSfcHashesMatch": true,
+  "packageHashesMatch": true,
+  "installedVue": "3.5.42",
+  "lockedVue": "3.5.42",
+  "sourceProof": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/supplier-batch-final-sourceproof.json",
+  "checks": [
+    {
+      "command": "node node_modules/vue-tsc/bin/vue-tsc.js -p tsconfig.app.json --noEmit",
+      "exit": 0,
+      "durationSeconds": 25.574,
+      "log": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/supplier-batch-final-types.log"
+    },
+    {
+      "command": "npm run build (vue-tsc -b && vite build)",
+      "exit": 0,
+      "durationSeconds": 63.419,
+      "log": "C:/Users/cina/.codex/visualizations/2026/10/13/01a13321-41f8-7ea2-9370-103a58344561/supplier-batch-final-build.log"
+    }
+  ],
+  "playwrightFinalScreenshotsMatchSameUiHashes": true,
+  "browserEvidence": [
+    {
+      "file": "supplier-batch-playwright.cjs",
+      "sha256": "5397C593BA223BBC5C9DE982524F2C3BF03D42257C824950416DED1A2C27A0B5"
+    },
+    {
+      "file": "supplier-batch-desktop.png",
+      "sha256": "499C88C63F3C9BBA576644C5DE2C100CDBC56E6DC22A83D63DB1EF2D0C61D554"
+    },
+    {
+      "file": "supplier-batch-mobile-form.png",
+      "sha256": "45FBE0CC709EAD1897AF14DE9C5DC2EF2E951E6463279C5D8B98CCA4E2C81BEC"
+    },
+    {
+      "file": "supplier-batch-mobile-verified.png",
+      "sha256": "AB769F6B8D60FB7F9E8CE6A45023295164C440CE0792CB8F42C158C2D517217F"
+    },
+    {
+      "file": "supplier-batch-readonly.png",
+      "sha256": "758DC0096254C41300ABA434E353C478179993AF0ED534F09C18D34CDB7B3C6D"
+    }
+  ]
+}

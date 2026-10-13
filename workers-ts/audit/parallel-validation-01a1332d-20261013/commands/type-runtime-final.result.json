@@ -1,0 +1,19 @@
+{
+  "tag": "type-runtime-final",
+  "start": "2026-10-13T03:19:06.581Z",
+  "end": "2026-10-13T03:20:41.981Z",
+  "node": "v24.14.1",
+  "cwd": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\cinashop-migration-20261013-HUPOBq\\workers-ts",
+  "args": [
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.runtime-test.json",
+    "--noEmit"
+  ],
+  "status": 0,
+  "signal": null,
+  "errorCode": null,
+  "stdoutBytes": 0,
+  "stderrBytes": 0
+}

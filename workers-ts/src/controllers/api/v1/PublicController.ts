@@ -20,6 +20,15 @@ import { readAgreementByType } from "@/services/user/PublicAgreementService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
 
+/** PHP getScript returns the configured JavaScript itself, without a JSON envelope. */
+export async function getScript(c: C) {
+  const script = await new SystemConfigService(c.get('container'), c.env).get('system_statistics');
+  c.header('Cache-Control', 'public, max-age=60');
+  c.header('Content-Type', 'application/javascript; charset=utf-8');
+  c.header('X-Content-Type-Options', 'nosniff');
+  return c.body(script);
+}
+
 /**
  * GET /api/site_config
  *

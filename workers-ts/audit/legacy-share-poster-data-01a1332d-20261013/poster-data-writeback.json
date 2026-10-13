@@ -1,0 +1,61 @@
+{
+  "writtenAt": "2026-10-13T05:22:46.837Z",
+  "completedAt": "2026-10-13T05:22:47.061Z",
+  "scope": [
+    "src/services/user/UserSpreadPosterDataService.ts",
+    "src/controllers/api/v1/UserProfileController.ts",
+    "test/user-spread-poster-data.test.ts",
+    "test/user-spread-poster-data-native.test.ts"
+  ],
+  "controllerChanges": [
+    "one service import",
+    "spreadInfo only"
+  ],
+  "files": [
+    {
+      "file": "src/services/user/UserSpreadPosterDataService.ts",
+      "sourceBefore": null,
+      "sourceAfter": "6aa008d63b84dfa0bc48117574a29cee64e55ed6adfa75abddb3d56218ee24ef",
+      "localAfter": "6aa008d63b84dfa0bc48117574a29cee64e55ed6adfa75abddb3d56218ee24ef",
+      "matches": true
+    },
+    {
+      "file": "src/controllers/api/v1/UserProfileController.ts",
+      "sourceBefore": "3dbb432573b2ee153c16f57ca42597f46280012a543b9905d1991d2dd5ad227b",
+      "sourceAfter": "510ed3618643c4c177ca94bd0632800e11bb8610d0563877bcf0cd149331ff51",
+      "localAfter": "510ed3618643c4c177ca94bd0632800e11bb8610d0563877bcf0cd149331ff51",
+      "matches": true
+    },
+    {
+      "file": "test/user-spread-poster-data.test.ts",
+      "sourceBefore": null,
+      "sourceAfter": "a19987c6f2948c1b924beeb7f46858d9de90fb22a47115174d6f551112b67cae",
+      "localAfter": "a19987c6f2948c1b924beeb7f46858d9de90fb22a47115174d6f551112b67cae",
+      "matches": true
+    },
+    {
+      "file": "test/user-spread-poster-data-native.test.ts",
+      "sourceBefore": null,
+      "sourceAfter": "1331925cb1b4e1fbf0ce8aba32ae0f9c2e2f4a7cf95d1107cf5ffb768ee7360e",
+      "localAfter": "1331925cb1b4e1fbf0ce8aba32ae0f9c2e2f4a7cf95d1107cf5ffb768ee7360e",
+      "matches": true
+    }
+  ],
+  "ordinary": {
+    "passed": 46,
+    "exit": 0,
+    "log": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/poster-data-local-2.log",
+    "result": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/poster-data-local-2.result.json"
+  },
+  "priorFailurePreserved": {
+    "log": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/poster-data-local-1.log",
+    "result": "C:/Users/cina/.codex/visualizations/2026/10/13/01a1332d-ffe1-7932-a2c8-d314f67cd722/poster-data-local-1.result.json"
+  },
+  "native": {
+    "file": "test/user-spread-poster-data-native.test.ts",
+    "cases": 2,
+    "executed": false
+  },
+  "prior93And48EvidenceBorrowed": false,
+  "fullCurrentInputValidationPassed": false
+}

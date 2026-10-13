@@ -1,0 +1,151 @@
+{
+  "recordedAt": "2026-10-13T03:15:33.677Z",
+  "node": "v24.14.1",
+  "npm": "11.11.0",
+  "dependencyPolicy": "Copied existing installed dependencies from same-lock local snapshots; no installation or lock/dependency edits.",
+  "packages": [
+    {
+      "path": "workers-ts",
+      "originalLockSha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "copiedLockSha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+      "installed": [
+        {
+          "package": "vitest",
+          "version": "4.1.11",
+          "lockedVersion": "4.1.11"
+        },
+        {
+          "package": "vite",
+          "version": "8.2.1",
+          "lockedVersion": "8.2.1"
+        },
+        {
+          "package": "typescript",
+          "version": "5.9.3",
+          "lockedVersion": "5.9.3"
+        },
+        {
+          "package": "tsx",
+          "version": "4.23.11",
+          "lockedVersion": "4.23.11"
+        },
+        {
+          "package": "drizzle-orm",
+          "version": "0.45.2",
+          "lockedVersion": "0.45.2"
+        },
+        {
+          "package": "postgres",
+          "version": "3.4.9",
+          "lockedVersion": "3.4.9"
+        },
+        {
+          "package": "@electric-sql/pglite",
+          "version": "0.5.8",
+          "lockedVersion": "0.5.8"
+        },
+        {
+          "package": "@cloudflare/vitest-plugin",
+          "version": "1.1.7",
+          "lockedVersion": "1.1.7"
+        },
+        {
+          "package": "@cloudflare/workers-types",
+          "version": "5.20260910.1",
+          "lockedVersion": "5.20260910.1"
+        },
+        {
+          "package": "esbuild",
+          "version": "0.28.2",
+          "lockedVersion": "0.28.2"
+        }
+      ]
+    },
+    {
+      "path": "view/admin-ts",
+      "originalLockSha256": "0e6d88770c9eeb6abb10c59e8b66d6a7bda3fe5c7b4caa1388e4d7f6a191ffaf",
+      "copiedLockSha256": "0e6d88770c9eeb6abb10c59e8b66d6a7bda3fe5c7b4caa1388e4d7f6a191ffaf",
+      "installed": [
+        {
+          "package": "vue",
+          "version": "3.5.42",
+          "lockedVersion": "3.5.42"
+        },
+        {
+          "package": "@vue/compiler-sfc",
+          "version": "3.5.42",
+          "lockedVersion": "3.5.42"
+        }
+      ]
+    },
+    {
+      "path": "view/uniapp-ts",
+      "originalLockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+      "copiedLockSha256": "ca7d27d59fc4a84bdb4a1d04d2866f4e5cbc7b7067e50b9a9ad3572abdbb68e8",
+      "installed": [
+        {
+          "package": "vue",
+          "version": "3.4.21",
+          "lockedVersion": "3.4.21"
+        },
+        {
+          "package": "vue-tsc",
+          "version": "2.2.12",
+          "lockedVersion": "2.2.12"
+        },
+        {
+          "package": "typescript",
+          "version": "5.9.3",
+          "lockedVersion": "5.9.3"
+        },
+        {
+          "package": "vite",
+          "version": "5.4.21",
+          "lockedVersion": "5.4.21"
+        }
+      ]
+    },
+    {
+      "path": "view/kefu-ts",
+      "originalLockSha256": "d57f3346a991315c62ef6a8e4ed42977c416e3d14bd2a7c54f4c97df3ac39ba7",
+      "copiedLockSha256": "d57f3346a991315c62ef6a8e4ed42977c416e3d14bd2a7c54f4c97df3ac39ba7",
+      "installed": [
+        {
+          "package": "vue",
+          "version": "3.5.42",
+          "lockedVersion": "3.5.42"
+        },
+        {
+          "package": "@vue/compiler-sfc",
+          "version": "3.5.42",
+          "lockedVersion": "3.5.42"
+        }
+      ]
+    }
+  ],
+  "postgresBin": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-cashier-images-validation/native-tools/pgsql/bin",
+  "postgresBinaries": [
+    {
+      "name": "postgres.exe",
+      "sha256": "324ac242d623edcf82822f0c59c5dc2f8e74049d9dbb7ebc738bdaf5824e2ae6"
+    },
+    {
+      "name": "initdb.exe",
+      "sha256": "b70c70d844a67f8a55dbd1b654b21ada180b517a6c21d601caa0914f834216fe"
+    },
+    {
+      "name": "pg_ctl.exe",
+      "sha256": "7d32e936b982b3338ce5b304c4c5474bbbd9fd5042bd4f6ba58149dc9ce82f92"
+    },
+    {
+      "name": "psql.exe",
+      "sha256": "e7acd0437ac9a15e4821c39dac3e51939a0d16e09ea0d9bb106ad2c8645626ac"
+    }
+  ],
+  "postgresVersionCommand": {
+    "status": 0,
+    "stdout": "postgres (PostgreSQL) 16.15",
+    "stderr": "",
+    "errorCode": null
+  }
+}

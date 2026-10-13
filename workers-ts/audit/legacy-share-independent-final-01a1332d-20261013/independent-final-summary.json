@@ -1,0 +1,246 @@
+{
+  "archivedAt": "2026-10-13T08:03:09.936Z",
+  "scope": "Independent frozen LOCAL Worker/Functions complete inputs, literal relative type closure and current scanner scope; main current repository remains active.",
+  "currentWholeSourceFrozen": false,
+  "inputCount": 3089,
+  "beforeDigest": "6f4b9395ca0688f2ce8646c0f22f57cccdef980570e197714aad95ef390b27cb",
+  "afterDigest": "6f4b9395ca0688f2ce8646c0f22f57cccdef980570e197714aad95ef390b27cb",
+  "localInputDrift": [],
+  "typeInputCaptureBefore": "2026-10-13T07:47:26.926Z",
+  "typeInputCaptureAfter": "2026-10-13T08:00:46.622Z",
+  "ownSourceCount": 7,
+  "ownSourceMismatchesBefore": [],
+  "ownSourceMismatchesAfter": [],
+  "relatedSourceMismatchesBefore": [
+    {
+      "path": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+      "localSha256": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+      "sourceSha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b"
+    }
+  ],
+  "relatedSourceMismatchesAfter": [
+    {
+      "path": "workers-ts/src/services/wechat/WechatMiniProgramCodeService.ts",
+      "localSha256": "297852182a23a2280e622e0c8c2f5fe3d780c9e22d7916013bd90e3211dffffa",
+      "sourceSha256": "a1bd90ad40a456507b99784290a813b9069cbb903532a2dbdb87c8861217572b"
+    }
+  ],
+  "ordinary": {
+    "files": [
+      "test/legacy-share-code.test.ts",
+      "test/legacy-share-provider-budget.test.ts",
+      "test/legacy-share-private-scan.test.ts",
+      "test/legacy-share-private-scan-flow.test.ts",
+      "test/legacy-share-private-mini.test.ts",
+      "test/legacy-share-http.test.ts",
+      "test/legacy-share-registered-http.test.ts",
+      "test/legacy-share-callback.test.ts",
+      "test/wechat-callback-pipeline.test.ts",
+      "test/wechat-qrcode-migration.test.ts",
+      "test/product-share-code.test.ts",
+      "test/wechat-follow-poster.test.ts",
+      "test/user-spread-poster-data.test.ts"
+    ],
+    "startedAt": "2026-10-13T07:51:01.661Z",
+    "finishedAt": "2026-10-13T07:53:08.180Z",
+    "exitCode": 0,
+    "total": 167,
+    "passed": 167,
+    "failed": 0,
+    "pending": 0
+  },
+  "types": {
+    "node": "v24.14.1",
+    "heapMiB": 6144,
+    "lockSha256": "db479340e0c5a43858219f24f7633de4848c7aae8a280ee9b77d1d94dce7015a",
+    "installedLockedPackageCount": 115,
+    "commands": [
+      {
+        "label": "unit",
+        "command": [
+          "--max-old-space-size=6144",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "startedAt": "2026-10-13T07:48:51.989Z",
+        "finishedAt": "2026-10-13T07:52:51.416Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-worker-types-independent-5-unit.txt",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "label": "runtime",
+        "command": [
+          "--max-old-space-size=6144",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "startedAt": "2026-10-13T07:52:51.439Z",
+        "finishedAt": "2026-10-13T07:54:23.330Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "log": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\13\\01a1332d-ffe1-7932-a2c8-d314f67cd722\\share-worker-types-independent-5-runtime.txt",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "frontendSourceBoundary": "The 65-file frontend snapshot is separately qualified in legacy-share-scanner-current audit. Main later pages.json registration is not covered by its earlier builds.",
+  "sourceBoundary": "Main added employee-invitation imports and method to WechatMiniProgramCodeService after local freeze. Old sharing methods were read-only compared unchanged; this does not qualify the new import graph or current whole Source.",
+  "retainedFailures": [
+    {
+      "prefix": "share-worker-types-independent-4",
+      "result": "Unit exit 2: local copy lacked two actual cross-frontend Cart imports. Runtime did not start. Exact existing Source files were subsequently copied; no fake implementation or source fix."
+    },
+    {
+      "prefix": "share-ordinary-frozen-final-1",
+      "result": "Stopped at source qualification before tests: shared AdminLayout/router had changed. Exact existing Source files copied only to validation workspace."
+    },
+    {
+      "prefix": "share-ordinary-frozen-final-2",
+      "result": "Vite config realpath EPERM in sandbox, no collected tests. Same bounded local test run then used approved escalation."
+    }
+  ],
+  "externalBoundary": "Controlled provider/Images/R2/network transport; real WeChat, device scanning and Cloudflare image encoder remain unverified. No production requests or deployment.",
+  "relatedEvidence": [
+    "../legacy-share-scanner-current-01a1332d-20261013/scanner-current-export-summary.json",
+    "../delivery-shared-read-key-01a1332d-20261013/delivery-shared-read-key-candidate-summary.json",
+    "../delivery-shared-read-key-01a1332d-20261013/delivery-shared-read-key-source-writeback.json"
+  ],
+  "artifacts": [
+    {
+      "name": "share-independent-current-before-5.json",
+      "bytes": 532188,
+      "sha256": "10b461adb961ad7724c2abf78271a995ae78e6cdee8b92b3483dabe39ecec46c"
+    },
+    {
+      "name": "share-independent-current-after-5.json",
+      "bytes": 532188,
+      "sha256": "9360acf1d7bf77bfc3d3a36f272fff099e9fda64a5323a14474fa2baee2ae2ed"
+    },
+    {
+      "name": "share-worker-types-independent-5-result.json",
+      "bytes": 26739,
+      "sha256": "d2869a9d0e98edb0fc27ed79d96f4a3ef912a1e4e1761891b36d6774c92258be"
+    },
+    {
+      "name": "share-worker-types-independent-5-unit-exit.json",
+      "bytes": 497,
+      "sha256": "5c15dcbc46d8ed0c6df501f06bf438849e5740e76c09d922b4bed7de4a0a4c0d"
+    },
+    {
+      "name": "share-worker-types-independent-5-runtime-exit.json",
+      "bytes": 547,
+      "sha256": "c862d452a39f0c1820144ee86d41571dcd46b7b6e4f44540d5bc0541edcd9dd7"
+    },
+    {
+      "name": "share-worker-types-independent-5-unit.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "share-worker-types-independent-5-runtime.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "share-ordinary-independent-final-3-result.json",
+      "bytes": 3124,
+      "sha256": "291cf8ecf1d4c093560a1f325f2c41af81c10ced978487437620291e02ec911f"
+    },
+    {
+      "name": "share-ordinary-independent-final-3-vitest.json",
+      "bytes": 71508,
+      "sha256": "42ffa6e15670a36082286a4ea56c58aab63a9b7c8924be50aee7b9d97a8ea4ef"
+    },
+    {
+      "name": "share-ordinary-independent-final-3-before.json",
+      "bytes": 532188,
+      "sha256": "7cb68306c4fcd86ed77812a88380daabb04c514d54dae256caa461981c16985c"
+    },
+    {
+      "name": "share-ordinary-independent-final-3-after.json",
+      "bytes": 532188,
+      "sha256": "4f816c9615545b7e662cc1f3a18aeb64c88c67db540bbb9c2576fc98d19edf0a"
+    },
+    {
+      "name": "share-ordinary-independent-final-3.log",
+      "bytes": 154,
+      "sha256": "b3fb215d481d2cbe0522a73eb2e0c60c4205b67b60bebdcdec7aa2fa0d3b2873"
+    },
+    {
+      "name": "capture-share-independent-local.cjs",
+      "bytes": 5373,
+      "sha256": "609afd6fbe99614976216caec5bee836a688fc7ac6a67a13a36bbd3c950d5467"
+    },
+    {
+      "name": "run-share-worker-types.cjs",
+      "bytes": 2425,
+      "sha256": "ca66531e705ddf573aae00ad7b113c91579dbad2be2dd8fd0e47debc937443cc"
+    },
+    {
+      "name": "run-share-ordinary-independent.cjs",
+      "bytes": 3232,
+      "sha256": "668d8d15d9a398af2df73223bcd79ac4a1a2d941e0862196e90f773b242d1b88"
+    },
+    {
+      "name": "share-worker-types-independent-4-result.json",
+      "bytes": 26122,
+      "sha256": "fb0ea73c51a54f39a8017495ac8fb093946c94148f456ffb8bad940576d75b74"
+    },
+    {
+      "name": "share-worker-types-independent-4-unit-exit.json",
+      "bytes": 497,
+      "sha256": "65fe8f692a2c4541cd47710ef521cf8abf5066032c75f18d05b039708012d6f0"
+    },
+    {
+      "name": "share-worker-types-independent-4-unit.txt",
+      "bytes": 319,
+      "sha256": "00192a116453f63ebb5d2052a2e9ef40054ab389e7df44aca8c194a860aa0b6f"
+    },
+    {
+      "name": "share-ordinary-frozen-final-1-before.json",
+      "bytes": 1267484,
+      "sha256": "13929ef3a6464cff82593752d55e71fb5dcb4232d334d7e0f3734ba7ad0ba6bc"
+    },
+    {
+      "name": "share-ordinary-frozen-final-1-before-closure.json",
+      "bytes": 783576,
+      "sha256": "28091d26d77f6327949d3e50d8b52ade5f22f24739bb264f12130d9200c450b9"
+    },
+    {
+      "name": "share-ordinary-frozen-final-2-result.json",
+      "bytes": 2341,
+      "sha256": "98c51d0d1c48df89508f58ecba5d1a6aa2bafed494e56c464929eb0e322ab2ec"
+    },
+    {
+      "name": "share-ordinary-frozen-final-2.log",
+      "bytes": 16869,
+      "sha256": "ba8386a1b5e2779bc652aa624f7233e7da000dcbfa0b1ade3c307eaf9823d935"
+    },
+    {
+      "name": "share-ordinary-frozen-final-2-before.json",
+      "bytes": 1267484,
+      "sha256": "1885de3e63490bb3eac710e26444526f0d11e4e40485228f093898740a258e08"
+    },
+    {
+      "name": "share-ordinary-frozen-final-2-after.json",
+      "bytes": 1267484,
+      "sha256": "b63fc77ba51994727997af1b4faa18652edb260556cad64a2594210df92b97e3"
+    },
+    {
+      "name": "share-ordinary-frozen-final-2-before-closure.json",
+      "bytes": 783092,
+      "sha256": "41766e1ebddcf7129c4ed72694c10aa04cf81ef788297644a9ca125017f1a97c"
+    },
+    {
+      "name": "share-ordinary-frozen-final-2-after-closure.json",
+      "bytes": 783092,
+      "sha256": "ceb2b1d130d9edddcf925bf6ee1b5464db3acacc32afcd57f7b20b33a869a2d5"
+    }
+  ]
+}

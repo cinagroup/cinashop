@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "sha256": "1806881F842D39E40829CE5589FBCCCF05D49781BDD911E3CEDBAA87751D6A51",
+      "typeOnlyCandidate": "04C000065471357E2EA532E6030750DD6E8BA3414CDBF0395A824619B9B5D57D",
+      "path": "src/services/other/LegacyPrivateScanTarget.ts"
+    },
+    {
+      "sha256": "D5703791FF94D4129CCC4C523ACBF5100F4A5EBB1CCA27597521EFB0B81C0651",
+      "typeOnlyCandidate": "D5703791FF94D4129CCC4C523ACBF5100F4A5EBB1CCA27597521EFB0B81C0651",
+      "path": "test/helpers/legacyPrivateScanFixture.ts"
+    },
+    {
+      "sha256": "B98215444E75AB435F3442506BE6BA5A570E7664EDC02C13337BEEE6850B3C55",
+      "typeOnlyCandidate": "B98215444E75AB435F3442506BE6BA5A570E7664EDC02C13337BEEE6850B3C55",
+      "path": "test/legacy-share-private-scan.test.ts"
+    },
+    {
+      "sha256": "5ACA8AB993E5D8AD48C3A81E3609775443717D5368688E9756CC0FF71C90D2F0",
+      "typeOnlyCandidate": "5ACA8AB993E5D8AD48C3A81E3609775443717D5368688E9756CC0FF71C90D2F0",
+      "path": "test/legacy-share-private-scan-native.test.ts"
+    }
+  ],
+  "scope": "Only real SystemConfigEnv forwarding; no realm/path/flow functional edits",
+  "freezeAt": "2026-10-13T04:29:12.6596572Z"
+}

@@ -1,0 +1,162 @@
+{
+  "thread": "01a1332d-ffe1-7932-a2c8-d314f67cd722",
+  "observedAt": "2026-10-13T03:30:04.970Z",
+  "sharedSourceEditing": "frozen",
+  "coordinationThread": "01a13321-41f8-7ea2-9370-103a58344561",
+  "scope": "Final integration root supplied three changed hashes; other fourteen shared source inputs must remain identical before and after copying.",
+  "files": [
+    {
+      "path": "src/services/admin/AdminLegacySystemLogService.ts",
+      "previousCoordinatedSha256": "9d9a40575abeb3dbec082a24675b39e6563d3f595d8e3e8a6dbb99c8a88653bb",
+      "sha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "sourceSha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "beforeCopySha256": "9d9a40575abeb3dbec082a24675b39e6563d3f595d8e3e8a6dbb99c8a88653bb",
+      "afterCopySha256": "54a4043ce802e364ef67b2fb4635f5906174793e76c98c15c44d56cf78391a5b",
+      "updated": true
+    },
+    {
+      "path": "src/controllers/api/v1/AdminLegacySystemLogController.ts",
+      "previousCoordinatedSha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "sha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "sourceSha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "beforeCopySha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "afterCopySha256": "c5cf11d8d7d6bde23cad7cfaff92124af13e48c97e01cf132ea550138733c9a2",
+      "updated": false
+    },
+    {
+      "path": "src/services/admin/AdminPermissionService.ts",
+      "previousCoordinatedSha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "sha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "sourceSha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "beforeCopySha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "afterCopySha256": "30c1ca1452f1d7ac1cee4d40a8295a1136fa0fd60d943802d6df069d344ca109",
+      "updated": false
+    },
+    {
+      "path": "src/services/system/PublicGeocodingService.ts",
+      "previousCoordinatedSha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "sha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "sourceSha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "beforeCopySha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "afterCopySha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+      "updated": false
+    },
+    {
+      "path": "src/controllers/api/v1/PublicGeocodingController.ts",
+      "previousCoordinatedSha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "sha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "sourceSha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "beforeCopySha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "afterCopySha256": "9bace1f058f95fe44aaa5899082983c69bd35aa94a6d47322dba0fcd3a6b4449",
+      "updated": false
+    },
+    {
+      "path": "src/services/supplier/SupplierProductCatalogService.ts",
+      "previousCoordinatedSha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "sha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "sourceSha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "beforeCopySha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "afterCopySha256": "3f0de866631b018ddbebc032758be561dc924ca13dd3390c5d7a6b92b931e9a7",
+      "updated": false
+    },
+    {
+      "path": "src/controllers/supplier/SupplierProductCatalogController.ts",
+      "previousCoordinatedSha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "sha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "sourceSha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "beforeCopySha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "afterCopySha256": "055b8b27dd8f2b3fdf7dea57a766a2e5463524d4bf2a75676ac702499de1fad9",
+      "updated": false
+    },
+    {
+      "path": "src/routes/adminapi.ts",
+      "previousCoordinatedSha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "sha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "sourceSha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "beforeCopySha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "afterCopySha256": "e6ef231f91e04ce6e5ed97469dfda3d5fa9c985659a2692475b809bb70065c89",
+      "updated": false
+    },
+    {
+      "path": "src/routes/v1/index.ts",
+      "previousCoordinatedSha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "sha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "sourceSha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "beforeCopySha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "afterCopySha256": "1878be1d8037d957f97112a1a05096e81a77dd2adf4782098cc32eea0773c892",
+      "updated": false
+    },
+    {
+      "path": "src/routes/supplierapi.ts",
+      "previousCoordinatedSha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "sha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "sourceSha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "beforeCopySha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "afterCopySha256": "00390e6a6c46902bb0b17209982e448715631a96d54960a54bd658b8ed74e79f",
+      "updated": false
+    },
+    {
+      "path": "test/admin-legacy-system-log.test.ts",
+      "previousCoordinatedSha256": "0fe9fa584b80da35f8279d5fe0c4b8be28d755487dfccef61828336abae886f4",
+      "sha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "sourceSha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "beforeCopySha256": "0fe9fa584b80da35f8279d5fe0c4b8be28d755487dfccef61828336abae886f4",
+      "afterCopySha256": "d8d1166483d93db86870c6318e7293830a2c1eea298571f39e3e0eb41fb902f1",
+      "updated": true
+    },
+    {
+      "path": "test/admin-legacy-system-log-native.test.ts",
+      "previousCoordinatedSha256": "35d75c73dee68cfb6b4d91570148ea9eb6a7176ebbb187c906e8206739208360",
+      "sha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "sourceSha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "beforeCopySha256": "35d75c73dee68cfb6b4d91570148ea9eb6a7176ebbb187c906e8206739208360",
+      "afterCopySha256": "ba36cd5de6dc752306d80246759f75904dd00a28d9c4d729d2c3fc0c8252113a",
+      "updated": true
+    },
+    {
+      "path": "test/admin-legacy-log-permission.test.ts",
+      "previousCoordinatedSha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "sha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "sourceSha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "beforeCopySha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "afterCopySha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db",
+      "updated": false
+    },
+    {
+      "path": "test/public-geocoding.test.ts",
+      "previousCoordinatedSha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "sha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "sourceSha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "beforeCopySha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "afterCopySha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+      "updated": false
+    },
+    {
+      "path": "test/supplier-product-catalog.test.ts",
+      "previousCoordinatedSha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "sha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "sourceSha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "beforeCopySha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "afterCopySha256": "f321ca96ccb1f223ecec968fd072b5eb2824f1ba95c85ca05ca05c97362dd8bb",
+      "updated": false
+    },
+    {
+      "path": "scripts/run-local-finance-postgres.mjs",
+      "previousCoordinatedSha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "sha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "sourceSha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "beforeCopySha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "afterCopySha256": "3805b27c4186c504aa590b70f619e43a1ab3630afc0312637be18414d865e600",
+      "updated": false
+    },
+    {
+      "path": "test/local-finance-postgres-runner.test.ts",
+      "previousCoordinatedSha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "sha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "sourceSha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "beforeCopySha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "afterCopySha256": "a26505c1a7c4faa76c234b1ea6b952648b813beb88bd072623eda06db9d3903f",
+      "updated": false
+    }
+  ]
+}

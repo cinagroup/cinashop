@@ -13,10 +13,14 @@ import { deliveryOrderRevision, requireDeliveryScope } from '@/services/store/De
 import { DeliveryOrderOperationRequest, prepareDeliveryOperation, type DeliveryOperationContext, type DeliveryOperationInput } from '@/services/store/DeliveryOrderOperationRequest';
 import { DeliveryOrderWriteoffService, parseDeliveryWriteoffPayload } from '@/services/store/DeliveryOrderWriteoffService';
 import { DELIVERY_ORDER_OPERATION_CATALOG_SHA256, deliveryOperationReadiness, inspectDeliveryOrderOperation, runDeliveryOrderOperation } from '@/migrations/runDeliveryOrderOperation';
-import { deliveryService, memberRight, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storePink, supplierFlowingWater, systemConfig, systemStore, user, userBill, userBrokerage } from '@/models/schema';
+import { deliveryService, memberRight, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storePink, supplierFlowingWater, systemConfig, systemStore, user, userBill, userBrokerage, storeOrderPromotions, storePromotions, storeCouponIssue, systemAttachment, systemSupplier } from '@/models/schema';
 import { financePostgres } from './helpers/financePostgres';
 import { withFinancePeers, waitForFinanceBlock } from './helpers/financePeers';
 import { createDeliveryWorkbenchRuntime } from './helpers/deliveryWorkbenchRuntime';
+import { deliveryWorkbenchReadFixture, observeDeliveryReadDb } from './helpers/deliveryWorkbenchReadFixture';
+import { DeliveryReadService } from '@/services/store/DeliveryReadService';
+import { writeFileSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 
 const pwd = 'a'.repeat(32), actor = { uid: 33, authVersion: md5(pwd), expiresAt: 2147483647 };
 const env = { APP_KEY: 'delivery-owned-local-only', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '', CONFIG_KV: { get: async () => null, put: async () => {}, delete: async () => {} } } as unknown as Env;
@@ -48,9 +52,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native courier s
   const state = async () => ({ orders: await f.db.select().from(storeOrder).orderBy(storeOrder.id), carts: await f.db.select().from(storeOrderCartInfo).orderBy(storeOrderCartInfo.id), records: await f.db.select().from(storeOrderWriteoff).orderBy(storeOrderWriteoff.id), statuses: await f.db.select().from(storeOrderStatus).orderBy(storeOrderStatus.id), flows: await f.db.select().from(supplierFlowingWater).orderBy(supplierFlowingWater.id), bills: await f.db.select().from(userBill).orderBy(userBill.id), accounts: await f.db.select({ uid: user.uid, integral: user.integral, exp: user.exp, brokerage: user.brokeragePrice }).from(user).orderBy(user.uid) });
   beforeAll(async () => {
     const tables = [user, systemStore, deliveryService, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storePink, systemConfig, memberRight, userBill, userBrokerage, supplierFlowingWater];
-    f = await financePostgres(tables, { namespace: 'public' }); await runDeliveryOrderOperation(f.db);
+    const readTables = [storeOrderPromotions, storePromotions, storeCouponIssue, systemAttachment, systemSupplier];
+    f = await financePostgres([...tables, ...readTables], { namespace: 'public' }); await runDeliveryOrderOperation(f.db);
     await f.exec('CREATE UNIQUE INDEX delivery_fixture_bill_event ON user_bill(uid,link_id,event_key)');
     runtime = await createDeliveryWorkbenchRuntime(f.db, tables);
+    if(!/^delivery_runtime_[a-f0-9]{32}$/.test(runtime.role))throw Error('Unexpected owned original delivery role');
+    await f.db.execute(sql`GRANT SELECT ON public.${sql.identifier('store_order_promotions')},public.${sql.identifier('store_promotions')},public.${sql.identifier('store_coupon_issue')},public.${sql.identifier('system_attachment')},public.${sql.identifier('system_supplier')} TO ${sql.identifier(runtime.role)}`);
   }, 30000);
   afterAll(async () => { try { await runtime?.close(); } finally { await f?.close(); } }, 30000);
   beforeEach(async () => {
@@ -64,6 +71,98 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native courier s
   });
   afterEach(() => { try { expect(guard).not.toHaveBeenCalled(); } finally { guard?.mockRestore(); } });
 
+  it('READ_COMPAT_DELIVERY_CONTEXT actual context and qualified writeoff readers share the same readonly snapshot', async () => {
+    const actual=await deliveryWorkbenchReadFixture();
+    try {
+      // The mature complete read fixture owns all shared snapshot tables.
+      // Add only actual writeoff catalog/tables on its owned maintenance login.
+      const kit=await import('drizzle-kit/api');
+      for(const statement of await kit.generateMigration(kit.generateDrizzleJson({}),kit.generateDrizzleJson({storeOrderWriteoff})))await actual.exec(statement);
+      await runDeliveryOrderOperation(actual.db);
+      await actual.withRuntimeRole(async peer=>{
+        await actual.installReadSlice(peer);
+        if(!/^cinashop_runtime_[a-f0-9]{32}$/.test(peer.role))throw Error('Unexpected owned read role');
+        await actual.exec(`GRANT SELECT ON public.store_order_writeoff,public.delivery_order_operation_request TO "${peer.role}"`);
+        for(const table of ['store_order_promotions','store_promotions','store_coupon_issue','system_attachment','system_supplier','delivery_order_operation_request']){
+          const [rights]=await peer.db.execute(sql`SELECT has_table_privilege(current_user,${'public.'+table},'SELECT') AS read,
+            (has_table_privilege(current_user,${'public.'+table},'INSERT') OR has_table_privilege(current_user,${'public.'+table},'UPDATE') OR has_table_privilege(current_user,${'public.'+table},'DELETE')) AS write`);
+          expect(rights).toEqual({read:true,write:false});
+        }
+        const [identity]=await peer.db.execute(sql`SELECT current_user AS current,session_user AS session,(SELECT rolsuper FROM pg_roles WHERE rolname=current_user) AS super`);
+        expect(identity).toEqual({current:peer.role,session:peer.role,super:false});
+        let snapshots=0;
+        const db=observeDeliveryReadDb(peer.db,async(tx,statement)=>{
+          if(!/^SET TRANSACTION ISOLATION LEVEL REPEATABLE READ,\s*READ ONLY/i.test(statement))return;
+          const [mode]=await tx.execute(sql`SELECT current_setting('transaction_read_only') AS readonly,current_setting('transaction_isolation') AS isolation`);
+          expect(mode).toEqual({readonly:'on',isolation:'repeatable read'});snapshots++;
+        });
+        const container=createContainerFromDb(db),reader=new DeliveryReadService(container,actual.env),writeoff=new DeliveryOrderWriteoffService(container,actual.env),realActor=actual.actor();
+        const fullState=async()=>({tables:await actual.snapshot(),writeoffRows:await actual.db.select().from(storeOrderWriteoff).orderBy(storeOrderWriteoff.id),ledger:await actual.db.execute(sql`SELECT * FROM public.delivery_order_operation_request ORDER BY actor_uid,request_key`)}),before=await fullState();
+        const reports=[];
+        for(const selected of [{kind:'platform',delivery_id:501,store_id:0},{kind:'store',delivery_id:502,store_id:77}]as const){
+          const selection={scope_kind:selected.kind,delivery_id:String(selected.delivery_id),store_id:String(selected.store_id)};
+          const context=await reader.context(realActor,selection);
+          const info=await writeoff.info(realActor,{version:'delivery-workbench-v1',...selection,delivery_id:selected.delivery_id,store_id:selected.store_id,scope_key:context.scope_key,code:'123456789012'});
+          const records=await writeoff.records(realActor,{...selection,scope_key:context.scope_key,order_id:'1'});
+          expect(context.actor_uid).toBe(realActor.uid);expect(info.actor_uid).toBe(realActor.uid);expect(records.actor_uid).toBe(realActor.uid);
+          expect(info.scope_key).toBe(context.scope_key);expect(records.scope_key).toBe(context.scope_key);
+          expect(info.data.list.map(row=>row.id)).toEqual([1]);expect(info.data.list[0].cart_info.length).toBeGreaterThan(0);expect(info.data.list[0].cart_info[0].cart_num).toBeGreaterThan(0);
+          reports.push({selected,context,info,records});
+        }
+        expect(snapshots).toBeGreaterThanOrEqual(6);expect(await fullState()).toEqual(before);
+        const destination=process.env.TEST_DELIVERY_READ_ENVELOPE_FILE;
+        if(destination){
+          if(!isAbsolute(destination))throw Error('Fixture envelope destination must be absolute');
+          const sanitized=JSON.parse(JSON.stringify(reports,(key,value)=>{
+            if(/password|pwd|token|auth_version|authVersion/i.test(key))return undefined;
+            if(['avatar','image'].includes(key))return '';
+            if(['nickname','account','name','phone','address','detailed_address','real_name','user_phone','user_address','store_name'].includes(key)&&typeof value==='string')return 'fixture-display';
+            if(['verify_code','code'].includes(key)&&typeof value==='string')return value?'000000000001':'';
+            return value;
+          }));
+          writeFileSync(destination,JSON.stringify({format:'sanitized-owned-delivery-read-envelope-v1',fixture_actor_uid:realActor.uid,financialExecutionPerformed:false,
+            sanitization:'fixture display text/code redacted; avatar/image cleared; no password/auth/token; computed keys and UID/scopes unchanged',reports:sanitized},null,2)+'\n');
+        }
+        for(const report of reports){expect(report.info.consistency_key).toBe(report.context.consistency_key);expect(report.records.consistency_key).toBe(report.context.consistency_key);}
+      });
+    }finally{await actual.close();}
+  },60000);
+  it('READ_COMPAT_DELIVERY persisted member codes retain exact assigned SQL read scope and strict financial intent', async () => {
+    const [identity] = await runtime.db.execute(sql`SELECT current_user AS current,session_user AS session,(SELECT rolsuper FROM pg_roles WHERE rolname=current_user) AS super`);
+    expect(identity).toEqual({current:runtime.role,session:runtime.role,super:false});
+    for(const name of ['store_order_promotions','store_promotions','store_coupon_issue','system_attachment','system_supplier']){
+      const [permissions]=await runtime.db.execute(sql`SELECT has_table_privilege(current_user,${'public.'+name},'SELECT') AS read,(has_table_privilege(current_user,${'public.'+name},'INSERT') OR has_table_privilege(current_user,${'public.'+name},'UPDATE') OR has_table_privilege(current_user,${'public.'+name},'DELETE')) AS write`);
+      expect(permissions).toEqual({read:true,write:false});
+    }
+    const platformRead=await readInput(),storeRead=await readInput(store);
+    const snapshot=async()=>({state:await state(),users:await f.db.select().from(user).orderBy(user.uid),brokerage:await f.db.select().from(userBrokerage).orderBy(userBrokerage.id),requests:await f.db.execute(sql`SELECT * FROM public.delivery_order_operation_request ORDER BY actor_uid,request_key`)});
+    const original=await snapshot();
+    for(const code of ['A B','A#B','A\\B','A?B','A&B','A/B']){
+      await f.db.update(user).set({barCode:code}).where(eq(user.uid,22));const before=await snapshot();
+      const result=await service().info(actor,{...platformRead,code});expect(result.data.lookup_kind).toBe('member-barcode');
+      expect(result.data.list.map(row=>row.id)).toEqual([2,1]);
+      expect((await service().info(actor,{...storeRead,code})).data.list.map(row=>row.id)).toEqual([1]);
+      const physical=await f.db.select().from(storeOrder).orderBy(storeOrder.id);
+      expect(result.data.list.every(row=>physical.some(order=>order.id===row.id&&order.uid===22&&order.deliveryUid===33))).toBe(true);
+      expect(result.data.list.some(row=>row.id===3)).toBe(false);
+      await expect(service().info(actor,{...platformRead,code:code+'X'})).rejects.toThrow();
+      await expect(service().info(actor,{...platformRead,scope_key:'0'.repeat(64),code})).rejects.toThrow();
+      // UID44 is a real active account with its own different delivery row;
+      // passing UID33's selected scope must never widen that current authority.
+      await expect(service().info({...actor,uid:44},{...platformRead,code})).rejects.toThrow();
+      expect(()=>parseDeliveryWriteoffPayload({code,items:[{order_cart_id:1,quantity:1}]})).toThrow('12位');
+      expect(await snapshot()).toEqual(before);
+    }
+    for(const code of [' A B','A B ','A\u0000B','A\nB','undefined'])await expect(service().info(actor,{...platformRead,code})).rejects.toThrow();
+    // A persisted 12-digit member value must still select only the order-code
+    // branch. It does not match a real order, so it cannot expose member rows.
+    await f.db.update(user).set({barCode:'111111111111'}).where(eq(user.uid,22));const beforeOrder=await snapshot();
+    await expect(service().info(actor,{...platformRead,code:'111111111111'})).rejects.toThrow();
+    const order=await service().info(actor,{...platformRead,code:'123456789012'});expect(order.data.lookup_kind).toBe('order-code');expect(order.data.list.map(row=>row.id)).toEqual([1]);
+    expect(await snapshot()).toEqual(beforeOrder);
+    const withoutBarcode=(value:Awaited<ReturnType<typeof snapshot>>)=>({...value,users:value.users.map(({barCode:_,...account})=>account)});
+    expect(withoutBarcode(await snapshot())).toEqual(withoutBarcode(original));expect((await snapshot()).requests).toEqual([]);
+  },60000);
   it('observes the actual native canonical catalog fingerprint', async () => {
     const observed = await inspectDeliveryOrderOperation(f.db); console.log('DELIVERY_CATALOG_CALIBRATION', observed.fingerprint);
     expect(observed).toMatchObject({ present: true }); expect(observed.fingerprint).toMatch(/^[a-f0-9]{64}$/);
