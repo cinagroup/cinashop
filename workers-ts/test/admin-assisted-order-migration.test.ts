@@ -98,7 +98,7 @@ describe("admin assisted order migration", () => {
     expect(cart).toContain("eq(storeCart.staffId, params.adminId)");
     expect(cart).toContain("pg_advisory_xact_lock");
     expect(create).toContain("cart.staffId !== assisted.adminId");
-    expect(create).toContain("eq(storeCart.staffId, cashier?.actor.uid ?? assisted?.adminId ?? 0)");
+    expect(create).toContain("eq(storeCart.staffId, ordinary?.actor.uid ?? cashier?.actor.uid ?? assisted?.adminId ?? 0)");
     expect(create).toContain("cart.staffId !== assisted.adminId");
     expect(create).toContain("cart.staffId!==cashier.actor.uid");
     expect(create).toContain('changeType: "admin_assisted_create"');

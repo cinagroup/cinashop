@@ -7,6 +7,10 @@ import {
   REGISTERED_PAGE_ROUTES,
   resolveRegisteredPageRoute,
 } from "../../view/uniapp-ts/src/config/navigation";
+import {
+  REGISTERED_PAGE_ROUTES as SERVER_REGISTERED_PAGE_ROUTES,
+  resolveRegisteredPageRoute as resolveServerRegisteredPageRoute,
+} from "../src/services/content/FabRouteRegistry";
 
 interface ParityAudit {
   counting: {
@@ -21,10 +25,11 @@ interface ParityAudit {
 
 const parity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-product-detail-design-followup-20261002.json", "utf8")) as ParityAudit;
 // The October 2 artifact is an immutable historical checklist/route snapshot.
-// Current navigation adds the member-barcode page and three cashier routes to
-// the writeoff snapshot; exact added records are removed to verify its old hash.
+// Current navigation adds the member-barcode page, three second-card cashier
+// routes and the ordinary cashier. Exact added records verify each old hash.
 const currentParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json", "utf8")) as Omit<ParityAudit, "checklist">;
 const checkoutParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json", "utf8")) as Omit<ParityAudit, "checklist">;
+const ordinaryParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-ordinary-cashier-followup-20261013.json", "utf8")) as Omit<ParityAudit, "checklist">;
 const memberCodeRoute = "/pages/users/user_member_code/index";
 const currentDirectRoutes = [...currentParity.directRegisteredLegacyRoutes, memberCodeRoute];
 const pages = JSON.parse(readFileSync("../view/uniapp-ts/src/pages.json", "utf8")) as {
@@ -55,8 +60,9 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   it("keeps the runtime allowlist synchronized with pages.json and actual page files", () => {
     const manifestRoutes = pages.pages.map((page) => `/${page.path}`).sort();
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
+    expect([...SERVER_REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(129);
+    expect(manifestRoutes).toHaveLength(130);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
     const cashierRecords = [
       { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
@@ -73,9 +79,23 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     }
     expect(currentParity.counting.target.manifestHashNormalization).toBe("LF");
     const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
+    const ordinaryRecord = '    {\n      "path": "pages/customer-work/ordinaryCashier",\n      "style": { "navigationBarTitleText": "普通商品现金收银" }\n    },\n';
+    expect(manifest.split(ordinaryRecord)).toHaveLength(2);
+    const checkoutManifest = manifest.replace(ordinaryRecord, "");
+    expect(JSON.parse(checkoutManifest).pages).toHaveLength(129);
+    expect(checkoutParity.counting.target.logicalManifestRouteRecords).toBe(129);
+    expect(checkoutParity.counting.target.manifestHashNormalization).toBe("LF");
+    expect(createHash("sha256").update(checkoutManifest).digest("hex").toUpperCase()).toBe(checkoutParity.counting.target.manifestSha256);
+    expect(manifestRoutes.filter(route => route === '/pages/customer-work/ordinaryCashier')).toHaveLength(1);
+    expect(resolveRegisteredPageRoute('/pages/customer-work/ordinaryCashier')).toBe('/pages/customer-work/ordinaryCashier');
+    expect(resolveServerRegisteredPageRoute('/pages/customer-work/ordinaryCashier')).toBe('/pages/customer-work/ordinaryCashier');
+    for (const query of ['uid=11', 'orderId=17', 'page=1', 'request_id=owned-record', 'uid=1&uid=1', 'unknown=x']) {
+      expect(resolveRegisteredPageRoute('/pages/customer-work/ordinaryCashier', query)).toBe('');
+      expect(resolveServerRegisteredPageRoute('/pages/customer-work/ordinaryCashier', query)).toBe('');
+    }
     const memberRecord = '    {\n      "path": "pages/users/user_member_code/index",\n      "style": { "navigationBarTitleText": "会员核销码" }\n    },\n';
     expect(manifest.split(memberRecord)).toHaveLength(2);
-    let writeoffManifest = manifest.replace(memberRecord, "");
+    let writeoffManifest = checkoutManifest.replace(memberRecord, "");
     for (const record of cashierRecords) {
       const exactRecord = `    {\n      "path": "${record.path.slice(1)}",\n      "style": { "navigationBarTitleText": "${record.title}" }\n    },\n`;
       expect(writeoffManifest.split(exactRecord)).toHaveLength(2);
@@ -108,30 +128,35 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.checklist.filter((item) => item.done).map((item) => item.id)).toEqual(["FE-003A", "FE-003C", "FE-003H", "FE-003I"]);
   });
 
-  it("aligns the current cashier checkout ledger with the complete manifest and actual navigation classifications", () => {
+  it("aligns the current ordinary cashier ledger with the complete manifest without replacing the historical checkout ledger", () => {
     const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
     const mappedRoutes = Object.keys(LEGACY_ROUTE_RULES);
-    const gapRoutes = checkoutParity.gaps.flatMap((gap) => gap.legacyRoutes);
-    const accounted = [...checkoutParity.directRegisteredLegacyRoutes, ...mappedRoutes, ...gapRoutes];
+    const gapRoutes = ordinaryParity.gaps.flatMap((gap) => gap.legacyRoutes);
+    const accounted = [...ordinaryParity.directRegisteredLegacyRoutes, ...mappedRoutes, ...gapRoutes];
     const historicalAccounted = [
       ...currentDirectRoutes,
       ...mappedRoutes,
       ...currentParity.gaps.flatMap((gap) => gap.legacyRoutes),
     ];
 
-    expect(checkoutParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length);
-    expect(checkoutParity.counting.target.manifestHashNormalization).toBe("LF");
-    expect(checkoutParity.counting.target.manifestSha256)
+    expect(ordinaryParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length);
+    expect(ordinaryParity.counting.target.manifestHashNormalization).toBe("LF");
+    expect(ordinaryParity.counting.target.manifestSha256)
       .toBe(createHash("sha256").update(manifest).digest("hex").toUpperCase());
-    expect([...checkoutParity.directRegisteredLegacyRoutes].sort()).toEqual([...currentDirectRoutes].sort());
-    for (const route of checkoutParity.directRegisteredLegacyRoutes) {
+    expect([...ordinaryParity.directRegisteredLegacyRoutes].sort()).toEqual([...currentDirectRoutes].sort());
+    expect(ordinaryParity.directRegisteredLegacyRoutes).toEqual(checkoutParity.directRegisteredLegacyRoutes);
+    expect(ordinaryParity.gaps).toEqual(checkoutParity.gaps);
+    expect(ordinaryParity.directRegisteredLegacyRoutes).not.toContain('/pages/customer-work/ordinaryCashier');
+    expect(gapRoutes).toContain('/pages/goods/cashier/index');
+    expect(LEGACY_ROUTE_RULES).not.toHaveProperty('/pages/goods/cashier/index');
+    for (const route of ordinaryParity.directRegisteredLegacyRoutes) {
       expect(REGISTERED_PAGE_ROUTES.has(route)).toBe(true);
     }
-    expect(accounted).toHaveLength(checkoutParity.counting.legacy.logicalManifestRouteRecords);
+    expect(accounted).toHaveLength(ordinaryParity.counting.legacy.logicalManifestRouteRecords);
     expect(new Set(accounted).size).toBe(accounted.length);
     expect([...accounted].sort()).toEqual([...historicalAccounted].sort());
-    expect(checkoutParity.counting.routeLedger).toEqual({
-      directRegistered: checkoutParity.directRegisteredLegacyRoutes.length,
+    expect(ordinaryParity.counting.routeLedger).toEqual({
+      directRegistered: ordinaryParity.directRegisteredLegacyRoutes.length,
       legacyCompatibilityRules: mappedRoutes.length,
       candidateCoveredRules: Object.values(LEGACY_ROUTE_RULES)
         .filter((rule) => rule.coverage === "candidate_covered").length,

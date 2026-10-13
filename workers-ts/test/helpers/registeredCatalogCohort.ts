@@ -133,7 +133,18 @@ const manualRedNoteColumns = {
 const manualRedNoteExplicitDeclarations = [
   ['invoiceManualRedNote.ts',manualRedNoteSourceSha256,['store_order_invoice_manual_red_note','store_order_invoice_manual_red_review']],
 ] as const;
-export function reviewedExplicitDeclarationTables() {
+const ordinaryExplicitDeclarations = [
+  ['cashierOrdinary.ts','5da40f39afd13ea03f43865ed5e88d3e7af6a448d0c7042ce9e47091c67d8d79',
+    ['cashier_ordinary_cart_v1','cashier_ordinary_draft_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1']],
+] as const;
+const ordinaryExplicitColumns = {
+  cashier_ordinary_cart_v1: ['cart_id','actor_uid','draft_key','product_id','sku_unique','created_quantity','source_json','source_hash','created_at'],
+  cashier_ordinary_draft_v1: ['actor_uid','draft_key','buyer_uid','tourist_hash','scope_key','request_hash','intent_json','created_at'],
+  cashier_ordinary_operation_v1: ['actor_uid','request_key','kind','request_hash','scope_key','draft_key','order_id','intent_json','evidence_json','evidence_hash','created_at'],
+  cashier_ordinary_origin_v1: ['order_id','actor_uid','service_id','buyer_uid','request_key','request_hash','scope_key','origin_json','origin_hash','created_at'],
+} as const;
+export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'='historical') {
+  assert.ok(scope==='historical'||scope==='current-ordinary','Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
@@ -143,10 +154,27 @@ export function reviewedExplicitDeclarationTables() {
   assert.equal(historicalTables.length,12);assert.equal(new Set(historicalTables).size,12);
   const previousTables=[...historicalTables,...additionalExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
   assert.equal(previousTables.length,16);assert.equal(new Set(previousTables).size,16);
-  const tables=[...previousTables,...manualRedNoteExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
+  const tables: string[]=[...previousTables,...manualRedNoteExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
   assert.equal(tables.length,18);assert.equal(new Set(tables).size,18);
   // This fixed external registration is present on both declaration sides.
-  return tables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  const historicalOnly=tables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(historicalOnly.length,17);assert.equal(new Set(historicalOnly).size,17);
+  if(scope==='historical')return historicalOnly;
+  for(const [file,sha256,names] of ordinaryExplicitDeclarations){
+    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n'),parsed=parseCreateTables(source,'postgres');
+    assert.equal(digest(source),sha256,'Complete independently commissioned ordinary DDL source changed: '+file);
+    assert.deepEqual([...parsed.keys()].sort(),[...names].sort());
+    assert.deepEqual(Object.keys(ordinaryExplicitColumns).sort(),[...names].sort());
+    for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...ordinaryExplicitColumns[name]]);
+  }
+  const ordinaryTables=ordinaryExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
+  assert.equal(ordinaryTables.length,4);assert.equal(new Set(ordinaryTables).size,4);
+  for(const name of ordinaryTables)assert.ok(!tables.includes(name),'Ordinary declaration must not replace a historical declaration');
+  const currentTables=[...tables,...ordinaryTables].sort();
+  assert.equal(currentTables.length,22);assert.equal(new Set(currentTables).size,22);
+  const currentOnly=currentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(currentOnly.length,21);assert.equal(new Set(currentOnly).size,21);
+  return currentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();
