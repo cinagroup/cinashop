@@ -1,0 +1,334 @@
+{
+  "kind": "admin-product-metadata-legacy-canonical-routes-summary",
+  "recordedAtUtc": "2026-10-13T07:57:33.676Z",
+  "baseHead": "e2ca1c44f4b2eca16ae045f956043b6e2c4cbfb8",
+  "validationEpoch": "independent-v3",
+  "sourceManifestSha256": "854810a5b613f2958a69186c0a4204a07bca0878b00bdd241a15cae62f4ec368",
+  "sourcePins": [
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminLegacyProductMetadataController.ts",
+      "bytes": 1230,
+      "sha256": "e5b5d7a6d59214edbb7464d082e30aedaf5f8d288f4ff01723115e843ae36d7c"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 96489,
+      "sha256": "4c3287d79fb772414153cac4b9333e7e3bc24c2693e84c1c1738f3920ed172f6"
+    },
+    {
+      "path": "workers-ts/test/admin-product-metadata-legacy-http.test.ts",
+      "bytes": 13359,
+      "sha256": "fe61b3211cf034b9f5cb956b5926c1fece7b527c549b6da0dd01283183859457"
+    }
+  ],
+  "canonicalRouteCount": 9,
+  "contracts": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/all_specs",
+      "phpAction": "StoreProductSpecs/allSpecs",
+      "handler": "AdminCrud.adminProductSpecsAll",
+      "permission": "product.view"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/specs",
+      "phpAction": "StoreProductSpecs/index",
+      "handler": "AdminLegacyProductMetadata.specsList",
+      "permission": "product.view"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/specs/:id",
+      "phpAction": "StoreProductSpecs/getInfo",
+      "handler": "AdminCrud.adminProductSpecsDetail",
+      "permission": "product.view"
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/specs/:id",
+      "phpAction": "StoreProductSpecs/save",
+      "handler": "AdminCrud.adminProductSpecsSave",
+      "permission": "product.manage"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/specs/:id",
+      "phpAction": "StoreProductSpecs/delete",
+      "handler": "AdminCrud.adminProductSpecsDelete",
+      "permission": "product.manage"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/rule",
+      "phpAction": "StoreProductRule/index",
+      "handler": "AdminCrud.adminProductRuleList",
+      "permission": "product.view"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/rule/:id",
+      "phpAction": "StoreProductRule/read",
+      "handler": "AdminCrud.adminProductRuleDetail",
+      "permission": "product.view"
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/product/rule/:id",
+      "phpAction": "StoreProductRule/save",
+      "handler": "AdminCrud.adminProductRuleSave",
+      "permission": "product.manage"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/product/rule/delete/:id",
+      "phpAction": "StoreProductRule/delete",
+      "handler": "AdminCrud.adminProductRuleDelete",
+      "permission": "product.manage"
+    }
+  ],
+  "responseCompatibility": {
+    "onlyAdapter": "GET canonical parameter-template list formats template add_time as PHP Asia/Shanghai YYYY-MM-DD HH:mm:ss; zero is empty string",
+    "existingShortEndpointReturnsUnixSeconds": true,
+    "specsDetailRetainsSpecsAndUnixSeconds": true,
+    "ruleDetailRetainsInfoSpec": true,
+    "listCountAndSnakeCaseBodyPreserved": true,
+    "originalTemplateSaveIdZeroSupported": true
+  },
+  "ownership": {
+    "fixedPlatformType": 0,
+    "fixedRelationId": 0,
+    "parameterTemplateCategoryGroup": 3,
+    "supplierAndOtherOwnerRowsExcluded": true,
+    "categoryGroupBoundaryRetained": true,
+    "activeSpecSelectorRetained": true,
+    "originalPhpAllSpecsUnscopedReadNotReplicated": true,
+    "existingDirectAndRelationProductDeletionGuardsRetained": true
+  },
+  "validation": {
+    "allSelectedChecksPassed": true,
+    "fullSourceFiles": 3852,
+    "completeIndependentPhysicalDependencyFiles": 42404,
+    "physicalDependencyRoots": 4,
+    "fullOriginalBorrowedProviderFiles": 43992,
+    "separatelyGuardedFreshWorkerFiles": 7639,
+    "actualCandidateInstallationInputBindings": 15,
+    "completeOriginalAndIndependentStageDependenciesVerifiedBeforeAndAfter": true,
+    "compilerGraphSha256": "7b6b3aa780dd2c9d8d92169dd0159afcaabf82fe9d82f5e84d334b063c40ac63",
+    "compilerGraphs": [
+      {
+        "config": "tsconfig.json",
+        "rootFiles": 2403,
+        "explicitNodeModulesImportsResolved": 5,
+        "sourceAliasesResolved": 5555
+      },
+      {
+        "config": "tsconfig.runtime-test.json",
+        "rootFiles": 1119,
+        "explicitNodeModulesImportsResolved": 0,
+        "sourceAliasesResolved": 4385
+      }
+    ],
+    "wholeTestReadFileInputs": 4,
+    "receipts": [
+      {
+        "label": "unit-http",
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\unit-http-receipt.json",
+          "bytes": 35329,
+          "sha256": "a31bc703b26d327bb5bbde600af70be9f5a77421d98faaff61717927ce651a31"
+        },
+        "startedAt": "2026-10-13T07:45:06.972Z",
+        "endedAt": "2026-10-13T07:46:17.006Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "manifestSha256": "854810a5b613f2958a69186c0a4204a07bca0878b00bdd241a15cae62f4ec368",
+        "before": {
+          "guard": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\unit-http-before.json",
+            "bytes": 16738,
+            "sha256": "89da1377483b02e0b775129528098556a39f45af6b68a5416eae8cb7b5cebbb4"
+          },
+          "fullSourceRawBytesVerified": true,
+          "sourceInventoryUnchanged": true,
+          "originalAndIndependentDependenciesRawBytesVerified": true
+        },
+        "after": {
+          "guard": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\unit-http-after.json",
+            "bytes": 16738,
+            "sha256": "23fcc8c1eb717a99e36520d9486acc7830020dfc43826506c586e94435361a1a"
+          },
+          "fullSourceRawBytesVerified": true,
+          "sourceInventoryUnchanged": true,
+          "originalAndIndependentDependenciesRawBytesVerified": true
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\unit-http.log",
+          "bytes": 2308,
+          "sha256": "fde09937e4b1706f4f96b4dbf35dfb6b628cadcb06109cdab033d412396f3561"
+        },
+        "summaries": [
+          "Test Files  2 passed (2)",
+          "Tests  11 passed (11)",
+          "Duration  28.56s (transform 13.38s, setup 0ms, import 17.79s, tests 10.40s, environment 0ms)"
+        ],
+        "fullCICredit": false,
+        "nativeLockCredit": false,
+        "productionDDL": false,
+        "deployed": false
+      },
+      {
+        "label": "typecheck-unit",
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-unit-receipt.json",
+          "bytes": 35173,
+          "sha256": "d4790038f811e6575c8aebf3031c93a2463116057f7a18a1879a083c975a60f5"
+        },
+        "startedAt": "2026-10-13T07:47:12.657Z",
+        "endedAt": "2026-10-13T07:55:19.348Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "manifestSha256": "854810a5b613f2958a69186c0a4204a07bca0878b00bdd241a15cae62f4ec368",
+        "before": {
+          "guard": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-unit-before.json",
+            "bytes": 16738,
+            "sha256": "4e47183e1ee3cde7bc08b0bfe3e9b21d86c0a6257eebb78db3fb538585c4a011"
+          },
+          "fullSourceRawBytesVerified": true,
+          "sourceInventoryUnchanged": true,
+          "originalAndIndependentDependenciesRawBytesVerified": true
+        },
+        "after": {
+          "guard": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-unit-after.json",
+            "bytes": 16738,
+            "sha256": "501ee68e474405763751c11bb0888ab1f3ca4bb6224f8788182e7875c4ebd164"
+          },
+          "fullSourceRawBytesVerified": true,
+          "sourceInventoryUnchanged": true,
+          "originalAndIndependentDependenciesRawBytesVerified": true
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-unit.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "summaries": [],
+        "fullCICredit": false,
+        "nativeLockCredit": false,
+        "productionDDL": false,
+        "deployed": false
+      },
+      {
+        "label": "typecheck-runtime",
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-runtime-receipt.json",
+          "bytes": 35179,
+          "sha256": "5fd9ef263fcedeec176da677b23cb4053d56200550f9a8860698d5fe4ba7c1c1"
+        },
+        "startedAt": "2026-10-13T07:47:23.539Z",
+        "endedAt": "2026-10-13T07:55:19.348Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "manifestSha256": "854810a5b613f2958a69186c0a4204a07bca0878b00bdd241a15cae62f4ec368",
+        "before": {
+          "guard": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-runtime-before.json",
+            "bytes": 16738,
+            "sha256": "aab2a521fb4b7df95453c662b8ae85c9d4fc321bc884dc190355496a3cc5cbe7"
+          },
+          "fullSourceRawBytesVerified": true,
+          "sourceInventoryUnchanged": true,
+          "originalAndIndependentDependenciesRawBytesVerified": true
+        },
+        "after": {
+          "guard": {
+            "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-runtime-after.json",
+            "bytes": 16738,
+            "sha256": "ceb3cb73c9734b5826047120c778db23aa5b383382db64a281c55ec3d59c47d4"
+          },
+          "fullSourceRawBytesVerified": true,
+          "sourceInventoryUnchanged": true,
+          "originalAndIndependentDependenciesRawBytesVerified": true
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-metadata-legacy-validation-v3\\typecheck-runtime.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "summaries": [],
+        "fullCICredit": false,
+        "nativeLockCredit": false,
+        "productionDDL": false,
+        "deployed": false
+      }
+    ]
+  },
+  "previousEpochs": [
+    {
+      "epoch": "v1",
+      "result": "preparation failed: Windows sandbox mkdir EPERM; no tests or typechecks started",
+      "sourceChanged": false,
+      "preserved": true
+    },
+    {
+      "epoch": "v2",
+      "result": "HTTP 2 files / 11 cases passed; full unit types exited 2 with 9 missing cross-frontend dependency / derived type errors; runtime not started",
+      "typeReceiptSha256": "d1d08e0ad79fdb1aebf1e49374e5adafade352ae49a591e9b187345c81f25f80",
+      "typeLogSha256": "9939c3b54504f8b51d8b5b9825ca254c4b023fc3c7ed446e641d11ecd025736a",
+      "sourceAndOneRootUnchangedBeforeAndAfter": true,
+      "preserved": true,
+      "currentV3ValidationCredit": false
+    }
+  ],
+  "archive": {
+    "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\admin-product-metadata-legacy-20261013\\.cache\\metadata-raw-v3\\raw-preservation-manifest.json",
+    "manifestSha256": "b0f0dfd82a40303b5019fb6a5f73927b2457536306b9490738c69cbd58ca7ad4",
+    "files": 3895,
+    "bytes": 69088990,
+    "uniqueObjects": 3886,
+    "completeValidatedSourceBodies": 3852,
+    "originalPhpContractFiles": 12,
+    "readbackVerified": true,
+    "rawArchiveIgnoredByGit": true
+  },
+  "unchangedServices": [
+    "AdminCrudController",
+    "ProductMetadataService",
+    "AdminPermissionService",
+    "ORM schemas",
+    "migration DDL",
+    "shared MIGRATION docs",
+    "historical catalog snapshots"
+  ],
+  "limits": {
+    "fullCICredit": false,
+    "nativePostgresLockCredit": false,
+    "productionDDL": false,
+    "deployed": false,
+    "allPhpToTsMigrationComplete": false,
+    "otherCanonicalProductRoutesHandled": false
+  },
+  "reportFormat": {
+    "rawReceiptsAreReferenced": true,
+    "expandedOriginalSummary": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\admin-product-metadata-legacy-20261013\\.cache\\metadata-report-summary-v1\\original-expanded-summary.json",
+      "bytes": 121874,
+      "sha256": "c3174fa86007274e1a1b5741867865808599de9489f6f0c7d840e4dfb8ae90a4"
+    },
+    "preservationManifest": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\admin-product-metadata-legacy-20261013\\.cache\\metadata-report-summary-v1\\preservation-manifest.json",
+      "bytes": 4040,
+      "sha256": "7f79f40f6c2afbd6d7d19f2536a4763356bf275a3803cb5cd3cfc3961712e5fd"
+    },
+    "sourceAndValidationUnchanged": true
+  }
+}

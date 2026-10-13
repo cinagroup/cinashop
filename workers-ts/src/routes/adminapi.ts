@@ -35,6 +35,7 @@ import { upgradeStaffNotification } from "@/services/notification/StaffNotificat
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminLegacyProductMetadata from "@/controllers/api/v1/AdminLegacyProductMetadataController";
 import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminLegacyRoleOperation from "@/controllers/api/v1/AdminLegacyRoleOperationController";
@@ -342,6 +343,16 @@ adminapiRoutes.get("/specs", adminAuth, AdminCrud.adminProductSpecsList);
 adminapiRoutes.get("/specs/:id", adminAuth, AdminCrud.adminProductSpecsDetail);
 adminapiRoutes.post("/specs/:id", adminAuth, AdminCrud.adminProductSpecsSave);
 adminapiRoutes.delete("/specs/:id", adminAuth, AdminCrud.adminProductSpecsDelete);
+// Canonical PHP /product group paths used by the original Admin Vue pages.
+adminapiRoutes.get("/product/all_specs", adminAuth, AdminCrud.adminProductSpecsAll);
+adminapiRoutes.get("/product/specs", adminAuth, AdminLegacyProductMetadata.specsList);
+adminapiRoutes.get("/product/specs/:id", adminAuth, AdminCrud.adminProductSpecsDetail);
+adminapiRoutes.post("/product/specs/:id", adminAuth, AdminCrud.adminProductSpecsSave);
+adminapiRoutes.delete("/product/specs/:id", adminAuth, AdminCrud.adminProductSpecsDelete);
+adminapiRoutes.get("/product/product/rule", adminAuth, AdminCrud.adminProductRuleList);
+adminapiRoutes.get("/product/product/rule/:id", adminAuth, AdminCrud.adminProductRuleDetail);
+adminapiRoutes.post("/product/product/rule/:id", adminAuth, AdminCrud.adminProductRuleSave);
+adminapiRoutes.delete("/product/product/rule/delete/:id", adminAuth, AdminCrud.adminProductRuleDelete);
 adminapiRoutes.get("/product/words", adminAuth, AdminProductWords.list);
 adminapiRoutes.get("/product/words/get_all", adminAuth, AdminProductWords.all);
 adminapiRoutes.get("/product/words/:id", adminAuth, AdminProductWords.detail);
