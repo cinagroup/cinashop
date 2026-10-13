@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { assertRegisteredModelCohort } from './helpers/registeredCatalogCohort';
+import { assertRegisteredModelCohort, registeredTableNames } from './helpers/registeredCatalogCohort';
 import { createHash } from 'node:crypto';
 import { readFileSync } from "node:fs";
 import { URL } from "node:url";
@@ -87,7 +87,7 @@ describe("standalone sequence transaction execution boundary", () => {
     // columns/CHECKs. The original 1166 basis and its failed projection remain
     // release evidence; this path executes the complete current model with only
     // the independently pinned previous kefu sequence substituted by the audit.
-    // The original nine-path audit measured the complete 1191 current DDL
+    // The original nine-path audit measured the complete historical 1191 DDL
     // statements, raw SHA 913f34ec0abf6fe311243a3f0b824ed41241968bbea450fd95ffda18bf52a4df.
     // Node's namespace key order and Vitest's source export order produce
     // different statement order (CI raw SHA a1ef244d08ba39c536acff3081267fa29fa8c909c420f513daa91a96344861f2).
@@ -96,12 +96,26 @@ describe("standalone sequence transaction execution boundary", () => {
     // no filtering, deduplication or text normalization; execution stays in
     // the generator's original order. Every missing, extra or changed DDL fails.
     const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
-    expect(createHash('sha256').update(JSON.stringify([...currentStatements].sort()),'utf8').digest('hex'))
+    const historicalSnapshot=structuredClone(snapshot);
+    for(const name of ['public.store_order_invoice_manual_red_note','public.store_order_invoice_manual_red_review'] as const)
+      delete historicalSnapshot.tables[name];
+    expect(Object.keys(historicalSnapshot.tables).sort()).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
+    const historicalStatements=await api.generateMigration(api.generateDrizzleJson({}),historicalSnapshot);
+    const exactManualAddition=await api.generateMigration(historicalSnapshot,snapshot);
+    const statementDigest=(statements:string[])=>createHash('sha256').update(JSON.stringify([...statements].sort()),'utf8').digest('hex');
+    // The complete 287-table model was checked above. Preserve the independent
+    // 285-table pin and prove its exact six-statement, two-table addition.
+    expect(statementDigest(historicalStatements))
       .toBe('446204483beeaac88d9f77ea90d5bd294a885fb24668e05b4ae6cf37c00ff400');
-    expect(currentStatements).toHaveLength(1191);
+    expect(historicalStatements).toHaveLength(1191);
+    expect(exactManualAddition).toHaveLength(6);
+    expect(statementDigest(exactManualAddition)).toBe('35ca850d550eea2cc29f170a675b7d12aa1683f6f8b20baa7c388cd5d1401da6');
+    expect([...currentStatements].sort()).toEqual([...historicalStatements,...exactManualAddition].sort());
+    expect(statementDigest(currentStatements)).toBe('3126c12be33a6966301f389a1e4bb50f104aca9e70816620040b85afb20a5b3d');
+    expect(currentStatements).toHaveLength(1197);
     // The independently pinned previous sequence has no owning-column ALTER;
-    // that real predecessor stage has 1190 statements, then the guarded upgrade.
-    expect(fullPath.initialStatements).toBe(1190);
+    // the historical 1190 statements retain the exact same six new statements.
+    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length);
     expect(fullPath.generatedProposalStatements).toBe(2);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([
