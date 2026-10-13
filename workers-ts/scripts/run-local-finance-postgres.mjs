@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync, unlink
 import { createServer } from 'node:net';
 import { resolve, join, relative, isAbsolute } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { assertLocalFinanceCachePath, resolveLocalFinanceCachePath } from './local-finance-cache-path.mjs';
 
 const workerRoot = resolve(import.meta.dirname, '..');
 const arguments_ = process.argv.slice(2);
@@ -497,19 +498,7 @@ const suffix = process.platform === 'win32' ? '.exe' : '';
 const binary = name => join(bin, `${name}${suffix}`);
 for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) assert.ok(existsSync(binary(name)), `Missing ${name}`);
 
-const cacheOverride = process.env.TEST_FINANCE_LOCAL_CACHE_ROOT;
-assert.ok(cacheOverride === undefined || (cacheOverride.length > 0 && isAbsolute(cacheOverride)),
-  'TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
-function assertLocalCache(path) {
-  if (process.platform !== 'win32') return;
-  assert.ok(!path.startsWith('\\\\') && !path.startsWith('//'),
-    'Windows PostgreSQL cache cannot use a UNC path; set TEST_FINANCE_LOCAL_CACHE_ROOT to an absolute local drive directory');
-  assert.match(path, /^[a-z]:[\\/]/i,
-    'TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute local drive directory on Windows');
-}
-if (cacheOverride !== undefined) assertLocalCache(cacheOverride);
-const cacheCandidate = resolve(cacheOverride ?? resolve(workerRoot, '../.cache'));
-assertLocalCache(cacheCandidate);
+const cacheCandidate = resolveLocalFinanceCachePath(process.env.TEST_FINANCE_LOCAL_CACHE_ROOT, workerRoot);
 
 function command(file, args, options = {}) {
   const result = spawnSync(file, args, {
@@ -532,7 +521,7 @@ const port = reservation.address().port;
 await new Promise((done, fail) => reservation.close(error => error ? fail(error) : done()));
 mkdirSync(cacheCandidate, { recursive: true });
 const cache = realpathSync(cacheCandidate);
-assertLocalCache(cache);
+assertLocalFinanceCachePath(cache);
 const taskRoot = mkdtempSync(join(cache, 'finance-postgres-'));
 const relativeRoot = relative(cache, taskRoot);
 assert.ok(relativeRoot && !relativeRoot.startsWith('..') && !isAbsolute(relativeRoot));
