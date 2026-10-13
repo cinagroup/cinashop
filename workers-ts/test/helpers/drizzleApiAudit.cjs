@@ -54,10 +54,13 @@ async function main() {
   // Real declarations retain all standalone indexes across snapshot upgrades.
   const models = require("tsx/cjs/api").require("../../src/models/schema/index.ts", __filename);
   const previous = generateDrizzleJson(models);
-  // The shared current catalog contract is versioned alongside full migrations;
-  // do not retain the older 264-table cohort after new ledgers are registered.
-  const { TABLE_CATALOG_COUNT } = require("tsx/cjs/api").require("../../scripts/data-migration/table-catalog-contracts.ts", __filename);
-  assert.equal(Object.keys(previous.tables).length, TABLE_CATALOG_COUNT);
+  // This API probe generates the exact ORM base. Full audit paths separately
+  // compose the reviewed external abandonment ledger, which has no ORM model.
+  // Keep both counts fixed; do not mistake the composed cohort for this API.
+  const { TABLE_CATALOG_BASE_COUNT, TABLE_CATALOG_COUNT } = require("tsx/cjs/api").require("../../scripts/data-migration/table-catalog-contracts.ts", __filename);
+  assert.equal(TABLE_CATALOG_COUNT, TABLE_CATALOG_BASE_COUNT + 1);
+  assert.equal(Object.keys(previous.tables).length, TABLE_CATALOG_BASE_COUNT);
+  assert.equal(previous.tables["public.cashier_second_card_abandon_v1"], undefined);
   assert.ok(previous.tables["public.store_pink"]);
   assert.equal(previous.tables["public.store_pink_full"], undefined);
   for (const [table, key] of [["work_member_current", "wmc_corp_id_uq"], ["work_client_current", "wcc_corp_external_userid_uq"], ["work_group_chat_current", "wgcc_corp_chat_id_uq"]]) {

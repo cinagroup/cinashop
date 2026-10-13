@@ -6,6 +6,7 @@ import { readRefundQuantityReservation,refundClaimCartKey } from './RefundQuanti
 import type { RefundEarnedIncomeCompensation } from './RefundEarnedIncome';
 import { readRefundGenerationMarker } from './RefundGenerationMarker';
 import { orderMembershipSavings } from './OrderMembershipSavings';
+import {LEGACY_PHP_REFUND_LINE_VERSION,projectLegacyPhpRefundLine} from './LegacyPhpRefundLineFinance';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -56,9 +57,12 @@ function decimal(value: bigint): string {
   return `${sign}${absolute / 100n}.${String(absolute % 100n).padStart(2, '0')}`;
 }
 function readLine(source: Cart, info: Record<string, unknown>): Line {
-  if (!['checkout-line-finance-v1', 'refund-order-line-finance-v1'].includes(String(info.financial_version)) || info.id !== source.cartId
+  if (!['checkout-line-finance-v1', 'refund-order-line-finance-v1',LEGACY_PHP_REFUND_LINE_VERSION].includes(String(info.financial_version)) || info.id !== source.cartId
     || (info.cart_num !== source.cartNum && info.cart_num !== String(source.cartNum))
     || ![0, 1].includes(source.isGift)) throw invalid();
+  if (Object.hasOwn(info, 'legacy_php_financial_source')
+    && (info.legacy_php_financial_source !== 'original-php-purchase-facts-v1'
+      || ![LEGACY_PHP_REFUND_LINE_VERSION, 'refund-order-line-finance-v1'].includes(String(info.financial_version)))) throw invalid();
   if (info.financial_version === 'refund-order-line-finance-v1') {
     readRefundGenerationMarker(info.refund_order_generation);
   }
@@ -115,12 +119,26 @@ function persisted(amounts: Amounts): Partial<typeof storeOrder.$inferInsert> {
  * their lifecycle/claims: a valid financial snapshot is never authorization. */
 function checkedOrderLines(order: Order, rows: Cart[]): Line[] | null {
   if (!rows.length || rows.length > 200) throw invalid();
-  const parsed = rows.map(row => parse(row.cartInfo));
-  if (parsed.every(info => !info || !['financial_version', 'raw_postage_price', 'gain_integral'].some(key => Object.hasOwn(info, key)))) return null;
+  let parsed = rows.map(row => parse(row.cartInfo));
+  // This version is a server-created read projection, never stored purchase
+  // evidence. A pre-labelled input cannot impersonate original PHP checkout.
+  if(parsed.some(info=>info?.financial_version===LEGACY_PHP_REFUND_LINE_VERSION))throw invalid();
+  if(parsed.every(info=>!info||!Object.hasOwn(info,'financial_version'))){
+    const original=parsed,paying=rows.filter(row=>row.isGift!==1);parsed=original.map((info,index)=>info?projectLegacyPhpRefundLine(order,rows[index],info,paying.length===1&&rows[index].isGift!==1):null);
+    if(parsed.some(info=>!info)){
+      // Preserve mature versionless/nonmaterialized refund behavior when this
+      // is not complete PHP financial evidence. Torn modern financial rows
+      // retain their original strict rejection and never use legacy fallback.
+      if(original.every(info=>!info||!['raw_postage_price','gain_integral','refund_order_generation','promotion_quote_version','member_savings_version','legacy_php_financial_source'].some(key=>Object.hasOwn(info,key))))return null;
+      throw invalid();
+    }
+  }
   if (rows.some(row => row.oid !== order.id || row.uid !== order.uid)) throw invalid();
   const ids = new Set(rows.map(row => row.cartId));
   if (ids.size !== rows.length) throw invalid();
   const originals = rows.map((row, index) => readLine(row, object(parsed[index])));
+  const legacy = originals.map(({ info }) => info.legacy_php_financial_source === 'original-php-purchase-facts-v1');
+  if (legacy.some(Boolean) && !legacy.every(Boolean)) throw invalid();
   orderMembershipSavings(order, rows);
   const original = aggregate(originals);
   for (const key of Object.keys(original) as (keyof Amounts)[]) {
@@ -133,13 +151,17 @@ function checkedOrderLines(order: Order, rows: Cart[]): Line[] | null {
 }
 
 /** A checked plan, not authorization to deliver/refund. Null means entirely
- * unversioned legacy evidence: never silently downgrade mixed/invalid v1 rows.
+ * legacy evidence without a complete, reconciled original-PHP projection:
+ * never silently downgrade mixed/invalid v1 rows or overwrite source carts.
  * Caller holds the order and all cart locks, supplies every active cart, and
  * assigns each new row identity after planning. No database or provider I/O. */
 export function planOrderFinancialSplit(order: Order, rows: Cart[], selections: ReadonlyMap<string, number>): {
   selected: Partial<typeof storeOrder.$inferInsert>;
   remaining: Partial<typeof storeOrder.$inferInsert>;
   carts: Map<string, FinancialCartPartition>;
+  /** Derived only after complete financial reconciliation. A marked successor
+   * still needs its actual protected refund generation proved by the caller. */
+  legacyPhpProjection: 'original-purchase' | 'refund-generation' | null;
 } | null {
   const originals = checkedOrderLines(order, rows);
   if (!originals) return null;
@@ -167,6 +189,9 @@ export function planOrderFinancialSplit(order: Order, rows: Cart[], selections: 
     : allocateRefundSplitPayment(order.payPrice, decimal(original.payPrice), decimal(selected.payPrice));
   const whole = remaining.totalNum === 0n;
   return {
+    legacyPhpProjection: originals.every(({ info }) => info.legacy_php_financial_source === 'original-php-purchase-facts-v1')
+      ? originals.every(({ info }) => info.financial_version === LEGACY_PHP_REFUND_LINE_VERSION)
+        ? 'original-purchase' : 'refund-generation' : null,
     selected: { ...persisted(selected), payPrice: payment.selected, changePrice: decimal(selected.payPrice - money(payment.selected)),
       giveIntegral: whole ? order.giveIntegral : 0, giveCoupon: whole ? order.giveCoupon : null, promotionsGive: whole ? order.promotionsGive : null },
     remaining: { ...persisted(remaining), payPrice: payment.remaining, changePrice: decimal(remaining.payPrice - money(payment.remaining)),

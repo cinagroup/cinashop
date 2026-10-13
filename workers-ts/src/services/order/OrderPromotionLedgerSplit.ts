@@ -1,8 +1,9 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrderPromotions } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
 import { readPromotionLineEvidence } from './RefundSplitAllocation';
+import { MANAGER_SCOPE_CONTEXT } from '@/migrations/managerRuntimeCapabilities';
 
 type Cart = { productId: number; cartNum: number; cartInfo: string | null };
 type Order = { id: number; uid: number; promotionsPrice: string };
@@ -70,7 +71,15 @@ export async function writeOrderPromotionLedger(tx: DbClient, order: Order, cart
   if (!expected.versioned && !replace) return;
   if (!Number.isSafeInteger(now) || now <= 0 || expected.list.reduce((sum, row) => sum + row.cents, 0)
     !== cents(order.promotionsPrice)) throw invalid();
-  if (replace) await tx.delete(storeOrderPromotions).where(eq(storeOrderPromotions.oid, order.id));
+  if (replace) {
+    const [context] = await tx.execute(sql`SELECT nullif(current_setting(${MANAGER_SCOPE_CONTEXT},true),'') IS NOT NULL AS manager`);
+    if(context?.manager===true) {
+      // Original rows are read through the caller's scoped transaction. The
+      // fixed function compares every SQL column before deleting this order.
+      const [rows] = await tx.execute(sql`SELECT COALESCE(jsonb_agg(to_jsonb(p) ORDER BY p.id),'[]'::jsonb) AS original FROM public.store_order_promotions p WHERE p.oid=${order.id}`);
+      await tx.execute(sql`SELECT public.manager_delete_order_promotions_v1(${order.id}::integer,${JSON.stringify(rows?.original)}::jsonb)`);
+    } else await tx.delete(storeOrderPromotions).where(eq(storeOrderPromotions.oid, order.id));
+  }
   if (expected.list.length) await tx.insert(storeOrderPromotions).values(expected.list.map((row) => ({
     oid: order.id, uid: order.uid, productId: row.productId,
     promotionsId: row.promotionId, promotionsPrice: (row.cents / 100).toFixed(2), addTime: now,

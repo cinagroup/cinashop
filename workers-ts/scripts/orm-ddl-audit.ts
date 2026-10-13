@@ -50,6 +50,7 @@ import { assertForeignKeyNamesAligned } from "./data-migration/foreign-key-name-
 import { assertAllConstraintsAligned, assertCheckStatesAligned } from "./data-migration/check-state-contracts";
 import { assertAllSequencesAligned, assertKefuSequenceAligned } from "./data-migration/kefu-sequence-contracts";
 import { assertAllTablesAligned, TABLE_CATALOG_FIELDS } from "./data-migration/table-catalog-contracts";
+import { composeReviewedCashierAbandonCatalog } from './data-migration/cashier-abandon-catalog';
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -91,6 +92,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const refundSplitVerification: Record<string, unknown> = {};
   const offlineOrderVerification: Record<string, unknown> = {};
   const customerCityDeliveryVerification: Record<string, unknown> = {};
+  const cashierAbandonmentVerification: Record<string, unknown> = {};
   const customerWaybillActorVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
   const seckillTimeReferenceLockVerification: Record<string, unknown> = {};
@@ -272,6 +274,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         if (!cityRepeatRefused || JSON.stringify(cityInstalled) !== JSON.stringify(await client.unsafe(cityIdentityQuery)))
           throw Error(`City fresh-only refusal changed object identity on ${path}`);
         customerCityDeliveryVerification[path] = { initial: path === 'embedded' ? 'absent' : 'exact-catalog', explicitInstallation: path === 'embedded', complete: true, existingObjectsPreserved: true, repeatRefused: true, noBackfill: true, rows: cityRowCounts };
+        // Preserve the historical 285-table base. Only this fixed independently
+        // commissioned protocol is composed into every complete audit path.
+        cashierAbandonmentVerification[path] = await composeReviewedCashierAbandonCatalog(shippingDb,path,root);
         // Compose the independently reviewed customer actor owner forward only
         // into exact empty legacy paths. Existing ORM targets must already be ready.
         const registeredWaybill = path === 'external' || path === 'embedded';
@@ -735,6 +740,7 @@ if (!registeredOfflineGift) {
       refundSplitVerification,
       offlineOrderVerification,
       customerCityDeliveryVerification,
+      cashierAbandonmentVerification,
       customerWaybillActorVerification,
       checkoutPricingLockVerification,
       seckillTimeReferenceLockVerification,

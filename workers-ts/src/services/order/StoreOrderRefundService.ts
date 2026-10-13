@@ -74,6 +74,7 @@ import { assertAtomicRefundAdmission, assertAtomicRefundCompleted, lockAtomicRef
 import { materializeCompletedRefundOrder } from './RefundOrderMaterialization';
 import { assertFullGiftRefundAdmission, reverseWholeOrderPromotionGiftPoints } from './OrderPromotionGiftRefund';
 import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
+import {authorizeCustomerManualRefundApplication,persistCustomerManualRefundProof,isManualRefundOrder,type CustomerManualRefundApplicationCapability,type CustomerManualRefundExecutionCapability} from './CustomerManualRefund';
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -82,7 +83,7 @@ export type RefundFinalizationOutcome = "completed" | "already-completed";
 
 export interface RefundExecutionResult {
   completed: boolean;
-  status: RefundProviderStatus | "BALANCE_SUCCESS";
+  status: RefundProviderStatus | "BALANCE_SUCCESS" | "CASH_SUCCESS" | "ZERO_SUCCESS";
 }
 
 /**
@@ -94,6 +95,8 @@ export interface RefundExecutionResult {
  * balance finalization or third-party payment intent is created.
  */
 export interface RefundExecutionScope {
+  /** Live, server-issued global customer admission; never a JSON request flag. */
+  manualRefund?: CustomerManualRefundExecutionCapability;
   expectedStoreId?: number;
   expectedSupplierId?: number;
   expectedUid?: number;
@@ -135,6 +138,7 @@ export interface RefundExecutionScope {
 type RefundExecutionScopeInput = number | RefundExecutionScope;
 
 export interface ApplyOrderRefundInput {
+  manualRefundCapability?: CustomerManualRefundApplicationCapability;
   uid: number;
   orderId: string;
   refundReason: string;
@@ -597,7 +601,9 @@ export async function finalizeStoreOrderRefund(
     if (refundCents === null || refundCents < 0) throw new ValidateException("退款金额无效");
     if (paidCents === null || paidCents < 0) throw new ValidateException("订单实付金额无效");
 
-    if (refundCents > 0 && order.payType !== "yue") {
+    const manualRefund=scope?.manualRefund;
+    if(manualRefund)await persistCustomerManualRefundProof(tx,manualRefund,refund,order);
+    if (refundCents > 0 && order.payType !== "yue" && !manualRefund) {
       const payment = await getRefundPaymentRow(tx, refundId);
       if (!payment || payment.providerStatus !== "SUCCESS") {
         throw new ValidateException("支付渠道尚未确认退款成功");
@@ -641,7 +647,7 @@ export async function finalizeStoreOrderRefund(
     const pureIntegralOrder = paidCents === 0 && order.type === 4 && order.payIntegral > 0;
 
     const zeroCashierQuantityReturn=materializeOrders&&paidCents===0&&order.payType==='cash';
-    if(zeroCashierQuantityReturn){
+    if(zeroCashierQuantityReturn&&!manualRefund){
       const zeroRows=await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id))
         .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
       await assertCashierZeroRefundOrigin(tx,order,zeroRows,true);
@@ -684,7 +690,7 @@ export async function finalizeStoreOrderRefund(
     if (!updated[0]) return "already-completed";
 
     await lockOrderSettlementUsers(tx, order, lineCompensation?.earnedIncome?.orderId);
-    const fullyRefunded = pureIntegralOrder || zeroCashierQuantityReturn
+    const fullyRefunded = pureIntegralOrder || zeroCashierQuantityReturn || Boolean(manualRefund)&&paidCents===0
       ? cumulativeNum >= order.totalNum
       : cumulativeCents >= paidCents;
     await tx
@@ -961,7 +967,11 @@ async function createOrderRefundApplication(
     const cartInfos = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
       .orderBy(asc(storeOrderCartInfo.id)).for('update');
     if(options.cashierZeroRefund)await authorizeCashierZeroRefund(tx,options.cashierZeroRefund,order,cartInfos);
-    const zeroCashierQuantityReturn=Boolean(options.cashierZeroRefund);
+    if(params.manualRefundCapability){
+      if(params.privilegedActor!=='customer-work'||!params.authorizeApplication||!options.materializeOrders)throw new ValidateException('人工退款必须绑定真实经营授权与成熟实体退款');
+      await authorizeCustomerManualRefundApplication(tx,params.manualRefundCapability,order,cartInfos);
+    }
+    const zeroCashierQuantityReturn=Boolean(options.cashierZeroRefund||params.manualRefundCapability)&&isManualRefundOrder(order)&&amountToCents(order.payPrice)===0;
     const customerRows=params.selectorNamespace==='row';
     if(customerRows&&(params.privilegedActor!=='customer-work'||!params.authorizeApplication))throw new ValidateException('真实行退款选择策略缺少经营授权');
     if(params.privilegedActor==='customer-work'&&!customerRows)throw new ValidateException('经营退款必须使用真实行标识');
@@ -1332,7 +1342,7 @@ export async function applyCashierZeroRefundWithMaterialization(container:Contai
  * allocation, rollback-as-quote, operation key or audit event is manufactured. */
 export async function quoteOrderRefundApplication(
   container: Container,
-  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays'>,
+  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays' | 'manualRefundCapability'>,
   refundTimeDays: number,
 ): Promise<OrderRefundApplicationQuote> {
   return createOrderRefundApplication(container, {
@@ -1350,7 +1360,7 @@ export async function quoteOrderRefundApplication(
  * the materialized creator. Ordinary customer entry remains unchanged. */
 export async function quoteOrderRefundWithMaterialization(
   container: Container,
-  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays'>,
+  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays' | 'manualRefundCapability'>,
   refundTimeDays: number,
 ): Promise<OrderRefundApplicationQuote> {
   return createOrderRefundApplication(container, {
@@ -1520,14 +1530,14 @@ export class StoreOrderRefundService {
 
     const refundCents = amountToCents(refund.refundPrice);
     if (refundCents === null || refundCents < 0) throw new ValidateException("退款金额无效");
-    if (refundCents === 0 || order.payType === "yue") {
+    if (refundCents === 0 || order.payType === "yue" || scope?.manualRefund) {
       await finalizeStoreOrderRefund(
         this.container,
         refundId,
         Math.floor(Date.now() / 1000),
         scope,
       );
-      return { completed: true, status: "BALANCE_SUCCESS" };
+      return { completed: true, status: scope?.manualRefund ? refundCents===0 ? 'ZERO_SUCCESS' : 'CASH_SUCCESS' : "BALANCE_SUCCESS" };
     }
     if (order.payType !== "weixin" && order.payType !== "alipay") {
       throw new ValidateException(`支付方式 ${order.payType || "未知"} 不支持原路退款`);

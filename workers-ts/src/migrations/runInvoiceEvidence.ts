@@ -1,11 +1,11 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
-import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
+import { refundEntityAcceptedPairSql } from './guestRefundEntityCatalog';
 import { INVOICE_MAINTENANCE_SETUP_SQL, INVOICE_EVIDENCE_INSTALLATION_SQL, INVOICE_EVIDENCE_ORM_INSTALLATION_SQL } from './invoiceEvidenceInstallation';
 
 type Root = Pick<DbClient,'transaction'> & Partial<Pick<DbClient,'$client'>>;
 type Query = Pick<DbClient,'execute'>;
-type State = 'fresh' | 'v1' | 'v2' | 'orm-pending' | 'drift';
+type State = 'fresh' | 'v1' | 'v2' | 'v3' | 'orm-pending' | 'drift';
 export interface InvoiceEvidenceInspection {
   state: State;
   runtimeSafe: boolean;
@@ -28,10 +28,32 @@ async function environment(tx: Query) {
   if (row?.safe !== true) throw Error('Invoice installation environment requires PG16 READ COMMITTED and reviewed triggers');
 }
 async function catalog(tx: Query): Promise<State> {
-  const [row]=await tx.execute(sql.raw(INVOICE_EVIDENCE_STATE_SQL));
+  const [row]=await tx.execute(sql.raw(`SELECT invoice AS state,split,profile FROM (${refundEntityAcceptedPairSql()}) entities`));
   const state=row?.state;
-  if (state==='fresh' || state==='v1' || state==='v2' || state==='orm-pending' || state==='drift') return state;
+  if ((state==='v3' || row?.split==='v2') && (row?.profile!=='guest' || state!=='v3' || row.split!=='v2')) return 'drift';
+  if (state==='fresh' || state==='v1' || state==='v2' || state==='v3' || state==='orm-pending' || state==='drift') return state;
   throw Error('Invoice catalog state unavailable');
+}
+/** Idempotent owner path only. It never installs the guest upgrade; all eight
+ * components must already match before and after the original lock graph. */
+export async function lockReviewedGuestRefundEntities(tx: Query): Promise<void> {
+  if (Object.hasOwn(tx,'$client')) throw Error('Guest entity inspection requires the owning maintenance transaction');
+  const [supported] = await tx.execute(sql`SELECT current_setting('transaction_read_only')='off'
+    AND current_setting('search_path')='public, pg_temp' AND current_schema()='public'
+    AND current_setting('row_security')='off'
+    AND (SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout') BETWEEN 1 AND 30000
+    AND (SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout') BETWEEN 1 AND 1000
+    AND (SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout') BETWEEN 1 AND 5000 AS safe`);
+  if (supported?.safe!==true) throw Error('Guest entity idempotence requires bounded owner maintenance');
+  await environment(tx);
+  const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731611,0) AS locked`);
+  if (gate?.locked!==true) throw Error('Evidence installation already running');
+  if (await catalog(tx)!=='v3') throw Error('Complete guest entity catalog required');
+  for (const table of ['store_order_invoice','store_order_invoice_evidence','store_order_invoice_allocation',
+    'store_order_refund_split','store_order_fulfillment_branch'])
+    await tx.execute(sql.raw(`LOCK TABLE public.${table} IN ACCESS EXCLUSIVE MODE NOWAIT`));
+  await environment(tx);
+  if (await catalog(tx)!=='v3') throw Error('Guest entity catalog changed during locking');
 }
 async function runtimeSafety(tx: Query, role: string): Promise<boolean> {
   const [row] = await tx.execute(sql`WITH RECURSIVE authority AS (
@@ -47,7 +69,7 @@ async function runtimeSafety(tx: Query, role: string): Promise<boolean> {
   return row?.safe===true;
 }
 async function ready(tx: Query, role: string, state: State) {
-  if (state!=='v2') return false;
+  if (state!=='v2' && state!=='v3') return false;
   const [row] = await tx.execute(sql`SELECT
     has_schema_privilege(r.oid,'public','USAGE')
     AND has_sequence_privilege(r.oid,'public.store_order_invoice_id_seq','USAGE')
@@ -95,21 +117,27 @@ export async function runInvoiceEvidence(db: Root, role: string, completeEmptyOr
   return db.transaction(async tx => {
     await tx.execute(setup); await environment(tx);
     if (!await runtimeSafety(tx,role)) throw Error('Invoice runtime authority is unsafe or missing');
-    await tx.execute(sql.raw(completeEmptyOrm ? INVOICE_EVIDENCE_ORM_INSTALLATION_SQL : INVOICE_EVIDENCE_INSTALLATION_SQL));
+    const guest = await catalog(tx)==='v3';
+    if (guest) await lockReviewedGuestRefundEntities(tx);
+    else await tx.execute(sql.raw(completeEmptyOrm ? INVOICE_EVIDENCE_ORM_INSTALLATION_SQL : INVOICE_EVIDENCE_INSTALLATION_SQL));
     await tx.execute(sql.raw(`GRANT SELECT ON public.store_order_invoice_evidence TO "${role}";
       GRANT SELECT,INSERT ON public.store_order_invoice_allocation TO "${role}"`));
     await environment(tx);
-    if (await catalog(tx)!=='v2' || !await runtimeSafety(tx,role) || !await ready(tx,role,'v2'))
+    const expected = guest ? 'v3' : 'v2';
+    if (await catalog(tx)!==expected || !await runtimeSafety(tx,role) || !await ready(tx,role,expected))
       throw Error('Invoice runtime prerequisites or catalog verification failed');
-    return {state:'v2',runtimeSafe:true,runtimeReady:true,preInstallHistoryUnknown:await unknownHistory(tx,'v2')};
+    return {state:expected,runtimeSafe:true,runtimeReady:true,preInstallHistoryUnknown:await unknownHistory(tx,expected)};
   },{isolationLevel:'read committed',accessMode:'read write'});
 }
 
 /** Construction/upgrade protocol only; runtime commissioning remains separate. */
 export async function runInvoiceEvidenceSchema(db: Root, completeEmptyOrm = false): Promise<void> {
   if (!Object.hasOwn(db,'$client') || !db.$client) throw Error('Invoice schema installation requires a root database');
-  await db.transaction(tx=>tx.execute(sql.raw(completeEmptyOrm ? INVOICE_EVIDENCE_ORM_INSTALLATION_SQL : INVOICE_EVIDENCE_INSTALLATION_SQL)),
-    {isolationLevel:'read committed',accessMode:'read write'});
+  await db.transaction(async tx=>{
+    await tx.execute(setup); await environment(tx);
+    if (await catalog(tx)==='v3') await lockReviewedGuestRefundEntities(tx);
+    else await tx.execute(sql.raw(completeEmptyOrm ? INVOICE_EVIDENCE_ORM_INSTALLATION_SQL : INVOICE_EVIDENCE_INSTALLATION_SQL));
+  },{isolationLevel:'read committed',accessMode:'read write'});
 }
 
 export async function inspectInvoiceEvidenceSchema(db: Root): Promise<State> {

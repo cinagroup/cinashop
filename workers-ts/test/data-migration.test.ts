@@ -226,7 +226,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(285);
+    expect(report.targetTableCount).toBe(286);
     expect([...parseCreateTables(externalTargetSql,"postgres").keys()].sort()).toEqual(registeredTableNames("external"));
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
@@ -236,6 +236,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "admin_refund_creation",
       "admin_refund_operation",
       "admin_user_write_replay",
+      "cashier_second_card_abandon_v1",
       "city_delivery_callback_event",
       "city_delivery_callback_outbox",
       "city_delivery_callback_watermark",
@@ -322,10 +323,11 @@ describe("MySQL to PostgreSQL schema audit", () => {
       report.sharedTables.map((table) => table.table).sort(),
     );
     expect(definitionDrift).toEqual({
-      externalTableCount: 285,
-      // This source-declaration scan includes twelve independently installed ledgers.
+      externalTableCount: 286,
+      // Sixteen independently installed ledgers are declared; abandonment is
+      // also the single explicit external addition, leaving fifteen TS-only tables.
       // It is distinct from the 282 tables actually installed by runAll.
-      workerTableCount: 294,
+      workerTableCount: 298,
       externalOnlyTables: [
         'customer_city_delivery_attempt',
         'customer_city_delivery_binding',

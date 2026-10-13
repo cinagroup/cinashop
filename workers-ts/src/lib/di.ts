@@ -14,6 +14,7 @@
 import { sql } from "drizzle-orm";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { HttpApiException } from "@/utils/errors";
 import * as schema from "@/models/schema";
 import { UserDao } from "@/dao/user/UserDao";
 import { SystemConfigDao } from "@/dao/system/SystemConfigDao";
@@ -228,6 +229,22 @@ export function createAdminDatabaseSession(env: Env) {
   }
   const db = createDbFromConnectionString(binding.connectionString, 2, {
     searchPath: "public,pg_temp", applicationName: "cinashop_admin",
+  });
+  return { container: createContainerFromDb(db), close: () => db.$client.end({ timeout: 5 }) };
+}
+
+/** Manager writes and customer payment-history reads have different SQL
+ * authority. The authenticated manager boundary never borrows main/Admin I/O. */
+export function createManagerDatabaseSession(env: Env) {
+  const binding = env.HYPERDRIVE_MANAGER;
+  if (!binding?.connectionString?.trim() || binding === env.HYPERDRIVE
+    || binding === env.HYPERDRIVE_ADMIN
+    || binding.connectionString === env.HYPERDRIVE?.connectionString
+    || binding.connectionString === env.HYPERDRIVE_ADMIN?.connectionString) {
+    throw new HttpApiException("门店管理运行环境尚未完成独立配置", 503, 503);
+  }
+  const db = createDbFromConnectionString(binding.connectionString, 2, {
+    searchPath: "public,pg_temp", applicationName: "cinashop_manager",
   });
   return { container: createContainerFromDb(db), close: () => db.$client.end({ timeout: 5 }) };
 }

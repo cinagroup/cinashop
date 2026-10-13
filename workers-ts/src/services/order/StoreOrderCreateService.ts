@@ -127,6 +127,8 @@ import { assertCheckoutCouponTemplate } from './CheckoutCouponTemplateAuthority'
 import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
 import { verifyUnpaidCancellationLines } from './UnpaidOrderCancellationEvidence';
 import { recordPurchaseOriginEvidence } from './PurchaseOriginEvidence';
+import { loadCashierFormSubmission, captureCashierFormConsumption } from '@/services/customer-work/CustomerCashierFormImages';
+import { lockCashierOperationRequest, assertCashierNotAbandoned } from '@/services/customer-work/CustomerCashierAbandon';
 import { cashierSecondCardCreationFacts, authorizeCashierSecondCardCreation, captureCashierSecondCardCreation,
   assertCashierSecondCardCreationReplay, type CashierSecondCardCreationCapability } from './CashierSecondCardOrigin';
 
@@ -215,6 +217,11 @@ export interface OrderPricingQuote {
   deliveryAddressFields: DeliveryAddressSnapshot['fields'] | null;
   integralPolicy: { enabled: boolean; ratio: string };
   systemFormId: number;
+  /** The actual template bound into a customer cashier confirmation. */
+  systemForm?: Awaited<ReturnType<typeof loadActiveOrderSystemForm>> | null;
+  /** Cashier-only rights from the same current items used for this quote. */
+  card?: { product_id: number; sku_unique: string; quantity: number; unit_write_times: number; total_write_times: number;
+    write_valid: 1 | 2 | 3; write_days: number; write_start: number; write_end: number };
   /** Only returned to an explicit read-only order-coupon request. Never a reservation. */
   couponPage?: OrderCouponPage;
   rawTotalCents: number;
@@ -1209,6 +1216,10 @@ export class StoreOrderCreateService {
       if (sku.productId !== product.id) {
         throw new ValidateException("商品规格与商品不匹配");
       }
+      if(cashier&&(product.pid!==0||product.isVerify!==1||sku.isRetired!==0||sku.writeTimes<=0
+        ||![1,2,3].includes(sku.writeValid)||(sku.writeValid===2&&sku.writeDays<=0)
+        ||(sku.writeValid===3&&(sku.writeStart<=0||sku.writeEnd<=sku.writeStart||sku.writeEnd<=Math.floor(Date.now()/1000)))))
+        throw new ValidateException('收银次卡商品或规格已失效，请重新选品');
       const presale = type === 6 ? preparePresalePurchase(cart, product, sku, user) : null;
 
       // 活动价 (M17: 秒杀/砍价/拼团替换 SKU 价)
@@ -1786,6 +1797,7 @@ export class StoreOrderCreateService {
         deliveryType: seckillPricingSnapshot.deliveryType, isSupportRefund: seckillPricingSnapshot.isSupportRefund } : null,
       combinationConfirmationRules, newcomerConfig, orderSystemFormId,
       ...(assisted ? { assistedForm: assistedFormConfirmation } : {}),
+      ...(cashier ? { cashierForm: assistedFormConfirmation } : {}),
       integralActivityId, discountActivityId, newcomerActivityId, newcomerActivitySkuId,
       address: deliveryAddress ? { id: deliveryAddress.saved?.id ?? 0, fields: deliveryAddress.fields, regions: deliveryAddress.regions } : null,
       shippingSnapshot, pricingConfig, firstOrderConfig, levelDiscountPercent, activePaidMember, membershipSnapshot,
@@ -1799,6 +1811,8 @@ export class StoreOrderCreateService {
           deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
         skuId: item.sku.id, unique: item.sku.unique, suk: item.sku.suk, activitySkuId: item.activitySku?.id ?? 0,
         ...(item.cart.productType === 4 ? { secondCardUnitEntitlements: Math.max(item.sku.writeTimes, 1) } : {}),
+        ...(cashier ? { cashierSecondCardValidity: { mode: item.sku.writeValid, days: item.sku.writeDays,
+          startsAt: item.sku.writeStart, endsAt: item.sku.writeEnd } } : {}),
         weight: item.sku.weight, volume: item.sku.volume, rawUnitPriceCents: item.rawUnitPriceCents,
         unitPriceCents: item.unitPriceCents, priceType: item.priceType,
         promotion: item.promotion ?? null,
@@ -1817,7 +1831,7 @@ export class StoreOrderCreateService {
       totalNum, isStoreFreePostage, gainIntegral,
     });
     if (options?.preview) {
-      if (assisted && orderSystemFormId > 0) {
+      if ((assisted || cashier) && orderSystemFormId > 0) {
         assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
       }
       return {
@@ -1827,6 +1841,12 @@ export class StoreOrderCreateService {
         integralPolicy: { enabled: Boolean(user) && supportsIntegralDeduction && pricingConfig.integralEnabled,
           ratio: pricingConfig.integralRatio },
         systemFormId: orderSystemFormId,
+        ...(cashier?{systemForm:assistedFormConfirmation}:{}),
+        ...(cashier?{card:{product_id:orderItems[0].product.id,sku_unique:orderItems[0].sku.unique,
+          quantity:orderItems[0].cart.cartNum,unit_write_times:orderItems[0].sku.writeTimes,
+          total_write_times:orderItems[0].sku.writeTimes*orderItems[0].cart.cartNum,
+          write_valid:orderItems[0].sku.writeValid as 1|2|3,write_days:orderItems[0].sku.writeDays,
+          write_start:orderItems[0].sku.writeStart,write_end:orderItems[0].sku.writeEnd}}:{}),
         ...(options.couponQuery ? { couponPage: !user || preliminaryFirstOrderEligible || type !== 0
           ? { list: [], nextCursor: null }
           : await eligibleOrderCoupons(c, uid, orderItems, options.couponQuery) } : {}),
@@ -1877,7 +1897,7 @@ export class StoreOrderCreateService {
     const confirmation = cashier ? cashier.confirmation! : runtime.requireConfirmation || params.quoteToken !== undefined
       ? await readCheckoutConfirmation(runtime.CONFIG_KV, { uid, key, adminId: assisted?.adminId, touristUid: assisted?.touristUid }, params.quoteToken)
       : null;
-    if (confirmation && assisted && orderSystemFormId > 0) {
+    if (confirmation && (assisted || cashier) && orderSystemFormId > 0) {
       assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
     }
     if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
@@ -1922,6 +1942,8 @@ export class StoreOrderCreateService {
 
     // 5. 事务 (ACID): 订单 + 库存 + 快照 + 积分
     const orderRow = await withTx(c, async (tx) => {
+      if(cashier){await lockCashierOperationRequest(tx,cashier.actor.uid,cashier.request_key);
+        await assertCashierNotAbandoned(tx,cashier.actor.uid,cashier.request_key,'creation',cashier.request_hash);}
       // Bound values come from activity rows locked/compared below. Their terms stay
       // stable, but time must be evaluated again after every possible business wait.
       let finalActivityWindow: SQL | undefined;
@@ -2103,7 +2125,7 @@ export class StoreOrderCreateService {
         if(!cashier)await lockCheckoutPickupStore(tx, pickupStoreId);
         verifyCode = await generatePickupVerifyCode(tx);
       }
-      if (confirmation && assisted && orderSystemFormId > 0) {
+      if (confirmation && (assisted || cashier) && orderSystemFormId > 0) {
         // The early read is only a fast rejection. This NOWAIT row lock is the
         // decisive check: form management cannot edit between validation and
         // commit, and changed fields demand a fresh quote before answers are
@@ -2111,7 +2133,7 @@ export class StoreOrderCreateService {
         assistedFormConfirmation = await loadActiveOrderSystemForm(tx, orderSystemFormId, true);
         assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
       }
-      const preparedSystemForm = await loadOrderSystemFormSubmission(
+      const preparedSystemForm = cashier ? await loadCashierFormSubmission(tx,cashier,orderSystemFormId,params.customForm) : await loadOrderSystemFormSubmission(
         tx,
         orderSystemFormId,
         params.customForm,
@@ -2742,6 +2764,9 @@ export class StoreOrderCreateService {
             eq(storeProductAttrValue.unique, sku.unique), eq(storeProductAttrValue.suk, sku.suk), eq(storeProductAttrValue.isRetired, 0),
             eq(storeProductAttrValue.price, sku.price),
             cart.productType === 4 ? eq(storeProductAttrValue.writeTimes, sku.writeTimes) : undefined,
+            cashier ? and(eq(storeProductAttrValue.writeValid,sku.writeValid),eq(storeProductAttrValue.writeDays,sku.writeDays),
+              eq(storeProductAttrValue.writeStart,sku.writeStart),eq(storeProductAttrValue.writeEnd,sku.writeEnd),
+              sql`${storeProductAttrValue.writeTimes}>0`,sql`(${storeProductAttrValue.writeValid}<>3 OR ${storeProductAttrValue.writeEnd}>floor(extract(epoch from clock_timestamp()))::bigint)`) : undefined,
             // Activity ledger sources are guarded at their own write/lock above.
             // Do not freeze unused base costs or turn internal amounts into quote terms.
             !activitySku ? and(eq(storeProductAttrValue.cost, sku.cost),
@@ -2772,8 +2797,10 @@ export class StoreOrderCreateService {
             // The assisted form row is pinned above. Also pin the product's
             // choice of that row at its inventory UPDATE, so an editor cannot
             // swap form IDs between the pre-transaction quote and this commit.
-            assisted && type === 0 && cart.activityId === 0
+            (assisted || cashier) && type === 0 && cart.activityId === 0
               ? eq(storeProduct.systemFormId, product.systemFormId) : undefined,
+            cashier ? and(eq(storeProduct.pid,0),eq(storeProduct.type,product.type),eq(storeProduct.relationId,product.relationId),
+              eq(storeProduct.productType,4),eq(storeProduct.isShow,1),eq(storeProduct.isDel,0),eq(storeProduct.isVerify,1),eq(storeProduct.isPresaleProduct,0)) : undefined,
             // Activity overrides are protected by their existing activity UPDATE.
             // Only freeze the base gift amount when it actually supplies the snapshot.
             activityGiveIntegral === null ? eq(storeProduct.giveIntegral, product.giveIntegral) : undefined,
@@ -3085,7 +3112,13 @@ export class StoreOrderCreateService {
         ));
         if (live.length !== promotionIds.length) throw new OrderQuoteReconfirmRequired(key);
       }
-      const finalPricingWindow = and(finalActivityWindow, finalMembershipWindow, finalBrokerageWindow, finalPresaleWindow);
+      // Origin/audit INSERTs can also wait. Persist them before the last pure
+      // clock guard so a cashier card cannot expire during those waits.
+      if(cashier)await captureCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!,order,await confirmationFingerprint());
+      if(cashier)await captureCashierFormConsumption(tx,cashier,order,preparedSystemForm);
+      const finalCashierWindow = cashier && orderItems[0].sku.writeValid === 3
+        ? sql`clock_timestamp() < to_timestamp(${orderItems[0].sku.writeEnd})` : undefined;
+      const finalPricingWindow = and(finalActivityWindow, finalMembershipWindow, finalBrokerageWindow, finalPresaleWindow, finalCashierWindow);
       if (finalPricingWindow) {
         // No user/activity table read or new lock here: only the database wall clock
         // against the already protected bounds, after INSERT/SKU/address/form waits.
@@ -3121,7 +3154,6 @@ export class StoreOrderCreateService {
           throw error;
         }
       }
-      if(cashier)await captureCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!,order,await confirmationFingerprint());
       return order;
     });
 

@@ -16,6 +16,9 @@ export interface LegacyRouteRule {
 export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/customer-work/index",
   "/pages/customer-work/statistics",
+  "/pages/customer-work/cashierRecords",
+  "/pages/customer-work/cashierRecord",
+  "/pages/customer-work/cashier",
   "/pages/customer-work/orders",
   "/pages/customer-work/orderDetail",
   "/pages/customer-work/refunds",

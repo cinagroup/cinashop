@@ -5,9 +5,8 @@ import { ADMIN_REFUND_CREATION_INSTALLATION_SQL } from './adminRefundCreationIns
 import { inspectAdminRefundOperation } from './runAdminRefundOperation';
 import { inspectAdminRefundCreation } from './runAdminRefundCreation';
 import { INVOICE_EVIDENCE_INSTALLATION_SQL } from './invoiceEvidenceInstallation';
-import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
+import { refundEntityAcceptedPairSql } from './guestRefundEntityCatalog';
 import { REFUND_SPLIT_INSTALLATION_SQL } from './refundOrderSplitInstallation';
-import { REFUND_SPLIT_STATE_SQL } from './refundOrderSplitCatalog';
 import { OFFLINE_INSTALLATION_SQL } from './offlineOrderInstallation';
 import { OFFLINE_DEPENDENCIES, OFFLINE_STATE_SQL } from './offlineOrderCatalog';
 import { CHECKOUT_PRICING_LOCK_INSTALLATION_SQL } from './checkoutPricingLockInstallation';
@@ -51,13 +50,15 @@ async function fingerprint(tx: Query) {
 }
 async function inspect(tx: Query) {
   const operation = await inspectAdminRefundOperation(tx), creation = await inspectAdminRefundCreation(tx);
-  const [invoice] = await tx.execute(sql.raw(INVOICE_EVIDENCE_STATE_SQL));
-  const [refund] = await tx.execute(sql.raw(REFUND_SPLIT_STATE_SQL));
+  const [entities] = await tx.execute(sql.raw(refundEntityAcceptedPairSql()));
   const [offline] = await tx.execute(sql.raw(OFFLINE_STATE_SQL));
   const pricing = await inspectCheckoutPricingLock(tx);
-  return { schemaReady:operation.complete && creation.complete && invoice?.state==='v2' && refund?.state==='v1'
+  const refundEntitiesReady = entities?.profile === 'legacy' && entities.invoice === 'v2' && entities.split === 'v1'
+    || entities?.profile === 'guest' && entities.invoice === 'v3' && entities.split === 'v2';
+  return { schemaReady:operation.complete && creation.complete && refundEntitiesReady
       && offline?.state==='v1' && pricingCatalogReady(pricing),
-    adminRefundOperation:operation, adminRefundCreation:creation, invoice:invoice?.state, refund:refund?.state, offline:offline?.state, pricing };
+    adminRefundOperation:operation, adminRefundCreation:creation, invoice:entities?.invoice, refund:entities?.split,
+    refundEntityProfile:entities?.profile, offline:offline?.state, pricing };
 }
 export async function inspectReleaseProtocolSchema(db: Root, target: ReleaseProtocolTarget) {
   validate(db,target);

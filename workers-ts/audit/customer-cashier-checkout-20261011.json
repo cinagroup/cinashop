@@ -1,0 +1,2008 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "timezone": "Asia/Singapore",
+  "generatedAt": "2026-10-11T07:23:35.107Z",
+  "status": "local_candidate_verified",
+  "baselineCommit": "0cae32bda15d3bf4f68ca507fcb1174e6b58fa87",
+  "scope": {
+    "actor": "ordinary customer UserJWT",
+    "feature": "single real second-card product/SKU selection, member/guest, actual form and entitlement quote, creation, cash/zero payment and original UUID recovery",
+    "newEndpoints": [
+      "GET /api/mobile/work/cashier/second-card/catalog",
+      "GET /api/mobile/work/cashier/second-card/catalog/:id"
+    ],
+    "newPage": "/pages/customer-work/cashier",
+    "genericAssistedModuleComplete": false,
+    "fullMigrationComplete": false
+  },
+  "reportGenerator": {
+    "script": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/finalize-cashier-checkout-evidence.cjs",
+      "sha256": "4e9914cbc6879a40dde860a88b704d94026626eb2d121ca795ab8ff5df7d810b"
+    },
+    "configuration": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/cashier-checkout-final-evidence-config.json",
+      "sha256": "af14e6591e2b0d25af4736a1d2cba85dd30a79d63b3b662db55aee18670ce9a8"
+    }
+  },
+  "checks": {
+    "backend": {
+      "currentFrozenNative": {
+        "passed": 46,
+        "failed": 0,
+        "skipped": 0,
+        "files": [
+          {
+            "file": "test/customer-cashier-records-postgres.test.ts",
+            "actual_passed": 16
+          },
+          {
+            "file": "test/customer-cashier-second-card-postgres.test.ts",
+            "actual_passed": 17
+          },
+          {
+            "file": "test/customer-cashier-write-ui-postgres.test.ts",
+            "actual_passed": 13
+          }
+        ],
+        "database": {
+          "server_version": "PostgreSQL 16.15",
+          "server_version_num": 160015,
+          "port": 62923,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-T5hP4D",
+          "remaining_fixture_count": 0,
+          "runner_stop_confirmed": true
+        }
+      },
+      "relatedUnit": {
+        "passed": 179,
+        "failed": 0,
+        "skipped": 268,
+        "declared": 447
+      },
+      "standardTypes": {
+        "exitCode": 0,
+        "configurations": [
+          "typecheck:unit original tsconfig",
+          "typecheck:runtime original tsconfig.runtime-test.json"
+        ]
+      },
+      "intermediateBusiness": {
+        "passed": 86,
+        "currentFullFiveFileCredit": false,
+        "sourceTimingNote": "Run launched from the business scoped snapshot; compatible quote.card DTO and native13 assertion source edits occurred during that run. The observed 86 pass is preserved as an intermediate business result. This receipt does not claim physically unchanged sources throughout that run, nor current final five-file credit. Only final wire46 has final frozen-source credit."
+      }
+    },
+    "backendExecution": {
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-final-execution.json",
+      "sha256": "c410da3806554336f4b6e91b6e4ed48912a433f8196fd0165af3f1a10881ea78"
+    },
+    "backendReceipt": {
+      "kind": "customer-cashier-real-write-ui-final-layered-execution",
+      "recorded_at_utc": "2026-10-11T07:18:51.0544781Z",
+      "workspace": "C:\\cinagroup\\cinashop",
+      "source_frozen": true,
+      "production_ddl_executed": false,
+      "scope_note": "Hashes cover 33 explicitly listed backend, native/unit, fixture, runner and compile inputs; exclude root migration docs and frontend-owned files. Native86 and final wire46 are sequential input layers and are not added as distinct unique cases.",
+      "native_business_layer": {
+        "scope": "Broad final business validity and assisted/checkout regression input, before display-only quote.card projection",
+        "command": "node scripts/run-local-finance-postgres.mjs with explicitly whitelisted selected native files",
+        "execution_session_id": 27132,
+        "completion_chunk_id": "0228b2",
+        "exit_code": 0,
+        "actual_executed": 86,
+        "actual_passed": 86,
+        "actual_failed": 0,
+        "actual_skipped": 0,
+        "actual_files": 5,
+        "vitest_duration_seconds": 413.26,
+        "files": [
+          {
+            "file": "test/assisted-form-consumption-postgres.test.ts",
+            "actual_passed": 33
+          },
+          {
+            "file": "test/checkout-confirmation-postgres.test.ts",
+            "actual_passed": 7
+          },
+          {
+            "file": "test/customer-cashier-records-postgres.test.ts",
+            "actual_passed": 16
+          },
+          {
+            "file": "test/customer-cashier-second-card-postgres.test.ts",
+            "actual_passed": 17
+          },
+          {
+            "file": "test/customer-cashier-write-ui-postgres.test.ts",
+            "actual_passed": 13
+          }
+        ],
+        "raw_log": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-validity-final.log",
+          "sha256": "d02cb9d11ba26f213d695c6af2a39f59cdcadb5e586bef86458244c3e46d4a3e"
+        },
+        "frozen_scoped_inputs": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\backend-write-ui-validity-final-frozen-inputs.json",
+          "sha256": "885a63806092766da4605283f51ba824e72c9498c9d7ca28012c6cab64e132f9"
+        },
+        "scoped_input_count": 33,
+        "database": {
+          "server_version": "PostgreSQL 16.15",
+          "server_version_num": 160015,
+          "port": 54045,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-np9kyd",
+          "remaining_fixture_count": 0,
+          "runner_stop_confirmed": true
+        },
+        "source_timing_note": "Run launched from the business scoped snapshot; compatible quote.card DTO and native13 assertion source edits occurred during that run. The observed 86 pass is preserved as an intermediate business result. This receipt does not claim physically unchanged sources throughout that run, nor current final five-file credit. Only final wire46 has final frozen-source credit.",
+        "physical_source_unchanged_through_run_claimed": false,
+        "current_final_five_file_credit_claimed": false
+      },
+      "native_current_wire_layer": {
+        "scope": "Current final wire input: cashier catalog/quote/create/recovery native13 + records16 + original cashier17",
+        "command": "node scripts/run-local-finance-postgres.mjs with explicitly whitelisted selected native files",
+        "execution_session_id": 77033,
+        "completion_chunk_id": "591bf5",
+        "exit_code": 0,
+        "actual_executed": 46,
+        "actual_passed": 46,
+        "actual_failed": 0,
+        "actual_skipped": 0,
+        "actual_files": 3,
+        "vitest_duration_seconds": 70.43,
+        "files": [
+          {
+            "file": "test/customer-cashier-records-postgres.test.ts",
+            "actual_passed": 16
+          },
+          {
+            "file": "test/customer-cashier-second-card-postgres.test.ts",
+            "actual_passed": 17
+          },
+          {
+            "file": "test/customer-cashier-write-ui-postgres.test.ts",
+            "actual_passed": 13
+          }
+        ],
+        "raw_log": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-wire-final.log",
+          "sha256": "b49897bb606ede6906d909b693d46a73d8186aa369419fad9648b85180dc824a"
+        },
+        "frozen_scoped_inputs": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\backend-write-ui-wire-final-frozen-inputs.json",
+          "sha256": "d7deab3ad7ad4f2d4d1d92926288fb43ba7b344a3c35a202cad0fe942441e991"
+        },
+        "scoped_input_count": 33,
+        "database": {
+          "server_version": "PostgreSQL 16.15",
+          "server_version_num": 160015,
+          "port": 62923,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-T5hP4D",
+          "remaining_fixture_count": 0,
+          "runner_stop_confirmed": true
+        }
+      },
+      "wire_delta": {
+        "changed_scoped_file_count": 3,
+        "unchanged_scoped_file_count": 30,
+        "paths": [
+          "workers-ts/src/services/customer-work/CustomerWorkCashierService.ts",
+          "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "workers-ts/test/customer-cashier-write-ui-postgres.test.ts"
+        ],
+        "meaning": "Only compatible cashier preview quote.card from actual same orderItems, wrapper returning that projection, and assertions in the existing native validity test. No business write or confirmation fingerprint change between these two inputs."
+      },
+      "final_standard_types": {
+        "command": "npm run typecheck",
+        "configurations": [
+          "typecheck:unit original tsconfig",
+          "typecheck:runtime original tsconfig.runtime-test.json"
+        ],
+        "execution_session_id": 49830,
+        "completion_chunk_id": "2c7935",
+        "exit_code": 0,
+        "raw_log": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\types-write-ui-wire-final.log",
+          "sha256": "5456bd1693a69b63084990f40b82971acbf6b368fe4093b40327cb757b7fe05b"
+        }
+      },
+      "final_related_unit": {
+        "command": "Vitest run exact eight related test files",
+        "execution_session_id": 28863,
+        "completion_chunk_id": "f34394",
+        "exit_code": 0,
+        "actual_executed": 179,
+        "actual_passed": 179,
+        "actual_failed": 0,
+        "native_conditioned_skipped": 268,
+        "declared_cases": 447,
+        "files_passed": 7,
+        "files_skipped": 1,
+        "declared_files": 8,
+        "vitest_duration_seconds": 10.97,
+        "raw_log": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\unit-write-ui-wire-final.log",
+          "sha256": "c75ed3653f45a447a14bdd977ba5981310b5bc686f0a2e59f27e0249635878d7"
+        },
+        "files": [
+          "test/customer-work-read-independent-contract.test.ts",
+          "test/customer-work-writeoff-sale-price.test.ts",
+          "test/checkout-confirmation.test.ts",
+          "test/checkout-confirmation-rules.test.ts",
+          "test/second-card-validity.test.ts",
+          "test/second-card-product.test.ts",
+          "test/assisted-form-attachment-scope.test.ts",
+          "test/assisted-form-read.test.ts"
+        ]
+      },
+      "independent_cleanup": {
+        "execution_completion_chunk_id": "9b6c64",
+        "exit_code": 0,
+        "raw_report": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-final-cleanup.json",
+          "sha256": "a63f40540c92c0490033dc34f28bb0a4993b552db12d32ee342ae0bac1a55872"
+        },
+        "checked_at_utc": "2026-10-11T07:13:54.1085905Z",
+        "owned_cluster_count": 11,
+        "all_pg_ctl_status_exit_codes": 3,
+        "owned_postmaster_pid_count": 0,
+        "owned_main_process_count": 0,
+        "owned_listening_port_count": 0,
+        "diagnostics_preserved": true,
+        "clusters": [
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-1PlwQZ",
+            "pg_ctl_status_exit_code": 3,
+            "port": 56487
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-hH4bQf",
+            "pg_ctl_status_exit_code": 3,
+            "port": 56500
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-tBxMBB",
+            "pg_ctl_status_exit_code": 3,
+            "port": 64963
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-kSmfEM",
+            "pg_ctl_status_exit_code": 3,
+            "port": 51412
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-1BOGm4",
+            "pg_ctl_status_exit_code": 3,
+            "port": 58700
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-s0Jh7S",
+            "pg_ctl_status_exit_code": 3,
+            "port": 52910
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-FSv7iv",
+            "pg_ctl_status_exit_code": 3,
+            "port": 55230
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-mKYVX7",
+            "pg_ctl_status_exit_code": 3,
+            "port": 51739
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-jHx9o2",
+            "pg_ctl_status_exit_code": 3,
+            "port": 61104
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-np9kyd",
+            "pg_ctl_status_exit_code": 3,
+            "port": 54045
+          },
+          {
+            "pg_ctl_status": "pg_ctl: no server running",
+            "listening_port_count": 0,
+            "postmaster_pid_present": false,
+            "matching_main_postmaster_count": 0,
+            "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-T5hP4D",
+            "pg_ctl_status_exit_code": 3,
+            "port": 62923
+          }
+        ]
+      },
+      "final_hash_verification": {
+        "checked_at_utc": "2026-10-11T07:18:51.0615604Z",
+        "explicitly_scoped_file_count": 33,
+        "drift_count": 0,
+        "frozen_inputs": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\backend-write-ui-wire-final-frozen-inputs.json",
+          "sha256": "d7deab3ad7ad4f2d4d1d92926288fb43ba7b344a3c35a202cad0fe942441e991"
+        },
+        "files": [
+          {
+            "sha256": "7d2d9ffd138920f7106c22500953d2b4208089b5ab8f07de43532681549400b2",
+            "path": "view/common/order-system-form.ts"
+          },
+          {
+            "sha256": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891",
+            "path": "workers-ts/package-lock.json"
+          },
+          {
+            "sha256": "d15dc6eb2a61330cea3e833440310fc56a677e3943e58582f6e67c7fc0faa252",
+            "path": "workers-ts/package.json"
+          },
+          {
+            "sha256": "c7169ce9114ade2feb9c5cc56af869ec71700923fe9abc618f10915c28f9e2e0",
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs"
+          },
+          {
+            "sha256": "9f4a4873490ce081cbeb485448ff566ea7f942a3ca82678b685dd12878464132",
+            "path": "workers-ts/src/controllers/api/v1/CustomerWorkCashierController.ts"
+          },
+          {
+            "sha256": "722dc0ce96895f483d4dcb1dc4fd31319c6710942ce447dcc9d78ef27bf262c0",
+            "path": "workers-ts/src/routes/v1/index.ts"
+          },
+          {
+            "sha256": "48000aec7abd891e6bc312ce2d11020a6dd6e70ec6fc84328d38cf07b10ffe24",
+            "path": "workers-ts/src/services/customer-work/CustomerWorkCashierCatalog.ts"
+          },
+          {
+            "sha256": "978e9353d88707c9066d140c4793a9082d591ab845a919c96b57e838574f1e9a",
+            "path": "workers-ts/src/services/customer-work/CustomerWorkCashierReadService.ts"
+          },
+          {
+            "sha256": "4bf89c4cc6f3276997fad728d098731e429c73387b7d036b7f3c0d821c3f22dd",
+            "path": "workers-ts/src/services/customer-work/CustomerWorkCashierService.ts"
+          },
+          {
+            "sha256": "a8f12b6c14d88d3d2d406c5ef08e542cefe7f404363447c32cf0bac05ebd4b55",
+            "path": "workers-ts/src/services/customer-work/CustomerWorkReadService.ts"
+          },
+          {
+            "sha256": "e403825e683acba8d472371a5c419705f65848095e50692048ef761f23b55be2",
+            "path": "workers-ts/src/services/order/CashierSecondCardOrigin.ts"
+          },
+          {
+            "sha256": "bbf389e9d444c9ffc8c93ef659339ad03af0bad52e98ea3178d9ec6683a09f7c",
+            "path": "workers-ts/src/services/order/StoreOrderCreateService.ts"
+          },
+          {
+            "sha256": "2d4571c5f95796db657f103cd25ad056e9ed96bb11f891033dab7d23d82f355a",
+            "path": "workers-ts/test/assisted-form-attachment-scope.test.ts"
+          },
+          {
+            "sha256": "acf8e7bcda0a6cbd83f986e08af533461c8ff90630d5e1b23c141993a6f6e933",
+            "path": "workers-ts/test/assisted-form-consumption-postgres.test.ts"
+          },
+          {
+            "sha256": "7d84ccbb66d6cd1a95a1ec6d3e4857a8425e38b733c55a260483aa8de73f9513",
+            "path": "workers-ts/test/assisted-form-read.test.ts"
+          },
+          {
+            "sha256": "9f0fd3630ca75357af850daf105b6820689287d4e982cc35ea08d097ce5ddef5",
+            "path": "workers-ts/test/checkout-confirmation-postgres.test.ts"
+          },
+          {
+            "sha256": "08f2257390c701fb255ba415a7e2c0b47d58b6f031dc9e036da20fb949d62a6f",
+            "path": "workers-ts/test/checkout-confirmation-rules.test.ts"
+          },
+          {
+            "sha256": "a133722fe38948a808d33e715cabaae04f15d84be40923b634204c71e07078d1",
+            "path": "workers-ts/test/checkout-confirmation.test.ts"
+          },
+          {
+            "sha256": "e2f33e6b0b807ff71bbfb42ae1f8285c4b3d574b5669b9840e7d1a57554afac2",
+            "path": "workers-ts/test/customer-cashier-records-postgres.test.ts"
+          },
+          {
+            "sha256": "8ae6fbcd11b6303fee81a64c2113f14e29ac06a08761eaee380b0b9c4b4315fe",
+            "path": "workers-ts/test/customer-cashier-second-card-postgres.test.ts"
+          },
+          {
+            "sha256": "c4d83b36d94312f78de594eeb240d500a5faa2cd06aabf8561e057a50d98d61c",
+            "path": "workers-ts/test/customer-cashier-write-ui-postgres.test.ts"
+          },
+          {
+            "sha256": "af84e0824af6cfa8d34dd931d26518c321f5c62b1a554e92e3016479fc0b14d2",
+            "path": "workers-ts/test/customer-work-read-independent-contract.test.ts"
+          },
+          {
+            "sha256": "231b3b7cad7e1d22b3d743f4884f6afa5960b029679044c0fb0aa889538f1d7d",
+            "path": "workers-ts/test/customer-work-writeoff-sale-price.test.ts"
+          },
+          {
+            "sha256": "2622a2dbe2a84bb2a0aeea43aab0fa545b574544c2de0249694156d1d5aa8853",
+            "path": "workers-ts/test/helpers/checkoutPricingFixture.ts"
+          },
+          {
+            "sha256": "9770d5e129c5e0226ce3af5c036900f851329ceec6188f12f4638a0b99dd4f3b",
+            "path": "workers-ts/test/helpers/customerCashierSecondCardFixture.ts"
+          },
+          {
+            "sha256": "0d25e7607c9478ac51a43b9a3b41aa8bd48daa274f6b06e656d40b412765d11f",
+            "path": "workers-ts/test/helpers/customerWorkFinancialFixture.ts"
+          },
+          {
+            "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647",
+            "path": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts"
+          },
+          {
+            "sha256": "efab0088dddb7f67899a963387f7e09941cd4c6b88bbcf6cc503a791d8adeb21",
+            "path": "workers-ts/test/helpers/refundRuntimeFixture.ts"
+          },
+          {
+            "sha256": "b3d30422ca3e1854c36de0f5e23229c92e5339343989059b7b1ee37e2fc6a0b0",
+            "path": "workers-ts/test/second-card-product.test.ts"
+          },
+          {
+            "sha256": "814a5b11fa70022afa5eabaf285eeeb9264b707dcc66c1c1a65481a772d4b3ff",
+            "path": "workers-ts/test/second-card-validity.test.ts"
+          },
+          {
+            "sha256": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+            "path": "workers-ts/tsconfig.json"
+          },
+          {
+            "sha256": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8",
+            "path": "workers-ts/tsconfig.runtime-test.json"
+          },
+          {
+            "sha256": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e",
+            "path": "workers-ts/vitest.config.ts"
+          }
+        ]
+      },
+      "metadata_correction": {
+        "pre_fix_receipt": {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-final-execution-pre-metadata-fix.json",
+          "sha256": "003e1be262365c82e739b045f00584041e213681caa904665ccceb01cdb158e8"
+        },
+        "reason": "Original generator omitted final wire ClusterName and Port positional arguments, shifting Label into ClusterName. Corrected named arguments and validate both native layers against immutable raw log headers and explicit file lists.",
+        "corrected_fields": [
+          "native_current_wire_layer.scope",
+          "native_current_wire_layer.database.port",
+          "native_current_wire_layer.database.cluster"
+        ],
+        "business_source_or_run_changed": false,
+        "native_database_identity_validated_against_raw_header": true
+      },
+      "preserved_intermediate_evidence": [
+        {
+          "session": 31440,
+          "exit_code": 1,
+          "actual_passed": 37,
+          "actual_failed": 7,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-first.log",
+            "sha256": "01179dab19dd336b540f2f6a5bd0e92715bd03449aaa3542e48281e96e72ae25"
+          },
+          "explanation": "Real system_form tables absent from first fixture; fixed optional fixture extraTables rather than business behavior"
+        },
+        {
+          "session": 87758,
+          "completion_chunk_id": "4009d3",
+          "exit_code": 0,
+          "actual_passed": 44,
+          "actual_failed": 0,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-second.log",
+            "sha256": "ae8e68c11c57481b65c8065f202a0db5806f5641f5b5c0e8532b2f3b5125faf8"
+          }
+        },
+        {
+          "session": 92371,
+          "completion_chunk_id": "85acfc",
+          "exit_code": 1,
+          "actual_passed": 83,
+          "actual_failed": 1,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-final.log",
+            "sha256": "6ae7f47d9522a411c0820bcf8efc1508a91466d1887c9850948affdf0cce8751"
+          },
+          "explanation": "Old peer product rebind injection occurred after existing product FOR UPDATE; retained genuine failure log"
+        },
+        {
+          "session": 55922,
+          "completion_chunk_id": "dd5d4f",
+          "exit_code": 1,
+          "actual_failed": 1,
+          "actual_skipped": 32,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-assisted-rebind-diagnostic.log",
+            "sha256": "5996c8ae1f71c3a12d86f4e0ba86f59e0c259ef466e2980245669a5a802bd981"
+          }
+        },
+        {
+          "session": 67465,
+          "completion_chunk_id": "ac01ab",
+          "exit_code": 1,
+          "actual_failed": 1,
+          "actual_skipped": 32,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-assisted-rebind-locks.log",
+            "sha256": "154600693a9a4774c15d9665efda7ddc7adc2ac1881b9cbbd3df3232e2521424"
+          },
+          "explanation": "Actual pg_blocking_pids and PostgreSQL tuple lock evidence; peer product UPDATE blocked by creation transaction. Corrected only old test injection to after first fast form read; preserved committed peer rebind, exact reconfirm rejection, complete rollback and fresh-quote success assertions"
+        },
+        {
+          "session": 61056,
+          "completion_chunk_id": "f005f0",
+          "exit_code": 0,
+          "actual_passed": 84,
+          "actual_failed": 0,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-final-current.log",
+            "sha256": "33be7b6d6d8e199a945286828b3c91df590e3f5e70366852d22c92ae311b938e"
+          },
+          "frozen_inputs": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\backend-write-ui-frozen-inputs.json",
+            "sha256": "fc3e30153ee4381df10c34034607827107693142e789a56b4a3aaa5ebc8280a8"
+          },
+          "explanation": "Intermediate corrected 84-case input before later full validity fingerprint/final deadline guard business fixes"
+        },
+        {
+          "session": 30342,
+          "completion_chunk_id": "2e282b",
+          "exit_code": 0,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\types-write-ui-validity-final.log",
+            "sha256": "5456bd1693a69b63084990f40b82971acbf6b368fe4093b40327cb757b7fe05b"
+          },
+          "explanation": "Standard types on business86 layer"
+        },
+        {
+          "session": 5271,
+          "completion_chunk_id": "82dc41",
+          "exit_code": 0,
+          "actual_passed": 179,
+          "native_conditioned_skipped": 268,
+          "raw_log": {
+            "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\unit-write-ui-validity-final.log",
+            "sha256": "4a1ba0730f2a785d9bb5e4f003da5289fd37fe0e6d5d77da793e8cc76b3092f1"
+          },
+          "explanation": "Related unit on business86 layer"
+        }
+      ]
+    },
+    "verifiedBackendReceiptReferences": [
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-validity-final.log",
+        "sha256": "d02cb9d11ba26f213d695c6af2a39f59cdcadb5e586bef86458244c3e46d4a3e"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/backend-write-ui-validity-final-frozen-inputs.json",
+        "sha256": "885a63806092766da4605283f51ba824e72c9498c9d7ca28012c6cab64e132f9"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-wire-final.log",
+        "sha256": "b49897bb606ede6906d909b693d46a73d8186aa369419fad9648b85180dc824a"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/backend-write-ui-wire-final-frozen-inputs.json",
+        "sha256": "d7deab3ad7ad4f2d4d1d92926288fb43ba7b344a3c35a202cad0fe942441e991"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/types-write-ui-wire-final.log",
+        "sha256": "5456bd1693a69b63084990f40b82971acbf6b368fe4093b40327cb757b7fe05b"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/unit-write-ui-wire-final.log",
+        "sha256": "c75ed3653f45a447a14bdd977ba5981310b5bc686f0a2e59f27e0249635878d7"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-final-cleanup.json",
+        "sha256": "a63f40540c92c0490033dc34f28bb0a4993b552db12d32ee342ae0bac1a55872"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/backend-write-ui-wire-final-frozen-inputs.json",
+        "sha256": "d7deab3ad7ad4f2d4d1d92926288fb43ba7b344a3c35a202cad0fe942441e991"
+      },
+      {
+        "path": "view/common/order-system-form.ts",
+        "sha256": "7d2d9ffd138920f7106c22500953d2b4208089b5ab8f07de43532681549400b2"
+      },
+      {
+        "path": "workers-ts/package-lock.json",
+        "sha256": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891"
+      },
+      {
+        "path": "workers-ts/package.json",
+        "sha256": "d15dc6eb2a61330cea3e833440310fc56a677e3943e58582f6e67c7fc0faa252"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "c7169ce9114ade2feb9c5cc56af869ec71700923fe9abc618f10915c28f9e2e0"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/CustomerWorkCashierController.ts",
+        "sha256": "9f4a4873490ce081cbeb485448ff566ea7f942a3ca82678b685dd12878464132"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "722dc0ce96895f483d4dcb1dc4fd31319c6710942ce447dcc9d78ef27bf262c0"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkCashierCatalog.ts",
+        "sha256": "48000aec7abd891e6bc312ce2d11020a6dd6e70ec6fc84328d38cf07b10ffe24"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkCashierReadService.ts",
+        "sha256": "978e9353d88707c9066d140c4793a9082d591ab845a919c96b57e838574f1e9a"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkCashierService.ts",
+        "sha256": "4bf89c4cc6f3276997fad728d098731e429c73387b7d036b7f3c0d821c3f22dd"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkReadService.ts",
+        "sha256": "a8f12b6c14d88d3d2d406c5ef08e542cefe7f404363447c32cf0bac05ebd4b55"
+      },
+      {
+        "path": "workers-ts/src/services/order/CashierSecondCardOrigin.ts",
+        "sha256": "e403825e683acba8d472371a5c419705f65848095e50692048ef761f23b55be2"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "bbf389e9d444c9ffc8c93ef659339ad03af0bad52e98ea3178d9ec6683a09f7c"
+      },
+      {
+        "path": "workers-ts/test/assisted-form-attachment-scope.test.ts",
+        "sha256": "2d4571c5f95796db657f103cd25ad056e9ed96bb11f891033dab7d23d82f355a"
+      },
+      {
+        "path": "workers-ts/test/assisted-form-consumption-postgres.test.ts",
+        "sha256": "acf8e7bcda0a6cbd83f986e08af533461c8ff90630d5e1b23c141993a6f6e933"
+      },
+      {
+        "path": "workers-ts/test/assisted-form-read.test.ts",
+        "sha256": "7d84ccbb66d6cd1a95a1ec6d3e4857a8425e38b733c55a260483aa8de73f9513"
+      },
+      {
+        "path": "workers-ts/test/checkout-confirmation-postgres.test.ts",
+        "sha256": "9f0fd3630ca75357af850daf105b6820689287d4e982cc35ea08d097ce5ddef5"
+      },
+      {
+        "path": "workers-ts/test/checkout-confirmation-rules.test.ts",
+        "sha256": "08f2257390c701fb255ba415a7e2c0b47d58b6f031dc9e036da20fb949d62a6f"
+      },
+      {
+        "path": "workers-ts/test/checkout-confirmation.test.ts",
+        "sha256": "a133722fe38948a808d33e715cabaae04f15d84be40923b634204c71e07078d1"
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-records-postgres.test.ts",
+        "sha256": "e2f33e6b0b807ff71bbfb42ae1f8285c4b3d574b5669b9840e7d1a57554afac2"
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-second-card-postgres.test.ts",
+        "sha256": "8ae6fbcd11b6303fee81a64c2113f14e29ac06a08761eaee380b0b9c4b4315fe"
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-write-ui-postgres.test.ts",
+        "sha256": "c4d83b36d94312f78de594eeb240d500a5faa2cd06aabf8561e057a50d98d61c"
+      },
+      {
+        "path": "workers-ts/test/customer-work-read-independent-contract.test.ts",
+        "sha256": "af84e0824af6cfa8d34dd931d26518c321f5c62b1a554e92e3016479fc0b14d2"
+      },
+      {
+        "path": "workers-ts/test/customer-work-writeoff-sale-price.test.ts",
+        "sha256": "231b3b7cad7e1d22b3d743f4884f6afa5960b029679044c0fb0aa889538f1d7d"
+      },
+      {
+        "path": "workers-ts/test/helpers/checkoutPricingFixture.ts",
+        "sha256": "2622a2dbe2a84bb2a0aeea43aab0fa545b574544c2de0249694156d1d5aa8853"
+      },
+      {
+        "path": "workers-ts/test/helpers/customerCashierSecondCardFixture.ts",
+        "sha256": "9770d5e129c5e0226ce3af5c036900f851329ceec6188f12f4638a0b99dd4f3b"
+      },
+      {
+        "path": "workers-ts/test/helpers/customerWorkFinancialFixture.ts",
+        "sha256": "0d25e7607c9478ac51a43b9a3b41aa8bd48daa274f6b06e656d40b412765d11f"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+        "sha256": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647"
+      },
+      {
+        "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+        "sha256": "efab0088dddb7f67899a963387f7e09941cd4c6b88bbcf6cc503a791d8adeb21"
+      },
+      {
+        "path": "workers-ts/test/second-card-product.test.ts",
+        "sha256": "b3d30422ca3e1854c36de0f5e23229c92e5339343989059b7b1ee37e2fc6a0b0"
+      },
+      {
+        "path": "workers-ts/test/second-card-validity.test.ts",
+        "sha256": "814a5b11fa70022afa5eabaf285eeeb9264b707dcc66c1c1a65481a772d4b3ff"
+      },
+      {
+        "path": "workers-ts/tsconfig.json",
+        "sha256": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20"
+      },
+      {
+        "path": "workers-ts/tsconfig.runtime-test.json",
+        "sha256": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8"
+      },
+      {
+        "path": "workers-ts/vitest.config.ts",
+        "sha256": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-final-execution-pre-metadata-fix.json",
+        "sha256": "003e1be262365c82e739b045f00584041e213681caa904665ccceb01cdb158e8"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-first.log",
+        "sha256": "01179dab19dd336b540f2f6a5bd0e92715bd03449aaa3542e48281e96e72ae25"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-second.log",
+        "sha256": "ae8e68c11c57481b65c8065f202a0db5806f5641f5b5c0e8532b2f3b5125faf8"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-final.log",
+        "sha256": "6ae7f47d9522a411c0820bcf8efc1508a91466d1887c9850948affdf0cce8751"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-assisted-rebind-diagnostic.log",
+        "sha256": "5996c8ae1f71c3a12d86f4e0ba86f59e0c259ef466e2980245669a5a802bd981"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-assisted-rebind-locks.log",
+        "sha256": "154600693a9a4774c15d9665efda7ddc7adc2ac1881b9cbbd3df3232e2521424"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/native-write-ui-final-current.log",
+        "sha256": "33be7b6d6d8e199a945286828b3c91df590e3f5e70366852d22c92ae311b938e"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/backend-write-ui-frozen-inputs.json",
+        "sha256": "fc3e30153ee4381df10c34034607827107693142e789a56b4a3aaa5ebc8280a8"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/types-write-ui-validity-final.log",
+        "sha256": "5456bd1693a69b63084990f40b82971acbf6b368fe4093b40327cb757b7fe05b"
+      },
+      {
+        "path": "C:/cinagroup/cinashop/.cache/customer-cashier-records-pg16-20261011/unit-write-ui-validity-final.log",
+        "sha256": "4a1ba0730f2a785d9bb5e4f003da5289fd37fe0e6d5d77da793e8cc76b3092f1"
+      }
+    ],
+    "frontendRuntime": {
+      "passed": 106,
+      "failed": 0,
+      "skipped": 0,
+      "log": {
+        "path": ".cache/customer-cashier-checkout-fe-20261011/final6/runtime.stdout.log",
+        "sha256": "f14961fa01b2e48f76a299795cc3e3098f49bbafc25b5a906e408e5bd071fd36"
+      },
+      "stderr": {
+        "path": ".cache/customer-cashier-checkout-fe-20261011/final6/runtime.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "frontendTypesAndBuilds": {
+      "checks": [
+        {
+          "name": "typecheck",
+          "args": [
+            "--max-old-space-size=6144",
+            "node_modules/vue-tsc/bin/vue-tsc.js",
+            "--noEmit"
+          ],
+          "startedAt": "2026-10-11T07:13:47.8720313Z",
+          "completedAt": "2026-10-11T07:14:03.7439990Z",
+          "exit": 0
+        },
+        {
+          "name": "h5",
+          "args": [
+            "--max-old-space-size=4096",
+            "node_modules/@dcloudio/vite-plugin-uni/bin/uni.js",
+            "build",
+            "-p",
+            "h5",
+            "--outDir",
+            "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5"
+          ],
+          "startedAt": "2026-10-11T07:14:03.9456727Z",
+          "completedAt": "2026-10-11T07:14:23.7128782Z",
+          "exit": 0
+        },
+        {
+          "name": "mp-weixin",
+          "args": [
+            "--max-old-space-size=4096",
+            "node_modules/@dcloudio/vite-plugin-uni/bin/uni.js",
+            "build",
+            "-p",
+            "mp-weixin",
+            "--outDir",
+            "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\mp-weixin"
+          ],
+          "startedAt": "2026-10-11T07:14:23.7170605Z",
+          "completedAt": "2026-10-11T07:14:37.9367935Z",
+          "exit": 0
+        },
+        {
+          "name": "app",
+          "args": [
+            "--max-old-space-size=4096",
+            "node_modules/@dcloudio/vite-plugin-uni/bin/uni.js",
+            "build",
+            "-p",
+            "app",
+            "--outDir",
+            "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\app"
+          ],
+          "startedAt": "2026-10-11T07:14:37.9393327Z",
+          "completedAt": "2026-10-11T07:14:53.9651359Z",
+          "exit": 0
+        }
+      ],
+      "receipt": {
+        "path": ".cache/customer-cashier-checkout-fe-20261011/final6/checks.json",
+        "sha256": "c7fd78e0a8cc7272a318df0cd4f8c46725a0375d3381034f05979e4052a1f03f"
+      },
+      "summary": {
+        "path": ".cache/customer-cashier-checkout-fe-20261011/final6/validation-summary.json",
+        "sha256": "55b4547fee4a31cea9f1e2bac87e144e6739aa96ff711e8dca2095eca0ab0ea6"
+      },
+      "rawExecutions": [
+        {
+          "execution": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/typecheck.execution.json",
+            "sha256": "5a131cbbba3fdcfae9036039dc85e99da8ad0a9085ee6a9826b3d4618d60faf4"
+          },
+          "stdout": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/typecheck.stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/typecheck.stderr.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "execution": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/h5.execution.json",
+            "sha256": "9c32a1b5e8d23bd172398f324a1ca6ca8f3566e5a32bfc426cc8f4f4bfdcdd51"
+          },
+          "stdout": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/h5.stdout.log",
+            "sha256": "a00451f0097f4eda1f7a0a9520a190b5f6d831e7ea1af680c7141557ce925b34"
+          },
+          "stderr": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/h5.stderr.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "execution": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/mp-weixin.execution.json",
+            "sha256": "d7e62ce40b0d004ebc479a23187eb942bff66c3b034799bf545c39aaaa0ed53d"
+          },
+          "stdout": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/mp-weixin.stdout.log",
+            "sha256": "dc3cb6c7e27dd8d67ed44c3378dff035dbe3e7ca7b7427dfc34b671972dbf9c9"
+          },
+          "stderr": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/mp-weixin.stderr.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "execution": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/app.execution.json",
+            "sha256": "cd0df62cc30e00b729b25eaaa663b9ccf0e768b95c7109046b08a6f333301d9c"
+          },
+          "stdout": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/app.stdout.log",
+            "sha256": "e14a66158d2766225f41b587d15a41b46fa91217626f23c9d9fd7b83abe0f793"
+          },
+          "stderr": {
+            "path": ".cache/customer-cashier-checkout-fe-20261011/final6/app.stderr.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    },
+    "compiledH5Browser": {
+      "passed": 10,
+      "synthetic": true,
+      "pageErrors": 0,
+      "rawConsoleErrors": 2,
+      "expectedFaultConsoleErrors": 2,
+      "unexpectedConsoleErrors": 0,
+      "expectedFaults": [
+        {
+          "kind": "intentional_create_transport_abort",
+          "meaning": "Synthetic route.abort exercises unknown result and original intent recovery; does not prove a committed order lost its response",
+          "text": "Failed to load resource: net::ERR_FAILED",
+          "location": {
+            "url": "http://127.0.0.1:54913/api/mobile/work/cashier/second-card/orders",
+            "line": 0,
+            "column": 0,
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "kind": "intentional_records_permission_revocation",
+          "meaning": "Owner receipt succeeds, then records403 revokes current write authority",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://127.0.0.1:54913/api/mobile/work/cashier/second-card/records/7?order_no=CASHIER_7&scope_key=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "line": 0,
+            "column": 0,
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "unexpectedApis": 0,
+      "warningCount": 4,
+      "warnings": [
+        "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+      ],
+      "receipt": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/customer-cashier-checkout-browser-result.json",
+        "sha256": "bd31621c03262dd08f3a7f032517c93d65436f2413bdb392a00e17b207001295"
+      },
+      "script": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/customer-cashier-checkout-browser.cjs",
+        "sha256": "c08f8bd403a924f4d9efc04e76fcba554c1eb140c5d4be163d9e8b92b973035a"
+      },
+      "screenshots": [
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/member-quote-desktop.png",
+          "sha256": "feb70bd69e4668133d12e481f0561818c65e697b226ffa05916f5057b6e2b896"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/member-paid-mobile.png",
+          "sha256": "96e018c5ea5ab58d887d72574aad06034bd12da192754f2f39779e52a7ee0175"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/guest-zero-paid-mobile.png",
+          "sha256": "b8953fef4d76ffb3a9c8aeca1d4f47f8c1fe8636f112d268eaef6ce5d9f19c8b"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/restored-original-contact-form-mobile.png",
+          "sha256": "b797386e869c854b6ca9e2f01abc598a2e5d7dbd3307e68937f946a0341d68d6"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/restored-original-form-quote-mobile.png",
+          "sha256": "7b03052bf4fbe3c728bc2652bdbfa21cebd7752051be30c9a7ec0029384973d8"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/owner-receipt-after-role-loss-mobile.png",
+          "sha256": "de8883aad0fa425b72eb6c2c1fdfbaaba6e2bb3ec44b226b9b0ee10b9471bbe7"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/required-image-blocked-mobile.png",
+          "sha256": "b3a9c67d545da1c63782a3c0dc34c67c9fb807fb7c1ac11ac6caf7819b2f401a"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/required-image-form-unavailable-mobile.png",
+          "sha256": "3241b6d9177b52882d7d1a0c65603c6026bb7f5aa0545096db13dfa4f972d84b"
+        },
+        {
+          "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-checkout/final6/capacity-form-blocked-mobile.png",
+          "sha256": "1c0a857c01d9ce77eb97dd6ebf5f741d42038942aeb908b5833191f803f2ee1f"
+        }
+      ],
+      "browserTool": "Local Playwright fallback; Build Web Apps browser plugin unavailable"
+    },
+    "inventories": {
+      "routeTotals": {
+        "php": 1904,
+        "ts": 2325,
+        "matched": 911,
+        "executableMatched": 890,
+        "unavailable": 21,
+        "missing": 993,
+        "retired": 17,
+        "actionableMissing": 976,
+        "coveragePercent": 47.8,
+        "executableCoveragePercent": 46.7,
+        "effectiveExecutableCoveragePercent": 47.2
+      },
+      "uniCounts": {
+        "legacyLogicalRoutes": 151,
+        "targetRoutes": 128,
+        "directRegistered": 28,
+        "legacyCompatibilityRules": 116,
+        "candidateCoveredRules": 62,
+        "partialReplacementRules": 54,
+        "gaps": 7
+      },
+      "exitCodes": [
+        0,
+        0
+      ],
+      "route": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/cashier-checkout-route-inventory.json",
+        "sha256": "1f22db76fc1bde7b30be40431ba9be171575ce458f5c7056e72ae13b1590ac6c"
+      },
+      "uni": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/cashier-checkout-uni-inventory.json",
+        "sha256": "0c799ddd71266949f04ceee185fed0d60a49fedae3d881b35dc377f1152a8359"
+      },
+      "datedLedger": {
+        "path": "workers-ts/audit/uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json",
+        "sha256": "85408c8491f7b24cef9328793af6b88dd356b2e65eb0193843cf2c5526d4e290"
+      }
+    },
+    "checklist": {
+      "total": 404,
+      "completed": 246,
+      "open": 158,
+      "checkboxRowsUnchanged": true
+    }
+  },
+  "sourceBinding": {
+    "backend": {
+      "path": ".cache/customer-cashier-records-pg16-20261011/backend-write-ui-wire-final-frozen-inputs.json",
+      "sha256": "d7deab3ad7ad4f2d4d1d92926288fb43ba7b344a3c35a202cad0fe942441e991"
+    },
+    "frontend": {
+      "path": ".cache/customer-cashier-checkout-fe-20261011/final6/source-after-validation.json",
+      "sha256": "e26755b535669ba4dfdb80d6548952ab13d2794caa7f49a1a8631962d03a8256"
+    },
+    "verifiedCurrentInputChecks": 54,
+    "uniqueSourceFileCount": 54,
+    "drift": 0,
+    "checks": [
+      {
+        "path": "view/common/order-system-form.ts",
+        "before": "7d2d9ffd138920f7106c22500953d2b4208089b5ab8f07de43532681549400b2",
+        "after": "7d2d9ffd138920f7106c22500953d2b4208089b5ab8f07de43532681549400b2"
+      },
+      {
+        "path": "workers-ts/package-lock.json",
+        "before": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891",
+        "after": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891"
+      },
+      {
+        "path": "workers-ts/package.json",
+        "before": "d15dc6eb2a61330cea3e833440310fc56a677e3943e58582f6e67c7fc0faa252",
+        "after": "d15dc6eb2a61330cea3e833440310fc56a677e3943e58582f6e67c7fc0faa252"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "before": "c7169ce9114ade2feb9c5cc56af869ec71700923fe9abc618f10915c28f9e2e0",
+        "after": "c7169ce9114ade2feb9c5cc56af869ec71700923fe9abc618f10915c28f9e2e0"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/CustomerWorkCashierController.ts",
+        "before": "9f4a4873490ce081cbeb485448ff566ea7f942a3ca82678b685dd12878464132",
+        "after": "9f4a4873490ce081cbeb485448ff566ea7f942a3ca82678b685dd12878464132"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "before": "722dc0ce96895f483d4dcb1dc4fd31319c6710942ce447dcc9d78ef27bf262c0",
+        "after": "722dc0ce96895f483d4dcb1dc4fd31319c6710942ce447dcc9d78ef27bf262c0"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkCashierCatalog.ts",
+        "before": "48000aec7abd891e6bc312ce2d11020a6dd6e70ec6fc84328d38cf07b10ffe24",
+        "after": "48000aec7abd891e6bc312ce2d11020a6dd6e70ec6fc84328d38cf07b10ffe24"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkCashierReadService.ts",
+        "before": "978e9353d88707c9066d140c4793a9082d591ab845a919c96b57e838574f1e9a",
+        "after": "978e9353d88707c9066d140c4793a9082d591ab845a919c96b57e838574f1e9a"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkCashierService.ts",
+        "before": "4bf89c4cc6f3276997fad728d098731e429c73387b7d036b7f3c0d821c3f22dd",
+        "after": "4bf89c4cc6f3276997fad728d098731e429c73387b7d036b7f3c0d821c3f22dd"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkReadService.ts",
+        "before": "a8f12b6c14d88d3d2d406c5ef08e542cefe7f404363447c32cf0bac05ebd4b55",
+        "after": "a8f12b6c14d88d3d2d406c5ef08e542cefe7f404363447c32cf0bac05ebd4b55"
+      },
+      {
+        "path": "workers-ts/src/services/order/CashierSecondCardOrigin.ts",
+        "before": "e403825e683acba8d472371a5c419705f65848095e50692048ef761f23b55be2",
+        "after": "e403825e683acba8d472371a5c419705f65848095e50692048ef761f23b55be2"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "before": "bbf389e9d444c9ffc8c93ef659339ad03af0bad52e98ea3178d9ec6683a09f7c",
+        "after": "bbf389e9d444c9ffc8c93ef659339ad03af0bad52e98ea3178d9ec6683a09f7c"
+      },
+      {
+        "path": "workers-ts/test/assisted-form-attachment-scope.test.ts",
+        "before": "2d4571c5f95796db657f103cd25ad056e9ed96bb11f891033dab7d23d82f355a",
+        "after": "2d4571c5f95796db657f103cd25ad056e9ed96bb11f891033dab7d23d82f355a"
+      },
+      {
+        "path": "workers-ts/test/assisted-form-consumption-postgres.test.ts",
+        "before": "acf8e7bcda0a6cbd83f986e08af533461c8ff90630d5e1b23c141993a6f6e933",
+        "after": "acf8e7bcda0a6cbd83f986e08af533461c8ff90630d5e1b23c141993a6f6e933"
+      },
+      {
+        "path": "workers-ts/test/assisted-form-read.test.ts",
+        "before": "7d84ccbb66d6cd1a95a1ec6d3e4857a8425e38b733c55a260483aa8de73f9513",
+        "after": "7d84ccbb66d6cd1a95a1ec6d3e4857a8425e38b733c55a260483aa8de73f9513"
+      },
+      {
+        "path": "workers-ts/test/checkout-confirmation-postgres.test.ts",
+        "before": "9f0fd3630ca75357af850daf105b6820689287d4e982cc35ea08d097ce5ddef5",
+        "after": "9f0fd3630ca75357af850daf105b6820689287d4e982cc35ea08d097ce5ddef5"
+      },
+      {
+        "path": "workers-ts/test/checkout-confirmation-rules.test.ts",
+        "before": "08f2257390c701fb255ba415a7e2c0b47d58b6f031dc9e036da20fb949d62a6f",
+        "after": "08f2257390c701fb255ba415a7e2c0b47d58b6f031dc9e036da20fb949d62a6f"
+      },
+      {
+        "path": "workers-ts/test/checkout-confirmation.test.ts",
+        "before": "a133722fe38948a808d33e715cabaae04f15d84be40923b634204c71e07078d1",
+        "after": "a133722fe38948a808d33e715cabaae04f15d84be40923b634204c71e07078d1"
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-records-postgres.test.ts",
+        "before": "e2f33e6b0b807ff71bbfb42ae1f8285c4b3d574b5669b9840e7d1a57554afac2",
+        "after": "e2f33e6b0b807ff71bbfb42ae1f8285c4b3d574b5669b9840e7d1a57554afac2"
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-second-card-postgres.test.ts",
+        "before": "8ae6fbcd11b6303fee81a64c2113f14e29ac06a08761eaee380b0b9c4b4315fe",
+        "after": "8ae6fbcd11b6303fee81a64c2113f14e29ac06a08761eaee380b0b9c4b4315fe"
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-write-ui-postgres.test.ts",
+        "before": "c4d83b36d94312f78de594eeb240d500a5faa2cd06aabf8561e057a50d98d61c",
+        "after": "c4d83b36d94312f78de594eeb240d500a5faa2cd06aabf8561e057a50d98d61c"
+      },
+      {
+        "path": "workers-ts/test/customer-work-read-independent-contract.test.ts",
+        "before": "af84e0824af6cfa8d34dd931d26518c321f5c62b1a554e92e3016479fc0b14d2",
+        "after": "af84e0824af6cfa8d34dd931d26518c321f5c62b1a554e92e3016479fc0b14d2"
+      },
+      {
+        "path": "workers-ts/test/customer-work-writeoff-sale-price.test.ts",
+        "before": "231b3b7cad7e1d22b3d743f4884f6afa5960b029679044c0fb0aa889538f1d7d",
+        "after": "231b3b7cad7e1d22b3d743f4884f6afa5960b029679044c0fb0aa889538f1d7d"
+      },
+      {
+        "path": "workers-ts/test/helpers/checkoutPricingFixture.ts",
+        "before": "2622a2dbe2a84bb2a0aeea43aab0fa545b574544c2de0249694156d1d5aa8853",
+        "after": "2622a2dbe2a84bb2a0aeea43aab0fa545b574544c2de0249694156d1d5aa8853"
+      },
+      {
+        "path": "workers-ts/test/helpers/customerCashierSecondCardFixture.ts",
+        "before": "9770d5e129c5e0226ce3af5c036900f851329ceec6188f12f4638a0b99dd4f3b",
+        "after": "9770d5e129c5e0226ce3af5c036900f851329ceec6188f12f4638a0b99dd4f3b"
+      },
+      {
+        "path": "workers-ts/test/helpers/customerWorkFinancialFixture.ts",
+        "before": "0d25e7607c9478ac51a43b9a3b41aa8bd48daa274f6b06e656d40b412765d11f",
+        "after": "0d25e7607c9478ac51a43b9a3b41aa8bd48daa274f6b06e656d40b412765d11f"
+      },
+      {
+        "path": "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts",
+        "before": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647",
+        "after": "83e61d44aea65deeef0c5190a7dec97ca2143fca284ab1e74cb6b23c848b8647"
+      },
+      {
+        "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+        "before": "efab0088dddb7f67899a963387f7e09941cd4c6b88bbcf6cc503a791d8adeb21",
+        "after": "efab0088dddb7f67899a963387f7e09941cd4c6b88bbcf6cc503a791d8adeb21"
+      },
+      {
+        "path": "workers-ts/test/second-card-product.test.ts",
+        "before": "b3d30422ca3e1854c36de0f5e23229c92e5339343989059b7b1ee37e2fc6a0b0",
+        "after": "b3d30422ca3e1854c36de0f5e23229c92e5339343989059b7b1ee37e2fc6a0b0"
+      },
+      {
+        "path": "workers-ts/test/second-card-validity.test.ts",
+        "before": "814a5b11fa70022afa5eabaf285eeeb9264b707dcc66c1c1a65481a772d4b3ff",
+        "after": "814a5b11fa70022afa5eabaf285eeeb9264b707dcc66c1c1a65481a772d4b3ff"
+      },
+      {
+        "path": "workers-ts/tsconfig.json",
+        "before": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20",
+        "after": "1dc3f7e6fb73748502ccd18825657bb03f804446e82a2f20c3c5292c36d26f20"
+      },
+      {
+        "path": "workers-ts/tsconfig.runtime-test.json",
+        "before": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8",
+        "after": "7ac05a978c0fc1bb6d450e04a0c5a424909b0dd2efc758c881206a4cb24ec4f8"
+      },
+      {
+        "path": "workers-ts/vitest.config.ts",
+        "before": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e",
+        "after": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\pages\\customer-work\\cashier.vue",
+        "before": "720f06d11912e79388bf867b65fd60302341a135e58739bffadf999b9cd34a62",
+        "after": "720f06d11912e79388bf867b65fd60302341a135e58739bffadf999b9cd34a62"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\api\\customerWorkCashier.ts",
+        "before": "ca6437b68ecf28eccfe486b816e5ee52fd260d8f302340e20eaa5df72ca0b6b9",
+        "after": "ca6437b68ecf28eccfe486b816e5ee52fd260d8f302340e20eaa5df72ca0b6b9"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\types\\customerWorkCashierCatalog.ts",
+        "before": "287b92b899d6fde6ed0412810ec2ac906f992a9f3a2f872a7f19fc6400360055",
+        "after": "287b92b899d6fde6ed0412810ec2ac906f992a9f3a2f872a7f19fc6400360055"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\utils\\customerWorkCashierCatalog.ts",
+        "before": "3a25c65e1b14e6ccbeed3a7bbb4549a8804e4247d8d1ba87b90696bcdd8af6f5",
+        "after": "3a25c65e1b14e6ccbeed3a7bbb4549a8804e4247d8d1ba87b90696bcdd8af6f5"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\composables\\useCustomerCashierCatalog.ts",
+        "before": "4a2b72e97a65944aff8b2d7fab27afe50f4c4505a5825f85801dbe0dcf295b62",
+        "after": "4a2b72e97a65944aff8b2d7fab27afe50f4c4505a5825f85801dbe0dcf295b62"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\composables\\useCustomerWorkCashier.ts",
+        "before": "cff2d526d687436bba9598b0ca3bf5ab86fdfc6c706c4aafe9f873d7b7f1df67",
+        "after": "cff2d526d687436bba9598b0ca3bf5ab86fdfc6c706c4aafe9f873d7b7f1df67"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\utils\\customerWorkCashier.ts",
+        "before": "09a05308534d10917d8529d5beaae07b12ac88b403be8bff7086d7026c366a38",
+        "after": "09a05308534d10917d8529d5beaae07b12ac88b403be8bff7086d7026c366a38"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\types\\customerWorkCashier.ts",
+        "before": "5f005740d9e53ac8084042a1aabdc8f874e740b2efec180cf216d6e895024994",
+        "after": "5f005740d9e53ac8084042a1aabdc8f874e740b2efec180cf216d6e895024994"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\types\\customerWork.ts",
+        "before": "ea405bab296f9c86998347d0d4ddb72d3e192344c2975605ca2a53fa38fe2d41",
+        "after": "ea405bab296f9c86998347d0d4ddb72d3e192344c2975605ca2a53fa38fe2d41"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\utils\\customerWork.ts",
+        "before": "1dab52435d58495eeeaa69e9753d5fdc3a51740e9511b2d87f50d9cfaccc44ce",
+        "after": "1dab52435d58495eeeaa69e9753d5fdc3a51740e9511b2d87f50d9cfaccc44ce"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\config\\navigation.ts",
+        "before": "add76acaa62843ccfaa2f36143fd310cfdc6350633cda80fb74b83e83891eaf3",
+        "after": "add76acaa62843ccfaa2f36143fd310cfdc6350633cda80fb74b83e83891eaf3"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\pages.json",
+        "before": "a99e62691811d86bfb2da5ebd1186842cff7fac7f1abe1fba3c9444a17b4376a",
+        "after": "a99e62691811d86bfb2da5ebd1186842cff7fac7f1abe1fba3c9444a17b4376a"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\pages\\customer-work\\index.vue",
+        "before": "294ef6948ada33d9005ad778754baefe4c1b77dcfe7c44ea649a0e9e20aa43fb",
+        "after": "294ef6948ada33d9005ad778754baefe4c1b77dcfe7c44ea649a0e9e20aa43fb"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\common\\customerWorkRoute.ts",
+        "before": "1c170311f6646c58441186268d5e53de7452a44f7e6187ae84ccbd7cb07ed02a",
+        "after": "1c170311f6646c58441186268d5e53de7452a44f7e6187ae84ccbd7cb07ed02a"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\scripts\\customer-work-cashier-protocol.test.cjs",
+        "before": "25d868be407d6fa2b38077d3f9c368e66285eba71c65ec7885e7f68dec70769d",
+        "after": "25d868be407d6fa2b38077d3f9c368e66285eba71c65ec7885e7f68dec70769d"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\scripts\\customer-work-cashier-runtime.test.cjs",
+        "before": "210b225e6cb44bdfbafa2ae4316ea209c699a740ad5ab2d22c23ef526331c1cc",
+        "after": "210b225e6cb44bdfbafa2ae4316ea209c699a740ad5ab2d22c23ef526331c1cc"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\scripts\\customer-work-cashier-read-runtime.test.cjs",
+        "before": "98c816d65f31711ff26e7ec5fa9ed70b822791fd73bf7e5b31e0944a14e95f03",
+        "after": "98c816d65f31711ff26e7ec5fa9ed70b822791fd73bf7e5b31e0944a14e95f03"
+      },
+      {
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12984-202f-70b0-81ad-b34a7f97222d\\customer-cashier-checkout\\customer-cashier-checkout-browser.cjs",
+        "before": "c08f8bd403a924f4d9efc04e76fcba554c1eb140c5d4be163d9e8b92b973035a",
+        "after": "c08f8bd403a924f4d9efc04e76fcba554c1eb140c5d4be163d9e8b92b973035a"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\check-original.ps1",
+        "before": "14efdbe00422024475253249d1195a724e36484533ffe4a9630f3ee8bd62d3f2",
+        "after": "14efdbe00422024475253249d1195a724e36484533ffe4a9630f3ee8bd62d3f2"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\src\\components\\SystemFormFields.vue",
+        "before": "0da44b8136c65fe38d42148adac5e2000551ca96ad35b8b55326f045940216e3",
+        "after": "0da44b8136c65fe38d42148adac5e2000551ca96ad35b8b55326f045940216e3"
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\view\\uniapp-ts\\package.json",
+        "before": "74f20acba6225b9a6bf9674e3a61344d43e6c33c33edf35d9dbac953c289ca7f",
+        "after": "74f20acba6225b9a6bf9674e3a61344d43e6c33c33edf35d9dbac953c289ca7f"
+      }
+    ],
+    "compiledH5KeyAssets": {
+      "selectedAssetsOnly": true,
+      "manifest": {
+        "path": ".cache/customer-cashier-checkout-fe-20261011/final6/compiled-h5-key-asset-hashes.json",
+        "sha256": "8815eaf5033f87ada99824350f2d8545426a0d1f66832d5377c8fed2a4b2d423"
+      },
+      "verifiedAssets": 33,
+      "drift": 0,
+      "checks": [
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\cashier-BuUhAKrq.css",
+          "before": "f4c6a60b1e75868930e1e221dd82f9c9a54354281e01c804c575ed29b441f251",
+          "after": "f4c6a60b1e75868930e1e221dd82f9c9a54354281e01c804c575ed29b441f251",
+          "expectedSize": 346,
+          "actualSize": 346
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\customerWorkCashierRead.DiNIrDCl.js",
+          "before": "eb10464398462deea4b4f416c8e2ff7076a4e191b7ddb678914428e2a2c37f1a",
+          "after": "eb10464398462deea4b4f416c8e2ff7076a4e191b7ddb678914428e2a2c37f1a",
+          "expectedSize": 3060,
+          "actualSize": 3060
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index--CLIQA7U.css",
+          "before": "8fb2d2e8fe7e74cb7292ecb21b374f69896a184ed043047357e638023dc308d8",
+          "after": "8fb2d2e8fe7e74cb7292ecb21b374f69896a184ed043047357e638023dc308d8",
+          "expectedSize": 2662,
+          "actualSize": 2662
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-B3BHjOPT.css",
+          "before": "fbf208d976bc8f2e0095d8a49c27682ae63a48d472998dc1bc16933fca7bc452",
+          "after": "fbf208d976bc8f2e0095d8a49c27682ae63a48d472998dc1bc16933fca7bc452",
+          "expectedSize": 1753,
+          "actualSize": 1753
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-BdAz06IM.css",
+          "before": "cdd9c3a5704efcb142a52f93e514eb5725b6b78a13050745251ca7ca4deaeca2",
+          "after": "cdd9c3a5704efcb142a52f93e514eb5725b6b78a13050745251ca7ca4deaeca2",
+          "expectedSize": 1298,
+          "actualSize": 1298
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-BLT-GhKr.js",
+          "before": "89f3f51ff0efa92c08e98a7636fbc05a0c73abc573fc18febc24662b5f30787e",
+          "after": "89f3f51ff0efa92c08e98a7636fbc05a0c73abc573fc18febc24662b5f30787e",
+          "expectedSize": 523552,
+          "actualSize": 523552
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-BzEecc39.css",
+          "before": "fdf9339bf17c631e13fb77d7b166aa2d11cb618027c0fc2d008426fe43daaaab",
+          "after": "fdf9339bf17c631e13fb77d7b166aa2d11cb618027c0fc2d008426fe43daaaab",
+          "expectedSize": 4825,
+          "actualSize": 4825
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-C3lbvHC8.css",
+          "before": "516f06cb64bdc97116e64fa395beef2aa1c068caa4cbb3d0f9a60594b35820ee",
+          "after": "516f06cb64bdc97116e64fa395beef2aa1c068caa4cbb3d0f9a60594b35820ee",
+          "expectedSize": 2300,
+          "actualSize": 2300
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-C5rSkaX-.css",
+          "before": "4a4f5f52de29ce08c4dc80bf3c79db22798efbea6fc296fbe9f3c613912644df",
+          "after": "4a4f5f52de29ce08c4dc80bf3c79db22798efbea6fc296fbe9f3c613912644df",
+          "expectedSize": 1594,
+          "actualSize": 1594
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-CCHTpowg.css",
+          "before": "30186e8b673d68f27fb8e392acfd7741b9c0c577262b6d1826f58a6fecb0503c",
+          "after": "30186e8b673d68f27fb8e392acfd7741b9c0c577262b6d1826f58a6fecb0503c",
+          "expectedSize": 1934,
+          "actualSize": 1934
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-CslMuDrw.css",
+          "before": "365e896d68e7933c3c6414b361bc1b792b5e4df5caf83a4aa54e0c7f27767a82",
+          "after": "365e896d68e7933c3c6414b361bc1b792b5e4df5caf83a4aa54e0c7f27767a82",
+          "expectedSize": 10533,
+          "actualSize": 10533
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DDsKyqht.css",
+          "before": "2369d40086de82584b55e31c7600387470ca053bfeb27cc6afdc6a89b5139eb1",
+          "after": "2369d40086de82584b55e31c7600387470ca053bfeb27cc6afdc6a89b5139eb1",
+          "expectedSize": 2165,
+          "actualSize": 2165
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DfN2Mo4C.css",
+          "before": "abd96c4569d322198597c47c9502cd54f3e760750f0fd9ad24bdc2a28a7d5675",
+          "after": "abd96c4569d322198597c47c9502cd54f3e760750f0fd9ad24bdc2a28a7d5675",
+          "expectedSize": 2355,
+          "actualSize": 2355
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DfqmjfpN.css",
+          "before": "4ce34d6c28aa242c2a574969f0269d6175f9881a3f1c0505132335ded491019a",
+          "after": "4ce34d6c28aa242c2a574969f0269d6175f9881a3f1c0505132335ded491019a",
+          "expectedSize": 1806,
+          "actualSize": 1806
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DJRFXZ33.css",
+          "before": "82c37f327babe23f0c67ac20716d70675d7a21cdf926b2e71e7e634d22ddeebb",
+          "after": "82c37f327babe23f0c67ac20716d70675d7a21cdf926b2e71e7e634d22ddeebb",
+          "expectedSize": 15774,
+          "actualSize": 15774
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DKIy6vKW.css",
+          "before": "cff3f5b83bdc1f0e1a2e3d68f73416a84420fa0501de997d0f46abf2620b2867",
+          "after": "cff3f5b83bdc1f0e1a2e3d68f73416a84420fa0501de997d0f46abf2620b2867",
+          "expectedSize": 2739,
+          "actualSize": 2739
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DNUjb9OV.css",
+          "before": "464cf723048f01363277c78cbd6de3707468054be9f637720ea0ef37a11d0ad9",
+          "after": "464cf723048f01363277c78cbd6de3707468054be9f637720ea0ef37a11d0ad9",
+          "expectedSize": 2300,
+          "actualSize": 2300
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DRU84LFh.css",
+          "before": "23ffaff2e3b5908fed51ec4d6ae799926a9385bb51c4d8625df1b826e3240ab3",
+          "after": "23ffaff2e3b5908fed51ec4d6ae799926a9385bb51c4d8625df1b826e3240ab3",
+          "expectedSize": 1314,
+          "actualSize": 1314
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DSpTj0sT.css",
+          "before": "a805f53164f0a2a7d9b0b5fc82a25ef00640acb92eb369dcdac50cd4f5adb3e9",
+          "after": "a805f53164f0a2a7d9b0b5fc82a25ef00640acb92eb369dcdac50cd4f5adb3e9",
+          "expectedSize": 1601,
+          "actualSize": 1601
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DTcMjyaN.css",
+          "before": "684f03c0aceb0741ffd764c2c9ad87b743f1214bf3831f42b3b25eda3d52b657",
+          "after": "684f03c0aceb0741ffd764c2c9ad87b743f1214bf3831f42b3b25eda3d52b657",
+          "expectedSize": 2799,
+          "actualSize": 2799
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-DWUO1eNZ.css",
+          "before": "aa48986e28e55567d5638607f5c47ca677c5254159a28093d8f5a2e5af00af9d",
+          "after": "aa48986e28e55567d5638607f5c47ca677c5254159a28093d8f5a2e5af00af9d",
+          "expectedSize": 1547,
+          "actualSize": 1547
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-eoadqnNH.css",
+          "before": "285aa43102f0dc012c03efe6c7bcd8967abb9dac1de68b4621db852f64ab8e41",
+          "after": "285aa43102f0dc012c03efe6c7bcd8967abb9dac1de68b4621db852f64ab8e41",
+          "expectedSize": 3094,
+          "actualSize": 3094
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-FpIqLrs6.css",
+          "before": "113722938d2fe2989e28286e1e4aef9829abcf6a81eee69112cb488f934979ff",
+          "after": "113722938d2fe2989e28286e1e4aef9829abcf6a81eee69112cb488f934979ff",
+          "expectedSize": 1588,
+          "actualSize": 1588
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-JAZh55Wn.css",
+          "before": "21b4fcf391165c3f357fe2b14217b526f682f039f0bbff9a5c93b8fad3583929",
+          "after": "21b4fcf391165c3f357fe2b14217b526f682f039f0bbff9a5c93b8fad3583929",
+          "expectedSize": 2471,
+          "actualSize": 2471
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-OfFS8KUA.css",
+          "before": "13d95bca44145bfb47bda18d4bbd0adf62a29c9ecdd8d2f9c6901fa52864aeb1",
+          "after": "13d95bca44145bfb47bda18d4bbd0adf62a29c9ecdd8d2f9c6901fa52864aeb1",
+          "expectedSize": 2490,
+          "actualSize": 2490
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\index-pm5zYXac.css",
+          "before": "5c2583f472d65b27c359f17f50eda90a87e758a9418b54f6e0527764c34b0cfe",
+          "after": "5c2583f472d65b27c359f17f50eda90a87e758a9418b54f6e0527764c34b0cfe",
+          "expectedSize": 3046,
+          "actualSize": 3046
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\pages-customer-work-cashier.BbsUSCcc.js",
+          "before": "5ee15036e2085728b60a3e56c566d813c82c04cf545a82fb69e99c0108de63d1",
+          "after": "5ee15036e2085728b60a3e56c566d813c82c04cf545a82fb69e99c0108de63d1",
+          "expectedSize": 49560,
+          "actualSize": 49560
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\pages-customer-work-cashierRecord.Dxp7H3fp.js",
+          "before": "aef428b6d789336b5e82eff815ce0d7c570ed892b0de7bfe3382c7adc6b1d5bf",
+          "after": "aef428b6d789336b5e82eff815ce0d7c570ed892b0de7bfe3382c7adc6b1d5bf",
+          "expectedSize": 3971,
+          "actualSize": 3971
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\pages-customer-work-cashierRecords.DXfkq32J.js",
+          "before": "29411f972e6318ad17eb8c7dc6142108b8c1fe56197bfcc190f1af4161162d48",
+          "after": "29411f972e6318ad17eb8c7dc6142108b8c1fe56197bfcc190f1af4161162d48",
+          "expectedSize": 4736,
+          "actualSize": 4736
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\pages-customer-work-index.BjuxZjIw.js",
+          "before": "cb067b0c54d337bd7bd8ebed50c9ca33e0fb093d2381584af6d72f5d9639e321",
+          "after": "cb067b0c54d337bd7bd8ebed50c9ca33e0fb093d2381584af6d72f5d9639e321",
+          "expectedSize": 6726,
+          "actualSize": 6726
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\SystemFormFields.CLOjjxYT.js",
+          "before": "041c930ad08573aecffe1241f02774b0b6a0087e78cd443401edc9a0b9d2e924",
+          "after": "041c930ad08573aecffe1241f02774b0b6a0087e78cd443401edc9a0b9d2e924",
+          "expectedSize": 7968,
+          "actualSize": 7968
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\assets\\useCustomerWork.S82r2uvk.js",
+          "before": "bcbaf3c56db5d14b4b06741a685b477b7548426ce577d51e61d28e6777088f75",
+          "after": "bcbaf3c56db5d14b4b06741a685b477b7548426ce577d51e61d28e6777088f75",
+          "expectedSize": 28964,
+          "actualSize": 28964
+        },
+        {
+          "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-checkout-fe-20261011\\final6\\h5\\index.html",
+          "before": "6f6a9a51bd35c87c409519751b63346c1e3c5cfb21cbcc7e88415d98dc9eddcb",
+          "after": "6f6a9a51bd35c87c409519751b63346c1e3c5cfb21cbcc7e88415d98dc9eddcb",
+          "expectedSize": 909,
+          "actualSize": 909
+        }
+      ]
+    }
+  },
+  "cleanup": {
+    "backend": {
+      "execution_completion_chunk_id": "9b6c64",
+      "exit_code": 0,
+      "raw_report": {
+        "path": "C:\\cinagroup\\cinashop\\.cache\\customer-cashier-records-pg16-20261011\\native-write-ui-final-cleanup.json",
+        "sha256": "a63f40540c92c0490033dc34f28bb0a4993b552db12d32ee342ae0bac1a55872"
+      },
+      "checked_at_utc": "2026-10-11T07:13:54.1085905Z",
+      "owned_cluster_count": 11,
+      "all_pg_ctl_status_exit_codes": 3,
+      "owned_postmaster_pid_count": 0,
+      "owned_main_process_count": 0,
+      "owned_listening_port_count": 0,
+      "diagnostics_preserved": true,
+      "clusters": [
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-1PlwQZ",
+          "pg_ctl_status_exit_code": 3,
+          "port": 56487
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-hH4bQf",
+          "pg_ctl_status_exit_code": 3,
+          "port": 56500
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-tBxMBB",
+          "pg_ctl_status_exit_code": 3,
+          "port": 64963
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-kSmfEM",
+          "pg_ctl_status_exit_code": 3,
+          "port": 51412
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-1BOGm4",
+          "pg_ctl_status_exit_code": 3,
+          "port": 58700
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-s0Jh7S",
+          "pg_ctl_status_exit_code": 3,
+          "port": 52910
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-FSv7iv",
+          "pg_ctl_status_exit_code": 3,
+          "port": 55230
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-mKYVX7",
+          "pg_ctl_status_exit_code": 3,
+          "port": 51739
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-jHx9o2",
+          "pg_ctl_status_exit_code": 3,
+          "port": 61104
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-np9kyd",
+          "pg_ctl_status_exit_code": 3,
+          "port": 54045
+        },
+        {
+          "pg_ctl_status": "pg_ctl: no server running",
+          "listening_port_count": 0,
+          "postmaster_pid_present": false,
+          "matching_main_postmaster_count": 0,
+          "cluster": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-T5hP4D",
+          "pg_ctl_status_exit_code": 3,
+          "port": 62923
+        }
+      ]
+    },
+    "frontendDependencyDirectoryRestored": true,
+    "navigationUnchangedDuringBuild": true,
+    "browserClosed": true,
+    "serverClosed": true
+  },
+  "preservedEarlierExecutions": [
+    {
+      "description": "Earlier 127-page historical ledger, not overwritten by this batch",
+      "path": "workers-ts/audit/uniapp-frontend-parity-customer-cashier-records-followup-20261011.json",
+      "sha256": "fdcd0e50d04ace51325ee9b47083ef0999557576ed55926173b326a8fb03d911"
+    },
+    {
+      "description": "Earlier read-chain execution source binding, retained as historical evidence",
+      "path": "workers-ts/audit/customer-cashier-records-20261011.json",
+      "sha256": "2551ca57ebcd1c89189d442b139bd20856c817272d32e29d59f24018876de0b0"
+    },
+    {
+      "description": "Native first fixture failure: system form tables absent",
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-first.log",
+      "sha256": "01179dab19dd336b540f2f6a5bd0e92715bd03449aaa3542e48281e96e72ae25"
+    },
+    {
+      "description": "Native original assisted rebind lock failure",
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-final.log",
+      "sha256": "6ae7f47d9522a411c0820bcf8efc1508a91466d1887c9850948affdf0cce8751"
+    },
+    {
+      "description": "Native actual PostgreSQL blocker diagnostics before test hook correction",
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-assisted-rebind-locks.log",
+      "sha256": "154600693a9a4774c15d9665efda7ddc7adc2ac1881b9cbbd3df3232e2521424"
+    },
+    {
+      "description": "Intermediate 84 pass before final validity business changes",
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-final-current.log",
+      "sha256": "33be7b6d6d8e199a945286828b3c91df590e3f5e70366852d22c92ae311b938e"
+    },
+    {
+      "description": "Intermediate 86 pass with source timing limit explicitly recorded in backend receipt",
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-validity-final.log",
+      "sha256": "d02cb9d11ba26f213d695c6af2a39f59cdcadb5e586bef86458244c3e46d4a3e"
+    },
+    {
+      "description": "Incorrect generator scope/cluster/port metadata retained byte-for-byte before repair",
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-write-ui-final-execution-pre-metadata-fix.json",
+      "sha256": "003e1be262365c82e739b045f00584041e213681caa904665ccceb01cdb158e8"
+    },
+    {
+      "description": "Frontend initial runtime output",
+      "path": ".cache/customer-cashier-checkout-fe-20261011/runtime-initial.stdout.log",
+      "sha256": "ab5da584a482bdbd1dcdd8497f426d12b182bb67621c302e42a27ca8bc9a4f51"
+    },
+    {
+      "description": "Frontend initial runtime errors",
+      "path": ".cache/customer-cashier-checkout-fe-20261011/runtime-initial.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "description": "Frontend initial original configuration type output",
+      "path": ".cache/customer-cashier-checkout-fe-20261011/build-attempt01/typecheck.stdout.log",
+      "sha256": "68ec666797afafbb20b4be3bfbe05dda025b45c6c9af1f670e0c7afadc7603a5"
+    },
+    {
+      "description": "Frontend initial original configuration type errors",
+      "path": ".cache/customer-cashier-checkout-fe-20261011/build-attempt01/typecheck.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "description": "Frontend initial browser output",
+      "path": ".cache/customer-cashier-checkout-fe-20261011/browser-attempt01.stdout.log",
+      "sha256": "eba4109f8919f50323df93544b966f40966174edecdbafb459827067314dc008"
+    },
+    {
+      "description": "Frontend initial browser errors",
+      "path": ".cache/customer-cashier-checkout-fe-20261011/browser-attempt01.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "independentReview": {
+    "readOnly": true,
+    "closedFindings": [
+      "nested receipt success/record403 must revoke write authority",
+      "physical order/SN/origin and exact payment binding",
+      "quote binds full card validity",
+      "expiry rechecked after last audit/origin INSERT wait",
+      "actual quote card projection displayed and explicitly confirmed",
+      "next transaction requires acknowledged local records"
+    ],
+    "newUnresolvedBlockingFindings": 0
+  },
+  "limitations": [
+    "No production DDL, deployment, commit or push",
+    "Full old Admin assisted five-page module, multiple products, shipping, coupon/integral choice and payment channels remain open",
+    "Mandatory images and durable abandonment after unknown/changed authority or original intent remain open",
+    "Ordinary cash/guest refunds, provider/device, production permissions, Linux/Hyperdrive, capacity and release acceptance remain open",
+    "The 86-case business run started before the additive card DTO and completed while later sources were changing; it is a preserved intermediate result. Current frozen-input native credit is the 46-case run, not a fresh full five-file 86-case claim or an accumulated 132 unique tests."
+  ],
+  "currentSourceHashes": [
+    {
+      "path": "view/common/customerWorkRoute.ts",
+      "sha256": "1c170311f6646c58441186268d5e53de7452a44f7e6187ae84ccbd7cb07ed02a"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "74f20acba6225b9a6bf9674e3a61344d43e6c33c33edf35d9dbac953c289ca7f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-protocol.test.cjs",
+      "sha256": "25d868be407d6fa2b38077d3f9c368e66285eba71c65ec7885e7f68dec70769d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-read-runtime.test.cjs",
+      "sha256": "98c816d65f31711ff26e7ec5fa9ed70b822791fd73bf7e5b31e0944a14e95f03"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-runtime.test.cjs",
+      "sha256": "210b225e6cb44bdfbafa2ae4316ea209c699a740ad5ab2d22c23ef526331c1cc"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkCashier.ts",
+      "sha256": "ca6437b68ecf28eccfe486b816e5ee52fd260d8f302340e20eaa5df72ca0b6b9"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkCashierRead.ts",
+      "sha256": "1bf91a28cc9f7e2e67d3f736466c9f9ba08a52ba8ed2c767a862db39af8f420f"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/SystemFormFields.vue",
+      "sha256": "0da44b8136c65fe38d42148adac5e2000551ca96ad35b8b55326f045940216e3"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerCashierCatalog.ts",
+      "sha256": "4a2b72e97a65944aff8b2d7fab27afe50f4c4505a5825f85801dbe0dcf295b62"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerCashierRead.ts",
+      "sha256": "7b6d580b382bb24007c6319696f937c8ff26f4da5d3df192b6acb038a874c655"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerWorkCashier.ts",
+      "sha256": "cff2d526d687436bba9598b0ca3bf5ab86fdfc6c706c4aafe9f873d7b7f1df67"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "add76acaa62843ccfaa2f36143fd310cfdc6350633cda80fb74b83e83891eaf3"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "a99e62691811d86bfb2da5ebd1186842cff7fac7f1abe1fba3c9444a17b4376a"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashier.vue",
+      "sha256": "720f06d11912e79388bf867b65fd60302341a135e58739bffadf999b9cd34a62"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashierRecord.vue",
+      "sha256": "d2bf056599bbe0459169b510b13a95bedc95fac3bc703a4f7cc91babd0386b3b"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashierRecords.vue",
+      "sha256": "1c46ea0e4f22af17710a071b66d421be591928a653c7e4d56133bd431d81e988"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/index.vue",
+      "sha256": "294ef6948ada33d9005ad778754baefe4c1b77dcfe7c44ea649a0e9e20aa43fb"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWork.ts",
+      "sha256": "ea405bab296f9c86998347d0d4ddb72d3e192344c2975605ca2a53fa38fe2d41"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashier.ts",
+      "sha256": "5f005740d9e53ac8084042a1aabdc8f874e740b2efec180cf216d6e895024994"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashierCatalog.ts",
+      "sha256": "287b92b899d6fde6ed0412810ec2ac906f992a9f3a2f872a7f19fc6400360055"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashierRead.ts",
+      "sha256": "2b801c6819f074b3d1cdca81f9425ca04b6eb8b86904dd1ff1a527918e094427"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWork.ts",
+      "sha256": "1dab52435d58495eeeaa69e9753d5fdc3a51740e9511b2d87f50d9cfaccc44ce"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashier.ts",
+      "sha256": "09a05308534d10917d8529d5beaae07b12ac88b403be8bff7086d7026c366a38"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashierCatalog.ts",
+      "sha256": "3a25c65e1b14e6ccbeed3a7bbb4549a8804e4247d8d1ba87b90696bcdd8af6f5"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashierRead.ts",
+      "sha256": "184e565eed983c6141d4b2fb43d3ad6a36f07a0a52ccc435a2d4503fd06bdd5d"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "c7169ce9114ade2feb9c5cc56af869ec71700923fe9abc618f10915c28f9e2e0"
+    },
+    {
+      "path": "workers-ts/scripts/uniapp-frontend-parity-audit.ts",
+      "sha256": "4d33ba43fcdaa7c2da960d15985225963e539f61f870c65d4af612abd3995c7e"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkCashierController.ts",
+      "sha256": "9f4a4873490ce081cbeb485448ff566ea7f942a3ca82678b685dd12878464132"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "722dc0ce96895f483d4dcb1dc4fd31319c6710942ce447dcc9d78ef27bf262c0"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkCashierCatalog.ts",
+      "sha256": "48000aec7abd891e6bc312ce2d11020a6dd6e70ec6fc84328d38cf07b10ffe24"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkCashierReadService.ts",
+      "sha256": "978e9353d88707c9066d140c4793a9082d591ab845a919c96b57e838574f1e9a"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkCashierService.ts",
+      "sha256": "4bf89c4cc6f3276997fad728d098731e429c73387b7d036b7f3c0d821c3f22dd"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkReadService.ts",
+      "sha256": "a8f12b6c14d88d3d2d406c5ef08e542cefe7f404363447c32cf0bac05ebd4b55"
+    },
+    {
+      "path": "workers-ts/src/services/order/CashierSecondCardOrigin.ts",
+      "sha256": "e403825e683acba8d472371a5c419705f65848095e50692048ef761f23b55be2"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "bbf389e9d444c9ffc8c93ef659339ad03af0bad52e98ea3178d9ec6683a09f7c"
+    },
+    {
+      "path": "workers-ts/test/assisted-form-consumption-postgres.test.ts",
+      "sha256": "acf8e7bcda0a6cbd83f986e08af533461c8ff90630d5e1b23c141993a6f6e933"
+    },
+    {
+      "path": "workers-ts/test/customer-cashier-records-postgres.test.ts",
+      "sha256": "e2f33e6b0b807ff71bbfb42ae1f8285c4b3d574b5669b9840e7d1a57554afac2"
+    },
+    {
+      "path": "workers-ts/test/customer-cashier-write-ui-postgres.test.ts",
+      "sha256": "c4d83b36d94312f78de594eeb240d500a5faa2cd06aabf8561e057a50d98d61c"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerCashierSecondCardFixture.ts",
+      "sha256": "9770d5e129c5e0226ce3af5c036900f851329ceec6188f12f4638a0b99dd4f3b"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerWorkFinancialFixture.ts",
+      "sha256": "0d25e7607c9478ac51a43b9a3b41aa8bd48daa274f6b06e656d40b412765d11f"
+    }
+  ],
+  "documents": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "0108de9d81c538f6dcb3a2f921b55c5d0041823bd840166e46e13d3fa45735df"
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "2131c380d4819ed7ab7255cb03bbe7b0b939c19bdc5ebb789f07cab48e9c6895"
+    },
+    {
+      "path": "workers-ts/docs/customer-cashier-checkout-20261011.md",
+      "sha256": "9126e58e8bcceea14003b1d64d6d05497ee946c4b1930a8c9bab215338caa557"
+    }
+  ]
+}

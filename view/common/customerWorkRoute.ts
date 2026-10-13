@@ -1,7 +1,7 @@
 /** Shared by the public menu resolver and actual UniApp pages. No auth grant is inferred here. */
 import {parseCustomerWriteoffQuery,writeoffLookupValue,decodeCustomerWriteoffScan,parseCustomerWriteoffLegacyChoice} from './customerWorkWriteoff';
-export type CustomerWorkPage = 'index' | 'statistics' | 'orders' | 'orderDetail' | 'refunds' | 'refundDetail' | 'refund' | 'logistics' | 'delivery' | 'products' | 'productSkus' | 'users' | 'userDetail' | 'scanning' | 'writeoff' | 'writeoffRecords' | 'writeoffResult';
-export const CUSTOMER_WORK_PAGES: CustomerWorkPage[] = ['index','statistics','orders','orderDetail','refunds','refundDetail','refund','logistics','delivery','products','productSkus','users','userDetail','scanning','writeoff','writeoffRecords','writeoffResult'];
+export type CustomerWorkPage = 'index' | 'statistics' | 'orders' | 'orderDetail' | 'refunds' | 'refundDetail' | 'refund' | 'logistics' | 'delivery' | 'products' | 'productSkus' | 'users' | 'userDetail' | 'scanning' | 'writeoff' | 'writeoffRecords' | 'writeoffResult' | 'cashierRecords' | 'cashierRecord' | 'cashier';
+export const CUSTOMER_WORK_PAGES: CustomerWorkPage[] = ['index','statistics','orders','orderDetail','refunds','refundDetail','refund','logistics','delivery','products','productSkus','users','userDetail','scanning','writeoff','writeoffRecords','writeoffResult','cashierRecords','cashierRecord','cashier'];
 const aliases: Record<string,CustomerWorkPage> = {
   '/pages/admin/work/index':'index', '/pages/admin/order/index':'statistics', '/pages/admin/orderList/index':'orders',
   '/pages/admin/orderDetail/index':'orderDetail', '/pages/admin/refundOrderList/index':'refunds',
@@ -31,7 +31,7 @@ export function parseCustomerWorkQuery(page: CustomerWorkPage, input: string | R
   const allowed:Record<CustomerWorkPage,string[]>={scanning:[],writeoff:[],writeoffRecords:[],writeoffResult:[],index:[],statistics:['type'],orders:['status','types','keyword','data','pay_type','type','field_key','is_del'],
     orderDetail:['orderId','id','status','types','goname'],refunds:['refundTypes','apply_type','order_id','time'],refundDetail:['refundOrderId','id'],refund:['orderId','id','listId'],logistics:['orderId','id','type'],
     delivery:['orderId','id','listId','totalNum','orderStatus','comeType','productType'],products:['type','keyword','store_name'],productSkus:['productId','id'],
-    users:['nickname','keyword','group_id','level','label_ids','label_id','isMember'],userDetail:['uid']};
+    users:['nickname','keyword','group_id','level','label_ids','label_id','isMember'],userDetail:['uid'],cashierRecords:[],cashierRecord:['orderId','orderNo'],cashier:[]};
   for(const [key,value]of entries){if(!allowed[page].includes(key)||Object.hasOwn(fields,key)||value.length>(page==='users'&&['label_ids','label_id'].includes(key)?1099:512))throw Error('经营入口参数重复或无效');fields[key]=value;}
   if(page==='users'){
     for(const [alias,key]of [['keyword','nickname'],['label_id','label_ids']])if(fields[alias]!==undefined){
@@ -47,6 +47,10 @@ export function parseCustomerWorkQuery(page: CustomerWorkPage, input: string | R
     }
   }
   if(page==='userDetail'&&(!fields.uid||!/^[1-9]\d{0,9}$/u.test(fields.uid)||Number(fields.uid)>2147483647))throw Error('用户编号无效');
+  if(page==='cashierRecord'){
+    if(!fields.orderId||!/^[1-9]\d{0,9}$/u.test(fields.orderId)||Number(fields.orderId)>2147483647||!fields.orderNo||!/^[A-Za-z0-9_-]{1,32}$/u.test(fields.orderNo))throw Error('次卡收银订单编号无效');
+    return fields;
+  }
   for(const [alias,key]of [['types','status'],['id',page==='refundDetail'?'refundOrderId':page==='productSkus'?'productId':'orderId'],['store_name','keyword']])if(fields[alias]!==undefined){
     if(fields[key]!==undefined)throw Error('经营入口参数含有冲突标识');fields[key]=fields[alias]!;delete fields[alias];}
   if(fields.goname!==undefined){if(fields.goname!=='look')throw Error('经营入口参数无效');delete fields.goname;}
@@ -64,7 +68,7 @@ export function parseCustomerWorkQuery(page: CustomerWorkPage, input: string | R
     delete fields.listId;
   }
   const select=(key:string,values:readonly string[])=>{if(fields[key]!==undefined&&!values.includes(fields[key]!))throw Error('经营筛选参数无效');};
-  select('status',['',...Array.from({length:14},(_,i)=>String(i-4))]);select('is_del',['0','1']);select('pay_type',['','1','2','3','4','5']);
+  select('status',['',...Array.from({length:14},(_,i)=>String(i-4))]);select('is_del',['0','1']);select('pay_type',['','1','2','3','4','5','6']);
   select('field_key',['','uid','order_id','real_name','user_phone','title','total_num']);select('refundTypes',['0','1','2','3','4','5','6']);select('apply_type',['','0','1','2','3','4']);
   select('type',page==='statistics'?['1','7','30']:page==='logistics'?['','refund']:page==='products'?['','1','2','4','5']:['',...Array.from({length:9},(_,i)=>String(i)),'105','106','107']);
   if(page==='productSkus'&&(!fields.productId||!/^[1-9]\d{0,9}$/u.test(fields.productId)||Number(fields.productId)>2147483647))throw Error('商品编号无效');
@@ -73,7 +77,7 @@ export function parseCustomerWorkQuery(page: CustomerWorkPage, input: string | R
   if((fields.keyword!==undefined&&fields.keyword.length>100)||(fields.order_id!==undefined&&fields.order_id.length>100))throw Error('查询文字过长');
   if(Object.values(fields).some(value=>/[\u0000-\u001f\u007f]/u.test(value)))throw Error('经营入口参数无效');
   if(fields.keyword&&['uid','total_num'].includes(fields.field_key??'')){
-    if(!/^(0|[1-9]\d{0,9})$/u.test(fields.keyword)||Number(fields.keyword)>2147483647||(fields.field_key==='uid'&&fields.keyword==='0'))throw Error('数字查询无效');
+    if(!/^(0|[1-9]\d{0,9})$/u.test(fields.keyword)||Number(fields.keyword)>2147483647)throw Error('数字查询无效');
   }
   if(page==='orders'){
     if(fields.status==='-4'&&fields.is_del===undefined)fields.is_del='1';

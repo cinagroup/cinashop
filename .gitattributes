@@ -6,6 +6,11 @@ workers-ts/audit/shipping-lifecycle-index*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-rules*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-route-auth*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-restricted-routes*.json text eol=lf
+# Preserve the already reviewed maintenance candidate's exact bytes and hash.
+workers-ts/src/migrations/maintenance/*.sql -text
+# Keep captured migration summary/report hashes stable across checkouts.
+workers-ts/audit/customer-*.json text eol=lf
+workers-ts/docs/customer-*.md text eol=lf
 # Admin system ledgers must match their generators byte-for-byte on Windows.
 workers-ts/audit/admin-legacy-system-route-parity.json text eol=lf
 workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json text eol=lf

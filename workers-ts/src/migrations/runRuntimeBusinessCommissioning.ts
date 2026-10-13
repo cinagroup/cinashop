@@ -5,8 +5,7 @@ import { inspectSeckillTimeReferenceLock } from './seckillTimeReferenceLock';
 import { seckillTimeReferenceLockCatalogReady } from './seckillTimeReferenceLockCatalog';
 import { inspectCheckoutPricingLock } from './checkoutPricingLock';
 import { inspectReviewedOfflineGiftCatalog } from './reviewedOfflineGiftCatalog';
-import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
-import { REFUND_SPLIT_STATE_SQL } from './refundOrderSplitCatalog';
+import { GUEST_INVOICE_EVIDENCE_STATE_SQL, GUEST_REFUND_SPLIT_STATE_SQL } from './guestRefundEntityCatalog';
 import { inspectAdminRefundOperation } from './runAdminRefundOperation';
 import { inspectAdminRefundCreation } from './runAdminRefundCreation';
 import { runtimeBusinessPrivilegePlan, RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY } from './runtimeBusinessPrivilegePlan';
@@ -84,7 +83,7 @@ async function inspect(tx:Query,target:RuntimeCommissionTarget){
   const pricing=await inspectCheckoutPricingLock(tx),[owner]=await tx.execute(sql`SELECT oid::text AS oid FROM pg_catalog.pg_roles WHERE rolname=${target.pricingOwner}`);
   const offline=await inspectReviewedOfflineGiftCatalog(tx,{requireOwner:true,
     maintenance:target.maintenance,runtime:target});
-  const [invoice]=await tx.execute(sql.raw(INVOICE_EVIDENCE_STATE_SQL)),[refund]=await tx.execute(sql.raw(REFUND_SPLIT_STATE_SQL));
+  const [invoice]=await tx.execute(sql.raw(GUEST_INVOICE_EVIDENCE_STATE_SQL)),[refund]=await tx.execute(sql.raw(GUEST_REFUND_SPLIT_STATE_SQL));
   const operation=await inspectAdminRefundOperation(tx),creation=await inspectAdminRefundCreation(tx);
   const shippingReplay=await inspectShippingTemplateCreateReplay(tx);
   const purchaseEvidence=await inspectRuntimePurchaseEvidence(tx,target.maintenance);
@@ -100,7 +99,7 @@ async function inspect(tx:Query,target:RuntimeCommissionTarget){
     sequencesReady:sequences.every(r=>r.ordinary===true) && standalone?.ready===true,
     pricingReady:pricingCatalogReady(pricing) && pricing.ownerOid===owner?.oid,
     offlineReady:offline.state==='v1-gift-index',
-    refundProtocolsReady:invoice?.state==='v2' && refund?.state==='v1' && operation.complete && creation.complete,
+    refundProtocolsReady:(invoice?.state==='v2' && refund?.state==='v1' || invoice?.state==='v3' && refund?.state==='v2') && operation.complete && creation.complete,
     shippingReplay,purchaseEvidence,couponTemplateCatalogReady:couponTemplates.ready,promotionGiftCatalogReady:giftReceipts.ready,promotionGiftCancellationReady:giftCancellation.ready,signDayConfigCatalogReady:signDayConfig.ready,agentLevelCatalogReady:agentLevels.ready,seckillTimeReferenceLockReady:seckillTimeReferenceLockCatalogReady(seckillTimeReferenceLock),
     ownedSequences:sequences.map(r=>({name:String(r.name),table:String(r.table)})) satisfies RuntimeOwnedSequence[]};
 }

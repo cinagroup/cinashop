@@ -48,6 +48,11 @@ export function isCustomerWorkContext(value: unknown): value is CustomerWorkCont
     && typeof capabilities.product_management === 'boolean'
     && typeof capabilities.user_management === 'boolean'
     && (capabilities.writeoff_read === undefined || typeof capabilities.writeoff_read === 'boolean')
+    && (capabilities.cashier_records === undefined || typeof capabilities.cashier_records === 'boolean')
+    && (capabilities.cashier_second_card === undefined || typeof capabilities.cashier_second_card === 'boolean')
+    && (capabilities.cashier_form_images === undefined || typeof capabilities.cashier_form_images === 'boolean')
+    && (value.cashier_readiness === undefined || customerWorkRecord(value.cashier_readiness) && typeof value.cashier_readiness.writes === 'boolean' && text(value.cashier_readiness.reason, 1000))
+    && (value.cashier_form_images_readiness === undefined || customerWorkRecord(value.cashier_form_images_readiness) && typeof value.cashier_form_images_readiness.writes === 'boolean' && text(value.cashier_form_images_readiness.reason, 1000))
     && ['assisted_order','writes'].every(key => capabilities[key] === false);
 }
 function summary(value: unknown): boolean { return customerWorkRecord(value) && customerWorkMoney(value.after_price)

@@ -1,5 +1,5 @@
 import {sql} from 'drizzle-orm';
-import {getTableConfig} from 'drizzle-orm/pg-core';
+import {getTableConfig,type PgTable} from 'drizzle-orm/pg-core';
 import postgres from 'postgres';
 import {drizzle} from 'drizzle-orm/postgres-js';
 import {readFileSync} from 'node:fs';
@@ -32,8 +32,8 @@ const ident=(value:string)=>{if(!/^[a-z_][a-z_0-9]*$/.test(value))throw Error('I
 const protocolTables=new Set(['order_waybill_job','order_waybill_job_action','customer_city_delivery_job','customer_city_delivery_attempt','customer_city_delivery_binding','store_order_refund_split','store_order_fulfillment_branch']);
 /** Real ordinary independent LOGIN on a registered disposable native PG16 DB.
  * Maintenance installation and reset stay on the separate owned fixture role. */
-export async function customerWorkFinancialFixture(){
- const f=await customerRefundApplicationFixture([...customerReadTables.filter(x=>!protocolTables.has(getTableConfig(x).name)),schema.storeOrderRefundPayment,schema.storeOrderOutbox,schema.userBrokerage,schema.supplierFlowingWater,schema.supplierTransactions,schema.supplierExtract,schema.systemUserLevel,schema.storeSeckill,schema.storeBargain,schema.storeCombination,schema.storeIntegral,schema.storeBargainUser,schema.storePink,schema.deliveryService,schema.paymentReconciliationCase,schema.printDocument,schema.storeCouponIssue,schema.storeCouponUser,schema.storeProductVirtual,schema.storeProductCoupon,schema.storeOrderProductCouponReward,schema.storeCouponIssueUser,schema.luckLottery,schema.luckLotteryEntitlement,schema.agentLevel,schema.agentLevelTask,schema.agentLevelTaskRecord,schema.storeProductLog]);
+export async function customerWorkFinancialFixture(extraTables:PgTable[]=[]){
+ const f=await customerRefundApplicationFixture([...customerReadTables.filter(x=>!protocolTables.has(getTableConfig(x).name)),schema.storeOrderRefundPayment,schema.storeOrderOutbox,schema.userBrokerage,schema.supplierFlowingWater,schema.supplierTransactions,schema.supplierExtract,schema.systemUserLevel,schema.storeSeckill,schema.storeBargain,schema.storeCombination,schema.storeIntegral,schema.storeBargainUser,schema.storePink,schema.deliveryService,schema.paymentReconciliationCase,schema.printDocument,schema.storeCouponIssue,schema.storeCouponUser,schema.storeProductVirtual,schema.storeProductCoupon,schema.storeOrderProductCouponReward,schema.storeCouponIssueUser,schema.luckLottery,schema.luckLotteryEntitlement,schema.agentLevel,schema.agentLevelTask,schema.agentLevelTaskRecord,schema.storeProductLog,...extraTables]);
  const role=`customer_financial_runtime_${crypto.randomUUID().replaceAll('-','')}`,scopeOwner=`customer_financial_scope_${crypto.randomUUID().replaceAll('-','')}`;let roleCreated=false,scopeCreated=false,client:ReturnType<typeof postgres>|undefined;
  const close=async()=>{try{await client?.end({timeout:5});if(roleCreated){await f.exec(`DROP OWNED BY ${ident(role)};DROP ROLE ${ident(role)}`);roleCreated=false;}if(scopeCreated){await f.exec(`DROP OWNED BY ${ident(scopeOwner)};DROP ROLE ${ident(scopeOwner)}`);scopeCreated=false;}}finally{await f.close();}};
  try{
@@ -118,6 +118,6 @@ export async function customerWorkFinancialFixture(){
      paid:order.paid,supplier_allocation_status:order.supplierAllocationStatus,outbox_id:paidEvent.id,outbox_status:paidEvent.status}));
     return{order,line,origin,payment,consumer,message,paidEvent,endsAt,virtualIds:virtual.map(x=>x.id)};
   };
-  await reset();return{...f,realPurchase,maintenanceDb:f.db,close,reset,db,role,actor,env,container:createContainerFromDb(db),service:()=>new CustomerWorkFinancialService(createContainerFromDb(db),env),withPeer:async<T>(callback:(peer:DbClient,pid:number)=>Promise<T>)=>{const peer=connect();try{const pid=await verify(peer);return await callback(drizzle(peer) as unknown as DbClient,pid);}finally{await peer.end({timeout:5});}},tables};
+  await reset();return{...f,realPurchase,maintenanceDb:f.db,close,reset,db,role,connectionString:target.href,actor,env,container:createContainerFromDb(db),service:()=>new CustomerWorkFinancialService(createContainerFromDb(db),env),withPeer:async<T>(callback:(peer:DbClient,pid:number)=>Promise<T>)=>{const peer=connect();try{const pid=await verify(peer);return await callback(drizzle(peer) as unknown as DbClient,pid);}finally{await peer.end({timeout:5});}},tables};
  }catch(error){await close();throw error;}
 }

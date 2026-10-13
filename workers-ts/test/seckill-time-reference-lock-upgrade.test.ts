@@ -144,11 +144,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds the current external 176-file and embedded 180-step catalogs with explicit city composition and identical five-category schema and exact independent capability', async () => {
+  it('builds the current external 177-file and embedded 180-step catalogs with explicit city and abandonment composition and identical five-category schema and exact independent capability', async () => {
     const external = await checkoutPricingMigrationDatabase();
     const embedded = await checkoutPricingMigrationDatabase();
     try {
-      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0173_customer_city_delivery.sql');
+      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0174_customer_cashier_abandon.sql');
       await applyExternal(external, list);
       // The second root connection can expire while the first full catalog is
       // built. Bind explicit owner settings to this actual maintenance session.

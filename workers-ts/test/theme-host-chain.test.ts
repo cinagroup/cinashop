@@ -26,7 +26,7 @@ const delivery=(tag='DeliveryShell',path='@/components/deliveryWorkbench/Deliver
 const customerWork=(tag='CustomerWorkShell',path='@/components/customerWork/CustomerWorkShell.vue',binding='CustomerWorkShell')=>'<template><'+tag+'><view>Actual customer work content</view></'+tag+'></template><script setup lang="ts">import '+binding+' from '+JSON.stringify(path)+';</script>';
 const direct='<template><ThemePage><view>Real content</view></ThemePage></template><script setup>import ThemePage from "@/components/ThemePage.vue";</script>';
 describe('registered theme host actual SFC import/root/default-slot chain',()=>{
- it('covers every current registered page including merchant delivery and seventeen customer work consumers',()=>{
+ it('covers every current registered page including merchant delivery and twenty customer work consumers',()=>{
   const registry=JSON.parse(read('../view/uniapp-ts/src/pages.json')) as {pages:{path:string}[];subPackages?:{root:string;pages:{path:string}[]}[]};
   const paths=[...registry.pages.map(row=>row.path),...(registry.subPackages??[]).flatMap(group=>group.pages.map(row=>group.root+'/'+row.path))],check=gate();
   expect(paths.length).toBeGreaterThan(0);expect(new Set(paths).size).toBe(paths.length);
@@ -35,7 +35,10 @@ describe('registered theme host actual SFC import/root/default-slot chain',()=>{
   for(const path of merchants)expect(check(read('../view/uniapp-ts/src/'+path+'.vue'),shell().replace('<slot />','<view>Detached empty wrapper</view>')),path).toBe(false);
   const deliveries=paths.filter(path=>path.startsWith('pages/delivery/'));expect(deliveries.sort()).toEqual(['pages/delivery/index','pages/delivery/orderDetail','pages/delivery/scanDetail','pages/delivery/scanning']);
   for(const path of deliveries)expect(check(read('../view/uniapp-ts/src/'+path+'.vue'),shell(),deliveryShell().replace('<slot />','<view>Detached empty wrapper</view>')),path).toBe(false);
-  const customers=paths.filter(path=>path.startsWith('pages/customer-work/'));expect(customers).toHaveLength(17);
+  const customers=paths.filter(path=>path.startsWith('pages/customer-work/'));expect(customers).toHaveLength(20);
+  expect(customers.filter(path=>path.startsWith('pages/customer-work/cashier')).sort()).toEqual([
+   'pages/customer-work/cashier','pages/customer-work/cashierRecord','pages/customer-work/cashierRecords',
+  ]);
   for(const path of ['pages/customer-work/scanning','pages/customer-work/writeoff','pages/customer-work/writeoffRecords','pages/customer-work/writeoffResult'])expect(customers).toContain(path);
   for(const path of customers)expect(check(read('../view/uniapp-ts/src/'+path+'.vue'),shell(),deliveryShell(),customerWorkShell().replace('<slot />','<view>Detached empty wrapper</view>')),path).toBe(false);
  });

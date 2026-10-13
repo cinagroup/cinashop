@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../../src/lib/di';
 import { parseCreateTables } from '../../scripts/data-migration/schema-audit';
 import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '../../src/migrations/customerCityDelivery';
+import { composeReviewedCashierAbandonCatalog } from '../../scripts/data-migration/cashier-abandon-catalog';
 
 // Fixed independent 281-table SQL cohort through 0169, before the five reviewed
 // additions. Never generate expected table names from the live ORM under test.
@@ -93,6 +94,15 @@ const additions = {
   }
 } as const;
 export const REVIEWED_TABLE_ADDITIONS = Object.keys(additions).sort();
+// The append-only abandonment ledger is an explicit external registration;
+// runAll and the ORM retain their independently frozen table cohorts.
+const externalAdditions = {
+  cashier_second_card_abandon_v1: {
+    file: '0174_customer_cashier_abandon.sql',
+    sourceSha256: '49bc46205953c28e482f76d3e62d044bf719b98466077f22401a69ed375c8899',
+    columns: ['actor_uid','request_key','kind','request_hash','scope_key','intent','intent_json','created_at'],
+  },
+} as const;
 // These are independently installed ledgers, not MigrationService.runAll registrations.
 // The schema-audit declaration scan includes every migration source; bind that
 // exact reviewed difference without pretending these tables exist after runAll.
@@ -108,17 +118,26 @@ const explicitDeclarations = [
   ['managerOrderOperation.ts','a119df84da27f34310094b1441ea3411408dc490beb02763cb309e4853f39ce8',['manager_order_operation_request']],
   ['newcomerCartAddReplay.ts','7406be369eca4574f46dfbc126b2a44e4aed0b28cd948a7af573648c77bdeade',['newcomer_cart_add_replay']],
 ] as const;
+const additionalExplicitDeclarations = [
+  ['cashierSecondCardAbandon.ts','e91f303bc1786c4eb32da38932eb2b1485aaa3e5ccd63696b570f5ccab856c0c',['cashier_second_card_abandon_v1']],
+  ['cashierSecondCardFormImages.ts','a22e5de1110223b6943726f8d59da9c5ae8ddc2fc46659fcd416e8db3b8c77fb',['cashier_second_card_form_session_v1','cashier_second_card_form_upload_v1']],
+  ['customerManualRefund.ts','bb7781fd1b070144610ebe7860a594acabaaa31d9d299ac5abc0c8d55cc86c67',['customer_financial_manual_refund_v1']],
+] as const;
 export function reviewedExplicitDeclarationTables() {
-  for (const [file,sha256,tables] of explicitDeclarations) {
+  for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
     assert.deepEqual([...parseCreateTables(source,'postgres').keys()].sort(),[...tables].sort());
   }
-  const tables=explicitDeclarations.flatMap(([, , tables])=>[...tables]).sort();
-  assert.equal(tables.length,12);assert.equal(new Set(tables).size,12);
-  return tables;
+  const historicalTables=explicitDeclarations.flatMap(([, , tables])=>[...tables]).sort();
+  assert.equal(historicalTables.length,12);assert.equal(new Set(historicalTables).size,12);
+  const tables=[...historicalTables,...additionalExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
+  assert.equal(tables.length,16);assert.equal(new Set(tables).size,16);
+  // This fixed external registration is present on both declaration sides.
+  return tables.filter(name=>!Object.hasOwn(externalAdditions,name));
 }
-const externalNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
+const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
+const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();
 const embeddedNames = [...legacyNames,'store_order_promotion_gift_coupon_reward'].sort();
 const root=resolve(import.meta.dirname,'../..');
 const digest=(value:string)=>createHash('sha256').update(value).digest('hex');
@@ -130,14 +149,14 @@ export function assertHistoricalCatalogBasis() {
   assert.equal(files.length,171);
   const source=files.map(file=>readFileSync(resolve(root,'migrations',file),'utf8')).join('\n');
   assert.deepEqual([...parseCreateTables(source,'postgres').keys()].sort(),legacyNames);
-  for(const [table,contract] of Object.entries(additions)) {
+  for(const [table,contract] of Object.entries({...additions,...externalAdditions})) {
     const source=readFileSync(resolve(root,'migrations',contract.file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),contract.sourceSha256,'Complete reviewed source changed: '+table);
     assert.deepEqual([...parseCreateTables(source,'postgres').get(table)!.columns.keys()],contract.columns);
   }
 }
 export function registeredTableNames(path:'external'|'embedded'|'orm') {
-  assertHistoricalCatalogBasis(); return path==='embedded'?embeddedNames:externalNames;
+  assertHistoricalCatalogBasis(); return path==='embedded'?embeddedNames:path==='external'?externalNames:ormNames;
 }
 export function assertRegisteredModelCohort(snapshot:{tables:Record<string,{columns?:Record<string,unknown>}>}) {
   assert.deepEqual(Object.keys(snapshot.tables).sort(),registeredTableNames('orm').map(name=>'public.'+name));
@@ -150,11 +169,15 @@ export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>
   assert.deepEqual(rows.map(row=>row.name),registeredTableNames(path));
 }
 export function assertExternalMigrationCohort(files:string[]) {
-  assert.equal(files.length,176);
-  assert.equal(digest(JSON.stringify(files)),"75756c037d53d9d690b2daaba89973458ea40c1277440b632dd815b40cef6cb0");
+  assert.equal(files.length,177);
+  assert.equal(digest(JSON.stringify(files)),"da361cb50bd8e57dd64dbb36f3189b9df87a88b152d52fc6c9adb8850c04b298");
+  const historicalFiles=files.filter(file=>file!==externalAdditions.cashier_second_card_abandon_v1.file);
+  assert.equal(historicalFiles.length,176);
+  assert.equal(digest(JSON.stringify(historicalFiles)),"75756c037d53d9d690b2daaba89973458ea40c1277440b632dd815b40cef6cb0");
   assert.deepEqual(files.filter(file=>!file.startsWith('0006a')&&!/^\d{4}_/.test(file)),[]);
   for(const file of ['0166_recharge_quota_group_seed.sql','0167_seckill_time_reference_lock.sql',
-    '0170_order_promotion_gift_receipt.sql','0171_purchase_cancellation_gift_evidence.sql','0173_customer_city_delivery.sql'])
+    '0170_order_promotion_gift_receipt.sql','0171_purchase_cancellation_gift_evidence.sql','0173_customer_city_delivery.sql',
+    externalAdditions.cashier_second_card_abandon_v1.file])
     assert.equal(files.filter(value=>value===file).length,1);
 }
 // Explicit fixture composition mirrors the approved full nine-path audit.
@@ -172,7 +195,7 @@ export async function composeExplicitCityCatalog(db:DbClient,path:'external'|'em
     SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace
     ORDER BY kind,oid`);
   assert.deepEqual(after.filter(row=>before.some(old=>old.kind===row.kind&&old.oid===row.oid)),Array.from(before));
-  await assertRegisteredDatabaseCohort(db,'external');
+  await assertRegisteredDatabaseCohort(db,path==='external'?'external':'orm');
   await assert.rejects(installCustomerCityDelivery(db,{maintenance:true}));
   await assertCustomerCityDeliveryReady(db,false);
   const repeat=await db.execute(sql`SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text AS acl
@@ -180,4 +203,6 @@ export async function composeExplicitCityCatalog(db:DbClient,path:'external'|'em
     SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace
     ORDER BY kind,oid`);
   assert.deepEqual(Array.from(repeat),Array.from(after));
+  await composeReviewedCashierAbandonCatalog(db,path,root);
+  await assertRegisteredDatabaseCohort(db,'external');
 }

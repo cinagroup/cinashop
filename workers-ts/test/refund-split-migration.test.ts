@@ -14,6 +14,7 @@ import { REFUND_SPLIT_INSTALLATION_SQL, REFUND_SPLIT_ORM_INSTALLATION_SQL } from
 import { MigrationService } from '../src/services/MigrationService';
 import { createContainerFromDb } from '../src/lib/di';
 import * as allModels from '../src/models/schema';
+import { COMPLETE_CONSTRUCTION_COUNTS } from './helpers/completeConstructionInventory';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split controlled PG16 installation',()=>{
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -241,7 +242,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
     const whole=await sequenceRunnerDatabase();
     try {
       if(path==='external') {
-        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();assertExternalMigrationCohort(files);expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
+        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();assertExternalMigrationCohort(files);expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
         for(const file of files) await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       }else if(path==='embedded') {
         expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 180},(_,i)=>String(i).padStart(4,'0')),errors:[]});
@@ -250,7 +251,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
         await expect(runRefundOrderSplitSchema(whole.db,true)).rejects.toThrow();
         await runInvoiceEvidenceSchema(whole.db,true);
       }
-      expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:path==='embedded'?282:285}]);
+      expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
       await assertRegisteredDatabaseCohort(whole.db,path);
       expect(await inspectRefundOrderSplitSchema(whole.db)).toEqual({state:path==='orm'?'orm-pending':'v1',invoiceProtectionReady:true});
       if(path==='orm') await runRefundOrderSplitSchema(whole.db,true);

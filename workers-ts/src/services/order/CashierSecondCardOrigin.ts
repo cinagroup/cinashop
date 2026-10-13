@@ -7,6 +7,7 @@ import { acquireCustomerWorkScopeLock } from '@/migrations/runCustomerWorkScopeL
 import { inspectCashierSecondCardOrigin, assertCashierSecondCardOriginCatalog, cashierSecondCardOriginReadiness } from '@/migrations/runCashierSecondCardOrigin';
 import { authorizeCustomerWorkActor, type CustomerWorkActor } from '@/services/customer-work/CustomerWorkScope';
 import { freezeCustomerActor, freezeCustomerJson, authorizeCustomerOperationOwner } from '@/services/customer-work/CustomerWorkOperationRequest';
+import { assertCashierNotAbandoned } from '@/services/customer-work/CustomerCashierAbandon';
 import { parseSecondCardValiditySnapshot, resolveSecondCardValidityAtPayment } from './SecondCardValidityService';
 import type { CheckoutConfirmation } from './CheckoutConfirmation';
 import { loadRefundOrderGeneration } from './RefundOrderGeneration';
@@ -96,6 +97,10 @@ function parseFact(value: unknown): CashierSecondCardCreationFact {
     creation_status_id:id(r.creation_status_id), cart_facts:[fact] };
 }
 
+/** Creation history also includes unpaid orders; it reuses the immutable
+ * creation validator without requiring a completed payment or redemption. */
+export const parseCashierSecondCardCreationFact = parseFact;
+
 /** An internal quantity return for a genuine zero cash purchase. This is never
  * selected by request JSON, ordinary refund entry, or a payment-method flag. */
 export async function prepareCashierZeroRefund(db:DbClient,actorInput:CustomerWorkActor,
@@ -155,6 +160,7 @@ export async function assertCashierZeroRefundOrigin(db:DbClient,order:Order,cart
 export async function prepareCashierSecondCardCreation(db: DbClient, value: CashierSecondCardCreationInput): Promise<CashierSecondCardCreationCapability> {
   const actor = freezeCustomerActor(value.actor), buyer_uid=id(value.buyer_uid,true), scope_key=hash(value.scope_key);
   const request_key=normalizeOutRequestKey(value.request_key), request_hash=hash(value.request_hash);
+  await assertCashierNotAbandoned(db,actor.uid,request_key,'creation',request_hash);
   if (!Array.isArray(value.cart_ids) || value.cart_ids.length!==1) throw new ValidateException('次卡收银一次只能选择一个真实商品规格');
   const cart_ids=Object.freeze(value.cart_ids.map(v=>id(v)));
   const selected=exact(value.selection,['product_id','sku_unique','quantity']);
@@ -187,6 +193,7 @@ export function cashierSecondCardCreationFacts(value: unknown): Readonly<Capabil
 }
 export async function authorizeCashierSecondCardCreation(tx:DbClient, capability:CashierSecondCardCreationCapability):Promise<void> {
   const facts=cashierSecondCardCreationFacts(capability)!;
+  await assertCashierNotAbandoned(tx,facts.actor.uid,facts.request_key,'creation',facts.request_hash);
   await assertCashierSecondCardOriginCatalog(tx);
   await tx.execute(sql`LOCK TABLE public.cashier_second_card_cart_v1 IN ROW SHARE MODE NOWAIT`);
   if (!(await cashierSecondCardOriginReadiness(tx)).ready) throw new HttpApiException('客户次卡收银来源权限尚未验收',503,503);
@@ -210,6 +217,7 @@ export async function authorizeCashierSecondCardCreation(tx:DbClient, capability
 }
 export async function assertCashierSecondCardCreationReplay(db:DbClient,capability:CashierSecondCardCreationCapability,order:Order):Promise<void>{
   const facts=cashierSecondCardCreationFacts(capability)!;
+  await assertCashierNotAbandoned(db,facts.actor.uid,facts.request_key,'creation',facts.request_hash);
   const scope=await authorizeCustomerWorkActor(db,facts.actor);
   if(scope.scope_key!==facts.scope_key||scope.service_id!==facts.service_id)throw new AuthException('收银客户管理身份已变化');
   await assertCashierSecondCardOriginCatalog(db);

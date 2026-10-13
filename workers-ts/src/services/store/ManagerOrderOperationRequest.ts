@@ -7,6 +7,7 @@ import { lockOrderSettlement } from '@/services/order/OrderBrokerageService';
 import { assertManagerOrderOperationCatalog, managerOperationReadiness } from '@/migrations/runManagerOrderOperation';
 export { managerOperationReadiness } from '@/migrations/runManagerOrderOperation';
 import { requireStoreManagerScope, merchantOrderRevision, managerId, type StoreManagerScope } from './StoreManagerScope';
+import { MANAGER_SCOPE_CONTEXT } from '@/migrations/managerRuntimeCapabilities';
 
 export const MANAGER_OPERATION_VERSION = 'merchant-order-operation-v1' as const;
 export type ManagerOperationKind = 'remark'|'manual_delivery'|'split_delivery'|'change_price'|'confirm_offline'|'refund_create'|'return_approve'|'refund_refuse'|'refund_execute';
@@ -79,7 +80,10 @@ export async function lockManagerOrder(tx:DbClient,orderId:number):Promise<Order
 export async function authorizeLockedManagerOperation(tx:DbClient,p:PreparedManagerOperation,order:Order,options:{skipRevision?:boolean}={}):Promise<StoreManagerScope>{
   await authorizeManagerOperationOwner(tx,p.actor);const scope=await requireStoreManagerScope(tx,p.actor.uid,p.input.store_id,{lock:true,expectedScopeKey:p.input.scope_key});
   if(order.id!==p.input.order_id||order.storeId!==scope.store_id||order.isDel||order.isSystemDel||order.supplierAllocationStatus===1||order.pid<0)throw new NotFoundException('订单不属于当前管理门店');
-  if(!options.skipRevision&&await merchantOrderRevision(order)!==p.input.expected_order_revision)throw new HttpApiException('订单已变化，请核对原请求与最新订单',412,412);return scope;
+  if(!options.skipRevision&&await merchantOrderRevision(order)!==p.input.expected_order_revision)throw new HttpApiException('订单已变化，请核对原请求与最新订单',412,412);
+  await tx.execute(sql`SELECT set_config(${MANAGER_SCOPE_CONTEXT},${JSON.stringify({actor_uid:p.actor.uid,store_id:scope.store_id,staff_id:scope.staff_id,
+    root_order_id:order.pid>0?order.pid:order.id,request_hash:p.hash,kind:p.kind,auth_version:p.actor.authVersion,expires_at:p.actor.expiresAt})},true)`);
+  return scope;
 }
 export async function appendManagerOperation(tx:DbClient,p:PreparedManagerOperation,staffId:number,outcome:ManagerOperationOutcome,evidence:Record<string,ManagerJson>={}):Promise<ManagerOperationReceipt>{
   if(!validOutcome(p.kind,outcome)||!Number.isSafeInteger(staffId)||staffId<0)throw new ValidateException('管理回执结果无效');

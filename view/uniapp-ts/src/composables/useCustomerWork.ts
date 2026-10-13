@@ -9,6 +9,8 @@ export interface CustomerWorkOptions {
   page: CustomerWorkPage; query?: (query: Record<string,string>) => void;
   clear?: () => void; load?: (controller: CustomerWorkController) => Promise<void>;
 }
+export interface CustomerWorkSuspendLease { active:()=>boolean; release:()=>void }
+interface SuspendLeaseState extends CustomerWorkSuspendLease { hiddenOnce:boolean; timer:ReturnType<typeof setTimeout>|null }
 export interface CustomerWorkController {
   auth: ReturnType<typeof useAuthStore>;
   context: Ref<CustomerWorkEnvelope<CustomerWorkContext>|null>; loading: Ref<boolean>; error: Ref<string>;
@@ -16,16 +18,30 @@ export interface CustomerWorkController {
   read:<T>(path:string,guard:(value:unknown)=>value is T,data?:Record<string,unknown>)=>Promise<CustomerWorkEnvelope<T>>;
   load:()=>Promise<void>; go:(page:CustomerWorkPage,query?:Record<string,string|number>)=>void;
   back:()=>void; login:()=>void; invalidate:(failure:unknown)=>void;
+  beginSuspendLease:(durationMs?:number)=>CustomerWorkSuspendLease; suspendLeaseActive:()=>boolean;
 }
 export function useCustomerWork(options: CustomerWorkOptions):CustomerWorkController {
   const auth=useAuthStore(), context=ref<CustomerWorkEnvelope<CustomerWorkContext>|null>(null);
   const loading=ref(false), error=ref('');
   let visible=false, disposed=false, epoch=0, requests:CustomerWorkRequests|null=null, routeError='', routeStamp='';
+  let lease:SuspendLeaseState|null=null;
   const current=()=>visible&&!disposed;
   const fence=()=>{const scope=requests;return ()=>!!scope?.active();};
-  function clear() { epoch++; requests?.abort(); requests=null; context.value=null; loading.value=false; error.value=''; options.clear?.(); }
+  function dropLease(){const prior=lease;lease=null;if(prior?.timer)clearTimeout(prior.timer);}
+  const suspendLeaseActive=()=>!!lease?.active();
+  function beginSuspendLease(durationMs=60_000):CustomerWorkSuspendLease {
+    if(options.page!=='cashier'||!current()||!context.value||!auth.isLoggedIn||lease||!Number.isSafeInteger(durationMs)||durationMs<1||durationMs>60_000)throw Error('当前图片选择范围不可用');
+    const owner={uid:auth.uid,token:auth.token,version:auth.sessionVersion,epoch,routeStamp,scope:context.value.scope_key,service:context.value.principal.service_id,consistency:context.value.consistency_key};
+    const until=Date.now()+durationMs,created:SuspendLeaseState={hiddenOnce:false,timer:null,active:()=>lease===created&&!disposed&&Date.now()<until
+      &&epoch===owner.epoch&&routeStamp===owner.routeStamp&&!routeError&&auth.uid===owner.uid&&auth.token===owner.token&&auth.sessionVersion===owner.version
+      &&context.value?.scope_key===owner.scope&&context.value.principal.service_id===owner.service&&context.value.consistency_key===owner.consistency,
+      release:()=>{if(lease!==created)return;dropLease();if(!visible)clear();}};
+    lease=created;created.timer=setTimeout(()=>{if(lease===created){dropLease();clear();}},durationMs);
+    return {active:created.active,release:created.release};
+  }
+  function clear() { epoch++; dropLease();requests?.abort(); requests=null; context.value=null; loading.value=false; error.value=''; options.clear?.(); }
   function fail(scope:CustomerWorkRequests, failure:unknown) {
-    if (!scope.active()) return; options.clear?.(); context.value=null; loading.value=false;
+    if (!scope.active()) return; dropLease();options.clear?.(); context.value=null; loading.value=false;
     error.value=failure instanceof Error?failure.message:'经营读取失败，请重新核对'; scope.abort(); requests=null;
   }
   async function read<T>(path:string, guard:(value:unknown)=>value is T, data:Record<string,unknown>={}):Promise<CustomerWorkEnvelope<T>> {
@@ -92,11 +108,11 @@ export function useCustomerWork(options: CustomerWorkOptions):CustomerWorkContro
   function back() { if(current())uni.navigateBack({fail:()=>uni.switchTab({url:'/pages/user/index'})}); }
   function login() { if(current())uni.navigateTo({url:'/pages/auth/login'}); }
   function invalidate(failure:unknown) { if(requests)fail(requests,failure); }
-  const controller={auth,context,loading,error,current,fence,read,load,go,back,login,invalidate};
+  const controller={auth,context,loading,error,current,fence,read,load,go,back,login,invalidate,beginSuspendLease,suspendLeaseActive};
   onLoad(query=>{try { const raw=hashQuery(); applyQuery(raw??query??{},raw===null?'load:'+JSON.stringify(query??{}):'hash:'+raw); }
     catch(failure) { routeError=failure instanceof Error?failure.message:'经营入口参数无效'; } });
-  onShow(()=>{visible=true;revalidateHash();void load();});
-  onHide(()=>{visible=false;clear();}); onUnload(()=>{disposed=true;visible=false;removeHashListener();clear();});
+  onShow(()=>{const resume=!!lease?.hiddenOnce&&suspendLeaseActive();visible=true;revalidateHash();if(resume&&suspendLeaseActive()){dropLease();return;}void load();});
+  onHide(()=>{visible=false;if(lease&&!lease.hiddenOnce&&suspendLeaseActive()){lease.hiddenOnce=true;return;}clear();}); onUnload(()=>{disposed=true;visible=false;removeHashListener();clear();});
   watch(()=>[auth.uid,auth.token,auth.sessionVersion],()=>{clear();if(current())void load();},{flush:'sync'});
   return controller;
 }

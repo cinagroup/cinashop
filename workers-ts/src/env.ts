@@ -5,6 +5,9 @@
  * 这是整个应用唯一的"外部依赖入口", 所有 service 通过此类型访问基础设施。
  */
 export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS" | "OFFLINE_PC_RETURN_ORIGIN" | "OFFLINE_H5_RETURN_ORIGIN" | "PUBLIC_H5_ORIGIN"> {
+  /** Independently commissioned manager application LOGIN. Selected only
+   * after complete UserJWT authentication; ordinary customer keeps HYPERDRIVE. */
+  HYPERDRIVE_MANAGER?: WorkerBindings["HYPERDRIVE"];
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;

@@ -31,6 +31,12 @@ binding = "HYPERDRIVE_ADMIN"
 id = "446e94a4de0143f58c8e5178ec55db8b"  # cinashop_admin_v1; no maintenance-role reachability
 localConnectionString = "postgresql://cinashop_admin_v1:local-development-only@localhost:5432/crmeb"
 
+# Manager LOGIN and its minimal privileges were independently verified in production.
+[[hyperdrive]]
+binding = "HYPERDRIVE_MANAGER"
+id = "0844165b230c44139067b9b5322971e3"  # cinashop_manager_v1
+localConnectionString = "postgresql://cinashop_manager_v1:local-development-only@localhost:5432/crmeb"
+
 # ─── Upstash Redis (REST API) ─────────────────────────────
 # 创建命令: wrangler kv namespace create CONFIG_KV
 # 把返回的 id 填入下面 (本地 dev 无所谓, 部署前必须替换)

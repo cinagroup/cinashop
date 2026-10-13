@@ -17,6 +17,7 @@ import { captureReturnedPointBills, loadRefundOrderGeneration } from './RefundOr
 import { captureRefundEarnedIncomeScope } from './RefundEarnedIncome';
 import { splitSupplierRefundPayment } from '@/services/supplier/SupplierRefundSplitFinance';
 import { materializeRefundInvoice, type RefundInvoiceSnapshot } from './RefundInvoiceAllocation';
+import {isManualRefundOrder,readCustomerManualRefundProof,deleteCustomerManualRefundPromotionRows} from './CustomerManualRefund';
 export type { RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -120,7 +121,10 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
     throw new ValidateException('商家运费需要独立账本分摊证据，不能按顾客运费推断');
   }
   const payments = await tx.select().from(storeOrderRefundPayment).where(eq(storeOrderRefundPayment.refundId, refund.id)).limit(2);
-  if (payments.length > 1 || (source.payType !== 'yue' && cents(refund.refundPrice) > 0 && payments.length !== 1)) throw invalid();
+  if(isManualRefundOrder(source)&&cents(refund.refundPrice)>0){
+    if(payments.length)throw invalid();
+    await readCustomerManualRefundProof(tx,refund,source);
+  }else if (payments.length > 1 || (source.payType !== 'yue' && cents(refund.refundPrice) > 0 && payments.length !== 1)) throw invalid();
   if (payments.some(payment => payment.storeOrderId !== source.id || payment.providerStatus !== 'SUCCESS'
     || payment.requestAmount !== cents(refund.refundPrice) || payment.totalAmount !== cents(root.payPrice))) throw invalid();
   const previousRefundId = priorGeneration?.refundId ?? 0;
@@ -195,8 +199,11 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
       const removedIds = carts.filter(row => !kept.has(row.id)).map(row => row.id);
       if (removedIds.length) await tx.delete(storeOrderCartInfo).where(and(eq(storeOrderCartInfo.oid, source.id), inArray(storeOrderCartInfo.id, removedIds)));
       for (const row of remainingRows) await tx.update(storeOrderCartInfo).set(row).where(and(eq(storeOrderCartInfo.id, row.id!), eq(storeOrderCartInfo.oid, source.id)));
-      if (hasPromotionLedger) await writeOrderPromotionLedger(tx,
-        { id: source.id, uid: source.uid, promotionsPrice: String(plan.remaining.promotionsPrice) }, promotionCarts(remainingRows), now, true);
+      if (hasPromotionLedger) {
+        if(isManualRefundOrder(source))await deleteCustomerManualRefundPromotionRows(tx,refund.id,source.id);
+        await writeOrderPromotionLedger(tx,
+          { id: source.id, uid: source.uid, promotionsPrice: String(plan.remaining.promotionsPrice) }, promotionCarts(remainingRows), now,!isManualRefundOrder(source));
+      }
     }
     await tx.update(storeOrder).set({ cartId: selectedRows.map(row => row.cartId).join(',') }).where(eq(storeOrder.id, selectedOrderId));
     await tx.update(storeOrder).set({ cartId: remainingRows.map(row => row.cartId).join(',') }).where(eq(storeOrder.id, remainingOrderId));

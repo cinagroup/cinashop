@@ -12,6 +12,21 @@ const sources = Object.fromEntries(Object.entries(userCenterDesignSourceFiles())
 const baseline = inspectUserCenterDesignCoverage(screens,sources);
 type Mutant = [string,string,string,string,UserCenterDesignGate];
 const mutants: Mutant[] = [
+  ['manager middleware actual factory','v1Routes','const managerAuth = managerRuntimeAuthMiddleware();','const managerAuth = authMiddleware({force:true});','statisticsTwoStyles'],
+  ['manager middleware actual import','v1Routes','"@/middleware/manager-runtime-auth"','"@/middleware/fake-manager-runtime-auth"','statisticsTwoStyles'],
+  ['manager authenticated producer','managerAuth','return (c, next) => authenticate(c, async () => {','return (c, next) => fakeAuthenticate(c, async () => {','statisticsTwoStyles'],
+  ['manager forced application authentication','managerAuth','authMiddleware({force:true})','authMiddleware({force:false})','statisticsTwoStyles'],
+  ['manager authentication actual import','managerAuth',"'./auth'","'./fake-auth'",'statisticsTwoStyles'],
+  ['manager session actual import','managerAuth',"'@/lib/di'","'@/lib/fake-di'",'statisticsTwoStyles'],
+  ['manager independent connection producer','managerAuth','createManagerDatabaseSession(c.env)','createApplicationDatabaseSession(c.env)','statisticsTwoStyles'],
+  ['manager container is installed','managerAuth',"c.set('container', session.container)","c.set('container', application)",'statisticsTwoStyles'],
+  ['manager original application restored','managerAuth',"c.set('container', application)","c.set('container', session.container)",'statisticsTwoStyles'],
+  ['manager session always closes','managerAuth','await session.close();','void session;','statisticsTwoStyles'],
+  ['manager independent binding','managerSession','const binding = env.HYPERDRIVE_MANAGER;','const binding = env.HYPERDRIVE;','statisticsTwoStyles'],
+  ['manager rejects App binding alias','managerSession','binding === env.HYPERDRIVE','false','statisticsTwoStyles'],
+  ['manager rejects Admin binding alias','managerSession','binding === env.HYPERDRIVE_ADMIN','false','statisticsTwoStyles'],
+  ['manager rejects identical App connection','managerSession','binding.connectionString === env.HYPERDRIVE?.connectionString','false','statisticsTwoStyles'],
+  ['manager rejects identical Admin connection','managerSession','binding.connectionString === env.HYPERDRIVE_ADMIN?.connectionString','false','statisticsTwoStyles'],
   ['statistics actual personal card navigation','mobile',"openMerchant('statistics')","previewStats()",'statisticsTwoStyles'],
   ['statistics actual waiting-shipment navigation','mobile',"openMerchant('unshipped')","previewStats()",'statisticsTwoStyles'],
   ['statistics scoped typed reader','merchantStatsPage',"controller.read('statistics',isMerchantStatistics)","fakeStats('statistics',isMerchantStatistics)",'statisticsTwoStyles'],
@@ -93,12 +108,38 @@ const mutants: Mutant[] = [
   ['request deadline actual timeout','mobileApi','timer=setTimeout(','timer=fakeTimeout(','requestDeadline'],
 ];
 describe('complete personal-centre connected source gates',()=>{
-  it('connects actual two-style statistic actions while keeping unimplemented work customer-service and delivery roles partial',()=>{
+  it('connects actual two-style statistic actions while keeping the complete legacy operator replacement partial',()=>{
     expect(baseline.adminScreen).toBe(true);
     expect(baseline.statisticsTwoStyles).toBe(true);
     expect(baseline.menuRoleGates).toBe(false);
     expect(classifyUserCenterDesignCoverage(baseline)).toBe('partial');
     expect(hasUserCenterDesignContract(sources.contract!)).toBe(true);
+  });
+  const managerRoutes=[...sources.v1Routes!.matchAll(/^v1Routes\.(get|post)\('([^']+)',managerAuth,([^\n]+)\);$/gmu)]
+    .filter(row=>row[2]!.startsWith('/store/manager/'));
+  it('checks the complete 29-route authenticated manager boundary',()=>{expect(managerRoutes).toHaveLength(29);});
+  it.each(managerRoutes.map(row=>[row[2]!,row[0]]))('rejects bare application auth on actual manager route %s',(_path,route)=>{
+    expect(baseline.statisticsTwoStyles).toBe(true);
+    const altered=sources.v1Routes!.replace(route,route.replace(',managerAuth,',',authMiddleware({force:true}),'));
+    expect(inspectUserCenterDesignCoverage(screens,{...sources,v1Routes:altered}).statisticsTwoStyles).toBe(false);
+  });
+  it('keeps the registered cashier read/write pages within the existing partial legacy work boundary',()=>{
+    const pages=JSON.parse(sources.pages!) as {pages:Array<{path:string}>};
+    for(const name of ['cashierRecords','cashierRecord','cashier']){
+      expect(pages.pages.some(page=>page.path===`pages/customer-work/${name}`)).toBe(true);
+      expect(sources.navigation).toContain(`"/pages/customer-work/${name}",`);
+      const source=readFileSync(resolve('..',`view/uniapp-ts/src/pages/customer-work/${name}.vue`),'utf8');
+      expect(source).toContain('useCustomerWork(');
+      if(name==='cashier'){
+        expect(source).toContain('useCustomerWorkCashier(manager');
+        expect(source).toContain('data.capabilities.cashier_second_card !== true');
+      }else{
+        expect(source).toContain('useCustomerCashierRead(manager)');
+        expect(source).toContain('await reader.read(');
+      }
+    }
+    expect(sources.navigation).toContain('"/pages/admin/work/index": { target: "/pages/customer-work/index", coverage: "partial_replacement" }');
+    expect(baseline.menuRoleGates).toBe(false);expect(classifyUserCenterDesignCoverage(baseline)).toBe('partial');
   });
   it('requires every gate before candidate and an actual screen before partial',()=>{
     const all=Object.fromEntries(USER_CENTER_DESIGN_COVERAGE_GATES.map(key=>[key,true]));

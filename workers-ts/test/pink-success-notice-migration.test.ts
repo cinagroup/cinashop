@@ -267,12 +267,12 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 176 and embedded 180 paths with explicit city composition and identical five-category contracts for 285 tables', async () => {
+  it('builds fresh external 177 and embedded 180 paths with explicit city and abandonment composition and identical five-category contracts for 286 tables', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
       embedded = await checkoutPricingMigrationDatabase();
-      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
+      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
       await externalMigrations(external, files);
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();

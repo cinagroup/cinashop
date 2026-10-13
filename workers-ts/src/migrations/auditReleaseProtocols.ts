@@ -3,8 +3,7 @@ import type { DbClient } from '../lib/di';
 import { inspectAdminRefundOperation } from './runAdminRefundOperation';
 import { inspectAdminRefundCreation } from './runAdminRefundCreation';
 import { inspectCheckoutPricingLock } from './checkoutPricingLock';
-import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
-import { REFUND_SPLIT_STATE_SQL } from './refundOrderSplitCatalog';
+import { GUEST_INVOICE_EVIDENCE_STATE_SQL, GUEST_REFUND_SPLIT_STATE_SQL } from './guestRefundEntityCatalog';
 import { OFFLINE_STATE_SQL, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_BARCODE_CATALOG_VERSIONS } from './offlineOrderCatalog';
 import { inspectTestReleaseSchemaUpgrade } from './runTestReleaseSchemaUpgrade';
 import { RELEASE_PRE_INDEX_HASHES } from './releaseSharedIndexes';
@@ -31,12 +30,16 @@ export async function auditReleaseProtocols(db: Pick<DbClient, 'transaction' | '
       || Number(identity.server_version) >= 170000) throw Error('Unsupported release inspection target');
     const adminRefundOperation = await inspectAdminRefundOperation(tx);
     const adminRefundCreation = await inspectAdminRefundCreation(tx);
-    const [invoice] = await tx.execute(sql.raw(INVOICE_EVIDENCE_STATE_SQL));
-    const [refundSplit] = await tx.execute(sql.raw(REFUND_SPLIT_STATE_SQL));
+    const [invoice] = await tx.execute(sql.raw(GUEST_INVOICE_EVIDENCE_STATE_SQL));
+    const [refundSplit] = await tx.execute(sql.raw(GUEST_REFUND_SPLIT_STATE_SQL));
     const [offline] = await tx.execute(sql.raw(OFFLINE_STATE_SQL));
-    const states = [invoice?.state, refundSplit?.state, offline?.state];
-    if (states.some(state => typeof state !== 'string' || !['fresh','v1','v2','orm-pending','drift'].includes(state)))
+    const states = [[invoice?.state, ['fresh','v1','v2','v3','orm-pending','drift']],
+      [refundSplit?.state, ['fresh','v1','v2','orm-pending','drift']],
+      [offline?.state, ['fresh','v1','v2','orm-pending','drift']]] as const;
+    if (states.some(([state, allowed]) => typeof state !== 'string' || !(allowed as readonly string[]).includes(state)))
       throw Error('Protocol inspection returned an invalid state');
+    const refundEntityProfile = invoice.state === 'v2' && refundSplit.state === 'v1' ? 'legacy'
+      : invoice.state === 'v3' && refundSplit.state === 'v2' ? 'guest' : 'drift';
     const checkoutPricing = await inspectCheckoutPricingLock(tx);
     // Catalog hashes only: expose the exact mismatched dependency names without
     // emitting table rows, routine bodies, credentials or target-learned approval.
@@ -67,7 +70,7 @@ export async function auditReleaseProtocols(db: Pick<DbClient, 'transaction' | '
       ORDER BY c.relname COLLATE "C",ic.relname COLLATE "C" LIMIT 101`);
     if (offlineIndexes.length > 100) throw Error('Release index inspection budget exceeded');
     return { identity, adminRefundOperation, adminRefundCreation, invoice: invoice.state,
-      refundSplit: refundSplit.state, offline: offline.state, checkoutPricing, offlinePredecessor, offlineIndexes };
+      refundSplit: refundSplit.state, refundEntityProfile, offline: offline.state, checkoutPricing, offlinePredecessor, offlineIndexes };
   }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
   const predecessor = await inspectTestReleaseSchemaUpgrade(db);
   return { scope: 'release-protocol-preflight', ready: false, protocols,

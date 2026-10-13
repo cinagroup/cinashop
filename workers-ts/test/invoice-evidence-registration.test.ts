@@ -14,6 +14,7 @@ import { INVOICE_EVIDENCE_INSTALLATION_SQL, INVOICE_EVIDENCE_ORM_INSTALLATION_SQ
 import * as allModels from '../src/models/schema';
 import { MigrationService } from '../src/services/MigrationService';
 import { createContainerFromDb } from '../src/lib/di';
+import { COMPLETE_CONSTRUCTION_COUNTS } from './helpers/completeConstructionInventory';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoice evidence PG16 construction paths',()=>{
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -49,12 +50,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoi
   it.each(['external','embedded','orm'] as const)('complete %s construction proves protection before runtime commissioning',async path=>{
     if(path==='external') {
       const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();
-      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
+      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
       for(const file of files) await f.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
     } else if(path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 180},(_,i)=>String(i).padStart(4,'0')),errors:[]});
     } else { const api=await import('drizzle-kit/api'); assertRegisteredModelCohort(api.generateDrizzleJson(allModels)); await generated(allModels); }
-    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:path==='embedded'?282:285}]);
+    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
     await assertRegisteredDatabaseCohort(f.db,path);
     expect(await inspectInvoiceEvidenceSchema(f.db)).toBe(path==='orm'?'orm-pending':'v2');
     if(path==='orm') await runInvoiceEvidenceSchema(f.db,true);

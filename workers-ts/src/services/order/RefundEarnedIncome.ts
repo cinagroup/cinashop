@@ -52,7 +52,11 @@ export function readRefundEarnedIncomeScope(value: unknown): RefundEarnedIncomeS
   const brokerage = Object.fromEntries(Object.keys(fields).map(type => [type, units(input[type])])) as Record<IncomeType, number>;
   if (brokerage.self_brokerage !== brokerage.one_brokerage) throw invalid();
   return { version: record.version, refundId: units(record.refundId, true), orderId: units(record.orderId, true),
-    uid: units(record.uid, true), productIntegral: units(record.productIntegral), payment: units(record.payment), brokerage };
+    uid: buyerIdentity(record.uid), productIntegral: units(record.productIntegral), payment: units(record.payment), brokerage };
+}
+
+function buyerIdentity(value:unknown):number {
+  const uid=units(value);if(uid>2147483647)throw invalid();return uid;
 }
 
 /** Freeze the first received source BEFORE shrinking its totals. A child can

@@ -49,7 +49,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
   it.each(['external','embedded','orm'] as const)('registers the receipt in the complete %s schema before any standalone repair', async path => {
     if (path==='external') {
       const files=readdirSync('migrations').filter(name=>/^\d+.*\.sql$/.test(name)).sort();
-      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0173_customer_city_delivery.sql');
+      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
       for (const file of files) await f.db.transaction(async tx=>{
         await tx.execute(sql`SET LOCAL search_path=public,pg_temp`);
         await tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8')));
@@ -64,7 +64,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
       await f.exec((await api.generateMigration(api.generateDrizzleJson({}),snapshot)).join('\n'));
     }
     expect(await f.db.execute(sql`SELECT COUNT(*)::int AS count FROM pg_class
-      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?282:285}]);
+      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?282:path==='external'?286:285}]);
     await assertRegisteredDatabaseCohort(f.db,path);
     expect(await inspectAdminRefundOperation(f.db)).toMatchObject({present:true,complete:true});
     expect(await shape()).toMatchObject({safe:true,shape:ADMIN_REFUND_OPERATION_EXPECTED_SHAPE});

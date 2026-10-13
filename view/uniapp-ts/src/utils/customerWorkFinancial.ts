@@ -16,6 +16,8 @@ export function customerFinancialNotice(code:string):string{
 }
 export function customerFinancialResultMessage(result:CustomerFinancialResult|null):string{
  const receipt=result?.receipt;if(!receipt)return'原操作结果尚未确认，请继续查询原编号。';
+ if(receipt.outcome==='cash-settled')return customerFinancialTerminal(result!)?'人工现金返还记录及订单退款效果已核验完成。':'原人工现金返还记录尚未核验完成，请保留原编号继续查询，勿再次返还现金。';
+ if(receipt.outcome==='zero-settled')return customerFinancialTerminal(result!)?'零金额商品退回及订单效果已核验完成。':'原零金额商品退回尚未核验完成，请保留原编号继续查询。';
  if(receipt.outcome==='balance-settled')return customerFinancialTerminal(result!)?'退款资金已核验完成。':'原退款账务尚未核验完成，请保留原编号继续核对。';
  if(receipt.outcome==='provider-admitted'){
   if(customerFinancialTerminal(result!))return'退款资金已核验完成，请核对原申请和订单。';

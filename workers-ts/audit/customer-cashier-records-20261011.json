@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "timezone": "Asia/Singapore",
+  "generatedAt": "2026-10-11T06:23:40.960Z",
+  "status": "local_candidate_verified",
+  "baselineCommit": "0cae32bda15d3bf4f68ca507fcb1174e6b58fa87",
+  "scope": {
+    "actor": "current ordinary customer UserJWT",
+    "ownership": "immutable cashier origin creator only",
+    "endpoints": [
+      "GET /api/mobile/work/cashier/second-card/records",
+      "GET /api/mobile/work/cashier/second-card/records/:id"
+    ],
+    "pages": [
+      "/pages/customer-work/cashierRecords",
+      "/pages/customer-work/cashierRecord"
+    ],
+    "genericAssistedModuleComplete": false
+  },
+  "checks": [
+    {
+      "name": "Worker original unit/runtime types",
+      "exitCode": 0,
+      "receipt": {
+        "path": ".cache/customer-cashier-records-typecheck-final3-execution-20261011.json",
+        "sha256": "17F782017B8C1AD3FB09E35EE6549C5BDF380276B0673708AADF46EFCAE99CB4"
+      },
+      "log": {
+        "path": ".cache/customer-cashier-records-typecheck-final3-20261011.log",
+        "sha256": "5456BD1693A69B63084990F40B82971ACBF6B368FE4093B40327CB757B7FE05B"
+      }
+    },
+    {
+      "name": "Native PG16 two complete files",
+      "passed": 33,
+      "records": 16,
+      "existingCore": 17,
+      "failed": 0,
+      "exitCode": 0,
+      "receipt": {
+        "path": ".cache/customer-cashier-records-pg16-20261011/native-final-execution.json",
+        "sha256": "98403AF684D51C2D6EC82C5A8B96368D7DB801AC5CA010872E19219F61256E62"
+      },
+      "log": {
+        "path": ".cache/customer-cashier-records-pg16-20261011/native-final.log",
+        "sha256": "BCAC05A614F64E85236EF00054E22F5270C9BD5C043C10A250CBC300A242A43B"
+      }
+    },
+    {
+      "name": "Worker two complete ordinary regressions",
+      "passed": 91,
+      "exitCode": 0,
+      "log": {
+        "path": ".cache/customer-cashier-records-regression-final-20261011.log",
+        "sha256": "1119389DE3F8A8FD3B406EF8A6B07997AA813073F590A85B32A74FE339933B16"
+      }
+    },
+    {
+      "name": "Uni three complete runtime files",
+      "passed": 69,
+      "newRecordsIncluded": 27,
+      "failed": 0,
+      "skipped": 0,
+      "log": {
+        "path": ".cache/customer-cashier-read-fe-final2-20261011/runtime-combined.stdout.log",
+        "sha256": "D64F90E5D53185D3DFBA6E47AE52240A09D5ADEC805333592D2AF2836CE7E86B"
+      }
+    },
+    {
+      "name": "Uni original full types and three platform builds",
+      "checks": [
+        {
+          "name": "typecheck",
+          "exitCode": 0,
+          "startedAt": "2026-10-11T06:16:04.7616385Z",
+          "completedAt": "2026-10-11T06:16:22.6223459Z"
+        },
+        {
+          "name": "h5",
+          "exitCode": 0,
+          "startedAt": "2026-10-11T06:16:22.6988540Z",
+          "completedAt": "2026-10-11T06:16:43.0430545Z"
+        },
+        {
+          "name": "mp-weixin",
+          "exitCode": 0,
+          "startedAt": "2026-10-11T06:16:43.0451142Z",
+          "completedAt": "2026-10-11T06:16:56.8630348Z"
+        },
+        {
+          "name": "app",
+          "exitCode": 0,
+          "startedAt": "2026-10-11T06:16:56.8679969Z",
+          "completedAt": "2026-10-11T06:17:12.4694390Z"
+        }
+      ],
+      "receipt": {
+        "path": ".cache/customer-cashier-read-fe-final2-20261011/checks.json",
+        "sha256": "A2C55F9E1E9B77595786FE516D244CEAA911E7573FA35F3304019B44618E3027"
+      }
+    },
+    {
+      "name": "Current compiled H5 synthetic desktop/mobile browser",
+      "passed": 9,
+      "unexpectedApis": 0,
+      "pageErrors": 0,
+      "receipt": {
+        "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12984-202f-70b0-81ad-b34a7f97222d/customer-cashier-final2/customer-cashier-read-browser-result.json",
+        "sha256": "987D41BADE89BE5F964BEBC4039E5F8F1FA848389D989279661C2003CAB9DF17"
+      }
+    },
+    {
+      "name": "Fresh route and dated Uni inventories",
+      "exitCode": 0,
+      "routeTotals": {
+        "php": 1904,
+        "ts": 2323,
+        "matched": 911,
+        "executableMatched": 890,
+        "unavailable": 21,
+        "missing": 993,
+        "retired": 17,
+        "actionableMissing": 976,
+        "coveragePercent": 47.8,
+        "executableCoveragePercent": 46.7,
+        "effectiveExecutableCoveragePercent": 47.2
+      },
+      "uniCounts": {
+        "legacyLogicalRoutes": 151,
+        "targetRoutes": 127,
+        "directRegistered": 28,
+        "legacyCompatibilityRules": 116,
+        "candidateCoveredRules": 62,
+        "partialReplacementRules": 54,
+        "gaps": 7
+      },
+      "route": {
+        "path": ".cache/customer-cashier-records-route-audit-20261011.json",
+        "sha256": "39F73ECE8578951838100BA81461E4793CCA0288EFA59E84B5F2863266F48828"
+      },
+      "uni": {
+        "path": ".cache/customer-cashier-records-uni-audit-final2-20261011.json",
+        "sha256": "308FFD933BF298042E49C6329FC7DCE62151F25F15BCF0A1A9BBBBA846FB497A"
+      }
+    }
+  ],
+  "cleanup": {
+    "nativeClusters": [
+      {
+        "path": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-1PlwQZ",
+        "pg_ctl_exit": 3,
+        "status": "pg_ctl: no server running",
+        "postmaster_pid_exists": false
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-hH4bQf",
+        "pg_ctl_exit": 3,
+        "status": "pg_ctl: no server running",
+        "postmaster_pid_exists": false
+      },
+      {
+        "path": "C:\\cinagroup\\cinashop\\.cache\\finance-postgres-tBxMBB",
+        "pg_ctl_exit": 3,
+        "status": "pg_ctl: no server running",
+        "postmaster_pid_exists": false
+      }
+    ],
+    "fixturesRemaining": 0,
+    "fixtureProcesses": 0,
+    "fixtureListeners": 0,
+    "mainUniDependenciesRestored": true,
+    "browser": {
+      "serverClosed": true,
+      "browserClosed": true
+    }
+  },
+  "runtime": {
+    "version": "16.15",
+    "provenance": {
+      "path": ".cache/customer-cashier-records-pg16-20261011/runtime-receipt.json",
+      "sha256": "B3157FDE2EA4B9DDF72A7C55696B39E1D92DA035D6AEBD9D67B60DC1BC4E9263"
+    },
+    "vendor": "https://www.enterprisedb.com/download-postgresql-binaries",
+    "officialArchive": "https://get.enterprisedb.com/postgresql/postgresql-16.15-3-windows-x64-binaries.zip",
+    "sourceArchiveEtag": "945f0d70da726baba8f41ab71bb97eba-40",
+    "selectedFiles": 1635,
+    "crcVerified": true,
+    "systemServiceInstalled": false
+  },
+  "earlierOutcomes": {
+    "workerInitialTypes": "actual source diagnostics preserved in initial/unit/final logs; final3 is authoritative",
+    "defaultUniAudit": "Oct1 default ledger conflicts with current aliases; original failure retained, new dated ledger retains all latest classifications",
+    "nativeFirstRun": "32 passed / 1 failed; new test hardcoded14.00, genuine member price12.60; test now binds actual order.payPrice, business unchanged",
+    "nativeFirstFailure": {
+      "path": ".cache/customer-cashier-records-pg16-20261011/native-first-failure.txt",
+      "sha256": "202E401547EEF4A3E593189CB5918362377D0266AB3E90BAD3FCAEDB628C7FA6"
+    },
+    "nativeFirstFailureFormat": "labelled tool-output transcript excerpt; not a full raw Vitest log",
+    "sandboxStartupFailures": "no business assertion credit; localhost/temporary rename/browser failures retained",
+    "warnings": "existing SSR anonymous-component and identified Vue Router deprecation retained; expected current-role403 is explicitly classified"
+  },
+  "checklist": {
+    "total": 404,
+    "complete": 246,
+    "open": 158,
+    "checkboxChanges": 0
+  },
+  "limitations": [
+    "Scoped local increment only; generic customer assisted selection/cart/checkout/payment remains open.",
+    "Current source hashes were captured after checks; no claim of frozen whole-project CI or independent full physical acceptance.",
+    "Production roles/provider/device/Hyperdrive/capacity/release commissioning remains open."
+  ],
+  "actions": {
+    "productionDdl": false,
+    "productionBusinessWrites": false,
+    "deploy": false,
+    "commit": false,
+    "push": false
+  },
+  "currentFiles": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "137A3EC9438A9F00E1035A8A99EEA0D1DD5CB9723FFF72F64E6AD73DC6373501"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "354C8367012CF6A82440977DA05476A7F3D8598E42AAA6F8569E67BF45EAA6E7"
+    },
+    {
+      "path": "view/common/customerWorkRoute.ts",
+      "sha256": "5676A85F4726CE7EBA19F2CE69D3FB5294069338D3F024A25CE1FFA9A16AAA18"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "7F75A0794B8B263F4FBEFE7DF6F1D1360C2BB8293727A89A8A6A1600A92EF2EB"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "5DFE0D55634DB6DA7847E1E3EA9B9927C70CA560B67C6175FA2A472B17CCA6AB"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "F1EBDFF8A2FFE7D356401D65B1B2E8AD727F411D79DB51F4653589A575B330C8"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/index.vue",
+      "sha256": "9D386D620BCA8314F66AE014396A497C7B741952E1F3804D02FBCC3379958533"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWork.ts",
+      "sha256": "B942C5AE2370944190C4DA83C921F4D6BD489240C8F58DF928DB9451628D1E68"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWork.ts",
+      "sha256": "CB70B44BB2DD7E0D2B8F00B39F00310762D3C00FD409164D32F37F2C9018F7C2"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "F942787DB230E6E2F305B29A2D38B3C631F07C1182913C7893EB47C6224A01DC"
+    },
+    {
+      "path": "workers-ts/scripts/uniapp-frontend-parity-audit.ts",
+      "sha256": "79C486A157F143E7D9E5D809D4374615DF1567CFD700976FB047B37CAC2C104E"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkCashierController.ts",
+      "sha256": "4A9EBA9E78BF5F2C41FE097E023B5E46EF1B335A53B8F6465825AC447AC27444"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "2F5707C1F898959CD9B95B19C7A3035B0499E48EAC5C5F80833C16B2DC68F99D"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkReadService.ts",
+      "sha256": "F83FB172ACADBDAE3F9D00E2AF3FD912719082AAE07FD0810468D8D28392C663"
+    },
+    {
+      "path": "workers-ts/src/services/order/CashierSecondCardOrigin.ts",
+      "sha256": "E403825E683ACBA8D472371A5C419705F65848095E50692048EF761F23B55BE2"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/customer-work-cashier-read-runtime.test.cjs",
+      "sha256": "CE979A5597F1DEF51CBCB65DB94E1A007DAA29CC42721C686A44566995B285BD"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkCashierRead.ts",
+      "sha256": "1BF91A28CC9F7E2E67D3F736466C9F9BA08A52BA8ED2C767A862DB39AF8F420F"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerCashierRead.ts",
+      "sha256": "7B6D580B382BB24007C6319696F937C8FF26F4DA5D3DF192B6ACB038A874C655"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashierRecord.vue",
+      "sha256": "D2BF056599BBE0459169B510B13A95BEDC95FAC3BC703A4F7CC91BABD0386B3B"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/cashierRecords.vue",
+      "sha256": "1C46EA0E4F22AF17710A071B66D421BE591928A653C7E4D56133BD431D81E988"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/customerWorkCashierRead.ts",
+      "sha256": "2B801C6819F074B3D1CDCA81F9425CA04B6EB8B86904DD1FF1A527918E094427"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/customerWorkCashierRead.ts",
+      "sha256": "184E565EED983C6141D4B2FB43D3AD6A36F07A0A52CCC435A2D4503FD06BDD5D"
+    },
+    {
+      "path": "workers-ts/audit/uniapp-frontend-parity-customer-cashier-records-followup-20261011.json",
+      "sha256": "FDCD0E50D04ACE51325EE9B47083EF0999557576ED55926173B326A8FB03D911"
+    },
+    {
+      "path": "workers-ts/docs/customer-cashier-records-20261011.md",
+      "sha256": "EF7D01EDB6B21F87C4C8F55BA4E71469DC7729D2268E12C3B25CF678B2056C41"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkCashierReadService.ts",
+      "sha256": "AB53D073B048DF490B82DD33B8194BE225245DCAFF3C333C7971F0E81725430A"
+    },
+    {
+      "path": "workers-ts/test/customer-cashier-records-postgres.test.ts",
+      "sha256": "E2F33E6B0B807FF71BBFB42AE1F8285C4B3D574B5669B9840E7D1A57554AFAC2"
+    }
+  ]
+}

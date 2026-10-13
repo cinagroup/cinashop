@@ -50,14 +50,8 @@ import {
   getOrderInvalidTime,
 } from "@/services/payment/OrderPaymentPolicy";
 
-/** 支付方式常量 (对应 PHP PayServices) */
-export const PayType = {
-  WEIXIN: "weixin",
-  YUE: "yue",
-  OFFLINE: "offline",
-  ALIPAY: "alipay",
-  INTEGRAL: "integral",
-} as const;
+import { PayType } from "@/services/payment/PayType";
+export { PayType } from "@/services/payment/PayType";
 
 export interface ApplyStoreOrderPaymentInput {
   orderId: number;

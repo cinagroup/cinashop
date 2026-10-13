@@ -8,6 +8,7 @@ import {
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { isCashierFormAttachmentKey } from './CashierFormAttachmentScope';
 import {
   assistedFormAttachmentKey, assertAssistedFormAttachmentScope, isAssistedFormAttachmentKey,
   type AssistedFormAttachmentScope,
@@ -238,6 +239,7 @@ export function isAttachmentObjectCleanupMessage(
       key.length <= 180 &&
       (
         isAssistedFormAttachmentKey(key) ||
+        isCashierFormAttachmentKey(key) ||
         /^attachments\/(?:admin|supplier|user|kefu|visitor)\/[1-9]\d*\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|png|webp|gif|mp4)$/.test(key) ||
         /^attachments\/tmp\/supplier\/[1-9]\d*\/[0-9a-f]{64}\/(?:[1-9]\d{0,2})\.part$/.test(key)
       )

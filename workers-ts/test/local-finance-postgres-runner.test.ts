@@ -1,9 +1,76 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve, win32 } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { resolveLocalFinanceCachePath } from '../scripts/local-finance-cache-path.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const script = resolve(root, 'scripts/run-local-finance-postgres.mjs');
+
+describe('local PostgreSQL runner cache boundary', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'cinashop-finance-runner-cache-'));
+  const bin = join(directory, 'bin'), hook = join(directory, 'block-native-launch.mjs');
+  mkdirSync(bin);
+  for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) {
+    writeFileSync(join(bin, `${name}${process.platform === 'win32' ? '.exe' : ''}`), 'Native launch must be blocked');
+  }
+  const sentinel = 'CACHE_ADMISSION_NATIVE_COMMAND_BOUNDARY';
+  writeFileSync(hook, `import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
+childProcess.spawnSync = () => { throw new Error('${sentinel}'); };
+syncBuiltinESMExports();
+`);
+  afterAll(() => rmSync(directory, { recursive: true, force: true }));
+  function admission(cache: string | undefined) {
+    const env = { ...process.env };
+    delete env.TEST_FINANCE_LOCAL_CACHE_ROOT;
+    if (cache !== undefined) env.TEST_FINANCE_LOCAL_CACHE_ROOT = cache;
+    const result = spawnSync(process.execPath,
+      ['--import', pathToFileURL(hook).href, script, '--schema-maintenance', bin, 'audit:unit-shard-1'],
+      { cwd: root, env, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    return result.stderr;
+  }
+  it.each(['', 'relative-cache'])('rejects nonabsolute override %j before native commands', cache => {
+    const error = admission(cache);
+    expect(error).toContain('TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
+    expect(error).not.toContain(sentinel);
+  });
+  it('admits an absolute local override up to the intercepted native command', () => {
+    expect(admission(directory)).toContain(sentinel);
+  });
+  it('keeps the original checkout cache default and explicitly rejects a Windows shared checkout', () => {
+    const error = admission(undefined);
+    if (process.platform === 'win32' && root.startsWith('\\\\')) {
+      expect(error).toContain('Windows PostgreSQL cache cannot use a UNC path');
+      expect(error).not.toContain(sentinel);
+    } else expect(error).toContain(sentinel);
+  });
+  it.each(['\\\\server\\share\\cache', '//server/share/cache', '\\\\?\\UNC\\server\\share\\cache'])
+    ('rejects Windows UNC override %j before native commands', cache => {
+      expect(() => resolveLocalFinanceCachePath(cache, win32.resolve('C:/cinashop/workers-ts'), 'win32'))
+        .toThrow('Windows PostgreSQL cache cannot use a UNC path');
+      if (process.platform === 'win32') {
+        const error = admission(cache);
+        expect(error).toContain('Windows PostgreSQL cache cannot use a UNC path');
+        expect(error).not.toContain(sentinel);
+      }
+    });
+  it('rejects drive-relative and current-drive-rooted Windows overrides', () => {
+    expect(() => resolveLocalFinanceCachePath('C:finance-cache', win32.resolve('C:/cinashop/workers-ts'), 'win32'))
+      .toThrow('TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
+    expect(() => resolveLocalFinanceCachePath(win32.sep + 'finance-cache', win32.resolve('C:/cinashop/workers-ts'), 'win32'))
+      .toThrow('absolute local drive directory on Windows');
+    if (process.platform === 'win32') {
+      expect(admission('C:finance-cache')).toContain('TEST_FINANCE_LOCAL_CACHE_ROOT must name an absolute directory');
+      const error = admission(win32.sep + 'finance-cache');
+      expect(error).toContain('absolute local drive directory on Windows');
+      expect(error).not.toContain(sentinel);
+    }
+  });
+});
 
 describe('local PostgreSQL runner command boundary', () => {
   it.each([1, 2])('admits only the complete native shard %i maintenance alias', shard => {
@@ -82,7 +149,7 @@ describe('local PostgreSQL runner command boundary', () => {
   });
   it.each(['admin-refund-operation-http','runtime-business-login','assisted-purchase-runtime-postgres','assisted-purchase-flow-postgres','admin-user-list-postgres','admin-runtime-login','presale-runtime-permissions','membership-pricing-policy','purchase-quota-refund-receipt-postgres','purchase-quota-payment-ledger-postgres','unpaid-mixed-order-cancellation-postgres','purchase-origin-evidence-postgres','purchase-origin-installation',
     'purchase-cancellation-evidence-postgres',
-    'purchase-cancellation-installation',
+    'purchase-cancellation-installation','customer-cashier-abandon-postgres','customer-work-cash-refund-postgres',
     'finance-fixture-advisory-isolation','checkout-line-finance','checkout-coupon-template-authority','checkout-membership-boundary',
     'checkout-brokerage-boundary','checkout-brokerage-authority','checkout-brokerage-paid-authority','checkout-member-evidence',
     'checkout-catalog-management','checkout-mobile-product-concurrency','checkout-out-product-concurrency','checkout-sku-lifecycle-concurrency',
