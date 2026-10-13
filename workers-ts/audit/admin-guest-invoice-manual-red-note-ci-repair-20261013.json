@@ -18,7 +18,10 @@
       "path": "workers-ts/src/migrations/runCustomerManualRefund.ts",
       "codeBeforeFix": "8c4b9d2f5237e3edfbb75a6547a0310403fcb15d",
       "canonicalSha256": "2c51aa5f0ace2fdbe480e2fefa176a33a04a1edcaa355d1ebe173dc44af37c8b"
-    }
+    },
+    "integratedReleaseCommit": "d703e540d632d3630d91aa606accaeff72bf1a55",
+    "integrationCommitBeforeReport": "e97f146b868650e340b6c5609c70e92b88094bf1",
+    "integrationDelta": "Reviewed Manager connection configuration; five shared cache/clock fixes and the diagnostic removal already present. No deployment."
   },
   "originalCi": {
     "runId": 38241472740,
@@ -109,7 +112,7 @@
     "noCaseFilters": true
   },
   "finalAcceptance": {
-    "status": "pending_new_common_commit_after_observability_repair",
+    "status": "pending_final_common_source_validation",
     "fullTypes": [
       "tsconfig.json",
       "tsconfig.runtime-test.json"
@@ -147,6 +150,22 @@
       "observedReleaseBlockers": 6,
       "productionSourceFiles": 1103
     },
-    "proofSha256": "05e7b4fbde68cdf4ab069a955e67075909bb8970d4beea0c66d30e176b01d1f0"
+    "proofSha256": "05e7b4fbde68cdf4ab069a955e67075909bb8970d4beea0c66d30e176b01d1f0",
+    "afterIntegration": {
+      "commitBeforeReport": "e97f146b868650e340b6c5609c70e92b88094bf1",
+      "exitCode": 0,
+      "stdoutSha256": "6a73c655b8393dbde98abc3af152d50a400b1fdcb023ccf674f104606388cc31",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": {
+        "policyVersion": 1,
+        "signals": 17,
+        "components": 10,
+        "requiredEvents": 53,
+        "logSamplingRate": 1,
+        "productionAlerts": "pending",
+        "observedReleaseBlockers": 6,
+        "productionSourceFiles": 1103
+      }
+    }
   }
 }
