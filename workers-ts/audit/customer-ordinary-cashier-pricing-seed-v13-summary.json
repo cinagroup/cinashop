@@ -1,0 +1,431 @@
+{
+  "kind": "customer-ordinary-cashier-pricing-seed-v13-summary",
+  "createdAtUtc": "2026-10-13T10:03:58.683Z",
+  "candidate": {
+    "head": "845b33e7f8a2ca3f25fa1220e904a2e93c188596",
+    "sourceRoot": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012",
+    "validationRoot": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-ordinary-backend-v13",
+    "sourceManifest": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\source-manifest.json",
+      "bytes": 1544419,
+      "sha256": "36894ef217c0b4707efb7c5aa95e011429cfb0692d4dbdca25b19a2460f58657"
+    },
+    "toolSeal": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\tools-seal.json",
+      "bytes": 5235,
+      "sha256": "063bdc49a1eb715e5d9b8439a003ce92cb1b1bffbe765822e14f822ac15ae080"
+    },
+    "finalReceipt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\final-receipt.json",
+      "bytes": 31216,
+      "sha256": "915d4e45686da510e6987d6aa261cd1a416940f446ef465cfc5bd73f19312f98"
+    },
+    "frozenRepairFiles": [
+      {
+        "path": "workers-ts/test/unpaid-mixed-order-cancellation-postgres.test.ts",
+        "bytes": 19666,
+        "sha256": "b81861494a889a2c7393adbf799582ed5402b9aa63d3f7fa3b1422d58b86387f",
+        "change": "Protect only the existing checkout(r) fixture helper with a compatible owner SHARE guard on member_right and system_config, while the separate restricted runtime LOGIN executes the original production NOWAIT capability and semantic reread. Observe the exact original routine invocation with a delegating transaction/execute spy, then commit the owner guard before any order read, damage, cancellation or compensation assertions."
+      },
+      {
+        "path": "workers-ts/audit/customer-ordinary-cashier-ci-repair-v12-summary.json",
+        "bytes": 40778,
+        "sha256": "0195aeb147d95d4194816bc96b0a1f4c0ea120a7ca6dabea161ed94ae707ea92",
+        "change": "Correct historical Browser QA instrument version 13 versus two viewport flows; record actual Chromium 154.0.8037.98. Preserve the original incorrect JSON in ignored evidence. No implementation or validation result changes."
+      }
+    ],
+    "repairFileCount": 2,
+    "productionSourceEdits": 0,
+    "frontendSourceEdits": 0,
+    "summaryOnlyFilesAreOutsideRuntimeCredit": true
+  },
+  "problemAndResult": "The published 845 CI failed one cancellation evidence case during its checkout seed, before the case damaged line evidence or invoked cancellation. Only that file's existing checkout helper now holds a compatible self-owned pricing SHARE guard while the real restricted LOGIN invokes the original NOWAIT capability. The complete declared V13 local scope passes; the original failed CI remains failed history.",
+  "validation": {
+    "labels": [
+      {
+        "label": "typecheck-unit",
+        "startedAtUtc": "2026-10-13T09:36:47.263Z",
+        "endedAtUtc": "2026-10-13T09:41:06.251Z",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": true,
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-unit-receipt.json",
+          "bytes": 1684,
+          "sha256": "676cb782f7fc5f16876dac2e6e253f8a244168a3a8fac3c10a79d2b36845fa61"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-unit.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-unit-before.json",
+          "bytes": 24681,
+          "sha256": "96c69c8fdacee51c851d42fa3b691760112226cc179132e3f8b99c200ddcc4ba"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-unit-after.json",
+          "bytes": 24681,
+          "sha256": "66e8fd665cc5972a65c3f30ede15de589bdd19bb94da7aec912d03d8a2375e8f"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "summaries": [],
+        "cleanup": null
+      },
+      {
+        "label": "typecheck-runtime",
+        "startedAtUtc": "2026-10-13T09:41:58.361Z",
+        "endedAtUtc": "2026-10-13T09:45:50.152Z",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": true,
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-runtime-receipt.json",
+          "bytes": 1696,
+          "sha256": "ae167ad76b4d912780aa2fa0cc2531587ea772aebab39c1b1c226bb856813198"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-runtime.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-runtime-before.json",
+          "bytes": 24681,
+          "sha256": "8b0d69aa8461f701c421ca89b5fe8d880dc776b28dc75a1187833378bda0cd22"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\typecheck-runtime-after.json",
+          "bytes": 24681,
+          "sha256": "9c928a73d93cb790eed3210ba82e58c153bf40095d95ffa534dbfc6796d803e9"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "summaries": [],
+        "cleanup": null
+      },
+      {
+        "label": "native-pricing-cancellation",
+        "startedAtUtc": "2026-10-13T09:46:35.291Z",
+        "endedAtUtc": "2026-10-13T09:58:41.763Z",
+        "args": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+          "test/unpaid-mixed-order-cancellation-postgres.test.ts",
+          "test/checkout-pricing-service-runtime.test.ts",
+          "test/refund-runtime-permissions.test.ts",
+          "test/purchase-cancellation-evidence-postgres.test.ts"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\native-pricing-cancellation-receipt.json",
+          "bytes": 2200,
+          "sha256": "7b63ed8c25dc09c057665a700b0efe67ace2b8ca184d6a614d97353888c11050"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\native-pricing-cancellation.log",
+          "bytes": 18432,
+          "sha256": "818a3aa8d53d23624faf41d9dccb2c4b3fb4c577060e00b0fcc4c4dde2795680"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\native-pricing-cancellation-before.json",
+          "bytes": 24681,
+          "sha256": "cb747a6b0ab85b926be1f189aca4a522a6fc61f546d03d9c00935a8c7f9eefc6"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\native-pricing-cancellation-after.json",
+          "bytes": 24681,
+          "sha256": "94783240dca7f63a63ceed21442ad7a826be400ca81f1dcc7e655cffc858de47"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "summaries": [
+          "Test Files  4 passed (4)",
+          "Tests  81 passed (81)",
+          "Duration  588.69s (transform 14.60s, setup 0ms, import 27.87s, tests 997.66s, environment 1ms)"
+        ],
+        "cleanup": {
+          "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\pg-cache-native-pricing-cancellation\\finance-postgres-NMpp2c",
+          "fixturesRemainingZero": true,
+          "runnerStopped": true,
+          "independentStatus": 3
+        }
+      }
+    ],
+    "fullTypeConfigurations": 2,
+    "wholeTestFiles": 4,
+    "tests": 81,
+    "failed": 0,
+    "skipped": 0,
+    "wholeNativeFiles": [
+      {
+        "file": "test/unpaid-mixed-order-cancellation-postgres.test.ts",
+        "actualVerbosePassedCases": 22
+      },
+      {
+        "file": "test/checkout-pricing-service-runtime.test.ts",
+        "actualVerbosePassedCases": 15
+      },
+      {
+        "file": "test/refund-runtime-permissions.test.ts",
+        "actualVerbosePassedCases": 10
+      },
+      {
+        "file": "test/purchase-cancellation-evidence-postgres.test.ts",
+        "actualVerbosePassedCases": 34
+      }
+    ],
+    "allThreeLabelsPassed": true,
+    "fullSourceBeforeAfterAndFinal": {
+      "head": "845b33e7f8a2ca3f25fa1220e904a2e93c188596",
+      "fullLiveAndStageRawBytes": true,
+      "capturedSourceFiles": 3889,
+      "ownedWorkerFiles": 2840,
+      "auxiliaryFiles": 14,
+      "fullInventoryUnchanged": true,
+      "allVerified": true
+    },
+    "fullToolsBeforeAfterAndFinal": {
+      "borrowedPhysicalFiles": 43992,
+      "freshNormalPostinstallWorkerFiles": 7639,
+      "originalInstallationInputBindings": 15,
+      "stagedMappings": {
+        "physicalRoots": 4,
+        "aliases": 1037,
+        "copiedFiles": 4,
+        "allVerified": true
+      },
+      "immutableAdditionalTools": {
+        "sealSha256": "063bdc49a1eb715e5d9b8439a003ce92cb1b1bffbe765822e14f822ac15ae080",
+        "verifiedExtraFiles": 17,
+        "allVerified": true
+      },
+      "allVerified": true,
+      "frontendInstallationCredit": false
+    },
+    "native": {
+      "version": "postgres (PostgreSQL) 16.15",
+      "versionNumber": 160015,
+      "host": "127.0.0.1",
+      "port": 56783,
+      "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\pg-cache-native-pricing-cancellation\\finance-postgres-NMpp2c",
+      "cleanup": {
+        "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v13\\pg-cache-native-pricing-cancellation\\finance-postgres-NMpp2c",
+        "fixturesRemainingZero": true,
+        "runnerStopped": true,
+        "independentStatus": 3
+      }
+    },
+    "originalCompleteFilesTitlesCasesAndBudgetsPreserved": true,
+    "runnerTimeoutMs": 600000,
+    "fullCICredit": false,
+    "wholeRepositoryCredit": false
+  },
+  "fixtureConcurrencyProof": {
+    "selfOwnedFreshDatabase": true,
+    "ownerGuardTables": [
+      "public.member_right",
+      "public.system_config"
+    ],
+    "ownerGuardMode": "SHARE",
+    "actualGrantedShareLocksRequired": 2,
+    "separateRestrictedLoginPidRequired": true,
+    "originalCheckoutCallbackAndExecuteObjectsAndPgResultsDelegated": true,
+    "originalRoutine": "public.checkout_lock_pricing_v1()",
+    "exactLiteralRoutineInvocationObservedWhileGuardHeld": true,
+    "routineObservationIsAssertedInsidePassingOriginalCasesNotAnInventedAggregateCount": true,
+    "ownerGuardCommitsBeforeOrderReadsAndAllDamageCancellationAssertions": true,
+    "originalRuntimeLockTimeoutMs": 3000,
+    "originalRuntimeStatementTimeoutMs": 30000,
+    "originalCaseHookTimeoutMs": 45000,
+    "noGrantOrRetryOrProductionBudgetChange": true,
+    "originalBusyWriterAndMaintenanceGateRejectionsRemainWholeTested": true,
+    "originalFailureLockHolderObserved": false,
+    "originalPgErrorCodeCaptured": false,
+    "provenRootCauseOfOriginalContention": false
+  },
+  "publishedCiHistory": {
+    "runId": 38365030240,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38365030240",
+    "headSha": "845b33e7f8a2ca3f25fa1220e904a2e93c188596",
+    "status": "completed",
+    "conclusion": "failure",
+    "successJobs": 9,
+    "failedJobs": 2,
+    "cancelledJobs": 0,
+    "wholeWorkerFiles": 973,
+    "tests": 16162,
+    "passed": 16161,
+    "failed": 1,
+    "skipped": 0,
+    "shards": [
+      {
+        "shard": 1,
+        "files": 487,
+        "tests": 8783,
+        "passed": 8783,
+        "failed": 0
+      },
+      {
+        "shard": 2,
+        "files": 486,
+        "tests": 7379,
+        "passed": 7378,
+        "failed": 1
+      }
+    ],
+    "syntheticCheckoutMergeSha": "ec962734139384549454627e5f3ca36ec5c8b901",
+    "pullRequestBaseSha": "faca8bf63838e5d46b5c8ebed58f691c5ea3857f",
+    "branchHeadAndSyntheticMergeAreDistinct": true,
+    "allElevenOriginalJobLogsCaptured": true,
+    "originalJobLogBytes": 97593951,
+    "terminalSummary": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-845b33e7-38365030240\\terminal-summary.json",
+      "bytes": 57712,
+      "sha256": "2496d883148746a88614fbb4654b081b12015066d05f0f9f5ebc7ae5cd910ce6"
+    },
+    "exactRawArchive": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-845b33e7-38365030240\\archive-manifest-v2.json",
+      "bytes": 16565,
+      "sha256": "40951c4ff8aa8a912b3f42b39777eea156cc33160e29cf9f898adddb731133a7"
+    },
+    "officialArtifactIndependentCoverage": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-845b33e7-38365030240\\artifact-coverage-v1.json",
+      "bytes": 55917,
+      "sha256": "8b1062699e310a0a0cf6ba81ae7bd67ece505cfc9ff49c665c893f5b842cad81"
+    },
+    "independentArtifactProofDoesNotGrantPassCredit": true,
+    "linuxUniAppOriginalToolchainTests": 1177,
+    "linuxUniAppOriginalToolchainPassed": 1177,
+    "localScopeDoesNotChangePublishedCiConclusion": true
+  },
+  "originalFailure": {
+    "file": "test/unpaid-mixed-order-cancellation-postgres.test.ts",
+    "suite": "unpaid mixed-owner cancellation on PostgreSQL16",
+    "title": "refuses inconsistent cancellation line evidence without restoring resources: quantity",
+    "elapsedMs": 8124,
+    "rawJobLog": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-845b33e7-38365030240\\job-115187996991.log",
+      "bytes": 34652161,
+      "sha256": "acc5515b0b1fdb8ada7065148a95f9291e637c622daa3e51d6dae18114623ebb"
+    },
+    "caseRawLine": 10224,
+    "stackRawLines": [
+      34715,
+      34735
+    ],
+    "actualError": "ValidateException: 订单计价配置正在更新，请稍后重新确认",
+    "serializedApplicationCode": 400,
+    "serializedApplicationData": null,
+    "originalPgErrorCode": null,
+    "stack": [
+      "CheckoutPricingSources.ts:85:60",
+      "StoreOrderCreateService.ts:3106",
+      "StoreOrderCreateService.ts:createWithRuntime:1968",
+      "unpaid-mixed-order-cancellation-postgres.test.ts:29",
+      "unpaid-mixed-order-cancellation-postgres.test.ts:89",
+      "kefuSequenceRunnerDatabase.ts:125"
+    ],
+    "trigger": "Checkout seed failed before evidence mutation and cancellation assertions.",
+    "sourceInference": "The actual stack points to the production lock-refusal translation branch, which maps nested 55P03; the original raw output did not record a PgError object or code. No actual lock holder or broader root cause is claimed."
+  },
+  "historicalBrowserMetadataCorrection": {
+    "originalBrowserInstrumentVersion": 13,
+    "originalBrowserScenarioCount": 2,
+    "actualChromiumVersion": "154.0.8037.98",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1280,
+        "height": 900,
+        "zero": false,
+        "actions": 7
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "zero": true,
+        "actions": 7
+      }
+    ],
+    "originalReceipt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\ordinary-ui-tools-v2\\browser-qa-v13\\receipt.json",
+      "bytes": 132801,
+      "sha256": "8d3ce902749d9ab1b289bc58789d1602c5c087161ec0444090d6c38efa424cd8"
+    },
+    "navigationSummary": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-navigation-v8-summary.json",
+      "bytes": 22072,
+      "sha256": "f57a5c231437c85315fa44fbd8811c38570aa605216fb7e00c6e5f315aa02ca3"
+    },
+    "originalIncorrectV12JsonPreservedInIgnoredBeforeArchive": true,
+    "currentBrowserOrFrontendExecutionCredit": false,
+    "originalC8FlowsWereSyntheticLocalApiAndNotProductionFinancialCredit": true
+  },
+  "earlierLocalScope": {
+    "epoch": "V12",
+    "fullTypeConfigurations": 2,
+    "wholeFiles": 12,
+    "tests": 251,
+    "failed": 0,
+    "skipped": 0,
+    "originalFinalReceipt": {
+      "path": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-ordinary-backend-v12/final-receipt.json",
+      "bytes": 41457,
+      "sha256": "296ff359ca5a0426056ea2c4b1a43aa62a1ea2e8c5398f19c1be352cc05d3593"
+    },
+    "currentFourWholeFilesDoNotClaimFreshOriginalFiveNative111OrEntireV12Credit": true,
+    "priorB19CiRemains22Failures": true,
+    "priorV9V10FailuresAndV11PreparedOnlyPreserved": true
+  },
+  "readiness": {
+    "ordinaryRuntimeAndSixteenInternalRoutesUnchanged": true,
+    "originalUuidAndAtomicAbandonmentContractsUnchanged": true,
+    "manualInvoiceSqlPinsAndStartupUnchanged": true,
+    "uncommissionedProductionCapabilityClosed": true,
+    "noProductionDDL": true,
+    "deployed": false
+  },
+  "preservation": {
+    "archiveManifest": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\backend-v13\\archive-manifest.json",
+      "bytes": 20847,
+      "sha256": "06557c22e47a1b622b6ecfb7d88bb38107ca25d018cca9316c9f88a83c0d9dca"
+    },
+    "rawFiles": 42,
+    "rawBytes": 2337826,
+    "allCopiesAndOriginalAfterVerified": true,
+    "old845OfficialArtifactsAndV12EvidenceUnmodified": true,
+    "sourceSnapshotAndPhysicalToolsRemainAtOriginalCPaths": true,
+    "rawIgnoredAndNotForGitHub": true
+  },
+  "creditBoundary": {
+    "localExactV13ScopePassed": true,
+    "currentFullCI": false,
+    "productionFinancialExecution": false,
+    "productionDDL": false,
+    "deployed": false
+  }
+}

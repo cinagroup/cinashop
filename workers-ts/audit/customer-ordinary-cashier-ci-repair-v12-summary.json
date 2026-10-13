@@ -832,7 +832,9 @@
     "originalHookTests": 1180,
     "originalHookFailed": 0,
     "originalHookSkipped": 0,
-    "originalBrowserScenarioCount": 13,
+    "originalBrowserInstrumentVersion": 13,
+    "originalBrowserScenarioCount": 2,
+    "actualChromiumVersion": "154.0.8037.98",
     "description": "C8 full Vue types/build, original hook and Browser13 are unchanged-source historical evidence. V12 does not rerun the browser/build or award a new frontend installation/full CI pass.",
     "currentFrontendBuildOrBrowserCredit": false
   },

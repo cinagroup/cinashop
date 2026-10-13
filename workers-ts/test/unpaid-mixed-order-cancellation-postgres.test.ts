@@ -26,7 +26,48 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('unpaid mixed-own
     try { expect(fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); await f?.close(); }
   }, 45_000);
   async function checkout(r: Runtime) {
-    const created = await r.checkout();
+    // Cancellation assertions need a quiescent pricing seed, not a competing
+    // pricing writer. This self-owned maintenance reader is compatible with
+    // the real restricted LOGIN's original SHARE NOWAIT capability. Both use
+    // the fixture's unchanged 3s lock / 30s statement limits; no retry/grant.
+    let seedFenceHeld = false;
+    let pricingRoutineCalls = 0;
+    const originalTransaction = r.db.transaction.bind(r.db);
+    const transactionObserver = vi.spyOn(r.db, 'transaction').mockImplementation((callback, configuration) =>
+      originalTransaction(async tx => {
+        const originalExecute = tx.execute.bind(tx);
+        const executeObserver = vi.spyOn(tx, 'execute').mockImplementation(query => {
+          const literal = typeof query === 'string' ? query : query.getSQL().queryChunks.flatMap(chunk =>
+            typeof chunk === 'object' && chunk !== null && 'value' in chunk && Array.isArray(chunk.value)
+              ? chunk.value.filter((text): text is string => typeof text === 'string') : []).join('');
+          if (/^\s*SELECT\s+"?public"\."?checkout_lock_pricing_v1"?\(\)\s*$/i.test(literal)) {
+            expect(seedFenceHeld).toBe(true);
+            pricingRoutineCalls++;
+          }
+          // Observe only: return the original query object and real PG result.
+          return originalExecute(query);
+        });
+        try { return await callback(tx); } finally { executeObserver.mockRestore(); }
+      }, configuration));
+    let created: Awaited<ReturnType<Runtime['checkout']>>;
+    try {
+      created = await f.db.transaction(async ownerTx => {
+        await ownerTx.execute(sql`LOCK TABLE public.member_right, public.system_config IN SHARE MODE`);
+        const [fence] = await ownerTx.execute(sql`SELECT pg_backend_pid() AS pid,
+          (SELECT count(DISTINCT relation)::integer FROM pg_catalog.pg_locks
+            WHERE pid=pg_backend_pid() AND granted AND mode='ShareLock'
+              AND relation IN ('public.member_right'::regclass, 'public.system_config'::regclass)) AS locked`);
+        expect(fence.pid).not.toBe(r.pid);
+        expect(fence.locked).toBe(2);
+        seedFenceHeld = true;
+        try {
+          const result = await r.checkout();
+          expect(pricingRoutineCalls).toBeGreaterThan(0);
+          return result;
+        } finally { seedFenceHeld = false; }
+      });
+    } finally { transactionObserver.mockRestore(); }
+    // The owner transaction has committed before any damage/cancellation step.
     const [order] = await r.db.select().from(storeOrder).where(eq(storeOrder.orderId, created.orderId));
     expect(order).toMatchObject({ pid: 0, paid: 0, status: 0, supplierId: 0, supplierAllocationStatus: 1, useIntegral: '100.00' });
     expect(await r.carts(order.id)).toHaveLength(2);
