@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "recordedAtUtc": "2026-10-13T10:03:18.115Z",
+  "scope": "Legacy platform product assurance create/edit forms and omitted-status preservation",
+  "validatedSourceHead": "cf0c1caedd700d190b86c3b3920d9a5f070c2f4f",
+  "sourceManifest": {
+    "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\manifest.json",
+    "bytes": 9203259,
+    "sha256": "1c73df676f185fb2465a6140f986aed0bdb4b62629d3acea9b08350e27340e08"
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/ensure/create",
+      "action": "product/ensure",
+      "submissionMethod": "POST"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/ensure/:id/edit",
+      "action": "product/ensure/:id",
+      "submissionMethod": "PUT"
+    }
+  ],
+  "behavior": {
+    "formFields": [
+      "name",
+      "desc",
+      "image",
+      "sort"
+    ],
+    "omittedUpdateStatusPreserved": true,
+    "explicitStatusChangesUnchanged": true,
+    "createDefaultStatus": 1,
+    "platformOwner": {
+      "type": 0,
+      "relation_id": 0
+    },
+    "readPermission": "product.view",
+    "writePermission": "product.manage",
+    "schemaOrDDLChanges": false
+  },
+  "ownedSources": [
+    {
+      "path": "workers-ts/src/controllers/api/v1/ProductExperienceController.ts",
+      "bytes": 2854,
+      "sha256": "f93abb264e6f126eb6b7874e89718022276bce0ea8c0a12f2d097c598bc6d6ca"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductExperienceService.ts",
+      "bytes": 17359,
+      "sha256": "f5bb9f04e9f3ee06720cf2aa353982412e674278ee8890919f8747ca30e7bfd0"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 96707,
+      "sha256": "3352c465ffd1389e3f50dd506e97c2fa45ce38debb9afe924d39d10e5aaacebd"
+    },
+    {
+      "path": "workers-ts/test/admin-product-ensure-legacy-forms-http.test.ts",
+      "bytes": 8705,
+      "sha256": "f225dda11ca623e619110282d39176c65f0eb2edcb3fc1f4ae1a6bc7d95ddd36"
+    }
+  ],
+  "generatedCurrentAdminApiReports": {
+    "reports": [
+      {
+        "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+        "bytes": 393277,
+        "sha256": "34b21df8b83bbffd37fb07c81367ca445dc2a132ce6e009d37ef2ea7f30617fc"
+      },
+      {
+        "path": "workers-ts/audit/admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json",
+        "bytes": 393277,
+        "sha256": "34b21df8b83bbffd37fb07c81367ca445dc2a132ce6e009d37ef2ea7f30617fc"
+      }
+    ],
+    "counts": {
+      "callSites": 621,
+      "pathVariants": 653,
+      "registered": 653,
+      "executable": 653,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "registeredRoutes": 823,
+    "originalBuilderAndAssertionsUnchanged": true
+  },
+  "validation": {
+    "epoch": "v3",
+    "completeTypeScriptConfigurations": 2,
+    "wholeTestFiles": 3,
+    "passedTests": 18,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "receipts": [
+      {
+        "label": "typecheck-unit",
+        "startedAt": "2026-10-13T09:29:51.041Z",
+        "endedAt": "2026-10-13T09:35:50.836Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\typecheck-unit-receipt.json",
+          "bytes": 35424,
+          "sha256": "03af81be18b927d02bb1849e8fd652c7a0107e196783df14dd7db00f0ae6f344"
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\typecheck-unit.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "summaries": [],
+        "fullSourceAndAuxiliaryAndDependencyGuardsBeforeAndAfter": true
+      },
+      {
+        "label": "typecheck-runtime",
+        "startedAt": "2026-10-13T09:36:39.382Z",
+        "endedAt": "2026-10-13T09:42:37.208Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\typecheck-runtime-receipt.json",
+          "bytes": 35430,
+          "sha256": "f7729ba8e7271e3597462e7d856a14c031dcf6a13bacad0f5b6e586af11a3312"
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\typecheck-runtime.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "summaries": [],
+        "fullSourceAndAuxiliaryAndDependencyGuardsBeforeAndAfter": true
+      },
+      {
+        "label": "unit-http",
+        "startedAt": "2026-10-13T09:47:01.961Z",
+        "endedAt": "2026-10-13T09:48:52.139Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "receipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\unit-http-receipt.json",
+          "bytes": 35580,
+          "sha256": "da8bbf4f1f1203e4dbe72da5fc589d6fb9f23afeabce1bf33c0a596c2ee9731d"
+        },
+        "log": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3\\unit-http.log",
+          "bytes": 3507,
+          "sha256": "50bbf0d3d47cff19a960217d315359e9bc9ef0894bd089098b700df62677df9a"
+        },
+        "summaries": [
+          "Test Files  3 passed (3)",
+          "Tests  18 passed (18)",
+          "Duration  32.85s (transform 12.25s, setup 0ms, import 16.92s, tests 15.31s, environment 0ms)"
+        ],
+        "fullSourceAndAuxiliaryAndDependencyGuardsBeforeAndAfter": true
+      }
+    ],
+    "sourcePrimaryFiles": 3853,
+    "guardedAuditAuxiliaryFiles": 2,
+    "originalProviderFiles": 43992,
+    "independentPhysicalDependencyFiles": 42404,
+    "completeDependencyRoots": 4,
+    "bindingInputs": 15,
+    "compilerGraphs": [
+      {
+        "configPath": "tsconfig.json",
+        "rootFiles": 2404,
+        "explicitDependencies": 5,
+        "aliases": 5555
+      },
+      {
+        "configPath": "tsconfig.runtime-test.json",
+        "rootFiles": 1119,
+        "explicitDependencies": 0,
+        "aliases": 4385
+      }
+    ],
+    "database": "Real SQL/Drizzle on PGlite through the existing financePostgres fixture",
+    "nativeLockCredit": false
+  },
+  "originalContract": {
+    "manifest": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v2\\original-contract\\manifest.json",
+      "bytes": 3501,
+      "sha256": "97ab733be24ccc12a7e6ff13a9ec33e5e6a12ec4626b6ef02b42dda492c2ff2b"
+    },
+    "readableFiles": 16,
+    "actualFormFactory": "crmeb/services/FormBuilder.php",
+    "sortMaximum": 99999,
+    "encryptedHelpersExecuted": false,
+    "sourceAndConsumerReview": true
+  },
+  "earlierPreparationFailures": [
+    {
+      "epoch": "v1",
+      "error": "EPERM during concurrent dependency mkdir",
+      "testsStarted": false
+    },
+    {
+      "epoch": "v2",
+      "error": "EPERM during original-provider realpath verification",
+      "testsStarted": false
+    }
+  ],
+  "rawEvidence": {
+    "directory": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\admin-product-ensure-forms-20261013\\.cache\\ensure-validation-v3-raw",
+    "manifest": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\admin-product-ensure-forms-20261013\\.cache\\ensure-validation-v3-raw\\raw-preservation-manifest.json",
+      "bytes": 1643304,
+      "sha256": "04ae2727ade04b39869caea0fe73492c67dab425605ecb1c87a38cf24e91562a"
+    },
+    "records": 3911,
+    "totalBytes": 82910636,
+    "allCopiesAndOriginalAfterVerified": true,
+    "completeFrozenSourceFilesArchived": 3855,
+    "dependencyRootsRemainAt": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\admin-product-ensure-forms-validation-v3/project",
+    "completeDependencyRootsCopiedToRawArchive": false
+  },
+  "limits": {
+    "fullLinuxCI": false,
+    "fullLegacySwooleLoaderExecution": false,
+    "browserVisualQA": false,
+    "fullPHPToTSMigrationComplete": false,
+    "productionDDL": false,
+    "deployed": false
+  }
+}

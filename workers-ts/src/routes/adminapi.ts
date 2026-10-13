@@ -296,6 +296,8 @@ adminapiRoutes.post("/product/cache", adminAuth, AdminLegacyContent.saveProductD
 adminapiRoutes.delete("/product/cache", adminAuth, AdminLegacyContent.deleteProductDraft);
 adminapiRoutes.get("/product/all_ensure", adminAuth, ProductExperienceController.adminEnsureAll);
 adminapiRoutes.get("/product/ensure", adminAuth, ProductExperienceController.adminEnsureList);
+adminapiRoutes.get("/product/ensure/create", adminAuth, ProductExperienceController.adminEnsureCreateForm);
+adminapiRoutes.get("/product/ensure/:id/edit", adminAuth, ProductExperienceController.adminEnsureEditForm);
 adminapiRoutes.post("/product/ensure", adminAuth, ProductExperienceController.adminEnsureCreate);
 adminapiRoutes.put(
   "/product/ensure/set_show/:id/:is_show",

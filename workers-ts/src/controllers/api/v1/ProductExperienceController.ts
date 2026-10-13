@@ -51,6 +51,14 @@ export async function adminEnsureDetail(c: C) {
   );
 }
 
+export async function adminEnsureCreateForm(c: C) {
+  return jsonOk(c, await service(c).ensureForm(platformEnsureOwner));
+}
+
+export async function adminEnsureEditForm(c: C) {
+  return jsonOk(c, await service(c).ensureForm(platformEnsureOwner, positiveId(c.req.param("id"))));
+}
+
 export async function adminEnsureCreate(c: C) {
   return jsonOk(c, await service(c).saveEnsure(platformEnsureOwner, 0, await body(c)), "添加成功");
 }

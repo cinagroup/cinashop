@@ -216,7 +216,7 @@ export class ProductExperienceService {
       if (id > 0) {
         await tx
           .update(storeProductEnsure)
-          .set({ name, image, desc: descValue, sort, status })
+          .set({ name, image, desc: descValue, sort, ...(body.status === undefined ? {} : { status }) })
           .where(eq(storeProductEnsure.id, id));
         return { id };
       }
@@ -235,6 +235,40 @@ export class ProductExperienceService {
         .returning({ id: storeProductEnsure.id });
       return { id: inserted[0].id };
     });
+  }
+
+  async ensureForm(owner: ProductEnsureOwner, id = 0) {
+    const info = id > 0 ? await this.ensureDetail(owner, id) : undefined;
+    return {
+      title: id > 0 ? "编辑保障服务" : "添加保障服务",
+      action: `product/ensure${id > 0 ? `/${id}` : ""}`,
+      method: id > 0 ? "PUT" : "POST",
+      rules: [
+        {
+          type: "input", field: "name", title: "保障服务条款", value: info?.name ?? "",
+          props: { type: "text", placeholder: "请输入保障服务条款", maxlength: 100 },
+          validate: [{ type: "string", required: true, message: "请输入保障服务条款" }],
+        },
+        {
+          type: "input", field: "desc", title: "内容描述", value: info?.desc ?? "",
+          props: { type: "textarea", placeholder: "请输入内容描述" },
+          validate: [{ type: "string", required: true, message: "请输入内容描述" }],
+        },
+        {
+          type: "frame", field: "image", title: "图标（100 * 100)", value: info?.image ?? "",
+          props: {
+            type: "image", maxLength: 1, frameTitle: "请选择图标（100 * 100)",
+            src: "/admin/widget.images/index?fodder=image", icon: "ios-add", width: "960px",
+            height: "505px", modal: { "footer-hide": true },
+          },
+          validate: [{ type: "string", required: true, message: "请选择图标(建议尺寸：100px*100px)" }],
+        },
+        {
+          type: "inputNumber", field: "sort", title: "排序", value: info?.sort ?? 0,
+          props: { min: 0, max: 99999 },
+        },
+      ],
+    };
   }
 
   async setEnsureStatus(owner: ProductEnsureOwner, id: number, status: number) {
