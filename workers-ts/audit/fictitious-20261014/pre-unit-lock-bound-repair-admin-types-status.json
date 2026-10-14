@@ -1,0 +1,14 @@
+{
+  "name": "admin-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vue-tsc/bin/vue-tsc.js",
+    "-b"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "startedAt": "2026-10-14T10:12:34.512036+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T10:12:58.566595+00:00",
+  "exitCode": 0,
+  "log": "admin-types.log"
+}

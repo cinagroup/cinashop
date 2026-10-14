@@ -1,0 +1,26 @@
+{
+  "completedAt": "2026-10-14T09:38:24.341520+00:00",
+  "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-34y8Sh",
+  "reason": "Terminal failed test-control deadlock left one confirmed owned fixture database and one runtime role; remove only those two exact catalog identities after independent offline SELECT proof",
+  "mode": "PostgreSQL single-user local offline maintenance; no TCP/listener, HBA or password changes, directory/log removal, production connection or rerun of tests",
+  "droppedDatabase": "cinashop_kefu_runner_c122e132b0bd421483bab1e8d18f8bd8",
+  "droppedRuntimeRole": "cinashop_runtime_d85c2e6fc0a046899c945f73aa48d6c1",
+  "argv": [
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/postgres",
+    "--single",
+    "-D",
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-34y8Sh/data",
+    "-c",
+    "exit_on_error=true",
+    "postgres"
+  ],
+  "exitCode": 0,
+  "log": "failed-native-offline-cleanup.log",
+  "sourceProbeSha256": "52551d27c358c3795647355c7c06d27c1e7f6786e2fe9b8745b8b35f985845e4",
+  "remainingFixtureDatabaseCatalogEmpty": true,
+  "remainingFixtureRoleCatalogEmpty": true,
+  "pgCtlStatusExit": 3,
+  "postmasterPidExists": false,
+  "historicalFailureRetained": true,
+  "fixturesRemainingAtOriginalFailedTeardown": 1
+}

@@ -54,6 +54,42 @@ describe('Supplier rule five complete registered createApp contracts, actual JWT
     expect((await logs()).map(row => [row.adminId, row.merchantId, row.type, row.method, row.path])).toEqual([
       [21, 20, 'supplier_product_rule', 'POST', `${path}/0`], [21, 20, 'supplier_product_rule', 'POST', `${path}/${detail.id}`], [21, 20, 'supplier_product_rule', 'DELETE', `${path}/delete/${detail.id}`]]);
   });
+  it('saves and searches real JWT-owned Unicode code-point boundaries and rejects oversize or invalid characters without SQL or audit changes', async () => {
+    const name = '😀'.repeat(32), dimension = '🚀'.repeat(32), value = '🍀'.repeat(64);
+    const spec = [{ value: dimension, detail: [value] }];
+    const created = await save(0, supplierRuleBody({ rule_name: ` ${name} `, spec }));
+    expect(created.body.status, created.body.msg).toBe(200); privateResponse(created.response);
+    const id = created.body.data.id;
+    const detail = (await request('GET', `${path}/${id}`)).body.data.info;
+    expect(detail).toMatchObject({ id, type: 2, relation_id: 20, rule_name: name, rule_value: JSON.stringify(spec), spec });
+    expect((await rows()).find(row => row.id === id)).toMatchObject({ type: 2, relationId: 20, ruleName: name, ruleValue: JSON.stringify(spec) });
+    const searched = await request('GET', `${path}?rule_name=${encodeURIComponent(name)}&page=1&limit=20`);
+    expect(searched.body.status, searched.body.msg).toBe(200);
+    expect(searched.body.data.count).toBe(1); expect(searched.body.data.list.map((row: any) => row.id)).toEqual([id]);
+    const maximumQuery = await request('GET', `${path}?rule_name=${encodeURIComponent('😀'.repeat(50))}`);
+    expect(maximumQuery.body.status, maximumQuery.body.msg).toBe(200); expect(maximumQuery.body.data.count).toBe(0);
+    const beforeRows = await rows(), beforeLogs = await logs();
+    expect(beforeLogs).toHaveLength(1);
+    expect(beforeLogs[0]).toMatchObject({ adminId: 21, merchantId: 20, type: 'supplier_product_rule', method: 'POST', path: `${path}/0` });
+    const invalid = [supplierRuleBody({ rule_name: '😀'.repeat(33), spec }),
+      supplierRuleBody({ rule_name: '超长维度拒绝', spec: [{ value: '🚀'.repeat(33), detail: [value] }] }),
+      supplierRuleBody({ rule_name: '超长规格值拒绝', spec: [{ value: dimension, detail: ['🍀'.repeat(65)] }] })];
+    for (const character of ['\u0001', '\u007f', '\u0085', '\u009f', '\ud800', '\udfff']) {
+      invalid.push(supplierRuleBody({ rule_name: `x${character}y` }),
+        supplierRuleBody({ spec: [{ value: `x${character}y`, detail: ['有效值'] }] }),
+        supplierRuleBody({ spec: [{ value: '有效维度', detail: [`x${character}y`] }] }));
+    }
+    for (const body of invalid) {
+      expect((await save(0, body)).body.status).toBe(400);
+      expect(await rows()).toEqual(beforeRows); expect(await logs()).toEqual(beforeLogs);
+    }
+    // URL query decoding cannot preserve isolated surrogates. JSON above can;
+    // query boundaries and control characters are tested through actual URLs.
+    for (const search of ['😀'.repeat(51), 'x\u0001y', 'x\u007fy', 'x\u0085y', 'x\u009fy']) {
+      expect((await request('GET', `${path}?rule_name=${encodeURIComponent(search)}`)).body.status).toBe(400);
+      expect(await rows()).toEqual(beforeRows); expect(await logs()).toEqual(beforeLogs);
+    }
+  });
   it('deletes a copied template without changing the existing product, dimension or priced stock SKU', async () => {
     const before = [await f.db.select().from(storeProduct), await f.db.select().from(storeProductAttr), await f.db.select().from(storeProductAttrValue)];
     expect((await request('DELETE', `${path}/delete/202`, { ids: '' })).body.status).toBe(200);

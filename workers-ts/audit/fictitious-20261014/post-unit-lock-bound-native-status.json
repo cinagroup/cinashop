@@ -1,0 +1,18 @@
+{
+  "name": "post-unit-lock-bound-native",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/checkout-sku-lifecycle-concurrency.test.ts",
+    "test/admin-product-unit-native.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T10:34:54.879015+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T10:37:07.331461+00:00",
+  "exitCode": 0,
+  "log": "post-unit-lock-bound-native.log"
+}

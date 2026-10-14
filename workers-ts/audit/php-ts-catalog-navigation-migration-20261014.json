@@ -1,0 +1,789 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T12:27:15.843456+00:00",
+  "scope": "Main Admin PHP catalogue/list/header, genuine legacy browser navigation and necessary SQL/UI context fixes",
+  "status": "local_candidate_verified_not_published",
+  "goalStatus": "active",
+  "legacyAdded": 2,
+  "modernAliasesAdded": 0,
+  "browserRedirectsAdded": 2,
+  "browserRedirectsNotCountedAsApi": true,
+  "report": {
+    "path": "workers-ts/docs/php-ts-catalog-navigation-migration-20261014.md",
+    "sha256": "0e3a2b01ab4d84684f891fb1b8a94b09c9883908325f566c4f114ca82404c3c4",
+    "byteLength": 11383
+  },
+  "routeReceipt": {
+    "path": "workers-ts/audit/catalog-20261014/route-delta.json",
+    "sha256": "4923fd17e2ac27144885a8fc015f6c3fc424ebb5a09f086755ee7cfff7dd73a7",
+    "byteLength": 1734
+  },
+  "validation": {
+    "generatedAt": "2026-10-14T12:23:49.993810+00:00",
+    "method": "Identity is repository-relative full test file plus ancestor titles plus case title; ordinary/native union, overlap counted once; loops inside a test are not additional definitions.",
+    "singleFinalFullMatrix": true,
+    "ordinary": {
+      "files": 16,
+      "filesWithPassedDefinitions": 13,
+      "passed": 171,
+      "skipped": 43,
+      "failed": 0
+    },
+    "native": {
+      "files": 9,
+      "passed": 127,
+      "skipped": 0,
+      "failed": 0
+    },
+    "overlap": 84,
+    "uniquePassed": 214,
+    "allConditionalSupplemented": true,
+    "supplementedConditional": 43
+  },
+  "scopeIsRelatedCompleteFilesNotFullRepositoryCI": true,
+  "eightFinalTerminalFacts": [
+    {
+      "name": "worker-unit-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T12:13:08.914727+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:15:21.801273+00:00",
+      "exitCode": 0,
+      "log": "worker-unit-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/worker-unit-types-status.json",
+        "sha256": "d4b0d67dc7e6cad7a36b2a59fc39047c025b4655939c282a9b26045e17c45722",
+        "byteLength": 468
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/worker-unit-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "worker-runtime-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T12:15:21.840485+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:16:38.512486+00:00",
+      "exitCode": 0,
+      "log": "worker-runtime-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/worker-runtime-types-status.json",
+        "sha256": "7161310a848336ff554a65ede46c93d56b4b6e2e767005b3531e418d9015e646",
+        "byteLength": 518
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/worker-runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "admin-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-14T12:16:38.546430+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:17:07.537674+00:00",
+      "exitCode": 0,
+      "log": "admin-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/admin-types-status.json",
+        "sha256": "233b83f20d971dca8d181210312ed294528505ae309fb10c6aa7cff94f329423",
+        "byteLength": 424
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/admin-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "supplier-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+      "startedAt": "2026-10-14T12:17:07.574705+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:17:15.322875+00:00",
+      "exitCode": 0,
+      "log": "supplier-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/supplier-types-status.json",
+        "sha256": "16d3b52c0a75fb34ab7b03c167025de6a0196511815268f533d61e7651dc3b55",
+        "byteLength": 433
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/supplier-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "final-ordinary",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/admin-product-catalog-read.test.ts",
+        "test/admin-product-catalog-read-http.test.ts",
+        "test/admin-product-catalog-read-native.test.ts",
+        "test/admin-product-catalog-navigation-frontend.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-reply-native.test.ts",
+        "test/admin-product-reply-workflow-frontend.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "test/admin-product-fictitious-reply-native.test.ts",
+        "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+        "test/admin-permission.test.ts",
+        "test/legacy-admin-permissions.test.ts",
+        "test/admin-product-frontend-parity.test.ts",
+        "test/admin-operational-group-data-frontend.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=audit/catalog-20261014/final-ordinary.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T12:17:15.356947+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:18:50.525739+00:00",
+      "exitCode": 0,
+      "log": "final-ordinary.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/final-ordinary-status.json",
+        "sha256": "47b99210428b14c8521a6e9dede27ad8e695443c087fff2951036830ff748839",
+        "byteLength": 1426
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/final-ordinary.log",
+        "sha256": "16d34529ba9784da3c578d1732c6b4f9a0bdba9c276dd7c02c48b4c70e9e61a6",
+        "byteLength": 79851
+      }
+    },
+    {
+      "name": "final-native",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-product-catalog-read.test.ts",
+        "test/admin-product-catalog-read-http.test.ts",
+        "test/admin-product-catalog-read-native.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-reply-native.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "test/admin-product-fictitious-reply-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T12:18:50.557006+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:20:51.679009+00:00",
+      "exitCode": 0,
+      "log": "final-native.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/final-native-status.json",
+        "sha256": "5c8a235f94605c5fa0e745924067b2070d70a733be9e43a00bce68e2c31585e5",
+        "byteLength": 983
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/final-native.log",
+        "sha256": "e206e0d0328d254c80b3907efbb67aff99a1fca9f34a8752102bcfa5c7435a64",
+        "byteLength": 135099
+      }
+    },
+    {
+      "name": "admin-build",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-14T12:20:51.714244+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:21:21.151940+00:00",
+      "exitCode": 0,
+      "log": "admin-build.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/admin-build-status.json",
+        "sha256": "96952f350ed6783ace29a85673bc41c0a6bb38a8954b8c2aa29e8888f1aaa0f7",
+        "byteLength": 421
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/admin-build.log",
+        "sha256": "f67f42ae10c873a372df00e7597620ab93fb44d45932f72dbdce1f2a3215add0",
+        "byteLength": 23530
+      }
+    },
+    {
+      "name": "supplier-build",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+      "startedAt": "2026-10-14T12:21:21.181690+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T12:21:34.528085+00:00",
+      "exitCode": 0,
+      "log": "supplier-build.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/catalog-20261014/supplier-build-status.json",
+        "sha256": "a4ef6f58c8a9a1216b50b864bda63ca98ec4469c979b16f223e623a38ad64438",
+        "byteLength": 430
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/catalog-20261014/supplier-build.log",
+        "sha256": "b39edeaddb17d1427255c5e93fc4588b7bf6731011d67f8310f684536317fd9f",
+        "byteLength": 4237
+      }
+    }
+  ],
+  "definitionReceipt": {
+    "path": "workers-ts/audit/catalog-20261014/verification-summary.json",
+    "sha256": "6da1b976a2dfaaafe95e47a6ee91792e0f71b7db6a02ae5d8380264b0db7977d",
+    "byteLength": 118264
+  },
+  "inputs": {
+    "count": 3365,
+    "digest": "1dba80872bd77d46df79bb7041e2a8fed11b948d49d86309c2cb69b58dd3c5fd",
+    "before": {
+      "path": "workers-ts/audit/catalog-20261014/frozen-before.json",
+      "sha256": "bf031c12a8b2730f06a7751f2e5e8fc8d18fc9f6cfb7798a5a791a21f17ee62a",
+      "byteLength": 438620
+    },
+    "after": {
+      "path": "workers-ts/audit/catalog-20261014/frozen-after.json",
+      "sha256": "1b0cda5ff83bafea38dbeffa571c346ce5b33a321ec3c2fea815905728958c6c",
+      "byteLength": 438754
+    },
+    "inventoryCompleteForDeclaredEightDirectories": true,
+    "notCompleteBuildInputGraph": true,
+    "environmentValuesAndInstalledDependencyBytesExcluded": true,
+    "deltaFromHistoricalFictitious": {
+      "path": "workers-ts/audit/catalog-20261014/delta-from-fictitious.json",
+      "sha256": "5989e4874a78b9ac777b7054d30db27c99be172058dae8a8b211903de7f14fa5",
+      "byteLength": 2388
+    }
+  },
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "checked": 249,
+      "open": 155,
+      "allCheckboxRowsUnchanged": true
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "checked": 50,
+      "open": 38,
+      "allCheckboxRowsUnchanged": true
+    }
+  },
+  "sourceReview": {
+    "path": "workers-ts/audit/catalog-20261014/source-independent-review.json",
+    "sha256": "0c8a4c391451788162734d4449a19efeec18f368ff29bd3034c414bbe3d2e2a8",
+    "byteLength": 65761
+  },
+  "sourceDecisionCaptureIsHistorical": true,
+  "localRuntimeProvenance": {
+    "path": "workers-ts/audit/catalog-20261014/local-runtime-provenance.json",
+    "sha256": "ba070985c392159c8c07095d5ce5ec52f07509857ad5e15f299ace12c13ed2fb",
+    "byteLength": 698
+  },
+  "readTransactions": {
+    "mode": "Each request has separate repeatable-read read-only transaction; list/header HTTP requests do not share snapshot",
+    "authorityAdmission": "Role/password/status from starting request snapshot; ending PostgreSQL wall-clock JWT expiry check; later committed revocation not guaranteed to appear",
+    "statementTimeoutMs": 5000,
+    "lockTimeoutMs": 2000,
+    "idleTransactionTimeoutMs": 5000,
+    "nativeSelectOnlyLoginAndDeclaredBusinessSnapshot": true,
+    "newDmlAuditSchemaMigrationOrStockWriter": false
+  },
+  "sourceExceptions": {
+    "nonemptyCategoryCountIgnoresOwnerKeywordBrandLabelPid": true,
+    "categorySoldCountAndVsListOr": true,
+    "mainStockFiltersAllOrdinaryIncludingRetiredSkuOutput": true,
+    "noSkuOutputStock": null,
+    "supplierSettleFallbackOnlyExplicitSupplierFilter": true,
+    "unorderedFallbackNotCrossEngineGoldenValue": true,
+    "pageFallbackBeforeEffectivePagination": true,
+    "phpStockUnsignedTargetSignedNegativeReconciliationOnly": true,
+    "genericModernProductListUnchangedAndSeparatelyOpen": true,
+    "opaqueFallbackSourceProofSeparateFromRuntimeTests": true
+  },
+  "sqlCorrelationRepair": {
+    "before": {
+      "path": "workers-ts/audit/catalog-20261014/correlated-sql-before.json",
+      "sha256": "c13efa606e8c5dd6d7b9dc433e0a79e8e0ae364df1c09e27f9273bd099a1a8d3",
+      "byteLength": 5212
+    },
+    "after": {
+      "path": "workers-ts/audit/catalog-20261014/correlated-sql-after.json",
+      "sha256": "76a228e7981ef4f6b3032ef54afff1ae3d93e777ee30f8ccc04562cacdec0ebc",
+      "byteLength": 5284
+    },
+    "fourOuterProductIdAggregateProjectionsQualified": true,
+    "correctDtoAssertionsNotWeakened": true
+  },
+  "uiMutationContext": {
+    "oldOptionsOrConfirmDiscardedOnChangedContext": true,
+    "busyOwnerRunInvalidatedOnSessionRoutePermissionChange": true,
+    "oldFinallyCannotClearNewBusy": true,
+    "pendingRepeatSubmissionBlocked": true,
+    "actualSfcAndAxiosAtoBPostGateDefinitions": 1,
+    "browserPostsSyntheticNotNewWriterProof": true
+  },
+  "browser": {
+    "verifiedAt": "2026-10-14T12:22:05.153432+00:00",
+    "status": "passed",
+    "mode": "Actual Chrome / actual Admin Vue / ElementPlus; standard auth synthetic local identity and explicit mock API transport",
+    "flows": 20,
+    "states": 25,
+    "screenshots": 25,
+    "apiMockCalls": 135,
+    "sourceHashCount": 14,
+    "sourceBeforeAfterEqual": true,
+    "viewports": [
+      {
+        "width": 1360,
+        "height": 900
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "consoleOrPageErrors": 0,
+    "unmockedApiOrExternalTransportCalls": 0,
+    "previewBypassOrSfcStub": false,
+    "backendProviderProductionProof": false,
+    "browserPluginAvailable": false,
+    "fallback": "Installed Playwright and Chrome; no dependency install",
+    "report": {
+      "path": "/tmp/cinashop-catalog-qa/QA.md",
+      "sha256": "c18755a754a14f65bb13163abd0132e837ef326d4f8be499253009365686436f",
+      "byteLength": 8845
+    },
+    "finalReceipt": {
+      "path": "/tmp/cinashop-catalog-qa/attempt-005-browser-receipt.json",
+      "sha256": "46cb7dad407ccf613324ab167e766fa45ded8ba7a3e19a57e92cf995fad54ace",
+      "byteLength": 58127
+    },
+    "finalScript": {
+      "path": "/tmp/cinashop-catalog-qa/attempt-005-run-browser.mjs",
+      "sha256": "cdc3380d030fa19817dc25aac05327d14e55b1979cb91ec058a618fdd5ca00ac",
+      "byteLength": 28691
+    },
+    "manifest": {
+      "path": "/tmp/cinashop-catalog-qa/artifact-manifest.json",
+      "sha256": "a035b86311a8d7c4c1ec11c95ad8261e6d6371c104bb2ba3e236a2328d8edfcb",
+      "byteLength": 40660
+    },
+    "cleanup": {
+      "path": "/tmp/cinashop-catalog-qa/resources-cleanup.json",
+      "sha256": "3d67e3cc1bfff13c57ea61bc912ca4dcec376be57ce3031d36e84c0f8ed19887",
+      "byteLength": 1572
+    },
+    "rootVisualInspection": [
+      {
+        "label": "desktop-initial-eight-statuses",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-initial-eight-statuses.png",
+          "sha256": "8c100e92399f4324798b5afd2b6dadefb6362682e835d17a18d583c50f974bdb",
+          "byteLength": 78671
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      },
+      {
+        "label": "desktop-page2",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-page2.png",
+          "sha256": "d798779db9620f09dc08aa20f42d23752ee8f8d2380a3a755ce0f9a3778c0624",
+          "byteLength": 62396
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      },
+      {
+        "label": "legacy-reply-id51-isreply0",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-legacy-reply-id51-isreply0.png",
+          "sha256": "04e9ca0b643713d270adf989cca1b001f5addb771052ce4c388f9bfb87fc3258",
+          "byteLength": 52611
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      },
+      {
+        "label": "desktop-new-batch-keeps-busy-after-old-finally",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-new-batch-keeps-busy-after-old-finally.png",
+          "sha256": "9d616af357ddefac08b6510a5153f6a9138ff37ae824af27dfb8da6489e7e0e6",
+          "byteLength": 87505
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      },
+      {
+        "label": "desktop-header-failure-list-preserved",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-header-failure-list-preserved.png",
+          "sha256": "bf1f5ca78810812eb404b23d2f94c3d07a3f6d42a60821648c493dc5de2bf97f",
+          "byteLength": 70241
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      },
+      {
+        "label": "mobile-eight-statuses-first-viewport",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-mobile-eight-statuses-first-viewport.png",
+          "sha256": "ffad057dc70a3e28871a15b367c5fb601ed3c9749f470270b4eb63586839fb4c",
+          "byteLength": 49107
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      },
+      {
+        "label": "mobile-row-to-reply",
+        "image": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-mobile-row-to-reply.png",
+          "sha256": "a3c31bf16125bb9bd59fa3c6518c54c463abc2d70cf8ae08a84fdac70d98919b",
+          "byteLength": 37078
+        },
+        "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+      }
+    ],
+    "historicalQaAttempts": "all original receipts/scripts/screenshots retained; harness trim, OK locator and GET-default counter corrections; final005 reran complete set",
+    "cleanupProfileCaptureLimitation": "profile field empty; complete cleanup uses actual owned startup PIDs and full /proc executable/arguments scan",
+    "artifactManifestFilesVerifiedByRoot": 200
+  },
+  "ownedProcessCleanup": {
+    "path": "workers-ts/audit/catalog-20261014/owned-process-cleanup.json",
+    "sha256": "d723b4b5cd005d8a2f8fb849eec51b20707fbf15c3c610e4e3ae176ad68169d5",
+    "byteLength": 2711
+  },
+  "ownedClusterCount": 2,
+  "historicalReceipts": {
+    "path": "workers-ts/audit/catalog-20261014/historical-verification-receipts.json",
+    "sha256": "33a54eaac962d427748f050239ef867748c3087c64e97b824dec00965aaddf58",
+    "byteLength": 5505
+  },
+  "nextScope": {
+    "path": "workers-ts/audit/catalog-20261014/next-stock-scope-source-scout.json",
+    "sha256": "8e3d63644149efa1d141a69e4264e3d8af6740c72b9a1bdd059f7c1fcc6a933d",
+    "byteLength": 28359
+  },
+  "proofReceiptIndex": [
+    {
+      "path": "workers-ts/audit/catalog-20261014/admin-build-status.json",
+      "sha256": "96952f350ed6783ace29a85673bc41c0a6bb38a8954b8c2aa29e8888f1aaa0f7",
+      "byteLength": 421
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/admin-build.log",
+      "sha256": "f67f42ae10c873a372df00e7597620ab93fb44d45932f72dbdce1f2a3215add0",
+      "byteLength": 23530
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/admin-types-status.json",
+      "sha256": "233b83f20d971dca8d181210312ed294528505ae309fb10c6aa7cff94f329423",
+      "byteLength": 424
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/admin-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/baseline-from-fictitious.json",
+      "sha256": "61027a4862a88e89f5a88f4f677a977f6c2c5e399dd08fcff40aaf6d38d36b44",
+      "byteLength": 656
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/batch-context-ordinary-status.json",
+      "sha256": "0240de89f5886488ab6f7a9a57a1c011ec5f5786ec5da3cd2cc4dd81fb975ed9",
+      "byteLength": 683
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/batch-context-ordinary.json",
+      "sha256": "25c0d3bb3cc3027f004f9765b28039b224dd5de2d86b5682dc1a77bbd3b0e261",
+      "byteLength": 6992
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/batch-context-ordinary.log",
+      "sha256": "9b9bceaaf4c985e2267df67f75e84c89d76577a0ce5a466e4ef7f3518ed6d705",
+      "byteLength": 3690
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/browser-evidence-reference.json",
+      "sha256": "6af84ae7d07db5464cc97fdfbe1443ed42ea39dc195fabcbaf2c7753a7794b07",
+      "byteLength": 5095
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/catalog-native-status.json",
+      "sha256": "8eb57216c9ca1258bba76ab9e067f4939b4ff60f4aeb58fbc272a9c7611f15c2",
+      "byteLength": 690
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/catalog-native.log",
+      "sha256": "fce31322b8ea97b964425b6250c006f928bac0d71135fc7ef529b56001b040d8",
+      "byteLength": 13388
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/checklist-after.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6",
+      "byteLength": 327654
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/checklist-before.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6",
+      "byteLength": 327654
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/collect-evidence.py",
+      "sha256": "6be1024be386a2d358b52dc62ce167941cf6ccfd29f74180f455ca269dd3a957",
+      "byteLength": 3915
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/corrected-ordinary-status.json",
+      "sha256": "a5f575ee4617020c7250b60b184dcf3add81d015b769d107a0914f2b60d4f45c",
+      "byteLength": 951
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/corrected-ordinary.json",
+      "sha256": "f0a57899f0492ce186ac6539178100c932cfc03fd91c2e50d75b5ede912d7623",
+      "byteLength": 38923
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/corrected-ordinary.log",
+      "sha256": "01a2cadf0145973315495a66eb0d6f2b7b4c80e854092b7682641a1ca17969d3",
+      "byteLength": 41449
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/correlated-sql-after.json",
+      "sha256": "76a228e7981ef4f6b3032ef54afff1ae3d93e777ee30f8ccc04562cacdec0ebc",
+      "byteLength": 5284
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/correlated-sql-before.json",
+      "sha256": "c13efa606e8c5dd6d7b9dc433e0a79e8e0ae364df1c09e27f9273bd099a1a8d3",
+      "byteLength": 5212
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/delta-from-fictitious.json",
+      "sha256": "5989e4874a78b9ac777b7054d30db27c99be172058dae8a8b211903de7f14fa5",
+      "byteLength": 2388
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-commands.json",
+      "sha256": "496a6d3e419f3d69a924a65a8c43717dad1325c27dc0d6d8e9aba5869aeebc53",
+      "byteLength": 3851
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-native-status.json",
+      "sha256": "5c8a235f94605c5fa0e745924067b2070d70a733be9e43a00bce68e2c31585e5",
+      "byteLength": 983
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-native.log",
+      "sha256": "e206e0d0328d254c80b3907efbb67aff99a1fca9f34a8752102bcfa5c7435a64",
+      "byteLength": 135099
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-ordinary-status.json",
+      "sha256": "47b99210428b14c8521a6e9dede27ad8e695443c087fff2951036830ff748839",
+      "byteLength": 1426
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-ordinary.json",
+      "sha256": "ce0d294925e848abc4a19f15caafd54e46be6d91349c78b105958f3be2004f4d",
+      "byteLength": 109000
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-ordinary.log",
+      "sha256": "16d34529ba9784da3c578d1732c6b4f9a0bdba9c276dd7c02c48b4c70e9e61a6",
+      "byteLength": 79851
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/finalize-delivery.py",
+      "sha256": "04b8f9ab30f5cdf76f6cdd065422b5947d94a9e605af45c16594d05fa6ea92e9",
+      "byteLength": 10360
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/frozen-after.json",
+      "sha256": "1b0cda5ff83bafea38dbeffa571c346ce5b33a321ec3c2fea815905728958c6c",
+      "byteLength": 438754
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/frozen-before.json",
+      "sha256": "bf031c12a8b2730f06a7751f2e5e8fc8d18fc9f6cfb7798a5a791a21f17ee62a",
+      "byteLength": 438620
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/historical-verification-receipts.json",
+      "sha256": "33a54eaac962d427748f050239ef867748c3087c64e97b824dec00965aaddf58",
+      "byteLength": 5505
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/initial-ordinary-status.json",
+      "sha256": "da1adf9168b93800177619346922cb53d8cfd8d60e8f0bbc989ac980c869d6a0",
+      "byteLength": 945
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/initial-ordinary.json",
+      "sha256": "399392d9e7ed44bf2b398c9101045c16f96cc9b33bbc965ba05fbcb0d333d12a",
+      "byteLength": 41308
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/initial-ordinary.log",
+      "sha256": "2c7333bc6de33af6611a9dc01e623049abd656c31436504ab9ab79d2ffa4a9f2",
+      "byteLength": 46417
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/local-runtime-provenance.json",
+      "sha256": "ba070985c392159c8c07095d5ce5ec52f07509857ad5e15f299ace12c13ed2fb",
+      "byteLength": 698
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/next-stock-scope-source-scout.json",
+      "sha256": "8e3d63644149efa1d141a69e4264e3d8af6740c72b9a1bdd059f7c1fcc6a933d",
+      "byteLength": 28359
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/owned-process-cleanup.json",
+      "sha256": "d723b4b5cd005d8a2f8fb849eec51b20707fbf15c3c610e4e3ae176ad68169d5",
+      "byteLength": 2711
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/pre-type-repair-worker-unit-types-status.json",
+      "sha256": "49faa68695b9a5bd93d7ced30de7949b4553b02d1629c3b3335c732c1165c032",
+      "byteLength": 468
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/pre-type-repair-worker-unit-types.log",
+      "sha256": "0f3f9ae224c67086961dfbf58ff51b7f352aa47ba7048b944a0e5c5d0a001999",
+      "byteLength": 1276
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/route-delta.json",
+      "sha256": "4923fd17e2ac27144885a8fc015f6c3fc424ebb5a09f086755ee7cfff7dd73a7",
+      "byteLength": 1734
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/run-check.py",
+      "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de",
+      "byteLength": 838
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/run-matrix.py",
+      "sha256": "68b0405b19031140984aacd60f1163e1b0906fc7b66349e159e9b833d10dbba5",
+      "byteLength": 371
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/source-independent-review.json",
+      "sha256": "0c8a4c391451788162734d4449a19efeec18f368ff29bd3034c414bbe3d2e2a8",
+      "byteLength": 65761
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/supplier-build-status.json",
+      "sha256": "a4ef6f58c8a9a1216b50b864bda63ca98ec4469c979b16f223e623a38ad64438",
+      "byteLength": 430
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/supplier-build.log",
+      "sha256": "b39edeaddb17d1427255c5e93fc4588b7bf6731011d67f8310f684536317fd9f",
+      "byteLength": 4237
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/supplier-types-status.json",
+      "sha256": "16d3b52c0a75fb34ab7b03c167025de6a0196511815268f533d61e7651dc3b55",
+      "byteLength": 433
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/supplier-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/verification-summary.json",
+      "sha256": "6da1b976a2dfaaafe95e47a6ee91792e0f71b7db6a02ae5d8380264b0db7977d",
+      "byteLength": 118264
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/worker-runtime-types-status.json",
+      "sha256": "7161310a848336ff554a65ede46c93d56b4b6e2e767005b3531e418d9015e646",
+      "byteLength": 518
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/worker-unit-types-status.json",
+      "sha256": "d4b0d67dc7e6cad7a36b2a59fc39047c025b4655939c282a9b26045e17c45722",
+      "byteLength": 468
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/final-diff-check.json",
+      "sha256": "453208a5650ee04b3ccdde0f469ed254df50107a3fb78887d663f2bf37e25b1e",
+      "byteLength": 300
+    }
+  ],
+  "limitations": [
+    "PHP interpreter/encoded BaseController/full PHP PDO and JSON wire not executed",
+    "Each API response snapshot is consistent but parallel list/header requests have separate snapshots",
+    "Source unordered category/fallback row encounter sequence not promised as cross-engine golden output",
+    "TS explicit capacities and canonical input parsing are target boundaries, not invented PHP limits",
+    "Actual local Node App/JWT/SQL/HMAC and isolated PostgreSQL tested; no new Workers/Hyperdrive production proof",
+    "R2 get response bytes stub and all browser API identities/transports explicit synthetic fixtures",
+    "Global get_script registration/retirement/consumer conflict remains independently open; no global coverage ratio/full CI claim",
+    "Existing generic /product/list, stock migration, real accounts/devices and production acceptance remain open",
+    "No commit/push/PR/production data change/publish/PHP shutdown"
+  ],
+  "independentDeliveryReview": {
+    "status": "passed-final-independent-audit",
+    "path": "workers-ts/audit/catalog-20261014/delivery-independent-review.json",
+    "sha256": "4decedbeb92dc299b62d7aa8d8bbe5e417d38dc8f40a786dfa9121ba0b2fb72d",
+    "byteLength": 50531,
+    "reviewer": "/root/catalog_source_review",
+    "ledgerProjectionSha256": "8c5d09e36c499c3b978c4f38a18ab0b5e94ecc07d044f01302e1629b41d04369",
+    "projectionRule": "Exclude only independentDeliveryReview; original reviewed ledger bytes and projection retained in independent receipt",
+    "furtherReviewMutationPlanned": false
+  }
+}

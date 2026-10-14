@@ -1,0 +1,73 @@
+{
+  "checkedAt": "2026-10-14T10:56:14.258641+00:00",
+  "method": "Read only pg_ctl status/noPID after original runnerSTOPPED; no restart/connection to inactive clusters; originalfailedcleanup retained and exactofflinecatalogproof used",
+  "clusters": {
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-34y8Sh": {
+      "receipt": "initial-native.log",
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "originalRunnerRemaining": 1,
+      "currentRemaining": 0,
+      "fixtureProof": "exact owned offlinecatalogcleanup0 at failed-native-offline-cleanup.json, originalfailure1 retained"
+    },
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-XXM7r3": {
+      "receipt": "corrected-native.log",
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "originalRunnerRemaining": 0,
+      "currentRemaining": 0,
+      "fixtureProof": "original runner0"
+    },
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-n7Elb8": {
+      "receipt": "pre-unit-lock-bound-repair-final-native.log",
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "originalRunnerRemaining": 0,
+      "currentRemaining": 0,
+      "fixtureProof": "original runner0"
+    },
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-YCPdXJ": {
+      "receipt": "post-unit-lock-bound-native.log",
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "originalRunnerRemaining": 0,
+      "currentRemaining": 0,
+      "fixtureProof": "original runner0"
+    },
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-9FoYLt": {
+      "receipt": "final-native.log",
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "originalRunnerRemaining": 0,
+      "currentRemaining": 0,
+      "fixtureProof": "original runner0"
+    }
+  },
+  "browser": {
+    "at": "2026-10-14T10:02:47.743Z",
+    "host": "127.0.0.1",
+    "port": 4974,
+    "result": "ECONNREFUSED",
+    "viteSession": 41911,
+    "ownedVitePid": 78303,
+    "ownedVitePidAbsent": true,
+    "viteExit": 143,
+    "viteExitMeaning": "Owned server explicitly stopped with SIGTERM after final QA.",
+    "browserSession": 90349,
+    "browserExit": 0,
+    "ownedChromeRemaining": []
+  },
+  "allOwnedClustersStopped": true,
+  "allOwnedCurrentFixturesCleared": true,
+  "productionOrOtherClustersTouched": false
+}

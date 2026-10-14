@@ -1,0 +1,80 @@
+[
+  {
+    "project": "uniapp-ts",
+    "modules": {
+      "vue": {
+        "version": "3.4.21",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/vue/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/vue/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/vue/index.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/vue/index.js"
+      },
+      "@vue/compiler-sfc": {
+        "version": "3.4.21",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/@vue/compiler-sfc/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/@vue/compiler-sfc/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js"
+      },
+      "typescript": {
+        "version": "5.9.3",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/typescript/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/typescript/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/typescript/lib/typescript.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/uniapp-ts/node_modules/typescript/lib/typescript.js"
+      }
+    }
+  },
+  {
+    "project": "kefu-ts",
+    "modules": {
+      "vue": {
+        "version": "3.5.42",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/vue/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/vue/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/vue/index.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/vue/index.js"
+      },
+      "@vue/compiler-sfc": {
+        "version": "3.5.42",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/@vue/compiler-sfc/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/@vue/compiler-sfc/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js"
+      },
+      "typescript": {
+        "version": "5.9.3",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/typescript/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/typescript/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/typescript/lib/typescript.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/kefu-ts/node_modules/typescript/lib/typescript.js"
+      }
+    }
+  },
+  {
+    "project": "supplier-ts",
+    "modules": {
+      "vue": {
+        "version": "3.5.42",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/vue/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/vue/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/vue/index.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/vue/index.js"
+      },
+      "@vue/compiler-sfc": {
+        "version": "3.5.42",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/@vue/compiler-sfc/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/@vue/compiler-sfc/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/@vue/compiler-sfc/dist/compiler-sfc.cjs.js"
+      },
+      "typescript": {
+        "version": "5.9.3",
+        "packagePath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/typescript/package.json",
+        "realPackagePath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/typescript/package.json",
+        "entryPath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/typescript/lib/typescript.js",
+        "realEntryPath": "/home/cina/cinagroup/cinashop/view/supplier-ts/node_modules/typescript/lib/typescript.js"
+      }
+    }
+  }
+]

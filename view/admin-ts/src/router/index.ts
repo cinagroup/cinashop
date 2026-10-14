@@ -42,6 +42,10 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "商品管理" },
       },
       {
+        path: "/admin/product/product_list",
+        redirect: to => ({ path: "/product", query: to.query, hash: to.hash }),
+      },
+      {
         path: "product/metadata",
         name: "product-metadata",
         component: () => import("@/pages/product/ProductMetadata.vue"),
@@ -478,6 +482,10 @@ const routes: RouteRecordRaw[] = [
         name: "speechcraft",
         component: () => import("@/pages/kefu/Speechcraft.vue"),
         meta: { title: "客服话术" },
+      },
+      {
+        path: "/admin/product/product_reply/:id?",
+        redirect: to => ({ path: "/reply", query: { ...to.query, ...(to.params.id ? { product_id: to.params.id } : {}) }, hash: to.hash }),
       },
       {
         path: "reply",

@@ -1,0 +1,111 @@
+{
+  "head": "6dc28867cab665bb6874520c36ea1c13cc653937",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/all_specs",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/all_specs",
+          "normalizedPath": "/adminapi/product/all_specs",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1475,
+          "target": "v1.product.specs.StoreProductSpecs/allSpecs"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.all"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/specs",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/specs",
+          "normalizedPath": "/adminapi/product/specs",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1639,
+          "target": "v1.product.specs.StoreProductSpecs/index"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.list"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/specs/:id",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/specs/:id",
+          "normalizedPath": "/adminapi/product/specs/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1640,
+          "target": "v1.product.specs.StoreProductSpecs/getInfo"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.detail"
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/specs/:id",
+      "phpAuthority": [
+        {
+          "method": "POST",
+          "path": "/adminapi/product/specs/:id",
+          "normalizedPath": "/adminapi/product/specs/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1641,
+          "target": "v1.product.specs.StoreProductSpecs/save"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.save"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/specs/:id",
+      "phpAuthority": [
+        {
+          "method": "DELETE",
+          "path": "/adminapi/product/specs/:id",
+          "normalizedPath": "/adminapi/product/specs/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1642,
+          "target": "v1.product.specs.StoreProductSpecs/delete"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.remove"
+    }
+  ],
+  "addedLegacyContracts": 5,
+  "phpSources": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/specs/StoreProductSpecs.php": "d70635c8937c4190e4cf58d9bb6e958bcf470b61af6975b89a90c9b223c60900",
+    "app/services/product/specs/StoreProductSpecsTemplateServices.php": "df1b07bd33d73bf2ab9206b799eb4c0bb20b39dd053bb61298976e0bdf7c9670",
+    "app/services/product/specs/StoreProductSpecsServices.php": "dc3eb604655408100bce17cb088cb012a889827452eef6777510dfa96698409b",
+    "app/dao/other/CategoryDao.php": "38928ea4742c8b9f942e4ef8e4ca161f10295e442e4d3dae34ce8eb6f5f2528a",
+    "app/model/other/Category.php": "51aff278cc3388d018ad0aef3681e0d1ee8e07f2a05c4d105263667f1746b73a",
+    "app/dao/product/specs/StoreProductSpecsDao.php": "b0a3e1536860d417d34608c6b7311beffd20a046cc9666ab61ff5089cf3373bc",
+    "app/model/product/specs/StoreProductSpecs.php": "0503a27f111d317c0f323239fe027a4c63662b8f4aeb9cb4c01c836d6e6cb1f5",
+    "view/admin/src/pages/product/specs/index.vue": "59a0f0259126c43235233c206c2f24d42d6b4871b4ade01f87661f5b4c5be51b",
+    "view/admin/src/pages/product/specsAdd/index.vue": "6b048a6bfbf4e5fb50d9a8070d3bba8fbeeade13ce7a515ac612de831a3c2bce",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+  },
+  "beforeReconstructedFromCurrentAndConfirmedAgainstPreviousFrozenManifest": true,
+  "beforeAdminapiSha256": "c6b7473d26123652099d7b212f5c6e2c817c4ee618e147468d3ed7fa90146947"
+}

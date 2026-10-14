@@ -38,6 +38,7 @@ import { SupplierProductCategoryService, lockSupplierCategoryScope, assertSuppli
 import { assertSupplierProductLabelBindings, replaceSupplierProductLabelBindings, supplierProductLabelInput } from './SupplierProductLabelBindings';
 import { SupplierProductLabelService, type SupplierProductLabelActor } from './SupplierProductLabelService';
 import { tryLockProductWrite } from '@/services/product/ProductAssociationService';
+import { lockProductUnitLifecycle } from '@/services/product/ProductUnitLifecycle';
 import { HttpApiException } from '@/utils/errors';
 
 export {
@@ -396,6 +397,7 @@ export class SupplierProductManagementService {
     const labelAuthority = new SupplierProductLabelService(this.container);
     const labelPath = `/supplierapi/product/product/${productId}`;
     return withTx(this.container, async (tx) => {
+      await lockProductUnitLifecycle(tx);
       // Category moves/deletes and Supplier product bindings serialize before
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.

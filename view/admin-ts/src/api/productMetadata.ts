@@ -217,7 +217,7 @@ export function apiProductEnsureList(params: {
   name?: string;
 }): Promise<PagedResult<ProductEnsure>> {
   if (previewMode) return Promise.resolve(previewPage(previewEnsures, params));
-  return getData(request.get("/product/ensure", { params }));
+  return getData(request.get("/ensure", { params }));
 }
 
 export function apiProductEnsureSave(
@@ -234,8 +234,8 @@ export function apiProductEnsureSave(
     return Promise.resolve({ id: nextId });
   }
   return id
-    ? getData(request.put(`/product/ensure/${id}`, data))
-    : getData(request.post("/product/ensure", data));
+    ? getData(request.put(`/ensure/${id}`, data))
+    : getData(request.post("/ensure", data));
 }
 
 export function apiProductEnsureStatus(id: number, status: number): Promise<null> {
@@ -243,7 +243,7 @@ export function apiProductEnsureStatus(id: number, status: number): Promise<null
     previewEnsures = previewEnsures.map((item) => item.id === id ? { ...item, status } : item);
     return Promise.resolve(null);
   }
-  return getData(request.put(`/product/ensure/set_show/${id}/${status}`));
+  return getData(request.put(`/ensure/set_show/${id}/${status}`));
 }
 
 export function apiProductEnsureDelete(id: number): Promise<null> {
@@ -251,7 +251,7 @@ export function apiProductEnsureDelete(id: number): Promise<null> {
     previewEnsures = previewEnsures.filter((item) => item.id !== id);
     return Promise.resolve(null);
   }
-  return getData(request.delete(`/product/ensure/${id}`));
+  return getData(request.delete(`/ensure/${id}`));
 }
 
 export function apiProductRuleList(params: {

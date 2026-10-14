@@ -1,0 +1,19 @@
+{
+  "name": "post-json-native",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/admin-product-reply.test.ts",
+    "test/admin-product-reply-http.test.ts",
+    "test/admin-product-reply-native.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T07:45:11.767339+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T07:45:58.380730+00:00",
+  "exitCode": 0,
+  "log": "post-json-native.log"
+}

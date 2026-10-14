@@ -1,0 +1,12 @@
+{
+  "vueTypes": {
+    "exitCode": 0,
+    "command": "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+    "receipt": "admin-vue-types.log"
+  },
+  "build": {
+    "exitCode": 0,
+    "command": "node node_modules/vite/bin/vite.js build",
+    "receipt": "admin-build.log"
+  }
+}

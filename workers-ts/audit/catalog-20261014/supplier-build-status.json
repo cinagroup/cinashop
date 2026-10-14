@@ -1,0 +1,14 @@
+{
+  "name": "supplier-build",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vite/bin/vite.js",
+    "build"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+  "startedAt": "2026-10-14T12:21:21.181690+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T12:21:34.528085+00:00",
+  "exitCode": 0,
+  "log": "supplier-build.log"
+}

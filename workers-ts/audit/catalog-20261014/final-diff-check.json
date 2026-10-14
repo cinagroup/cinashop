@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-14T12:28:34.822544+00:00",
+  "command": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "scope": "entire working-tree tracked diff whitespace check; existing changes retained; untracked source was validated by frozen matrix"
+}

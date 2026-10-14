@@ -82,12 +82,13 @@ export async function readDetailEnsures(tx:DbClient,product:Pick<Product,'id'|'t
 }
 /** Published UGC images keep their actual user/module owner. A product asset
  * signature must never grant access to another customer's upload. */
-async function userPictures(tx:DbClient,rows:{image:unknown;uid:number}[]){
+async function userPictures(tx:DbClient,rows:{image:unknown;uid:number;type?:number;relationId?:number}[]){
   const refs=rows.map(row=>{try{return seckillTimePicture(row.image);}catch{return '';}}),ids=[...new Set(refs.map(parseCanonicalAttachmentId).filter((id):id is number=>id!==null))];
   const assets=ids.length?await tx.select({id:systemAttachment.attId,type:systemAttachment.type,relationId:systemAttachment.relationId,module:systemAttachment.moduleType,file:systemAttachment.fileType,imageType:systemAttachment.imageType,name:systemAttachment.name,dir:systemAttachment.attDir,mime:systemAttachment.attType}).from(systemAttachment).where(inArray(systemAttachment.attId,ids)):[];
   const byId=new Map(assets.map(row=>[row.id,row]));
   return refs.map((ref,index)=>{const id=parseCanonicalAttachmentId(ref);if(id===null)return ref;const a=byId.get(id),uid=rows[index].uid;
-    if(!a||uid<=0||a.type!==3||a.relationId!==uid||a.module!==3||a.file!==1||a.imageType!==8||a.dir!==ref||!a.name.startsWith(`attachments/user/${uid}/`)
+    const platform=uid===0&&rows[index].type===0&&rows[index].relationId===0;
+    if(!a||(!platform&&uid<=0)||a.type!==(platform?1:3)||a.relationId!==(platform?0:uid)||a.module!==(platform?1:3)||a.file!==1||a.imageType!==8||a.dir!==ref||!a.name.startsWith(platform?'attachments/admin/1/':`attachments/user/${uid}/`)
       ||a.name.split('/').some(part=>part==='.'||part==='..')||/[\\\u0000-\u001f\u007f]/u.test(a.name))return '';
     const ext=/\.(jpe?g|png|webp|gif)$/i.exec(a.name)?.[1]?.toLowerCase(),mime=a.mime.trim().toLowerCase().replace(/^image\/jpg$/,'image/jpeg');
     return ext&&(!mime||mime===`image/${ext==='jpg'?'jpeg':ext}`)?ref:'';});
@@ -141,8 +142,8 @@ export async function readProductDetailExtras(tx:DbClient,product:Product,uid:nu
   const snapshot=await readProductDetailDesignSnapshot(tx),design=publicProductDetailDesign(snapshot),value=design.value;
   const description=await readDetailDescription(tx,product.id,0,product),ensure=value.showService.includes(2)?await readDetailEnsures(tx,product):[];
   const replies=new ReplyService(createContainerFromDb(tx)),stats=value.showReply?await replies.replyConfig(product.id):null;
-  const reply=value.showReply?await replies.replyList(product.id,1,value.replyNum,uid):[];
-  const userRefs=reply.flatMap(row=>[{image:row.avatar,uid:row.uid},...row.pics.slice(0,9).map(image=>({image,uid:row.uid}))]),safe=await userPictures(tx,userRefs);let cursor=0;
+  const reply=value.showReply?await replies.replyList(product.id,1,value.replyNum,uid,0,false):[];
+  const userRefs=reply.flatMap(row=>[{image:row.avatar,uid:row.uid,type:row.type,relationId:row.relation_id},...row.pics.slice(0,9).map(image=>({image,uid:row.uid,type:row.type,relationId:row.relation_id}))]),safe=await userPictures(tx,userRefs);let cursor=0;
   for(const row of reply){row.avatar=safe[cursor++];row.comment=bodyText(row.comment,512);row.sku=text(row.sku,512);row.suk=row.sku;row.merchant_reply_content=bodyText(row.merchant_reply_content,1000);row.pics=row.pics.slice(0,9).map(()=>safe[cursor++]).filter(Boolean);}
   const posts=value.showCommunity?await readProductCommunity(tx,product.id,1,value.communityNum):{list:[],count:0};
   const recommend=value.showRecommend?await readDetailRecommendations(tx,product,value.recommendNum,member):[];
@@ -162,8 +163,8 @@ export async function readActivityDetailDesign(tx:DbClient,activity:{id:number;p
   if(!base||(activity.type!==undefined&&activity.type!==base.type)||(activity.relationId!==undefined&&activity.relationId!==base.relationId))throw new NotFoundException('活动原商品不存在或归属异常');
   const product_detail_design=publicProductDetailDesign(await readProductDetailDesignSnapshot(tx)),design=product_detail_design.value;
   const product={...base,ensureId:activity.ensureId??base.ensureId},ensure=design.showService.includes(2)?await readDetailEnsures(tx,product):[];
-  const replyService=new ReplyService(createContainerFromDb(tx)),reply=design.showReply?await replyService.replyList(base.id,1,design.replyNum,uid):[],stats=design.showReply?await replyService.replyConfig(base.id):null;
-  const refs=reply.flatMap(row=>[{image:row.avatar,uid:row.uid},...row.pics.slice(0,9).map(image=>({image,uid:row.uid}))]),safe=await userPictures(tx,refs);let cursor=0;
+  const replyService=new ReplyService(createContainerFromDb(tx)),reply=design.showReply?await replyService.replyList(base.id,1,design.replyNum,uid,0,false):[],stats=design.showReply?await replyService.replyConfig(base.id):null;
+  const refs=reply.flatMap(row=>[{image:row.avatar,uid:row.uid,type:row.type,relationId:row.relation_id},...row.pics.slice(0,9).map(image=>({image,uid:row.uid,type:row.type,relationId:row.relation_id}))]),safe=await userPictures(tx,refs);let cursor=0;
   for(const row of reply){row.avatar=safe[cursor++];row.comment=bodyText(row.comment,512);row.merchant_reply_content=bodyText(row.merchant_reply_content,1000);row.pics=row.pics.slice(0,9).map(()=>safe[cursor++]).filter(Boolean);}
   // Presale selection uses the base product (current checkout type 6). PHP's
   // presale productDetail retained the ordinary, positive specs condition.

@@ -1,0 +1,537 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-14T12:20:55.457167+00:00",
+  "status": "source-scout-only-not-migrated",
+  "requestedBy": "root read-only next-stock-scope scout",
+  "goal": "继续推进php到ts的迁移",
+  "scope": "Admin desktop main catalogue stock modal; two active PHP interfaces; source and current TS inspection only",
+  "mutationPolicy": {
+    "productionEdited": false,
+    "testsEdited": false,
+    "databaseAccessed": false,
+    "networkAccessed": false,
+    "heavyValidationRun": false,
+    "onlyWrittenArtifact": "workers-ts/audit/catalog-20261014/next-stock-scope-source-scout.json",
+    "currentSourceFreezeUnchangedByThisScout": true
+  },
+  "sourceInputs": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "kind": "php-source",
+      "bytes": 183912,
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "kind": "php-source",
+      "bytes": 27131,
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+      "kind": "php-source",
+      "bytes": 22891,
+      "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductAttrValueDao.php",
+      "kind": "php-source",
+      "bytes": 8354,
+      "sha256": "a6c3f481a168544605185059287e9e86c541a31b296a82d18421725dc05e3b8e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+      "kind": "php-source",
+      "bytes": 3751,
+      "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "kind": "php-source",
+      "bytes": 136399,
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductStockRecordServices.php",
+      "kind": "php-source",
+      "bytes": 3188,
+      "sha256": "28ab8a4a5a4ce6a0e8e8124ecc079ae8f8e68f4349cfc2315fa39df9fc2aa273"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductStockRecord.php",
+      "kind": "php-source",
+      "bytes": 2485,
+      "sha256": "ca8b462ce9a8cc2393ea9e7ef2752e1e296f5b6d16617a234be0674d5aa70d67"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductStockTips.php",
+      "kind": "php-source",
+      "bytes": 2151,
+      "sha256": "02d2147f00fbd75801191642b8df150aa866bfeb626a958b636bcb026f0dcbcc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductStockJob.php",
+      "kind": "php-source",
+      "bytes": 1826,
+      "sha256": "2c72338fc2052bfc338c28c266d85d7f125d8655165c52c8f90a7adab3951eaf"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/admin/AdminCkeckRoleMiddleware.php",
+      "kind": "php-source",
+      "bytes": 1490,
+      "sha256": "61d841ef746d5e8031f9ad4d24bc351c7f742659f8fa0b4d62af8f2ce9e48881"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/admin/AdminLogMiddleware.php",
+      "kind": "php-source",
+      "bytes": 1391,
+      "sha256": "d1c2ec74ae5f9ff88b1f73e1183ee906a26085381f2606a77484fc68028cd8f2"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/SystemRoleServices.php",
+      "kind": "php-source",
+      "bytes": 6642,
+      "sha256": "9c85f2b36a3584e6fb87fc79a20a819001a13c5e1490a7a20513794cdf7d906d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+      "kind": "php-source",
+      "bytes": 6158,
+      "sha256": "b24ea2b61d05f877896390596cdfd3116b0631ca223c6d220b79273ca7405bdb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "kind": "php-source",
+      "bytes": 16957,
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/stockEdit.vue",
+      "kind": "php-source",
+      "bytes": 7870,
+      "sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+      "kind": "php-source",
+      "bytes": 62288,
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/modules/product.js",
+      "kind": "php-source",
+      "bytes": 4460,
+      "sha256": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "kind": "php-source",
+      "bytes": 7322393,
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "kind": "current-ts-source",
+      "bytes": 104229,
+      "sha256": "97f198e37e6c55bf928977617f569e61b42b11d3a52553bdd8ddaf1dc31310d5"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "kind": "current-ts-source",
+      "bytes": 170020,
+      "sha256": "ab0661c9e788d32c512736f3c5e69e619a375d0199fe60c90d8a1683579be052"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/supplierapi.ts",
+      "kind": "current-ts-source",
+      "bytes": 19756,
+      "sha256": "f5020efc3a7ffce797d5f1833f9eed7e29313e14feba39c2c39604196b11a210"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "kind": "current-ts-source",
+      "bytes": 108386,
+      "sha256": "88881e405963ddabdf8e9e046d8bd01f78aa107e424b6aaa720fa15864b43dde"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminMobileProductService.ts",
+      "kind": "current-ts-source",
+      "bytes": 20937,
+      "sha256": "704920fe5414692e59fa3846edc6def51c43b88e56c4558506bde336bf738ed9"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "kind": "current-ts-source",
+      "bytes": 104889,
+      "sha256": "61191efd03678c5244fb9665ccc4fa8a814492167209ede0890bca43f4dfa134"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/MobileProductManagementCore.ts",
+      "kind": "current-ts-source",
+      "bytes": 27834,
+      "sha256": "86e56d5e0a57a479e0f8ee3aae794ddc59870886830a3ad26c09e91a560f488e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductAssociationService.ts",
+      "kind": "current-ts-source",
+      "bytes": 37986,
+      "sha256": "468d327beb5026143fa4ed2dc040dd197f2c3bedb1cdc7c185c6e3244efdd2f3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "kind": "current-ts-source",
+      "bytes": 32293,
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuRetirementService.ts",
+      "kind": "current-ts-source",
+      "bytes": 15291,
+      "sha256": "793d483df11a1c54090b1ee7be42292fd6cbae6164425a8707219419f4926d9c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuIdentity.ts",
+      "kind": "current-ts-source",
+      "bytes": 345,
+      "sha256": "dfaffd1645892a0bbca35eb7cb22b62d309b4c37a18ee453b826ef5cd3b73668"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/VirtualProductInventoryService.ts",
+      "kind": "current-ts-source",
+      "bytes": 33150,
+      "sha256": "3b91261249831f45c15fcd2faf9fae0e7cce2c286e025fe9ca266ed7df2daa22"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "kind": "current-ts-source",
+      "bytes": 32887,
+      "sha256": "ca7e483bba5e64b2ed45ab7d584f56d57c5aa5efa86cfd4640bca48890a96cf7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/erp/ErpStockService.ts",
+      "kind": "current-ts-source",
+      "bytes": 7738,
+      "sha256": "342ceb6319d6564061e327e5d0385cc430e34d08a6f52e3ce8621563f87432b7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "kind": "current-ts-source",
+      "bytes": 179538,
+      "sha256": "6a5a89aa4591fc837295a78ae52569bf247bc0d6fbd52f7dd426699da4fbd9ce"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderCompensationInventoryLocks.ts",
+      "kind": "current-ts-source",
+      "bytes": 2379,
+      "sha256": "dbdfeaf8ed6958bfa7edd7cf5cadfa327ef7bc396d2161b2028b6c9938a3284b"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/product_relations.ts",
+      "kind": "current-ts-source",
+      "bytes": 17486,
+      "sha256": "fb5649a270f6563f05936d7807f4d2021ac0c87fa958899f49820683481c2efe"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/missingConstraintAlignment.ts",
+      "kind": "current-ts-source",
+      "bytes": 40205,
+      "sha256": "0abb09170a487a8025671e5e64ebaec93f33783ffb81f90c3f63479b7330aa0d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "kind": "current-ts-source",
+      "bytes": 18417,
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+      "kind": "current-ts-source",
+      "bytes": 18777,
+      "sha256": "0c76a6c4c594767af70e47a5b869499b894c02700673de6561c24eb84cc5bd9e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+      "kind": "current-ts-source",
+      "bytes": 26637,
+      "sha256": "c0f63d8d9f59450a30c24739dde72ce8fe4d8d71ca54f44cff630e6510ddfa6c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductForm.vue",
+      "kind": "current-ts-source",
+      "bytes": 39955,
+      "sha256": "78f5c7ce4149accace5e62b833c4115cee87197d497eb0378c492c296dafbb8f"
+    }
+  ],
+  "activeUi": {
+    "entry": "/admin/product/product_list, old productList/index.vue DropdownItem name=4, row.product_type !=1 and openErp==false only; no recycle-state or is_verify restriction on the stock menu",
+    "flow": [
+      "changeMenu case4 → stockControl(row)",
+      "goodsId=row.id; stock.modal=true; stock.productAttrs(row)",
+      "GET productAttrsApi(row.id) → initializes resultNum=stock, changeNum=0, pm=1 for EVERY returned SKU",
+      "multi-spec batch operation or individual input computes nonnegative displayed stock with inbound/outbound direction",
+      "PUT productSaveStocksApi({attrs:[{unique,pm,stock:changeNum}, ...]}, id), sends ALL SKUs including zero changes",
+      "success closes modal and emits stockChange(res.data.stock); parent patches only table row.stock using goodsId"
+    ],
+    "sourceFiles": [
+      "view/admin/src/router/modules/product.js:28",
+      "view/admin/src/pages/product/productList/index.vue:362",
+      "view/admin/src/pages/product/productList/index.vue:1220",
+      "view/admin/src/pages/product/productList/index.vue:1299",
+      "view/admin/src/pages/product/components/stockEdit.vue:191",
+      "view/admin/src/pages/product/components/stockEdit.vue:209",
+      "view/admin/src/api/product.js:545",
+      "view/admin/src/api/product.js:555"
+    ],
+    "sourceRetryLimitation": "Modal submit has no in-flight or idempotency guard; a transport retry can apply the same deltas again. Preserve the flow while adding explicit duplicate-click/unknown-result recovery safeguards rather than presenting relative adjustment as absolute editing."
+  },
+  "contracts": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/attrs/:id",
+      "phpRouteLine": 1575,
+      "handler": "StoreProduct.getAttrs:728",
+      "minimalRequest": "positive product id path; no query declared",
+      "sourceResponse": "success(data=array of full store_product_attr_value rows, product_id=id AND type=0, id ASC)",
+      "sourceBehavior": [
+        "controller only checks nonzero id; DAO does not load/check parent existence/status/owner",
+        "missing/parentless product normally returns []",
+        "all ordinary type0 SKU rows; no is_retired column in PHP",
+        "full rows include id, product_id, product_type, suk, stock, sum_stock, sales, decimal-string fields, image, unique, bar_code, code, disk_info and write-* fields; no descriptions or {info:...} wrapper"
+      ],
+      "currentGap": "No matching Admin route. Existing /api/admin/product/get_attr/:id enforces is_del0 parent, selects is_retired0, and returns only narrow skuProjection without bar_code/code; cannot be counted as old stock-dialog contract.",
+      "intendedRuntimeCapability": "product.view, with live Admin identity/read transaction and explicit private-media policy; source full disk_info exposure needs a deliberate card-secret boundary before declaring fidelity complete."
+    },
+    {
+      "method": "PUT",
+      "path": "/adminapi/product/product/saveStocks/:id",
+      "phpRouteLine": 1577,
+      "handler": "StoreProduct.saveProductAttrsStock:742 → StoreProductAttrValueServices.saveProductAttrsStock:404",
+      "minimalRequest": {
+        "attrs": [
+          {
+            "unique": "8-char SKU alias",
+            "pm": "0(outbound)|1(inbound)",
+            "stock": "nonnegative integral delta, including 0"
+          }
+        ]
+      },
+      "sourceResponse": "success(data={stock:product_stock}) where bcadd/bcsub scale0 returns a numeric string when >0, but clamped nonpositive result is literal integer0",
+      "sourceBehavior": [
+        "product parent exists; no is_del/is_verify/is_show/owner/product_type/ERP gate in server method",
+        "load all type0 SKU rows idASC, array_combine(unique,rows) keeps last row on duplicate aliases",
+        "unrecognized unique silently skipped; recognized zero adjustment still updates SKU and appends zero-number stock record",
+        "pm PHP truthiness selects inbound or outbound; bcadd/bcsub(scale0) applies each request to ORIGINAL loaded SKU stock and sum_stock, not the result of preceding duplicate request",
+        "SKU stock=max(originalStock±delta,0); sum_stock=originalSumStock±delta without floor (signed column can become negative)",
+        "main stock=max(originalProductStock+net sum of RECOGNIZED requested deltas,0), not SUM(final SKU stock)",
+        "writes only SKU stock/sum_stock, product stock and stock ledger rows; original sales/prices/identity unchanged",
+        "record fields product_id/unique/cost_price(original SKU cost)/number(requested delta)/pm/add_time; store_id omitted so schema default0 even nonplatform parent",
+        "no explicit surrounding transaction or row locks in readable source method; AdminLog middleware separately dispatches AdminLogJob before handler",
+        "clears product and attr cache, dispatches ProductStockTips for is_sold/is_police + optional admin SocketPushJob"
+      ],
+      "currentGap": "No matching Admin route. Mobile absolute attr_value editor also changes prices and normalizes sum_stock, while Supplier adjustStock rejects overdraft, leaves outbound sum_stock unchanged, recomputes product SUM and changes isSold; neither is an implementation of this legacy contract.",
+      "intendedRuntimeCapability": "product.manage, checked against current full Admin authority in write transaction; no invented legacy inventory seed or read-page writer grant."
+    }
+  ],
+  "permissionEvidence": {
+    "exactInventorySeedSearch": {
+      "readSingleIdStockRows": 0,
+      "writeSaveStocksRows": 0
+    },
+    "result": "Current installer has NO full API seed tuple for these exact one-id Admin stock endpoints. Do not invent numeric inventory grants or reinterpret the unrelated two-id attrs seeds.",
+    "differentTwoArgumentAttrsSeeds": [
+      {
+        "line": 9110,
+        "sourceRow": "(630, 375, 1, '', '获取商品属性', 'admin', '', '', 'product/product/attrs/<id>/<type>', 'GET', '[]', 0, 0, 0, 1, '', '', 2, '', 0, '', 0),",
+        "completeAuthorityTuple": {
+          "id": 630,
+          "type": 1,
+          "authType": 2,
+          "access": 1,
+          "isDel": 0,
+          "apiUrl": "product/product/attrs/<id>/<type>",
+          "methods": "GET",
+          "menuPath": "",
+          "uniqueAuth": ""
+        }
+      },
+      {
+        "line": 9111,
+        "sourceRow": "(631, 386, 1, '', '商品规格获取', 'admin', '', '', 'product/product/attrs/<id>/<type>', 'GET', '[]', 0, 0, 0, 1, '', '', 2, '', 0, '', 0),",
+        "completeAuthorityTuple": {
+          "id": 631,
+          "type": 1,
+          "authType": 2,
+          "access": 1,
+          "isDel": 0,
+          "apiUrl": "product/product/attrs/<id>/<type>",
+          "methods": "GET",
+          "menuPath": "",
+          "uniqueAuth": ""
+        }
+      },
+      {
+        "line": 9112,
+        "sourceRow": "(632, 397, 1, '', '商品规格和获取', 'admin', '', '', 'product/product/attrs/<id>/<type>', 'GET', '[]', 0, 0, 0, 1, '', '', 2, '', 0, '', 0),",
+        "completeAuthorityTuple": {
+          "id": 632,
+          "type": 1,
+          "authType": 2,
+          "access": 1,
+          "isDel": 0,
+          "apiUrl": "product/product/attrs/<id>/<type>",
+          "methods": "GET",
+          "menuPath": "",
+          "uniqueAuth": ""
+        }
+      },
+      {
+        "line": 9348,
+        "sourceRow": "(942, 939, 1, '', '商品规格和获取', 'admin', '', '', 'product/product/attrs/<id>/<type>', 'GET', '[]', 0, 0, 0, 1, '', '27/34/930/939', 2, '', 0, '', 0),",
+        "completeAuthorityTuple": {
+          "id": 942,
+          "type": 1,
+          "authType": 2,
+          "access": 1,
+          "isDel": 0,
+          "apiUrl": "product/product/attrs/<id>/<type>",
+          "methods": "GET",
+          "menuPath": "",
+          "uniqueAuth": ""
+        }
+      }
+    ],
+    "differentContract": {
+      "route": "/adminapi/product/product/attrs/:id/:type",
+      "handler": "StoreProduct.get_attrs:664",
+      "response": "{info:getProductRules(id,type)}",
+      "sourceApiSeeds": [
+        630,
+        631,
+        632,
+        942
+      ],
+      "scopeExcluded": true
+    },
+    "knownCataloguePageTuple": {
+      "id": 2,
+      "authType": 1,
+      "apiUrl": "",
+      "methods": "",
+      "menuPath": "/admin/product/product_list",
+      "uniqueAuth": "admin-store-storeProuduct-index",
+      "runtimeGrant": "product.view only",
+      "type": 1,
+      "access": 1,
+      "isDel": 0
+    },
+    "knownProductSaveTupleDifferentOperation": {
+      "id": 105,
+      "authType": 2,
+      "apiUrl": "product/product/<id>",
+      "methods": "POST",
+      "menuPath": "/admin/product/save",
+      "uniqueAuth": "product-save",
+      "sourceLine": 8724,
+      "notInventorySaveStocksTuple": true,
+      "type": 1,
+      "access": 1,
+      "isDel": 0
+    },
+    "sourceMiddlewareExplanation": "SystemRoleServices.verifiAuth:92-121 returns true if requested method+rule has no global API seed; matches are checked only against getRolesByAuth. These unseeded stock routes therefore use the readable PHP fail-open branch for authenticated non-root users; the TS runtime must explicitly register view/manage rather than reproduce unregistered fail-open authorization.",
+    "requiredTupleWork": "If real deployed extra menu seeds later supplied, capture actual id/type/authType/access/isDel/methods/apiUrl/menuPath/uniqueAuth and protect all single/batch/opaque resolutions; current source proves zero inventory seeds, not any guessed id."
+  },
+  "sourceAnomaliesThatMustNotBeSilentlyNormalized": [
+    {
+      "example": "original SKU/product stock5,sumStock5, outbound7",
+      "result": "SKUstock0,sumStock-2,productstock0,recordnumber7; requested delta is recorded even though effective stock fall is5"
+    },
+    {
+      "example": "original SKU/product10, requests inbound3 then inbound4 for same alias",
+      "result": "final SKU14,main17,records3and4; source original snapshot + duplicate-request overwrite produces divergence. Need explicit malformed/duplicate-input policy; do not claim cumulative behavior is source."
+    },
+    {
+      "example": "unknown alias only",
+      "result": "zero stock records, main stock unchanged, still cache clear and alert dispatch"
+    },
+    {
+      "example": "all recognized zero changes from unchanged actual modal",
+      "result": "valid nonempty attrs request with zero rows written; normalizeStockAdjustments requiring >0 would reject a real old UI request"
+    },
+    {
+      "example": "SKU retirement exists only in TS",
+      "result": "source GET/adjustment has no retirement filter; decide and document whether retired SKU rows are read-only tombstones/current-edit exclusions, retaining historical storage. Cannot claim current-SKU-only is unmodified source."
+    }
+  ],
+  "currentWritersAndBoundaries": [
+    {
+      "service": "ProductAssociationService/ProductSkuEditorService",
+      "locks": "product fence731617→product row plus SKU identity731602/global0 and current SKU locks; editor sumStock += max(0,newStock-oldStock); full editor prices/identity differs from relative adjustment"
+    },
+    {
+      "service": "MobileProductManagementCore.applyMobileProductSkus",
+      "locks": "product fence731617→parent FOR UPDATE NOWAIT→current type0 SKUs id order FOR UPDATE NOWAIT; lock2s/statement5s",
+      "difference": "absolute prices+stock input attr_value, sumStock usually=newStock, aggregated stock; admin call audit callback no-op for SKU"
+    },
+    {
+      "service": "SupplierProductManagementService.adjustStock",
+      "locks": "separate731602/productId advisory key; parent lookup not row locked before reading, selected SKU SELECT not FOR UPDATE",
+      "difference": "tenant2/id+isDel0, productType0/1/3, nozero/duplicates, insufficient out rejected, inboundsum+=delta only, source-like stock records but storeId=supplierId and aggregateproductSUM+isSold"
+    },
+    {
+      "service": "VirtualProductInventoryService",
+      "locks": "731603/productId advisory→owned product FOR UPDATE→SKU FOR UPDATE",
+      "difference": "card product1 only, quantities backed by available/unassigned cards; quick stock edits must not manufacture card-backed inventory"
+    },
+    {
+      "service": "ProductSkuRetirementService",
+      "locks": "731617/productId→731602/global0→product/SKU NOWAIT",
+      "difference": "retirement/restoration affects topology/current aggregate; must interoperate through row locks and deterministic failure/retry"
+    },
+    {
+      "service": "ErpStockService",
+      "locks": "731602/global0→selected SKU NOWAIT→sorted product rows NOWAIT→allSKUs NOWAIT",
+      "difference": "absolute external stock facts for platform ordinary products; complete durable operation record + full-row verification"
+    },
+    {
+      "service": "StoreOrderCreateService/OrderCompensationInventoryLocks",
+      "locks": "actual checkout writes SKU first then product using guarded UPDATE; compensation uses SKU→product NOWAIT; no shared731617 requirement for all consumers",
+      "difference": "new product→SKU inventory service cannot WAIT backwards on checkout SKU→product; acquire all required rows NOWAIT and rollback whole operation on conflict. Never assume one advisory lock covers checkout/ERP/Supplier."
+    }
+  ],
+  "necessaryWriteInvariantsForImplementation": [
+    "Complete transaction: locked original product + exact SKU identities/topology + all requested changes + stock ledger + Admin audit either commit together or rollback; never partial batch success or silently lose a busy row.",
+    "Repeat current actor realm/status/password/roles/live product.manage, database clock/token expiry, and full authority session at admission and after DML/audit. product.view/page2 cannot grant inventory writer or gallery authority.",
+    "Use bounded canonical integers, actualchar8 alias and exact ordinary type0 membership; explicit unknown/duplicate aliases, retired rows, card products, deleted/foreign/malformed owners, signed sum_stock and numeric overflow policies backed by source/UI requirements.",
+    "Freeze complete expected product/SKU rows before write; UPDATE RETURNING + full readback and post-audit verification, ledger full identity/fields/count proof. Preserve sales/prices/cost/owner/alias/stock-lifecycle metadata not part of source delta.",
+    "Share existing731617product fence where appropriate; lock original product and required ordinary SKUs in deterministic order with NOWAIT to avoid checkout reverse lock cycles. Bound statement/lock/idle deadlines and preserve original failure reason; native tests must hold real competing connections.",
+    "Preserve source requested-delta vs clamped-stock semantics and product main-delta formula rather than switching to absolute editor/Supplier recomputed SUM. Source duplicated data anomaly must be explicit, not silently repaired into a different contract.",
+    "Include ProductStockTips equivalent: source isSold=exists ANY type0 SKU stock0; isPolice=(configured threshold>=mainStock OR anytype0SKU<=threshold), with exact store_stock config snapshot and existing alert delivery policy. Choose durable queued vs synchronous timing explicitly; do not mark completed without side-effect proof.",
+    "Browser actual source flow needs current catalogue row→ordinary SKU modal→batch and individual inbound/outbound→PUT→main row+headers refresh, stale request guards and explicit unknown-result recovery; relative writes must not auto-retry.",
+    "Private SKU image signing must derive persisted current parent owner and authorized attachment metadata; raw nonprivate image/decimal/full source getter shapes preserved. No media fetch, virtual secret disclosure, arbitrary attachment signing or new upload capability."
+  ],
+  "minimalNextBatch": {
+    "countedNewOldEndpoints": 2,
+    "routeCountExcludes": [
+      "existing /api/admin/product/get_attr/:id",
+      "existing /api/admin/product/update_attrs/:id",
+      "Supplier routes",
+      "different attrs/:id/:type selection contract"
+    ],
+    "frontendScope": "ProductList.vue stock modal + exact two APIs; preserve permission/media/stale/unknown-write patterns from preceding reply flow",
+    "fixtures": [
+      "system_admin/role/menus and authority evidence",
+      "full store_product/store_product_attr_value incl retired/activity/colliding aliases",
+      "store_product_stock_record/system_log",
+      "stock threshold system_config and alert/outbox event dependencies",
+      "private image publication metadata",
+      "real checkout/compensation/editor/retirement/ERP/Supplier contending rows"
+    ],
+    "verification": "ordinary source algorithms + actual legacy compiledAxios/stock modal HTTP/JWT + SELECT-only read native + constrained LOGIN write native full rollback/audit/timeout/authority/concurrency + actual desktop/mobile Chrome; all heavy through shared serial wrapper by root"
+  },
+  "proofLimits": [
+    "Source scout only, both interfaces remain unregistered in Admin. No migration implementation claim.",
+    "No PHP interpreter/Swoole/FormBuilder or real provider/queue execution. Readable controller/service/DAO/UI/middleware source supplies semantics.",
+    "No network or database probe; concurrency gaps are static code observations, not confirmed production incidents.",
+    "No dependencies/source frozen receipt rewritten. Exact SHA inputs are this scout read-time inventory, independent of the finalized catalogue evidence."
+  ]
+}

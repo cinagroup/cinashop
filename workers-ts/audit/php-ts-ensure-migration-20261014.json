@@ -1,0 +1,328 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T03:58:42.206829+00:00",
+  "status": "local_candidate_validated_not_published",
+  "goalStatus": "active",
+  "head": "6dc28867cab665bb6874520c36ea1c13cc653937",
+  "addedLegacyContracts": 2,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/ensure/create",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/ensure/create",
+          "normalizedPath": "/adminapi/product/ensure/create",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1628,
+          "target": "v1.product.ensure.StoreProductEnsure"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductEnsures.createForm"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/ensure/:id/edit",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/ensure/:id/edit",
+          "normalizedPath": "/adminapi/product/ensure/:param/edit",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1628,
+          "target": "v1.product.ensure.StoreProductEnsure"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductEnsures.editForm"
+    }
+  ],
+  "existingEnsureRoutesReplaced": 7,
+  "oldResourceGetDetailIsTSExtensionBecausePHPControllerHasNoRead": true,
+  "modernRoutes": {
+    "newAdminapiShortAliases": 7,
+    "existingApiAdminProductAliases": 7
+  },
+  "verification": {
+    "normalFiles": 18,
+    "normalPassedFiles": 14,
+    "normalPassed": 131,
+    "normalConditionalSkipped": 39,
+    "nativeFiles": 11,
+    "nativePassed": 108,
+    "nativeSkipped": 0,
+    "overlap": 69,
+    "uniquePassed": 170,
+    "nativeConditionalCovered": 39,
+    "method": "file + ancestor title chain + title; all selected definitions have unique keys; passed only"
+  },
+  "workerTypes": {
+    "unit": {
+      "exitCode": 0,
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "receipt": "worker-unit-types.log"
+    },
+    "runtime": {
+      "exitCode": 0,
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+      "receipt": "worker-runtime-types.log"
+    }
+  },
+  "admin": {
+    "vueTypes": {
+      "exitCode": 0,
+      "command": "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+      "receipt": "admin-vue-types.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "command": "node node_modules/vite/bin/vite.js build",
+      "receipt": "admin-build.log"
+    },
+    "actualCompiledVueApiAndAxiosToFullAppProof": true,
+    "browserOrDeviceProof": false
+  },
+  "unitFormConsumerRepair": {
+    "previousActionProducedRepeatedAdminapiPrefix": true,
+    "relativeActions": [
+      "product/unit",
+      "product/unit/:id"
+    ],
+    "actualAxiosResolvedRequestsAndSqlAuditVerified": true,
+    "newHTTPCaseCount": 1
+  },
+  "executedMigrationInput": {
+    "count": 3268,
+    "digest": "a02d8d0cc97ddc249cf8a3a0267164ce4f67e1d162466a13d62530e0c3857a03",
+    "method": "SHA256 of UTF8 compact sorted-key JSON files map",
+    "scope": "Worker src/test/scripts/migrations/configs + Admin src/configs + six inherited Supplier static inputs",
+    "beforeReceipt": "ensure-20261014/frozen-final-before.json",
+    "afterReceipt": "ensure-20261014/frozen-final-after.json",
+    "deliveryBytesEqual": true,
+    "normalCommandCompletelyRerunAfterCorrectedFreeze": true
+  },
+  "native": {
+    "version": "16.14",
+    "files": 11,
+    "passed": 108,
+    "skipped": 0,
+    "fixtureRemaining": 0,
+    "independentStoppedClusters": [
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/ensure-postgres-fixtures/finance-postgres-Mbsz3L",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running",
+        "stopped": true
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/ensure-postgres-fixtures/finance-postgres-m7BtpI",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running",
+        "stopped": true
+      }
+    ],
+    "toolSourceReceipt": "specs-20261014/pg16-tool-build-receipt.json"
+  },
+  "routeAudit": {
+    "exitCode": 1,
+    "preExistingAtHead": true,
+    "reason": "GET /api/get_script is registered but legacy-route-decisions.json still marks it retired",
+    "currentGlobalCoverageClaimed": false
+  },
+  "commandsReceipt": "ensure-20261014/commands.json",
+  "validationHistoryReceipt": "ensure-20261014/validation-history.json",
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "complete": 249,
+      "open": 155,
+      "rowsUnchanged": true
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "complete": 50,
+      "open": 38,
+      "rowsUnchanged": true
+    }
+  },
+  "phpSources": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/ensure/StoreProductEnsure.php": "149f499d8a92a98eac31c3760ae8fe9be8bd8cba37bd87b8340878ccb8f6b6cf",
+    "app/services/product/ensure/StoreProductEnsureServices.php": "a98a8d965656d9f4ad42553ffe2bf3fa5135c8632e17411d160346b31f7cba21",
+    "app/dao/product/ensure/StoreProductEnsureDao.php": "33198e6c41e0791d921443c021e121eb0bf1f2db8b20aa96d53c49c9327b0fec",
+    "app/model/product/ensure/StoreProductEnsure.php": "f5e7c99fbdea4c840f6516b28993cd32181f8a68f3eae994b64a154ee9c65cad",
+    "app/dao/product/product/StoreProductDao.php": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+    "crmeb/services/FormBuilder.php": "5a6e2a7e77c36bb12b5518e7c3350b7300873822039937e2f5de3113962be889",
+    "view/admin/src/api/product.js": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+    "view/admin/src/utils/modalForm.js": "9a874601934c710bb106857c17f1b6e78a38173efd810b3e58e7f3b817ab94b5",
+    "view/admin/src/plugins/request/index.js": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5"
+  },
+  "knownDifferences": [
+    "PHP all options omitted ownership; TS platform Admin and supplier-readable scopes are enforced",
+    "Readonly complete echoes, canonical numeric bounds, query uniqueness and 64 KiB bodies are stricter than PHP ignored fields",
+    "PHP lacked reference protection; TS guards every product CSV reference including deleted or foreign owners and type-5 relations",
+    "Legacy descriptions may be empty; modern descriptions remain required; form maxlength100 and API255 differ intentionally",
+    "Selectors reject more than2000 explicitly; paginated lists retain complete count; no unlimited-capacity claim"
+  ],
+  "production": {
+    "ddlExecuted": false,
+    "businessDataWritten": false,
+    "providerCalls": false,
+    "submitted": false,
+    "pushed": false,
+    "deployed": false
+  },
+  "receipts": {
+    "admin-build.log": {
+      "path": "audit/ensure-20261014/admin-build.log",
+      "sha256": "7cc43c4d081fd011b7aea22988c38c5781e8ddfb110c5a88755f0333ca304498"
+    },
+    "admin-status.json": {
+      "path": "audit/ensure-20261014/admin-status.json",
+      "sha256": "2d8b27ba123e2b2b8c8327a155e057f48bd525fc9e6341d88427c93ac36c0352"
+    },
+    "admin-vue-types.log": {
+      "path": "audit/ensure-20261014/admin-vue-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "adminapi-before.ts": {
+      "path": "audit/ensure-20261014/adminapi-before.ts",
+      "sha256": "2a54a2b887a86c299fbca10973ccf4fb15f031cbcc6e9827bd7359da8b4061dc"
+    },
+    "checklist-before.json": {
+      "path": "audit/ensure-20261014/checklist-before.json",
+      "sha256": "1290662a5be1ff63598c06fefdaa91e606d02d36ddbe1c3116565242bba85cf6"
+    },
+    "command-status.json": {
+      "path": "audit/ensure-20261014/command-status.json",
+      "sha256": "1d8d0343526f6540eb8917063acd42e8ba938b5722ba81e7b60f4a04039fb980"
+    },
+    "commands.json": {
+      "path": "audit/ensure-20261014/commands.json",
+      "sha256": "d5ddfeb8627e19d1abe1c39f4affc135ba2f89a15dd20e714432b5dd44b2c857"
+    },
+    "final-native-independent-status.json": {
+      "path": "audit/ensure-20261014/final-native-independent-status.json",
+      "sha256": "2eae83889c810b9f8a095f71344f6eeffb7d3114f425a68270a32a377ad898cf"
+    },
+    "final-native.log": {
+      "path": "audit/ensure-20261014/final-native.log",
+      "sha256": "bb275a62b7988dc33e0d228850874ffcb71ef2cd72f113cb60c564826ce28284"
+    },
+    "final-ordinary.json": {
+      "path": "audit/ensure-20261014/final-ordinary.json",
+      "sha256": "2ab061b354207671a90c1cc69ee5ed15ab3fedb158f5b55ed9b9515f8227c588"
+    },
+    "final-ordinary.log": {
+      "path": "audit/ensure-20261014/final-ordinary.log",
+      "sha256": "3838154cacca5e62650652b24654b46c17a78d9b6afef539ed2530a56472af59"
+    },
+    "frozen-final-after.json": {
+      "path": "audit/ensure-20261014/frozen-final-after.json",
+      "sha256": "794c3559ba0f02fe07367ce599773471abf4cad50bf93c541927cf942baf2cdf"
+    },
+    "frozen-final-before.json": {
+      "path": "audit/ensure-20261014/frozen-final-before.json",
+      "sha256": "794c3559ba0f02fe07367ce599773471abf4cad50bf93c541927cf942baf2cdf"
+    },
+    "http-repair.json": {
+      "path": "audit/ensure-20261014/http-repair.json",
+      "sha256": "df9fc4d47ee421f0171eef541906295e4e0c37cc3dd4676a69202af13518b03a"
+    },
+    "http-repair.log": {
+      "path": "audit/ensure-20261014/http-repair.log",
+      "sha256": "701e756e7ce86fd71fb947c9824f15d62bb9d1c88eeaa1278159a447d51d7a81"
+    },
+    "initial-http.json": {
+      "path": "audit/ensure-20261014/initial-http.json",
+      "sha256": "52a3063e712b9215144b97c6747d078bb33b9de0b8a782db7402ace6f696028c"
+    },
+    "initial-http.log": {
+      "path": "audit/ensure-20261014/initial-http.log",
+      "sha256": "8bcb100a158a0c936a934e76a357f394a89f2f3ee419eaa73313e98ccffe36ec"
+    },
+    "initial-native-independent-status.json": {
+      "path": "audit/ensure-20261014/initial-native-independent-status.json",
+      "sha256": "397b8006be641ee281df01129d5bed30b7a51e104b5df5ff36cc004327f82456"
+    },
+    "initial-native.log": {
+      "path": "audit/ensure-20261014/initial-native.log",
+      "sha256": "252b8aab96e171d3e3f2564b44cfe09aea38d9f2511b7abca0678d7815ef049c"
+    },
+    "initial-ordinary.json": {
+      "path": "audit/ensure-20261014/initial-ordinary.json",
+      "sha256": "369dcbfee5cee2108a3231f1b39fe65a82fed34b73ea14f5507b3b694ff67290"
+    },
+    "initial-ordinary.log": {
+      "path": "audit/ensure-20261014/initial-ordinary.log",
+      "sha256": "1358379e7004f40306897129874f77209e7e311672c79289ba4e5c0ced34e824"
+    },
+    "native-cases.json": {
+      "path": "audit/ensure-20261014/native-cases.json",
+      "sha256": "61eaa0e13bf8b0681377555c12331636547a1eb63d3ba8115da69d3618f22139"
+    },
+    "post-native-input.json": {
+      "path": "audit/ensure-20261014/post-native-input.json",
+      "sha256": "8bb5328dae36dc4d6f70cc070692f6676ce20084216fce1e1b1e35f65edac89e"
+    },
+    "pre-freeze-ordinary.json": {
+      "path": "audit/ensure-20261014/pre-freeze-ordinary.json",
+      "sha256": "c0946ba0203ef5da0a453e7a07aff8b93a9a06d72d0921d7cfa0fcb290637df2"
+    },
+    "pre-freeze-ordinary.log": {
+      "path": "audit/ensure-20261014/pre-freeze-ordinary.log",
+      "sha256": "6429943b49cba1b3ac275fa2809e840e7a24912e2d01b4f0aa8261581e649cb8"
+    },
+    "route-audit.log": {
+      "path": "audit/ensure-20261014/route-audit.log",
+      "sha256": "27a08b848f943b720336447200ea4cd45852b1dc191cb03a9bf16eeaa1dd6ad7"
+    },
+    "static-delta.json": {
+      "path": "audit/ensure-20261014/static-delta.json",
+      "sha256": "e355664c4e52b6435c5dc96ccab1012272593e738667d58009e2d4812b36bf4d"
+    },
+    "test-summary.json": {
+      "path": "audit/ensure-20261014/test-summary.json",
+      "sha256": "115f56b38e12c80976588f18509da940e16381015b23b79248997ea634977cb5"
+    },
+    "type-status.json": {
+      "path": "audit/ensure-20261014/type-status.json",
+      "sha256": "365e44574e2b3ac54c6c5113b5ba2c20bd9e7e70db7ac0822dabe7ba12a51e84"
+    },
+    "v1-before.ts": {
+      "path": "audit/ensure-20261014/v1-before.ts",
+      "sha256": "86c80f344c36dd4e6e718493436ecbed12fa5c05eeacb98f79dfc42290797f18"
+    },
+    "validation-history.json": {
+      "path": "audit/ensure-20261014/validation-history.json",
+      "sha256": "d4d7e3e01d40b9499c47e6465287814f6d14cbba1fc2df09d4141644d562ec23"
+    },
+    "worker-runtime-types.log": {
+      "path": "audit/ensure-20261014/worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker-unit-types.log": {
+      "path": "audit/ensure-20261014/worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "independent-review.json": {
+      "path": "audit/ensure-20261014/independent-review.json",
+      "sha256": "ab9876bcd3aa412e80c1e09ffd39907bf40cde53673e5a8d68761f3d08c24b00"
+    }
+  },
+  "independentReview": {
+    "result": "passed",
+    "receipt": "ensure-20261014/independent-review.json",
+    "priorReceiptsChecked": 33,
+    "currentInputHashesChecked": 3268,
+    "implementationEdited": false,
+    "testsRerun": false
+  }
+}

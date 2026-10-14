@@ -1,0 +1,143 @@
+{
+  "generatedAt": "2026-10-14T12:15:24.861801+00:00",
+  "method": "Retain original failed and intermediate bytes; scoped final matrix supersedes pass claims. Historical type receipt original log basename resolved via explicit actual archived log ref here. No observation timeout counted as process failure.",
+  "receipts": [
+    {
+      "path": "workers-ts/audit/catalog-20261014/initial-ordinary-status.json",
+      "sha256": "da1adf9168b93800177619346922cb53d8cfd8d60e8f0bbc989ac980c869d6a0",
+      "byteLength": 945
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/initial-ordinary.json",
+      "sha256": "399392d9e7ed44bf2b398c9101045c16f96cc9b33bbc965ba05fbcb0d333d12a",
+      "byteLength": 41308
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/initial-ordinary.log",
+      "sha256": "2c7333bc6de33af6611a9dc01e623049abd656c31436504ab9ab79d2ffa4a9f2",
+      "byteLength": 46417
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/corrected-ordinary-status.json",
+      "sha256": "a5f575ee4617020c7250b60b184dcf3add81d015b769d107a0914f2b60d4f45c",
+      "byteLength": 951
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/corrected-ordinary.json",
+      "sha256": "f0a57899f0492ce186ac6539178100c932cfc03fd91c2e50d75b5ede912d7623",
+      "byteLength": 38923
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/corrected-ordinary.log",
+      "sha256": "01a2cadf0145973315495a66eb0d6f2b7b4c80e854092b7682641a1ca17969d3",
+      "byteLength": 41449
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/catalog-native-status.json",
+      "sha256": "8eb57216c9ca1258bba76ab9e067f4939b4ff60f4aeb58fbc272a9c7611f15c2",
+      "byteLength": 690
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/catalog-native.log",
+      "sha256": "fce31322b8ea97b964425b6250c006f928bac0d71135fc7ef529b56001b040d8",
+      "byteLength": 13388
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/pre-type-repair-worker-unit-types-status.json",
+      "sha256": "49faa68695b9a5bd93d7ced30de7949b4553b02d1629c3b3335c732c1165c032",
+      "byteLength": 468
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/pre-type-repair-worker-unit-types.log",
+      "sha256": "0f3f9ae224c67086961dfbf58ff51b7f352aa47ba7048b944a0e5c5d0a001999",
+      "byteLength": 1276
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/batch-context-ordinary-status.json",
+      "sha256": "0240de89f5886488ab6f7a9a57a1c011ec5f5786ec5da3cd2cc4dd81fb975ed9",
+      "byteLength": 683
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/batch-context-ordinary.json",
+      "sha256": "25c0d3bb3cc3027f004f9765b28039b224dd5de2d86b5682dc1a77bbd3b0e261",
+      "byteLength": 6992
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/batch-context-ordinary.log",
+      "sha256": "9b9bceaaf4c985e2267df67f75e84c89d76577a0ce5a466e4ef7f3518ed6d705",
+      "byteLength": 3690
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/correlated-sql-before.json",
+      "sha256": "c13efa606e8c5dd6d7b9dc433e0a79e8e0ae364df1c09e27f9273bd099a1a8d3",
+      "byteLength": 5212
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/correlated-sql-after.json",
+      "sha256": "76a228e7981ef4f6b3032ef54afff1ae3d93e777ee30f8ccc04562cacdec0ebc",
+      "byteLength": 5284
+    }
+  ],
+  "failures": [
+    {
+      "run": "initial-ordinary",
+      "exitCode": 1,
+      "passed": 60,
+      "failed": 4,
+      "conditionalSkipped": 6,
+      "reasons": [
+        "frontend expected negative target signed stock rejection; corrected test domain to target reconciliation (PHP source unsigned)",
+        "real production outer correlation was stripped in four Drizzle aggregate projections; qualified outer identifier repaired without weakening DTO assertions",
+        "supplier copy fixture19 lacked ordinary SKU required by source fallback; added genuine legal fixture SKU"
+      ]
+    },
+    {
+      "run": "pre-type-repair-worker-unit-types",
+      "exitCode": 2,
+      "reason": "two unused fixture imports/params and two native observer rows union result typings; SQL/assertions unchanged"
+    }
+  ],
+  "intermediatePasses": [
+    {
+      "run": "corrected-ordinary",
+      "passed": 65,
+      "conditionalSkipped": 6,
+      "definitions": 71,
+      "coversCurrentBatchRunPatch": false
+    },
+    {
+      "run": "catalog-native",
+      "passed": 33,
+      "conditionalSkipped": 0,
+      "fixtureRemaining": 0
+    },
+    {
+      "run": "batch-context-ordinary",
+      "passed": 12,
+      "conditionalSkipped": 0,
+      "coversCurrentBatchRunPatch": true
+    }
+  ],
+  "previousCompletedFictitiousArtifactsAreAsOfSnapshots": [
+    {
+      "path": "workers-ts/docs/php-ts-fictitious-reply-migration-20261014.md",
+      "sha256": "f110897f8a6eafe1b69b18945435aa32b813dbba5264877220d13c4d40407b94",
+      "byteLength": 12102
+    },
+    {
+      "path": "workers-ts/audit/php-ts-fictitious-reply-migration-20261014.json",
+      "sha256": "c8addb6f2b541a24359efd800ec836ba0c08d0b19ad235ca0646a69d322ec6ef",
+      "byteLength": 39283
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/frozen-before.json",
+      "sha256": "4d8aaa673b51705ff0436e15d0cebd0d43215bf7851fef590e448121dbeaa6c1",
+      "byteLength": 437677
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/delivery-independent-review.json",
+      "sha256": "f3ed168ae16daccd4124f6875515acbd9c6459ca7f102755f8c72f0b71661793",
+      "byteLength": 54503
+    }
+  ]
+}

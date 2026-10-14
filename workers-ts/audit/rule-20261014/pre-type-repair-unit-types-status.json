@@ -1,0 +1,16 @@
+{
+  "name": "unit-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "--noEmit"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T04:37:26.665641+00:00",
+  "completedAt": "2026-10-14T04:40:25.769767+00:00",
+  "exitCode": 2,
+  "log": "worker-unit-types.log",
+  "nodePathIncluded": true,
+  "testFinanceLocalCacheRoot": null
+}

@@ -1,0 +1,131 @@
+{
+  "capturedAt": "2026-10-14T10:13:21.001833+00:00",
+  "reviewer": "/root/after_fictitious_gap_scout; input map captured by/root",
+  "mode": "read-only rg/sed source; no heavy/global audit/provider/production",
+  "candidateStatus": "source-scoped next increments, not implemented or validated by this receipt",
+  "priority": [
+    {
+      "scope": "Product row review navigation and genuine legacy browser alias",
+      "newApiRoutes": 0,
+      "sourceLegacyBrowserPath": "/admin/product/product_reply/:id?",
+      "canonicalPath": "/reply?product_id=...",
+      "sourceQuery": "is_reply=0 must survive exactly",
+      "permission": "reply.view or reply.manage, independent from product.view",
+      "findings": [
+        "old active changeMenu case1 goes to legacyproduct_reply path",
+        "TS router only/reply; ProductList has no review entry",
+        "ReplyList consumes query.product_id only, not old params.id/is_reply"
+      ],
+      "estimatedProductionFiles": 3
+    },
+    {
+      "scope": "Main legacy product list and status header reads",
+      "newApiRoutes": [
+        "GET /adminapi/product/product",
+        "GET /adminapi/product/product/type_header"
+      ],
+      "permission": "product.view",
+      "sourceSeeds": [
+        108,
+        192
+      ],
+      "findings": [
+        "active oldgetDataList consumes list/count and8statusheaders",
+        "currentgeneric/product/list has list/page/limit and is not source contract",
+        "source type renamedstatus, only Supplier convertsowner;defaultpid0notplatformowner",
+        "policeusesis_police1andstock>0;thresholdcheckcommented"
+      ]
+    },
+    {
+      "scope": "Admin ordinary SKU stock quick adjustment",
+      "newApiRoutes": [
+        "GET /adminapi/product/product/attrs/:id",
+        "PUT /adminapi/product/product/saveStocks/:id"
+      ],
+      "permission": {
+        "read": "product.view",
+        "write": "product.manage"
+      },
+      "dedicatedExactSourceSeedNotFound": true,
+      "doNotBorrowSeeds": [
+        630,
+        631,
+        632,
+        942
+      ],
+      "note": "those tuples haveattrs/:id/:type; actual oldstockEdit active, mutations need inventory concurrency/record proofs"
+    }
+  ],
+  "independentOpenConflict": {
+    "path": "/api/get_script",
+    "kind": "registered implemented currentlyconsumed route versusretirementdecision/testing; not missing implementation",
+    "manifestStillSaysNoCurrentConsumers": true,
+    "mustResolveImplementationConsumersDecisionTestsTogether": true
+  },
+  "inputs": {
+    "php/view/admin/src/pages/product/productList/index.vue": {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1"
+    },
+    "php/view/admin/src/router/modules/product.js": {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/modules/product.js",
+      "sha256": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790"
+    },
+    "php/view/admin/src/pages/product/productReply/index.vue": {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407"
+    },
+    "php/app/controller/admin/v1/product/StoreProduct.php": {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60"
+    },
+    "php/app/services/product/product/StoreProductServices.php": {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+    },
+    "php/route/admin.php": {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+    },
+    "php/public/install/crmeb.sql": {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+    },
+    "view/admin-ts/src/router/index.ts": {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/router/index.ts",
+      "sha256": "5989836439b351d1b36a3b8b1b7b77f2cc11130029ecc3a8545658f7082f3cf5"
+    },
+    "view/admin-ts/src/pages/product/ProductList.vue": {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+      "sha256": "d05b2cd52c1551a92ac5fdb62c4834b1acdb12b4cfd00258ce9b4fa95f134c47"
+    },
+    "view/admin-ts/src/pages/reply/ReplyList.vue": {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "sha256": "ce43bbb82d3f91c71ea1a28a3b9733a84dc7c009f4e50ff7fcdb4812aed664e6"
+    },
+    "workers-ts/src/controllers/api/v1/AdminCrudController.ts": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "88881e405963ddabdf8e9e046d8bd01f78aa107e424b6aaa720fa15864b43dde"
+    },
+    "workers-ts/src/routes/adminapi.ts": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "sha256": "02327093a8121c2e1fdd4b1ac325c342adc36a5e76c8d1a4f3172dfc8547205a"
+    },
+    "workers-ts/src/routes/v1/index.ts": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "sha256": "ab0661c9e788d32c512736f3c5e69e619a375d0199fe60c90d8a1683579be052"
+    },
+    "workers-ts/src/controllers/api/v1/PublicController.ts": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427"
+    },
+    "view/admin-ts/src/main.ts": {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5"
+    },
+    "workers-ts/audit/legacy-route-decisions.json": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56"
+    }
+  }
+}

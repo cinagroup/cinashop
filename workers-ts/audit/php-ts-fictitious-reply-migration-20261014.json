@@ -1,0 +1,938 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T10:56:53.205941+00:00",
+  "scope": "Admin fictitious/self reviews, actual legacy commodity selector, synchronous creation rating effects and required shared unit lock bound regression repair",
+  "status": "local_candidate_verified_not_published",
+  "goalStatus": "active",
+  "legacyAdded": 3,
+  "modernCreationAliasesAdded": 0,
+  "report": {
+    "path": "workers-ts/docs/php-ts-fictitious-reply-migration-20261014.md",
+    "sha256": "f110897f8a6eafe1b69b18945435aa32b813dbba5264877220d13c4d40407b94",
+    "byteLength": 12102
+  },
+  "routeReceipt": {
+    "path": "workers-ts/audit/fictitious-20261014/route-delta.json",
+    "sha256": "4459a7039407ce9c2af6950aba3d35dd9f3e37d86575d10ad73d3989ded05a5a",
+    "byteLength": 1966
+  },
+  "validation": {
+    "generatedAt": "2026-10-14T10:56:14.266008+00:00",
+    "method": "Identity is repository-relative full test file plus ancestor titles plus case title; ordinary/native union, overlap counted once; loops inside a test are not additional definitions.",
+    "singleFinalFullMatrix": true,
+    "ordinary": {
+      "files": 49,
+      "filesWithPassedDefinitions": 37,
+      "passed": 623,
+      "skipped": 148,
+      "failed": 0
+    },
+    "native": {
+      "files": 28,
+      "passed": 356,
+      "skipped": 0,
+      "failed": 0
+    },
+    "overlap": 208,
+    "uniquePassed": 771,
+    "allConditionalSupplemented": true,
+    "supplementedConditional": 148
+  },
+  "eightFinalTerminalFacts": [
+    {
+      "name": "worker-unit-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T10:37:43.592091+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:39:48.158426+00:00",
+      "exitCode": 0,
+      "log": "worker-unit-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/worker-unit-types-status.json",
+        "sha256": "b6cad0ebf8bfe2a799b5e9025b4e84d301a88203bde633dc8b57b2cf424f5c79",
+        "byteLength": 468
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/worker-unit-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "worker-runtime-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T10:39:48.188373+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:41:04.770197+00:00",
+      "exitCode": 0,
+      "log": "worker-runtime-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/worker-runtime-types-status.json",
+        "sha256": "85579319aaaf0fa442727291dfa3f6bb5cf131b9d1ea574d0401ec6c7f4d815b",
+        "byteLength": 518
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/worker-runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "admin-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-14T10:41:04.809452+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:41:31.126932+00:00",
+      "exitCode": 0,
+      "log": "admin-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/admin-types-status.json",
+        "sha256": "c1196f1b7a8c8be3d1b0d880a1dd2470576f23e6efc9de88a61f102d550ddddc",
+        "byteLength": 424
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/admin-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "supplier-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+      "startedAt": "2026-10-14T10:41:31.159806+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:41:39.097768+00:00",
+      "exitCode": 0,
+      "log": "supplier-types.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/supplier-types-status.json",
+        "sha256": "eed36522828bf675de437e1e121c85e57d2c7b7806a58b6669ca01dc044725a0",
+        "byteLength": 433
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/supplier-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byteLength": 0
+      }
+    },
+    {
+      "name": "final-ordinary",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/admin-product-rule.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-rule-native.test.ts",
+        "test/supplier-product-rule-http.test.ts",
+        "test/supplier-product-rule-native.test.ts",
+        "test/supplier-product-rule-frontend.test.ts",
+        "test/supplier-product-rule-workflow-frontend.test.ts",
+        "test/supplier-product-media-frontend.test.ts",
+        "test/product-sku-editor-migration.test.ts",
+        "test/admin-product-ensure.test.ts",
+        "test/admin-product-ensure-http.test.ts",
+        "test/admin-product-ensure-native.test.ts",
+        "test/admin-product-unit.test.ts",
+        "test/admin-product-unit-http.test.ts",
+        "test/admin-product-unit-native.test.ts",
+        "test/admin-product-specs.test.ts",
+        "test/admin-product-specs-http.test.ts",
+        "test/admin-product-specs-audit.test.ts",
+        "test/admin-product-specs-native.test.ts",
+        "test/admin-user-group-contract.test.ts",
+        "test/admin-user-group-http.test.ts",
+        "test/admin-user-group-native.test.ts",
+        "test/product-experience-migration.test.ts",
+        "test/product-association-migration.test.ts",
+        "test/product-metadata-migration.test.ts",
+        "test/admin-product-frontend-parity.test.ts",
+        "test/admin-permission.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-reply-native.test.ts",
+        "test/admin-product-reply-workflow-frontend.test.ts",
+        "test/product-reply-detail-migration.test.ts",
+        "test/product-reply-detail-compatibility-scenario.test.ts",
+        "test/reply-shipping-migration.test.ts",
+        "test/supplier-product-reply-migration.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "test/admin-product-fictitious-reply-native.test.ts",
+        "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+        "test/product-detail-design-consumers-postgres.test.ts",
+        "test/order-review-integrity.test.ts",
+        "test/lottery-migration.test.ts",
+        "test/product-detail-cache-isolation.test.ts",
+        "test/admin-product-detail-design.test.ts",
+        "test/admin-product-detail-design-http.test.ts",
+        "test/admin-product-detail-design-postgres.test.ts",
+        "test/admin-product-detail-design-coverage.test.ts",
+        "test/attachment-storage-migration.test.ts",
+        "test/checkout-sku-lifecycle-concurrency.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=audit/fictitious-20261014/final-ordinary.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T10:41:39.134659+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:47:54.089894+00:00",
+      "exitCode": 0,
+      "log": "final-ordinary.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/final-ordinary-status.json",
+        "sha256": "0af05839530ebd82ad55d37e458643feb827820cf62ad2ff9e9b083640c22b7a",
+        "byteLength": 2993
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/final-ordinary.log",
+        "sha256": "5ea0e7cfe1624589d50ba6e80ae35ac137cfc5d0bbd447c8bfa04dead5ef905b",
+        "byteLength": 192143
+      }
+    },
+    {
+      "name": "final-native",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-product-rule.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-rule-native.test.ts",
+        "test/supplier-product-rule-http.test.ts",
+        "test/supplier-product-rule-native.test.ts",
+        "test/admin-product-ensure.test.ts",
+        "test/admin-product-ensure-http.test.ts",
+        "test/admin-product-ensure-native.test.ts",
+        "test/admin-product-unit.test.ts",
+        "test/admin-product-unit-http.test.ts",
+        "test/admin-product-unit-native.test.ts",
+        "test/admin-product-specs.test.ts",
+        "test/admin-product-specs-http.test.ts",
+        "test/admin-product-specs-audit.test.ts",
+        "test/admin-product-specs-native.test.ts",
+        "test/admin-user-group-native.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-reply-native.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "test/admin-product-fictitious-reply-native.test.ts",
+        "test/product-detail-design-consumers-postgres.test.ts",
+        "test/product-detail-cache-isolation.test.ts",
+        "test/checkout-sku-lifecycle-concurrency.test.ts",
+        "test/admin-product-detail-design.test.ts",
+        "test/admin-product-detail-design-http.test.ts",
+        "test/admin-product-detail-design-postgres.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T10:47:54.125009+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:54:50.529827+00:00",
+      "exitCode": 0,
+      "log": "final-native.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/final-native-status.json",
+        "sha256": "a8f4148107f4e21ba868de1252c2468cff4a03ae19b2f60db71ea51ae9a5a460",
+        "byteLength": 1866
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/final-native.log",
+        "sha256": "fd0259eb95ae55168b5a80634fb10e7d76d9eb42640ccdcca2f5a96d8fe8dd2e",
+        "byteLength": 235815
+      }
+    },
+    {
+      "name": "admin-build",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-14T10:54:50.573766+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:55:20.030675+00:00",
+      "exitCode": 0,
+      "log": "admin-build.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/admin-build-status.json",
+        "sha256": "7d4db0d906d1c461ad5427fc7834ebcf862dbb541e2517a9d1f834a2af317d05",
+        "byteLength": 421
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/admin-build.log",
+        "sha256": "3514a2356e5c9cc38af013d2e8d1d573eb19532fef5187f79984b9abbc9eb5cb",
+        "byteLength": 23530
+      }
+    },
+    {
+      "name": "supplier-build",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+      "startedAt": "2026-10-14T10:55:20.061944+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-14T10:55:34.744157+00:00",
+      "exitCode": 0,
+      "log": "supplier-build.log",
+      "statusReceipt": {
+        "path": "workers-ts/audit/fictitious-20261014/supplier-build-status.json",
+        "sha256": "7a6c3d60e05bb6f4b0aa7e03516fe2fe4f89963766ee22d60dde51c84034a18d",
+        "byteLength": 430
+      },
+      "rawLog": {
+        "path": "workers-ts/audit/fictitious-20261014/supplier-build.log",
+        "sha256": "a4282c978abd584f4211c78bc7ebcf2fc1f8326efc3f1c16ef4aaddf9f4bfc3e",
+        "byteLength": 4237
+      }
+    }
+  ],
+  "definitionReceipt": {
+    "path": "workers-ts/audit/fictitious-20261014/verification-summary.json",
+    "sha256": "a38cd1376a87b71db537208c9c44ffaffdabac63b363a92bd024d5a726d94214",
+    "byteLength": 335630
+  },
+  "inputs": {
+    "count": 3358,
+    "digest": "39e342050e8db8107f869dc2b3cf11fb6cf43e40e06e8f721d6bad3340caf7e4",
+    "before": {
+      "path": "workers-ts/audit/fictitious-20261014/frozen-before.json",
+      "sha256": "4d8aaa673b51705ff0436e15d0cebd0d43215bf7851fef590e448121dbeaa6c1",
+      "byteLength": 437677
+    },
+    "after": {
+      "path": "workers-ts/audit/fictitious-20261014/frozen-after.json",
+      "sha256": "36f463ba3a0ddb267ac7b3d8892d8ee8208b0ba0a0d78d93c4087881d2d19f17",
+      "byteLength": 437811
+    },
+    "inventoryCompleteForDeclaredEightDirectories": true,
+    "notCompleteBuildInputGraph": true,
+    "environmentValuesAndInstalledDependencyBytesExcluded": true,
+    "deltaFromHistoricalReply": {
+      "path": "workers-ts/audit/fictitious-20261014/delta-from-reply.json",
+      "sha256": "c80e5a9149ef3ebbf55c6fbd272e2d15a3ccbee6581c22f1309b97f8332b017a",
+      "byteLength": 6272
+    }
+  },
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "checked": 249,
+      "open": 155,
+      "allCheckboxRowsUnchanged": true
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "checked": 50,
+      "open": 38,
+      "allCheckboxRowsUnchanged": true
+    }
+  },
+  "sourceReview": {
+    "path": "workers-ts/audit/fictitious-20261014/source-independent-review.json",
+    "sha256": "2b9f559e90cab962fa81e46de04ee54589165090627c00f29627c72967be0d5e",
+    "byteLength": 53649
+  },
+  "historicalPreMediaSourceReview": {
+    "path": "workers-ts/audit/fictitious-20261014/pre-media-source-independent-review.json",
+    "sha256": "71385ea4d23d3018dcf915e24af46c6347471db9640b157c38a793e9c85508ef",
+    "byteLength": 28946
+  },
+  "sourceDecisionCaptureIsHistorical": true,
+  "phpSourceReceipt": {
+    "path": "workers-ts/audit/fictitious-20261014/php-sources.json",
+    "sha256": "9cb6fbefc74d52b4fc19346cd728d99a217a06d5ae6ae136cb05b4d2b2324091",
+    "byteLength": 5170
+  },
+  "localRuntimeProvenance": {
+    "path": "workers-ts/audit/fictitious-20261014/local-runtime-provenance.json",
+    "sha256": "195139950ce4fd8cb5e3142e68e46691e953241b76630957f1897d0b426af6ce",
+    "byteLength": 916
+  },
+  "sourceRating": {
+    "source": "PHP StoreProductReplyServices.computedProductStar plus product.reply listener/job",
+    "aggregation": "all product_id matches with is_del=0; product_score mean truncated one decimal, regardless of owner,UID,status",
+    "noRows": "retain previous star",
+    "strategy": "synchronous before commit on virtual and existing public submit/automatic creation; no fire-and-forget",
+    "deletion": "PHP delete emits no rating event; retain star unchanged, acquire product before parent/thread only to serialize membership changes",
+    "sourceTimingDifference": "synchronous write replaces source queued eventual effect; not exact queue deployment/runtime parity",
+    "fence": "existing lockProductWrite731617 + product row; real order/cart locks precede all sorted product locks",
+    "missingProduct": "virtual creation refused; historic real-order/cart review retained and rating update skipped"
+  },
+  "transportExtension": {
+    "canonicalStored": true,
+    "readSigningOnlyForCurrentPublishableMetadata": true,
+    "privateSelectionsRequireIndependentAttachmentView": true,
+    "imageOwnerProofUsesCurrentMetadata": true,
+    "opaqueLegacyJsonShapePreserved": true,
+    "phpPrivateR2ParityNotClaimed": true,
+    "actualHmacAssetHttpWithExplicitR2GetBytesStub": true,
+    "realR2OrProviderNotCalled": true
+  },
+  "sharedUnitLockRepair": {
+    "scope": "helper lock_timeout only preserves stricter finite bound; no allSupplierdownstream uniformity claim",
+    "nativeBoundaryTestDefinitionsAdded": 1,
+    "inputOutputMs": {
+      "0": 2000,
+      "750": 750,
+      "2000": 2000,
+      "5000": 2000
+    },
+    "loopsCountedOnce": true,
+    "originalCheckoutCaseUnchanged": true,
+    "historicalFailure": {
+      "path": "workers-ts/audit/fictitious-20261014/unit-lock-bound-repair-historical.json",
+      "sha256": "072cf91b9b8ac1e14007b217e780a54f3d42adfb8dfb155a2f1cc64902b520b9",
+      "byteLength": 11460
+    },
+    "inputDelta": {
+      "path": "workers-ts/audit/fictitious-20261014/unit-lock-bound-repair-delta.json",
+      "sha256": "438031b4a5f71d0bbc57ccf387b0d958ddb90c1ba8228a49ffcf5e3e6a97b3f1",
+      "byteLength": 1036
+    },
+    "narrowFullFilesReceipt": {
+      "path": "workers-ts/audit/fictitious-20261014/post-unit-lock-bound-native-status.json",
+      "sha256": "dabb0c8ff33cc6203d3fd4eb43fc44266f9010c3ed7800eab0e841e718af8c01",
+      "byteLength": 664
+    }
+  },
+  "browser": {
+    "availability": "Browser plugin not available",
+    "fallback": "Installed Playwright1.62.1 with Chrome155.0.8059.39; Node24.19.0; no dependencies installed",
+    "url": "http://127.0.0.1:4974/reply",
+    "viewports": [
+      {
+        "width": 1360,
+        "height": 900
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "finalAttempt": "attempt-004",
+    "flows": 7,
+    "states": 15,
+    "screenshots": 15,
+    "unchangedSourceInputs": 11,
+    "sourceOfUiAuthority": "actualSFC/Axios/UI; allAPI/image responses explicit synthetic local fixtures, no preview=1 bypass",
+    "remainingBoundary": "Browser fixture does not prove SQL/JWT/HMAC/realR2/provider/production",
+    "cleanup": {
+      "chrome": 0,
+      "viteStoppedExplicitly": true,
+      "port4974": "ECONNREFUSED"
+    },
+    "externallyStoredArtifactSnapshot": {
+      "files": 113,
+      "newRootVisualInspectionSupplemental": true
+    },
+    "references": [
+      {
+        "path": "/tmp/cinashop-fictitious-qa/attempt-004-browser-receipt.json",
+        "sha256": "e6537f327429806ad38930050d5fec9b193ad53c3b3c4c25123b5c657aff3c9b",
+        "byteLength": 36138
+      },
+      {
+        "path": "/tmp/cinashop-fictitious-qa/attempt-004-cleanup-proof.json",
+        "sha256": "e78ac0e9fc8a96fcdc32709a87ecb0b489624c585857f168fe67bebb9910ce42",
+        "byteLength": 366
+      },
+      {
+        "path": "/tmp/cinashop-fictitious-qa/final-summary.json",
+        "sha256": "53b9b1bc6fc572463f3cce3d93fae50a99b5ade11e819d17a921c9e92f852333",
+        "byteLength": 2404
+      },
+      {
+        "path": "/tmp/cinashop-fictitious-qa/artifact-hashes.json",
+        "sha256": "a7e06b84090626de7b0258853e89379fee4d63588267f8feba95ab3568a58bb1",
+        "byteLength": 21418
+      },
+      {
+        "path": "/tmp/cinashop-fictitious-qa/root-visual-inspection.json",
+        "sha256": "0f1c25dfb345ba0c013e9d1278f42f36c997b7a0e7726ddd07f070698c1d9f37",
+        "byteLength": 1444
+      }
+    ]
+  },
+  "ownedProcessCleanup": {
+    "path": "workers-ts/audit/fictitious-20261014/owned-process-cleanup.json",
+    "sha256": "191ba37fc49ae8de5ae2f7fa63f032b26a877eb518f415afe8452386c1bf0022",
+    "byteLength": 2737
+  },
+  "ownedClusterCount": 5,
+  "historicalReceipts": {
+    "path": "workers-ts/audit/fictitious-20261014/historical-verification-receipts.json",
+    "sha256": "ba3a6dfa046c4bfce18602832a9d24ffe3d3a3ebf40315561743f730ea42a046",
+    "byteLength": 11337
+  },
+  "nextScope": {
+    "path": "workers-ts/audit/fictitious-20261014/next-scope-source-scout.json",
+    "sha256": "9e3a9625a0cdedaae4daf75b12cc95bad2f8a1282b56a5a393f8fae9f0ff06e4",
+    "byteLength": 6250
+  },
+  "proofReceiptIndex": [
+    {
+      "path": "workers-ts/audit/fictitious-20261014/admin-build-status.json",
+      "sha256": "7d4db0d906d1c461ad5427fc7834ebcf862dbb541e2517a9d1f834a2af317d05",
+      "byteLength": 421
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/admin-build.log",
+      "sha256": "3514a2356e5c9cc38af013d2e8d1d573eb19532fef5187f79984b9abbc9eb5cb",
+      "byteLength": 23530
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/admin-types-status.json",
+      "sha256": "c1196f1b7a8c8be3d1b0d880a1dd2470576f23e6efc9de88a61f102d550ddddc",
+      "byteLength": 424
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/admin-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/baseline-from-reply.json",
+      "sha256": "c1d0549e45451a0511548a38baf8c9cc5f059b97c3546df1547f9f1dabe6bb59",
+      "byteLength": 887
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/browser-evidence-reference.json",
+      "sha256": "8c8fa1a5e074534fd6feb4c9cd39a4e0e95d5a57fff5a5f11f8ba657924dd25e",
+      "byteLength": 1872
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/checklist-after.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6",
+      "byteLength": 327654
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/checklist-before.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6",
+      "byteLength": 327654
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/collect-cleanup.py",
+      "sha256": "eb04e9f1b848ed69983b26414a172e19d2fd730fb77e34fac0db73b6ec27106b",
+      "byteLength": 2334
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/collect-evidence.py",
+      "sha256": "bdd69c6bd3953778d5ed98d130d0563eaa2137dfbd0186d3e1a128bc590f46ff",
+      "byteLength": 3918
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/corrected-native-status.json",
+      "sha256": "747f8c68962625b50a03229a646e21995211c2f95067d581e68f1fed3c096c0b",
+      "byteLength": 767
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/corrected-native.log",
+      "sha256": "4ccc6bdc228c95f78644b0d455603abeaf08637430ec266afc807a9207340e0e",
+      "byteLength": 48728
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/corrected-ordinary-status.json",
+      "sha256": "aa51e4ada88eeadbc3cb835d50641cc5d6725fdbb6a2d672e2e089aa29e3a16d",
+      "byteLength": 965
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/corrected-ordinary.json",
+      "sha256": "b56aa886b9ea2e85013b6bf79b5b9917ed4a4f3469dfdb698455a6cfd9a9882c",
+      "byteLength": 46268
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/corrected-ordinary.log",
+      "sha256": "99b7a9e75b458ce8d6b66730a3c4a465c6b2507e6ad5139717d0606cce9baec5",
+      "byteLength": 45066
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/delta-from-reply.json",
+      "sha256": "c80e5a9149ef3ebbf55c6fbd272e2d15a3ccbee6581c22f1309b97f8332b017a",
+      "byteLength": 6272
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/failed-native-offline-catalog-probe.json",
+      "sha256": "00c99a57954478f620a7782414f6fb51be9503f70e96ddf5a9ccd41fdbbf3579",
+      "byteLength": 664
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/failed-native-offline-catalog-probe.log",
+      "sha256": "52551d27c358c3795647355c7c06d27c1e7f6786e2fe9b8745b8b35f985845e4",
+      "byteLength": 874
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/failed-native-offline-cleanup.json",
+      "sha256": "059ef553b12a1a87538d146868d51bd8621b4d06003679ad989259b13989d712",
+      "byteLength": 1287
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/failed-native-offline-cleanup.log",
+      "sha256": "de3719c2d5426ce5361909011ffcf3f4d9beb450e9d1e48d3be3b2d39dd0385b",
+      "byteLength": 1386
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/final-commands.json",
+      "sha256": "83aa1b6557b92f73fbead0ad7488c554dec5e1159ec77a31ca6122eacb205cd7",
+      "byteLength": 6405
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/final-native-status.json",
+      "sha256": "a8f4148107f4e21ba868de1252c2468cff4a03ae19b2f60db71ea51ae9a5a460",
+      "byteLength": 1866
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/final-native.log",
+      "sha256": "fd0259eb95ae55168b5a80634fb10e7d76d9eb42640ccdcca2f5a96d8fe8dd2e",
+      "byteLength": 235815
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/final-ordinary-status.json",
+      "sha256": "0af05839530ebd82ad55d37e458643feb827820cf62ad2ff9e9b083640c22b7a",
+      "byteLength": 2993
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/final-ordinary.json",
+      "sha256": "c1acd11af262ffa40be5d57b673bc28f991da94062e222c189bfcd956704dc69",
+      "byteLength": 327207
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/final-ordinary.log",
+      "sha256": "5ea0e7cfe1624589d50ba6e80ae35ac137cfc5d0bbd447c8bfa04dead5ef905b",
+      "byteLength": 192143
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/finalize-delivery.py",
+      "sha256": "5da70f1fba15e8f2a688518883117b4646c9bda0024201a6eefe295ae10d073f",
+      "byteLength": 8052
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/frozen-after.json",
+      "sha256": "36f463ba3a0ddb267ac7b3d8892d8ee8208b0ba0a0d78d93c4087881d2d19f17",
+      "byteLength": 437811
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/frozen-before.json",
+      "sha256": "4d8aaa673b51705ff0436e15d0cebd0d43215bf7851fef590e448121dbeaa6c1",
+      "byteLength": 437677
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/historical-verification-receipts.json",
+      "sha256": "ba3a6dfa046c4bfce18602832a9d24ffe3d3a3ebf40315561743f730ea42a046",
+      "byteLength": 11337
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/initial-native-status.json",
+      "sha256": "00f944f7c69b1a92254c2e4226543a0cb6da061a5f9254289df9c8e36c9277e0",
+      "byteLength": 763
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/initial-native.log",
+      "sha256": "3672e55955888f31f51ad3845a3ad6fa323b6d3bb17296e052f6b30b0e74630a",
+      "byteLength": 52224
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/initial-ordinary-command.json",
+      "sha256": "3f2749fb1bf67daee647e171f8215fcaae35077d0964456c04f807046455bf0a",
+      "byteLength": 976
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/initial-ordinary-status.json",
+      "sha256": "10d8e452751c610806bbd5404e695f4e4b8aee04f2baff2908177bba7364f2e2",
+      "byteLength": 840
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/initial-ordinary.json",
+      "sha256": "8ba7a86ba1b18a5dd07d62eb3570b2f6fc15906dd198706dfd90e9dd61ba39b9",
+      "byteLength": 29104
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/initial-ordinary.log",
+      "sha256": "83ff4c2eaf777c6a2bd8c2dccf641c3038da07780cc307662478f59e5c75e93f",
+      "byteLength": 42047
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/local-runtime-provenance.json",
+      "sha256": "195139950ce4fd8cb5e3142e68e46691e953241b76630957f1897d0b426af6ce",
+      "byteLength": 916
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/next-scope-source-scout.json",
+      "sha256": "9e3a9625a0cdedaae4daf75b12cc95bad2f8a1282b56a5a393f8fae9f0ff06e4",
+      "byteLength": 6250
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/owned-process-cleanup.json",
+      "sha256": "191ba37fc49ae8de5ae2f7fa63f032b26a877eb518f415afe8452386c1bf0022",
+      "byteLength": 2737
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/php-sources.json",
+      "sha256": "9cb6fbefc74d52b4fc19346cd728d99a217a06d5ae6ae136cb05b4d2b2324091",
+      "byteLength": 5170
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/post-unit-lock-bound-native-status.json",
+      "sha256": "dabb0c8ff33cc6203d3fd4eb43fc44266f9010c3ed7800eab0e841e718af8c01",
+      "byteLength": 664
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/post-unit-lock-bound-native.log",
+      "sha256": "1c96580a036c8ad7712ad9ad57e74a1b267ca918b1991d760c39f96e176ed5ab",
+      "byteLength": 6550
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-delta.json",
+      "sha256": "445340910e28786f5ec02f296f8850b80a664f30a2cda77595b4a0c25272a205",
+      "byteLength": 2115
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-final-ordinary-status.json",
+      "sha256": "486589ed7819be05fe0763c8b3dd0d16f0bff105707eeb02bdf9f98b04c0d9c7",
+      "byteLength": 2993
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-final-ordinary.json",
+      "sha256": "6caf31aaac2729847803413769dad18f34f490ecaf4fa9af238e1f64e0d19463",
+      "byteLength": 394051
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-final-ordinary.log",
+      "sha256": "1a7c52647292e3a0db38d3a695fa01bfc81d574e6f6bae1958e40f7a36e86704",
+      "byteLength": 211438
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before.json",
+      "sha256": "4eb7d6281120923b2054f04aab31823f5a49d94e78190276da14a0578a4be0f9",
+      "byteLength": 437677
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-media-source-independent-review.json",
+      "sha256": "71385ea4d23d3018dcf915e24af46c6347471db9640b157c38a793e9c85508ef",
+      "byteLength": 28946
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before.json",
+      "sha256": "59ab8e508e7de3e8088488851a9ba1483e5c9594ec13fc47b1a06c1f7688bf78",
+      "byteLength": 437677
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-type-repair-worker-unit-types-status.json",
+      "sha256": "f9b748fa8e3f42b2969d50375039a1650bf0061c1aead0a11f56b34eb1e554a1",
+      "byteLength": 468
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-type-repair-worker-unit-types.log",
+      "sha256": "0ea2b44a2ccc8dd06819da11ed42270d5135fba1a3a2a6295c2eedcb78b7ed12",
+      "byteLength": 3109
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-admin-types-status.json",
+      "sha256": "c6061d34e49a186fff7956b0153fb9afc26f5750cb4b9b039c35055732ca670e",
+      "byteLength": 424
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-admin-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-final-native-status.json",
+      "sha256": "e2b95a71c893ef4c40e7c3dbcd61f01e7869f2c56441d0088f9e62981b5f26ff",
+      "byteLength": 1866
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-final-native.log",
+      "sha256": "ec55d6465c1055b11c2609b1d0e1aa9e1a7ce7d9df2903ec5bbc06cb364958cb",
+      "byteLength": 237953
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-final-ordinary-status.json",
+      "sha256": "acc4df28eda0335e9275d8f0ecd8dc5762006874d36dc5329b6b09bbb1e6117b",
+      "byteLength": 2993
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-final-ordinary.json",
+      "sha256": "4cc58d94ec503bb5ef7a5664d61ae615413fa7ab8f23e02df16cb192eeb30e49",
+      "byteLength": 326739
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-final-ordinary.log",
+      "sha256": "39ce7aa3e1f3215b361ef4afdae1c7de690fae1edb5e1cb5a69b454244230886",
+      "byteLength": 191910
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before.json",
+      "sha256": "4fe457669c47d405847fe80e3a0650f22577871ca0c87673f916204e54f7f7d9",
+      "byteLength": 437677
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-supplier-types-status.json",
+      "sha256": "f4195cc1e7018b137bed2d87439515f5151e73da43ad874214c2ec2d020773af",
+      "byteLength": 433
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-supplier-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-worker-runtime-types-status.json",
+      "sha256": "32c827ca37ffc2ec5232222f6f9fe01182429531b2d09a2c84504c8579e5cb73",
+      "byteLength": 518
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-worker-unit-types-status.json",
+      "sha256": "dee49039506810308a7eb6c3506e2ab90c5bd365154e0bdcb1d4af550cf7bb10",
+      "byteLength": 468
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/route-delta.json",
+      "sha256": "4459a7039407ce9c2af6950aba3d35dd9f3e37d86575d10ad73d3989ded05a5a",
+      "byteLength": 1966
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/run-check.py",
+      "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de",
+      "byteLength": 838
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/run-matrix.py",
+      "sha256": "68b0405b19031140984aacd60f1163e1b0906fc7b66349e159e9b833d10dbba5",
+      "byteLength": 371
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/scope-decisions.json",
+      "sha256": "28289748f8de81a1fc5dcd74b498ed6769a5bfa9fa684093f61a15e55bd57eb6",
+      "byteLength": 2038
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/source-independent-review.json",
+      "sha256": "2b9f559e90cab962fa81e46de04ee54589165090627c00f29627c72967be0d5e",
+      "byteLength": 53649
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/supplier-build-status.json",
+      "sha256": "7a6c3d60e05bb6f4b0aa7e03516fe2fe4f89963766ee22d60dde51c84034a18d",
+      "byteLength": 430
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/supplier-build.log",
+      "sha256": "a4282c978abd584f4211c78bc7ebcf2fc1f8326efc3f1c16ef4aaddf9f4bfc3e",
+      "byteLength": 4237
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/supplier-types-status.json",
+      "sha256": "eed36522828bf675de437e1e121c85e57d2c7b7806a58b6669ca01dc044725a0",
+      "byteLength": 433
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/supplier-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/type-repair-delta.json",
+      "sha256": "d1b19e1177b9c87a0739bf1b39fd868d8241bce5efdb895ed675ccc5105fb54a",
+      "byteLength": 1435
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/unit-lock-bound-repair-delta.json",
+      "sha256": "438031b4a5f71d0bbc57ccf387b0d958ddb90c1ba8228a49ffcf5e3e6a97b3f1",
+      "byteLength": 1036
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/unit-lock-bound-repair-historical.json",
+      "sha256": "072cf91b9b8ac1e14007b217e780a54f3d42adfb8dfb155a2f1cc64902b520b9",
+      "byteLength": 11460
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/verification-summary.json",
+      "sha256": "a38cd1376a87b71db537208c9c44ffaffdabac63b363a92bd024d5a726d94214",
+      "byteLength": 335630
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/worker-runtime-types-status.json",
+      "sha256": "85579319aaaf0fa442727291dfa3f6bb5cf131b9d1ea574d0401ec6c7f4d815b",
+      "byteLength": 518
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/worker-unit-types-status.json",
+      "sha256": "b6cad0ebf8bfe2a799b5e9025b4e84d301a88203bde633dc8b57b2cf424f5c79",
+      "byteLength": 468
+    },
+    {
+      "path": "workers-ts/audit/fictitious-20261014/worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    }
+  ],
+  "limitations": [
+    "PHP interpreter and encoded BaseController/opaque FormBuilder application not executed",
+    "Synchronous creation star effect differs from PHP asynchronous queue timing; queue deployment parity not asserted",
+    "Actual local Hono App/JWT/SQL/HMAC tested under Node, not new production Hyperdrive or Workers deployment proof",
+    "R2 get response bytes stub and all browser API/image transports explicit synthetic fixtures",
+    "Global get_script registration/retirement/consumer conflict remains open; no new global coverage ratio or fullCIclaim",
+    "Legacy product-row review navigation/browser alias, full repository CI, actual accounts/devices/production acceptance remain open",
+    "No commit/push/PR/productiondatachange/publish/PHPshutdown"
+  ],
+  "independentDeliveryReview": {
+    "status": "passed-final-independent-audit",
+    "path": "workers-ts/audit/fictitious-20261014/delivery-independent-review.json",
+    "sha256": "f3ed168ae16daccd4124f6875515acbd9c6459ca7f102755f8c72f0b71661793",
+    "byteLength": 54503,
+    "reviewer": "/root/reply_source_review",
+    "ledgerProjectionSha256": "e777808861bea5e94b72a1cb6b1ea5fd9c7003619659ed8913017d811ed15645",
+    "projectionRule": "Exclude only independentDeliveryReview; original reviewed ledger bytes/history/projection retained in independent receipt",
+    "furtherReviewMutationPlanned": false
+  }
+}

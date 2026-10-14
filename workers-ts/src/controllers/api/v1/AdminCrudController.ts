@@ -128,32 +128,6 @@ export async function adminProductUnitDelete(c: C) {
   return jsonOk(c, null, "删除成功");
 }
 
-export async function adminProductRuleList(c: C) {
-  return jsonOk(c, await productMetadata(c).ruleList(platformMetadataOwner, c.req.query()));
-}
-
-export async function adminProductRuleTemplates(c: C) {
-  return jsonOk(c, await productMetadata(c).ruleTemplates(platformMetadataOwner));
-}
-
-export async function adminProductRuleDetail(c: C) {
-  return jsonOk(c, await productMetadata(c).ruleDetail(platformMetadataOwner, metadataId(c)));
-}
-
-export async function adminProductRuleSave(c: C) {
-  const result = await productMetadata(c).saveRule(
-    platformMetadataOwner,
-    metadataId(c, true),
-    await metadataBody(c),
-  );
-  return jsonOk(c, result, "保存成功");
-}
-
-export async function adminProductRuleDelete(c: C) {
-  await productMetadata(c).deleteRule(platformMetadataOwner, metadataId(c));
-  return jsonOk(c, null, "删除成功");
-}
-
 export async function adminProductSpecsList(c: C) {
   return jsonOk(
     c,
@@ -1249,47 +1223,6 @@ export async function adminActivityStatus(c: C) {
 // ═══════════════════════════════════════════════════════════
 // 商品评价管理 (M11)
 // ═══════════════════════════════════════════════════════════
-
-/** GET /api/admin/reply/list — 评价列表 */
-export async function adminReplyList(c: C) {
-  const q = c.req.query();
-  const page = Number(q.page ?? 1);
-  const limit = Number(q.limit ?? 10);
-  const container = c.get("container");
-  const list = await container.replyDao.selectList({ where: {}, page, limit });
-  // 解析 pics JSON
-  return jsonOk(
-    c,
-    list.map((item: any) => ({
-      ...item,
-      pics: (() => {
-        try {
-          const arr = JSON.parse(item.pics || "[]");
-          return Array.isArray(arr) ? arr : [];
-        } catch {
-          return [];
-        }
-      })(),
-    })),
-  );
-}
-
-/** POST /api/admin/reply/status/:id — 评价隐藏/显示 */
-export async function adminReplyStatus(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const body = (await c.req.json().catch(() => ({}))) as { status?: number };
-  const container = c.get("container");
-  await container.replyDao.update(id, { status: body.status ?? 0 });
-  return jsonOk(c, null, "操作成功");
-}
-
-/** DELETE /api/admin/reply/del/:id — 删除评价 */
-export async function adminReplyDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  await container.replyDao.update(id, { isDel: 1 });
-  return jsonOk(c, null, "已删除");
-}
 
 // ═══════════════════════════════════════════════════════════
 // 营销活动详情 (M12)

@@ -23,10 +23,10 @@ export function parseSupplierProductRuleInput(value: unknown) {
   const keys = ['rule_name', 'ruleName', 'spec', 'expected_revision', 'id', 'type', 'relation_id', 'rule_value', 'attr_name', 'attr_value', 'revision', 'valid'];
   if (Object.keys(body).some(key => !keys.includes(key))) throw new ValidateException('规格模板字段错误');
   const name = body.rule_name ?? body.ruleName;
-  if (typeof name !== 'string' || !name.trim() || name.trim().length > 32 || /[\u0000-\u001f\u007f]/u.test(name)) throw new ValidateException('模板名称需为1至32个字符');
+  if (typeof name !== 'string' || !name.trim() || [...name.trim()].length > 32 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(name)) throw new ValidateException('模板名称需为1至32个字符');
   if (body.rule_name !== undefined && body.ruleName !== undefined && body.rule_name !== body.ruleName) throw new ValidateException('模板名称参数冲突');
   const spec = normalizeProductRuleInput(body.spec);
-  if (spec.some(item => /[\u0000-\u001f\u007f]/u.test(item.value) || item.detail.some(value => /[\u0000-\u001f\u007f]/u.test(value)))) throw new ValidateException('规格内容包含无效字符');
+  if (spec.some(item => /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(item.value) || item.detail.some(value => /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(value)))) throw new ValidateException('规格内容包含无效字符');
   return { name: name.trim(), spec, expectedRevision: supplierRuleRevision(body.expected_revision) };
 }
 export function parseSupplierProductRuleDelete(value: unknown) {
@@ -41,7 +41,7 @@ export function supplierRuleNoQuery(query: URLSearchParams) {
 export function parseSupplierProductRuleList(query: URLSearchParams) {
   for (const key of query.keys()) if (!['rule_name', 'page', 'limit'].includes(key) || query.getAll(key).length !== 1) throw new ValidateException('规格模板查询参数错误');
   const name = query.get('rule_name') ?? '';
-  if (name.length > 50 || /[\u0000-\u001f\u007f]/u.test(name)) throw new ValidateException('规格模板搜索内容无效');
+  if ([...name].length > 50 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(name)) throw new ValidateException('规格模板搜索内容无效');
   const paged = query.has('page') || query.has('limit');
   const page = paged ? supplierRuleId(query.get('page') ?? 1) : 0;
   const limit = paged ? supplierRuleId(query.get('limit') ?? 20) : 0;

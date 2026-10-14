@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-10-14T06:09:11.126989+00:00",
+  "clusters": [
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-EKPAit",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-JqQ5h1",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-Vx0Twc",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-ldGeeg",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-uNsxE6",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false,
+      "stopped": true
+    }
+  ],
+  "interruptedRecoveryReceipts": [
+    "interrupted-cluster-cleanup.json",
+    "second-interrupted-cluster-cleanup.json"
+  ]
+}

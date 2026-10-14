@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { lockProductUnitLifecycle } from './ProductUnitLifecycle';
 import { boundBargainSourceProductChange, lockBargainSourceProductChange } from "@/services/activity/BargainSourceProductLifecycle";
 import {
   legacyCategory,
@@ -90,6 +91,14 @@ function textValue(value: unknown, field: string, maximum: number, fallback = ""
   return result;
 }
 
+function parameterText(value: unknown, field: string): string {
+  const source = value === undefined || value === null ? '' : value;
+  if (typeof source !== 'string') throw new ValidateException(`${field}格式错误`);
+  const text = source.trim();
+  if ([...text].length > 255 || /[\u0000\ud800-\udfff]/u.test(text)) throw new ValidateException(`${field}长度或字符错误`);
+  return text;
+}
+
 function integerValue(
   value: unknown,
   field: string,
@@ -157,13 +166,13 @@ export function normalizeProductParameterSnapshot(value: unknown): ProductParame
       throw new ValidateException("商品参数快照格式错误");
     }
     const row = entry as Record<string, unknown>;
-    const name = textValue(row.name, "参数名称", 255);
+    const name = parameterText(row.name, "参数名称");
     if (!name) throw new ValidateException("参数名称不能为空");
     if (names.has(name)) throw new ValidateException("参数名称不能重复");
     names.add(name);
     return {
       name,
-      value: textValue(row.value, "参数值", 255),
+      value: parameterText(row.value, "参数值"),
       sort: integerValue(row.sort, "参数排序", 0),
       status: integerValue(row.status, "参数状态", 1, 0, 1) as 0 | 1,
     };
@@ -306,6 +315,7 @@ export class ProductAssociationService {
         .where(and(
           eq(legacyCategory.type, 0),
           eq(legacyCategory.relationId, 0),
+          eq(legacyCategory.ownerId, 0),
           eq(legacyCategory.group, PARAMETER_TEMPLATE_GROUP),
           eq(legacyCategory.isShow, 1),
         ))
@@ -371,6 +381,8 @@ export class ProductAssociationService {
           status: storeProductSpecs.status,
         }).from(storeProductSpecs).where(and(
           inArray(storeProductSpecs.tempId, templates.map((item) => item.id)),
+          eq(storeProductSpecs.type, 0),
+          eq(storeProductSpecs.relationId, 0),
           eq(storeProductSpecs.status, 1),
         )).orderBy(desc(storeProductSpecs.sort), asc(storeProductSpecs.id))
       : [];
@@ -477,6 +489,7 @@ export class ProductAssociationService {
     if (!Number.isSafeInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
+      await lockProductUnitLifecycle(tx);
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
         await lockBargainSourceProductChange(tx, productId);
@@ -538,6 +551,7 @@ export class ProductAssociationService {
       const owner = { type: existing?.type ?? 0, relationId: existing?.relationId ?? 0 };
       let associationBody = body;
       let historicalParameters: { templateId: number; specs: ProductParameterSnapshot[] } | undefined;
+      let historicalEnsureIds: number[] = [];
       if (hasAssociations && existing) {
         const currentRelations = await tx.select({
           type: storeProductRelation.type,
@@ -575,9 +589,10 @@ export class ProductAssociationService {
         };
         associationBody = { ...fallback, ...body };
         historicalParameters = { templateId: fallback.specs_id, specs: existingSpecs };
+        historicalEnsureIds = fallback.ensure_id;
       }
       const associations = hasAssociations
-        ? await this.validateAssociations(tx, owner, associationBody, historicalParameters)
+        ? await this.validateAssociations(tx, owner, associationBody, historicalParameters, historicalEnsureIds)
         : null;
 
       const values = {
@@ -746,6 +761,7 @@ export class ProductAssociationService {
     owner: { type: number; relationId: number },
     body: Record<string, unknown>,
     historicalParameters?: { templateId: number; specs: ProductParameterSnapshot[] },
+    historicalEnsureIds: readonly number[] = [],
   ): Promise<ProductAssociations> {
     const categoryIds = normalizeProductAssociationIds(body.cate_id, "商品分类", 20);
     const brandIds = normalizeProductAssociationIds(body.brand_id, "商品品牌", 20);
@@ -762,13 +778,14 @@ export class ProductAssociationService {
       productLabelIds.length ? tx.select({ id: storeProductLabel.id }).from(storeProductLabel)
         .where(and(inArray(storeProductLabel.id, productLabelIds), readableScope(storeProductLabel, owner)))
         .for("share") : [],
-      ensureIds.length ? tx.select({ id: storeProductEnsure.id }).from(storeProductEnsure)
+      ensureIds.length ? tx.select({ id: storeProductEnsure.id, status: storeProductEnsure.status }).from(storeProductEnsure)
         .where(and(inArray(storeProductEnsure.id, ensureIds), readableScope(storeProductEnsure, owner)))
         .for("share") : [],
-      parameterTemplateId > 0 ? tx.select({ id: legacyCategory.id }).from(legacyCategory)
+      parameterTemplateId > 0 ? tx.select({ id: legacyCategory.id, type: legacyCategory.type, relationId: legacyCategory.relationId }).from(legacyCategory)
         .where(and(
           eq(legacyCategory.id, parameterTemplateId),
           eq(legacyCategory.group, PARAMETER_TEMPLATE_GROUP),
+          eq(legacyCategory.ownerId, 0),
           readableScope(legacyCategory, owner),
         )).limit(1).for("share") : [],
     ]);
@@ -776,12 +793,17 @@ export class ProductAssociationService {
     if (!sameIds(brands.map((item) => item.id), brandIds)) throw new ValidateException("商品品牌不存在或已删除");
     if (!sameIds(labels.map((item) => item.id), productLabelIds)) throw new ValidateException("商品标签不存在或不属于当前商品");
     if (!sameIds(ensures.map((item) => item.id), ensureIds)) throw new ValidateException("保障服务不存在或不属于当前商品");
+    if (ensures.some(item => item.status !== 1 && !historicalEnsureIds.includes(item.id))) {
+      throw new ValidateException('保障服务已停用，不能新绑定');
+    }
     if (parameterTemplateId > 0 && !templates[0]) throw new ValidateException("参数模板不存在或不属于当前商品");
     if (parameterTemplateId === 0 && parameterSpecs.length) throw new ValidateException("请选择参数模板后再填写商品参数");
     if (parameterTemplateId > 0) {
       const templateSpecs = await tx.select({ name: storeProductSpecs.name })
         .from(storeProductSpecs).where(and(
           eq(storeProductSpecs.tempId, parameterTemplateId),
+          eq(storeProductSpecs.type, templates[0].type),
+          eq(storeProductSpecs.relationId, templates[0].relationId),
           eq(storeProductSpecs.status, 1),
         )).orderBy(desc(storeProductSpecs.sort), asc(storeProductSpecs.id)).for("share");
       const currentShapeMatches = sameNames(

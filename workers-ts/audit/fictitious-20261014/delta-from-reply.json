@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-10-14T10:39:31.688406+00:00",
+  "baseline": "Historical previous reply3348 declared input map as-of its own completed slice; not an asserted pre-edit snapshot of new batch",
+  "baselineReceipt": "workers-ts/audit/reply-20261014/frozen-before.json",
+  "baselineDigest": "9972ef116089f2f1969e4530273281024a8c90c06707b63ba55da957559b6097",
+  "currentReceipt": "workers-ts/audit/fictitious-20261014/frozen-before.json",
+  "currentDigest": "39e342050e8db8107f869dc2b3cf11fb6cf43e40e06e8f721d6bad3340caf7e4",
+  "addedCount": 10,
+  "changedExistingCount": 19,
+  "unchangedExistingCount": 3329,
+  "removedCount": 0,
+  "added": [
+    "view/admin-ts/src/pages/reply/FictitiousReplyDialog.vue",
+    "workers-ts/src/controllers/api/v1/AdminProductFictitiousReplyController.ts",
+    "workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+    "workers-ts/src/services/product/ProductReplyMediaPolicy.ts",
+    "workers-ts/src/services/product/ProductReviewRatingService.ts",
+    "workers-ts/test/admin-product-fictitious-reply-http.test.ts",
+    "workers-ts/test/admin-product-fictitious-reply-native.test.ts",
+    "workers-ts/test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+    "workers-ts/test/admin-product-fictitious-reply.test.ts",
+    "workers-ts/test/helpers/adminProductFictitiousReplies.ts"
+  ],
+  "changed": {
+    "view/admin-ts/src/api/reply.ts": {
+      "historicalBefore": "fda9261265d93416fa9e5023f628f99fa4f5655a6b73ad80b46b9e736f8975b1",
+      "current": "93d16adc64d90fe28fdef8c5ff060067f8934023a3a961d5ab04d63ed5083c96"
+    },
+    "view/admin-ts/src/pages/activity/CombinationImagePicker.vue": {
+      "historicalBefore": "ff78dd680d05da45f1d5f7b6113bdccf24b976055a4b9c97903a9324498c623b",
+      "current": "7e33d828576eabf5d9826dc76df5dd92c22fc4c132e809a426b6e4bc5ecf8426"
+    },
+    "view/admin-ts/src/pages/reply/ReplyList.vue": {
+      "historicalBefore": "47c8ab5be6107060258bdd2447c9659e1d755a5eda8975d3cf4f256d257b3f26",
+      "current": "ce43bbb82d3f91c71ea1a28a3b9733a84dc7c009f4e50ff7fcdb4812aed664e6"
+    },
+    "workers-ts/scripts/product-detail-design-coverage.ts": {
+      "historicalBefore": "43c11c0f01e87c00e5144e543e22b685032270436caa5527e8dcaed7ed2ee1b8",
+      "current": "8fa7c1b7b3315e84c6b17afd6830082eec2554736fb5360f04025fe69f79201b"
+    },
+    "workers-ts/scripts/run-local-finance-postgres.mjs": {
+      "historicalBefore": "d276baf0ff52615ba55d83dec0b37157ff460bbfeac0b15d4b1d1164a13d38e3",
+      "current": "1eeeeb2cf8fbd9bb1911c387e229d357adf85c09cc7943e2197fc36d7bdf5b5c"
+    },
+    "workers-ts/src/controllers/api/v1/AdminProductReplyController.ts": {
+      "historicalBefore": "fc90c8a7cf5151358c042f51b8358414c5dbaffd2c3e7fe63a22ba99789baa17",
+      "current": "767ea7c947e1b0e445fce8e5ae860abdd7b80931d5d7106f62291d0edafd54e5"
+    },
+    "workers-ts/src/controllers/api/v1/ReplyController.ts": {
+      "historicalBefore": "0c033cd994932afa79191350d8e3dd1bf22073f35d316f1fb60ae31e1ad082dd",
+      "current": "5a7faf2b903e4cb970b963e49bacdf37e8e6e4a6dac782decc5443c6bb6c0d75"
+    },
+    "workers-ts/src/routes/adminapi.ts": {
+      "historicalBefore": "8cb05551c3680ee937e24623ec9a3629da9df05dce0960fe22a961febb562cd5",
+      "current": "02327093a8121c2e1fdd4b1ac325c342adc36a5e76c8d1a4f3172dfc8547205a"
+    },
+    "workers-ts/src/services/admin/AdminPermissionService.ts": {
+      "historicalBefore": "c8b64774ba88d35a0bf5fd6173a923865297c299614dbd4e214216c8792460c3",
+      "current": "8003e777e4d31b34c21a68dcea5477d5019301ab166d0cc4a62a7c423b2ba403"
+    },
+    "workers-ts/src/services/admin/AdminProductReplyService.ts": {
+      "historicalBefore": "20fb51b1b06aa4ca2f77998d9a540b9f10388a8d845f6bccf4cf4ab57728e9bf",
+      "current": "1141d41efa076932e6169e1d4d21e0e345fa71c2a21573b749fd60368983d1c4"
+    },
+    "workers-ts/src/services/product/ProductDetailDesignData.ts": {
+      "historicalBefore": "e6beb2d85afe157c1bae54bd31cb6b7dc93de624205e806beb6c8389226a44f8",
+      "current": "078a24db58fa0eb482de7726d21ab4ecc9a52ab008273f86a0cbfdf37f9abda5"
+    },
+    "workers-ts/src/services/product/ProductUnitLifecycle.ts": {
+      "historicalBefore": "5bcf5b30c07e7ab50dcb737e98b497de913fd0cfba220bd5dabf0cca18679e66",
+      "current": "e469d1f24605388db204b6f701088c229d315f33d1046d61621c687915ed7f23"
+    },
+    "workers-ts/src/services/product/ReplyService.ts": {
+      "historicalBefore": "fade772de9f2f21f71cdabe434ca18cb6cf17c60daeef46f681ea6393921edfb",
+      "current": "ac856f8fa8961cbec1c019d6cbee6a0543145bd6c790c5292e765f62ba822408"
+    },
+    "workers-ts/src/services/supplier/SupplierProductReplyService.ts": {
+      "historicalBefore": "9e1e33de16892f5a2edf75f93f0f8fd84931dda529550e320e7558fa07879c1e",
+      "current": "c5d145953118458ad80124891a24ae0539b22274b9886631a4bc66be525a5032"
+    },
+    "workers-ts/test/admin-product-detail-design-coverage.test.ts": {
+      "historicalBefore": "0a016fa9dc89ede2a573b16fe028b12fe1e5e1bcc4c0b2989e3a0163199dd2e0",
+      "current": "a9580c164fe7e0b53bcc0389128e89d5bc334979c4c22560bc974fd33fecd91f"
+    },
+    "workers-ts/test/admin-product-reply-native.test.ts": {
+      "historicalBefore": "08cf7b104dfcac9e24ffbde3b11ea998779c340b2e44086a31dae61876a42916",
+      "current": "a603df65db569c4b6889fa471a7d133f99bb36340666574638079706c07eafaf"
+    },
+    "workers-ts/test/admin-product-unit-native.test.ts": {
+      "historicalBefore": "f63c4c913746c73408fd62e135aec7e42acae0d165fc97ed91e01ad72654f653",
+      "current": "03d2cdca037e1bfece131c1c3aaf77ea418f951f89dc7b835c0ef056333316d5"
+    },
+    "workers-ts/test/product-detail-design-consumers-postgres.test.ts": {
+      "historicalBefore": "d7f9897b2e37c36dd98501f8f6258547988218ef87fca5b5fcc1c3b6e9e78de5",
+      "current": "778e7e359996ac4602f351cd5cf99110e6b4df7dcd456bafa05f6290ac5a96ee"
+    },
+    "workers-ts/test/product-reply-detail-migration.test.ts": {
+      "historicalBefore": "37b9eb46504fe83fa50f2bd8328b6399e924a172d84a0e1413dfc45343659f3d",
+      "current": "c81eff5fef2a735cc99ce89a136709ca709ad0373281c0fc003b4c5526c5fa8b"
+    }
+  },
+  "previousReportsLedgersReceiptsNotUpdated": true,
+  "note": "new local candidate supersedes historical input state; old validation is retained as historical and is not claimed current for changed files"
+}

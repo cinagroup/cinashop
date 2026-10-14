@@ -1,0 +1,14 @@
+{
+  "ordinary": 0,
+  "native": 0,
+  "workerUnitTypes": 0,
+  "workerRuntimeTypes": 0,
+  "adminVueTypes": 0,
+  "adminBuild": 0,
+  "routeAudit": 1,
+  "initialNative": 0,
+  "initialOrdinary": 1,
+  "initialHTTP": 1,
+  "httpRepair": 0,
+  "preFreezeOrdinary": 0
+}

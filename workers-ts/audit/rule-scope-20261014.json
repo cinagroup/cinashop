@@ -1,0 +1,252 @@
+{
+  "artifact": "admin-sku-rule-next-increment-scope",
+  "date": "2026-10-14",
+  "status": "read-only source reconnaissance; proposed implementation and tests, not execution evidence",
+  "roots": {
+    "typescript": "/home/cina/cinagroup/cinashop",
+    "php_reference": "/home/cina/cinagroup/cinashop-php"
+  },
+  "scope": {
+    "title": "旧 Admin 商品 SKU 规格模板 rule 合同恢复与事务收口",
+    "missing_legacy_route_count": 5,
+    "already_implemented_modern_route_count": 5,
+    "do_not_count": [
+      "已存在的 /adminapi/product/rule 四个 CRUD 路径和 /adminapi/product/get_rule",
+      "已存在的 /api/admin/product/rule 与 /api/admin/product/get_rule",
+      "已恢复的 /supplierapi/product/product/rule 与 get_rule 路径",
+      "商品 SKU 编辑和持久化本身，已有真实实现"
+    ],
+    "edits_during_reconnaissance": "Only this JSON evidence file; no implementation or test edits and no tests run."
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "legacy_missing": "/adminapi/product/product/rule",
+      "modern_existing": "/adminapi/product/rule",
+      "php_route": "route/admin.php:1527, inside outer product group at 1464",
+      "php_controller": "StoreProductRule/index",
+      "modern_handler": "AdminCrud.adminProductRuleList"
+    },
+    {
+      "method": "POST",
+      "legacy_missing": "/adminapi/product/product/rule/:id",
+      "modern_existing": "/adminapi/product/rule/:id",
+      "php_route": "route/admin.php:1529",
+      "php_controller": "StoreProductRule/save",
+      "modern_handler": "AdminCrud.adminProductRuleSave",
+      "id_zero": "0 creates; positive ID edits"
+    },
+    {
+      "method": "GET",
+      "legacy_missing": "/adminapi/product/product/rule/:id",
+      "modern_existing": "/adminapi/product/rule/:id",
+      "php_route": "route/admin.php:1531",
+      "php_controller": "StoreProductRule/read",
+      "modern_handler": "AdminCrud.adminProductRuleDetail"
+    },
+    {
+      "method": "DELETE",
+      "legacy_missing": "/adminapi/product/product/rule/delete/:id",
+      "modern_existing": "/adminapi/product/rule/delete/:id",
+      "php_route": "route/admin.php:1533",
+      "php_controller": "StoreProductRule/delete",
+      "modern_handler": "AdminCrud.adminProductRuleDelete"
+    },
+    {
+      "method": "GET",
+      "legacy_missing": "/adminapi/product/product/get_rule",
+      "modern_existing": "/adminapi/product/get_rule",
+      "php_route": "route/admin.php:1563",
+      "php_controller": "StoreProduct/get_rule",
+      "modern_handler": "AdminCrud.adminProductRuleTemplates"
+    }
+  ],
+  "php_contract": {
+    "table": {
+      "name": "eb_store_product_rule / TS store_product_rule",
+      "columns": ["id", "type", "relation_id", "rule_name", "rule_value"],
+      "platform_scope": { "type": 0, "relation_id": 0 },
+      "rule_name": "varchar(32), UTF-8 / utf8mb4",
+      "rule_value": "nullable text containing JSON dimension array",
+      "no_columns": ["status", "sort", "add_time", "owner_id", "product_rule_id foreign key"],
+      "source": "public/install/crmeb.sql:3273; workers-ts/src/models/schema/catalog_templates.ts:79"
+    },
+    "list": {
+      "query": "rule_name substring filter plus standard page/limit",
+      "scope": "type=0 AND relation_id=0",
+      "ordering": "id DESC",
+      "data": "Exactly {list,count}; PHP does not append page/limit.",
+      "row": "Original five DB fields. rule_value remains original JSON string or null. Nonempty rule_value adds attr_name and attr_value.",
+      "derivation": "attr_name = comma-joined dimension value; attr_value = array of comma-joined detail values",
+      "malformed_nonempty_json": "json_decode invalid/null/empty result yields attr_name='' and attr_value=['']; raw rule_value is preserved.",
+      "empty_or_null_raw": "No attr_name/attr_value keys are added by PHP's truthiness branch.",
+      "source": "app/services/product/sku/StoreProductRuleServices.php:getList; app/dao/product/sku/StoreProductRuleDao.php:getList"
+    },
+    "detail": {
+      "data": "{info: {id,type,relation_id,rule_name,rule_value,spec}}",
+      "rule_value": "Original raw text/null is retained.",
+      "spec": "json_decode(raw,true), including null for malformed/null input and [] for JSON [].",
+      "not_present": ["attr_name", "attr_value", "page", "limit"],
+      "source": "app/services/product/sku/StoreProductRuleServices.php:getInfo"
+    },
+    "templates_get_rule": {
+      "data": "Array of platform rows ordered id DESC, not {list,count}.",
+      "rule_value": "Nonempty stored JSON is replaced with decoded array/null. Raw empty/null remains unchanged.",
+      "derived": "attr_name/attr_value follow the same nonempty-raw truthiness branch as list.",
+      "spec": "PHP getRule does not add a spec alias.",
+      "source": "app/controller/admin/v1/product/StoreProduct.php:479; app/services/product/sku/StoreProductRuleServices.php:getRule"
+    },
+    "save": {
+      "authoritative_input": ["rule_name", "spec"],
+      "controller_behavior": "postMore selects these two keys and ignores other submitted fields; only an empty rule_name is rejected before service.",
+      "service_behavior": "Force owner type/relation_id; encode spec into rule_value; duplicate rule_name check is scoped by type/relation_id; update existing ID or create.",
+      "success": { "status": 200, "msg": "保存成功!" },
+      "data_omitted": true,
+      "success_envelope_evidence": "Static readable evidence: crmeb/utils/Json.php:68 make() only adds data when non-null; success($msg,?array $data=null) at 100. The controller passes a message without data. The legacy adapter should omit data rather than serialize null.",
+      "php_runtime_boundary": "The inherited crmeb/basic/BaseController forwarding layer is opaque/encoded. It was not executed or fully inspected. This scope records readable controller and Json defaults, not a PHP runtime response capture; later HTTP tests validate the TS legacy adapter only.",
+      "source": "app/controller/admin/v1/product/StoreProductRule.php:58; app/services/product/sku/StoreProductRuleServices.php:save"
+    },
+    "delete": {
+      "success": { "status": 200, "msg": "删除成功!" },
+      "data_omitted": true,
+      "no_product_usage_guard": true,
+      "source": "app/controller/admin/v1/product/StoreProductRule.php:delete"
+    },
+    "old_vue2_actual_body": {
+      "create": "{rule_name,spec}; id starts at 0",
+      "edit": "ruleInfoApi -> this.formDynamic=res.data.info -> ruleAddApi(this.formDynamic,this.ids). Entire fetched info row is submitted.",
+      "keys": ["id", "type", "relation_id", "rule_name", "rule_value", "spec"],
+      "stale_echo": "rule_value is the ORIGINAL raw JSON. Only spec is edited. Do not require echoed rule_value to equal newly encoded spec; compare immutable echo to pre-edit stored row if the TS boundary validates it.",
+      "ui_limits": "Template name maxlength20; dimension names/values maxlength30; local deduplication; refuses no dimensions; no observed dimension/value-count cap in this form.",
+      "source": "view/admin/src/pages/product/productAttr/addAttr.vue:25,41,50,57,113,155,172,226,247"
+    }
+  },
+  "menu_seed": {
+    "source": "public/install/crmeb.sql:8723,8770,8778-8781,9067",
+    "exact_rows": [
+      { "id": 99, "pid": 1, "type": 1, "authType": 1, "title": "商品规格", "apiUrl": "", "methods": "", "menuPath": "/admin/product/product_attr", "uniqueAuth": "product-product-attr", "proposed_grant": "Exact page-only product.view; never a writer." },
+      { "id": 186, "pid": 22, "type": 1, "authType": 2, "title": "获取属性模板列表", "apiUrl": "product/product/get_rule", "methods": "GET", "menuPath": "/adminproduct/product/get_rule", "uniqueAuth": "", "expected_grant": "product.view" },
+      { "id": 194, "pid": 99, "type": 1, "authType": 2, "title": "属性规则列表", "apiUrl": "product/product/rule", "methods": "GET", "menuPath": "/adminproduct/product/rule", "uniqueAuth": "", "expected_grant": "product.view" },
+      { "id": 195, "pid": 580, "type": 1, "authType": 2, "title": "保存修改规则", "apiUrl": "product/product/rule/<id>", "methods": "POST", "menuPath": "/adminproduct/rule/<id>", "uniqueAuth": "product-rule-save", "expected_grant": "product.manage" },
+      { "id": 196, "pid": 580, "type": 1, "authType": 2, "title": "规则详情", "apiUrl": "product/product/rule/<id>", "methods": "GET", "menuPath": "/adminproduct/product/rule/<id>", "uniqueAuth": "", "expected_grant": "product.view" },
+      { "id": 197, "pid": 580, "type": 1, "authType": 2, "title": "删除规则", "apiUrl": "product/product/rule/delete", "methods": "DELETE", "menuPath": "/adminproduct/product/rule/delete", "uniqueAuth": "product-product-rule-delete", "expected_grant": "product.manage", "caveat": "The actual SQL api_url deliberately lacks /<id>; do not silently invent it in a supposedly exact seed test." },
+      { "id": 580, "pid": 99, "type": 1, "authType": 1, "title": "附加权限", "apiUrl": "", "methods": "", "menuPath": "/admin*", "uniqueAuth": "", "expected_grant": "none" }
+    ],
+    "router_mismatch": "Old router/modules/product.js:66 product_attr uses auth admin-store-storeProuduct-index, the product-list page menu2 key, rather than seed99 product-product-attr. This does not prove a general product-list writer grant for rule management.",
+    "current_ts": "Generic product route classification already maps the method-qualified API menu rows to product.view/manage. No explicit exact page99 mapping was found in menuPathPermission or the page-only resolver. Add an exact pair/ID mapping backed by seed; do not use wildcard580 or title-only heuristics.",
+    "cross_catalog_warning": "Keep ensure1382/specs1381 exact mappings and misleading ensure/create1383 rejection unchanged; page99 is independent evidence."
+  },
+  "modern_ts_existing": {
+    "routes": "workers-ts/src/routes/adminapi.ts:397-402 and src/routes/v1/index.ts:1686-1691",
+    "handlers": "workers-ts/src/controllers/api/v1/AdminCrudController.ts:131-155 directly delegate to ProductMetadataService",
+    "list_delta": "Returns {list,count,page,limit}; formatted rows add spec and always add derived attr fields.",
+    "detail_delta": "Returns {info}, but row has attr_name/attr_value in addition to original fields/spec and turns malformed/null JSON spec into [].",
+    "get_rule_delta": "Returns decoded rule_value, but formatRule also adds spec and always derived attrs, unlike PHP omission/null branches.",
+    "save_delta": "Returns {id} and message 保存成功 without exclamation, which modern apiProductRuleSave expects. Preserve the modern contract while adding a legacy adapter.",
+    "modern_body": "ProductMetadata.vue sends clean {rule_name,spec}. api/productMetadata.ts unwraps detail.info and expects save {id}; these existing paths are not missing.",
+    "modern_ui_limits": "name32; at most3 dimensions, each1..50 values of length64; differing from old form's20/30 length hints and no count cap.",
+    "source": [
+      "workers-ts/src/services/product/ProductMetadataService.ts:230,269,458-543",
+      "view/admin-ts/src/api/productMetadata.ts:260-312",
+      "view/admin-ts/src/pages/product/ProductMetadata.vue:181-193,364-405"
+    ]
+  },
+  "real_consumer": {
+    "persistent_rule_fk": false,
+    "legacy_flow": "productGetRuleApi calls fifth double-product route; productAdd.confirm selects by rule_name and copies item.rule_value into attrs. Submit uses formValidate.items=attrs and formValidate.attrs=manyFormValidate. No persistent template identifier is used.",
+    "modern_flow": "ProductAssociationService.editorOptions reads type0/relation0 rules ordered id DESC, currently LIMIT500; parseProductSkuRuleValue filters unsupported/malformed templates. ProductForm.applySkuRuleTemplate copies cached template.dimensions and regenerates items/attrs. sku_rule_id is a UI selection field and has no rule-table FK or lookup in save.",
+    "save_path": "ProductAssociationService.save -> normalizeProductSkuEditorPayload(body) -> replaceProductSkuEditor(tx,...). The payload dimensions/SKU rows are authoritative; save does not query store_product_rule.",
+    "persistent_snapshot_tables": ["store_product_attr", "store_product_attr_value", "store_product_attr_result"],
+    "required_shared_rule_lock_for_product_save": false,
+    "business_semantics": "Editing/deleting a template affects later catalog reads only. Existing product dimensions, price, stock and unique SKU identity remain untouched. Already-copied cached dimensions may still be saved after template deletion. Do not add a used-template delete ban, a new binding relationship, or a ProductAssociation731612 lock without changing the business contract.",
+    "source": [
+      "view/admin/src/api/product.js:330",
+      "view/admin/src/pages/product/productAdd/index.vue:3750-3758,4164-4169",
+      "workers-ts/src/services/product/ProductAssociationService.ts:333-340,405-408,528,678",
+      "workers-ts/src/services/product/ProductSkuEditorService.ts:158,197,584",
+      "view/admin-ts/src/pages/product/ProductForm.vue:647-651"
+    ]
+  },
+  "transaction_gaps_and_plan": {
+    "core_save_current": "saveRule uses withTx and pg_advisory_xact_lock(731612,ownerKey), platform ownerKey0. Existing row is selected without FOR UPDATE; UPDATE predicates only id; no affected-row/full-returning/readback proof.",
+    "core_delete_current": "deleteRule directly deletes outside a matching advisory-lock transaction. Save can read a row, delete can commit it, and UPDATE can affect zero rows while save falsely returns {id}.",
+    "core_required": "Share731612 ownerKey for save/delete; parent row FOR UPDATE; scope every SELECT/UPDATE/DELETE by type/relation_id; require exact receipt and expected post-state. Deleted ID must never be recreated by delayed edit. Retain supplier-scoped key independence and existing SupplierProductRuleService contracts.",
+    "admin_current": "Direct AdminCrud handlers do not perform fresh actor/session/role/menu validation, authority write barrier or same-transaction business audit. metadataId Number() accepts noncanonical forms and has no int32 upper bound; metadataBody has no body byte cap or accepted-key/echo contract.",
+    "admin_proposed": "NEW AdminProductRuleService and AdminProductRuleController; keep modern 5 routes while add old5 aliases. Read under REPEATABLE READ READ ONLY, exact catalog ownership, fresh actor credentials/permissions and expiry. Write: authority barrier/live product.manage before731612, mutation, audit receipt/readback, business post-audit exact proof, actor/session/clock expiry before commit.",
+    "body_adapter": "Modern clean {rule_name,spec}; legacy genuine full DTO {id,type,relation_id,rule_name,rule_value,spec}. If present validate id/type/relation_id/original raw rule_value against old row, not against newly edited spec. Reject unknown authority/owner keys without allowing read echo to mutate scope.",
+    "supplier_reference": "workers-ts/src/services/supplier/SupplierProductRuleService.ts already provides exact scoped save/delete receipts,731612 supplierId and same-transaction audit/full-catalog post-audit proof. Its compatibility routes are already restored and are not this batch's missing routes."
+  },
+  "compatibility_risks": [
+    {
+      "risk": "Unproved legacy count ceilings",
+      "evidence": "PHP rule save JSON-encodes spec without observed3-dimension/50-value/200-SKU ceiling; old form has no observed dimension/value-count cap. PHP StoreProductAttrServices.validateProductAttr iterates the supplied dimensions. attr_format helper is encoded by Swoole Loader, so exhaustive internal combination limits cannot be claimed from this read.",
+      "action": "State modern support limits explicitly; preserve legacy/raw read rows, including unsupported historic dimensions. Decide legacy write acceptance separately; do not label TS3/50/200 limits PHP compatibility evidence."
+    },
+    {
+      "risk": "UTF-16 length differs from varchar character length",
+      "evidence": "ProductMetadataService.requiredString and ProductSkuInput.requiredString use JS string.length;32 astral Unicode code points count64 code units and are rejected although varchar32 accepts32 characters.",
+      "action": "Use consistent code-point length at catalog boundary and add multibyte/emoji boundary tests; avoid broad SKU normalizer changes without scoped decision."
+    },
+    {
+      "risk": "Historic invalid/empty JSON silently changed",
+      "evidence": "Current tolerant TS parser returns[] and formatter always adds attrs/spec; genuine PHP detail/get_rule preserve distinct raw null/empty/invalid and conditional key shape.",
+      "action": "Seed validJSON,[],null,emptystring,invalidJSON and preserve exact legacy return adapter semantics while retaining clean modern data contracts."
+    },
+    {
+      "risk": "Editor LIMIT500 silently omits catalog rows",
+      "evidence": "ProductAssociationService.editorOptions rule query is LIMIT500 without overflow check; ruleTemplates has no cap.",
+      "action": "Keep this as a known bounded consumer read limit or implement a separately proved overflow policy; do not silently claim every legacy template is available in modern product editor."
+    },
+    {
+      "risk": "False concurrency/audit evidence",
+      "evidence": "Two Admin writes can fail at authority table NOWAIT barrier before731612. A generic rejects assertion can pass on input/authority errors before a trigger reaches audit.",
+      "action": "Use real core writer versus full Admin writer with pg_locks namespace731612 waiting facts. Require exact P0001/deep error or trigger probe sequence for skippedDML; verify all create/update/delete reach actual audit."
+    }
+  ],
+  "recommended_test_seed": {
+    "catalog": [
+      { "id": 10, "type": 0, "relationId": 0, "ruleName": "平台颜色尺码", "ruleValue": "[{\"value\":\"颜色\",\"detail\":[\"红\",\"蓝\"]},{\"value\":\"尺码\",\"detail\":[\"S\",\"M\"]}]" },
+      { "id": 11, "type": 0, "relationId": 0, "ruleName": "平台容量", "ruleValue": "[{\"value\":\"容量\",\"detail\":[\"300ml\",\"500ml\"]}]" },
+      { "id": 20, "type": 2, "relationId": 20, "ruleName": "平台颜色尺码", "purpose": "same-name supplier ownership isolation" },
+      { "id": 21, "type": 0, "relationId": 99, "ruleName": "异常平台归属", "purpose": "must not read/write as platform0/0" },
+      { "id": 22, "type": 1, "relationId": 20, "ruleName": "门店规格", "purpose": "store isolation" }
+    ],
+    "dynamic_edge_rows": ["ruleValue null", "ruleValue ''", "ruleValue invalidJSON", "ruleValue '[]'", "4-dimensional historical rule", "duplicate scoped name", "32/33 code-point rule names"],
+    "actors": ["super100", "modern product.manage101", "modern product.view102", "unrelated user.manage103", "exact API195/197 numeric writer104", "exact page99 reader105", "page580-only negative106", "API186/194/196 read-only roles", "forged page99 pair/changed authType negative"],
+    "fixture_policy": "Reuse complete ProductAssociation/SKU table fixture. Start with no products. Create actual SKU products through ProductAssociationService.save for consumer evidence, not direct fixture inserts advertised as binding proof."
+  },
+  "recommended_test_suites": {
+    "contract": "Legacy list/detail/get_rule exact shape including raw stale echo and malformed/empty JSON; clean modern save; owner isolation; canonical int32 IDs/query/body cap/unknown keys; exact numeric page/API grants; no wildcard580 or cross-specs/ensure grants.",
+    "http": "Actual App against five old paths and five existing modern paths; old full-info edit body with stale original rule_value plus edited spec; preserve modern save{id}; legacy messages/envelope; method/path failure and no-write unauthorized checks.",
+    "native": "Independent PG16 LOGIN SELECT-only reads and rule-only minimal DML writer/menu UPDATE(id); real731612 pg_locks waits with core↔Admin save/delete both orders; delayed update after delete rejects without ID resurrection; exact P0001 audit rollback and skipped audit probe; post-audit rewrites/recreates must rollback; role/API menu revocation ordering and strict expiry after wait.",
+    "snapshot": "Fetch real editorOptions dimensions, create actual multi-SKU product, snapshot all dimension/result/value rows with price/stock/unique, update/delete template, verify byte-for-byte unchanged SKU state. Save previously copied dimensions after deletion and prove no rule-FK lookup or invented delete restriction.",
+    "execution_owner": "Root integrates runner allowlist, runs heavy/native/types/build checks once; this reconnaissance ran no tests."
+  },
+  "implementation_file_map": {
+    "new": [
+      "workers-ts/src/services/admin/AdminProductRuleService.ts",
+      "workers-ts/src/controllers/api/v1/AdminProductRuleController.ts",
+      "workers-ts/test/helpers/adminProductRules.ts",
+      "workers-ts/test/admin-product-rule.test.ts",
+      "workers-ts/test/admin-product-rule-http.test.ts",
+      "workers-ts/test/admin-product-rule-native.test.ts"
+    ],
+    "modify_scoped": [
+      "workers-ts/src/services/product/ProductMetadataService.ts saveRule/deleteRule and legacy format adapter if placed here",
+      "workers-ts/src/routes/adminapi.ts",
+      "workers-ts/src/routes/v1/index.ts",
+      "workers-ts/src/services/admin/AdminPermissionService.ts exact seed99 read mapping",
+      "workers-ts/scripts/run-local-finance-postgres.mjs native allowlist",
+      "view/admin-ts/src/api/productMetadata.ts and ProductMetadata.vue only if modern contract needs scoped alignment"
+    ],
+    "consumer_no_new_binding_lock": ["workers-ts/src/services/product/ProductAssociationService.ts", "workers-ts/src/services/product/ProductSkuEditorService.ts"]
+  },
+  "php_source_sha256": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/StoreProductRule.php": "1ee678dab0dc4fc8449a9d42d970751a3d601c2a06bc4a7079899595a9fec62f",
+    "app/services/product/sku/StoreProductRuleServices.php": "226a522a5c73ef72f4f03a94e1249bc5b51301eebc15d5ade51626b3fb7e717a",
+    "view/admin/src/pages/product/productAttr/addAttr.vue": "f2333b8442ff67ab8f1de53e308601a34a7b1df4c977a5a13b8442332b7c00ce",
+    "view/admin/src/pages/product/productAdd/index.vue": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+  }
+}

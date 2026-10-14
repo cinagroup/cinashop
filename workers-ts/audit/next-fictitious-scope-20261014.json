@@ -1,0 +1,727 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T07:32:19.124820+00:00",
+  "status": "read-only-next-scope-candidate-not-implemented",
+  "recommendation": {
+    "name": "Admin 虚拟评价表单与创建；保留真实自评来源、商品/SKU选择及评分事件",
+    "legacyMissingCore": 2,
+    "implementationReady": true,
+    "reason": "PHP源码已给出明确创建合同，可在现有Admin评价事务模式上实现；不能仅增加两个返回200接口就宣称活旧SPA全部完成，商品selector与product.star事件也须具体处理。"
+  },
+  "changes": {
+    "onlyNewArtifact": "/home/cina/cinagroup/cinashop/workers-ts/audit/next-fictitious-scope-20261014.json",
+    "srcOrTestEdited": false,
+    "routesEdited": false,
+    "schemaEdited": false,
+    "permissionEdited": false,
+    "checkboxEdited": false,
+    "authorityOrDecisionEdited": false,
+    "currentReportEdited": false,
+    "testsRun": false,
+    "httpProbeSent": false,
+    "productionOrProviderAccess": false
+  },
+  "declaredCurrentSliceFreeze": {
+    "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/reply-20261014/frozen-before.json",
+    "sha256": "3d29bdc09bbbe0f43c68b33234b18ab87a163ccd9c7f6e82ef45b0cf794b7163",
+    "count": 3347,
+    "digest": "2b7345755c0abde22fbbcfb2efab9043809be3721deddbc9b35ecf9716e8656f",
+    "verification": "All declared file bytes checked before creating this separate audit artifact; no declaration of a complete build graph",
+    "mismatches": [],
+    "thisArtifactInFrozenMap": false,
+    "originalPath": "/home/cina/cinagroup/cinashop/workers-ts/audit/reply-20261014/frozen-before.json",
+    "preservedAs": "/home/cina/cinagroup/cinashop/workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before.json",
+    "snapshotSemantics": "Historical as-of snapshot verified when this read-only scout artifact was generated. Root subsequently preserved/renamed it and separately authorized JSON wire source repair; this candidate does not claim later current source still matches that old freeze."
+  },
+  "routeEvidence": {
+    "source": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/adminapi/product/reply/fictitious_reply/:product_id",
+        "phpLine": 1551,
+        "target": "v1.product.StoreProductReply/fictitious_reply",
+        "registeredNow": false,
+        "retiredNow": false,
+        "consumerStatus": "API helper exists; the productReply add() GET modalForm call is commented out; preserve as a compatibility contract"
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/product/reply/save_fictitious_reply",
+        "phpLine": 1553,
+        "target": "v1.product.StoreProductReply/save_fictitious_reply",
+        "registeredNow": false,
+        "retiredNow": false,
+        "consumerStatus": "Visible add button opens addReply.vue; its onOk actively calls saveFictitiousReply(data)"
+      }
+    ],
+    "existingModernCreationAliases": [],
+    "existingModernModerationOnly": [
+      "GET /adminapi/reply/list",
+      "POST /adminapi/reply/status/:id",
+      "DELETE /adminapi/reply/del/:id",
+      "GET /api/admin/reply/list",
+      "POST /api/admin/reply/status/:id",
+      "DELETE /api/admin/reply/del/:id"
+    ],
+    "excludedUnrelated": "Community fictitious comments and order fictitious-delivery operations are separate domains, not product-review aliases.",
+    "authority": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-authority.json",
+    "absenceMethod": "Read-only exact route-source search plus existing explicit authority entries; no HTTP requests or global auditor execution"
+  },
+  "sourceCorrections": [
+    {
+      "topic": "GET路径ID确实被读取，不能凭postMore名字认为只取POST",
+      "chain": [
+        "StoreProductReply.fictitious_reply has no method parameter and calls request.postMore(product_id,0)",
+        "app.Request.postMore→more→this.param",
+        "ThinkRequest.param merges current/get/body/route, with route parameters last; path product_id takes precedence"
+      ],
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+          "needle": "public function postMore",
+          "matches": [
+            {
+              "line": 132,
+              "text": "public function postMore(array $params, bool $suffix = false, bool $filter = true): array"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+          "needle": "$this->param($name",
+          "matches": [
+            {
+              "line": 77,
+              "text": "$p[$suffix == true ? $i++ : ($param[3] ?? $keyName)] = $this->param($name, $param[1], $param[2]);"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/framework/src/think/Request.php",
+          "needle": "array_merge($this->param, $this->get(false), $vars, $this->route(false))",
+          "matches": [
+            {
+              "line": 868,
+              "text": "$this->param = array_merge($this->param, $this->get(false), $vars, $this->route(false));"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topic": "真正虚拟表单/保存API种子为184/185；191/192是其他商品操作；579不是评价页面",
+      "trueFormSeed": 184,
+      "trueCreateSeed": 185,
+      "realReaderPage": 6,
+      "wildcardAuxiliary": 579,
+      "unrelatedRequestedIds": [
+        191,
+        192
+      ]
+    },
+    {
+      "topic": "goods-type=0不是平台owner过滤",
+      "facts": [
+        "goodsType only controls exclusion of is_presale_product/is_vip_product when truthy",
+        "search_list defaults is_supplier=-1; only is_supplier==1 adds type=[2]",
+        "Source selector can contain any product owner; saveReply always creates platform review type0/relation0"
+      ],
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/goodsList/index.vue",
+          "needle": "if(this.goodsType)",
+          "matches": [
+            {
+              "line": 363,
+              "text": "if(this.goodsType){"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+          "needle": "['is_supplier', -1]",
+          "matches": [
+            {
+              "line": 638,
+              "text": "['is_supplier', -1],//供应商商品0:不是1:是"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+          "needle": "if ($where['is_supplier'] == 1)",
+          "matches": [
+            {
+              "line": 652,
+              "text": "if ($where['is_supplier'] == 1) {"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": {
+    "rawMenuSeeds": {
+      "6": {
+        "line": 8666,
+        "text": "(6, 1, 1, 'md-chatboxes', '商品评论', 'admin', 'store.store_product_reply', 'index', '', '', '[]', 0, 1, 0, 1, '/admin/product/product_reply', '1', 1, 'product', 1, 'product-product-reply', 0),"
+      },
+      "184": {
+        "line": 8768,
+        "text": "(184, 579, 1, '', '虚拟评论表单', 'admin', '', '', 'product/reply/fictitious_reply/<product_id>', 'GET', '[]', 0, 0, 0, 1, '/adminproduct/reply/fictitious_reply', '', 2, '', 0, '', 0),"
+      },
+      "185": {
+        "line": 8769,
+        "text": "(185, 579, 1, '', '保存虚拟评论', 'admin', '', '', 'product/reply/save_fictitious_reply', 'POST', '[]', 0, 0, 0, 1, '/adminproduct/reply/save_fictitious_reply', '', 2, '', 0, 'product-reply-save_fictitious_reply', 0),"
+      },
+      "188": {
+        "line": 8772,
+        "text": "(188, 579, 1, '', '删除评论', 'admin', '', '', 'product/reply/<id>', 'DELETE', '[]', 0, 0, 0, 1, '/adminproduct/reply/<id>', '', 2, '', 0, '', 0),"
+      },
+      "189": {
+        "line": 8773,
+        "text": "(189, 579, 1, '', '评论回复', 'admin', '', '', 'product/reply/set_reply/<id>', 'PUT', '[]', 0, 0, 0, 1, '/adminreply/set_reply/<id>', '', 2, '', 0, '', 0),"
+      },
+      "190": {
+        "line": 8774,
+        "text": "(190, 6, 1, '', '评论列表', 'admin', '', '', 'product/reply', 'GET', '[]', 0, 0, 0, 1, '/adminproduct/reply', '', 2, '', 0, '', 0),"
+      },
+      "191": {
+        "line": 8775,
+        "text": "(191, 22, 1, '', '生成属性', 'admin', '', '', 'product/generate_attr/<id>/<type>', 'POST', '[]', 0, 0, 0, 1, '/adminproduct/generate_attr/<id>', '', 2, '', 0, '', 0),"
+      },
+      "192": {
+        "line": 8776,
+        "text": "(192, 2, 1, '', '商品列表头部', 'admin', '', '', 'product/product/type_header', 'GET', '[]', 10, 0, 0, 1, '/adminproduct/product/type_header', '', 2, '', 0, '', 0),"
+      },
+      "579": {
+        "line": 9066,
+        "text": "(579, 6, 1, '', '附加权限', 'admin', '', '', '', '', '[]', 0, 0, 0, 1, '/admin*', '', 1, '', 0, '', 0),"
+      },
+      "580": {
+        "line": 9067,
+        "text": "(580, 99, 1, '', '附加权限', 'admin', '', '', '', '', '[]', 0, 0, 0, 1, '/admin*', '', 1, '', 0, '', 0),"
+      }
+    },
+    "form184": {
+      "type": 1,
+      "auth_type": 2,
+      "pid": 579,
+      "api_url": "product/reply/fictitious_reply/<product_id>",
+      "methods": "GET",
+      "menu_path": "/adminproduct/reply/fictitious_reply",
+      "unique_auth": ""
+    },
+    "create185": {
+      "type": 1,
+      "auth_type": 2,
+      "pid": 579,
+      "api_url": "product/reply/save_fictitious_reply",
+      "methods": "POST",
+      "menu_path": "/adminproduct/reply/save_fictitious_reply",
+      "unique_auth": "product-reply-save_fictitious_reply"
+    },
+    "currentResolver": "product/reply paths enter their dedicated matcher and cannot fall back to generic product.*. It recognizes real moderation only; 184/185 are not added, and nonempty seed menu_path/185 unique_auth make them fail closed. No executed permission fixture in this scout.",
+    "exactBindingGap": "The current three-value seed tuple matcher additionally requires uniqueAuth empty. Adding 185 to that table alone will still reject its genuine nonempty unique_auth. The new binding must include the complete genuine tuple and accept product_id placeholders explicitly.",
+    "wildcard579": "Original /admin* auxiliary seed is not on either SQL page whitelist and does not grant. The special immutable ID refusal currently targets 580, not 579; do not claim mutated579 can never grant. Add explicit 579 non-grant mutation cases in the next implementation.",
+    "proposedNotImplemented": {
+      "form": "reply.view",
+      "create": "reply.manage",
+      "page6": "view only",
+      "579": "no wildcard or rewritten API grant",
+      "191And192": "continue their unrelated existing domain rules"
+    },
+    "legacyVisibilityCaveat": "The active button v-auth uses source185 unique_auth; the old page route meta.auth instead names admin-store-storeProuduct-index, and its auth directive removes buttons only when access is nonempty. No claim that seed6 alone already fixes the old SPA access UI.",
+    "independentReviewer": "/root/reply_core_service/fictitious_permission_scout; read-only routes/seed/resolver/UI audit, no edits or tests"
+  },
+  "contracts": {
+    "form": {
+      "pathProductId": "0 means choose product; positive path ID is actually consumed and becomes hidden product_id. Reject negative/noncanonical IDs and duplicate/conflicting extra parameters in TS.",
+      "title": "添加虚拟评论",
+      "fieldsWhenZero": [
+        {
+          "field": "image",
+          "type": "frameImage",
+          "title": "商品",
+          "srcKey": "image",
+          "width": "960px",
+          "height": "560px",
+          "urlSource": "admin/store.StoreProduct/index?fodder=image"
+        }
+      ],
+      "fieldsWhenPositive": [
+        {
+          "field": "product_id",
+          "type": "hidden",
+          "value": "path product ID"
+        }
+      ],
+      "sharedFields": [
+        {
+          "field": "avatar",
+          "type": "frameImage",
+          "title": "用户头像",
+          "width": "960px",
+          "height": "505px",
+          "urlSource": "admin/widget.images/index?fodder=avatar"
+        },
+        {
+          "field": "nickname",
+          "type": "input",
+          "title": "用户名称"
+        },
+        {
+          "field": "comment",
+          "type": "textarea",
+          "title": "评价文字"
+        },
+        {
+          "field": "product_score",
+          "type": "rate",
+          "default": 0,
+          "allowHalf": false
+        },
+        {
+          "field": "service_score",
+          "type": "rate",
+          "default": 0,
+          "allowHalf": false
+        },
+        {
+          "field": "pics",
+          "type": "frameImages",
+          "maxLength": 8,
+          "urlSource": "admin/widget.images/index?fodder=pics&type=many&maxLength=8"
+        },
+        {
+          "field": "add_time",
+          "type": "dateTime",
+          "default": "",
+          "placeholder": "请选择评论时间(不选择默认当前添加时间)"
+        }
+      ],
+      "action": "/product/reply/save_fictitious_reply",
+      "method": "POST",
+      "formLimitations": "The generated PHP form omits reply_score/delivery_score/SKU controls and relies on controller defaults. Active addReply.vue supplies all of them. create_form/URL/FormBuilder output was not executed, so exact serialized runtime form envelope remains unproven."
+    },
+    "create": {
+      "acceptedSourceFields": [
+        "image",
+        "nickname",
+        "avatar",
+        "comment",
+        "pics",
+        "reply_score",
+        "product_score",
+        "service_score",
+        "delivery_score",
+        "product_id",
+        "unique",
+        "add_time"
+      ],
+      "sourceDefaults": {
+        "image": "",
+        "nickname": "",
+        "avatar": "",
+        "comment": "",
+        "pics": [],
+        "reply_score": 3,
+        "product_score": 5,
+        "service_score": 5,
+        "delivery_score": 5,
+        "product_id": 0,
+        "unique": "",
+        "add_time": 0
+      },
+      "productIdPrecedence": "Controller uses truthy product_id first, otherwise image.product_id. image.image itself is discarded before insert. New TS should refuse two differing nonzero IDs instead of silently choosing conflicting client metadata.",
+      "uniqueMeaning": "Incoming unique is aliased to sku_unique by Request.more param[3]. It is never the new review unique; saveReply overwrites review.unique with PHP uniqid().",
+      "validation": "product_id/avatar/nickname/comment required; reply_score In1,2,3; three scores In1..5. ThinkValidate.in uses non-strict in_array, and must permits string0, so do not infer all string0 text is source-invalid.",
+      "skuSnapshot": "Optional truthy sku_unique fetches getOne(product_id,unique), copying suk to review.sku; missing match becomes empty sku. Source query has no explicit ordinary-SKU type, activity/retired filtering or ambiguity count. Active SPA requires attr.unique selected from product.attrValue(type0).",
+      "time": "PHP empty(add_time) uses current time; otherwise strtotime in Asia/Shanghai; only >now is explicitly refused, so equality now is accepted. Nonempty invalid dates can become false/epoch0 in the source; TS should reject invalid/future dates while preserving imported history. DatePicker on-change supplies a wall-time string.",
+      "images": "Controller receives pics as array and json_encodes it. Max8 is enforced by generated form/custom SPA, not separately by saveReply; implement explicit8 and bounded URL/text validation in TS, with no remote fetch.",
+      "bodyPolicyProposed": "Only proven fields; scalar canonical IDs/score string or number values; Unicode nickname<=64, customer comment<=512, avatar<=255 and SKU snapshot<=255 (original PHP table limits). Reject identity/order/visibility/owner injection and oversized streamed body. Broader TS column capacities are not proof of an expanded old contract.",
+      "storedIdentity": {
+        "uid": 0,
+        "oid": 0,
+        "type": 0,
+        "relation_id": 0,
+        "reply_type": "product",
+        "unique": "fresh review identifier independent of selected SKU",
+        "sku_unique": "selected input alias",
+        "order_cart_info_id": "NULL target-only extension"
+      },
+      "sourceUntouchedDefaults": "Source table defaults praise/views_num/merchant_reply_time/is_del/is_reply=0, merchant_reply_content empty; target must explicitly retain status1/top0, empty merchantReply and mirror delivery_score to logistics_score.",
+      "message": "添加成功!",
+      "envelopeLimitation": "Readable Json.php supports string success/default-null data omission, but encoded BaseController forwarding was not executed."
+    },
+    "ratingEvent": {
+      "chain": [
+        "saveReply clears reply cache then event(product.reply,[product_id])",
+        "app.event product.reply→app.listener.product.Reply",
+        "listener dispatches ProductReplyJob.computedProductStar via QueueTrait.queuePush",
+        "computedProductStar reads every is_del=0 review for product_id, sums product_score only, bcdiv(sum,count,1), writes product.star and clears product cache"
+      ],
+      "scope": "Includes UID0 virtual and real customer rows, all owners for the product, and does not filter TS status. It is not a mean of all three per-review scores.",
+      "nextImplementationRequirement": "Implement this business effect with exact numeric truncation to one decimal and a real transaction/producer strategy. Do not claim a fake row insert alone preserves the source. Source queue delivery/deployment state was not checked; the inspected TS review paths do not expose an equivalent computedProductStar consumer.",
+      "concurrencyEvidenceGap": "A per-product catalogue lock alone does not fence the existing public ReplyService order-locked insert. A claimed race-free live product.star update needs cross-producer locking or a durable per-product refresh consumer with evidence; design/test this rather than assuming the Admin lock proves global aggregation freshness."
+    }
+  },
+  "consumers": {
+    "activeFlow": [
+      {
+        "step": "add",
+        "source": "view/admin/src/pages/product/productReply/index.vue:85-89/454-458",
+        "behavior": "Visible 添加自评 button checks unique_auth185 and opens replyModal custom addReply; generated-form GET call is commented"
+      },
+      {
+        "step": "product selection",
+        "source": "view/admin/src/components/goodsList/index.vue:357-378",
+        "request": "GET /adminapi/product/product/list",
+        "query": "page,limit,cate_id,store_name,is_new,store_label_id,is_integral1; optional live exclusions",
+        "expected": "data.list/data.count; row.attrValue supplies ordinary SKU rows"
+      },
+      {
+        "step": "SKU selection",
+        "source": "view/admin/src/pages/product/productReply/index.vue:192/342-367/560-563",
+        "behavior": "Select a row from goodsData.attrValue; actual code does not call imported productAttrsApi"
+      },
+      {
+        "step": "avatar/pics",
+        "source": "view/admin/src/components/uploadPictures/index.vue + api/uploadPictures.js",
+        "requests": [
+          "GET /adminapi/file/category",
+          "GET /adminapi/file/file",
+          "POST /adminapi/file/upload"
+        ],
+        "selected": "att_dir string and max8 picture rows; no review-save server-side fetch"
+      },
+      {
+        "step": "create",
+        "source": "view/admin/src/pages/product/components/addReply.vue:168-228",
+        "request": "POST /adminapi/product/reply/save_fictitious_reply",
+        "payload": "image:{image:goods.image,product_id:goods.id}, unique:attr.unique, avatar:att_dir, nickname/comment, numeric three scores, reply_score string3/2/1, pics strings, add_time wall string"
+      }
+    ],
+    "registeredDependencyState": {
+      "legacyProductSelector": "not registered in TS; exact product/product/list is an additional real workflow gap",
+      "unusedLegacySkuApi": "GET product/product/attrs/:id/:type remains defined/imported but has no actual caller in this addReply flow; not counted as an active dependency",
+      "media": "file/category, file/file and file/upload are registered; response shape and live authorization were not probed in this scout"
+    },
+    "existingProductsAlternatives": "GET /adminapi/product/list and /api/admin/product/list return {list,page,limit}, not source count+attrValue. /product/editor/options is a catalogue metadata candidate set, not a product/SKU selector. Mobile /api/admin/product/get_attr/:id has a separate contract. Reuse only after a proven adapter or implement the real source selector.",
+    "currentTsUi": "Current ReplyList.vue/API implements genuine moderation only and contains no virtual-create/form flow. Proposed UI should keep an explicit 添加自评 context and distinguish UID0/oid0 rows from real order evidence."
+  },
+  "importAndEvidenceBoundary": {
+    "phpUniqueIndex": "Source eb_store_product_reply has UNIQUE(oid,unique); uid0/oid0 fictitious rows each receive fresh uniqid. Target spr_order_unique/spr_unique are ordinary indexes; spr_active_cart_uq only constrains non-null orderCartInfoId.",
+    "manifest": "store_product_reply copies by id with common source columns; new nullable/default target-only fields retain defaults. store_product_reply_comment maps create_time→add_time. No live import or catalogue verification in this investigation.",
+    "migration0026": "Backfills order_cart_info_id only for a unique cart.unique match and oid matching cart.oid or cart.id, then binds the first matched row per cart sorted by is_del ASC,id ASC: earliest active when present, otherwise earliest deleted. It has no explicit uid0 exclusion; do not claim global imported virtual rows have already been proven unbound. New creation must write NULL directly and must never call that migration as part of an HTTP write.",
+    "immutableCustomerEvidence": "Do not update existing review/comment/user/order/order-cart/SKU inventory or attach virtual creation to order completion. Fresh insert only; any required product.star change is a separately prescribed aggregate field, not inventory or purchase evidence.",
+    "ownerPolicy": "Preserve central Admin ability to select any valid source product owner but create platform review0/0 as PHP does. Do not assign Supplier owner to fake rows automatically or claim goodsType0 establishes platform catalogue isolation. Supplier review list remains its own type2/relation fence."
+  },
+  "implementationRecommendations": [
+    "Register only the two missing explicit old contracts initially, with dedicated controller bounded body and private/no-store form response, full live reply.view/manage revalidation and short5s/2s/5s transaction; do not count six preexisting modern moderation aliases as new.",
+    "Add exact genuine 184/185 seed metadata and product_id placeholder matching to permission resolver, retaining real page6 as reader and explicitly refusing wildcard579/580 reinterpretation. Exercise both SQL seed-loading paths and complete tuple forgery cases.",
+    "Product form positive path ID actually works through Request.param; zero must provide source product selector. Either implement old product/product/list with count+attrValue in the planned workflow or explicitly use and test a correct dedicated replacement in the TS page.",
+    "Validate selected product exists/is_del0/approved as the real selector requires; preserve all valid owners, including approved off-shelf products. Source POST only checks require and can create orphan identities; reject new orphan/cross-product/activity/ambiguous SKU associations in TS while retaining imported history reads.",
+    "Use existing product-write serialization before mutable product/SKU rows and respect retirement lock ordering; read/recheck selected SKU type0, active lifecycle, productId, alias, full snapshot. Creation does not allocate a SKU unique, so do not add a gratuitous global SKU allocator lock or reuse order namespace46301.",
+    "Generate fresh cryptographic32-character review unique, uid0/oid0/platform0/0/orderCartInfoIdNULL; mirror logistics_score/delivery_score, publish according to established source defaults, and preserve normal moderation operations on the new row.",
+    "Every INSERT and prescribed rating DML requires full RETURNING plus readback, all11 audit fields explicitly scoped, no reviewer/customer content in logs, final actor/session expiry and business verification after audit. Trigger rewrites/zero-row receipts must roll back the entire virtual creation.",
+    "Finish source rating-event strategy and tests; preserve exact is_del0 product_score mean truncated one decimal, prove producer/concurrency freshness or explicitly retain durable asynchronous processing. Avoid silently omitting the product.star effect.",
+    "Run future verification serially through /home/cina/cinagroup/tools/validate-serial.sh with Vitest maxWorkers1: actual old GET/helper and active addReply submit/Axios/JWT/SQL tests, form0/positive path override, allowner selector and SKU retirement/ambiguity, Unicode/source lengths, images8, Shanghai/DST/future time, defaults/status, fresh IDs, no real-order side effects, full audit rollback and aggregation/concurrency evidence."
+  ],
+  "unprovenRuntimeBoundaries": [
+    "Opaque BaseController/FormBuilder/create_form serialized PHP execution and envelope",
+    "Source deployment Queue driver/worker delivery and cache backends",
+    "Actual old SPA permissions/selector/media browser run against PHP",
+    "Production source/target data cleanliness, virtual cart binding and import execution",
+    "Current TS product-star producer/consumer convergence across real/public review writers"
+  ],
+  "inputs": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "lineCount": 2586
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+      "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+      "lineCount": 208
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+      "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+      "lineCount": 596
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/validate/admin/product/StoreProductReplyValidate.php",
+      "sha256": "8aace9f935ddea40bba94ca4258b97e63f566d14cea0d9f1b7e9ee5888079700",
+      "lineCount": 58
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+      "sha256": "b24ea2b61d05f877896390596cdfd3116b0631ca223c6d220b79273ca7405bdb",
+      "lineCount": 222
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/framework/src/think/Request.php",
+      "sha256": "759f6817b904ba209b73c530a7996e188a1370d00ef1aceb4d5e26f08276e0c5",
+      "lineCount": 2152
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/framework/src/think/Validate.php",
+      "sha256": "ab2a23400916512a47374bda6110fe3494602e0bc50f021a03e50fe1541e5666",
+      "lineCount": 1702
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+      "lineCount": 851
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineCount": 2834
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProduct.php",
+      "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+      "lineCount": 762
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "lineCount": 559
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+      "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8",
+      "lineCount": 554
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+      "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d",
+      "lineCount": 146
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductAttrValueDao.php",
+      "sha256": "a6c3f481a168544605185059287e9e86c541a31b296a82d18421725dc05e3b8e",
+      "lineCount": 258
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+      "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+      "lineCount": 593
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "lineCount": 56505
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+      "lineCount": 664
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/addReply.vue",
+      "sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+      "lineCount": 274
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/goodsList/index.vue",
+      "sha256": "bfa21f742ec0331d59cdaa399ef020d6e674d6e2b5bb597745322d7910a8e3b2",
+      "lineCount": 506
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/uploadPictures/index.vue",
+      "sha256": "a2cdf6a665995b69ab03ec1767f758df36c3931fb1c9f6368c34a385ffec5036",
+      "lineCount": 1306
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "lineCount": 917
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/marketing.js",
+      "sha256": "bef418a916c1b5df20399b882593755dd7da13d630a98d888c09cb7853728f73",
+      "lineCount": 1311
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/uploadPictures.js",
+      "sha256": "9c1d7fc6b32d69261552faf52caddd8dbf0b08fbedde7e896d193e32ee3b4485",
+      "lineCount": 104
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/modules/product.js",
+      "sha256": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790",
+      "lineCount": 138
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/index.js",
+      "sha256": "49807655464a7dbe95b3e0f9bb04b5d25f97cff5876ea0b23a11e9827df10e5f",
+      "lineCount": 102
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/plugins/auth/index.js",
+      "sha256": "b00fb64337af72359ed2e233f0b0240d8ef698347d8b3f289d4c707eec60a527",
+      "lineCount": 30
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+      "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+      "lineCount": 47
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+      "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38",
+      "lineCount": 112
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/product/Reply.php",
+      "sha256": "21ea905fe9384c466f5474046c2ed709cac7d8aba81fb6a43f841dec20a76339",
+      "lineCount": 40
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductReplyJob.php",
+      "sha256": "83de69f8cffb8df000e52bd2d6f87e7259b86933f19e4e795a041f3e9b8129e8",
+      "lineCount": 60
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/QueueTrait.php",
+      "sha256": "1a16900d00df3951e29c77bdac65bc3a9ffd1b0c2ff315ab8350c9c295258cd3",
+      "lineCount": 145
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common.php",
+      "sha256": "aa8ec005680a709ae3f7324dadcbe91c8e305c0a685e1b7c08f3b24f1d63c8f9",
+      "lineCount": 840
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/utils/Json.php",
+      "sha256": "b6d6bc57ab5ee6e8fdb66b7cd294e7a23b17737d526eae94ca02768ddb0208f5",
+      "lineCount": 134
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/reply.ts",
+      "sha256": "7a2ec3a828e2f800bb95b9053a9788170cd6670b228117174112c705eb503e3c",
+      "lineCount": 131
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/product.ts",
+      "sha256": "aeab9bf36b6695f66de4e2ac4fd8cc316730a15a2f1ffa4c3eeec0b0e32c5c9b",
+      "lineCount": 144
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/product_relations.ts",
+      "sha256": "fb5649a270f6563f05936d7807f4d2021ac0c87fa958899f49820683481c2efe",
+      "lineCount": 372
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/MigrationService.ts",
+      "sha256": "0069e483f7fd103380e69c97f510b9dbbe0f2511f007eaefb5f783e2ae7da4e2",
+      "lineCount": 8871
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/scripts/data-migration/manifest.ts",
+      "sha256": "9668231ce2b89336befab2780e63dbb962df3012d474437194a99296e23a79f1",
+      "lineCount": 909
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/scripts/data-migration/runner.ts",
+      "sha256": "0fb05f86d750dd933f61bd4e763a8655d160d54665cc403b59651045fa818edc",
+      "lineCount": 2407
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "c8b64774ba88d35a0bf5fd6173a923865297c299614dbd4e214216c8792460c3",
+      "lineCount": 1587
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "sha256": "8cb05551c3680ee937e24623ec9a3629da9df05dce0960fe22a961febb562cd5",
+      "lineCount": 1328
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "sha256": "ab0661c9e788d32c512736f3c5e69e619a375d0199fe60c90d8a1683579be052",
+      "lineCount": 2441
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+      "sha256": "774ad89d5d0bf24d3351e2c912a3408e909e5eafe12486c399ba722c1f84a3d8",
+      "lineCount": 581
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "fade772de9f2f21f71cdabe434ca18cb6cf17c60daeef46f681ea6393921edfb",
+      "lineCount": 804
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "88881e405963ddabdf8e9e046d8bd01f78aa107e424b6aaa720fa15864b43dde",
+      "lineCount": 2603
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminMobileProductService.ts",
+      "sha256": "704920fe5414692e59fa3846edc6def51c43b88e56c4558506bde336bf738ed9",
+      "lineCount": 572
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/system/AttachmentController.ts",
+      "sha256": "18c73ca5949f368d1579ecd744f1204857358f51094ab5d87cf4ac5946da6d5d",
+      "lineCount": 382
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductAssociationService.ts",
+      "sha256": "468d327beb5026143fa4ed2dc040dd197f2c3bedb1cdc7c185c6e3244efdd2f3",
+      "lineCount": 887
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuRetirementService.ts",
+      "sha256": "793d483df11a1c54090b1ee7be42292fd6cbae6164425a8707219419f4926d9c",
+      "lineCount": 375
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuIdentity.ts",
+      "sha256": "dfaffd1645892a0bbca35eb7cb22b62d309b4c37a18ee453b826ef5cd3b73668",
+      "lineCount": 7
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/reply.ts",
+      "sha256": "fda9261265d93416fa9e5023f628f99fa4f5655a6b73ad80b46b9e736f8975b1",
+      "lineCount": 128
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "sha256": "47c8ab5be6107060258bdd2447c9659e1d755a5eda8975d3cf4f256d257b3f26",
+      "lineCount": 248
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-authority.json",
+      "sha256": "d3d8a19b4791c63a860fbb87b0948fed2df0b8bd320a5d09d9e753efedd8ed14",
+      "lineCount": 17259
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+      "lineCount": 232
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/next-scope-20261014.json",
+      "sha256": "5c085ff300546cf05bbd041091a6f6ee98824534fac74fb77c717d37d7987ec9",
+      "lineCount": 1037
+    }
+  ],
+  "independentReview": {
+    "agent": "/root/reply_core_service/fictitious_permission_scout",
+    "scope": "Read-only permission seed/current resolver/route/old SPA consumer cross-check; correct184/185 vs191/192 and page6 vswildcard579",
+    "testsRun": false,
+    "writes": false,
+    "status": "passed-read-only-candidate-review",
+    "checkedCandidateSha256": "8f8c3f53ee66ae9c7bb588b63a944d41edd6b0ae175ff7206d1a675f537b81bb",
+    "inputVerification": "55 unique paths;54 current SHA/lineCount matches;AdminProductReplyService as-of hash matches preserved old freeze and differs only by later separately authorized JSON wire repair",
+    "preservedFreezeVerified": true,
+    "postReviewCorrection": "The migration0026 wording now states the actual is_del ASC,id ASC ranking, including the all-deleted case; no implementation changed."
+  }
+}

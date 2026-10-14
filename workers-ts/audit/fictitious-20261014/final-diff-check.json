@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-14T10:59:08.417905+00:00",
+  "argv": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "boundary": "Tracked working diff whitespace only; new files are covered by declared frozen input inventory/types/runtimechecks, not gitdiff whitespace claim"
+}

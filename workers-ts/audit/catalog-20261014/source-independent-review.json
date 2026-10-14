@@ -1,0 +1,1359 @@
+{
+  "capturedAt": "2026-10-14T11:24:02.030900+00:00",
+  "reviewer": "/root/catalog_source_review",
+  "mode": "Read-only source inspection; no PHP interpreter, heavy validation, provider request, production action or production/test edits",
+  "stage": "Final source implementation review: no remaining findings; declared full matrix/type/build/browser/provider gates remain separate",
+  "sourceSnapshot": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+      "bytes": 27131
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "bytes": 24769
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProduct.php",
+      "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+      "bytes": 20315
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+      "sha256": "b24ea2b61d05f877896390596cdfd3116b0631ca223c6d220b79273ca7405bdb",
+      "bytes": 6158
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/BaseServices.php",
+      "sha256": "c56396bf827787d5ab8d80bfa70687697582abfe3b3cd1c6ce43867b7b80b7e9",
+      "bytes": 14915
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+      "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+      "bytes": 16491
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/basic/BaseModel.php",
+      "sha256": "d09d99c98900f9e9f2ed2bf328d6d879592656cbf358f19208bcf9eee086748a",
+      "bytes": 1931
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/category/StoreProductCategoryServices.php",
+      "sha256": "77431e2d9eebeb2b85eff500f7bde1ed9359f3da801513f719b6a9080c1ad41e",
+      "bytes": 17102
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/category/StoreProductCategoryDao.php",
+      "sha256": "996bdc89810d1c70bc612fd2b5c5321b4cd0df143fa36da2470ddfbfbda0a4f0",
+      "bytes": 8080
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/category/StoreProductCategory.php",
+      "sha256": "237edefa1695e83664199b9f28101c0f08cd257ed45432024c335f1c180b62b5",
+      "bytes": 4397
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/concern/AggregateQuery.php",
+      "sha256": "9d3021b95aa48f79f9566dac51763ba6fde80185f152b831e6da05122bc36733",
+      "bytes": 3366
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/PDOConnection.php",
+      "sha256": "caf53cfeee617239c4188666c7dac574b344f0080b1b44cfc9c8afdc2e1edc45",
+      "bytes": 52339
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/model/concern/Attribute.php",
+      "sha256": "c5aa8b5c94f749f353ed164581d961d5abddaa31c11c3f1a02e97a173a9960e4",
+      "bytes": 16789
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/config/database.php",
+      "sha256": "7eddd37e76e5ef96fd2f32a3923b6a5878cdf8e4754e4ff16dec28b7762b3d7f",
+      "bytes": 3418
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "bytes": 183912
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "bytes": 7322393
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "bytes": 16957
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/modules/product.js",
+      "sha256": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790",
+      "bytes": 4460
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+      "bytes": 62288
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+      "bytes": 17097
+    }
+  ],
+  "observedTsSnapshot": {
+    "capturedAt": "2026-10-14T11:24:02.043004+00:00",
+    "meaning": "Authoritative bytes observed during initial source investigation, not a pre-edit whole-worktree freeze and not final validated implementation",
+    "inputs": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "sha256": "88881e405963ddabdf8e9e046d8bd01f78aa107e424b6aaa720fa15864b43dde",
+        "bytes": 108386
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductFictitiousReplyController.ts",
+        "sha256": "a9737db15872e1d10fdb754d43ce61601d5ee0c09e07ea9dbf69a4138cf7cc63",
+        "bytes": 1556
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+        "sha256": "eaa28ceb2f9e2384eedba408afd4ee9ed03f37337e862a660fa428c777b82946",
+        "bytes": 33331
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+        "sha256": "a4118398b63d8f01bc5f0991675a37f520d754b7039786821287787ddd8f13da",
+        "bytes": 104850
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+        "sha256": "1141d41efa076932e6169e1d4d21e0e345fa71c2a21573b749fd60368983d1c4",
+        "bytes": 44405
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/ProductAssetPolicy.ts",
+        "sha256": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57",
+        "bytes": 4581
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/product.ts",
+        "sha256": "aeab9bf36b6695f66de4e2ac4fd8cc316730a15a2f1ffa4c3eeec0b0e32c5c9b",
+        "bytes": 7471
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/dao/product/StoreProductDao.ts",
+        "sha256": "26078d8582c8b5b2ba3646ed16c2c1fc5613b22e6c0ae7507279ba13abba3512",
+        "bytes": 7275
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/middleware/admin-auth.ts",
+        "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+        "bytes": 3254
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+        "sha256": "97f198e37e6c55bf928977617f569e61b42b11d3a52553bdd8ddaf1dc31310d5",
+        "bytes": 104229
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+        "sha256": "d05b2cd52c1551a92ac5fdb62c4834b1acdb12b4cfd00258ce9b4fa95f134c47",
+        "bytes": 18220
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+        "sha256": "b528d3f581d3c4f36c4a192951687d018313c299ccc3892d7875a6dff4229353",
+        "bytes": 16684
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/types/admin.ts",
+        "sha256": "4a7b10cee1a8665ed0ad2f2768330d70ae1ee32331af499b70a9d00658a1f0ae",
+        "bytes": 3004
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/router/index.ts",
+        "sha256": "5989836439b351d1b36a3b8b1b7b77f2cc11130029ecc3a8545658f7082f3cf5",
+        "bytes": 24667
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+        "sha256": "ce43bbb82d3f91c71ea1a28a3b9733a84dc7c009f4e50ff7fcdb4812aed664e6",
+        "bytes": 29096
+      }
+    ]
+  },
+  "sourceFacts": [
+    {
+      "id": "routes",
+      "source": [
+        "route/admin.php:1495",
+        "route/admin.php:1509",
+        "view/admin/src/api/product.js:15",
+        "view/admin/src/api/product.js:37"
+      ],
+      "projection": {
+        "main": "GET /adminapi/product/product",
+        "header": "GET /adminapi/product/product/type_header",
+        "existingSelector": "GET /adminapi/product/product/list remains a different contract"
+      },
+      "scope": "Read-only legacy main catalog plus actual old navigation; no inventory writer and no global get_script adjudication."
+    },
+    {
+      "id": "main-controller",
+      "source": [
+        "app/controller/admin/v1/product/StoreProduct.php:169"
+      ],
+      "projection": {
+        "defaults": {
+          "store_name": "",
+          "cate_id": "",
+          "supplier_id": 0,
+          "type": 1,
+          "sales": "normal",
+          "store_id": 0,
+          "store_label_id": "",
+          "brand_id": ""
+        },
+        "typeAlias": "request type becomes where.status, not owner type",
+        "supplier": "nonzero supplier_id replaces owner type=2/relation_id=supplier_id, no pid restriction",
+        "ordinary": "without supplier_id adds pid=0; does not require platform owner type=0",
+        "store_id": "Always removed in main controller: a no-op even when nonzero",
+        "categories": "Nonempty scalar string wrapped as one-element array; remove 0 and deduplicate; descendant expansion is commented out",
+        "otherQuery": "getMore selects declared inputs; actual old caller sends excel=0 and header also receives page/limit/sales: no-op compatibility must be explicit"
+      }
+    },
+    {
+      "id": "header-controller",
+      "source": [
+        "app/controller/admin/v1/product/StoreProduct.php:46",
+        "app/services/product/product/StoreProductServices.php:79"
+      ],
+      "projection": {
+        "order": [
+          {
+            "type": 1,
+            "name": "销售中"
+          },
+          {
+            "type": 2,
+            "name": "仓库中"
+          },
+          {
+            "type": 4,
+            "name": "已售罄"
+          },
+          {
+            "type": 5,
+            "name": "库存预警"
+          },
+          {
+            "type": 6,
+            "name": "回收站"
+          },
+          {
+            "type": 0,
+            "name": "待审核"
+          },
+          {
+            "type": -1,
+            "name": "审核未通过"
+          },
+          {
+            "type": -2,
+            "name": "强制下架"
+          }
+        ],
+        "ownerBranch": "store_id branch first, supplier branch second, else pid=0",
+        "bothOwners": "Store branch unsets only store_id, leaving positive supplier_id; noncategory searchSupplierIdAttr and explicit type1/relStore conflict with type2/relSupplier, yielding zero counts; category-count branch ignores owner conditions",
+        "stateInput": "Each source count uses its own status union-left override: selected type never limits all header counts"
+      }
+    },
+    {
+      "id": "status-list-and-noncategory-count",
+      "source": [
+        "app/model/product/product/StoreProduct.php:660"
+      ],
+      "projection": {
+        "0": "is_verify=0 AND is_del=0",
+        "1": "is_show=1 AND is_del=0 AND is_verify=1",
+        "2": "is_show=0 AND is_del=0 AND is_verify=1",
+        "3": "is_del=0 AND is_verify=1",
+        "4": "is_del=0 AND is_verify=1 AND (is_sold=1 OR main stock=0)",
+        "5": "is_show=1 AND is_del=0 AND is_verify=1 AND is_police=1 AND main stock>0; store_stock threshold branch is commented out",
+        "6": "is_del=1",
+        "7": "is_del=1 OR is_show=0",
+        "-2": "is_verify=-2, no is_del restriction",
+        "-1": "is_verify=-1, no is_del restriction",
+        "empty": "No state condition"
+      },
+      "headerStates": "3 and 7 accepted by source search but absent from eight header tabs"
+    },
+    {
+      "id": "category-count-branch",
+      "source": [
+        "app/dao/product/product/StoreProductDao.php:107",
+        "vendor/topthink/think-orm/src/db/concern/AggregateQuery.php:45"
+      ],
+      "projection": {
+        "trigger": "Nonempty normalized cate_id array",
+        "shape": "JOIN product_relation type1/relation_id IN categories; group product id; ORM grouped-count returns number of groups, not first group size",
+        "ignored": "store_name,pid,type,relation_id,supplier_id,store_id,brand_id,store_label_id are not applied by this branch",
+        "status1": "is_show=1 AND is_del=0; source omits is_verify=1",
+        "status2": "is_show=0 AND is_del=0; source omits is_verify=1",
+        "status3": "is_del=0; source omits is_verify=1",
+        "status4": "is_del=0 AND is_verify=1 AND is_sold=1 AND main stock=0 (AND, unlike list OR)",
+        "otherStatuses": "same as status searcher for -2,-1,0,5,6,7"
+      },
+      "fidelity": "Do not silently unify list/count predicates: source classification counts can intentionally differ from returned filtered rows, including header counts."
+    },
+    {
+      "id": "search",
+      "source": [
+        "app/dao/product/product/StoreProductDao.php:45",
+        "app/dao/BaseDao.php:304",
+        "app/model/product/product/StoreProduct.php:641",
+        "app/model/product/product/StoreProduct.php:712"
+      ],
+      "projection": {
+        "store_name": "PHP truthy string excluding 0; trim then LIKE %...% across id,keyword,store_name,store_info,bar_code, OR exact barcode match in any SKU (no SKU type/retired filter)",
+        "categories": "Relation type1 with exact selected IDs; main category descendant expansion remains commented out",
+        "brand": "Both model searchBrandIdAttr direct main brand_id and DAO relation type2 membership apply",
+        "labels": "Only DAO relation type3 membership (no model searchStoreLabelIdAttr)",
+        "relations": "No status flag filter on category/brand/label relation"
+      }
+    },
+    {
+      "id": "paging-sort",
+      "source": [
+        "app/services/BaseServices.php:34",
+        "app/services/product/product/StoreProductServices.php:130",
+        "app/dao/product/product/StoreProductDao.php:205",
+        "config/database.php:85"
+      ],
+      "projection": {
+        "sourceMissing": "page and limit default0; defaultLimit10 is third returned value and unused by main getList; DAO paginates only if both nonzero, so missing either or zero means full list",
+        "sourceLimit": "limit>100 clamped to100 by default getPageValue",
+        "fallback": "count<=limit and requested page !=1 forces effective page1, including count0",
+        "sourceEnvelope": "list,count only (no returned page or limit)",
+        "order": "Explicit sales asc/desc on main sales followed by sort desc,id desc; normal or other source sales values use sort desc,id desc",
+        "modernTransport": "Any additional pagination metadata on /product/list must be separated as a modern extension; source envelopes remain exact"
+      }
+    },
+    {
+      "id": "row-projection",
+      "source": [
+        "app/dao/product/product/StoreProductDao.php:205",
+        "app/services/product/product/StoreProductServices.php:147",
+        "app/model/product/product/StoreProduct.php:59",
+        "app/model/product/product/StoreProduct.php:259"
+      ],
+      "projection": {
+        "source": "All persisted main product columns with snake names; preserve owners/product types without guessing goods type == owner",
+        "stock": "SUM(all SKU stock WHERE product_id=id AND type=0), no retirement or current-active filter; no rows -> NULL; state filtering still uses main table stock",
+        "sales": "Main sales only, no ficti addition",
+        "branch_stock": "Projected ordinary SKU SUM with PHP ??0 fallback: null becomes 0",
+        "branch_sales": "Main sales",
+        "stock_attr": "Projected SUM >0",
+        "collect": "COUNT all user_relation rows relation_id=id/category product/type collect",
+        "likes": "COUNT all user_relation rows relation_id=id/category product/type like",
+        "visitor": "COUNT all store_visit rows product_id=id/product_type product",
+        "plate_name": "平台; 门店：+nondeleted store name; 供应商：+nondeleted supplier_name; is_show not required, missing/deleted suffix empty",
+        "noPrivateInventory": "No SKU card passwords or full disk_info payload requested by catalog projection; source main columns remain source-compatible",
+        "accessors": "delivery_type truthy CSV->string[], false->[]; slider_image string JSON decode wire else[]; truthy custom_form/specs JSON else[]; label_id/store_label_id/ensure_id CSV int-array source getters; cate_id stays CSV",
+        "decimalBoundary": "Model lacks explicit decimal type/getter transforms. Preserve raw Drizzle decimal strings; PHP/MySQL driver exact scalar encoding not executed in this environment; do not claim bit-for-bit cross-driver receipt."
+      }
+    },
+    {
+      "id": "category-name",
+      "source": [
+        "app/dao/product/category/StoreProductCategoryDao.php:133",
+        "app/services/product/category/StoreProductCategoryServices.php:496",
+        "app/model/product/category/StoreProductCategory.php:62"
+      ],
+      "projection": {
+        "selection": "Use IDs from stored main cate_id CSV; child row itself has no is_show/is_del filter",
+        "prefix": "Only direct parent with is_show=1 may contribute one prefix; no recursive ancestor rendering",
+        "wire": "parent/child or child, comma join; missing category omitted",
+        "orderBoundary": "Source SELECT has no ORDER BY: cannot claim portable golden ordering across MySQL and Postgres"
+      }
+    },
+    {
+      "id": "supplier-settlement",
+      "source": [
+        "app/services/product/product/StoreProductServices.php:214",
+        "app/dao/BaseDao.php:197",
+        "vendor/topthink/think-orm/src/db/PDOConnection.php:1350"
+      ],
+      "projection": {
+        "trigger": "Supplier-owned row settle_price<=0 only when supplier-filter where.type==2",
+        "algorithm": "getSkuArray returns ordinary type0 SKU fields keyed by product_id; repeated product_id rows overwrite in returned row order, then outer min(array_column(...settle_price)) operates on that single surviving entry; not MIN across every SKU",
+        "ordering": "No ORDER BY for SKU query, SQL row order unresolved; preserve actual keyed overwrite source algorithm and explicitly state cross-engine order ambiguity; do not impose id sort or fail a legal multiple-SKU case merely for deterministic tests",
+        "note": "PDO keyed-overwrite details independently investigated by implementation agent and source reviewer read downstream PDO file; no PHP interpreter run."
+      }
+    },
+    {
+      "id": "menus",
+      "source": [
+        "public/install/crmeb.sql:8662",
+        "public/install/crmeb.sql:8666",
+        "public/install/crmeb.sql:8725",
+        "public/install/crmeb.sql:8776",
+        "public/install/crmeb.sql:9066"
+      ],
+      "projection": {
+        "2": {
+          "id": 2,
+          "type": 1,
+          "authType": 1,
+          "apiUrl": "",
+          "methods": "",
+          "menuPath": "/admin/product/product_list",
+          "uniqueAuth": "admin-store-storeProuduct-index",
+          "permission": "product.view only"
+        },
+        "6": "Existing exact product reply page remains reply.view, independent from product.view",
+        "108": {
+          "id": 108,
+          "type": 1,
+          "authType": 2,
+          "apiUrl": "product/product",
+          "methods": "GET",
+          "menuPath": "/admin/product/product",
+          "uniqueAuth": "product-product-index",
+          "permission": "product.view only"
+        },
+        "192": {
+          "id": 192,
+          "type": 1,
+          "authType": 2,
+          "apiUrl": "product/product/type_header",
+          "methods": "GET",
+          "menuPath": "/adminproduct/product/type_header",
+          "uniqueAuth": "",
+          "permission": "product.view only"
+        },
+        "193": "Existing selector stays product.view; original tuple distinct from main108/header192",
+        "579580": "Wildcard auxiliary original rows and rewritten metadata cannot grant catalog or review permissions"
+      },
+      "rootDecision": "Root explicitly scoped exact full seed2 page tuple to read-only product.view, never writer; no generic path-only page grant."
+    },
+    {
+      "id": "navigation",
+      "source": [
+        "view/admin/src/router/modules/product.js:29",
+        "view/admin/src/router/modules/product.js:57",
+        "view/admin/src/pages/product/productList/index.vue:1291",
+        "view/admin/src/pages/product/productReply/index.vue:249",
+        "view/admin/src/pages/product/productReply/index.vue:427"
+      ],
+      "projection": {
+        "aliases": "/admin/product/product_list -> /product; /admin/product/product_reply/:id? -> /reply with explicit product_id scope",
+        "query": "Old is_reply=0 survives exactly; preserve hash and unrelated query only if canonical safe parser handles it",
+        "scope": "Product path must win over conflicting unrelated query product_id; malformed or ambiguous scope cannot widen into an all-products review request",
+        "capability": "Row review action requires independent reply.view or reply.manage; product.view alone cannot acquire review access",
+        "oldBug": "Old SPA params watch resets product_id=0 on every route change; this undesired widening is not copied because intended source navigation scope is the selected product",
+        "lifecycle": "Changing path/product/status or losing session must invalidate old list/dialog responses before another context may show them"
+      }
+    },
+    {
+      "id": "media-extension",
+      "source": [
+        "workers-ts/src/services/activity/ProductAssetPolicy.ts",
+        "workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts:198"
+      ],
+      "projection": {
+        "scope": "PHP source predates private canonical R2 transport; this is an explicit extension, no source provider claim",
+        "ordinary": "Keep nonprivate HTTP/HTTPS/relative refs and complex non-array source JSON wire shapes",
+        "private": "Sign only validated persisted metadata and existing product owner publication policy; canonical refs never leave usable raw private URI without valid HMAC projection",
+        "storeCopies": "Existing selector/detail maps persisted store copies to platform media for canonical refs; main catalog may reuse this exact existing policy without inventing new store gallery capabilities",
+        "IO": "No HTTP fetch or R2 get during catalog read/sign projection; real object-provider integration remains separate acceptance."
+      }
+    }
+  ],
+  "decisionsCommunicated": [
+    "Store list store_id no-op and header both-owner contradiction",
+    "Different category count branch and distinct grouped count",
+    "Missing/zero paging source full-list behavior",
+    "Keyed supplier SKU overwrite and no portable SQL order",
+    "Exact full tuple source seeds 2,108,192 plus independent reply capability",
+    "Complete actual old caller artFrom incl excel=0 and header paging/sales no-ops"
+  ],
+  "implementationReviewStages": [
+    {
+      "capturedAt": "2026-10-14T11:26:58.910926+00:00",
+      "stage": "Initial implemented backend and in-progress tests; frontend not yet implemented/reviewed",
+      "inputs": [
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+          "sha256": "7b2bf2b2787da7583aab2bd61d2a6c80b343db97081efe8b70c667d032ca243b"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductCatalogReadController.ts",
+          "sha256": "eaf472a67cb8fd1dbd3d5aed44e3a7713680238523b942d98a6bd2ecf2d8354f"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+          "sha256": "61191efd03678c5244fb9665ccc4fa8a814492167209ede0890bca43f4dfa134"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+          "sha256": "97f198e37e6c55bf928977617f569e61b42b11d3a52553bdd8ddaf1dc31310d5"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-catalog-read.test.ts",
+          "sha256": "3b1e2a5ee0d351e0c6d90f5e55ec2e0726388eb7600cf9b7011d99c7fc383f77"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/adminProductCatalogReads.ts",
+          "sha256": "bc231c1a2190191ff0df2f2cf2cbb310cedc2217ba8c6356067ea349b70fe9ad"
+        }
+      ],
+      "findings": [
+        {
+          "id": "catalog-read-empty-copy-grant",
+          "severity": "P2",
+          "status": "open-sent-to-root-implementation-tests",
+          "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+          "line": 766,
+          "problem": "Nonseed fallback accepts arbitrary menu IDs with empty path/auth and GET/HEAD main/header/selector route; a copied 108 row with ID998 and emptied path/auth can acquire product.view despite scope requiring exact genuine seed 2/108/192 tuples.",
+          "requestedFix": "Bind main/header to exact proved seeds. Keep selector compatibility only for explicitly source-proved additional tuples such as genuine410 instead of arbitrary main/header copies.",
+          "missingTest": "Current998 copy has nonempty original path/auth and is refused; empty path/auth clone exercises uncovered positive fallback."
+        }
+      ],
+      "observations": [
+        "Implemented source status/category-count branching, source default page0/limit0 complete list with10000 capacity503, source ordinary SKU sum incl retirement, supplier keyed final returned row overwrite without ORDER BY, decimal strings, direct-parent category naming and store copy media policy match the inspected source decisions.",
+        "In-progress tests incorrectly expected valid-owner-only catalog rows; source/main implementation preserve malformed owner rows and blank private media. Test agent notified not to add row owner filtering.",
+        "Read and transport control extensions explicit: bounded queries/capacities/readonly RR/current actor/JWT clock/private cache/HMAC media; no business or audit DML in new service."
+      ],
+      "validation": "Read-only review only; no types/tests/browser execution."
+    },
+    {
+      "capturedAt": "2026-10-14T11:28:56.132Z",
+      "stage": "Independent production permission helper repair probes; frontend pending",
+      "productionInput": {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+        "sha256": "61191efd03678c5244fb9665ccc4fa8a814492167209ede0890bca43f4dfa134"
+      },
+      "probeCount": 24,
+      "probes": [
+        {
+          "name": "genuine main108",
+          "input": {
+            "id": 108,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "GET",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine header192",
+          "input": {
+            "id": 192,
+            "authType": 2,
+            "apiUrl": "product/product/type_header",
+            "methods": "GET",
+            "menuPath": "/adminproduct/product/type_header",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine page2",
+          "input": {
+            "id": 2,
+            "authType": 1,
+            "apiUrl": "",
+            "methods": "",
+            "menuPath": "/admin/product/product_list",
+            "uniqueAuth": "admin-store-storeProuduct-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine selector193",
+          "input": {
+            "id": 193,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "/adminproduct/product/list",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine selector377",
+          "input": {
+            "id": 377,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine selector388",
+          "input": {
+            "id": 388,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine selector399",
+          "input": {
+            "id": 399,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine selector410",
+          "input": {
+            "id": 410,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "genuine selector941",
+          "input": {
+            "id": 941,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": "product.view"
+          },
+          "expected": "product.view",
+          "passed": true
+        },
+        {
+          "name": "copied full main",
+          "input": {
+            "id": 998,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "GET",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "copied empty main",
+          "input": {
+            "id": 998,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "copied empty header",
+          "input": {
+            "id": 997,
+            "authType": 2,
+            "apiUrl": "product/product/type_header",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "copied empty selector",
+          "input": {
+            "id": 999,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "selector377 rewritten main",
+          "input": {
+            "id": 377,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "header192 rewritten selector",
+          "input": {
+            "id": 192,
+            "authType": 2,
+            "apiUrl": "product/product/list",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "copied page",
+          "input": {
+            "id": 996,
+            "authType": 1,
+            "apiUrl": "",
+            "methods": "",
+            "menuPath": "/admin/product/product_list",
+            "uniqueAuth": "admin-store-storeProuduct-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "writer auth on genuine page",
+          "input": {
+            "id": 2,
+            "authType": 1,
+            "apiUrl": "",
+            "methods": "",
+            "menuPath": "/admin/product/product_list",
+            "uniqueAuth": "product.manage"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "upper source API",
+          "input": {
+            "id": 108,
+            "authType": 2,
+            "apiUrl": "PRODUCT/PRODUCT",
+            "methods": "GET",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "source API padded",
+          "input": {
+            "id": 108,
+            "authType": 2,
+            "apiUrl": " product/product ",
+            "methods": "GET",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "source HEAD method",
+          "input": {
+            "id": 108,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "HEAD",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "source padded method",
+          "input": {
+            "id": 108,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "GET ",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "source wrong authType",
+          "input": {
+            "id": 192,
+            "authType": 1,
+            "apiUrl": "product/product/type_header",
+            "methods": "GET",
+            "menuPath": "/adminproduct/product/type_header",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "wildcard rewritten main",
+          "input": {
+            "id": 579,
+            "authType": 2,
+            "apiUrl": "product/product",
+            "methods": "GET",
+            "menuPath": "/admin/product/product",
+            "uniqueAuth": "product-product-index"
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        },
+        {
+          "name": "wildcard empty header",
+          "input": {
+            "id": 580,
+            "authType": 2,
+            "apiUrl": "product/product/type_header",
+            "methods": "GET",
+            "menuPath": "",
+            "uniqueAuth": ""
+          },
+          "result": {
+            "protected": true,
+            "permission": null
+          },
+          "expected": null,
+          "passed": true
+        }
+      ],
+      "probeBoundary": "Actual production AST declarations transpiled in memory using installed TypeScript; isolated pure helper execution only. No SQL, live menu flags, JWT, HTTP, provider or heavy test/type/build execution; these probes are not Vitest case counts.",
+      "sourceSupplement": "Independently read unchanged install/crmeb.sql rows377/388/399/410/941 at8923/8934/8944/8955/9347: exact blank path/auth GET product/product/list selector tuples, authType2/type1.",
+      "findings": [
+        {
+          "id": "catalog-read-empty-copy-grant",
+          "status": "resolved",
+          "resolution": "Arbitrary empty main/header/selector clones now have null permission. Genuine additional selector seeds are explicitly bound to independently inspected tuples; no generic blank catalog route fallback."
+        }
+      ]
+    },
+    {
+      "capturedAt": "2026-10-14T11:50:44.985742+00:00",
+      "stage": "First frontend implementation source review; first ordinary validation is owned/running under root",
+      "inputs": [
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+          "sha256": "0c76a6c4c594767af70e47a5b869499b894c02700673de6561c24eb84cc5bd9e"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+          "sha256": "5cdc52f5a9ea3d618366e6eaeb16d7385cd71e637bfb5d9c05b10eb00dca70d3"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/router/index.ts",
+          "sha256": "15eafd89025b21be714c30b9df526328d1ef67b5d66b95373338470e6cecdd30"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+          "sha256": "ce19cb66401cecde6ccaec52ef88a9ce7ce9abc15254ab06c4913fb5fb014508"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+          "sha256": "ae432c1a0e7c7a4af8b554f7f180c9ee114c72a43b9a4318b568b12854163fe7"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-catalog-navigation-frontend.test.ts",
+          "sha256": "ae02b74182c6f83b8ff12d3c143eac724ea5827a659ab185339e99c7a30153d7"
+        }
+      ],
+      "confirmed": [
+        "Actual main API has one production caller ProductList, now /product/product with list/count; type_header independently fetched and exact 8 states decoded; SQL nullable stock preserved and shown as dash.",
+        "Actual router registry redirects legacy product_list and product_reply with unrelated query/hash retained and nonempty path ID authoritative over repeated/conflicting query ID. ReplyList parses exact textual status0/1, rejects array IDs/status and watches both scope inputs before clears/aborts.",
+        "ProductList count retained during delayed page switch and actual server count used; first-page fallback only when source count<=limit. Independent read errors suppress fake counts/rows.",
+        "Product/reply read capabilities remain independent; product.view-only page lacks writer and review controls; old write controls additionally gated to management/current source states1/2.",
+        "Source/header list read responses carry captured session/identity/turn and abort before permission/status changes can refill catalog state."
+      ],
+      "findings": [
+        {
+          "id": "catalog-existing-async-writer-context",
+          "severity": "P2",
+          "status": "open-sent-root",
+          "path": "view/admin-ts/src/pages/product/ProductList.vue",
+          "lines": [
+            361,
+            489
+          ],
+          "problem": "openBatch verifies management before awaiting options but neither pins nor rechecks session/read context before assigning options and reopening dialog. clearReads hides dialog on withdrawal but old options response can reopen it outside canView. del verifies before asynchronous confirmation but sends old-row DELETE even after identity/permission/state changed; current Axios injects replacement token.",
+          "requestedFix": "Capture current session/state/read turn before asynchronous candidates/confirm, recheck capability and current displayed/selected IDs after await, cancel/clear pending options on clearReads, update notifications/refresh only in original operation context. Existing backend writers remain out of this slice.",
+          "coverageGap": "Current 10 frontend cases test pending main/header reads and review editors, not pending catalog options/delete confirmation."
+        }
+      ],
+      "boundaries": [
+        "Frontend source reading only; 10 current frontend case definitions are not observed successful test receipts by reviewer.",
+        "First-front decoder currently permits any safe integer stock, while a test expects negative stock rejection. PHP source SKU stock is unsigned int at install/crmeb.sql:2864; rejecting negative transported stock is a source invariant check, not narrowing a legitimate source signed-stock case.",
+        "API decoder validates id, nullable stock, count and header shape/state sequence. It does not validate every projected product column; cannot claim complete whole-row frontend DTO validation.",
+        "Preview mode fixture has fewer source states and approximate header values; actual production main/header API path is separate and real Chrome acceptance must state its mocked API/provider boundary."
+      ]
+    },
+    {
+      "capturedAt": "2026-10-14T11:55:18.777Z",
+      "stage": "Independent correlated SQL emitter inspection following root initial ordinary four failures",
+      "productionInput": {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+        "sha256": "ae432c1a0e7c7a4af8b554f7f180c9ee114c72a43b9a4318b568b12854163fe7"
+      },
+      "emitterProbe": {
+        "sourceSha256": "ae432c1a0e7c7a4af8b554f7f180c9ee114c72a43b9a4318b568b12854163fe7",
+        "sql": "select \"id\", (SELECT count(*)::text FROM \"user_relation\" WHERE \"relation_id\"=\"id\" AND \"category\"='product' AND \"type\"='collect'), (SELECT count(*)::text FROM \"user_relation\" WHERE \"relation_id\"=\"id\" AND \"category\"='product' AND \"type\"='like'), (SELECT sum(\"stock\")::text FROM \"store_product_attr_value\" WHERE \"product_id\"=\"id\" AND \"type\"=0), (SELECT count(*)::text FROM \"store_visit\" WHERE \"product_id\"=\"id\" AND \"product_type\"='product') from \"store_product\" where \"store_product\".\"id\" in ($1)",
+        "params": [
+          10
+        ],
+        "boundary": "Actual production totals AST expression + installed Drizzle PgDialect/PgDatabase emitter; isolated minimal table-column metadata; no DB request or test/type/build execution."
+      },
+      "emitterSetupAttempt": "node-postgres driver first unavailable due missing optional pg module; corrected to installed core PgDatabase/PgDialect with no dependency install.",
+      "observations": [
+        "Raw initial-ordinary JSON inspected: 60 passed,4 failed,6 skipped over70 definitions; negative stock decoder failure, actual correlated totals values missing/wrong in two cases, and source supplier fixture product19 lacking ordinary SKU in one case. Root owns serial retries."
+      ],
+      "findings": [
+        {
+          "id": "catalog-correlated-projection-qualification",
+          "severity": "P2",
+          "status": "open-sent-backend-root",
+          "problem": "Single-table Drizzle select rewrites embedded model columns to bare names within correlated subqueries. Initial stock/count projection binds inner product_id/relation_id to inner table id instead of outer store_product.id, producing null stock and wrong counts.",
+          "resolutionRequested": "Use explicitly qualified fixed outer identifier or properly joined grouped aggregate in all four projections; verify emitted SQL and rerun all affected full test files. Do not change source stock/count expectations to fit erroneous SQL."
+        }
+      ],
+      "boundary": "Emitter inspection explains initial real SQL failures but does not itself execute PostgreSQL or count as a Vitest definition."
+    },
+    {
+      "capturedAt": "2026-10-14T11:56:50.135Z",
+      "stage": "Independent correlated totals repair emitter proof",
+      "productionInput": {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+        "sha256": "f6eec038da06eaf6553aa61ba3f4aeb3872b3262877d93bb5e0c18cb45a58c19"
+      },
+      "emitterProbe": {
+        "sql": "select \"id\", (SELECT count(*)::text FROM \"user_relation\" WHERE \"relation_id\"=\"store_product\".\"id\" AND \"category\"='product' AND \"type\"='collect'), (SELECT count(*)::text FROM \"user_relation\" WHERE \"relation_id\"=\"store_product\".\"id\" AND \"category\"='product' AND \"type\"='like'), (SELECT sum(\"stock\")::text FROM \"store_product_attr_value\" WHERE \"product_id\"=\"store_product\".\"id\" AND \"type\"=0), (SELECT count(*)::text FROM \"store_visit\" WHERE \"product_id\"=\"store_product\".\"id\" AND \"product_type\"='product') from \"store_product\" where \"store_product\".\"id\" in ($1)",
+        "params": [
+          10
+        ],
+        "qualifiedOuterCorrelations": 4,
+        "passed": true
+      },
+      "findings": [
+        {
+          "id": "catalog-correlated-projection-qualification",
+          "status": "resolved-source-and-emitter-scope",
+          "resolution": "Each of four aggregate projections now pins immutable quoted store_product.id via sql.raw. Actual installed emitter preserves every outer correlation; no client-controlled identifier interpolation. Root must still complete real SQL full-file rerun receipts."
+        }
+      ],
+      "boundary": "Independent actual-production AST/PgDialect emitter proof with isolated table metadata; no SQL/JWT/HTTP/provider or heavy command execution. Historical failed source stage retained unchanged."
+    },
+    {
+      "capturedAt": "2026-10-14T12:07:20.162779+00:00",
+      "stage": "MutationScope repair and actual corrected ordinary evidence review",
+      "inputs": [
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+          "sha256": "77af3d1a6c242e22d82e70e9dcc3c575eac803a21a22352d76e173f545830cd4"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+          "sha256": "0c76a6c4c594767af70e47a5b869499b894c02700673de6561c24eb84cc5bd9e"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-catalog-navigation-frontend.test.ts",
+          "sha256": "5efb1e40e46cca4c4264925a437c8f1c50e2bfb3641b83750ddd2aa7d8d1adf3"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/corrected-ordinary-status.json",
+          "sha256": "a5f575ee4617020c7250b60b184dcf3add81d015b769d107a0914f2b60d4f45c"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/corrected-ordinary.json",
+          "sha256": "f0a57899f0492ce186ac6539178100c932cfc03fd91c2e50d75b5ede912d7623"
+        }
+      ],
+      "observedValidation": {
+        "commandName": "corrected-ordinary",
+        "exitCode": 0,
+        "completedAt": "2026-10-14T12:01:02.306623+00:00",
+        "success": true,
+        "total": 71,
+        "passed": 65,
+        "failed": 0,
+        "pending": 6,
+        "newRelevantFrontendCase": {
+          "name": "actual Admin catalog pages, counted Axios consumers and real Router registry does not reopen a batch editor or dispatch a confirmed deletion after capability, session or catalog-state changes",
+          "status": "passed",
+          "definitionCount": 1,
+          "insideCaseContexts": [
+            "capability withdrawal",
+            "session identity/token replacement",
+            "catalog state change to6"
+          ],
+          "proof": "Actual compiled ProductList and Axios adapter/real Router fixture; gate options and confirmation to inspect no reopen/no mutation dispatch. These loops count as one Vitest case, not3 or6."
+        }
+      },
+      "confirmed": [
+        "openBatch now pins original session/readTurn/type/selected IDs and checks activeMutation after options before assigning or opening; stale options cannot reopen modal.",
+        "Delete now rechecks captured actor/session/readTurn/type/displayed ID after confirmation and after request; replacement session cannot confirm old-row deletion.",
+        "toggleShow and applyBatch success/error notifications and refetches require activeMutation; root test receipts directly prove two original options/confirm triggers, and static source supports response invalidation."
+      ],
+      "findings": [
+        {
+          "id": "catalog-existing-async-writer-context",
+          "status": "partially-resolved-residual-busy-callback-open",
+          "originalTriggersResolved": [
+            "Old pending candidate assignment/dialog reopening",
+            "Old delete confirmation dispatch under changed context"
+          ],
+          "remaining": "applyBatch finally sets batchSubmitting=false unconditionally. clearReads has no busy run invalidation/reset, and applyBatch/openBatch entry lacks already-busy guard. After session replacement a new authorized batch can begin while original request remains pending; original finally clears the new batch loading state, allowing another confirm while the new write remains pending.",
+          "requestedFix": "Separate immutable busy run/owner ID from readTurn. Invalidate/reset busy owner on clearReads; guard new apply/open dispatch while its own writer is busy, and release only the matching busyRun in finally. Do not use activeMutation for finally cleanup because successful fetch advances readTurn.",
+          "missingProof": "Gate original batch request, replace session, start a fresh batch, release original, assert fresh busy state persists and no extra mutation can dispatch."
+        }
+      ],
+      "targetStockDecision": {
+        "source": "Original MySQL SKU stock is unsigned int at install/crmeb.sql:2864; legal PHP source cannot produce negative SKU sums.",
+        "target": "Existing target PostgreSQL stock is signed. Current UI deliberately preserves a transported safe-integer negative aggregate for reconciliation; does not clamp, infer0 or claim negative values are lawful PHP source data.",
+        "testChange": "The first frontend negative-stock rejection expectation was corrected to explicit target reconciliation acceptance, with NaN/fraction rejection retained. This is a source/target transport boundary, distinct from the actual SQL correlation bug."
+      },
+      "boundary": "This stage only consumes completed serial ordinary receipts and reads sources. No additional heavy execution; PG native conditional6 cases remain pending supplementation and Chrome/provider acceptance separate."
+    },
+    {
+      "capturedAt": "2026-10-14T12:09:28.299694+00:00",
+      "stage": "Independent batch busy owner source repair inspection; new runtime case pending root serial execution",
+      "productionInput": {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+        "sha256": "c0f63d8d9f59450a30c24739dde72ce8fe4d8d71ca54f44cff630e6510ddfa6c"
+      },
+      "confirmed": [
+        "batchRun initialized with read generation and incremented by clearReads; busy flag reset only upon context invalidation.",
+        "openBatch and applyBatch return immediately if current busy flag is set.",
+        "Each submitted batch captures immutable ++batchRun; finally clears busy only if that run still owns the flag.",
+        "Successful batch fetch changes readTurn but leaves batchRun unchanged, so the legitimate original finally still releases its own busy flag.",
+        "Session/type/permission reset increments batchRun, invalidates old result scope, and permits fresh context to own a new run; late original finally cannot clear the fresh run."
+      ],
+      "findings": [
+        {
+          "id": "catalog-existing-async-writer-context",
+          "status": "resolved-static-source-awaiting-new-runtime-case",
+          "resolution": "Separate batchRun ownership closes residual stale finally while preserving successful fetch cleanup and avoiding repeated dispatch under current busy state. Original options/confirmation runtime proof stays the previous completed ordinary receipt; current patch cannot inherit its pass claim."
+        }
+      ],
+      "targetStockWording": "Current test explicitly states target signed reconciliation values may be exposed but original PHP unsigned source cannot produce negative stock. Source fact and latest transport decision are separate; no legal-PHP-negative assertion.",
+      "remainingVerification": "Root instructed reviewer to wait for new specialist frontend whole-file run terminal receipt before recording runtime pass; no execution by reviewer."
+    },
+    {
+      "capturedAt": "2026-10-14T12:16:15.804822+00:00",
+      "stage": "Final source review with completed whole frontend regression and declared freeze independently verified; complete scoped matrix pending root",
+      "inputs": [
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+          "sha256": "c0f63d8d9f59450a30c24739dde72ce8fe4d8d71ca54f44cff630e6510ddfa6c"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+          "sha256": "0c76a6c4c594767af70e47a5b869499b894c02700673de6561c24eb84cc5bd9e"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/router/index.ts",
+          "sha256": "15eafd89025b21be714c30b9df526328d1ef67b5d66b95373338470e6cecdd30"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+          "sha256": "ce19cb66401cecde6ccaec52ef88a9ce7ce9abc15254ab06c4913fb5fb014508"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+          "sha256": "f6eec038da06eaf6553aa61ba3f4aeb3872b3262877d93bb5e0c18cb45a58c19"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductCatalogReadController.ts",
+          "sha256": "eaf472a67cb8fd1dbd3d5aed44e3a7713680238523b942d98a6bd2ecf2d8354f"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+          "sha256": "61191efd03678c5244fb9665ccc4fa8a814492167209ede0890bca43f4dfa134"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+          "sha256": "97f198e37e6c55bf928977617f569e61b42b11d3a52553bdd8ddaf1dc31310d5"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-catalog-read-native.test.ts",
+          "sha256": "0b6fb75b1e1a4f95fedcbdce440466d83aa507c71626e703cf8814df0bbeae29"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-catalog-navigation-frontend.test.ts",
+          "sha256": "6d0b9116eb7a5f33f1a623267b01bbffa26146bec65df47548ac7b084617d107"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/batch-context-ordinary-status.json",
+          "sha256": "0240de89f5886488ab6f7a9a57a1c011ec5f5786ec5da3cd2cc4dd81fb975ed9"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/batch-context-ordinary.json",
+          "sha256": "25c0d3bb3cc3027f004f9765b28039b224dd5de2d86b5682dc1a77bbd3b0e261"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/frozen-before.json",
+          "sha256": "bf031c12a8b2730f06a7751f2e5e8fc8d18fc9f6cfb7798a5a791a21f17ee62a"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/final-commands.json",
+          "sha256": "496a6d3e419f3d69a924a65a8c43717dad1325c27dc0d6d8e9aba5869aeebc53"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/pre-type-repair-worker-unit-types-status.json",
+          "sha256": "49faa68695b9a5bd93d7ced30de7949b4553b02d1629c3b3335c732c1165c032"
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/pre-type-repair-worker-unit-types.log",
+          "sha256": "0f3f9ae224c67086961dfbf58ff51b7f352aa47ba7048b944a0e5c5d0a001999"
+        }
+      ],
+      "observedWholeFrontendValidation": {
+        "name": "batch-context-ordinary",
+        "completedAt": "2026-10-14T12:11:16.087347+00:00",
+        "exitCode": 0,
+        "files": 1,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "newBusyOwnerCase": {
+          "name": "actual Admin catalog pages, counted Axios consumers and real Router registry keeps the replacement batch busy when an old session request completes and blocks repeated pending submissions",
+          "status": "passed",
+          "durationMs": 27.307474999999954,
+          "definitionCount": 1,
+          "proof": "Actual compiled ProductList template handler/Axios/Router fixture sends old actorA and replacement actorB writes with distinct targets, suppresses repeated saved handlers, releases original while replacement remains pending, observes replacement loading unchanged/no old toast/refetch, then releases replacement and verifies own cleanup/fresh read."
+        }
+      },
+      "typeRepairInspection": {
+        "initialExitCode": 2,
+        "initialDiagnosticReceiptPair": [
+          "pre-type-repair-worker-unit-types-status.json",
+          "pre-type-repair-worker-unit-types.log"
+        ],
+        "observedDiagnostics": "Only2unused declarations (fixture callback arg, native systemRole import) and4row-access typing diagnostics on2pg_stat_activity observers. Current source removes those unused declarations and explicitly casts observer result shape with TypeScript as unknown as Array<row>; no SQL CAST or ROW() function inserted, SQL strings and assertions retained.",
+        "runtimeMeaning": "Type-only cleanup separate from actual correlated production SQL fix and frontend busy fix; prior failed type receipt preserved. Parent final matrix/type retries are not yet observed complete here."
+      },
+      "independentlyVerifiedFreeze": {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/frozen-before.json",
+        "sha256": "bf031c12a8b2730f06a7751f2e5e8fc8d18fc9f6cfb7798a5a791a21f17ee62a",
+        "count": 3365,
+        "digest": "1dba80872bd77d46df79bb7041e2a8fed11b948d49d86309c2cb69b58dd3c5fd",
+        "mapDigestMatches": true,
+        "allCurrentDeclaredFileHashesMatch": true,
+        "declaredDirectoriesInventoryComplete": true,
+        "excluded": "Environment values and installed dependency bytes; not the complete build input graph"
+      },
+      "scopedValidationPlan": {
+        "receipt": "/home/cina/cinagroup/cinashop/workers-ts/audit/catalog-20261014/final-commands.json",
+        "commands": 8,
+        "ordinaryFullFiles": 16,
+        "nativeFullFiles": 9,
+        "checks": [
+          "worker-unit-types",
+          "worker-runtime-types",
+          "admin-types",
+          "supplier-types",
+          "final-ordinary",
+          "final-native",
+          "admin-build",
+          "supplier-build"
+        ],
+        "status": "Declared upcoming/current root validation scope only; no final full-matrix success/count claim from this review."
+      },
+      "findings": [
+        {
+          "id": "catalog-existing-async-writer-context",
+          "status": "resolved-source-and-runtime",
+          "resolution": "Original options/delete confirmation triggers passed prior full ordinary callback-case; new separate batchRun ownership and already-busy guards pass the completed12-case full frontend file, including the actual overlapping actor requests and loading ownership proof.",
+          "remaining": "No actionable source finding in reviewed current scope; real provider/deployment and full parent matrix are separate acceptance gates."
+        },
+        {
+          "id": "catalog-correlated-projection-qualification",
+          "status": "resolved-source-emitter-and-observed-native",
+          "resolution": "Independent actual emitter confirms4qualified outer correlations. Root catalog-native3fullfiles/33passed,0skipped,fixtures0/stopped log was independently read after repair; final wider native matrix still pending."
+        },
+        {
+          "id": "catalog-read-empty-copy-grant",
+          "status": "resolved-source-helper-and-observed-sql",
+          "resolution": "Exact actual source seed tuples restrict read grants;24pure production helper probes plus corrected ordinary and source native completed full files cover single/batch/current-role decisions. No copied/rewritten blank generic main/header fallback remains."
+        }
+      ],
+      "sourceTargetStockBoundary": "PHP original SKU stock is unsigned; target signed stock may be displayed exactly for reconciliation. No assertion that negative target stock is a lawful PHP source value, no clamping or inferred0 for negative/null aggregates.",
+      "boundary": "Reviewer executes no heavy validation, SQL/provider requests, production/test source writes. Source receipt history/hashes preserved; new facts based only on actual source reads and completed raw receipts. All original persistent goal/checklist scope remains active."
+    }
+  ],
+  "remainingProofBoundaries": [
+    "PHP interpreter absent; encoded BaseController/Swoole and serialized runtime not executed",
+    "Source row SQL ordering without ORDER BY has no portable cross-engine golden-order proof",
+    "Private R2 is an explicit transport extension; actual object/provider acceptance open",
+    "Current source/observed TS hashes are specific snapshots, not whole-repository build-graph freeze",
+    "Full type/build/native/HTTP/browser validation owned by root and not performed by this read-only receipt",
+    "Persistent PHP-to-TS goal remains active; this read/navigation slice does not close parent checklist groups"
+  ],
+  "laterSourceSupplements": [
+    {
+      "capturedAt": "2026-10-14T11:26:58.910835+00:00",
+      "inputs": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+          "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8",
+          "bytes": 22891
+        }
+      ],
+      "actuallyRead": [
+        "StoreProductAttrValueServices.getSkuArray lines282-285",
+        "PDOConnection column result keyed array_column lines1350-1377"
+      ],
+      "corrections": [
+        "Clarified branch_stock null->0 source null-coalescing fallback; stock itself stays null."
+      ]
+    }
+  ],
+  "currentFindings": [
+    {
+      "id": "catalog-read-empty-copy-grant",
+      "status": "resolved"
+    },
+    {
+      "id": "catalog-correlated-projection-qualification",
+      "status": "resolved"
+    },
+    {
+      "id": "catalog-existing-async-writer-context",
+      "status": "resolved"
+    }
+  ],
+  "remainingSourceFindings": []
+}

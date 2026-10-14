@@ -1,0 +1,41 @@
+{
+  "unchanged": true,
+  "files": [
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/uniapp-ts/package.json",
+      "before": "04dae5b68890f58b5f6ee13006fe51a76a59bca4ce9bd8c91899e976ed7ac346",
+      "after": "04dae5b68890f58b5f6ee13006fe51a76a59bca4ce9bd8c91899e976ed7ac346",
+      "unchanged": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/uniapp-ts/package-lock.json",
+      "before": "ca1f19c8966e0ab33c3f8224bd100728af2dd008a4a8bfd3b40ea16f40eb1d71",
+      "after": "ca1f19c8966e0ab33c3f8224bd100728af2dd008a4a8bfd3b40ea16f40eb1d71",
+      "unchanged": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/kefu-ts/package.json",
+      "before": "5e414e528cd205b4849f97d408f35139a4d4a548299c7e3318bc846d91af27e2",
+      "after": "5e414e528cd205b4849f97d408f35139a4d4a548299c7e3318bc846d91af27e2",
+      "unchanged": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/kefu-ts/package-lock.json",
+      "before": "08b209f78bb257f5c542487f40b3ffb24d5cd762040c40c1186756bdd6ae440a",
+      "after": "08b209f78bb257f5c542487f40b3ffb24d5cd762040c40c1186756bdd6ae440a",
+      "unchanged": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/package.json",
+      "before": "8c29684dd5ed77b03f81b4dd8cfb42aec8416235d5604dae19b5c9de70110611",
+      "after": "8c29684dd5ed77b03f81b4dd8cfb42aec8416235d5604dae19b5c9de70110611",
+      "unchanged": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/package-lock.json",
+      "before": "0a5659199465f6df7cf4c1d7580d7c7d19516ccb60228aca09b116a038ae735e",
+      "after": "0a5659199465f6df7cf4c1d7580d7c7d19516ccb60228aca09b116a038ae735e",
+      "unchanged": true
+    }
+  ]
+}

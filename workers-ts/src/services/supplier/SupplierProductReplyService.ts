@@ -19,6 +19,7 @@ import {
   storeProductReplyComment,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { lockReviewProducts } from '@/services/product/ProductReviewRatingService';
 
 const SUPPLIER_OWNER_TYPE = 2;
 const MAX_PAGE = 1_000_000;
@@ -282,16 +283,27 @@ export class SupplierProductReplyService {
     const now = Math.floor(Date.now() / 1_000);
 
     return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+      await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+      await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
+      const [located] = await tx.select({ productId: storeProductReply.productId }).from(storeProductReply).where(and(
+        eq(storeProductReply.id, replyId), eq(storeProductReply.type, SUPPLIER_OWNER_TYPE),
+        eq(storeProductReply.relationId, supplierId), eq(storeProductReply.isDel, 0),
+      )).limit(1);
+      if (!located) throw new NotFoundException("评论不存在或不属于当前供应商");
+      const product = (await lockReviewProducts(tx, [located.productId])).get(located.productId);
+      if (!product || product.type !== SUPPLIER_OWNER_TYPE || product.relationId !== supplierId) {
+        throw new NotFoundException("评论不存在或不属于当前供应商");
+      }
+      // A joined FOR UPDATE leaves row lock order to the SQL execution plan.
+      // Creation/rating/deletion own the product before a review: take those
+      // rows explicitly in the same order, then recheck the located parent.
       const rows = await tx
         .select({ id: storeProductReply.id })
         .from(storeProductReply)
-        .innerJoin(storeProduct, and(
-          eq(storeProduct.id, storeProductReply.productId),
-          eq(storeProduct.type, SUPPLIER_OWNER_TYPE),
-          eq(storeProduct.relationId, supplierId),
-        ))
         .where(and(
           eq(storeProductReply.id, replyId),
+          eq(storeProductReply.productId, located.productId),
           eq(storeProductReply.type, SUPPLIER_OWNER_TYPE),
           eq(storeProductReply.relationId, supplierId),
           eq(storeProductReply.isDel, 0),

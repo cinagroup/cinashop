@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-10-14T10:05:22.165025+00:00",
+  "scope": "Three genuine PHP old Admin routes; no new modern creation aliases",
+  "legacyAdded": 3,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/reply/fictitious_reply/:product_id",
+      "handler": "AdminProductFictitiousReplyController.form",
+      "permission": "reply.view",
+      "sourceSeed": 184,
+      "sourceDefaultProductId": 0
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/reply/save_fictitious_reply",
+      "handler": "AdminProductFictitiousReplyController.create",
+      "permission": "reply.manage",
+      "sourceSeed": 185,
+      "sourceUniqueAuth": "product-reply-save_fictitious_reply"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/list",
+      "handler": "AdminProductFictitiousReplyController.products",
+      "permission": "product.view",
+      "sourceSeed": 193
+    }
+  ],
+  "implementationFiles": [
+    "workers-ts/src/routes/adminapi.ts",
+    "workers-ts/src/controllers/api/v1/AdminProductFictitiousReplyController.ts",
+    "workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+    "workers-ts/src/services/admin/AdminPermissionService.ts"
+  ],
+  "sourceReceipt": "workers-ts/audit/fictitious-20261014/php-sources.json",
+  "formBoundary": "Readable source builder factory arguments asserted; PHP opaque FormBuilder and encoded BaseController were not executed",
+  "aux579580Grant": false,
+  "page6": "reader only",
+  "selectorCapacity": {
+    "maxPage": 1000000,
+    "maxLimit": 100,
+    "maxOffset": 2147483647,
+    "maxOrdinarySkusPerProduct": 200,
+    "canonicalMediaMetadataChunk": 10000
+  },
+  "oldGetFormCallerActive": false,
+  "actualOldCustomAddReplyAndGoodsListActive": true,
+  "exactRegistryOccurrences": {
+    "/adminapi/product/reply/fictitious_reply/:product_id": 1,
+    "/adminapi/product/reply/save_fictitious_reply": 1,
+    "/adminapi/product/product/list": 1
+  }
+}

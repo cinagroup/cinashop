@@ -1,0 +1,141 @@
+{
+  "addedLegacyContracts": 7,
+  "existingModernHandlersReplaced": 6,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/reply",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.list",
+      "phpAuthority": {
+        "method": "GET",
+        "path": "/adminapi/product/reply",
+        "normalizedPath": "/adminapi/product/reply",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1537,
+        "target": "v1.product.StoreProductReply/index",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/adminapi/product/reply/set_reply/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.setReply",
+      "phpAuthority": {
+        "method": "PUT",
+        "path": "/adminapi/product/reply/set_reply/:id",
+        "normalizedPath": "/adminapi/product/reply/set_reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1539,
+        "target": "v1.product.StoreProductReply/set_reply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/reply/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.remove",
+      "phpAuthority": {
+        "method": "DELETE",
+        "path": "/adminapi/product/reply/:id",
+        "normalizedPath": "/adminapi/product/reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1541,
+        "target": "v1.product.StoreProductReply/delete",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/reply/comment/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.comments",
+      "phpAuthority": {
+        "method": "GET",
+        "path": "/adminapi/product/reply/comment/:id",
+        "normalizedPath": "/adminapi/product/reply/comment/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1555,
+        "target": "v1.product.StoreProductReply/getComment",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/reply/get_reply/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.getReply",
+      "phpAuthority": {
+        "method": "GET",
+        "path": "/adminapi/product/reply/get_reply/:id",
+        "normalizedPath": "/adminapi/product/reply/get_reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1557,
+        "target": "v1.product.StoreProductReply/getReply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/reply/save_comment/:replyId/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.saveComment",
+      "phpAuthority": {
+        "method": "POST",
+        "path": "/adminapi/product/reply/save_comment/:replyId/:id",
+        "normalizedPath": "/adminapi/product/reply/save_comment/:param/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1559,
+        "target": "v1.product.StoreProductReply/saveComment",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/reply/delete_comment/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductReplies.removeComment",
+      "phpAuthority": {
+        "method": "DELETE",
+        "path": "/adminapi/product/reply/delete_comment/:id",
+        "normalizedPath": "/adminapi/product/reply/delete_comment/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1561,
+        "target": "v1.product.StoreProductReply/deleteComment",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    }
+  ],
+  "fictitiousLegacyTwoStillOpen": true,
+  "globalCoverageClaimed": false
+}

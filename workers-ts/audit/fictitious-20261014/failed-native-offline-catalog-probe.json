@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-14T09:36:42.939959+00:00",
+  "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-34y8Sh",
+  "mode": "offline PostgreSQL single-user read-only catalog SELECT; no TCP, HBA or credentials changes",
+  "argv": [
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/postgres",
+    "--single",
+    "-D",
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-34y8Sh/data",
+    "-c",
+    "default_transaction_read_only=on",
+    "postgres"
+  ],
+  "postgresExit": 0,
+  "priorTerminalRunnerExit": 1,
+  "priorStoppedPgCtlExit": 3,
+  "postmasterPidAfterExists": false,
+  "log": "failed-native-offline-catalog-probe.log"
+}

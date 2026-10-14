@@ -1,0 +1,62 @@
+{
+  "head": "6dc28867cab665bb6874520c36ea1c13cc653937",
+  "addedLegacyContracts": 2,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/ensure/create",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/ensure/create",
+          "normalizedPath": "/adminapi/product/ensure/create",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1628,
+          "target": "v1.product.ensure.StoreProductEnsure"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductEnsures.createForm"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/ensure/:id/edit",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/ensure/:id/edit",
+          "normalizedPath": "/adminapi/product/ensure/:param/edit",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1628,
+          "target": "v1.product.ensure.StoreProductEnsure"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductEnsures.editForm"
+    }
+  ],
+  "existingEnsureRoutesReplaced": 7,
+  "oldResourceGetDetailIsTSExtensionBecausePHPControllerHasNoRead": true,
+  "modernRoutes": {
+    "newAdminapiShortAliases": 7,
+    "existingApiAdminProductAliases": 7
+  },
+  "phpSources": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/ensure/StoreProductEnsure.php": "149f499d8a92a98eac31c3760ae8fe9be8bd8cba37bd87b8340878ccb8f6b6cf",
+    "app/services/product/ensure/StoreProductEnsureServices.php": "a98a8d965656d9f4ad42553ffe2bf3fa5135c8632e17411d160346b31f7cba21",
+    "app/dao/product/ensure/StoreProductEnsureDao.php": "33198e6c41e0791d921443c021e121eb0bf1f2db8b20aa96d53c49c9327b0fec",
+    "app/model/product/ensure/StoreProductEnsure.php": "f5e7c99fbdea4c840f6516b28993cd32181f8a68f3eae994b64a154ee9c65cad",
+    "app/dao/product/product/StoreProductDao.php": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+    "crmeb/services/FormBuilder.php": "5a6e2a7e77c36bb12b5518e7c3350b7300873822039937e2f5de3113962be889",
+    "view/admin/src/api/product.js": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+    "view/admin/src/utils/modalForm.js": "9a874601934c710bb106857c17f1b6e78a38173efd810b3e58e7f3b817ab94b5",
+    "view/admin/src/plugins/request/index.js": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5"
+  },
+  "beforeAdminapiSha256": "2a54a2b887a86c299fbca10973ccf4fb15f031cbcc6e9827bd7359da8b4061dc"
+}

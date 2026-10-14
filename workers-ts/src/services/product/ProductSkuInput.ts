@@ -52,7 +52,7 @@ function requiredString(value: unknown, field: string, maxLength: number): strin
   if (typeof value !== "string") throw new ValidateException(`请填写${field}`);
   const normalized = value.trim();
   if (!normalized) throw new ValidateException(`请填写${field}`);
-  if (normalized.length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
+  if ([...normalized].length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
   return normalized;
 }
 

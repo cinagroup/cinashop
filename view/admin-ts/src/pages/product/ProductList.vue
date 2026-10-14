@@ -1,7 +1,15 @@
 <template>
   <div class="product-list">
+    <el-alert v-if="!canView" title="没有商品查看权限" type="warning" :closable="false" />
+    <el-alert v-if="readError" :title="readError" type="error" :closable="false" />
+    <el-alert v-if="headerError" :title="headerError" type="warning" :closable="false" />
+    <div v-if="canView" class="catalog-states">
+      <el-button v-for="item in headers" :key="item.type" :type="query.type === item.type ? 'primary' : 'default'" @click="chooseType(item.type)">
+        {{ item.name }} ({{ item.count }})
+      </el-button>
+    </div>
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="filter-card">
+    <el-card v-if="canView" shadow="never" class="filter-card">
       <el-form inline>
         <el-form-item label="商品名称">
           <el-input
@@ -19,20 +27,20 @@
     </el-card>
 
     <!-- 工具栏 -->
-    <el-card shadow="never">
+    <el-card v-if="canView" shadow="never">
       <div class="toolbar">
-        <el-button plain @click="$router.push('/product/metadata')">
+        <el-button v-if="canManage" plain @click="$router.push('/product/metadata')">
           商品基础资料
         </el-button>
-        <el-button type="warning" plain @click="$router.push('/product/virtual-alerts')">
+        <el-button v-if="canManage" type="warning" plain @click="$router.push('/product/virtual-alerts')">
           卡密预警
         </el-button>
-        <el-button type="primary" @click="$router.push('/product/create')">
+        <el-button v-if="canManage" type="primary" @click="$router.push('/product/create')">
           添加商品
         </el-button>
       </div>
 
-      <div class="batch-toolbar">
+      <div v-if="canMutateState" class="batch-toolbar">
         <el-text :type="selectedRows.length ? 'primary' : 'info'">
           已选择 {{ selectedRows.length }} 项（单次最多100项）
         </el-text>
@@ -43,7 +51,7 @@
 
       <!-- 表格 -->
       <el-table :data="list" v-loading="loading" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" />
+        <el-table-column v-if="canMutateState" type="selection" width="48" />
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column label="商品" min-width="240">
           <template #default="{ row }">
@@ -62,7 +70,7 @@
         <el-table-column prop="price" label="价格" width="100">
           <template #default="{ row }">¥{{ row.price }}</template>
         </el-table-column>
-        <el-table-column prop="stock" label="库存" width="80" />
+        <el-table-column label="库存" width="80"><template #default="{ row }">{{ row.stock === null ? "—" : row.stock }}</template></el-table-column>
         <el-table-column prop="sales" label="销量" width="80" />
         <el-table-column label="状态" width="90">
           <template #default="{ row }">
@@ -71,23 +79,24 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260">
+        <el-table-column label="操作" min-width="290">
           <template #default="{ row }">
             <el-button
-              v-if="row.product_type === 1"
+              v-if="canMutateState && row.product_type === 1"
               link
               type="primary"
               @click="$router.push(`/product/virtual/${row.id}`)"
             >
               卡密库存
             </el-button>
-            <el-button v-if="row.product_type !== 1" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
+            <el-button v-if="canMutateState && row.product_type !== 1" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
               编辑
             </el-button>
-            <el-button link :type="row.is_show === 1 ? 'warning' : 'success'" @click="toggleShow(row)">
+            <el-button v-if="canMutateState" link :type="row.is_show === 1 ? 'warning' : 'success'" @click="toggleShow(row)">
               {{ row.is_show === 1 ? "下架" : "上架" }}
             </el-button>
-            <el-button link type="danger" @click="del(row)">删除</el-button>
+            <el-button v-if="canMutateState" link type="danger" @click="del(row)">删除</el-button>
+            <el-button v-if="canReplyView" link type="primary" @click="viewReplies(row)">查看评价</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -206,10 +215,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { getToken, getAdminSession } from "@/utils/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   apiAdminProductList,
+  apiAdminProductTypeHeader,
+  type AdminProductCatalogItem,
+  type AdminProductCatalogHeader,
   apiAdminProductSetShow,
   apiAdminProductDel,
   apiAdminProductBatchOperation,
@@ -219,13 +234,48 @@ import {
   type ProductBatchResult,
   type ProductEditorOption,
 } from "@/api/product";
-import type { AdminProduct } from "@/types/admin";
 
-const list = ref<AdminProduct[]>([]);
+const list = ref<AdminProductCatalogItem[]>([]);
 const loading = ref(false);
 const total = ref(0);
-const query = reactive({ page: 1, limit: 10, store_name: "" });
-const selectedRows = ref<AdminProduct[]>([]);
+const query = reactive<{ page: number; limit: number; store_name: string; type: number | "" }>({ page: 1, limit: 10, store_name: "", type: 1 });
+const headers = ref<AdminProductCatalogHeader[]>([]), readError = ref(""), headerError = ref("");
+const route = useRoute(), router = useRouter(), auth = useAuthStore();
+let alive = false, syncing = false, readTurn = 0, batchRun = 0, abort: AbortController | null = null, stored = localStorage.getItem("admin_session");
+const sessionVersion = ref(0);
+const identity = computed(() => `${auth.token}:${auth.userInfo?.id ?? 0}:${auth.userInfo?.level ?? ""}:${auth.uniqueAuth.join(",")}`);
+function permission(key: string): boolean {
+  void sessionVersion.value;
+  const session = getAdminSession();
+  return !!auth.token && auth.token === getToken() && stored === localStorage.getItem("admin_session") && !!auth.userInfo && !!session &&
+    session.userInfo.id === auth.userInfo.id && session.userInfo.level === auth.userInfo.level &&
+    (auth.userInfo.level === 0 || auth.uniqueAuth.includes(key) && session.uniqueAuth.includes(key));
+}
+const canView = computed(() => permission("product.view")), canManage = computed(() => canView.value && permission("product.manage"));
+const canReplyView = computed(() => canView.value && (permission("reply.view") || permission("reply.manage")));
+const canMutateState = computed(() => canManage.value && [1, 2].includes(Number(query.type)));
+function current(value: string, token: string, session: string | null): boolean {
+  return alive && canView.value && identity.value === value && getToken() === token && auth.token === token && stored === session && localStorage.getItem("admin_session") === session;
+}
+function clearReads(): void { readTurn++; batchRun++; batchSubmitting.value = false; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
+type MutationScope = { owner: string; token: string; session: string | null; turn: number; type: number | ""; ids: number[] };
+function mutationScope(ids: number[]): MutationScope { return { owner: identity.value, token: auth.token, session: stored, turn: readTurn, type: query.type, ids: [...ids] }; }
+function activeMutation(scope: MutationScope, selected = false): boolean {
+  return canMutateState.value && current(scope.owner, scope.token, scope.session) && readTurn === scope.turn && query.type === scope.type &&
+    scope.ids.every(id => list.value.some(row => row.id === id)) && (!selected || scope.ids.join(",") === selectedRows.value.map(row => row.id).join(","));
+}
+function catalogType(value: unknown): number | "" {
+  if (value === undefined) return 1;
+  if (value === "") return "";
+  if (typeof value !== "string" || !/^(?:-2|-1|[0-7])$/.test(value)) throw Error("商品状态格式错误");
+  return Number(value);
+}
+function viewReplies(row: AdminProductCatalogItem): void {
+  if (!canReplyView.value || !list.value.some(item => item.id === row.id) || !Number.isSafeInteger(row.id) || row.id < 1 || row.id > 2_147_483_647) return;
+  void router.push({ path: "/reply", query: { product_id: String(row.id) } });
+}
+
+const selectedRows = ref<AdminProductCatalogItem[]>([]);
 const batchDialogVisible = ref(false);
 const batchSubmitting = ref(false);
 type BatchOperation =
@@ -271,33 +321,55 @@ const batchOptions = reactive<{
   shipping_templates: [],
 });
 
-async function fetch() {
-  loading.value = true;
-  try {
-    const result = await apiAdminProductList({
-      page: query.page,
-      limit: query.limit,
-      store_name: query.store_name || undefined,
-    });
-    list.value = result.list;
-    selectedRows.value = [];
-    total.value = result.list.length < query.limit ? (query.page - 1) * query.limit + result.list.length : query.page * query.limit + 1;
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加载失败");
-  } finally {
-    loading.value = false;
-  }
+async function fetch(): Promise<void> {
+  if (!alive || !canView.value || !Number.isSafeInteger(query.page) || query.page < 1) return;
+  if ([...query.store_name].length > 128 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(query.store_name)) { readError.value = "商品关键词格式错误或超过128个字符"; return; }
+  abort?.abort(); const controller = new AbortController(); abort = controller;
+  const turn = ++readTurn, owner = identity.value, token = auth.token, session = stored;
+  const params = { page: query.page, limit: query.limit, store_name: query.store_name, type: query.type };
+  loading.value = true; readError.value = headerError.value = ""; list.value = []; selectedRows.value = [];
+  const active = () => current(owner, token, session) && turn === readTurn;
+  // Keep the known count during a page switch; Element Plus otherwise clamps
+  // page2 back to1. Only the source's count<=limit fallback changes the page.
+  const rows = (async () => {
+    try { const result = await apiAdminProductList(params, controller.signal); if (!active()) return;
+      list.value = result.list; total.value = result.count;
+      if (params.page > 1 && result.count <= params.limit) query.page = 1;
+    } catch (error) { if (active()) { list.value = []; total.value = 0; readError.value = error instanceof Error ? error.message : "商品列表读取失败"; } }
+  })();
+  const counts = (async () => {
+    try { const result = await apiAdminProductTypeHeader(params, controller.signal); if (active()) headers.value = result; }
+    catch (error) { if (active()) { headers.value = []; headerError.value = error instanceof Error ? error.message : "商品状态计数读取失败"; } }
+  })();
+  await Promise.all([rows, counts]); if (active()) { loading.value = false; abort = null; }
 }
+function chooseType(type: number): void { if (!canView.value || batchSubmitting.value) return; void router.replace({ path: "/product", query: { ...route.query, type: String(type) }, hash: route.hash }); }
+function applyRoute(): void {
+  if (!alive || !canView.value) return;
+  clearReads();
+  try { query.type = catalogType(route.query.type); query.page = 1; void fetch(); }
+  catch (error) { readError.value = error instanceof Error ? error.message : "商品状态格式错误"; }
+}
+function syncSession(): void {
+  syncing = true; clearReads(); const session = getAdminSession();
+  auth.$patch({ token: getToken() ?? "", userInfo: session?.userInfo ?? null, menus: (session?.menus as typeof auth.menus) ?? [], uniqueAuth: session?.uniqueAuth ?? [] });
+  stored = localStorage.getItem("admin_session"); sessionVersion.value++; syncing = false;
+  query.page = 1; query.store_name = ""; applyRoute();
+}
+function syncStorage(event: StorageEvent): void { if (event.key === null || ["admin_token", "admin_session"].includes(event.key)) syncSession(); }
 
-function handleSelectionChange(rows: AdminProduct[]) {
-  selectedRows.value = rows.slice(0, 100);
+function handleSelectionChange(rows: AdminProductCatalogItem[]) {
+  selectedRows.value = canMutateState.value ? rows.slice(0, 100) : [];
 }
 
 async function openBatch() {
+  if (!canMutateState.value || batchSubmitting.value) return;
   if (!selectedRows.value.length) return ElMessage.warning("请先选择商品");
+  const scope = mutationScope(selectedRows.value.map(row => row.id));
   if (!batchOptionsLoaded.value) {
     try {
       const options = await apiAdminProductEditorOptions();
+      if (!activeMutation(scope, true)) return;
       batchOptions.categories = options.categories;
       batchOptions.product_labels = options.product_labels;
       batchOptions.brands = options.brands;
@@ -307,9 +379,11 @@ async function openBatch() {
       batchOptions.shipping_templates = options.shipping_templates;
       batchOptionsLoaded.value = true;
     } catch (e) {
-      return ElMessage.error(e instanceof Error ? e.message : "加载批量候选失败");
+      if (activeMutation(scope, true)) ElMessage.error(e instanceof Error ? e.message : "加载批量候选失败");
+      return;
     }
   }
+  if (!activeMutation(scope, true)) return;
   batchOperation.value = "show";
   resetBatchInputs();
   batchDialogVisible.value = true;
@@ -330,6 +404,7 @@ function resetBatchInputs() {
 }
 
 async function applyBatch() {
+  if (!canMutateState.value || batchSubmitting.value) return;
   const ids = selectedRows.value.map((row) => row.id);
   if (!ids.length) return ElMessage.warning("请选择商品");
   if (batchOperation.value === "category" && !batchRelationIds.value.length) {
@@ -341,6 +416,8 @@ async function applyBatch() {
   if (batchOperation.value === "freight" && batchFreight.value === 3 && !batchShippingTemplateId.value) {
     return ElMessage.warning("请选择运费模板");
   }
+  const scope = mutationScope(ids);
+  const run = ++batchRun;
   batchSubmitting.value = true;
   try {
     let result: ProductBatchResult;
@@ -388,14 +465,15 @@ async function applyBatch() {
         });
         break;
     }
+    if (!activeMutation(scope, true)) return;
     if (!result.verified) throw new Error("批量操作数据库回读未通过");
     ElMessage.success(`已处理 ${result.changed} 个商品`);
     batchDialogVisible.value = false;
     await fetch();
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "批量操作失败");
+    if (activeMutation(scope, true)) ElMessage.error(e instanceof Error ? e.message : "批量操作失败");
   } finally {
-    batchSubmitting.value = false;
+    if (run === batchRun) batchSubmitting.value = false;
   }
 }
 
@@ -409,35 +487,47 @@ function reset() {
   reload();
 }
 
-async function toggleShow(row: AdminProduct) {
+async function toggleShow(row: AdminProductCatalogItem) {
+  if (!canMutateState.value || !list.value.some(item => item.id === row.id)) return;
+  const scope = mutationScope([row.id]);
   try {
     await apiAdminProductSetShow(row.id, row.is_show === 1 ? 0 : 1);
+    if (!activeMutation(scope)) return;
     ElMessage.success(row.is_show === 1 ? "已下架" : "已上架");
     fetch();
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "操作失败");
+    if (activeMutation(scope)) ElMessage.error(e instanceof Error ? e.message : "操作失败");
   }
 }
 
-async function del(row: AdminProduct) {
+async function del(row: AdminProductCatalogItem) {
+  if (!canMutateState.value || !list.value.some(item => item.id === row.id)) return;
+  const scope = mutationScope([row.id]);
   try {
     await ElMessageBox.confirm(`确定删除商品「${row.store_name}」?`, "确认");
   } catch {
     return;
   }
+  if (!activeMutation(scope)) return;
   try {
     await apiAdminProductDel(row.id);
+    if (!activeMutation(scope)) return;
     ElMessage.success("已删除");
     fetch();
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "删除失败");
+    if (activeMutation(scope)) ElMessage.error(e instanceof Error ? e.message : "删除失败");
   }
 }
 
-onMounted(fetch);
+watch(identity, () => { if (alive && !syncing) syncSession(); }, { flush: "sync" });
+watch(() => route.query.type, () => { if (alive) applyRoute(); });
+onMounted(() => { alive = true; window.addEventListener("admin-session-changed", syncSession); window.addEventListener("admin-auth-expired", syncSession); window.addEventListener("storage", syncStorage); syncSession(); });
+onBeforeUnmount(() => { alive = false; clearReads(); window.removeEventListener("admin-session-changed", syncSession); window.removeEventListener("admin-auth-expired", syncSession); window.removeEventListener("storage", syncStorage); });
 </script>
 
 <style scoped>
+.catalog-states { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.catalog-states :deep(.el-button + .el-button) { margin-left: 0; }
 .filter-card {
   margin-bottom: 16px;
 }

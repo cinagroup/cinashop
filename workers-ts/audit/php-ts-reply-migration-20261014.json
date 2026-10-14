@@ -1,0 +1,783 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T08:02:00.192339+00:00",
+  "scope": "Admin product reviews, platform primary responses and user-root secondary response threads; local candidate",
+  "status": "local_candidate_verified_not_published",
+  "goalStatus": "active",
+  "legacyAdded": 7,
+  "existingModernHandlersReplaced": 6,
+  "routeReceipt": "workers-ts/audit/reply-20261014/route-delta.json",
+  "report": {
+    "path": "workers-ts/docs/php-ts-reply-migration-20261014.md",
+    "sha256": "f228d953f72ba6c023f821eff55d1f447f0cba374989c7c32f3824afa2bb567d"
+  },
+  "validation": {
+    "method": "Identity is repository-relative full test file plus ancestor titles plus case title; replace all definitions in each rerun full file, then union ordinary passed and native passed. Loops inside a test are not additional definitions.",
+    "singleFinalFullMatrix": false,
+    "ordinary": {
+      "files": 35,
+      "filesWithPassedDefinitions": 28,
+      "passed": 307,
+      "skipped": 86,
+      "failed": 0
+    },
+    "native": {
+      "files": 19,
+      "passed": 231,
+      "skipped": 0,
+      "failed": 0
+    },
+    "overlap": 145,
+    "uniquePassed": 393,
+    "supplementedConditional": 86,
+    "allConditionalSupplemented": true,
+    "definitionReceipt": "workers-ts/audit/reply-20261014/verification-summary.json",
+    "wholeFileReplacement": {
+      "ordinaryFullFiles": [
+        "workers-ts/test/admin-product-reply-http.test.ts",
+        "workers-ts/test/admin-product-reply-native.test.ts",
+        "workers-ts/test/admin-product-reply-workflow-frontend.test.ts",
+        "workers-ts/test/admin-product-reply.test.ts"
+      ],
+      "nativeFullFiles": [
+        "workers-ts/test/admin-product-reply-http.test.ts",
+        "workers-ts/test/admin-product-reply-native.test.ts",
+        "workers-ts/test/admin-product-reply.test.ts"
+      ],
+      "baselineOrdinary": "pre-json-wire-repair-final-ordinary.json",
+      "baselineNative": "pre-json-wire-repair-final-native.log",
+      "latestOrdinary": "post-json-ordinary.json",
+      "latestNative": "post-json-native.log"
+    },
+    "baselinePassedCompleteFileReceipts": [
+      {
+        "name": "final-ordinary",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "test/admin-product-rule.test.ts",
+          "test/admin-product-rule-http.test.ts",
+          "test/admin-product-rule-native.test.ts",
+          "test/supplier-product-rule-http.test.ts",
+          "test/supplier-product-rule-native.test.ts",
+          "test/supplier-product-rule-frontend.test.ts",
+          "test/supplier-product-rule-workflow-frontend.test.ts",
+          "test/supplier-product-media-frontend.test.ts",
+          "test/product-sku-editor-migration.test.ts",
+          "test/admin-product-ensure.test.ts",
+          "test/admin-product-ensure-http.test.ts",
+          "test/admin-product-ensure-native.test.ts",
+          "test/admin-product-unit.test.ts",
+          "test/admin-product-unit-http.test.ts",
+          "test/admin-product-unit-native.test.ts",
+          "test/admin-product-specs.test.ts",
+          "test/admin-product-specs-http.test.ts",
+          "test/admin-product-specs-audit.test.ts",
+          "test/admin-product-specs-native.test.ts",
+          "test/admin-user-group-contract.test.ts",
+          "test/admin-user-group-http.test.ts",
+          "test/admin-user-group-native.test.ts",
+          "test/product-experience-migration.test.ts",
+          "test/product-association-migration.test.ts",
+          "test/product-metadata-migration.test.ts",
+          "test/admin-product-frontend-parity.test.ts",
+          "test/admin-permission.test.ts",
+          "test/admin-product-reply.test.ts",
+          "test/admin-product-reply-http.test.ts",
+          "test/admin-product-reply-native.test.ts",
+          "test/admin-product-reply-workflow-frontend.test.ts",
+          "test/product-reply-detail-migration.test.ts",
+          "test/product-reply-detail-compatibility-scenario.test.ts",
+          "test/reply-shipping-migration.test.ts",
+          "test/supplier-product-reply-migration.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=audit/reply-20261014/final-ordinary.json"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T07:17:10.042800+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:20:35.739416+00:00",
+        "exitCode": 0,
+        "log": "final-ordinary.log",
+        "receipt": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-ordinary-status.json",
+        "receiptSha256": "a1caf1a4b1ba823cf40765cbca881cc787ae9d50bb1b6703f65d6cbd584c7803",
+        "preservedRawLog": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-ordinary.log",
+        "logSha256": "803ac8a65f688356553db9ded41c70ae637fe9afa15b42841aa542f5467b68d6",
+        "historicalLogBasenameNote": "status preserved verbatim; original final-ordinary.log/final-native.log basename was relocated to the explicit preservedRawLog path; affected full files are replaced by latest receipts, not added twice"
+      },
+      {
+        "name": "final-native",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/admin-product-rule.test.ts",
+          "test/admin-product-rule-http.test.ts",
+          "test/admin-product-rule-native.test.ts",
+          "test/supplier-product-rule-http.test.ts",
+          "test/supplier-product-rule-native.test.ts",
+          "test/admin-product-ensure.test.ts",
+          "test/admin-product-ensure-http.test.ts",
+          "test/admin-product-ensure-native.test.ts",
+          "test/admin-product-unit.test.ts",
+          "test/admin-product-unit-http.test.ts",
+          "test/admin-product-unit-native.test.ts",
+          "test/admin-product-specs.test.ts",
+          "test/admin-product-specs-http.test.ts",
+          "test/admin-product-specs-audit.test.ts",
+          "test/admin-product-specs-native.test.ts",
+          "test/admin-user-group-native.test.ts",
+          "test/admin-product-reply.test.ts",
+          "test/admin-product-reply-http.test.ts",
+          "test/admin-product-reply-native.test.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T07:20:35.769205+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:23:38.933922+00:00",
+        "exitCode": 0,
+        "log": "final-native.log",
+        "receipt": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-native-status.json",
+        "receiptSha256": "4351bb953bf478a0536b3c735706fc9a41e7c0190d4eab5b72ec13841e2f009a",
+        "preservedRawLog": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-native.log",
+        "logSha256": "3484705c40a3ee30f86e164444b7968ac1faf0d42ba5c531a9b57b8996e88b8b",
+        "historicalLogBasenameNote": "status preserved verbatim; original final-ordinary.log/final-native.log basename was relocated to the explicit preservedRawLog path; affected full files are replaced by latest receipts, not added twice"
+      }
+    ],
+    "eightFinalTerminalFacts": [
+      {
+        "name": "post-json-ordinary",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "test/admin-product-reply.test.ts",
+          "test/admin-product-reply-http.test.ts",
+          "test/admin-product-reply-native.test.ts",
+          "test/admin-product-reply-workflow-frontend.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=audit/reply-20261014/post-json-ordinary.json"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T07:44:44.133541+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:45:11.733994+00:00",
+        "exitCode": 0,
+        "log": "post-json-ordinary.log",
+        "receipt": "workers-ts/audit/reply-20261014/post-json-ordinary-status.json",
+        "receiptSha256": "103637e9cd40767aabe8ec70e6eea5edface03bae8be580764c197fe108d003f",
+        "logSha256": "4d51fd7330e120fda9091710e8036fb6a5feb3eae6a5c88239d230c80fe22186",
+        "scope": "latest Worker source after JSON repair"
+      },
+      {
+        "name": "post-json-native",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/admin-product-reply.test.ts",
+          "test/admin-product-reply-http.test.ts",
+          "test/admin-product-reply-native.test.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T07:45:11.767339+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:45:58.380730+00:00",
+        "exitCode": 0,
+        "log": "post-json-native.log",
+        "receipt": "workers-ts/audit/reply-20261014/post-json-native-status.json",
+        "receiptSha256": "c6512b102b342e5371b4b07139f792baf50741799aa9285a5620bb47e053a1fa",
+        "logSha256": "ef6fc7d6704c6a4c91d114002ae3028630aa6e19454a6e329c1daf882c171d64",
+        "scope": "latest Worker source after JSON repair"
+      },
+      {
+        "name": "worker-unit-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T07:45:58.418279+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:48:10.469493+00:00",
+        "exitCode": 0,
+        "log": "worker-unit-types.log",
+        "receipt": "workers-ts/audit/reply-20261014/worker-unit-types-status.json",
+        "receiptSha256": "9163d6ee1c22d6b11e71a2069b012439819ddd2e547927b213d7879d97bc1063",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "scope": "latest Worker source after JSON repair"
+      },
+      {
+        "name": "worker-runtime-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T07:48:10.511329+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:49:22.573187+00:00",
+        "exitCode": 0,
+        "log": "worker-runtime-types.log",
+        "receipt": "workers-ts/audit/reply-20261014/worker-runtime-types-status.json",
+        "receiptSha256": "553b87c81da07ed2bdf05034f1a6f66f0f549dfe4e34146da779bf4ac5aeb29c",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "scope": "latest Worker source after JSON repair"
+      },
+      {
+        "name": "admin-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "startedAt": "2026-10-14T07:27:03.046879+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:27:35.176431+00:00",
+        "exitCode": 0,
+        "log": "admin-types.log",
+        "receipt": "workers-ts/audit/reply-20261014/admin-types-status.json",
+        "receiptSha256": "0ea0ecc12c23b7e0b1bde51d1159f8dcb814d6589d0f942984722a136a71b37c",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "scope": "unchanged declared frontend inputs; complete frontend check predates final Worker-only JSON repair"
+      },
+      {
+        "name": "admin-build",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "startedAt": "2026-10-14T07:27:35.204644+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:28:01.789429+00:00",
+        "exitCode": 0,
+        "log": "admin-build.log",
+        "receipt": "workers-ts/audit/reply-20261014/admin-build-status.json",
+        "receiptSha256": "d4034377e524ceb8e31d7a468ce6aa7fbd489538c32b1440ca64bfcee922d6e2",
+        "logSha256": "0e717af48a275c0f820009c410feaff4d3ac416a73994fb4bb1f659101d76133",
+        "scope": "unchanged declared frontend inputs; complete frontend check predates final Worker-only JSON repair"
+      },
+      {
+        "name": "supplier-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "startedAt": "2026-10-14T07:28:01.820344+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:28:12.497708+00:00",
+        "exitCode": 0,
+        "log": "supplier-types.log",
+        "receipt": "workers-ts/audit/reply-20261014/supplier-types-status.json",
+        "receiptSha256": "150eab47cbe707ef74817ab29609368e483c8d07cea4e3e3165bf5b0029bde50",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "scope": "unchanged declared frontend inputs; complete frontend check predates final Worker-only JSON repair"
+      },
+      {
+        "name": "supplier-build",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "startedAt": "2026-10-14T07:28:12.548219+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T07:28:30.314618+00:00",
+        "exitCode": 0,
+        "log": "supplier-build.log",
+        "receipt": "workers-ts/audit/reply-20261014/supplier-build-status.json",
+        "receiptSha256": "88c5ed57a27dc92b93d50faed15429da1e2f02ddcf28cf7cae24fb8be633d053",
+        "logSha256": "1e2d724acbf9c62aca6c7afa183ed5dc65de6c9cfe7d92f08d1d5bd86da8a145",
+        "scope": "unchanged declared frontend inputs; complete frontend check predates final Worker-only JSON repair"
+      }
+    ],
+    "allEightTerminalExitZero": true,
+    "policy": {
+      "path": "/home/cina/cinagroup/AGENTS.md",
+      "sha256": "5ea3157b7fe788775cbe839d06dfe02811e50e0029d6996b1858c19eb95a1a74",
+      "wrapper": "/home/cina/cinagroup/tools/validate-serial.sh",
+      "wrapperSha256": "30a0897f142bded0b195d6bbab82b208e212f6b162ddd6fb7561e54628713a74",
+      "allHeavyValidationThisSliceSerialized": true,
+      "vitestMaxWorkers": 1,
+      "workerTypesMiB": 8192
+    }
+  },
+  "freeze": {
+    "count": 3348,
+    "digest": "9972ef116089f2f1969e4530273281024a8c90c06707b63ba55da957559b6097",
+    "method": "SHA256 of UTF8 compact sorted-key JSON files map",
+    "scope": "Declared Worker src/test/scripts/migrations/config, Admin and Supplier src/config/package/lock/index/public, explicitly consumed uniapp reply files and legacy decisions/authority",
+    "excluded": "Environment values and installed dependency bytes; not the complete build input graph",
+    "beforeAndAfterExact": true,
+    "eightDeclaredDirectoriesInventoryComplete": true,
+    "before": "workers-ts/audit/reply-20261014/frozen-before.json",
+    "after": "workers-ts/audit/reply-20261014/frozen-after.json",
+    "finalRepairInputDelta": {
+      "oldDigest": "2b7345755c0abde22fbbcfb2efab9043809be3721deddbc9b35ecf9716e8656f",
+      "currentDigest": "9972ef116089f2f1969e4530273281024a8c90c06707b63ba55da957559b6097",
+      "added": [
+        "workers-ts/src/utils/legacy-php-json.ts"
+      ],
+      "changed": [
+        "workers-ts/src/services/admin/AdminProductReplyService.ts",
+        "workers-ts/test/admin-product-reply-http.test.ts",
+        "workers-ts/test/admin-product-reply.test.ts"
+      ],
+      "unchangedExistingInputs": 3344,
+      "unchangedFrontendSourceConfigLockIndexPublicInputs": 347,
+      "frontendCounts": {
+        "admin": 284,
+        "supplier": 63
+      },
+      "reason": "Legacy reply pics response shaping and actual SQL/HTTP expectations only; frontend type/build receipts remain valid for unchanged declared frontend inputs; environment and installed dependency bytes are outside this proof",
+      "unaffectedCatalogRuntimeSourceChanged": false
+    }
+  },
+  "phpSourceProof": {
+    "count": 29,
+    "allCurrentHashesMatch": true,
+    "receipt": "workers-ts/audit/reply-20261014/php-sources.json",
+    "runtimeExecuted": false,
+    "scope": "readable PHP source/ORM contracts and opaque envelope boundary, not full PHP app runtime",
+    "historicalSourceReviewOriginalPreserved": true,
+    "historicalSourceReviewSha256": "be976134c4e722ca35a85ffeffeec2695708b9560b54f785f04df0a8e6662da9"
+  },
+  "browserQA": {
+    "status": "passed",
+    "engine": "Existing Playwright + /usr/bin/google-chrome",
+    "browserPluginAvailable": false,
+    "transportBoundary": "All /adminapi requests fulfilled with fake local layout fixtures; no SQL/JWT/backend or production claim",
+    "viewportPixels": [
+      [
+        1360,
+        900
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "flowsPassed": 5,
+    "declaredSourceCurrentHashesMatch": true,
+    "artifactHashCount": 29,
+    "allArtifactHashesMatch": true,
+    "qaReport": "/tmp/cinashop-reply-qa/qa.md",
+    "cleanupReceipt": "/tmp/cinashop-reply-qa/cleanup-receipt.json",
+    "port4973Closed": true,
+    "allHeavyBrowserBuildValidationSerialized": true
+  },
+  "ownedPostgres": {
+    "checkedAt": "2026-10-14T07:57:29.237294+00:00",
+    "readOnlyStatusProbe": true,
+    "ownedClusters": [
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ULgo2E",
+        "pgCtlStatusExit": 3,
+        "postmasterPidExists": false,
+        "output": "pg_ctl: no server running",
+        "stderr": "",
+        "stopped": true
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vDehff",
+        "pgCtlStatusExit": 3,
+        "postmasterPidExists": false,
+        "output": "pg_ctl: no server running",
+        "stderr": "",
+        "stopped": true
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-S683I1",
+        "pgCtlStatusExit": 3,
+        "postmasterPidExists": false,
+        "output": "pg_ctl: no server running",
+        "stderr": "",
+        "stopped": true
+      }
+    ],
+    "allStopped": true,
+    "fixturesRemainingPerOriginalRunner": 0,
+    "fixtureProofScope": "runner terminal receipts, not a fresh SQL connection; clusters not restarted"
+  },
+  "checklists": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "checked": 249,
+      "open": 155,
+      "allCheckboxRowsUnchanged": true
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "checked": 50,
+      "open": 38,
+      "allCheckboxRowsUnchanged": true
+    }
+  ],
+  "retainedFailureHistory": [
+    {
+      "stage": "initial ordinary fixture",
+      "cause": "9-character SKU fixture exceeded real char(8); corrected only fixture to replysku; initial incomplete execution not counted"
+    },
+    {
+      "stage": "ordinary and mounted frontend repair",
+      "cause": "JSON site configuration decode, implied view permission expectation, HTTP business-error envelope expectation and compiled fixture resolveDir; all corrected and full affected files rerun"
+    },
+    {
+      "stage": "source and browser review",
+      "cause": "epoch zero, empty JSON config, Shanghai historical DST, lazy date ranges and real ElementPlus pagination clamp; corrected and proven by final source and tests"
+    },
+    {
+      "stage": "first broad native matrix",
+      "passed": 229,
+      "failed": 2,
+      "exitCode": 1,
+      "rawLog": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-final-native.log",
+      "cause": "Fixture-owned explicit user_relation primary IDs did not advance serial sequence; only owned native beforeEach sequence repaired, no production source/schema or expected outcome weakened"
+    },
+    {
+      "stage": "legacy pics wire repair after passing broad matrix",
+      "cause": "Preserve PHP associative-array insertion order and empty-object wire shape; old full matrix retained, all affected full files plus both complete Worker type checks rerun; unchanged frontend checks reused only within declared input proof"
+    },
+    {
+      "stage": "browser harness",
+      "cause": "Initial exact-text locator and premature animation capture histories retained under /tmp; subsequent five-flow two-viewport actual Chrome receipt passed"
+    }
+  ],
+  "boundaries": [
+    "No full PHP interpreter or encoded BaseController execution proof",
+    "Legacy anonymity algorithm runtime parity not established",
+    "Unsafe historical retained JSON numbers refuse explicitly instead of rounding",
+    "2000-row thread and 100-row pagination bounds are explicit",
+    "Audit name/IP remain current empty defaults; proof concerns captured target rows, not arbitrary whole-database trigger effects",
+    "Old ProductList navigation and browser route aliases remain open",
+    "Global get_script registration/retirement conflict and complete repository CI remain independently open",
+    "Browser layout uses fake API fixtures; App/JWT/SQL proofs use separate local HTTP and native receipts",
+    "Freeze excludes environment and installed dependency bytes; not all build inputs",
+    "Actual-role/device/production acceptance and migration parent items remain open"
+  ],
+  "nextInvestigatedOnly": {
+    "path": "workers-ts/audit/next-fictitious-scope-20261014.json",
+    "sha256": "4abb886dfffa7b1bd8775bd5b3ad495d01489157c16ec0952d998e3dba2169b4",
+    "implementationComplete": false,
+    "remaining": [
+      "two genuine fictitious review APIs",
+      "active old commodity selector and SKU contract",
+      "source product.reply event rating effect"
+    ]
+  },
+  "publication": {
+    "commit": false,
+    "push": false,
+    "pullRequest": false,
+    "deployment": false,
+    "productionDataChanged": false,
+    "phpRemoved": false
+  },
+  "receipts": [
+    {
+      "path": "workers-ts/audit/reply-20261014/admin-build-status.json",
+      "sha256": "d4034377e524ceb8e31d7a468ce6aa7fbd489538c32b1440ca64bfcee922d6e2"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/admin-build.log",
+      "sha256": "0e717af48a275c0f820009c410feaff4d3ac416a73994fb4bb1f659101d76133"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/admin-types-status.json",
+      "sha256": "0ea0ecc12c23b7e0b1bde51d1159f8dcb814d6589d0f942984722a136a71b37c"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/admin-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/checklist-after.json",
+      "sha256": "e650336aeaa38a69b780bcecd1d0d1f2836fb4f73e9937622e7829bc2836df44"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/checklist-before.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/collect-evidence.py",
+      "sha256": "d971b8b6dbb683d2b1d863a82bf1a809c3c32131e1e627ccfe97f680d9d08862"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/corrected-ordinary-http-frontend-status.json",
+      "sha256": "0217efcdc501688e3b5d62e71a7146cfbe6e10efd3237debb11a3d8947b74e55"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/corrected-ordinary-http-frontend.json",
+      "sha256": "a58839b5e37a3f4d4c971c442e9975b89d62c8f062e8425e35cef4d28ffa3072"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/corrected-ordinary-http-frontend.log",
+      "sha256": "37eeffcaad34eeea6405cce4da1d056b1a5b56826a0b96698ccdb2a2c3801efe"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/final-commands.json",
+      "sha256": "201dd52cd419ba44d9314deca73b5bb6786e93c3a2d4df146cf50227ad1e0056"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/final-diff-check.json",
+      "sha256": "fc8c8ae17fecea612285a61b1fa9d66b35f51a05f3835e4c4378a7355be68be1"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/first-native-cluster-status.json",
+      "sha256": "68d5633e4088f6b92e715e49c7d91d7fe2e798c8b0f5a7bdcacad5ca451843ae"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/frozen-after.json",
+      "sha256": "015a168a5d8e36bea05e2b17b5b8d0f6737bb9d17749e17e8d2b4708dcdbc0b0"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/frozen-before.json",
+      "sha256": "049acdfcaf9d95b469e0943643f94f0cff1473f0d55229401995070e817a9beb"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/initial-ordinary-status.json",
+      "sha256": "0e326e932cb533e5b233fc272d8b739af3d511d35ee8c7595a24c5888c273c22"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/initial-ordinary.json",
+      "sha256": "d8c5f2a5ab576e75edf6e28b884f53155f4bca9552854c023746b062bb9bb3ad"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/initial-ordinary.log",
+      "sha256": "b6cb647c7ea2b3a4bb8f73dcaa24efeb4751cb53031f22582d601155034bcb9f"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/json-wire-repair-affected-inputs.json",
+      "sha256": "d15801010bbd939c84fc66ddc039c467536415fdb1051764d84d97262edd6f7b"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/owned-cluster-cleanup.json",
+      "sha256": "d5a4963a7ef7f1ee05ae25377a4501c91e1e579c27df687763db2bb4ad2ab862"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/php-sources.json",
+      "sha256": "e33402122fcd959ce88899d3e665a08511382991997181a3fb6eff1040ff85c5"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/post-json-commands.json",
+      "sha256": "00f7c4a4d8fec6150a05d06f93747adc52d89ef3f29ac0bc66e0527929b8e14f"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/post-json-native-status.json",
+      "sha256": "c6512b102b342e5371b4b07139f792baf50741799aa9285a5620bb47e053a1fa"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/post-json-native.log",
+      "sha256": "ef6fc7d6704c6a4c91d114002ae3028630aa6e19454a6e329c1daf882c171d64"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/post-json-ordinary-status.json",
+      "sha256": "103637e9cd40767aabe8ec70e6eea5edface03bae8be580764c197fe108d003f"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/post-json-ordinary.json",
+      "sha256": "fc9a4123321bf2908e9e3bcd8887b51eb934398e9f17d95f52fcf7886fd54723"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/post-json-ordinary.log",
+      "sha256": "4d51fd7330e120fda9091710e8036fb6a5feb3eae6a5c88239d230c80fe22186"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-contract-review-worker-unit-types-status.json",
+      "sha256": "1f7109b11f3dc887e40bc14d69f0ae30e53e3f9ec0d113e13eab0ced78cc177c"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-contract-review-worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before.json",
+      "sha256": "a7d79566a12e1c7487b5a577b71971f517bded2bed5a134cdf645e2387f02498"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-native-status.json",
+      "sha256": "4351bb953bf478a0536b3c735706fc9a41e7c0190d4eab5b72ec13841e2f009a"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-native.log",
+      "sha256": "3484705c40a3ee30f86e164444b7968ac1faf0d42ba5c531a9b57b8996e88b8b"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-ordinary-status.json",
+      "sha256": "a1caf1a4b1ba823cf40765cbca881cc787ae9d50bb1b6703f65d6cbd584c7803"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-ordinary.json",
+      "sha256": "46d2697312f771fbc35b9b66a83f8f0d52abadcaaaa1689724c7a704bac09453"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-final-ordinary.log",
+      "sha256": "803ac8a65f688356553db9ded41c70ae637fe9afa15b42841aa542f5467b68d6"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before.json",
+      "sha256": "3d29bdc09bbbe0f43c68b33234b18ab87a163ccd9c7f6e82ef45b0cf794b7163"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-worker-runtime-types-status.json",
+      "sha256": "d19d0adce39219ab10db3da6c14c75f0d2caf899c9c79ae1e32fad93901f7629"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-worker-unit-types-status.json",
+      "sha256": "8b4c6cfe86d6df04dc51e91d6a04abd40b1b32132adecf77042c7d651d552d48"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-json-wire-repair-worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-final-native-status.json",
+      "sha256": "cb76188ca5b2c7d9f5def09343eac3e48e88ac21278546e82a1c0a3680cb14ba"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-final-native.log",
+      "sha256": "6d546c506b1c856509b7bdbbb0cec76dd58bccf88f1922eba6575cd8030a8d64"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-final-ordinary-status.json",
+      "sha256": "405fedd4abba69256caa255ce299ba06366ff0fc6edf6c8100131c98dca43ba6"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-final-ordinary.json",
+      "sha256": "96bfea05e86411a95a8f5df8cc956c6c39d79e15478d4751b391f12f8c5cd0e1"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-final-ordinary.log",
+      "sha256": "b9df1e0563bd353e5b2e685ffe009f378da699e36a11564ff78d0e020044bb94"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before.json",
+      "sha256": "d4e8f1ea9ceb969301a55fa8e42e598503b5baad9f6edafb2460a2b86f19f20b"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/repaired-ordinary-http-frontend-status.json",
+      "sha256": "84359d51c19cf6239676c6bfd500b906083cbf9f7c01de989c43737fcdbee51a"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/repaired-ordinary-http-frontend.json",
+      "sha256": "9f0f148c289dafaca669a3b5071b754ab0ee120fcda140de0226de66c8d5d392"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/repaired-ordinary-http-frontend.log",
+      "sha256": "4611b57f5a5296a8bc0cbd8d77d71cb3f208012e91a30312e6e0bc79fc79b7bc"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/route-delta.json",
+      "sha256": "7f7414512678a5f5ca9e353ee162899c16c6eda1638c19f90987a62938c360b8"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/run-check.py",
+      "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/run-matrix.py",
+      "sha256": "68b0405b19031140984aacd60f1163e1b0906fc7b66349e159e9b833d10dbba5"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/run-post-json.py",
+      "sha256": "e5013e31c914e1e7b47dbe4cf4c9be3566e8964db199070f574f6ac0f10ee8fa"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/source-independent-review.json",
+      "sha256": "be976134c4e722ca35a85ffeffeec2695708b9560b54f785f04df0a8e6662da9"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/supplier-build-status.json",
+      "sha256": "88c5ed57a27dc92b93d50faed15429da1e2f02ddcf28cf7cae24fb8be633d053"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/supplier-build.log",
+      "sha256": "1e2d724acbf9c62aca6c7afa183ed5dc65de6c9cfe7d92f08d1d5bd86da8a145"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/supplier-types-status.json",
+      "sha256": "150eab47cbe707ef74817ab29609368e483c8d07cea4e3e3165bf5b0029bde50"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/supplier-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/verification-summary.json",
+      "sha256": "8c459d85837e68ebef948ad9a73ae381e3af23597080ac904223f745ac462cd0"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/worker-runtime-types-status.json",
+      "sha256": "553b87c81da07ed2bdf05034f1a6f66f0f549dfe4e34146da779bf4ac5aeb29c"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/worker-unit-types-status.json",
+      "sha256": "9163d6ee1c22d6b11e71a2069b012439819ddd2e547927b213d7879d97bc1063"
+    },
+    {
+      "path": "workers-ts/audit/reply-20261014/worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "externalBrowserReceipts": [
+    {
+      "path": "/tmp/cinashop-reply-qa/artifact-hashes.json",
+      "sha256": "442e46349390ddaada3615909903a87f62b1310ba1b75176bb733b91b6c885c5"
+    },
+    {
+      "path": "/tmp/cinashop-reply-qa/browser-receipt.json",
+      "sha256": "f34edecb9735779aad82525ef0e4566f7293cdadc94cff5a60ce15658e1a8e38"
+    },
+    {
+      "path": "/tmp/cinashop-reply-qa/cleanup-receipt.json",
+      "sha256": "7242a08e16fb99ded01a89c0cf3ea0db97b2e96315a24f45262b854546a89150"
+    },
+    {
+      "path": "/tmp/cinashop-reply-qa/qa.md",
+      "sha256": "0aeef0ad50061232d0aa2c45fc36d8c72f74b009f31b45db1fa017b7fa04f529"
+    }
+  ],
+  "independentDeliveryReview": {
+    "path": "workers-ts/audit/reply-20261014/delivery-independent-review.json",
+    "status": "passed",
+    "sha256": "d662b2290bc11f3545646a5f34b7dbc00f3c11b6b9d2ac9d5dd58b3ae101e3bc",
+    "canonicalLedgerExcludingThisFieldSha256": "f4a2fbe13d1d39ae55768d09c0d552657849362b0a6864acb97ac062d8fd530e",
+    "substantiveRemainingFindings": 0,
+    "hashCycleRule": "Remove only independentDeliveryReview; UTF8 ensure_ascii=False sorted-key compact JSON. Final integration modifies only this excluded field."
+  }
+}

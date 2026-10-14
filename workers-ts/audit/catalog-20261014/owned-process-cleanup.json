@@ -1,0 +1,84 @@
+{
+  "checkedAt": "2026-10-14T12:23:50.317643+00:00",
+  "method": "Read only pg_ctl status/noPID after original runnerSTOPPED; no inactive cluster restart or connection. Current-slice clusters only; prior slice receipts immutable.",
+  "clusters": {
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-OvtxrD": {
+      "receipt": "catalog-native.log",
+      "originalRunnerRemaining": 0,
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "noRestart": true
+    },
+    "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ZemtaI": {
+      "receipt": "final-native.log",
+      "originalRunnerRemaining": 0,
+      "runnerStopped": true,
+      "pgCtlStatusExit": 3,
+      "pgCtlMessage": "pg_ctl: no server running",
+      "postmasterPidExists": false,
+      "noRestart": true
+    }
+  },
+  "browser": {
+    "checkedAt": "2026-10-14T12:17:44.027060+00:00",
+    "status": "passed",
+    "ownedChromeStartupPidsAllAttempts": [
+      104674,
+      104688,
+      104689,
+      104710,
+      104714,
+      104724,
+      105594,
+      105608,
+      105609,
+      105632,
+      105636,
+      105646,
+      106654,
+      106668,
+      106669,
+      106693,
+      106696,
+      106721,
+      108053,
+      108067,
+      108068,
+      108092,
+      108095,
+      108111,
+      109035,
+      109049,
+      109050,
+      109072,
+      109075,
+      109076
+    ],
+    "ownedChromeStartupPidsActiveRemaining": [],
+    "ownedChromeStartupPidsStillInProc": [],
+    "fullProcScanPattern": "Chrome executable basename plus --user-data-dir=/tmp/playwright_chromiumdev_profile- argument",
+    "allMatchingTemporaryPlaywrightChromeProcessesRemaining": [],
+    "browserCloseAllAttempts": true,
+    "finalReceiptProfileCapture": [],
+    "profileCaptureLimitation": "Final receipt profile capture is empty; cleanup does not rely on that field. Actual full /proc executable/argument scan finds 0 temporary Playwright Chrome processes, including child renderers. Empty-cmdline defunct process descriptors, if present, are recorded separately.",
+    "ownedVitePids": [
+      103728
+    ],
+    "ownedViteRemaining": [],
+    "viteSessionId": 13324,
+    "viteSessionTerminalExit": 143,
+    "intentionalSigterm": true,
+    "port": "127.0.0.1:4976",
+    "portProbe": {
+      "accepted": false,
+      "errno": 111,
+      "error": "[Errno 111] Connection refused"
+    },
+    "scope": "No unrelated processes were stopped; Chrome close called only on this task browser objects, SIGTERM only validated Vite pid103728."
+  },
+  "allOwnedClustersStopped": true,
+  "allOwnedCurrentFixturesCleared": true,
+  "productionOrOtherClustersTouched": false
+}

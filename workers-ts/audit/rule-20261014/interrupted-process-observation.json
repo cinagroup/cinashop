@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-14T04:36:23.686918+00:00",
+  "handles": [
+    7383,
+    69936,
+    2451
+  ],
+  "toolHandleState": "Unknown process id",
+  "hostMatchingProcesses": [],
+  "clusters": [
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-ldGeeg",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false
+    }
+  ],
+  "ordinaryLogHadCompleteSummary": false,
+  "nativeLogHadCompleteSummary": false,
+  "unitTypeExitCode": "not observed",
+  "retryAuthorizedOnlyAfterHostInspection": true
+}

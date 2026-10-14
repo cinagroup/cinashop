@@ -1,0 +1,26 @@
+{
+  "capturedAt": "2026-10-14T10:34:48.959239+00:00",
+  "changed": {
+    "workers-ts/src/services/product/ProductUnitLifecycle.ts": {
+      "before": "5bcf5b30c07e7ab50dcb737e98b497de913fd0cfba220bd5dabf0cca18679e66",
+      "after": "e469d1f24605388db204b6f701088c229d315f33d1046d61621c687915ed7f23"
+    },
+    "workers-ts/test/admin-product-unit-native.test.ts": {
+      "before": "f63c4c913746c73408fd62e135aec7e42acae0d165fc97ed91e01ad72654f653",
+      "after": "03d2cdca037e1bfece131c1c3aaf77ea418f951f89dc7b835c0ef056333316d5"
+    }
+  },
+  "unchangedInputs": 3356,
+  "helperInputsAndExpectedMs": {
+    "0": 2000,
+    "750": 750,
+    "2000": 2000,
+    "5000": 2000
+  },
+  "newNativeDefinitions": 1,
+  "subcaseLoopsAreNotAdditionalDefinitions": true,
+  "oldCheckoutAssertionsAndTimeoutUnchanged": true,
+  "oldUnitNative7DefinitionsUnchanged": true,
+  "namespaceErrorWrappingStatementIdleUnchanged": true,
+  "scopeCaveat": "Only sharedhelper bound preservation, no claim allSupplier downstream paths preserve every narrowercontext"
+}

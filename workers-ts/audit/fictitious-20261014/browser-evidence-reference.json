@@ -1,0 +1,58 @@
+{
+  "availability": "Browser plugin not available",
+  "fallback": "Installed Playwright1.62.1 with Chrome155.0.8059.39; Node24.19.0; no dependencies installed",
+  "url": "http://127.0.0.1:4974/reply",
+  "viewports": [
+    {
+      "width": 1360,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "finalAttempt": "attempt-004",
+  "flows": 7,
+  "states": 15,
+  "screenshots": 15,
+  "unchangedSourceInputs": 11,
+  "sourceOfUiAuthority": "actualSFC/Axios/UI; allAPI/image responses explicit synthetic local fixtures, no preview=1 bypass",
+  "remainingBoundary": "Browser fixture does not prove SQL/JWT/HMAC/realR2/provider/production",
+  "cleanup": {
+    "chrome": 0,
+    "viteStoppedExplicitly": true,
+    "port4974": "ECONNREFUSED"
+  },
+  "externallyStoredArtifactSnapshot": {
+    "files": 113,
+    "newRootVisualInspectionSupplemental": true
+  },
+  "references": [
+    {
+      "path": "/tmp/cinashop-fictitious-qa/attempt-004-browser-receipt.json",
+      "sha256": "e6537f327429806ad38930050d5fec9b193ad53c3b3c4c25123b5c657aff3c9b",
+      "byteLength": 36138
+    },
+    {
+      "path": "/tmp/cinashop-fictitious-qa/attempt-004-cleanup-proof.json",
+      "sha256": "e78ac0e9fc8a96fcdc32709a87ecb0b489624c585857f168fe67bebb9910ce42",
+      "byteLength": 366
+    },
+    {
+      "path": "/tmp/cinashop-fictitious-qa/final-summary.json",
+      "sha256": "53b9b1bc6fc572463f3cce3d93fae50a99b5ade11e819d17a921c9e92f852333",
+      "byteLength": 2404
+    },
+    {
+      "path": "/tmp/cinashop-fictitious-qa/artifact-hashes.json",
+      "sha256": "a7e06b84090626de7b0258853e89379fee4d63588267f8feba95ab3568a58bb1",
+      "byteLength": 21418
+    },
+    {
+      "path": "/tmp/cinashop-fictitious-qa/root-visual-inspection.json",
+      "sha256": "0f1c25dfb345ba0c013e9d1278f42f36c997b7a0e7726ddd07f070698c1d9f37",
+      "byteLength": 1444
+    }
+  ]
+}

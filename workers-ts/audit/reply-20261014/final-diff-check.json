@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop",
+  "checkedAt": "2026-10-14T08:02:00.189782+00:00",
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": ""
+}

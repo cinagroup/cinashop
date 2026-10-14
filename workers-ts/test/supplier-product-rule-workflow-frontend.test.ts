@@ -62,6 +62,41 @@ describe('actual mounted Supplier rule library SFC, parsed transport and atomic 
     const f = await mount(); try { await fillCreate(f); await f.view.submit(); expect(JSON.parse(writes(f)[0].data)).toEqual({ rule_name: '新模板', spec: spec(), expected_revision: 'a'.repeat(64) });
       expect(f.view.attempt.value).toBeNull(); expect(f.view.editing.value).toBe(false); expect(f.view.catalog.value.list.map((row: any) => row.id)).toEqual([201, 400]); } finally { f.close(); }
   });
+  it('submits Unicode boundaries through the mounted library and prepares copied SKU details while invalid drafts never POST', async () => {
+    const name = '😀'.repeat(32), dimension = '🚀'.repeat(32), value = '🍀'.repeat(64);
+    const dimensions = [{ value: dimension, detail: [value] }];
+    const f = await mount();
+    try {
+      await f.view.openCreate(); Object.assign(f.view.form, { rule_name: ` ${name} `, spec: dimensions });
+      await f.view.submit();
+      expect(writes(f)).toHaveLength(1);
+      expect(JSON.parse(writes(f)[0].data)).toEqual({ rule_name: name, spec: dimensions, expected_revision: 'a'.repeat(64) });
+      expect(f.view.attempt.value).toBeNull(); expect(f.view.editing.value).toBe(false);
+      const stored = f.view.catalog.value.list.find((row: any) => row.id === 400);
+      expect(stored.rule_name).toBe(name); expect(stored.spec).toEqual(dimensions);
+      const original = JSON.parse(JSON.stringify(stored.spec));
+      const prepared = runtime.rules.prepareSupplierProductRuleApplication(stored.spec);
+      expect(prepared).toEqual({ items: dimensions, details: [{ [dimension]: value }] });
+      prepared.items[0].detail.push('另一个值'); expect(stored.spec).toEqual(original);
+      await f.view.openCreate();
+      const invalid = [{ rule_name: '😀'.repeat(33), spec: dimensions },
+        { rule_name: name, spec: [{ value: '🚀'.repeat(33), detail: [value] }] },
+        { rule_name: name, spec: [{ value: dimension, detail: ['🍀'.repeat(65)] }] }];
+      for (const character of ['\u0001', '\u007f', '\u0085', '\u009f', '\ud800', '\udfff']) {
+        invalid.push({ rule_name: `x${character}y`, spec: dimensions },
+          { rule_name: name, spec: [{ value: `x${character}y`, detail: [value] }] },
+          { rule_name: name, spec: [{ value: dimension, detail: [`x${character}y`] }] });
+      }
+      for (const payload of invalid) {
+        Object.assign(f.view.form, payload); const before = JSON.stringify(f.view.form);
+        await f.view.submit();
+        expect(writes(f)).toHaveLength(1); expect(f.view.attempt.value).toBeNull();
+        expect(f.view.editing.value).toBe(true); expect(JSON.stringify(f.view.form)).toBe(before);
+        expect(f.view.error.value).not.toBe('');
+        if (payload.spec !== dimensions) expect(() => runtime.rules.prepareSupplierProductRuleApplication(payload.spec)).toThrow();
+      }
+    } finally { f.close(); }
+  });
   it('edits from the exact legacy info detail and does not mutate the catalog row before the readback', async () => {
     const f = await mount(); try { await f.view.openEdit(201); f.view.form.rule_name = '修改模板'; expect(f.view.catalog.value.list[0].rule_name).toBe('当前模板'); await f.view.submit();
       expect(JSON.parse(writes(f)[0].data)).toEqual({ rule_name: '修改模板', spec: spec(), expected_revision: 'c'.repeat(64) }); expect(f.view.catalog.value.list[0].rule_name).toBe('修改模板'); } finally { f.close(); }
@@ -96,7 +131,7 @@ describe('actual mounted Supplier rule library SFC, parsed transport and atomic 
     try { await fillCreate(f); await f.view.submit(); expect(f.view.attempt.value).not.toBeNull(); await f.view.submit(); expect(writes(f)).toHaveLength(1); } finally { f.close(); }
   });
   it.each(['legacy', 'axios'])('permits explicit draft correction after genuine %s atomic write refusal', async mode => {
-    let refused = false; const f = await mount((config, fixture) => { if (config.method !== 'post' || refused) return; refused = true;
+    let refused = false; const f = await mount(config => { if (config.method !== 'post' || refused) return; refused = true;
       if (mode === 'legacy') throw new runtime.ApiError('duplicate name', 400); throw new runtime.AxiosError('conflict', 'ERR_BAD_REQUEST', config, undefined, { status: 409, data: { status: 409, msg: 'atomic refusal' }, config, headers: {}, statusText: 'Conflict' }); });
     try { await fillCreate(f); await f.view.submit(); expect(f.view.attempt.value).toBeNull(); expect(f.view.editing.value).toBe(true); f.view.form.rule_name = '更正模板'; await f.view.submit();
       expect(f.view.attempt.value).toBeNull(); expect(writes(f)).toHaveLength(2); expect(f.view.catalog.value.list.at(-1).rule_name).toBe('更正模板'); } finally { f.close(); }

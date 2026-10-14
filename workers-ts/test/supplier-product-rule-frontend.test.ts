@@ -57,19 +57,12 @@ describe("supplier reusable product-rule frontend migration", () => {
     expect(api).toContain("previewProductRules");
   });
 
-  it("adds a manage-gated library and explicit destructive ProductForm application", () => {
+  it("connects the reusable template library navigation", () => {
     const router = readFileSync("../view/supplier-ts/src/router.ts", "utf8");
     const shell = readFileSync("../view/supplier-ts/src/components/AppShell.vue", "utf8");
-    const page = readFileSync("../view/supplier-ts/src/pages/ProductSpecifications.vue", "utf8");
-    const form = readFileSync("../view/supplier-ts/src/pages/ProductForm.vue", "utf8");
     expect(router).toContain('path: "product-specifications"');
     expect(shell).toContain('{ path: "/product-specifications", label: "规格模板"');
-    expect(page).toContain('auth.can("supplier.product.manage")');
-    expect(page).toContain('v-if="canManageProducts"');
-    expect(page).toContain("await getProductRule(id)");
-    expect(form).toContain("getProductRuleTemplates()");
-    expect(form).toContain("套用规格模板");
-    expect(form).toContain("form.attrs = []");
-    expect(form).toContain("regenerateSkus(false)");
+    // Permission withdrawal and destructive application are exercised through
+    // actual mounted SFCs in the rule workflow and product media suites.
   });
 });

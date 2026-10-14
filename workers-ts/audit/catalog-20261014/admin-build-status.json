@@ -1,0 +1,14 @@
+{
+  "name": "admin-build",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vite/bin/vite.js",
+    "build"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "startedAt": "2026-10-14T12:20:51.714244+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T12:21:21.151940+00:00",
+  "exitCode": 0,
+  "log": "admin-build.log"
+}

@@ -1,0 +1,26 @@
+{
+  "name": "corrected-ordinary",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-catalog-read.test.ts",
+    "test/admin-product-catalog-read-http.test.ts",
+    "test/admin-product-catalog-read-native.test.ts",
+    "test/admin-product-catalog-navigation-frontend.test.ts",
+    "test/admin-product-reply-workflow-frontend.test.ts",
+    "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/catalog-20261014/corrected-ordinary.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T12:00:33.501665+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T12:01:02.306623+00:00",
+  "exitCode": 0,
+  "log": "corrected-ordinary.log"
+}

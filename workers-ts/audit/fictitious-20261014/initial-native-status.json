@@ -1,0 +1,20 @@
+{
+  "name": "initial-native",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/admin-product-fictitious-reply.test.ts",
+    "test/admin-product-fictitious-reply-http.test.ts",
+    "test/admin-product-fictitious-reply-native.test.ts",
+    "test/product-detail-design-consumers-postgres.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T09:22:52.526361+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T09:25:19.859137+00:00",
+  "exitCode": 1,
+  "log": "initial-native.log"
+}

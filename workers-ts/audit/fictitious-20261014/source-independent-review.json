@@ -1,0 +1,1284 @@
+{
+  "version": 2,
+  "reviewer": "/root/reply_source_review",
+  "status": "passed-source-review",
+  "reviewCompletedAt": "2026-10-14T09:24:28.305Z",
+  "fileFinalized": true,
+  "furtherMutationByReviewerPlanned": false,
+  "scope": "Independent read-only PHP/TS source review of Admin fictitious review form/create, active product selector, creation rating effect/lock order, and mounted frontend workflow.",
+  "evidenceBoundary": {
+    "productionOrProviderAccess": false,
+    "sqlExecutedByReviewer": false,
+    "browserExecutedByReviewer": false,
+    "phpInterpreterExecuted": false,
+    "heavyChecksExecutedByReviewer": false,
+    "pureHelpersOnly": true,
+    "reviewDoesNotAssertRuntimeDeliveryPass": true,
+    "oldReplyReportsLedgersReceiptsUntouched": true,
+    "authorizedWriteOnly": "workers-ts/audit/fictitious-20261014/source-independent-review.json",
+    "sourceWasNotYetFrozen": true,
+    "authorizedWrites": [
+      "workers-ts/audit/fictitious-20261014/source-independent-review.json",
+      "workers-ts/audit/fictitious-20261014/pre-media-source-independent-review.json"
+    ],
+    "noFurtherSourceFindings": true
+  },
+  "historicalPreMediaReview": {
+    "scope": "Historical facts and hashes before media/date/query-key repair. They do not assert old inputs still match current final source.",
+    "receiptPath": "/home/cina/cinagroup/cinashop/workers-ts/audit/fictitious-20261014/pre-media-source-independent-review.json",
+    "sha256": "71385ea4d23d3018dcf915e24af46c6347471db9640b157c38a793e9c85508ef",
+    "originalCapturedAt": "2026-10-14T08:48:26.171Z",
+    "originalStatus": "source-findings-awaiting-targeted-repair",
+    "inputCount": 52,
+    "inputs": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+        "sha256": "af5d7af648cc2f40fd0a4fdc1bff1c6d53835f4a0412aea929c1974a854c2447",
+        "byteLength": 30715,
+        "semanticReadRanges": [
+          "1-396"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductFictitiousReplyController.ts",
+        "sha256": "10f51a87aa0138ad07ccc5bd0c14de19c16340af356250f1b7cba0743e899bb2",
+        "byteLength": 1541,
+        "semanticReadRanges": [
+          "1-25"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductReviewRatingService.ts",
+        "sha256": "15b6e9c8fffee978868b11f88266822767b753c5de4ea20639d62af290785924",
+        "byteLength": 3368,
+        "semanticReadRanges": [
+          "1-55"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+        "sha256": "8003e777e4d31b34c21a68dcea5477d5019301ab166d0cc4a62a7c423b2ba403",
+        "byteLength": 102142,
+        "semanticReadRanges": [
+          "745-780",
+          "1248-1275",
+          "1377-1410"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+        "sha256": "02327093a8121c2e1fdd4b1ac325c342adc36a5e76c8d1a4f3172dfc8547205a",
+        "byteLength": 103954,
+        "semanticReadRanges": [
+          "52",
+          "288",
+          "905-906"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+        "sha256": "7913e1e53b013ec7373969788335e203b9a923998845109a77d939d50cc7be95",
+        "byteLength": 32823,
+        "semanticReadRanges": [
+          "143-259",
+          "617-729",
+          "294-309",
+          "475-487"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+        "sha256": "83b80e76bc347b943ffdb21fd8a9e7f2575204e8be5aaabc1758885d07ee288d",
+        "byteLength": 43791,
+        "semanticReadRanges": [
+          "128-134",
+          "184-245",
+          "411-420",
+          "451-469"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+        "sha256": "c5d145953118458ad80124891a24ae0539b22274b9886631a4bc66be525a5032",
+        "byteLength": 14808,
+        "semanticReadRanges": [
+          "279-367"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductAssociationService.ts",
+        "sha256": "468d327beb5026143fa4ed2dc040dd197f2c3bedb1cdc7c185c6e3244efdd2f3",
+        "byteLength": 37986,
+        "semanticReadRanges": [
+          "65-73"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+        "sha256": "290335b5ee34c8fc521bb12506c042078c20bdf68d39d5e14a51c32c44a63f74",
+        "byteLength": 25434,
+        "semanticReadRanges": [
+          "74-84",
+          "104-143"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/AttachmentService.ts",
+        "sha256": "ec5f48dd094599043bb7fa82a00d781c29f2f9a2b20b8e78e938194e33692653",
+        "byteLength": 58870,
+        "semanticReadRanges": [
+          "90-145",
+          "965-1008",
+          "1274-1305"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/system/AttachmentController.ts",
+        "sha256": "18c73ca5949f368d1579ecd744f1204857358f51094ab5d87cf4ac5946da6d5d",
+        "byteLength": 14612,
+        "semanticReadRanges": [
+          "231-240"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/reply.ts",
+        "sha256": "7a2ec3a828e2f800bb95b9053a9788170cd6670b228117174112c705eb503e3c",
+        "byteLength": 5627,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/product.ts",
+        "sha256": "aeab9bf36b6695f66de4e2ac4fd8cc316730a15a2f1ffa4c3eeec0b0e32c5c9b",
+        "byteLength": 7471,
+        "semanticReadRanges": [
+          "star/type/owner fields"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply.test.ts",
+        "sha256": "2a0cfcf8b972aa3fe7376fd10af437ffa0df9639bd14bd622039ce5ef7b7ccec",
+        "byteLength": 22295,
+        "semanticReadRanges": [
+          "28-280"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-http.test.ts",
+        "sha256": "38bea341f8864e2e3b8a7f469fd996ba5c7435a795e8a864a642f2cb3a31a1b9",
+        "byteLength": 19478,
+        "semanticReadRanges": [
+          "95-208"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-native.test.ts",
+        "sha256": "dd7cff25b33dd11daef4e067c64d9494e3a6ed50d16dc9d4a672e8221aaba5fe",
+        "byteLength": 30292,
+        "semanticReadRanges": [
+          "1-384"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+        "sha256": "0f453f7048cbf1271321346b1a36fde1bfa6baf46e3985bf0d31ca3b3d373a00",
+        "byteLength": 38025,
+        "semanticReadRanges": [
+          "45-298"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/adminProductFictitiousReplies.ts",
+        "sha256": "f49655a5d1ec09946b779ba7ec9325ed644d75a4c1c1e0941f6fb44aa39ece7a",
+        "byteLength": 5793,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/FictitiousReplyDialog.vue",
+        "sha256": "71f7cd78ead2ee5c1df24b125eb35b44ebd9a9020e50c5523023974db58c012c",
+        "byteLength": 25206,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+        "sha256": "c7e7b528e1c100599ab3d21000682de6ec693ab55b2049199ba542163f1183eb",
+        "byteLength": 28788,
+        "semanticReadRanges": [
+          "17-35",
+          "70-195"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/activity/CombinationImagePicker.vue",
+        "sha256": "6c062132a338ea5d2a32a929e530f69cb60a018a6248483201e16c817bca7168",
+        "byteLength": 10605,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/reply.ts",
+        "sha256": "93d16adc64d90fe28fdef8c5ff060067f8934023a3a961d5ab04d63ed5083c96",
+        "byteLength": 5978,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/fictitious-20261014/scope-decisions.json",
+        "sha256": "28289748f8de81a1fc5dcd74b498ed6769a5bfa9fa684093f61a15e55bd57eb6",
+        "byteLength": 2038,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/fictitious-20261014/php-sources.json",
+        "sha256": "9cb6fbefc74d52b4fc19346cd728d99a217a06d5ae6ae136cb05b4d2b2324091",
+        "byteLength": 5170,
+        "semanticReadRanges": [
+          "manifest bytes, runtime not run"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/fictitious-20261014/baseline-from-reply.json",
+        "sha256": "c1d0549e45451a0511548a38baf8c9cc5f059b97c3546df1547f9f1dabe6bb59",
+        "byteLength": 887,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/next-fictitious-scope-20261014.json",
+        "sha256": "4abb886dfffa7b1bd8775bd5b3ad495d01489157c16ec0952d998e3dba2169b4",
+        "byteLength": 38437,
+        "semanticReadRanges": [
+          "scout/source chain"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+        "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+        "byteLength": 183912,
+        "semanticReadRanges": [
+          "1505",
+          "1550-1553"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+        "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+        "byteLength": 6402,
+        "semanticReadRanges": [
+          "40-52",
+          "105-138"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+        "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+        "byteLength": 24959,
+        "semanticReadRanges": [
+          "78-134",
+          "580-594"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/validate/admin/product/StoreProductReplyValidate.php",
+        "sha256": "8aace9f935ddea40bba94ca4258b97e63f566d14cea0d9f1b7e9ee5888079700",
+        "byteLength": 2330,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+        "sha256": "b24ea2b61d05f877896390596cdfd3116b0631ca223c6d220b79273ca7405bdb",
+        "byteLength": 6158,
+        "semanticReadRanges": [
+          "60-84",
+          "121-134"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+        "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+        "byteLength": 27131,
+        "semanticReadRanges": [
+          "625-657"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "byteLength": 136399,
+        "semanticReadRanges": [
+          "1059-1129"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+        "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+        "byteLength": 24769,
+        "semanticReadRanges": [
+          "45-98",
+          "107-189",
+          "264-290"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProduct.php",
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "byteLength": 20315,
+        "semanticReadRanges": [
+          "63-153",
+          "248-261",
+          "576-580",
+          "660-704"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+        "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d",
+        "byteLength": 3751,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductAttrValueDao.php",
+        "sha256": "a6c3f481a168544605185059287e9e86c541a31b296a82d18421725dc05e3b8e",
+        "byteLength": 8354,
+        "semanticReadRanges": [
+          "44-78"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+        "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+        "byteLength": 16491,
+        "semanticReadRanges": [
+          "269-309"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductReply.php",
+        "sha256": "093bd50a58a4323a028c1667b64e0381d4cccd6737004a0dfea1c37a27bd2c23",
+        "byteLength": 5348,
+        "semanticReadRanges": [
+          "105-137"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+        "sha256": "5ad9a325f008de19b99c925a205d423c5ff8d0019d7fc66ca74102d35c9233a2",
+        "byteLength": 4120,
+        "semanticReadRanges": [
+          "62-118"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/ModelTrait.php",
+        "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+        "byteLength": 4990,
+        "semanticReadRanges": [
+          "27-86"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/model/relation/OneToOne.php",
+        "sha256": "6315f175ebad444be383524e485b2b2ff2ce5277a61d144cad898c03dec98f77",
+        "byteLength": 10293,
+        "semanticReadRanges": [
+          "315-326"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+        "byteLength": 7322393,
+        "semanticReadRanges": [
+          "2707",
+          "2859-2871",
+          "3210-3243",
+          "seed184/185/193/579/580"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+        "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+        "byteLength": 16957,
+        "semanticReadRanges": [
+          "191-195",
+          "320-324",
+          "830-834"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/addReply.vue",
+        "sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+        "byteLength": 6916,
+        "semanticReadRanges": [
+          "133-228"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/goodsList/index.vue",
+        "sha256": "bfa21f742ec0331d59cdaa399ef020d6e674d6e2b5bb597745322d7910a8e3b2",
+        "byteLength": 12185,
+        "semanticReadRanges": [
+          "357-379"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+        "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38",
+        "byteLength": 7883,
+        "semanticReadRanges": [
+          "86"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/listener/product/Reply.php",
+        "sha256": "21ea905fe9384c466f5474046c2ed709cac7d8aba81fb6a43f841dec20a76339",
+        "byteLength": 1317,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductReplyJob.php",
+        "sha256": "83de69f8cffb8df000e52bd2d6f87e7259b86933f19e4e795a041f3e9b8129e8",
+        "byteLength": 1802,
+        "semanticReadRanges": [
+          "24-57"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/QueueTrait.php",
+        "sha256": "1a16900d00df3951e29c77bdac65bc3a9ffd1b0c2ff315ab8350c9c295258cd3",
+        "byteLength": 3618,
+        "semanticReadRanges": [
+          "51-113"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+        "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+        "byteLength": 1807,
+        "semanticReadRanges": [
+          "38"
+        ]
+      }
+    ],
+    "pureHelperVerification": {
+      "successfulProbeReceipt": {
+        "backendSHA": "af5d7af648cc2f40fd0a4fdc1bff1c6d53835f4a0412aea929c1974a854c2447",
+        "frontendSHA": "71f7cd78ead2ee5c1df24b125eb35b44ebd9a9020e50c5523023974db58c012c",
+        "probeCount": 19,
+        "outcomes": [
+          {
+            "name": "signed-before-epoch",
+            "actual": -72000,
+            "passed": true
+          },
+          {
+            "name": "exact-epoch-zero",
+            "actual": 0,
+            "passed": true
+          },
+          {
+            "name": "historical-Shanghai-DST",
+            "actual": 583729200,
+            "passed": true
+          },
+          {
+            "name": "nonexistent-DST-wall-time",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "invalid-calendar",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "pre-signed32-range",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "future-date",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "exact-now-wall-time",
+            "actual": 1791960000,
+            "passed": true
+          },
+          {
+            "name": "source-Unicode-and-default-ratings",
+            "actual": [
+              64,
+              512,
+              8,
+              5,
+              5,
+              5,
+              3,
+              ""
+            ],
+            "passed": true
+          },
+          {
+            "name": "nickname-over-codepoint-limit",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "comment-over-limit",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "identity-injection",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "conflicting-image-ID",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "unsafe-media-scheme",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "account-embedded-media",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "textual-zero-preserved",
+            "actual": "0",
+            "passed": true
+          },
+          {
+            "name": "gallery-signed-preview-retained-after-fix",
+            "actual": "/api/assets/31?expires=1791951000&signature=abc",
+            "passed": true
+          },
+          {
+            "name": "signed-preview-refused-as-persistent-reference",
+            "rejected": true,
+            "passed": true
+          },
+          {
+            "name": "canonical-reference-remains-stable",
+            "actual": "/api/assets/31",
+            "passed": true
+          }
+        ]
+      },
+      "method": "Read current production helper sections; esbuild transform(write-free) and isolated new Function. No imports/DI/DB/browser/provider execution.",
+      "toolingNotes": [
+        "Initial plain node invocation unavailable; reran with desktop bundled Node executable.",
+        "Initial transform setup used top-level return with an export and was rejected; corrected helper extraction removes export and returns from isolated function.",
+        "An expected-old preview assertion raced an already-applied frontend repair; reread exact repair and reran appropriate final assertions. This was not a production regression or a heavy test receipt."
+      ]
+    }
+  },
+  "targetedPostMediaReview": {
+    "capturedAt": "2026-10-14T09:24:28.305Z",
+    "inputCount": 21,
+    "inputs": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductReplyMediaPolicy.ts",
+        "sha256": "38243f91e74e0f4856b522b6ef22bdfa034eca44ab9870a4f03b4563fbb0fa40",
+        "byteLength": 6744,
+        "semanticReadRanges": [
+          "complete"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/ProductAssetPolicy.ts",
+        "sha256": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57",
+        "byteLength": 4581,
+        "semanticReadRanges": [
+          "1-56"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/content/ArticleContentPolicy.ts",
+        "sha256": "28fa50b40dcdd61d08a8742c4eff417c05ff5760eaf7ab25c075c10a0b3f6126",
+        "byteLength": 13237,
+        "semanticReadRanges": [
+          "65-90",
+          "271-283"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/SeckillTimeAssetPolicy.ts",
+        "sha256": "612053570c679e5eb89980b3e0f8c61ee95027ad73e390d51416de7a32942b23",
+        "byteLength": 2864,
+        "semanticReadRanges": [
+          "1-40"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/AttachmentService.ts",
+        "sha256": "ec5f48dd094599043bb7fa82a00d781c29f2f9a2b20b8e78e938194e33692653",
+        "byteLength": 58870,
+        "semanticReadRanges": [
+          "parseCanonicalAttachmentId/signAttachmentReferences/list/getSignedAsset reviewed in first stage"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+        "sha256": "b4bad2d8b2f660432ddf9dd4f5c2b34790b8aa356e878cd52f51e6c832ff53c1",
+        "byteLength": 33282,
+        "semanticReadRanges": [
+          "50-64",
+          "191-216",
+          "309-332",
+          "397-400"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductFictitiousReplyController.ts",
+        "sha256": "a9737db15872e1d10fdb754d43ce61601d5ee0c09e07ea9dbf69a4138cf7cc63",
+        "byteLength": 1556,
+        "semanticReadRanges": [
+          "1-16"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+        "sha256": "1141d41efa076932e6169e1d4d21e0e345fa71c2a21573b749fd60368983d1c4",
+        "byteLength": 44405,
+        "semanticReadRanges": [
+          "185-195",
+          "398-425"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductReplyController.ts",
+        "sha256": "767ea7c947e1b0e445fce8e5ae860abdd7b80931d5d7106f62291d0edafd54e5",
+        "byteLength": 3039,
+        "semanticReadRanges": [
+          "1-18"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+        "sha256": "ac856f8fa8961cbec1c019d6cbee6a0543145bd6c790c5292e765f62ba822408",
+        "byteLength": 34383,
+        "semanticReadRanges": [
+          "265-317",
+          "475-533"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/ReplyController.ts",
+        "sha256": "5a7faf2b903e4cb970b963e49bacdf37e8e6e4a6dac782decc5443c6bb6c0d75",
+        "byteLength": 6245,
+        "semanticReadRanges": [
+          "1-76"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductDetailDesignData.ts",
+        "sha256": "078a24db58fa0eb482de7726d21ab4ecc9a52ab008273f86a0cbfdf37f9abda5",
+        "byteLength": 24404,
+        "semanticReadRanges": [
+          "83-94",
+          "144-188"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/StoreNewcomerService.ts",
+        "sha256": "6ae582c41f0a04aa7b67a265a386b1cca54be631c6d2bf501abcd0f7e352f1e2",
+        "byteLength": 40167,
+        "semanticReadRanges": [
+          "722-727",
+          "734-817",
+          "926"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/FictitiousReplyDialog.vue",
+        "sha256": "d30b0da8ce6c9bcf725669415c8e18e0cf3081d08ea84d4d8d4a4f09a7a08599",
+        "byteLength": 25299,
+        "semanticReadRanges": [
+          "77-93"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+        "sha256": "ce43bbb82d3f91c71ea1a28a3b9733a84dc7c009f4e50ff7fcdb4812aed664e6",
+        "byteLength": 29096,
+        "semanticReadRanges": [
+          "22",
+          "105-106"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply.test.ts",
+        "sha256": "a00d05b7539b75ec9f52b612f1c1093bd1d80b7c11bdf80c73dce333f7713e1a",
+        "byteLength": 26435,
+        "semanticReadRanges": [
+          "150-207"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-http.test.ts",
+        "sha256": "a9595e5c1ccc51884f28407a38211f0c84ccb8385f64a90f16ddcb95af411a15",
+        "byteLength": 27826,
+        "semanticReadRanges": [
+          "183-258"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-native.test.ts",
+        "sha256": "071ea9971b54866b75169eefafb0ad2e5d5cf32d83efa48964fc7e08771e7db2",
+        "byteLength": 34399,
+        "semanticReadRanges": [
+          "262-306"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+        "sha256": "6b634a5e131fbdd8ba9575c553719950a9a252b2e6224e4679fb3bd8fe14d983",
+        "byteLength": 40389,
+        "semanticReadRanges": [
+          "171-224",
+          "decoded-key cases at280"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/product-detail-design-consumers-postgres.test.ts",
+        "sha256": "778e7e359996ac4602f351cd5cf99110e6b4df7dcd456bafa05f6290ac5a96ee",
+        "byteLength": 16608,
+        "semanticReadRanges": [
+          "33-68"
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/adminProductFictitiousReplies.ts",
+        "sha256": "7599ddf29cef29c00e08db79db723dd9f400221e940ba6b51f52e859dd034fb4",
+        "byteLength": 7072,
+        "semanticReadRanges": [
+          "1-80"
+        ]
+      }
+    ],
+    "repeatedInputHashComparison": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/AttachmentService.ts",
+        "historicalSHA256": "ec5f48dd094599043bb7fa82a00d781c29f2f9a2b20b8e78e938194e33692653",
+        "reviewedPostMediaSHA256": "ec5f48dd094599043bb7fa82a00d781c29f2f9a2b20b8e78e938194e33692653",
+        "changed": false
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+        "historicalSHA256": "af5d7af648cc2f40fd0a4fdc1bff1c6d53835f4a0412aea929c1974a854c2447",
+        "reviewedPostMediaSHA256": "b4bad2d8b2f660432ddf9dd4f5c2b34790b8aa356e878cd52f51e6c832ff53c1",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductFictitiousReplyController.ts",
+        "historicalSHA256": "10f51a87aa0138ad07ccc5bd0c14de19c16340af356250f1b7cba0743e899bb2",
+        "reviewedPostMediaSHA256": "a9737db15872e1d10fdb754d43ce61601d5ee0c09e07ea9dbf69a4138cf7cc63",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+        "historicalSHA256": "83b80e76bc347b943ffdb21fd8a9e7f2575204e8be5aaabc1758885d07ee288d",
+        "reviewedPostMediaSHA256": "1141d41efa076932e6169e1d4d21e0e345fa71c2a21573b749fd60368983d1c4",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+        "historicalSHA256": "7913e1e53b013ec7373969788335e203b9a923998845109a77d939d50cc7be95",
+        "reviewedPostMediaSHA256": "ac856f8fa8961cbec1c019d6cbee6a0543145bd6c790c5292e765f62ba822408",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/FictitiousReplyDialog.vue",
+        "historicalSHA256": "71f7cd78ead2ee5c1df24b125eb35b44ebd9a9020e50c5523023974db58c012c",
+        "reviewedPostMediaSHA256": "d30b0da8ce6c9bcf725669415c8e18e0cf3081d08ea84d4d8d4a4f09a7a08599",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+        "historicalSHA256": "c7e7b528e1c100599ab3d21000682de6ec693ab55b2049199ba542163f1183eb",
+        "reviewedPostMediaSHA256": "ce43bbb82d3f91c71ea1a28a3b9733a84dc7c009f4e50ff7fcdb4812aed664e6",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply.test.ts",
+        "historicalSHA256": "2a0cfcf8b972aa3fe7376fd10af437ffa0df9639bd14bd622039ce5ef7b7ccec",
+        "reviewedPostMediaSHA256": "a00d05b7539b75ec9f52b612f1c1093bd1d80b7c11bdf80c73dce333f7713e1a",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-http.test.ts",
+        "historicalSHA256": "38bea341f8864e2e3b8a7f469fd996ba5c7435a795e8a864a642f2cb3a31a1b9",
+        "reviewedPostMediaSHA256": "a9595e5c1ccc51884f28407a38211f0c84ccb8385f64a90f16ddcb95af411a15",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-native.test.ts",
+        "historicalSHA256": "dd7cff25b33dd11daef4e067c64d9494e3a6ed50d16dc9d4a672e8221aaba5fe",
+        "reviewedPostMediaSHA256": "071ea9971b54866b75169eefafb0ad2e5d5cf32d83efa48964fc7e08771e7db2",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+        "historicalSHA256": "0f453f7048cbf1271321346b1a36fde1bfa6baf46e3985bf0d31ca3b3d373a00",
+        "reviewedPostMediaSHA256": "6b634a5e131fbdd8ba9575c553719950a9a252b2e6224e4679fb3bd8fe14d983",
+        "changed": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/adminProductFictitiousReplies.ts",
+        "historicalSHA256": "f49655a5d1ec09946b779ba7ec9325ed644d75a4c1c1e0941f6fb44aa39ece7a",
+        "reviewedPostMediaSHA256": "7599ddf29cef29c00e08db79db723dd9f400221e940ba6b51f52e859dd034fb4",
+        "changed": true
+      }
+    ],
+    "hashRule": "Historical hashes retained. Only actually reread targeted inputs receive a new stage hash; no global source/build inventory or blind current refresh of all52 historical inputs."
+  },
+  "confirmedOriginalScope": [
+    {
+      "topic": "add_time source signedness",
+      "evidence": [
+        "PHP public/install/crmeb.sql:3227 signed int(11), unlike is_del unsigned at3232",
+        "PHP StoreProductReplyServices:114 strtotime and123 rejects only future"
+      ],
+      "conclusion": "New creation permits signed32 negative epochs consistently with readable storage/creation source; not an unsigned-column deviation."
+    },
+    {
+      "topic": "real paths and authority",
+      "evidence": [
+        "PHP route/admin.php:1505,1551,1553",
+        "PHP seed184/185/193 at crmeb.sql:8768,8769,8777",
+        "TS dedicated routes/adminapi.ts:288,905-906",
+        "AdminPermissionService:748-780,1395"
+      ],
+      "conclusion": "Two genuine fictitious endpoints plus active selector. Genuine184 reads reply.view,185 grants reply.manage with its complete nonempty unique_auth tuple,193 selector requires independent product.view. Page6 only reads; immutable579/580 cannot acquire grants by metadata rewrite."
+    },
+    {
+      "topic": "selector source filters",
+      "evidence": [
+        "StoreProduct controller:627-656",
+        "StoreProductServices:1059-1129",
+        "StoreProductDao:45-98,174-189,264-274",
+        "StoreProduct model:576-580,660-704",
+        "BaseDao:304-309 and340-359"
+      ],
+      "conclusion": "Approved nondeleted products across valid owners, including off-shelf. is_new uses relation type3/label4 rather than is_new column. is_integral has no model searcher and search(false) discards it. Supplier count intentionally omits ids while list honors ids order. Bound description is flat via descriptions()->bind(['description']), not a nested descriptions object."
+    },
+    {
+      "topic": "created review identity and snapshots",
+      "evidence": [
+        "AdminProductFictitiousReplyService:97-123,selectedSku,create",
+        "PHP StoreProductReplyServices:105-134",
+        "PHP original varchar limits atcrmeb.sql:3218-3235"
+      ],
+      "conclusion": "Fresh random32 review identifier, uid0/oid0/platform0/relation0/cartnull; optional incoming unique is selected SKU alias, not review identity. Active ordinary exact-product SKU lookup, ambiguity refusal, NOWAIT row lock and post-audit full SKU readback. Code-point nickname64/comment512/avatar255, pics8/url2048, explicit score defaults/mirrored logistics; identity/order/owner/visibility/unknown fields refused."
+    },
+    {
+      "topic": "source rating effect",
+      "evidence": [
+        "PHP event.php:86 -> listener/product/Reply.php -> ProductReplyJob -> StoreProductReplyServices:580-593",
+        "ProductReviewRatingService:18-54",
+        "ReplyService:650-669,698-728"
+      ],
+      "conclusion": "Source all nondeleted product_score rows include UID0, hidden, all owners. Exact numeric TRUNC one decimal, no rows preserves previous star. Synchronous effect is explicitly a timing difference from source queue, not queue deployment parity. Current three insert producers use common product lock."
+    },
+    {
+      "topic": "lock hierarchy and deletion",
+      "evidence": [
+        "ProductAssociationService:66-67 shared731617",
+        "ReplyService:639-650,691-698",
+        "AdminProductReplyService:454-468",
+        "SupplierProductReplyService:289-313",
+        "Fictitious selectedSku NOWAIT"
+      ],
+      "conclusion": "Public order/cart precede sorted products before inserts; Admin delete product then review then thread and intentionally no rating refresh. Supplier explicit product then review avoids JOIN-dependent lock order. Reverse SKU holders cause NOWAIT conflict rather than backwards wait. Missing current real-order products retain cart evidence and skip only rating."
+    },
+    {
+      "topic": "actor/audit/readbacks",
+      "evidence": [
+        "AdminProductFictitiousReplyService.transaction/audit/verifyReply/create",
+        "AdminAuthorityWriteService:74-84,104-143",
+        "native test source audit/producer/expiry probes"
+      ],
+      "conclusion": "Read-only repeatable snapshot reads; writes reacquire live central actor and complete role/menu authority under actual table barrier, compare initial/final actor, verify DB clock expiry at end. Full created review/product/selected SKU and all audit fields read back after audit. Audit store/merchant0 and name/IP empty are explicit; source scope does not promise immunity to arbitrary owner trigger mutations of every unrelated database row."
+    },
+    {
+      "topic": "frontend intent/races",
+      "evidence": [
+        "FictitiousReplyDialog stamped session/current/read IDs, editorDisabled/save/reset",
+        "ReplyList capability/session guards and busy/uncertain integration",
+        "CombinationImagePicker scoped canonical field and separate permissions",
+        "13 mounted test definitions inspected; no claim reviewer ran them"
+      ],
+      "conclusion": "Actual API helpers and picker reused. Separate reply/product/attachment gates, obsolete reads aborted/discarded, SKU/product/session reset clears editor, duplicate creates blocked, unknown create outcomes freeze writes until counted-list reconciliation and never auto replay."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "FIC-SRC-001",
+      "priority": 2,
+      "status": "resolved-source-reviewed",
+      "title": "Signed gallery previews were discarded in editor",
+      "observedSource": "Original imageReference rejected expires/signature, preview reused it, selected gallery media fell back to bare canonical asset.",
+      "evidence": [
+        "AttachmentService:986-996 and144 supplies signed att_dir and canonical_url separately",
+        "Original FictitiousReplyDialog:81,85,143,147",
+        "Repaired imageAddress/imageReference/preview at77-91",
+        "Mounted current selected avatar/picture src + canonical-only POST assertions at178,182,184"
+      ],
+      "resolution": "Display-only imageAddress preserves signed preview while imageReference refuses temporary query keys; original repair remains valid after decoded-key amendment.",
+      "runtimeStatus": "Reviewer did not run mounted tests or browser.",
+      "historicalObservation": true,
+      "historicalStatus": "resolved-by-targeted-source-repair"
+    },
+    {
+      "id": "FIC-SRC-002",
+      "priority": 2,
+      "status": "resolved-source-reviewed",
+      "title": "Saved private gallery picture has no usable list display URL",
+      "reproduction": "Select canonical /api/assets/31 with a signed gallery preview, save the virtual review, then refresh Admin review list. Persisted pics is canonical; legacyReplyDto returns canonical raw pics and ReplyList binds it directly as image src.",
+      "evidence": [
+        "AdminProductReplyService:128-134/419",
+        "ReplyList:22/105",
+        "AttachmentController.asset:233-236 -> AttachmentService.getSignedAsset:1289-1299"
+      ],
+      "impact": "A bare /api/assets/31 request lacks expires/signature and asset reader rejects it. Editor fix alone does not complete saved-list image display. Public reply source also forwards raw avatar/pics; no claim all public consumers were browser tested.",
+      "missingCoverage": "Mounted picker case tests canonical POST and editor previews but needs refreshed saved-row image source/authorized signed response coverage. Actual R2/browser not executed by reviewer.",
+      "recommendedFix": "Keep persistent canonical reference; provide separately authorized ephemeral display previews when consuming the saved row.",
+      "historicalObservation": true,
+      "historicalStatus": "open-reported-to-root",
+      "resolution": "ProductReplyMediaPolicy validates platform publication metadata and signs eligible UID0/platform0/0 references at Admin/public list/info response time. Controllers supply APP_KEY and no-store; stored canonical bytes remain unchanged. Selector product/SKU canonical images use current product publication owner in10000 chunks. DetailDesignData requests raw replies, validates UID0 platform or actual customer metadata inside its snapshot, then final render signs once.",
+      "sourceCoverage": [
+        "ProductReplyMediaPolicy complete",
+        "AdminProductFictitiousReplyService:191-216,315,331,397-400",
+        "AdminProductReplyService:411-425 and AdminProductReplyController:11",
+        "ReplyService:292-310,475-507 and ReplyController:31-69",
+        "ProductDetailDesignData:85-94,145,166-188"
+      ],
+      "testSourceCoverage": [
+        "fictitious HTTP:183-248 actual consumers/asset endpoint with controlled bucket fixture, canonical row retention, foreign/missing blank, complex wire shape",
+        "fictitious frontend:171-220 mounted save→list refresh src and unavailable placeholder",
+        "product-detail native source:33-61 actual ordinary/combination/seckill consumers, UID0 and real-user ownership, snapshot equality"
+      ],
+      "runtimeStatus": "Assertions reviewed only; no SQL/browser/provider execution by reviewer."
+    },
+    {
+      "id": "FIC-SRC-003",
+      "priority": 2,
+      "status": "resolved-source-reviewed",
+      "title": "Creation accepts valid signed negative epoch but existing Admin date filter refuses it",
+      "reproduction": "add_time 1969-12-31 12:00:00 resolves to -72000 and creation helper accepts it; data=1969/12/31-1969/12/31 reaches AdminProductReplyService.dateEpoch epoch<0 guard and is rejected.",
+      "evidence": [
+        "PHP signed add_time crmeb.sql:3227",
+        "PHP ModelTrait:75-85 negative strtotime values are truthy",
+        "PHP StoreProductReplyStoreProductDao:104 invokes time searcher",
+        "TS AdminProductReplyService.dateEpoch:193"
+      ],
+      "impact": "The legal new historical review cannot be retrieved using the source date selector. No unsigned-column argument justifies this lower bound.",
+      "missingCoverage": "Actual old DatePicker shape and SQL/HTTP negative-epoch creation/read filtering case; reviewer only ran pure parser.",
+      "historicalObservation": true,
+      "historicalStatus": "open-reported-to-root",
+      "resolution": "Admin dateEpoch lower bound changed to signed32. Production pure helpers accept -72000, source negative day/open-upper ranges and zero endpoint semantics. HTTP source creates1969 row then queries actual old DatePicker range.",
+      "sourceCoverage": [
+        "AdminProductReplyService:185-195,233-247"
+      ],
+      "testSourceCoverage": [
+        "fictitious HTTP:250-257",
+        "ordinary creation:195-207 includes -1/exact0/default0"
+      ]
+    },
+    {
+      "id": "FIC-SRC-004",
+      "priority": 2,
+      "status": "resolved-source-reviewed",
+      "title": "Encoded temporary query keys bypass stable image-reference validation",
+      "reproduction": {
+        "reference": "/api/assets/31?%65xpires=1791951000&%73ignature=abc",
+        "accepted": "/api/assets/31?%65xpires=1791951000&%73ignature=abc",
+        "decodedKeys": [
+          "expires",
+          "signature"
+        ]
+      },
+      "evidence": [
+        "FictitiousReplyDialog.imageReference:88 tests raw url.search"
+      ],
+      "impact": "Manually entered expiring asset URL with percent-encoded expires/signature keys is accepted for persistence although decoded URL query keys are temporary credentials.",
+      "recommendedFix": "Validate decoded URL.searchParams key names case-insensitively; preserve separate signed display preview. Consider backend same persistent-reference policy so an API caller cannot bypass the UI.",
+      "missingCoverage": "Mounted rejection for percent-encoded temporary keys.",
+      "historicalObservation": true,
+      "historicalStatus": "open-reported-to-root",
+      "resolution": "Frontend traverses decoded searchParams names case-insensitively for token/expires/signature/provider signature keys. Backend media traverses decoded expires/signature keys. Targeted production probes reject encoded names; display preview remains allowed.",
+      "sourceCoverage": [
+        "FictitiousReplyDialog:85-92",
+        "AdminProductFictitiousReplyService:50-64"
+      ],
+      "testSourceCoverage": [
+        "frontend:280 encoded expiry/signature/token/provider signature negative controls",
+        "ordinary:173-181 encoded expiring externalURL refusal"
+      ]
+    }
+  ],
+  "additionalConfirmedMediaBoundaries": [
+    "Only private relative canonical R2 references add live attachment.view to the reply.manage writer. Exact metadata rows are SHARE NOWAIT locked in ascending attachment ID order until commit.",
+    "Before creation and after audit, actual publicProductPictures validates publication. Complete metadata equality and live capability are checked after audit. Platform type1/relation0/module1/file1/image_type8, admin/1 object prefix/path, stored canonical URL and raster MIME/extension prove rights.",
+    "Conditional signing changes eligible UID0/platform0/0 private slots. Missing APP_KEY, foreign owner, malformed/encoded/unavailable private slot is empty while array position stays; external strings and complex PHP object values retain bytes/shape.",
+    "Selector capacity remains100 products*200 SKUs; only canonical private slots enter publicProductPictures batches10000. Persisted product/SKU image values are unchanged.",
+    "Both DetailDesignData reply readers pass renderMedia=false. userPictures admits UID0/platform0/0 only with platform module1/admin1 metadata and keeps actual positive UID/customer module3/user prefix. Existing final detail/activity render signs after read once.",
+    "The other internal StoreNewcomerService replyList call is intermediate legacy data; final public detail overrides it with design.reply and does not replace the corrected final projection.",
+    "Standalone public review renderer deliberately signs only platform UID0 transport. Positive-UID private values cannot acquire platform publication from a guessed ID; rich detail separately validates genuine customer media."
+  ],
+  "excludedHypotheses": [
+    {
+      "topic": "replyInfo product image oversized canonical ID",
+      "initialInference": "Direct parseCanonicalAttachmentId entry lacks a local max bound.",
+      "excludedBy": "Actual publicProductPictures first calls seckillTimePicture, whose id>2147483647 refusal is caught to blank before SQL IDs are collected. Source and targeted pure predicate exclude it. Suggestion withdrawn; no extra source/test change needed.",
+      "runtimeClaim": "No SQL executed; source-path exclusion and pure helper only."
+    }
+  ],
+  "targetedPureHelperVerification": {
+    "probeCount": 25,
+    "passed": 25,
+    "method": "Production helper extraction; metadata/publishing/signing callbacks are in-memory doubles only, not SQL/crypto/provider proof.",
+    "inputs": [
+      {
+        "path": "workers-ts/src/services/admin/AdminProductReplyService.ts",
+        "sha256": "1141d41efa076932e6169e1d4d21e0e345fa71c2a21573b749fd60368983d1c4"
+      },
+      {
+        "path": "workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts",
+        "sha256": "b4bad2d8b2f660432ddf9dd4f5c2b34790b8aa356e878cd52f51e6c832ff53c1"
+      },
+      {
+        "path": "view/admin-ts/src/pages/reply/FictitiousReplyDialog.vue",
+        "sha256": "d30b0da8ce6c9bcf725669415c8e18e0cf3081d08ea84d4d8d4a4f09a7a08599"
+      },
+      {
+        "path": "workers-ts/src/services/product/ProductReplyMediaPolicy.ts",
+        "sha256": "38243f91e74e0f4856b522b6ef22bdfa034eca44ab9870a4f03b4563fbb0fa40"
+      },
+      {
+        "path": "workers-ts/src/services/activity/SeckillTimeAssetPolicy.ts",
+        "sha256": "612053570c679e5eb89980b3e0f8c61ee95027ad73e390d51416de7a32942b23"
+      },
+      {
+        "path": "workers-ts/src/services/system/AttachmentService.ts",
+        "sha256": "ec5f48dd094599043bb7fa82a00d781c29f2f9a2b20b8e78e938194e33692653"
+      }
+    ],
+    "outcomes": [
+      {
+        "name": "negative-reader-epoch",
+        "passed": true,
+        "actual": -72000
+      },
+      {
+        "name": "negative-source-day-range",
+        "passed": true,
+        "actual": {
+          "start": -115200,
+          "end": -28800,
+          "endExclusive": false
+        }
+      },
+      {
+        "name": "negative-open-upper-strict",
+        "passed": true,
+        "actual": {
+          "end": -28800,
+          "endExclusive": true
+        }
+      },
+      {
+        "name": "cross-zero-keeps-source-zero-truthiness",
+        "passed": true,
+        "actual": {
+          "start": -115200,
+          "endExclusive": false
+        }
+      },
+      {
+        "name": "exact-zero-reader",
+        "passed": true,
+        "actual": 0
+      },
+      {
+        "name": "reader-signed32-lower-range",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "frontend-decoded-temp-key-/api/assets/31?%65xpires=1&%73ignature=abc",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "frontend-decoded-temp-key-/api/assets/31?%54oKeN=temp",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "frontend-decoded-temp-key-https://x.invalid/a.png?%58-AmZ-%73iGnAtUrE=temp",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "frontend-decoded-temp-key-https://x.invalid/a.png?%78-goog-signature=temp",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "frontend-display-signature-retained",
+        "passed": true,
+        "actual": "/api/assets/31?expires=1&signature=abc"
+      },
+      {
+        "name": "frontend-canonical-persistent-reference",
+        "passed": true,
+        "actual": "/api/assets/31"
+      },
+      {
+        "name": "backend-decoded-expiry",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "backend-decoded-signature",
+        "passed": true,
+        "rejected": true
+      },
+      {
+        "name": "backend-static-external-preserved",
+        "passed": true,
+        "actual": "http://external.invalid/raw.png?size=100"
+      },
+      {
+        "name": "eligible-platform-slots-only",
+        "passed": true,
+        "actual": {
+          "avatar": "/api/assets/31?PURE_DISPLAY_SIGNED=1",
+          "pics": [
+            "/api/assets/31?PURE_DISPLAY_SIGNED=1",
+            "http://external.invalid/api/assets/31",
+            {
+              "image": "/api/assets/31"
+            },
+            null,
+            7
+          ]
+        }
+      },
+      {
+        "name": "real-UID-private-slot-not-platform-published",
+        "passed": true,
+        "actual": {
+          "avatar": "",
+          "pics": [
+            "",
+            "https://external.invalid/x"
+          ]
+        }
+      },
+      {
+        "name": "foreign-UID0-tuple-blank",
+        "passed": true,
+        "actual": {
+          "avatar": "",
+          "pics": [
+            ""
+          ]
+        }
+      },
+      {
+        "name": "missing-malformed-encoded-oversized-private-blank",
+        "passed": true,
+        "actual": {
+          "avatar": "",
+          "pics": [
+            "",
+            "",
+            "",
+            ""
+          ]
+        }
+      },
+      {
+        "name": "media-input-not-mutated",
+        "passed": true,
+        "actual": "[{\"uid\":0,\"type\":0,\"relationId\":0,\"avatar\":\"/api/assets/31\",\"pics\":[\"/api/assets/31\",\"http://external.invalid/api/assets/31\",{\"image\":\"/api/assets/31\"},null,7]},{\"uid\":2,\"type\":0,\"relationId\":0,\"avatar\":\"/api/assets/31\",\"pics\":[\"/api/assets/31\",\"https://external.invalid/x\"]},{\"uid\":0,\"type\":2,\"relationId\":20,\"avatar\":\"/api/assets/31\",\"pics\":[\"/api/assets/31\"]},{\"uid\":0,\"type\":0,\"relationId\":0,\"avatar\":\"/api/assets/32\",\"pics\":[\"/api/assets/031\",\"/%61pi/assets/31\",\"/attachments/admin/1/a.png\",\"/api/assets/2147483648\"]}]"
+      },
+      {
+        "name": "one-bounded-publication-callback",
+        "passed": true,
+        "actual": 1
+      },
+      {
+        "name": "opaque-PHP-object-not-traversed",
+        "passed": true,
+        "actual": {
+          "avatar": "https://external.invalid/api/assets/31",
+          "pics": {
+            "image": "/api/assets/31",
+            "raw": "http://x.invalid/y"
+          }
+        }
+      },
+      {
+        "name": "missing-key-blanks-only-private-slots",
+        "passed": true,
+        "actual": {
+          "avatar": "",
+          "pics": [
+            "",
+            "http://external.invalid/api/assets/31",
+            {
+              "image": "/api/assets/31"
+            },
+            null,
+            7
+          ]
+        }
+      },
+      {
+        "name": "missing-key-no-publication-read",
+        "passed": true,
+        "actual": 1
+      },
+      {
+        "name": "actual-shared-policy-rejects-oversized-ID-before-SQL",
+        "passed": true,
+        "rejected": true
+      }
+    ]
+  },
+  "testSourceDefinitionCounts": {
+    "fictitiousFrontend": 14,
+    "nativeRichDetailNewCase": 1,
+    "semantics": "Counted source definitions only, not runtime results; loop iterations are not definitions."
+  },
+  "remainingSubstantiveFindings": [],
+  "pendingSourceReview": [],
+  "runtimeValidationBoundary": "Root owns upcoming serial full-file SQL/native/types/build/browser validation. This source-only receipt makes no native/ordinary pass, SQL snapshot, real R2/browser or production claim."
+}

@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-14T04:52:02.880203+00:00",
+  "command": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers",
+    "1",
+    "test/supplier-product-rule-http.test.ts",
+    "test/supplier-product-rule-workflow-frontend.test.ts",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=/home/cina/cinagroup/cinashop/workers-ts/audit/rule-20261014/supplier-unicode-affected.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "filesBefore": {
+    "workers-ts/src/services/supplier/SupplierProductRuleInput.ts": "f9c5bb97da806213943834e5f2adf4135dab702180652102e8c0480114fa98ac",
+    "view/supplier-ts/src/utils/productRules.ts": "a41c1bebe9f85bcb5e87a7afc4cf0be03edb945039201577b592bee8aea4a529",
+    "view/supplier-ts/src/pages/ProductSpecifications.vue": "4dea9298ebcced4d570d16975f9eef3a76f0dd142710db2894b9ebd2a2c55062",
+    "workers-ts/test/supplier-product-rule-http.test.ts": "9f0bb68878a85332ff861cf91556ceee7f9cf73e1764bf223519da7578ae0c17",
+    "workers-ts/test/supplier-product-rule-workflow-frontend.test.ts": "165722759d44e44e20b0ddfba55ffa90af21cca43abb970c1eea3f455a70d3c4"
+  },
+  "nativePostgresRequested": false,
+  "testFinancePostgresUrlRemovedFromChildEnv": true,
+  "scope": "full HTTP and actual-mounted workflow files only",
+  "exitCode": 0,
+  "finishedAt": "2026-10-14T04:52:16.425941+00:00",
+  "filesAfter": {
+    "workers-ts/src/services/supplier/SupplierProductRuleInput.ts": "f9c5bb97da806213943834e5f2adf4135dab702180652102e8c0480114fa98ac",
+    "view/supplier-ts/src/utils/productRules.ts": "a41c1bebe9f85bcb5e87a7afc4cf0be03edb945039201577b592bee8aea4a529",
+    "view/supplier-ts/src/pages/ProductSpecifications.vue": "4dea9298ebcced4d570d16975f9eef3a76f0dd142710db2894b9ebd2a2c55062",
+    "workers-ts/test/supplier-product-rule-http.test.ts": "9f0bb68878a85332ff861cf91556ceee7f9cf73e1764bf223519da7578ae0c17",
+    "workers-ts/test/supplier-product-rule-workflow-frontend.test.ts": "165722759d44e44e20b0ddfba55ffa90af21cca43abb970c1eea3f455a70d3c4"
+  },
+  "sourceHashesUnchangedDuringRun": true,
+  "tests": {
+    "success": true,
+    "total": 37,
+    "passed": 37,
+    "failed": 0,
+    "pending": 0
+  }
+}

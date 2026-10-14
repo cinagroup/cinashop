@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-10-14T12:15:24.861037+00:00",
+  "legacyAdded": 2,
+  "modernAliasesAdded": 0,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product",
+      "handler": "AdminProductCatalogReadController.list",
+      "permission": "product.view",
+      "sourceSeed": 108
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/type_header",
+      "handler": "AdminProductCatalogReadController.header",
+      "permission": "product.view",
+      "sourceSeed": 192,
+      "exactSeedMenuPath": "/adminproduct/product/type_header"
+    }
+  ],
+  "browserRedirects": [
+    {
+      "path": "/admin/product/product_list",
+      "target": "/product",
+      "queryAndHashRetained": true
+    },
+    {
+      "path": "/admin/product/product_reply/:id?",
+      "target": "/reply",
+      "nonemptyPathIdWinsProductId": true,
+      "queryAndHashRetained": true,
+      "isReplyZeroPreserved": true
+    }
+  ],
+  "browserRedirectsAreNotApiRoutes": true,
+  "pageSeed2": {
+    "uniqueAuth": "admin-store-storeProuduct-index",
+    "menuPath": "/admin/product/product_list",
+    "capability": "product.view"
+  },
+  "additionalGenuineBlankSelectorSeeds": [
+    377,
+    388,
+    399,
+    410,
+    941
+  ],
+  "genericModernProductListChanged": false,
+  "noDmlSchemaMigrationStockWriterAdded": true,
+  "exactRegistryOccurrences": {
+    "/adminapi/product/product": 1,
+    "/adminapi/product/product/type_header": 1
+  },
+  "implementationFiles": [
+    "workers-ts/src/routes/adminapi.ts",
+    "workers-ts/src/controllers/api/v1/AdminProductCatalogReadController.ts",
+    "workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+    "workers-ts/src/services/admin/AdminPermissionService.ts"
+  ]
+}

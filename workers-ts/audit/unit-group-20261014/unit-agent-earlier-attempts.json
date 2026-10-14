@@ -1,0 +1,31 @@
+{
+  "recordKind": "exported-agent-observation-not-original-shell-log",
+  "initialOrdinary": {
+    "command": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --config vitest.config.ts test/admin-product-unit.test.ts test/product-metadata-migration.test.ts",
+    "toolSessionId": 69041,
+    "exitCode": 0,
+    "filesPassed": 2,
+    "testsPassed": 12,
+    "testsSkipped": 0,
+    "elapsedSeconds": 15.50,
+    "sourceScope": "Historical initial leaf input; not final integrated-source credit"
+  },
+  "defaultHeapTypecheckFailure": {
+    "command": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/typescript/bin/tsc --noEmit --pretty false",
+    "toolSessionId": 64372,
+    "exitCode": 134,
+    "observedHeapMegabytes": 2040.7,
+    "fatalMessage": "FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory",
+    "interpretation": "Agent omitted the repository standard --max-old-space-size=8192; no completed typecheck assertion. Root will run standard complete scripts."
+  },
+  "intermediateIntegratedOrdinaryFailure": {
+    "toolSessionId": 6948,
+    "exitCode": 1,
+    "testsFailed": 3,
+    "failures": [
+      "Two HTTP helper exact cache-control assertions rejected middleware private, no-store, max-age=0; corrected to assert private and no-store directives.",
+      "Existing product-metadata route-source assertion required double quotes; integration changed only source quotes. Corrected this assertion to accept both JS quote styles."
+    ],
+    "sourceScope": "Historical intermediate integrated input. Final rerun is separately captured in ordinary-final.log."
+  }
+}

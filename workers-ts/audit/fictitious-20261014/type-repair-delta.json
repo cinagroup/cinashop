@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-10-14T10:09:39.396512+00:00",
+  "historicalReceipt": "pre-type-repair-worker-unit-types-status.json",
+  "historicalFreeze": "pre-type-repair-frozen-before.json",
+  "changed": {
+    "workers-ts/src/services/admin/AdminProductFictitiousReplyService.ts": {
+      "before": "b4bad2d8b2f660432ddf9dd4f5c2b34790b8aa356e878cd52f51e6c832ff53c1",
+      "after": "eaa28ceb2f9e2384eedba408afd4ee9ed03f37337e862a660fa428c777b82946"
+    },
+    "workers-ts/test/admin-product-fictitious-reply-native.test.ts": {
+      "before": "f063c21d6752980e71501ad9980197b5c0b3e621923500de53bdcf6e8447c92e",
+      "after": "9e370e3a0775a1fb86281433ce6d49d2b7a3c0cba1581b98a1964ac75d527bf0"
+    },
+    "workers-ts/test/admin-product-fictitious-reply-workflow-frontend.test.ts": {
+      "before": "6b634a5e131fbdd8ba9575c553719950a9a252b2e6224e4679fb3bd8fe14d983",
+      "after": "ae8bb63f6465bb9b5bf33933ae127d4e3b941647e8b54742c97671e60f60134a"
+    }
+  },
+  "unchangedCount": 3355,
+  "reasons": [
+    "Crypto random bytes converted explicitly byte-by-byte to padded lower-case hex; retains16fresh bytes/32chars with Buffer or Uint8Array",
+    "Six actual native SQL result arrays receive explicit structural types; no SQL, assertions or timeouts changed",
+    "Remove unused copied frontend thread factory; all14case definitions/behavior remain"
+  ],
+  "frontendUiInputsChanged": false,
+  "validationPipelineStoppedAtFirstCheck": true
+}

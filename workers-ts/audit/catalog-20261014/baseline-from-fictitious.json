@@ -1,0 +1,11 @@
+{
+  "capturedAt": "2026-10-14T11:42:56.059721+00:00",
+  "scope": "historical previous completedfictitious local candidate, not currentpre-edit snapshot",
+  "previousLedger": "workers-ts/audit/php-ts-fictitious-reply-migration-20261014.json",
+  "previousLedgerSHA256": "c8addb6f2b541a24359efd800ec836ba0c08d0b19ad235ca0646a69d322ec6ef",
+  "previousFreeze": "workers-ts/audit/fictitious-20261014/frozen-after.json",
+  "previousFreezeSHA256": "36f463ba3a0ddb267ac7b3d8892d8ee8208b0ba0a0d78d93c4087881d2d19f17",
+  "previousFreezeCount": 3358,
+  "previousFreezeDigest": "39e342050e8db8107f869dc2b3cf11fb6cf43e40e06e8f721d6bad3340caf7e4",
+  "goalActive": true
+}

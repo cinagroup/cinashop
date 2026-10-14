@@ -1,0 +1,12 @@
+{
+  "normalFiles": 14,
+  "normalPassedFiles": 11,
+  "nativeFiles": 6,
+  "normalPassed": 98,
+  "nativePassed": 52,
+  "overlap": 27,
+  "uniquePassed": 123,
+  "normalConditionalSkipped": 25,
+  "nativeConditionalCovered": 25,
+  "method": "file + ancestor title chain + title; all selected definitions have unique keys; passed only"
+}

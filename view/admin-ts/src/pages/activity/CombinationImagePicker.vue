@@ -1,7 +1,7 @@
 <template>
   <el-button :disabled="!canChoose || disabled" @click="open">从图库选择</el-button>
-  <span v-if="!canChoose" class="hint">选择图片需要图库查看权限</span>
-  <el-dialog v-model="visible" title="选择拼团图片" width="min(840px, calc(100vw - 24px))" append-to-body @closed="onClosed">
+  <span v-if="!hasAttachmentView" class="hint">选择图片需要图库查看权限</span>
+  <el-dialog v-model="visible" :title="title || '选择拼团图片'" width="min(840px, calc(100vw - 24px))" append-to-body @closed="onClosed">
     <div class="toolbar">
       <el-select v-model="pid" aria-label="图片分类" @change="search"><el-option label="全部分类" :value="0" /><el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" /></el-select>
       <el-input v-model="name" aria-label="图片名称" placeholder="搜索图片名称" maxlength="100" clearable @keyup.enter="search" />
@@ -25,11 +25,12 @@ import { ElMessage, type UploadRequestOptions } from 'element-plus';
 import { useAuthStore } from '@/stores/auth';
 import { getToken } from '@/utils/auth';
 import { apiAttachmentCategories, apiAttachmentList, apiAttachmentUpload, type AttachmentItem, type AttachmentCategoryItem } from '@/api/attachment';
-const props = defineProps<{ disabled: boolean; editorKey: string; limit?: number }>();
+const props = defineProps<{ disabled: boolean; editorKey: string; limit?: number; title?: string }>();
 const emit = defineEmits<{ choose: [images: { reference: string; preview: string }[]] }>();
 const auth = useAuthStore();
 const identity = computed(() => `${auth.token}:${auth.userInfo?.id}:${auth.userInfo?.level}:${auth.uniqueAuth.join(',')}:${props.editorKey}`);
-const canChoose = computed(() => !props.disabled && auth.token === getToken() && !!auth.token && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes('attachment.view')));
+const hasAttachmentView = computed(() => auth.token === getToken() && !!auth.token && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes('attachment.view')));
+const canChoose = computed(() => !props.disabled && hasAttachmentView.value);
 const canUpload = computed(() => canChoose.value && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes('attachment.manage')));
 const visible = ref(false), loading = ref(false), uploading = ref(false), error = ref(''), categoryError = ref('');
 const items = ref<AttachmentItem[]>([]), categories = ref<AttachmentCategoryItem[]>([]), name = ref(''), pid = ref(0), page = ref(1), count = ref(0);

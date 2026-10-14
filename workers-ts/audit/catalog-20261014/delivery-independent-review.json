@@ -1,0 +1,845 @@
+{
+  "version": 1,
+  "reviewedAt": "2026-10-14T12:56:21.161455+00:00",
+  "reviewer": "/root/catalog_source_review",
+  "status": "pass-final",
+  "scope": "Independent final local catalog/navigation delivery evidence review, resumed only to finish the currently authorized GitHub push preparation. This receipt does not resume or complete the paused overall PHP-to-TS migration goal.",
+  "mode": "Read-only source/evidence/hash/visual inspection; only this new receipt was written in the repository. Temporary recomputation code and contact sheets are outside QA and repository under /tmp. No heavy validation, cluster restart, business mutation, commit or push performed by this reviewer.",
+  "reviewedLedger": {
+    "path": "workers-ts/audit/php-ts-catalog-navigation-migration-20261014.json",
+    "sha256": "bc4bf57f0915de1caab1a36e6c5851a18e9c1e1b195c7ebba63976c79392c4e8",
+    "byteLength": 32212
+  },
+  "canonicalLedgerProjection": {
+    "algorithm": "SHA256 UTF8 compact sorted-key JSON, exclude ONLY top-level independentDeliveryReview",
+    "sha256": "8c5d09e36c499c3b978c4f38a18ab0b5e94ecc07d044f01302e1629b41d04369",
+    "receipt": {
+      "path": "workers-ts/audit/catalog-20261014/delivery-ledger-projection.json",
+      "sha256": "830513d4eb4f3cc7529280f93f6e8d8c2bdbff7418392d748ee3dc8e6e54babb",
+      "byteLength": 289
+    },
+    "attachmentBoundary": "Root may add this receipt to independentDeliveryReview and thereby change raw ledger bytes. All other ledger fields must retain this reviewed projection. The reviewedLedger SHA identifies the original bytes reviewed, not that later self-reference."
+  },
+  "report": {
+    "path": "workers-ts/docs/php-ts-catalog-navigation-migration-20261014.md",
+    "sha256": "0e3a2b01ab4d84684f891fb1b8a94b09c9883908325f566c4f114ca82404c3c4",
+    "byteLength": 11383
+  },
+  "findings": [],
+  "necessaryCorrections": [],
+  "verification": {
+    "method": "Independently parse final-ordinary.json assertionResults into repo-relative filename + ancestorTitles + title identities; independently parse final-native.log verbose pass definitions (regular-unit, full filename and titles, strip final duration). Reject repeated identities, compare both rebuilt maps with verification-summary, compute union/intersection and check every skipped definition in native passes. Case-internal loops and previous reruns are not added as definitions.",
+    "counts": {
+      "ordinaryPassed": 171,
+      "ordinaryConditional": 43,
+      "nativePassed": 127,
+      "overlap": 84,
+      "uniquePassed": 214,
+      "allConditionalSupplemented": true,
+      "ordinaryFiles": 16,
+      "nativeFiles": 9
+    },
+    "ordinaryFilesWithPassedDefinitions": 13,
+    "ordinaryFailed": 0,
+    "nativeFailed": 0,
+    "nativeSkipped": 0,
+    "ordinaryReporter": {
+      "path": "workers-ts/audit/catalog-20261014/final-ordinary.json",
+      "sha256": "ce0d294925e848abc4a19f15caafd54e46be6d91349c78b105958f3be2004f4d",
+      "byteLength": 109000
+    },
+    "nativeRawVerboseLog": {
+      "path": "workers-ts/audit/catalog-20261014/final-native.log",
+      "sha256": "e206e0d0328d254c80b3907efbb67aff99a1fca9f34a8752102bcfa5c7435a64",
+      "byteLength": 135099
+    },
+    "definitionReceipt": {
+      "path": "workers-ts/audit/catalog-20261014/verification-summary.json",
+      "sha256": "6da1b976a2dfaaafe95e47a6ee91792e0f71b7db6a02ae5d8380264b0db7977d",
+      "byteLength": 118264
+    },
+    "ordinaryDefinitionMapCanonicalSha256": "76c97501b586e7f8857a3923b93433773450d92f3db9f2914210ccfa54f242ab",
+    "nativeDefinitionMapCanonicalSha256": "addcf8c987b0671e70e389cacae2660e98b7bd07a4666f56e165e0ad90e20b45",
+    "all43ConditionalIdentitiesSupplemented": [
+      "workers-ts/test/admin-product-catalog-read-native.test.ts > main catalogue PG16 SELECT-only LOGIN and native repeatable-read/public media receipts > executes both genuine main reads under SELECT-only native LOGIN with no audit/sequence/order/catalogue write privileges and complete business immutability",
+      "workers-ts/test/admin-product-catalog-read-native.test.ts > main catalogue PG16 SELECT-only LOGIN and native repeatable-read/public media receipts > uses one real repeatable-read snapshot across count, rows, SKU totals, names, relations and private publication metadata",
+      "workers-ts/test/admin-product-catalog-read-native.test.ts > main catalogue PG16 SELECT-only LOGIN and native repeatable-read/public media receipts > keeps all eight real header counts on one native snapshot and exposes the newly committed product states only on the next read",
+      "workers-ts/test/admin-product-catalog-read-native.test.ts > main catalogue PG16 SELECT-only LOGIN and native repeatable-read/public media receipts > renders authorized native canonical media without R2/HTTP access, blanks foreign/missing/malformed slots and rechecks live metadata on each new snapshot",
+      "workers-ts/test/admin-product-catalog-read-native.test.ts > main catalogue PG16 SELECT-only LOGIN and native repeatable-read/public media receipts > rejects expiry after real count work using PostgreSQL wall clock, preserves full read-only snapshot and succeeds with a fresh actor",
+      "workers-ts/test/admin-product-catalog-read-native.test.ts > main catalogue PG16 SELECT-only LOGIN and native repeatable-read/public media receipts > bounds an actual main-table lock wait, proves the exact blocker PID and SQLSTATE, leaves business unchanged and permits a clean retry",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > reads source form/catalogue under SELECT-only LOGIN, preserves independent193 permission and refuses unfunded creation SQL",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > creates and refreshes exact truncated source star with INSERT-only audit, star-only catalogue DML and no real evidence write privileges",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > blocks actual real submitReply behind fake creation product lock then incorporates the committed fake and customer into source star",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > blocks fake creation behind an actual uncommitted customer producer and refreshes from both complete reviews after its commit",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > locks all autoCommentOrder products in ascending order before inserts even when cart order has Supplier20 before platform10",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > serializes actual multi-product automatic reviews after an audited fake producer and incorporates every resulting member into the rating",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > orders the actual Supplier reply writer after fake product lock without broadening Supplier ownership or modifying fake evidence",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > holds source Admin soft-delete behind real producer product lock and deliberately leaves rating unchanged until the next creation event",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > reports the actual Admin authority NOWAIT conflict while fake creation is in flight and permits a source no-rating-refresh delete on retry",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > fails selected ordinary SKU row lock immediately with NOWAIT instead of deadlocking a reverse SKU→product maintenance writer",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > rejects private-media publication on a proven native attachment row locker with SHARE NOWAIT and preserves all canonical and business evidence",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > proves native audit owner triggers reach and roll back private attachment metadata rewrite/deletion under a gallery-authorized restricted LOGIN",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > rolls back a complete inserted review/star/audit when the original JWT session expires during a proven audit wait",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > orders concurrent real numeric-role revocation behind the live write barrier and refuses the subsequent fake creation",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > orders genuine185 menu revocation behind the frozen numeric authority and rejects a later create using the same JWT",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > proves all 24 audit identity/scope mutations execute native owner triggers under INSERT-only audit and roll back",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > proves suppressed/rewritten native review and star DML receipts roll back with no audit and no external evidence mutation",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > proves native skipped audit and successful audit-trigger tampering of new review, product and selected SKU are reached and fully rolled back",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > retains actual historical order/cart review creation when the current product is missing while refreshing the present products of the same order",
+      "workers-ts/test/admin-product-fictitious-reply-native.test.ts > virtual review PG16 independent LOGIN receipts and real public/Supplier/product producer locks > preserves a product existing star when the real source aggregate has no nondeleted members and computes exact tenths without float rounding",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > reads hidden, Supplier and orphan moderation with SELECT-only LOGIN while denying product-only, wildcard and unfunded SQL writes",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > completes numeric-authority moderation with id-only product lock permission, comment DML, parent UPDATE, INSERT-only audit and no product content/order/like write privileges",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > orders actual public comment praise before Admin physical deletion on the parent lock and preserves like evidence",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > holds late actual public praise behind audited Admin comment deletion and refuses its disappeared target",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > orders actual customer replyComment before central review soft deletion and retains the committed customer evidence",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > orders actual public review praise before central soft deletion and retains its committed counter and like relationship",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > holds late actual customer replyComment behind Admin soft deletion and creates neither comment nor praise after the commit",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > orders the actual Supplier reply before central Admin reply and retains two separate roots and the Supplier reply flag",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > holds actual Supplier reply behind an audited central Admin root while preserving each owner response",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > holds current-role revocation behind an authenticated write waiting on its parent and denies every subsequent action",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > locks exact numeric reply API189 through a parent wait and commits before that menu revoke",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > rolls back a pending parent-locked response when the original authenticated session expires during the proven wait",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > proves all 24 default audit identity mutations reach owned native triggers under INSERT-only audit privilege and roll back",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > proves real skipped comment INSERT UPDATE DELETE and parent UPDATE cannot produce a success or committed audit",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > proves skipped native audit INSERT was reached for response creation child creation and physical deletion then rolls back",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > rolls back DML-side cross-parent response rewrites and exact-ID reconstruction after physical deletion",
+      "workers-ts/test/admin-product-reply-native.test.ts > Admin real review threads on independent PG16 LOGINs and public/Supplier parent-first writers > rolls back AFTER-audit cross-parent response moves and deleted target or direct-child reconstruction using global absence proofs"
+    ],
+    "fullCommands": {
+      "path": "workers-ts/audit/catalog-20261014/final-commands.json",
+      "sha256": "496a6d3e419f3d69a924a65a8c43717dad1325c27dc0d6d8e9aba5869aeebc53",
+      "byteLength": 3851
+    },
+    "eightTerminalFacts": [
+      {
+        "name": "worker-unit-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T12:13:08.914727+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:15:21.801273+00:00",
+        "exitCode": 0,
+        "log": "worker-unit-types.log"
+      },
+      {
+        "name": "worker-runtime-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T12:15:21.840485+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:16:38.512486+00:00",
+        "exitCode": 0,
+        "log": "worker-runtime-types.log"
+      },
+      {
+        "name": "admin-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "startedAt": "2026-10-14T12:16:38.546430+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:17:07.537674+00:00",
+        "exitCode": 0,
+        "log": "admin-types.log"
+      },
+      {
+        "name": "supplier-types",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "startedAt": "2026-10-14T12:17:07.574705+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:17:15.322875+00:00",
+        "exitCode": 0,
+        "log": "supplier-types.log"
+      },
+      {
+        "name": "final-ordinary",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "test/admin-product-catalog-read.test.ts",
+          "test/admin-product-catalog-read-http.test.ts",
+          "test/admin-product-catalog-read-native.test.ts",
+          "test/admin-product-catalog-navigation-frontend.test.ts",
+          "test/admin-product-reply.test.ts",
+          "test/admin-product-reply-http.test.ts",
+          "test/admin-product-reply-native.test.ts",
+          "test/admin-product-reply-workflow-frontend.test.ts",
+          "test/admin-product-fictitious-reply.test.ts",
+          "test/admin-product-fictitious-reply-http.test.ts",
+          "test/admin-product-fictitious-reply-native.test.ts",
+          "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+          "test/admin-permission.test.ts",
+          "test/legacy-admin-permissions.test.ts",
+          "test/admin-product-frontend-parity.test.ts",
+          "test/admin-operational-group-data-frontend.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=audit/catalog-20261014/final-ordinary.json"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T12:17:15.356947+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:18:50.525739+00:00",
+        "exitCode": 0,
+        "log": "final-ordinary.log"
+      },
+      {
+        "name": "final-native",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/admin-product-catalog-read.test.ts",
+          "test/admin-product-catalog-read-http.test.ts",
+          "test/admin-product-catalog-read-native.test.ts",
+          "test/admin-product-reply.test.ts",
+          "test/admin-product-reply-http.test.ts",
+          "test/admin-product-reply-native.test.ts",
+          "test/admin-product-fictitious-reply.test.ts",
+          "test/admin-product-fictitious-reply-http.test.ts",
+          "test/admin-product-fictitious-reply-native.test.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-14T12:18:50.557006+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:20:51.679009+00:00",
+        "exitCode": 0,
+        "log": "final-native.log"
+      },
+      {
+        "name": "admin-build",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "startedAt": "2026-10-14T12:20:51.714244+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:21:21.151940+00:00",
+        "exitCode": 0,
+        "log": "admin-build.log"
+      },
+      {
+        "name": "supplier-build",
+        "argv": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "startedAt": "2026-10-14T12:21:21.181690+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-14T12:21:34.528085+00:00",
+        "exitCode": 0,
+        "log": "supplier-build.log"
+      }
+    ],
+    "allEightExit0": true,
+    "allEightStartedAfterFinalFreeze": true,
+    "eightCommandsNonoverlapping": true,
+    "ordinaryAndNativeExactWholeFileArgv": true,
+    "noCaseRegexChangedShardExcludeOrOnlyFilters": true,
+    "workerTypesMemoryMiB": 8192,
+    "ordinaryVitestSingleWorker": true,
+    "nativeVitestSingleWorker": {
+      "actualRunnerInspected": true,
+      "nineArgvFilesAllInSingleWorkerSelectionSet": true,
+      "noCaseFilterActivatedInRawLog": true,
+      "runner": {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "7d199d1f97ee0ca61e767d0065f579aefa009a7e1070d3e9967d983b302f43bd",
+        "byteLength": 51514
+      }
+    },
+    "sharedSerialWrapper": {
+      "actualInvocationInspected": true,
+      "oneOuterWrapperNoNestedWrapper": true,
+      "commandRunner": {
+        "path": "workers-ts/audit/catalog-20261014/run-check.py",
+        "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de",
+        "byteLength": 838
+      },
+      "sequentialMatrix": {
+        "path": "workers-ts/audit/catalog-20261014/run-matrix.py",
+        "sha256": "68b0405b19031140984aacd60f1163e1b0906fc7b66349e159e9b833d10dbba5",
+        "byteLength": 371
+      },
+      "sharedWrapper": {
+        "path": "/home/cina/cinagroup/tools/validate-serial.sh",
+        "sha256": "30a0897f142bded0b195d6bbab82b208e212f6b162ddd6fb7561e54628713a74",
+        "byteLength": 399
+      }
+    },
+    "boundary": "Eight completed local scoped commands; no rerun by this reviewer, no full-repository CI claim, no Workers/Hyperdrive/production runtime inference."
+  },
+  "freeze": {
+    "count": 3365,
+    "digest": "1dba80872bd77d46df79bb7041e2a8fed11b948d49d86309c2cb69b58dd3c5fd",
+    "currentAllHashesMatch": true,
+    "inventoryComplete": true,
+    "before": {
+      "path": "workers-ts/audit/catalog-20261014/frozen-before.json",
+      "sha256": "bf031c12a8b2730f06a7751f2e5e8fc8d18fc9f6cfb7798a5a791a21f17ee62a",
+      "byteLength": 438620
+    },
+    "after": {
+      "path": "workers-ts/audit/catalog-20261014/frozen-after.json",
+      "sha256": "1b0cda5ff83bafea38dbeffa571c346ce5b33a321ec3c2fea815905728958c6c",
+      "byteLength": 438754
+    },
+    "method": "Re-hash current bytes of every3365 declared input, recompute compact sorted map SHA and independently enumerate all eight complete directories plus30 explicit paths. Match before and after maps exactly.",
+    "notCompleteBuildInputGraph": true,
+    "environmentValuesAndInstalledDependencyBytesExcluded": true
+  },
+  "ledgerReferences": {
+    "objectsChecked": 93,
+    "uniquePathsChecked": 65,
+    "allExistAndSha256AndDeclaredByteLengthsMatch": true,
+    "proofReceiptIndexEntries": 52,
+    "method": "Recursively validate every ledger object containing path+sha256; inspect references as artifact bytes, without treating historical stage source hashes as current source hashes."
+  },
+  "sourceEvidence": {
+    "immutableIndependentSourceReview": {
+      "path": "workers-ts/audit/catalog-20261014/source-independent-review.json",
+      "sha256": "0c8a4c391451788162734d4449a19efeec18f368ff29bd3034c414bbe3d2e2a8",
+      "byteLength": 65761
+    },
+    "implementationStagesPreserved": 8,
+    "currentActuallyObservedFinalStageInputRefsChecked": 16,
+    "originalPhpAndOldSpaActuallyObservedSourceInputs": 21,
+    "laterActuallyReadSourceSupplement": 1,
+    "all22SourceHashesStillMatch": true,
+    "threeSourceFindings": [
+      {
+        "id": "catalog-read-empty-copy-grant",
+        "status": "resolved"
+      },
+      {
+        "id": "catalog-correlated-projection-qualification",
+        "status": "resolved"
+      },
+      {
+        "id": "catalog-existing-async-writer-context",
+        "status": "resolved"
+      }
+    ],
+    "remainingSourceFindings": [],
+    "resolutionEvidence": [
+      {
+        "id": "catalog-read-empty-copy-grant",
+        "proof": "Historical actual24 pure production helper probes and final complete shared/HTTP SQL permission tests, exact full seed tuples. Helper and opaque source proof remain separate from runtime SQL tests."
+      },
+      {
+        "id": "catalog-correlated-projection-qualification",
+        "proof": "Historical production AST/real installed Drizzle emitter before/after SQL retained, four fixed outer store_product.id correlations, final actual SQL DTO tests passed. No WHERE blind repair or assertions weakened."
+      },
+      {
+        "id": "catalog-existing-async-writer-context",
+        "proof": "Frozen MutationScope and separate batchRun ownership repair; final12 whole frontend cases and actual ElementPlus browser stale options/confirmation/session/type6/busy-owner flows passed. These protect existing write lifecycle; no newly migrated inventory write is inferred."
+      }
+    ],
+    "reportSourceQualificationsChecked": [
+      "Nonempty category distinct count preserves ignoring owner/pid/keyword/brand/label and sold count AND versus list OR; source status counts keep their own verification exceptions.",
+      "Unfiltered source pid0 catalog includes malformed owner tuples, explicit supplier filter includes copies; malformed owner private media blanking does not remove legal read rows.",
+      "Main stock filter is distinct from all ordinary SKU SUM including retired; no-SKU output null and branch_stock0; original PHP unsigned versus existing PostgreSQL signed reconciliation is explicit.",
+      "Supplier settle fallback requires explicit supplier filter and nonpositive settle value; product_id keyed last encountered ordinary row has noORDER, no invented MIN/ID-order or cross-engine golden equality.",
+      "Count<=limit and page!=1 fallback occurs before effective page/limit truthiness; page0 is not universally unpaged. Query capacities and canonical parser boundaries belong to TS.",
+      "Menu page2, API108/header192/selector193 and genuine blank377/388/399/410/941 tuples are exact; menu HEAD cannot grant, authorized HTTP HEAD and opaque source fallback proof are separate.",
+      "Each HTTP endpoint has its own repeatable-read read-only snapshot. List and header requests share no snapshot; authority admission is starting snapshot and final JWT wall-clock check, without later committed revocation guarantees.",
+      "Private R2 signing/native metadata/HMAC tests, stubbed object bytes, browser synthetic transport and no real PHP PDO/JSON execution have distinct proof boundaries.",
+      "Previous selector and unchanged genericmodern product/list remain distinct. Global get_script, stock migration, complete CI, real accounts/devices and deployment remain open."
+    ]
+  },
+  "history": {
+    "index": {
+      "path": "workers-ts/audit/catalog-20261014/historical-verification-receipts.json",
+      "sha256": "33a54eaac962d427748f050239ef867748c3087c64e97b824dec00965aaddf58",
+      "byteLength": 5505
+    },
+    "fourPriorAsOfArtifactsPreserved": [
+      {
+        "path": "workers-ts/docs/php-ts-fictitious-reply-migration-20261014.md",
+        "sha256": "f110897f8a6eafe1b69b18945435aa32b813dbba5264877220d13c4d40407b94",
+        "byteLength": 12102
+      },
+      {
+        "path": "workers-ts/audit/php-ts-fictitious-reply-migration-20261014.json",
+        "sha256": "c8addb6f2b541a24359efd800ec836ba0c08d0b19ad235ca0646a69d322ec6ef",
+        "byteLength": 39283
+      },
+      {
+        "path": "workers-ts/audit/fictitious-20261014/frozen-before.json",
+        "sha256": "4d8aaa673b51705ff0436e15d0cebd0d43215bf7851fef590e448121dbeaa6c1",
+        "byteLength": 437677
+      },
+      {
+        "path": "workers-ts/audit/fictitious-20261014/delivery-independent-review.json",
+        "sha256": "f3ed168ae16daccd4124f6875515acbd9c6459ca7f102755f8c72f0b71661793",
+        "byteLength": 54503
+      }
+    ],
+    "historicalOriginalReporterCounts": {
+      "initial-ordinary": {
+        "passed": 60,
+        "failed": 4,
+        "conditionalSkipped": 6,
+        "exitCode": 1
+      },
+      "corrected-ordinary": {
+        "passed": 65,
+        "failed": 0,
+        "conditionalSkipped": 6,
+        "exitCode": 0
+      },
+      "batch-context-ordinary": {
+        "passed": 12,
+        "failed": 0,
+        "conditionalSkipped": 0,
+        "exitCode": 0
+      }
+    },
+    "preTypeRepairExitCode": 2,
+    "initialFailuresRetained": true,
+    "typeRepairBoundary": "Only unused fixture/systemRole cleanup and explicit TypeScript row result casts for two native observers; SQL and assertions unchanged. Original failed status/log preserved separately rather than relabelled pass.",
+    "allHistoricalReceiptHashRefsMatch": true,
+    "checklists": {
+      "MIGRATION_CHECKLIST.md": {
+        "total": 404,
+        "checked": 249,
+        "open": 155
+      },
+      "MIGRATION_AUDIT.md": {
+        "total": 88,
+        "checked": 50,
+        "open": 38
+      }
+    },
+    "allCurrentCheckboxRowsExactlyBeforeAfter": true,
+    "checkboxBefore": {
+      "path": "workers-ts/audit/catalog-20261014/checklist-before.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6",
+      "byteLength": 327654
+    },
+    "checkboxAfter": {
+      "path": "workers-ts/audit/catalog-20261014/checklist-after.json",
+      "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6",
+      "byteLength": 327654
+    }
+  },
+  "browser": {
+    "finalReceipt": {
+      "path": "/tmp/cinashop-catalog-qa/attempt-005-browser-receipt.json",
+      "sha256": "46cb7dad407ccf613324ab167e766fa45ded8ba7a3e19a57e92cf995fad54ace",
+      "byteLength": 58127
+    },
+    "finalScript": {
+      "path": "/tmp/cinashop-catalog-qa/attempt-005-run-browser.mjs",
+      "sha256": "cdc3380d030fa19817dc25aac05327d14e55b1979cb91ec058a618fdd5ca00ac",
+      "byteLength": 28691
+    },
+    "report": {
+      "path": "/tmp/cinashop-catalog-qa/QA.md",
+      "sha256": "c18755a754a14f65bb13163abd0132e837ef326d4f8be499253009365686436f",
+      "byteLength": 8845
+    },
+    "manifest": {
+      "path": "/tmp/cinashop-catalog-qa/artifact-manifest.json",
+      "sha256": "a035b86311a8d7c4c1ec11c95ad8261e6d6371c104bb2ba3e236a2328d8edfcb",
+      "byteLength": 40660
+    },
+    "manifestFileCount": 200,
+    "all200FilesShaAndSizeMatch": true,
+    "manifestExactOwnedDirectoryInventory": true,
+    "qaArtifactsUnchanged": true,
+    "flows": 20,
+    "statesAndScreenshots": 25,
+    "allFlowPass": true,
+    "allStateMeaningfulNoOverlayNoDocumentOverflow": true,
+    "actualApplicationSourcesBeforeAfterAndFrozenCurrentEqual": 14,
+    "viewports": [
+      {
+        "width": 1360,
+        "height": 900
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "consoleErrorsOrWarnings": 0,
+    "pageErrors": 0,
+    "unmockedApi": 0,
+    "externalTransportCalls": 0,
+    "all25ScreenshotsIndependentlyInspected": true,
+    "inspectionMethod": "Seven contact sheets generated only under /tmp from all25 actual PNGs, viewed at original contact-sheet resolution; original busy-owner desktop PNG additionally viewed at full1360x900. Original PNGs and QA manifest were not edited. Text/body and script assertions separately inspected for navigation, ID/query/hash and internal mobile table action.",
+    "visualStates": [
+      {
+        "ordinal": 1,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-initial-eight-statuses.png",
+          "sha256": "8c100e92399f4324798b5afd2b6dadefb6362682e835d17a18d583c50f974bdb",
+          "byteLength": 78671
+        },
+        "state": "desktop-initial-eight-statuses",
+        "visuallyInspected": true,
+        "observation": "All eight named states are visible in source order; main rows and total23/pagination visible; null ordinary SKU stock is an em dash."
+      },
+      {
+        "ordinal": 2,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-page2.png",
+          "sha256": "d798779db9620f09dc08aa20f42d23752ee8f8d2380a3a755ce0f9a3778c0624",
+          "byteLength": 62396
+        },
+        "state": "desktop-page2",
+        "visuallyInspected": true,
+        "observation": "Actual second page shows the separate row62 and active page2, total23 retained."
+      },
+      {
+        "ordinal": 3,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-type0-keyword.png",
+          "sha256": "989fa15b28482fcb05ba69c6effdd7b54dce66bb00a9ca0574b4d4c255495799",
+          "byteLength": 64322
+        },
+        "state": "desktop-type0-keyword",
+        "visuallyInspected": true,
+        "observation": "Keyword and type0 pending state are visible; row mutations absent and independent review links retained."
+      },
+      {
+        "ordinal": 4,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-source-count-fallback.png",
+          "sha256": "a83575ba4f703f491d7882ca987312c227683a2f85a1ac63bd56d520ba3667d9",
+          "byteLength": 61781
+        },
+        "state": "desktop-source-count-fallback",
+        "visuallyInspected": true,
+        "observation": "Source low count3 is visible with active page1 and readable returned row."
+      },
+      {
+        "ordinal": 5,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-legacy-product-type0-hash.png",
+          "sha256": "aa9a79545b2ca64c02655969d71320299148bed9430eddb78343a20a2b04e3e2",
+          "byteLength": 66374
+        },
+        "state": "legacy-product-type0-hash",
+        "visuallyInspected": true,
+        "observation": "Legacy list result shows canonical type0 pending state; query/hash assertion inspected in actual script and raw receipt."
+      },
+      {
+        "ordinal": 6,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-legacy-reply-id51-isreply0.png",
+          "sha256": "04e9ca0b643713d270adf989cca1b001f5addb771052ce4c388f9bfb87fc3258",
+          "byteLength": 52611
+        },
+        "state": "legacy-reply-id51-isreply0",
+        "visuallyInspected": true,
+        "observation": "Legacy review shows product filter51 and textual unreplied state; product51 current review is visible."
+      },
+      {
+        "ordinal": 7,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-row-to-specific-reply.png",
+          "sha256": "21d10c372460e3dd812e1e658d9eea62fece6889c8c2ea6ebb582decb3d35ce2",
+          "byteLength": 52624
+        },
+        "state": "desktop-row-to-specific-reply",
+        "visuallyInspected": true,
+        "observation": "Row navigation result shows specific product51 and the matching review."
+      },
+      {
+        "ordinal": 8,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-product-view-only.png",
+          "sha256": "8b1fbb9dcff2c037be1bd5ca4aacefe0b1a6441660a40c214bb48576a9ea1228",
+          "byteLength": 55694
+        },
+        "state": "desktop-product-view-only",
+        "visuallyInspected": true,
+        "observation": "Product.view-only main table retains rows, stock and pagination; mutation controls and review links absent."
+      },
+      {
+        "ordinal": 9,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-no-reply-cap.png",
+          "sha256": "fe07e87a878252f558d4c9e7dc09e6c9e92ff73637544f4683cad30650d9f9a2",
+          "byteLength": 22592
+        },
+        "state": "desktop-no-reply-cap",
+        "visuallyInspected": true,
+        "observation": "Direct review denial is visible; no stale table shown."
+      },
+      {
+        "ordinal": 10,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-header-failure-list-preserved.png",
+          "sha256": "bf1f5ca78810812eb404b23d2f94c3d07a3f6d42a60821648c493dc5de2bf97f",
+          "byteLength": 70241
+        },
+        "state": "desktop-header-failure-list-preserved",
+        "visuallyInspected": true,
+        "observation": "Independent header failure warning is visible while main rows and total23 remain."
+      },
+      {
+        "ordinal": 11,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-invalid-product-query.png",
+          "sha256": "c20f7040110c646bdca9240fd958f76fec89b9e5f7f487105c7806636dfbe4df",
+          "byteLength": 45344
+        },
+        "state": "desktop-invalid-product-query",
+        "visuallyInspected": true,
+        "observation": "Invalid product status warning and empty table are visible; no stale product rows."
+      },
+      {
+        "ordinal": 12,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-invalid-reply-query.png",
+          "sha256": "856f1ad172e685db1c75c1a9cb6f1b4634a59e357fd73f2d45149c130bcb6ff2",
+          "byteLength": 58041
+        },
+        "state": "desktop-invalid-reply-query",
+        "visuallyInspected": true,
+        "observation": "Invalid reply status warning and empty review table are visible."
+      },
+      {
+        "ordinal": 13,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-type6-stale-read.png",
+          "sha256": "040d137c6c738b09f1b561c83f2ad38257b17eca95b2494b2ca03ccc3b0c2c65",
+          "byteLength": 65994
+        },
+        "state": "desktop-type6-stale-read",
+        "visuallyInspected": true,
+        "observation": "Type6 recycle state is selected; only independent review row actions remain."
+      },
+      {
+        "ordinal": 14,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-new-session-discards-old-read.png",
+          "sha256": "884cf46a7007fa75476409a6d3daa97b6f7b9d79b32e48897f22c613dd962b5a",
+          "byteLength": 79231
+        },
+        "state": "desktop-new-session-discards-old-read",
+        "visuallyInspected": true,
+        "observation": "New administrator current product label is visible; old actor label absent."
+      },
+      {
+        "ordinal": 15,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-product-permission-withdrawn.png",
+          "sha256": "976bdd4b80e21c2c94d72a36313cc32bf2cbc3f9cf986efff8152e3fa1c8ef25",
+          "byteLength": 20168
+        },
+        "state": "desktop-product-permission-withdrawn",
+        "visuallyInspected": true,
+        "observation": "Withdrawn product authority warning visible; main rows and state controls absent."
+      },
+      {
+        "ordinal": 16,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-stale-options-permission.png",
+          "sha256": "92d286ad7eea59f4d488988408903ac05d4514085944c857cd378cd105830eb7",
+          "byteLength": 60193
+        },
+        "state": "desktop-stale-options-permission",
+        "visuallyInspected": true,
+        "observation": "Stale options after manage withdrawal do not reopen a dialog; readonly main table remains."
+      },
+      {
+        "ordinal": 17,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-stale-options-session.png",
+          "sha256": "b6dbff9e96f61b280303a75817bc67c1fe9dda2342e959c8b1ea192cc66aa344",
+          "byteLength": 78680
+        },
+        "state": "desktop-stale-options-session",
+        "visuallyInspected": true,
+        "observation": "Stale options after session replacement do not reopen a dialog; current session table remains."
+      },
+      {
+        "ordinal": 18,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-stale-options-type6.png",
+          "sha256": "a657604566837cfe1d3885da677f6710999b86295c214abe782017580af729b2",
+          "byteLength": 65984
+        },
+        "state": "desktop-stale-options-type6",
+        "visuallyInspected": true,
+        "observation": "Stale options after type6 change do not reopen a dialog; recycle controls remain readonly."
+      },
+      {
+        "ordinal": 19,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-stale-delete-permission.png",
+          "sha256": "45c3a13a1030cac3cacb33cde3c1c7befab639486eb1b97acd1934646c6857f0",
+          "byteLength": 60169
+        },
+        "state": "desktop-stale-delete-permission",
+        "visuallyInspected": true,
+        "observation": "Stale delete after manage withdrawal leaves readonly rows and no confirmation dialog."
+      },
+      {
+        "ordinal": 20,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-stale-delete-session.png",
+          "sha256": "4e89a8a7f8ba2b414c752e4b8115adbee15a49c16c8ad76e88f8a5aeaaab90f2",
+          "byteLength": 78861
+        },
+        "state": "desktop-stale-delete-session",
+        "visuallyInspected": true,
+        "observation": "Stale delete after session replacement leaves current rows and no confirmation dialog."
+      },
+      {
+        "ordinal": 21,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-stale-delete-type6.png",
+          "sha256": "3aef73381fffb69ae85e404a0e52582fcbd8cae63e4cbe2fe20b0186814062f8",
+          "byteLength": 66263
+        },
+        "state": "desktop-stale-delete-type6",
+        "visuallyInspected": true,
+        "observation": "Stale delete after type6 change leaves recycle rows and no confirmation dialog."
+      },
+      {
+        "ordinal": 22,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-new-batch-keeps-busy-after-old-finally.png",
+          "sha256": "9d616af357ddefac08b6510a5153f6a9138ff37ae824af27dfb8da6489e7e0e6",
+          "byteLength": 87505
+        },
+        "state": "desktop-new-batch-keeps-busy-after-old-finally",
+        "visuallyInspected": true,
+        "observation": "New actor batch dialog remains open with loading spinner on confirm after old actor completion; additionally inspected original1360x900 PNG."
+      },
+      {
+        "ordinal": 23,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-reply-route-discards-pending-dialog.png",
+          "sha256": "dfbf79ad3365322a641b265bcc8fe240b7fb9cbe02c4d5772535530a746b33b8",
+          "byteLength": 56031
+        },
+        "state": "desktop-reply-route-discards-pending-dialog",
+        "visuallyInspected": true,
+        "observation": "Changed review route shows product52/unreplied filter, current row and no old pending reply dialog; table is internally scrolled to actions."
+      },
+      {
+        "ordinal": 24,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-mobile-eight-statuses-first-viewport.png",
+          "sha256": "ffad057dc70a3e28871a15b367c5fb601ed3c9749f470270b4eb63586839fb4c",
+          "byteLength": 49107
+        },
+        "state": "mobile-eight-statuses-first-viewport",
+        "visuallyInspected": true,
+        "observation": "Mobile390x844 shows all eight states wrapped into two columns, usable search/actions and internal table viewport, without document overflow."
+      },
+      {
+        "ordinal": 25,
+        "screenshot": {
+          "path": "/tmp/cinashop-catalog-qa/attempt-005-mobile-row-to-reply.png",
+          "sha256": "a3c31bf16125bb9bd59fa3c6518c54c463abc2d70cf8ae08a84fdac70d98919b",
+          "byteLength": 37078
+        },
+        "state": "mobile-row-to-reply",
+        "visuallyInspected": true,
+        "observation": "Mobile review shows product51 filter, meaningful current review row and pagination; internal table clipping is distinct from document overflow."
+      }
+    ],
+    "browserPluginUnavailableFallback": "Existing installed Playwright plus /usr/bin/google-chrome; no plugin installation or new dependencies.",
+    "syntheticTransportBoundary": "Explicit local synthetic browser API fixtures; no preview bypass, no component stubs. This is rendered app proof only, not SQL/JWT/HMAC/PHP/R2/provider or production proof.",
+    "notBackendAuthSqlProviderOrProductionProof": true,
+    "historyAllAttemptsPreserved": true
+  },
+  "ownedCleanup": {
+    "originalReceipt": {
+      "path": "workers-ts/audit/catalog-20261014/owned-process-cleanup.json",
+      "sha256": "d723b4b5cd005d8a2f8fb849eec51b20707fbf15c3c610e4e3ae176ad68169d5",
+      "byteLength": 2711
+    },
+    "browserCleanupOriginal": {
+      "path": "/tmp/cinashop-catalog-qa/resources-cleanup.json",
+      "sha256": "3d67e3cc1bfff13c57ea61bc912ca4dcec376be57ce3031d36e84c0f8ed19887",
+      "byteLength": 1572
+    },
+    "currentIndependentReadOnlyChecks": {
+      "clusters": [
+        {
+          "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-OvtxrD",
+          "pgCtlStatusExit": 3,
+          "postmasterPidExists": false,
+          "noRestart": true
+        },
+        {
+          "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ZemtaI",
+          "pgCtlStatusExit": 3,
+          "postmasterPidExists": false,
+          "noRestart": true
+        }
+      ],
+      "portConnectErrno": null,
+      "portProbeLimitation": {
+        "errno": 1,
+        "message": "This review sandbox disallows socket creation. Original full-process/port cleanup receipt independently hashed and reviewed; no new port success claim."
+      },
+      "ownedProcessesObservedRemaining": [],
+      "temporaryPlaywrightChromeObservedRemaining": []
+    },
+    "bothCurrentOwnedRawRunnerFixture0AndStopped": true,
+    "noOtherOrProductionClusterTouched": true,
+    "originalBrowserFullProcAndPort111RefusalVerified": true,
+    "emptyProfileCaptureHandled": "Final receipt chromeProfiles is empty; original full /proc executable/argument scan and all-attempt startupPID checks supply separate cleanup evidence. Empty profile capture is not itself used as proof.",
+    "procObservationBoundary": "Independent /proc absence applies to processes visible to this review sandbox; original owned full-process cleanup receipt supplies host cleanup evidence.",
+    "noClusterRestartOrConnectionOrKillByReviewer": true
+  },
+  "pushPreparationBoundaries": {
+    "originalReportAndLedgerAreAsOfBeforeCommitPushSnapshots": true,
+    "gitIgnoredRawLogs": "Raw*.log proof files currently match repository gitignore. Standard git add does not carry them to GitHub. Root was informed to preserve or deliberately carry raw receipts when publishing.",
+    "browserRawEvidenceLocal": "The200 browser artifacts are currently under/tmp and referenced with actual hashes. This review proves local artifacts, not a GitHub copy or permanent hosting.",
+    "boundedHighSignalSecretScreen": {
+      "files": 57,
+      "findings": [],
+      "patterns": "Private key PEM, OpenAI secret prefixes, GitHub credential formats, AWS access-key formats. No values printed. Not a repository-wide secret audit."
+    },
+    "gitDiffCheckExit0": true,
+    "noRemoteCommitPrPublishAcceptanceClaim": true,
+    "rootStagingDecision": "Root explicitly confirms373 staged candidates on existingmain, with existingignore retained: raw*.log and /tmp browser artifacts are not uploaded. Nonignored audit artifacts keep original paths/hashes. This delivery remains local evidence, without claiming those omitted originals are available from GitHub.",
+    "gitDiffCheckScope": "Independent git diff --check exited0 for current tracked working-tree diff. Original final-diff-check receipt also exited0. Root separately recorded and explicitly accepts the sole staged historical fictitious report EOF blank-line68 warning; its original f110897f… SHA is immutable. No production whitespace error is reported."
+  },
+  "remainingLimitations": [
+    "This reviewer repeated no heavy tests/type checks/builds and relies on independently inspected, hashed completed original terminal records.",
+    "Independent current socket probe was unavailable with sandbox EPERM; existing raw local port-refusal receipt was checked. Both PostgreSQL stopped states were independently repeated read-only.",
+    "No actual PHP full runtime, live provider/object bytes, full repository CI, production business data or deployment acceptance claim.",
+    "Source-review and report/ledger goal status belong to their original timestamp. This follow-up finishes push preparation only and does not resume the paused parent migration goal."
+  ]
+}

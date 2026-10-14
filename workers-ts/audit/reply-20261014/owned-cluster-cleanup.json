@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-14T07:57:29.237294+00:00",
+  "readOnlyStatusProbe": true,
+  "ownedClusters": [
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ULgo2E",
+      "pgCtlStatusExit": 3,
+      "postmasterPidExists": false,
+      "output": "pg_ctl: no server running",
+      "stderr": "",
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vDehff",
+      "pgCtlStatusExit": 3,
+      "postmasterPidExists": false,
+      "output": "pg_ctl: no server running",
+      "stderr": "",
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-S683I1",
+      "pgCtlStatusExit": 3,
+      "postmasterPidExists": false,
+      "output": "pg_ctl: no server running",
+      "stderr": "",
+      "stopped": true
+    }
+  ],
+  "allStopped": true,
+  "fixturesRemainingPerOriginalRunner": 0,
+  "fixtureProofScope": "runner terminal receipts, not a fresh SQL connection; clusters not restarted"
+}

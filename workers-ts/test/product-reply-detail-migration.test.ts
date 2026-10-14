@@ -51,7 +51,7 @@ describe("API-007 product review detail migration", () => {
   it("bounds content and fails closed on hidden parent reviews", () => {
     expect(controller).toContain("readBoundedJsonObject(c.req.raw, 4 * 1024)");
     expect(controller.match(/c\.header\("Cache-Control", "private, no-store"\)/g))
-      .toHaveLength(5);
+      .toHaveLength(6);
     expect(service).toContain("MAX_REPLY_COMMENT_LENGTH = 1_000");
     expect(service).toContain("Array.from(content).length > MAX_REPLY_COMMENT_LENGTH");
     expect(service).toContain("回复内容包含非法字符");

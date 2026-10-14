@@ -1,0 +1,49 @@
+{
+  "reviewer": "/root/specs_contract_tests",
+  "mode": "independent_read_only_review",
+  "reviewedAt": "2026-10-14T04:03:50.574579+00:00",
+  "result": "passed",
+  "materialInaccuracies": [],
+  "checked": {
+    "normal": {
+      "files": 18,
+      "passedFiles": 14,
+      "passed": 131,
+      "conditionalSkipped": 39
+    },
+    "native": {
+      "files": 11,
+      "passed": 108,
+      "skipped": 0
+    },
+    "overlap": 69,
+    "uniquePassed": 170,
+    "conditionalCovered": 39,
+    "priorReceiptHashes": 33,
+    "currentInputHashes": 3268,
+    "inputDigest": "a02d8d0cc97ddc249cf8a3a0267164ce4f67e1d162466a13d62530e0c3857a03",
+    "phpSourceHashes": 11,
+    "workerTypesExitCodes": [
+      0,
+      0
+    ],
+    "adminTypesAndBuildExitCodes": [
+      0,
+      0
+    ],
+    "stoppedClusterStatusExitCodes": [
+      3,
+      3
+    ],
+    "addedOldRoutes": 2,
+    "replacedOldRoutes": 7,
+    "modernAliases": 14,
+    "actualCompiledVueApiAxiosConsumer": true,
+    "actualUnitFormAxiosConsumer": true,
+    "initialFailureRawReportsRetained": true,
+    "checkboxRowsUnchanged": true
+  },
+  "reviewerChangedImplementation": false,
+  "reviewerRanTests": false,
+  "reviewerIndependentlyRecheckedClusterStatus": true
+}

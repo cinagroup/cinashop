@@ -1,0 +1,98 @@
+{
+  "observedAt": "2026-10-14T04:40:14.726061+00:00",
+  "exactOwnedCluster": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD",
+  "dataDirectory": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD/data",
+  "phase": "offline-inventory",
+  "credentialsRead": false,
+  "networkServerStarted": false,
+  "otherClustersTouched": false,
+  "stalePostmasterPid": 42202,
+  "initialPgCtlStatus": {
+    "exitCode": 3,
+    "output": "pg_ctl: no server running"
+  },
+  "matchingHostPostgresProcesses": [],
+  "trustedVersion": "postgres (PostgreSQL) 16.14",
+  "offlineInventoryExitCode": 0,
+  "databasesBefore": [
+    "cinashop_finance_test",
+    "finance_fixture_29a4728405c349b38707afd9a09779cf",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "rolesBefore": [
+    "finance_bootstrap",
+    "finance_test",
+    "pg_checkpoint",
+    "pg_create_subscription",
+    "pg_database_owner",
+    "pg_execute_server_program",
+    "pg_monitor",
+    "pg_read_all_data",
+    "pg_read_all_settings",
+    "pg_read_all_stats",
+    "pg_read_server_files",
+    "pg_signal_backend",
+    "pg_stat_scan_tables",
+    "pg_use_reserved_connections",
+    "pg_write_all_data",
+    "pg_write_server_files"
+  ],
+  "inventoryComplete": true,
+  "cleanupStatus": "verified offline cleanup complete; exact owned fixture databases/runtime roles remaining zero; cluster shut down",
+  "cleanupStartedAt": "2026-10-14T04:41:25.909356+00:00",
+  "allowedFixtureDatabasePatterns": [
+    "^cinashop_kefu_runner_[a-f0-9]{32}$",
+    "^finance_fixture_[a-f0-9]{32}$"
+  ],
+  "allowedRuntimeRolePattern": "^cinashop_runtime_[a-f0-9]{32}$",
+  "helperPrefixEvidence": [
+    "workers-ts/test/helpers/kefuSequenceRunnerDatabase.ts:14,51,106",
+    "workers-ts/test/helpers/financePostgres.ts:9,100"
+  ],
+  "cleanupExitCode": 0,
+  "exactDatabaseDropTargets": [
+    "finance_fixture_29a4728405c349b38707afd9a09779cf"
+  ],
+  "exactRoleDropTargets": [],
+  "verificationExitCode": 0,
+  "databasesAfter": [
+    "cinashop_finance_test",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "rolesAfter": [
+    "finance_bootstrap",
+    "finance_test",
+    "pg_checkpoint",
+    "pg_create_subscription",
+    "pg_database_owner",
+    "pg_execute_server_program",
+    "pg_monitor",
+    "pg_read_all_data",
+    "pg_read_all_settings",
+    "pg_read_all_stats",
+    "pg_read_server_files",
+    "pg_signal_backend",
+    "pg_stat_scan_tables",
+    "pg_use_reserved_connections",
+    "pg_write_all_data",
+    "pg_write_server_files"
+  ],
+  "remainingOwnedFixtureDatabases": [],
+  "remainingOwnedRuntimeRoles": [],
+  "unrecognizedNonbaseDatabases": [],
+  "unrecognizedNonbaseRoles": [],
+  "finalPgCtlStatus": {
+    "exitCode": 3,
+    "output": "pg_ctl: no server running"
+  },
+  "postmasterPidPresentAfter": false,
+  "finalControlDataState": "shut down",
+  "cleanupComplete": true,
+  "cleanupFinishedAt": "2026-10-14T04:41:26.155455+00:00",
+  "implementationFilesChanged": false,
+  "clusterDirectoryRemoved": false
+}

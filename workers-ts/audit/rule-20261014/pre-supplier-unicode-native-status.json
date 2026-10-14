@@ -1,0 +1,33 @@
+{
+  "name": "native",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/admin-product-rule.test.ts",
+    "test/admin-product-rule-http.test.ts",
+    "test/admin-product-rule-native.test.ts",
+    "test/supplier-product-rule-http.test.ts",
+    "test/supplier-product-rule-native.test.ts",
+    "test/admin-product-ensure.test.ts",
+    "test/admin-product-ensure-http.test.ts",
+    "test/admin-product-ensure-native.test.ts",
+    "test/admin-product-unit.test.ts",
+    "test/admin-product-unit-http.test.ts",
+    "test/admin-product-unit-native.test.ts",
+    "test/admin-product-specs.test.ts",
+    "test/admin-product-specs-http.test.ts",
+    "test/admin-product-specs-audit.test.ts",
+    "test/admin-product-specs-native.test.ts",
+    "test/admin-user-group-native.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T04:42:53.193408+00:00",
+  "completedAt": "2026-10-14T04:46:43.089507+00:00",
+  "exitCode": 0,
+  "log": "final-native.log",
+  "nodePathIncluded": true,
+  "testFinanceLocalCacheRoot": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures"
+}

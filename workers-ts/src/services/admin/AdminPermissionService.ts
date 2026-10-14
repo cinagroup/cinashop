@@ -58,7 +58,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
     key: "product",
     label: "商品管理",
     path: "/product",
-    matches: ["product/", "unit", "unit/", "get_all_unit", "specs", "specs/", "all_specs"],
+    matches: ["product/", "unit", "unit/", "get_all_unit", "specs", "specs/", "all_specs", "ensure", "ensure/", "all_ensure"],
     manage: true,
   },
   { key: "category", label: "商品分类", path: "/category", matches: ["category/"], manage: true },
@@ -480,6 +480,9 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     if (method.toUpperCase() === 'POST' && new RegExp(`^erp/connections/${id}/(?:auth|rotate|disable|revoke)$`).test(route)) return 'erp.connection.manage';
     return null;
   }
+  // Central review moderation has independent capabilities even on old product URLs.
+  if (isProductReplyRoute(route)) return productReplyPermission(method.toUpperCase(), route);
+  if (isProductCatalogReadRoute(route)) return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'product.view' : null;
   if (isOperationalGroupRoute(route)) return operationalGroupPermission(method.toUpperCase(), route);
   if (isProductCategoryRoute(route)) return productCategoryPermission(method.toUpperCase(), route);
   if (isProductBrandRoute(route)) return productBrandPermission(method.toUpperCase(), route);
@@ -739,6 +742,72 @@ const auditedLegacyPageAuth = new Set([
 
 type LegacyAdminMenuMetadata = Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>;
+
+function isProductCatalogReadRoute(route: string): boolean {
+  return ['product/product', 'product/product/type_header', 'product/product/list'].includes(route);
+}
+const productCatalogReadMenuTuples: Record<number, readonly [string, string, string, string]> = {
+  108: ['GET', 'product/product', '/admin/product/product', 'product-product-index'],
+  192: ['GET', 'product/product/type_header', '/adminproduct/product/type_header', ''],
+  193: ['GET', 'product/product/list', '/adminproduct/product/list', ''],
+  377: ['GET', 'product/product/list', '', ''],
+  388: ['GET', 'product/product/list', '', ''],
+  399: ['GET', 'product/product/list', '', ''],
+  410: ['GET', 'product/product/list', '', ''],
+  941: ['GET', 'product/product/list', '', ''],
+};
+function productCatalogReadMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const route = normalizeAdminRoute(menu.apiUrl), path = menu.menuPath.toLowerCase(), auth = menu.uniqueAuth.toLowerCase();
+  const page = menu.id === 2 || path === '/admin/product/product_list' || auth === 'admin-store-storeprouduct-index';
+  const seed = productCatalogReadMenuTuples[menu.id];
+  const claimedPath = ['/admin/product/product', '/adminproduct/product/type_header', '/adminproduct/product/list'].includes(path);
+  if (!page && !seed && !claimedPath && !isProductCatalogReadRoute(route) && auth !== 'product-product-index') return { protected: false, permission: null };
+  if (page) return { protected: true, permission: menu.id === 2 && menu.authType === 1
+    && menu.menuPath === '/admin/product/product_list' && menu.uniqueAuth === 'admin-store-storeProuduct-index'
+    && menu.apiUrl === '' && menu.methods === '' ? 'product.view' : null };
+  const valid = menu.authType === 2 && !!seed && menu.methods === seed[0] && menu.apiUrl === seed[1]
+    && menu.menuPath === seed[2] && menu.uniqueAuth === seed[3];
+  return { protected: true, permission: valid ? 'product.view' : null };
+}
+
+function isProductReplyRoute(route: string): boolean {
+  return route === 'product/reply' || route.startsWith('product/reply/') || route === 'reply' || route.startsWith('reply/');
+}
+function productReplyPermission(method: string, route: string): string | null {
+  const id = '(?:[1-9]\\d*|:id|:replyid|<id>|<replyid>)';
+  const productId = '(?:0|[1-9]\\d*|:product_id|<product_id>)';
+  if (['GET', 'HEAD'].includes(method) && (['product/reply', 'reply/list'].includes(route)
+    || new RegExp(`^product/reply/(?:comment|get_reply)/${id}$`).test(route)
+    || new RegExp(`^product/reply/fictitious_reply/${productId}$`).test(route))) return 'reply.view';
+  if (method === 'PUT' && new RegExp(`^product/reply/set_reply/${id}$`).test(route)) return 'reply.manage';
+  if (method === 'POST' && (route === 'product/reply/save_fictitious_reply' || new RegExp(`^product/reply/save_comment/${id}/${id}$`).test(route)
+    || new RegExp(`^reply/status/${id}$`).test(route))) return 'reply.manage';
+  if (method === 'DELETE' && (new RegExp(`^product/reply/(?:delete_comment/)?${id}$`).test(route)
+    || new RegExp(`^reply/del/${id}$`).test(route))) return 'reply.manage';
+  return null;
+}
+const productReplyMenuTuples: Record<number, readonly [string, string, string, string]> = {
+  184: ['GET', 'product/reply/fictitious_reply/<product_id>', '/adminproduct/reply/fictitious_reply', ''],
+  185: ['POST', 'product/reply/save_fictitious_reply', '/adminproduct/reply/save_fictitious_reply', 'product-reply-save_fictitious_reply'],
+  188: ['DELETE', 'product/reply/<id>', '/adminproduct/reply/<id>', ''],
+  189: ['PUT', 'product/reply/set_reply/<id>', '/adminreply/set_reply/<id>', ''],
+  190: ['GET', 'product/reply', '/adminproduct/reply', ''],
+};
+function productReplyMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const route = normalizeAdminRoute(menu.apiUrl), path = menu.menuPath.toLowerCase(), auth = menu.uniqueAuth.toLowerCase();
+  const pageClaim = menu.id === 6 || path === '/admin/product/product_reply' || auth === 'product-product-reply';
+  const seed = productReplyMenuTuples[menu.id];
+  if (!pageClaim && !seed && !isProductReplyRoute(route) && auth !== 'product-reply-save_fictitious_reply') return { protected: false, permission: null };
+  if (pageClaim) return { protected: true, permission: menu.id === 6 && menu.authType === 1
+    && menu.menuPath === '/admin/product/product_reply' && menu.uniqueAuth === 'product-product-reply'
+    && menu.apiUrl === '' && menu.methods === '' ? 'reply.view' : null };
+  const valid = menu.authType === 2 && (seed
+    ? menu.methods === seed[0] && menu.apiUrl === seed[1] && menu.menuPath === seed[2] && menu.uniqueAuth === seed[3]
+    : menu.uniqueAuth === '' && menu.menuPath === '' && menu.apiUrl === menu.apiUrl.trim() && !/\s/.test(menu.apiUrl)
+      && ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'].includes(menu.methods));
+  return { protected: true, permission: valid ? productReplyPermission(menu.methods, route) : null };
+}
+
 function isOperationalGroupRoute(route: string) {
   return /^(?:setting\/group_data|setting\/operational_group_data)(?:\/|$)/.test(route);
 }
@@ -922,7 +991,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (unprovedErpMenuClaim(menu) || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1038,6 +1107,20 @@ export class AdminPermissionService {
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
+                and(eq(systemMenus.id, 227), eq(systemMenus.uniqueAuth, 'user-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
+                and(eq(systemMenus.id, 263), eq(systemMenus.uniqueAuth, 'admin-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
+                and(eq(systemMenus.id, 6), eq(systemMenus.uniqueAuth, 'product-product-reply'),
+                  eq(systemMenus.menuPath, '/admin/product/product_reply')),
+                and(eq(systemMenus.id, 2), eq(systemMenus.uniqueAuth, 'admin-store-storeProuduct-index'),
+                  eq(systemMenus.menuPath, '/admin/product/product_list')),
+                and(eq(systemMenus.id, 99), eq(systemMenus.uniqueAuth, 'product-product-attr'),
+                  eq(systemMenus.menuPath, '/admin/product/product_attr')),
+                and(eq(systemMenus.id, 1349), eq(systemMenus.uniqueAuth, 'admin-storeProduct-unit'),
+                  eq(systemMenus.menuPath, '/admin/product/unitList')),
+                and(eq(systemMenus.id, 1381), eq(systemMenus.uniqueAuth, 'admin-storeProduct-specs'),
+                  eq(systemMenus.menuPath, '/admin/product/specs')),
+                and(eq(systemMenus.id, 1382), eq(systemMenus.uniqueAuth, 'admin-storeProduct-ensure'),
+                  eq(systemMenus.menuPath, '/admin/product/ensure')),
                 and(eq(systemMenus.uniqueAuth, "setting-system-list"),
                   eq(systemMenus.menuPath, "/admin/setting/system_admin/index")),
                 and(eq(systemMenus.uniqueAuth, "setting-system_admin-add"),
@@ -1209,6 +1292,20 @@ export class AdminPermissionService {
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
+                and(eq(systemMenus.id, 227), eq(systemMenus.uniqueAuth, 'user-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
+                and(eq(systemMenus.id, 263), eq(systemMenus.uniqueAuth, 'admin-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
+                and(eq(systemMenus.id, 6), eq(systemMenus.uniqueAuth, 'product-product-reply'),
+                  eq(systemMenus.menuPath, '/admin/product/product_reply')),
+                and(eq(systemMenus.id, 2), eq(systemMenus.uniqueAuth, 'admin-store-storeProuduct-index'),
+                  eq(systemMenus.menuPath, '/admin/product/product_list')),
+                and(eq(systemMenus.id, 99), eq(systemMenus.uniqueAuth, 'product-product-attr'),
+                  eq(systemMenus.menuPath, '/admin/product/product_attr')),
+                and(eq(systemMenus.id, 1349), eq(systemMenus.uniqueAuth, 'admin-storeProduct-unit'),
+                  eq(systemMenus.menuPath, '/admin/product/unitList')),
+                and(eq(systemMenus.id, 1381), eq(systemMenus.uniqueAuth, 'admin-storeProduct-specs'),
+                  eq(systemMenus.menuPath, '/admin/product/specs')),
+                and(eq(systemMenus.id, 1382), eq(systemMenus.uniqueAuth, 'admin-storeProduct-ensure'),
+                  eq(systemMenus.menuPath, '/admin/product/ensure')),
                 and(eq(systemMenus.uniqueAuth, "setting-system-list"),
                   eq(systemMenus.menuPath, "/admin/setting/system_admin/index")),
                 and(eq(systemMenus.uniqueAuth, "setting-system_admin-add"),
@@ -1325,6 +1422,67 @@ export class AdminPermissionService {
     if (allowedLegacyIds.size) {
       for (const menu of menus) {
         if (!allowedLegacyIds.has(menu.id)) continue;
+        // Wildcard attachment rows cannot acquire a grant by rewriting their
+        // metadata into a protected or generic API tuple.
+        if (menu.id === 579 || menu.id === 580) continue;
+        const catalogReadBinding = productCatalogReadMenuBinding(menu);
+        if (catalogReadBinding.protected) {
+          if (catalogReadBinding.permission) resolved.add(catalogReadBinding.permission);
+          continue;
+        }
+        const replyBinding = productReplyMenuBinding(menu);
+        if (replyBinding.protected) {
+          if (replyBinding.permission) resolved.add(replyBinding.permission);
+          continue;
+        }
+        // Only the exact PHP specification page seed grants catalog reads.
+        if (menu.id === 99 || menu.menuPath.toLowerCase() === '/admin/product/product_attr'
+          || menu.uniqueAuth.toLowerCase() === 'product-product-attr') {
+          if (menu.id === 99 && menu.authType === 1 && menu.menuPath === '/admin/product/product_attr'
+            && menu.uniqueAuth === 'product-product-attr' && menu.apiUrl === '' && menu.methods === '') {
+            resolved.add('product.view');
+          }
+          continue;
+        }
+        // Seed 1383 routes to the parameter editor in the old SPA despite its
+        // guarantee-page URL. It is not a proved catalog read/write grant.
+        if (menu.id === 1383 || menu.menuPath.toLowerCase() === '/admin/product/ensure/create'
+          || menu.uniqueAuth.toLowerCase() === 'admin-storeproduct-ensure-create') continue;
+        if (menu.id === 1382 || menu.menuPath.toLowerCase() === '/admin/product/ensure'
+          || menu.uniqueAuth.toLowerCase() === 'admin-storeproduct-ensure') {
+          if (menu.id === 1382 && menu.authType === 1 && menu.menuPath === '/admin/product/ensure'
+            && menu.uniqueAuth === 'admin-storeProduct-ensure' && menu.apiUrl === '' && menu.methods === '') {
+            resolved.add('product.view');
+          }
+          continue;
+        }
+        // Exact PHP parameter-template page seed grants reads. Its neighbouring
+        // create-page seed 1383 belongs to product guarantees, not parameters.
+        if (menu.id === 1381 || menu.menuPath.toLowerCase() === '/admin/product/specs'
+          || menu.uniqueAuth.toLowerCase() === 'admin-storeproduct-specs') {
+          if (menu.id === 1381 && menu.authType === 1 && menu.menuPath === '/admin/product/specs'
+            && menu.uniqueAuth === 'admin-storeProduct-specs' && menu.apiUrl === '' && menu.methods === '') {
+            resolved.add('product.view');
+          }
+          continue;
+        }
+        // The original unit page grants reads only. A copied path/auth or
+        // rewritten API tuple cannot turn its page seed into a writer grant.
+        if (menu.id === 1349 || menu.menuPath.toLowerCase() === '/admin/product/unitlist'
+          || menu.uniqueAuth.toLowerCase() === 'admin-storeproduct-unit') {
+          if (menu.id === 1349 && menu.authType === 1 && menu.menuPath === '/admin/product/unitList'
+            && menu.uniqueAuth === 'admin-storeProduct-unit' && menu.apiUrl === '' && menu.methods === '') {
+            resolved.add('product.view');
+          }
+          continue;
+        }
+        if ([227, 263].includes(menu.id) || menu.menuPath.toLowerCase() === '/admin/user/group'
+          || ['user-user-group', 'admin-user-group'].includes(menu.uniqueAuth.toLowerCase())) {
+          const expectedAuth = menu.id === 227 ? 'user-user-group' : menu.id === 263 ? 'admin-user-group' : '';
+          if (expectedAuth && menu.authType === 1 && menu.menuPath === '/admin/user/group'
+            && menu.uniqueAuth === expectedAuth && menu.apiUrl === '' && menu.methods === '') resolved.add('user.view');
+          continue;
+        }
         if (unprovedErpMenuClaim(menu)) continue;
         const operationalBinding = operationalGroupMenuBinding(menu);
         if (operationalBinding.protected) {

@@ -1,0 +1,14 @@
+{
+  "changedFiles": {
+    "workers-ts/test/admin-operational-group-data.test.ts": {
+      "before": "29426b573637486e4172cc4941510f65154fa436372fb8e4ba4de12109cdbb98",
+      "after": "9716f235406c7d4eb75632adc51a34ddec4fdf65384e53594599de99a824e21b"
+    },
+    "workers-ts/test/supplier-product-rule-workflow-frontend.test.ts": {
+      "before": "f3e37ef9c9659513cf5e21477a88b195577c0ac337ebefff8355434767080f15",
+      "after": "1fbe19b4d09f94a7750ff47383f00876f693a5580d732a39840df230b9c7c357"
+    }
+  },
+  "scope": "Only two previously unselected standalone test files; runtime src, native suites, selected ordinary suites, helpers, scripts, migrations and Admin input unchanged",
+  "regression": "type-repair-regression.json"
+}

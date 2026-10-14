@@ -1,0 +1,15 @@
+{
+  "name": "supplier-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vue-tsc/bin/vue-tsc.js",
+    "-b"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+  "startedAt": "2026-10-14T05:58:33.665944+00:00",
+  "completedAt": "2026-10-14T05:58:43.715968+00:00",
+  "exitCode": 0,
+  "log": "supplier-vue-types.log",
+  "nodePathIncluded": true,
+  "testFinanceLocalCacheRoot": null
+}

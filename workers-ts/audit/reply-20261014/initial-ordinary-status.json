@@ -1,0 +1,21 @@
+{
+  "name": "initial-ordinary",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-reply.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/reply-20261014/initial-ordinary.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T06:34:17.251085+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T06:34:24.987823+00:00",
+  "exitCode": 1,
+  "log": "initial-ordinary.log"
+}

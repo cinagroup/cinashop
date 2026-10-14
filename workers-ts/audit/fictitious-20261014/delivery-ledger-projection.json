@@ -1,0 +1,5 @@
+{
+  "algorithm": "SHA256 UTF8 compactsorted-key JSON; exclude only independentDeliveryReview",
+  "ledger": "/home/cina/cinagroup/cinashop/workers-ts/audit/php-ts-fictitious-reply-migration-20261014.json",
+  "digest": "e777808861bea5e94b72a1cb6b1ea5fd9c7003619659ed8913017d811ed15645"
+}

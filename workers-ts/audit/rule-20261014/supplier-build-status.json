@@ -1,0 +1,15 @@
+{
+  "name": "supplier-build",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vite/bin/vite.js",
+    "build"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+  "startedAt": "2026-10-14T05:59:23.543969+00:00",
+  "completedAt": "2026-10-14T05:59:40.789869+00:00",
+  "exitCode": 0,
+  "log": "supplier-build.log",
+  "nodePathIncluded": true,
+  "testFinanceLocalCacheRoot": null
+}

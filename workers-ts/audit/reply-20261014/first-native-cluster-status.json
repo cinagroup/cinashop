@@ -1,0 +1,7 @@
+{
+  "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ULgo2E",
+  "exitCode": 3,
+  "output": "pg_ctl: no server running\n",
+  "postmasterPidPresent": false,
+  "stopped": true
+}

@@ -9,7 +9,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   storeProduct,
@@ -18,13 +18,53 @@ import {
   storeProductRelation,
   storeVisit,
 } from "@/models/schema";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { NotFoundException, ServiceUnavailableException, ValidateException } from "@/utils/errors";
+import { formatParameterSpecTime } from './ProductMetadataService';
 
 const ENSURE_LOCK_NAMESPACE = 731_614;
 const VISIT_LOCK_NAMESPACE = 731_615;
 const PRODUCT_ENSURE_RELATION_TYPE = 5;
 const VISIT_THROTTLE_SECONDS = 20;
 const MAX_PAGE_SIZE = 100;
+const MAX_ENSURE_READ_ROWS = 2000;
+
+async function lockEnsureLifecycle(tx: DbClient, owner: ProductEnsureOwner): Promise<void> {
+  if (!(owner.type === 0 && owner.relationId === 0 || owner.type === 2 && Number.isSafeInteger(owner.relationId)
+    && owner.relationId > 0 && owner.relationId <= 2147483647)) throw new ValidateException('保障服务归属错误');
+  await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+  await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${ENSURE_LOCK_NAMESPACE}, ${owner.relationId})`);
+}
+
+function ensureString(value: unknown, label: string, required = true): string {
+  if (!required && (value === undefined || value === null)) return '';
+  if (typeof value !== 'string') throw new ValidateException(`请填写${label}`);
+  const text = value.trim();
+  if (required && !text) throw new ValidateException(`请填写${label}`);
+  if ([...text].length > 255 || /[\u0000\ud800-\udfff]/u.test(text)) throw new ValidateException(`${label}长度或字符错误`);
+  return text;
+}
+
+function ensureInteger(value: unknown, label: string, fallback = 0): number {
+  if (value === undefined || value === null || value === '') return fallback;
+  const n = typeof value === 'number' ? value : typeof value === 'string' && /^(?:0|[1-9]\d*)$/.test(value) ? Number(value) : NaN;
+  if (!Number.isSafeInteger(n) || n < 0 || n > 2147483647) throw new ValidateException(`${label}必须是非负整数`);
+  return n;
+}
+
+function ensureId(id: number, create = false): void {
+  if (!Number.isSafeInteger(id) || id < (create ? 0 : 1) || id > 2147483647) throw new ValidateException('保障服务ID错误');
+}
+
+function sameEnsureRow(actual: object, expected: object): boolean {
+  const a = actual as Record<string, unknown>, e = expected as Record<string, unknown>;
+  return Object.keys(a).length === Object.keys(e).length && Object.keys(e).every(key => a[key] === e[key]);
+}
+
+function echoEnsureInteger(value: unknown, expected: number): boolean {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value === expected
+    || typeof value === 'string' && /^(?:0|[1-9]\d*)$/.test(value) && Number(value) === expected;
+}
 
 export interface ProductEnsureOwner {
   type: 0 | 2;
@@ -36,17 +76,6 @@ function record(value: unknown): Record<string, unknown> {
     throw new ValidateException("参数格式错误");
   }
   return value as Record<string, unknown>;
-}
-
-function textValue(value: unknown, field: string, maxLength: number, required = true): string {
-  if (typeof value !== "string") {
-    if (!required && (value === undefined || value === null)) return "";
-    throw new ValidateException(`请填写${field}`);
-  }
-  const result = value.trim();
-  if (required && !result) throw new ValidateException(`请填写${field}`);
-  if (result.length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
-  return result;
 }
 
 function nonNegativeInteger(value: unknown, field: string, fallback = 0): number {
@@ -135,7 +164,8 @@ export class ProductExperienceService {
     const { page, limit } = pageValues(query);
     const conditions = [ownerScope(owner)];
     const name = query.name?.trim();
-    if (name) conditions.push(ilike(storeProductEnsure.name, `%${name}%`));
+    if (name) conditions.push(or(ilike(storeProductEnsure.name, `%${name}%`),
+      sql`${storeProductEnsure.id}::text ILIKE ${`%${name}%`}`)!);
     const where = and(...conditions);
     const [list, countRows] = await Promise.all([
       this.container.db
@@ -164,11 +194,13 @@ export class ProductExperienceService {
       .select()
       .from(storeProductEnsure)
       .where(and(scope, eq(storeProductEnsure.status, 1)))
-      .orderBy(desc(storeProductEnsure.sort), asc(storeProductEnsure.id));
+      .orderBy(desc(storeProductEnsure.sort), asc(storeProductEnsure.id)).limit(MAX_ENSURE_READ_ROWS + 1);
+    if (rows.length > MAX_ENSURE_READ_ROWS) throw new ServiceUnavailableException('保障服务超过2000项，请缩小范围');
     return rows.map((item) => this.formatEnsure(item));
   }
 
   async ensureDetail(owner: ProductEnsureOwner, id: number) {
+    ensureId(id);
     const row = (
       await this.container.db
         .select()
@@ -180,27 +212,44 @@ export class ProductExperienceService {
     return this.formatEnsure(row);
   }
 
-  async saveEnsure(owner: ProductEnsureOwner, id: number, input: unknown) {
+  async saveEnsure(owner: ProductEnsureOwner, id: number, input: unknown, legacy = false) {
+    ensureId(id, true);
     const body = record(input);
-    const name = textValue(body.name, "保障服务条款", 255);
-    const image = textValue(body.image, "保障服务图标", 255);
-    const descValue = textValue(body.desc, "保障服务描述", 255);
-    const sort = nonNegativeInteger(body.sort, "排序");
-    const status = nonNegativeInteger(body.status, "状态", 1);
-    if (status !== 0 && status !== 1) throw new ValidateException("状态只能是0或1");
+    if (Object.keys(body).some(key => !['id', 'type', 'relation_id', 'name', 'image', 'desc', 'sort',
+      'status', 'add_time', 'product_count'].includes(key))) throw new ValidateException('保障服务包含未知字段');
+    const name = ensureString(body.name, "保障服务条款");
+    const image = ensureString(body.image, "保障服务图标");
+    const descValue = ensureString(body.desc, "保障服务描述", !legacy);
+    const sort = ensureInteger(body.sort, "排序");
     return withTx(this.container, async (tx) => {
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(${ENSURE_LOCK_NAMESPACE}, ${owner.relationId})`,
-      );
+      await lockEnsureLifecycle(tx, owner);
+      let original: typeof storeProductEnsure.$inferSelect | undefined;
       if (id > 0) {
         const existing = await tx
-          .select({ id: storeProductEnsure.id })
+          .select()
           .from(storeProductEnsure)
           .where(and(eq(storeProductEnsure.id, id), ownerScope(owner)))
           .limit(1)
           .for("update");
         if (!existing[0]) throw new NotFoundException("商品保障服务不存在");
+        original = existing[0];
       }
+      for (const [key, expected] of [['id', id], ['type', owner.type], ['relation_id', owner.relationId]] as const) {
+        if (Object.hasOwn(body, key) && !echoEnsureInteger(body[key], expected)) throw new ValidateException('保障服务回显身份或归属已变化');
+      }
+      const originalTime = original?.addTime ?? 0;
+      if (Object.hasOwn(body, 'add_time') && !(echoEnsureInteger(body.add_time, originalTime)
+        || body.add_time === formatParameterSpecTime(originalTime))) throw new ValidateException('保障服务创建时间不能修改');
+      if (legacy && Object.hasOwn(body, 'status') && !echoEnsureInteger(body.status, original?.status ?? 1)) {
+        throw new ValidateException('旧编辑表单不能修改保障服务状态');
+      }
+      if (Object.hasOwn(body, 'product_count')) {
+        const [count] = id ? await tx.select({ count: sql<number>`COUNT(*)::int` }).from(storeProduct)
+          .where(sql`position(${`,` + id + `,`} in (',' || coalesce(${storeProduct.ensureId}, '') || ',')) > 0`) : [{ count: 0 }];
+        if (!echoEnsureInteger(body.product_count, count?.count ?? 0)) throw new ValidateException('保障服务使用数量回显已变化');
+      }
+      const status = legacy ? original?.status ?? 1 : ensureInteger(body.status, '状态', original?.status ?? 1);
+      if (status !== 0 && status !== 1) throw new ValidateException("状态只能是0或1");
       const duplicate = await tx
         .select({ id: storeProductEnsure.id })
         .from(storeProductEnsure)
@@ -214,12 +263,17 @@ export class ProductExperienceService {
         .limit(1);
       if (duplicate[0]) throw new ValidateException("保障服务条款已存在");
       if (id > 0) {
-        await tx
+        const rows = await tx
           .update(storeProductEnsure)
           .set({ name, image, desc: descValue, sort, status })
-          .where(eq(storeProductEnsure.id, id));
+          .where(and(eq(storeProductEnsure.id, id), ownerScope(owner))).returning();
+        const expected = { ...original!, name, image, desc: descValue, sort, status };
+        if (rows.length !== 1 || !sameEnsureRow(rows[0], expected)) throw Error('保障服务更新回执不完整');
+        const [after] = await tx.select().from(storeProductEnsure).where(eq(storeProductEnsure.id, id)).limit(1);
+        if (!after || !sameEnsureRow(after, expected)) throw Error('保障服务保存后核验失败');
         return { id };
       }
+      const now = Math.floor(Date.now() / 1000);
       const inserted = await tx
         .insert(storeProductEnsure)
         .values({
@@ -230,27 +284,42 @@ export class ProductExperienceService {
           desc: descValue,
           sort,
           status,
-          addTime: Math.floor(Date.now() / 1000),
+          addTime: now,
         })
-        .returning({ id: storeProductEnsure.id });
-      return { id: inserted[0].id };
+        .returning();
+      const saved = inserted[0];
+      if (inserted.length !== 1 || !saved || !Number.isSafeInteger(saved.id) || saved.id <= 0) throw Error('保障服务创建回执不完整');
+      const expected = { id: saved.id, type: owner.type, relationId: owner.relationId, name, image, desc: descValue, sort, status, addTime: now };
+      const [after] = await tx.select().from(storeProductEnsure).where(eq(storeProductEnsure.id, saved.id)).limit(1);
+      if (!sameEnsureRow(saved, expected) || !after || !sameEnsureRow(after, expected)) throw Error('保障服务创建后核验失败');
+      return { id: saved.id };
     });
   }
 
   async setEnsureStatus(owner: ProductEnsureOwner, id: number, status: number) {
+    ensureId(id);
     if (status !== 0 && status !== 1) throw new ValidateException("状态只能是0或1");
-    const updated = await this.container.db
-      .update(storeProductEnsure)
-      .set({ status })
-      .where(and(eq(storeProductEnsure.id, id), ownerScope(owner)))
-      .returning({ id: storeProductEnsure.id });
-    if (!updated[0]) throw new NotFoundException("商品保障服务不存在");
+    return withTx(this.container, async tx => {
+      await lockEnsureLifecycle(tx, owner);
+      const [original] = await tx.select().from(storeProductEnsure)
+        .where(and(eq(storeProductEnsure.id, id), ownerScope(owner))).limit(1).for('update');
+      if (!original) throw new NotFoundException("商品保障服务不存在");
+      const expected = { ...original, status };
+      const updated = await tx.update(storeProductEnsure).set({ status })
+        .where(and(eq(storeProductEnsure.id, id), ownerScope(owner))).returning();
+      const [after] = await tx.select().from(storeProductEnsure).where(eq(storeProductEnsure.id, id)).limit(1);
+      if (updated.length !== 1 || !sameEnsureRow(updated[0], expected) || !after || !sameEnsureRow(after, expected)) {
+        throw Error('保障服务状态回执不完整');
+      }
+    });
   }
 
   async deleteEnsure(owner: ProductEnsureOwner, id: number) {
+    ensureId(id);
     return withTx(this.container, async (tx) => {
+      await lockEnsureLifecycle(tx, owner);
       const existing = await tx
-        .select({ id: storeProductEnsure.id })
+        .select()
         .from(storeProductEnsure)
         .where(and(eq(storeProductEnsure.id, id), ownerScope(owner)))
         .limit(1)
@@ -272,7 +341,11 @@ export class ProductExperienceService {
         .where(sql`(',' || COALESCE(${storeProduct.ensureId}, '') || ',') LIKE ${`%,${id},%`}`)
         .limit(1);
       if (relation[0] || legacy[0]) throw new ValidateException("该保障服务仍被商品使用，不能删除");
-      await tx.delete(storeProductEnsure).where(eq(storeProductEnsure.id, id));
+      const deleted = await tx.delete(storeProductEnsure).where(and(eq(storeProductEnsure.id, id), ownerScope(owner))).returning();
+      if (deleted.length !== 1 || !sameEnsureRow(deleted[0], existing[0])) throw Error('保障服务删除回执不完整');
+      const remaining = await tx.select({ id: storeProductEnsure.id }).from(storeProductEnsure)
+        .where(eq(storeProductEnsure.id, id)).limit(1);
+      if (remaining.length) throw Error('保障服务删除后核验失败');
     });
   }
 

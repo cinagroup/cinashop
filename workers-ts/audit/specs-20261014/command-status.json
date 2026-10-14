@@ -1,0 +1,10 @@
+{
+  "ordinary": 0,
+  "native": 0,
+  "workerUnitTypes": 0,
+  "workerRuntimeTypes": 0,
+  "adminVueTypes": 0,
+  "adminBuild": 0,
+  "routeAudit": 1,
+  "nativeIndependentStatus": 3
+}

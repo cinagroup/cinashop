@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T02:11:55.153349+00:00",
+  "status": "local_candidate_validated_not_published",
+  "goalStatus": "active",
+  "head": "6dc28867cab665bb6874520c36ea1c13cc653937",
+  "addedLegacyContracts": 12,
+  "routes": {
+    "productUnit": 8,
+    "userGroup": 4
+  },
+  "verification": {
+    "normalPassed": 292,
+    "normalFiles": 16,
+    "nativePassed": 67,
+    "nativeFiles": 8,
+    "overlap": 43,
+    "uniquePassed": 316,
+    "method": "file + ancestor chain + title + same-title occurrence count; passed assertions only",
+    "normalConditionalSkipped": 13,
+    "nativeConditionalCovered": 13
+  },
+  "workerTypes": {
+    "unit": {
+      "exitCode": 0,
+      "command": "npm run typecheck:unit (8192 MiB standard heap)"
+    },
+    "runtime": {
+      "exitCode": 0,
+      "command": "npm run typecheck:runtime (8192 MiB standard heap)"
+    },
+    "receipt": "unit-group-20261014/worker-typecheck-final.log"
+  },
+  "admin": {
+    "completeVueTypecheckExitCode": 0,
+    "productionBuildExitCode": 0,
+    "command": "npm run build (vue-tsc -b && vite build)",
+    "receipt": "unit-group-20261014/admin-build.log",
+    "browserOrDeviceProof": false
+  },
+  "executedMigrationInput": {
+    "count": 3249,
+    "digest": "284ef39de3e51047959e82783f143f269378cfe66dfd568d53c70e4ccacc5b77",
+    "scope": "Worker src/test/scripts/migrations/configs + Admin src/configs",
+    "receipt": "unit-group-20261014/frozen-final-2-before.json"
+  },
+  "candidateInput": {
+    "count": 3255,
+    "digest": "927ac0899bdcd8804ecd7a745cc853ad6bad623b4dc9362771f67baa14f05df1",
+    "deliveryBytesEqual": true,
+    "receipt": "unit-group-20261014/final-candidate-before.json",
+    "extraStaticSupplierInputs": 6
+  },
+  "postMigrationTestRepairs": {
+    "files": [
+      "test/admin-operational-group-data.test.ts",
+      "test/supplier-product-rule-workflow-frontend.test.ts"
+    ],
+    "outsideSelectedMigrationRuntimeAndTestGraph": true,
+    "fullFilesPassed": 35,
+    "receipt": "unit-group-20261014/type-repair-regression.json"
+  },
+  "native": {
+    "version": "16.14",
+    "files": 8,
+    "passed": 67,
+    "skipped": 0,
+    "fixtureRemaining": 0,
+    "independentStoppedClusters": [
+      {
+        "root": "/tmp/cinashop-migration-20261014/pg-fixtures/finance-postgres-MV1W55",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running",
+        "stopped": true
+      },
+      {
+        "root": "/tmp/cinashop-migration-20261014/pg-fixtures/finance-postgres-TZ2BLd",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running",
+        "stopped": true
+      }
+    ]
+  },
+  "routeAudit": {
+    "exitCode": 1,
+    "preExistingAtHead": true,
+    "reason": "GET /api/get_script is registered but legacy-route-decisions.json still marks it retired",
+    "currentGlobalCoverageClaimed": false,
+    "targetedDeltaReceipt": "unit-group-20261014/static-delta.json"
+  },
+  "checklist": {
+    "total": 404,
+    "complete": 249,
+    "open": 155,
+    "rowsUnchanged": true
+  },
+  "auditChecklist": {
+    "total": 88,
+    "complete": 50,
+    "open": 38,
+    "rowsUnchanged": true
+  },
+  "phpSources": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/StoreProductUnit.php": "ee1e670b117d89d3c3f9a084efcd4cb52e291a6acc27c9e83368c5271752f648",
+    "app/services/product/product/StoreProductUnitServices.php": "ffe10c9f201a646473c5b7c6f6cfd8de551f0dcc03ace521a5b6e0b7e79f3cea",
+    "app/dao/product/product/StoreProductUnitDao.php": "96e922516d956c3a710688c7ea05b6612c04a63c222e8827f45c14dcd82b5b4b",
+    "app/validate/admin/product/StoreProductUnitValidate.php": "612a0660f7492b15702f7e0614ae3673d53597af354ca9e23995d62a5eb3a886",
+    "app/controller/admin/v1/user/UserGroup.php": "51ed39ef78df292f3a0e7712be44256ff497bd31f30d21dc88d884cc39ab1833",
+    "app/services/user/group/UserGroupServices.php": "97604cbb4f89bfd353b08cc87c8eeaf907d505d7626d65bd03e101f27b8fb8bd",
+    "app/dao/user/group/UserGroupDao.php": "d4702608d20b806458f632ec8512d8e76ff7c1421dcce391ec817f5bd3713bb1",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+  },
+  "failedAttemptsRetained": [
+    "group unit initial incorrect banned error-code expectation",
+    "intermediate ordinary HTTP cache header/static quote assertions",
+    "unit agent default 2 GiB heap OOM (exported observation, not raw log)",
+    "group agent default 2 GiB heap OOM (message observation, no original raw log)",
+    "unit-agent complete eight-file memory run timeout under overlapping test/type load",
+    "ordinary-final sandbox spawnSync EPERM + missing Pragma expectation",
+    "native-final two missing required product names",
+    "initial standard full typecheck existing request_id/unused callback errors and two missing frontend Vue dependencies"
+  ],
+  "production": {
+    "ddlExecuted": false,
+    "businessDataWritten": false,
+    "providerCalls": false,
+    "submitted": false,
+    "pushed": false,
+    "deployed": false
+  },
+  "receipts": {
+    "ordinary-intermediate.json": {
+      "path": "audit/unit-group-20261014/ordinary-intermediate.json",
+      "sha256": "5057d374f2608e1a23c33b02440879fe2d2307ff3825431624ae7e6a0b776085"
+    },
+    "ordinary-final.json": {
+      "path": "audit/unit-group-20261014/ordinary-final.json",
+      "sha256": "a6f4ced53c87c6e97d9574c7ea5ab72af8f6c818efcbf982b0b58c582fe37c6b"
+    },
+    "ordinary-final-2.json": {
+      "path": "audit/unit-group-20261014/ordinary-final-2.json",
+      "sha256": "95136467b6dfd978936f4509ba1a124aa0cdaf674cdd00b08e24dfd2edacf589"
+    },
+    "ordinary-final-3.json": {
+      "path": "audit/unit-group-20261014/ordinary-final-3.json",
+      "sha256": "71abe733fe5ecb59ec16cd199c6e2b87982135c9e55a03c65189322e6f3fba16"
+    },
+    "type-repair-regression.json": {
+      "path": "audit/unit-group-20261014/type-repair-regression.json",
+      "sha256": "8c5aedfab1824556e11540cccadc30f411449dee9623d327a6baa181af3af52d"
+    },
+    "native-final.log": {
+      "path": "audit/unit-group-20261014/native-final.log",
+      "sha256": "060f8ce2bac8a34c474f45c0c6f673d5714fb2a55fb6b5ed41a7d21520b8be53"
+    },
+    "native-final-2.log": {
+      "path": "audit/unit-group-20261014/native-final-2.log",
+      "sha256": "562d45751c7708e76b47b4394142d8852bc19ed348ac23b5090b8bd450e0eee2"
+    },
+    "worker-typecheck.log": {
+      "path": "audit/unit-group-20261014/worker-typecheck.log",
+      "sha256": "540acdb5b8afb7bbe82616773ca6ea1a85085a5f11a1e214e4aa480e729ade30"
+    },
+    "worker-typecheck-final.log": {
+      "path": "audit/unit-group-20261014/worker-typecheck-final.log",
+      "sha256": "c352104a790180fae1014c361893c81d1b04a868c104d56453a0fa2e69cd457c"
+    },
+    "admin-build.log": {
+      "path": "audit/unit-group-20261014/admin-build.log",
+      "sha256": "6e9f8e44169c581786ab0e0dd2127b85ac9b4915ff58dfc10d4993436ce4d6fa"
+    },
+    "native-independent-status.json": {
+      "path": "audit/unit-group-20261014/native-independent-status.json",
+      "sha256": "cc02f9c5f27ce5cd8e523958442d5daebeddd456e5f3fdf999f0afe61932f453"
+    },
+    "static-delta.json": {
+      "path": "audit/unit-group-20261014/static-delta.json",
+      "sha256": "ff5c760631077ee6c095b2356d8910b9c10344ca1c1d0d58008367b54d838f48"
+    },
+    "full-route-audit.stdout": {
+      "path": "audit/unit-group-20261014/full-route-audit.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "full-route-audit.stderr": {
+      "path": "audit/unit-group-20261014/full-route-audit.stderr",
+      "sha256": "27a08b848f943b720336447200ea4cd45852b1dc191cb03a9bf16eeaa1dd6ad7"
+    },
+    "frozen-final-2-before.json": {
+      "path": "audit/unit-group-20261014/frozen-final-2-before.json",
+      "sha256": "60351b78346c445b9f7bc624b553a6c803dd5a1e46e7f6786f68f9d6230e9700"
+    },
+    "final-candidate-before.json": {
+      "path": "audit/unit-group-20261014/final-candidate-before.json",
+      "sha256": "59ed12c5b3e3cf23b420e8c09a6dd937fffeba8511cd0e31662ac3a6127bb59d"
+    },
+    "type-repair-delta.json": {
+      "path": "audit/unit-group-20261014/type-repair-delta.json",
+      "sha256": "199735d550ceb574c883043f0576ac7e7620f494e8a5a535b446b684fc8b4a8f"
+    },
+    "setup-evidence.json": {
+      "path": "audit/unit-group-20261014/setup-evidence.json",
+      "sha256": "832be1bf432ccfd2a5ea4def2f3971129e39913c18fb846ee15a7c250f1fc66a"
+    },
+    "frontend-type-dependencies-resolved.json": {
+      "path": "audit/unit-group-20261014/frontend-type-dependencies-resolved.json",
+      "sha256": "851f9852260a810196b5a78ca01542bd3934d27f70a45546a4cea7b24b307581"
+    },
+    "frontend-type-dependencies-sha-comparison.json": {
+      "path": "audit/unit-group-20261014/frontend-type-dependencies-sha-comparison.json",
+      "sha256": "d092704a9f5dd919fd73ef4b4d3e9ec7a1dd1ae6b955778a1df0602f77428867"
+    },
+    "test-counts-final.json": {
+      "path": "audit/unit-group-20261014/test-counts-final.json",
+      "sha256": "8ec65143c0341dd5e33bb52f010b8ddd1445a36e347daeecf975b047e9409ceb"
+    },
+    "group-unit-first.log": {
+      "path": "audit/unit-group-20261014/group-unit-first.log",
+      "sha256": "d1f8ad6987b86e722581f23818e6e3ce020fb9294e91ff05d86892f500d98b39"
+    },
+    "group-unit-second.log": {
+      "path": "audit/unit-group-20261014/group-unit-second.log",
+      "sha256": "4e6ae833416de2a92735286fbd8ef09784377119ecc6a13edc04a7d449a373fe"
+    },
+    "unit-agent-earlier-attempts.json": {
+      "path": "audit/unit-group-20261014/unit-agent-earlier-attempts.json",
+      "sha256": "d673c574ed0105cf73708f189faeb835c83009d050e29263e851032299ac055f"
+    },
+    "unit-agent-ordinary-final.log": {
+      "path": "audit/unit-group-20261014/unit-agent-ordinary-final.log",
+      "sha256": "200db723c0e287ed660655038468234616680e74b66ed9b415a074fc41ab672e"
+    }
+  }
+}

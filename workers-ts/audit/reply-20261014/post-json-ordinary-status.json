@@ -1,0 +1,24 @@
+{
+  "name": "post-json-ordinary",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-reply.test.ts",
+    "test/admin-product-reply-http.test.ts",
+    "test/admin-product-reply-native.test.ts",
+    "test/admin-product-reply-workflow-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/reply-20261014/post-json-ordinary.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T07:44:44.133541+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T07:45:11.733994+00:00",
+  "exitCode": 0,
+  "log": "post-json-ordinary.log"
+}

@@ -1,0 +1,12 @@
+{
+  "nodeExecutable": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+  "workerCwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "adminCwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "ordinary": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts --maxWorkers=1 test/admin-product-ensure.test.ts test/admin-product-ensure-http.test.ts test/admin-product-ensure-native.test.ts test/admin-product-unit.test.ts test/admin-product-unit-http.test.ts test/admin-product-unit-native.test.ts test/admin-product-specs.test.ts test/admin-product-specs-http.test.ts test/admin-product-specs-audit.test.ts test/admin-product-specs-native.test.ts test/admin-user-group-contract.test.ts test/admin-user-group-http.test.ts test/admin-user-group-native.test.ts test/product-experience-migration.test.ts test/product-association-migration.test.ts test/product-metadata-migration.test.ts test/admin-product-frontend-parity.test.ts test/admin-permission.test.ts --reporter=verbose --reporter=json --outputFile=audit/ensure-20261014/final-ordinary.json",
+  "native": "TEST_FINANCE_LOCAL_CACHE_ROOT=/home/cina/cinagroup/cinashop/.cache/ensure-postgres-fixtures node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests /home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin test/admin-product-ensure.test.ts test/admin-product-ensure-http.test.ts test/admin-product-ensure-native.test.ts test/admin-product-unit.test.ts test/admin-product-unit-http.test.ts test/admin-product-unit-native.test.ts test/admin-product-specs.test.ts test/admin-product-specs-http.test.ts test/admin-product-specs-audit.test.ts test/admin-product-specs-native.test.ts test/admin-user-group-native.test.ts",
+  "workerUnitTypes": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+  "workerRuntimeTypes": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+  "adminVueTypes": "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+  "adminBuild": "node node_modules/vite/bin/vite.js build",
+  "routeAudit": "node --import tsx scripts/route-parity-audit.ts"
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "root": "/tmp/cinashop-migration-20261014/pg-fixtures/finance-postgres-MV1W55",
+    "exitCode": 3,
+    "output": "pg_ctl: no server running",
+    "stopped": true
+  },
+  {
+    "root": "/tmp/cinashop-migration-20261014/pg-fixtures/finance-postgres-TZ2BLd",
+    "exitCode": 3,
+    "output": "pg_ctl: no server running",
+    "stopped": true
+  }
+]

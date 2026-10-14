@@ -1,0 +1,62 @@
+{
+  "status": "implementation_repaired_ordinary_verified_native_pending_root",
+  "resolves": [
+    "R1",
+    "R2"
+  ],
+  "source_checks": {
+    "all11NonIdSystemLogColumnsExplicitlyExpected": true,
+    "sameExpectedChecksReturningAndSelectReadback": true,
+    "supplierSkuDimensionNativeMaxlengthRemoved": true,
+    "existingOptionalSkuStringMaxlengthsPreserved": true
+  },
+  "ordinary": {
+    "files": 1,
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "audit_identity_case": {
+      "fields": [
+        "store_id",
+        "merchant_id",
+        "admin_name",
+        "ip"
+      ],
+      "phases": [
+        "BEFORE",
+        "AFTER"
+      ],
+      "operations": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "mutation_assertions": 24,
+      "snapshot": "complete store_product_rule and system_log rows after each refusal"
+    }
+  },
+  "native_test_ready": {
+    "cases": 16,
+    "new_case": 1,
+    "mutation_assertions": 24,
+    "role": "existing minimal independent LOGIN helper, audit INSERT allowed / UPDATE forbidden",
+    "trigger": "fixture-owned SECURITY DEFINER, INSERT only, WHEN type=product_rule_catalog",
+    "reachability": "native_rule_audit_probe nextval remains after rollback, exact per-attempt last_value checked",
+    "status": "not executed by this agent; root owns unified PG16 run"
+  },
+  "unchangedInputsAfterOrdinary": {
+    "src/services/admin/AdminProductRuleService.ts": "7f81a1bd347e7da7ca8c2c8c8feb8ef03999beefa776a639eedb9b6ea91cbf18",
+    "test/admin-product-rule.test.ts": "03e7e14ecf67383645dd8a851100fe803d0d9ccb4f2d951d9412026e9f10dac9",
+    "test/admin-product-rule-native.test.ts": "67b7ab897f4b57463512bb236ccfb3a01be66732fbd69d4c017429d8ded2f228",
+    "../view/supplier-ts/src/pages/ProductForm.vue": "f46033c0feebce85aeebd46c345fd9eaf1f349252eae1f40dbeca495bb24a18c"
+  },
+  "receipt_hashes": {
+    "identity-repair-inputs.json": "deca4e71ea8b97939081c0f05d81ff801a974940a23b7db0d2f0d61f82ee8362",
+    "identity-repair-ordinary.json": "6cee696d82318443023a623efa2c95e4e2725a9653429fa333f32ebe160b275d",
+    "identity-repair-ordinary.log": "b0471e135f01be9f3f40f39e8f4a3bc398b60e77693fd6e8d75655a8c659a966",
+    "identity-repair-ordinary-status.json": "8588fcb4bf2a2ceac3b5e0215cb8e5cc2c8f8b0322f24ea4e126dbdc7ba0e9a7"
+  },
+  "history": "original audit-scope-repro.json proves prior miscommit and is retained unmodified; source-final-review.json remains historical pre-fix review",
+  "scope": "only two assigned test files edited; no native service, all matrix, typecheck or browser runtime claim"
+}

@@ -100,7 +100,7 @@ describe("product metadata and system group migration", () => {
     expect(supplierRoutes).toContain('"/product/all_specs"');
     expect(supplierRoutes).toContain('"/product/product/get_rule"');
     expect(supplierRoutes).toContain('"/product/product/rule/delete/:id"');
-    expect(adminRoutes).toContain('"/get_all_unit"');
+    expect(adminRoutes).toMatch(/["']\/get_all_unit["']/);
     expect(adminRoutes).toContain('"/specs/:id"');
     expect(adminRoutes).toContain('"/product/rule/:id"');
     expect(permissions).toContain('"get_all_unit"');

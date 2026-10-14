@@ -1,0 +1,16 @@
+{
+  "capturedAt": "2026-10-14T12:23:50.324447+00:00",
+  "versions": {
+    "node": "v24.19.0",
+    "postgres": "postgres (PostgreSQL) 16.14"
+  },
+  "node": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+  "postgresBin": "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+  "db": "owned temporary PG16 clusters; no external URL/provider",
+  "browser": "installed /usr/bin/google-chrome and existing Playwright, explicit local synthetic API fixtures",
+  "noDependencyInstall": true,
+  "phpInterpreterRun": false,
+  "heavyWrapper": "bash /home/cina/cinagroup/tools/validate-serial.sh",
+  "vitestMaxWorkers": 1,
+  "workerTypecheckMaxOldSpaceMiB": 8192
+}

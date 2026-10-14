@@ -253,7 +253,7 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && ordinary.in('displayPrice','selectedSku.value.display_price?.price')
     && s('cart').has('line.memberUnitPriceCents * line.quantity','membershipSavingsCents')
     && !s('cart').has('product_detail_design') && !s('cart').has('showPrice') && !s('discount').has('showPrice');
-  const realReplyPreviews = data.in('readProductDetailExtras','replies.replyList(product.id,1,value.replyNum,uid)','replies.replyConfig(product.id)','replyCount:stats?.sum_count??0')
+  const realReplyPreviews = data.in('readProductDetailExtras','replies.replyList(product.id,1,value.replyNum,uid,0,false)','replies.replyConfig(product.id)','replyCount:stats?.sum_count??0')
     && s('reply').in('replyList','this.container.replyDao.listByProduct(productId,','limit')
     && s('replyDao').in('listByProduct','eq(storeProductReply.productId,productId)','eq(storeProductReply.status,1)','eq(storeProductReply.isDel,0)','.limit(limit)')
     && s('productController').in('detail','reply:info.reply','replyCount:info.replyCount')
@@ -357,12 +357,12 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && s('activityApi').call('apiCouponReceive','http.post',"'/coupon/receive'",'{id}');
   const activityConsumers = data.in('readActivityDetailDesign','publicOrdinaryProductIdentitySql()','readProductDetailDesignSnapshot(tx)',
     '(activityType===6?design.showService.includes(3):!design.showService.includes(3))?integralDetailSpecs(activity.specs??base.specs,[]):[]',
-    'replyService.replyList(base.id,1,design.replyNum,uid)','replyService.replyConfig(base.id)','activityType===6||activityType===7',
+    'replyService.replyList(base.id,1,design.replyNum,uid,0,false)','replyService.replyConfig(base.id)','activityType===6||activityType===7',
     'readDetailDescription(tx,baseDescription?base.id:activity.id,baseDescription?0:activityType,base)',
     'ensure=design.showService.includes(2)?await readDetailEnsures(tx,product):[]','gallery.length>20','replyCount:stats?.sum_count??0')
     && data.call('readActivityDetailDesign','readProductDetailDesignSnapshot','tx')
     && data.call('readActivityDetailDesign','readDetailEnsures','tx','product')
-    && data.call('readActivityDetailDesign','replyService.replyList','base.id','1','design.replyNum','uid')
+    && data.call('readActivityDetailDesign','replyService.replyList','base.id','1','design.replyNum','uid','0','false')
     && data.call('readActivityDetailDesign','replyService.replyConfig','base.id')
     && data.call('readActivityDetailDesign','readDetailDescription','tx','baseDescription?base.id:activity.id','baseDescription?0:activityType','base')
     && data.call('renderActivityDetailDesign','renderDetailDescription','appKey','result.description')

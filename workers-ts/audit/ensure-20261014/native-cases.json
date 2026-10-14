@@ -1,0 +1,869 @@
+{
+  "source": "final-native.log completed verbose cases",
+  "cases": [
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "projects exact legacy parents and Shanghai dates while modern lists retain specs and pagination",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "preserves the PHP id OR name search within the complete owned template scope",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "isolates every metadata owner and child owner while allowing supplier reads of platform templates",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "accepts complete displayed legacy edit DTOs and recreates owned children without altering immutable metadata",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "rejects forged parent echo fields and foreign or stale child echo fields without catalog or audit effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "validates names, children, scalar bounds and read query multiplicity before writing SQL",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "accepts the complete 100-row and 255-codepoint write boundaries through the real product snapshot consumer",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "returns complete 2000-child reads, rejects overflow explicitly and keeps legacy parent lists independent of children",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "returns every template at the 2000-selector bound and refuses the 2001st without truncating paginated lists",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "grants the exact PHP 1381 page read access without writes or the unrelated 1383 create-page grant",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "revalidates current roles, password, account scope and token expiry at the business SQL boundary",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "preserves live product parameter snapshots during template edits and refuses direct or relation references on delete",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "rolls back every parent, child and audit change when SQL skips a parent update or audit insert",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs.test.ts",
+      "ancestorTitles": [
+        "PHP parameter-template contracts with actual catalog SQL and current authority"
+      ],
+      "title": "checks complete child insert and deletion receipts so database triggers cannot commit incomplete replacement",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "projects PHP dates and counts without changing numeric modern lists or the existing detail extension",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "keeps selector DTOs distinct and searches exact owned IDs or names rather than foreign catalogs",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "matches PHP FIND_IN_SET product_count exactly across owners, deleted rows and repeated tokens",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "restores create and populated edit forms with PHP actions, four rules and 100-character name controls",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "preserves disabled status on omitted or echoed legacy updates while modern writers can change it explicitly",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "accepts API names beyond the form bound and all 255 Unicode codepoints while retaining optional HTTP descriptions",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "validates full list echo metadata and refuses stale counts, identity changes and unknown fields atomically",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "keeps core owners isolated and scopes duplicate names without exposing foreign supplier or store assurances",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "rejects malformed scalars and repeated, unsupported or invalid queries before producing catalog effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "grants only the exact 1382 page reader and refuses forged 1383 tuples in both permission resolvers",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "revalidates current authority, password, account owner and expiry at the actual SQL boundary",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "protects exact CSV and type-5 references and filters the actual product editor options on status changes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "rejects incomplete SQL write receipts and skipped audits for all four mutations with full rollback",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "checks business rows again after audits and rolls back audit rewrites or deleted-row resurrection",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure.test.ts",
+      "ancestorTitles": [
+        "PHP assurance forms and mutable catalog contracts with current SQL authority"
+      ],
+      "title": "returns every enabled selector at 2000 rows and refuses overflow without truncating paginated parent lists",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "returns owner-scoped enabled selectors, deterministic list and exact snake-case details",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "reconstructs create and populated edit forms with correct methods, targets and 15-character controls",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "recognizes the exact PHP 1349 page seed in both resolvers without writer or forged-page grants",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "preserves real 15-character Unicode names, scopes duplicates, sorts and returns complete committed effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "blocks deletion and renaming of names used by any live owner and permits sorting without rewriting products",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "uses the same Unicode bound and global reference checks in existing metadata callers",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "revalidates read/write permission, credentials, account type and expiration at the actual SQL boundary",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "rejects repeated, unknown and malformed read parameters before generating SQL",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit.test.ts",
+      "ancestorTitles": [
+        "PHP platform unit contracts and current Admin authority"
+      ],
+      "title": "rolls back malformed unit write receipts and skipped audit inserts",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "reads exact page-1382 catalogs and both forms with SELECT-only LOGIN but refuses an unfenced SQL writer",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "completes numeric-authority lifecycle with guarantee-only DML, INSERT-only audit and menu-id locking privilege",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "orders a real core save before Admin deletion on 731614 and removes the committed row completely",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "orders a late Admin update after real core deletion and refuses the disappeared ID without resurrection or audit",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "orders Admin status behind a real core save on the same 731614 fence and preserves the committed metadata",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "waits for the actual product writer SHARE lock then protects its committed CSV and type-5 guarantee relation",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "holds a late real product binding until deletion and its audit commit then preserves the prior guarantee reference",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "orders disable after an actual product binding and retains the committed reference while allowing later historical edits",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "holds a late actual new product binding until disable commits then rejects the inactive guarantee without changing existing references",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "reaches the native rejecting audit on create, update, status and delete and rolls back every business effect",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "proves the skipped audit trigger was reached for every mutation and refuses all zero-row receipts atomically",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "orders current-role revocation after the waiting authenticated write then refuses all later writes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "locks the synthetic current API menu decision through the 731614 wait and commits before its exact menu revoke",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-native.test.ts",
+      "ancestorTitles": [
+        "Admin guarantees on independent PG16 LOGINs and actual product-reference writers"
+      ],
+      "title": "rolls back update and audit when the original authenticated session expires during a proven business-fence wait",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-audit.test.ts",
+      "ancestorTitles": [
+        "parameter-template business receipts after the atomic audit insert"
+      ],
+      "title": "rolls back create and edit when the audit rewrites a parent after the core readback",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-audit.test.ts",
+      "ancestorTitles": [
+        "parameter-template business receipts after the atomic audit insert"
+      ],
+      "title": "rolls back create and edit when the audit rewrites a child after the core readback",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-audit.test.ts",
+      "ancestorTitles": [
+        "parameter-template business receipts after the atomic audit insert"
+      ],
+      "title": "rolls back delete when the audit recreates a parent after the core absence check",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-audit.test.ts",
+      "ancestorTitles": [
+        "parameter-template business receipts after the atomic audit insert"
+      ],
+      "title": "rolls back delete when the audit recreates a child after the core absence check",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "serves all nine old and modern read contracts with deliberate date and pagination projections",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "creates, edits by complete returned DTO and deletes through PHP endpoints with exact response envelopes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "keeps both modern prefixes on the same authority, numeric DTOs and committed write results",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "admits exact 1381 readers and numeric API writers but rejects 1383 and unrelated or read-only writer aliases",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "refuses anonymous requests before opening transaction sessions and closes every admitted request session",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "refuses cross-owner templates, changed echo identities, malformed paths and repeated queries without effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "rejects invalid JSON or UTF8 and content lengths and streaming bodies beyond 64 KiB without mutations",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "uses live authorization and credentials and strict expiry despite middleware token tolerance",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-http.test.ts",
+      "ancestorTitles": [
+        "registered PHP specs routes and modern aliases through actual App, JWT and SQL"
+      ],
+      "title": "runs HEAD through all three read variants without bodies or catalog and audit changes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "serves legacy selectors, list dates and forms while modern prefixes retain full numeric DTOs and pagination",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "executes all four PHP mutations with exact messages and empty-array responses, including populated list echoes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "keeps modern short and api/admin/product writers on explicit statuses, committed IDs and null mutations",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "uses the actual compiled Vue API and Axios /adminapi base URL to consume modern envelopes and writable status",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "preserves disabled rows through omitted and unchanged legacy status echoes and refuses legacy status injection",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "admits exact page readers and numeric writers but rejects anonymous, unrelated, 1383 and read-only mutations",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "rejects cross-owner rows, immutable echoes, repeated parameters and malformed identity or status paths without effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "rejects invalid UTF8 and JSON and both declared and streaming bodies beyond 64 KiB with session cleanup",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "refuses live role revocation, changed credentials, foreign admin identity and expired tokens without effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "reports failed audit receipts for every HTTP mutation and leaves no committed catalog change",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-ensure-http.test.ts",
+      "ancestorTitles": [
+        "actual ensure App routes, JWT and SQL with the production Vue Axios consumer"
+      ],
+      "title": "serves HEAD through all legacy read contracts and modern list, selector and detail without response bodies",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "serves every old read, create/edit form and six modern aliases through the full application",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "executes the old POST/PUT/DELETE and accepts complete displayed DTO bodies without changing ownership",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "uses identical 15-character write behavior and committed rows for both contemporary prefixes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "rejects missing/foreign/view-only auth and numeric-menu forgery without state changes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "rejects malformed IDs, unsupported verbs, repeated query and ownership/body injection",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "admits the exact original unit page role for reads and forms but refuses all its writer aliases",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-http.test.ts",
+      "ancestorTitles": [
+        "actual App PHP unit routes and current aliases with JWT and SQL"
+      ],
+      "title": "submits the actual create and edit form responses through the legacy Axios base URL to the real App",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "reads owned templates with SELECT-only LOGIN and rejects an unfenced write without any business effects",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "completes create, rebuild and delete with minimum catalog DML and menu-id row locks",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "filters mismatched parameter rows and refuses native rebuild without changing any owner data",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "filters the actual product editor options by parent ownership and every active child scope with a SELECT-only LOGIN",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "serializes a completed metadata rebuild before Admin deletion on the exact 731613 fence without orphan parameters",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "orders Admin save after metadata deletion on 731613 and rejects the disappeared ID instead of recreating children",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "waits for the actual product writer SHARE lock then refuses template deletion while retaining its independent snapshot and type-6 relation",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "holds a late actual product binding until the template and atomic delete audit commit then retains the prior snapshot and relation",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "rolls back parent, rebuilt children and deletion when a native audit trigger rejects the receipt",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "orders current-role revocation after the fenced write and refuses every later mutation",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "holds the exact numeric API menu row through a business wait and orders its revocation after the current receipt",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-specs-native.test.ts",
+      "ancestorTitles": [
+        "product parameter templates on independent PG16 LOGINs and actual product writers"
+      ],
+      "title": "rolls back the full rebuild and audit if the authenticated session expires during a proven native lock wait",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "serializes duplicate creations to one unit and one atomic audit",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "waits for the real Admin product update, then rejects deleting its committed global reference",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "waits for a real Supplier product/SKU save before rejecting platform unit deletion",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "deletion may commit first and a later real product preserves historical free text by contract",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "orders a concurrent current-role revoke after the fenced commit and rejects all subsequent writes",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "rolls back the complete unit and audit if the original session expires during a proven lock wait",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-product-unit-native.test.ts",
+      "ancestorTitles": [
+        "native PG16 unit metadata and actual product-save synchronization"
+      ],
+      "title": "returns bounded lock conflict with no effects, then succeeds once the real unit fence is available",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-user-group-native.test.ts",
+      "ancestorTitles": [
+        "user-group lifecycle on independent PG16 LOGINs"
+      ],
+      "title": "reads with SELECT-only authority and denies writes without authority barrier privileges",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-user-group-native.test.ts",
+      "ancestorTitles": [
+        "user-group lifecycle on independent PG16 LOGINs"
+      ],
+      "title": "writes with bounded catalog ACL and numeric authority without user DML or semantic menu UPDATE",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-user-group-native.test.ts",
+      "ancestorTitles": [
+        "user-group lifecycle on independent PG16 LOGINs"
+      ],
+      "title": "serializes concurrent same-name creation into one catalog row and one atomic audit",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-user-group-native.test.ts",
+      "ancestorTitles": [
+        "user-group lifecycle on independent PG16 LOGINs"
+      ],
+      "title": "keeps deletion outside an uncommitted assignGroup reference and refuses it after assignment commits",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-user-group-native.test.ts",
+      "ancestorTitles": [
+        "user-group lifecycle on independent PG16 LOGINs"
+      ],
+      "title": "holds assignGroup until deletion and its audit commit, then rejects the disappeared target without orphan users",
+      "status": "passed"
+    },
+    {
+      "file": "test/admin-user-group-native.test.ts",
+      "ancestorTitles": [
+        "user-group lifecycle on independent PG16 LOGINs"
+      ],
+      "title": "rolls back native creation and deletion completely when the audit trigger refuses commit",
+      "status": "passed"
+    }
+  ]
+}

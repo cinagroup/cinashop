@@ -1,0 +1,115 @@
+{
+  "driver": "PGlite isolated owned memory via existing financePostgres helper",
+  "trigger": "BEFORE INSERT system_log sets store_id=73, merchant_id=91, admin_name=forged-name, ip=203.0.113.73",
+  "outcomes": [
+    {
+      "operation": "create",
+      "committed": true,
+      "result": {
+        "id": 1000
+      }
+    },
+    {
+      "operation": "update",
+      "committed": true,
+      "result": {
+        "id": 10
+      }
+    },
+    {
+      "operation": "delete",
+      "committed": true,
+      "result": null
+    }
+  ],
+  "cleanup": true,
+  "logs": [
+    {
+      "id": 1,
+      "storeId": 73,
+      "adminId": 101,
+      "adminName": "forged-name",
+      "path": "product/product/rule/1000",
+      "page": "商品规格模板管理",
+      "method": "POST",
+      "action": "{\"operation\":\"create\",\"id\":1000}",
+      "ip": "203.0.113.73",
+      "type": "product_rule_catalog",
+      "addTime": 1791957316,
+      "merchantId": 91
+    },
+    {
+      "id": 2,
+      "storeId": 73,
+      "adminId": 101,
+      "adminName": "forged-name",
+      "path": "product/product/rule/10",
+      "page": "商品规格模板管理",
+      "method": "POST",
+      "action": "{\"operation\":\"update\",\"id\":10}",
+      "ip": "203.0.113.73",
+      "type": "product_rule_catalog",
+      "addTime": 1791957316,
+      "merchantId": 91
+    },
+    {
+      "id": 3,
+      "storeId": 73,
+      "adminId": 101,
+      "adminName": "forged-name",
+      "path": "product/product/rule/11",
+      "page": "商品规格模板管理",
+      "method": "DELETE",
+      "action": "{\"operation\":\"delete\",\"id\":11}",
+      "ip": "203.0.113.73",
+      "type": "product_rule_catalog",
+      "addTime": 1791957316,
+      "merchantId": 91
+    }
+  ],
+  "rules": [
+    {
+      "id": 10,
+      "type": 0,
+      "relationId": 0,
+      "ruleName": "scope-update-repro",
+      "ruleValue": "[{\"value\":\"颜色\",\"detail\":[\"红\",\"蓝\"]},{\"value\":\"尺码\",\"detail\":[\"S\",\"M\"]}]"
+    },
+    {
+      "id": 20,
+      "type": 2,
+      "relationId": 20,
+      "ruleName": "供应商规格",
+      "ruleValue": "[{\"value\":\"材质\",\"detail\":[\"钢\"]}]"
+    },
+    {
+      "id": 21,
+      "type": 0,
+      "relationId": 99,
+      "ruleName": "异常平台规格",
+      "ruleValue": "[]"
+    },
+    {
+      "id": 22,
+      "type": 1,
+      "relationId": 20,
+      "ruleName": "门店规格",
+      "ruleValue": "[]"
+    },
+    {
+      "id": 30,
+      "type": 2,
+      "relationId": 30,
+      "ruleName": "另一供应商规格",
+      "ruleValue": "[]"
+    },
+    {
+      "id": 1000,
+      "type": 0,
+      "relationId": 0,
+      "ruleName": "scope-create-repro",
+      "ruleValue": "[{\"value\":\"颜色\",\"detail\":[\"红\",\"蓝\"]},{\"value\":\"尺码\",\"detail\":[\"S\",\"M\"]}]"
+    }
+  ],
+  "reproduced": true
+}

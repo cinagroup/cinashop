@@ -1,0 +1,20 @@
+{
+  "oldDigest": "2b7345755c0abde22fbbcfb2efab9043809be3721deddbc9b35ecf9716e8656f",
+  "currentDigest": "9972ef116089f2f1969e4530273281024a8c90c06707b63ba55da957559b6097",
+  "added": [
+    "workers-ts/src/utils/legacy-php-json.ts"
+  ],
+  "changed": [
+    "workers-ts/src/services/admin/AdminProductReplyService.ts",
+    "workers-ts/test/admin-product-reply-http.test.ts",
+    "workers-ts/test/admin-product-reply.test.ts"
+  ],
+  "unchangedExistingInputs": 3344,
+  "unchangedFrontendSourceConfigLockIndexPublicInputs": 347,
+  "frontendCounts": {
+    "admin": 284,
+    "supplier": 63
+  },
+  "reason": "Legacy reply pics response shaping and actual SQL/HTTP expectations only; frontend type/build receipts remain valid for unchanged declared frontend inputs; environment and installed dependency bytes are outside this proof",
+  "unaffectedCatalogRuntimeSourceChanged": false
+}

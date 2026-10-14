@@ -1,0 +1,212 @@
+{
+  "head": "6dc28867cab665bb6874520c36ea1c13cc653937",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/get_all_unit",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/get_all_unit",
+          "normalizedPath": "/adminapi/product/get_all_unit",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1598,
+          "target": "v1.product.StoreProductUnit/getAllUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/unit",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/unit",
+          "normalizedPath": "/adminapi/product/unit",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/unit/create",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/unit/create",
+          "normalizedPath": "/adminapi/product/unit/create",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/unit",
+      "phpAuthority": [
+        {
+          "method": "POST",
+          "path": "/adminapi/product/unit",
+          "normalizedPath": "/adminapi/product/unit",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/unit/:id",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/unit/:id",
+          "normalizedPath": "/adminapi/product/unit/:param",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/unit/:id/edit",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/unit/:id/edit",
+          "normalizedPath": "/adminapi/product/unit/:param/edit",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "PUT",
+      "path": "/adminapi/product/unit/:id",
+      "phpAuthority": [
+        {
+          "method": "PUT",
+          "path": "/adminapi/product/unit/:id",
+          "normalizedPath": "/adminapi/product/unit/:param",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/unit/:id",
+      "phpAuthority": [
+        {
+          "method": "DELETE",
+          "path": "/adminapi/product/unit/:id",
+          "normalizedPath": "/adminapi/product/unit/:param",
+          "kind": "resource",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1600,
+          "target": "v1.product.StoreProductUnit"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/user/user_group/list",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/user/user_group/list",
+          "normalizedPath": "/adminapi/user/user_group/list",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 2254,
+          "target": "v1.user.UserGroup/index"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/user/user_group/add/:id",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/user/user_group/add/:id",
+          "normalizedPath": "/adminapi/user/user_group/add/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 2256,
+          "target": "v1.user.UserGroup/add"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/user/user_group/save",
+      "phpAuthority": [
+        {
+          "method": "POST",
+          "path": "/adminapi/user/user_group/save",
+          "normalizedPath": "/adminapi/user/user_group/save",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 2258,
+          "target": "v1.user.UserGroup/save"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/user/user_group/del/:id",
+      "phpAuthority": [
+        {
+          "method": "DELETE",
+          "path": "/adminapi/user/user_group/del/:id",
+          "normalizedPath": "/adminapi/user/user_group/del/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 2260,
+          "target": "v1.user.UserGroup/delete"
+        }
+      ],
+      "headRegistered": false,
+      "currentRegistered": true
+    }
+  ],
+  "addedLegacyContracts": 12,
+  "globalAudit": "blocked by pre-existing retired /api/get_script registration conflict",
+  "baselineAlsoHasConflict": true
+}

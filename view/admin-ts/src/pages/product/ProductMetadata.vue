@@ -161,7 +161,7 @@
 
     <el-dialog v-model="unitDialog" :title="unitForm.id ? '编辑单位' : '新增单位'" width="min(440px, 92vw)">
       <el-form label-width="82px">
-        <el-form-item label="单位名称" required><el-input v-model="unitForm.name" maxlength="50" placeholder="如：件、盒、千克" /></el-form-item>
+        <el-form-item label="单位名称" required><el-input v-model="unitForm.name" maxlength="15" placeholder="如：件、盒、千克" /></el-form-item>
         <el-form-item label="排序"><el-input-number v-model="unitForm.sort" :min="0" :max="32767" /></el-form-item>
       </el-form>
       <template #footer><el-button @click="unitDialog = false">取消</el-button><el-button type="primary" :loading="saving" @click="saveUnit">保存</el-button></template>
@@ -324,6 +324,7 @@ function openUnit(row?: ProductUnit) {
 async function saveUnit() {
   const name = unitForm.name.trim();
   if (!name) return ElMessage.warning("请输入单位名称");
+  if ([...name].length > 15) return ElMessage.warning("单位名称不能超过15个字符");
   saving.value = true;
   try { await apiProductUnitSave(unitForm.id, { name, sort: unitForm.sort }); unitDialog.value = false; ElMessage.success(unitForm.id ? "单位已更新" : "单位已创建"); await loadUnits(); }
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "单位保存失败"); }

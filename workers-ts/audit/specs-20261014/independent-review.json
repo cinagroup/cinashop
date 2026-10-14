@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-10-14T03:14:45.391920+00:00",
+  "reviewer": "/root/specs_contract_tests",
+  "source": "completed collaboration read-only independent review",
+  "noSourceEditsOrTestExecution": true,
+  "conclusions": {
+    "substantiveMismatchFound": false,
+    "normalPassed": 98,
+    "normalSkipped": 25,
+    "nativePassed": 52,
+    "overlap": 27,
+    "uniquePassed": 123,
+    "conditionalCasesCovered": 25,
+    "receiptHashesBeforeThisNote": 23,
+    "currentInputHashesMatched": 3262,
+    "phpSourceHashesMatched": 11,
+    "binaryHashesMatched": 32,
+    "postgresIndependentStatusExitCode": 3,
+    "addedOldRoutesEachRegisteredExactlyOnce": 5,
+    "headRetirementConflictConfirmed": true,
+    "checkboxRowsUnchanged": true,
+    "goalActive": true
+  }
+}

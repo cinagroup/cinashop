@@ -1,0 +1,51 @@
+{
+  "comparedTo": "historical fictitious completed freeze (as-of previous slice, not a pre-edit snapshot)",
+  "baselineDigest": "39e342050e8db8107f869dc2b3cf11fb6cf43e40e06e8f721d6bad3340caf7e4",
+  "added": [
+    "workers-ts/src/controllers/api/v1/AdminProductCatalogReadController.ts",
+    "workers-ts/src/services/admin/AdminProductCatalogReadService.ts",
+    "workers-ts/test/admin-product-catalog-navigation-frontend.test.ts",
+    "workers-ts/test/admin-product-catalog-read-http.test.ts",
+    "workers-ts/test/admin-product-catalog-read-native.test.ts",
+    "workers-ts/test/admin-product-catalog-read.test.ts",
+    "workers-ts/test/helpers/adminProductCatalogReads.ts"
+  ],
+  "deleted": [],
+  "changed": [
+    {
+      "path": "view/admin-ts/src/api/product.ts",
+      "before": "b528d3f581d3c4f36c4a192951687d018313c299ccc3892d7875a6dff4229353",
+      "after": "0c76a6c4c594767af70e47a5b869499b894c02700673de6561c24eb84cc5bd9e"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductList.vue",
+      "before": "d05b2cd52c1551a92ac5fdb62c4834b1acdb12b4cfd00258ce9b4fa95f134c47",
+      "after": "c0f63d8d9f59450a30c24739dde72ce8fe4d8d71ca54f44cff630e6510ddfa6c"
+    },
+    {
+      "path": "view/admin-ts/src/pages/reply/ReplyList.vue",
+      "before": "ce43bbb82d3f91c71ea1a28a3b9733a84dc7c009f4e50ff7fcdb4812aed664e6",
+      "after": "ce19cb66401cecde6ccaec52ef88a9ce7ce9abc15254ab06c4913fb5fb014508"
+    },
+    {
+      "path": "view/admin-ts/src/router/index.ts",
+      "before": "5989836439b351d1b36a3b8b1b7b77f2cc11130029ecc3a8545658f7082f3cf5",
+      "after": "15eafd89025b21be714c30b9df526328d1ef67b5d66b95373338470e6cecdd30"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "before": "1eeeeb2cf8fbd9bb1911c387e229d357adf85c09cc7943e2197fc36d7bdf5b5c",
+      "after": "7d199d1f97ee0ca61e767d0065f579aefa009a7e1070d3e9967d983b302f43bd"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "before": "02327093a8121c2e1fdd4b1ac325c342adc36a5e76c8d1a4f3172dfc8547205a",
+      "after": "97f198e37e6c55bf928977617f569e61b42b11d3a52553bdd8ddaf1dc31310d5"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "before": "8003e777e4d31b34c21a68dcea5477d5019301ab166d0cc4a62a7c423b2ba403",
+      "after": "61191efd03678c5244fb9665ccc4fa8a814492167209ede0890bca43f4dfa134"
+    }
+  ]
+}

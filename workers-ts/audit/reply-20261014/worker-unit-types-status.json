@@ -1,0 +1,15 @@
+{
+  "name": "worker-unit-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "--noEmit"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T07:45:58.418279+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T07:48:10.469493+00:00",
+  "exitCode": 0,
+  "log": "worker-unit-types.log"
+}

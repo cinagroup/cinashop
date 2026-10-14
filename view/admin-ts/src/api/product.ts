@@ -240,25 +240,40 @@ export interface VirtualInventoryAlertView {
   next_cursor: number | null;
 }
 
-/** 商品列表 (GET /adminapi/product/list) */
-export function apiAdminProductList(params: {
-  page?: number;
-  limit?: number;
-  store_name?: string;
-  status?: number;
-}): Promise<{ list: AdminProduct[]; page: number; limit: number }> {
+export interface AdminProductCatalogItem extends Omit<AdminProduct, "stock"> {
+  stock: number | null;
+  cate_name?: string;
+  plate_name?: string;
+  stock_attr?: boolean;
+  branch_stock?: number;
+}
+export interface AdminProductCatalogHeader { type: number; name: string; count: number; }
+export interface AdminProductCatalogQuery { page?: number; limit?: number; store_name?: string; type?: number | ""; }
+const catalogStates = [1, 2, 4, 5, 6, 0, -1, -2];
+function catalogCount(value: unknown): number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0 || value > 2_147_483_647) throw Error("商品计数响应格式错误");
+  return value;
+}
+/** 主商品列表 (GET /adminapi/product/product)，独立于选商品接口。 */
+export async function apiAdminProductList(params: AdminProductCatalogQuery, signal?: AbortSignal): Promise<{ list: AdminProductCatalogItem[]; count: number }> {
   if (previewMode) {
-    const page = Number(params.page ?? 1);
-    const limit = Number(params.limit ?? 10);
-    const keyword = String(params.store_name ?? "").trim().toLowerCase();
-    const rows = previewProducts.filter((row) => (
-      row.is_del === 0
-      && (!keyword || row.store_name.toLowerCase().includes(keyword))
-      && (params.status === undefined || row.is_show === Number(params.status))
-    ));
-    return Promise.resolve({ list: rows.slice((page - 1) * limit, page * limit), page, limit });
+    const page = Number(params.page ?? 1), limit = Number(params.limit ?? 10), keyword = String(params.store_name ?? "").trim().toLowerCase();
+    const rows = previewProducts.filter(row => (!keyword || row.store_name.toLowerCase().includes(keyword)) &&
+      (params.type === undefined || params.type === "" || params.type === 1 ? row.is_del === 0 && row.is_show === 1 :
+       params.type === 2 ? row.is_del === 0 && row.is_show === 0 : params.type === 6 ? row.is_del === 1 : false));
+    const actualPage = rows.length <= limit ? 1 : page;
+    return { list: rows.slice((actualPage - 1) * limit, actualPage * limit), count: rows.length };
   }
-  return getData(request.get("/product/list", { params }));
+  const value = await getData<{ list: AdminProductCatalogItem[]; count: number }>(request.get("/product/product", { params, signal }));
+  if (!value || !Array.isArray(value.list) || value.list.some(row => !row || !Number.isSafeInteger(row.id) || row.id < 1 || row.id > 2_147_483_647 ||
+    row.stock !== null && !Number.isSafeInteger(row.stock))) throw Error("商品列表响应格式错误");
+  return { list: value.list, count: catalogCount(value.count) };
+}
+export async function apiAdminProductTypeHeader(params: AdminProductCatalogQuery, signal?: AbortSignal): Promise<AdminProductCatalogHeader[]> {
+  if (previewMode) return catalogStates.map((type, index) => ({ type, name: ["销售中", "仓库中", "已售罄", "库存预警", "回收站", "待审核", "审核未通过", "强制下架"][index]!, count: type === 1 ? previewProducts.length : 0 }));
+  const value = await getData<{ list: AdminProductCatalogHeader[] }>(request.get("/product/product/type_header", { params, signal }));
+  if (!value || !Array.isArray(value.list) || value.list.length !== catalogStates.length || value.list.some((row, index) => !row || row.type !== catalogStates[index] || typeof row.name !== "string")) throw Error("商品状态计数响应格式错误");
+  return value.list.map(row => ({ ...row, count: catalogCount(row.count) }));
 }
 
 /** 商品详情 (GET /adminapi/product/detail/:id) */

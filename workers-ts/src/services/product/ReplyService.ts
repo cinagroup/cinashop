@@ -19,6 +19,10 @@ import {
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import { ValidateException } from "@/utils/errors";
 import { grantLotteryEntitlement } from "@/services/activity/LotteryService";
+import { lockReviewProducts, refreshProductReviewStar, verifyReviewProductSnapshot } from './ProductReviewRatingService';
+import { renderProductReplyMedia } from './ProductReplyMediaPolicy';
+import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
 
 const REVIEW_LOCK_NAMESPACE = 46_301;
 const MAX_COMMENT_LENGTH = 512;
@@ -259,13 +263,13 @@ function replyValues(
 }
 
 export class ReplyService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   async replyConfig(productId: number) {
     return this.container.replyDao.stats(productId);
   }
 
-  async replyList(productId: number, page = 1, limit = 10, uid = 0, type = 0) {
+  async replyList(productId: number, page = 1, limit = 10, uid = 0, type = 0, renderMedia = true) {
     const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
     const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(Math.trunc(limit), 100)) : 10;
     const safeType = [1, 2, 3].includes(type) ? type : 0;
@@ -285,12 +289,17 @@ export class ReplyService {
         );
       praised = new Set(relations.map((item) => item.id));
     }
-    return list.map((item) => ({
+    const media = renderMedia ? await renderProductReplyMedia(this.container.db,
+      list.map(item => ({ ...item, pics: this.parsePics(item.pics) })), this.appKey)
+      : list.map(item => ({ avatar: item.avatar, pics: this.parsePics(item.pics) }));
+    return list.map((item, index) => ({
       id: item.id,
       product_id: item.productId,
       uid: item.uid,
+      type: item.type,
+      relation_id: item.relationId,
       nickname: anonymizeNickname(item.nickname),
-      avatar: item.avatar,
+      avatar: media[index].avatar,
       comment: item.comment || "此用户没有填写评价",
       suk: item.sku,
       sku: item.sku,
@@ -298,7 +307,7 @@ export class ReplyService {
       service_score: item.serviceScore,
       delivery_score: item.deliveryScore,
       star: Math.round((item.productScore + item.serviceScore + item.deliveryScore) / 3),
-      pics: this.parsePics(item.pics),
+      pics: Array.isArray(media[index].pics) ? (media[index].pics as unknown[]).filter((picture): picture is string => typeof picture === 'string') : [],
       merchant_reply: item.merchantReply,
       merchant_reply_content: item.merchantReplyContent,
       merchant_reply_time: this.formatTime(item.merchantReplyTime),
@@ -417,6 +426,8 @@ export class ReplyService {
     const [products, users, praiseRows, commentRows, config] = await Promise.all([
       this.container.db.select({
         id: storeProduct.id,
+        type: storeProduct.type,
+        relationId: storeProduct.relationId,
         storeName: storeProduct.storeName,
         image: storeProduct.image,
         isPresaleProduct: storeProduct.isPresaleProduct,
@@ -461,6 +472,16 @@ export class ReplyService {
     const vipStatus = current && String(config.member_card_status ?? "1") === "1"
       && (current.isEverLevel === 1
         || (current.isMoneyLevel === 1 && current.overdueTime > now)) ? 1 : 0;
+    const [media] = await renderProductReplyMedia(this.container.db, [{ ...reply, pics: this.parsePics(reply.pics) }], this.appKey);
+    let productImage = products[0]?.image ?? '';
+    if (products[0] && parseCanonicalAttachmentId(productImage) !== null) {
+      if (!this.appKey) productImage = '';
+      else {
+        const product = products[0], checked = await publicProductPictures(this.container.db, [{ image: productImage,
+          type: product.type === 1 ? 0 : product.type, relationId: product.type === 1 ? 0 : product.relationId }]);
+        [productImage] = await renderProductPictures(this.appKey, checked);
+      }
+    }
 
     return {
       reply: {
@@ -471,7 +492,7 @@ export class ReplyService {
         unique: reply.unique,
         uid: reply.uid,
         nickname: anonymizeNickname(reply.nickname),
-        avatar: reply.avatar,
+        avatar: media.avatar,
         comment: reply.comment,
         sku: reply.sku,
         sku_unique: reply.skuUnique,
@@ -483,7 +504,7 @@ export class ReplyService {
         service_score: reply.serviceScore,
         logistics_score: reply.logisticsScore,
         delivery_score: reply.deliveryScore,
-        pics: this.parsePics(reply.pics),
+        pics: Array.isArray(media.pics) ? (media.pics as unknown[]).filter((picture): picture is string => typeof picture === 'string') : [],
         is_reply: reply.isReply,
         merchant_reply: reply.merchantReply,
         merchant_reply_content: reply.merchantReplyContent,
@@ -500,7 +521,7 @@ export class ReplyService {
       product: products[0] ? {
         id: products[0].id,
         store_name: products[0].storeName,
-        image: products[0].image,
+        image: productImage,
         is_presale_product: products[0].isPresaleProduct,
       } : {},
       user: current ? {
@@ -562,17 +583,22 @@ export class ReplyService {
 
   private async setCommentPraise(uid: number, commentId: number, praised: boolean) {
     return withTx(this.container, async (tx) => {
-      const comments = await tx.select({
-        id: storeProductReplyComment.id,
-        replyId: storeProductReplyComment.replyId,
-      }).from(storeProductReplyComment).innerJoin(
-        storeProductReply,
-        eq(storeProductReply.id, storeProductReplyComment.replyId),
-      ).where(and(
+      const [target] = await tx.select({ replyId: storeProductReplyComment.replyId })
+        .from(storeProductReplyComment).where(and(
+          eq(storeProductReplyComment.id, commentId), eq(storeProductReplyComment.isDel, 0),
+        )).limit(1);
+      if (!target) throw new ValidateException("回复不存在");
+      // Moderation and public comment creation lock the review before its
+      // comments. A joined FOR UPDATE could lock those rows in reverse order.
+      const parents = await tx.select({ id: storeProductReply.id }).from(storeProductReply).where(and(
+        eq(storeProductReply.id, target.replyId), eq(storeProductReply.status, 1), eq(storeProductReply.isDel, 0),
+      )).limit(1).for("update");
+      if (!parents[0]) throw new ValidateException("回复不存在");
+      const comments = await tx.select({ id: storeProductReplyComment.id })
+        .from(storeProductReplyComment).where(and(
         eq(storeProductReplyComment.id, commentId),
+        eq(storeProductReplyComment.replyId, target.replyId),
         eq(storeProductReplyComment.isDel, 0),
-        eq(storeProductReply.status, 1),
-        eq(storeProductReply.isDel, 0),
       )).limit(1).for("update");
       if (!comments[0]) throw new ValidateException("回复不存在");
       const relationWhere = and(
@@ -627,6 +653,9 @@ export class ReplyService {
 
     return c.db.transaction(async (rawTx) => {
       const tx = rawTx as unknown as DbClient;
+      await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+      await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+      await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
       const order = await lockOrder(tx, matches[0].oid);
       if (!order) throw new ValidateException("订单不存在");
       assertReviewableOrder(order, uid);
@@ -638,6 +667,7 @@ export class ReplyService {
 
       const reviewed = await reviewedCartIds(tx, order.id, carts);
       if (reviewed.has(cart.id)) throw new ValidateException("该商品已评价");
+      const products = await lockReviewProducts(tx, [cart.productId]);
       const now = Math.floor(Date.now() / 1_000);
       const inserted = await tx
         .insert(storeProductReply)
@@ -645,6 +675,8 @@ export class ReplyService {
         .onConflictDoNothing()
         .returning({ id: storeProductReply.id });
       if (!inserted[0]) throw new ValidateException("该商品已评价");
+      const product = products.get(cart.productId);
+      const rating = product ? await refreshProductReviewStar(tx, product) : undefined;
       reviewed.add(cart.id);
       const completed = await completeOrderIfReviewed(tx, order, carts, reviewed, now, false);
       const entitlement = await grantLotteryEntitlement(tx, {
@@ -654,6 +686,7 @@ export class ReplyService {
         sourceId: inserted[0].id,
         now,
       });
+      if (rating) await verifyReviewProductSnapshot(tx, rating);
       return { id: inserted[0].id, oid: order.id, completed, to_lottery: entitlement.activityId > 0 };
     });
   }
@@ -672,12 +705,18 @@ export class ReplyService {
     };
     return this.container.db.transaction(async (rawTx) => {
       const tx = rawTx as unknown as DbClient;
+      await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+      await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+      await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
       const order = await lockOrder(tx, orderId);
       if (!order || order.status !== 2) return { inserted: 0, completed: order?.status === 3 };
       assertReviewableOrder(order, order.uid);
       const carts = await lockOrderCarts(tx, order.id);
       if (!carts.length) throw new ValidateException("评价商品不存在");
       const reviewed = await reviewedCartIds(tx, order.id, carts);
+      const pending = carts.filter(cart => !reviewed.has(cart.id) && !!cart.unique);
+      const products = await lockReviewProducts(tx, pending.map(cart => cart.productId));
+      const changedProducts = new Set<number>();
       const now = Math.floor(Date.now() / 1_000);
       let insertedCount = 0;
       const defaults: Omit<NormalizedReplyInput, "unique"> = {
@@ -688,8 +727,7 @@ export class ReplyService {
         replyScore: 3,
         pics: [],
       };
-      for (const cart of carts) {
-        if (reviewed.has(cart.id) || !cart.unique) continue;
+      for (const cart of pending) {
         const inserted = await tx
           .insert(storeProductReply)
           .values(replyValues(order, cart, user, defaults, now))
@@ -698,9 +736,16 @@ export class ReplyService {
         if (inserted.length) {
           insertedCount += 1;
           reviewed.add(cart.id);
+          changedProducts.add(cart.productId);
         }
       }
+      const ratings = [];
+      for (const id of [...changedProducts].sort((a, b) => a - b)) {
+        const product = products.get(id);
+        if (product) ratings.push(await refreshProductReviewStar(tx, product));
+      }
       const completed = await completeOrderIfReviewed(tx, order, carts, reviewed, now, true);
+      for (const rating of ratings) await verifyReviewProductSnapshot(tx, rating);
       return { inserted: insertedCount, completed };
     });
   }

@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-10-14T08:28:17.241685+00:00",
+  "semantics": "Last verified Reply milestone snapshot; new authorized fictitious implementation follows and supersedes source byte identity. Do not interpret this historical map as the current pre-edit tree.",
+  "ledger": "/home/cina/cinagroup/cinashop/workers-ts/audit/php-ts-reply-migration-20261014.json",
+  "ledgerSha256": "e5030bd458e77425fce1cc84cbb420cbf1ce265612a3efcec36cd89e8c845f65",
+  "frozenAfter": "/home/cina/cinagroup/cinashop/workers-ts/audit/reply-20261014/frozen-after.json",
+  "frozenAfterSha256": "015a168a5d8e36bea05e2b17b5b8d0f6737bb9d17749e17e8d2b4708dcdbc0b0",
+  "sourceCount": 3348,
+  "sourceDigest": "9972ef116089f2f1969e4530273281024a8c90c06707b63ba55da957559b6097",
+  "uniquePassed": 393,
+  "conditionalSupplemented": 86,
+  "previousStatus": "verified_not_published",
+  "productionOrGitAction": false
+}

@@ -1,0 +1,98 @@
+{
+  "addedLegacyContracts": 5,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/get_rule",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductRules.templates",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/product/get_rule",
+          "normalizedPath": "/adminapi/product/product/get_rule",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1563,
+          "target": "v1.product.StoreProduct/get_rule"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/rule",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductRules.list",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/product/rule",
+          "normalizedPath": "/adminapi/product/product/rule",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1527,
+          "target": "v1.product.StoreProductRule/index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/product/rule/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductRules.save",
+      "phpAuthority": [
+        {
+          "method": "POST",
+          "path": "/adminapi/product/product/rule/:id",
+          "normalizedPath": "/adminapi/product/product/rule/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1529,
+          "target": "v1.product.StoreProductRule/save"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/product/rule/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductRules.detail",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/product/rule/:id",
+          "normalizedPath": "/adminapi/product/product/rule/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1531,
+          "target": "v1.product.StoreProductRule/read"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/product/rule/delete/:id",
+      "beforeRegistered": false,
+      "currentRegistrations": 1,
+      "handler": "AdminProductRules.remove",
+      "phpAuthority": [
+        {
+          "method": "DELETE",
+          "path": "/adminapi/product/product/rule/delete/:id",
+          "normalizedPath": "/adminapi/product/product/rule/delete/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1533,
+          "target": "v1.product.StoreProductRule/delete"
+        }
+      ]
+    }
+  ],
+  "existingModernAdminapiHandlersReplaced": 5,
+  "existingModernApiAdminHandlersReplaced": 5,
+  "globalCoverageClaimed": false
+}

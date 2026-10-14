@@ -1,0 +1,19 @@
+{
+  "capturedAt": "2026-10-14T10:19:47.483072+00:00",
+  "runtime": {
+    "node": {
+      "path": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "version": "v24.19.0",
+      "sha256": "bc17c508ffeed0ec622934f9b7fa72f8e78da65350e63c3eceb56fa688aa5e12"
+    },
+    "postgres": {
+      "path": "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/postgres",
+      "version": "postgres (PostgreSQL) 16.14",
+      "sha256": "ac3b0d657c9d6278572dd9e500630ff5f48a2abfe21c4d26649b9a213058c2a1"
+    }
+  },
+  "phpInterpreterFound": false,
+  "postgresOfficialSourceSha256": "f6d077142737920858ce958ccdb75c6ee137a63b5b0853c70693d401ac7e3471",
+  "provenanceBoundary": "Official source digest verified in previous owned local tool build; this receipt records installed current executable bytes/version, no new download or remoteverification",
+  "networkOrProductionCalls": false
+}

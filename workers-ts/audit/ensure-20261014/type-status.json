@@ -1,0 +1,12 @@
+{
+  "unit": {
+    "exitCode": 0,
+    "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+    "receipt": "worker-unit-types.log"
+  },
+  "runtime": {
+    "exitCode": 0,
+    "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+    "receipt": "worker-runtime-types.log"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "normalPassed": 292,
+  "normalFiles": 16,
+  "nativePassed": 67,
+  "nativeFiles": 8,
+  "overlap": 43,
+  "uniquePassed": 316,
+  "method": "file + ancestor chain + title + same-title occurrence count; passed assertions only",
+  "normalConditionalSkipped": 13,
+  "nativeConditionalCovered": 13
+}

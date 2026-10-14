@@ -1,7 +1,7 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {eq} from 'drizzle-orm';
 import {createContainerFromDb} from '../src/lib/di';
-import {systemDise,storeProduct,storeProductDescription,community} from '../src/models/schema';
+import {systemDise,storeProduct,storeProductDescription,community,storeProductReply,systemAttachment} from '../src/models/schema';
 import {StoreProductService} from '../src/services/product/StoreProductService';
 import {PublicCatalogService} from '../src/services/product/PublicCatalogService';
 import {V2PublicCompatibilityService} from '../src/services/content/V2PublicCompatibilityService';
@@ -30,6 +30,35 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native full prod
     for(const [reference,allowed] of[['/api/assets/111?expires=1&signature=old',true],['/api/assets/112',false],['/api/assets/113',false],['/a/../api/assets/111',false]] as const){await f.db.update(storeProduct).set({videoLink:reference}).where(eq(storeProduct.id,70));const detail=await read(peer.db).getProductDetail(70,11);if(allowed)expect(detail.videoLink).toMatch(/^\/api\/assets\/111\?expires=\d+&signature=/);else expect(detail.videoLink).toBe('');}
   });});
   it('applies every read switch and exact count while leaving safe publication and cart qualification unchanged',async()=>{await app(async peer=>{await design({showReply:1,replyNum:1,showCommunity:1,communityNum:1,showMatch:1,matchNum:1,showRecommend:1,recommendNum:1});let result=await read(peer.db).getProductDetail(70,11);expect(result.reply).toHaveLength(1);expect(result.elegant_list).toHaveLength(1);expect(result.discounts_products).toHaveLength(1);expect(result.recommend).toHaveLength(1);expect(result.cart_button).toBe(1);await design({showReply:0,showCommunity:0,showMatch:0,showRecommend:0,showRank:0,showService:[],showCart:0});result=await read(peer.db).getProductDetail(70,11);expect(result).toMatchObject({reply:[],replyCount:0,replyChance:0,elegant_list:[],elegant_count:0,ensure:[],specs:[],rank:0,recommend:[],discounts_products:[],cart_button:1});});});
+  it('renders published UID0 platform review media in ordinary/activity detail while preserving genuine customer ownership and excluding foreign fake tuples',async()=>{
+    await design({showReply:1,replyNum:10});
+    await f.db.insert(systemAttachment).values({attId:250,type:3,relationId:11,moduleType:3,fileType:1,imageType:8,
+      name:'attachments/user/11/2026/10/customer.png',attDir:'/api/assets/250',sattDir:'/api/assets/250',attType:'image/png'});
+    await f.db.insert(storeProductReply).values([
+      {id:201,productId:70,uid:0,type:0,relationId:0,nickname:'平台自评',comment:'已授权平台媒体',avatar:'/api/assets/41',pics:'["/api/assets/41"]',status:1,isDel:0,addTime:9},
+      {id:202,productId:70,uid:0,type:2,relationId:88,nickname:'外属自评',comment:'外属tuple不能签平台素材',avatar:'/api/assets/41',pics:'["/api/assets/41","/api/assets/42"]',status:1,isDel:0,addTime:8},
+      {id:203,productId:70,uid:0,type:0,relationId:0,nickname:'伪素材自评',comment:'UID0不能签顾客私有素材',avatar:'/api/assets/250',pics:'["/api/assets/250"]',status:1,isDel:0,addTime:7},
+    ]);
+    await f.db.update(storeProductReply).set({avatar:'/api/assets/250',pics:'["/api/assets/250","/api/assets/41"]'}).where(eq(storeProductReply.id,101));
+    await app(async peer=>{
+      const before=await f.snapshot();
+      const ordinary=await read(peer.db).getProductDetail(70,11);
+      const combination=await new ActivityService(createContainerFromDb(peer.db),f.env).combinationDetail(401);
+      const seckill=await new SeckillSkuCatalogService(createContainerFromDb(peer.db),f.env).read(11,'601');
+      for(const detail of[ordinary,combination,seckill]){
+        const replies=detail.reply as Array<{id:number;avatar:string;pics:string[]}>;
+        expect(replies).toHaveLength(5);
+        const platform=replies.find(row=>row.id===201)!;
+        expect(platform.avatar).toMatch(/^\/api\/assets\/41\?expires=\d+&signature=/);
+        expect(platform.pics).toEqual([platform.avatar]);
+        for(const id of[202,203])expect(replies.find(row=>row.id===id)).toMatchObject({avatar:'',pics:[]});
+        const customer=replies.find(row=>row.id===101)!;
+        expect(customer.avatar).toMatch(/^\/api\/assets\/250\?expires=\d+&signature=/);
+        expect(customer.pics).toEqual([customer.avatar]);
+      }
+      expect(await f.snapshot()).toEqual(before);
+    });
+  });
   it('changes each selected SKU display offer without changing actual member price or authoritative purchase qualification',async()=>{await app(async peer=>{for(const [showPrice,expected] of [[[],'20.00'],[[0],'17.60'],[[1],'18.00'],[[0,1],'17.60']] as const){await design({showPrice:[...showPrice]});const result=await read(peer.db).getProductDetail(70,11),skus=result.attr_value as any[];expect(skus[0].display_price.price).toBe(expected);expect(skus[0]).toMatchObject({price:'20.00',member_price:'17.60',price_type:'level',stock:8,purchasable:true});expect(skus[1]).toMatchObject({price:'30.00',member_price:'26.40',stock:3});}});});
   it('uses one real RR snapshot across config, body and counts despite a committed peer edit, then exposes the new request',async()=>{await app(async peer=>{await f.withPeer(async writer=>{let switched=false;const db=observeCategoryDb(peer.db,async(_tx,command)=>{if(!switched&&command.includes('system_dise')){switched=true;await writer.db.update(systemDise).set({value:JSON.stringify({...cloneProductDetailDesign(),showReply:0,showCommunity:0})}).where(eq(systemDise.id,5));await writer.db.update(storeProductDescription).set({description:'NEW PEER BODY'}).where(eq(storeProductDescription.productId,70));}});const old=await read(db).getProductDetail(70,11);expect(switched).toBe(true);expect(old.replyCount).toBe(2);expect(old.elegant_count).toBe(2);expect(String(old.description)).toContain('公开正文');const fresh=await read(peer.db).getProductDetail(70,11);expect(fresh.replyCount).toBe(0);expect(fresh.elegant_count).toBe(0);expect(fresh.description).toBe('NEW PEER BODY');});});});
   it('shares the named nineteen-key public authority, protects opaque values, and keeps site origin out of SQL/API fallbacks',async()=>{await app(async peer=>{const publicService=new V2PublicCompatibilityService(createContainerFromDb(peer.db),f.env),raw=await publicService.diy(' product_detail '),page=await publicService.productDetail();expect(Object.keys(raw as object)).toHaveLength(19);expect(JSON.stringify(raw)).not.toContain('opaque');expect(page.product_detail).toEqual(raw);expect(page.product_detail_design_state).toMatchObject({configured:true,issues:[]});const detail=await read(peer.db).getProductDetail(70,0);expect(detail.site_url).toBe('https://shop.example.com');expect(JSON.stringify(detail)).not.toContain('wrong-api');});});

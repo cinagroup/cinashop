@@ -1,0 +1,67 @@
+{
+  "startedAt": "2026-10-14T04:53:46.003416+00:00",
+  "command": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers",
+    "1",
+    "test/supplier-product-rule-http.test.ts",
+    "test/supplier-product-rule-workflow-frontend.test.ts",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=/home/cina/cinagroup/cinashop/workers-ts/audit/rule-20261014/supplier-unicode-affected.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "filesBefore": {
+    "workers-ts/src/services/supplier/SupplierProductRuleInput.ts": "f9c5bb97da806213943834e5f2adf4135dab702180652102e8c0480114fa98ac",
+    "view/supplier-ts/src/utils/productRules.ts": "a41c1bebe9f85bcb5e87a7afc4cf0be03edb945039201577b592bee8aea4a529",
+    "view/supplier-ts/src/pages/ProductSpecifications.vue": "4dea9298ebcced4d570d16975f9eef3a76f0dd142710db2894b9ebd2a2c55062",
+    "workers-ts/test/supplier-product-rule-http.test.ts": "383671065df6c329bab138724d5a54d1bc0af13081b3254a8f1d864bf3ee048d",
+    "workers-ts/test/supplier-product-rule-workflow-frontend.test.ts": "165722759d44e44e20b0ddfba55ffa90af21cca43abb970c1eea3f455a70d3c4"
+  },
+  "nativePostgresRequested": false,
+  "testFinancePostgresUrlRemovedFromChildEnv": true,
+  "scope": "full HTTP and actual-mounted workflow files; oversize-dimension/value negatives use unique unsaved names to exclude duplicate-name false pass",
+  "exitCode": 0,
+  "finishedAt": "2026-10-14T04:53:58.891794+00:00",
+  "filesAfter": {
+    "workers-ts/src/services/supplier/SupplierProductRuleInput.ts": "f9c5bb97da806213943834e5f2adf4135dab702180652102e8c0480114fa98ac",
+    "view/supplier-ts/src/utils/productRules.ts": "a41c1bebe9f85bcb5e87a7afc4cf0be03edb945039201577b592bee8aea4a529",
+    "view/supplier-ts/src/pages/ProductSpecifications.vue": "4dea9298ebcced4d570d16975f9eef3a76f0dd142710db2894b9ebd2a2c55062",
+    "workers-ts/test/supplier-product-rule-http.test.ts": "383671065df6c329bab138724d5a54d1bc0af13081b3254a8f1d864bf3ee048d",
+    "workers-ts/test/supplier-product-rule-workflow-frontend.test.ts": "165722759d44e44e20b0ddfba55ffa90af21cca43abb970c1eea3f455a70d3c4"
+  },
+  "sourceHashesUnchangedDuringRun": true,
+  "tests": {
+    "success": true,
+    "total": 37,
+    "passed": 37,
+    "failed": 0,
+    "pending": 0
+  },
+  "perFile": [
+    {
+      "file": "supplier-product-rule-http.test.ts",
+      "status": "passed",
+      "cases": 16
+    },
+    {
+      "file": "supplier-product-rule-workflow-frontend.test.ts",
+      "status": "passed",
+      "cases": 21
+    }
+  ],
+  "addedMeaningfulCases": 2,
+  "coverageBoundary": "Actual createApp JWT+SQL and mounted ProductSpecifications setup submit/readback plus prepareSupplierProductRuleApplication utility; native maxLength removal is not browser manual-input acceptance or code-point counter proof.",
+  "preservedBoundaries": [
+    "read DTO text() historic wide limits unchanged",
+    "3 dimensions/50 detail values/200 SKU combinations unchanged",
+    "500 editor candidates unchanged",
+    "no new rule FK or ownership logic",
+    "original raw-name C0 refusal preserved and frontend aligned"
+  ],
+  "independentReadOnlyReview": "Initial review found duplicate-name false-pass gate for 33-dimension/65-value HTTP negatives; repaired to unique unsaved legitimate names and reran complete affected files. Previous raw receipt kept under supplier-unicode-pre-review-affected.*."
+}

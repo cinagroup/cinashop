@@ -1,0 +1,38 @@
+{
+  "time": "2026-10-14T03:01:05.224196+00:00",
+  "temporaryDirectoriesLost": [
+    "/tmp/cinashop-migration-specs-20261014",
+    "/tmp/cinashop-migration-20261014"
+  ],
+  "previousObservedCommands": {
+    "ordinary": {
+      "exitCode": 0,
+      "passed": 98,
+      "conditionalSkipped": 25,
+      "files": 14
+    },
+    "native": {
+      "exitCode": 0,
+      "passed": 52,
+      "files": 6,
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    "routeAudit": {
+      "exitCode": 1,
+      "reason": "GET /api/get_script retirement conflict"
+    },
+    "typecheck": {
+      "terminalOutcomeObserved": false,
+      "oldHandleUnavailable": true
+    }
+  },
+  "lostRawReceiptsNotAvailable": true,
+  "currentInputMatchesPreviousBeforeAndPostTestsDigests": true,
+  "freshPersistentEvidenceRequired": true,
+  "recoveryInitialCommand": {
+    "exitCode": 1,
+    "reason": "wrong relative log directory, typecheck did not start",
+    "repaired": true
+  }
+}

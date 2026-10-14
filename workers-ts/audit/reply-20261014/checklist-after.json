@@ -1,0 +1,16 @@
+[
+  {
+    "path": "MIGRATION_CHECKLIST.md",
+    "total": 404,
+    "checked": 249,
+    "open": 155,
+    "allCheckboxRowsUnchanged": true
+  },
+  {
+    "path": "MIGRATION_AUDIT.md",
+    "total": 88,
+    "checked": 50,
+    "open": 38,
+    "allCheckboxRowsUnchanged": true
+  }
+]

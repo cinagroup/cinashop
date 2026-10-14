@@ -28,10 +28,11 @@ export async function replyConfig(c: C) {
 
 /** GET /reply/list/:productId — 评价列表 */
 export async function replyList(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const productId = Number(c.req.param("productId") ?? c.req.param("id") ?? "0");
   if (!Number.isSafeInteger(productId) || productId <= 0) return jsonFail(c, "参数错误");
   const q = c.req.query();
-  const svc = new ReplyService(c.get("container"));
+  const svc = new ReplyService(c.get("container"), c.env.APP_KEY);
   return jsonOk(
     c,
     await svc.replyList(
@@ -65,7 +66,7 @@ export async function replyInfo(c: C) {
   if (!uid) return jsonFail(c, "请先登录");
   const id = Number(c.req.param("id") ?? "0");
   if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少参数");
-  return jsonOk(c, await new ReplyService(c.get("container")).replyInfo(id, uid));
+  return jsonOk(c, await new ReplyService(c.get("container"), c.env.APP_KEY).replyInfo(id, uid));
 }
 
 /** POST /reply/comment/:id — add a root reply to a visible product review. */

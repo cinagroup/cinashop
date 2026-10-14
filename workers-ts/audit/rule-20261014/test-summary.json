@@ -1,0 +1,13 @@
+{
+  "normalFiles": 27,
+  "normalPassedFiles": 21,
+  "normalPassed": 243,
+  "normalConditionalSkipped": 69,
+  "nativeFiles": 16,
+  "nativePassed": 185,
+  "nativeSkipped": 0,
+  "overlap": 116,
+  "uniquePassed": 312,
+  "nativeConditionalCovered": 69,
+  "method": "file + ancestor title chain + title; final passed definitions only; raw verbose native lines matched against full ordinary JSON definitions"
+}

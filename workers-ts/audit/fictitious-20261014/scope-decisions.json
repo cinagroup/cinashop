@@ -1,0 +1,34 @@
+{
+  "scope": "two genuine fictitious routes plus active old product selector and actual TS creation producers rating effect",
+  "legacyRoutes": [
+    "GET /adminapi/product/reply/fictitious_reply/:product_id",
+    "POST /adminapi/product/reply/save_fictitious_reply",
+    "GET /adminapi/product/product/list"
+  ],
+  "permissions": {
+    "form": "reply.view",
+    "create": "reply.manage",
+    "selector": "product.view",
+    "sourceSeeds": [
+      184,
+      185,
+      193
+    ],
+    "page6": "reply reader only",
+    "aux579and580": "no original wildcard or rewrite grant"
+  },
+  "rating": {
+    "source": "PHP StoreProductReplyServices.computedProductStar plus product.reply listener/job",
+    "aggregation": "all product_id matches with is_del=0; product_score mean truncated one decimal, regardless of owner,UID,status",
+    "noRows": "retain previous star",
+    "strategy": "synchronous before commit on virtual and existing public submit/automatic creation; no fire-and-forget",
+    "deletion": "PHP delete emits no rating event; retain star unchanged, acquire product before parent/thread only to serialize membership changes",
+    "sourceTimingDifference": "synchronous write replaces source queued eventual effect; not exact queue deployment/runtime parity",
+    "fence": "existing lockProductWrite731617 + product row; real order/cart locks precede all sorted product locks",
+    "missingProduct": "virtual creation refused; historic real-order/cart review retained and rating update skipped"
+  },
+  "identity": "new uid0/oid0/platform0/0/cartnull independent fresh reviewunique; no customer/order/inventory mutation by virtual creation",
+  "media": "reuse actual existing gallery select/upload with independent attachment permission; no provider/production calls in verification",
+  "validation": "all heavy checks through shared serial wrapper, Vitest maxWorkers1, Worker types8192MiB; root alone queues commands",
+  "completion": "implementation and validation in progress; parent checkboxes and overall goal remain open"
+}

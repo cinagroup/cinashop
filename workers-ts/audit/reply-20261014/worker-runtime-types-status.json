@@ -1,0 +1,17 @@
+{
+  "name": "worker-runtime-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.runtime-test.json",
+    "--noEmit"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T07:48:10.511329+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T07:49:22.573187+00:00",
+  "exitCode": 0,
+  "log": "worker-runtime-types.log"
+}

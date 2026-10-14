@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T03:09:52.749117+00:00",
+  "status": "local_candidate_validated_not_published",
+  "goalStatus": "active",
+  "head": "6dc28867cab665bb6874520c36ea1c13cc653937",
+  "addedLegacyContracts": 5,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/adminapi/product/all_specs",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/all_specs",
+          "normalizedPath": "/adminapi/product/all_specs",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1475,
+          "target": "v1.product.specs.StoreProductSpecs/allSpecs"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.all"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/specs",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/specs",
+          "normalizedPath": "/adminapi/product/specs",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1639,
+          "target": "v1.product.specs.StoreProductSpecs/index"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.list"
+    },
+    {
+      "method": "GET",
+      "path": "/adminapi/product/specs/:id",
+      "phpAuthority": [
+        {
+          "method": "GET",
+          "path": "/adminapi/product/specs/:id",
+          "normalizedPath": "/adminapi/product/specs/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1640,
+          "target": "v1.product.specs.StoreProductSpecs/getInfo"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.detail"
+    },
+    {
+      "method": "POST",
+      "path": "/adminapi/product/specs/:id",
+      "phpAuthority": [
+        {
+          "method": "POST",
+          "path": "/adminapi/product/specs/:id",
+          "normalizedPath": "/adminapi/product/specs/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1641,
+          "target": "v1.product.specs.StoreProductSpecs/save"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.save"
+    },
+    {
+      "method": "DELETE",
+      "path": "/adminapi/product/specs/:id",
+      "phpAuthority": [
+        {
+          "method": "DELETE",
+          "path": "/adminapi/product/specs/:id",
+          "normalizedPath": "/adminapi/product/specs/:param",
+          "kind": "explicit",
+          "source": "cinashop-php/route/admin.php",
+          "line": 1642,
+          "target": "v1.product.specs.StoreProductSpecs/delete"
+        }
+      ],
+      "beforeBatchRegistered": false,
+      "currentRegistered": true,
+      "handler": "AdminProductSpecs.remove"
+    }
+  ],
+  "verification": {
+    "normalFiles": 14,
+    "normalPassedFiles": 11,
+    "nativeFiles": 6,
+    "normalPassed": 98,
+    "nativePassed": 52,
+    "overlap": 27,
+    "uniquePassed": 123,
+    "normalConditionalSkipped": 25,
+    "nativeConditionalCovered": 25,
+    "method": "file + ancestor title chain + title; all selected definitions have unique keys; passed only"
+  },
+  "workerTypes": {
+    "unit": {
+      "exitCode": 0,
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "receipt": "worker-unit-types.log"
+    },
+    "runtime": {
+      "exitCode": 0,
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+      "receipt": "worker-runtime-types.log"
+    }
+  },
+  "admin": {
+    "vueTypes": {
+      "exitCode": 0,
+      "command": "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+      "receipt": "admin-vue-types.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "command": "node node_modules/vite/bin/vite.js build",
+      "receipt": "admin-build.log"
+    },
+    "browserOrDeviceProof": false
+  },
+  "executedMigrationInput": {
+    "count": 3262,
+    "digest": "01a043d35437081d1422f4f7cdceb0df38637cf600f1c04e75b54de9a27d5a25",
+    "method": "SHA256 of UTF8 compact sorted-key JSON files map",
+    "scope": "Worker src/test/scripts/migrations/configs + Admin src/configs + six inherited Supplier static inputs",
+    "beforeReceipt": "specs-20261014/frozen-before.json",
+    "afterReceipt": "specs-20261014/frozen-after.json",
+    "deliveryBytesEqual": true
+  },
+  "native": {
+    "version": "16.14",
+    "passed": 52,
+    "files": 6,
+    "skipped": 0,
+    "fixtureRemaining": 0,
+    "independentStoppedCluster": {
+      "root": "/home/cina/cinagroup/cinashop/.cache/specs-postgres-fixtures/finance-postgres-obXwqP",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "stopped": true
+    },
+    "toolSourceReceipt": "specs-20261014/pg16-tool-build-receipt.json"
+  },
+  "routeAudit": {
+    "exitCode": 1,
+    "preExistingAtHead": true,
+    "reason": "GET /api/get_script is registered but legacy-route-decisions.json still marks it retired",
+    "currentGlobalCoverageClaimed": false,
+    "targetedDeltaReceipt": "specs-20261014/static-delta.json"
+  },
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "complete": 249,
+      "open": 155,
+      "rowsUnchanged": true
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "complete": 50,
+      "open": 38,
+      "rowsUnchanged": true
+    }
+  },
+  "phpSources": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/specs/StoreProductSpecs.php": "d70635c8937c4190e4cf58d9bb6e958bcf470b61af6975b89a90c9b223c60900",
+    "app/services/product/specs/StoreProductSpecsTemplateServices.php": "df1b07bd33d73bf2ab9206b799eb4c0bb20b39dd053bb61298976e0bdf7c9670",
+    "app/services/product/specs/StoreProductSpecsServices.php": "dc3eb604655408100bce17cb088cb012a889827452eef6777510dfa96698409b",
+    "app/dao/other/CategoryDao.php": "38928ea4742c8b9f942e4ef8e4ca161f10295e442e4d3dae34ce8eb6f5f2528a",
+    "app/model/other/Category.php": "51aff278cc3388d018ad0aef3681e0d1ee8e07f2a05c4d105263667f1746b73a",
+    "app/dao/product/specs/StoreProductSpecsDao.php": "b0a3e1536860d417d34608c6b7311beffd20a046cc9666ab61ff5089cf3373bc",
+    "app/model/product/specs/StoreProductSpecs.php": "0503a27f111d317c0f323239fe027a4c63662b8f4aeb9cb4c01c836d6e6cb1f5",
+    "view/admin/src/pages/product/specs/index.vue": "59a0f0259126c43235233c206c2f24d42d6b4871b4ade01f87661f5b4c5be51b",
+    "view/admin/src/pages/product/specsAdd/index.vue": "6b048a6bfbf4e5fb50d9a8070d3bba8fbeeade13ce7a515ac612de831a3c2bce",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+  },
+  "recovery": {
+    "receipt": "specs-20261014/context-reset-note.json",
+    "lostTemporaryRawReceiptsNotClaimed": true,
+    "finalCommandsCompletelyRerun": true,
+    "previousObservedCountsNotAddedAgain": true,
+    "initialWrongLogDirectoryCommandDidNotStartTypes": true
+  },
+  "sourceReviewRepairs": [
+    "legacy list unnecessarily loaded child rows and inherited child capacity limit",
+    "audit trigger could rewrite business rows after core readback",
+    "product editor option queries omitted ownerId and child-owner filters",
+    "template Unicode bound and product parameter snapshot bound differed",
+    "core child post-write readback needed a bound"
+  ],
+  "knownDifferences": [
+    "PHP getAllSpecs/detail/delete omit owner predicates; TS preserves platform and child-parent owner isolation",
+    "PHP update rebuilds child IDs; stale or forged echoed metadata is refused and reload is required",
+    "PHP checkSpecsData drops status; existing modern TS writable status is retained including disabled rows",
+    "Selectors and child reads are bounded at 2000 and return explicit unavailable errors at overflow; writes cap100; legacy parent list does not load children",
+    "Supplier product parameter binding is not implemented by this batch"
+  ],
+  "production": {
+    "ddlExecuted": false,
+    "businessDataWritten": false,
+    "providerCalls": false,
+    "submitted": false,
+    "pushed": false,
+    "deployed": false
+  },
+  "receipts": {
+    "admin-build.log": {
+      "path": "audit/specs-20261014/admin-build.log",
+      "sha256": "210ebaaf0123bf02b40c8a557d1e47de9e75ecd4ace1a81e287ba149c53ef79d"
+    },
+    "admin-status.json": {
+      "path": "audit/specs-20261014/admin-status.json",
+      "sha256": "2d8b27ba123e2b2b8c8327a155e057f48bd525fc9e6341d88427c93ac36c0352"
+    },
+    "admin-vue-types.log": {
+      "path": "audit/specs-20261014/admin-vue-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "adminapi-before.ts": {
+      "path": "audit/specs-20261014/adminapi-before.ts",
+      "sha256": "c6b7473d26123652099d7b212f5c6e2c817c4ee618e147468d3ed7fa90146947"
+    },
+    "checklist-before.json": {
+      "path": "audit/specs-20261014/checklist-before.json",
+      "sha256": "d87c5f12e72b00ca1132cf20d2a843b49fbc0795fe20e3eef667c6bfda703904"
+    },
+    "command-status.json": {
+      "path": "audit/specs-20261014/command-status.json",
+      "sha256": "7908fb52067263bc411f934f1135b1b1185de0cac6a6b66cac7771e55229b699"
+    },
+    "context-reset-note.json": {
+      "path": "audit/specs-20261014/context-reset-note.json",
+      "sha256": "b7264ef6a80b9eb0dc10d46a6bd5fc0c32948f7104ef3e00cd1904cca955a21b"
+    },
+    "final-native.log": {
+      "path": "audit/specs-20261014/final-native.log",
+      "sha256": "218f239ffd6784d318cad4ecfdc3efbce0a18afe8c2ec8f8ce44ca53631038bd"
+    },
+    "final-ordinary.json": {
+      "path": "audit/specs-20261014/final-ordinary.json",
+      "sha256": "d2f86d94da0a93fa20659caa546b00d3870f399896ad1fdfac5f1882138e3324"
+    },
+    "final-ordinary.log": {
+      "path": "audit/specs-20261014/final-ordinary.log",
+      "sha256": "a30e312f51e5b089aef03760d795f885d40cc39ee0a999e1ae81af0a98db6f1b"
+    },
+    "frozen-after.json": {
+      "path": "audit/specs-20261014/frozen-after.json",
+      "sha256": "b01a31ecf4082ddb78d3230ecf4f5577ee5db7bafcc425bee27f26006e2930f0"
+    },
+    "frozen-before.json": {
+      "path": "audit/specs-20261014/frozen-before.json",
+      "sha256": "b01a31ecf4082ddb78d3230ecf4f5577ee5db7bafcc425bee27f26006e2930f0"
+    },
+    "native-cases.json": {
+      "path": "audit/specs-20261014/native-cases.json",
+      "sha256": "da0a81e8e6fdb2e81b99653208419a47de12d85e689592d6a9f282e3277afd5e"
+    },
+    "native-independent-status.json": {
+      "path": "audit/specs-20261014/native-independent-status.json",
+      "sha256": "2cb49980f8afb695034412538a024e08d52e104987e556d0cf92be9ab7a71622"
+    },
+    "pg16-binary.sha256": {
+      "path": "audit/specs-20261014/pg16-binary.sha256",
+      "sha256": "859a009ef60b38637f1e99005184b199f60577d4e0ceb1aacbc84ce893213f83"
+    },
+    "pg16-tool-build-receipt.json": {
+      "path": "audit/specs-20261014/pg16-tool-build-receipt.json",
+      "sha256": "6a570c981acfe554669a8c5d7bc4ac2cf7c0c88d6fd022d5b3d37eb9a048a22c"
+    },
+    "route-audit.log": {
+      "path": "audit/specs-20261014/route-audit.log",
+      "sha256": "27a08b848f943b720336447200ea4cd45852b1dc191cb03a9bf16eeaa1dd6ad7"
+    },
+    "static-delta.json": {
+      "path": "audit/specs-20261014/static-delta.json",
+      "sha256": "3e364a1bd6ed0114a959ad3409dda3e3747aedb5831b9d81fd140bb39c5085ef"
+    },
+    "test-summary.json": {
+      "path": "audit/specs-20261014/test-summary.json",
+      "sha256": "ca3846c724b19cb4c6cbdc1022ffea5b7ccd6de0487af4aeb2d571164fb5af64"
+    },
+    "type-status.json": {
+      "path": "audit/specs-20261014/type-status.json",
+      "sha256": "365e44574e2b3ac54c6c5113b5ba2c20bd9e7e70db7ac0822dabe7ba12a51e84"
+    },
+    "worker-runtime-types.log": {
+      "path": "audit/specs-20261014/worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker-unit-types.log": {
+      "path": "audit/specs-20261014/worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "path": "audit/specs-20261014/commands.json",
+      "sha256": "772fc47ee6f55292a46fcbb4ed44393c3e1aa4aa48c71321dba2c62a03740f9c"
+    },
+    "independent-review.json": {
+      "path": "audit/specs-20261014/independent-review.json",
+      "sha256": "20e40b90047f5ab545d089dcd86c6ad12cc410375859e4e248d5bb19b8adda3c"
+    }
+  },
+  "commandsReceipt": "specs-20261014/commands.json",
+  "independentReviewReceipt": "specs-20261014/independent-review.json"
+}

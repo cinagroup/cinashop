@@ -1,0 +1,111 @@
+[
+  {
+    "name": "worker-unit-types",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "--max-old-space-size=8192",
+      "node_modules/typescript/bin/tsc",
+      "--noEmit"
+    ]
+  },
+  {
+    "name": "worker-runtime-types",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "--max-old-space-size=8192",
+      "node_modules/typescript/bin/tsc",
+      "-p",
+      "tsconfig.runtime-test.json",
+      "--noEmit"
+    ]
+  },
+  {
+    "name": "admin-types",
+    "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "node_modules/vue-tsc/bin/vue-tsc.js",
+      "-b"
+    ]
+  },
+  {
+    "name": "supplier-types",
+    "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "node_modules/vue-tsc/bin/vue-tsc.js",
+      "-b"
+    ]
+  },
+  {
+    "name": "final-ordinary",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "--maxWorkers=1",
+      "test/admin-product-catalog-read.test.ts",
+      "test/admin-product-catalog-read-http.test.ts",
+      "test/admin-product-catalog-read-native.test.ts",
+      "test/admin-product-catalog-navigation-frontend.test.ts",
+      "test/admin-product-reply.test.ts",
+      "test/admin-product-reply-http.test.ts",
+      "test/admin-product-reply-native.test.ts",
+      "test/admin-product-reply-workflow-frontend.test.ts",
+      "test/admin-product-fictitious-reply.test.ts",
+      "test/admin-product-fictitious-reply-http.test.ts",
+      "test/admin-product-fictitious-reply-native.test.ts",
+      "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+      "test/admin-permission.test.ts",
+      "test/legacy-admin-permissions.test.ts",
+      "test/admin-product-frontend-parity.test.ts",
+      "test/admin-operational-group-data-frontend.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=audit/catalog-20261014/final-ordinary.json"
+    ]
+  },
+  {
+    "name": "final-native",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "scripts/run-local-finance-postgres.mjs",
+      "--schema-maintenance",
+      "--verbose-tests",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+      "test/admin-product-catalog-read.test.ts",
+      "test/admin-product-catalog-read-http.test.ts",
+      "test/admin-product-catalog-read-native.test.ts",
+      "test/admin-product-reply.test.ts",
+      "test/admin-product-reply-http.test.ts",
+      "test/admin-product-reply-native.test.ts",
+      "test/admin-product-fictitious-reply.test.ts",
+      "test/admin-product-fictitious-reply-http.test.ts",
+      "test/admin-product-fictitious-reply-native.test.ts"
+    ]
+  },
+  {
+    "name": "admin-build",
+    "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "node_modules/vite/bin/vite.js",
+      "build"
+    ]
+  },
+  {
+    "name": "supplier-build",
+    "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "node_modules/vite/bin/vite.js",
+      "build"
+    ]
+  }
+]

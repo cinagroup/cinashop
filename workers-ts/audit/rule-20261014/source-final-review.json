@@ -1,0 +1,191 @@
+{
+  "status": "requires_remediation",
+  "scope": "read-only rule PHP/source/consumer final review; no source, test, manifest edits; one owned PGlite trigger reproduction only",
+  "source_snapshot": [
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductRuleService.ts",
+      "sha256": "d4e1300e10cf32f993046b6bfee3edfb373037a6db26e7c054552c3b57414ee0"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductRuleController.ts",
+      "sha256": "1bdae872719be79bc5a47a8f791366016b13f98503f426db76b9def30b364ffe"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductMetadataService.ts",
+      "sha256": "eb576e0baa1d5d14a517ed86963fd900b624e613007a1978e5deefb0b5dab413"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "8956aac715c677fbdc33c488f35ab891041da6002ee39411088c11b27ee208e9"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductRuleInput.ts",
+      "sha256": "f9c5bb97da806213943834e5f2adf4135dab702180652102e8c0480114fa98ac"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/admin.ts",
+      "sha256": "b4139db55ee5928309df53fafac9c07deabc77ee876c205a1a05b620e420bfbe"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "sha256": "e05491ba3fb0b152d8a9dc6493810ac530a5f13ab452003c16bf1f5e44d0960c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "sha256": "c29163bcb4d80cec81f0502c231fb0f510050432627af1495f09cf9086e82bf7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/utils/productRules.ts",
+      "sha256": "a41c1bebe9f85bcb5e87a7afc4cf0be03edb945039201577b592bee8aea4a529"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/ProductSpecifications.vue",
+      "sha256": "4dea9298ebcced4d570d16975f9eef3a76f0dd142710db2894b9ebd2a2c55062"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "fe939de33d1af06fe89e6a2c8be1915fc2c547905729a7b6c11d889c756122ec"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductForm.vue",
+      "sha256": "78f5c7ce4149accace5e62b833c4115cee87197d497eb0378c492c296dafbb8f"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/productMetadata.ts",
+      "sha256": "48a53b57a628e4ba8ad3d4e08c0975f6ed5a3c5fcf4f3f19b621c62d5505a5f7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-rule.test.ts",
+      "sha256": "5611edf6ee5b2005ea24db40e3ea85c3315ab367ae633cdf625b3574e82be877"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-rule-http.test.ts",
+      "sha256": "383671065df6c329bab138724d5a54d1bc0af13081b3254a8f1d864bf3ee048d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-rule-workflow-frontend.test.ts",
+      "sha256": "165722759d44e44e20b0ddfba55ffa90af21cca43abb970c1eea3f455a70d3c4"
+    }
+  ],
+  "php_authority": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductRule.php",
+      "sha256": "1ee678dab0dc4fc8449a9d42d970751a3d601c2a06bc4a7079899595a9fec62f"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductRuleServices.php",
+      "sha256": "226a522a5c73ef72f4f03a94e1249bc5b51301eebc15d5ade51626b3fb7e717a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductRuleDao.php",
+      "sha256": "7b4de35e9943ea856b4657c4814ee9b9ad6b39af88178a5bb5622209456b0910"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductRule.php",
+      "sha256": "9fc548318ac29be5e0a2a18900591b521d881dfcc59154e92bfe839cd83cdb65"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAttr/index.vue",
+      "sha256": "d0c4a3a0c7a63fb61e6f5dcbdeaab9f2d65a839db51cad8269c437a58eda1e4c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAttr/addAttr.vue",
+      "sha256": "f2333b8442ff67ab8f1de53e308601a34a7b1df4c977a5a13b8442332b7c00ce"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/common.js",
+      "sha256": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+    }
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "importance": "material receipt correctness",
+      "file": "workers-ts/src/services/admin/AdminProductRuleService.ts",
+      "issue": "audit expected does not include storeId,merchantId,adminName,ip from actual systemLog schema; matching returned row only by provided expected keys allows mutated platform audit identity to commit",
+      "evidence": [
+        "workers-ts/audit/rule-20261014/audit-scope-repro.mjs",
+        "workers-ts/audit/rule-20261014/audit-scope-repro.json",
+        "workers-ts/audit/rule-20261014/audit-scope-repro.log"
+      ],
+      "operations_reproduced": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "fix": "Explicitly assign and check all systemLog columns except generated positive id, including platform storeId=0 and merchantId=0, adminName and ip chosen by current contract; validate both RETURNING and SELECT readback; add before/after trigger rollback regressions."
+    },
+    {
+      "id": "R2",
+      "importance": "real input boundary mismatch",
+      "file": "view/supplier-ts/src/pages/ProductForm.vue",
+      "line": 589,
+      "issue": "SKU dimension input still sets native maxlength=32 (UTF-16), while template + SKU API now permits 32 Unicode code points; template copy via programmatic value succeeds but manual entry/edit remains capped at 16 emoji",
+      "evidence": "Current actual Vue template contains el-input v-model=dimension.value maxlength=32; ProductSpecifications removed native maxlength but this actual SKU consumer did not. Static finding; no browser runtime claim.",
+      "fix": "Remove SKU dimension native maxlength or implement code-point input constraint, preserving 32-code-point API limit; leave optional strings with existing UTF-16 semantics unchanged."
+    }
+  ],
+  "verified_static": [
+    {
+      "requirement": "five missing legacy routes and ten retained modern aliases",
+      "evidence": "Admin route registrations and original PHP nested product routes match specified method/path; modern aliases are replacement handlers, not new PHP paths."
+    },
+    {
+      "requirement": "old list/get_rule/detail projections",
+      "evidence": "Original PHP getList keeps raw rule_value; getRule conditionally decodes truthy strings; getInfo always includes spec. Legacy helpers implement PHP null/empty/string0 truthiness and documented malformed nonempty safe boundary."
+    },
+    {
+      "requirement": "full editor echo",
+      "evidence": "Actual old addAttr assigns whole res.data.info then sends whole form; current core validates ownership/raw value/derived metadata under fence and ignores object key insertion order while preserving arrays/unknown keys."
+    },
+    {
+      "requirement": "actual empty delete transport",
+      "evidence": "Old index delete config ids emptystring; api/common tableDelApi sends data.ids. Current legacy accepts empty transport with extra narrow emptyids compatibility; modern accepts empty only."
+    },
+    {
+      "requirement": "99/580 permissions",
+      "evidence": "Both SQL whitelist entry points require type1/auth1 and exact99 path/auth plus access1/isDel0. Resolver protects exact claimant copies/rewrites and unconditionally denies580. Tests exercise single+batch parity."
+    },
+    {
+      "requirement": "catalog 731612 lifecycle and ownership",
+      "evidence": "Both core save/delete hold shared advisory namespace by owner, edit/delete FOR UPDATE, duplicate checks and full business return/readback within transaction; platform00 filters on Admin reads/writes."
+    },
+    {
+      "requirement": "copy-only template application",
+      "evidence": "Actual supplier prepares cloned items/details; actual Admin creates item clones. ProductAssociation reads rule candidates only for editorOptions; save has no persisted rule FK lookup/binding fence."
+    },
+    {
+      "requirement": "Unicode positive/negative coverage",
+      "evidence": "32/32/64 names/values use codepoint count in shared rule inputs and actual Supplier draft/application; ProductSkuInput requiredString uses codepoint count, optionalString semantics unchanged. 33/65 negative cases use distinct names/no extant matching name or fail before frontend POST, so duplicate errors cannot mask intended boundary."
+    },
+    {
+      "requirement": "read tolerance maintained",
+      "evidence": "Supplier frontend parse row retains 128/4096/32768 UTF16 read bounds and historical decoder tolerance; new strict draft only applies write/apply checks. Shared Supplier query now accepts fifty Unicode codepoints as exercised by real HTTP tests."
+    }
+  ],
+  "limits": [
+    "Root owns heavyweight full validation and final case count. This review does not claim test matrix/typecheck/build/browser/native concurrency completion.",
+    "PHP BaseController remains encoded; readable Json source cannot by itself prove entire PHP runtime envelope.",
+    "Current draft full audit wording needs correction until R1 repaired."
+  ]
+}

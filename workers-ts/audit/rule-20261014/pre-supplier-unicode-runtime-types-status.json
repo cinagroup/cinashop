@@ -1,0 +1,18 @@
+{
+  "name": "runtime-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.runtime-test.json",
+    "--noEmit"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T04:42:47.121926+00:00",
+  "completedAt": "2026-10-14T04:44:40.677521+00:00",
+  "exitCode": 0,
+  "log": "worker-runtime-types.log",
+  "nodePathIncluded": true,
+  "testFinanceLocalCacheRoot": null
+}

@@ -1,0 +1,1037 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T04:46:30.713667+00:00",
+  "status": "read-only-next-scope-candidate",
+  "recommendation": {
+    "name": "Admin 商品评价与真实回复线程",
+    "legacyMissingRecommended": 7,
+    "legacyMissingDeferred": 2,
+    "priorityReason": "商品同域可操作完整流程：评价筛选分页→管理员一级回复→用户根评论/二级回复→删评论/软删评价；现代页面已有入口而回复线程未实现。"
+  },
+  "changes": {
+    "onlyNewArtifact": "workers-ts/audit/next-scope-20261014.json",
+    "implementation": false,
+    "manifest": false,
+    "retiredDecision": false,
+    "auditor": false,
+    "checkbox": false,
+    "testsRun": false,
+    "productionAccess": false
+  },
+  "routeEvidence": {
+    "authoritySnapshot": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-authority.json",
+    "registeredSource": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+    "method": "只读扫描与既有 route-parity-audit.ts 相同形式的显式 Routes.get/post/put/delete/patch/all 注册并比较 method+参数名归一化路径；未执行全局 auditor 或 HTTP 404 探针。",
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/adminapi/product/reply",
+        "normalizedPath": "/adminapi/product/reply",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1537,
+        "target": "v1.product.StoreProductReply/index",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      },
+      {
+        "method": "PUT",
+        "path": "/adminapi/product/reply/set_reply/:id",
+        "normalizedPath": "/adminapi/product/reply/set_reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1539,
+        "target": "v1.product.StoreProductReply/set_reply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      },
+      {
+        "method": "DELETE",
+        "path": "/adminapi/product/reply/:id",
+        "normalizedPath": "/adminapi/product/reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1541,
+        "target": "v1.product.StoreProductReply/delete",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/product/reply/fictitious_reply/:product_id",
+        "normalizedPath": "/adminapi/product/reply/fictitious_reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1551,
+        "target": "v1.product.StoreProductReply/fictitious_reply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "later-fictitious-review"
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/product/reply/save_fictitious_reply",
+        "normalizedPath": "/adminapi/product/reply/save_fictitious_reply",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1553,
+        "target": "v1.product.StoreProductReply/save_fictitious_reply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "later-fictitious-review"
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/product/reply/comment/:id",
+        "normalizedPath": "/adminapi/product/reply/comment/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1555,
+        "target": "v1.product.StoreProductReply/getComment",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/product/reply/get_reply/:id",
+        "normalizedPath": "/adminapi/product/reply/get_reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1557,
+        "target": "v1.product.StoreProductReply/getReply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/product/reply/save_comment/:replyId/:id",
+        "normalizedPath": "/adminapi/product/reply/save_comment/:param/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1559,
+        "target": "v1.product.StoreProductReply/saveComment",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      },
+      {
+        "method": "DELETE",
+        "path": "/adminapi/product/reply/delete_comment/:id",
+        "normalizedPath": "/adminapi/product/reply/delete_comment/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1561,
+        "target": "v1.product.StoreProductReply/deleteComment",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "recommended-real-moderation"
+      }
+    ],
+    "existingModernRoutes": [
+      {
+        "method": "GET",
+        "path": "/adminapi/reply/list",
+        "normalizedPath": "/adminapi/reply/list",
+        "line": 901,
+        "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/reply/status/:id",
+        "normalizedPath": "/adminapi/reply/status/:param",
+        "line": 902,
+        "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts"
+      },
+      {
+        "method": "DELETE",
+        "path": "/adminapi/reply/del/:id",
+        "normalizedPath": "/adminapi/reply/del/:param",
+        "line": 903,
+        "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/reply/list",
+        "normalizedPath": "/api/admin/reply/list",
+        "line": 2056,
+        "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/reply/status/:id",
+        "normalizedPath": "/api/admin/reply/status/:param",
+        "line": 2057,
+        "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/reply/del/:id",
+        "normalizedPath": "/api/admin/reply/del/:param",
+        "line": 2058,
+        "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts"
+      }
+    ],
+    "fallback": {
+      "source": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "evidence": {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+        "needle": "status: 501, msg:",
+        "lines": [
+          {
+            "line": 1318,
+            "text": "c.json({ status: 501, msg: `接口 ${c.req.path} 尚未迁移到 Workers`, data: null }),"
+          }
+        ]
+      },
+      "meaning": "未注册的旧评价合同由最终 all(/*) 未迁移兜底返回业务status501；不是已实现，也未探针验证为HTTP404。"
+    }
+  },
+  "checklistBoundary": {
+    "files": {
+      "MIGRATION_CHECKLIST.md": {
+        "total": 404,
+        "checked": 249,
+        "open": 155,
+        "sha256": "ca5d95f46b93d0cb78b20dc4b83e7368879e0e88d751ae4c92fa3ab8373dafbc",
+        "changedByScout": false
+      },
+      "MIGRATION_AUDIT.md": {
+        "total": 88,
+        "checked": 50,
+        "open": 38,
+        "sha256": "69a41bba58a0a288ccfb329f2a5bcbb9d16a34274cf41d73b04efa5e09b357ec",
+        "changedByScout": false
+      }
+    },
+    "parentOpen": {
+      "path": "/home/cina/cinagroup/cinashop/MIGRATION_CHECKLIST.md",
+      "needle": "**ADM-003 商品运营**",
+      "lines": [
+        {
+          "line": 1834,
+          "text": "- [ ] **ADM-003 商品运营**：product 98、freight 9；覆盖规格、属性、分类、品牌、库存、评价、运费模板、虚拟商品与批量操作。"
+        }
+      ]
+    },
+    "screenParity": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/admin-legacy-product-route-parity.json",
+      "needle": "Product-scoped navigation",
+      "lines": [
+        {
+          "line": 60,
+          "text": "\"remaining\": \"Product-scoped navigation, administrator replies, fictitious-review creation, pagination/filtering, and reply history are absent.\""
+        }
+      ]
+    },
+    "globalCoverageClaimed": false,
+    "getScriptConflict": "GET /api/get_script 的现有注册与原 retired 裁决继续独立开放；不改 retired、auditor 或安全判定。"
+  },
+  "excludedCompletedDomains": [
+    "AdminProductWords",
+    "AdminProductBrands",
+    "AdminProductLabels",
+    "AdminProductCategories",
+    "Unit",
+    "Ensure",
+    "Specs",
+    "本批已注册的 5 条 AdminProductRule 旧合同"
+  ],
+  "phpSource": {
+    "controller": {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+      "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+      "lineCount": 208
+    },
+    "mainService": {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+      "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+      "lineCount": 596
+    },
+    "threadService": {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyCommentServices.php",
+      "sha256": "ee2ee105a8ee82f97f00963e61b06edf5d5f4f9fd430589f3ee227ff7442c098",
+      "lineCount": 194
+    },
+    "joinedListDao": {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+      "sha256": "5ad9a325f008de19b99c925a205d423c5ff8d0019d7fc66ca74102d35c9233a2",
+      "lineCount": 121
+    },
+    "allInputs": "见 inputs 的31份源码/权威/种子hash"
+  },
+  "contracts": {
+    "list": {
+      "controller": "index",
+      "service": "sysPage→StoreProductReplyStoreProductServices.getProductReplyList→StoreProductReplyStoreProductDao.searchWhere",
+      "query": [
+        "is_reply",
+        "store_name",
+        "account",
+        "data",
+        "product_id",
+        "page",
+        "limit"
+      ],
+      "shape": "{list,count}; r.*+store_name/image/account/add_time上海日期/time相对时间/create_time同日期/score三分均值向下取整/replyComment；pics由modelJSONdecode。",
+      "filters": "is_del=0；store_name LIKE商品名/keyword/评价id/product_id；account LIKE nickname；date/time筛选；按add_timeDESC/is_replyASC，无id tie-break。"
+    },
+    "setReply": "setReply(replyId,content)按reply_id/uid0/type0/relation_id0/pid0查重UPDATE或INSERT reply_comment，create/update时间；只在parent.type==0时is_reply=1。不是写merchant_reply_content。",
+    "getReply": "按reply_id/uid0/relation_id0查根回复或{content:\"\"}；PHP缺type/pid条件，TS必须明确防二级/污染行冒充。",
+    "getComment": "getReplCommenList默认pid0/notUid0，用户根评论按praiseDESC/create_timeDESC分页，{list,count}；children为hasOne单个直接子回复；仅root.user.nickname anonymity，root VIP字段；管理员uid0子回复缺user时使用站点名/头像，Admin调用root/child is_praise=false。",
+    "saveComment": "path replyId/id对应reply_id/pid，uid0，查uid0/pid/reply_id改content/update_time或插入；PHP不核对id属于replyId，TS必须验证真实parent链。",
+    "deleteReview": "只修改is_del=1，保留订单、商品、SKU、客户评价正文和历史证据。",
+    "deleteComment": "事务内物理删除id及pid=id直属孩子，不是递归所有深度；不得未经源码/策略依据额外改点赞关系、订单或SKU。",
+    "messages": [
+      "回复成功!",
+      "删除成功!",
+      "保存成功",
+      "删除成功"
+    ],
+    "envelopeLimitation": "PHP调用success(单string)；readable Json.php null default支持省略data，opaque BaseController forwarding未执行，不能声称完整PHP运行时信封已验证。"
+  },
+  "sourceDifferencesRequiringExplicitPolicy": [
+    {
+      "finding": "Admin controller指定type0/relation0，但DAO只对truthy加owner过滤；原列表实际全owner，而不是平台限定。",
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+          "needle": "$where['type'] = 0;",
+          "lines": [
+            {
+              "line": 49,
+              "text": "$where['type'] = 0;"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+          "needle": "if ($where['type'])",
+          "lines": [
+            {
+              "line": 107,
+              "text": "if ($where['type']) $model = $model->where('r.type', $where['type']);"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+          "needle": "if ($where['relation_id'])",
+          "lines": [
+            {
+              "line": 110,
+              "text": "if ($where['relation_id']) $model = $model->where('r.relation_id', $where['relation_id']);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "finding": "平台管理员可回复任何parent（含Supplier），写平台tuple根回复；Supplier parent不置is_reply1。需明确中央Admin跨owner moderation权限，而不是静默丢掉旧流程。Supplier删除退休replacement已说明moderation归Admin。",
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+          "needle": "if ($type == $reply['type'])",
+          "lines": [
+            {
+              "line": 166,
+              "text": "if ($type == $reply['type']) {//回复端 与商品端一致 修改回复状态"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-decisions.json",
+          "needle": "Platform moderation remains an Admin responsibility",
+          "lines": [
+            {
+              "line": 135,
+              "text": "\"replacement\": \"Supplier reviews remain immutable customer evidence; GET /supplierapi/product/reply lists only reviews bound to the authenticated Supplier and PUT /supplierapi/product/reply/set_reply/:id writes only that Supplier's scoped merchant response. Platform moderation remains an Admin responsibility.\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "finding": "平台list的replyComment仅uid0/pid0，无owner条件；不能任取供应商/污染行作为平台回复。重复历史root应拒绝需修复或使用经证据确认的canonical策略。",
+      "evidence": {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+        "needle": "$query->where('uid', 0)->where('pid', 0);",
+        "lines": [
+          {
+            "line": 59,
+            "text": "$query->where('uid', 0)->where('pid', 0);"
+          }
+        ]
+      }
+    },
+    {
+      "finding": "Comment model create_time映射到TS schema add_time；不能因TS名不同漏旧字段。父comment PHP512/TS1024、nickname源64/TS128也须区分，回复content源/TS均1000。",
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductReplyComment.php",
+          "needle": "getCreateTimeAttr",
+          "lines": [
+            {
+              "line": 130,
+              "text": "public function getCreateTimeAttr($value)"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/reply.ts",
+          "needle": "addTime: integer(\"add_time\")",
+          "lines": [
+            {
+              "line": 78,
+              "text": "addTime: integer(\"add_time\").default(0).notNull(),"
+            },
+            {
+              "line": 121,
+              "text": "addTime: integer(\"add_time\").default(0).notNull(),"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "finding": "PHP只匿名根用户昵称，children昵称未同样匿名；现有TS公共commentList匿名整个投影、包含uid0根且只读公开status1父。若复用需明确后台隐私/隐藏可读差异，不冒充PHP DTO完全相同。",
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyCommentServices.php",
+          "needle": "$item['user']['nickname'] = anonymity",
+          "lines": [
+            {
+              "line": 91,
+              "text": "$item['user']['nickname'] = anonymity($item['user']['nickname']);"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+          "needle": "const serialize =",
+          "lines": [
+            {
+              "line": 372,
+              "text": "const serialize = (item: typeof storeProductReplyComment.$inferSelect) => {"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "consumers": {
+    "legacyActive": [
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+        "flow": "getList→replyListApi；oks→setReplyApi；seeReply→replyList.getList；del→modalSure",
+        "evidence": [
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+            "needle": "replyListApi(this.formValidate)",
+            "lines": [
+              {
+                "line": 532,
+                "text": "replyListApi(this.formValidate)"
+              }
+            ]
+          },
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+            "needle": "setReplyApi(this.contents",
+            "lines": [
+              {
+                "line": 464,
+                "text": "setReplyApi(this.contents, this.rows.id)"
+              }
+            ]
+          },
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+            "needle": "url: `product/reply/${row.id}`",
+            "lines": [
+              {
+                "line": 488,
+                "text": "url: `product/reply/${row.id}`,"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+        "flow": "活跃getList→productReplycomment(time,page,limit)、del→modalSure；oks→productReplySave方法/Modal仍在，但template回复入口按钮已注释，不能称当前活跃用户操作。",
+        "evidence": [
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+            "needle": "productReplySave(this.contents",
+            "lines": [
+              {
+                "line": 175,
+                "text": "productReplySave(this.contents, this.replyId, this.rows.id);"
+              }
+            ]
+          },
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+            "needle": "product/reply/delete_comment/${row.id}",
+            "lines": [
+              {
+                "line": 215,
+                "text": "urls = this.fromType?`/marketing/video/comment/${row.id}`:`product/reply/delete_comment/${row.id}`;"
+              }
+            ]
+          },
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+            "needle": "this.replyFrom.time =",
+            "lines": [
+              {
+                "line": 244,
+                "text": "this.replyFrom.time =  this.time;"
+              }
+            ]
+          },
+          {
+            "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+            "needle": "<a @click=\"reply(row)\"",
+            "lines": [
+              {
+                "line": 46,
+                "text": "<!--\t\t\t\t  <a @click=\"reply(row)\" v-show=\"row.pid == 0 || row.uid > 0\">回复</a>-->"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "legacyGetReply": "route/controller有效，但旧Admin src扫描未找到get_reply调用，标为contract-only，不宣称活跃消费已执行。",
+    "legacyDeleteBody": "真实public.modalSure→api.common.tableDelApi将ids:\"\"直接作为Axios data，产生空字符串正文；JSON{ids:\"\"}仅可作为单独兼容拓展。",
+    "modern": {
+      "api": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/reply.ts",
+      "page": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "now": "camelCase数组/list、status显隐和删除null；无分页控件、筛选、商品入口、一级/二级回复。既有6两前缀合同需保留DTO并接共享授权/事务服务。",
+      "evidence": [
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/reply.ts",
+          "needle": "\"/reply/list\"",
+          "lines": [
+            {
+              "line": 19,
+              "text": "return getData(request.get<AdminReplyItem[]>(\"/reply/list\", { params: { page, limit } }));"
+            }
+          ]
+        },
+        {
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+          "needle": "await apiAdminReplyList()",
+          "lines": [
+            {
+              "line": 76,
+              "text": "list.value = await apiAdminReplyList();"
+            }
+          ]
+        }
+      ]
+    },
+    "nextValidation": "编译真实旧API/Vue methods/public.modalSure/common.tableDelApi及modern api/reply.ts/utils/request.ts Axios→完整App；再mounted现代桌面/手机正反role操作，避免字符串镜像验证。"
+  },
+  "reusableTs": [
+    {
+      "source": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/reply.ts",
+      "reuse": "两张业务表已存在，无需新业务表；NOT VALID订单snapshot FK/score约束与active_cart幂等索引保留。"
+    },
+    {
+      "source": "/home/cina/cinagroup/cinashop/workers-ts/src/dao/product/ReplyDaos.ts",
+      "reuse": "基本DAO、stats/pics/score桶；BaseDao没有currentAdmin权限/owner/审计，不能直接挂新管理路由。"
+    },
+    {
+      "source": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "reuse": "有界list过滤/date/批量一级回复projection与FORUPDATE upsert参考；type2身份只供Supplier，不泛化为任意owner。现dateRange不支持old today/week/lately7/lately30/month/year，需Admin专门恢复。"
+    },
+    {
+      "source": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+      "reuse": "真实公开/登录评论、昵称匿名/会员/site配置、订单评价幂等；public replyComment父FORUPDATE、点赞comment+parentjoinFORUPDATE适合复用父锁协议。公开commentList只status1且返回array；replyInfo会增长views，不能当Admin读取替身。"
+    },
+    {
+      "source": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductRuleService.ts",
+      "reuse": "当前authority barrier、live账号/密码/role/menu/expiry两次复核、RR读、完整RETURNING/readback、原子审计与audit后业务核对框架。"
+    }
+  ],
+  "permissions": {
+    "installationSeeds": [
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "line": 8666,
+        "values": {
+          "id": "6",
+          "pid": "1",
+          "type": "1",
+          "icon": "md-chatboxes",
+          "menu_name": "商品评论",
+          "module": "admin",
+          "controller": "store.store_product_reply",
+          "action": "index",
+          "api_url": "",
+          "methods": "",
+          "params": "[]",
+          "sort": "0",
+          "is_show": "1",
+          "is_show_path": "0",
+          "access": "1",
+          "menu_path": "/admin/product/product_reply",
+          "path": "1",
+          "auth_type": "1",
+          "header": "product",
+          "is_header": "1",
+          "unique_auth": "product-product-reply",
+          "is_del": "0"
+        },
+        "rawTuple": "(6, 1, 1, 'md-chatboxes', '商品评论', 'admin', 'store.store_product_reply', 'index', '', '', '[]', 0, 1, 0, 1, '/admin/product/product_reply', '1', 1, 'product', 1, 'product-product-reply', 0),"
+      },
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "line": 8768,
+        "values": {
+          "id": "184",
+          "pid": "579",
+          "type": "1",
+          "icon": "",
+          "menu_name": "虚拟评论表单",
+          "module": "admin",
+          "controller": "",
+          "action": "",
+          "api_url": "product/reply/fictitious_reply/<product_id>",
+          "methods": "GET",
+          "params": "[]",
+          "sort": "0",
+          "is_show": "0",
+          "is_show_path": "0",
+          "access": "1",
+          "menu_path": "/adminproduct/reply/fictitious_reply",
+          "path": "",
+          "auth_type": "2",
+          "header": "",
+          "is_header": "0",
+          "unique_auth": "",
+          "is_del": "0"
+        },
+        "rawTuple": "(184, 579, 1, '', '虚拟评论表单', 'admin', '', '', 'product/reply/fictitious_reply/<product_id>', 'GET', '[]', 0, 0, 0, 1, '/adminproduct/reply/fictitious_reply', '', 2, '', 0, '', 0),"
+      },
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "line": 8769,
+        "values": {
+          "id": "185",
+          "pid": "579",
+          "type": "1",
+          "icon": "",
+          "menu_name": "保存虚拟评论",
+          "module": "admin",
+          "controller": "",
+          "action": "",
+          "api_url": "product/reply/save_fictitious_reply",
+          "methods": "POST",
+          "params": "[]",
+          "sort": "0",
+          "is_show": "0",
+          "is_show_path": "0",
+          "access": "1",
+          "menu_path": "/adminproduct/reply/save_fictitious_reply",
+          "path": "",
+          "auth_type": "2",
+          "header": "",
+          "is_header": "0",
+          "unique_auth": "product-reply-save_fictitious_reply",
+          "is_del": "0"
+        },
+        "rawTuple": "(185, 579, 1, '', '保存虚拟评论', 'admin', '', '', 'product/reply/save_fictitious_reply', 'POST', '[]', 0, 0, 0, 1, '/adminproduct/reply/save_fictitious_reply', '', 2, '', 0, 'product-reply-save_fictitious_reply', 0),"
+      },
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "line": 8772,
+        "values": {
+          "id": "188",
+          "pid": "579",
+          "type": "1",
+          "icon": "",
+          "menu_name": "删除评论",
+          "module": "admin",
+          "controller": "",
+          "action": "",
+          "api_url": "product/reply/<id>",
+          "methods": "DELETE",
+          "params": "[]",
+          "sort": "0",
+          "is_show": "0",
+          "is_show_path": "0",
+          "access": "1",
+          "menu_path": "/adminproduct/reply/<id>",
+          "path": "",
+          "auth_type": "2",
+          "header": "",
+          "is_header": "0",
+          "unique_auth": "",
+          "is_del": "0"
+        },
+        "rawTuple": "(188, 579, 1, '', '删除评论', 'admin', '', '', 'product/reply/<id>', 'DELETE', '[]', 0, 0, 0, 1, '/adminproduct/reply/<id>', '', 2, '', 0, '', 0),"
+      },
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "line": 8773,
+        "values": {
+          "id": "189",
+          "pid": "579",
+          "type": "1",
+          "icon": "",
+          "menu_name": "评论回复",
+          "module": "admin",
+          "controller": "",
+          "action": "",
+          "api_url": "product/reply/set_reply/<id>",
+          "methods": "PUT",
+          "params": "[]",
+          "sort": "0",
+          "is_show": "0",
+          "is_show_path": "0",
+          "access": "1",
+          "menu_path": "/adminreply/set_reply/<id>",
+          "path": "",
+          "auth_type": "2",
+          "header": "",
+          "is_header": "0",
+          "unique_auth": "",
+          "is_del": "0"
+        },
+        "rawTuple": "(189, 579, 1, '', '评论回复', 'admin', '', '', 'product/reply/set_reply/<id>', 'PUT', '[]', 0, 0, 0, 1, '/adminreply/set_reply/<id>', '', 2, '', 0, '', 0),"
+      },
+      {
+        "source": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "line": 8774,
+        "values": {
+          "id": "190",
+          "pid": "6",
+          "type": "1",
+          "icon": "",
+          "menu_name": "评论列表",
+          "module": "admin",
+          "controller": "",
+          "action": "",
+          "api_url": "product/reply",
+          "methods": "GET",
+          "params": "[]",
+          "sort": "0",
+          "is_show": "0",
+          "is_show_path": "0",
+          "access": "1",
+          "menu_path": "/adminproduct/reply",
+          "path": "",
+          "auth_type": "2",
+          "header": "",
+          "is_header": "0",
+          "unique_auth": "",
+          "is_del": "0"
+        },
+        "rawTuple": "(190, 6, 1, '', '评论列表', 'admin', '', '', 'product/reply', 'GET', '[]', 0, 0, 0, 1, '/adminproduct/reply', '', 2, '', 0, '', 0),"
+      }
+    ],
+    "current": "旧product/reply落通用product.view/manage；现代/reply落独立reply.view/manage。page6未在限定authType1查询中接入，API188/189/190当前generic mapping是product域。",
+    "recommendation": "明确评价独立reply.view/manage并使legacy/modern一致（若保持product兼容需显式策略）。精确6 type1/authType1/menu_path=/admin/product/product_reply/unique_auth=product-product-reply/api_url及methods空只读；188DELETE/189PUT仅授已证明评价写、190GET只读，不从标题推断全商品写。防id/path/auth重写，不把185虚拟创建菜单默认授moderationwriter。",
+    "threadSeeds": "安装SQL未找到get_reply/comment/save_comment/delete_comment API tuple；不得发明真实ID，测试用独立synthetic或明确现代reply权限。",
+    "evidence": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+        "needle": "key: \"reply\"",
+        "lines": [
+          {
+            "line": 140,
+            "text": "{ key: \"reply\", label: \"商品评价\", path: \"/reply\", matches: [\"reply/\"], manage: true },"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+        "needle": "function requiredAdminPermission",
+        "lines": [
+          {
+            "line": 466,
+            "text": "export function requiredAdminPermission(method: string, routePath: string): string | null {"
+          }
+        ]
+      }
+    ]
+  },
+  "dataWriteConcurrencyPlan": [
+    "父商品/评价owner一致、CentralAdmin scope先明确；异常owner/孤儿不能靠任意全局id写入。一级平台回复uid0/pid0/type0/relation0；二级必须是path replyId下真实用户根id，拒跨parent/owner、管理员根与深度伪造。",
+    "content1000Unicode码点、拒controls/unpaired、HTTP64KiB、严格canonicalID/重复和未知query/body、分页和时间有界；private/no-store及sessionclose。只改回复内容/update时间和必要is_reply，不改客户正文、UID、oid/order_cart_info_id、SKU unique、score、pics或订单status。",
+    "所有DML完整RETURNING/readback、目标子集合和审计回读、审计后business核对；skip/改写/跨owner删除后重建全回滚。现代status拓展保留，但不是源PHP已存在合同。",
+    "新Admin写统一父replyFORUPDATE→按id锁root/child→审计/liveauthority；验证existing public replyComment和joined点赞锁序以及Supplier setReply两端真实竞争，不能只用假consumer。",
+    "两Admin同时一级/二级emptyupsert不重复；deleteComment↔saveComment双向提交，delete先commit则迟到save拒，save先commit则delete包含新child；parentsoftdelete/现代status↔public评论/点赞均要真实peer证明。",
+    "live roles/menu/密码/adminstatus撤权与等待中expiry、runtime只读/精确DML/noauditgrant、新PG16独立LOGIN/pg_blocking_pids、trigger skip真实触发与全snapshot回滚，记录清理stop0fixture。"
+  ],
+  "necessaryTests": {
+    "ordinary": [
+      "PHP列表/count/time/score/pics/filter与moderncamelCase",
+      "全owner/平台回复政策与污染tuple",
+      "完整readonlyecho防篡改、一/二级upsert、duplicates/crossparent/owner",
+      "父softdelete和直属childdelete保持订单/SKU/点赞历史边界",
+      "1000Unicode/input64KiB/repeatedunknown、完整DML/audit异常回滚"
+    ],
+    "http": [
+      "7old+既有modern3*2完整App/JWT/SQLsession/noexternalfetch",
+      "实际旧API/Vue/modalSure空body与compiledmodernAxios/mounted页面",
+      "page6/numeric188189190与只读/撤权/expiry/HEAD/cache/body/sessionclose"
+    ],
+    "native": [
+      "两个管理员upsert",
+      "delete/save child双向",
+      "parentsoftdelete/status和真实public replyComment/praise",
+      "Admin与真实Supplier setReply",
+      "authority/expiry/精确运行权限及SQLtrigger回滚"
+    ],
+    "regression": [
+      "product-reply-detail-migration.test.ts",
+      "product-reply-detail-compatibility-scenario.test.ts",
+      "supplier-product-reply-migration.test.ts",
+      "reply-shipping-migration.test.ts",
+      "订单评价/自动评价/回复点赞现有runtime gates",
+      "Worker完整双types/Admintypes-build、sourcefreeze/receipts与独立集群清理"
+    ]
+  },
+  "deferredFictitiousFlow": {
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/adminapi/product/reply/fictitious_reply/:product_id",
+        "normalizedPath": "/adminapi/product/reply/fictitious_reply/:param",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1551,
+        "target": "v1.product.StoreProductReply/fictitious_reply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "later-fictitious-review"
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/product/reply/save_fictitious_reply",
+        "normalizedPath": "/adminapi/product/reply/save_fictitious_reply",
+        "kind": "explicit",
+        "source": "cinashop-php/route/admin.php",
+        "line": 1553,
+        "target": "v1.product.StoreProductReply/save_fictitious_reply",
+        "registeredNow": false,
+        "retiredDecisionNow": false,
+        "phase": "later-fictitious-review"
+      }
+    ],
+    "reason": "另2route不阻断7条真实moderation；该流程涉及商品/SKU、素材、头像、评分、时间与造评正文，独立设计。GET表单controller读postMore而非pathid，旧modalForm调用已注释，实际addReply.vue自建表单直接POST。",
+    "consumer": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/addReply.vue",
+    "actualBody": "image:{image,product_id},unique(SKU),avatar,nickname,comment,reply_score/product_score/service_score/delivery_score,pics,add_time。Controllerunique→sku_unique，service再生成评价unique/固定uid0/oid0/拒未来时间；新实现要严格验证商品SKUowner/retired，不改库存和订单。",
+    "evidence": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+        "needle": "// this.$modalForm",
+        "lines": [
+          {
+            "line": 455,
+            "text": "// this.$modalForm(fictitiousReply(this.formValidate.product_id)).then(() =>"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/addReply.vue",
+        "needle": "saveFictitiousReply(data)",
+        "lines": [
+          {
+            "line": 221,
+            "text": "saveFictitiousReply(data)"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+        "needle": "$data['unique'] = uniqid();",
+        "lines": [
+          {
+            "line": 112,
+            "text": "$data['unique'] = uniqid();"
+          }
+        ]
+      }
+    ]
+  },
+  "inputs": [
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-authority.json",
+      "sha256": "d3d8a19b4791c63a860fbb87b0948fed2df0b8bd320a5d09d9e753efedd8ed14",
+      "lineCount": 17259
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+      "lineCount": 232
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "sha256": "e05491ba3fb0b152d8a9dc6493810ac530a5f13ab452003c16bf1f5e44d0960c",
+      "lineCount": 1319
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "sha256": "c29163bcb4d80cec81f0502c231fb0f510050432627af1495f09cf9086e82bf7",
+      "lineCount": 2440
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+      "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+      "lineCount": 208
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+      "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+      "lineCount": 596
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyCommentServices.php",
+      "sha256": "ee2ee105a8ee82f97f00963e61b06edf5d5f4f9fd430589f3ee227ff7442c098",
+      "lineCount": 194
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+      "sha256": "5ad9a325f008de19b99c925a205d423c5ff8d0019d7fc66ca74102d35c9233a2",
+      "lineCount": 121
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyStoreProductServices.php",
+      "sha256": "da1abc196e062160dc18b0c0bafe3d3ea7bd1d4a15fdf4fa521cba9ba6f75ba3",
+      "lineCount": 52
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyDao.php",
+      "sha256": "0c280eeac38db4c7e755a8c8581718bae568580f5d9519873fa7b594135eeaf0",
+      "lineCount": 124
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyCommentDao.php",
+      "sha256": "eafbfd3d4ab4e7a5bd748d4f9a95479512c2f1e703ba3dff6d431c0f860cfdcb",
+      "lineCount": 55
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductReply.php",
+      "sha256": "093bd50a58a4323a028c1667b64e0381d4cccd6737004a0dfea1c37a27bd2c23",
+      "lineCount": 234
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductReplyComment.php",
+      "sha256": "b5c1ce91b82a3198eb2a6f8776c8287e5eb30f934b680ced5222684998dba696",
+      "lineCount": 143
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/validate/admin/product/StoreProductReplyValidate.php",
+      "sha256": "8aace9f935ddea40bba94ca4258b97e63f566d14cea0d9f1b7e9ee5888079700",
+      "lineCount": 58
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+      "lineCount": 664
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+      "sha256": "b17017fc4bad9078cf218fef88f9e2c3cdb2b3d14f80b9418db13e66bb51c84e",
+      "lineCount": 291
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/addReply.vue",
+      "sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+      "lineCount": 274
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "lineCount": 917
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/utils/public.js",
+      "sha256": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+      "lineCount": 98
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/common.js",
+      "sha256": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+      "lineCount": 59
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/modules/product.js",
+      "sha256": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790",
+      "lineCount": 138
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "lineCount": 56505
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/reply.ts",
+      "sha256": "e501bb5a8f36406fd5f3d981d79c610199e926b305bdb634138610b505a654b4",
+      "lineCount": 30
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "sha256": "d2fe0f7196fee840b2a56a590077d7cecd73a27a9282fd0d574adda2f2046e52",
+      "lineCount": 120
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "8956aac715c677fbdc33c488f35ab891041da6002ee39411088c11b27ee208e9",
+      "lineCount": 1541
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "f29f3cc34149003a80c395d50a0430621009c35d42259e250cd35ee230ea922b",
+      "lineCount": 799
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "sha256": "9e1e33de16892f5a2edf75f93f0f8fd84931dda529550e320e7558fa07879c1e",
+      "lineCount": 357
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "64c9ef3c1125da11ba020e9e8fd89165f7ef18a30a02152e0763472133719c8b",
+      "lineCount": 2644
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/reply.ts",
+      "sha256": "7a2ec3a828e2f800bb95b9053a9788170cd6670b228117174112c705eb503e3c",
+      "lineCount": 131
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/dao/product/ReplyDaos.ts",
+      "sha256": "61a0c7b93a219a72e1c0d7144ea7f00d76c4f83f90d78d4f9c4a88f8138d3061",
+      "lineCount": 118
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/admin-legacy-product-route-parity.json",
+      "sha256": "6a20c29c6e69e819b5d396562fb9c795fd7dc1cb301b21fa072544b9146f0cf6",
+      "lineCount": 151
+    }
+  ],
+  "independentReview": {
+    "agent": "/root/specs_contract_tests/review_reply_scope",
+    "mode": "只读源复核，无编辑/测试",
+    "confirmed": [
+      "9旧合同未注册且rule5已补齐",
+      "7 moderation +2 fictitious独立",
+      "Admin PHP实际全owner及平台回复不置Supplier is_reply",
+      "旧product和modernreply权限不同、真实page6/API188189190",
+      "PHP thread roots uid<>0/hasOne/根nickname匿名及现有TS public有区别",
+      "get_reply contract-only与二级回复按钮注释",
+      "真实public写评论/点赞已有父锁"
+    ]
+  }
+}

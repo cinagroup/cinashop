@@ -1,0 +1,24 @@
+{
+  "name": "initial-ordinary",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-fictitious-reply.test.ts",
+    "test/admin-product-fictitious-reply-http.test.ts",
+    "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+    "test/admin-product-reply-workflow-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/fictitious-20261014/initial-ordinary.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-14T08:33:42.060598+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-14T08:34:11.339059+00:00",
+  "exitCode": 1,
+  "log": "initial-ordinary.log"
+}

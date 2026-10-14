@@ -1,0 +1,5 @@
+{
+  "algorithm": "SHA256 UTF8 compact sorted-key JSON; exclude only independentDeliveryReview",
+  "ledger": "/home/cina/cinagroup/cinashop/workers-ts/audit/php-ts-catalog-navigation-migration-20261014.json",
+  "digest": "8c5d09e36c499c3b978c4f38a18ab0b5e94ecc07d044f01302e1629b41d04369"
+}

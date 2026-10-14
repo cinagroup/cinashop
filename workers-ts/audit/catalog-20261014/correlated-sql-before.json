@@ -1,0 +1,56 @@
+{
+  "serviceSourceSha256": "ae432c1a0e7c7a4af8b554f7f180c9ee114c72a43b9a4318b568b12854163fe7",
+  "totals": {
+    "sql": "select \"id\", (SELECT count(*)::text FROM \"user_relation\" WHERE \"relation_id\"=\"id\" AND \"category\"='product' AND \"type\"='collect'), (SELECT count(*)::text FROM \"user_relation\" WHERE \"relation_id\"=\"id\" AND \"category\"='product' AND \"type\"='like'), (SELECT sum(\"stock\")::text FROM \"store_product_attr_value\" WHERE \"product_id\"=\"id\" AND \"type\"=0), (SELECT count(*)::text FROM \"store_visit\" WHERE \"product_id\"=\"id\" AND \"product_type\"='product') from \"store_product\" where \"store_product\".\"id\" in ($1, $2)",
+    "params": [
+      10,
+      20
+    ]
+  },
+  "listWhere": {
+    "sql": "select \"id\", \"pid\", \"type\", \"product_type\", \"relation_id\", \"mer_id\", \"image\", \"recommend_image\", \"slider_image\", \"store_name\", \"store_info\", \"keyword\", \"bar_code\", \"cate_id\", \"price\", \"settle_price\", \"vip_price\", \"ot_price\", \"delivery_type\", \"freight\", \"postage\", \"temp_id\", \"unit_name\", \"sort\", \"star\", \"collect\", \"ficti\", \"sales\", \"stock\", \"is_show\", \"is_hot\", \"is_benefit\", \"is_best\", \"is_new\", \"add_time\", \"is_postage\", \"is_verify\", \"is_del\", \"mer_use\", \"give_integral\", \"cost\", \"is_seckill\", \"is_bargain\", \"is_good\", \"is_sub\", \"is_vip\", \"browse\", \"code_path\", \"soure_link\", \"video_open\", \"video_link\", \"spec_type\", \"activity\", \"spu\", \"label_id\", \"command_word\", \"recommend_list\", \"brand_id\", \"brand_com\", \"code\", \"is_vip_product\", \"is_presale_product\", \"presale_start_time\", \"presale_end_time\", \"presale_day\", \"auto_on_time\", \"auto_off_time\", \"custom_form\", \"system_form_id\", \"is_support_refund\", \"store_label_id\", \"ensure_id\", \"specs\", \"specs_id\", \"is_limit\", \"limit_type\", \"limit_num\", \"refusal\", \"is_police\", \"is_sold\" from \"store_product\" where (\"store_product\".\"is_show\" = $1 and \"store_product\".\"is_del\" = $2 and \"store_product\".\"is_verify\" = $3 and \"store_product\".\"type\" = $4 and \"store_product\".\"relation_id\" = $5 and EXISTS (SELECT 1 FROM \"store_product_relation\" WHERE \"store_product_relation\".\"product_id\"=\"store_product\".\"id\"\n    AND \"store_product_relation\".\"type\"=$6 AND \"store_product_relation\".\"relation_id\" in ($7)) and \"store_product\".\"brand_id\" in ($8) and EXISTS (SELECT 1 FROM \"store_product_relation\" WHERE \"store_product_relation\".\"product_id\"=\"store_product\".\"id\"\n    AND \"store_product_relation\".\"type\"=$9 AND \"store_product_relation\".\"relation_id\" in ($10)) and EXISTS (SELECT 1 FROM \"store_product_relation\" WHERE \"store_product_relation\".\"product_id\"=\"store_product\".\"id\"\n    AND \"store_product_relation\".\"type\"=$11 AND \"store_product_relation\".\"relation_id\" in ($12)) and (\"store_product\".\"id\"::text ILIKE $13 or \"store_product\".\"keyword\" ILIKE $14 or \"store_product\".\"store_name\" ILIKE $15 or \"store_product\".\"store_info\" ILIKE $16 or \"store_product\".\"bar_code\" ILIKE $17 or EXISTS (SELECT 1 FROM \"store_product_attr_value\" WHERE \"store_product_attr_value\".\"product_id\"=\"store_product\".\"id\" AND \"store_product_attr_value\".\"bar_code\"=$18)))",
+    "params": [
+      1,
+      0,
+      1,
+      2,
+      20,
+      1,
+      2,
+      5,
+      2,
+      5,
+      3,
+      6,
+      "%fixture%",
+      "%fixture%",
+      "%fixture%",
+      "%fixture%",
+      "%fixture%",
+      "fixture"
+    ]
+  },
+  "countWhere": {
+    "sql": "select count(*)::text from \"store_product\" where (\"store_product\".\"is_show\" = $1 and \"store_product\".\"is_del\" = $2 and \"store_product\".\"is_verify\" = $3 and \"store_product\".\"type\" = $4 and \"store_product\".\"relation_id\" = $5 and EXISTS (SELECT 1 FROM \"store_product_relation\" WHERE \"store_product_relation\".\"product_id\"=\"store_product\".\"id\"\n    AND \"store_product_relation\".\"type\"=$6 AND \"store_product_relation\".\"relation_id\" in ($7)) and \"store_product\".\"brand_id\" in ($8) and EXISTS (SELECT 1 FROM \"store_product_relation\" WHERE \"store_product_relation\".\"product_id\"=\"store_product\".\"id\"\n    AND \"store_product_relation\".\"type\"=$9 AND \"store_product_relation\".\"relation_id\" in ($10)) and EXISTS (SELECT 1 FROM \"store_product_relation\" WHERE \"store_product_relation\".\"product_id\"=\"store_product\".\"id\"\n    AND \"store_product_relation\".\"type\"=$11 AND \"store_product_relation\".\"relation_id\" in ($12)) and (\"store_product\".\"id\"::text ILIKE $13 or \"store_product\".\"keyword\" ILIKE $14 or \"store_product\".\"store_name\" ILIKE $15 or \"store_product\".\"store_info\" ILIKE $16 or \"store_product\".\"bar_code\" ILIKE $17 or EXISTS (SELECT 1 FROM \"store_product_attr_value\" WHERE \"store_product_attr_value\".\"product_id\"=\"store_product\".\"id\" AND \"store_product_attr_value\".\"bar_code\"=$18)))",
+    "params": [
+      1,
+      0,
+      1,
+      2,
+      20,
+      1,
+      2,
+      5,
+      2,
+      5,
+      3,
+      6,
+      "%fixture%",
+      "%fixture%",
+      "%fixture%",
+      "%fixture%",
+      "%fixture%",
+      "fixture"
+    ]
+  }
+}

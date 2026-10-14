@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-10-14T05:54:06.353046+00:00",
+  "handles": [
+    6116,
+    86251,
+    53067,
+    53021
+  ],
+  "toolHandleState": "Unknown process id",
+  "hostMatchingProcesses": [],
+  "clusters": [
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-EKPAit",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-JqQ5h1",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-ldGeeg",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-uNsxE6",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running",
+      "postmasterPidPresent": false
+    }
+  ],
+  "completeExitReceiptsPresent": false,
+  "frozenInputFilesUnchanged": 3330
+}

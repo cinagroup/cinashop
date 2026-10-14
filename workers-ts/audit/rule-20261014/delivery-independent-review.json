@@ -1,0 +1,704 @@
+{
+  "version": 1,
+  "reviewer": "/root/rule_delivery_review",
+  "observedAt": "2026-10-14T06:21:40.658946+00:00",
+  "status": "passed_for_reported_local_candidate_evidence_with_explicit_limits",
+  "scope": "Read-only final delivery audit. Only this separate review artifact written; no source/test/doc mutation, heavy check rerun or PG cluster start.",
+  "reviewedLedgerSha256": "b5c3047e30765acef100d7aa741619e60eb895ee5ced761a933b73bb0366dee5",
+  "reviewedReportSha256": "46be48e9a18b6df7ee030320c4b8b393b423ba33813f8e022d482f7efee1b17f",
+  "receiptCountAtReview": 91,
+  "receiptHashesAllMatched": true,
+  "testCounts": {
+    "ordinaryFiles": 27,
+    "ordinaryPassedFiles": 21,
+    "ordinaryOnlySkippedFiles": 6,
+    "ordinaryPassed": 243,
+    "ordinaryConditionalSkipped": 69,
+    "nativeFiles": 16,
+    "nativePassed": 185,
+    "nativeSkipped": 0,
+    "overlap": 116,
+    "uniquePassed": 312,
+    "nativeConditionalCovered": 69
+  },
+  "mappingMethod": "Independently parsed every raw ordinary assertion using file + ancestor titles + title, then mapped all 185 native verbose passed lines against full ordinary definitions. Checked complete command file sets, native summary and native-cases.json. Read and compared summarize-matrix.py logic; did not execute its writer.",
+  "perFileDefinitions": {
+    "test/admin-permission.test.ts": {
+      "passed": 24,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/admin-product-ensure-http.test.ts": {
+      "passed": 11,
+      "conditionalSkipped": 0,
+      "nativePassed": 11
+    },
+    "test/admin-product-ensure-native.test.ts": {
+      "passed": 0,
+      "conditionalSkipped": 14,
+      "nativePassed": 14
+    },
+    "test/admin-product-ensure.test.ts": {
+      "passed": 15,
+      "conditionalSkipped": 0,
+      "nativePassed": 15
+    },
+    "test/admin-product-frontend-parity.test.ts": {
+      "passed": 5,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/admin-product-rule-http.test.ts": {
+      "passed": 12,
+      "conditionalSkipped": 0,
+      "nativePassed": 12
+    },
+    "test/admin-product-rule-native.test.ts": {
+      "passed": 0,
+      "conditionalSkipped": 16,
+      "nativePassed": 16
+    },
+    "test/admin-product-rule.test.ts": {
+      "passed": 19,
+      "conditionalSkipped": 0,
+      "nativePassed": 19
+    },
+    "test/admin-product-specs-audit.test.ts": {
+      "passed": 4,
+      "conditionalSkipped": 0,
+      "nativePassed": 4
+    },
+    "test/admin-product-specs-http.test.ts": {
+      "passed": 9,
+      "conditionalSkipped": 0,
+      "nativePassed": 9
+    },
+    "test/admin-product-specs-native.test.ts": {
+      "passed": 0,
+      "conditionalSkipped": 12,
+      "nativePassed": 12
+    },
+    "test/admin-product-specs.test.ts": {
+      "passed": 14,
+      "conditionalSkipped": 0,
+      "nativePassed": 14
+    },
+    "test/admin-product-unit-http.test.ts": {
+      "passed": 7,
+      "conditionalSkipped": 0,
+      "nativePassed": 7
+    },
+    "test/admin-product-unit-native.test.ts": {
+      "passed": 0,
+      "conditionalSkipped": 7,
+      "nativePassed": 7
+    },
+    "test/admin-product-unit.test.ts": {
+      "passed": 9,
+      "conditionalSkipped": 0,
+      "nativePassed": 9
+    },
+    "test/admin-user-group-contract.test.ts": {
+      "passed": 10,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/admin-user-group-http.test.ts": {
+      "passed": 6,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/admin-user-group-native.test.ts": {
+      "passed": 0,
+      "conditionalSkipped": 6,
+      "nativePassed": 6
+    },
+    "test/product-association-migration.test.ts": {
+      "passed": 7,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/product-experience-migration.test.ts": {
+      "passed": 6,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/product-metadata-migration.test.ts": {
+      "passed": 4,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/product-sku-editor-migration.test.ts": {
+      "passed": 8,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/supplier-product-media-frontend.test.ts": {
+      "passed": 31,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/supplier-product-rule-frontend.test.ts": {
+      "passed": 5,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    },
+    "test/supplier-product-rule-http.test.ts": {
+      "passed": 16,
+      "conditionalSkipped": 0,
+      "nativePassed": 16
+    },
+    "test/supplier-product-rule-native.test.ts": {
+      "passed": 0,
+      "conditionalSkipped": 14,
+      "nativePassed": 14
+    },
+    "test/supplier-product-rule-workflow-frontend.test.ts": {
+      "passed": 21,
+      "conditionalSkipped": 0,
+      "nativePassed": 0
+    }
+  },
+  "checks": {
+    "ordinary": {
+      "name": "ordinary",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/admin-product-rule.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-rule-native.test.ts",
+        "test/supplier-product-rule-http.test.ts",
+        "test/supplier-product-rule-native.test.ts",
+        "test/supplier-product-rule-frontend.test.ts",
+        "test/supplier-product-rule-workflow-frontend.test.ts",
+        "test/supplier-product-media-frontend.test.ts",
+        "test/product-sku-editor-migration.test.ts",
+        "test/admin-product-ensure.test.ts",
+        "test/admin-product-ensure-http.test.ts",
+        "test/admin-product-ensure-native.test.ts",
+        "test/admin-product-unit.test.ts",
+        "test/admin-product-unit-http.test.ts",
+        "test/admin-product-unit-native.test.ts",
+        "test/admin-product-specs.test.ts",
+        "test/admin-product-specs-http.test.ts",
+        "test/admin-product-specs-audit.test.ts",
+        "test/admin-product-specs-native.test.ts",
+        "test/admin-user-group-contract.test.ts",
+        "test/admin-user-group-http.test.ts",
+        "test/admin-user-group-native.test.ts",
+        "test/product-experience-migration.test.ts",
+        "test/product-association-migration.test.ts",
+        "test/product-metadata-migration.test.ts",
+        "test/admin-product-frontend-parity.test.ts",
+        "test/admin-permission.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=audit/rule-20261014/final-ordinary.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T06:04:56.686868+00:00",
+      "completedAt": "2026-10-14T06:08:25.453960+00:00",
+      "exitCode": 0,
+      "log": "final-ordinary.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "b7b47f097b67ff5eabea73e1a6357cf3e53cdc12dc458f85a151efc63a60de23"
+    },
+    "native": {
+      "name": "native",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-product-rule.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-rule-native.test.ts",
+        "test/supplier-product-rule-http.test.ts",
+        "test/supplier-product-rule-native.test.ts",
+        "test/admin-product-ensure.test.ts",
+        "test/admin-product-ensure-http.test.ts",
+        "test/admin-product-ensure-native.test.ts",
+        "test/admin-product-unit.test.ts",
+        "test/admin-product-unit-http.test.ts",
+        "test/admin-product-unit-native.test.ts",
+        "test/admin-product-specs.test.ts",
+        "test/admin-product-specs-http.test.ts",
+        "test/admin-product-specs-audit.test.ts",
+        "test/admin-product-specs-native.test.ts",
+        "test/admin-user-group-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T06:05:01.599243+00:00",
+      "completedAt": "2026-10-14T06:08:11.612636+00:00",
+      "exitCode": 0,
+      "log": "final-native.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures",
+      "rawLogSha256": "45d16d4959f19ba3b3050e936bd485deeb768a08bc1d817869dd6c5c271e83a8"
+    },
+    "unit-types": {
+      "name": "unit-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T06:01:13.439361+00:00",
+      "completedAt": "2026-10-14T06:03:45.191757+00:00",
+      "exitCode": 0,
+      "log": "worker-unit-types.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "runtime-types": {
+      "name": "runtime-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-14T06:01:13.439464+00:00",
+      "completedAt": "2026-10-14T06:02:50.634511+00:00",
+      "exitCode": 0,
+      "log": "worker-runtime-types.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "admin-types": {
+      "name": "admin-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-14T04:38:36.301977+00:00",
+      "completedAt": "2026-10-14T04:39:23.422282+00:00",
+      "exitCode": 0,
+      "log": "admin-vue-types.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "admin-build": {
+      "name": "admin-build",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-14T04:40:08.428363+00:00",
+      "completedAt": "2026-10-14T04:40:56.078684+00:00",
+      "exitCode": 0,
+      "log": "admin-build.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "a6779f0e587c083930aa8352e880823df0c5cd743626c9e3ffab2ddfc86eb02e"
+    },
+    "supplier-types": {
+      "name": "supplier-types",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+      "startedAt": "2026-10-14T05:58:33.665944+00:00",
+      "completedAt": "2026-10-14T05:58:43.715968+00:00",
+      "exitCode": 0,
+      "log": "supplier-vue-types.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "supplier-build": {
+      "name": "supplier-build",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+      "startedAt": "2026-10-14T05:59:23.543969+00:00",
+      "completedAt": "2026-10-14T05:59:40.789869+00:00",
+      "exitCode": 0,
+      "log": "supplier-build.log",
+      "nodePathIncluded": true,
+      "testFinanceLocalCacheRoot": null,
+      "rawLogSha256": "1a9e7be7ad02a6bf5127abd978801f15425f98705a5be193ce30b709fd134b74"
+    }
+  },
+  "inputs": {
+    "declaredCount": 3330,
+    "recomputedDigest": "97691ada96267688e4b6d69cce4a12b92d0ac7b5428f01fe661bce7ee4c36a89",
+    "beforeAfterAndCurrentEqual": true,
+    "declaredDirectoriesCompletelyEnumerated": [
+      {
+        "directory": "workers-ts/src",
+        "currentFiles": 1174,
+        "unlisted": [],
+        "staleListed": []
+      },
+      {
+        "directory": "workers-ts/test",
+        "currentFiles": 1504,
+        "unlisted": [],
+        "staleListed": []
+      },
+      {
+        "directory": "workers-ts/scripts",
+        "currentFiles": 120,
+        "unlisted": [],
+        "staleListed": []
+      },
+      {
+        "directory": "workers-ts/migrations",
+        "currentFiles": 177,
+        "unlisted": [],
+        "staleListed": []
+      },
+      {
+        "directory": "view/admin-ts/src",
+        "currentFiles": 277,
+        "unlisted": [],
+        "staleListed": []
+      },
+      {
+        "directory": "view/supplier-ts/src",
+        "currentFiles": 56,
+        "unlisted": [],
+        "staleListed": []
+      }
+    ],
+    "adminSourceConfigLockInputs": 281,
+    "allAdminListedHashesMatchBuildSnapshotAndCurrent": true,
+    "scopeCorrection": "Independently identified unlisted Admin/Supplier index.html and Admin public/favicon.ico/public/logo.png. Notified root; final report and ledger now explicitly exclude HTML/public/environment/installed dependency contents from byte-freezing claims. No retrospective before-build hashes invented.",
+    "manifestLimitsReadAndVerified": [
+      "Declared migration source/config/lock manifest, not the entire Vite build input graph",
+      "Admin and Supplier index.html, public static assets, environment and installed dependency file contents are not included",
+      "Successful full type and build command receipts are independent evidence; the digest does not prove byte freezing for all build inputs"
+    ]
+  },
+  "phpSources": {
+    "currentHashMatched": 19,
+    "runtimeExecutionClaimed": false,
+    "opaqueBaseControllerBoundaryVerified": true
+  },
+  "routes": {
+    "newLegacyMethodPaths": 5,
+    "existingModernHandlerReplacements": 10,
+    "beforeCurrentIndependentExtraction": [
+      {
+        "baseline": "adminapi-before.ts",
+        "current": "src/routes/adminapi.ts",
+        "before": [
+          [
+            "get",
+            "/product/get_rule",
+            "AdminCrud.adminProductRuleTemplates"
+          ],
+          [
+            "get",
+            "/product/rule",
+            "AdminCrud.adminProductRuleList"
+          ],
+          [
+            "post",
+            "/product/rule/:id",
+            "AdminCrud.adminProductRuleSave"
+          ],
+          [
+            "get",
+            "/product/rule/:id",
+            "AdminCrud.adminProductRuleDetail"
+          ],
+          [
+            "delete",
+            "/product/rule/delete/:id",
+            "AdminCrud.adminProductRuleDelete"
+          ]
+        ],
+        "currentRegistrations": [
+          [
+            "get",
+            "/product/product/get_rule",
+            "AdminProductRules.templates"
+          ],
+          [
+            "get",
+            "/product/product/rule",
+            "AdminProductRules.list"
+          ],
+          [
+            "post",
+            "/product/product/rule/:id",
+            "AdminProductRules.save"
+          ],
+          [
+            "get",
+            "/product/product/rule/:id",
+            "AdminProductRules.detail"
+          ],
+          [
+            "delete",
+            "/product/product/rule/delete/:id",
+            "AdminProductRules.remove"
+          ],
+          [
+            "get",
+            "/product/get_rule",
+            "AdminProductRules.modernTemplates"
+          ],
+          [
+            "get",
+            "/product/rule",
+            "AdminProductRules.modernList"
+          ],
+          [
+            "post",
+            "/product/rule/:id",
+            "AdminProductRules.modernSave"
+          ],
+          [
+            "get",
+            "/product/rule/:id",
+            "AdminProductRules.modernDetail"
+          ],
+          [
+            "delete",
+            "/product/rule/delete/:id",
+            "AdminProductRules.modernRemove"
+          ]
+        ]
+      },
+      {
+        "baseline": "v1-before.ts",
+        "current": "src/routes/v1/index.ts",
+        "before": [
+          [
+            "get",
+            "/admin/product/get_rule",
+            "AdminCrud.adminProductRuleTemplates"
+          ],
+          [
+            "get",
+            "/admin/product/rule",
+            "AdminCrud.adminProductRuleList"
+          ],
+          [
+            "post",
+            "/admin/product/rule/:id",
+            "AdminCrud.adminProductRuleSave"
+          ],
+          [
+            "get",
+            "/admin/product/rule/:id",
+            "AdminCrud.adminProductRuleDetail"
+          ],
+          [
+            "delete",
+            "/admin/product/rule/delete/:id",
+            "AdminCrud.adminProductRuleDelete"
+          ]
+        ],
+        "currentRegistrations": [
+          [
+            "get",
+            "/admin/product/get_rule",
+            "AdminProductRules.modernTemplates"
+          ],
+          [
+            "get",
+            "/admin/product/rule",
+            "AdminProductRules.modernList"
+          ],
+          [
+            "post",
+            "/admin/product/rule/:id",
+            "AdminProductRules.modernSave"
+          ],
+          [
+            "get",
+            "/admin/product/rule/:id",
+            "AdminProductRules.modernDetail"
+          ],
+          [
+            "delete",
+            "/admin/product/rule/delete/:id",
+            "AdminProductRules.modernRemove"
+          ]
+        ]
+      }
+    ]
+  },
+  "auditIntegrity": {
+    "priorMisattributedCreateUpdateDeleteReproductionRetained": true,
+    "currentSystemLogFields": [
+      "id",
+      "storeId",
+      "adminId",
+      "adminName",
+      "path",
+      "page",
+      "method",
+      "action",
+      "ip",
+      "type",
+      "addTime",
+      "merchantId"
+    ],
+    "expectedNonIdFields": 11,
+    "positiveSafeIntegerIdChecked": true,
+    "returningAndSelectReadbackChecked": true,
+    "platformPreservedDefaults": {
+      "storeId": 0,
+      "merchantId": 0,
+      "adminName": "",
+      "ip": ""
+    },
+    "ordinaryCompleteFilePassed": 19,
+    "nativeCompleteFilePassed": 16,
+    "ordinaryIdentityNegativeMutations": 24,
+    "nativeIdentityNegativeMutations": 24,
+    "nativeReachability": "Exact sequence advancement after each of 24 mutations plus exact receipt/readback failure and full snapshot equality.",
+    "nativeAuditAcl": "Independent LOGIN INSERT true / UPDATE false; real UPDATE rejected 42501; fixture-owned SECURITY DEFINER AFTER trigger provides tamper effect.",
+    "realNameOrIpPopulationClaimed": false
+  },
+  "consumers": {
+    "oldAxios": "Actual old index.vue script del method → modalSure → tableDelApi with installed Axios /adminapi; detail API and complete info save executed. Empty-string serialized DELETE body asserted. Old request/auth/Vuex/component construction are fixture boundaries.",
+    "modernAxios": "Actual Admin productMetadata API + request.ts compiled; installed Axios local adapter sends full createApp with actual JWT/services/SQL; auth token fixture is replaced.",
+    "realAdminSku": "ProductAssociation.editorOptions/save persists real dimension/price/stock/unique/result snapshots; template edit/delete leaves product snapshot unchanged and copied items/attrs save after deletion. Exact 32/64 emoji positive and over-bound negative SQL cases passed.",
+    "supplierUnicode": "Actual owned JWT/SQL HTTP positive and negative boundary cases passed. Actual compiled SFC setup mounted in Vue custom-renderer lifecycle with adapter validates normalized POST and actual prepareSupplierProductRuleApplication copy semantics; actual template/input typing is not rendered.",
+    "browserOrDeviceProof": false,
+    "nativeMaxlengthAttributesRemoved": 4,
+    "phpOpaqueRuntimeProof": false
+  },
+  "cleanup": {
+    "independentCurrentStoppedClusters": [
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD",
+        "independentCurrentPgCtlStatus": 3,
+        "output": "pg_ctl: no server running",
+        "postmasterPidPresent": false
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-EKPAit",
+        "independentCurrentPgCtlStatus": 3,
+        "output": "pg_ctl: no server running",
+        "postmasterPidPresent": false
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-JqQ5h1",
+        "independentCurrentPgCtlStatus": 3,
+        "output": "pg_ctl: no server running",
+        "postmasterPidPresent": false
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-Vx0Twc",
+        "independentCurrentPgCtlStatus": 3,
+        "output": "pg_ctl: no server running",
+        "postmasterPidPresent": false
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-ldGeeg",
+        "independentCurrentPgCtlStatus": 3,
+        "output": "pg_ctl: no server running",
+        "postmasterPidPresent": false
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-uNsxE6",
+        "independentCurrentPgCtlStatus": 3,
+        "output": "pg_ctl: no server running",
+        "postmasterPidPresent": false
+      }
+    ],
+    "successfulNativeRawLogsReportFixture0": [
+      "initial-native.log",
+      "pre-type-repair-final-native.log",
+      "pre-supplier-unicode-final-native.log",
+      "final-native.log"
+    ],
+    "interruptedOfflineInventoryVerified": [
+      {
+        "receipt": "interrupted-cluster-cleanup.json",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-CE4sRD",
+        "rawFinalInventoryDatabases": [
+          "cinashop_finance_test",
+          "postgres",
+          "template0",
+          "template1"
+        ],
+        "remainingOwnedFixtureDatabases": 0,
+        "remainingOwnedRuntimeRoles": 0,
+        "strictlyNamedTargetsDropped": [
+          "finance_fixture_29a4728405c349b38707afd9a09779cf"
+        ]
+      },
+      {
+        "receipt": "second-interrupted-cluster-cleanup.json",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/rule-postgres-fixtures/finance-postgres-JqQ5h1",
+        "rawFinalInventoryDatabases": [
+          "cinashop_finance_test",
+          "postgres",
+          "template0",
+          "template1"
+        ],
+        "remainingOwnedFixtureDatabases": 0,
+        "remainingOwnedRuntimeRoles": 0,
+        "strictlyNamedTargetsDropped": [
+          "finance_fixture_a8c90f23d82c4d16a5bc85ef9bd33134"
+        ]
+      }
+    ]
+  },
+  "history": {
+    "initialAxiosHttpSuiteLoadingFailurePreserved": true,
+    "initialSharedStaticFailurePreserved": true,
+    "initialWorkerTypeErrorsPreserved": true,
+    "preCorrection240Pass68Skip182NativeNotCountedFinal": true,
+    "bothInterruptedRunsNotCountedFinal": true,
+    "missingHandlesAndHostProcessInspectionBeforeRetryPreserved": true,
+    "originalAuditRequiresRemediationReviewRetained": true,
+    "countOnlyFinalPassedDefinitions": true
+  },
+  "checklists": [
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "completed": 249,
+      "open": 155,
+      "fullRowsUnchanged": true
+    },
+    {
+      "file": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "completed": 50,
+      "open": 38,
+      "fullRowsUnchanged": true
+    }
+  ],
+  "goalStatus": "active; full migration, CI, runtime/device, production and retirement requirements remain open",
+  "materialEvidenceProblemsRemaining": [],
+  "reviewCollectionCorrection": "Initial independent collector regex lacked multiline flag for schema field enumeration, failed before artifact write; corrected collector and reran only read-only evidence checks. No source/test behavior changed.",
+  "claimLimits": [
+    "Preserved compiler/test command receipts inspected; no heavy checks rerun.",
+    "Current pg_ctl statuses independently observed; fixture emptiness uses raw successful run/offline inventory rather than newly starting stopped DBs.",
+    "No global route-coverage, whole-repository security, browser/device, PHP encrypted runtime, production or full migration completion claim."
+  ]
+}

@@ -586,7 +586,7 @@ onMounted(load);
               <el-button link type="primary" @click="router.push('/product-specifications')">管理模板</el-button>
             </div>
             <div v-for="(dimension, index) in form.items" :key="index" class="dimension-row">
-              <el-input v-model="dimension.value" class="dimension-name" maxlength="32" placeholder="规格名称，如颜色" />
+              <el-input v-model="dimension.value" class="dimension-name" placeholder="规格名称，如颜色" />
               <el-select v-model="dimension.detail" multiple filterable allow-create default-first-option placeholder="输入规格值后回车" class="dimension-values" />
               <el-button text type="danger" :icon="Delete" aria-label="删除规格" @click="removeDimension(index)" />
             </div>

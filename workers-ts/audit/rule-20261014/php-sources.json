@@ -1,0 +1,26 @@
+{
+  "root": "/home/cina/cinagroup/cinashop-php",
+  "files": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/StoreProductRule.php": "1ee678dab0dc4fc8449a9d42d970751a3d601c2a06bc4a7079899595a9fec62f",
+    "app/controller/admin/v1/product/StoreProduct.php": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+    "app/services/product/sku/StoreProductRuleServices.php": "226a522a5c73ef72f4f03a94e1249bc5b51301eebc15d5ade51626b3fb7e717a",
+    "app/dao/product/sku/StoreProductRuleDao.php": "7b4de35e9943ea856b4657c4814ee9b9ad6b39af88178a5bb5622209456b0910",
+    "app/model/product/sku/StoreProductRule.php": "9fc548318ac29be5e0a2a18900591b521d881dfcc59154e92bfe839cd83cdb65",
+    "view/admin/src/api/product.js": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+    "view/admin/src/pages/product/productAttr/addAttr.vue": "f2333b8442ff67ab8f1de53e308601a34a7b1df4c977a5a13b8442332b7c00ce",
+    "view/admin/src/pages/product/productAttr/index.vue": "d0c4a3a0c7a63fb61e6f5dcbdeaab9f2d65a839db51cad8269c437a58eda1e4c",
+    "view/admin/src/pages/product/productList/index.vue": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+    "view/admin/src/api/common.js": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+    "view/admin/src/utils/public.js": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+    "view/admin/src/plugins/request/index.js": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+    "crmeb/utils/Json.php": "b6d6bc57ab5ee6e8fdb66b7cd294e7a23b17737d526eae94ca02768ddb0208f5",
+    "crmeb/basic/BaseController.php": "5ed43da87f0263f42b899a22125acde87bc26c90c2e853660e43c733c6897474",
+    "app/controller/admin/AuthController.php": "31a7650cf8155ea6e43aa6d707407ae473708006eb95684e075cd124426e96da",
+    "view/admin/src/pages/product/productAdd/index.vue": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f",
+    "view/admin/src/router/modules/product.js": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790"
+  },
+  "runtimeProof": false,
+  "opaqueBaseController": "crmeb/basic/BaseController.php uses Swoole Loader encoded content; readable Json.php null default and caller-only string support omitting data; BaseController forwarding behavior has not been executed"
+}

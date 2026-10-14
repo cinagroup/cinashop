@@ -34,12 +34,12 @@ export function parseSupplierProductRuleTemplates(value: unknown) {
 export function parseSupplierProductRuleReceipt(value: unknown) { const row = object(value); return { id: number(row.id), revision: revision(row.revision) }; }
 export function supplierProductRuleDraft(name: string, values: SupplierRuleDimension[], expected?: string): SupplierProductRulePayload {
   const rule_name = name.trim();
-  if (!rule_name || rule_name.length > 32 || /[\u0000-\u001f\u007f]/u.test(rule_name)) throw Error('模板名称需为1至32个字符');
+  if (!rule_name || [...rule_name].length > 32 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(name)) throw Error('模板名称需为1至32个字符');
   if (!Array.isArray(values) || values.length < 1 || values.length > 3) throw Error('规格维度需为1至3项');
   const spec = values.map(item => {
     const value = item.value.trim(), detail = item.detail.map(value => value.trim());
-    if (!value || value.length > 32 || /[\u0000-\u001f\u007f]/u.test(value)) throw Error('请填写1至32个字符的规格名称');
-    if (!detail.length || detail.length > 50 || detail.some(value => !value || value.length > 64 || /[\u0000-\u001f\u007f]/u.test(value)) || new Set(detail).size !== detail.length) throw Error('每个规格需为1至50个不重复的有效规格值');
+    if (!value || [...value].length > 32 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(value)) throw Error('请填写1至32个字符的规格名称');
+    if (!detail.length || detail.length > 50 || detail.some(value => !value || [...value].length > 64 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(value)) || new Set(detail).size !== detail.length) throw Error('每个规格需为1至50个不重复的有效规格值');
     return { value, detail };
   });
   if (new Set(spec.map(item => item.value)).size !== spec.length) throw Error('规格名称不能重复');

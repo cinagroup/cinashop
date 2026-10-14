@@ -1,0 +1,62 @@
+{
+  "createdAt": "2026-10-14T01:46:31.106Z",
+  "platform": "linux",
+  "arch": "x64",
+  "node": "v24.19.0",
+  "npm": "11.11.0",
+  "npmTool": "/tmp/cinashop-migration-20261014/npm-tool/package/bin/npm-cli.js",
+  "workerInstall": {
+    "status": "passed",
+    "packages": 116,
+    "log": "/tmp/cinashop-migration-20261014/worker-npm-ci.log",
+    "packageFilesUnchanged": true
+  },
+  "localRunnerUnit": {
+    "status": "passed",
+    "files": 1,
+    "tests": 162,
+    "log": "/tmp/cinashop-migration-20261014/local-runner-unit.log",
+    "initialSandboxFailure": {
+      "reason": "spawnSync Node EPERM",
+      "log": "/tmp/cinashop-migration-20261014/local-runner-unit-sandbox.log"
+    }
+  },
+  "postgres": {
+    "bin": "/tmp/cinashop-migration-20261014/pg16/bin",
+    "versions": {
+      "postgres": "postgres (PostgreSQL) 16.14",
+      "initdb": "initdb (PostgreSQL) 16.14",
+      "pg_ctl": "pg_ctl (PostgreSQL) 16.14",
+      "psql": "psql (PostgreSQL) 16.14"
+    },
+    "source": "https://ftp.postgresql.org/pub/source/v16.14/postgresql-16.14.tar.bz2",
+    "sha256": "f6d077142737920858ce958ccdb75c6ee137a63b5b0853c70693d401ac7e3471  postgresql-16.14.tar.bz2",
+    "sourceChecksumVerified": true,
+    "configure": [
+      "--without-readline",
+      "--without-zlib",
+      "--without-icu",
+      "--without-openssl"
+    ],
+    "buildStatus": "passed",
+    "databaseStarted": false,
+    "fullRepositoryTestsRun": false
+  },
+  "adminInstall": {
+    "status": "passed",
+    "packages": 108,
+    "durationSeconds": 9,
+    "log": "/tmp/cinashop-migration-20261014/admin-npm-ci.log",
+    "packageFilesUnchanged": true,
+    "versions": {
+      "vue": "3.5.42",
+      "@vue/compiler-dom": "3.5.42",
+      "element-plus": "2.14.4",
+      "typescript": "5.9.3",
+      "vue-tsc": "2.2.12",
+      "vite": "6.4.3"
+    },
+    "typecheckRun": false,
+    "frontendRegressionRun": false
+  }
+}

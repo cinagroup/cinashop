@@ -1,0 +1,57 @@
+[
+  {
+    "name": "post-json-ordinary",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "--maxWorkers=1",
+      "test/admin-product-reply.test.ts",
+      "test/admin-product-reply-http.test.ts",
+      "test/admin-product-reply-native.test.ts",
+      "test/admin-product-reply-workflow-frontend.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=audit/reply-20261014/post-json-ordinary.json"
+    ]
+  },
+  {
+    "name": "post-json-native",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "scripts/run-local-finance-postgres.mjs",
+      "--schema-maintenance",
+      "--verbose-tests",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+      "test/admin-product-reply.test.ts",
+      "test/admin-product-reply-http.test.ts",
+      "test/admin-product-reply-native.test.ts"
+    ]
+  },
+  {
+    "name": "worker-unit-types",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "--max-old-space-size=8192",
+      "node_modules/typescript/bin/tsc",
+      "--noEmit"
+    ]
+  },
+  {
+    "name": "worker-runtime-types",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "args": [
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "--max-old-space-size=8192",
+      "node_modules/typescript/bin/tsc",
+      "-p",
+      "tsconfig.runtime-test.json",
+      "--noEmit"
+    ]
+  }
+]

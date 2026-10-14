@@ -1,0 +1,6 @@
+{
+  "root": "/home/cina/cinagroup/cinashop/.cache/ensure-postgres-fixtures/finance-postgres-m7BtpI",
+  "exitCode": 3,
+  "output": "pg_ctl: no server running",
+  "stopped": true
+}

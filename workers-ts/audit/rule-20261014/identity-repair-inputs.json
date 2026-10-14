@@ -1,0 +1,6 @@
+{
+  "src/services/admin/AdminProductRuleService.ts": "7f81a1bd347e7da7ca8c2c8c8feb8ef03999beefa776a639eedb9b6ea91cbf18",
+  "test/admin-product-rule.test.ts": "03e7e14ecf67383645dd8a851100fe803d0d9ccb4f2d951d9412026e9f10dac9",
+  "test/admin-product-rule-native.test.ts": "67b7ab897f4b57463512bb236ccfb3a01be66732fbd69d4c017429d8ded2f228",
+  "../view/supplier-ts/src/pages/ProductForm.vue": "f46033c0feebce85aeebd46c345fd9eaf1f349252eae1f40dbeca495bb24a18c"
+}

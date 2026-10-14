@@ -1,0 +1,26 @@
+{
+  "preparedAt": "2026-10-14T08:33:36.463997+00:00",
+  "fullFiles": [
+    "test/admin-product-fictitious-reply.test.ts",
+    "test/admin-product-fictitious-reply-http.test.ts",
+    "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+    "test/admin-product-reply-workflow-frontend.test.ts"
+  ],
+  "partialNameFilters": false,
+  "serialWrapper": "/home/cina/cinagroup/tools/validate-serial.sh",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-fictitious-reply.test.ts",
+    "test/admin-product-fictitious-reply-http.test.ts",
+    "test/admin-product-fictitious-reply-workflow-frontend.test.ts",
+    "test/admin-product-reply-workflow-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/fictitious-20261014/initial-ordinary.json"
+  ]
+}

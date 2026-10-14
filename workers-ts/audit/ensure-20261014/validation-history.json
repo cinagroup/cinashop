@@ -1,0 +1,38 @@
+{
+  "initialOrdinary": {
+    "exitCode": 1,
+    "passed": 43,
+    "failed": 1,
+    "nativeConditionalSkipped": 14,
+    "reason": "fixture SQL used unquoted reserved desc identifier",
+    "repaired": "quoted desc while retaining audit rollback assertions"
+  },
+  "initialHTTP": {
+    "exitCode": 1,
+    "passed": 24,
+    "failed": 2,
+    "reasons": [
+      "edit form expected one rule although its exact contract has four",
+      "modern Vue fixture supplied empty description despite existing modern required-description contract"
+    ],
+    "repaired": [
+      "assert all four populated form rules",
+      "use a valid modern description and separately prove empty modern description rejection with unchanged state"
+    ]
+  },
+  "initialNative": {
+    "exitCode": 0,
+    "passed": 14,
+    "fixtureRemaining": 0,
+    "independentStopped": true
+  },
+  "httpRepair": {
+    "exitCode": 0,
+    "passed": 11
+  },
+  "commandCorrections": [
+    "esbuild executable initially invoked through node; corrected to execute its trusted native binary",
+    "initial snapshot script used worker cwd as repository root; corrected; fresh final ordinary must run after corrected freeze",
+    "static delta collector initially repeated the worker-vs-repository cwd error; corrected with absolute root; no source mutation"
+  ]
+}

@@ -1,0 +1,836 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-14T07:03:27.863898+00:00",
+  "reviewer": "/root/reply_source_review",
+  "status": "source-review-passed-after-repairs",
+  "scope": "7 actual old moderation contracts and 6 existing modern handler replacements; Admin page/API consumer changes; public parent-first praise lock ordering",
+  "remainingFindings": [],
+  "repairedFindings": [
+    {
+      "severity": "P2",
+      "name": "Unix epoch-zero endpoints used incorrect complete-range branch",
+      "reproduction": "data=1970/01/01 08:00:00-2026/08/02 formerly included exact next-midnight unlike PHP open-upper",
+      "resolution": "Parsed zero endpoints become absent before deciding open/complete filtering; ordinary SQL cases added."
+    },
+    {
+      "severity": "P3",
+      "name": "Decoded empty object incorrectly enabled member flags",
+      "reproduction": "configEnabled(configValue(\"{}\",0)) formerly true, unlike PHP json_decode(...,true) empty associative array",
+      "resolution": "Empty objects are false; empty arrays and quoted zero remain false; ordinary user projection cases added."
+    },
+    {
+      "severity": "P2",
+      "name": "Fixed UTC+8 lost historical Asia/Shanghai summer time",
+      "reproduction": "epoch 583729200 formerly formatted 1988-07-01 11:00:00 instead of source timezone 12:00:00",
+      "resolution": "New service format/parse/named bounds use IANA Asia/Shanghai; ordinary imported review/thread fixtures added."
+    },
+    {
+      "severity": "P2",
+      "name": "Eager relative range evaluation poisoned unrelated valid date filters at a DST gap",
+      "reproduction": "At Shanghai 1988/04/24 02:30, today/month/concrete July ranges threw from unrelated lately7 target",
+      "resolution": "Named ranges are lazy and concrete ranges do not consult now; relative forward-gap normalization is proved from surrounding offsets."
+    }
+  ],
+  "checkedContracts": [
+    "Legacy list intentionally remains central moderation across every valid stored review owner and orphaned current-product histories.",
+    "Platform roots use exactly 0/0/uid0/pid0; Supplier roots remain separate; platform reply on Supplier review does not set its is_reply flag.",
+    "Comment DTO uses ten source fields, Shanghai create/update text, user root anonymity and single direct child; duplicate/polluted read/save targets fail closed.",
+    "Physical delete removes the exact target and its direct children; deep/orphan/duplicate targets remain individually cleanable; parent review soft-delete retains customer/order/SKU/praise evidence.",
+    "Writes require current independent reply.manage and serialized Admin actor/role/menu authority; reads require current reply.view and consistent repeatable read snapshot.",
+    "Full parent/comment write receipts and pre/post-audit readbacks guard targeted business state; all eleven non-ID audit fields include explicit empty name/IP defaults.",
+    "Public comment writers and comment praise lock parent before comment, matching Admin moderation; independent native peer source asserts actual SQL Lock/FOR UPDATE waits in both orders.",
+    "Actual modern API/request source and old API/delete-popup source are compiled for HTTP fixture; rendered actual SFC tests cover role/session replacement, duplicate writes, uncertainty, failed detail reads, confirmation races and Unicode.",
+    "Following actual Chrome finding by another agent, independently verified root/thread load preserves known totals before response, and mounted clamp-sensitive delayed-read case covers page2 on both surfaces. This reviewer did not run Chrome."
+  ],
+  "intentionalBoundaries": [
+    "status is the existing TS moderation extension and its legacy response field is an explicit difference from PHP.",
+    "Strict body/query/ID/calendar validation and missing/ambiguous data refusals are migration policies rather than claims of all malformed PHP-input compatibility.",
+    "Explicit nonexistent local datetime stays rejected; relative-day forward gaps normalize separately.",
+    "Audit name/IP fields remain explicitly empty defaults; no claim of attribution to human display name or client IP.",
+    "The two fictitious-review routes, browser/device proof, production, full CI, and global migration completion are outside this review."
+  ],
+  "verification": {
+    "sourceReviewOnly": true,
+    "heavyTestsRunByReviewer": false,
+    "sqlTestsRunByReviewer": false,
+    "browserRunByReviewer": false,
+    "phpRuntimeExecuted": false,
+    "pureProbeMethod": "Actual service helper source extracted and esbuild transform(write:false), executed in isolated Node process; no app substitution or network.",
+    "pureProbeCount": 26,
+    "pureProbes": [
+      {
+        "name": "IANA format epoch 0",
+        "actual": "1970-01-01 08:00:00",
+        "expected": "1970-01-01 08:00:00",
+        "passed": true
+      },
+      {
+        "name": "IANA parse 1970-01-01 08:00:00",
+        "actual": 0,
+        "expected": 0,
+        "passed": true
+      },
+      {
+        "name": "IANA format epoch 583729200",
+        "actual": "1988-07-01 12:00:00",
+        "expected": "1988-07-01 12:00:00",
+        "passed": true
+      },
+      {
+        "name": "IANA parse 1988-07-01 12:00:00",
+        "actual": 583729200,
+        "expected": 583729200,
+        "passed": true
+      },
+      {
+        "name": "IANA format epoch 1785643200",
+        "actual": "2026-08-02 12:00:00",
+        "expected": "2026-08-02 12:00:00",
+        "passed": true
+      },
+      {
+        "name": "IANA parse 2026-08-02 12:00:00",
+        "actual": 1785643200,
+        "expected": 1785643200,
+        "passed": true
+      },
+      {
+        "name": "zero lower endpoint becomes PHP open-upper",
+        "actual": {
+          "end": 1785686400,
+          "endExclusive": true
+        },
+        "expected": {
+          "end": 1785686400,
+          "endExclusive": true
+        },
+        "passed": true
+      },
+      {
+        "name": "zero upper endpoint becomes PHP open-lower",
+        "actual": {
+          "start": 1785600000,
+          "endExclusive": false
+        },
+        "expected": {
+          "start": 1785600000,
+          "endExclusive": false
+        },
+        "passed": true
+      },
+      {
+        "name": "both zero endpoints do not filter",
+        "actual": {},
+        "expected": {},
+        "passed": true
+      },
+      {
+        "name": "string zero does not filter",
+        "actual": {},
+        "expected": {},
+        "passed": true
+      },
+      {
+        "name": "decoded config {}",
+        "actual": false,
+        "expected": false,
+        "passed": true
+      },
+      {
+        "name": "decoded config []",
+        "actual": false,
+        "expected": false,
+        "passed": true
+      },
+      {
+        "name": "decoded config \"0\"",
+        "actual": false,
+        "expected": false,
+        "passed": true
+      },
+      {
+        "name": "decoded config 0",
+        "actual": false,
+        "expected": false,
+        "passed": true
+      },
+      {
+        "name": "decoded config \"1\"",
+        "actual": true,
+        "expected": true,
+        "passed": true
+      },
+      {
+        "name": "decoded config 1",
+        "actual": true,
+        "expected": true,
+        "passed": true
+      },
+      {
+        "name": "unrelated relative DST gap does not reject today",
+        "actual": {
+          "start": 577810800,
+          "end": 577897199
+        },
+        "passed": true
+      },
+      {
+        "name": "unrelated relative DST gap does not reject month",
+        "actual": {
+          "start": 575827200,
+          "end": 578415599
+        },
+        "passed": true
+      },
+      {
+        "name": "unrelated relative DST gap does not reject 1988/07/01-1988/07/01",
+        "actual": {
+          "start": 583686000,
+          "end": 583772400,
+          "endExclusive": false
+        },
+        "passed": true
+      },
+      {
+        "name": "relative lately7 spring gap normalizes forward",
+        "actual": "1988-04-17 03:30:00",
+        "expected": "1988-04-17 03:30:00",
+        "passed": true
+      },
+      {
+        "name": "relative lately30 retains wall clock across spring shift",
+        "actual": "1988-03-25 02:30:00",
+        "expected": "1988-03-25 02:30:00",
+        "passed": true
+      },
+      {
+        "name": "named day real IANA length 1988/04/17 12:00:00",
+        "actual": 82800,
+        "expected": 82800,
+        "passed": true
+      },
+      {
+        "name": "named day local endpoints 1988/04/17 12:00:00",
+        "actual": [
+          "1988-04-17 00:00:00",
+          "1988-04-17 23:59:59"
+        ],
+        "expected": [
+          "1988-04-17 00:00:00",
+          "1988-04-17 23:59:59"
+        ],
+        "passed": true
+      },
+      {
+        "name": "named day real IANA length 1988/09/11 12:00:00",
+        "actual": 90000,
+        "expected": 90000,
+        "passed": true
+      },
+      {
+        "name": "named day local endpoints 1988/09/11 12:00:00",
+        "actual": [
+          "1988-09-11 00:00:00",
+          "1988-09-11 23:59:59"
+        ],
+        "expected": [
+          "1988-09-11 00:00:00",
+          "1988-09-11 23:59:59"
+        ],
+        "passed": true
+      },
+      {
+        "name": "explicit date range is independent of now",
+        "actual": {
+          "start": 583686000,
+          "end": 583772400,
+          "endExclusive": false
+        },
+        "expected": {
+          "start": 583686000,
+          "end": 583772400,
+          "endExclusive": false
+        },
+        "passed": true
+      }
+    ]
+  },
+  "inputs": [
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/next-scope-20261014.json",
+      "sha256": "5c085ff300546cf05bbd041091a6f6ee98824534fac74fb77c717d37d7987ec9",
+      "lineCount": 1038
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+      "sha256": "774ad89d5d0bf24d3351e2c912a3408e909e5eafe12486c399ba722c1f84a3d8",
+      "lineCount": 582
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductReplyController.ts",
+      "sha256": "fc90c8a7cf5151358c042f51b8358414c5dbaffd2c3e7fe63a22ba99789baa17",
+      "lineCount": 32
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "c8b64774ba88d35a0bf5fd6173a923865297c299614dbd4e214216c8792460c3",
+      "lineCount": 1588
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+      "sha256": "290335b5ee34c8fc521bb12506c042078c20bdf68d39d5e14a51c32c44a63f74",
+      "lineCount": 398
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "fade772de9f2f21f71cdabe434ca18cb6cf17c60daeef46f681ea6393921edfb",
+      "lineCount": 805
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "sha256": "9e1e33de16892f5a2edf75f93f0f8fd84931dda529550e320e7558fa07879c1e",
+      "lineCount": 358
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/reply.ts",
+      "sha256": "7a2ec3a828e2f800bb95b9053a9788170cd6670b228117174112c705eb503e3c",
+      "lineCount": 132
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/lib/di.ts",
+      "sha256": "2dcc293c5e1153eb679cfaa39e5237eec41409a6f200ce79b0fd1b5abc4d832c",
+      "lineCount": 275
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "sha256": "8cb05551c3680ee937e24623ec9a3629da9df05dce0960fe22a961febb562cd5",
+      "lineCount": 1329
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+      "sha256": "ab0661c9e788d32c512736f3c5e69e619a375d0199fe60c90d8a1683579be052",
+      "lineCount": 2442
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-reply.test.ts",
+      "sha256": "26221f284440fcb68230d976e2a0d45edc0d014b2462f398f2a2bc1e78af2cf5",
+      "lineCount": 427
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-reply-http.test.ts",
+      "sha256": "32a7c94009f1615f995ff679e4f1cf8376db4a14063c556f5d02a3ba7ec2c452",
+      "lineCount": 164
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-reply-native.test.ts",
+      "sha256": "5253b763c1dfae4ef3ad804e4513378d8373a637072ea7e5ae05c75e1c83d7b0",
+      "lineCount": 451
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-reply-workflow-frontend.test.ts",
+      "sha256": "8238fb5faed30b6ed041ec26ad46227a7646f911196075af12490fb99adf33ec",
+      "lineCount": 215
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/adminProductReplies.ts",
+      "sha256": "7b5d272ebe35dabd092da4e7920973db320a1da65dac790c1fd8e96ad3f1887a",
+      "lineCount": 84
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/reply.ts",
+      "sha256": "fda9261265d93416fa9e5023f628f99fa4f5655a6b73ad80b46b9e736f8975b1",
+      "lineCount": 129
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "sha256": "47c8ab5be6107060258bdd2447c9659e1d755a5eda8975d3cf4f256d257b3f26",
+      "lineCount": 249
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+      "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+      "lineCount": 209
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+      "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+      "lineCount": 597
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyCommentServices.php",
+      "sha256": "ee2ee105a8ee82f97f00963e61b06edf5d5f4f9fd430589f3ee227ff7442c098",
+      "lineCount": 195
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+      "sha256": "5ad9a325f008de19b99c925a205d423c5ff8d0019d7fc66ca74102d35c9233a2",
+      "lineCount": 122
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductReply.php",
+      "sha256": "093bd50a58a4323a028c1667b64e0381d4cccd6737004a0dfea1c37a27bd2c23",
+      "lineCount": 235
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProductReplyComment.php",
+      "sha256": "b5c1ce91b82a3198eb2a6f8776c8287e5eb30f934b680ced5222684998dba696",
+      "lineCount": 144
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/ModelTrait.php",
+      "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+      "lineCount": 130
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/config/SystemConfigServices.php",
+      "sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "lineCount": 2657
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/user/UserServices.php",
+      "sha256": "d8c5aae71df278a885b238bc44c1fc73d3644a5fa68441260a3cc22fdc2e6a25",
+      "lineCount": 2569
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common.php",
+      "sha256": "aa8ec005680a709ae3f7324dadcbe91c8e305c0a685e1b7c08f3b24f1d63c8f9",
+      "lineCount": 841
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+      "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+      "lineCount": 48
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/concern/TimeFieldQuery.php",
+      "sha256": "ef8e86ea916d7f419637e352abbd15a2b7213bbaa30c943007b974791ab0cdd1",
+      "lineCount": 224
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/Builder.php",
+      "sha256": "f8e63be6b9ac26b71f6e8c115169af32d227ec48b6cd45636a8a4ac9c7a17e50",
+      "lineCount": 775
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "lineCount": 917
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productReply/index.vue",
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+      "lineCount": 665
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+      "sha256": "b17017fc4bad9078cf218fef88f9e2c3cdb2b3d14f80b9418db13e66bb51c84e",
+      "lineCount": 292
+    }
+  ],
+  "excerpts": [
+    {
+      "purpose": "legacy seven controller operations",
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+      "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+      "lines": [
+        {
+          "line": 40,
+          "text": "    public function index()"
+        },
+        {
+          "line": 71,
+          "text": "    public function set_reply($id)"
+        },
+        {
+          "line": 86,
+          "text": "    public function getReply(StoreProductReplyCommentServices $services, $id)"
+        },
+        {
+          "line": 150,
+          "text": "    public function getComment(StoreProductReplyCommentServices $services, $id)"
+        },
+        {
+          "line": 166,
+          "text": "    public function saveComment(StoreProductReplyCommentServices $services, $replyId, $id)"
+        },
+        {
+          "line": 197,
+          "text": "    public function deleteComment(StoreProductReplyCommentServices $services, $id)"
+        }
+      ]
+    },
+    {
+      "purpose": "all-owner truthy DAO filters",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductReplyStoreProductDao.php",
+      "sha256": "5ad9a325f008de19b99c925a205d423c5ff8d0019d7fc66ca74102d35c9233a2",
+      "lines": [
+        {
+          "line": 107,
+          "text": "            if ($where['type']) $model = $model->where('r.type', $where['type']);"
+        },
+        {
+          "line": 110,
+          "text": "            if ($where['relation_id']) $model = $model->where('r.relation_id', $where['relation_id']);"
+        }
+      ]
+    },
+    {
+      "purpose": "platform owner tuple and is_reply owner equality",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductReplyServices.php",
+      "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5",
+      "lines": [
+        {
+          "line": 145,
+          "text": "    public function setReply(int $replyId, string $content, int $type = 0, int $relation_id = 0)"
+        },
+        {
+          "line": 166,
+          "text": "        if ($type == $reply['type']) {//回复端 与商品端一致 修改回复状态"
+        },
+        {
+          "line": 176,
+          "text": "    public function del(int $id)"
+        }
+      ]
+    },
+    {
+      "purpose": "source time zero/open range and 86400 adjustment",
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/ModelTrait.php",
+      "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+      "lines": [
+        {
+          "line": 77,
+          "text": "                            if ($startTime && $endTime) {"
+        },
+        {
+          "line": 82,
+          "text": "                            } else if (!$startTime && $endTime) {"
+        },
+        {
+          "line": 84,
+          "text": "                            } else if ($startTime && !$endTime) {"
+        }
+      ]
+    },
+    {
+      "purpose": "source JSON decode",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/config/SystemConfigServices.php",
+      "sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "lines": [
+        {
+          "line": 303,
+          "text": "    public function getConfigValue(string $configName, int $type = 1, int $relation_id = 0, $default = null)"
+        },
+        {
+          "line": 311,
+          "text": "            return is_null($value) ? $default : json_decode($value, true);"
+        }
+      ]
+    },
+    {
+      "purpose": "source VIP truthiness",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/user/UserServices.php",
+      "sha256": "d8c5aae71df278a885b238bc44c1fc73d3644a5fa68441260a3cc22fdc2e6a25",
+      "lines": [
+        {
+          "line": 175,
+          "text": "    public function checkIsVip(array $uid): array"
+        },
+        {
+          "line": 191,
+          "text": "            $vip_status = $is_open_member && $item && isset($item['is_money_level']) && $item['is_money_level'] > 0 && isset($item['overdue_time']) && $item['overdue_time'] > time() ? 1 : 0;"
+        },
+        {
+          "line": 192,
+          "text": "            if ($is_open_level && $item['level']) {"
+        }
+      ]
+    },
+    {
+      "purpose": "source IANA timezone",
+      "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+      "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+      "lines": [
+        {
+          "line": 38,
+          "text": "    'default_timezone' => 'Asia/Shanghai',"
+        }
+      ]
+    },
+    {
+      "purpose": "source named local-calendar endpoints",
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/concern/TimeFieldQuery.php",
+      "sha256": "ef8e86ea916d7f419637e352abbd15a2b7213bbaa30c943007b974791ab0cdd1",
+      "lines": [
+        {
+          "line": 27,
+          "text": "        'today'      => ['today', 'tomorrow -1second'],"
+        },
+        {
+          "line": 29,
+          "text": "        'week'       => ['this week 00:00:00', 'next week 00:00:00 -1second'],"
+        },
+        {
+          "line": 31,
+          "text": "        'month'      => ['first Day of this month 00:00:00', 'first Day of next month 00:00:00 -1second'],"
+        },
+        {
+          "line": 106,
+          "text": "        return $this->whereTimeInterval($field, $month, 'month', $step, $logic);"
+        },
+        {
+          "line": 125,
+          "text": "        return $this->whereTimeInterval($field, $week, 'week', $step, $logic);"
+        },
+        {
+          "line": 157,
+          "text": "    public function whereDay(string $field, string $day = 'today', int $step = 1, string $logic = 'AND')"
+        },
+        {
+          "line": 159,
+          "text": "        if (in_array($day, ['today', 'yesterday'])) {"
+        }
+      ]
+    },
+    {
+      "purpose": "new IANA zero/config repaired helpers",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+      "sha256": "774ad89d5d0bf24d3351e2c912a3408e909e5eafe12486c399ba722c1f84a3d8",
+      "lines": [
+        {
+          "line": 65,
+          "text": "const shanghaiFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai',"
+        },
+        {
+          "line": 93,
+          "text": "function relativeCalendarEpoch(parts: CalendarParts): number {"
+        },
+        {
+          "line": 194,
+          "text": "function timeBounds(value: string | undefined): { start?: number; end?: number; endExclusive?: boolean } {"
+        },
+        {
+          "line": 235,
+          "text": "  const start = parsedStart === 0 ? undefined : parsedStart;"
+        },
+        {
+          "line": 263,
+          "text": "function configEnabled(value: unknown): boolean {"
+        }
+      ]
+    },
+    {
+      "purpose": "live actor complete write boundary and default audit fields",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductReplyService.ts",
+      "sha256": "774ad89d5d0bf24d3351e2c912a3408e909e5eafe12486c399ba722c1f84a3d8",
+      "lines": [
+        {
+          "line": 289,
+          "text": "  private async transaction<T>(actor: AdminProductReplyActor, write: boolean, work: (tx: DbClient) => Promise<T>): Promise<T> {"
+        },
+        {
+          "line": 334,
+          "text": "  private async audit(tx: DbClient, actor: AdminProductReplyActor, parentId: number, operation: string, method: string, commentId?: number): Promise<void> {"
+        },
+        {
+          "line": 335,
+          "text": "    const expected = { storeId: 0, merchantId: 0, adminName: '', ip: '', adminId: actor.id,"
+        },
+        {
+          "line": 347,
+          "text": "  private async savePlatformComment(tx: DbClient, parent: ReplyRow, thread: CommentRow[], pid: number, content: string): Promise<{ row: CommentRow; thread: CommentRow[] }> {"
+        },
+        {
+          "line": 550,
+          "text": "  async removeComment(id: number, query: URLSearchParams, value: unknown, actor: AdminProductReplyActor) {"
+        }
+      ]
+    },
+    {
+      "purpose": "exact seeds and capability mapping",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "c8b64774ba88d35a0bf5fd6173a923865297c299614dbd4e214216c8792460c3",
+      "lines": [
+        {
+          "line": 484,
+          "text": "  if (isProductReplyRoute(route)) return productReplyPermission(method.toUpperCase(), route);"
+        },
+        {
+          "line": 759,
+          "text": "const productReplyMenuTuples: Record<number, readonly [string, string, string]> = {"
+        },
+        {
+          "line": 764,
+          "text": "function productReplyMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {"
+        },
+        {
+          "line": 1391,
+          "text": "        const replyBinding = productReplyMenuBinding(menu);"
+        }
+      ]
+    },
+    {
+      "purpose": "actual parent-first public writer",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ReplyService.ts",
+      "sha256": "fade772de9f2f21f71cdabe434ca18cb6cf17c60daeef46f681ea6393921edfb",
+      "lines": [
+        {
+          "line": 519,
+          "text": "  async replyComment(uid: number, replyId: number, rawContent: unknown): Promise<{ id: number }> {"
+        },
+        {
+          "line": 563,
+          "text": "  private async setCommentPraise(uid: number, commentId: number, praised: boolean) {"
+        },
+        {
+          "line": 570,
+          "text": "      // Moderation and public comment creation lock the review before its"
+        }
+      ]
+    },
+    {
+      "purpose": "physical nonrecursive PHP deletion",
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProductReply.php",
+      "sha256": "96d1114931e7c2a7f7a33db93d5d10b13f70259215174e265a8a967a7a95dd03",
+      "lines": [
+        {
+          "line": 203,
+          "text": "            $services->delete($id);"
+        },
+        {
+          "line": 204,
+          "text": "            $services->delete(['pid' => $id]);"
+        }
+      ]
+    },
+    {
+      "purpose": "active old thread consumer and commented reply button",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/replyList.vue",
+      "sha256": "b17017fc4bad9078cf218fef88f9e2c3cdb2b3d14f80b9418db13e66bb51c84e",
+      "lines": [
+        {
+          "line": 46,
+          "text": "<!--\t\t\t\t  <a @click=\"reply(row)\" v-show=\"row.pid == 0 || row.uid > 0\">回复</a>-->"
+        },
+        {
+          "line": 175,
+          "text": "\t\t\t\t\t\t  productReplySave(this.contents, this.replyId, this.rows.id);"
+        },
+        {
+          "line": 215,
+          "text": "\t\t\t\turls = this.fromType?`/marketing/video/comment/${row.id}`:`product/reply/delete_comment/${row.id}`;"
+        },
+        {
+          "line": 247,
+          "text": "\t\t\t\tapiName(this.replyFrom,id).then(res => {"
+        }
+      ]
+    },
+    {
+      "purpose": "actual mounted UI session and pending write boundaries",
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "sha256": "47c8ab5be6107060258bdd2447c9659e1d755a5eda8975d3cf4f256d257b3f26",
+      "lines": [
+        {
+          "line": 96,
+          "text": "function current(value: Stamp): boolean { return alive && canView.value && value.identity === identity.value && value.stored === stored &&"
+        },
+        {
+          "line": 160,
+          "text": "async function saveReply(): Promise<void> {"
+        },
+        {
+          "line": 215,
+          "text": "async function deleteComment(row: AdminProductReplyComment): Promise<void> {"
+        },
+        {
+          "line": 224,
+          "text": "function syncSession(): void {"
+        }
+      ]
+    },
+    {
+      "purpose": "real native peer blocking assertions and least privilege",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-reply-native.test.ts",
+      "sha256": "5253b763c1dfae4ef3ad804e4513378d8373a637072ea7e5ae05c75e1c83d7b0",
+      "lines": [
+        {
+          "line": 64,
+          "text": "      const [identity] = await peer.exec(\"SELECT current_user AS role,session_user AS session,pg_backend_pid() AS pid,current_setting('server_version_num') AS version\");"
+        },
+        {
+          "line": 80,
+          "text": "  async function assertParentWait(waiter: number, blocker: number) {"
+        },
+        {
+          "line": 123,
+          "text": "      expect(acl).toEqual({ audit_insert: true, audit_update: false, product_update: false,"
+        },
+        {
+          "line": 283,
+          "text": "  it('holds current-role revocation behind an authenticated write waiting on its parent and denies every subsequent action', async () => {"
+        },
+        {
+          "line": 346,
+          "text": "  it('proves all 24 default audit identity mutations reach owned native triggers under INSERT-only audit privilege and roll back', async () => {"
+        },
+        {
+          "line": 351,
+          "text": "      expect(acl).toEqual({ audit_insert: true, audit_update: false });"
+        }
+      ]
+    },
+    {
+      "purpose": "root/thread page2 clamp source repair",
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/reply/ReplyList.vue",
+      "sha256": "47c8ab5be6107060258bdd2447c9659e1d755a5eda8975d3cf4f256d257b3f26",
+      "lines": [
+        {
+          "line": 127,
+          "text": "  // Element Plus clamps current-page when total drops to zero. Keep the known"
+        },
+        {
+          "line": 129,
+          "text": "  query.page = target; loading.value = true; listError.value = \"\"; list.value = [];"
+        },
+        {
+          "line": 175,
+          "text": "  threadPage.value = page; threadLoading.value = true; threadError.value = \"\"; commentVisible.value = false; threads.value = [];"
+        }
+      ]
+    },
+    {
+      "purpose": "mounted delayed-read clamp reproduction coverage",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-reply-workflow-frontend.test.ts",
+      "sha256": "8238fb5faed30b6ed041ec26ad46227a7646f911196075af12490fb99adf33ec",
+      "lines": [
+        {
+          "line": 73,
+          "text": "    runtime.watch(() => [props.currentPage, props.total, props.pageSize], () => { const maximum = Math.max(1, Math.ceil(props.total / props.pageSize)); if (props.currentPage > maximum) emit('current-change', maximum); });"
+        },
+        {
+          "line": 144,
+          "text": "  it('retains known review and thread totals during delayed page loads so pagination cannot clamp back to one', async () => {"
+        },
+        {
+          "line": 150,
+          "text": "      const pendingList = f.view.changePage(2); await flush(); expect(f.view.query.page).toBe(2); expect(f.view.total.value).toBe(31); expect(f.calls.filter((config: any) => config.url === base)).toHaveLength(2);"
+        },
+        {
+          "line": 152,
+          "text": "      const pendingThread = f.view.loadThreads(2); await flush(); expect(f.view.threadPage.value).toBe(2); expect(f.view.threadTotal.value).toBe(16);"
+        }
+      ]
+    }
+  ],
+  "externalReviewPending": null,
+  "externalFrontendFinding": {
+    "source": "/root/reply_implementation_design and root; actual Chrome QA by that agent",
+    "finding": "Actual ElementPlus pagination clamped page2 back to page1 when loading reset counts to zero.",
+    "sourceRepairIndependentlyRead": true,
+    "rootAndThreadKnownTotalsPreservedBeforeResponse": true,
+    "mountedDelayedClampCaseIndependentlyRead": true,
+    "browserRunByThisReviewer": false,
+    "sourceChangesObserved": []
+  }
+}

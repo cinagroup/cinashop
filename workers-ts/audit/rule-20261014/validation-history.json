@@ -1,0 +1,135 @@
+{
+  "initialSharedRegression": {
+    "exitCode": 1,
+    "passed": 28,
+    "failed": 1,
+    "conditionalSkipped": 0,
+    "reason": "pre-existing static assertion expected retired library function, variable names and quote style at unchanged HEAD ProductSpecifications.vue",
+    "unchangedHeadSource": "view/supplier-ts/src/pages/ProductSpecifications.vue",
+    "sha256": "1ff59b801fc8a6e7b5b391fb34159f1dc77f2433d6dacb050d9f5f9835af5443"
+  },
+  "repair": {
+    "sourceBehaviorChanged": false,
+    "staticNavigationCasePreserved": true,
+    "mountedRuleLibraryAndProductFormSuitesRetainBehaviorChecks": true,
+    "completeFiles": 4,
+    "passed": 60,
+    "failed": 0,
+    "preFreeze": true
+  },
+  "phpEnvelopeBoundary": "crmeb/basic/BaseController.php uses Swoole Loader encoded content; readable Json.php null default and caller-only string support omitting data; BaseController forwarding behavior has not been executed",
+  "commandCorrections": [
+    "Initial static collector used authority key adminapi rather than actual admin; corrected without source mutation.",
+    "Admin wrapper first invoked with a Worker-relative path from Admin cwd and did not start; corrected to the absolute harness path.",
+    "Final summary collector initially expected pending for conditional cases; actual Vitest JSON uses skipped too. Both documented labels now accepted, raw reports unchanged.",
+    "JSON file status may be passed even when all definitions are skipped; passed-file count now requires an actually passed definition and matches the raw 21 passed/6 skipped summary."
+  ],
+  "initialTypes": {
+    "exitCode": 2,
+    "final": false,
+    "log": "initial-worker-unit-types.log",
+    "reason": "obsolete requiredString helper after Unicode rule normalization",
+    "repaired": "removed now-unused helper; full final unit/runtime checks still required"
+  },
+  "routeAudit": {
+    "exitCode": 1,
+    "preExistingAtHead": true,
+    "reason": "GET /api/get_script registered but manifest still retired",
+    "globalCoverageClaimed": false
+  },
+  "interruptedFinalRun": {
+    "scope": "27 ordinary files,16 native files,unit types",
+    "complete": false,
+    "receipt": "interrupted-process-observation.json",
+    "retriedOnlyAfterMissingHandlesAndHostProcessStatusAndStoppedOwnedClusters": true,
+    "logsRetained": true,
+    "sourceInputsUnchanged": true
+  },
+  "preTypeRepairCompleteMatrix": {
+    "ordinary": {
+      "files": 27,
+      "passed": 240,
+      "skipped": 68,
+      "exitCode": 0
+    },
+    "native": {
+      "files": 16,
+      "passed": 182,
+      "skipped": 0,
+      "exitCode": 0,
+      "fixtureRemaining": 0
+    },
+    "workerUnitTypes": {
+      "exitCode": 2,
+      "reason": "new contract test retained an unused owner constant",
+      "repaired": "remove unused declaration, then completely rerun final frozen matrix and both standard type checks"
+    },
+    "sourceChange": [
+      "workers-ts/test/admin-product-rule.test.ts"
+    ]
+  },
+  "preSupplierConsumerRepairCompleteMatrix": {
+    "ordinary": {
+      "files": 27,
+      "passed": 240,
+      "conditionalSkipped": 68,
+      "exitCode": 0
+    },
+    "native": {
+      "files": 16,
+      "passed": 182,
+      "skipped": 0,
+      "exitCode": 0,
+      "fixtureRemaining": 0
+    },
+    "workerUnitAndRuntimeTypesExitCodes": [
+      0,
+      0
+    ],
+    "knownConsumerGap": "SupplierProductRuleDraft/prepareSupplierProductRuleApplication continued UTF16 bounds for Unicode dimensions accepted by shared backend normalization; full final verification requires the actual consumer repair",
+    "countedAsFinal": false
+  },
+  "supplierUnicodeConsumerRepair": {
+    "affectedCompleteFiles": 2,
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0,
+    "receipt": "supplier-unicode-affected-status.json",
+    "final": false,
+    "oversizeNegativesUseDistinctUnsavedNames": true,
+    "nativeInputMaxlengthRemoved": 3,
+    "browserInputProof": false,
+    "codepointCounterClaimed": false
+  },
+  "secondInterruptedRun": {
+    "logPrefix": "second-interrupted-",
+    "receipt": "second-interrupted-process-observation.json",
+    "complete": false,
+    "noSurvivingHostValidationProcess": true,
+    "inputsUnchanged": true
+  },
+  "auditIdentityReviewRepair": {
+    "oldSuccessfulMisattributedAudits": "audit-scope-repro.json",
+    "explicitExpectedFields": [
+      "storeId",
+      "merchantId",
+      "adminName",
+      "ip"
+    ],
+    "preservedValues": {
+      "storeId": 0,
+      "merchantId": 0,
+      "adminName": "",
+      "ip": ""
+    },
+    "completeSchemaNonIdFieldsCovered": 11,
+    "allNegativeMutationsPerOrdinaryAndNativeCase": 24,
+    "ordinaryFullFilePassed": 19,
+    "ordinaryFailed": 0,
+    "nativeFullFileExecutionPending": false,
+    "actualIdentityNameOrIPAttributionClaimed": false,
+    "additionalSupplierSkuDimensionInputMaxlengthRemoved": 1,
+    "sourceRepairReviewReceipt": "source-final-repair-review.json",
+    "nativeFullFilePassed": 16
+  }
+}

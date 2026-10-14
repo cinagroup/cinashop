@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-10-14T10:01:42.124538+00:00",
+  "historicalFrozenReceipt": "pre-coverage-acl-ui-repair-frozen-before.json",
+  "changed": {
+    "view/admin-ts/src/pages/activity/CombinationImagePicker.vue": {
+      "before": "6c062132a338ea5d2a32a929e530f69cb60a018a6248483201e16c817bca7168",
+      "after": "7e33d828576eabf5d9826dc76df5dd92c22fc4c132e809a426b6e4bc5ecf8426"
+    },
+    "workers-ts/scripts/product-detail-design-coverage.ts": {
+      "before": "43c11c0f01e87c00e5144e543e22b685032270436caa5527e8dcaed7ed2ee1b8",
+      "after": "8fa7c1b7b3315e84c6b17afd6830082eec2554736fb5360f04025fe69f79201b"
+    },
+    "workers-ts/test/admin-product-detail-design-coverage.test.ts": {
+      "before": "0a016fa9dc89ede2a573b16fe028b12fe1e5e1bcc4c0b2989e3a0163199dd2e0",
+      "after": "a9580c164fe7e0b53bcc0389128e89d5bc334979c4c22560bc974fd33fecd91f"
+    },
+    "workers-ts/test/admin-product-reply-native.test.ts": {
+      "before": "08cf7b104dfcac9e24ffbde3b11ea998779c340b2e44086a31dae61876a42916",
+      "after": "a603df65db569c4b6889fa471a7d133f99bb36340666574638079706c07eafaf"
+    },
+    "workers-ts/test/product-reply-detail-migration.test.ts": {
+      "before": "37b9eb46504fe83fa50f2bd8328b6399e924a172d84a0e1413dfc45343659f3d",
+      "after": "c81eff5fef2a735cc99ce89a136709ca709ad0373281c0fc003b4c5526c5fa8b"
+    }
+  },
+  "unchangedCount": 3353,
+  "reasons": [
+    "update exact literal/AST contract to raw reply media read; retain configured-limit/empty-call mutations",
+    "minimum test-role product id-column lock grant; explicit star/stock DML denial",
+    "actual public list now sets private,no-store in addition to existing five endpoints",
+    "gallery permission hint separated from temporary editor disabled state"
+  ],
+  "historicalFailedOrdinary": {
+    "files": 49,
+    "passed": 563,
+    "failed": 60,
+    "skipped": 147,
+    "failuresByFullFile": {
+      "workers-ts/test/admin-product-detail-design-coverage.test.ts": 59,
+      "workers-ts/test/product-reply-detail-migration.test.ts": 1
+    }
+  },
+  "nativeAclWasReadOnlyPredictedAndRepairedBeforeFirstExpandedNative": true
+}

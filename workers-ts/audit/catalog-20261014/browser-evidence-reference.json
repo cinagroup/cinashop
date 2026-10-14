@@ -1,0 +1,120 @@
+{
+  "verifiedAt": "2026-10-14T12:22:05.153432+00:00",
+  "status": "passed",
+  "mode": "Actual Chrome / actual Admin Vue / ElementPlus; standard auth synthetic local identity and explicit mock API transport",
+  "flows": 20,
+  "states": 25,
+  "screenshots": 25,
+  "apiMockCalls": 135,
+  "sourceHashCount": 14,
+  "sourceBeforeAfterEqual": true,
+  "viewports": [
+    {
+      "width": 1360,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "consoleOrPageErrors": 0,
+  "unmockedApiOrExternalTransportCalls": 0,
+  "previewBypassOrSfcStub": false,
+  "backendProviderProductionProof": false,
+  "browserPluginAvailable": false,
+  "fallback": "Installed Playwright and Chrome; no dependency install",
+  "report": {
+    "path": "/tmp/cinashop-catalog-qa/QA.md",
+    "sha256": "c18755a754a14f65bb13163abd0132e837ef326d4f8be499253009365686436f",
+    "byteLength": 8845
+  },
+  "finalReceipt": {
+    "path": "/tmp/cinashop-catalog-qa/attempt-005-browser-receipt.json",
+    "sha256": "46cb7dad407ccf613324ab167e766fa45ded8ba7a3e19a57e92cf995fad54ace",
+    "byteLength": 58127
+  },
+  "finalScript": {
+    "path": "/tmp/cinashop-catalog-qa/attempt-005-run-browser.mjs",
+    "sha256": "cdc3380d030fa19817dc25aac05327d14e55b1979cb91ec058a618fdd5ca00ac",
+    "byteLength": 28691
+  },
+  "manifest": {
+    "path": "/tmp/cinashop-catalog-qa/artifact-manifest.json",
+    "sha256": "a035b86311a8d7c4c1ec11c95ad8261e6d6371c104bb2ba3e236a2328d8edfcb",
+    "byteLength": 40660
+  },
+  "cleanup": {
+    "path": "/tmp/cinashop-catalog-qa/resources-cleanup.json",
+    "sha256": "3d67e3cc1bfff13c57ea61bc912ca4dcec376be57ce3031d36e84c0f8ed19887",
+    "byteLength": 1572
+  },
+  "rootVisualInspection": [
+    {
+      "label": "desktop-initial-eight-statuses",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-initial-eight-statuses.png",
+        "sha256": "8c100e92399f4324798b5afd2b6dadefb6362682e835d17a18d583c50f974bdb",
+        "byteLength": 78671
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    },
+    {
+      "label": "desktop-page2",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-page2.png",
+        "sha256": "d798779db9620f09dc08aa20f42d23752ee8f8d2380a3a755ce0f9a3778c0624",
+        "byteLength": 62396
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    },
+    {
+      "label": "legacy-reply-id51-isreply0",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-legacy-reply-id51-isreply0.png",
+        "sha256": "04e9ca0b643713d270adf989cca1b001f5addb771052ce4c388f9bfb87fc3258",
+        "byteLength": 52611
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    },
+    {
+      "label": "desktop-new-batch-keeps-busy-after-old-finally",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-new-batch-keeps-busy-after-old-finally.png",
+        "sha256": "9d616af357ddefac08b6510a5153f6a9138ff37ae824af27dfb8da6489e7e0e6",
+        "byteLength": 87505
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    },
+    {
+      "label": "desktop-header-failure-list-preserved",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-desktop-header-failure-list-preserved.png",
+        "sha256": "bf1f5ca78810812eb404b23d2f94c3d07a3f6d42a60821648c493dc5de2bf97f",
+        "byteLength": 70241
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    },
+    {
+      "label": "mobile-eight-statuses-first-viewport",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-mobile-eight-statuses-first-viewport.png",
+        "sha256": "ffad057dc70a3e28871a15b367c5fb601ed3c9749f470270b4eb63586839fb4c",
+        "byteLength": 49107
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    },
+    {
+      "label": "mobile-row-to-reply",
+      "image": {
+        "path": "/tmp/cinashop-catalog-qa/attempt-005-mobile-row-to-reply.png",
+        "sha256": "a3c31bf16125bb9bd59fa3c6518c54c463abc2d70cf8ae08a84fdac70d98919b",
+        "byteLength": 37078
+      },
+      "observed": "Meaningful source-shaped page/error/pending state; appropriate captured layout; screenshot only does not prove backend"
+    }
+  ],
+  "historicalQaAttempts": "all original receipts/scripts/screenshots retained; harness trim, OK locator and GET-default counter corrections; final005 reran complete set",
+  "cleanupProfileCaptureLimitation": "profile field empty; complete cleanup uses actual owned startup PIDs and full /proc executable/arguments scan",
+  "artifactManifestFilesVerifiedByRoot": 200
+}

@@ -89,7 +89,7 @@ export class UserSegmentationService {
     const id = integer(body.id, "分组ID", 0);
     const groupName = typeof body.group_name === "string" ? body.group_name.trim() : "";
     if (!groupName) throw new ValidateException("请输入分组名称");
-    if (groupName.length > 64) throw new ValidateException("分组名称不能超过64个字符");
+    if ([...groupName].length > 64) throw new ValidateException("分组名称不能超过64个字符");
     return withTx(this.container, async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${GROUP_LOCK_NAMESPACE}, 0)`);
       if (id > 0) {
@@ -97,7 +97,8 @@ export class UserSegmentationService {
           .select({ id: userGroup.id })
           .from(userGroup)
           .where(eq(userGroup.id, id))
-          .limit(1);
+          .limit(1)
+          .for("update");
         if (!existing[0]) throw new NotFoundException("用户分组不存在");
       }
       const duplicateConditions = [eq(userGroup.groupName, groupName)];
@@ -123,6 +124,7 @@ export class UserSegmentationService {
   async deleteGroup(id: number) {
     if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("分组ID错误");
     return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${GROUP_LOCK_NAMESPACE}, 0)`);
       const group = await tx
         .select({ id: userGroup.id })
         .from(userGroup)
@@ -133,7 +135,7 @@ export class UserSegmentationService {
       const used = await tx
         .select({ uid: userTable.uid })
         .from(userTable)
-        .where(and(eq(userTable.groupId, id), eq(userTable.isDel, 0)))
+        .where(eq(userTable.groupId, id))
         .limit(1);
       if (used[0]) throw new ValidateException("该分组仍有用户，不能删除");
       await tx.delete(userGroup).where(eq(userGroup.id, id));
