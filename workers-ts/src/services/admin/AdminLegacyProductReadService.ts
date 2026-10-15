@@ -12,6 +12,7 @@ import { normalizeConfigScalar } from '@/utils/config';
 import { assertAdminAuthoritySession, type AdminAuthorityActor } from './AdminAuthorityWriteService';
 import { budgetLegacyProductRead } from './AdminLegacyProductReadBudget';
 import { authorizeAdminLegacyProductRead, assertAdminLegacyProductReadDeadline } from './AdminLegacyProductReadAuthority';
+import { assertProductCopyDestination, productCopyDescriptor } from './AdminProductCopy';
 
 type Row = Record<string, unknown>;
 type Product = typeof storeProduct.$inferSelect;
@@ -139,7 +140,7 @@ function error(error: unknown): never {
  * selects card credentials, invokes a provider, or issues business DML. */
 export class AdminLegacyProductReadService {
   constructor(private readonly container: Container, private readonly appKey?: string) {}
-  async detail(id: number, query: URLSearchParams, actor: AdminAuthorityActor, options: { editorContract?: boolean } = {}) {
+  async detail(id: number, query: URLSearchParams, actor: AdminAuthorityActor, options: { editorContract?: boolean; copy?: boolean } = {}) {
     if (!Number.isSafeInteger(id) || id < 0 || id > 2_147_483_647) throw new ValidateException('商品ID错误');
     if (query.size) throw new ValidateException('商品详情不接受查询参数');
     assertAdminAuthoritySession(actor);
@@ -149,6 +150,7 @@ export class AdminLegacyProductReadService {
         await tx.execute(sql`SET LOCAL statement_timeout='5s'`); await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
         await authorizeAdminLegacyProductRead(tx, actor);
+        if (options.copy) await authorizeAdminLegacyProductRead(tx, actor, 'product.manage');
         const usedBytes = await budgetLegacyProductRead(tx, [
           { table: storeProduct, where: eq(storeProduct.id, id) },
           { table: storeProductAttr, where: and(eq(storeProductAttr.productId, id), eq(storeProductAttr.type, 0))! },
@@ -166,7 +168,7 @@ export class AdminLegacyProductReadService {
           bounded(tx.select().from(storeProductAttr).where(and(eq(storeProductAttr.productId, id), eq(storeProductAttr.type, 0))).orderBy(asc(storeProductAttr.id)).limit(CAPACITY + 1)),
           bounded(tx.select().from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, id), eq(storeProductAttrValue.type, 0))).orderBy(asc(storeProductAttrValue.id)).limit(CAPACITY + 1)),
           tx.select().from(storeProductDescription).where(and(eq(storeProductDescription.productId, id), eq(storeProductDescription.type, 0))).limit(2),
-          bounded(tx.select({ unique: storeProductVirtual.attrUnique, available: sql<number>`count(*) FILTER(WHERE ${storeProductVirtual.uid}=0)::int`, total: sql<number>`count(*)::int` })
+          options.copy ? [] : bounded(tx.select({ unique: storeProductVirtual.attrUnique, available: sql<number>`count(*) FILTER(WHERE ${storeProductVirtual.uid}=0)::int`, total: sql<number>`count(*)::int` })
             .from(storeProductVirtual).where(eq(storeProductVirtual.productId, id)).groupBy(storeProductVirtual.attrUnique).limit(CAPACITY + 1)),
           bounded(tx.select().from(storeProductCoupon).where(eq(storeProductCoupon.productId, id)).orderBy(asc(storeProductCoupon.id)).limit(CAPACITY + 1)),
           bounded(tx.select().from(shippingTemplates).where(and(eq(shippingTemplates.ownerType, 0), eq(shippingTemplates.relationId, 0)))
@@ -181,6 +183,8 @@ export class AdminLegacyProductReadService {
         const labelRelations = options.editorContract ? await bounded(tx.select().from(storeProductRelation)
           .where(and(eq(storeProductRelation.productId, id), eq(storeProductRelation.type, 4)))
           .orderBy(asc(storeProductRelation.id)).limit(CAPACITY + 1)) : [];
+        const copy = options.copy ? productCopyDescriptor(product, attrs, skus, descriptions, couponRows, labelRelations, this.appKey) : undefined;
+        if (copy) await assertProductCopyDestination(tx, product);
         if (new Set(labelRelations.map(row => row.relationId)).size !== labelRelations.length
           || labelRelations.some(row => row.relationId <= 0 || row.relationPid !== 0 || row.status !== 1)) throw conflict('商品用户标签关联不完整');
         if (skus.some(row => ![0, 1].includes(row.isRetired)) || new Set(skus.map(row => row.unique)).size !== skus.length) throw conflict();
@@ -235,7 +239,18 @@ export class AdminLegacyProductReadService {
         // Large read-only expansions are outside productInfo: the old Vue
         // echoes that object verbatim to POST, whose transport cap is 1 MiB.
         const editor = { ...(options.editorContract ? { contract_version: 1, erp_open: ['1','true'].includes(erp) } : {}),
-          stored_custom_form: storedForm, retired_attrs: skus.filter(row => row.isRetired === 1).map(row => skuDto(row, dims, countMap)), description_preview: '' };
+          ...(copy ? { copy } : {}), stored_custom_form: storedForm,
+          retired_attrs: copy ? [] : skus.filter(row => row.isRetired === 1).map(row => skuDto(row, dims, countMap)), description_preview: '' };
+        if (copy) {
+          Object.assign(info, { id: 0, supplier_id: product.type === 2 ? product.relationId : 0,
+            soure_link: '', spu: '', code_path: '', sales: 0, is_del: 0, is_verify: 0, add_time: 0 });
+          for (const row of [...skuRows, info.attr as Row]) {
+            delete row.id; delete row.unique;
+            Object.assign(row, { sales: 0, sum_stock: 0, disk_info: '', virtual_list: [], virtual_available: 0, virtual_total: 0 });
+            if (product.productType === 1) row.stock = 0;
+          }
+          if (product.productType === 1) info.stock = 0;
+        }
         const slots: Slot[] = [];
         const collect = (raw: unknown, owner: Product, set: (value: string) => void) => {
           if (typeof raw !== 'string') return;
@@ -246,6 +261,7 @@ export class AdminLegacyProductReadService {
         for (const key of ['image', 'recommend_image']) collect(info[key], product, value => { info[key] = value; });
         if (Array.isArray(info.slider_image)) (info.slider_image as unknown[]).forEach((value, index) => collect(value, product, next => { (info.slider_image as unknown[])[index] = next; }));
         for (const row of [...skuRows, ...editor.retired_attrs, info.attr as Row]) collect(row.pic, product, value => { row.pic = value; });
+        if (copy) canonicalizePublishedHtmlAttachmentReferences(info.description, reference => collect(reference, product, () => {}));
         (info.recommend_list as Row[]).forEach(row => { const owner = recommendations.find(item => item.id === Number(row.product_id)); if (owner) collect(row.image, owner, value => { row.image = value; }); });
         // Editable markup stays canonical and byte-preserving; preview alone
         // is sanitized and signed after checking actual owner metadata here.
@@ -255,6 +271,8 @@ export class AdminLegacyProductReadService {
           preview.set(match[1], ''); collect(match[1], product, value => { preview.set(match[1], value); });
         }
         const references = await publicProductPictures(tx, slots);
+        if (copy && references.some((reference, index) => reference !== slots[index].image))
+          throw conflict('来源包含不存在或不属于复制目标的私有图片，请先在来源商品替换素材');
         await assertAdminLegacyProductReadDeadline(tx, actor);
         return { data: { tempList: templates.map(row => ({ id: row.id, name: row.name })), cateList: tree(categories), productInfo: info, editor }, slots, references, html, preview };
       });

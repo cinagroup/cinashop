@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { canonicalProductImage, detailIdentity, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorRoute, parsePendingProductSave, parseProductReceipt, PRODUCT_EDITOR_FIELDS, toLegacySave, validateProductSave } from '../../view/admin-ts/src/pages/product/productEditorModel';
+import { canonicalProductImage, detailIdentity, fromCopyDetail, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorEntry, parseEditorRoute, parsePendingProductSave, parseProductEditorCopy, parseProductReceipt, PRODUCT_EDITOR_FIELDS, toLegacySave, validateProductSave, type ProductEditorCopy } from '../../view/admin-ts/src/pages/product/productEditorModel';
 
 const operation = { operation_id: '9d2a99ec-3798-4fbc-822f-33143bdb70e8', actor_id: 20, requested_id: 19 };
 function model() { const value = newProductEditor(); value.store_name = '完整商品'; value.cate_id = [11, 12]; value.brand_id = [21, 22]; value.slider_image = ['/api/assets/31']; value.attrs[0]!.price = 12; value.attrs[0]!.stock = 5; return value; }
@@ -113,5 +113,44 @@ describe('full Admin product editor field projection', () => {
     expect(() => parseProductReceipt({ ...operation, state: 'unknown', result: null }, operation)).toThrow();
     expect(() => fromEditorDraft(makeEditorDraft(model(), 19, operation), 21, 19)).toThrow();
     expect(() => fromEditorDraft(makeEditorDraft(model(), 19, operation), 20, 20)).toThrow();
+  });
+  it('accepts the genuine copy route while rejecting edit/import/duplicate or malformed source contexts', () => {
+    expect(parseEditorEntry(undefined, '19', undefined)).toEqual({ target: 0, copySourceId: 19 });
+    expect(parseEditorEntry('0', '19', undefined)).toEqual({ target: 0, copySourceId: 19 });
+    expect(parseEditorEntry('19', undefined, undefined)).toEqual({ target: 19, copySourceId: 0 });
+    for (const [target, source, type] of [['19', '20', undefined], [undefined, '19', '0'], [undefined, '19', '1'], [undefined, '19', '-1'], [undefined, ['19'], undefined], [undefined, '01', undefined], [undefined, '0', undefined], [undefined, '', undefined], [undefined, null, undefined]] as const)
+      expect(() => parseEditorEntry(target, source, type)).toThrow();
+  });
+  it.each([0, 1, 2] as const)('validates source-bound copy context and preserves the actual owner type %s', ownerType => {
+    const destination = { type: ownerType, relation_id: ownerType === 0 ? 0 : 500 }, copy = { source_id: 19, token: 'a'.repeat(64), destination };
+    const dto = detail(); Object.assign(dto.productInfo, { type: ownerType, relation_id: destination.relation_id });
+    dto.productInfo.attr = { ...toLegacySave(model()).attrs[0] } as any;
+    const state = fromCopyDetail({ ...dto, editor: { ...dto.editor, copy } }, 19);
+    expect(state.copy).toEqual(copy); expect(state.owner).toEqual({ ...destination, supplier_id: ownerType === 2 ? 500 : 0 });
+    expect(toLegacySave(state.model, copy).attrs[0]).not.toHaveProperty('unique');
+    for (const invalid of [{ ...copy, source_id: 20 }, { ...copy, token: 'A'.repeat(64) }, { ...copy, destination: { type: 0, relation_id: 500 } }, { ...copy, destination: { type: 1, relation_id: 0 } }, { ...copy, extra: true }]) expect(() => parseProductEditorCopy(invalid, 19)).toThrow();
+  });
+  it('refuses copy seeds or drafts that still contain historical SKU or card delivery data', () => {
+    const copy: ProductEditorCopy = { source_id: 19, token: 'b'.repeat(64), destination: { type: 2, relation_id: 500 } };
+    expect(() => fromCopyDetail({ ...detail(), editor: { ...detail().editor, copy } }, 19)).toThrow('历史SKU');
+    const value = model(); value.product_type = 1; value.supplier_id = 500; value.attrs[0]!.stock = 0;
+    expect(() => toLegacySave(value, copy)).not.toThrow();
+    for (const patch of [{ unique: 'old00001' }, { id: 10 }, { stock: 1 }, { disk_info: 'must stay in source' }, { virtual_list: [{ key: 'never-copy', value: 'synthetic' }] }, { sales: 1 }]) {
+      const changed = structuredClone(value); Object.assign(changed.attrs[0]!, patch); expect(() => toLegacySave(changed, copy)).toThrow('历史SKU');
+    }
+  });
+  it('keeps a copy draft source and original snapshot token isolated from ordinary creates and other sources', () => {
+    const copy: ProductEditorCopy = { source_id: 19, token: 'c'.repeat(64), destination: { type: 1, relation_id: 500 } }, value = model();
+    const draft = makeEditorDraft(value, 0, null, copy), restored = fromEditorDraft(draft, 20, 0, 19);
+    expect(restored.copy).toEqual(copy); expect(restored.copy).not.toBe(copy); expect(restored.model.store_name).toBe(value.store_name);
+    expect(() => fromEditorDraft(draft, 20, 0)).toThrow(); expect(() => fromEditorDraft(draft, 20, 0, 20)).toThrow();
+    expect(() => fromEditorDraft(makeEditorDraft(value, 0, null), 20, 0, 19)).toThrow('普通新建');
+    const old = makeEditorDraft(value, 0, null); delete old.editor_copy; expect(fromEditorDraft(old, 20, 0).copy).toBeNull();
+    expect(() => makeEditorDraft(value, 19, null, copy)).toThrow('独立商品');
+  });
+  it('requires a parameter template when parameter rows exist before a request is sent', () => {
+    const value = model(); value.specs = [{ name: '产地', value: '合成地区', sort: 0, status: 1 }];
+    expect(() => validateProductSave(toLegacySave(value), false)).toThrow('参数模板');
+    value.specs_id = 31; expect(() => validateProductSave(toLegacySave(value), false)).not.toThrow();
   });
 });

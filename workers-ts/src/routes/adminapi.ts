@@ -308,6 +308,8 @@ adminapiRoutes.delete('/product/product/:id', adminAuth, AdminProductRecycle.tog
 adminapiRoutes.post('/product/product/:id', adminAuth, AdminLegacyProductSave.save);
 adminapiRoutes.get('/product/editor/detail/:id', adminAuth, AdminProductEditor.detail);
 adminapiRoutes.post('/product/editor/save/:id', adminAuth, AdminProductEditor.save);
+adminapiRoutes.get('/product/editor/copy/:id', adminAuth, AdminProductEditor.copyDetail);
+adminapiRoutes.post('/product/editor/copy/:id', adminAuth, AdminProductEditor.copySave);
 adminapiRoutes.get('/product/editor/operations/:operationId', adminAuth, AdminProductEditor.receipt);
 adminapiRoutes.post('/product/editor/operations/:operationId/resolve', adminAuth, AdminProductEditor.resolve);
 adminapiRoutes.post('/product/generate_attr/:id/:type', adminAuth, AdminLegacyProductGenerate.generate);

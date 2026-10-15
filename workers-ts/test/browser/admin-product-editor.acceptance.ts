@@ -38,7 +38,10 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
   const appKey = randomUUID(), password = randomUUID(), control = `/__product_editor_fixture/${randomUUID()}`;
   const app = createApp(), env = { APP_KEY: appKey, NODE_ENV: 'test', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '', ORDER_QUEUE: { sendBatch: async () => {} } } as unknown as Env;
   const paths: Array<{ path: string; method: string; status: number; operation_id?: string }> = [];
-  const saves: Array<{ operation_id: string; requested_id: number; fields: string[]; state: string; result: unknown }> = [];
+  const saves: Array<{ operation_id: string; requested_id: number; source_id?: number; fields: string[]; state: string; result: unknown }> = [];
+  const copySources = new Map<number,string>();
+  const sourceState = async (id: number) => JSON.stringify({product:await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)),
+    skus:await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,id))});
   const committedCreates = new Set<number>(), recovered = new Set<string>(); let dropNext = false, droppedOperation = '', droppedId = 0, dropped = 0, unexpected = 0, outbound = 0;
   const unexpectedPaths: string[] = []; let origin = '', finished = false, fail!: (error: Error) => void, finish!: () => void;
   const completion = new Promise<void>((yes, no) => { finish = yes; fail = no; });
@@ -65,6 +68,18 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
         expect((await f.db.select().from(storeProduct)).length).toBe(committedCreates.size);
         expect((await f.db.select().from(storeProduct)).some(row => row.id === droppedId)).toBe(true);
         expect(saves.every(value => JSON.stringify(value.fields) === JSON.stringify([...ADMIN_LEGACY_PRODUCT_FIELDS].sort()))).toBe(true);
+        const copies = saves.filter(value => value.source_id && value.state === 'committed');
+        expect(copies).toHaveLength(1);
+        const copied = copies[0]!, copiedId = (copied.result as {id:number}).id;
+        expect(copiedId).not.toBe(copied.source_id);
+        const [sourceProduct] = await f.db.select().from(storeProduct).where(eq(storeProduct.id,copied.source_id!));
+        const [copyProduct] = await f.db.select().from(storeProduct).where(eq(storeProduct.id,copiedId));
+        const [sourceSku] = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,copied.source_id!));
+        const [copySku] = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.productId,copiedId));
+        expect(copySku.unique).not.toBe(sourceSku.unique);
+        expect(copySku).toMatchObject({price:sourceSku.price,stock:sourceSku.stock,sales:0});
+        expect(copyProduct).toMatchObject({customForm:sourceProduct.customForm,type:sourceProduct.type,relationId:sourceProduct.relationId,sales:0});
+        for (const [id, snapshot] of copySources) expect(await sourceState(id)).toBe(snapshot);
         expect(unexpected).toBe(0); expect(outbound).toBe(0); finished = true;
       }
       json(response, await state()); if (finished) finish(); return;
@@ -88,17 +103,19 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
     if (candidate !== undefined) return json(response, { status: 200, msg: 'Synthetic shell/candidate fixture only', data: candidate });
     if (path === '/uploads/product-editor-fixture.svg' && method === 'GET') return send(response, '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#e7f1ed"/><circle cx="150" cy="130" r="70" fill="#538a73"/><text x="150" y="245" text-anchor="middle" font-size="24" fill="#244b3b">LOCAL PRODUCT</text></svg>', 200, 'image/svg+xml');
     if (path.startsWith('/adminapi/') || path.startsWith('/api/')) {
-      const allowed = method === 'GET' && /^\/adminapi\/product\/editor\/(?:detail\/[1-9]\d*|operations\/[a-f0-9-]{36})$/.test(path)
-        || method === 'POST' && /^\/adminapi\/product\/editor\/(?:save\/(?:0|[1-9]\d*)|operations\/[a-f0-9-]{36}\/resolve)$/.test(path)
+      const allowed = method === 'GET' && /^\/adminapi\/product\/editor\/(?:(?:detail|copy)\/[1-9]\d*|operations\/[a-f0-9-]{36})$/.test(path)
+        || method === 'POST' && /^\/adminapi\/product\/editor\/(?:save\/(?:0|[1-9]\d*)|copy\/[1-9]\d*|operations\/[a-f0-9-]{36}\/resolve)$/.test(path)
         || ['GET', 'POST', 'DELETE'].includes(method) && path === '/adminapi/product/cache'
         || method === 'POST' && /^\/adminapi\/product\/generate_attr\/(?:0|[1-9]\d*)\/1$/.test(path);
       if (!allowed) { unexpected++; unexpectedPaths.push(method + ' ' + path); process.stdout.write('PRODUCT_EDITOR_UNEXPECTED ' + method + ' ' + path + '\n'); return json(response, { status: 404, msg: 'Not part of the explicit editor fixture', data: null }, 404); }
       const headers = new Headers(); for (let index = 0; index < request.rawHeaders.length; index += 2) headers.append(request.rawHeaders[index]!, request.rawHeaders[index + 1]!);
+      const sourceId = method === 'POST' && /\/copy\/[1-9]\d*$/.test(path) ? Number(path.split('/').at(-1)) : undefined;
+      if (sourceId && !copySources.has(sourceId)) copySources.set(sourceId,await sourceState(sourceId));
       const body = await bodyOf(request), result = await app.fetch(new Request(origin + request.url, { method, headers, ...(body ? { body } : {}) }), env);
       const text = await result.text(), envelope = JSON.parse(text); paths.push({ path, method, status: Number(envelope.status) });
-      if (/\/save\//.test(path)) {
+      if (/\/save\//.test(path) || sourceId) {
         const input = JSON.parse(body), data = envelope.data;
-        saves.push({ operation_id: input.operation_id, requested_id: Number(path.split('/').at(-1)), fields: Object.keys(input.product).sort(), state: data?.state || `rejected:${envelope.status}`, result: data?.result || null });
+        saves.push({ operation_id: input.operation_id, requested_id: sourceId ? 0 : Number(path.split('/').at(-1)), ...(sourceId ? {source_id:sourceId} : {}), fields: Object.keys(input.product).sort(), state: data?.state || `rejected:${envelope.status}`, result: data?.result || null });
         paths.at(-1)!.operation_id = input.operation_id;
         if (data?.state === 'committed' && data.result?.created === true) committedCreates.add(data.result.id);
         if (dropNext && envelope.status === 200 && data?.state === 'committed') { dropNext = false; dropped++; droppedOperation = input.operation_id; droppedId = data.result.id; json(response, { status: 502, msg: 'Synthetic gateway lost the committed receipt', data: null }, 502); return; }
@@ -106,7 +123,9 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
       if (path.includes('/operations/') && envelope.data?.state === 'committed') recovered.add(envelope.data.operation_id);
       response.writeHead(result.status, Object.fromEntries(result.headers)); response.end(text); return;
     }
-    if (method !== 'GET' || url.search) return send(response, 'Static GET only', 404, 'text/plain');
+    const copyEntry = ['/product/create','/admin/product/add_product'].includes(path)
+      && url.searchParams.size === 1 && /^[1-9]\d*$/.test(url.searchParams.get('copy') || '');
+    if (method !== 'GET' || url.search && !copyEntry) return send(response, 'Static GET only', 404, 'text/plain');
     let file = resolve(root, '.' + decodeURIComponent(path)); if (file !== root && !file.startsWith(root + sep)) return send(response, 'Invalid static path', 403, 'text/plain');
     if (file === root || !extname(file)) file = resolve(root, 'index.html');
     const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };

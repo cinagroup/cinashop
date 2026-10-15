@@ -3,7 +3,7 @@ import { createContainerFromDb, type Container, type DbClient } from '@/lib/di';
 import { storeProduct, storeProductAttrValue, storeProductAttrResult, storeProductDescription, storeProductRelation,
   storeProductCategory, storeProductLabel, storeProductEnsure, storeProductSpecs, storeBrand, legacyCategory,
   storeProductCoupon, storeCouponIssue, storeCart, storeDiscountsProducts, storeSeckill, storeCombination, storeBargain, storeIntegral,
-  systemSupplier, shippingTemplates, systemForm, userLabel, systemConfig, systemAttachment, systemLog, storeOrderOutbox } from '@/models/schema';
+  systemSupplier, systemStore, shippingTemplates, systemForm, userLabel, systemConfig, systemAttachment, systemLog, storeOrderOutbox } from '@/models/schema';
 import { ProductAssociationService, tryLockProductWrite } from '@/services/product/ProductAssociationService';
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from '@/services/product/ProductSkuIdentity';
 import { lockProductUnitLifecycle } from '@/services/product/ProductUnitLifecycle';
@@ -23,6 +23,8 @@ import { assertProductSaveSame, lockProductSaveTables, lockProductSaveRows, prod
   productSaveSame, productSaveWatermarks, readProductSaveState, emptyProductSaveState, MAX_PRODUCT_SAVE_ROWS } from './AdminLegacyProductSaveState';
 import { verifyProductSavePlan, expectedProductSaveMain } from './AdminLegacyProductSaveProof';
 import { admitProductEditorSave, completeProductEditorSave, type ProductEditorIntent } from './AdminProductEditorReceipt';
+import { admitProductCopy } from './AdminProductCopy';
+import { authorizeAdminLegacyProductRead } from './AdminLegacyProductReadAuthority';
 
 export interface AdminLegacyProductSaveEffects { dispatch(outboxId: number): Promise<void> }
 export interface AdminLegacyProductSaveContext { localCopy?: boolean; editorOperation?: ProductEditorIntent }
@@ -77,7 +79,7 @@ async function canonicalizeMedia(tx: DbClient, input: AdminLegacyProductInput, o
 /** Complete write coordinator. No network/provider work or DDL occurs in the
  * transaction. Route integration must use the strict body reader separately. */
 export class AdminLegacyProductSaveService {
-  constructor(private readonly container: Container, private readonly effects?: AdminLegacyProductSaveEffects) {}
+  constructor(private readonly container: Container, private readonly effects?: AdminLegacyProductSaveEffects, private readonly appKey?: string) {}
 
   async save(requestedId: number, body: unknown, actor: AdminAuthorityActor, context: AdminLegacyProductSaveContext = {}) {
     id(requestedId);
@@ -86,12 +88,15 @@ export class AdminLegacyProductSaveService {
         const previous = context.editorOperation && await admitProductEditorSave(tx, context.editorOperation, requestedId, actor);
         if (previous) return { id: previous.result!.id, committed: true as const, outboxId: null,
           receipt: previous, message: '商品操作已完成' };
+        const copy = context.editorOperation?.copy;
+        if (copy && requestedId !== 0) throw new ValidateException('复制只能新建商品');
+        if (copy) await authorizeAdminLegacyProductRead(tx, actor);
         const now = await dbClock(tx, actor);
         await lockProductUnitLifecycle(tx);
         // Candidate discovery precedes bargain/cart/product locks. The real
         // table barrier below closes both source-link and child-set phantoms.
         const source = body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
-        const sourceLink = context.localCopy ? '' : typeof source.soure_link === 'string' ? source.soure_link.trim() : '';
+        const sourceLink = context.localCopy || copy ? '' : typeof source.soure_link === 'string' ? source.soure_link.trim() : '';
         const candidates = async () => requestedId ? tx.select().from(storeProduct).where(eq(storeProduct.id, requestedId)).limit(2)
           : sourceLink ? tx.select().from(storeProduct).where(and(eq(storeProduct.soureLink, sourceLink), eq(storeProduct.isDel, 0))).orderBy(asc(storeProduct.id)).limit(2) : [];
         const initial = await candidates();
@@ -110,10 +115,12 @@ export class AdminLegacyProductSaveService {
         await tx.execute(sql`LOCK TABLE ${systemConfig}, ${systemSupplier}, ${shippingTemplates}, ${systemForm}, ${userLabel},
           ${storeProductCategory}, ${storeBrand}, ${storeProductLabel}, ${storeProductEnsure}, ${legacyCategory}, ${storeProductSpecs},
           ${storeCouponIssue}, ${systemAttachment} IN SHARE MODE NOWAIT`);
+        if (copy) await tx.execute(sql`LOCK TABLE ONLY ${systemStore} IN SHARE MODE NOWAIT`);
         await lockProductSaveTables(tx);
         await tx.execute(sql`LOCK TABLE ONLY ${systemLog}, ONLY ${storeOrderOutbox} IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
         assertProductSaveSame(await candidates(), initial, '候选');
         if (productId) await lockProductSaveRows(tx, productId);
+        const copySource = copy ? await admitProductCopy(tx, copy, this.appKey) : undefined;
         const config = await tx.select().from(systemConfig).where(and(eq(systemConfig.isStore, 0),
           inArray(systemConfig.menuName, ['erp_open', 'store_stock', 'site_url']))).orderBy(asc(systemConfig.id));
         if (new Set(config.map(row => row.menuName)).size !== config.length) throw productSaveConflict('商品配置存在重复键，请先核对');
@@ -122,7 +129,7 @@ export class AdminLegacyProductSaveService {
         if (!['', '0', 'false', '1', 'true'].includes(erpValue) || !/^(?:0|[1-9]\d*)$/.test(thresholdValue)
           || Number(thresholdValue) > 2_147_483_647) throw productSaveConflict('商品库存配置无效');
         const threshold = Number(thresholdValue);
-        const input = normalizeAdminLegacyProductInput(body, { now, localCopy: context.localCopy,
+        const input = normalizeAdminLegacyProductInput(body, { now, localCopy: context.localCopy || !!copy,
           erpOpen: ['1', 'true'].includes(erpValue), siteUrl: settings.get('site_url') });
         if (input.copyMode === -1) throw new ValidateException('采集图片处理尚未接入，请先使用本地图文素材保存');
         // Ordinary editing cannot replace trusted import provenance via its
@@ -130,7 +137,11 @@ export class AdminLegacyProductSaveService {
         if (context.editorOperation && existing) input.productValues.soureLink = existing.soureLink;
         if (input.productValues.isShow === 2) throw new ValidateException('定时上架必须填写有效上架时间');
         if (existing?.isDel === 1 && input.productValues.isShow !== 0) throw new ValidateException('回收站商品不能直接上架');
-        const owner = resolveAdminLegacyProductOwner(input, existing);
+        if (copySource && (input.productType !== copySource.productType
+          || input.supplierId !== (copySource.type === 2 ? copySource.relationId : 0)))
+          throw new ValidateException('复制不能改变来源商品归属或履约类型');
+        const owner = copySource ? { type: copySource.type, relationId: copySource.relationId }
+          : resolveAdminLegacyProductOwner(input, existing);
         if (![0, 1, 2].includes(owner.type) || owner.type === 0 && owner.relationId !== 0 || owner.type !== 0 && owner.relationId <= 0)
           throw new ValidateException('商品历史归属无效');
         if (input.supplierId && (!existing || existing.type === 0)) {
@@ -224,6 +235,7 @@ export class AdminLegacyProductSaveService {
         const categories = await tx.select().from(storeProductCategory).where(inArray(storeProductCategory.id, input.normalized.cate_id as number[]));
         const expectedMain = expectedProductSaveMain(input, existing, actualId, owner, verifiedState, creation, now, stock, isSold, isPolices);
         const verify = async () => {
+          if (copy) await admitProductCopy(tx, copy, this.appKey);
           const [main] = await tx.select().from(storeProduct).where(eq(storeProduct.id, actualId)).limit(1);
           assertProductSaveSame(main, expectedMain, '主表');
           verifyProductSavePlan({ input, existing, before, after: await readProductSaveState(tx, actualId), actualId, owner,
@@ -239,7 +251,8 @@ export class AdminLegacyProductSaveService {
         if (auditBefore.length > MAX_PRODUCT_SAVE_ROWS || outboxBefore.length > MAX_PRODUCT_SAVE_ROWS) throw new ServiceUnavailableException('商品审计或事件集合超过完整容量');
         const auditExpected = { ...productSaveDefaults(systemLog), adminId: actor.id, path: auditPath, page: '商品完整保存', method: 'POST', type: 'product_save', addTime: now,
           action: JSON.stringify({ operation: 'save', productId: actualId, requestedId, warning: isPolices === 1,
-            copied: context.localCopy === true, sourceLinkResolved: requestedId === 0 && !!existing, skuCount: active.length }) };
+            copied: input.localCopy, ...(copy ? { source_id: copy.sourceId } : {}),
+            sourceLinkResolved: requestedId === 0 && !!existing, skuCount: active.length }) };
         const insertedAudit = await tx.insert(systemLog).values(auditExpected as typeof systemLog.$inferInsert).returning();
         if (insertedAudit.length !== 1 || !Number.isInteger(insertedAudit[0].id) || insertedAudit[0].id <= 0)
           throw productSaveConflict('商品审计回执不完整');

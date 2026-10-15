@@ -1,0 +1,710 @@
+{
+  "schema": "cinashop_trusted_product_copy_evidence_v1",
+  "date": "2026-10-15",
+  "base_commit": "c9778a9b2e64b9cb549709d183210fe5262574a0",
+  "status": "local_validation_passed",
+  "routes": {
+    "seed": "GET /adminapi/product/editor/copy/:id",
+    "save": "POST /adminapi/product/editor/copy/:id",
+    "save_body": [
+      "operation_id",
+      "copy_token",
+      "product(all59)"
+    ],
+    "requested_target": 0
+  },
+  "contract": {
+    "source_state": "existing including recycled; no requirement to be on sale",
+    "destination": "preserve actual type/relation_id for platform, store and supplier; caller cannot override owner or fulfillment",
+    "source_snapshot": "HMAC-SHA256 over main, attrs, active/retired SKU metadata, descriptions, coupons and type4 label relations; no card credential query",
+    "source_revalidation": "after actual full-save table barriers, and both final business/audit proofs; stale or missing source refuses atomically",
+    "media": "inaccessible raw source references fail seed before signing; destination references revalidated in save; no silent empty image replacement or ownership transfer",
+    "clear": [
+      "SKU id/unique",
+      "real sales",
+      "sourceLink",
+      "SPU/codePath",
+      "fixed disk_info",
+      "card credentials/imports/counts",
+      "card inventory",
+      "retired SKU list"
+    ],
+    "retain": [
+      "ordinary inventory",
+      "prices",
+      "second-card configuration",
+      "marketing selections",
+      "stored custom-form snapshot"
+    ],
+    "copy_operation_mac": "separate copy domain binds actor,target0,UUID,full body,source ID and snapshot token (which binds actual destination)",
+    "committed_replay": "original receipt before source/config normalization; no duplicate product/audit/outbox",
+    "draft": "source-bound editor_copy metadata or null; original token retained on restore; one shared actor slot with existing19h TTL",
+    "ddl_changes": false,
+    "legacy_get_post_and_receipt_catalog_unchanged": true
+  },
+  "php_fidelity": {
+    "legacy_copy": "query.copy reads existing product then submits id0 and empty soure_link through ordinary save",
+    "intentional_corrections": [
+      "preserve actual owner instead of store-ID-to-supplier confusion or nonphysical owner reset",
+      "never duplicate fixed delivery content/cards/inventory"
+    ],
+    "source_inputs": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+        "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAdd/index.vue",
+        "sha256": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrServices.php",
+        "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductVirtualServices.php",
+        "sha256": "1a44c129483d02f79b0f70f972fd5954b543eb7afb246a9e083de99e887613a1"
+      }
+    ]
+  },
+  "validation": {
+    "wrapper": "bash /home/cina/cinagroup/tools/validate-serial.sh; Vitest maxWorkers=1",
+    "worker_types": {
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "final_status": "passed",
+      "log": "/tmp/cinashop-copy-types-final.log"
+    },
+    "runtime_types": {
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+      "final_status": "passed",
+      "log": "/tmp/cinashop-copy-types-final.log"
+    },
+    "frontend": {
+      "command": "node_modules/.bin/vue-tsc -b; node_modules/.bin/vite build",
+      "passed": true,
+      "log": "/tmp/cinashop-copy-frontend-build.log"
+    },
+    "unit_runs": [
+      {
+        "files": [
+          "admin-product-editor",
+          "admin-permission"
+        ],
+        "passed": 28,
+        "failed": 0
+      },
+      {
+        "files": [
+          "admin-product-editor",
+          "admin-product-full-editor-model-frontend",
+          "admin-product-full-editor-workflow-frontend"
+        ],
+        "passed": 61,
+        "failed": 0
+      },
+      {
+        "files": [
+          "admin-product-full-editor-model-frontend",
+          "admin-product-full-editor-workflow-frontend",
+          "admin-product-catalog-navigation-frontend",
+          "legacy-content-cache",
+          "admin-legacy-product-save-http",
+          "admin-legacy-product-read-http"
+        ],
+        "passed": 92,
+        "failed": 1,
+        "failure": "real omitted-id legacy route redirected to dashboard; corrected empty-string optional param"
+      },
+      {
+        "files": [
+          "admin-product-catalog-navigation-frontend",
+          "admin-product-full-editor-model-frontend",
+          "admin-product-full-editor-workflow-frontend"
+        ],
+        "passed": 77,
+        "failed": 0
+      }
+    ],
+    "native_runs": [
+      {
+        "files": [
+          "admin-product-editor-native",
+          "admin-product-draft-roundtrip"
+        ],
+        "passed": 18,
+        "failed": 1,
+        "failure": "test pause regex did not match quoted Drizzle table SQL; fixed without changing barrier assertions"
+      },
+      {
+        "files": [
+          "admin-product-editor-native",
+          "admin-product-draft-roundtrip",
+          "admin-legacy-product-save-native",
+          "admin-legacy-product-read-native"
+        ],
+        "passed": 24,
+        "failed": 0
+      },
+      {
+        "files": [
+          "admin-product-editor-native"
+        ],
+        "passed": 13,
+        "failed": 0,
+        "extra": "copy recovery after grant revocation and rollback after late coupon failure",
+        "log": "/tmp/cinashop-copy-native-final.log"
+      }
+    ],
+    "repairs": [
+      "Vue TS2322 copy-union narrowing corrected before final production build and77 frontend checks",
+      "independent review corrected copied/source_id audit and rejected string fulfillment enum before final tests"
+    ],
+    "native_scope": [
+      "actual App/JWT copy and receipts",
+      "platform/store/supplier owner preservation",
+      "recycled source",
+      "new SKU/SPU and real sales reset",
+      "no credential/disk/card-stock copy",
+      "stale snapshot and inaccessible source media refusal",
+      "independent direct-SQL source writer/table fences",
+      "late rollback",
+      "immutable receipts and restricted recovery LOGIN",
+      "legacy SELECT-only read and old save barriers",
+      "draft SQL round trips"
+    ],
+    "source_secret_scan": {
+      "tool": "Gitleaks8.29.0",
+      "reviewed_files": 23,
+      "leaks": 0,
+      "report": "/tmp/cinashop-copy-source-secrets.json"
+    }
+  },
+  "browser": {
+    "availability": "installed Browser/Computer Use path, selected Codex IAB2; no alternate driver",
+    "environment": "http://127.0.0.1:33013, newly owned PostgreSQL16.14; App/JWT/save/detail/copy/receipts/drafts actual; shell/candidates/picture synthetic",
+    "flow": "new source -> genuine legacy copy link -> change copy name -> gateway502 after copy commit -> original UUID query -> edit independent product2",
+    "viewport": {
+      "width": 662,
+      "height": 684
+    },
+    "checks": {
+      "page_identity": true,
+      "meaningful_content": true,
+      "no_framework_overlay": true,
+      "relevant_console_warn_error": 0,
+      "interaction_proof": true,
+      "screenshot_evidence": true
+    },
+    "sql_assertions": [
+      "two products and two save requests",
+      "exactly one committed copy POST",
+      "original source unchanged",
+      "distinct SKU identities",
+      "same price19.50 and stock7",
+      "same stored form snapshot and actual owner",
+      "copy real sales0",
+      "all59 fields per save",
+      "zero unknown routes/server outbound"
+    ],
+    "result": {
+      "fixture": "owned PG16, actual editor App/JWT/SQL; shell/candidates synthetic",
+      "products": [
+        {
+          "id": 1,
+          "name": "可信复制源商品",
+          "categories": "11",
+          "brands": "",
+          "labels": ""
+        },
+        {
+          "id": 2,
+          "name": "可信复制独立副本",
+          "categories": "11",
+          "brands": "",
+          "labels": ""
+        }
+      ],
+      "skus": [
+        {
+          "product_id": 1,
+          "unique": "8085bd56",
+          "stock": 7
+        },
+        {
+          "product_id": 2,
+          "unique": "a533c433",
+          "stock": 7
+        }
+      ],
+      "save_requests": 2,
+      "saves": [
+        {
+          "operation_id": "f8880175-ca4d-4a3b-83a9-0beffcd9d1e8",
+          "requested_id": 0,
+          "fields": [
+            "activity",
+            "attrs",
+            "auto_off_time",
+            "auto_on_time",
+            "bar_code",
+            "brand_id",
+            "cate_id",
+            "code",
+            "command_word",
+            "coupon_ids",
+            "custom_form",
+            "delivery_type",
+            "description",
+            "ensure_id",
+            "ficti",
+            "freight",
+            "give_integral",
+            "is_benefit",
+            "is_best",
+            "is_good",
+            "is_hot",
+            "is_limit",
+            "is_new",
+            "is_postage",
+            "is_presale_product",
+            "is_show",
+            "is_sub",
+            "is_support_refund",
+            "is_vip_product",
+            "items",
+            "keyword",
+            "label_id",
+            "limit_num",
+            "limit_type",
+            "mer_use",
+            "postage",
+            "presale_day",
+            "presale_time",
+            "product_type",
+            "recommend",
+            "recommend_image",
+            "recommend_list",
+            "slider_image",
+            "sort",
+            "soure_link",
+            "spec_type",
+            "specs",
+            "specs_id",
+            "store_info",
+            "store_label_id",
+            "store_name",
+            "supplier_id",
+            "system_form_id",
+            "tao_words",
+            "temp_id",
+            "type",
+            "unit_name",
+            "video_link",
+            "video_open"
+          ],
+          "state": "committed",
+          "result": {
+            "id": 1,
+            "created": true
+          }
+        },
+        {
+          "operation_id": "15e857b7-2bce-4294-b19f-35675b4fbf88",
+          "requested_id": 0,
+          "source_id": 1,
+          "fields": [
+            "activity",
+            "attrs",
+            "auto_off_time",
+            "auto_on_time",
+            "bar_code",
+            "brand_id",
+            "cate_id",
+            "code",
+            "command_word",
+            "coupon_ids",
+            "custom_form",
+            "delivery_type",
+            "description",
+            "ensure_id",
+            "ficti",
+            "freight",
+            "give_integral",
+            "is_benefit",
+            "is_best",
+            "is_good",
+            "is_hot",
+            "is_limit",
+            "is_new",
+            "is_postage",
+            "is_presale_product",
+            "is_show",
+            "is_sub",
+            "is_support_refund",
+            "is_vip_product",
+            "items",
+            "keyword",
+            "label_id",
+            "limit_num",
+            "limit_type",
+            "mer_use",
+            "postage",
+            "presale_day",
+            "presale_time",
+            "product_type",
+            "recommend",
+            "recommend_image",
+            "recommend_list",
+            "slider_image",
+            "sort",
+            "soure_link",
+            "spec_type",
+            "specs",
+            "specs_id",
+            "store_info",
+            "store_label_id",
+            "store_name",
+            "supplier_id",
+            "system_form_id",
+            "tao_words",
+            "temp_id",
+            "type",
+            "unit_name",
+            "video_link",
+            "video_open"
+          ],
+          "state": "committed",
+          "result": {
+            "id": 2,
+            "created": true
+          }
+        }
+      ],
+      "dropped_responses": 1,
+      "dropped_operation": "15e857b7-2bce-4294-b19f-35675b4fbf88",
+      "recovered_operations": [
+        "15e857b7-2bce-4294-b19f-35675b4fbf88"
+      ],
+      "armed_drop_next": false,
+      "route_requests": [
+        {
+          "path": "/adminapi/product/cache",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/editor/save/0",
+          "method": "POST",
+          "status": 200,
+          "operation_id": "f8880175-ca4d-4a3b-83a9-0beffcd9d1e8"
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "DELETE",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/editor/detail/1",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/editor/copy/1",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/editor/copy/1",
+          "method": "POST",
+          "status": 200,
+          "operation_id": "15e857b7-2bce-4294-b19f-35675b4fbf88"
+        },
+        {
+          "path": "/adminapi/product/editor/operations/15e857b7-2bce-4294-b19f-35675b4fbf88",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "DELETE",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/cache",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/adminapi/product/editor/detail/2",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "unexpected_requests": 0,
+      "unexpected_paths": [],
+      "outbound_requests": 0,
+      "finished": true
+    },
+    "exit": {
+      "exit_code": 0,
+      "finished_at": 1792049723.354882
+    },
+    "screenshots": [
+      "/tmp/cinashop-copy-seed.png",
+      "/tmp/cinashop-copy-pending.png",
+      "/tmp/cinashop-copy-recovered.png"
+    ],
+    "log": "/tmp/cinashop-copy-browser.log",
+    "created_tabs_closed": true
+  },
+  "cleanup": [
+    {
+      "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-JI6jFw/data",
+      "status_exit": 3,
+      "status": "pg_ctl: no server running",
+      "postmaster_pid_exists": false
+    },
+    {
+      "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-iqOS7M/data",
+      "status_exit": 3,
+      "status": "pg_ctl: no server running",
+      "postmaster_pid_exists": false
+    },
+    {
+      "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-120ZTc/data",
+      "status_exit": 3,
+      "status": "pg_ctl: no server running",
+      "postmaster_pid_exists": false
+    },
+    {
+      "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-cVvWh5/data",
+      "status_exit": 3,
+      "status": "pg_ctl: no server running",
+      "postmaster_pid_exists": false
+    }
+  ],
+  "base_cloud_ci": {
+    "run": 38696584510,
+    "snapshot": {
+      "conclusion": "",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "Repository secret scan",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "status": "completed"
+        },
+        {
+          "conclusion": "",
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "status": "in_progress"
+        },
+        {
+          "conclusion": "success",
+          "name": "workerd runtime tests",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Supplier build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Kefu build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "UniApp build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "PC build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Admin build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "",
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "status": "in_progress"
+        }
+      ],
+      "status": "in_progress"
+    },
+    "new_copy_commit_ci": "requires separate post-push verification; local success does not claim full cloud CI success"
+  },
+  "open_boundaries": [
+    "formal independent receipt addon/runtime grants still require commissioned installation",
+    "cross-owner asset transfer is outside copy; same owner enforced",
+    "external import/media collection and video upload",
+    "fixed/mobile viewport coverage beyond observed662x684",
+    "production/provider acceptance and full new-commit CI",
+    "single shared actor draft slot still has no multiwindow CAS"
+  ],
+  "checklist": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "checkbox_rows_unchanged": true
+  },
+  "audit": {
+    "total": 88,
+    "done": 50,
+    "open": 38,
+    "checkbox_rows_unchanged": true
+  },
+  "source_inputs": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "c3e5a524c9d9b6fc0aa376cc73fe9301c85e732a4a7d28163f1ab331dc43a72c"
+    },
+    {
+      "path": "view/admin-ts/src/api/productEditor.ts",
+      "sha256": "2d4ead75fe7542657265ead20d488729478693158d1dde55e619c17e5cda05b1"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductForm.vue",
+      "sha256": "277bafc4c6a3970949dbb1f8afd7bc702c57d782817eb849217c287de6fc8d26"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductList.vue",
+      "sha256": "81fc3a5f4ef0e497f5303b5c5816edd6158ae6b571f1670f9c5b83d88baab776"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/productEditorModel.ts",
+      "sha256": "af61af0e6153f09f97e542107de584a6d9c0497e5477e02c1eddbe488d29fe54"
+    },
+    {
+      "path": "view/admin-ts/src/router/index.ts",
+      "sha256": "00ef6fde8aa61717676a7394276e7fb72467ea7e11eee9817b20eb77627749ac"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminProductEditorController.ts",
+      "sha256": "89b761e114e1681c0af584065935a610a9050ad1f2fae176aa34f2371c541adb"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "5d80a80f212f43c64069ea861a8378e9e83e8d20af64b05054514a909a570d99"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+      "sha256": "2c7e4b37e27afe47840585f0270db99c91a60fa09d32315e228599b6fb8233b4"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+      "sha256": "bb2a038fa20d419d89fc5dc20c70c4933376e91f5db9d582dbbd33a19e8c26d5"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "3e52ce63a80e24c8f18542777c26d1610fd0fb6ced12c29571fc0edc397f7c60"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductCopy.ts",
+      "sha256": "5ae8bb060a503d9dcd75950cf079b1d2dead05aebd1c6922a9c28388ab541795"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductEditorReceipt.ts",
+      "sha256": "1565ba46aa27b79e2434dfdfbaa1b30cd091983c86eda06004bba549acb4b51f"
+    },
+    {
+      "path": "workers-ts/src/services/system/LegacyContentService.ts",
+      "sha256": "1074b9624825787a21d01be508c84baa1ce296bc4f8d396422d91e69db1d7fb9"
+    },
+    {
+      "path": "workers-ts/test/admin-product-catalog-navigation-frontend.test.ts",
+      "sha256": "dbc465b428e5832911f6f3329eb51c0dbe6dc35bfa8a773349c1475301bf3241"
+    },
+    {
+      "path": "workers-ts/test/admin-product-draft-roundtrip.test.ts",
+      "sha256": "39f89c070602e02d957b19fcb04ddcd4c819f3cae64fdaffccedd0dc634fde9e"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor-native.test.ts",
+      "sha256": "86f6a1469300d62cafa51ff10be9fc7bf99282127b49279f01ed89dbb702c4b3"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor.test.ts",
+      "sha256": "460cdce1b1908c1d170d2114d7dc5397f09d7ce4f1830e64dd809d28e0c8057d"
+    },
+    {
+      "path": "workers-ts/test/admin-product-full-editor-model-frontend.test.ts",
+      "sha256": "82a08825eefcdc558aab0b1fb395e5c4b4e39a9da7bcca208b161fbdcb67c50f"
+    },
+    {
+      "path": "workers-ts/test/admin-product-full-editor-workflow-frontend.test.ts",
+      "sha256": "13d35d9f5f590df8162ec80f0769947c91d7745c39cae9d00c857a5c3ce3e37a"
+    },
+    {
+      "path": "workers-ts/test/browser/admin-product-editor.acceptance.ts",
+      "sha256": "b657336aa8d1f6ca98fdb9bde073b273e12c80e6e9aeda190eb64848b900fe42"
+    },
+    {
+      "path": "workers-ts/test/helpers/adminLegacyProductSave.ts",
+      "sha256": "4afd5bb3ace9db27a08d74bddb349a6d9a714d989d9e0c777d6f22db0d8c7164"
+    }
+  ]
+}

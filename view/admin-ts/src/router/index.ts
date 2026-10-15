@@ -47,7 +47,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "/admin/product/add_product/:id?",
-        redirect: to => ({ path: to.params.id === undefined || to.params.id === "0" ? "/product/create" : `/product/edit/${encodeURIComponent(String(to.params.id))}`, query: to.query, hash: to.hash }),
+        redirect: to => ({ path: to.params.id === undefined || to.params.id === "" || to.params.id === "0" ? "/product/create" : `/product/edit/${encodeURIComponent(String(to.params.id))}`, query: to.query, hash: to.hash }),
       },
       {
         path: "product/metadata",

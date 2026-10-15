@@ -36,11 +36,14 @@ export const PRODUCT_EDITOR_FIELDS = [
 ] as const satisfies ReadonlyArray<keyof ProductSavePayload>;
 
 export interface ProductEditorModel extends Omit<ProductSavePayload, 'attrs'> { attrs: EditorSku[] }
+export interface ProductEditorCopy {
+  source_id: number; token: string; destination: { type: 0 | 1 | 2; relation_id: number };
+}
 export interface ProductEditorDetail {
   productInfo: Record<string, unknown>;
   tempList: Array<{ id: number; name: string }>;
   cateList: unknown[];
-  editor: { stored_custom_form: unknown; retired_attrs: unknown[]; description_preview: string; contract_version?: number; erp_open?: boolean };
+  editor: { stored_custom_form: unknown; retired_attrs: unknown[]; description_preview: string; contract_version?: number; erp_open?: boolean; copy?: ProductEditorCopy };
 }
 export interface PendingProductSave { operation_id: string; requested_id: number; actor_id: number }
 export interface ProductSaveReceipt extends PendingProductSave {
@@ -50,7 +53,7 @@ export interface ProductSaveReceipt extends PendingProductSave {
 export type ProductOperationReceipt = Omit<ProductSaveReceipt, 'requested_id'> & { requested_id: number | null };
 export interface EditorDraft extends ProductSavePayload {
   [key: string]: unknown;
-  editor_contract_version: 1; editor_target: number; editor_pending: PendingProductSave | null;
+  editor_contract_version: 1; editor_target: number; editor_pending: PendingProductSave | null; editor_copy?: ProductEditorCopy | null;
 }
 const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const object = (value: unknown): Record<string, unknown> => {
@@ -134,8 +137,31 @@ export function fromLegacyDetail(value: ProductEditorDetail) {
   return { model, owner: { type: number(p.type), relation_id: number(p.relation_id), supplier_id: model.supplier_id },
     retired: restoreEditorSkus(extra.retired_attrs, model.items), preview: extra.description_preview, savedDescription: model.description };
 }
+export function parseProductEditorCopy(value: unknown, sourceId: number): ProductEditorCopy {
+  const row = object(value), destination = object(row.destination);
+  if (Object.keys(row).sort().join(',') !== 'destination,source_id,token' || row.source_id !== sourceId || !Number.isSafeInteger(sourceId) || sourceId < 1 || sourceId > 2147483647
+    || typeof row.token !== 'string' || !/^[a-f0-9]{64}$/u.test(row.token)
+    || Object.keys(destination).sort().join(',') !== 'relation_id,type' || ![0, 1, 2].includes(destination.type as number)
+    || typeof destination.relation_id !== 'number' || !Number.isSafeInteger(destination.relation_id) || destination.relation_id < 0 || destination.relation_id > 2147483647
+    || (destination.type === 0 ? destination.relation_id !== 0 : destination.relation_id < 1)) throw Error('可信复制来源、快照或目的归属无效');
+  return { source_id: sourceId, token: row.token, destination: { type: destination.type as 0 | 1 | 2, relation_id: destination.relation_id } };
+}
+function assertCopyModel(model: ProductEditorModel, copy: ProductEditorCopy): void {
+  if (model.supplier_id !== (copy.destination.type === 2 ? copy.destination.relation_id : 0)) throw Error('复制目的归属不能修改，请重新读取来源');
+  if (model.attrs.some(row => row.id !== undefined || row.unique !== undefined || row.sales !== 0 || row.virtual_available !== 0 || row.virtual_total !== 0
+    || row.disk_info !== '' || row.virtual_list.length !== 0 || model.product_type === 1 && row.stock !== 0)) throw Error('复制商品不能携带历史SKU身份、销量或卡密内容；请在新商品保存后独立配置交付');
+}
+export function fromCopyDetail(value: ProductEditorDetail, sourceId: number) {
+  const state = fromLegacyDetail(value), copy = parseProductEditorCopy(value.editor.copy, sourceId);
+  if (state.owner.type !== copy.destination.type || state.owner.relation_id !== copy.destination.relation_id || state.retired.length) throw Error('复制目的归属或规格快照不一致');
+  state.model.supplier_id = copy.destination.type === 2 ? copy.destination.relation_id : 0;
+  state.owner.supplier_id = state.model.supplier_id;
+  assertCopyModel(state.model, copy);
+  return { ...state, copy };
+}
 /** Explicit projection: read-only owner, server preview, SKU ids and import contexts never enter the write body. */
-export function toLegacySave(m: ProductEditorModel): ProductSavePayload {
+export function toLegacySave(m: ProductEditorModel, copy: ProductEditorCopy | null = null): ProductSavePayload {
+  if (copy) assertCopyModel(m, copy);
   // Element Plus clears numeric/select controls to null/undefined. Always emit
   // every main numeric key; optional blank values have the explicit zero/default meaning.
   const productType = number(m.product_type) as ProductType, freight = number(m.freight, 1) as 1 | 2 | 3;
@@ -161,7 +187,7 @@ export function toLegacySave(m: ProductEditorModel): ProductSavePayload {
     specs: m.specs.map(row => ({ name: row.name, value: row.value, sort: number(row.sort), status: flag(row.status, 1) })), specs_id: number(m.specs_id),
     is_limit: flag(m.is_limit), limit_type: number(m.limit_type), limit_num: number(m.limit_num) };
 }
-export function validateProductSave(p: ProductSavePayload, erp: boolean | null, now = Date.now()): void {
+export function validateProductSave(p: ProductSavePayload, erp: boolean | null, now = Date.now(), copy: ProductEditorCopy | null = null): void {
   if (![0, 1, 3, 4].includes(p.product_type) || ![0, 1].includes(p.spec_type) || ![1, 2, 3].includes(p.freight)) throw Error('商品履约、规格或运费类型无效');
   if ((['supplier_id', 'sort', 'ficti', 'presale_day', 'system_form_id', 'specs_id', 'limit_type', 'limit_num', 'temp_id'] as const).some(field => !Number.isSafeInteger(p[field]) || p[field] < 0 || p[field] > 2147483647) || !Number.isFinite(p.give_integral) || p.give_integral < 0 || !Number.isFinite(p.postage) || p.postage < 0) throw Error('商品排序、销量、积分、运费及规则数量须为有效非负数值');
   if (!p.store_name.trim()) throw Error('请输入商品名称'); if (!p.cate_id.length) throw Error('请选择至少一个分类');
@@ -176,10 +202,11 @@ export function validateProductSave(p: ProductSavePayload, erp: boolean | null, 
   if ((p.product_type === 0 || p.product_type === 4) && (!p.delivery_type.length || p.freight === 2 && p.postage <= 0 || p.freight === 3 && !p.temp_id)) throw Error('请完善配送方式和运费设置');
   if (p.product_type === 4 && (p.attrs.length !== 1 || p.spec_type !== 0 || p.attrs.some(row => !Number.isSafeInteger(row.write_times) || row.write_times < 1 || row.write_times > 99999999 || ![1, 2, 3].includes(row.write_valid) || row.write_valid === 2 && (!Number.isSafeInteger(row.days) || row.days < 1 || row.days > 3650) || row.write_valid === 3 && (row.section_time.length !== 2 || row.section_time[1]! <= row.section_time[0]!)))) throw Error('请完善次卡次数及有效期');
   if (p.is_limit && (!p.limit_num || ![1, 2].includes(p.limit_type))) throw Error('请填写限购方式和数量');
+  if (p.specs.length && !p.specs_id) throw Error('商品参数已填写，请先选择参数模板');
   if (p.video_open && !/^https:\/\/[^\s]+$/u.test(p.video_link)) throw Error('视频请填写完整HTTPS外链');
   if (erp === true && p.product_type === 0 && (!p.code || p.attrs.some(row => !row.code))) throw Error('ERP已开启，请填写商品及每个SKU编码');
   if (p.is_presale_product && (p.presale_time.length !== 2 || p.presale_time.some(value => { const date = Date.parse(`${value.replace(' ', 'T')}+08:00`); return !Number.isFinite(date) || date < now; }))) throw Error('预售起止时间均不能早于当前时间（北京时间）');
-  if (new TextEncoder().encode(JSON.stringify({ operation_id: '00000000-0000-4000-8000-000000000000', product: p })).byteLength > 1024 * 1024) throw Error('完整商品请求超过1 MiB，请减少详情或规格');
+  if (new TextEncoder().encode(JSON.stringify({ operation_id: '00000000-0000-4000-8000-000000000000', ...(copy ? { copy_token: copy.token } : {}), product: p })).byteLength > 1024 * 1024) throw Error('完整商品请求超过1 MiB，请减少详情或规格');
 }
 export function detailIdentity(detail: Record<string, string>): string { return JSON.stringify(Object.entries(detail).sort(([a], [b]) => a.localeCompare(b))); }
 /** Generator intentionally omits identities. Preserve the exact old identity by semantic dimension names/values. */
@@ -194,6 +221,15 @@ export function parseEditorRoute(value: unknown): number {
   if (value === undefined || value === '' || value === '0') return 0;
   if (typeof value !== 'string' || !/^[1-9]\d*$/u.test(value)) throw Error('商品编辑ID无效'); return id(value);
 }
+export function parseEditorEntry(value: unknown, copy: unknown, sourceType: unknown): { target: number; copySourceId: number } {
+  const target = parseEditorRoute(value);
+  if (copy === undefined) {
+    if (sourceType !== undefined && sourceType !== '0') throw Error('采集入口尚未开放，请使用普通编辑或可信复制入口');
+    return { target, copySourceId: 0 };
+  }
+  if (target > 0 || sourceType !== undefined || typeof copy !== 'string' || !/^[1-9]\d*$/u.test(copy)) throw Error('可信复制入口不能混合编辑ID或采集上下文');
+  return { target: 0, copySourceId: id(copy) };
+}
 export function parseProductReceipt(value: unknown, pending: PendingProductSave): ProductOperationReceipt {
   const row = object(value);
   if (row.operation_id !== pending.operation_id || row.actor_id !== pending.actor_id || !['unknown', 'committed', 'not_applied'].includes(String(row.state)) ||
@@ -207,16 +243,20 @@ export function parsePendingProductSave(value: unknown, actor: number): PendingP
   if (Object.keys(row).sort().join(',') !== 'actor_id,operation_id,requested_id' || row.actor_id !== actor || typeof row.operation_id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u.test(row.operation_id) || typeof row.requested_id !== 'number' || !Number.isSafeInteger(row.requested_id) || row.requested_id < 0 || row.requested_id > 2147483647) throw Error('未确认保存的恢复资料无效，请保留当前页面并核实操作记录');
   return { operation_id: row.operation_id, requested_id: row.requested_id, actor_id: actor };
 }
-export function makeEditorDraft(model: ProductEditorModel, target: number, pending: PendingProductSave | null): EditorDraft {
-  return { ...toLegacySave(model), editor_contract_version: 1, editor_target: target, editor_pending: pending ? { ...pending } : null };
+export function makeEditorDraft(model: ProductEditorModel, target: number, pending: PendingProductSave | null, copy: ProductEditorCopy | null = null): EditorDraft {
+  if (copy && target !== 0) throw Error('复制草稿必须新建独立商品');
+  return { ...toLegacySave(model, copy), editor_contract_version: 1, editor_target: target, editor_pending: pending ? { ...pending } : null, editor_copy: copy ? cloneJson(copy) : null };
 }
-export function fromEditorDraft(value: unknown, actor: number, target: number): { model: ProductEditorModel; pending: PendingProductSave | null } {
+export function fromEditorDraft(value: unknown, actor: number, target: number, copySourceId = 0): { model: ProductEditorModel; pending: PendingProductSave | null; copy: ProductEditorCopy | null } {
   const row = object(value);
   if (row.editor_contract_version !== 1 || row.editor_target !== target) throw Error('服务器草稿属于其他编辑器或商品，当前表单未覆盖');
+  const copy = row.editor_copy === undefined || row.editor_copy === null ? null : parseProductEditorCopy(row.editor_copy, copySourceId);
+  if (copySourceId ? !copy || target !== 0 : copy !== null) throw Error('服务器草稿属于其他复制来源或普通新建，当前表单未覆盖');
   const pending = row.editor_pending === null ? null : parsePendingProductSave(row.editor_pending, actor);
   if (pending && pending.requested_id !== target) throw Error('草稿与未确认保存的商品不一致');
   // Reuse the same field projection, including per-SKU second-card rights and stored form snapshot.
   const model = fromLegacyDetail({ productInfo: { ...row, attr: list(row.attrs)[0], attrs: row.attrs, coupons: row.coupon_ids,
     recommend_list: row.recommend_list, type: 0 }, tempList: [], cateList: [], editor: { stored_custom_form: row.custom_form, retired_attrs: [], description_preview: '' } }).model;
-  return { model, pending };
+  if (copy) assertCopyModel(model, copy);
+  return { model, pending, copy };
 }

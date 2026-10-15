@@ -56,7 +56,7 @@ export const PRODUCT_DRAFT_FIELDS = [
   // Preserve unfinished editor limits across draft save/restore. The PHP
   // cache whitelist omitted these even though its final save accepted them.
   "is_limit", "limit_type", "limit_num", "recommend",
-  "editor_pending", "editor_target", "editor_contract_version",
+  "editor_pending", "editor_target", "editor_contract_version", "editor_copy",
 ] as const;
 
 const productDraftFieldSet = new Set<string>(PRODUCT_DRAFT_FIELDS);
@@ -338,9 +338,19 @@ export class LegacyContentService {
 
   async saveProductDraft(adminId: number, value: unknown): Promise<Record<string, unknown>> {
     const draft = normalizeProductDraft(value);
-    if (draft.editor_contract_version !== undefined || draft.editor_target !== undefined || draft.editor_pending !== undefined) {
+    if (draft.editor_contract_version !== undefined || draft.editor_target !== undefined || draft.editor_pending !== undefined || draft.editor_copy !== undefined) {
       if (draft.editor_contract_version !== 1 || !Number.isSafeInteger(draft.editor_target) || Number(draft.editor_target) < 0
         || Number(draft.editor_target) > 2147483647) throw new ValidateException("商品草稿编辑器版本或目标无效");
+      if (draft.editor_copy !== undefined && draft.editor_copy !== null) {
+        const copy = objectValue(draft.editor_copy), destination = objectValue(copy?.destination);
+        if (draft.editor_target !== 0 || !copy || Object.keys(copy).sort().join(',') !== 'destination,source_id,token'
+          || !Number.isSafeInteger(copy.source_id) || Number(copy.source_id) <= 0 || Number(copy.source_id) > 2147483647
+          || typeof copy.token !== 'string' || !/^[a-f0-9]{64}$/.test(copy.token) || !destination
+          || Object.keys(destination).sort().join(',') !== 'relation_id,type' || ![0,1,2].includes(Number(destination.type))
+          || typeof destination.type !== 'number' || !Number.isSafeInteger(destination.relation_id)
+          || (destination.type === 0 ? destination.relation_id !== 0 : Number(destination.relation_id) <= 0 || Number(destination.relation_id) > 2147483647))
+          throw new ValidateException('商品复制草稿来源或目标归属无效');
+      }
       if (draft.editor_pending !== null && draft.editor_pending !== undefined) {
         const pending = objectValue(draft.editor_pending);
         if (!pending || Object.keys(pending).length !== 3 || pending.actor_id !== adminId

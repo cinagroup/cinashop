@@ -7,13 +7,14 @@ import { ApiErrorCode, AuthException, HttpApiException, ServiceUnavailableExcept
 import { md5 } from '@/utils/jwt';
 import { ADMIN_LEGACY_PRODUCT_FIELDS, assertBoundedJson } from './AdminLegacyProductInput';
 import { acquireAdminAuthorityWriteBarrier, adminAuthorityWriteError, assertAdminAuthoritySession, type AdminAuthorityActor } from './AdminAuthorityWriteService';
+import type { ProductCopyContext } from './AdminProductCopy';
 
 export interface ProductEditorResult { id: number; created: boolean }
 export interface ProductEditorReceipt {
   operation_id: string; actor_id: number; requested_id: number | null;
   state: 'unknown' | 'committed' | 'not_applied'; result: ProductEditorResult | null;
 }
-export interface ProductEditorIntent { operationId: string; actorId: number; requestedId: number; requestHash: string }
+export interface ProductEditorIntent { operationId: string; actorId: number; requestedId: number; requestHash: string; copy?: ProductCopyContext }
 interface ReceiptRow { operation_id: string; actor_id: number; requested_id: number; request_hash: string;
   state: 'committed' | 'not_applied'; result: ProductEditorResult | null; created_at: number }
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -40,11 +41,12 @@ function canonical(value: unknown): string {
     .map(([key,item]) => JSON.stringify(key) + ':' + canonical(item)).join(',') + '}';
   throw new ValidateException('商品编辑正文包含不能签名的数据');
 }
-export function prepareProductEditorSave(value: unknown, requestedId: number, actor: AdminAuthorityActor, appKey: string) {
+function prepare(value: unknown, requestedId: number, actor: AdminAuthorityActor, appKey: string, copy?: ProductCopyContext) {
   assertAdminAuthoritySession(actor); productEditorTarget(requestedId);
   assertBoundedJson(value);
   const row = object(value);
-  if (Object.keys(row).length !== 2 || !Object.hasOwn(row, 'operation_id') || !Object.hasOwn(row, 'product'))
+  if (Object.keys(row).length !== (copy ? 3 : 2) || !Object.hasOwn(row, 'operation_id') || !Object.hasOwn(row, 'product')
+    || copy && !Object.hasOwn(row, 'copy_token'))
     throw new ValidateException('商品编辑保存仅接受操作ID与完整商品');
   const operationId = productEditorOperationId(row.operation_id), product = object(row.product);
   if (Object.keys(product).length !== ADMIN_LEGACY_PRODUCT_FIELDS.length
@@ -52,10 +54,29 @@ export function prepareProductEditorSave(value: unknown, requestedId: number, ac
     throw new ValidateException('完整编辑器须提交全部59字段');
   if (product.type !== 0 || product.soure_link !== '' || product.tao_words !== '')
     throw new ValidateException('普通编辑器不接受采集或复制上下文');
+  if (copy) {
+    if (typeof product.product_type !== 'number' || ![0,1,3,4].includes(product.product_type))
+      throw new ValidateException('复制商品履约类型须为有效数字枚举');
+    if (!Array.isArray(product.attrs) || product.attrs.some(value => {
+      const sku = object(value);
+      return Object.hasOwn(sku, 'id') || Object.hasOwn(sku, 'unique') || sku.disk_info !== ''
+        || !Array.isArray(sku.virtual_list) || sku.virtual_list.length !== 0 || product.product_type === 1 && sku.stock !== 0;
+    })) throw new ValidateException('复制不能携带SKU身份、卡密、固定交付内容或卡密库存，请保存后另行配置');
+  }
   if (!appKey) throw new ServiceUnavailableException('商品操作签名尚未就绪');
-  const requestHash = createHmac('sha256', appKey).update('cinashop.product-editor.request.v1\0')
-    .update(canonical({ actorId: actor.id, requestedId, operationId, product })).digest('hex');
-  return { product, intent: { operationId, actorId: actor.id, requestedId, requestHash } satisfies ProductEditorIntent };
+  const requestHash = createHmac('sha256', appKey).update(copy ? 'cinashop.product-editor.copy.v1\0' : 'cinashop.product-editor.request.v1\0')
+    .update(canonical({ actorId: actor.id, requestedId, operationId, product, ...(copy ? { kind: 'copy', copy } : {}) })).digest('hex');
+  return { product, intent: { operationId, actorId: actor.id, requestedId, requestHash, ...(copy ? { copy } : {}) } satisfies ProductEditorIntent };
+}
+export function prepareProductEditorSave(value: unknown, requestedId: number, actor: AdminAuthorityActor, appKey: string) {
+  return prepare(value, requestedId, actor, appKey);
+}
+export function prepareProductEditorCopySave(value: unknown, sourceId: number, actor: AdminAuthorityActor, appKey: string) {
+  if (!productEditorTarget(sourceId)) throw new ValidateException('复制来源ID错误');
+  assertBoundedJson(value);
+  const token = object(value).copy_token;
+  if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) throw new ValidateException('商品复制快照无效');
+  return prepare(value, 0, actor, appKey, { sourceId, token });
 }
 function dto(row: ReceiptRow): ProductEditorReceipt {
   return { operation_id: row.operation_id, actor_id: row.actor_id, requested_id: row.requested_id, state: row.state, result: row.result };

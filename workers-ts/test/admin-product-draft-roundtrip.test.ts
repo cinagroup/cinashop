@@ -90,4 +90,18 @@ describe('Admin unfinished product draft SQL round trips', () => {
       expect(await f.db.select().from(legacyCache)).toEqual(before);
     }
   });
+  it('keeps copy source/owner/snapshot metadata losslessly and refuses malformed or edit-target copy drafts', async () => {
+    const copy = {source_id:17,token:'a'.repeat(64),destination:{type:1,relation_id:71}};
+    const draft = {store_name:'复制草稿',editor_contract_version:1,editor_target:0,editor_pending:null,editor_copy:copy};
+    expect((await http()('POST',draft)).data?.info).toEqual(draft);
+    expect((await http()('GET')).data?.info).toEqual(draft);
+    const before = await f.db.select().from(legacyCache);
+    for(const change of [{editor_target:1},{editor_copy:{...copy,source_id:0}},{editor_copy:{...copy,token:'bad'}},
+      {editor_copy:{...copy,destination:{type:0,relation_id:71}}},{editor_copy:{...copy,extra:true}}]) {
+      expect((await http()('POST',{...draft,...change})).status).toBe(400);
+      expect(await f.db.select().from(legacyCache)).toEqual(before);
+    }
+    const ordinary = {...draft,editor_copy:null};
+    expect((await http()('POST',ordinary)).data?.info).toEqual(ordinary);
+  });
 });

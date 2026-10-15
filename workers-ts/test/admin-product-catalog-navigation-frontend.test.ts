@@ -169,6 +169,21 @@ async function click(f: any, label: string) { const control = button(f, label); 
 async function input(f: any, placeholder: string, value: string) { const control = f.nodes().find((node: Node) => node.tag === 'input' && node.props.placeholder === placeholder); if (!control) throw Error(`Missing rendered input ${placeholder}`); control.props.onInput({ target: { value } }); await flush(); }
 
 describe('actual Admin catalog pages, counted Axios consumers and real Router registry', () => {
+  it('opens the dedicated copy entry from recycled rows only for live product managers and rejects stale row actions', async () => {
+    const f = await mount('/product?type=6',['product.view']);
+    try {
+      expect(f.nodes().some((node:Node)=>node.tag==='button'&&textOf(node).trim()==='复制商品')).toBe(false);
+      login(['product.view','product.manage']); browser.dispatchEvent(new Event('admin-session-changed')); await flush();
+      const stale = button(f,'复制商品');
+      login(['product.view']); browser.dispatchEvent(new Event('admin-session-changed')); await flush();
+      await stale.props.onClick(); await flush(); expect(runtime.router.currentRoute.value.path).toBe('/product');
+      login(['product.view','product.manage']); browser.dispatchEvent(new Event('admin-session-changed')); await flush();
+      const sourceId = f.view.list.value[0].id;
+      await click(f,'复制商品');
+      expect(runtime.router.currentRoute.value).toMatchObject({path:'/product/create',query:{copy:String(sourceId)}});
+      expect(f.calls.every((config:any)=>config.method==='get')).toBe(true);
+    } finally {f.close();}
+  });
   it('uses the main catalog endpoint, independent eight-state header and actual count without inventing stock for NULL SUM', async () => {
     const f = await mount(); try {
       expect(reads(f, catalog)).toHaveLength(1); expect(reads(f, header)).toHaveLength(1);

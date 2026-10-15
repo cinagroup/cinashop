@@ -5,7 +5,7 @@ import { storeProduct, storeProductAttr, storeProductAttrResult, storeProductAtt
   storeDiscountsProducts, storeSeckill, storeCombination, storeBargain, storeIntegral, systemConfig,
   systemSupplier, shippingTemplates, systemForm, userLabel, storeProductCategory, storeBrand, storeProductLabel,
   storeProductEnsure, legacyCategory, storeProductSpecs, storeCouponIssue, systemAttachment, systemAdmin,
-  systemRole, systemMenus, systemLog, storeOrderOutbox } from '@/models/schema';
+  systemRole, systemMenus, systemLog, storeOrderOutbox, systemStore } from '@/models/schema';
 import { AdminLegacyProductSaveService } from '@/services/admin/AdminLegacyProductSaveService';
 import { md5 } from '@/utils/jwt';
 import { financePostgres } from './financePostgres';
@@ -15,7 +15,7 @@ export const legacySaveSchema = { storeProduct, storeProductAttr, storeProductAt
   storeDiscountsProducts, storeSeckill, storeCombination, storeBargain, storeIntegral, systemConfig,
   systemSupplier, shippingTemplates, systemForm, userLabel, storeProductCategory, storeBrand, storeProductLabel,
   storeProductEnsure, legacyCategory, storeProductSpecs, storeCouponIssue, systemAttachment, systemAdmin,
-  systemRole, systemMenus, systemLog, storeOrderOutbox };
+  systemRole, systemMenus, systemLog, storeOrderOutbox, systemStore };
 export const legacySaveActor = () => ({ id: 1, authVersion: md5('legacy-save-password'), expiresAt: Math.floor(Date.now() / 1000) + 3600 });
 export const legacySaveSku = (overrides: Record<string, unknown> = {}) => ({ pic: '/uploads/sku.png', price: 12.5,
   cost: 3, ot_price: 20, vip_price: 8, settle_price: 0, stock: 7, ...overrides });

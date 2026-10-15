@@ -3,7 +3,7 @@ import type { AppVariables, Env } from '@/env';
 import { AdminLegacyProductSaveService } from '@/services/admin/AdminLegacyProductSaveService';
 import { AdminLegacyProductReadService } from '@/services/admin/AdminLegacyProductReadService';
 import { readAdminLegacyProductBody } from '@/services/admin/AdminLegacyProductInput';
-import { AdminProductEditorOperationService, prepareProductEditorSave } from '@/services/admin/AdminProductEditorReceipt';
+import { AdminProductEditorOperationService, prepareProductEditorCopySave, prepareProductEditorSave } from '@/services/admin/AdminProductEditorReceipt';
 import { OrderOutboxService } from '@/services/order/OrderOutboxService';
 import { ValidateException } from '@/utils/errors';
 import { jsonOk } from '@/utils/json';
@@ -26,16 +26,25 @@ export async function detail(c: C) {
   return jsonOk(c, await new AdminLegacyProductReadService(c.get('container'), c.env.APP_KEY)
     .detail(target(c), new URLSearchParams(), identity, { editorContract: true }));
 }
-export async function save(c: C) {
-  const identity = actor(c), requestedId = target(c);
-  const prepared = prepareProductEditorSave(await readAdminLegacyProductBody(c.req.raw), requestedId, identity, c.env.APP_KEY);
+export async function copyDetail(c: C) {
+  const identity = actor(c), sourceId = target(c);
+  if (!sourceId) throw new ValidateException('复制来源ID错误');
+  return jsonOk(c, await new AdminLegacyProductReadService(c.get('container'), c.env.APP_KEY)
+    .detail(sourceId, new URLSearchParams(), identity, { editorContract: true, copy: true }));
+}
+async function persist(c: C, copy: boolean) {
+  const identity = actor(c), routeId = target(c), body = await readAdminLegacyProductBody(c.req.raw);
+  const prepared = copy ? prepareProductEditorCopySave(body, routeId, identity, c.env.APP_KEY)
+    : prepareProductEditorSave(body, routeId, identity, c.env.APP_KEY);
   const container = c.get('container');
   const service = new AdminLegacyProductSaveService(container, { async dispatch(outboxId) {
     await new OrderOutboxService(container, c.env).dispatchPending(1, outboxId);
-  } });
-  const saved = await service.save(requestedId, prepared.product, identity, { editorOperation: prepared.intent });
+  } }, c.env.APP_KEY);
+  const saved = await service.save(prepared.intent.requestedId, prepared.product, identity, { editorOperation: prepared.intent });
   return jsonOk(c, saved.receipt, saved.message);
 }
+export async function save(c: C) { return persist(c, false); }
+export async function copySave(c: C) { return persist(c, true); }
 export async function receipt(c: C) {
   const identity = actor(c);
   return jsonOk(c, await new AdminProductEditorOperationService(c.get('container'))

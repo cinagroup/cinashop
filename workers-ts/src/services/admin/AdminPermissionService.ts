@@ -528,6 +528,7 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     if (['GET','HEAD'].includes(method.toUpperCase()) && route==='product/editor/options') return 'product.view';
     if (['GET','HEAD'].includes(method.toUpperCase()) && /^product\/editor\/detail\/(?:[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'product.view';
     if (method.toUpperCase()==='POST' && /^product\/editor\/save\/(?:0|[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'product.manage';
+    if (['GET','HEAD','POST'].includes(method.toUpperCase()) && /^product\/editor\/copy\/(?:[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'product.manage';
     return null;
   }
   if (route === 'setting/admin-authority' || route.startsWith('setting/admin-authority/')) {

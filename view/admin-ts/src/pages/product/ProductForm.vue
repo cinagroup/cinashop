@@ -2,7 +2,7 @@
   <div class="product-form">
     <el-card shadow="never" v-loading="loading">
       <template #header>
-        <div class="heading"><h1>{{ target ? '编辑商品' : '添加商品' }}</h1><el-tag v-if="target">商品 #{{ target }}</el-tag><el-tag v-if="owner">归属 {{ ownerName }} · #{{ owner.relation_id }}</el-tag></div>
+        <div class="heading"><h1>{{ copySourceId ? '复制商品' : target ? '编辑商品' : '添加商品' }}</h1><el-tag v-if="target">商品 #{{ target }}</el-tag><el-tag v-if="copySourceId" type="warning">来源 #{{ copySourceId }} · 新建独立商品</el-tag><el-tag v-if="owner">归属 {{ ownerName }} · #{{ owner.relation_id }}</el-tag></div>
       </template>
       <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon class="notice" />
       <el-button v-if="loadError" @click="initialize">重新读取当前账号资料</el-button>
@@ -17,12 +17,14 @@
       </div>
       <template v-if="loaded">
         <el-alert v-if="metadataError" :title="metadataError" type="warning" :closable="false" class="notice" />
-        <p class="muted">候选资料各最多显示500项，分类与品牌树最多1000项。历史已选值会保留；未显示的候选请先在基础资料中核实。复制与导入入口尚未开放。</p>
+        <p class="muted">候选资料各最多显示500项，分类与品牌树最多1000项。历史已选值会保留；未显示的候选请先在基础资料中核实。外部采集入口尚未开放。</p>
+        <el-alert v-if="copySourceId" title="复制会创建新商品、新SKU身份及独立库存记录，真实销量从0开始；原卡密与固定交付内容不复制。保存后请进入新商品独立配置交付。目的归属保持来源实际归属，来源快照改变会整次拒绝，请核实后重新读取。" type="warning" :closable="false" show-icon class="notice" />
+        <el-button v-if="copySourceId" :disabled="locked" @click="reloadCopySource">重新读取来源并替换当前复制</el-button>
         <el-steps :active="step" simple class="steps"><el-step v-for="name in steps" :key="name" :title="name" /></el-steps>
         <nav class="step-links" aria-label="商品编辑步骤"><el-button v-for="(name, index) in steps" :key="name" :type="step === index ? 'primary' : 'default'" size="small" @click="step = index">{{ index + 1 }} {{ name }}</el-button></nav>
         <el-form :model="form" label-width="112px" :disabled="locked" class="editor-form">
           <section v-show="step === 0" aria-label="基础信息">
-            <el-form-item label="履约类型" required><el-radio-group v-model="form.product_type" :disabled="target > 0" @change="changeProductType"><el-radio-button :value="0">实物商品</el-radio-button><el-radio-button :value="1">卡密/网盘</el-radio-button><el-radio-button :value="3">手工虚拟</el-radio-button><el-radio-button :value="4">次卡商品</el-radio-button></el-radio-group></el-form-item>
+            <el-form-item label="履约类型" required><el-radio-group v-model="form.product_type" :disabled="target > 0 || copySourceId > 0" @change="changeProductType"><el-radio-button :value="0">实物商品</el-radio-button><el-radio-button :value="1">卡密/网盘</el-radio-button><el-radio-button :value="3">手工虚拟</el-radio-button><el-radio-button :value="4">次卡商品</el-radio-button></el-radio-group></el-form-item>
             <el-form-item label="商品名称" required><el-input v-model="form.store_name" maxlength="256" show-word-limit /></el-form-item>
             <el-form-item label="商品分类" required><el-cascader v-model="form.cate_id" :options="categoryOptions" :props="treeProps" clearable filterable collapse-tags collapse-tags-tooltip placeholder="可多选分类与子分类" /></el-form-item>
             <el-form-item label="商品品牌"><el-cascader v-model="form.brand_id" :options="brandOptions" :props="treeProps" clearable filterable collapse-tags placeholder="可多选品牌" /></el-form-item>
@@ -52,7 +54,7 @@
               <el-table-column label="规格图片" min-width="180"><template #default="{ row }"><el-input v-model="row.pic" maxlength="128" placeholder="留空使用主图" /></template></el-table-column>
               <el-table-column v-for="column in priceColumns" :key="column.key" :label="column.name" min-width="130"><template #default="{ row }"><el-input-number v-model="row[column.key]" :min="0" :precision="2" controls-position="right" /></template></el-table-column>
               <el-table-column label="库存" min-width="130"><template #default="{ row }"><el-input-number v-model="row.stock" :min="0" :precision="0" :disabled="stockDisabled(row)" controls-position="right" /></template></el-table-column>
-              <el-table-column v-if="form.product_type === 1" label="交付方式与内容" min-width="300"><template #default="{ row }"><el-radio-group v-model="row.delivery_mode" @change="changeDelivery(row)"><el-radio-button value="cards">一次性卡密</el-radio-button><el-radio-button value="fixed">固定内容</el-radio-button></el-radio-group><el-input v-if="row.delivery_mode === 'fixed'" v-model="row.disk_info" type="textarea" :rows="3" maxlength="4096" placeholder="支付后交付的固定内容" /><el-text v-else type="info">可用 {{ row.virtual_available }} / 总数 {{ row.virtual_total }}。保存后进入卡密库存导入；支付发货严格使用下单快照。</el-text></template></el-table-column>
+              <el-table-column v-if="form.product_type === 1" label="交付方式与内容" min-width="300"><template #default="{ row }"><el-text v-if="copySourceId" type="warning">原卡密、固定内容与库存均不复制；新商品保存后独立配置交付。</el-text><template v-else><el-radio-group v-model="row.delivery_mode" @change="changeDelivery(row)"><el-radio-button value="cards">一次性卡密</el-radio-button><el-radio-button value="fixed">固定内容</el-radio-button></el-radio-group><el-input v-if="row.delivery_mode === 'fixed'" v-model="row.disk_info" type="textarea" :rows="3" maxlength="4096" placeholder="支付后交付的固定内容" /><el-text v-else type="info">可用 {{ row.virtual_available }} / 总数 {{ row.virtual_total }}。保存后进入卡密库存导入；支付发货严格使用下单快照。</el-text></template></template></el-table-column>
               <el-table-column label="条码" min-width="130"><template #default="{ row }"><el-input v-model="row.bar_code" maxlength="50" /></template></el-table-column>
               <el-table-column label="编码" min-width="130"><template #default="{ row }"><el-input v-model="row.code" maxlength="50" /></template></el-table-column>
               <el-table-column v-if="target" prop="unique" label="稳定唯一标识" min-width="130" />
@@ -125,7 +127,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { apiAdminProductDraft, apiAdminProductDraftDelete, apiAdminProductDraftSave, apiAdminProductEditorOptions, apiAdminProductSkuRestore, apiAdminProductSkuRetire, type ProductEditorOption, type ProductEditorOptions } from '@/api/product';
-import { apiFullProductDetail, apiFullProductSave, apiGenerateEditorSkus, apiProductSaveOperation } from '@/api/productEditor';
+import { apiFullProductDetail, apiFullProductSave, apiGenerateEditorSkus, apiProductCopyDetail, apiProductCopySave, apiProductSaveOperation } from '@/api/productEditor';
 import { apiProductUnitList, type ProductUnit } from '@/api/productMetadata';
 import { apiCatalogFilterBrands, apiCatalogFilterCategories, type CatalogFilterNode } from '@/api/productCatalogFilters';
 import { apiAdminStockErpEnabled } from '@/api/productStock';
@@ -133,12 +135,12 @@ import { apiSystemFormInfo } from '@/api/systemForms';
 import { apiAttachmentCategories, apiAttachmentList, type AttachmentCategoryItem, type AttachmentItem } from '@/api/attachment';
 import { getAdminSession, getToken } from '@/utils/auth';
 import { AdminResponseError } from '@/utils/request';
-import { canonicalProductImage, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorRoute, parsePendingProductSave, toLegacySave, validateProductSave, type EditorDimension, type EditorSku, type Json, type PendingProductSave, type ProductSavePayload } from './productEditorModel';
+import { canonicalProductImage, fromCopyDetail, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorEntry, parsePendingProductSave, toLegacySave, validateProductSave, type EditorDimension, type EditorSku, type Json, type PendingProductSave, type ProductEditorCopy, type ProductSavePayload } from './productEditorModel';
 
 const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const route = useRoute(), router = useRouter();
 const form = reactive(newProductEditor());
-const target = ref(0), loading = ref(false), loaded = ref(false), loadError = ref(''), metadataError = ref('');
+const target = ref(0), copySourceId = ref(0), copyContext = ref<ProductEditorCopy | null>(null), copyProductType = ref<number | null>(null), loading = ref(false), loaded = ref(false), loadError = ref(''), metadataError = ref('');
 const step = ref(0), steps = ['基础信息', '规格库存', '商品详情', '物流设置', '营销设置', '其他设置'];
 const sessionVersion = ref(0), submitting = ref(false), resolving = ref(false), pending = ref<PendingProductSave | null>(null), recoveryMessage = ref('');
 let alive = true, turn = 0, readAbort: AbortController | null = null, boundToken: string | null = null, boundSession: string | null = null, boundActor = 0;
@@ -170,7 +172,7 @@ function readPending(actor: number): PendingProductSave | null { const raw = ses
 function syncCustomForm(): void { customFormText.value = JSON.stringify(form.custom_form, null, 2); customFormError.value = ''; }
 function clearSensitive(): void {
   stopDraft(); readAbort?.abort(); readAbort = null; turn++; loaded.value = false; loading.value = false;
-  Object.assign(form, newProductEditor()); retired.value = []; owner.value = null; availableDraft.value = null; serverPreview.value = ''; savedDescription.value = ''; inFlightPayload = null;
+  Object.assign(form, newProductEditor()); copySourceId.value = 0; copyContext.value = null; copyProductType.value = null; retired.value = []; owner.value = null; availableDraft.value = null; serverPreview.value = ''; savedDescription.value = ''; inFlightPayload = null;
   assets.value = []; assetCategories.value = []; assetOpen.value = false; previewOpen.value = false; pending.value = null; selectedActive.value = []; selectedRetired.value = [];
   categoryTree.value = []; brandTree.value = []; units.value = []; historicalNames.value = {}; erpEnabled.value = null; imagePreviews.clear();
   for (const key of Object.keys(options) as Array<keyof ProductEditorOptions>) options[key] = [];
@@ -178,17 +180,18 @@ function clearSensitive(): void {
 }
 function changedSession(): void { sessionVersion.value++; if (getToken() !== boundToken || localStorage.getItem('admin_session') !== boundSession) { clearSensitive(); boundActor = 0; loadError.value = '登录身份或权限资料已改变，旧商品内容已清除。请重新读取当前账号资料。'; } }
 function storageChanged(event: StorageEvent): void { if (event.storageArea === localStorage && (event.key === null || event.key === 'admin_token' || event.key === 'admin_session')) changedSession(); }
-async function initialize(): Promise<void> {
+async function initialize(): Promise<void> { await initializeEditor(true); }
+async function initializeEditor(restoreDraft: boolean): Promise<void> {
   clearSensitive(); loadError.value = ''; metadataError.value = ''; draftStatus.value = ''; recoveryMessage.value = ''; step.value = 0;
   const s = getAdminSession(); boundActor = s?.userInfo.id || 0; boundToken = getToken(); boundSession = localStorage.getItem('admin_session');
   sessionVersion.value++; if (!boundActor || !boundToken) { loadError.value = '请先登录有效管理员账号'; return; }
-  try { target.value = parseEditorRoute(route.params.id); if (route.query.copy !== undefined || route.query.type === '1' || route.query.type === '2' || route.query.type === '-1') throw Error('可信复制与采集入口尚未开放，请从普通新建或编辑入口进入'); pending.value = readPending(boundActor); }
+  try { const entry = parseEditorEntry(route.params.id, route.query.copy, route.query.type); target.value = entry.target; copySourceId.value = entry.copySourceId; pending.value = readPending(boundActor); }
   catch (error) { loadError.value = errorText(error); return; }
   const run = turn;
-  if (!canRead()) { loadError.value = '当前账号没有商品查看权限；未确认请求可在上方恢复'; if (pending.value) void recover(false); return; }
+  if (!canRead() || copySourceId.value && !canManage.value) { loadError.value = '当前账号没有本入口所需的商品查看或管理权限；未确认请求可在上方恢复'; if (pending.value) void recover(false); return; }
   loading.value = true; readAbort = new AbortController(); const signal = readAbort.signal;
   try {
-    const results = await Promise.allSettled([apiAdminProductEditorOptions(), apiProductUnitList({ page: 1, limit: 100 }), apiCatalogFilterCategories(signal), apiCatalogFilterBrands(signal), apiAdminStockErpEnabled(signal), target.value ? apiFullProductDetail(target.value, signal) : Promise.resolve(null), apiAdminProductDraft()]);
+    const results = await Promise.allSettled([apiAdminProductEditorOptions(), apiProductUnitList({ page: 1, limit: 100 }), apiCatalogFilterCategories(signal), apiCatalogFilterBrands(signal), apiAdminStockErpEnabled(signal), copySourceId.value ? apiProductCopyDetail(copySourceId.value, signal) : target.value ? apiFullProductDetail(target.value, signal) : Promise.resolve(null), apiAdminProductDraft()]);
     if (!current(run)) return;
     const [metadata, unit, categories, brands, erp, detail, draft] = results;
     if (metadata.status === 'fulfilled') Object.assign(options, metadata.value); else metadataError.value = '部分基础候选未能读取，历史已选值保持；请核实后保存。';
@@ -198,45 +201,56 @@ async function initialize(): Promise<void> {
     erpEnabled.value = erp.status === 'fulfilled' ? erp.value : null;
     if (detail.status === 'rejected') throw detail.reason;
     if (detail.value) {
-      const state = fromLegacyDetail(detail.value); Object.assign(form, state.model); owner.value = state.owner; retired.value = state.retired; serverPreview.value = state.preview; savedDescription.value = state.savedDescription; if (typeof detail.value.editor.erp_open === 'boolean') erpEnabled.value = detail.value.editor.erp_open;
+      const copied = copySourceId.value ? fromCopyDetail(detail.value, copySourceId.value) : null; const state = copied ?? fromLegacyDetail(detail.value); if (copied) { copyContext.value = copied.copy; copyProductType.value = copied.model.product_type; } Object.assign(form, state.model); owner.value = state.owner; retired.value = state.retired; serverPreview.value = state.preview; savedDescription.value = state.savedDescription; if (typeof detail.value.editor.erp_open === 'boolean') erpEnabled.value = detail.value.editor.erp_open;
       for (const source of [...form.slider_image, form.recommend_image, ...form.attrs.map(row => row.pic), ...[...state.preview.matchAll(/\bsrc="([^"]+)"/g)].map(match => match[1]!)]) { try { if (source) { const preview = source.replaceAll('&amp;', '&'); imagePreviews.set(canonicalProductImage(preview), preview); } } catch { /* editable validation reports invalid stored media on save */ } }
       const p = detail.value.productInfo; historicalNames.value = {
         product_labels: nameMap(p.store_label_id, 'label_name'), user_labels: nameMap(p.label_id, 'label_name'), gift_coupons: nameMap(p.coupons, 'title'),
       };
     }
     dimensions.value = cloneJson(form.items); syncCustomForm(); loaded.value = true;
-    if (draft.status === 'fulfilled' && !Array.isArray(draft.value.info)) {
+    if (restoreDraft && draft.status === 'fulfilled' && !Array.isArray(draft.value.info)) {
       availableDraft.value = draft.value.info;
       try {
-        const restored = fromEditorDraft(draft.value.info, boundActor, target.value);
+        const restored = fromEditorDraft(draft.value.info, boundActor, target.value, copySourceId.value);
         if (restored.pending && alreadyResolved(restored.pending)) { availableDraft.value = null; throw Error('服务器保留的是已处理操作的旧草稿，请勿恢复；当前商品已重新读取。'); }
         if (restored.pending) {
           if (pending.value && pending.value.operation_id !== restored.pending.operation_id) throw Error('本窗口与服务器草稿存在不同未确认请求，请先核实本窗口操作');
           keepPending(restored.pending);
         }
-        if (!target.value || restored.pending) { applyRestoredModel(restored.model); availableDraft.value = null; draftStatus.value = '已恢复本商品完整草稿。'; }
+        if (!target.value || restored.pending) { applyRestoredState(restored); availableDraft.value = null; draftStatus.value = '已恢复本商品完整草稿。'; }
       } catch (error) { draftStatus.value = errorText(error); }
     }
     draftEnabled = !target.value && !pending.value && canManage.value; if (pending.value) void recover(false);
-  } catch (error) { if (current(run)) { Object.assign(form, newProductEditor()); loaded.value = false; owner.value = null; retired.value = []; loadError.value = `完整商品读取失败，保存已禁用：${errorText(error)}`; } }
+  } catch (error) { if (current(run)) { Object.assign(form, newProductEditor()); loaded.value = false; owner.value = null; retired.value = []; copyContext.value = null; loadError.value = `完整商品读取失败，保存已禁用：${errorText(error)}`; if (pending.value) void recover(false); } }
   finally { if (current(run)) loading.value = false; }
+}
+async function reloadCopySource(): Promise<void> {
+  if (!copySourceId.value || locked.value) return;
+  const run = turn;
+  try {
+    await ElMessageBox.confirm('将用最新来源快照替换本页面未保存的复制内容。服务器草稿在下次保存时更新。', '重新读取复制来源', { confirmButtonText: '重新读取', cancelButtonText: '保留当前内容', type: 'warning' });
+    if (!current(run) || locked.value) return;
+    stopDraft(); await drainDraft(); if (!current(run)) return;
+    await initializeEditor(false);
+    if (loaded.value) draftStatus.value = '已采用最新来源快照；原复制草稿未自动恢复，请核实后保存。';
+  } catch (error) { if (current(run) && error !== 'cancel' && error !== 'close') ElMessage.error(errorText(error)); }
 }
 function nameMap(value: unknown, field: string): Record<number, string> { return Array.isArray(value) ? Object.fromEntries(value.flatMap(row => row && typeof row === 'object' && Number.isSafeInteger(row.id) && typeof row[field] === 'string' ? [[row.id, row[field]]] : [])) : {}; }
 function stableJson(value: unknown): string { if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`; if (value && typeof value === 'object') return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(',')}}`; return JSON.stringify(value); }
 function errorText(error: unknown): string { return error instanceof Error ? error.message : String(error || '请求未能完成'); }
 function ensureWritable(): void { if (!current() || locked.value) throw Error('当前商品或账号状态不允许保存'); }
 async function submit(): Promise<void> {
-  try { ensureWritable(); applyCustomFormText(); if (customFormError.value) throw Error(customFormError.value); form.specs_id = Number(form.specs_id || 0); form.system_form_id = Number(form.system_form_id || 0); validateProductSave(toLegacySave(form), erpEnabled.value); }
+  try { ensureWritable(); applyCustomFormText(); if (customFormError.value) throw Error(customFormError.value); form.specs_id = Number(form.specs_id || 0); form.system_form_id = Number(form.system_form_id || 0); if (copySourceId.value && (!copyContext.value || form.product_type !== copyProductType.value)) throw Error('复制上下文或履约类型已变化，请重新读取来源'); validateProductSave(toLegacySave(form, copyContext.value), erpEnabled.value, Date.now(), copyContext.value); }
   catch (error) { ElMessage.error(errorText(error)); return; }
   const run = turn, actor = boundActor, id = target.value;
   let mutationStarted = false;
   submitting.value = true; stopDraft(); await drainDraft(); if (!current(run)) { submitting.value = false; return; }
   try {
-    const operation = { actor_id: actor, requested_id: id, operation_id: crypto.randomUUID() }; inFlightPayload = toLegacySave(form); keepPending(operation);
+    const operation = { actor_id: actor, requested_id: id, operation_id: crypto.randomUUID() }; inFlightPayload = toLegacySave(form, copyContext.value); keepPending(operation);
     // Save the exact projected payload and minimal recovery marker before starting the mutation.
-    await queueDraft(makeEditorDraft(form, id, operation), run);
+    await queueDraft(makeEditorDraft(form, id, operation, copyContext.value), run);
     if (!current(run)) return;
-    mutationStarted = true; const receipt = await apiFullProductSave(operation, inFlightPayload);
+    mutationStarted = true; const receipt = await (copyContext.value ? apiProductCopySave(operation, copyContext.value, inFlightPayload) : apiFullProductSave(operation, inFlightPayload));
     if (!current(run)) return;
     if (receipt.state !== 'committed') throw Error('保存响应未证明提交，结果待确认');
     await committed(receipt.result!.id, run);
@@ -254,9 +268,9 @@ async function committed(id: number, run: number): Promise<void> {
   stopDraft(); await drainDraft(); if (!current(run)) return;
   let cleanupFailed = false; try { await apiAdminProductDraftDelete(); } catch { cleanupFailed = true; }
   if (!current(run)) return;
-  forgetPending(true); availableDraft.value = null;
+  forgetPending(true); availableDraft.value = null; loaded.value = false; copyContext.value = null; copySourceId.value = 0; copyProductType.value = null;
   ElMessage.success(cleanupFailed ? '商品已提交，旧服务器草稿清理失败；请勿恢复该旧草稿' : '完整商品已保存');
-  await router.replace(`/product/edit/${id}`); if (current(run)) await initialize();
+  await router.replace(`/product/edit/${id}`); if (current(run) && route.query.copy === undefined) await initialize();
 }
 async function recover(resolve: boolean): Promise<void> {
   if (!pending.value || resolving.value || !current()) return;
@@ -267,7 +281,7 @@ async function recover(resolve: boolean): Promise<void> {
     else if (receipt.state === 'not_applied') {
       forgetPending(); recoveryMessage.value = '已封存原请求未提交。请核对表单，明确点击保存会创建新的操作标识。';
       draftStatus.value = recoveryMessage.value; draftEnabled = !target.value && canManage.value;
-      if (loaded.value && canManage.value && operation.requested_id === target.value) await queueDraft(makeEditorDraft(form, target.value, null), run).catch(() => undefined);
+      if (loaded.value && canManage.value && operation.requested_id === target.value) await queueDraft(makeEditorDraft(form, target.value, null, copyContext.value), run).catch(() => undefined);
     } else recoveryMessage.value = '尚未找到确定回执，不能据此重复保存。原事务仍在处理时“确认原事务结果”会提示忙碌，请稍后重试；结束后可封存结果。';
   } catch (error) { if (current(run)) recoveryMessage.value = `仍无法确认：${errorText(error)}。原请求标识已保留。`; }
   finally { if (current(run)) resolving.value = false; }
@@ -293,11 +307,15 @@ function queueDraft(body: ReturnType<typeof makeEditorDraft>, run: number): Prom
   });
   draftQueue = operation; return operation;
 }
-async function saveDraftNow(): Promise<void> { try { ensureWritable(); applyCustomFormText(); if (customFormError.value) throw Error(customFormError.value); await queueDraft(makeEditorDraft(form, target.value, null), turn); } catch (error) { ElMessage.error(errorText(error)); } }
+async function saveDraftNow(): Promise<void> { try { ensureWritable(); applyCustomFormText(); if (customFormError.value) throw Error(customFormError.value); await queueDraft(makeEditorDraft(form, target.value, null, copyContext.value), turn); } catch (error) { ElMessage.error(errorText(error)); } }
 async function clearDraft(): Promise<void> { if (!current() || pending.value || submitting.value || draftDeleting.value || !canManage.value) return; draftDeleting.value = true; const run = turn; stopDraft(); await drainDraft(); if (!current(run)) return; draftSaving.value = true; try { await apiAdminProductDraftDelete(); if (current(run)) { availableDraft.value = null; draftStatus.value = '服务器草稿已删除，当前表单内容保留。再次修改会开始新的自动草稿。'; } } catch (error) { if (current(run)) ElMessage.error(errorText(error)); } finally { if (current(run)) { draftSaving.value = false; draftDeleting.value = false; draftEnabled = !target.value && canManage.value; } } }
 function applyRestoredModel(model: ReturnType<typeof newProductEditor>): void { const prior = new Map(form.attrs.filter(row => row.unique).map(row => [row.unique, row])); for (const row of model.attrs) { const old = row.unique ? prior.get(row.unique) : undefined; if (old) { row.id = old.id; row.original_disk_info = old.original_disk_info; row.virtual_available = old.virtual_available; row.virtual_total = old.virtual_total; row.sales = old.sales; } } Object.assign(form, model); dimensions.value = cloneJson(form.items); syncCustomForm(); }
-function restoreAvailableDraft(): void { if (!availableDraft.value || locked.value) return; try { const state = fromEditorDraft(availableDraft.value, boundActor, target.value); if (state.pending && alreadyResolved(state.pending)) throw Error('该草稿属于已处理操作，请勿恢复'); if (state.pending) keepPending(state.pending); applyRestoredModel(state.model); availableDraft.value = null; draftStatus.value = '已恢复服务器完整草稿'; if (state.pending) void recover(false); } catch (error) { ElMessage.error(errorText(error)); } }
-watch(form, () => { if (!draftEnabled || !current() || locked.value) return; if (draftTimer) clearTimeout(draftTimer); draftTimer = setTimeout(() => { try { void queueDraft(makeEditorDraft(form, target.value, null), turn).catch(() => undefined); } catch (error) { draftStatus.value = `草稿未保存：${errorText(error)}`; } }, 1000); }, { deep: true });
+function applyRestoredState(state: ReturnType<typeof fromEditorDraft>): void {
+  if (copySourceId.value) { if (!state.copy || state.model.product_type !== copyProductType.value) throw Error('复制草稿履约类型与当前来源不一致，请核实来源变更'); copyContext.value = state.copy; owner.value = { ...state.copy.destination, supplier_id: state.copy.destination.type === 2 ? state.copy.destination.relation_id : 0 }; }
+  applyRestoredModel(state.model);
+}
+function restoreAvailableDraft(): void { if (!availableDraft.value || locked.value) return; try { const state = fromEditorDraft(availableDraft.value, boundActor, target.value, copySourceId.value); if (state.pending && alreadyResolved(state.pending)) throw Error('该草稿属于已处理操作，请勿恢复'); if (state.pending) keepPending(state.pending); applyRestoredState(state); availableDraft.value = null; draftStatus.value = '已恢复服务器完整草稿'; if (state.pending) void recover(false); } catch (error) { ElMessage.error(errorText(error)); } }
+watch(form, () => { if (!draftEnabled || !current() || locked.value) return; if (draftTimer) clearTimeout(draftTimer); draftTimer = setTimeout(() => { try { void queueDraft(makeEditorDraft(form, target.value, null, copyContext.value), turn).catch(() => undefined); } catch (error) { draftStatus.value = `草稿未保存：${errorText(error)}`; } }, 1000); }, { deep: true });
 
 const dimensions = ref<EditorDimension[]>(cloneJson(form.items)), skuTemplateId = ref<number>(), generating = ref(false);
 watch(dimensions, () => { if (form.spec_type === 1) form.items = cloneJson(dimensions.value); }, { deep: true });
@@ -308,11 +326,11 @@ const selectRetiredSkus = (rows: EditorSku[]) => { selectedRetired.value = rows.
 const priceColumns = computed(() => [{ key: 'price', name: '售价' }, { key: 'ot_price', name: '划线价' }, { key: 'cost', name: '成本价' }, ...(owner.value?.type === 2 ? [{ key: 'settle_price', name: '供应商结算价' }] : []), ...(form.is_sub.includes(0) ? [{ key: 'vip_price', name: '会员价' }] : []), ...(form.is_sub.includes(1) ? [{ key: 'brokerage', name: '一级佣金' }, { key: 'brokerage_two', name: '二级佣金' }] : []), ...(form.product_type === 0 ? [{ key: 'weight', name: '重量 kg' }, { key: 'volume', name: '体积 m³' }] : [])]);
 const batchFields = [{ key: 'price', name: '售价' }, { key: 'ot_price', name: '划线价' }, { key: 'cost', name: '成本价' }, { key: 'vip_price', name: '会员价' }, { key: 'stock', name: '库存' }, { key: 'weight', name: '重量' }, { key: 'volume', name: '体积' }, { key: 'brokerage', name: '一级佣金' }, { key: 'brokerage_two', name: '二级佣金' }] as const;
 const batchField = ref<(typeof batchFields)[number]['key']>('price'), batchValue = ref(0);
-function stockDisabled(row: EditorSku): boolean { return form.product_type === 0 && erpEnabled.value !== false || form.product_type === 1 && row.delivery_mode === 'cards'; }
+function stockDisabled(row: EditorSku): boolean { return form.product_type === 0 && erpEnabled.value !== false || form.product_type === 1 && (copySourceId.value > 0 || row.delivery_mode === 'cards'); }
 function applyBatch(): void { if (locked.value) return; if (batchField.value === 'stock' && form.attrs.some(stockDisabled)) return void ElMessage.error('当前部分库存由ERP或卡密库存维护，不能批量修改'); for (const row of form.attrs) row[batchField.value] = batchValue.value; }
 function fillSkuImages(): void { if (!locked.value) for (const row of form.attrs) if (!row.pic) row.pic = form.slider_image[0] || ''; }
 function changeDelivery(row: EditorSku): void { if (row.delivery_mode === 'cards') { row.disk_info = ''; if (!row.id || row.original_disk_info.trim()) row.stock = 0; } }
-function changeProductType(): void { if (target.value) return; if (form.product_type !== 1) form.attrs.forEach(row => { row.disk_info = ''; row.virtual_list = []; row.delivery_mode = 'cards'; }); else form.attrs.forEach(row => { row.stock = 0; }); if (form.product_type === 4) { form.freight = 1; form.postage = 0; form.temp_id = 0; form.delivery_type = [2]; form.spec_type = 0; form.items = [{ value: '规格', detail: ['默认'] }]; form.attrs = [newEditorSku()]; form.unit_name = '次卡'; } }
+function changeProductType(): void { if (target.value || copySourceId.value) return; if (form.product_type !== 1) form.attrs.forEach(row => { row.disk_info = ''; row.virtual_list = []; row.delivery_mode = 'cards'; }); else form.attrs.forEach(row => { row.stock = 0; }); if (form.product_type === 4) { form.freight = 1; form.postage = 0; form.temp_id = 0; form.delivery_type = [2]; form.spec_type = 0; form.items = [{ value: '规格', detail: ['默认'] }]; form.attrs = [newEditorSku()]; form.unit_name = '次卡'; } }
 function changeSpecType(value: unknown): void { const next = Number(value) === 1 ? 1 : 0; if (next === form.spec_type) return; if (form.attrs.some(row => row.unique)) return void ElMessage.error('历史SKU不能通过切换规格类型移除，请先核实并退役'); form.spec_type = next; if (!next) { form.items = [{ value: '规格', detail: ['默认'] }]; form.attrs = [newEditorSku()]; } else { dimensions.value = []; form.items = []; form.attrs = []; } }
 function applySkuTemplate(): void { const template = options.sku_rule_templates.find(row => row.id === skuTemplateId.value); if (!template) return void ElMessage.error('请选择规格模板'); dimensions.value = template.dimensions.map(row => ({ value: row.value, detail: [...row.detail] })); }
 async function generateSkus(): Promise<void> { if (locked.value) return; const run = turn; generating.value = true; try { const dims = cloneJson(dimensions.value); if (!dims.length || dims.length > 3 || dims.some(row => !row.value || !row.detail.length || row.detail.length > 50) || dims.reduce((n, row) => n * row.detail.length, 1) > 200) throw Error('请填写1至3个有效规格维度，组合最多200项'); const generated = await apiGenerateEditorSkus(target.value, form.product_type, dims); if (!current(run)) return; const rows = mergeGeneratedSkus(generated.attr, generated.value, form.attrs); form.items = generated.attr.map(row => ({ value: row.value, detail: [...row.detail] })); form.attrs = rows; } catch (error) { if (current(run)) ElMessage.error(errorText(error)); } finally { if (current(run)) generating.value = false; } }
@@ -339,7 +357,7 @@ async function openAssets(target: typeof assetTarget): Promise<void> { if (locke
 async function loadAssets(): Promise<void> { if (!current() || !assetOpen.value) return; const run = turn, query = ++assetRun; assetLoading.value = true; assetError.value = ''; try { const result = await apiAttachmentList({ page: assetPage.value, limit: 20, pid: assetCategory.value || 0, name: assetSearch.value }); if (!current(run) || query !== assetRun || !assetOpen.value) return; assets.value = result.list.filter(row => row.att_type.startsWith('image/')); assetCount.value = result.count; } catch (error) { if (current(run) && query === assetRun) { assets.value = []; assetError.value = `素材读取失败：${errorText(error)}`; } } finally { if (current(run) && query === assetRun) assetLoading.value = false; } }
 function selectAsset(asset: AttachmentItem): void { if (locked.value || !assets.value.includes(asset)) return; try { const canonical = canonicalProductImage(asset.canonical_url); imagePreviews.set(canonical, asset.att_dir); if (assetTarget === 'slider') { if (form.slider_image.length >= 10) throw Error('轮播图最多10张'); form.slider_image.push(canonical); } else if (assetTarget === 'recommend') form.recommend_image = canonical; else form.description += `\n<p><img src="${canonical.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}" alt=""></p>`; assetOpen.value = false; } catch (error) { ElMessage.error(errorText(error)); } }
 onMounted(() => { window.addEventListener('admin-session-changed', changedSession); window.addEventListener('admin-auth-expired', changedSession); window.addEventListener('storage', storageChanged); void initialize(); });
-watch(() => route.params.id, () => { if (alive) void initialize(); });
+watch([() => route.params.id, () => route.query.copy, () => route.query.type], () => { if (alive) void initialize(); });
 onBeforeUnmount(() => { alive = false; stopDraft(); readAbort?.abort(); window.removeEventListener('admin-session-changed', changedSession); window.removeEventListener('admin-auth-expired', changedSession); window.removeEventListener('storage', storageChanged); });
 </script>
 

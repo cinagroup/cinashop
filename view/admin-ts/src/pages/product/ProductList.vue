@@ -117,6 +117,7 @@
             <el-button v-if="canMutateState" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
               编辑
             </el-button>
+            <el-button v-if="canManage && [0, 1, 3, 4].includes(row.product_type)" link type="primary" @click="copyProduct(row)">复制商品</el-button>
             <el-button v-if="canAdjustStock && row.product_type !== 1" link type="primary" @click="openStock(row)">库存管理</el-button>
             <el-button v-if="canMutateState" link :type="row.is_show === 1 ? 'warning' : 'success'" @click="toggleShow(row)">
               {{ row.is_show === 1 ? "下架" : "上架" }}
@@ -297,6 +298,10 @@ function permission(key: string): boolean {
 const canView = computed(() => permission("product.view")), canManage = computed(() => canView.value && permission("product.manage"));
 const canReplyView = computed(() => canView.value && (permission("reply.view") || permission("reply.manage")));
 const canMutateState = computed(() => canManage.value && [1, 2].includes(Number(query.type)));
+function copyProduct(row: AdminProductCatalogItem): void {
+  if (!canManage.value || !list.value.includes(row) || ![0, 1, 3, 4].includes(row.product_type) || !Number.isSafeInteger(row.id) || row.id < 1) return;
+  void router.push(`/admin/product/add_product?copy=${row.id}`);
+}
 const categoryFilterProps = { emitPath: false, multiple: true, checkStrictly: true }, brandFilterProps = { emitPath: true, checkStrictly: true };
 const filterOptions = reactive<{ categories: CatalogFilterNode[]; brands: CatalogFilterNode[]; labels: CatalogFilterLabel[]; suppliers: CatalogFilterSupplier[] }>({ categories: [], brands: [], labels: [], suppliers: [] });
 const filterLoading = reactive({ categories: false, brands: false, labels: false, suppliers: false });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ADMIN_LEGACY_PRODUCT_FIELDS, readAdminLegacyProductBody } from '@/services/admin/AdminLegacyProductInput';
-import { prepareProductEditorSave, productEditorOperationId } from '@/services/admin/AdminProductEditorReceipt';
+import { prepareProductEditorCopySave, prepareProductEditorSave, productEditorOperationId } from '@/services/admin/AdminProductEditorReceipt';
 import { editorProduct } from './helpers/adminProductEditor';
 import { legacySaveActor } from './helpers/adminLegacyProductSave';
 
@@ -32,5 +32,22 @@ describe('complete editor request identity and bounded projection', () => {
     const product = editorProduct(); product.custom_form = product;
     expect(() => prepareProductEditorSave({ operation_id: operation, product }, 0, legacySaveActor(), 'local-test-key')).toThrow('有限JSON');
     await expect(readAdminLegacyProductBody(new Request('https://editor.local', { method: 'POST', body: '{"operation_id":"a","operation_id":"b"}' }))).rejects.toThrow();
+  });
+  it('binds trusted copy intent to source/snapshot and refuses raw identity or delivery material', () => {
+    const actor = legacySaveActor(), token = 'a'.repeat(64), product = editorProduct();
+    product.attrs = (product.attrs as object[]).map(row=>({...row,disk_info:'',virtual_list:[]}));
+    const envelope = {operation_id:operation,copy_token:token,product};
+    const copy = prepareProductEditorCopySave(envelope,17,actor,'local-test-key');
+    expect(copy.intent.copy).toEqual({sourceId:17,token}); expect(copy.intent.requestedId).toBe(0);
+    const ordinary = prepareProductEditorSave({operation_id:operation,product},0,actor,'local-test-key');
+    for(const changed of [ordinary,prepareProductEditorCopySave(envelope,18,actor,'local-test-key'),
+      prepareProductEditorCopySave({...envelope,copy_token:'b'.repeat(64)},17,actor,'local-test-key')])
+      expect(changed.intent.requestHash).not.toBe(copy.intent.requestHash);
+    for(const attrs of [{unique:'old-id'},{id:1},{disk_info:'fixed content'},{virtual_list:[{card_no:'do not copy'}]}])
+      expect(()=>prepareProductEditorCopySave({...envelope,product:{...product,attrs:[{...(product.attrs as object[])[0],...attrs}]}},17,actor,'local-test-key')).toThrow('复制不能携带');
+    expect(()=>prepareProductEditorCopySave({...envelope,product:{...product,product_type:1}},17,actor,'local-test-key')).toThrow('卡密库存');
+    expect(()=>prepareProductEditorCopySave({...envelope,product:{...product,product_type:'1'}},17,actor,'local-test-key')).toThrow('数字枚举');
+    expect(()=>prepareProductEditorCopySave(envelope,0,actor,'local-test-key')).toThrow('来源ID');
+    expect(()=>prepareProductEditorSave(envelope,0,actor,'local-test-key')).toThrow();
   });
 });
