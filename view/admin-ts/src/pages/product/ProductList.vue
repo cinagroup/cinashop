@@ -11,7 +11,25 @@
     </div>
     <!-- 搜索栏 -->
     <el-card v-if="canView" shadow="never" class="filter-card">
-      <el-form inline>
+      <el-form inline class="catalog-filter-form" @submit.prevent>
+        <el-form-item label="商品分类">
+          <el-cascader v-model="query.cate_id" :options="filterOptions.categories" :props="categoryFilterProps"
+            placeholder="请选择商品分类" filterable clearable collapse-tags :max-collapse-tags="2" :disabled="filterLoading.categories" @change="reload" />
+        </el-form-item>
+        <el-form-item label="供应商">
+          <el-select v-model="query.supplier_id" placeholder="请选择供应商" filterable clearable :disabled="filterLoading.suppliers" @change="reload">
+            <el-option v-for="item in filterOptions.suppliers" :key="item.id" :label="item.supplier_name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="商品品牌">
+          <el-cascader v-model="query.brand_id" :options="filterOptions.brands" :props="brandFilterProps"
+            placeholder="请选择商品品牌" filterable clearable :disabled="filterLoading.brands" @change="reload" />
+        </el-form-item>
+        <el-form-item label="商品标签">
+          <el-select v-model="query.store_label_id" multiple :multiple-limit="100" placeholder="请选择商品标签" filterable clearable collapse-tags :max-collapse-tags="2" :disabled="filterLoading.labels" @change="reload">
+            <el-option v-for="item in filterOptions.labels" :key="item.id" :label="`${item.group_name} / ${item.label_name}`" :value="item.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="商品名称">
           <el-input
             v-model="query.store_name"
@@ -25,6 +43,10 @@
           <el-button @click="reset">重置</el-button>
         </el-form-item>
       </el-form>
+      <div v-if="filterError" class="catalog-filter-error">
+        <el-alert :title="filterError" type="warning" :closable="false" />
+        <el-button plain @click="loadFilterOptions">重试筛选资料</el-button>
+      </div>
     </el-card>
 
     <!-- 工具栏 -->
@@ -239,11 +261,14 @@ import ProductModerationDialog from './ProductModerationDialog.vue';
 import type { ProductModerationMode } from '@/api/productModeration';
 import { apiAdminStockErpEnabled } from '@/api/productStock';
 import { ElMessage } from "element-plus";
+import { apiCatalogFilterCategories, apiCatalogFilterBrands, apiCatalogFilterLabels, apiCatalogFilterSuppliers,
+  type CatalogFilterNode, type CatalogFilterLabel, type CatalogFilterSupplier } from '@/api/productCatalogFilters';
 import {
   apiAdminProductList,
   apiAdminProductTypeHeader,
   type AdminProductCatalogItem,
   type AdminProductCatalogHeader,
+  type AdminProductCatalogQuery,
   apiAdminProductSetShow,
   apiAdminProductBatchOperation,
   apiAdminProductBatchRelations,
@@ -256,7 +281,7 @@ import {
 const list = ref<AdminProductCatalogItem[]>([]);
 const loading = ref(false);
 const total = ref(0);
-const query = reactive<{ page: number; limit: number; store_name: string; type: number | "" }>({ page: 1, limit: 10, store_name: "", type: 1 });
+const query = reactive<{ page: number; limit: number; store_name: string; type: number | ""; cate_id: number[]; brand_id: number[]; store_label_id: number[]; supplier_id: number | "" | undefined }>({ page: 1, limit: 10, store_name: "", type: 1, cate_id: [], brand_id: [], store_label_id: [], supplier_id: "" });
 const headers = ref<AdminProductCatalogHeader[]>([]), readError = ref(""), headerError = ref("");
 const route = useRoute(), router = useRouter(), auth = useAuthStore();
 let alive = false, syncing = false, readTurn = 0, batchRun = 0, abort: AbortController | null = null, stored = localStorage.getItem("admin_session");
@@ -272,10 +297,37 @@ function permission(key: string): boolean {
 const canView = computed(() => permission("product.view")), canManage = computed(() => canView.value && permission("product.manage"));
 const canReplyView = computed(() => canView.value && (permission("reply.view") || permission("reply.manage")));
 const canMutateState = computed(() => canManage.value && [1, 2].includes(Number(query.type)));
+const categoryFilterProps = { emitPath: false, multiple: true, checkStrictly: true }, brandFilterProps = { emitPath: true, checkStrictly: true };
+const filterOptions = reactive<{ categories: CatalogFilterNode[]; brands: CatalogFilterNode[]; labels: CatalogFilterLabel[]; suppliers: CatalogFilterSupplier[] }>({ categories: [], brands: [], labels: [], suppliers: [] });
+const filterLoading = reactive({ categories: false, brands: false, labels: false, suppliers: false });
+const filterErrors = reactive({ categories: '', brands: '', labels: '', suppliers: '' });
+const filterError = computed(() => Object.values(filterErrors).filter(Boolean).join('；'));
+let filterTurn = 0, filterAbort: AbortController | null = null;
+function clearFilterOptions(): void {
+  filterTurn++; filterAbort?.abort(); filterAbort = null;
+  filterOptions.categories = []; filterOptions.brands = []; filterOptions.labels = []; filterOptions.suppliers = [];
+  for (const key of ['categories', 'brands', 'labels', 'suppliers'] as const) { filterLoading[key] = false; filterErrors[key] = ''; }
+}
+async function loadFilterOptions(): Promise<void> {
+  if (!alive || !canView.value) return;
+  filterAbort?.abort(); const controller = new AbortController(); filterAbort = controller;
+  const turn = ++filterTurn, owner = identity.value, token = auth.token, session = stored;
+  const active = () => turn === filterTurn && current(owner, token, session);
+  async function read<K extends keyof typeof filterOptions>(key: K, readOptions: (signal?: AbortSignal) => Promise<(typeof filterOptions)[K]>, label: string) {
+    filterLoading[key] = true; filterErrors[key] = '';
+    try { const rows = await readOptions(controller.signal); if (active()) filterOptions[key] = rows; }
+    catch (error) { if (active()) { filterOptions[key] = [];
+      filterErrors[key] = `${label}筛选资料读取失败：${error instanceof Error ? error.message : '请重试'}`; } }
+    finally { if (active()) filterLoading[key] = false; }
+  }
+  await Promise.all([read('categories', apiCatalogFilterCategories, '分类'), read('brands', apiCatalogFilterBrands, '品牌'),
+    read('labels', apiCatalogFilterLabels, '标签'), read('suppliers', apiCatalogFilterSuppliers, '供应商')]);
+  if (active()) filterAbort = null;
+}
 function current(value: string, token: string, session: string | null): boolean {
   return alive && canView.value && identity.value === value && getToken() === token && auth.token === token && stored === session && localStorage.getItem("admin_session") === session;
 }
-function clearReads(): void { readTurn++; batchRun++; batchSubmitting.value = false; stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; recycleVisible.value = false; recycleProduct.value = null; stockGeneration.value++; erpEnabled.value = null; stockGuardError.value = ''; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
+function clearReads(resetBatch = true): void { readTurn++; if (resetBatch) { batchRun++; batchSubmitting.value = false; } stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; recycleVisible.value = false; recycleProduct.value = null; stockGeneration.value++; erpEnabled.value = null; stockGuardError.value = ''; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
 type MutationScope = { owner: string; token: string; session: string | null; turn: number; type: number | ""; ids: number[] };
 function mutationScope(ids: number[]): MutationScope { return { owner: identity.value, token: auth.token, session: stored, turn: readTurn, type: query.type, ids: [...ids] }; }
 function activeMutation(scope: MutationScope, selected = false): boolean {
@@ -363,11 +415,20 @@ const batchOptions = reactive<{
 
 async function fetch(): Promise<void> {
   if (!alive || !canView.value || !Number.isSafeInteger(query.page) || query.page < 1) return;
-  if ([...query.store_name].length > 128 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(query.store_name)) { readError.value = "商品关键词格式错误或超过128个字符"; return; }
+  const validIds = (values: unknown): values is number[] => Array.isArray(values) && values.length <= 100 && values.every(id => Number.isSafeInteger(id) && id > 0 && id <= 2_147_483_647) && new Set(values).size === values.length;
+  if ([...query.store_name].length > 128 || /[\u0000-\u001f\u007f-\u009f\ud800-\udfff]/u.test(query.store_name)) { clearReads(false); readError.value = "商品关键词格式错误或超过128个字符"; return; }
+  // Element Plus clears a single cascader/select to undefined. Empty choices
+  // remain absent filters, while a brand's full ancestor path stays an array.
+  const categoryIds = query.cate_id ?? [], brandIds = query.brand_id ?? [], labelIds = query.store_label_id ?? [], supplierId = query.supplier_id || '';
+  if (!validIds(categoryIds) || !validIds(brandIds) || brandIds.length > 3 || !validIds(labelIds) ||
+    supplierId !== '' && (!Number.isSafeInteger(supplierId) || supplierId < 1 || supplierId > 2_147_483_647)) {
+    clearReads(false); readError.value = '商品筛选条件格式错误或超过容量'; return;
+  }
   abort?.abort(); const controller = new AbortController(); abort = controller;
   const turn = ++readTurn, owner = identity.value, token = auth.token, session = stored;
-  const params = { page: query.page, limit: query.limit, store_name: query.store_name, type: query.type };
-  loading.value = true; readError.value = headerError.value = ""; list.value = []; selectedRows.value = [];
+  const params = { page: query.page, limit: query.limit, store_name: query.store_name, type: query.type,
+    cate_id: [...categoryIds], brand_id: [...brandIds], store_label_id: [...labelIds], supplier_id: supplierId } satisfies AdminProductCatalogQuery;
+  loading.value = true; readError.value = headerError.value = ""; list.value = []; selectedRows.value = []; batchDialogVisible.value = false;
   stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; recycleVisible.value = false; recycleProduct.value = null; stockGeneration.value++;
   erpEnabled.value = null; stockGuardError.value = '';
   const active = () => current(owner, token, session) && turn === readTurn;
@@ -398,10 +459,10 @@ function applyRoute(): void {
   catch (error) { readError.value = error instanceof Error ? error.message : "商品状态格式错误"; }
 }
 function syncSession(): void {
-  syncing = true; clearReads(); const session = getAdminSession();
+  syncing = true; clearReads(); clearFilterOptions(); const session = getAdminSession();
   auth.$patch({ token: getToken() ?? "", userInfo: session?.userInfo ?? null, menus: (session?.menus as typeof auth.menus) ?? [], uniqueAuth: session?.uniqueAuth ?? [] });
   stored = localStorage.getItem("admin_session"); sessionVersion.value++; syncing = false;
-  query.page = 1; query.store_name = ""; applyRoute();
+  query.page = 1; query.store_name = ""; query.cate_id = []; query.brand_id = []; query.store_label_id = []; query.supplier_id = ""; applyRoute(); void loadFilterOptions();
 }
 function syncStorage(event: StorageEvent): void { if (event.key === null || ["admin_token", "admin_session"].includes(event.key)) syncSession(); }
 function stockNotice(event: Event): void {
@@ -537,6 +598,7 @@ function reload() {
 
 function reset() {
   query.store_name = "";
+  query.cate_id = []; query.brand_id = []; query.store_label_id = []; query.supplier_id = "";
   reload();
 }
 
@@ -557,7 +619,7 @@ async function toggleShow(row: AdminProductCatalogItem) {
 watch(identity, () => { if (alive && !syncing) syncSession(); }, { flush: "sync" });
 watch(() => route.query.type, () => { if (alive) applyRoute(); });
 onMounted(() => { alive = true; window.addEventListener("admin-session-changed", syncSession); window.addEventListener("admin-auth-expired", syncSession); window.addEventListener("storage", syncStorage); window.addEventListener('cinashop:product-stock-changed', stockNotice); window.addEventListener('cinashop:product-stock-notice-denied', stockNoticeDenied); syncSession(); });
-onBeforeUnmount(() => { alive = false; clearReads(); window.removeEventListener("admin-session-changed", syncSession); window.removeEventListener("admin-auth-expired", syncSession); window.removeEventListener("storage", syncStorage); window.removeEventListener('cinashop:product-stock-changed', stockNotice); window.removeEventListener('cinashop:product-stock-notice-denied', stockNoticeDenied); });
+onBeforeUnmount(() => { alive = false; clearReads(); clearFilterOptions(); window.removeEventListener("admin-session-changed", syncSession); window.removeEventListener("admin-auth-expired", syncSession); window.removeEventListener("storage", syncStorage); window.removeEventListener('cinashop:product-stock-changed', stockNotice); window.removeEventListener('cinashop:product-stock-notice-denied', stockNoticeDenied); });
 </script>
 
 <style scoped>
@@ -566,6 +628,8 @@ onBeforeUnmount(() => { alive = false; clearReads(); window.removeEventListener(
 .filter-card {
   margin-bottom: 16px;
 }
+.catalog-filter-form :deep(.el-select), .catalog-filter-form :deep(.el-cascader) { width: 230px; }
+.catalog-filter-error { display: flex; align-items: center; gap: 12px; }
 
 .toolbar {
   margin-bottom: 16px;
@@ -615,6 +679,10 @@ onBeforeUnmount(() => { alive = false; clearReads(); window.removeEventListener(
   justify-content: flex-end;
 }
 @media (max-width: 640px) {
+  .catalog-filter-form :deep(.el-form-item) { display: flex; margin-right: 0; }
+  .catalog-filter-form :deep(.el-form-item__content) { min-width: 0; }
+  .catalog-filter-form :deep(.el-select), .catalog-filter-form :deep(.el-cascader), .catalog-filter-form :deep(.el-input) { width: 100%; }
+  .catalog-filter-error { flex-wrap: wrap; }
   .toolbar,
   .batch-toolbar {
     flex-wrap: wrap;

@@ -36,6 +36,9 @@ describe('main catalogue actual old SPA/Axios and modern API → App/JWT/SQL sou
   let f: Awaited<ReturnType<typeof catalogReadFixture>>, legacy: Legacy, modern: Modern;
   const calls: Array<{ method: string; path: string; query: URLSearchParams }> = [];
   beforeAll(async () => {
+    // Browser storage is a host fixture; these reads contain no pending
+    // moderation/recycle attempt and make no cross-tab recovery claim.
+    vi.stubGlobal('localStorage', { getItem: () => null });
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Catalogue HTTP fixture forbids remote I/O'));
     f = await catalogReadFixture(); wiring.application.mockImplementation(() => f.container);
     wiring.open.mockImplementation(() => ({ container: f.container, close: wiring.close }));
@@ -75,7 +78,7 @@ describe('main catalogue actual old SPA/Axios and modern API → App/JWT/SQL sou
         plugin.onResolve({ filter: /^@\/utils\/request$/ }, () => ({ path: resolve(admin, 'src/utils/request.ts') }));
         plugin.onResolve({ filter: /^@\/utils\/auth$/ }, () => ({ path: 'auth', namespace: 'catalogue-modern-fixture' }));
         plugin.onLoad({ filter: /.*/, namespace: 'catalogue-modern-fixture' }, () => ({ contents:
-          'export function getToken(){return globalThis.__catalogModernToken;} export function clearAuth(){throw Error("Unexpected catalogue consumer expiry");}', loader: 'js' }));
+          'export function getToken(){return globalThis.__catalogModernToken;} export function getAdminSession(){return null;} export function clearAuth(){throw Error("Unexpected catalogue consumer expiry");}', loader: 'js' }));
       } }] });
     const currentModule = { exports: {} }; new Function('require', 'module', 'exports', current.outputFiles[0].text)(require, currentModule, currentModule.exports);
     modern = currentModule.exports as Modern; modern.request.defaults.adapter = adapter(modern.request);
@@ -84,7 +87,7 @@ describe('main catalogue actual old SPA/Axios and modern API → App/JWT/SQL sou
     Reflect.set(globalThis, '__catalogModernToken', tokens[120]); }, 30000);
   afterAll(async () => { try { expect(fetch).not.toHaveBeenCalled(); }
     finally { Reflect.deleteProperty(globalThis, '__catalogLegacyRequest'); Reflect.deleteProperty(globalThis, '__catalogModernToken');
-      vi.restoreAllMocks(); await f?.close(); } }, 30000);
+      vi.restoreAllMocks(); vi.unstubAllGlobals(); await f?.close(); } }, 30000);
   function adapter(request: { getUri(config: Config): string }) { return async (config: Config) => {
     const url = new URL(request.getUri(config), 'http://localhost'); calls.push({ method: config.method?.toUpperCase() ?? 'GET', path: url.pathname, query: url.searchParams });
     const response = await raw(config.method?.toUpperCase() ?? 'GET', url.pathname + url.search, 0, config.headers.toJSON());
@@ -144,6 +147,21 @@ describe('main catalogue actual old SPA/Axios and modern API → App/JWT/SQL sou
     expect(list.count).toBe(9); expect(list.list.some(row => row.id === 30)).toBe(true);
     expect((await modern.apiAdminProductTypeHeader({ type: '0' })).map(row => row.type)).toEqual([1, 2, 4, 5, 6, 0, -1, -2]);
     expect(calls.map(row => row.path)).toEqual(['/adminapi/product/product', '/adminapi/product/product/type_header']);
+    expect(await catalogReadSnapshot(f.db)).toEqual(before);
+  });
+
+  it('consumes all four modern filter fields with real bracket serialization through App/JWT/SQL and preserves the category count exception', async () => {
+    const before = await catalogReadSnapshot(f.db), params = { page: 1, limit: 10, type: 1,
+      cate_id: [2], brand_id: [5], store_label_id: [6], supplier_id: 20 };
+    const rows = await modern.apiAdminProductList(params), counts = await modern.apiAdminProductTypeHeader(params);
+    // Category count deliberately ignores the other dimensions, while no
+    // product satisfies both this brand and Supplier label in the real fixture.
+    expect(rows).toEqual({ list: [], count: 4 });
+    expect(counts.map(row => row.count)).toEqual([4,0,0,0,0,1,0,0]);
+    for (const call of calls) {
+      expect(call.query.getAll('cate_id[]')).toEqual(['2']); expect(call.query.getAll('brand_id[]')).toEqual(['5']);
+      expect(call.query.getAll('store_label_id[]')).toEqual(['6']); expect(call.query.get('supplier_id')).toBe('20');
+    }
     expect(await catalogReadSnapshot(f.db)).toEqual(before);
   });
 

@@ -102,6 +102,7 @@ function controls(app: any) {
   for (const [name, tag] of Object.entries({ 'el-card': 'card', 'el-form': 'form', 'el-form-item': 'field', 'el-button': 'button', 'el-option': 'option', 'el-tag': 'tag', 'el-image': 'image', 'el-text': 'text',
     'el-checkbox-group': 'checkbox-group', 'el-checkbox': 'checkbox', 'el-radio-group': 'radio-group', 'el-radio-button': 'radio-button' })) app.component(name, pass(tag));
   app.component('el-input', { inheritAttrs: false, props: ['modelValue', 'type'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h(props.type === 'textarea' ? 'textarea' : 'input', { ...attrs, value: props.modelValue, onInput: (event: any) => emit('update:modelValue', event.target.value) }); } });
+  app.component('el-cascader', { inheritAttrs: false, props: ['modelValue', 'options', 'props'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h('cascader', { ...attrs, value: props.modelValue, options: props.options, onChange: (value: any) => { emit('update:modelValue', value); attrs.onChange?.(value); } }); } });
   app.component('el-select', { inheritAttrs: false, props: ['modelValue'], emits: ['update:modelValue'], setup(props: any, { attrs, emit, slots }: any) { return () => runtime.h('select', { ...attrs, value: props.modelValue, onChange: (value: any) => { emit('update:modelValue', value); attrs.onChange?.(value); } }, slots.default?.()); } });
   app.component('el-input-number', { inheritAttrs: false, props: ['modelValue'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h('number', { ...attrs, value: props.modelValue, onInput: (value: number) => emit('update:modelValue', value) }); } });
   app.component('el-date-picker', { inheritAttrs: false, props: ['modelValue'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h('date-range', { ...attrs, value: props.modelValue, onChange: (value: any) => emit('update:modelValue', value) }); } });
@@ -127,6 +128,7 @@ async function mount(path = '/product', permissions = ['product.view', 'product.
     products: [product(51), product(52, 1), product(53)], count: 3, headers: headerRows(), enabled: false,
     skus: new Map([[51, [sku(101, 51, 5), sku(102, 51, 7), sku(103, 51, 0, 1)]], [53, [sku(201, 53, 12)]]]),
     respond(config: any) {
+      if (config.method === 'get' && ['/product/category/cascader_list/1', '/product/brand/cascader_list/2', '/product/product_label', '/supplier/list'].includes(config.url)) return [];
       if (config.method === 'get' && config.url === catalog) return { list: structuredClone(fixture.products), count: fixture.count };
       if (config.method === 'get' && config.url === header) return { list: structuredClone(fixture.headers) };
       if (config.method === 'get' && config.url === erp) return { open_erp: fixture.enabled };

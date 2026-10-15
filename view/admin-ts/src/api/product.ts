@@ -146,7 +146,7 @@ const previewEditorOptions: ProductEditorOptions = {
 
 const previewProducts: AdminProduct[] = [
   { id: 8, product_type: 0, type: 0, relation_id: 0, store_name: "轻盈通勤衬衫", store_info: "舒适基础款", image: "https://placehold.co/120x120/png?text=Shirt", price: "199.00", ot_price: "239.00", stock: 120, sales: 36, is_show: 1, is_verify: 1, is_del: 0, cate_id: [12], keyword: "通勤,衬衫", unit_name: "件" },
-  { id: 7, product_type: 0, type: 0, relation_id: 0, store_name: "亚麻收纳篮", store_info: "家居收纳", image: "https://placehold.co/120x120/png?text=Basket", price: "89.00", ot_price: "109.00", stock: 48, sales: 21, is_show: 1, is_verify: 1, is_del: 0, cate_id: [11], keyword: "收纳", unit_name: "个" },
+  { id: 7, product_type: 0, type: 2, relation_id: 20, store_name: "亚麻收纳篮", store_info: "家居收纳", image: "https://placehold.co/120x120/png?text=Basket", price: "89.00", ot_price: "109.00", stock: 48, sales: 21, is_show: 1, is_verify: 1, is_del: 0, cate_id: [11], keyword: "收纳", unit_name: "个" },
   { id: 6, product_type: 0, type: 0, relation_id: 0, store_name: "轻量保温杯", store_info: "随行饮水", image: "https://placehold.co/120x120/png?text=Cup", price: "129.00", ot_price: "159.00", stock: 75, sales: 18, is_show: 0, is_verify: 1, is_del: 0, cate_id: [11], keyword: "水杯", unit_name: "只" },
 ];
 
@@ -254,8 +254,40 @@ export interface AdminProductCatalogItem extends Omit<AdminProduct, "stock"> {
   auto_off_time?: number;
 }
 export interface AdminProductCatalogHeader { type: number; name: string; count: number; }
-export interface AdminProductCatalogQuery { page?: number; limit?: number; store_name?: string; type?: number | ""; }
+export interface AdminProductCatalogQuery {
+  page?: number;
+  limit?: number;
+  store_name?: string;
+  type?: number | "";
+  cate_id?: number[];
+  brand_id?: number[];
+  store_label_id?: number[];
+  supplier_id?: number | "";
+}
 const catalogStates = [1, 2, 4, 5, 6, 0, -1, -2];
+const previewCatalogRelations: Record<number, { brand: number; labels: number[] }> = {
+  8: { brand: 21, labels: [31] }, 7: { brand: 22, labels: [32] }, 6: { brand: 21, labels: [31] },
+};
+function previewCatalogRows(params: AdminProductCatalogQuery, type = params.type ?? 1, count = false): AdminProduct[] {
+  const categoryCount = count && !!params.cate_id?.length;
+  return previewProducts.filter(row => {
+    const metadata = previewCatalogRelations[row.id]!;
+    const state = type === '' ? true : type === 1 ? row.is_del === 0 && row.is_show === 1 && row.is_verify === 1
+      : type === 2 ? row.is_del === 0 && row.is_show === 0 && row.is_verify === 1
+      : type === 3 ? row.is_del === 0 && row.is_verify === 1
+      : type === 4 ? row.is_del === 0 && row.is_verify === 1 && row.stock === 0
+      : type === 6 ? row.is_del === 1 : type === 7 ? row.is_del === 1 || row.is_show === 0
+      : type === 0 ? row.is_del === 0 && row.is_verify === 0 : type < 0 ? row.is_verify === type : false;
+    if (!state || params.cate_id?.length && !params.cate_id.some(id => Array.isArray(row.cate_id) && row.cate_id.includes(id))) return false;
+    if (categoryCount) return true; // The real PHP category count ignores the remaining filters.
+    const keyword = (params.store_name ?? '').trim().toLowerCase();
+    return (!keyword || keyword === '0' || row.store_name.toLowerCase().includes(keyword))
+      && (!params.supplier_id || row.type === 2 && row.relation_id === params.supplier_id)
+      && (!params.brand_id?.length || params.brand_id.includes(metadata.brand))
+      && (!params.store_label_id?.length || params.store_label_id.some(id => metadata.labels.includes(id)));
+  });
+}
+
 function catalogCount(value: unknown): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0 || value > 2_147_483_647) throw Error("商品计数响应格式错误");
   return value;
@@ -263,12 +295,9 @@ function catalogCount(value: unknown): number {
 /** 主商品列表 (GET /adminapi/product/product)，独立于选商品接口。 */
 export async function apiAdminProductList(params: AdminProductCatalogQuery, signal?: AbortSignal): Promise<{ list: AdminProductCatalogItem[]; count: number }> {
   if (previewMode) {
-    const page = Number(params.page ?? 1), limit = Number(params.limit ?? 10), keyword = String(params.store_name ?? "").trim().toLowerCase();
-    const rows = previewProducts.filter(row => (!keyword || row.store_name.toLowerCase().includes(keyword)) &&
-      (params.type === undefined || params.type === "" || params.type === 1 ? row.is_del === 0 && row.is_show === 1 :
-       params.type === 2 ? row.is_del === 0 && row.is_show === 0 : params.type === 6 ? row.is_del === 1 : false));
-    const actualPage = rows.length <= limit ? 1 : page;
-    return { list: rows.slice((actualPage - 1) * limit, actualPage * limit), count: rows.length };
+    const page = Number(params.page ?? 1), limit = Number(params.limit ?? 10), rows = previewCatalogRows(params), count = previewCatalogRows(params, params.type ?? 1, true).length;
+    const actualPage = count <= limit ? 1 : page;
+    return { list: rows.slice((actualPage - 1) * limit, actualPage * limit), count };
   }
   const observe = await beginModerationRead(), observeRecycle = await beginRecycleRead();
   const value = await getData<{ list: AdminProductCatalogItem[]; count: number }>(request.get("/product/product", { params, signal }));
@@ -280,7 +309,7 @@ export async function apiAdminProductList(params: AdminProductCatalogQuery, sign
   return { list: value.list, count };
 }
 export async function apiAdminProductTypeHeader(params: AdminProductCatalogQuery, signal?: AbortSignal): Promise<AdminProductCatalogHeader[]> {
-  if (previewMode) return catalogStates.map((type, index) => ({ type, name: ["销售中", "仓库中", "已售罄", "库存预警", "回收站", "待审核", "审核未通过", "强制下架"][index]!, count: type === 1 ? previewProducts.length : 0 }));
+  if (previewMode) return catalogStates.map((type, index) => ({ type, name: ["销售中", "仓库中", "已售罄", "库存预警", "回收站", "待审核", "审核未通过", "强制下架"][index]!, count: previewCatalogRows(params, type, true).length }));
   const value = await getData<{ list: AdminProductCatalogHeader[] }>(request.get("/product/product/type_header", { params, signal }));
   if (!value || !Array.isArray(value.list) || value.list.length !== catalogStates.length || value.list.some((row, index) => !row || row.type !== catalogStates[index] || typeof row.name !== "string")) throw Error("商品状态计数响应格式错误");
   return value.list.map(row => ({ ...row, count: catalogCount(row.count) }));

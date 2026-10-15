@@ -308,4 +308,20 @@ export class AdminProductCatalogReadService {
       return { list };
     });
   }
+
+  /** The old supplier selector reads no query values and returns every
+   * nondeleted supplier, including disabled suppliers, in descending ID order.
+   * Bound the otherwise ignored transport without turning it into pagination. */
+  async supplierOptions(query: URLSearchParams, actor: AdminProductCatalogReadActor) {
+    if (new TextEncoder().encode(query.toString()).byteLength > 16384 || query.size > 320
+      || [...query].some(([key, value]) => [...key].length > 256 || [...value].length > 256)) {
+      throw new ValidateException('供应商查询参数超出容量');
+    }
+    return this.transaction(actor, async tx => {
+      const rows = await tx.select({ id: systemSupplier.id, supplier_name: systemSupplier.supplierName })
+        .from(systemSupplier).where(eq(systemSupplier.isDel, 0)).orderBy(desc(systemSupplier.id)).limit(FULL_LIST_CAPACITY + 1);
+      if (rows.length > FULL_LIST_CAPACITY) throw new ServiceUnavailableException('供应商完整选项超过10000项容量');
+      return rows;
+    });
+  }
 }

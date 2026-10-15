@@ -293,6 +293,7 @@ adminapiRoutes.get("/product/list", adminAuth, AdminCrud.adminProductList);
 adminapiRoutes.get('/product/product/list', adminAuth, AdminProductFictitiousReplies.products);
 adminapiRoutes.get('/product/product', adminAuth, AdminProductCatalogRead.list);
 adminapiRoutes.get('/product/product/type_header', adminAuth, AdminProductCatalogRead.header);
+adminapiRoutes.get('/supplier/list', adminAuth, AdminProductCatalogRead.supplierOptions);
 adminapiRoutes.get('/product/product/attrs/:id', adminAuth, AdminProductStock.attrs);
 adminapiRoutes.put('/product/product/saveStocks/:id', adminAuth, AdminProductStock.save);
 adminapiRoutes.get('/product/product/verify/:id', adminAuth, AdminProductModeration.verifyForm);

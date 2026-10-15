@@ -472,6 +472,9 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // The earlier mobile editor has a distinct /api/admin selection contract.
   if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;
   const route = normalizeAdminRoute(routePath);
+  if (route === 'supplier/list' || route.startsWith('supplier/list/')) {
+    return route === 'supplier/list' && ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'product.view' : null;
+  }
   if (route === 'erp/connections' || route.startsWith('erp/connections/')) {
     if (['GET', 'HEAD'].includes(method.toUpperCase()) && route === 'erp/connections') return 'erp.connection.view';
     if (method.toUpperCase() === 'POST' && route === 'erp/connections') return 'erp.connection.manage';
@@ -811,7 +814,11 @@ function productCatalogReadMenuBinding(menu: LegacyAdminMenuMetadata): { protect
   const page = menu.id === 2 || path === '/admin/product/product_list' || auth === 'admin-store-storeprouduct-index';
   const seed = productCatalogReadMenuTuples[menu.id];
   const claimedPath = ['/admin/product/product', '/adminproduct/product/type_header', '/adminproduct/product/list'].includes(path);
-  if (!page && !seed && !claimedPath && !isProductCatalogReadRoute(route) && auth !== 'product-product-index') return { protected: false, permission: null };
+  // There is no supplier/list tuple in the PHP installer. Merely copying this
+  // selector URL, its path, or a canonical unique_auth cannot mint a grant.
+  const selectorClaim = [route, normalizeAdminRoute(path.replace(/^\/admin(?=\/)/, ''))]
+    .some(value => value === 'supplier/list' || value.startsWith('supplier/list/'));
+  if (!page && !seed && !claimedPath && !selectorClaim && !isProductCatalogReadRoute(route) && auth !== 'product-product-index') return { protected: false, permission: null };
   if (page) return { protected: true, permission: menu.id === 2 && menu.authType === 1
     && menu.menuPath === '/admin/product/product_list' && menu.uniqueAuth === 'admin-store-storeProuduct-index'
     && menu.apiUrl === '' && menu.methods === '' ? 'product.view' : null };

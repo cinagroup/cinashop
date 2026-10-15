@@ -8,6 +8,13 @@ const root = resolve(import.meta.dirname, '../../view/admin-ts');
 const require = createRequire(resolve(root, 'package.json'));
 const { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
 const catalog = '/product/product', header = `${catalog}/type_header`, replies = '/product/reply';
+const filterPaths = { categories: '/product/category/cascader_list/1', brands: '/product/brand/cascader_list/2', labels: '/product/product_label', suppliers: '/supplier/list' };
+const filterFixtures = {
+  categories: [{ value: 11, label: '一级分类', pid: 0, children: [{ value: 12, label: '二级分类', pid: 11 }] }],
+  brands: [{ value: 21, label: '一级品牌', pid: 0, children: [{ value: 22, label: '二级品牌', pid: 21, children: [{ value: 23, label: '三级品牌', pid: 22 }] }] }],
+  labels: [{ id: 71, label_name: '标签组', type: 0, relation_id: 0, children: [31,32].map(id => ({ id, label_cate: 71, type: 0, relation_id: 0, label_name: `标签 ${id}` })) }],
+  suppliers: [{ id: 20, supplier_name: '停用但未删除供应商' }, { id: 19, supplier_name: '启用供应商' }],
+};
 let runtime: any, browser: EventTarget, values: Map<string, string>;
 
 beforeAll(async () => {
@@ -21,6 +28,7 @@ beforeAll(async () => {
     export {default as router} from './src/router';
     export {default as request} from './src/utils/request';
     export * as productApi from './src/api/product';
+    export * as filterApi from './src/api/productCatalogFilters';
     export * as dialogs from 'element-plus';
     export {createPinia,disposePinia} from 'pinia';
     export {createRenderer,nextTick,h,provide,inject,watch} from 'vue';
@@ -98,6 +106,7 @@ function controls(app: any) {
   for (const [name, tag] of Object.entries({ 'el-card': 'card', 'el-form': 'form', 'el-form-item': 'field', 'el-button': 'button', 'el-option': 'option', 'el-tag': 'tag', 'el-image': 'image', 'el-text': 'text',
     'el-checkbox-group': 'checkbox-group', 'el-checkbox': 'checkbox', 'el-radio-group': 'radio-group', 'el-radio-button': 'radio-button' })) app.component(name, pass(tag));
   app.component('el-input', { inheritAttrs: false, props: ['modelValue', 'type'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h(props.type === 'textarea' ? 'textarea' : 'input', { ...attrs, value: props.modelValue, onInput: (event: any) => emit('update:modelValue', event.target.value) }); } });
+  app.component('el-cascader', { inheritAttrs: false, props: ['modelValue', 'options', 'props'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h('cascader', { ...attrs, value: props.modelValue, options: props.options, choiceProps: props.props, onChange: (value: any) => { emit('update:modelValue', value); attrs.onChange?.(value); } }); } });
   app.component('el-select', { inheritAttrs: false, props: ['modelValue'], emits: ['update:modelValue'], setup(props: any, { attrs, emit, slots }: any) { return () => runtime.h('select', { ...attrs, value: props.modelValue, onChange: (value: any) => { emit('update:modelValue', value); attrs.onChange?.(value); } }, slots.default?.()); } });
   app.component('el-input-number', { inheritAttrs: false, props: ['modelValue'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h('number', { ...attrs, value: props.modelValue, onInput: (value: number) => emit('update:modelValue', value) }); } });
   app.component('el-date-picker', { inheritAttrs: false, props: ['modelValue'], emits: ['update:modelValue'], setup(props: any, { attrs, emit }: any) { return () => runtime.h('date-range', { ...attrs, value: props.modelValue, onChange: (value: any) => emit('update:modelValue', value) }); } });
@@ -122,6 +131,7 @@ async function mount(path = '/product', permissions = ['product.view', 'reply.vi
   login(permissions); const calls: any[] = [], fixture = {
     products: Array.from({ length: 31 }, (_, index) => product(51 + index, index === 0 ? null : 12)), count: 31, headers: headerRows(),
     respond(config: any) {
+      for (const [key, path] of Object.entries(filterPaths)) if (config.method === 'get' && config.url === path) return structuredClone(filterFixtures[key as keyof typeof filterFixtures]);
       if (config.method !== 'get') throw Error(`Unexpected navigation mutation ${config.method} ${config.url}`);
       if (config.url === catalog) {
         const limit = Number(config.params.limit), page = fixture.count <= limit ? 1 : Number(config.params.page);
@@ -310,13 +320,14 @@ describe('actual Admin catalog pages, counted Axios consumers and real Router re
   it('does not reopen a batch editor or dispatch a confirmed deletion after capability, session or catalog-state changes', async () => {
     // Each await boundary must retain its own authorization and page stamp.
     // These three probes remain one definition, not three counted tests.
-    for (const changed of ['capability', 'session', 'state']) {
+    for (const changed of ['capability', 'session', 'state', 'filter']) {
       const options = gate(), confirmation = gate();
       const candidates = { categories: [{ id: 91, name: '旧上下文候选' }], brands: [], product_labels: [], user_labels: [], gift_coupons: [], system_forms: [], shipping_templates: [], ensures: [], parameter_templates: [], sku_rule_templates: [] };
       const f = await mount('/product?type=1', ['product.view', 'product.manage', 'reply.view'], config => config.url === '/product/editor/options' ? options.promise.then(() => structuredClone(candidates)) : undefined);
       const originalProducts = structuredClone(f.fixture.products);
       const changeContext = async () => {
         if (changed === 'state') await f.navigate('/product?type=6');
+        else if (changed === 'filter') { f.view.query.supplier_id = 20; await f.view.reload(); await flush(); }
         else {
           const current = JSON.parse(values.get('admin_session')!);
           login(changed === 'capability' ? ['product.view', 'reply.view'] : ['product.view', 'product.manage', 'reply.view'],
@@ -346,7 +357,7 @@ describe('actual Admin catalog pages, counted Axios consumers and real Router re
         expect(f.view.recycleVisible.value).toBe(false); expect(f.view.recycleProduct.value).toBeNull();
         expect(f.calls).toHaveLength(afterDeleteChange); expect(f.calls.filter((config: any) => config.method !== 'get')).toHaveLength(0);
         expect(f.view.list.value[0].stock).toBeNull(); expect(f.fixture.products).toEqual(originalProducts);
-        expect(f.view.canManage.value).toBe(changed !== 'capability'); expect(f.view.canMutateState.value).toBe(changed === 'session');
+        expect(f.view.canManage.value).toBe(changed !== 'capability'); expect(f.view.canMutateState.value).toBe(['session', 'filter'].includes(changed));
       } finally { options.resolve(); confirmation.resolve(); runtime.dialogs.state.confirm = async () => {}; f.close(); }
     }
   });
@@ -382,7 +393,7 @@ describe('actual Admin catalog pages, counted Axios consumers and real Router re
       expect(button(f, '确认执行').props.loading).toBe(true);
       dispatch(oldConfirm); await flush(); expect(posts()).toHaveLength(1);
       await button(f, '批量操作').props.onClick(); await flush();
-      expect(f.nodes().find((node: Node) => node.tag === 'select')!.props.value).toBe('hide');
+      expect(f.nodes().find((node: Node) => node.tag === 'select' && node.props.value === 'hide')!.props.value).toBe('hide');
       expect(reads(f, '/product/editor/options')).toHaveLength(1);
 
       login(['product.view', 'product.manage'], 'catalog-admin-b', 21);
@@ -417,5 +428,165 @@ describe('actual Admin catalog pages, counted Axios consumers and real Router re
     } finally {
       oldResponse.resolve(); replacementResponse.resolve(); await Promise.allSettled(submissions); await flush(); f.close();
     }
+  });
+});
+
+describe('actual counted catalogue four-dimensional filter consumption', () => {
+  async function selectFilter(f: any, placeholder: string, value: unknown) {
+    const control = f.nodes().find((node: Node) => ['select', 'cascader'].includes(node.tag ?? '') && node.props.placeholder === placeholder);
+    if (!control || control.props.disabled) throw Error(`Missing or disabled filter ${placeholder}`);
+    control.props.onChange(value); await flush();
+  }
+
+  it('loads the genuine four selector routes for product readers and exposes category multi-selection, full brand paths, grouped labels and Supplier names', async () => {
+    const f = await mount('/product', ['product.view']); try {
+      for (const path of Object.values(filterPaths)) expect(reads(f, path)).toHaveLength(1);
+      expect(f.calls.some((config: any) => ['/supplier/supplier', '/product/editor/options', '/product/all_label'].includes(config.url))).toBe(false);
+      const categories = f.nodes().find((node: Node) => node.props.placeholder === '请选择商品分类')!;
+      expect(categories.props.choiceProps).toEqual({ emitPath: false, multiple: true, checkStrictly: true });
+      expect(categories.props.options).toEqual(filterFixtures.categories);
+      const brands = f.nodes().find((node: Node) => node.props.placeholder === '请选择商品品牌')!;
+      expect(brands.props.choiceProps).toEqual({ emitPath: true, checkStrictly: true });
+      expect(brands.props.options[0].children[0].children[0].value).toBe(23);
+      expect(f.view.filterOptions.labels).toEqual([31,32].map(id => ({ id, label_name: `标签 ${id}`, group_name: '标签组' })));
+      expect(f.nodes().some((node: Node) => node.tag === 'option' && node.props.label === '停用但未删除供应商' && node.props.value === 20)).toBe(true);
+      expect(f.view.filterError.value).toBe(''); expect(f.view.canManage.value).toBe(false);
+      expect(f.nodes().some((node: Node) => node.tag === 'button' && textOf(node) === '批量操作')).toBe(false);
+    } finally { f.close(); }
+  });
+
+  it('sends all four rendered choices as immutable Axios bracket arrays to both list and header, retaining filters on pagination and state changes and clearing all on reset', async () => {
+    const f = await mount('/product?type=1&source=legacy#filters', ['product.view']); try {
+      await selectFilter(f, '请选择商品分类', [11,12]);
+      await selectFilter(f, '请选择供应商', 20);
+      await selectFilter(f, '请选择商品品牌', [21,22,23]);
+      await selectFilter(f, '请选择商品标签', [31,32]);
+      const expected = { cate_id: [11,12], supplier_id: 20, brand_id: [21,22,23], store_label_id: [31,32] };
+      const last = reads(f, catalog).at(-1);
+      expect(last.params).toMatchObject({ page: 1, ...expected });
+      expect(reads(f, header).at(-1).params).toEqual(last.params);
+      const wire = new URL(runtime.request.getUri(last), 'https://local.invalid');
+      expect(wire.pathname).toBe('/adminapi/product/product');
+      expect(wire.searchParams.getAll('cate_id[]')).toEqual(['11','12']);
+      expect(wire.searchParams.getAll('brand_id[]')).toEqual(['21','22','23']);
+      expect(wire.searchParams.getAll('store_label_id[]')).toEqual(['31','32']);
+      expect(wire.searchParams.get('supplier_id')).toBe('20');
+      f.nodes().find((node: Node) => node.tag === 'pagination')!.props.onPage(2); await flush();
+      expect(reads(f, catalog).at(-1).params).toMatchObject({ page: 2, ...expected });
+      await click(f, '回收站 (3)');
+      expect(reads(f, catalog).at(-1).params).toMatchObject({ page: 1, type: 6, ...expected });
+      expect(runtime.router.currentRoute.value).toMatchObject({ query: { type: '6', source: 'legacy' }, hash: '#filters' });
+      for (const path of Object.values(filterPaths)) expect(reads(f, path)).toHaveLength(1);
+      await selectFilter(f, '请选择商品分类', [12]);
+      expect(last.params.cate_id).toEqual([11,12]);
+      await click(f, '重置');
+      expect(reads(f, catalog).at(-1).params).toMatchObject({ page: 1, type: 6, cate_id: [], brand_id: [], store_label_id: [], supplier_id: '', store_name: '' });
+      expect(reads(f, header).at(-1).params).toEqual(reads(f, catalog).at(-1).params);
+      await selectFilter(f, '请选择商品品牌', undefined);
+      await selectFilter(f, '请选择供应商', undefined);
+      expect(reads(f, catalog).at(-1).params).toMatchObject({ brand_id: [], supplier_id: '' });
+    } finally { f.close(); }
+  });
+
+  it('discards earlier filtered list/header responses, closes mutation dialogs and preserves server category count/list asymmetry', async () => {
+    const old = gate(); let delayed = false;
+    const f = await mount('/product', ['product.view', 'product.manage'], config => {
+      if ([catalog,header].includes(config.url) && config.params.supplier_id === 19 && delayed) return old.promise.then(() => config.url === catalog ? { list: [product(999)], count: 999 } : { list: headerRows().map(row => ({ ...row, count: 999 })) });
+      if (config.url === catalog && config.params.cate_id?.length) return { list: [], count: 4 };
+      return undefined;
+    });
+    try {
+      delayed = true; await selectFilter(f, '请选择供应商', 19);
+      await selectFilter(f, '请选择供应商', 20);
+      old.resolve(); await flush();
+      expect(f.view.list.value.some((row: any) => row.id === 999)).toBe(false); expect(f.view.total.value).toBe(31);
+      expect(f.view.headers.value.every((row: any) => row.count !== 999)).toBe(true);
+      await click(f, '移入回收站'); expect(f.view.recycleVisible.value).toBe(true);
+      await selectFilter(f, '请选择商品分类', [11]);
+      expect(f.view.recycleVisible.value).toBe(false); expect(f.view.recycleProduct.value).toBeNull();
+      expect(f.view.list.value).toEqual([]); expect(f.view.total.value).toBe(4);
+      expect(f.nodes().find((node: Node) => node.tag === 'pagination')!.props.total).toBe(4);
+      expect(f.calls.filter((config: any) => config.method !== 'get')).toEqual([]);
+    } finally { old.resolve(); f.close(); }
+  });
+
+  it('keeps successful filter sources and counted reads usable after one candidate source fails, retries without clearing selected IDs and never replays a mutation', async () => {
+    let fail = true;
+    const f = await mount('/product', ['product.view'], config => {
+      if (config.url === filterPaths.suppliers && fail) throw Error('独立供应商读取失败');
+      return undefined;
+    }); try {
+      expect(f.view.filterOptions.suppliers).toEqual([]); expect(f.view.filterOptions.categories).toHaveLength(1);
+      expect(f.text()).toContain('供应商筛选资料读取失败'); expect(f.view.list.value).toHaveLength(10);
+      await selectFilter(f, '请选择商品分类', [12]);
+      expect(reads(f, catalog).at(-1).params.cate_id).toEqual([12]);
+      fail = false; await click(f, '重试筛选资料');
+      expect(f.view.filterOptions.suppliers).toEqual(filterFixtures.suppliers); expect(f.view.filterError.value).toBe('');
+      expect(f.view.query.cate_id).toEqual([12]);
+      expect(f.calls.filter((config: any) => config.method !== 'get')).toEqual([]);
+    } finally { f.close(); }
+  });
+
+  it('aborts and ignores old candidate results across session replacement and permission withdrawal, resetting all previous selections', async () => {
+    const old = gate(); let first = true;
+    const f = await mount('/product', ['product.view'], config => Object.values(filterPaths).includes(config.url) && first ? old.promise.then(() => structuredClone(filterFixtures[Object.keys(filterPaths).find(key => filterPaths[key as keyof typeof filterPaths] === config.url) as keyof typeof filterFixtures])) : undefined);
+    try {
+      const requests = f.calls.filter((config: any) => Object.values(filterPaths).includes(config.url));
+      expect(requests).toHaveLength(4); expect(f.view.filterLoading.suppliers).toBe(true);
+      f.view.query.supplier_id = 20; f.view.query.cate_id = [11];
+      first = false; login(['product.view'], 'catalog-replacement', 21); browser.dispatchEvent(new Event('admin-session-changed')); await flush();
+      expect(requests.every((config: any) => config.signal.aborted)).toBe(true);
+      expect(f.view.query).toMatchObject({ supplier_id: '', cate_id: [], brand_id: [], store_label_id: [] });
+      login(['reply.view'], 'catalog-withdrawn', 22); browser.dispatchEvent(new Event('admin-session-changed')); await flush();
+      const count = f.calls.length; expect(f.view.filterOptions.suppliers).toEqual([]); expect(f.view.list.value).toEqual([]);
+      old.resolve(); await flush(); expect(f.calls).toHaveLength(count);
+      expect(f.view.filterOptions.categories).toEqual([]); expect(f.view.filterError.value).toBe('');
+    } finally { old.resolve(); f.close(); }
+  });
+
+  it('rejects malformed filter DTOs and duplicate or oversize selections without retaining actionable old rows', async () => {
+    const f = await mount('/product', ['product.view']); try {
+      const cases: Array<[string, unknown]> = [
+        ['apiCatalogFilterCategories', [{ value: 1, label: 'foreign parent', pid: 3 }]],
+        ['apiCatalogFilterBrands', [{ value: 1, label: 'root', pid: 0, children: [{ value: 1, label: 'duplicate', pid: 1 }] }]],
+        ['apiCatalogFilterLabels', [{ id: 71, label_name: '组', type: 0, relation_id: 0, children: [{ id: 31, label_name: '孤儿', label_cate: 72, type: 0, relation_id: 0 }] }]],
+        ['apiCatalogFilterSuppliers', [{ id: 20, supplier_name: 'one' }, { id: 20, supplier_name: 'copy' }]],
+      ];
+      for (const [method, data] of cases) {
+        runtime.request.defaults.adapter = async (config: any) => ({ config, status: 200, statusText: 'fixture', headers: {}, data: { status: 200, msg: 'malformed filter fixture', data } });
+        await expect(runtime.filterApi[method]()).rejects.toThrow('候选');
+      }
+      for (const value of [[11,11], Array.from({ length: 101 }, (_, i) => i + 1), [0], [2_147_483_648]]) {
+        const count = f.calls.length; f.view.query.cate_id = value; await f.view.reload(); await flush();
+        expect(f.calls).toHaveLength(count); expect(f.view.list.value).toEqual([]); expect(f.view.total.value).toBe(0);
+        expect(f.view.readError.value).toContain('筛选条件');
+      }
+    } finally { f.close(); }
+  });
+});
+
+describe('filter changes during an existing batch request', () => {
+  it('keeps the in-flight batch guard through valid and invalid filter changes and ignores the old completion', async () => {
+    const pending = gate();
+    const f = await mount('/product', ['product.view', 'product.manage'], config => {
+      if (config.url === '/product/editor/options') return { categories: [], brands: [], product_labels: [], user_labels: [], gift_coupons: [], system_forms: [], shipping_templates: [], ensures: [], parameter_templates: [], sku_rule_templates: [] };
+      if (config.method === 'post' && config.url === '/product/set_show') return pending.promise.then(() => ({ changed: 1, verified: true }));
+      return undefined;
+    });
+    let writing: Promise<unknown> | undefined;
+    try {
+      f.nodes().find((node: Node) => node.tag === 'table')!.props.onSelectionChange([f.view.list.value[0]]); await flush();
+      await click(f, '批量操作'); writing = button(f, '确认执行').props.onClick(); await flush();
+      expect(f.view.batchSubmitting.value).toBe(true);
+      f.view.query.supplier_id = 20; await f.view.reload(); await flush();
+      expect(f.view.batchSubmitting.value).toBe(true); expect(f.view.selectedRows.value).toEqual([]);
+      f.nodes().find((node: Node) => node.tag === 'table')!.props.onSelectionChange([f.view.list.value[0]]); await flush();
+      await f.view.openBatch(); expect(f.view.batchDialogVisible.value).toBe(false);
+      f.view.query.cate_id = [11,11]; await f.view.reload(); await flush();
+      expect(f.view.batchSubmitting.value).toBe(true); expect(f.view.list.value).toEqual([]);
+      pending.resolve(); await writing; await flush();
+      expect(f.view.batchSubmitting.value).toBe(false); expect(runtime.dialogs.state.successes).toEqual([]);
+      expect(f.calls.filter((config: any) => config.method !== 'get')).toHaveLength(1);
+    } finally { pending.resolve(); await writing; f.close(); }
   });
 });
