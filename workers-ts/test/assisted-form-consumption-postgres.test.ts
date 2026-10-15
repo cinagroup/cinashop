@@ -69,11 +69,22 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
     const tokens = await Promise.all([1, 2, 3].map(async id => (await createToken(id, 'admin', md5('local-hash'), env.APP_KEY)).token));
     const customerToken = (await createToken(11, 'api', md5('local-hash'), env.APP_KEY)).token;
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    const sqlStates: string[] = [];
     app.use('*', async (c, next) => {
       const container = createContainer(c.env); c.set('container', container);
       try { await next(); } finally { await container.db.$client.end({ timeout: 5 }); }
     });
-    app.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
+    app.onError((error, c) => {
+      let cause: unknown = error;
+      let state = 'NONE';
+      for (let depth = 0; depth < 4 && cause && typeof cause === 'object'; depth++) {
+        const code = (cause as { code?: unknown }).code;
+        if (typeof code === 'string' && /^[A-Z0-9]{5}$/.test(code)) { state = code; break; }
+        cause = (cause as { cause?: unknown }).cause;
+      }
+      sqlStates.push(state);
+      return c.json({ status: 400, msg: error.message, data: null });
+    });
     const auth = adminRuntimeAuthMiddleware();
     app.post('/api/admin/order/cart/add/:uid', auth, adminAssistedCartAdd);
     app.post('/api/admin/order/confirm/:uid', auth, adminAssistedConfirm);
@@ -111,7 +122,7 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
       expect(result.status, result.msg).toBe(200);
       return result.data;
     }
-    return { post, confirm, upload, env, request };
+    return { post, confirm, upload, env, request, sqlStates };
   }
   const business = async () => ({ state: await f.state(), forms: await f.exec('SELECT * FROM system_form_data ORDER BY id') });
 
@@ -527,15 +538,18 @@ describe('assisted form upload -> authenticated create -> scoped read on indepen
             await peer.exec('BEGIN');
             try {
               await peer.exec(`SELECT att_id FROM system_attachment WHERE att_id=${image.att_id} FOR UPDATE`);
+              const lockErrorCount = client.sqlStates.length;
               const blocked = await client.post(`create/${quote.orderKey}/11`, payload);
-              expect(blocked, blocked.msg).toMatchObject({ status: 400, data: null });
-              expect(blocked.msg).toContain('system_attachment');
-              expect(blocked.msg).toContain('for share nowait');
+              expect(blocked.status).toBe(400); expect(blocked.data).toBeNull();
+              expect(client.sqlStates[lockErrorCount]).toBe('55P03');
               expect(await business()).toEqual(before);
             } finally { await peer.exec('ROLLBACK'); }
           });
+          const retryErrorCount = client.sqlStates.length;
           const retried = await client.post(`create/${quote.orderKey}/11`, payload);
-          expect(retried.status, retried.msg).toBe(200);
+          const errorCode = retried.data && typeof retried.data === 'object' && 'errorCode' in retried.data
+            && typeof retried.data.errorCode === 'string' ? retried.data.errorCode.replace(/[^A-Z0-9_]/g, '?').slice(0, 64) : null;
+          expect(retried.status, JSON.stringify({ status: retried.status, sqlState: client.sqlStates[retryErrorCount] ?? null, errorCode })).toBe(200);
         } finally { await pricingGuard.exec('ROLLBACK'); }
       }));
     });
