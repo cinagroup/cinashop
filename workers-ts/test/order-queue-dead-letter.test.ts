@@ -11,6 +11,16 @@ import {
 import { sameDeadLetterAuditPublicSnapshot } from "./integration/OrderQueueDeadLetterPostgresScenario";
 
 describe("order Queue dead-letter operations", () => {
+  it('replays guarded video cleanup identity while refusing caller-selected object keys', () => {
+    const message = { action: 'cleanupProductVideoUpload', uploadId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' };
+    expect(prepareOrderQueueDeadLetter(message)).toMatchObject({ replayPolicy: 'ALLOW', replayMessage: message });
+    for (const invalid of [{ ...message, objectKey: 'attachments/admin/1/owned.mp4' },
+      { ...message, uploadId: '../another-session' }, { action: message.action }]) {
+      const prepared = prepareOrderQueueDeadLetter(invalid);
+      expect(prepared.replayPolicy).not.toBe('ALLOW'); expect(prepared.replayMessage).toBeUndefined();
+    }
+  });
+
   it("compares production safety snapshots independent of JSONB object key order", () => {
     const left = {
       table_count: 227,

@@ -255,6 +255,41 @@ it('renders a private video ticket while keeping draft and save requests canonic
   expect(JSON.stringify(parsedBody(saves(h.calls)[0]))).not.toContain('temporary-editor-video');
   expect([...storage.values(), ...sessionValues.values()].join('')).not.toContain('temporary-editor-video');
 });
+it('uses an explicitly selected upload result in the real template and saves only its canonical video reference', async () => {
+  const h = await mount('19'), ticket = '/api/assets/301?expires=2000000000&signature=temporary-upload-video';
+  const uploader = renderNodes(h.view).find(n => n.type?.name === 'ProductVideoUploader');
+  expect(uploader.props.disabled).toBe(false); expect(uploader.props['context-key']).toBe('edit:19');
+  expect(h.view.form.video_link).toBe(''); uploader.props.onUse({ url: '/api/assets/301', src: ticket });
+  expect(h.view.form.video_open).toBe(1); expect(h.view.form.video_link).toBe('/api/assets/301');
+  expect(renderNodes(h.view).find(n => n.type === 'video')?.props.src).toBe(ticket);
+  await h.view.saveDraftNow(); await h.view.submit();
+  const drafts = h.calls.filter(c => c.url === '/product/cache' && c.method === 'post').map(parsedBody);
+  expect(drafts.length).toBeGreaterThan(0); expect(drafts.every(draft => draft.video_link === '/api/assets/301')).toBe(true);
+  expect(parsedBody(saves(h.calls)[0]).product.video_link).toBe('/api/assets/301');
+  expect(JSON.stringify([...drafts, ...saves(h.calls).map(parsedBody)])).not.toContain('temporary-upload-video');
+  expect([...storage.values(), ...sessionValues.values()].join('')).not.toContain('temporary-upload-video');
+});
+it('requests video categories and MP4 assets then uses only the stable reference from the selected real template tile', async () => {
+  const ticket = '/api/assets/302?expires=2000000000&signature=temporary-library-video';
+  const selected = { att_id: 302, canonical_url: '/api/assets/302', att_dir: ticket, satt_dir: '', att_size: '43 B', raw_size: 43,
+    att_type: 'video/mp4', pid: 9, time: '2026-10-15 00:00:00', real_name: 'library-owned.mp4', type: 1, file_type: 2, relation_id: 0, module_type: 1 };
+  const h = await mount('19', c => c.url === '/file/category' ? { list: [{ id: 9, pid: 0, name: '视频分类', title: '视频分类', type: 1, file_type: 2, relation_id: 0 }] }
+    : c.url === '/file/file' ? { list: [selected, { ...selected, att_id: 303, file_type: 1 }, { ...selected, att_id: 304, att_type: 'image/png' }], count: 3 } : undefined, ['product.view', 'product.manage', 'attachment.view']);
+  const content = (value: any): string => typeof value === 'string' ? value : Array.isArray(value) ? value.map(content).join('') : value && typeof value === 'object' ? content(value.children) : '';
+  await renderNodes(h.view).find(n => n.type?.name === 'el-button' && content(n.children?.default?.()).includes('选择视频素材')).props.onClick();
+  expect(h.calls.find(c => c.url === '/file/category').params).toEqual({ pid: 0, file_type: 2, all: 1 });
+  expect(h.calls.find(c => c.url === '/file/file').params).toMatchObject({ file_type: 2, pid: 0, page: 1, limit: 20 });
+  expect(h.view.assets.value.map((asset: any) => asset.att_id)).toEqual([302]);
+  const category = renderNodes(h.view).find(n => n.type?.name === 'el-select' && n.props?.placeholder === '根分类');
+  category.props['onUpdate:modelValue'](9); category.props.onChange(); await flush();
+  expect(h.calls.filter(c => c.url === '/file/file').at(-1).params).toMatchObject({ file_type: 2, pid: 9, page: 1 });
+  const tile = renderNodes(h.view).find(n => n.type === 'button' && n.props?.class === 'asset-tile');
+  expect(tile.children.find((n: any) => n.type === 'video').props.src).toBe(ticket); tile.props.onClick();
+  expect(h.view.form.video_link).toBe('/api/assets/302'); expect(h.view.videoPreviewUrl.value).toBe(ticket); expect(h.view.assetOpen.value).toBe(false);
+  await h.view.saveDraftNow(); await h.view.submit();
+  const writes = h.calls.filter(c => c.method === 'post').map(parsedBody);
+  expect(parsedBody(saves(h.calls)[0]).product.video_link).toBe('/api/assets/302'); expect(JSON.stringify(writes)).not.toContain('temporary-library-video');
+});
 it('does not reuse a loaded video ticket for a different draft or manually changed private asset', async () => {
   const dto: any = productDetail(), ticket = '/api/assets/71?signature=only-asset-71';
   Object.assign(dto.productInfo, { video_open: 1, video_link: '/api/assets/71' }); dto.editor.video_preview = ticket;

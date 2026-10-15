@@ -223,7 +223,7 @@ export function normalizeExternalVideoUrl(value: unknown, maxLength = 200): stri
   return normalizeHttpsMediaUrl(value, "视频地址", ["mp4"], maxLength);
 }
 
-function normalizeExternalVideoCoverUrl(value: unknown): string {
+export function normalizeExternalVideoCoverUrl(value: unknown): string {
   if (value === undefined || value === null || value === "") return "";
   return normalizeHttpsMediaUrl(value, "视频封面地址", ["jpg", "jpeg", "png", "webp", "gif"]);
 }

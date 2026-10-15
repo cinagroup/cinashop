@@ -84,10 +84,10 @@ export async function apiAttachmentDelete(ids: number[], signal?: AbortSignal) {
   );
 }
 
-export async function apiAttachmentCategories(signal?: AbortSignal, options: { all?: boolean; pid?: number } = {}) {
+export async function apiAttachmentCategories(signal?: AbortSignal, options: { all?: boolean; pid?: number; file_type?: 1 | 2 } = {}) {
   if (previewMode) return { list: previewCategories.filter(item => options.all || item.pid === (options.pid ?? 0)) };
   return getData<{ list: AttachmentCategoryItem[] }>(
-    request.get("/file/category", { params: { pid: options.pid ?? 0, file_type: 1, ...(options.all ? { all: 1 } : {}) }, signal }),
+    request.get("/file/category", { params: { pid: options.pid ?? 0, file_type: options.file_type ?? 1, ...(options.all ? { all: 1 } : {}) }, signal }),
   );
 }
 

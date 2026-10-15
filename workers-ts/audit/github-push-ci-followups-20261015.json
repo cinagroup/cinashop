@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-15",
+  "base_commit": "6057681f3c26985de20262b5ffa5b1f7b601da43",
+  "run_url": "https://github.com/cinagroup/cinashop/actions/runs/38705607954",
+  "status": "triaged_followups_open",
+  "log": "/tmp/cinashop-video-previous-ci-failed.log",
+  "scope": "Prior main CI; not an assertion that current local video validation or all cloud checks fail",
+  "groups": [
+    {
+      "id": "php-reference-inputs",
+      "status": "open",
+      "evidence": "Six old SPA consumer suites cannot resolve sibling cinashop-php files absent in CI checkout",
+      "next": "Supply pinned genuine PHP reference inputs with source hashes; preserve real old-consumer execution"
+    },
+    {
+      "id": "migration-cohort-baselines",
+      "status": "open",
+      "evidence": "refundRuntimeFixture expected182 vs184; registeredCatalogCohort external179 vs181",
+      "next": "Explicitly admit0177 product recycle effects and0178 product save effects with hashes while preserving historical cohort;0185 video addon stays independent"
+    },
+    {
+      "id": "protected-menu-fixtures",
+      "status": "open",
+      "evidence": "Synthetic authority/menu fixtures reuse protected actual PHP page IDs with incompatible tuples",
+      "next": "Use genuine protected tuples or nonreserved IDs; retain production permission protection"
+    },
+    {
+      "id": "diy-module-resolution",
+      "status": "open",
+      "evidence": "Restricted test resolver rejects newly imported common/divisionStaff pure module",
+      "next": "Resolve and cache the actual module without copying navigation policy"
+    },
+    {
+      "id": "api-audit-reports",
+      "status": "open",
+      "evidence": "Committed current API inventory differs from live final route/frontend sources",
+      "next": "Regenerate current and merged-work-branch inventories, preserve historical frozen reports"
+    },
+    {
+      "id": "video-design-source-gate",
+      "status": "fixed_and_locally_validated",
+      "evidence": "ordinarySafeDisplay still scans inline checks moved into ProductVideoPolicy",
+      "validation": {
+        "passed": 218,
+        "failed": 0,
+        "skipped": 0,
+        "log": "/tmp/cinashop-product-video-design-coverage.log"
+      }
+    },
+    {
+      "id": "category-brand-management-fixtures",
+      "status": "open",
+      "evidence": "checkout coupon fixture sends mixed old cate_name/brand_name, body.id and pid types rejected by current strict controllers",
+      "next": "Exercise each real current input/revision/JWT contract without weakening unknown-field checks"
+    },
+    {
+      "id": "integral-read-fixture",
+      "status": "open",
+      "evidence": "select-only fake DB lacks the current RR/read-only transaction API",
+      "next": "Use an actual SQL fixture or support real transaction/execute boundaries"
+    },
+    {
+      "id": "statistics-script-contract",
+      "status": "open",
+      "evidence": "Retirement test conflicts with restored get_script/system_statistics read behavior",
+      "next": "Resolve the actual retirement contract explicitly; retain rejection tests until adjudicated"
+    },
+    {
+      "id": "withdrawal-effects-catalog",
+      "status": "open",
+      "evidence": "Readiness remains false in upgrade case",
+      "next": "Inspect complete live catalog diff before changing readiness expectations"
+    }
+  ]
+}

@@ -339,6 +339,12 @@ export interface AttachmentObjectCleanupMessage {
   keys: string[];
 }
 
+/** Read terminal upload facts before deleting any temporary/final video key. */
+export interface ProductVideoCleanupMessage {
+  action: 'cleanupProductVideoUpload';
+  uploadId: string;
+}
+
 /** Permanent official-account QR codes are provisioned outside HTTP requests. */
 export interface OfficialAccountQrcodeMessage {
   action: "provisionOfficialAccountQrcode";
@@ -458,6 +464,7 @@ export type OrderMessage =
   | SignReminderMessage
   | SmsVerificationMessage
   | AttachmentObjectCleanupMessage
+  | ProductVideoCleanupMessage
   | OfficialAccountQrcodeMessage
   | WorkCallbackOutboxMessage
   | WorkCallbackDispatchMessage

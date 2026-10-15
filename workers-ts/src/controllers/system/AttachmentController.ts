@@ -107,7 +107,7 @@ export async function boundedMultipartImage(c: C): Promise<{ file: File; pid: st
   return { file: files[0], pid: form.get("pid") };
 }
 
-async function boundedMultipartVideoChunk(c: C) {
+export async function boundedMultipartVideoChunk(c: C, strict = false) {
   const contentType = c.req.header("content-type") ?? "";
   if (!/^multipart\/form-data\s*;/i.test(contentType)) {
     throw new ValidateException("请使用multipart/form-data上传视频分片");
@@ -146,6 +146,12 @@ async function boundedMultipartVideoChunk(c: C) {
   }
   const file = form.get("file");
   if (!(file instanceof File) || file.size <= 0) throw new ValidateException("请选择视频文件");
+  if (strict) {
+    const fields = ['chunkNumber', 'currentChunkSize', 'chunkSize', 'totalChunks', 'file', 'filename', 'md5', 'pid'];
+    if ([...form.keys()].length !== fields.length || fields.some(field => form.getAll(field).length !== 1)
+      || [...form.keys()].some(field => !fields.includes(field)) || fields.filter(field => field !== 'file').some(field => typeof form.get(field) !== 'string'))
+      throw new ValidateException('视频分片仅接受完整的八个上传字段');
+  }
   return {
     file,
     chunkNumber: form.get("chunkNumber"),
@@ -345,7 +351,7 @@ export const adminCategoryDelete = (c: C) => deleteCategory(c, "admin");
 export const supplierCategoryDelete = (c: C) => deleteCategory(c, "supplier");
 
 export function uploadType(c: C) {
-  return jsonOk(c, { upload_type: String(R2_IMAGE_TYPE), binding: "ASSETS_BUCKET" });
+  return jsonOk(c, { upload_type: '1', storage_type: String(R2_IMAGE_TYPE), binding: "ASSETS_BUCKET", direct_upload: true });
 }
 
 export function supplierUploadType(c: C) {

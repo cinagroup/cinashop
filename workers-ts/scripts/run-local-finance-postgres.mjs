@@ -69,6 +69,8 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || p
 if (schemaMaintenance) {
   const allowed = new Set([
     'test/admin-product-editor-native.test.ts',
+    'test/admin-product-video-upload-catalog-native.test.ts',
+    'test/admin-product-video-upload-native.test.ts',
     'test/admin-legacy-product-save.test.ts',
     'test/admin-legacy-product-save-http.test.ts',
     'test/admin-legacy-product-save-native.test.ts',
@@ -719,6 +721,8 @@ try {
     : ['node_modules/vitest/vitest.mjs', 'run', ...tests,
       tests.some(test => new Set([
         'test/admin-product-editor-native.test.ts',
+        'test/admin-product-video-upload-catalog-native.test.ts',
+        'test/admin-product-video-upload-native.test.ts',
         'test/admin-legacy-product-save.test.ts',
         'test/admin-legacy-product-save-http.test.ts',
         'test/admin-legacy-product-save-native.test.ts',

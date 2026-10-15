@@ -144,6 +144,7 @@ export default {
     const { AttachmentService, isAttachmentObjectCleanupMessage } = await import(
       "./services/system/AttachmentService"
     );
+    const { AdminProductVideoUploadService, isProductVideoCleanupMessage } = await import('./services/admin/AdminProductVideoUploadService');
     const {
       OfficialAccountQrcodeService,
       isOfficialAccountQrcodeMessage,
@@ -676,6 +677,21 @@ export default {
         continue;
       }
 
+      if (isProductVideoCleanupMessage(msg.body)) {
+        try {
+          const result = await new AdminProductVideoUploadService(container, env).cleanup(msg.body);
+          emitOperationalEvent('info', { event: 'product_video_cleanup_completed', component: 'r2', operation: 'cleanup',
+            outcome: 'success', resourceCount: result.deleted, durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts });
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent('error', { event: 'product_video_cleanup_failed', component: 'r2', operation: 'cleanup',
+            outcome: 'retry', durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds, errorCode: operationalErrorCode(error) });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
       if (isAttachmentObjectCleanupMessage(msg.body)) {
         try {
           const result = await attachments.processObjectCleanup(msg.body);

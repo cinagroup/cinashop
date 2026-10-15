@@ -23,6 +23,7 @@ import {
   isScheduledOrderMessage,
 } from "@/services/order/ScheduledMaintenanceService";
 import { isAttachmentObjectCleanupMessage } from "@/services/system/AttachmentService";
+import { isProductVideoCleanupMessage } from '@/services/admin/AdminProductVideoUploadService';
 import { isProductAutoShelfMessage, isProductAutoShelfScanMessage } from '@/services/product/ProductAutoShelfService';
 import { isOfficialAccountQrcodeMessage } from "@/services/wechat/OfficialAccountQrcodeService";
 import {
@@ -240,7 +241,7 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
       replayMessage: value,
     };
   }
-  if (isAttachmentObjectCleanupMessage(value)) {
+  if (isAttachmentObjectCleanupMessage(value) || isProductVideoCleanupMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",

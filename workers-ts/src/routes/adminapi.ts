@@ -140,6 +140,7 @@ import * as PrintDocumentController from "@/controllers/system/PrintDocumentCont
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
 import * as AttachmentController from "@/controllers/system/AttachmentController";
+import * as AdminProductVideo from '@/controllers/system/AdminProductVideoController';
 import type { AppVariables, Env } from "@/env";
 
 export const adminapiRoutes = new Hono<{
@@ -393,6 +394,14 @@ adminapiRoutes.put("/file/file/do_move", adminAuth, AttachmentController.adminMo
 adminapiRoutes.put("/file/file/update/:id", adminAuth, AttachmentController.adminRename);
 adminapiRoutes.post("/file/upload", adminAuth, AttachmentController.adminUploadImage);
 adminapiRoutes.post("/file/upload/:upload_type", adminAuth, AttachmentController.adminUploadImage);
+adminapiRoutes.post('/file/video_upload', adminAuth, AdminProductVideo.legacyUpload);
+adminapiRoutes.post('/file/video_attachment', adminAuth, AdminProductVideo.registerExternal);
+adminapiRoutes.post('/file/video_uploads/:uploadId', adminAuth, AdminProductVideo.initialize);
+adminapiRoutes.get('/file/video_uploads/:uploadId', adminAuth, AdminProductVideo.query);
+adminapiRoutes.put('/file/video_uploads/:uploadId/parts/:part', adminAuth, AdminProductVideo.part);
+adminapiRoutes.post('/file/video_uploads/:uploadId/complete', adminAuth, AdminProductVideo.complete);
+adminapiRoutes.post('/file/video_uploads/:uploadId/cancel', adminAuth, AdminProductVideo.cancel);
+adminapiRoutes.get('/file/video_uploads/:uploadId/preview', adminAuth, AdminProductVideo.preview);
 adminapiRoutes.get("/file/upload_type", adminAuth, AttachmentController.uploadType);
 adminapiRoutes.get("/file/category", adminAuth, AttachmentController.adminCategories);
 adminapiRoutes.get("/file/category/create", adminAuth, AttachmentController.adminCategoryCreateForm);

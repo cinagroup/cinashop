@@ -27,6 +27,7 @@ export function productDetailDesignSourceFiles(): Record<string, string> {
     service: 'workers-ts/src/services/admin/AdminProductDetailDesignService.ts', input: 'workers-ts/src/services/admin/AdminProductDetailDesignInput.ts',
     httpController: 'workers-ts/src/controllers/api/v1/AdminProductDetailDesignController.ts', crud: 'workers-ts/src/controllers/api/v1/AdminCrudController.ts',
     publicConfig: 'workers-ts/src/services/content/V2PublicCompatibilityService.ts', data: 'workers-ts/src/services/product/ProductDetailDesignData.ts',
+    videoPolicy: 'workers-ts/src/services/product/ProductVideoPolicy.ts',
     products: 'workers-ts/src/services/product/StoreProductService.ts', productController: 'workers-ts/src/controllers/api/v1/ProductController.ts',
     catalog: 'workers-ts/src/services/product/PublicCatalogService.ts', reply: 'workers-ts/src/services/product/ReplyService.ts',
     replyDao: 'workers-ts/src/dao/product/ReplyDaos.ts', discount: 'workers-ts/src/services/activity/StoreDiscountService.ts',
@@ -233,7 +234,16 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && c.in('invalidate','job.controller.abort()') && !c.body('invalidate').includes('removeItem(');
   const ordinarySafeDisplay = data.in('readDetailDescription','productDetailDescriptionHtml(', 'integralDescriptionAssetReferences(description)','publicProductPictures(tx,','eq(storeProductDescription.type,type)', '.limit(2)')
     && data.in('productDetailDescriptionHtml','integralDescriptionHtml(cleaned.replace(', '(script|style|template|noscript|iframe|object)')
-    && data.in('readDetailVideo','product.videoOpen!==1','canonicalizePublishedAttachmentReference(product.videoLink)','normalizeExternalVideoUrl(safe)', 'asset.relationId===relation', "asset.mime.trim().toLowerCase()==='video/mp4'", 'asset.module===1','asset.file===2')
+    && data.in('readDetailVideo','product.videoOpen!==1','!product.videoLink')
+    && data.imports('./ProductVideoPolicy','resolveProductVideoReference')
+    && data.call('readDetailVideo','resolveProductVideoReference','tx','product.videoLink','product','{allowLegacyRelative:true}')
+    && s('videoPolicy').in('normalizeProductVideoReference','canonicalizePublishedAttachmentReference(value)','normalizeExternalVideoUrl(reference,MAX_PRODUCT_VIDEO_REFERENCE_CHARS)')
+    && s('videoPolicy').call('resolveProductVideoReference','normalizeProductVideoReference','value','options')
+    && s('videoPolicy').in('resolveProductVideoReference','parseCanonicalAttachmentId(reference)','[0,1,2].includes(owner.type)',
+      'asset.module!==1','asset.file!==2','asset.imageType!==R2_IMAGE_TYPE','asset.dir!==reference',"asset.mime.trim().toLowerCase()!=='video/mp4'",
+      "asset.type===1&&asset.relationId===0&&asset.name.startsWith('attachments/admin/1/')",
+      'owner.type!==2||asset.type!==4||asset.relationId!==owner.relationId','asset.name.startsWith(`attachments/supplier/${owner.relationId}/`)',
+      'eq(systemSupplier.id,owner.relationId)','eq(systemSupplier.isDel,0)','eq(systemSupplier.isShow,1)')
     && s('products').in('getProductDetail','videoLink:await readDetailVideo(tx,product)','renderProductPictures(this.env?.APP_KEY,[snapshot.detail.videoLink])')
     && data.in('readDetailEnsures','eq(storeProductRelation.productId,product.id)','eq(storeProductEnsure.status,1)','eq(storeProductEnsure.relationId,product.relationId)','publicProductPictures(tx,')
     && data.in('readProductDetailExtras','value.showService.includes(3)?integralDetailSpecs(product.specs,[]):[]')

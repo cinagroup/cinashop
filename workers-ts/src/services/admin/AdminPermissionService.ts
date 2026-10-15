@@ -143,7 +143,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
     key: "attachment",
     label: "素材中心",
     path: "/assets",
-    matches: ["file/file", "file/upload", "file/upload_type", "file/category", "config/storage", "assets", "asset-categories"],
+    matches: ["file/file", "file/upload", "file/upload_type", "file/video_upload", "file/video_uploads", "file/video_attachment", "file/category", "config/storage", "assets", "asset-categories"],
     manage: true,
   },
   { key: "shipping_settings", label: "发货设置", path: "/setting/shipping", matches: ["config/shipping"], manage: true },
@@ -371,6 +371,12 @@ export function isAdminProductEditorRecoveryRoute(method:string,routePath:string
     || (verb==='POST' && /^product\/editor\/operations\/[^/]+\/resolve$/.test(route));
 }
 
+export function isAdminProductVideoRecoveryRoute(method:string,routePath:string):boolean {
+  const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^file\/video_uploads\/[^/]+$/.test(route))
+    || (verb==='POST' && /^file\/video_uploads\/[^/]+\/cancel$/.test(route));
+}
+
 /** Both actual IDs and the two historical/router placeholder spellings have
  * the same narrow policy. Malformed IDs never fall through to config access. */
 function legacyAdminId(value: string): boolean {
@@ -523,7 +529,15 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // Only authenticated owners may recover their own immutable operation key.
   // Recovery service admits live identity independently of current role grants.
   if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
-  if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath)) return null;
+  if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return null;
+  if (route === 'file/video_upload' || route === 'file/video_attachment') return method.toUpperCase() === 'POST' ? 'attachment.manage' : null;
+  if (route === 'file/video_uploads' || route.startsWith('file/video_uploads/')) {
+    const verb=method.toUpperCase();
+    if (verb==='POST' && /^file\/video_uploads\/[^/]+(?:\/complete)?$/.test(route)) return 'attachment.manage';
+    if (verb==='PUT' && /^file\/video_uploads\/[^/]+\/parts\/[^/]+$/.test(route)) return 'attachment.manage';
+    if (['GET','HEAD'].includes(verb) && /^file\/video_uploads\/[^/]+\/preview$/.test(route)) return 'attachment.view';
+    return null;
+  }
   if (route === 'product/editor' || route.startsWith('product/editor/')) {
     if (['GET','HEAD'].includes(method.toUpperCase()) && route==='product/editor/options') return 'product.view';
     if (['GET','HEAD'].includes(method.toUpperCase()) && /^product\/editor\/detail\/(?:[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'product.view';
@@ -1314,7 +1328,7 @@ export class AdminPermissionService {
     // Auth middleware has authenticated the account. The recovery service
     // repeats live realm/status/password checks and binds the receipt owner;
     // these two exact endpoints never perform a staff/role mutation.
-    if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath)) return;
+    if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return;
     if (admin.level === 0) return;
     // Common header: authenticated financial/product-only roles need not hold
     // dashboard access. The controller independently filters EVERY count by role.
