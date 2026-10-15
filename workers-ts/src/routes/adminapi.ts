@@ -53,6 +53,7 @@ import * as AdminProductFictitiousReplies from '@/controllers/api/v1/AdminProduc
 import * as AdminProductCatalogRead from '@/controllers/api/v1/AdminProductCatalogReadController';
 import * as AdminLegacyProductSave from '@/controllers/api/v1/AdminLegacyProductSaveController';
 import * as AdminLegacyProductRead from '@/controllers/api/v1/AdminLegacyProductReadController';
+import * as AdminLegacyProductGenerate from '@/controllers/api/v1/AdminLegacyProductGenerateController';
 import * as AdminProductStock from '@/controllers/api/v1/AdminProductStockController';
 import * as AdminProductModeration from '@/controllers/api/v1/AdminProductModerationController';
 import * as AdminProductRecycle from '@/controllers/api/v1/AdminProductRecycleController';
@@ -145,7 +146,7 @@ export const adminapiRoutes = new Hono<{
   Variables: AppVariables;
 }>();
 const adminAuth = adminRuntimeAuthMiddleware();
-for (const path of ['/product/product/:id', '/product/del/:id', '/product/product/verify/*', '/product/product/remove/*', '/product/product/get_verify/*', '/product/product/set_verify/*', '/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',
+for (const path of ['/product/generate_attr/*', '/product/product/:id', '/product/del/:id', '/product/product/verify/*', '/product/product/remove/*', '/product/product/get_verify/*', '/product/product/set_verify/*', '/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',
   '/setting/group_data', '/setting/group_data/*', '/setting/operational_group_data', '/setting/operational_group_data/*', '/erp/connections', '/erp/connections/*']) {
   adminapiRoutes.use(path, async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
@@ -304,6 +305,7 @@ adminapiRoutes.get('/product/product/get_verify/:id', adminAuth, AdminProductMod
 adminapiRoutes.post('/product/product/set_verify/:id', adminAuth, AdminProductModeration.save);
 adminapiRoutes.delete('/product/product/:id', adminAuth, AdminProductRecycle.toggle);
 adminapiRoutes.post('/product/product/:id', adminAuth, AdminLegacyProductSave.save);
+adminapiRoutes.post('/product/generate_attr/:id/:type', adminAuth, AdminLegacyProductGenerate.generate);
 // Target-only stock stream; its namespace and product.view scope are independent of withdrawals.
 adminapiRoutes.get('/product/stock/notifications/socket', adminAuth, (c) => upgradeStaffNotification(c, 'admin', 'product_stock'));
 adminapiRoutes.get('/product/category', adminAuth, AdminProductCategories.list);

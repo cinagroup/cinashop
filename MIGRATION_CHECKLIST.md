@@ -1,5 +1,13 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-15 旧商品规格生成接口
+
+新增真正旧POST `/adminapi/product/generate_attr/:id/:type`：模式0仅保留命中组合、模式1／2补新模板，保持旧输出字段与总后台表头，主表归属和履约类型为权威。精确191与查看620／保存105隔离，拒绝复制元数据或改写为写接口后提权；共享只读授权和快照，生成不修复行、不分配身份、不读取卡密凭据。次卡读取实际核销配置，修复源SELECT漏选导致的默认值覆盖。
+
+实际旧API/request/Axios/App/JWT/SQL、生成行保存后稳定身份、原生SELECT-only LOGIN／独立会话快照／数据库过期等证据和完整类型回执见[报告](workers-ts/docs/php-ts-admin-product-generator-20261015.md)与[账本](workers-ts/audit/php-ts-admin-product-generator-20261015.json)。加密attr_format不可作为已执行oracle，有界确定组合与空输入选择均明确记录。
+
+完整六步界面／复制／未知提交结果恢复仍为后续主线；既有新系统不继承旧真实数据的部署决定保持，描述编码仅为条件性源导入边界。本批没有前端／生产验收或部署声明，全部复选行及404／249／155、88／50／38计数保持。下方历史保留各批当时范围。
+
 ## 2026-10-15 商品完整保存与编辑读取增量
 
 上一批提交 `ac04e154` 已接通真正旧 POST `/adminapi/product/product/:id`，主表、稳定SKU、描述、关系、库存、审计及持久化后续事件同事务保存，详见[保存报告](workers-ts/docs/php-ts-admin-product-save-20261015.md)。本批新增真正旧 GET，同一只读快照恢复主表／SKU／目录／表单回显；不隐式修复SKU、不读取卡密凭据，固定交付内容按已有查看权限保留。

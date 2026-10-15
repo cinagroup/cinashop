@@ -1,20 +1,17 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { timingSafeEqual } from 'node:crypto';
-import { createContainerFromDb, withTx, type Container, type DbClient } from '@/lib/di';
+import { withTx, type Container } from '@/lib/di';
 import { storeProduct, storeProductAttr, storeProductAttrValue, storeProductDescription, storeProductVirtual,
   storeProductCoupon, storeCouponIssue, storeProductCategory, storeProductLabel, userLabel, systemForm,
-  shippingTemplates, systemConfig, systemAdmin } from '@/models/schema';
+  shippingTemplates, systemConfig } from '@/models/schema';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { canonicalizePublishedAttachmentReference, canonicalizePublishedHtmlAttachmentReferences,
   sanitizePublishedArticleHtml } from '@/services/content/ArticleContentPolicy';
-import { ApiErrorCode, AuthException, HttpApiException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
-import { md5 } from '@/utils/jwt';
+import { HttpApiException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { legacyPhpJsonDecodeWire } from '@/utils/legacy-php-json';
 import { normalizeConfigScalar } from '@/utils/config';
-import { AdminPermissionService, hasAdminPermission } from './AdminPermissionService';
-import { loadAdminLegacyRoleReferenceHistory } from './AdminLegacyRoleDeletionProof';
-import { assertAdminAuthoritySession, parseAdminAuthorityRoleIds, type AdminAuthorityActor } from './AdminAuthorityWriteService';
+import { assertAdminAuthoritySession, type AdminAuthorityActor } from './AdminAuthorityWriteService';
 import { budgetLegacyProductRead } from './AdminLegacyProductReadBudget';
+import { authorizeAdminLegacyProductRead, assertAdminLegacyProductReadDeadline } from './AdminLegacyProductReadAuthority';
 
 type Row = Record<string, unknown>;
 type Product = typeof storeProduct.$inferSelect;
@@ -151,7 +148,7 @@ export class AdminLegacyProductReadService {
         await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
         await tx.execute(sql`SET LOCAL statement_timeout='5s'`); await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL idle_in_transaction_session_timeout='5s'`);
-        await this.authorize(tx, actor);
+        await authorizeAdminLegacyProductRead(tx, actor);
         const usedBytes = await budgetLegacyProductRead(tx, [
           { table: storeProduct, where: eq(storeProduct.id, id) },
           { table: storeProductAttr, where: and(eq(storeProductAttr.productId, id), eq(storeProductAttr.type, 0))! },
@@ -247,9 +244,7 @@ export class AdminLegacyProductReadService {
           preview.set(match[1], ''); collect(match[1], product, value => { preview.set(match[1], value); });
         }
         const references = await publicProductPictures(tx, slots);
-        const [clock] = await tx.execute(sql`SELECT extract(epoch FROM clock_timestamp())>=${actor.expiresAt} AS expired`) as unknown as Array<{ expired: boolean }>;
-        if (clock?.expired !== false) throw new AuthException('登录已过期', ApiErrorCode.ERR_EXPIRED);
-        assertAdminAuthoritySession(actor);
+        await assertAdminLegacyProductReadDeadline(tx, actor);
         return { data: { tempList: templates.map(row => ({ id: row.id, name: row.name })), cateList: tree(categories), productInfo: info, editor }, slots, references, html, preview };
       });
       const signed = await renderProductPictures(this.appKey, snapshot.references);
@@ -261,14 +256,4 @@ export class AdminLegacyProductReadService {
     } catch (caught) { return error(caught); }
   }
 
-  private async authorize(tx: DbClient, actor: AdminAuthorityActor): Promise<void> {
-    const [live] = await tx.select().from(systemAdmin).where(eq(systemAdmin.id, actor.id)).limit(1);
-    if (!live || live.adminType !== 1 || live.relationId !== 0 || live.status !== 1 || live.isDel !== 0
-      || !Number.isInteger(live.level) || live.level < 0 || live.level > 9) throw new AuthException('管理员身份已变化', ApiErrorCode.ERR_BANNED);
-    const encoder = new TextEncoder();
-    if (!timingSafeEqual(encoder.encode(md5(live.pwd)), encoder.encode(actor.authVersion))) throw new AuthException('登录凭据已变化', ApiErrorCode.ERR_EXPIRED);
-    await loadAdminLegacyRoleReferenceHistory(tx, parseAdminAuthorityRoleIds(live.roles), live.level);
-    const { keys } = await new AdminPermissionService(createContainerFromDb(tx)).resolveRoleAssignment(live.roles);
-    if (live.level !== 0 && !hasAdminPermission(keys, 'product.view')) throw new AuthException('管理员权限已变化', ApiErrorCode.ERR_AUTH);
-  }
 }

@@ -1,5 +1,5 @@
 import { getTableColumns, sql, type SQL } from 'drizzle-orm';
-import type { PgTable } from 'drizzle-orm/pg-core';
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 
@@ -18,15 +18,15 @@ function aggregateInteger(value: unknown): bigint {
  * integers leave PostgreSQL; no source text is materialized in the Worker. */
 export async function budgetLegacyProductRead(
   tx: DbClient,
-  scans: Array<{ table: PgTable; where: SQL }>,
+  scans: Array<{ table: PgTable; where: SQL; columns?: readonly PgColumn[] }>,
   remainingBytes = 1024 * 1024,
 ): Promise<number> {
   if (!Number.isSafeInteger(remainingBytes) || remainingBytes < 0)
     throw new ServiceUnavailableException('商品详情读取容量预算无效');
   const budget = BigInt(remainingBytes);
   let used = 0n;
-  for (const { table, where } of scans) {
-    const columns = Object.values(getTableColumns(table));
+  for (const { table, where, columns: selectedColumns } of scans) {
+    const columns = selectedColumns ?? Object.values(getTableColumns(table));
     // Fixed fields, property names, separators and row/object bookkeeping are
     // charged even for NULL values; variable strings add their actual DB bytes.
     const fixedBytes = 64 + columns.length * 64;

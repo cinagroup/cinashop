@@ -7,6 +7,10 @@ import { financePostgres } from './helpers/financePostgres';
 describe('legacy numeric role workflow authority', () => {
   let fixture: Awaited<ReturnType<typeof financePostgres>>;
   let permissions: AdminPermissionService;
+  // Real installer IDs2/3 belong to the protected product/category pages.
+  // Generic role-contract fixtures must use unreserved synthetic identities.
+  const menuId = (value: number) => String(1_900_000 + value);
+  const menuRules = (...values: number[]) => values.map(menuId).join(',');
   const form = 'system.legacy_role_form_view', manage = 'system.legacy_role_manage', list = 'system.legacy_role_view';
   const actor = (roles: string) => ({ id: 100, account: 'operator', realName: '', divisionId: 0, level: 1, roles });
 
@@ -24,14 +28,18 @@ describe('legacy numeric role workflow authority', () => {
       { id: 8, authType: 2, type: 1, access: 0, apiUrl: 'setting/role/4', methods: 'POST' },
       { id: 9, authType: 2, type: 1, isDel: 1, apiUrl: 'setting/role/4', methods: 'POST' },
       { id: 10, authType: 1, type: 1, menuPath: '/admin/setting/system_role/index', uniqueAuth: 'setting-system-role' },
+    ].map(row => ({ ...row, id: Number(menuId(row.id)) })));
+    await fixture.db.insert(systemMenus).values([
+      { id: 2, authType: 2, type: 1, apiUrl: '/api/admin/setting/role/:id/edit', methods: 'HEAD' },
+      { id: 3, authType: 2, type: 1, apiUrl: '/adminapi/setting/role/0', methods: 'POST' },
     ]);
     await fixture.db.insert(systemRole).values([
-      { id: 20, roleName: 'form-only', rules: '1,2' },
-      { id: 21, roleName: 'numeric-writer', rules: '3,4' },
-      { id: 22, roleName: 'page-only', rules: '10' },
+      { id: 20, roleName: 'form-only', rules: menuRules(1,2) },
+      { id: 21, roleName: 'numeric-writer', rules: menuRules(3,4) },
+      { id: 22, roleName: 'page-only', rules: menuRules(10) },
       { id: 23, roleName: 'canonical-view', rules: 'system.view' },
       { id: 24, roleName: 'canonical-manage', rules: 'system.manage' },
-      { id: 25, roleName: 'invalid-writes', rules: '5,6,7,8,9' },
+      { id: 25, roleName: 'invalid-writes', rules: menuRules(5,6,7,8,9) },
     ]);
   });
   afterAll(async () => { await fixture?.close(); });
@@ -54,10 +62,13 @@ describe('legacy numeric role workflow authority', () => {
   it('resolves numeric contracts identically in single, batched and locked decisions', async () => {
     const writer = [manage, list, form];
     const expected = [[form], [form], writer, writer, [], [], [], [], [], [list]];
-    expect(await permissions.resolveManyRulePermissionKeys(Array.from({ length: 10 }, (_, i) => String(i + 1)))).toEqual(expected);
+    expect(await permissions.resolveManyRulePermissionKeys(Array.from({ length: 10 }, (_, i) => menuId(i + 1)))).toEqual(expected);
     for (let index = 0; index < expected.length; index++) {
-      expect(await permissions.resolveRulePermissionKeys(String(index + 1))).toEqual(expected[index]);
+      expect(await permissions.resolveRulePermissionKeys(menuId(index + 1))).toEqual(expected[index]);
     }
+    expect(await permissions.resolveManyRulePermissionKeys(['2', '3'])).toEqual([[], []]);
+    expect(await permissions.resolveRulePermissionKeys('2')).toEqual([]);
+    expect(await permissions.resolveRulePermissionKeys('3')).toEqual([]);
     const locked = await withTx(createContainerFromDb(fixture.db), tx => new AdminPermissionService(createContainerFromDb(tx)).resolveRoleAssignment('21', true));
     expect([...locked.keys]).toEqual(writer);
     expect(locked.missingRoleIds).toEqual([]);

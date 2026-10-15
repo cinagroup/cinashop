@@ -1,0 +1,9 @@
+{
+  "verifiedAt": "2026-10-15T05:11:08.642323+00:00",
+  "nativeFreeze": "426ef8cd57a77d67dd9b7fc9649761bca8b1e397c5a7f316869e42fde895ad40",
+  "finalOrdinaryFreeze": "92f2e91b28ec56cff7f6e8e6bc1a850b43d76a7cc54e7222105a0bb9bb057842",
+  "onlyChangedFile": "workers-ts/test/admin-legacy-role-permission.test.ts",
+  "runtimeSourceRunnerNativeTestAndHelperHashesUnchanged": true,
+  "nativeSelectedFilesExcludeChangedTest": true,
+  "boundary": "Native result predates only this generic role-permission fixture correction. Runtime source, runner, native cases, helpers, configs and all other selected files have identical bytes."
+}

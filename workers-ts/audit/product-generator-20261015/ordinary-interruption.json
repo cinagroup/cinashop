@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-15T05:16:20.629721+00:00",
+  "priorSessionId": 62633,
+  "outcome": "Unverified interruption; handle missing, no completion receipt, partial RUN-only log retained.",
+  "liveHostProcessesMatchingRunner": 0,
+  "liveHostOrphanVitestOrTypeScript": 0,
+  "sharedLocksObserved": 0,
+  "action": "Restart identical19-file command under new receipt name ordinary-restarted; do not count interrupted run as passed."
+}

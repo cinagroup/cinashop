@@ -1,0 +1,416 @@
+{
+  "scope": "Actual legacy Admin read-only generate_attr POST, isolated191 permission and stable generate/save chain; full six-step frontend remains open",
+  "status": "selected-final-validation-and-static-review-passed",
+  "sealedAt": "2026-10-15T05:24:39.563803+00:00",
+  "baseCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+  "source": {
+    "phpExecution": false,
+    "phpBytePinsVerified": 24,
+    "baselineGitPinsVerified": 10,
+    "sourceInvestigation": "audit/product-generator-20261015/source-investigation.json",
+    "targetBaselineCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+    "boundary": "Visible source route/controller/service/model/DAO/Vue facts only. attr_format implementation is opaque/encrypted; deterministic bounded Cartesian/empty behavior is explicit target contract, not a PHP execution oracle. Source HTTP also logs asynchronously; target pure read is a declared choice."
+  },
+  "implementationHashes": {
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "3456162c631822a064f56fbcb3af08a73dad2bf77cc0c5024858e63eed9794a0",
+    "workers-ts/src/controllers/api/v1/AdminLegacyProductGenerateController.ts": "d2479beaad5547c8b6817f683358c50820b1a15515f494faf1be1e73a48419a8",
+    "workers-ts/src/routes/adminapi.ts": "437e43e31ec86a63d7acb62a0661499b3dd62db57987a76f82c7c80b325917fe",
+    "workers-ts/src/services/admin/AdminLegacyProductGenerateInput.ts": "dbe0de34428b53e95db8198481cd9a1060280c960e04b4b0dd40515b30bf3f5c",
+    "workers-ts/src/services/admin/AdminLegacyProductGenerateService.ts": "8164ba13773e75013927b78b535866c5239f7580b2c9eee7487072571161d7d0",
+    "workers-ts/src/services/admin/AdminLegacyProductReadAuthority.ts": "50984ed698767bd966362fb3880e652917ec72c93d351e567254fb818a114cb1",
+    "workers-ts/src/services/admin/AdminLegacyProductReadBudget.ts": "b171b1d016a1033d2ddee1b23fc7e594ce776060e8d06e55fb2e61d6f3c877a2",
+    "workers-ts/src/services/admin/AdminLegacyProductReadService.ts": "2fb2a8714b043d02ef4add3cbe0d3228b5918278c94f0d20ce60f87455f8913d",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "63d25d84b865af57f0240011986e77f66a17f9e350b9cc3c01e113377c9819f1",
+    "workers-ts/test/admin-legacy-product-generate-http.test.ts": "acdd122086a51f04a2456347c851298e86f86061dbdb4c99aa8900dcde5f6f7f",
+    "workers-ts/test/admin-legacy-product-generate-native.test.ts": "dacb4c23d4ee0dee447eeb7e2448fd9a1165da4174790abd805bcd58be6c668f",
+    "workers-ts/test/admin-legacy-product-generate.test.ts": "b76b6d6b009f9a842bdacc8a459544ea53297b640e676544ac4d28393808dea9",
+    "workers-ts/test/admin-legacy-role-permission.test.ts": "8c4adc243017899275146be13edf39ac4c4d910dd798b45606719f1f02a9a8da",
+    "workers-ts/test/admin-product-generate-permission.test.ts": "b8a992d8f5e2e33a8cb461a01c6af615800b3d355b490eb489a408936e87784d"
+  },
+  "finalValidation": {
+    "ordinary-restarted": {
+      "name": "ordinary-restarted",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-generate.test.ts",
+        "test/admin-legacy-product-generate-http.test.ts",
+        "test/admin-product-generate-permission.test.ts",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-input.test.ts",
+        "test/admin-legacy-product-save.test.ts",
+        "test/admin-legacy-product-save-http.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-catalog-read.test.ts",
+        "test/admin-product-catalog-read-http.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "test/admin-permission.test.ts",
+        "test/legacy-admin-permissions.test.ts",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/legacy-role-operation-permissions.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:16:23.376797+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:18:51.494318+00:00",
+      "exitCode": 0,
+      "log": "ordinary-restarted.log",
+      "logSHA256": "3815e530c63e4e7b4304f1118ec3abcf0405a13be70dc31d30499dec2a51a412",
+      "passedTests": 274,
+      "passedFiles": 19,
+      "skippedTests": 0
+    },
+    "native-final": {
+      "name": "native-final",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-legacy-product-generate.test.ts",
+        "test/admin-legacy-product-generate-http.test.ts",
+        "test/admin-legacy-product-generate-native.test.ts",
+        "test/admin-product-generate-permission.test.ts",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-read-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:04:44.610827+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:06:02.360370+00:00",
+      "exitCode": 0,
+      "log": "native-final.log",
+      "logSHA256": "65193a311b997fd5571883081786d677bc267927843e638df6990084424affc5",
+      "passedTests": 49,
+      "passedFiles": 7,
+      "skippedTests": 0
+    },
+    "types-unit": {
+      "name": "types-unit",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:19:33.593662+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:21:40.668126+00:00",
+      "exitCode": 0,
+      "log": "types-unit.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "types-runtime": {
+      "name": "types-runtime",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:21:52.411544+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:23:07.522627+00:00",
+      "exitCode": 0,
+      "log": "types-runtime.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "counts": {
+    "ordinaryFiles": 19,
+    "ordinaryPassed": 274,
+    "nativeFiles": 7,
+    "nativePassed": 49,
+    "overlappingDefinitions": 43,
+    "nativeOnlyDefinitions": 6,
+    "distinctPassingDefinitions": 280,
+    "passingExecutions": 323,
+    "distinctFiles": 21,
+    "skips": 0,
+    "newGeneratorDefinitions": 26,
+    "developmentRepeatsExcluded": true
+  },
+  "developmentAttempts": {
+    "generator-initial": {
+      "name": "generator-initial",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-generate.test.ts",
+        "test/admin-product-generate-permission.test.ts",
+        "test/admin-legacy-product-read.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop",
+      "startedAt": "2026-10-15T04:58:21.039602+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:58:21.043908+00:00",
+      "exitCode": 1,
+      "log": "generator-initial.log",
+      "resolution": "Sandbox rejected the shared lock path before Node/Vitest launched; correct workers-ts cwd and approved escalation used in generator-core."
+    },
+    "generator-core": {
+      "name": "generator-core",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-generate.test.ts",
+        "test/admin-product-generate-permission.test.ts",
+        "test/admin-legacy-product-read.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:58:36.297409+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:01:53.520901+00:00",
+      "exitCode": 0,
+      "log": "generator-core.log"
+    },
+    "generator-http": {
+      "name": "generator-http",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-generate.test.ts",
+        "test/admin-legacy-product-generate-http.test.ts",
+        "test/admin-product-generate-permission.test.ts",
+        "test/admin-permission.test.ts",
+        "test/legacy-admin-permissions.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:02:28.697303+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:03:25.719922+00:00",
+      "exitCode": 0,
+      "log": "generator-http.log"
+    },
+    "ordinary-final": {
+      "name": "ordinary-final",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-generate.test.ts",
+        "test/admin-legacy-product-generate-http.test.ts",
+        "test/admin-product-generate-permission.test.ts",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-input.test.ts",
+        "test/admin-legacy-product-save.test.ts",
+        "test/admin-legacy-product-save-http.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-catalog-read.test.ts",
+        "test/admin-product-catalog-read-http.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "test/admin-permission.test.ts",
+        "test/legacy-admin-permissions.test.ts",
+        "test/admin-legacy-role-permission.test.ts",
+        "test/legacy-role-operation-permissions.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:06:16.468675+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:08:45.785273+00:00",
+      "exitCode": 1,
+      "log": "ordinary-final.log",
+      "resolution": "Existing generic role fixture reused protected installer menu IDs2/3; runtime protections identical to baseline. Move synthetic identities to1900001..10 and preserve all assertions, add2/3 denials. See fixture-correction.md."
+    }
+  },
+  "interruptedAttempt": {
+    "at": "2026-10-15T05:16:20.629721+00:00",
+    "priorSessionId": 62633,
+    "outcome": "Unverified interruption; handle missing, no completion receipt, partial RUN-only log retained.",
+    "liveHostProcessesMatchingRunner": 0,
+    "liveHostOrphanVitestOrTypeScript": 0,
+    "sharedLocksObserved": 0,
+    "action": "Restart identical19-file command under new receipt name ordinary-restarted; do not count interrupted run as passed."
+  },
+  "freeze": {
+    "capturedAt": "2026-10-15T05:10:33.226041+00:00",
+    "count": 3122,
+    "sha256": "92f2e91b28ec56cff7f6e8e6bc1a850b43d76a7cc54e7222105a0bb9bb057842",
+    "manifestSHA256": "b4c40b9605f0a49d06b25a9ba7d5c5b98da9ac82f6aa503778583e840efead65",
+    "verifiedAtSeal": true,
+    "scope": "Selected workers-ts src/test/scripts/migrations and seven package/type/Vitest/generated-declaration files; freeze.py algorithm",
+    "algorithm": "SHA256 compact JSON sorted path/sha256 records from git ls-files --cached --others --exclude-standard; individual hashes raw bytes",
+    "nativeDelta": {
+      "verifiedAt": "2026-10-15T05:11:08.642323+00:00",
+      "nativeFreeze": "426ef8cd57a77d67dd9b7fc9649761bca8b1e397c5a7f316869e42fde895ad40",
+      "finalOrdinaryFreeze": "92f2e91b28ec56cff7f6e8e6bc1a850b43d76a7cc54e7222105a0bb9bb057842",
+      "onlyChangedFile": "workers-ts/test/admin-legacy-role-permission.test.ts",
+      "runtimeSourceRunnerNativeTestAndHelperHashesUnchanged": true,
+      "nativeSelectedFilesExcludeChangedTest": true,
+      "boundary": "Native result predates only this generic role-permission fixture correction. Runtime source, runner, native cases, helpers, configs and all other selected files have identical bytes."
+    },
+    "boundary": "Selected inputs only; not every transitive dependency, wrangler config, view/common, installed dependency or environment. Full current and native input manifests retained locally."
+  },
+  "capacity": {
+    "requestActualUTF8Bytes": 65536,
+    "sqlProjectedEstimatedBytes": 1048576,
+    "responseActualUTF8Bytes": 1048576,
+    "rowsPerCompleteSkuCollection": 10000,
+    "dimensions": 3,
+    "valuesPerDimension": 50,
+    "combinationProductBeforeExpansion": 200,
+    "boundary": "Complete classified refusal; no silent truncation. Parent projection is four fixed-size columns. Only actual selected SKU columns enter SQL budget."
+  },
+  "permission": {
+    "internalAdmission": "product.sku_generation_view",
+    "selectableCanonicalRoleToken": false,
+    "exactLegacyMenuId": 191,
+    "modernManageAllowed": true,
+    "viewAnd620Allowed": false,
+    "binding": "Exact POST/API/menuPath/authType/uniqueAuth tuple; copied/rewritten claimants fail closed. Internal capability grants no product view/manage."
+  },
+  "proofBoundaries": {
+    "sql": "Owned PGlite fixtures and actual local PG16.14. Native non-superuser SELECT-only LOGIN, denied credential columns/DML/sequence, independent PID peers, RR snapshots and DB-clock expiry. Not deployed ACL commissioning.",
+    "http": "Real old API/request/Axios, actual Hono/JWT/SQL; explicit host cookie/UI/connection-factory doubles. Whole-form transform is handwritten from pinned Vue, not a mounted editor.",
+    "media": "Existing metadata authorization/HMAC path; no R2 bytes or provider delivery.",
+    "frontend": "No frontend edits/build/browser acceptance in this batch; current modern ProductForm stays incomplete.",
+    "corrections": "Active ordinary rows only; credentials unread; actual second-card rights retained rather than source omitted-SELECT defaults; modes1/2 do not become trusted copy."
+  },
+  "review": {
+    "mode": "Read-only static source/contract review by delegated agent; native tests separately authored by agent and executed by root",
+    "result": "No additional confirmed P0-P2 in current bounded generator; original observations/pending wording retained. Completed root gate receipts above are authoritative later evidence.",
+    "artifacts": {
+      "fixture-baseline-proof.json": {
+        "path": "audit/product-generator-20261015/fixture-baseline-proof.json",
+        "sha256": "00f781e8ae945e8e7e9fe9f65ab12420543440ef68ea3bbd5859b53bb9881781",
+        "bytes": 453
+      },
+      "fixture-correction.md": {
+        "path": "audit/product-generator-20261015/fixture-correction.md",
+        "sha256": "cd3e581eb1e31db77b563b28353e8bed8e8df541a396a7737079a909c00bdca7",
+        "bytes": 1677
+      },
+      "freeze.py": {
+        "path": "audit/product-generator-20261015/freeze.py",
+        "sha256": "00191447ac8a3bf0629bf30a65be09105ce2415565c8576501e2fa58945597bf",
+        "bytes": 1664
+      },
+      "full-editor-next.md": {
+        "path": "audit/product-generator-20261015/full-editor-next.md",
+        "sha256": "c800928a466285df959861d16c519fc496e46ab3d556ae5238bbf6dd29a40289",
+        "bytes": 23435
+      },
+      "independent-review.md": {
+        "path": "audit/product-generator-20261015/independent-review.md",
+        "sha256": "b2618c47e4bcedad675cd4753527812871642115c1b860ba9f23b82e0c78c44a",
+        "bytes": 14039
+      },
+      "initial-lock-denied.log": {
+        "path": "audit/product-generator-20261015/initial-lock-denied.log",
+        "sha256": "a59e656b2e6a4c89c4e9deef6444d7de72aa2e177f8fe75c03e18db911ae17f7",
+        "bytes": 133
+      },
+      "native-final.log": {
+        "path": "audit/product-generator-20261015/native-final.log",
+        "sha256": "65193a311b997fd5571883081786d677bc267927843e638df6990084424affc5",
+        "bytes": 15674
+      },
+      "native-input-delta.json": {
+        "path": "audit/product-generator-20261015/native-input-delta.json",
+        "sha256": "603fb788791a7e94e726ca161856fb0c9fc7301e75d01b0b955c3af53eb4ecd7",
+        "bytes": 625
+      },
+      "ordinary-fixture-failed.log": {
+        "path": "audit/product-generator-20261015/ordinary-fixture-failed.log",
+        "sha256": "b9cf99cc90b60ac566a9c08985e95f62155dae8e9a41950d9cfe6dac3610a6a7",
+        "bytes": 2226
+      },
+      "ordinary-interruption.json": {
+        "path": "audit/product-generator-20261015/ordinary-interruption.json",
+        "sha256": "232a0877f04178ba89ef48fae1af46dce90f2e0e29a46e1b68d5305595083601",
+        "bytes": 425
+      },
+      "ordinary-restarted.log": {
+        "path": "audit/product-generator-20261015/ordinary-restarted.log",
+        "sha256": "3815e530c63e4e7b4304f1118ec3abcf0405a13be70dc31d30499dec2a51a412",
+        "bytes": 678
+      },
+      "source-investigation.json": {
+        "path": "audit/product-generator-20261015/source-investigation.json",
+        "sha256": "0181ab2f3cd47ba8a962c355804697aa4164374bb7363d79aea8e4ce4a43f63b",
+        "bytes": 28924
+      },
+      "source-investigation.md": {
+        "path": "audit/product-generator-20261015/source-investigation.md",
+        "sha256": "2ab1acd8a68495ee443da5d7f37df61111c1a0703db117edd7af3b51c16b3775",
+        "bytes": 23308
+      }
+    }
+  },
+  "runtimeDiagnostics": {
+    "ordinary": "Unchanged duplicate changeTemplate key warning from old PHP Vue source is retained in passing log.",
+    "rawLogs": "Raw stdout/stderr and EOF padding retained byte-for-byte; code/doc whitespace check excludes raw *.log artifacts."
+  },
+  "cleanup": {
+    "verifiedAt": "2026-10-15T05:06:17.862671+00:00",
+    "ownedCluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-qrd8ZF",
+    "runnerRemainingFixtures": 0,
+    "runnerStopped": true,
+    "independentPgCtl": {
+      "exitCode": 3,
+      "output": "pg_ctl: no server running\n"
+    },
+    "independentHostRecheck": {
+      "at": "2026-10-15T05:17:55.110351+00:00",
+      "exitCode": 3,
+      "output": "pg_ctl: no server running\n",
+      "postmasterPidFilePresent": false
+    }
+  },
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "completed": 249,
+      "open": 155,
+      "checkboxLinesUnchangedFromBase": true,
+      "checkboxLinesSHA256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+      "hashAlgorithm": "SHA256 of newline-joined exact checkbox lines without trailing newline"
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "completed": 50,
+      "open": 38,
+      "checkboxLinesUnchangedFromBase": true,
+      "checkboxLinesSHA256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+      "hashAlgorithm": "SHA256 of newline-joined exact checkbox lines without trailing newline"
+    }
+  },
+  "remaining": [
+    "Full six-step Vue editor and old list/router integration",
+    "Metadata/media/forms/drafts full-field workflows",
+    "Trusted copy HTTP/UI and unknown save-outcome recovery",
+    "Coupon fulfillment product_type2",
+    "Full-repository CI and formal deployed ACL/provider/production acceptance"
+  ],
+  "deploymentScope": "Existing owner decision: this deployment is a new system and does not inherit real legacy PHP data. Description import normalization remains a conditional source-compatibility gap, outside current deployment acceptance.",
+  "production": {
+    "ddlExecuted": false,
+    "businessDataWritten": false,
+    "deployed": false
+  },
+  "rawLocalEvidence": "/tmp/cinashop-product-generator-20261015",
+  "rawLocalEvidenceBoundary": "Final passing logs, original failed fixture and lock rejection, interruption evidence, commands, hashes and static review persisted. Other development logs/manifests remain local diagnostic artifacts."
+}

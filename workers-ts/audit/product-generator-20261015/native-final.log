@@ -1,0 +1,112 @@
+{"version":"postgres (PostgreSQL) 16.14","host":"127.0.0.1","port":36619,"taskRoot":"/home/cina/cinagroup/cinashop/.cache/finance-postgres-qrd8ZF","schemaMaintenance":true,"tests":["test/admin-legacy-product-generate.test.ts","test/admin-legacy-product-generate-http.test.ts","test/admin-legacy-product-generate-native.test.ts","test/admin-product-generate-permission.test.ts","test/admin-legacy-product-read.test.ts","test/admin-legacy-product-read-http.test.ts","test/admin-legacy-product-read-native.test.ts"]}
+FINANCE_LOCAL_IDENTITY {"data":"/home/cina/cinagroup/cinashop/.cache/finance-postgres-qrd8ZF/data","version":"160014","host":"127.0.0.1","port":36619,"database":"cinashop_finance_test","role":"finance_test","superuser":true,"createdb":true}
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > returns the actual envelope, main scalar/JSON transforms and ordinary single attr, with no write side effects 539ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > reconstructs multi-SKU pic/detail/valueN and fresh stock from current rows instead of stale/camel snapshot JSON 459ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > does not backfill result, dimensions, identity or parent spec_type when a single legacy product has no SKU 325ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > refuses ambiguous dimensions rather than resetting spec_type or replacing active identities on GET 447ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > returns no historical card credentials, including assigned cards, and roundtrips only current inventory counts 544ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > retains actual fixed delivery for authorized editing, so an unchanged whole-form save cannot erase it 442ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > retains PHP live-template custom_form and formatter while separately exposing the persisted snapshot, including >32KiB form JSON 412ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > uses main selections rather than resurrecting stale relations, and resolves referenced inactive label/coupon rows 313ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > returns source platform shipping selectors, including inactive/deleted history, without mixing supplier templates 449ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > formats source conditional scheduled and presale values in Shanghai and expands relative video using the snapshot config 467ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > signs only owned private image/description previews and preserves editable HTML while never signing foreign references 363ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > reads deleted products, refuses missing/id0/query and rechecks actual password/role with no mutation 424ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > preserves the actual old physical-store supplier echo and pending owner1/cart branch on read-save 447ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > refuses text budgets in SQL before loading a large value and bounds form expansion before mapping fields 590ms
+ ✓ |regular-unit| test/admin-legacy-product-read-native.test.ts > PG16 legacy editor GET restricted column LOGIN, RR snapshot and database expiry > reads with genuine seed620 SELECT-only LOGIN and only aggregate card columns, preserving all business rows and sequences 1394ms
+ ✓ |regular-unit| test/admin-legacy-product-read-native.test.ts > PG16 legacy editor GET restricted column LOGIN, RR snapshot and database expiry > keeps main, SKU, description, form and both directory selectors on one real RR snapshot while a distinct peer commits changes 1196ms
+ ✓ |regular-unit| test/admin-legacy-product-read-native.test.ts > PG16 legacy editor GET restricted column LOGIN, RR snapshot and database expiry > refuses expiry using actual PostgreSQL wall clock while the application clock remains before the deadline, without hidden writes 2847ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-native.test.ts > PG16 legacy generator isolated seed191 LOGIN, RR projection and database expiry > generates under a genuine seed191 SELECT-only LOGIN with denied credential columns and no identity, DML or sequence allocation 1436ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-native.test.ts > PG16 legacy generator isolated seed191 LOGIN, RR projection and database expiry > keeps current owner, fulfillment and matched SKU on one real RR snapshot while a different backend commits replacements 1247ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-native.test.ts > PG16 legacy generator isolated seed191 LOGIN, RR projection and database expiry > refuses using actual PostgreSQL expiry while the application clock remains valid, preserving the full database and sequences 3256ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > loads the genuine old GET shape and saves its transformed whole DTO through the genuine old POST
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > loads the genuine old GET shape and saves its transformed whole DTO through the genuine old POST 745ms
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > admits seed620 read, refuses its write, denies unrelated/revoked identities and preserves no-store headers 565ms
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > returns old-Axios rejecting errors for missing/zero/path/query and classified repair refusal with no accidental mutation 497ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > retains fixed-content edit values through actual old helper reads and saves
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > retains fixed-content edit values through actual old helper reads and saves 673ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > keeps a valid large Unicode description editable without echoing a duplicate preview into the bounded POST
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > keeps a valid large Unicode description editable without echoing a duplicate preview into the bounded POST 791ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > refuses a large duplicated live form before returning a whole DTO the old form cannot resubmit
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > refuses a large duplicated live form before returning a whole DTO the old form cannot resubmit 710ms
+stderr | test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > uses genuine old generator helper and generated rows in genuine whole-form POST while retaining stable persisted SKU identity
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > uses genuine old generator helper and generated rows in genuine whole-form POST while retaining stable persisted SKU identity 767ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > keeps actual existing mode0 and refill mode1/2 behavior and parent authority through the real helper 486ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > separates exact191 from detail620 and save105 while rejecting live revocation and protecting no-store on denied calls 510ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > rejects malformed canonical paths, queries, duplicate JSON and actual UTF8 over-cap bodies through the real App 582ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > shows fixed edit content and aggregate counts without historical card credentials, excluding delivery fields in refill modes 467ms
+ ✓ |regular-unit| test/admin-legacy-product-generate-http.test.ts > actual generateAttrApi/request/Axios → readonly POST and stable save roundtrip > makes SQL capacity refusal reject in the actual old Axios consumer with no business mutation 430ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > generates source-ordered Cartesian templates and headers without identities, business writes or client-supplied SKU values 403ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > keeps empty attrs as an explicit empty projection and fixed headers for the old single-spec automatic call 497ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > uses authoritative parent type and owner, returns current matched fields, and skips missing combinations only in mode0 430ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > omits dimension headers when mode0 matches no SKU and never resurrects a retired or activity SKU 456ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > excludes card credentials, retains fixed delivery only for edit mode, and treats mode1/2 as generation rather than trusted copies 396ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > preserves actual second-card columns and Shanghai day boundaries instead of copying the source omitted-select reset 382ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > signs only SKU images authorized by the actual parent owner 469ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > rejects ambiguous active rows and oversized raw SKU text before a partial projection 488ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > rejects malformed dimensions and checks combination capacity before expansion 381ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > requires live narrow generator permission and refuses disabled, password-stale and revoked actors without mutation 360ms
+ ✓ |regular-unit| test/admin-legacy-product-generate.test.ts > source legacy generate_attr read-only SKU projection > does not require irrelevant main text fields for generation, but refuses missing products and invalid paths 338ms
+ ✓ |regular-unit| test/admin-product-generate-permission.test.ts > exact191 generation capability is independent from product write and detail grants > maps only POST and the canonical old path shapes to read-only generation admission 35ms
+ ✓ |regular-unit| test/admin-product-generate-permission.test.ts > exact191 generation capability is independent from product write and detail grants > admits managers and exact generation grants without adding product.view/manage or a selectable synthetic role token 28ms
+ ✓ |regular-unit| test/admin-product-generate-permission.test.ts > exact191 generation capability is independent from product write and detail grants > resolves the real191 tuple through both live SQL menu resolvers as only the narrow read capability 36ms
+ ✓ |regular-unit| test/admin-product-generate-permission.test.ts > exact191 generation capability is independent from product write and detail grants > refuses copied API/path tuples and canonical-token forgery instead of falling back to generic namespace writes 32ms
+ ✓ |regular-unit| test/admin-product-generate-permission.test.ts > exact191 generation capability is independent from product write and detail grants > protects191 even if every claim is rewritten to a real product save tuple 33ms
+ ✓ |regular-unit| test/admin-product-generate-permission.test.ts > exact191 generation capability is independent from product write and detail grants > requires every exact191 metadata field and existing type/access/deletion filters 276ms
+
+ Test Files  7 passed (7)
+      Tests  49 passed (49)
+   Start at  05:05:04
+   Duration  57.49s (transform 10.21s, setup 0ms, import 20.37s, tests 36.16s, environment 1ms)
+
+FINANCE_LOCAL_FIXTURES remaining=0
+FINANCE_LOCAL_STOPPED /home/cina/cinagroup/cinashop/.cache/finance-postgres-qrd8ZF

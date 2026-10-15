@@ -297,9 +297,12 @@ const legacyRolePreviewPermission = "system.legacy_role_operation_preview";
 export const PRODUCT_LABEL_SELECTION_PERMISSION = "label.product_selection_view";
 export const PRODUCT_BRAND_SELECTION_PERMISSION = "brand.product_selection_view";
 export const PRODUCT_CATEGORY_SELECTION_PERMISSION = 'category.product_selection_view';
+// Read-only POST admission; exact legacy191 does not grant product writes.
+export const PRODUCT_SKU_GENERATION_PERMISSION = 'product.sku_generation_view';
 
 /** Canonical grants cover narrower legacy contracts; legacy grants stay within their own workflow. */
 export function hasAdminPermission(granted: ReadonlySet<string>, required: string): boolean {
+  if (required === PRODUCT_SKU_GENERATION_PERMISSION) return granted.has(required) || granted.has('product.manage');
   if (required === PRODUCT_CATEGORY_SELECTION_PERMISSION) return granted.has(required)
     || granted.has('product.view') || granted.has('product.manage') || granted.has('category.view') || granted.has('category.manage');
   if (required === PRODUCT_BRAND_SELECTION_PERMISSION) return granted.has(required)
@@ -482,6 +485,11 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     if (method.toUpperCase() === 'PUT' && new RegExp(`^erp/connections/${id}/bindings$`).test(route)) return 'erp.connection.manage';
     if (method.toUpperCase() === 'POST' && new RegExp(`^erp/connections/${id}/(?:auth|rotate|disable|revoke)$`).test(route)) return 'erp.connection.manage';
     return null;
+  }
+  if (route === 'product/generate_attr' || route.startsWith('product/generate_attr/')) {
+    return method.toUpperCase() === 'POST'
+      && /^product\/generate_attr\/(?:0|[1-9]\d{0,9}|:id|<id>)\/(?:[012]|:type|<type>)$/.test(route)
+      ? PRODUCT_SKU_GENERATION_PERMISSION : null;
   }
   // Central review moderation has independent capabilities even on old product URLs.
   if (isProductReplyRoute(route)) return productReplyPermission(method.toUpperCase(), route);
@@ -785,6 +793,15 @@ function unprovedProductModerationMenuClaim(menu: LegacyAdminMenuMetadata): bool
  * a copied GET tuple with product.manage must never become a delete writer.
  * The existing editor105/detail620 tuples remain exact independent bindings.
  * Both resolver queries already require type=1/access=1/is_del=0. */
+function productGenerationMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const routes = [normalizeAdminRoute(menu.apiUrl), normalizeAdminRoute(menu.menuPath.replace(/^\/admin(?=\/|product\/)/i, ''))];
+  const claimed = menu.id === 191 || routes.some(route => route === 'product/generate_attr' || route.startsWith('product/generate_attr/'));
+  if (!claimed) return { protected: false, permission: null };
+  return { protected: true, permission: menu.id === 191 && menu.authType === 2
+    && menu.apiUrl === 'product/generate_attr/<id>/<type>' && menu.methods === 'POST'
+    && menu.menuPath === '/adminproduct/generate_attr/<id>' && menu.uniqueAuth === '' ? PRODUCT_SKU_GENERATION_PERMISSION : null };
+}
+
 function productRecycleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
   const claimed = [normalizeAdminRoute(menu.apiUrl), normalizeAdminRoute(menu.menuPath.replace(/^\/admin(?=\/|product\/)/i, ''))]
     .some(route => /^product\/product\/[^/]+$/.test(route) && legacyAdminId(route.split('/')[2]));
@@ -1048,7 +1065,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productGenerationMenuBinding(menu).protected || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1484,6 +1501,11 @@ export class AdminPermissionService {
         if (menu.id === 579 || menu.id === 580) continue;
         if (unprovedProductStockMenuClaim(menu)) continue;
         if (unprovedProductModerationMenuClaim(menu)) continue;
+        const generationBinding = productGenerationMenuBinding(menu);
+        if (generationBinding.protected) {
+          if (generationBinding.permission) resolved.add(generationBinding.permission);
+          continue;
+        }
         const recycleBinding = productRecycleMenuBinding(menu);
         if (recycleBinding.protected) {
           if (recycleBinding.permission) resolved.add(recycleBinding.permission);

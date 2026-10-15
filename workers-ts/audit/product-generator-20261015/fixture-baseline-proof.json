@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-15T05:23:55.930543+00:00",
+  "baseCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+  "functions": {
+    "productCatalogReadMenuBinding": {
+      "byteIdenticalToBase": true,
+      "sha256": "db5bc67e5c22cfc1b57152b44d6efe0add576c589af7e0ee153dbe8899c4e7a9"
+    },
+    "productCategoryMenuBinding": {
+      "byteIdenticalToBase": true,
+      "sha256": "8272209cd6992cc249af5899e34250ef134f1c2b71a6bfbb405ee0480aff6f45"
+    }
+  }
+}

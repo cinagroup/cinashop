@@ -1,0 +1,910 @@
+{
+  "generatedAt": "2026-10-15T04:57:38.793256+00:00",
+  "scope": "Read-only source investigation of real Admin generator; no PHP execution, tests, builds, providers or repository source edits",
+  "targetBaselineCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+  "references": [
+    {
+      "id": "S01",
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "lines": [
+        [
+          1464,
+          1464
+        ],
+        [
+          1534,
+          1535
+        ],
+        [
+          1658,
+          1663
+        ]
+      ],
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "bytes": 183912,
+      "note": "Actual product group POST generator route and middleware"
+    },
+    {
+      "id": "S02",
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "lines": [
+        [
+          593,
+          619
+        ]
+      ],
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+      "bytes": 27131,
+      "note": "Request defaults, current owner lookup, commented activity check and envelope"
+    },
+    {
+      "id": "S03",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "lines": [
+        [
+          502,
+          695
+        ]
+      ],
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399,
+      "note": "Complete visible generator implementation"
+    },
+    {
+      "id": "S04",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+      "lines": [
+        [
+          282,
+          285
+        ]
+      ],
+      "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8",
+      "bytes": 22891,
+      "note": "getSkuArray delegates explicit field whitelist to DAO"
+    },
+    {
+      "id": "S05",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductAttrValueDao.php",
+      "lines": [
+        [
+          119,
+          138
+        ]
+      ],
+      "sha256": "a6c3f481a168544605185059287e9e86c541a31b296a82d18421725dc05e3b8e",
+      "bytes": 8354,
+      "note": "Raw where/column explicit select; no inferred write fields or retirement filter"
+    },
+    {
+      "id": "S06",
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+      "lines": [
+        [
+          25,
+          58
+        ],
+        [
+          89,
+          106
+        ]
+      ],
+      "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d",
+      "bytes": 3751,
+      "note": "Insert-only identity mutators; no select-time hidden write configuration"
+    },
+    {
+      "id": "S07",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductVirtualServices.php",
+      "lines": [
+        [
+          32,
+          39
+        ]
+      ],
+      "sha256": "1a44c129483d02f79b0f70f972fd5954b543eb7afb246a9e083de99e887613a1",
+      "bytes": 3560,
+      "note": "Card credentials read by unique/product only; assigned rows not excluded"
+    },
+    {
+      "id": "S08",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+      "lines": [
+        [
+          136,
+          145
+        ],
+        [
+          172,
+          175
+        ],
+        [
+          198,
+          204
+        ]
+      ],
+      "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+      "bytes": 16491,
+      "note": "Generic find and column read paths"
+    },
+    {
+      "id": "S09",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "lines": [
+        [
+          268,
+          277
+        ]
+      ],
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "bytes": 16957,
+      "note": "Actual generateAttrApi method/path/body"
+    },
+    {
+      "id": "S10",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAdd/index.vue",
+      "lines": [
+        [
+          633,
+          643
+        ],
+        [
+          2336,
+          2341
+        ],
+        [
+          2498,
+          2508
+        ],
+        [
+          2536,
+          2545
+        ],
+        [
+          2670,
+          2670
+        ],
+        [
+          2788,
+          2838
+        ],
+        [
+          2880,
+          2885
+        ],
+        [
+          3108,
+          3120
+        ],
+        [
+          3422,
+          3464
+        ],
+        [
+          3853,
+          3900
+        ],
+        [
+          3911,
+          3934
+        ],
+        [
+          4008,
+          4025
+        ],
+        [
+          4162,
+          4169
+        ],
+        [
+          4245,
+          4252
+        ],
+        [
+          4409,
+          4434
+        ]
+      ],
+      "sha256": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f",
+      "bytes": 157763,
+      "note": "Actual editor dimensions, calls, response consumption, copy and rename"
+    },
+    {
+      "id": "S11",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/productDetails.vue",
+      "lines": [
+        [
+          2990,
+          3002
+        ],
+        [
+          3401,
+          3437
+        ]
+      ],
+      "sha256": "c241be57347a9ba5ac66dad8a95919247232fa31128928c3060f8377e631fb6f",
+      "bytes": 135364,
+      "note": "Second actual Admin generator consumer"
+    },
+    {
+      "id": "S12",
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "lines": [
+        [
+          8660,
+          8660
+        ],
+        [
+          8676,
+          8676
+        ],
+        [
+          8775,
+          8775
+        ],
+        [
+          9101,
+          9101
+        ]
+      ],
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "bytes": 7322393,
+      "note": "Menu column order and distinct seeds22/191/620"
+    },
+    {
+      "id": "S13",
+      "path": "/home/cina/cinagroup/cinashop-php/composer.json",
+      "lines": [
+        [
+          57,
+          67
+        ]
+      ],
+      "sha256": "2651664ff3cb15ac5968ffbc1a1f5b29c6a4b3c17e8a0c9d923788cf2629277f",
+      "bytes": 2095,
+      "note": "Composer loads app/helpers.php"
+    },
+    {
+      "id": "S14",
+      "path": "/home/cina/cinagroup/cinashop-php/app/helpers.php",
+      "lines": [
+        [
+          1,
+          1
+        ]
+      ],
+      "sha256": "5ed1ad26409bc86839701855d620c3855f34163d76bd88be2243031f98f5d8a5",
+      "bytes": 105440,
+      "note": "Opaque swoole_loader binary payload; no readable attr_format definition; raw-byte SHA"
+    },
+    {
+      "id": "S15",
+      "path": "/home/cina/cinagroup/cinashop-php/app/common.php",
+      "lines": [
+        [
+          1,
+          20
+        ]
+      ],
+      "sha256": "aa8ec005680a709ae3f7324dadcbe91c8e305c0a685e1b7c08f3b24f1d63c8f9",
+      "bytes": 27055,
+      "note": "Readable common helper file contains no attr_format definition"
+    },
+    {
+      "id": "S16",
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/composer/autoload_files.php",
+      "lines": [
+        [
+          33,
+          33
+        ]
+      ],
+      "sha256": "005b23153fab8435c097ae057e1e51f23506ddb5b3f8aee00c2f12615dd85d26",
+      "bytes": 2654,
+      "note": "Actual installed autoload list loads encoded helper"
+    },
+    {
+      "id": "S17",
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/admin/AdminCkeckRoleMiddleware.php",
+      "lines": [
+        [
+          28,
+          39
+        ]
+      ],
+      "sha256": "61d841ef746d5e8031f9ad4d24bc351c7f742659f8fa0b4d62af8f2ce9e48881",
+      "bytes": 1490,
+      "note": "Current auth role middleware delegates PHP ACL"
+    },
+    {
+      "id": "S18",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/SystemRoleServices.php",
+      "lines": [
+        [
+          92,
+          116
+        ],
+        [
+          125,
+          150
+        ]
+      ],
+      "sha256": "9c85f2b36a3584e6fb87fc79a20a819001a13c5e1490a7a20513794cdf7d906d",
+      "bytes": 6642,
+      "note": "Exact route-method menu auth; missing API permissiveness is source behavior"
+    },
+    {
+      "id": "S19",
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/admin/AdminLogMiddleware.php",
+      "lines": [
+        [
+          31,
+          38
+        ]
+      ],
+      "sha256": "d1c2ec74ae5f9ff88b1f73e1183ee906a26085381f2606a77484fc68028cd8f2",
+      "bytes": 1391,
+      "note": "HTTP middleware enqueues audit"
+    },
+    {
+      "id": "S20",
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/system/AdminLogJob.php",
+      "lines": [
+        [
+          30,
+          32
+        ],
+        [
+          44,
+          53
+        ]
+      ],
+      "sha256": "97498993ec646463ce2825448c7d6a9040b53afe23987096f8c478e779db1535",
+      "bytes": 1561,
+      "note": "Queued access-log job"
+    },
+    {
+      "id": "S21",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/log/SystemLogServices.php",
+      "lines": [
+        [
+          46,
+          67
+        ]
+      ],
+      "sha256": "71944fc9e0a5d039f22eb33f6802c0b284f33b3c746e1a5ac294eb502c00ac00",
+      "bytes": 2886,
+      "note": "Audit worker writes log row"
+    },
+    {
+      "id": "S22",
+      "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+      "lines": [
+        [
+          36,
+          38
+        ]
+      ],
+      "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+      "bytes": 1807,
+      "note": "Source Shanghai timezone"
+    },
+    {
+      "id": "S23",
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/utils/Json.php",
+      "lines": [
+        [
+          66,
+          83
+        ],
+        [
+          97,
+          107
+        ],
+        [
+          115,
+          122
+        ]
+      ],
+      "sha256": "b6d6bc57ab5ee6e8fdb66b7cd294e7a23b17737d526eae94ca02768ddb0208f5",
+      "bytes": 3657,
+      "note": "Legacy success/failure envelope"
+    },
+    {
+      "id": "S24",
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/product/StoreProduct.php",
+      "lines": [
+        [
+          410,
+          420
+        ]
+      ],
+      "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1",
+      "bytes": 19362,
+      "note": "Supplier shares PHP service with is_supplier true; not Admin contract"
+    }
+  ],
+  "targetBaselineReferences": [
+    {
+      "id": "T01",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuInput.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          122,
+          150
+        ],
+        [
+          185,
+          251
+        ]
+      ],
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f",
+      "bytes": 9617,
+      "note": "Dimension/combinations/strict save validation; baseline, not generator adapter"
+    },
+    {
+      "id": "T02",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          108,
+          194
+        ],
+        [
+          241,
+          330
+        ],
+        [
+          584,
+          678
+        ]
+      ],
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2",
+      "bytes": 32293,
+      "note": "Real TS second-card fields, active/retired identities and mutation boundary"
+    },
+    {
+      "id": "T03",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/supplier/SupplierController.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          708,
+          718
+        ]
+      ],
+      "sha256": "918b94773986a2703fafecf233fd6bc912f931ef45d470c799bb7e1b4d4165ce",
+      "bytes": 32638,
+      "note": "Supplier generator currently reads body.items and returns combinations, not legacy info"
+    },
+    {
+      "id": "T04",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          305,
+          306
+        ],
+        [
+          421,
+          426
+        ]
+      ],
+      "sha256": "d8882a1782a22c3b144a662ef8239b6d88a7c68671f44827e89bf69acaf43a1b",
+      "bytes": 106581,
+      "note": "True product save/read exist; Admin generator absent at baseline"
+    },
+    {
+      "id": "T05",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          58,
+          63
+        ],
+        [
+          466,
+          495
+        ],
+        [
+          630,
+          631
+        ],
+        [
+          1666,
+          1680
+        ]
+      ],
+      "sha256": "6ab97a3585adfb0b978214ac8e87e5952f8c539184750dc38846b20e3a94b90f",
+      "bytes": 109504,
+      "note": "Existing broad product POST fallback; seed191 must gain isolated mapping"
+    },
+    {
+      "id": "T06",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          178,
+          185
+        ],
+        [
+          197,
+          220
+        ]
+      ],
+      "sha256": "ff09af33cff61cfbcaf0ec38aa942cc7364a9485462f32669c0b7c4cde8aa248",
+      "bytes": 24084,
+      "note": "Supported product types and distinct import/copy mode; legacy pic/snake adapter"
+    },
+    {
+      "id": "T07",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          110,
+          128
+        ],
+        [
+          151,
+          165
+        ],
+        [
+          264,
+          273
+        ]
+      ],
+      "sha256": "ecf74aec76992f9ab0c0209bca461538b04d9f2f8a8c601074c2e73139d86a5c",
+      "bytes": 23578,
+      "note": "Current GET actual SKU/card-safe projection and read snapshot pattern"
+    },
+    {
+      "id": "T08",
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductForm.vue",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          13,
+          16
+        ],
+        [
+          192,
+          216
+        ],
+        [
+          538,
+          561
+        ],
+        [
+          607,
+          651
+        ],
+        [
+          839,
+          868
+        ]
+      ],
+      "sha256": "78f5c7ce4149accace5e62b833c4115cee87197d497eb0378c492c296dafbb8f",
+      "bytes": 39955,
+      "note": "Modern editor uses local template generation and camel/image state"
+    },
+    {
+      "id": "T09",
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          29,
+          94
+        ],
+        [
+          399,
+          425
+        ]
+      ],
+      "sha256": "fa89248718515698885a8160da43ac3eafeb66f8ad7a465b6f02f6390264c1ec",
+      "bytes": 20656,
+      "note": "Modern DTO and detail/add/edit endpoints differ from actual old generator"
+    },
+    {
+      "id": "T10",
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+      "gitCommit": "b2297262f76d5bdb0c12c26cba38c990ee5e2965",
+      "lines": [
+        [
+          28,
+          70
+        ],
+        [
+          73,
+          104
+        ]
+      ],
+      "sha256": "48a6474a037f31b0c45af86732d3aaf0b6cbef85c8db8e957da7e6f556c3894d",
+      "bytes": 8082,
+      "note": "Existing Cartesian and strict SKU tests are not legacy generator HTTP proof"
+    }
+  ],
+  "contract": {
+    "route": {
+      "method": "POST",
+      "path": "/adminapi/product/generate_attr/:id/:type",
+      "sourceDefaultId": 0,
+      "sourceDefaultType": 0,
+      "response": {
+        "status": 200,
+        "msg": "ok",
+        "data": {
+          "info": {
+            "attr": "input dimensions",
+            "value": "dense emitted SKU rows",
+            "header": "column descriptors",
+            "product_type": "persisted product type if id, otherwise body/default0"
+          }
+        }
+      },
+      "references": [
+        "S01",
+        "S02",
+        "S09",
+        "S23"
+      ]
+    },
+    "input": {
+      "attrs": "Dimension array [{value:dimensionName,detail:[option,...]}]; NOT submitted SKU rows on this endpoint",
+      "items": "Controller default[] but ignored by getAttr; old Vue does not send it",
+      "product_type": "Existing ID reads actual SQL main value, new ID uses supplied/default0; owner read from SQL only",
+      "references": [
+        "S02",
+        "S03",
+        "S10"
+      ]
+    },
+    "pathMode": {
+      "0": "Existing ID: skip unmatched suk, matched SQL rows emitted; ID0: default generated rows still emitted; card fixed/list projection allowed",
+      "1": "Matched SQL rows retained; unmatched rows emitted with defaults; card disk_info/virtual_list omitted",
+      "2": "Same server branch as1; no dedicated Vue call found; not copy or coupon semantic",
+      "outside_0_1_2": "PHP has no explicit enum validation; recommended TS bounded enum0|1|2 is intentional narrowing",
+      "references": [
+        "S03",
+        "S10",
+        "S11"
+      ]
+    },
+    "matching": {
+      "suk": "Trim detail values in helper-produced iteration order, implode comma; sorting explicitly commented",
+      "where": {
+        "product_id": "path id",
+        "type": 0,
+        "suk": "computed ordered value tuple"
+      },
+      "select": "unique,bar_code,code,cost,price,settle_price,ot_price,stock,image as pic,weight,volume,brokerage,brokerage_two,vip_price,disk_info",
+      "per_combination_query": true,
+      "sourceRetiredFilter": false,
+      "sourceDuplicateDeterminism": "DAO column map keyed by suk without explicit order; exact duplicate winner unspecified",
+      "outputIdentity": "No id, unique or suk emitted by visible projection; unique is used only for virtual lookup",
+      "references": [
+        "S03",
+        "S04",
+        "S05",
+        "S06"
+      ]
+    },
+    "row": {
+      "common": {
+        "pic": "string, empty for default",
+        "price": "number(float)",
+        "settle_price": "number(float)",
+        "cost": "number(float)",
+        "ot_price": "number(float)",
+        "vip_price": "number(float)",
+        "stock": "number(integer)",
+        "bar_code": "string",
+        "code": "string",
+        "weight": "number(float)",
+        "volume": "number(float)",
+        "brokerage": "number(float)",
+        "brokerage_two": "number(float)"
+      },
+      "dimensionFields": {
+        "detail": "trimmed key/value object",
+        "value1..N": "ordered dimension option strings",
+        "values": "comma-joined option string"
+      },
+      "defaults": "pic/bar_code/code empty; all money/weight/volume/commission/stock zero; vip_price missing ->0",
+      "card": "Only product_type1 and route mode0 emits virtual_list and disk_info; source getArr reads card_no/card_pwd even assigned rows and is called twice; TS must intentionally redact list",
+      "second_card": "Output write_times/write_valid/days/section_time, but SELECT omits all write fields, so matched source rows actually default1/1/0/[empty,empty]. Preserve actual TS SQL fields as explicit repair, not exact legacy equivalence.",
+      "coupon_type2": "Default coupon_id=0 assigned internally but never emitted; no usable coupon fulfillment identity",
+      "references": [
+        "S03",
+        "S07"
+      ]
+    },
+    "header": {
+      "dimension": "Only after first emitted row: title=name,align=center,minWidth130,slot=valueN",
+      "base": [
+        {
+          "title": "图片",
+          "slot": "pic",
+          "minWidth": 80
+        },
+        {
+          "conditional": "Admin owner type2 only",
+          "title": "结算价",
+          "slot": "settle_price",
+          "minWidth": 120
+        },
+        {
+          "title": "售价",
+          "slot": "price",
+          "minWidth": 120
+        },
+        {
+          "title": "成本价",
+          "slot": "cost",
+          "minWidth": 140
+        },
+        {
+          "title": "划线价",
+          "slot": "ot_price",
+          "minWidth": 140
+        },
+        {
+          "title": "库存",
+          "slot": "stock",
+          "minWidth": 140
+        },
+        {
+          "title": "商品条形码",
+          "slot": "bar_code",
+          "minWidth": 140
+        },
+        {
+          "title": "商品编码",
+          "slot": "code",
+          "minWidth": 140
+        }
+      ],
+      "fulfillment": {
+        "0": [
+          {
+            "title": "重量(KG)",
+            "slot": "weight",
+            "minWidth": 140
+          },
+          {
+            "title": "体积(m³)",
+            "slot": "volume",
+            "minWidth": 140
+          }
+        ],
+        "1": [
+          {
+            "title": "卡密商品",
+            "slot": "fictitious",
+            "minWidth": 140
+          }
+        ],
+        "2": [],
+        "3": [],
+        "4": []
+      },
+      "last": {
+        "title": "操作",
+        "slot": "action",
+        "align": "center",
+        "minWidth": 70
+      },
+      "allAlign": "center",
+      "noVipHeader": true,
+      "supplier_variant": "is_supplier=true omits Admin price/cost/otprice and shows settle only; separate contract",
+      "references": [
+        "S03",
+        "S24"
+      ]
+    },
+    "permissions": {
+      "seed": 191,
+      "tuple": {
+        "pid": 22,
+        "auth_type": 2,
+        "api_url": "product/generate_attr/<id>/<type>",
+        "methods": "POST",
+        "menu_path": "/adminproduct/generate_attr/<id>",
+        "unique_auth": "",
+        "access": 1,
+        "is_del": 0
+      },
+      "getSeed620": "different GET product/product/<id>; never generator authority",
+      "sourceMiddleware": "Admin role checks visible route-method registration, with legacy permissive unknown API cases; do not copy to TS",
+      "targetProposed": "product.sku_generation_view, exact191 independent generator-only grant; product.manage accepted; product.view/620 not enough; defend forged metadata and unrelated broad grants",
+      "references": [
+        "S12",
+        "S17",
+        "S18",
+        "T05"
+      ]
+    },
+    "dml": {
+      "visibleBusinessPath": "No save/update/delete/sequence/identity allocation or checkProductAttr in visible generator/DAO call chain; checkActivity commented",
+      "helper": "attr_format implementation opaque, so full executed PHP purity is not proved",
+      "httpAudit": "product route group AdminLogMiddleware dispatches AdminLogJob, whose SystemLogServices.recordAdminLog saves an access-log row",
+      "target": "Deliberately RR READ ONLY pure projection, no audit/outbox/DML/sequence/network; prove with actual role and snapshots",
+      "references": [
+        "S01",
+        "S02",
+        "S03",
+        "S08",
+        "S19",
+        "S20",
+        "S21"
+      ]
+    },
+    "opaqueHelper": {
+      "readableDefinitionFound": false,
+      "autoload": "Composer autoload files app/helpers.php; installed autoload includes it",
+      "payload": "swoole_loader encoded; no readable attr_format function name",
+      "provedFromCallers": "Only attr_format($attr)[1] consumed; entries must provide detail object. Exact helper validation, combination order, numeric-key/duplicate/empty behavior not executable-proved.",
+      "target": "Explicit bounded deterministic ordered Cartesian implementation; characterize declared compatibility differences, no invented PHP oracle",
+      "references": [
+        "S03",
+        "S13",
+        "S14",
+        "S15",
+        "S16"
+      ]
+    },
+    "oldVue": {
+      "load": "infoData gets data.items into this.attrs; this.formValidate=data keeps current id; calls generate(0), then seeds data.attrs, asynchronous result can replace rows",
+      "draft": "cache data.items -> this.attrs; formValidate.id usually0; generate(0)",
+      "click": "button generate(1)",
+      "rename": "handleEnter mutates option then generate(1, callback); callback substitutes strings in existing manyFormValidate and detail; server rows not applied",
+      "request": "only attrs and product_type; not current manyFormValidate SKU edits",
+      "response": "res.data.info; deep-copy header into formValidate.header, remove final action column for batch, attrData=info.attr; addmanyData sets select=true; mode1 sets every pic to main image",
+      "copy": "productInfoApi routeID or query.copy reads original ID; generator uses returned original formValidate.id and path0 mode; submit later sets id0 and clears soure_link. No route mode2 copy signal or trusted copy token.",
+      "typesDistinct": [
+        "route mode0/1/2",
+        "persisted product_type0/1/2/3/4",
+        "persisted owner type0/1/2",
+        "formValidate.type=this.type from query.type0/-1/1 import mode"
+      ],
+      "references": [
+        "S09",
+        "S10",
+        "S11"
+      ]
+    }
+  },
+  "mustTest": [
+    "Actual old generateAttrApi/request/Axios -> real Hono/JWT/SQL: response.data.info attr/value/header/product_type and classified failures reject.",
+    "ID0 modes0/1/2 with ordered dimensions produce fresh default rows; never allocate id/unique or write row/audit/outbox/sequence.",
+    "Positive ID current owner and product_type win over forged body product_type/type/relation fields; nonexistent/deleted/foreign-owner policy explicit.",
+    "Mode0 mixed matched/missing combinations emits matching subset only; mode1/2 emit complete combinations with defaults for missing; all-missing mode0 fixed header only.",
+    "Matches only current ordinary active SKU; no activity type rows, no retired resurrection, no stale attr_result data, duplicate/ambiguous topology refused.",
+    "Positive-ID matches preserve monetary values, stock and fixed-content contract; no stale submitted items/rows may override SQL truth.",
+    "Header exact order/title/slot/minWidth for new platform, owner0/1, owner2 and each supported product_type; no supplier-only header leak.",
+    "Card mode0 virtual_list stays empty with aggregate uid0/total counts, actual fixed disk_info preserved; modes1/2 omit disk_info and virtual_list by explicit source contract. Assigned cards and stale snapshots never leak.",
+    "Actual SELECT-only non-superuser LOGIN reads through service despite card_no/card_pwd SELECT denied; card credentials, DML and nextval prove denied.",
+    "Second-card default rows use1/1/0/empty dates, matched rows preserve actual SQL writeTimes/writeValid/writeDays/start/end as documented source-select repair; enforce one combination.",
+    "Body product_type2 on id0 and persisted product_type2 on existing ID rejected as unsupported; route mode2 remains supported for0/1/3/4.",
+    "Empty attrs automatic single-SKU call produces deterministic empty value/fixed header; malformed dimensions, >3, >50 values, >200 Cartesian product refused before allocation.",
+    "Whitespace/comma/control/numeric-key/prototype-key/duplicate name/value cases and bounded ignored items/details UI echoes; strict canonical path/mode/query/body size/UTF8.",
+    "Exact seed191 generates and cannot save/mutate; product.manage generates; product.view/620/order.view and forged191 method/path/authType/uniqueAuth/rewritten unrelated tuple rejected.",
+    "RR same-snapshot peers update current main owner/product_type/SKU/catalog facts; current result stable, next call sees change; actual DB clock expiry wins over frozen app clock.",
+    "Private asset URLs use actual stored product owner under current metadata ACL; no provider/network; whole DB/sequence snapshot unchanged on success and every refusal.",
+    "Rename callback preserves client unsaved row values without trusting them as DB identity; source copy flow keeps original ID until submit and is not silently granted trusted-copy behavior.",
+    "Actual Vue mounted copy/edit/generator integration remains separate acceptance; DTO helper and local modern template generation do not prove full six-step editor completion."
+  ],
+  "openBoundaries": [
+    "Opaque attr_format exact behavior, no PHP execution/oracle",
+    "Full mounted old/modern Vue generator/edit/copy acceptance",
+    "Product_type2 coupon fulfillment unsupported",
+    "Production ACL/provider/source-data acceptance remain separate"
+  ],
+  "referenceHashAlgorithm": "SHA256 full raw file bytes; targetBaselineReferences hashes are git object file content at named baseline commit, not a claim current implementation stays unchanged"
+}
