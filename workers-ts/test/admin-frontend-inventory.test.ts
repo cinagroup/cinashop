@@ -3,6 +3,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { buildCurrentAdminFrontendInventory, CURRENT_ADMIN_INVENTORY_FILE,
+  ADMIN_INVENTORY_AUTHORITY_FILE, ADMIN_INVENTORY_AUTHORITY_SHA256 } from '../scripts/admin-frontend-parity-audit';
 
 interface RouteEntry {
   path: string;
@@ -34,6 +36,7 @@ interface InventoryReport {
   version: number;
   legacy: InventorySide;
   target: InventorySide;
+  legacyAuthority: { file: string; sha256: string };
 }
 
 const testDir = dirname(fileURLToPath(import.meta.url));
@@ -41,8 +44,10 @@ const workerRoot = resolve(testDir, "..");
 const repositoryRoot = resolve(workerRoot, "..");
 const adminRoot = join(repositoryRoot, "view", "admin-ts");
 const report = JSON.parse(
-  readFileSync(join(workerRoot, "audit", "admin-frontend-inventory-user-center-design-followup-20261003.json"), "utf8"),
+  readFileSync(join(workerRoot, "audit", CURRENT_ADMIN_INVENTORY_FILE), "utf8"),
 ) as InventoryReport;
+const historicalBytes = readFileSync(join(workerRoot, 'audit', ADMIN_INVENTORY_AUTHORITY_FILE));
+const historical = JSON.parse(new TextDecoder().decode(historicalBytes)) as InventoryReport;
 
 function listVueFiles(root: string): string[] {
   const files: string[] = [];
@@ -91,6 +96,10 @@ function assertInternallyConsistent(side: InventorySide) {
 describe("Admin frontend navigation inventory", () => {
   it("keeps the committed legacy authority snapshot internally consistent", () => {
     expect(report.version).toBe(1);
+    expect(createHash('sha256').update(historicalBytes).digest('hex')).toBe(ADMIN_INVENTORY_AUTHORITY_SHA256);
+    expect(ADMIN_INVENTORY_AUTHORITY_SHA256).toBe('41c78f270cfde05bcdc28d7cfefef9af5e2e90c8f56634159242b257f47d3145');
+    expect(report.legacyAuthority).toEqual({file:ADMIN_INVENTORY_AUTHORITY_FILE,sha256:ADMIN_INVENTORY_AUTHORITY_SHA256});
+    expect(report.legacy).toEqual(historical.legacy);
     assertInternallyConsistent(report.legacy);
     expect(report.legacy.routeFiles.length).toBeGreaterThan(1);
     expect(new Set(report.legacy.routeFiles.map((entry) => entry.file)).size).toBe(
@@ -101,10 +110,16 @@ describe("Admin frontend navigation inventory", () => {
 
   it("fails when target pages or router records drift from the committed audit", () => {
     assertInternallyConsistent(report.target);
+    expect(report).toEqual(buildCurrentAdminFrontendInventory());
     expect(report.target.pageVueFiles).toEqual(
       listVueFiles(join(adminRoot, "src", "pages")),
     );
     expect(report.target.counts.unresolvedComponents).toBe(0);
+    // Components under pages remain visible inventory entries even when they
+    // are opened by a routed editor rather than registered as standalone routes.
+    for (const file of ['label/ProductLabelCatalog.vue','product/ProductModerationDialog.vue',
+      'product/ProductRecycleDialog.vue','product/ProductStockDialog.vue','reply/FictitiousReplyDialog.vue',
+      'system/OperationalGroupData.vue']) expect(report.target.pageVueFiles).toContain(`src/pages/${file}`);
 
     for (const entry of report.target.routeFiles) {
       const file = join(adminRoot, entry.file);

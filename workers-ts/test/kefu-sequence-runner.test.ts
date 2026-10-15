@@ -96,40 +96,54 @@ describe("standalone sequence transaction execution boundary", () => {
     // multisets. Sort a copy by UTF-16 code units for this fixed digest only:
     // no filtering, deduplication or text normalization; execution stays in
     // the generator's original order. Every missing, extra or changed DDL fails.
+    const oldEvents=['order.paid','order.delivery.notice','order.refund.refused.notice',
+      'order.second_card.advent.notice','order.second_card.expired.notice','withdrawal.approved.notice',
+      'withdrawal.refused.notice','withdrawal.applied.notice','withdrawal.staff.refresh',
+      'order.presale.fulfillment','order.pink.success.notice'];
+    const stockEvents=[...oldEvents,'product.stock.effects'];
+    const recycleEvents=[...stockEvents,'product.recycle.effects'];
+    const saveEvents=[...recycleEvents,'product.save.effects'];
+    const checkValue=(events:string[])=>`"store_order_outbox"."event_type" IN (\n      ${events.map(event=>"'"+event+"'").join(',\n      ')}\n    )`;
+    const check=(events:string[])=>({name:'soob_event_type_ck',value:checkValue(events)});
+    const currentCheck=snapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck;
+    expect(currentCheck).toEqual(check(saveEvents));
     const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
-    const previousCurrentSnapshot=structuredClone(snapshot);
+    // Preserve the independently frozen twelve-event checkpoints. The reviewed
+    // recycle/save successors change this CHECK only, after the auto-shelf DDL.
+    const autoShelfSnapshot=structuredClone(snapshot);
+    autoShelfSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=check(stockEvents);
+    const autoShelfStatements=await api.generateMigration(api.generateDrizzleJson({}),autoShelfSnapshot);
+    const previousCurrentSnapshot=structuredClone(autoShelfSnapshot);
     const autoShelfIndexNames=['sp_auto_on_due_idx','sp_auto_off_due_idx'] as const;
     for(const name of autoShelfIndexNames){
       expect(previousCurrentSnapshot.tables['public.store_product'].indexes[name]?.name).toBe(name);
       delete previousCurrentSnapshot.tables['public.store_product'].indexes[name];
     }
     const previousCurrentStatements=await api.generateMigration(api.generateDrizzleJson({}),previousCurrentSnapshot);
-    const exactAutoShelfAddition=await api.generateMigration(previousCurrentSnapshot,snapshot);
+    const exactAutoShelfAddition=await api.generateMigration(previousCurrentSnapshot,autoShelfSnapshot);
     const historicalSnapshot=structuredClone(previousCurrentSnapshot);
     for(const name of [...MANUAL_RED_NOTE_ORM_TABLE_NAMES,...ERP_ORM_TABLE_NAMES])
       delete historicalSnapshot.tables['public.'+name];
     expect(Object.keys(historicalSnapshot.tables).sort()).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
     // Main also expands this one CHECK without adding a table or statement.
     // Bind both exact values before projecting the separately reviewed old DDL.
-    const oldEvents=['order.paid','order.delivery.notice','order.refund.refused.notice',
-      'order.second_card.advent.notice','order.second_card.expired.notice','withdrawal.approved.notice',
-      'withdrawal.refused.notice','withdrawal.applied.notice','withdrawal.staff.refresh',
-      'order.presale.fulfillment','order.pink.success.notice'];
-    const checkValue=(events:string[])=>`"store_order_outbox"."event_type" IN (\n      ${events.map(event=>"'"+event+"'").join(',\n      ')}\n    )`;
-    const currentCheck=snapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck;
-    expect(currentCheck).toEqual({name:'soob_event_type_ck',value:checkValue([...oldEvents,'product.stock.effects'])});
     historicalSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=
-      {name:'soob_event_type_ck',value:checkValue(oldEvents)};
+      check(oldEvents);
     const historicalStatements=await api.generateMigration(api.generateDrizzleJson({}),historicalSnapshot);
     const manualSnapshot=structuredClone(historicalSnapshot);
     for(const name of MANUAL_RED_NOTE_ORM_TABLE_NAMES)manualSnapshot.tables['public.'+name]=snapshot.tables['public.'+name];
     const exactManualAddition=await api.generateMigration(historicalSnapshot,manualSnapshot);
     const manualStatements=await api.generateMigration(api.generateDrizzleJson({}),manualSnapshot);
     const stockSnapshot=structuredClone(manualSnapshot);
-    stockSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=structuredClone(currentCheck);
+    stockSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=check(stockEvents);
     const exactStockUpgrade=await api.generateMigration(manualSnapshot,stockSnapshot);
     const stockStatements=await api.generateMigration(api.generateDrizzleJson({}),stockSnapshot);
     const exactErpAddition=await api.generateMigration(stockSnapshot,previousCurrentSnapshot);
+    const recycleSnapshot=structuredClone(autoShelfSnapshot);
+    recycleSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=check(recycleEvents);
+    const recycleStatements=await api.generateMigration(api.generateDrizzleJson({}),recycleSnapshot);
+    const exactRecycleUpgrade=await api.generateMigration(autoShelfSnapshot,recycleSnapshot);
+    const exactSaveUpgrade=await api.generateMigration(recycleSnapshot,snapshot);
     const statementDigest=(statements:string[])=>createHash('sha256').update(JSON.stringify([...statements].sort()),'utf8').digest('hex');
     // Keep the independent historical285/1191 and manual287/1197 pins intact.
     // The current291 model adds exactly the four reviewed ERP table statements
@@ -155,8 +169,16 @@ describe("standalone sequence transaction execution boundary", () => {
       'CREATE INDEX "sp_auto_off_due_idx" ON "store_product" USING btree ("auto_off_time","id") WHERE "store_product"."is_del"=0 AND "store_product"."is_show"=1 AND "store_product"."auto_off_time">0;',
     ]);
     expect(statementDigest(exactAutoShelfAddition)).toBe('cae05710e5933a05952d1ff5b0c6990e1ed274cb3ec78097d4ed661e4592579b');
-    expect([...currentStatements].sort()).toEqual([...previousCurrentStatements,...exactAutoShelfAddition].sort());
-    expect(statementDigest(currentStatements)).toBe('5b1724634d591d14d1bbd63cc05c441d88d1293c7ce8ba6d58bc927b5133fcd6');
+    expect([...autoShelfStatements].sort()).toEqual([...previousCurrentStatements,...exactAutoShelfAddition].sort());
+    expect(statementDigest(autoShelfStatements)).toBe('5b1724634d591d14d1bbd63cc05c441d88d1293c7ce8ba6d58bc927b5133fcd6');
+    expect(autoShelfStatements).toHaveLength(1203);
+    expect(autoShelfStatements.filter(statement=>statement.includes(checkValue(stockEvents)))).toHaveLength(1);
+    // The historical stock upgrade is independently pinned above. Reuse its
+    // exact two-statement form, replacing only the complete reviewed CHECK.
+    expect(exactRecycleUpgrade).toEqual(exactStockUpgrade.map(statement=>statement.replace(checkValue(stockEvents),checkValue(recycleEvents))));
+    expect(exactSaveUpgrade).toEqual(exactStockUpgrade.map(statement=>statement.replace(checkValue(stockEvents),checkValue(saveEvents))));
+    expect([...recycleStatements].sort()).toEqual(autoShelfStatements.map(statement=>statement.replace(checkValue(stockEvents),checkValue(recycleEvents))).sort());
+    expect([...currentStatements].sort()).toEqual(recycleStatements.map(statement=>statement.replace(checkValue(recycleEvents),checkValue(saveEvents))).sort());
     expect(currentStatements).toHaveLength(1203);
     // The independently pinned previous sequence has no owning-column ALTER.
     expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length+exactErpAddition.length+exactAutoShelfAddition.length);

@@ -53,9 +53,15 @@ describe("seckill schedule admission on disposable SQL", () => {
   });
   afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
   afterAll(async () => { await f?.close(); });
-  const snapshot = async () => ({ ...await f.snapshot(), children: await f.db.select().from(storeSeckill),
-    details: await f.db.select().from(storeOrderCartInfo), statuses: await f.db.select().from(storeOrderStatus),
-    prints: await f.db.select().from(printDocument) });
+  const snapshot = async () => {
+    const state = await f.snapshot();
+    // Unordered SELECTs may return a different physical row order after UPDATE.
+    // Compare every SKU identity and value in stable primary-key order.
+    return { ...state, skus: [...state.skus].sort((a, b) => a.id - b.id),
+      children: await f.db.select().from(storeSeckill),
+      details: await f.db.select().from(storeOrderCartInfo), statuses: await f.db.select().from(storeOrderStatus),
+      prints: await f.db.select().from(printDocument) };
+  };
   const quote = () => new StoreOrderCreateService(f.container, f.env).quoteOrder(params);
   const create = (nextOrderId = async () => "local_schedule_order") =>
     StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, nextOrderId }, params);

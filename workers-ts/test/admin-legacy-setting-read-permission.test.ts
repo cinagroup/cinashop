@@ -13,11 +13,15 @@ describe('legacy staff list permissions', () => {
     permissions = new AdminPermissionService(createContainerFromDb(fixture.db));
     await fixture.db.insert(systemMenus).values([
       { id: 1, authType: 1, type: 1, menuPath: '/admin/setting/system_admin/index', uniqueAuth: 'setting-system-list' },
+      // Preserve former synthetic tuples as refusals on the protected product, category and reply IDs.
       { id: 2, authType: 1, type: 1, menuPath: '/admin/setting/system_role/index', uniqueAuth: 'setting-system-role' },
       { id: 3, authType: 2, type: 1, apiUrl: 'setting/admin', methods: 'GET' },
+      { id: 6, authType: 2, type: 1, apiUrl: 'setting/set_status/22/0', methods: 'PUT' },
+      { id: 930002, authType: 1, type: 1, menuPath: '/admin/setting/system_role/index', uniqueAuth: 'setting-system-role' },
+      { id: 930003, authType: 2, type: 1, apiUrl: 'setting/admin', methods: 'GET' },
       { id: 4, authType: 2, type: 1, apiUrl: '/adminapi/setting/role', methods: 'HEAD' },
       { id: 5, authType: 2, type: 1, apiUrl: 'setting/role/22', methods: 'POST' },
-      { id: 6, authType: 2, type: 1, apiUrl: 'setting/set_status/22/0', methods: 'PUT' },
+      { id: 930006, authType: 2, type: 1, apiUrl: 'setting/set_status/22/0', methods: 'PUT' },
       { id: 7, authType: 1, type: 1, menuPath: '/admin/product', uniqueAuth: 'setting-system-list' },
       { id: 8, authType: 1, type: 1, menuPath: '/admin/setting/system_role/index', uniqueAuth: 'wrong-role' },
       { id: 9, authType: 1, type: 4, menuPath: '/admin/setting/system_role/index', uniqueAuth: 'setting-system-role' },
@@ -26,17 +30,17 @@ describe('legacy staff list permissions', () => {
     ]);
     await fixture.db.insert(systemRole).values([
       { id: 21, roleName: 'platform-normalized', type: 0, rules: 'system.view' },
-      { id: 22, roleName: 'platform-legacy', type: 1, rules: '1,2,3,4' },
+      { id: 22, roleName: 'platform-legacy', type: 1, rules: '1,930002,930003,4' },
       { id: 23, roleName: 'supplier', type: 4, relationId: 1, rules: 'system.manage,config.manage' },
       { id: 24, roleName: 'store', type: 2, rules: 'system.manage' },
       { id: 25, roleName: 'foreign-relation', type: 0, relationId: 9, rules: 'system.manage' },
       { id: 26, roleName: 'disabled', type: 1, status: 0, rules: 'system.manage' },
       { id: 27, roleName: 'deleted', type: 0, status: -1, rules: 'system.manage' },
       { id: 28, roleName: 'configuration-only', type: 1, rules: 'config.view' },
-      { id: 29, roleName: 'independent-legacy-writers', type: 1, rules: '5,6' },
+      { id: 29, roleName: 'independent-legacy-writers', type: 1, rules: '5,930006' },
       { id: 30, roleName: 'forged-pages', type: 1, rules: '7,8,9,10,11' },
-      { id: 31, roleName: 'legacy-admin-only', type: 1, rules: '1,3' },
-      { id: 32, roleName: 'legacy-role-only', type: 1, rules: '2,4' },
+      { id: 31, roleName: 'legacy-admin-only', type: 1, rules: '1,930003' },
+      { id: 32, roleName: 'legacy-role-only', type: 1, rules: '930002,4' },
       { id: 33, roleName: 'platform-manager', type: 0, rules: 'system.manage' },
     ]);
   });
@@ -66,18 +70,23 @@ describe('legacy staff list permissions', () => {
   });
 
   it('resolves audited numeric page and API rules to read authority in single and batch paths', async () => {
-    expect(await permissions.resolveManyRulePermissionKeys(['1', '2', '3', '4', '5', '6', '7,8,9,10,11']))
+    expect(await permissions.resolveManyRulePermissionKeys(['1', '930002', '930003', '4', '5', '930006', '7,8,9,10,11']))
       .toEqual([['system.legacy_admin_view'], ['system.legacy_role_view'], ['system.legacy_admin_view'], ['system.legacy_role_view'],
         ['system.legacy_role_manage', 'system.legacy_role_view', 'system.legacy_role_form_view'],
         ['system.legacy_admin_manage','system.legacy_admin_view','system.legacy_admin_form_view'], []]);
-    for (const rules of ['1', '3']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual(['system.legacy_admin_view']);
-    for (const rules of ['2', '4']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual(['system.legacy_role_view']);
+    for (const rules of ['1', '930003']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual(['system.legacy_admin_view']);
+    for (const rules of ['930002', '4']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual(['system.legacy_role_view']);
     expect(await permissions.resolveRulePermissionKeys('5')).toEqual(['system.legacy_role_manage', 'system.legacy_role_view', 'system.legacy_role_form_view']);
-    expect(await permissions.resolveRulePermissionKeys('6')).toEqual(['system.legacy_admin_manage','system.legacy_admin_view','system.legacy_admin_form_view']);
+    expect(await permissions.resolveRulePermissionKeys('930006')).toEqual(['system.legacy_admin_manage','system.legacy_admin_view','system.legacy_admin_form_view']);
     expect(await permissions.resolveRulePermissionKeys('7,8,9,10,11')).toEqual([]);
     const locked = await withTx(createContainerFromDb(fixture.db), tx => new AdminPermissionService(createContainerFromDb(tx)).resolveRoleAssignment('22', true));
     expect([...locked.keys]).toEqual(['system.legacy_admin_view', 'system.legacy_role_view']);
     expect(locked.missingRoleIds).toEqual([]);
+  });
+
+  it('rejects each former staff tuple on protected product, category and reply IDs in single and batch resolution', async () => {
+    expect(await permissions.resolveManyRulePermissionKeys(['2','3','6','2,3,6'])).toEqual([[],[],[],[]]);
+    for (const rules of ['2','3','6','2,3,6']) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual([]);
   });
 
   it('does not import supplier, store, foreign, disabled or deleted role authority into platform decisions', async () => {

@@ -12,6 +12,7 @@ import { financePostgres } from './helpers/financePostgres';
 // Actual Hono controller -> catalogue service -> DAO -> disposable SQL.
 // Fixture identities are not evidence of real JWT, Hyperdrive or customer acceptance.
 describe('legacy product/hot offset contract', () => {
+  const env = { APP_KEY: 'owned-hot-pagination-signing-key' } as Env;
   let f: Awaited<ReturnType<typeof financePostgres>>;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   let container: ReturnType<typeof createContainerFromDb>;
@@ -41,7 +42,7 @@ describe('legacy product/hot offset contract', () => {
   }, 60_000);
   afterAll(async () => { vi.restoreAllMocks(); await f?.close(); }, 60_000);
   const request = async (query = '', uid = '') => {
-    const response = await app.request(`/api/product/hot${query}`, { headers: { 'x-fixture-user': uid } });
+    const response = await app.request(`/api/product/hot${query}`, { headers: { 'x-fixture-user': uid } }, env);
     return response.json() as Promise<{ status: number; msg: string; data: Array<{ id: number; price: string; stock: number; store_name: string }> }>;
   };
   it('defaults to ten and advances past the first page in stable sort/id order', async () => {

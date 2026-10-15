@@ -17,12 +17,12 @@ function gates(): Gates {
   const source = readFileSync('scripts/admin-setting-frontend-parity-audit.ts', 'utf8');
   const tree = ts.createSourceFile('category-audit.ts', source, ts.ScriptTarget.Latest, true);
   const names = new Set(['classifyProductCategoryStyleCoverage', 'categoryAuditCode', 'hasProductCategoryStyleMatrix',
-    'productCategoryStyleSourceFiles', 'inspectProductCategoryStyleCoverage']);
+    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'inspectProductCategoryStyleCoverage']);
   const selected = tree.statements.filter((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && !!node.name && names.has(node.name.text));
   expect(selected).toHaveLength(names.size);
   const result = ts.transpileModule(selected.map(node => node.getText(tree)).join('\n'),
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } });
-  const sandbox = { exports: {} }; runInNewContext(result.outputText, sandbox, { timeout: 1000 });
+  const sandbox = { exports: {}, ts }; runInNewContext(result.outputText, sandbox, { timeout: 1000 });
   return sandbox.exports as Gates;
 }
 const screens = ['/setting/product-category-style'];
@@ -106,9 +106,27 @@ describe('complete legacy product-category layout source coverage', () => {
     loses(gate, source, 'searcher', "publicCategoryRelationSelection(Number(value), 'tid')", "publicCategoryRelationSelection(Number(value), 'cid')", 'categoryScopes');
     loses(gate, source, 'products', 'isVerify: 1', 'isVerify: -1', 'publishedProducts');
     loses(gate, source, 'cards', 'eq(storeCart.uid, uid)', 'sql`TRUE`', 'publishedProducts');
-    loses(gate, source, 'taxonomy', 'publicProductPictures(tx', 'unsafePictures(tx', 'publicTaxonomy');
+    loses(gate, source, 'taxonomy', 'publicProductCategoryPictures(tx', 'unsafePictures(tx', 'publicTaxonomy');
     loses(gate, source, 'cards', 'publicProductPictures(tx', 'unsafePictures(tx', 'publishedProducts');
     loses(gate, source, 'products', 'await decoratePublicProductCards(', 'await unvalidatedCards(', 'publishedProducts');
+  });
+
+  it('follows the category picture delegate without bypassing canonical owner, module, MIME or column bounds', () => {
+    const gate=gates(),source=currentSources(gate);
+    for (const [role,before,after] of [
+      ['taxonomy', "from './ProductCategoryAssetPolicy'", "from './UnverifiedCategoryPictures'"],
+      ['categoryAssets','await publicProductPictures(db,','await uncheckedPictures(db,'],
+      ['categoryAssets',"bySlot.get(index)??''","values[index].image"],
+      ['categoryAssets','value.reference.length<=512','value.reference.length<=4096'],
+      ['productAssets','eq(systemAttachment.fileType, 1)','eq(systemAttachment.fileType, 2)'],
+      ['productAssets','eq(systemAttachment.moduleType, 1)','eq(systemAttachment.moduleType, 2)'],
+      ['productAssets','asset.relationId === platform.relationId','true'],
+      ['productAssets','asset.relationId === supplier.relationId','true'],
+      ['productAssets','mime !== expectedMime','false'],
+    ]) loses(gate,source,role,before,after,'publicTaxonomy');
+    const fake=mutated(source,'categoryAssets','await publicProductPictures(db,','await uncheckedPictures(db,');
+    fake.categoryAssets+='\nfunction unrelated(db: unknown){ return publicProductPictures(db,[]); }';
+    expect(gate.inspectProductCategoryStyleCoverage(screens,fake).publicTaxonomy).toBe(false);
   });
 
   it('requires real active SKU identity, safe media and durable unknown-cart protection', () => {

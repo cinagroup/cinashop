@@ -56,6 +56,9 @@ const legacyRoot = resolve(
 const legacyAdminRoot = join(legacyRoot, "view", "admin");
 const targetAdminRoot = join(repositoryRoot, "view", "admin-ts");
 const outputFile = join(workerRoot, "audit", "admin-frontend-inventory.json");
+export const CURRENT_ADMIN_INVENTORY_FILE = 'admin-frontend-inventory-current.json';
+export const ADMIN_INVENTORY_AUTHORITY_FILE = 'admin-frontend-inventory-user-center-design-followup-20261003.json';
+export const ADMIN_INVENTORY_AUTHORITY_SHA256 = '41c78f270cfde05bcdc28d7cfefef9af5e2e90c8f56634159242b257f47d3145';
 
 function normalizedRelative(root: string, file: string): string {
   return relative(root, file).replace(/\\/g, "/");
@@ -310,6 +313,35 @@ function buildInventory(
   };
 }
 
+/** Current target inventory keeps the reviewed PHP authority byte-for-byte.
+ * CI can recompute it without discovering a different sibling checkout. */
+export function buildCurrentAdminFrontendInventory() {
+  const authorityBytes = readFileSync(join(workerRoot, 'audit', ADMIN_INVENTORY_AUTHORITY_FILE));
+  if (createHash('sha256').update(authorityBytes).digest('hex') !== ADMIN_INVENTORY_AUTHORITY_SHA256)
+    throw new Error('Reviewed legacy Admin inventory authority changed');
+  const authority = JSON.parse(new TextDecoder().decode(authorityBytes)) as { version: number; methodology: Record<string,string>; legacy: FrontendInventory };
+  if (authority.version !== 1 || !authority.legacy) throw new Error('Legacy Admin inventory authority missing');
+  const targetRoutesFile = join(targetAdminRoot, 'src', 'router', 'index.ts');
+  const routes = collectRoutes(targetRoutesFile, targetAdminRoot, namedVariableExpression(targetRoutesFile, 'routes'));
+  return { version: 1, methodology: authority.methodology,
+    legacyAuthority: { file: ADMIN_INVENTORY_AUTHORITY_FILE, sha256: ADMIN_INVENTORY_AUTHORITY_SHA256 },
+    legacy: authority.legacy, target: buildInventory(targetAdminRoot, 'view/admin-ts', [targetRoutesFile], routes) };
+}
+
+function auditCurrent() {
+  const report = buildCurrentAdminFrontendInventory();
+  if (process.argv.includes('--write')) {
+    const file = join(workerRoot, 'audit', CURRENT_ADMIN_INVENTORY_FILE);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, `${JSON.stringify(report, null, 2)}\n`);
+  }
+  console.log(JSON.stringify(process.argv.includes('--summary') ? {
+    version: report.version, legacyAuthority: report.legacyAuthority,
+    legacy: { counts: report.legacy.counts, domains: report.legacy.domains },
+    target: { counts: report.target.counts, domains: report.target.domains },
+  } : report, null, process.argv.includes('--compact') ? 0 : 2));
+}
+
 function audit() {
   if (!existsSync(legacyAdminRoot)) {
     throw new Error(`Legacy Admin frontend not found: ${legacyAdminRoot}`);
@@ -377,4 +409,7 @@ function audit() {
   console.log(JSON.stringify(printable, null, process.argv.includes("--compact") ? 0 : 2));
 }
 
-audit();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes('--current')) auditCurrent();
+  else audit();
+}

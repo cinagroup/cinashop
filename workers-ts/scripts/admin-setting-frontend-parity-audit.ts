@@ -233,6 +233,7 @@ export function productCategoryStyleSourceFiles(): Record<string, string> {
     publicConfig: "workers-ts/src/services/content/V2PublicCompatibilityService.ts", permission: "workers-ts/src/services/admin/AdminPermissionService.ts",
     crud: "workers-ts/src/controllers/api/v1/AdminCrudController.ts", routes: "workers-ts/src/routes/adminapi.ts", v1Routes: "workers-ts/src/routes/v1/index.ts",
     taxonomy: "workers-ts/src/services/product/StoreCategoryService.ts", categoryPolicy: "workers-ts/src/services/product/PublicCategoryPolicy.ts",
+    categoryAssets: "workers-ts/src/services/product/ProductCategoryAssetPolicy.ts", productAssets: "workers-ts/src/services/activity/ProductAssetPolicy.ts",
     products: "workers-ts/src/services/product/StoreProductService.ts", productDao: "workers-ts/src/dao/product/StoreProductDao.ts",
     searcher: "workers-ts/src/models/searchers/product.ts",
     ordinary: "workers-ts/src/services/product/OrdinaryProductReadData.ts", cards: "workers-ts/src/services/product/PublicProductCardData.ts",
@@ -242,6 +243,47 @@ export function productCategoryStyleSourceFiles(): Record<string, string> {
     productCard: "view/uniapp-ts/src/components/category/CategoryProductCard.vue", sku: "view/uniapp-ts/src/components/category/CategorySkuSelection.vue",
     cartSheet: "view/uniapp-ts/src/components/category/CategoryCartSheet.vue",
   };
+}
+
+/** Category columns allow longer public pictures, while private pictures still
+ * pass through the real product owner/module/MIME authority in the snapshot. */
+export function hasProductCategoryPictureDelegation(sources: Record<string,string>): boolean {
+  const compact = (value:string) => value.replace(/\s+/g,'').replace(/"/g,"'");
+  const printer = ts.createPrinter({removeComments:true});
+  const trees = Object.fromEntries(['taxonomy','categoryAssets','productAssets'].map(role=>
+    [role,ts.createSourceFile(role+'.ts',sources[role]??'',ts.ScriptTarget.Latest,true)]));
+  const scopes = (role:string,name:string) => {
+    const result:ts.Node[]=[];
+    const visit=(node:ts.Node)=>{if((ts.isFunctionDeclaration(node)||ts.isMethodDeclaration(node))&&node.name?.getText(trees[role])===name&&node.body)result.push(node.body);ts.forEachChild(node,visit);};
+    visit(trees[role]);return result;
+  };
+  const body=(role:string,name:string)=>scopes(role,name).map(node=>compact(printer.printNode(ts.EmitHint.Unspecified,node,trees[role]))).join('\n');
+  const imported=(role:string,module:string,name:string)=>trees[role].statements.some(node=>ts.isImportDeclaration(node)
+    &&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===module&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)
+    &&node.importClause.namedBindings.elements.some(binding=>binding.name.text===name&&(binding.propertyName?.text??name)===name));
+  const call=(role:string,scope:string,expression:string,...args:string[])=>{
+    let found=false;const visit=(node:ts.Node)=>{if(ts.isCallExpression(node)&&compact(node.expression.getText(trees[role]))===compact(expression)
+      &&args.every((arg,index)=>!!node.arguments[index]&&compact(node.arguments[index].getText(trees[role]))===compact(arg)))found=true;ts.forEachChild(node,visit);};
+    scopes(role,scope).forEach(visit);return found;
+  };
+  const category=body('categoryAssets','publicProductCategoryPictures'), product=body('productAssets','publicProductPictures');
+  return imported('taxonomy','./ProductCategoryAssetPolicy','publicProductCategoryPictures')
+    && imported('categoryAssets','@/services/activity/ProductAssetPolicy','publicProductPictures')
+    && call('taxonomy','snapshot','publicProductCategoryPictures','tx',
+      'published.flatMap(row => [{ image: row.pic, type: 0, relationId: 0 }, { image: row.bigPic, type: 0, relationId: 0 }])')
+    && call('taxonomy','getCategory','renderProductPictures','this.env?.APP_KEY','snapshot.references')
+    && call('categoryAssets','publicProductCategoryPictures','publicProductPictures','db',
+      "indexes.map(index=>({...values[index],image:classified[index]?.kind==='asset'?classified[index].reference:''}))")
+    && ['row.relationId===0','row.type===2','row.relationId>0','row.relationId<=2147483647',
+      "value?.kind==='asset'?bySlot.get(index)??'':value?.kind==='public'&&value.reference.length<=512?value.reference:''"].every(token=>category.includes(compact(token)))
+    && call('productAssets','publicProductPictures','eq','systemAttachment.fileType','1')
+    && call('productAssets','publicProductPictures','eq','systemAttachment.moduleType','1')
+    && call('productAssets','publicProductPictures','eq','systemAttachment.imageType','R2_IMAGE_TYPE')
+    && call('productAssets','publicProductPictures','canonicalizePublishedAttachmentReference','asset.attDir')
+    && call('productAssets','publicProductPictures','IMAGE_MIMES.has','mime')
+    && ['asset.type===platform.type&&asset.relationId===platform.relationId',
+      'asset.type===supplier.type&&asset.relationId===supplier.relationId',"asset.name.startsWith(prefix)",
+      "'attachments/admin/1/'",'mime!==expectedMime'].every(token=>product.includes(compact(token)));
 }
 
 /** Require connected current implementations, not comments or legacy fixtures. */
@@ -302,7 +344,8 @@ export function inspectProductCategoryStyleCoverage(targetScreens: string[], sou
       && has("api", "normalizeCategoryStyleWrite", "parseCategoryStyleReceipt"),
     publicTaxonomy: has("categoryPolicy", ".type=0", ".relation_id=0", ".is_show=1", "category_parent.is_show=1", "category_root.is_show=1",
       "category_parent.level=1", "category_root.level=0")
-      && has("taxonomy", "REPEATABLE READ, READ ONLY", "PUBLIC_CATEGORY_LIMIT + 1", "publicCategoryIdentitySql", "await publicProductPictures(tx,", "await renderProductPictures(",
+      && hasProductCategoryPictureDelegation(sources)
+      && has("taxonomy", "REPEATABLE READ, READ ONLY", "PUBLIC_CATEGORY_LIMIT + 1", "publicCategoryIdentitySql", "await publicProductCategoryPictures(tx,", "await renderProductPictures(",
         "accepted.has(row.pid)", "big_pic: pictures[index * 2 + 1]") && !code("taxonomy").includes("cacheSet("),
     categoryScopes: has("categoryPolicy", "['cid', 'sid', 'tid', 'selectId']", "query.getAll(key)", "values.length !== 1", "validatePublicCategoryFilters",
       "sid.pid !== query.cid", "tid.pid !== sid.id", "publicCategoryRelationSelection")

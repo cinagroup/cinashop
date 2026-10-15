@@ -1,0 +1,632 @@
+{
+  "version": 1,
+  "date": "2026-10-15",
+  "recorded_at": "2026-10-15T12:52:33.587540+00:00",
+  "status": "locally_validated_new_cloud_ci_pending",
+  "base_commit": "ef794cf26661855e1f471c76c18095e8d8d54346",
+  "goal_status": "active",
+  "scope": "Close14 recorded CI contract failures using the actual migrated delegates and reproducible fixtures; no production handler changes.",
+  "implementation": {
+    "registry": "Exactly two actual shared imports with realpath and binding equality; all remaining Admin/UniApp registry AST must be equal.",
+    "inventory": {
+      "current": "audit/admin-frontend-inventory-current.json",
+      "sha256": "43c5322d0b084d70392cd582aaa06d4f5a190ec11d431af8fe481704530fe750",
+      "authority": {
+        "file": "admin-frontend-inventory-user-center-design-followup-20261003.json",
+        "sha256": "41c78f270cfde05bcdc28d7cfefef9af5e2e90c8f56634159242b257f47d3145"
+      },
+      "legacy_counts": {
+        "pageVueFiles": 378,
+        "routeRecords": 292,
+        "businessPageRouteRecords": 274,
+        "distinctRoutedPageComponents": 245,
+        "auxiliaryRouteRecords": 18,
+        "layoutRouteRecords": 0,
+        "otherRouteRecords": 0,
+        "unresolvedComponents": 0,
+        "unroutedPageFiles": 133
+      },
+      "target_counts": {
+        "pageVueFiles": 138,
+        "routeRecords": 117,
+        "businessPageRouteRecords": 116,
+        "distinctRoutedPageComponents": 115,
+        "auxiliaryRouteRecords": 0,
+        "layoutRouteRecords": 1,
+        "otherRouteRecords": 0,
+        "unresolvedComponents": 0,
+        "unroutedPageFiles": 23
+      },
+      "policy": "Complete target AST and every page scan; no filtering of new dialog/component pages. Historical authority remains byte-pinned."
+    },
+    "permissions": "Move synthetic staff tuples/rules from protected2/3/6 to930002/930003/930006. Original wrong tuples still independently refused. Video query/cancel recovery is exact; initialization, parts, completion and preview retain existing capability checks.",
+    "category_gate": "Follow actual StoreCategoryService→ProductCategoryAssetPolicy→ProductAssetPolicy; verify owner, module, file/MIME, canonical key, RR read-only and complete tree visibility. Preserve negative source mutations.",
+    "user_center_gate": "Prove exact five legacy routes and no additional matching write; actual controller→bounded six-group input/service, permission/table barriers and before/after group/row scope. Generic member writes and unknown routes remain rejected.",
+    "supplier_relation_gate": "Follow actual dispatcher→categoryWrite→await withTx, whole moved subtree, immediate-parent relationPid and same supplier restriction; nested unrelated transaction calls do not prove the wrapper.",
+    "env": "Own APP_KEY passed to actual Hono handlers and existing signing/SQL; request principals remain explicit fixture identities rather than production JWT proof.",
+    "seckill_snapshot": "Copy all SKU rows and preserve every field; canonicalize by primary key only. No filtering, deduplication, stock normalization or runtime change.",
+    "kefu": "All1191/1197/1201/autoShelf1203 historical batch digests preserved. Exact independent11-event baseline,12 stock,13 recycle and14 save CHECKs; complete generated SQL multisets differ only by each full reviewed CHECK. Actual native standalone upgrade, thirty refusals and lock/rollback evidence remain."
+  },
+  "validation": {
+    "distinct_files": 24,
+    "distinct_passed_cases": 537,
+    "failed": 0,
+    "skipped": 0,
+    "arithmetic": "ordinary345 + native253 - repeated61 =537. Initial failed13-file run is not credited; full final files supply all counts.",
+    "per_file_distinct_cases": {
+      "test/product-auxiliary-migration.test.ts": 13,
+      "test/admin-user-center-design-coverage.test.ts": 145,
+      "test/admin-permission.test.ts": 25,
+      "test/presale-sku-catalog-postgres.test.ts": 28,
+      "test/admin-product-category-style-coverage.test.ts": 10,
+      "test/recommendation-navigation.test.ts": 9,
+      "test/admin-legacy-setting-read-permission.test.ts": 7,
+      "test/product-hot-frames.test.ts": 13,
+      "test/product-rank-navigation-postgres.test.ts": 4,
+      "test/product-hot-pagination.test.ts": 7,
+      "test/admin-frontend-inventory.test.ts": 2,
+      "test/admin-fab-settings.test.ts": 13,
+      "test/admin-setting-frontend-parity.test.ts": 21,
+      "test/theme-host-chain.test.ts": 44,
+      "test/admin-all-frontend-parity.test.ts": 4,
+      "test/seckill-schedule-postgres.test.ts": 111,
+      "test/kefu-sequence-runner.test.ts": 11,
+      "test/supplier-product-category-http.test.ts": 21,
+      "test/supplier-product-category-concurrency-postgres.test.ts": 11,
+      "test/product-category-consumer-postgres.test.ts": 8,
+      "test/seckill-product-media.test.ts": 6,
+      "test/admin-operational-group-data.test.ts": 15,
+      "test/admin-operational-group-data-native.test.ts": 5,
+      "test/admin-operational-group-data-http.test.ts": 4
+    },
+    "ordinary": {
+      "files": 15,
+      "passed": 345,
+      "groups": [
+        {
+          "log": {
+            "path": "/tmp/cinashop-ci-remaining-unit-final.log",
+            "bytes": 50538,
+            "sha256": "6775f95eb6e10edc7c8eabbb7560531b8030af14b85fa7fd4f38f4f0c8ba4d5c"
+          },
+          "files": 12,
+          "passed": 276
+        },
+        {
+          "log": {
+            "path": "/tmp/cinashop-ci-remaining-audit-regressions.log",
+            "bytes": 13496,
+            "sha256": "7cbc753d5dd44201b0120e14c49a05fba7835c23adb72240ca371cb5522ff470"
+          },
+          "files": 3,
+          "passed": 69
+        }
+      ]
+    },
+    "native": {
+      "files": 14,
+      "passed": 253,
+      "repeated_cases": 61,
+      "groups": [
+        {
+          "name": "display",
+          "args": [
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "scripts/run-local-finance-postgres.mjs",
+            "--verbose-tests",
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+            "test/product-hot-frames.test.ts",
+            "test/product-hot-pagination.test.ts",
+            "test/product-rank-navigation-postgres.test.ts",
+            "test/recommendation-navigation.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-remaining-native-display.log",
+          "exit_code": 0,
+          "duration_seconds": 15.83,
+          "passed": 33,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "54e35d297ff989963d0b79f11045edfb7f2071e660904e6f07b17536d69791d9",
+          "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-EVRcFK",
+          "cleanup_remaining": 0,
+          "independent_pg_ctl_exit": 3,
+          "postmaster_pid_exists": false
+        },
+        {
+          "name": "protocol",
+          "args": [
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "scripts/run-local-finance-postgres.mjs",
+            "--schema-maintenance",
+            "--verbose-tests",
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+            "test/presale-sku-catalog-postgres.test.ts",
+            "test/seckill-schedule-postgres.test.ts",
+            "test/kefu-sequence-runner.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-remaining-native-protocol.log",
+          "exit_code": 0,
+          "duration_seconds": 58.88,
+          "passed": 150,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "c5a83efed1eec0e196ff956b03296e03a56b8f1bb93c0087fc27860325b32ebf",
+          "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nuEpKz",
+          "cleanup_remaining": 0,
+          "independent_pg_ctl_exit": 3,
+          "postmaster_pid_exists": false
+        },
+        {
+          "name": "category-media",
+          "args": [
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "scripts/run-local-finance-postgres.mjs",
+            "--schema-maintenance",
+            "--verbose-tests",
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+            "test/product-category-consumer-postgres.test.ts",
+            "test/seckill-product-media.test.ts",
+            "test/supplier-product-category-http.test.ts",
+            "test/supplier-product-category-concurrency-postgres.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-remaining-contract-native-category-media.log",
+          "exit_code": 0,
+          "duration_seconds": 45.06,
+          "passed": 46,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "519d3ccd6e1a6846aae3a0da19cc54dcc22144878c3a0d5449f0e5d9912431bf",
+          "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Rh1C9e",
+          "cleanup_remaining": 0,
+          "independent_pg_ctl_exit": 3,
+          "postmaster_pid_exists": false
+        },
+        {
+          "name": "operational",
+          "args": [
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "scripts/run-local-finance-postgres.mjs",
+            "--schema-maintenance",
+            "--verbose-tests",
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+            "test/admin-operational-group-data.test.ts",
+            "test/admin-operational-group-data-http.test.ts",
+            "test/admin-operational-group-data-native.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-remaining-contract-native-operational.log",
+          "exit_code": 0,
+          "duration_seconds": 26.2,
+          "passed": 24,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "9ec92d8981adc9e9d2925ff2392717465d9b13a6ca91b45c81a0d64ed9c4c7cc",
+          "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-3QdCpn",
+          "cleanup_remaining": 0,
+          "independent_pg_ctl_exit": 3,
+          "postmaster_pid_exists": false
+        }
+      ]
+    },
+    "final_commands": [
+      {
+        "name": "audit-regressions",
+        "args": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "--reporter",
+          "verbose",
+          "test/theme-host-chain.test.ts",
+          "test/admin-all-frontend-parity.test.ts",
+          "test/admin-setting-frontend-parity.test.ts"
+        ],
+        "log": "/tmp/cinashop-ci-remaining-audit-regressions.log",
+        "exit_code": 0,
+        "duration_seconds": 18.7
+      },
+      {
+        "name": "worker-type",
+        "args": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-ci-remaining-worker-type.log",
+        "exit_code": 0,
+        "duration_seconds": 131.43
+      }
+    ],
+    "worker_standard_type": "Full8192MiB noEmit passed.",
+    "runtime_and_frontend_scope": "Runtime compiler include and frontend source inputs are unchanged fromef794cf2; no fresh workerd/browser/frontend-build result is asserted. Existing exact-base proof stays independently scoped.",
+    "freeze": {
+      "manifest": {
+        "path": "/tmp/cinashop-ci-remaining-final-frozen.json",
+        "bytes": 997248,
+        "sha256": "5b1df2319a5d60f0a8fa05824ef08ce2b48bc8bff631c1a8172af9d57ef2d859"
+      },
+      "files": 5841,
+      "changes_after_final_broad_and_type_checks": 0,
+      "planned_outputs": [
+        "MIGRATION_CHECKLIST.md",
+        "MIGRATION_AUDIT.md",
+        "workers-ts/audit/github-push-ci-followups-20261015.json",
+        "workers-ts/audit/php-ts-ci-remaining-contracts-20261015.json"
+      ]
+    },
+    "parent_checkboxes": [
+      {
+        "file": "MIGRATION_CHECKLIST.md",
+        "total": 404,
+        "complete": 249,
+        "open": 155,
+        "checkbox_lines_sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+        "unchanged": true
+      },
+      {
+        "file": "MIGRATION_AUDIT.md",
+        "total": 88,
+        "complete": 50,
+        "open": 38,
+        "checkbox_lines_sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+        "unchanged": true
+      }
+    ]
+  },
+  "failed_attempts": [
+    {
+      "log": {
+        "path": "/tmp/cinashop-ci-remaining-unit.log",
+        "bytes": 8705,
+        "sha256": "ad882536c1f5cebd5471b4c325da9b82600628fdbb165c890dc040e06bbbf886"
+      },
+      "files": 13,
+      "passed": 362,
+      "failed": 21,
+      "causes": [
+        {
+          "cases": 2,
+          "cause": "First Supplier relation AST gate did not recognize a returned await withTx inside the real transaction wrapper.",
+          "resolution": "Scope the real save dispatcher, actual DI binding and awaited wrapper; add unrelated nested-call and fake-dispatcher refusal mutations."
+        },
+        {
+          "cases": 19,
+          "cause": "Ordinary PGlite checkout fixture lacks the required native pricing capability protocol.",
+          "resolution": "Do not replace/bypass the runtime guard. Run the entire unchanged111-case seckill suite on the newly owned native maintenance cluster; all111 pass. The final ordinary group excludes this environment-specific file, not individual cases."
+        }
+      ]
+    }
+  ],
+  "tracked_failures_resolved": [
+    {
+      "file": "workers-ts/test/admin-fab-settings.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 13,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47325,
+        "case": "FAIL   regular-unit  test/admin-fab-settings.test.ts > complete FAB input and historical numeric preservation > keeps the exact opaque navigation registry equal to the real Uniapp registry",
+        "cause": "AssertionError: expected [ NodeObject{ pos: +0, …(15) }, …(1) ] to have a length of 1 but got 2"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-inventory.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 2,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47345,
+        "case": "FAIL   regular-unit  test/admin-frontend-inventory.test.ts > Admin frontend navigation inventory > fails when target pages or router records drift from the committed audit",
+        "cause": "AssertionError: expected [ 'src/pages/ConfigList.vue', …(131) ] to deeply equal [ 'src/pages/ConfigList.vue', …(137) ]"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "previous_failed_cases": 2,
+      "final_complete_file_cases": 7,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47461,
+        "case": "FAIL   regular-unit  test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > resolves audited numeric page and API rules to read authority in single and batch paths",
+        "cause": "AssertionError: expected [ Array(7) ] to deeply equal [ Array(7) ]"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 25,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47679,
+        "case": "FAIL   regular-unit  test/admin-permission.test.ts > admin permission catalog > covers every route guarded by adminAuth in both compatibility surfaces",
+        "cause": "AssertionError: expected [ { method: 'GET', …(1) }, …(1) ] to deeply equal []"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "previous_failed_cases": 2,
+      "final_complete_file_cases": 10,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47707,
+        "case": "FAIL   regular-unit  test/admin-product-category-style-coverage.test.ts > complete legacy product-category layout source coverage > connects all current implementations and rejects page-only or commentary-only replacements",
+        "cause": "AssertionError: expected [ [ 'publicTaxonomy', false ] ] to deeply equal []"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-user-center-design-coverage.test.ts",
+      "previous_failed_cases": 3,
+      "final_complete_file_cases": 145,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47880,
+        "case": "FAIL   regular-unit  test/admin-user-center-design-coverage.test.ts > complete personal-centre connected source gates > generic normalized member deletion",
+        "cause": "AssertionError: generic normalized member deletion: current live gate: expected false to be true // Object.is equality"
+      }
+    },
+    {
+      "file": "workers-ts/test/kefu-sequence-runner.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 11,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 48518,
+        "case": "FAIL   regular-unit  test/kefu-sequence-runner.test.ts > standalone sequence transaction execution boundary > runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function",
+        "cause": "AssertionError: expected { name: 'soob_event_type_ck', …(1) } to deeply equal { name: 'soob_event_type_ck', …(1) }"
+      }
+    },
+    {
+      "file": "workers-ts/test/presale-sku-catalog-postgres.test.ts",
+      "previous_failed_cases": 7,
+      "final_complete_file_cases": 28,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 48649,
+        "case": "FAIL   regular-unit  test/presale-sku-catalog-postgres.test.ts > presale selection view with real disposable SQL > feeds both frontend catalogues from actual SQL HTTP rows for all three time filters without writes",
+        "cause": "Error: 预售列表数据无效，请刷新"
+      }
+    },
+    {
+      "file": "workers-ts/test/product-auxiliary-migration.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 13,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 48681,
+        "case": "FAIL   regular-unit  test/product-auxiliary-migration.test.ts > superseded product auxiliary migration > keeps store_product_relation authoritative and writes the PHP immediate-parent semantics",
+        "cause": "AssertionError: expected 'import {\\n  and,\\n  eq,\\n  inArray,\\n…' to contain '.set({ relationPid: storeProductCateg…'"
+      }
+    },
+    {
+      "file": "workers-ts/test/product-hot-frames.test.ts",
+      "previous_failed_cases": 12,
+      "final_complete_file_cases": 13,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49465,
+        "case": "FAIL   regular-unit  test/product-hot-frames.test.ts > hot product frame display against disposable SQL > adds the legacy empty array while retaining every existing response field",
+        "cause": "AssertionError: Cannot read properties of undefined (reading 'APP_KEY'): expected 400 to be 200 // Object.is equality"
+      }
+    },
+    {
+      "file": "workers-ts/test/product-hot-pagination.test.ts",
+      "previous_failed_cases": 6,
+      "final_complete_file_cases": 7,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49632,
+        "case": "FAIL   regular-unit  test/product-hot-pagination.test.ts > legacy product/hot offset contract > defaults to ten and advances past the first page in stable sort/id order",
+        "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+      }
+    },
+    {
+      "file": "workers-ts/test/product-rank-navigation-postgres.test.ts",
+      "previous_failed_cases": 4,
+      "final_complete_file_cases": 4,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49732,
+        "case": "FAIL   regular-unit  test/product-rank-navigation-postgres.test.ts > ranked product activity navigation against disposable SQL > adds only exact current-page activity identities while retaining the ranked rows and tabs",
+        "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+      }
+    },
+    {
+      "file": "workers-ts/test/recommendation-navigation.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 9,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49859,
+        "case": "FAIL   regular-unit  test/recommendation-navigation.test.ts > hot recommendation navigation against real disposable SQL > adds exact target metadata at the real hot endpoint and reaches the same base through the real seckill detail",
+        "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+      }
+    },
+    {
+      "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+      "previous_failed_cases": 1,
+      "final_complete_file_cases": 111,
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367607070.log",
+        "line": 55142,
+        "case": "FAIL   regular-unit  test/seckill-schedule-postgres.test.ts > seckill schedule admission on disposable SQL > cancels an existing order and restores stock even when parent-missing",
+        "cause": "AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]"
+      }
+    }
+  ],
+  "cloud": {
+    "prior_failed_run": 38718696576,
+    "base_run": {
+      "id": 38730458718,
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/38730458718",
+      "commit": "ef794cf26661855e1f471c76c18095e8d8d54346",
+      "observed_at": "2026-10-15T12:47:29Z",
+      "status": "in_progress",
+      "conclusion": null,
+      "last_detailed_observation": "8 jobs succeeded; both unit shards live.",
+      "unit_job_ids": [
+        116406665613,
+        116406665663
+      ]
+    },
+    "new_commit": "Run is observed after authorized push; full CI success is not claimed."
+  },
+  "independent_review": "Separate read-only review confirmed fixed historical hashes, exact CHECK-only progression, full SKU values and real signing/SQL with explicit fixture identity boundaries; production permission/service sources unchanged.",
+  "source_hashes": [
+    {
+      "file": "MIGRATION_AUDIT.md",
+      "bytes": 2000708,
+      "sha256": "864c57a9f5dd2de871a44234c00a5cf401368ac8184c58613f7d2d4f9375f37c",
+      "status": "modified_tracked",
+      "base_sha256": "de8be005db77581df7ab2967edfb9b512d4877f1a17c500dff60c1faf6421042"
+    },
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 1002162,
+      "sha256": "795ead05dafd332d38aca23bc8a54d86e7bfed60bae7223c9962f33cc5945520",
+      "status": "modified_tracked",
+      "base_sha256": "ffa50650ff95949a09ee7142cde0862769f00810d73dd93dc1c777577913d9e2"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-inventory-current.json",
+      "bytes": 183519,
+      "sha256": "43c5322d0b084d70392cd582aaa06d4f5a190ec11d431af8fe481704530fe750",
+      "status": "new"
+    },
+    {
+      "file": "workers-ts/audit/github-push-ci-followups-20261015.json",
+      "bytes": 22867,
+      "sha256": "6c4a8f1bc9140bd2d8fb593bf6a6b43f29373978dda4baaaf0482d06928ee966",
+      "status": "modified_tracked",
+      "base_sha256": "d80acdf446f586295ebbfe8a4183a0d1d0320e61035fe3d43787237c11ed89bd"
+    },
+    {
+      "file": "workers-ts/scripts/admin-frontend-parity-audit.ts",
+      "bytes": 15721,
+      "sha256": "eb13ef23f5164657fcefbd2b2efd9af470d893112373d59cc32582267a5d0c3f",
+      "status": "modified_tracked",
+      "base_sha256": "27ebc0f387766cd73f9dcbc63d34463a87e75b1cacf451b1b7c5bbb81b007af0"
+    },
+    {
+      "file": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "bytes": 148858,
+      "sha256": "a7783a939f2d3cb8886b3c9dbface535ec702aa7a18b4f6a0d7277998a6afd98",
+      "status": "modified_tracked",
+      "base_sha256": "6789b5475d24e6f2f6d34fe6ed1f5c8a7e7e939ac949235dd15c9ecc1bddfed0"
+    },
+    {
+      "file": "workers-ts/scripts/user-center-design-coverage.ts",
+      "bytes": 46725,
+      "sha256": "d7e69ac97f0a186cfddf0f40f6b75f2ad09b24695ad2df26cd7b9dea78e2f998",
+      "status": "modified_tracked",
+      "base_sha256": "399574ce8c8d306f140fd45abd65cf89e3171544146e8d403e37e7263863a353"
+    },
+    {
+      "file": "workers-ts/test/admin-fab-settings.test.ts",
+      "bytes": 11606,
+      "sha256": "ca2bd3bffc1c867c91607dd6ba8eb020f6b160f133c48366164b2bde384cddb9",
+      "status": "modified_tracked",
+      "base_sha256": "462d67a74e0e11cfcfc076296a9d363f031a3af18c38c5cba2086b984818a0d1"
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-inventory.test.ts",
+      "bytes": 6259,
+      "sha256": "255f7cdc5618d5daf41859851e469be0bdade59fc5f4e900102dc91516662436",
+      "status": "modified_tracked",
+      "base_sha256": "d9f79555c4874e9cb1714652a30ba414b72f27a801531c4900218640fb931dc0"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "bytes": 12251,
+      "sha256": "a1aec627f92323068b7a2e33d5759dee1e8aaef568dbebda72562bda9d5abc54",
+      "status": "modified_tracked",
+      "base_sha256": "177bb4ff3a9515dbcb342b29f41c3e98559c0cd1c88d033d4b86a880152bf742"
+    },
+    {
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "bytes": 43080,
+      "sha256": "3b9ce14ae54bfa6542e80b9a21dc66c2d919bfe748bc20180b6d9cf2eada6edb",
+      "status": "modified_tracked",
+      "base_sha256": "a7350b0537ce506a9ef8d047b7445cda0f212f9f6fccd427e715454b76ba2314"
+    },
+    {
+      "file": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "bytes": 13790,
+      "sha256": "9b1be6e8b3879080f6c5c67587fc511c08ae3099227aaa1d481211f29858e8d3",
+      "status": "modified_tracked",
+      "base_sha256": "8bb310049abde937e7ee5cdf13ded9ff9ce7c69d1f84af27a243d21233ac4bb0"
+    },
+    {
+      "file": "workers-ts/test/admin-user-center-design-coverage.test.ts",
+      "bytes": 21796,
+      "sha256": "9c4ebcb0e9b297e45a14d75fd794a5db4853233c8ff0ab740b8afc22be5ee26c",
+      "status": "modified_tracked",
+      "base_sha256": "ce72b6de50fb2e39f51898c412e9e29670ace631908a052acdb3e39c025473fe"
+    },
+    {
+      "file": "workers-ts/test/kefu-sequence-runner.test.ts",
+      "bytes": 20894,
+      "sha256": "e76de241e6bb91db4428e162f217e900d5dc8b15b9dbf00a6547ee77c1b543d1",
+      "status": "modified_tracked",
+      "base_sha256": "4a861e0ff5511548b5d846f669d1c6452646c0a125d6483186af947fc8d9f701"
+    },
+    {
+      "file": "workers-ts/test/presale-sku-catalog-postgres.test.ts",
+      "bytes": 20471,
+      "sha256": "5b9c09e5f3b9c88e5957916c72d65c03f8a37e38f063418c3b0e4697a1d8458f",
+      "status": "modified_tracked",
+      "base_sha256": "3e1eb47ae23602919bef1e896cbf0a1cb92319f9038138e4615a882068e77031"
+    },
+    {
+      "file": "workers-ts/test/product-auxiliary-migration.test.ts",
+      "bytes": 9256,
+      "sha256": "a9ee394fa279a54f8993ef537776b8ce776432079ab41e4b46b4d0874831aad2",
+      "status": "modified_tracked",
+      "base_sha256": "1a73a203a69608c5fdea7fc85b2aa267e301a8f47e14ae53c1f24e156f0c3e31"
+    },
+    {
+      "file": "workers-ts/test/product-hot-frames.test.ts",
+      "bytes": 10150,
+      "sha256": "5306a24cf986a59b084e6564ee171979e4e7456eef9d75bad8553c75fb0ece28",
+      "status": "modified_tracked",
+      "base_sha256": "e0f6a80ff4c40c90183a1e927ce6f757a0a056a13c107730fc2568cf06597dab"
+    },
+    {
+      "file": "workers-ts/test/product-hot-pagination.test.ts",
+      "bytes": 7985,
+      "sha256": "b76c4a73da65eaa537bc010699e0686f0b14f30b80251feac359a746e1162f9e",
+      "status": "modified_tracked",
+      "base_sha256": "bf16ff221d948d5cb60f02897faaf2e4781a6ba94881e9f0f2f5ada308b75026"
+    },
+    {
+      "file": "workers-ts/test/product-rank-navigation-postgres.test.ts",
+      "bytes": 8045,
+      "sha256": "74fa88de6498d1d3470d85d87711c630b48da33da920858967e6e15d1e03959d",
+      "status": "modified_tracked",
+      "base_sha256": "413547c103ef2725c36cc806b18fc9f127e80fc356caa559899bda673b4a005f"
+    },
+    {
+      "file": "workers-ts/test/recommendation-navigation.test.ts",
+      "bytes": 11994,
+      "sha256": "52f8f74f61e9588974a56ac5d43d4a3395561dace98aed164a8882c57b03ca8d",
+      "status": "modified_tracked",
+      "base_sha256": "07c456e26e3716aa5da7864d01693836448bdb9c6f3ea2f99fc0e91628a27cae"
+    },
+    {
+      "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+      "bytes": 34108,
+      "sha256": "4f19041a728c0f5def1ead4c0b8adadafb5a0b633e422ffcf47461fcb6c2db84",
+      "status": "modified_tracked",
+      "base_sha256": "70dfd3ab602a8bc1c195d8677c01b8388792bb8af10b11f27d7d8b77370eb768"
+    }
+  ],
+  "source_hash_count": 21,
+  "secret_checks": "Fixed8.29.0 source and exact commit-range Gitleaks scans execute after this evidence record, before authorized push; results reported in task.",
+  "limitations": [
+    "537 targeted cases do not establish complete cloud shard success or overall migration completion.",
+    "512-character public category picture boundary is statically connected by the updated gate; this batch does not add a direct runtime512-edge test. Native tests cover actual tree visibility and the delegated image owner/module/MIME contracts.",
+    "Production/provider acceptance and Supplier durable uploads/unknown-commit cleanup remain open. New TS deployment does not inherit old real production data."
+  ]
+}

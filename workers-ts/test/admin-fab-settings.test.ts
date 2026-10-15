@@ -11,21 +11,32 @@ const button = (url = '/pages/index/index') => ({ source_id: null, img: '/legacy
 const values = () => ({ ...fabDefaults(), main_ago_image: '/legacy/main.png', button: [] });
 describe('complete FAB input and historical numeric preservation', () => {
   it('keeps the exact opaque navigation registry equal to the real Uniapp registry', () => {
-    const shared = realpathSync(fileURLToPath(new URL('../../view/common/customerWorkRoute.ts', import.meta.url)));
+    const shared = [
+      ['customerWorkRoute', ['resolveCustomerWorkPageRoute']],
+      ['divisionStaff', ['divisionStaffInviteReturnPath', 'parseDivisionStaffInviteRoute']],
+    ] as const;
     function actualRegistry(file: URL): string {
       const source = readFileSync(file, 'utf8').replaceAll('\r\n', '\n');
       const parsed = ts.createSourceFile(file.pathname, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
       const imports = parsed.statements.filter(ts.isImportDeclaration);
-      expect(imports).toHaveLength(1);
-      const dependency = imports[0]!;
-      expect(dependency.importClause?.isTypeOnly).toBe(false);
-      expect(dependency.importClause?.namedBindings?.getText(parsed)).toBe('{ resolveCustomerWorkPageRoute }');
-      expect(ts.isStringLiteral(dependency.moduleSpecifier)).toBe(true);
-      const specifier = (dependency.moduleSpecifier as ts.StringLiteral).text;
-      expect(realpathSync(fileURLToPath(new URL(`${specifier}.ts`, file)))).toBe(shared);
-      // Only each module's necessarily different relative import is removed.
+      expect(imports).toHaveLength(shared.length);
+      for (const [index, [module, names]] of shared.entries()) {
+        const dependency = imports[index]!;
+        expect(dependency.importClause?.isTypeOnly).toBe(false);
+        expect(dependency.importClause?.name).toBeUndefined();
+        const bindings = dependency.importClause?.namedBindings;
+        if (!bindings || !ts.isNamedImports(bindings)) throw Error('Expected named shared navigation imports');
+        expect(bindings.elements.map(binding => [binding.name.text, binding.propertyName?.text ?? binding.name.text]))
+          .toEqual(names.map(name => [name, name]));
+        expect(ts.isStringLiteral(dependency.moduleSpecifier)).toBe(true);
+        const specifier = (dependency.moduleSpecifier as ts.StringLiteral).text;
+        expect(realpathSync(fileURLToPath(new URL(`${specifier}.ts`, file))))
+          .toBe(realpathSync(fileURLToPath(new URL(`../../view/common/${module}.ts`, import.meta.url))));
+      }
+      // Remove only the two proved dependency declarations. Every route and
+      // resolver branch must still be identical across the two real consumers.
       // Every remaining declaration, registered page, alias and resolver branch is equal.
-      const body = ts.factory.updateSourceFile(parsed, parsed.statements.filter(statement => statement !== dependency));
+      const body = ts.factory.updateSourceFile(parsed, parsed.statements.filter(statement => !imports.includes(statement as ts.ImportDeclaration)));
       return ts.createPrinter({ removeComments: true }).printFile(body);
     }
     expect(actualRegistry(new URL('../src/services/content/FabRouteRegistry.ts', import.meta.url)))

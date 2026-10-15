@@ -137,15 +137,16 @@ describe("hot recommendation navigation against real disposable SQL", () => {
     await expect(read("2")).rejects.toThrow("超过500项");
   });
   it("adds exact target metadata at the real hot endpoint and reaches the same base through the real seckill detail", async () => {
-    const response = await app.request("/api/product/hot?limit=1&uid=999&vip=1");
+    const env = { APP_KEY: 'owned-recommendation-navigation-signing-key' } as Env;
+    const response = await app.request("/api/product/hot?limit=1&uid=999&vip=1", {}, env);
     const result = await response.json() as { status: number; data: Array<{ activity: string; recommendation_target: { id: number; kind: string } }> };
     expect(result.status).toBe(200); expect(result.data[0].activity).toBe("1,2,3,0");
     expect(result.data[0].recommendation_target).toMatchObject({ kind: "seckill", id: 900, product_id: 170 });
-    const detail = await app.request(`/api/seckill/detail/${result.data[0].recommendation_target.id}?view=skus`);
+    const detail = await app.request(`/api/seckill/detail/${result.data[0].recommendation_target.id}?view=skus`, {}, env);
     const detailResult = await detail.json();
     expect(detailResult, JSON.stringify(detailResult)).toMatchObject({ status: 200, data: { seckill_id: 900, product_id: 170,
       skus: [{ unique: "seckA001", base_unique: "baseA001", catalog_price: "8.00" }] } });
     await f.db.update(storeProduct).set({ isVipProduct: 1 });
-    expect(await (await app.request("/api/product/hot?uid=999&vip=1")).json()).toMatchObject({ status: 200, data: [] });
+    expect(await (await app.request("/api/product/hot?uid=999&vip=1", {}, env)).json()).toMatchObject({ status: 200, data: [] });
   });
 });

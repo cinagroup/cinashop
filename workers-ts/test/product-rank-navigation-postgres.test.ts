@@ -17,6 +17,7 @@ type Target = { version: number; product_id: number; kind: string; id: number | 
 type RankResult = { status: number; data: Array<{ id: number; activity: string; recommendation_target: Target }> };
 
 describe("ranked product activity navigation against disposable SQL", () => {
+  const env = { APP_KEY: 'owned-rank-navigation-signing-key' } as Env;
   let f: Awaited<ReturnType<typeof financePostgres>>;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
@@ -52,7 +53,7 @@ describe("ranked product activity navigation against disposable SQL", () => {
       storeName: "首位拼团", startTime: NOW, stopTime: END });
   });
   const read = async (query = "1?limit=10") => {
-    const response = await app.request(`/api/product/rank/${query}`);
+    const response = await app.request(`/api/product/rank/${query}`, {}, env);
     return { response, result: await response.json() as RankResult };
   };
 

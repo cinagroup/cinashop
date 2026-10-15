@@ -9,6 +9,7 @@ import {
   requiredAdminPermission,
   isAdminAuthorityRecoveryRoute,
   isAdminProductEditorRecoveryRoute,
+  isAdminProductVideoRecoveryRoute,
 } from "@/services/admin/AdminPermissionService";
 import { createContainerFromDb } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -69,12 +70,36 @@ describe("admin permission catalog", () => {
     ]);
     const missing = routes.filter((route) => !isAdminAuthorityRecoveryRoute(route.method,route.path)
       && !isAdminProductEditorRecoveryRoute(route.method,route.path)
+      && !isAdminProductVideoRecoveryRoute(route.method,route.path)
       && !requiredAdminPermission(route.method, route.path));
     expect(missing).toEqual([]);
     expect(routes.filter(route => isAdminProductEditorRecoveryRoute(route.method,route.path))).toEqual([
       { method:'GET',path:'/adminapi/product/editor/operations/:operationId' },
       { method:'POST',path:'/adminapi/product/editor/operations/:operationId/resolve' },
     ]);
+    expect(routes.filter(route => isAdminProductVideoRecoveryRoute(route.method,route.path))).toEqual([
+      { method:'GET',path:'/adminapi/file/video_uploads/:uploadId' },
+      { method:'POST',path:'/adminapi/file/video_uploads/:uploadId/cancel' },
+    ]);
+  });
+
+  it('limits video recovery to owned query and cancellation while keeping publication and previews capability gated', () => {
+    for (const prefix of ['/adminapi', '/api/admin']) {
+      const base = `${prefix}/file/video_uploads/aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa`;
+      for (const [method,path] of [['GET',base],['HEAD',base],['POST',base+'/cancel']]) {
+        expect(isAdminProductVideoRecoveryRoute(method,path)).toBe(true);
+        expect(requiredAdminPermission(method,path)).toBeNull();
+      }
+      for (const [method,path,permission] of [
+        ['POST',base,'attachment.manage'],['PUT',base+'/parts/1','attachment.manage'],
+        ['POST',base+'/complete','attachment.manage'],['GET',base+'/preview','attachment.view'],
+      ]) {
+        expect(isAdminProductVideoRecoveryRoute(method,path)).toBe(false);
+        expect(requiredAdminPermission(method,path)).toBe(permission);
+      }
+      for (const [method,path] of [['DELETE',base],['GET',base+'/cancel'],['POST',base+'/cancel/extra'],['POST',base+'/resolve']])
+        expect(isAdminProductVideoRecoveryRoute(method,path)).toBe(false);
+    }
   });
 
   it("keeps route aliases in the same permission domain", () => {

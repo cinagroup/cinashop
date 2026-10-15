@@ -13,6 +13,7 @@ import { parsePresaleCatalog } from "../../view/common/presaleCatalog";
 
 const now = new Date("2026-09-21T02:00:00.500Z"), stamp = Math.floor(now.getTime() / 1000);
 describe("presale selection view with real disposable SQL", () => {
+  const env = { APP_KEY: 'owned-presale-catalog-signing-key' } as Env;
   let f: Awaited<ReturnType<typeof financePostgres>>, service: PresaleSkuCatalogService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
@@ -60,7 +61,7 @@ describe("presale selection view with real disposable SQL", () => {
   });
   it("feeds the shared frontend contract using a real HTTP response, without creating a cart or quoting", async () => {
     const before = await snapshot();
-    const response = await app.request('/api/product/detail/70?view=presale');
+    const response = await app.request('/api/product/detail/70?view=presale', {}, env);
     const body = await response.json() as { data: unknown };
     const parsed = parsePresaleSelection(body.data, 70);
     expect(parsed.purchase_limits).toEqual({ mode: 'none', quantity: null });
@@ -83,12 +84,12 @@ describe("presale selection view with real disposable SQL", () => {
     for (const [type, start, end] of [[1, stamp + 1, stamp + 60], [2, stamp, stamp], [3, stamp - 60, stamp - 1]] as const) {
       await f.db.update(storeProduct).set({ presaleStartTime: start, presaleEndTime: end });
       const before = await snapshot();
-      const response = await app.request(`/api/presale/list?time_type=${type}&page=1&limit=8`);
+      const response = await app.request(`/api/presale/list?time_type=${type}&page=1&limit=8`, {}, env);
       const body = await response.json() as { data: unknown };
       const parsed = parsePresaleCatalog(body.data, type, 1);
       expect(parsed).toMatchObject({ count: 1, list: [{ id: 70, price: '100.00', shippingDays: 7 }] });
       expect(response.headers.get('cache-control')).toBe('private, no-store');
-      const selected = await app.request(`/api/product/detail/${parsed.list[0].id}?view=presale`);
+      const selected = await app.request(`/api/product/detail/${parsed.list[0].id}?view=presale`, {}, env);
       expect(parsePresaleSelection((await selected.json() as { data: unknown }).data, 70).schedule.presale_pay_status).toBe(type);
       expect(await snapshot()).toEqual(before);
     }
@@ -142,13 +143,13 @@ describe("presale selection view with real disposable SQL", () => {
     }
   });
   it("mounts the opt-in contract with private no-store and does not trust UID/VIP/type query overrides", async () => {
-    const response = await app.request("/api/product/detail/70?view=presale&uid=11&vip=1&type=6");
+    const response = await app.request("/api/product/detail/70?view=presale&uid=11&vip=1&type=6", {}, env);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toMatchObject({ status: 200, data: { type: 6, product_id: 70, skus: [{ unique: "pres0001" }, { unique: "pres0002" }] } });
     await f.db.update(storeProduct).set({ isVipProduct: 1 });
-    expect(await (await app.request("/api/product/detail/70?view=presale&uid=11&vip=1")).json()).toMatchObject({ status: 400, data: null });
+    expect(await (await app.request("/api/product/detail/70?view=presale&uid=11&vip=1", {}, env)).json()).toMatchObject({ status: 400, data: null });
     await f.db.update(user).set({ isMoneyLevel: 1, overdueTime: stamp + 60 });
-    expect(await (await app.request("/api/product/detail/70?view=presale", { headers: { "x-fixture-user": "11" } })).json())
+    expect(await (await app.request("/api/product/detail/70?view=presale", { headers: { "x-fixture-user": "11" } }, env)).json())
       .toMatchObject({ status: 200, data: { product_id: 70 } });
   });
   it.each([
@@ -165,7 +166,7 @@ describe("presale selection view with real disposable SQL", () => {
     await f.db.insert(storeProduct).values([{ ...vip, id: 71, isVipProduct: 0 }, { ...vip, id: 72, isVipProduct: 2 }]);
     const before = await snapshot();
     const headers = entry.uid ? { 'x-fixture-user': '11' } : undefined;
-    const response = await app.request('/api/presale/list?uid=11&vip=1', { headers });
+    const response = await app.request('/api/presale/list?uid=11&vip=1', { headers }, env);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
     const body = await response.json() as { data: { list: { id: number }[]; count: number } };
     expect(body.data.count).toBe(entry.visible ? 2 : 1);
@@ -212,7 +213,7 @@ describe("presale selection view with real disposable SQL", () => {
     for (const uid of [-1, NaN, 0.5, 2_147_483_648]) await expect(service.read(uid, "70")).rejects.toThrow("参数无效");
     await expect(service.read(0, "70", new Date(NaN))).rejects.toThrow("参数无效");
     for (const path of ["70?view=other", "70?view=", "70?view=presale&view=presale", "70/6?view=presale"]) {
-      const response = await app.request(`/api/product/detail/${path}`);
+      const response = await app.request(`/api/product/detail/${path}`, {}, env);
       expect(response.headers.get("cache-control")).toBe("private, no-store");
       expect(await response.json()).toMatchObject({ status: 400, data: null });
     }

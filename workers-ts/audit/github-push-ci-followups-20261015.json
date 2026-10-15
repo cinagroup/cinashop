@@ -2,7 +2,7 @@
   "date": "2026-10-15",
   "base_commit": "6057681f3c26985de20262b5ffa5b1f7b601da43",
   "run_url": "https://github.com/cinagroup/cinashop/actions/runs/38705607954",
-  "status": "validated_increment_with_additional_ci_followups_open",
+  "status": "all_tracked_failure_groups_locally_validated_full_cloud_ci_pending",
   "log": "/tmp/cinashop-video-previous-ci-failed.log",
   "scope": "Prior main CI; not an assertion that current local video validation or all cloud checks fail",
   "groups": [
@@ -83,7 +83,7 @@
     },
     {
       "id": "remaining-admin-fab-settings",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/admin-fab-settings.test.ts",
       "observed_failed_cases": 1,
       "evidence": "Registry comparison assumes one import; both actual registries now import divisionStaff as a second real dependency.",
@@ -94,11 +94,13 @@
         "cause": "AssertionError: expected [ NodeObject{ pos: +0, …(15) }, …(1) ] to have a length of 1 but got 2"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 13
     },
     {
       "id": "remaining-admin-frontend-inventory",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/admin-frontend-inventory.test.ts",
       "observed_failed_cases": 1,
       "evidence": "Committed report lists132 target page Vue files while actual filesystem scan lists138, including six newly added dialog/catalog/component files.",
@@ -109,11 +111,13 @@
         "cause": "AssertionError: expected [ 'src/pages/ConfigList.vue', …(131) ] to deeply equal [ 'src/pages/ConfigList.vue', …(137) ]"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 2
     },
     {
       "id": "remaining-admin-legacy-setting-read-permission",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
       "observed_failed_cases": 2,
       "evidence": "Positive synthetic role-page/admin-API tuples occupy protected product/category IDs2/3; numeric rules must move with the tuples and explicit wrong-ID refusal must remain.",
@@ -124,11 +128,13 @@
         "cause": "AssertionError: expected [ Array(7) ] to deeply equal [ Array(7) ]"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 7
     },
     {
       "id": "remaining-admin-permission",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/admin-permission.test.ts",
       "observed_failed_cases": 1,
       "evidence": "All-route permission gate excludes authority/editor recovery but not the new exact video query/cancel owned-recovery routes; runtime policy intentionally handles them separately.",
@@ -139,11 +145,13 @@
         "cause": "AssertionError: expected [ { method: 'GET', …(1) }, …(1) ] to deeply equal []"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 25
     },
     {
       "id": "remaining-admin-product-category-style-coverage",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/admin-product-category-style-coverage.test.ts",
       "observed_failed_cases": 2,
       "evidence": "Current publicTaxonomy source-connection gate false. Inspect the real delegation chain; do not weaken the gate or assume runtime failure.",
@@ -154,11 +162,13 @@
         "cause": "AssertionError: expected [ [ 'publicTaxonomy', false ] ] to deeply equal []"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 10
     },
     {
       "id": "remaining-admin-user-center-design-coverage",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/admin-user-center-design-coverage.test.ts",
       "observed_failed_cases": 3,
       "evidence": "Current live gates fail for generic normalized member deletion, generic list exclusion and newly registered generic group-write rejection. Runtime cause not established.",
@@ -169,11 +179,13 @@
         "cause": "AssertionError: generic normalized member deletion: current live gate: expected false to be true // Object.is equality"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 145
     },
     {
       "id": "remaining-kefu-sequence-runner",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/kefu-sequence-runner.test.ts",
       "observed_failed_cases": 1,
       "evidence": "Own independent frozen current CHECK expects stock12, but actual ORM includes reviewed recycle/save14. This assertion is outside the shared cohort helper changed in the current patch.",
@@ -184,11 +196,13 @@
         "cause": "AssertionError: expected { name: 'soob_event_type_ck', …(1) } to deeply equal { name: 'soob_event_type_ck', …(1) }"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 11
     },
     {
       "id": "remaining-presale-sku-catalog-postgres",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/presale-sku-catalog-postgres.test.ts",
       "observed_failed_cases": 7,
       "evidence": "Actual HTTP response data is null, causing shared parser/count assertions to fail. Direct Hono requests omit Env; exact reason must be confirmed before changing expected behavior.",
@@ -199,11 +213,13 @@
         "cause": "Error: 预售列表数据无效，请刷新"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 28
     },
     {
       "id": "remaining-product-auxiliary-migration",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/product-auxiliary-migration.test.ts",
       "observed_failed_cases": 1,
       "evidence": "Source gate expects inline relationPid parent update inside SupplierProductManagementService. Verify the actual category-service delegation and preserve immediate-parent behavior.",
@@ -214,11 +230,13 @@
         "cause": "AssertionError: expected 'import {\\n  and,\\n  eq,\\n  inArray,\\n…' to contain '.set({ relationPid: storeProductCateg…'"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 13
     },
     {
       "id": "remaining-product-hot-frames",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/product-hot-frames.test.ts",
       "observed_failed_cases": 12,
       "evidence": "Direct Hono requests omit Env; log explicitly reports undefined.APP_KEY. Preserve real frame and error-boundary assertions when correcting the fixture.",
@@ -229,11 +247,13 @@
         "cause": "AssertionError: Cannot read properties of undefined (reading 'APP_KEY'): expected 400 to be 200 // Object.is equality"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 13
     },
     {
       "id": "remaining-product-hot-pagination",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/product-hot-pagination.test.ts",
       "observed_failed_cases": 6,
       "evidence": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
@@ -244,11 +264,13 @@
         "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 7
     },
     {
       "id": "remaining-product-rank-navigation-postgres",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/product-rank-navigation-postgres.test.ts",
       "observed_failed_cases": 4,
       "evidence": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
@@ -259,11 +281,13 @@
         "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 4
     },
     {
       "id": "remaining-recommendation-navigation",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/recommendation-navigation.test.ts",
       "observed_failed_cases": 1,
       "evidence": "Direct hot endpoint fixture request returns400, with Env omitted. Confirm successful response before restoring recommendation assertions.",
@@ -274,11 +298,13 @@
         "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 9
     },
     {
       "id": "remaining-seckill-schedule-postgres",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
       "observed_failed_cases": 1,
       "evidence": "parent-missing cancellation stock snapshot differs by reversed SKU identity order(id1/id2). This is not evidence of stock corruption; inspect snapshot ordering and compare exact identities/values.",
@@ -289,13 +315,15 @@
         "cause": "AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]"
       },
       "runtime_defect_proven": false,
-      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
+      "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
+      "validation_file_passed_cases": 111
     }
   ],
   "resolution_base_commit": "721654e0645a636c882d4de81d38ed6511236a1f",
   "resolution_evidence": "workers-ts/audit/php-ts-ci-contract-inputs-20261015.json",
   "statistics_human_choice": "保留已恢复的 PHP 兼容行为，更新退役审计",
-  "full_cloud_ci": "The exact new commit run is observed after push; no full cloud success claim.",
+  "full_cloud_ci": "Exact new commit CI is observed after push. Theef794cf2 run was still live at12:47UTC with unit shards running; no complete-cloud success claim.",
   "additional_base_run": {
     "commit": "721654e0645a636c882d4de81d38ed6511236a1f",
     "run_url": "https://github.com/cinagroup/cinashop/actions/runs/38718696576",
@@ -321,5 +349,7 @@
     "uncovered_failed_cases": 43,
     "coverage_limit": "The remaining802 FAIL headers map to modified test/input families or changed shared helpers. This maps recorded original causes to the patch, not proof every previously masked business case is now successful. Exact new-commit CI must verify that.",
     "comparison_to_previous605": "The previous --log-failed aggregate had full shard2 but only partial shard1 output, so these newly visible families are not asserted to be regressions introduced at721. The13 Admin video detail design coverage failures fixed at721 are absent from the new failure files."
-  }
+  },
+  "remaining_contract_base": "ef794cf26661855e1f471c76c18095e8d8d54346",
+  "remaining_contract_evidence": "workers-ts/audit/php-ts-ci-remaining-contracts-20261015.json"
 }

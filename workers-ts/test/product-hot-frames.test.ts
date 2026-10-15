@@ -21,12 +21,13 @@ const frame = (id: number, extra: Partial<typeof storePromotions.$inferInsert> =
 type Product = { id: number; activity_frame: [] | { id: number; name: string; image: string }; [key: string]: unknown };
 
 describe('hot product frame display against disposable SQL', () => {
+  const env = { APP_KEY: 'owned-hot-frames-signing-key' } as Env;
   let f: Awaited<ReturnType<typeof financePostgres>>, service: V2PromotionCompatibilityService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
     f = await financePostgres(tables);
     const container = createContainerFromDb(f.db);
-    service = new V2PromotionCompatibilityService(container, {} as Env);
+    service = new V2PromotionCompatibilityService(container, env);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use('*', async (c, next) => { c.set('container', container); c.set('uid', 0); await next(); });
     app.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
@@ -40,7 +41,7 @@ describe('hot product frame display against disposable SQL', () => {
     })));
   });
   const request = async (query = '') => {
-    const response = await app.request(`/api/product/hot${query}`);
+    const response = await app.request(`/api/product/hot${query}`, {}, env);
     const result = await response.json() as { status: number; msg: string; data: Product[] };
     expect(result.status, result.msg).toBe(200);
     return result.data;
@@ -163,7 +164,7 @@ describe('hot product frame display against disposable SQL', () => {
       expect(select).not.toHaveBeenCalled();
     } finally { select.mockRestore(); }
     await f.db.insert(storePromotions).values(Array.from({ length: 201 }, (_, index) => frame(500 + index)));
-    const response = await app.request('/api/product/hot');
+    const response = await app.request('/api/product/hot', {}, env);
     expect(await response.json()).toMatchObject({ status: 400, msg: '有效优惠活动过多，请联系管理员整理', data: null });
   });
 });

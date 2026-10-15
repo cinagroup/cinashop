@@ -30,6 +30,9 @@ export function userCenterDesignSourceFiles(): Record<string, string> {
     catalog: 'workers-ts/src/services/admin/AdminUserCenterCatalogService.ts', publicCatalog: 'workers-ts/src/services/product/PublicCatalogService.ts',
     crud: 'workers-ts/src/controllers/api/v1/AdminCrudController.ts', pcBanner: 'workers-ts/src/services/admin/AdminPcBannerService.ts',
     signDay: 'workers-ts/src/services/admin/AdminSignDayConfigService.ts', recharge: 'workers-ts/src/services/admin/AdminRechargeQuotaService.ts',
+    operationalController: 'workers-ts/src/controllers/api/v1/AdminOperationalGroupDataController.ts',
+    operationalService: 'workers-ts/src/services/admin/AdminOperationalGroupDataService.ts',
+    operationalInput: 'workers-ts/src/services/admin/AdminOperationalGroupDataInput.ts',
     finance: 'workers-ts/src/services/user/UserFinanceReadService.ts', profile: 'workers-ts/src/services/user/UserProfileService.ts',
     profileController: 'workers-ts/src/controllers/api/v1/UserProfileController.ts', operator: 'workers-ts/src/services/order/StoreOrderWriteoffService.ts',
     collectionService: 'workers-ts/src/services/user/UserCollectCompatibilityService.ts',
@@ -92,6 +95,26 @@ class Source {
     return this.tree.statements.some(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===module
       && !!node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)
       && node.importClause.namedBindings.elements.some(element=>element.name.text===name&&(element.propertyName?.text??element.name.text)===name));
+  }
+  namespaceImported(module: string, name: string): boolean {
+    return this.tree.statements.some(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===module
+      && !!node.importClause?.namedBindings&&ts.isNamespaceImport(node.importClause.namedBindings)&&node.importClause.namedBindings.name.text===name);
+  }
+  exactObjectKeys(scope: string, expected: readonly string[]): boolean {
+    const nodes=this.nodes(scope);if(nodes.length!==1)return false;let node=nodes[0]!;
+    while(ts.isAsExpression(node)||ts.isSatisfiesExpression(node)||ts.isParenthesizedExpression(node))node=node.expression;
+    return ts.isObjectLiteralExpression(node)&&node.properties.length===expected.length&&node.properties.every((property,index)=>
+      ts.isPropertyAssignment(property)&&(ts.isIdentifier(property.name)||ts.isStringLiteral(property.name))&&property.name.text===expected[index]);
+  }
+  exactWriteRoutes(pattern: RegExp, expected: ReadonlyArray<readonly [string,string,string]>): boolean {
+    const routes:ts.CallExpression[]=[];
+    const visit=(node:ts.Node)=>{if(ts.isCallExpression(node)&&/^(?:adminapiRoutes|v1Routes)\.(?:post|put|delete|patch)$/u.test(node.expression.getText(this.tree))
+      &&node.arguments[0]&&ts.isStringLiteral(node.arguments[0])&&pattern.test(node.arguments[0].text))routes.push(node);ts.forEachChild(node,visit);};
+    visit(this.tree);
+    return routes.length===expected.length&&expected.every(([method,path,handler])=>routes.filter(node=>
+      ts.isExpressionStatement(node.parent)&&node.parent.parent===this.tree&&node.expression.getText(this.tree)===`adminapiRoutes.${method}`
+      &&node.arguments.length===3&&ts.isStringLiteral(node.arguments[0]!)&&node.arguments[0]!.text===path
+      &&node.arguments[1]!.getText(this.tree)==='adminAuth'&&node.arguments[2]!.getText(this.tree)===handler).length===1);
   }
   rootRoutes(prefix: string): ts.CallExpression[] {
     return this.tree.statements.filter(ts.isExpressionStatement).map(node=>node.expression).filter(ts.isCallExpression)
@@ -170,6 +193,36 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
   const { contract:c, controller:ctl, admin:a, preview:p, picker:k, api, router:r, sidebar, adminRoutes:ar, v1Routes:vr, permission:perm, input, service:w, httpController:hc, reader:read, publicReader:pub, catalog:cat, publicCatalog:pc, crud, pcBanner, signDay, recharge, profile, profileController, operator, collectionService:cs, collectionController:cc, mobile:m, mobileConsumer:u, mobileDecoder:d, mobileApi:ma, menus, collection:collect, collectionConsumer:uc, memberCodePage:code, navigation:nav } = s as Record<keyof ReturnType<typeof userCenterDesignSourceFiles>, Source>;
   const route = (method: string, suffix: string, action: string) => ar!.call('$root', `adminapiRoutes.${method}`, `'/config/user-center-design${suffix}'`, 'adminAuth', `AdminUserCenterDesign.${action}`) && vr!.call('$root', `v1Routes.${method}`, `'/admin/config/user-center-design${suffix}'`, 'adminAuth', `AdminUserCenterDesign.${action}`);
   const publicConnected = pc!.call('menuUser', 'new UserCenterPublicReadService(this.container,this.env).menu', 'uid') && pc!.call('menuUserData', 'new UserCenterPublicReadService(this.container,this.env).data', 'uid');
+  // These five legacy paths delegate to a bounded operational-image service.
+  // Every other group write, a changed handler/auth binding, or expansion into
+  // the member-owned groups remains a parity blocker.
+  const operationalController=s.operationalController!,operationalService=s.operationalService!,operationalInput=s.operationalInput!;
+  const operationalPattern=/(?:system_group(?:_data)?|(?:operational_)?group_data)(?:\/|$)/u;
+  const boundedOperationalWrites=ar!.namespaceImported('@/controllers/api/v1/AdminOperationalGroupDataController','AdminOperationalGroup')
+    &&ar!.exactWriteRoutes(operationalPattern,[
+      ['post','/setting/group_data','AdminOperationalGroup.create'],['post','/setting/group_data/save_all','AdminOperationalGroup.saveAll'],
+      ['put','/setting/group_data/set_status/:id/:status','AdminOperationalGroup.setStatus'],['put','/setting/group_data/:id','AdminOperationalGroup.update'],
+      ['delete','/setting/group_data/:id','AdminOperationalGroup.remove'],
+    ])&&vr!.exactWriteRoutes(operationalPattern,[])
+    &&operationalController.imported('@/services/admin/AdminOperationalGroupDataService','AdminOperationalGroupDataService')
+    &&operationalController.call('context','new AdminOperationalGroupDataService',"c.get('container')",'c.env.APP_KEY')
+    &&operationalController.call('body','readBoundedUtf8Text','c.req.raw','256*1024')
+    &&operationalController.call('write','x.service.mutate','operation',"c.req.param('id')",'input','x.actor')
+    &&[['create','create'],['update','update'],['remove','delete'],['setStatus','status'],['saveAll','replace']].every(([handler,operation])=>
+      operationalController.call(handler!,'write','c',`'${operation}'`))
+    &&operationalService.imported('./AdminOperationalGroupDataInput','operationalName')
+    &&operationalInput.exactObjectKeys('OPERATIONAL_GROUPS',[
+      'routine_home_bast_banner','combination_banner','routine_home_hot_banner','routine_home_new_banner','routine_home_benefit_banner','integral_shop_banner',
+    ])
+    &&operationalInput.guardThrows('operationalName',"typeof value!=='string'||!Object.hasOwn(OPERATIONAL_GROUPS,value)",'ValidateException',"'此配置组不属于已支持的运营图片范围'")
+    &&operationalService.call('group','operationalName','current.configName')&&operationalService.call('group','operationalFields','current.fields')
+    &&operationalService.guardThrows('group','scope.gid!==undefined&&scope.gid!==current.id||scope.config_name!==undefined&&scope.config_name!==current.configName','ValidateException',"'运营图片组ID和名称不一致'")
+    &&operationalService.call('mutate','this.transaction','actor','true')
+    &&operationalService.ordered('mutate','const initial=await this.group(tx,scope)','pg_advisory_xact_lock','LOCK TABLE ${systemGroupData} IN SHARE ROW EXCLUSIVE MODE','const group=await this.group(tx,scope,true)','if(!same(initial,group))','const before=await this.rows(tx,group,true)')
+    &&operationalService.call('rows','eq','systemGroupData.gid','group.id')
+    &&operationalService.call('transaction','acquireAdminAuthorityWriteBarrier','tx')
+    &&operationalService.in('transaction',"write?'operational_group.manage':'operational_group.view'")
+    &&!operationalService.call('mutate','tx.update','systemGroup')&&!operationalService.call('mutate','tx.insert','systemGroup')&&!operationalService.call('mutate','tx.delete','systemGroup');
   const manager=(role:string)=>s[role]!;
   const managerRoutes:ReadonlyArray<readonly[string,string,string]>=[
     ['get','/store/manager/order/context','StoreManagerOrder.context'],['get','/store/manager/context','StoreManagerOrder.context'],
@@ -232,7 +285,7 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
     sharedThreeAuthority: read!.in('userCenterDesignCatalog', 'systemDise', 'systemGroup', 'systemGroupData', 'xmin', 'USER_CENTER_MAX_ROWS*3+1') && read!.call('userCenterDesignCatalog', 'themeHash', "{template:'member',type:3,member,groups,data}") && read!.in('projectUserCenterDesign', 'catalog.member.length>1', "row.type!==3", "row.isDel!==0", 'user_center_per_show_type_defaulted', 'user_center_${key}_defaulted', 'user_center_${module}_group_disagreement', 'user_center_${module}_group_backfill') && read!.call('projectUserCenterDesign', 'isUserCenterDesignValue', 'projected') && read!.in('read', 'REPEATABLE READ, READ ONLY') && read!.call('read', 'readUserCenterDesignSnapshot', 'tx'),
     atomicMutation: w!.call('save', 'withTx', 'this.container') && w!.call('save','lockDiseCatalogForMutation','tx') && w!.call('save','tx.update','systemDise') && w!.call('save','tx.update','systemGroupData') && w!.call('save','tx.update(systemGroupData).set','{status:0}') && w!.ordered('save', 'pg_advisory_xact_lock', 'journals.length', 'await lockDiseCatalogForMutation(tx)', 'LOCK TABLE', 'await userCenterDesignCatalog(tx)', 'catalog.revision!==canonical.revision', 'await projectUserCenterDesign(tx,catalog)', 'tx.insert(systemLog)') && w!.in('save', 'READ COMMITTED', 'journals[0].actor!==id', 'receipt.payloadHash!==payloadHash', 'systemGroupData', 'tx.update(systemDise)', 'source?.original', 'groupOriginal', "if(key==='sourceId')continue", 'catalog.data.filter(row=>row.gid===group!.id&&row.status===1)') && w!.call('save','publicProductPictures') && w!.call('save','tx.insert','systemLog') && w!.in('receipt', 'eq(systemLog.adminId,id)') && hc!.in('save', 'operationId:error.operationId', 'payloadHash:error.payloadHash'),
     merchantImmutable: w!.in('save', "module==='merMenu'", 'items.length!==old.length', 'item.sourceId===null', 'next.sourceId===item.sourceId&&next.url===item.url', 'next.type===2', 'prior.module!==module', 'seen.has(item.sourceId)') && a!.in('openPicker', "mode==='link'&&listKey.value==='merMenu'", "index===null&&listKey.value==='merMenu'") && a!.binding('el-button','v-if',"listKey!=='merMenu'") && a!.in('editItem', "key!=='merMenu'||field!=='url'"),
-    genericProtection: crud!.in('adminDiseDeletionProtectionReason', "templateName==='member'") && crud!.call('adminDiseList','rows.filter',"row=>!['product_detail','member'].includes(normalizeDiseTemplateName(row.templateName))") && crud!.in('adminDiseSave', "'member'", 'normalizeDiseTemplateName(existing.templateName)') && !ar!.routeMatching(/(?:system_group(?:_data)?|group_data)(?:\/|$)/u) && !vr!.routeMatching(/(?:system_group(?:_data)?|group_data)(?:\/|$)/u) && pcBanner!.in('$root', 'pc_home_banner') && signDay!.in('$root', 'sign_day_num') && recharge!.call('mutate', 'rechargeQuotaGroup', 'tx'),
+    genericProtection: crud!.in('adminDiseDeletionProtectionReason', "templateName==='member'") && crud!.call('adminDiseList','rows.filter',"row=>!['product_detail','member'].includes(normalizeDiseTemplateName(row.templateName))") && crud!.in('adminDiseSave', "'member'", 'normalizeDiseTemplateName(existing.templateName)') && boundedOperationalWrites && pcBanner!.in('$root', 'pc_home_banner') && signDay!.in('$root', 'sign_day_num') && recharge!.call('mutate', 'rechargeQuotaGroup', 'tx'),
     actorRecovery: ctl!.call('save','freezeIntent') && ctl!.ordered('save','userCenterDesignFingerprint(input)','this.ports.confirm','this.ports.storage.setItem','s.pending=frozen') && ctl!.in('parseUserCenterDesignPending', 'row.actor!==actor', 'await userCenterDesignFingerprint(input)!==row.fingerprint') && ctl!.in('freezeIntent','Object.freeze') && ctl!.call('readReceipt','this.ports.receipt') && ctl!.in('readReceipt','response(reason)?.status===404', 's.retryReady=true') && ctl!.call('retryOriginal','this.submit','value') && ctl!.in('definitive', 'data.operationId===pending.input.operationId', 'data.payloadHash===pending.fingerprint') && ctl!.call('invalidate','job.controller.abort') && a!.call('syncStored','controller.invalidate'),
     publicProjection: publicConnected && pub!.call('snapshot','readUserCenterDesignSnapshot','tx') && pub!.in('snapshot','REPEATABLE READ, READ ONLY') && pub!.ordered('menu','this.snapshot(uid)','renderUserCenterDesignSnapshot(this.env,read.snapshot)','publicUserCenterDesignValue(snapshot.value!,snapshot.imagePreviews)') && pub!.in('snapshot','kept.map(entry=>entry.item)','kept.map(entry=>entry.pic)') && c!.in('publicUserCenterDesignValue','imagePreviews[key].length!==value[key].list.length') && d!.call('parseUserCenterMenu','isPublicUserCenterDesignValue','value.diy_data') && u!.call('load','parseUserCenterMenu') && u!.call('load','parseUserCenterStats'),
     realNineAssets: publicConnected && pub!.in('snapshot','now_money','integral','couponCount','collectProductCount','collectVideoCount','visit_num','brokerage_price','spread_user_count','spread_order_count', "category='video'", "category='product'", 'userUnreadMessageCount(uid)') && pub!.call('snapshot','UserFinanceReadService.commissionSummary','scoped','uid','now') && d!.call('userCenterProperties','USER_CENTER_PROPERTY_OPTIONS.filter') && d!.in('userCenterProperties','diy_data.member.property.includes(item.id)','profile[item.field', 'capabilities.promotion') && m!.binding('view','v-for','item in properties') && m!.binding('view','@tap','openProperty(item.id)') && u!.call('openProperty','go','item.url'),
