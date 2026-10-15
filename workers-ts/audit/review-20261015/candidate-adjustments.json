@@ -1,0 +1,32 @@
+{
+  "candidateDigest": "df28b2130a93d3b0a563f419ba95ecb371d7a69ff4cfe30b7908caaa16df58e4",
+  "finalDigest": "f680db48b4290bde0f1074b2fc8076593d54148f6a8c91a0900fc85eb392fee8",
+  "changes": [
+    {
+      "path": "workers-ts/migrations/0176_product_auto_shelf.sql",
+      "before": "6bdc0b11ff0c60901fdbe73f809a13f3f586f8f7ca28ccd301c4b6002c943852",
+      "after": "46b3e860bfafbd29bd17596c88f9b0299c3b04dd776ed81818a919bef92e9f07"
+    },
+    {
+      "path": "workers-ts/src/migrations/productAutoShelf.ts",
+      "before": "9ba4fbefdafcbd3703904f4d5cd622ddcc345809831cf6847223e664738f0022",
+      "after": "34e430fbc2e3b984acc856d0c213d15433f5add90bdb6260ad45f63acebaa509"
+    },
+    {
+      "path": "workers-ts/test/admin-product-moderation-frontend.test.ts",
+      "before": "80ecbafd40a720c8589e8b52f65fdca4221642fbfe3d4c634af2e521e552394f",
+      "after": "b0e59f81ec853704152452c9609dd0f70c500505c603a4b56712c8fad0b0791b"
+    },
+    {
+      "path": "workers-ts/test/scheduled-maintenance.test.ts",
+      "before": "518564f847be110ffca51b3160f6ee22872036fa248cb1190bd47399daea30f9",
+      "after": "444b7edd475c05f119381c32929dde26203e25aed0de9bb376688ff11842ea78"
+    },
+    {
+      "path": "workers-ts/wrangler.toml",
+      "before": "6812af137a5572adaa8b08fe46c5abb2290ee7dab5b0be8d458c18133fca8842",
+      "after": "b6fbf0c89a2922041e8f799183ac9226a649619ff52e836a36c401d3656a3987"
+    }
+  ],
+  "explanation": "After first canonical unit run: replace timeout interval-formatted GUC values with integer milliseconds (native executed current SQL and exact embedded equality passed); remove unused frontend-test URL bindings; restore original scheduled test indentation; clarify only production cron comment. Final narrow unit pass/type/build/runtime checks follow this snapshot."
+}

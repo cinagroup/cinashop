@@ -1,0 +1,18 @@
+{
+  "name": "final-native-annotations",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/admin-product-moderation-native.test.ts",
+    "test/product-auto-shelf-native.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T01:16:04.142707+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T01:17:23.234091+00:00",
+  "exitCode": 0,
+  "log": "final-native-annotations.log"
+}

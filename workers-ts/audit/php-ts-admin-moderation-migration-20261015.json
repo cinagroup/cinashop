@@ -1,0 +1,412 @@
+{
+  "status": "verified-local-source-candidate",
+  "capturedAt": "2026-10-15T01:28:37.455341+00:00",
+  "baselineCommit": "b05fefe90e74055344cedf2135de47d77b539769",
+  "goal": "继续推进 PHP 到 TS 的迁移",
+  "githubPushAuthorizedByUser": true,
+  "routes": [
+    "GET /adminapi/product/product/verify/:id",
+    "GET /adminapi/product/product/remove/:id",
+    "GET /adminapi/product/product/get_verify/:id",
+    "POST /adminapi/product/product/set_verify/:id"
+  ],
+  "scheduledJob": {
+    "name": "product_auto_shelf",
+    "cron": "* * * * *",
+    "priorFiveMinuteOtherJobsUnchanged": true,
+    "rootAndScansBounded": true,
+    "executionRechecksCurrentPgWallClock": true
+  },
+  "inputFreeze": {
+    "path": "workers-ts/audit/review-20261015/frozen-after.json",
+    "sha256": "7d95ad031c765ffb0b233a8e8897072563665d88ec5709d17929b58892b3a7af",
+    "count": 3495,
+    "digest": "4758c8bb69e44867b535f484ab63305109e9c4209b520a4c93476d2286ef8932",
+    "allDeclaredInputsRehashedUnchanged": true,
+    "directoryInventoryMatches": true,
+    "fullBuildGraph": false
+  },
+  "report": {
+    "path": "workers-ts/docs/php-ts-admin-moderation-migration-20261015.md",
+    "sha256": "c2bd1615d155db212561ab8e23758c9eac397f258174025745842158bcba9b2c"
+  },
+  "evidence": [
+    {
+      "path": "workers-ts/audit/review-20261015/baseline.json",
+      "sha256": "e99b72e1aa9d630c33ce97a7f22c8e7ac02767ecb8b1a7ac021a09a84b60c850"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/next-scope-source-scout.json",
+      "sha256": "979cbfad9850c57d79e33e21a3b4bc461bdb1fa986dd6b32f38acf652d5ee63c"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/source-independent-review.json",
+      "sha256": "b3bd0af34973281406f42027288b925e27ca722cdf8b8ab5d3ec5e4813218bb5"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/browser-facts.json",
+      "sha256": "730b14695c23e8bbd8439bba60d8d9a3a076296571a027ecf7ca61c02d6164fa"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/browser-cleanup.json",
+      "sha256": "8ba024301b515ab48275da2aa7bd8aeb129e4759ac16090b6816f3357dbc581c"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/checklists-after.json",
+      "sha256": "39579bbc9542dcbc4f59d416fd0f267e6923ad689bb3acab8428965abb4a1a05"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/candidate-adjustments.json",
+      "sha256": "2157a891bdac062fb378886053dba7bbe299aa3a7c7648f1c29167c6aa26d8e7"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/type-annotation-adjustments.json",
+      "sha256": "ecb2ae2e4ea5530a806de7aa0d5a3711561bad8bca4dd3744a105ca3462cf11b"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/frontend-label-annotation.json",
+      "sha256": "1101dc7828803ef20d5bdcbea56fe1a070bd860138b7a1d1b41dfbb4bdb3a224"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/next-gap-notes.json",
+      "sha256": "c5c1d9b97f7c0ceab93d1bb33ea6f733a3efc318373a202a67b3053c75c4f9a8"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/run-check.py",
+      "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/final-gates.py",
+      "sha256": "b56db53028fa6c1ddc11103cf26683f1f326db084346a3cbb8c6d6890f085704"
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/eof-normalization.json",
+      "sha256": "f4ff47bab59f486c76254b8b058bb7c3093c71bcc2837b10ab6e19adf6e6a20d"
+    }
+  ],
+  "validation": [
+    {
+      "path": "workers-ts/audit/review-20261015/final-unit-status.json",
+      "sha256": "ace564085c1de82c9d3893b88e0f7f841a301195c6aaed987ebf2f016c713df9",
+      "name": "final-unit",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/admin-product-moderation.test.ts",
+        "test/admin-product-moderation-frontend.test.ts",
+        "test/admin-product-moderation-tabs.test.ts",
+        "test/product-auto-shelf.test.ts",
+        "test/scheduled-maintenance.test.ts",
+        "test/admin-product-stock.test.ts",
+        "test/admin-product-stock-workflow-frontend.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=audit/review-20261015/final-unit.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:07:51.638295+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/final-unit.log",
+        "sha256": "d729b1324c75298b2b508929c94fa7bcf8a0006f20c569dc0599d80bdaac2d89",
+        "includedInGit": false
+      },
+      "result": {
+        "path": "workers-ts/audit/review-20261015/final-unit.json",
+        "sha256": "fac7fc69f1d631bcf7981ab764f697d2ca1165f57bb84cf1abe01a032fcf9111",
+        "passed": 63,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/initial-native-status.json",
+      "sha256": "f5c56a55e67a82691f22dd8ea19152ea8fad19be1d5269a9fbf0eb6275574ee0",
+      "name": "initial-native",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-product-moderation.test.ts",
+        "test/admin-product-moderation-native.test.ts",
+        "test/product-auto-shelf.test.ts",
+        "test/product-auto-shelf-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:10:48.922920+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/initial-native.log",
+        "sha256": "d9fcf7eba10306d450d8921aed8dd3b3d462b95f1b82cf4a396f8324eafd08ee",
+        "includedInGit": false
+      },
+      "passed": 30,
+      "cleanupRemainingZero": true,
+      "clusterStopped": true
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/queue-runtime-status.json",
+      "sha256": "6611111476473dfdfcbc1f3fd649cb8d0f7daf8edda9770e451e6c00589589b1",
+      "name": "queue-runtime",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.worker.config.ts",
+        "--maxWorkers=1",
+        "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+        "test/runtime/worker-runtime.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=audit/review-20261015/queue-runtime.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:13:41.161592+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/queue-runtime.log",
+        "sha256": "7e617a9adba4844f588bd283b22b4831f22db1f65e2d2cdfdd4e34af29abe62b",
+        "includedInGit": false
+      },
+      "result": {
+        "path": "workers-ts/audit/review-20261015/queue-runtime.json",
+        "sha256": "291ed75b3de7ae30b6e0fe84b99a2145d471f75b7fd2f62ed07ce96c15fa7d6d",
+        "passed": 19,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/worker-unit-types-final-status.json",
+      "sha256": "83b3987a2059b2df781f029c6c10addfbd8b5b3286ff2050940125e6c6f8974c",
+      "name": "worker-unit-types-final",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:15:46.482423+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/worker-unit-types-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "includedInGit": false
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/final-native-annotations-status.json",
+      "sha256": "2b4946dd488c8a5da90c857c55d39b492434279e17a75dcf2852ee7366340429",
+      "name": "final-native-annotations",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-product-moderation-native.test.ts",
+        "test/product-auto-shelf-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:17:23.234091+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/final-native-annotations.log",
+        "sha256": "1a6e5bba192032a4d148fe13b24675272d5a4ad07536f19ee6092b02411be399",
+        "includedInGit": false
+      },
+      "passed": 11,
+      "cleanupRemainingZero": true,
+      "clusterStopped": true
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/frontend-cleanup-final-status.json",
+      "sha256": "4a556df4fa815f7719e3dbd418bbd7ff07a911564a74351a1f28797bf2ae92f7",
+      "name": "frontend-cleanup-final",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/admin-product-moderation-frontend.test.ts",
+        "test/admin-product-moderation-tabs.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=audit/review-20261015/frontend-cleanup-final.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:24:41.795202+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/frontend-cleanup-final.log",
+        "sha256": "d27fe1f0c2b4d02e4bd85c3aaf5046d41d3fdf9828c2c97da0aa359c8bb08f75",
+        "includedInGit": false
+      },
+      "result": {
+        "path": "workers-ts/audit/review-20261015/frontend-cleanup-final.json",
+        "sha256": "98d5faad71521c59c52a4bcb9376f5d946465b3512090290dedb8d39cf3d153c",
+        "passed": 9,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/final-gates-status.json",
+      "sha256": "bc6166c4f4291540a2b73d26188f080a74cb9b0279ea7b9806bb790fa893466f",
+      "name": "final-gates",
+      "exitCode": 0,
+      "argv": [
+        "python3",
+        "audit/review-20261015/final-gates.py"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:27:17.404344+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/final-gates.log",
+        "sha256": "4208da3b205d82b80be8fdc8c0ecb94c96543a14137642044d27e374fb558b23",
+        "includedInGit": false
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/worker-runtime-types-status.json",
+      "sha256": "ab19e4f122790dcb338905bcf886425e255096bb82ae55bc6edd0b779f84a5c8",
+      "name": "worker-runtime-types",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:26:23.217469+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/worker-runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "includedInGit": false
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/admin-types-final-status.json",
+      "sha256": "0d554f594b39abce0250feb9232d9ac6871a9ed1c04a529c46a9fc3bf4eacedb",
+      "name": "admin-types-final",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "../view/admin-ts/node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b",
+        "../view/admin-ts/tsconfig.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "completedAt": "2026-10-15T01:26:49.615347+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/admin-types-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "includedInGit": false
+      }
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/admin-build-status.json",
+      "sha256": "6f24ed7ddf06155688284cc6a4e6e0849063ea768b45e230d64df2fa017c4081",
+      "name": "admin-build",
+      "exitCode": 0,
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "completedAt": "2026-10-15T01:27:17.399041+00:00",
+      "localRawLog": {
+        "path": "workers-ts/audit/review-20261015/admin-build.log",
+        "sha256": "f95fc778ada7c987655b42fcfa90134d2a6bcdfefae36cd617ff79fdfeba4743",
+        "includedInGit": false
+      }
+    }
+  ],
+  "missingGates": [],
+  "historicalChecks": [
+    {
+      "path": "workers-ts/audit/review-20261015/initial-admin-types-status.json",
+      "sha256": "8d62db3a1b383de8bbb05f6d4d99c44d8d047738806813b27e7c883b68d36061",
+      "name": "initial-admin-types",
+      "exitCode": 0,
+      "canonical": false
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/initial-frontend-status.json",
+      "sha256": "e4ec2ff4095a0c4db2b9299df1764f22e71d976d3caee4754c4585ba760f14ae",
+      "name": "initial-frontend",
+      "exitCode": 1,
+      "canonical": false
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/initial-moderation-status.json",
+      "sha256": "7949dd36301a03e250c3d5a207a654e0441f86c4aa3f768b9839d96464edc9f1",
+      "name": "initial-moderation",
+      "exitCode": 1,
+      "canonical": false
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/initial-scheduler-status.json",
+      "sha256": "7833e6c69e902942ad5500a20460b81c5c2040964f8f0ad1de834e33481055dc",
+      "name": "initial-scheduler",
+      "exitCode": 0,
+      "canonical": false
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/second-frontend-status.json",
+      "sha256": "7148da118fcc730f1fd218a745de43a18fdc817983005d5019f9f0ee9188f778",
+      "name": "second-frontend",
+      "exitCode": 0,
+      "canonical": false
+    },
+    {
+      "path": "workers-ts/audit/review-20261015/worker-unit-types-status.json",
+      "sha256": "551c26a11574af749b2385c176b99a569d8bf2f3108600c62945b830931a13d2",
+      "name": "worker-unit-types",
+      "exitCode": 2,
+      "canonical": false
+    }
+  ],
+  "coverage": {
+    "ordinaryDefinitions": 63,
+    "ordinaryFiles": 7,
+    "nativeDefinitionsExecuted": 30,
+    "nativeFiles": 4,
+    "ordinaryNativeOverlap": 19,
+    "distinctSqlFrontendDefinitions": 74,
+    "separateWorkerdDefinitions": 19,
+    "separateWorkerdFiles": 2,
+    "repeatNarrowNativeDefinitions": 11,
+    "repeatNarrowFrontendDefinitions": 9,
+    "repeatsIncreaseCoverage": false
+  },
+  "limits": [
+    "PHP runtime not executed; exact-source static comparison",
+    "Workerd Queue dispatch mocks SQL service; not real PG end-to-end",
+    "Native scheduler fixture has no cart/relation tables; no claim those tables were natively checked unchanged",
+    "No actual Checkout concurrency execution",
+    "No production deploy/DDL/PHP shutdown",
+    "No whole-dashboard/browser/provider/Hyperdrive acceptance",
+    "No full ORM nine-path audit claimed; only new indexes actual ORM predicate/native checks",
+    "Audit set rechecks do not exclude arbitrary external same-path system_log writes",
+    "Browsers without Web Locks do not get equivalent cross-tab recovery guarantees",
+    "Global get_script registration/retirement conflict remains open"
+  ],
+  "checklistsUnchanged": true,
+  "remainingGlobalChecklistOpen": 155,
+  "goalComplete": false
+}

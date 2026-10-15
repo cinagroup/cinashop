@@ -1,0 +1,22 @@
+{
+  "name": "frontend-cleanup-final",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-moderation-frontend.test.ts",
+    "test/admin-product-moderation-tabs.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/review-20261015/frontend-cleanup-final.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T01:17:43.878503+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T01:24:41.795202+00:00",
+  "exitCode": 0,
+  "log": "frontend-cleanup-final.log"
+}

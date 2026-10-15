@@ -1,0 +1,22 @@
+{
+  "name": "initial-scheduler",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/product-auto-shelf.test.ts",
+    "test/scheduled-maintenance.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/review-20261015/initial-scheduler.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:51:55.012659+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:52:04.683418+00:00",
+  "exitCode": 0,
+  "log": "initial-scheduler.log"
+}

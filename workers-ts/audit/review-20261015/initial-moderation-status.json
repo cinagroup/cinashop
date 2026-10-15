@@ -1,0 +1,23 @@
+{
+  "name": "initial-moderation",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-moderation.test.ts",
+    "test/product-auto-shelf.test.ts",
+    "test/scheduled-maintenance.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/review-20261015/initial-moderation.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T01:02:00.949317+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T01:06:42.689696+00:00",
+  "exitCode": 1,
+  "log": "initial-moderation.log"
+}

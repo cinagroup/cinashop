@@ -1,0 +1,198 @@
+{
+  "status": "read-only-source-scout",
+  "baseCommit": "b05fefe90e74055344cedf2135de47d77b539769",
+  "scope": "Admin product review / forced removal, and actual timed shelf execution",
+  "routes": [
+    {
+      "method": "GET",
+      "route": "/adminapi/product/product/verify/:id",
+      "controller": "StoreProduct.verifyForm",
+      "source": "route/admin.php:1579",
+      "consumer": "Legacy form contract; direct list currently uses its own modal, not this form endpoint"
+    },
+    {
+      "method": "GET",
+      "route": "/adminapi/product/product/remove/:id",
+      "controller": "StoreProduct.removeForm",
+      "source": "route/admin.php:1581",
+      "consumer": "product.js forcedRemovalApi + productList index changeMenu case 5 / forcedRemoval method; dropdown item 5 currently absent from rendered template"
+    },
+    {
+      "method": "GET",
+      "route": "/adminapi/product/product/get_verify/:id",
+      "controller": "StoreProduct.getVerify",
+      "source": "route/admin.php:1583",
+      "consumer": "productList index saveAuditConfirm → productGetVerifyApi → confirm price warning"
+    },
+    {
+      "method": "POST",
+      "route": "/adminapi/product/product/set_verify/:id",
+      "controller": "StoreProduct.setVerify",
+      "source": "route/admin.php:1584",
+      "consumer": "productList index saveAuditConfirm + dynamic verification/removal form action"
+    }
+  ],
+  "livePrimaryFlow": {
+    "sourceTemplate": "type 0 row has 审核 button at productList/index.vue:346; modal at 616; submit handler 1129",
+    "wire": "auditForm {is_verify:1,refusal:\"\",id:\"\",is_show:0,auto_on_time:\"\"}; actual API passes full object, path id chooses target; controller getMore discards redundant body id",
+    "preflight": "getVerify reads ordinary type=0 price/settle_price and returns {verify:1|0}; missing parent is not checked; no SKU →0; no parent/main price comparison",
+    "duplicateSkuNuance": "getSkuArray defaults key=suk; BaseDao.getColumn then PDOConnection.column uses array_column(resultSet,null,key). Duplicates overwrite with last encountered physical row; no ORDER. Target ANY all ordinary SKU warning is an explicit conservative warning extension, not exact duplicate-suk parity. Retired type=0 target rows included."
+  },
+  "sourceWrite": {
+    "defaults": {
+      "is_verify": 1,
+      "refusal": "",
+      "is_show": 0,
+      "auto_on_time": 0
+    },
+    "controller": "positive-ish id; refusal required when is_verify is -1 or -2; service loads any parent id; no owner/delete/current-review/card/price/server preflight gate",
+    "time": "Truthy auto_on_time is strtotime; nonzero parsed timestamp forces is_show=0. Otherwise is_show retained, including UI value 2 when no schedule supplied. DatePicker JSON Date is ISO Z; historical string can be Shanghai local. Target strict bounded parser must document differences from broad PHP strtotime.",
+    "cart": "Always updates product cart rows currently status=1 to status=0, even successful immediately shown review. Other rows/columns untouched.",
+    "product": "Only is_verify/refusal/is_show/auto_on_time set. No child pid propagation, relation status rewrite, cache clear or product.status event.",
+    "transaction": "No source transaction visible around cart plus parent update; TS should make atomic, verify complete sets, real locks and post-audit readback."
+  },
+  "timedExecution": {
+    "liveSources": [
+      "app/listener/product/AutoShow.php:30 tick every 60 sec",
+      "app/listener/system/timer/SystemTimer.php:147 auto_show dispatch",
+      "StoreProductServices.autoUpperShelves:2500 first overUpperShelves(1), then (0)",
+      "StoreProductDao.overUpperShelves:467"
+    ],
+    "on": "is_del=0 AND is_show=0 AND auto_on_time<>0 AND auto_on_time<=time →is_show=1",
+    "off": "is_del=0 AND is_show=1 AND auto_off_time<>0 AND auto_off_time<time →is_show=0",
+    "allOwners": "No type/pid/is_verify filter; on then off means both-due ends hidden. Does not clear time columns or update cart/relations/cache. Source autoOn can show rejected review flag; consumer checkout still separately checks is_verify. Do not silently add approval filter to pretend parity.",
+    "targetGap": "Only schema/legacy DTO mentions autoOnTime; no current scheduled product job. Need root scheduled messages, Queue consumer, bounded real product execution and retry; storing auto_on_time alone is incomplete."
+  },
+  "permissionEvidence": {
+    "installSql": "public/install/crmeb.sql has zero get_verify,set_verify,product/verify,product/remove tuples anywhere; no four-route numeric seed. Existing 2 catalog page is read only; 105 POST product/<id>,169 DELETE product/<id>,179 PUT set_show are other interfaces, not review evidence.",
+    "sourceRuntime": "SystemRoleServices.verifiAuth lines101-105 returns true when method@@rule absent from all auth tuples. It is source fail-open, not a target grant.",
+    "targetPolicy": "Use explicit product.view for warning/form read and product.manage for POST; reject all fabricated numeric claims for these unseeded routes in single/batch/opaque resolution. Canonical capability is target policy extension."
+  },
+  "targetConstraints": {
+    "schema": "is_show/is_verify smallint no 0/1 CHECK observed; refusal varchar255; auto_on_time int32. No new DDL necessary.",
+    "lockProtocol": "BargainSourceProductLifecycle: every visibility/review writer takes exclusive lifecycle namespace731634 before product/cart/SKU locks; shared admission on starts/help. ProductAssociation namespace731617 is distinct and also required for editing coordination. Checkout owns carts before final product write, so NOWAIT on all target product/cart/SKU rows avoids reverse wait cycles. Real table barrier may be required for SKU/cart phantoms; tradeoff must be stated.",
+    "scopeSeparation": "Existing generic editor, mobile setShow, recycle toggle/permanent purge, actual card inventory and providers are separate. Do not call modern existing write an implementation of these four absent old review endpoints."
+  },
+  "recommendedDelivery": [
+    "Four true old routes plus strict input/default/path-body/date handling and independent current authority",
+    "Actual Admin list pending-review and removal UI with price preflight, reason, immediate/warehouse/schedule, session/context and unknown-result protection",
+    "Actual root+Queue bounded auto on/off execution retaining source order/boundaries and real concurrency checks",
+    "Readonly/native authority, exact source DTO/input, complete product/cart/SKU/relations no-collateral receipts, rollback, provider-free actual browser proof"
+  ],
+  "limitations": [
+    "Static PHP source only; PHP interpreter/encoded base controller not run",
+    "No production data/provider/DDL/deployment access or heavy validation performed by this scout"
+  ],
+  "inputs": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "bytes": 183912
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+      "bytes": 27131
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "bytes": 136399
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "bytes": 24769
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+      "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8",
+      "bytes": 22891
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+      "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+      "bytes": 16491
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/PDOConnection.php",
+      "sha256": "caf53cfeee617239c4188666c7dac574b344f0080b1b44cfc9c8afdc2e1edc45",
+      "bytes": 52339
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/SystemRoleServices.php",
+      "sha256": "9c85f2b36a3584e6fb87fc79a20a819001a13c5e1490a7a20513794cdf7d906d",
+      "bytes": 6642
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/product/AutoShow.php",
+      "sha256": "501d1b1bcdf108c0156d81db1d7085cdbf4fb1e1eb16f324efcba8c12aae40b0",
+      "bytes": 1548
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/system/timer/SystemTimer.php",
+      "sha256": "2494e962688cb71ba6db1d9d2e3b2f5eeec5687e8265d65560e55d8524c3e3c9",
+      "bytes": 8019
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "bytes": 7322393
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "bytes": 16957
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+      "bytes": 62288
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+      "sha256": "65fb505233dd6ae61e8a7c58eb6a99dd36b04a202d060445c11fa8b2b435188b",
+      "bytes": 104722
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "88c4a83778539be4d6c66fa85dfc2f8ba379e8296a3d16d4e554d107bad96ef8",
+      "bytes": 105653
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/product.ts",
+      "sha256": "aeab9bf36b6695f66de4e2ac4fd8cc316730a15a2f1ffa4c3eeec0b0e32c5c9b",
+      "bytes": 7471
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/BargainSourceProductLifecycle.ts",
+      "sha256": "16c384ee3c7e11de9211566621145c7684f17111b7dfc95284c571414c80fa26",
+      "bytes": 2731
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductAssociationService.ts",
+      "sha256": "468d327beb5026143fa4ed2dc040dd197f2c3bedb1cdc7c185c6e3244efdd2f3",
+      "bytes": 37986
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "ca7e483bba5e64b2ed45ab7d584f56d57c5aa5efa86cfd4640bca48890a96cf7",
+      "bytes": 32887
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+      "sha256": "33dc4aa4d0eb0fea32648ff152050d1b8c6df5858bbfc4e546b190d4ef9f46d7",
+      "bytes": 24584
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/index.ts",
+      "sha256": "921c8dac000c19a2f4a8c4d1234cea5ddd5471f20188777557af7b5adf6f830e",
+      "bytes": 29806
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+      "sha256": "fb7ff4830dc576213e211b424671989cafb137b4f0bd9f3c69aed4c758b99b5e",
+      "bytes": 29261
+    }
+  ]
+}

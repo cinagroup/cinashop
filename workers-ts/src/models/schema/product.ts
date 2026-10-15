@@ -120,6 +120,8 @@ export const storeProduct = pgTable(
     isSold: smallint("is_sold").default(0).notNull(),
   },
   (t) => [
+    index('sp_auto_on_due_idx').on(t.autoOnTime, t.id).where(sql`${t.isDel}=0 AND ${t.isShow}=0 AND ${t.autoOnTime}>0`),
+    index('sp_auto_off_due_idx').on(t.autoOffTime, t.id).where(sql`${t.isDel}=0 AND ${t.isShow}=1 AND ${t.autoOffTime}>0`),
     index("sp_cate_id_idx").on(t.cateId),
     index("sp_shipping_ref").on(sql.raw(`(${SHIPPING_REFERENCE_EXPRESSION_SQL})`)),
     index("is_hot").on(t.isHot),

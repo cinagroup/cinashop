@@ -1,0 +1,27 @@
+{
+  "name": "final-unit",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-moderation.test.ts",
+    "test/admin-product-moderation-frontend.test.ts",
+    "test/admin-product-moderation-tabs.test.ts",
+    "test/product-auto-shelf.test.ts",
+    "test/scheduled-maintenance.test.ts",
+    "test/admin-product-stock.test.ts",
+    "test/admin-product-stock-workflow-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/review-20261015/final-unit.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T01:07:15.039378+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T01:07:51.638295+00:00",
+  "exitCode": 0,
+  "log": "final-unit.log"
+}

@@ -39,6 +39,7 @@ import {
   SignReminderService,
 } from "@/services/message/SignReminderService";
 import { SecondCardReminderService } from "@/services/order/SecondCardReminderService";
+import { ProductAutoShelfService } from '@/services/product/ProductAutoShelfService';
 
 export const SCHEDULED_ORDER_PAGE_SIZE = 80;
 export const SCHEDULED_OUTBOX_PAGE_SIZE = 20;
@@ -95,7 +96,7 @@ function isScheduledOrderJob(value: unknown): value is ScheduledOrderJob {
 }
 
 function isScheduledMaintenanceJob(value: unknown): value is ScheduledMaintenanceJob {
-  return ROOT_JOBS.includes(value as ScheduledMaintenanceJob);
+  return value === "product_auto_shelf" || ROOT_JOBS.includes(value as ScheduledMaintenanceJob);
 }
 
 export function scheduledRunId(scheduledAt: number): string {
@@ -118,6 +119,11 @@ export function createScheduledRunMessages(scheduledAt: number): ScheduledMainte
     cursor: 0,
     threshold: null,
   }));
+}
+
+/** PHP auto_show ticks every 60 seconds; other roots keep their five-minute cadence. */
+export function createProductAutoShelfRoot(scheduledAt: number): ScheduledMaintenanceMessage {
+  return { action: 'runScheduledMaintenance', job: 'product_auto_shelf', runId: scheduledRunId(scheduledAt), scheduledAt, cursor: 0, threshold: null };
 }
 
 export function isScheduledMaintenanceMessage(
@@ -187,6 +193,8 @@ export class ScheduledMaintenanceService {
 
   async processMaintenance(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
     switch (message.job) {
+      case 'product_auto_shelf':
+        return new ProductAutoShelfService(this.container, this.env).start(message);
       case "payment_outbox_dispatch":
         return this.dispatchPaymentOutbox(message);
       case "notification_delivery_dispatch":

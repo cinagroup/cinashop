@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-15T00:49:44.623503+00:00",
+  "baselineCommit": "b05fefe90e74055344cedf2135de47d77b539769",
+  "previousGoalTurn": "progress: stock migration committed/pushed and remote SHA verified",
+  "priorInputFreeze": {
+    "path": "workers-ts/audit/stock-20261015/frozen-after.json",
+    "sha256": "3acfafd99e42632ed45249901d8f2cc1b58e25f7d4ab382b0dcad8f9349c2af4",
+    "digest": "5dc796c85f8a53ba57f4e0d8b49dd8f6ecba4474c997575b6fa4a5a6f559594d",
+    "currentDeclaredInputsRevalidated": 3478
+  },
+  "priorReportsRemainHistorical": true
+}

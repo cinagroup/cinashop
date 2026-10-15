@@ -1,0 +1,19 @@
+{
+  "previousDigest": "f680db48b4290bde0f1074b2fc8076593d54148f6a8c91a0900fc85eb392fee8",
+  "finalDigest": "011e4d54e6318d564087be5f2c713c0e5c387ca52a1649133d2ec038ba085605",
+  "changes": [
+    {
+      "path": "workers-ts/test/admin-product-moderation-native.test.ts",
+      "before": "38a0c35d7313b62f0e1f9630d2a8546569c3bf2eae6ea2a77e51bffc1a57d055",
+      "after": "523276ee8834f5cbeefd7357712765d468070f71c7dc1772fca2090ed0c458d6"
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf-native.test.ts",
+      "before": "05a34cb20fb72017e3132ca7681da04beb27f221cc890382e3e8824208bd2dff",
+      "after": "02ba18354b81154103813af260fceb931f4aef394db48cf4f56d1afaea4c7115"
+    }
+  ],
+  "runtimeChange": false,
+  "reason": "Explicit unknown outcome generic for read/write promise union and transaction handle casts required by existing full DbClient-typed lock helpers. These are test type annotations only; affected native files will rerun.",
+  "scopeOfAnnotationOnlyClaim": "Only the two files listed in changes; it does not apply to earlier SQL timeout source adjustment."
+}

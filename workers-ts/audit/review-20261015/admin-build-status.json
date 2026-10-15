@@ -1,0 +1,16 @@
+{
+  "name": "admin-build",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vite/bin/vite.js",
+    "build"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "startedAt": "2026-10-15T01:26:49.615943+00:00",
+  "serialWrapperRequired": true,
+  "serialWrapperOwner": "final-gates-status.json",
+  "nestedWrapper": false,
+  "completedAt": "2026-10-15T01:27:17.399041+00:00",
+  "exitCode": 0,
+  "log": "admin-build.log"
+}

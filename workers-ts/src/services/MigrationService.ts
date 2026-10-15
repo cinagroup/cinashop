@@ -104,9 +104,15 @@ import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from '@/migrations/purcha
 import { runPurchaseCancellationGiftEvidence } from '@/migrations/runPurchaseCancellationGiftEvidence';
 import { PRODUCT_STOCK_EFFECTS_SQL } from '@/migrations/productStockEffects';
 import { runProductStockEffects } from '@/migrations/runProductStockEffects';
+import { PRODUCT_AUTO_SHELF_SQL } from '@/migrations/productAutoShelf';
+import { runProductAutoShelf } from '@/migrations/runProductAutoShelf';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  productAutoShelfSqlForVerification(): string {
+    return this.migration_0181();
+  }
 
   productStockEffectsSqlForVerification(): string {
     return this.migration_0180();
@@ -600,10 +606,16 @@ export class MigrationService {
       this.migration_0178(),
       this.migration_0179(),
       this.migration_0180(),
+      this.migration_0181(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 181) {
+          await runProductAutoShelf(this.container.db);
+          executed.push('0181');
+          continue;
+        }
         if (i === 180) {
           await runProductStockEffects(this.container.db);
           executed.push('0180');
@@ -8883,5 +8895,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0180(): string {
     return PRODUCT_STOCK_EFFECTS_SQL;
+  }
+
+  private migration_0181(): string {
+    return PRODUCT_AUTO_SHELF_SQL;
   }
 }

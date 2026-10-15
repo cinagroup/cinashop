@@ -222,6 +222,7 @@ export type ScheduledMaintenanceJob =
   | "live_anchor_sync"
   | "refund_reconciliation"
   | "pink_cancellation_recovery"
+  | "product_auto_shelf"
   | "reminder_unverified_remind"
   | "sign_remind_time";
 
@@ -233,6 +234,25 @@ export interface ScheduledMaintenanceMessage {
   scheduledAt: number;
   cursor: number;
   threshold: number | null;
+}
+
+/** Product scans use a timestamp/ID keyset, not an unbounded product-table scan. */
+export interface ProductAutoShelfScanMessage {
+  action: 'scanProductAutoShelf';
+  job: 'product_auto_shelf';
+  runId: string;
+  scheduledAt: number;
+  phase: 'on' | 'off';
+  maximumId: number;
+  cursorTime: number;
+  cursorId: number;
+}
+export interface ProductAutoShelfMessage {
+  action: 'processProductAutoShelf';
+  job: 'product_auto_shelf';
+  runId: string;
+  scheduledAt: number;
+  productId: number;
 }
 
 /** Candidate order work is separate from scanning and remains idempotent on redelivery. */
@@ -428,6 +448,8 @@ export type OrderMessage =
   | OrderWaybillJobMessage
   | ScheduledMaintenanceMessage
   | ScheduledOrderMessage
+  | ProductAutoShelfScanMessage
+  | ProductAutoShelfMessage
   | PinkTimeoutMessage
   | SecondCardReminderMessage
   | SignReminderMessage

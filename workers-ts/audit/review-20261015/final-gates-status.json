@@ -1,0 +1,13 @@
+{
+  "name": "final-gates",
+  "argv": [
+    "python3",
+    "audit/review-20261015/final-gates.py"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T01:25:15.042045+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T01:27:17.404344+00:00",
+  "exitCode": 0,
+  "log": "final-gates.log"
+}
