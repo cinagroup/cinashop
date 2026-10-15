@@ -53,6 +53,9 @@ export const PRODUCT_DRAFT_FIELDS = [
   "is_support_refund", "is_presale_product", "presale_time", "presale_day", "is_vip_product",
   "auto_on_time", "auto_off_time", "custom_form", "custom_form_info", "system_form_id",
   "store_label_id", "ensure_id", "specs", "specs_id", "coupons",
+  // Preserve unfinished editor limits across draft save/restore. The PHP
+  // cache whitelist omitted these even though its final save accepted them.
+  "is_limit", "limit_type", "limit_num",
 ] as const;
 
 const productDraftFieldSet = new Set<string>(PRODUCT_DRAFT_FIELDS);

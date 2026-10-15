@@ -67,6 +67,7 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    'test/admin-product-draft-roundtrip.test.ts',
     'test/admin-product-recycle.test.ts',
     'test/admin-product-recycle-native.test.ts',
     'test/product-recycle-effects.test.ts',
@@ -701,6 +702,7 @@ try {
     // exhaust Windows commit memory; one Vitest worker retains those proofs.
     : ['node_modules/vitest/vitest.mjs', 'run', ...tests,
       tests.some(test => new Set([
+        'test/admin-product-draft-roundtrip.test.ts',
         'test/admin-product-recycle.test.ts',
         'test/admin-product-recycle-native.test.ts',
         'test/product-recycle-effects.test.ts',
