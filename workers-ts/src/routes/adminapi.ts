@@ -52,6 +52,7 @@ import * as AdminProductReplies from '@/controllers/api/v1/AdminProductReplyCont
 import * as AdminProductFictitiousReplies from '@/controllers/api/v1/AdminProductFictitiousReplyController';
 import * as AdminProductCatalogRead from '@/controllers/api/v1/AdminProductCatalogReadController';
 import * as AdminLegacyProductSave from '@/controllers/api/v1/AdminLegacyProductSaveController';
+import * as AdminLegacyProductRead from '@/controllers/api/v1/AdminLegacyProductReadController';
 import * as AdminProductStock from '@/controllers/api/v1/AdminProductStockController';
 import * as AdminProductModeration from '@/controllers/api/v1/AdminProductModerationController';
 import * as AdminProductRecycle from '@/controllers/api/v1/AdminProductRecycleController';
@@ -421,6 +422,8 @@ adminapiRoutes.get('/product/product/get_rule', adminAuth, AdminProductRules.tem
 adminapiRoutes.get('/product/product/rule', adminAuth, AdminProductRules.list);
 adminapiRoutes.post('/product/product/rule/:id', adminAuth, AdminProductRules.save);
 adminapiRoutes.get('/product/product/rule/:id', adminAuth, AdminProductRules.detail);
+// Keep literal get_rule/rule selectors ahead of the legacy resource wildcard.
+adminapiRoutes.get('/product/product/:id', adminAuth, AdminLegacyProductRead.detail);
 adminapiRoutes.delete('/product/product/rule/delete/:id', adminAuth, AdminProductRules.remove);
 adminapiRoutes.get("/product/get_rule", adminAuth, AdminProductRules.modernTemplates);
 adminapiRoutes.get("/product/rule", adminAuth, AdminProductRules.modernList);

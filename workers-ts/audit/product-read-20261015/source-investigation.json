@@ -1,0 +1,1663 @@
+{
+  "capturedAt": "2026-10-15T04:25:09.632991+00:00",
+  "kind": "source-investigation-only",
+  "noExecution": true,
+  "noRepositoryMutation": true,
+  "references": [
+    {
+      "id": "S01",
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+      "lineSpans": [
+        {
+          "start": 1533,
+          "end": 1536
+        },
+        {
+          "start": 1562,
+          "end": 1577
+        }
+      ],
+      "note": "True GET/POST/generate/template contracts within product group"
+    },
+    {
+      "id": "S02",
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+      "lineSpans": [
+        {
+          "start": 491,
+          "end": 494
+        },
+        {
+          "start": 599,
+          "end": 621
+        },
+        {
+          "start": 679,
+          "end": 722
+        }
+      ],
+      "note": "get_product_info has no creation defaults; generator/template owner dispatch"
+    },
+    {
+      "id": "S03",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineSpans": [
+        {
+          "start": 343,
+          "end": 493
+        },
+        {
+          "start": 502,
+          "end": 707
+        }
+      ],
+      "note": "Complete getInfo transformation and subsequent generator called by old Vue"
+    },
+    {
+      "id": "S04",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+      "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+      "lineSpans": [
+        {
+          "start": 233,
+          "end": 236
+        }
+      ],
+      "note": "find(id) with coupons; no owner/is_del/status restriction"
+    },
+    {
+      "id": "S05",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+      "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+      "lineSpans": [
+        {
+          "start": 383,
+          "end": 391
+        }
+      ],
+      "note": "search([]) returns unfiltered model"
+    },
+    {
+      "id": "S06",
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProduct.php",
+      "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+      "lineSpans": [
+        {
+          "start": 46,
+          "end": 132
+        },
+        {
+          "start": 221,
+          "end": 224
+        },
+        {
+          "start": 259,
+          "end": 262
+        }
+      ],
+      "note": "CSV/JSON accessors and coupons relation"
+    },
+    {
+      "id": "S07",
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+      "lineSpans": [
+        {
+          "start": 2682,
+          "end": 2763
+        }
+      ],
+      "note": "All original main-row storage columns, types and DDL defaults"
+    },
+    {
+      "id": "S08",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrServices.php",
+      "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+      "lineSpans": [
+        {
+          "start": 80,
+          "end": 220
+        },
+        {
+          "start": 223,
+          "end": 272
+        }
+      ],
+      "note": "validate shape, result snapshot and destructive positional save invoked by implicit GET repair"
+    },
+    {
+      "id": "S09",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrResultServices.php",
+      "sha256": "136d66730ba803a8a4748edb3fd33f3c0b610556c466ddad6bde9f383704a9a1",
+      "lineSpans": [
+        {
+          "start": 40,
+          "end": 43
+        },
+        {
+          "start": 68,
+          "end": 80
+        },
+        {
+          "start": 88,
+          "end": 153
+        }
+      ],
+      "note": "JSON result and hidden checkProductAttr writes; Throwable is swallowed"
+    },
+    {
+      "id": "S10",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductVirtualServices.php",
+      "sha256": "1a44c129483d02f79b0f70f972fd5954b543eb7afb246a9e083de99e887613a1",
+      "lineSpans": [
+        {
+          "start": 32,
+          "end": 40
+        },
+        {
+          "start": 66,
+          "end": 109
+        }
+      ],
+      "note": "Plaintext card lookup without uid restriction and original import semantics"
+    },
+    {
+      "id": "S11",
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+      "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d",
+      "lineSpans": [
+        {
+          "start": 43,
+          "end": 61
+        }
+      ],
+      "note": "Historical unique preserved or new hex8 generated"
+    },
+    {
+      "id": "S12",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/form/SystemFormServices.php",
+      "sha256": "7592c22bef6da315a09de29faa698fb3796c244e8286bb1bdbf215a30ff065c1",
+      "lineSpans": [
+        {
+          "start": 34,
+          "end": 45
+        },
+        {
+          "start": 76,
+          "end": 104
+        }
+      ],
+      "note": "Form type captions and compact custom_form_info formatter"
+    },
+    {
+      "id": "S13",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/shipping/ShippingTemplatesDao.php",
+      "sha256": "63c136db110d7e3f860a4d006aeb8ca8174e9c0057612aaa84faabf76e55828e",
+      "lineSpans": [
+        {
+          "start": 41,
+          "end": 44
+        }
+      ],
+      "note": "getTemp scoped type/relation, sort DESC,id DESC, id/name rows"
+    },
+    {
+      "id": "S14",
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/shipping/ShippingTemplates.php",
+      "sha256": "d99c89897b6a4bc3191193da0a87d963044948246983a2ab5266c5aba3dbd529",
+      "lineSpans": [
+        {
+          "start": 124,
+          "end": 158
+        }
+      ],
+      "note": "Scope searchers do not add live status/is_del predicates"
+    },
+    {
+      "id": "S15",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/category/StoreProductCategoryServices.php",
+      "sha256": "77431e2d9eebeb2b85eff500f7bde1ed9359f3da801513f719b6a9080c1ad41e",
+      "lineSpans": [
+        {
+          "start": 128,
+          "end": 139
+        }
+      ],
+      "note": "Platform shown category tree via value/label/pid rows"
+    },
+    {
+      "id": "S16",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/category/StoreProductCategoryDao.php",
+      "sha256": "996bdc89810d1c70bc612fd2b5c5321b4cd0df143fa36da2470ddfbfbda0a4f0",
+      "lineSpans": [
+        {
+          "start": 63,
+          "end": 66
+        }
+      ],
+      "note": "Category sibling input order sort DESC,id DESC"
+    },
+    {
+      "id": "S17",
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/category/StoreProductCategory.php",
+      "sha256": "237edefa1695e83664199b9f28101c0f08cd257ed45432024c335f1c180b62b5",
+      "lineSpans": [
+        {
+          "start": 119,
+          "end": 140
+        },
+        {
+          "start": 180,
+          "end": 184
+        }
+      ],
+      "note": "level=-1 all levels; is_show=1 selector"
+    },
+    {
+      "id": "S18",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/user/label/UserLabelServices.php",
+      "sha256": "a3880e5910f14f0611270ba70c5c34fb2e175fccd45213045c581a55cc46847f",
+      "lineSpans": [
+        {
+          "start": 60,
+          "end": 63
+        }
+      ],
+      "note": "Selected user labels without pagination"
+    },
+    {
+      "id": "S19",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/user/label/UserLabelDao.php",
+      "sha256": "b5931134b210328e52dfe195120e138c50c808b8d449d75a057d8dee7dae0ea0",
+      "lineSpans": [
+        {
+          "start": 46,
+          "end": 51
+        }
+      ],
+      "note": "Label order id DESC"
+    },
+    {
+      "id": "S20",
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/user/label/UserLabel.php",
+      "sha256": "22e3978b4d3c5e05e83292cf93ba2efc883815050cca08aab38fb3342c2a55b9",
+      "lineSpans": [
+        {
+          "start": 80,
+          "end": 83
+        }
+      ],
+      "note": "ids IN search"
+    },
+    {
+      "id": "S21",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/activity/coupon/StoreCouponIssueDao.php",
+      "sha256": "d216691392c2ffb14b70ca76eaf5dc4d1fdd2b512bf98fb5774020427f1f26ea",
+      "lineSpans": [
+        {
+          "start": 386,
+          "end": 389
+        }
+      ],
+      "note": "Selected issue title,id, no status/expiry/delete scope filter"
+    },
+    {
+      "id": "S22",
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreDescriptionServices.php",
+      "sha256": "ba4f5434c0d76432fe962eac2f8f8cca233753c6259438fbc018b80224094acd",
+      "lineSpans": [
+        {
+          "start": 38,
+          "end": 43
+        },
+        {
+          "start": 52,
+          "end": 65
+        }
+      ],
+      "note": "Decode description on read, htmlspecialchars on legacy write"
+    },
+    {
+      "id": "S23",
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreDescriptionDao.php",
+      "sha256": "8fbe9fc7c6f0533e19bc21c434b2b20abf7f01cf989012f0fe42c19644223e11",
+      "lineSpans": [
+        {
+          "start": 40,
+          "end": 43
+        }
+      ],
+      "note": "Description by product_id,type; absent becomes empty"
+    },
+    {
+      "id": "S24",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "lineSpans": [
+        {
+          "start": 125,
+          "end": 140
+        },
+        {
+          "start": 170,
+          "end": 175
+        },
+        {
+          "start": 272,
+          "end": 278
+        },
+        {
+          "start": 332,
+          "end": 380
+        }
+      ],
+      "note": "productInfoApi is GET product/product/id; productEditApi edits category"
+    },
+    {
+      "id": "S25",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAdd/index.vue",
+      "sha256": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f",
+      "lineSpans": [
+        {
+          "start": 2498,
+          "end": 2596
+        },
+        {
+          "start": 2774,
+          "end": 2894
+        },
+        {
+          "start": 2993,
+          "end": 3042
+        },
+        {
+          "start": 3252,
+          "end": 3279
+        },
+        {
+          "start": 3422,
+          "end": 3496
+        },
+        {
+          "start": 3763,
+          "end": 3776
+        },
+        {
+          "start": 3867,
+          "end": 3909
+        },
+        {
+          "start": 4008,
+          "end": 4033
+        },
+        {
+          "start": 4158,
+          "end": 4175
+        },
+        {
+          "start": 4225,
+          "end": 4262
+        },
+        {
+          "start": 4371,
+          "end": 4398
+        }
+      ],
+      "note": "True defaults, getInfo/infoData, generate dependency and copy/full-post behavior"
+    },
+    {
+      "id": "S26",
+      "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+      "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+      "lineSpans": [
+        {
+          "start": 38,
+          "end": 38
+        }
+      ],
+      "note": "Source configured Asia/Shanghai date formatting"
+    },
+    {
+      "id": "S27",
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAdd/mixins/index.js",
+      "sha256": "cb63f3c5d51d344d77b613279e55373763741fa37dbfcf13e77eff24dd289d44",
+      "lineSpans": [
+        {
+          "start": 1,
+          "end": 111
+        }
+      ],
+      "note": "Client validation and Date-based schedule picker helpers; no GET API remapping"
+    }
+  ],
+  "endpoint": {
+    "method": "GET",
+    "path": "/adminapi/product/product/:id",
+    "controller": "StoreProduct.get_product_info",
+    "responseDataKeys": [
+      "tempList",
+      "cateList",
+      "productInfo"
+    ],
+    "zero": "No new-product/default branch. Normal no-row id0 is 商品不存在; Vue obtains new defaults locally/draft, not this endpoint.",
+    "deleted": "DAO does not exclude is_del=1",
+    "copy": "Same positive-id GET as edit; Vue query.copy only chooses requested id and later POST id0/sourceLink empty.",
+    "wrongHelper": "productEditApi is category GET product/category/:id"
+  },
+  "mainColumns": [
+    {
+      "name": "id",
+      "sqlType": "mediumint(11)",
+      "nullable": false,
+      "ddlDefault": null,
+      "autoIncrement": true,
+      "line": 2683,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "pid",
+      "sqlType": "INT(10)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2684,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "type",
+      "sqlType": "TINYINT(2)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2685,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "product_type",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2686,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "relation_id",
+      "sqlType": "INT(10)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2687,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "mer_id",
+      "sqlType": "int(10)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2688,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "image",
+      "sqlType": "varchar(256)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2689,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "recommend_image",
+      "sqlType": "varchar(256)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2690,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "slider_image",
+      "sqlType": "varchar(5000)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2691,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "store_name",
+      "sqlType": "varchar(256)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2692,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "store_info",
+      "sqlType": "varchar(256)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2693,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "keyword",
+      "sqlType": "varchar(256)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2694,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "bar_code",
+      "sqlType": "varchar(15)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2695,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "cate_id",
+      "sqlType": "varchar(64)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2696,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "price",
+      "sqlType": "decimal(12,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2697,
+      "sourceRef": "S07",
+      "getInfoWire": "number (explicit floatval)"
+    },
+    {
+      "name": "settle_price",
+      "sqlType": "DECIMAL(10,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2698,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "vip_price",
+      "sqlType": "decimal(12,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2699,
+      "sourceRef": "S07",
+      "getInfoWire": "number (explicit floatval)"
+    },
+    {
+      "name": "ot_price",
+      "sqlType": "decimal(12,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2700,
+      "sourceRef": "S07",
+      "getInfoWire": "number (explicit floatval)"
+    },
+    {
+      "name": "delivery_type",
+      "sqlType": "varchar(255)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2701,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "freight",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "2",
+      "autoIncrement": false,
+      "line": 2702,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "postage",
+      "sqlType": "decimal(12,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2703,
+      "sourceRef": "S07",
+      "getInfoWire": "number (explicit floatval)"
+    },
+    {
+      "name": "temp_id",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "1",
+      "autoIncrement": false,
+      "line": 2704,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "unit_name",
+      "sqlType": "varchar(32)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2705,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "sort",
+      "sqlType": "smallint(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2706,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "star",
+      "sqlType": "DECIMAL(2,1)",
+      "nullable": false,
+      "ddlDefault": "3.0",
+      "autoIncrement": false,
+      "line": 2707,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "collect",
+      "sqlType": "int(10)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2708,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "ficti",
+      "sqlType": "mediumint(11)",
+      "nullable": false,
+      "ddlDefault": "100",
+      "autoIncrement": false,
+      "line": 2709,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "sales",
+      "sqlType": "mediumint(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2710,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "stock",
+      "sqlType": "mediumint(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2711,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_show",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "1",
+      "autoIncrement": false,
+      "line": 2712,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_hot",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2713,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_benefit",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2714,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_best",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2715,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_new",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2716,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "add_time",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2717,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_postage",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2718,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_verify",
+      "sqlType": "TINYINT(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2719,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_del",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2720,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "mer_use",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2721,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "give_integral",
+      "sqlType": "decimal(12,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2722,
+      "sourceRef": "S07",
+      "getInfoWire": "number (explicit floatval)"
+    },
+    {
+      "name": "cost",
+      "sqlType": "decimal(12,2)",
+      "nullable": false,
+      "ddlDefault": "0.00",
+      "autoIncrement": false,
+      "line": 2723,
+      "sourceRef": "S07",
+      "getInfoWire": "number (explicit floatval)"
+    },
+    {
+      "name": "is_seckill",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2724,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_bargain",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2725,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_good",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2726,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_sub",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2727,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "is_vip",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2728,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "browse",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2729,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "code_path",
+      "sqlType": "varchar(64)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2730,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "soure_link",
+      "sqlType": "varchar(2000)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2731,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "video_open",
+      "sqlType": "TINYINT(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2732,
+      "sourceRef": "S07",
+      "getInfoWire": "boolean (explicit cast)"
+    },
+    {
+      "name": "video_link",
+      "sqlType": "varchar(500)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2733,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "spec_type",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2734,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "activity",
+      "sqlType": "varchar(255)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2735,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "spu",
+      "sqlType": "char(13)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2736,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "label_id",
+      "sqlType": "varchar(64)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2737,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "command_word",
+      "sqlType": "varchar(255)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2738,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "recommend_list",
+      "sqlType": "varchar(256)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2739,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "brand_id",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2740,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "brand_com",
+      "sqlType": "varchar(64)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2741,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "code",
+      "sqlType": "varchar(50)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2742,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_vip_product",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2743,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_presale_product",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2744,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "presale_start_time",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2745,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "presale_end_time",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2746,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "presale_day",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2747,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "auto_on_time",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2748,
+      "sourceRef": "S07",
+      "getInfoWire": "string: empty or Shanghai YYYY-MM-DD HH:mm:ss"
+    },
+    {
+      "name": "auto_off_time",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2749,
+      "sourceRef": "S07",
+      "getInfoWire": "string: empty or Shanghai YYYY-MM-DD HH:mm:ss"
+    },
+    {
+      "name": "custom_form",
+      "sqlType": "longtext",
+      "nullable": true,
+      "ddlDefault": null,
+      "autoIncrement": false,
+      "line": 2750,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "system_form_id",
+      "sqlType": "INT(10)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2751,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_support_refund",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "1",
+      "autoIncrement": false,
+      "line": 2752,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "store_label_id",
+      "sqlType": "longtext",
+      "nullable": true,
+      "ddlDefault": null,
+      "autoIncrement": false,
+      "line": 2753,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "ensure_id",
+      "sqlType": "longtext",
+      "nullable": true,
+      "ddlDefault": null,
+      "autoIncrement": false,
+      "line": 2754,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "specs",
+      "sqlType": "longtext",
+      "nullable": true,
+      "ddlDefault": null,
+      "autoIncrement": false,
+      "line": 2755,
+      "sourceRef": "S07",
+      "getInfoWire": "array/mixed: see transformation table"
+    },
+    {
+      "name": "specs_id",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2756,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_limit",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2757,
+      "sourceRef": "S07",
+      "getInfoWire": "boolean (explicit cast)"
+    },
+    {
+      "name": "limit_type",
+      "sqlType": "tinyint(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2758,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "limit_num",
+      "sqlType": "int(11)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2759,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "refusal",
+      "sqlType": "varchar(255)",
+      "nullable": false,
+      "ddlDefault": "",
+      "autoIncrement": false,
+      "line": 2760,
+      "sourceRef": "S07",
+      "getInfoWire": "string or nullable/raw DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_police",
+      "sqlType": "TINYINT(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2761,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    },
+    {
+      "name": "is_sold",
+      "sqlType": "TINYINT(1)",
+      "nullable": false,
+      "ddlDefault": "0",
+      "autoIncrement": false,
+      "line": 2762,
+      "sourceRef": "S07",
+      "getInfoWire": "integer-like DB scalar; no explicit getInfo cast"
+    }
+  ],
+  "legacyTransformations": [
+    {
+      "fields": [
+        "is_sub"
+      ],
+      "type": "number[]",
+      "rule": "Append 1 iff stored is_sub==1, then append 0 iff is_vip==1; [] otherwise. Stored is_vip stays in DTO.",
+      "sourceRef": "S03",
+      "lines": [
+        365,
+        369
+      ]
+    },
+    {
+      "fields": [
+        "recommend"
+      ],
+      "type": "[]",
+      "rule": "Always empty; not read from a column.",
+      "sourceRef": "S03",
+      "lines": [
+        365,
+        370
+      ]
+    },
+    {
+      "fields": [
+        "cost",
+        "give_integral",
+        "ot_price",
+        "postage",
+        "price",
+        "vip_price"
+      ],
+      "type": "number",
+      "rule": "Explicit floatval conversions. settle_price and star are NOT converted by getInfo.",
+      "sourceRef": "S03",
+      "lines": [
+        371,
+        402
+      ]
+    },
+    {
+      "fields": [
+        "video_open",
+        "is_limit"
+      ],
+      "type": "boolean",
+      "rule": "Explicit boolean conversion.",
+      "sourceRef": "S03",
+      "lines": [
+        375,
+        379
+      ]
+    },
+    {
+      "fields": [
+        "slider_image"
+      ],
+      "type": "string[] or null in malformed/empty legacy JSON",
+      "rule": "Model json_decode on any string; non-string returns[]. Empty stored string decodes null, not[].",
+      "sourceRef": "S06",
+      "lines": [
+        259,
+        262
+      ]
+    },
+    {
+      "fields": [
+        "delivery_type"
+      ],
+      "type": "string[]",
+      "rule": "Truthy CSV splits; falsey returns[].",
+      "sourceRef": "S06",
+      "lines": [
+        63,
+        69
+      ]
+    },
+    {
+      "fields": [
+        "cate_id"
+      ],
+      "type": "string[] or original array",
+      "rule": "No category lookup or parent expansion: explode comma if not array. Empty CSV yields [\"\"].",
+      "sourceRef": "S03",
+      "lines": [
+        383,
+        383
+      ]
+    },
+    {
+      "fields": [
+        "brand_id"
+      ],
+      "type": "number[]",
+      "rule": "brand_com split+intval; [] if empty. Stored leaf brand_id is discarded even if positive when brand_com empty. brand_com remains raw.",
+      "sourceRef": "S03",
+      "lines": [
+        377,
+        377
+      ]
+    },
+    {
+      "fields": [
+        "coupons"
+      ],
+      "type": "{title:string,id:integer-like}[]",
+      "rule": "Product coupon relation issue_coupon_id -> StoreCouponIssue title,id. No is_del/status/date filter, no preserved relation snapshot title, unspecified order.",
+      "sourceRef": "S21",
+      "lines": [
+        386,
+        389
+      ]
+    },
+    {
+      "fields": [
+        "label_id"
+      ],
+      "type": "{id:integer-like,label_name:string}[]",
+      "rule": "Main CSV/model integer IDs -> selected user label rows ordered idDESC; missing labels vanish. No owner filter in this lookup.",
+      "sourceRef": "S19",
+      "lines": [
+        44,
+        49
+      ]
+    },
+    {
+      "fields": [
+        "store_label_id"
+      ],
+      "type": "{id:integer-like,label_name:string}[]",
+      "rule": "Main accessor integer IDs -> selected product-label id/name rows. No status/owner filter or explicit sort in getInfo.",
+      "sourceRef": "S03",
+      "lines": [
+        390,
+        396
+      ]
+    },
+    {
+      "fields": [
+        "ensure_id"
+      ],
+      "type": "number[]",
+      "rule": "Model CSV int/array_filter accessor only; empty=>[]. No ensure lookup.",
+      "sourceRef": "S06",
+      "lines": [
+        114,
+        120
+      ]
+    },
+    {
+      "fields": [
+        "specs"
+      ],
+      "type": "array/mixed|null",
+      "rule": "Persisted JSON snapshot decoded by model, falsey=>[]; not replaced from current template. specs_id remains persisted integer-like scalar.",
+      "sourceRef": "S06",
+      "lines": [
+        127,
+        132
+      ]
+    },
+    {
+      "fields": [
+        "presale_time"
+      ],
+      "type": "[] or [string,string]",
+      "rule": "Only checks presale_start_time==0; otherwise formats both endpoints in source timezone, even end0 (1970-01-01 08:00:00).",
+      "sourceRef": "S03",
+      "lines": [
+        398,
+        398
+      ]
+    },
+    {
+      "fields": [
+        "auto_on_time",
+        "auto_off_time"
+      ],
+      "type": "string",
+      "rule": "auto_on_time hidden when is_show truthy; auto_off_time hidden when is_show falsey; other nonzero timestamps format Y-m-d H:i:s, else empty.",
+      "sourceRef": "S03",
+      "lines": [
+        399,
+        400
+      ]
+    },
+    {
+      "fields": [
+        "video_link"
+      ],
+      "type": "string",
+      "rule": "If nonempty and strpos(value,\"http\")===false, prefix site_url literally; this is not a URL parser/origin policy.",
+      "sourceRef": "S03",
+      "lines": [
+        379,
+        381
+      ]
+    },
+    {
+      "fields": [
+        "description"
+      ],
+      "type": "string",
+      "rule": "Read separate product_id,type0 description, htmlspecialchars_decode once; missing=>empty. Current TS saves raw HTML, so do not blindly decode new TS rows again.",
+      "sourceRef": "S22",
+      "lines": [
+        38,
+        43
+      ]
+    },
+    {
+      "fields": [
+        "custom_form",
+        "custom_form_info"
+      ],
+      "type": "array",
+      "rule": "Unconditionally resets both to[]. If system_form_id, fetch current system_form.value by id regardless status, decode it, and derive compact info via handleForm. Ignores persisted product.custom_form.",
+      "sourceRef": "S03",
+      "lines": [
+        402,
+        410
+      ]
+    },
+    {
+      "fields": [
+        "activity"
+      ],
+      "type": "string[]",
+      "rule": "Nonempty CSV retains order: 0默认,1秒杀,2砍价,3拼团; other values passthrough. Empty=>all four default captions.",
+      "sourceRef": "S03",
+      "lines": [
+        459,
+        475
+      ]
+    },
+    {
+      "fields": [
+        "recommend_list"
+      ],
+      "type": "{product_id:string,image:string}[]",
+      "rule": "Main CSV order preserved; image lookup by productid without visibility/delete filter; missing=>empty image. Empty=>[].",
+      "sourceRef": "S03",
+      "lines": [
+        477,
+        490
+      ]
+    }
+  ],
+  "frontendCreateDefaults": {
+    "system_form_id": 0,
+    "is_presale_product": 0,
+    "is_limit": 0,
+    "limit_type": 1,
+    "limit_num": 1,
+    "is_vip_product": 0,
+    "is_support_refund": 0,
+    "disk_info": "",
+    "presale_day": 1,
+    "presale_time": [],
+    "auto_on_time": "",
+    "video_open": false,
+    "store_name": "",
+    "freight": 1,
+    "postage": 0,
+    "custom_form": [],
+    "cate_id": [],
+    "label_id": [],
+    "ensure_id": [],
+    "keyword": "",
+    "unit_name": "",
+    "specs_id": 0,
+    "store_info": "",
+    "bar_code": "",
+    "code": "",
+    "image": "",
+    "recommend_image": "",
+    "slider_image": [],
+    "description": "",
+    "ficti": 0,
+    "give_integral": 0,
+    "sort": 0,
+    "is_show": 1,
+    "is_hot": 0,
+    "is_benefit": 0,
+    "is_best": 0,
+    "is_new": 0,
+    "is_good": 0,
+    "is_postage": 0,
+    "is_sub": [],
+    "id": 0,
+    "spec_type": 0,
+    "video_link": "",
+    "temp_id": "",
+    "attrs": [],
+    "items": [
+      {
+        "pic": "",
+        "price": 0,
+        "cost": 0,
+        "ot_price": 0,
+        "stock": 0,
+        "bar_code": "",
+        "code": ""
+      }
+    ],
+    "activity": [
+      "默认",
+      "秒杀",
+      "砍价",
+      "拼团"
+    ],
+    "couponName": [],
+    "header": [],
+    "selectRule": "",
+    "coupon_ids": [],
+    "command_word": "",
+    "delivery_type": [
+      "1"
+    ],
+    "specs": [],
+    "recommend_list": [],
+    "brand_id": [],
+    "product_type": 0
+  },
+  "frontendSingleSkuDefaults": {
+    "pic": "",
+    "price": 0,
+    "settle_price": 0,
+    "cost": 0,
+    "ot_price": 0,
+    "stock": 0,
+    "bar_code": "",
+    "code": "",
+    "weight": 0,
+    "volume": 0,
+    "brokerage": 0,
+    "brokerage_two": 0,
+    "vip_price": 0,
+    "virtual_list": [],
+    "write_times": 0,
+    "write_valid": 1,
+    "days": 1
+  },
+  "multiAttrPlaceholder": {
+    "pic": "",
+    "vip_price": 0,
+    "price": 0,
+    "settle_price": 0,
+    "cost": 0,
+    "ot_price": 0,
+    "stock": 0,
+    "bar_code": "",
+    "weight": 0,
+    "volume": 0,
+    "brokerage": 0,
+    "brokerage_two": 0,
+    "code": "",
+    "write_times": 1,
+    "write_valid": 1,
+    "days": 0,
+    "section_time": []
+  },
+  "formFormatter": {
+    "mapping": {
+      "checkboxs": "多选框",
+      "citys": "城市",
+      "dates": "日期",
+      "dateranges": "日期范围",
+      "radios": "单选框",
+      "selects": "下拉框",
+      "texts": "文本框",
+      "times": "时间",
+      "timeranges": "时间范围",
+      "uploadPicture": "图片"
+    },
+    "row": {
+      "id": "item.id or empty",
+      "type": "item.name or empty",
+      "name": "mapping[type] or empty",
+      "title": "titleConfig.value or empty",
+      "tip": "tipConfig.value or empty",
+      "list": "wordsConfig.list only for checkboxs/radios/selects; otherwise []",
+      "require": "titleShow.val or false",
+      "value": "item.value or empty"
+    },
+    "sourceRef": "S12"
+  },
+  "recommendedCorrections": [
+    "READ ONLY current-authority repeatable-read snapshot with final DB-clock expiry; never run checkProductAttr/get.config/writes/allocate identities.",
+    "Use explicit all-main-column snake projection plus every legacy transformation; preserve deleted/hidden product readability under product.view as source, not modern detail isDel rejection.",
+    "Reconstruct attrs from authoritative active ordinary SKU rows and dimensions; support legacy and TS snapshot shapes, retain stable IDs/unique, return retired rows separately if needed.",
+    "Never return assigned or available card passwords in general editor GET. virtual_list=[] plus counts/import-only semantics can roundtrip safely with current save baseline.",
+    "Do not erase fixed disk_info on a whole-form resave. Choose manager-authorized fixed-content read or implement a verified preserve-unchanged secret contract before redacting it; trusted copy strips both fixed and inventory secrets.",
+    "Persisted custom_form snapshot versus source reset-to-current-system-form must be an explicit parity/correction decision, never accidental data loss.",
+    "Missing result can be reconstructed read-only from valid DB dimensions/SKUs. No SKU must be a clearly marked editor template/repair-needed state, not a fabricated persistent saleable identity. Ambiguity/malformed/duplicate/oversized sets should refuse instead of mutating.",
+    "Bound complete categories/templates/rows/descriptions/forms/media and check overflow, not silent limit500. Private media authorized and signed only after snapshot; retained canonical identifiers on POST.",
+    "Source and current TS description encoding differ: establish normalization or provenance policy; preserve editable bytes and use separate preview sanitizer.",
+    "GET completion alone is not full Vue editor migration: generator(0), metadata options, copied SKU/secret policy, draft/defaults, save/unknown recovery and browser flows remain required."
+  ],
+  "chosenTargetContract": {
+    "id0AndMissing": "Both rejected; no synthetic creation-default GET response.",
+    "authority": "One RR READ ONLY snapshot; live product.view / exact seed620; final DB-clock expiry.",
+    "mainAssociations": "Main persisted columns are authoritative; do not union stale relation rows into editor selection.",
+    "sku": "Authoritative active ordinary SKU+dimensions; explicit old pic/valueN/detail/values and snake核销 projection; single no-SKU may use unpersisted main template without an allocated identity; ambiguous topology409.",
+    "cards": "No historical card_no/card_pwd or stored snapshot virtual_list; virtual_list=[] plus aggregate available/assigned counts.",
+    "fixedContent": "Keep actual disk_info under the existing modern product.view detail boundary to avoid clearing it on complete-form save. This is a documented existing access boundary, not a claim of secret-redacted GET.",
+    "forms": "Match source current-system-form custom_form; separately return stored_custom_form so the persisted snapshot is explicit rather than silently discarded.",
+    "copy": "No completed trusted localCopy HTTP/copy-flow claim; stripping source unique/card/fixed contents remains required when that flow is connected."
+  }
+}

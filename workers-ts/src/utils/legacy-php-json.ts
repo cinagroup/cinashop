@@ -7,9 +7,11 @@ const PHP_DEFAULT_JSON_DEPTH = 512;
  * json_encode: decoded objects are associative arrays, including [] for {}.
  * Object insertion order matters when PHP decides whether an array is a list;
  * JSON.parse's reordered integer property names cannot prove that order. */
-export function legacyPhpJsonDecodeWire(raw: string | null): unknown {
+export function legacyPhpJsonDecodeWire(raw: string | null, maximumCharacters = MAX_PICS_CHARACTERS): unknown {
   if (raw === null) return null;
-  if (raw.length > MAX_PICS_CHARACTERS) throw new ServiceUnavailableException('历史评价图片数据过大，请核对数据');
+  if (!Number.isSafeInteger(maximumCharacters) || maximumCharacters <= 0) throw Error('Invalid historical JSON capacity');
+  if (raw.length > maximumCharacters) throw new ServiceUnavailableException(maximumCharacters === MAX_PICS_CHARACTERS
+    ? '历史评价图片数据过大，请核对数据' : '历史JSON数据过大，请核对数据');
   try { JSON.parse(raw); } catch { return null; }
 
   let index = 0;

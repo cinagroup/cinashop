@@ -1,0 +1,218 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ❯ |regular-unit| test/admin-legacy-product-read.test.ts (12 tests | 1 failed) 4990ms
+     × refuses ambiguous dimensions rather than resetting spec_type or replacing active identities on GET 177ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > refuses ambiguous dimensions rather than resetting spec_type or replacing active identities on GET
+AssertionError: promise resolved "{ tempList: [], …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cateList": [
++     {
++       "label": "平台分类",
++       "pid": 0,
++       "value": 1,
++     },
++   ],
++   "productInfo": {
++     "activity": [
++       "默认",
++       "秒杀",
++       "砍价",
++       "拼团",
++     ],
++     "add_time": 1792038555,
++     "attr": {
++       "bar_code": "",
++       "brokerage": 0,
++       "brokerage_two": 0,
++       "code": "",
++       "cost": 0,
++       "days": 0,
++       "detail": {
++         "规格": "默认",
++       },
++       "disk_info": "",
++       "ot_price": 0,
++       "pic": "",
++       "price": 0,
++       "section_time": [],
++       "settle_price": 0,
++       "stock": 0,
++       "value1": "默认",
++       "vip_price": 0,
++       "virtual_available": 0,
++       "virtual_list": [],
++       "virtual_total": 0,
++       "volume": 0,
++       "weight": 0,
++       "write_times": 1,
++       "write_valid": 1,
++     },
++     "attrs": [
++       {
++         "bar_code": "",
++         "brokerage": 0,
++         "brokerage_two": 0,
++         "code": "",
++         "cost": 3,
++         "days": 0,
++         "detail": {
++           "规格": "默认",
++         },
++         "disk_info": "",
++         "id": 1,
++         "is_retired": 0,
++         "ot_price": 20,
++         "pic": "/uploads/sku.png",
++         "price": 12.5,
++         "sales": 0,
++         "section_time": [
++           "",
++           "",
++         ],
++         "settle_price": 0,
++         "stock": 7,
++         "suk": "默认",
++         "sum_stock": 7,
++         "unique": "84fac33a",
++         "value1": "默认",
++         "vip_price": 8,
++         "virtual_available": 0,
++         "virtual_list": [],
++         "virtual_total": 0,
++         "volume": 0,
++         "weight": 0,
++         "write_times": 1,
++         "write_valid": 1,
++       },
++     ],
++     "auto_off_time": "",
++     "auto_on_time": "",
++     "bar_code": "",
++     "brand_com": "",
++     "brand_id": [],
++     "browse": 0,
++     "cate_id": [
++       "1",
++     ],
++     "code": "",
++     "code_path": "",
++     "collect": 0,
++     "command_word": "",
++     "cost": 3,
++     "coupons": [],
++     "custom_form": [],
++     "custom_form_info": [],
++     "delivery_type": [
++       "1",
++     ],
++     "description": "<p>完整描述</p>",
++     "description_preview": "<p>完整描述</p>",
++     "ensure_id": [],
++     "ficti": 0,
++     "freight": 1,
++     "give_integral": 0,
++     "id": 1,
++     "image": "/uploads/main.png",
++     "is_bargain": 0,
++     "is_benefit": 0,
++     "is_best": 0,
++     "is_del": 0,
++     "is_good": 0,
++     "is_hot": 0,
++     "is_limit": false,
++     "is_new": 0,
++     "is_police": 0,
++     "is_postage": 0,
++     "is_presale_product": 0,
++     "is_seckill": 0,
++     "is_show": 0,
++     "is_sold": 0,
++     "is_sub": [],
++     "is_support_refund": 1,
++     "is_verify": 1,
++     "is_vip": 0,
++     "is_vip_product": 0,
++     "items": [
++       {
++         "detail": [
++           "默认",
++         ],
++         "value": "规格",
++       },
++     ],
++     "keyword": "",
++     "label_id": [],
++     "limit_num": 0,
++     "limit_type": 0,
++     "mer_id": 0,
++     "mer_use": 0,
++     "ot_price": 20,
++     "pid": 0,
++     "postage": 0,
++     "presale_day": 0,
++     "presale_end_time": 0,
++     "presale_start_time": 0,
++     "presale_time": [],
++     "price": 12.5,
++     "product_type": 0,
++     "recommend": [],
++     "recommend_image": "",
++     "recommend_list": [],
++     "refusal": "",
++     "relation_id": 0,
++     "retired_attrs": [],
++     "sales": 0,
++     "settle_price": "0.00",
++     "sku_repair_required": false,
++     "slider_image": [
++       "/uploads/main.png",
++     ],
++     "sort": 0,
++     "soure_link": "",
++     "spec_type": 1,
++     "specs": [],
++     "specs_id": 0,
++     "spu": "4411039770131",
++     "star": "5.0",
++     "stock": 7,
++     "store_info": "",
++     "store_label_id": [],
++     "store_name": "完整商品",
++     "stored_custom_form": [],
++     "system_form_id": 0,
++     "temp_id": 0,
++     "type": 0,
++     "unit_name": "件",
++     "video_link": "",
++     "video_open": false,
++     "vip_price": 8,
++   },
++   "tempList": [],
+  }
+
+ ❯ test/admin-legacy-product-read.test.ts:65:60
+     63|   it('refuses ambiguous dimensions rather than resetting spec_type or …
+     64|     await create(); await f.db.update(storeProduct).set({ specType: 1 …
+     65|     const before = await f.snapshot(); await expect(read()).rejects.to…
+       |                                                            ^
+     66|     expect(await f.snapshot()).toEqual(before);
+     67|     await f.db.insert(storeProductAttr).values({ productId: 1, type: 0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  04:29:07
+   Duration  9.88s (transform 3.45s, setup 0ms, import 4.76s, tests 4.99s, environment 0ms)
+

@@ -1,0 +1,432 @@
+{
+  "scope": "Actual bounded legacy Admin product GET with current authorization and complete read-only snapshot; full editor/copy and original PHP description import semantics remain open",
+  "status": "selected-final-validation-and-source-review-passed",
+  "sealedAt": "2026-10-15T04:50:21.694444+00:00",
+  "baseCommit": "ac04e154443267d8b7209cc7659066be5d02e478",
+  "source": {
+    "phpExecution": false,
+    "pinnedReferences": 27,
+    "sourceInvestigation": "audit/product-read-20261015/source-investigation.json",
+    "sourceInvestigationBoundary": "Earlier static report retained. Its decode-once shorthand is explicitly corrected by independent-review-addendum.md: PHP model accessor plus service both decode. No raw PHP import completion claim.",
+    "encodingCorrectionReferences": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "lines": "400, 982",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreDescriptionServices.php",
+        "lines": "38-42, 52-61",
+        "sha256": "ba4f5434c0d76432fe962eac2f8f8cca233753c6259438fbc018b80224094acd"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreDescription.php",
+        "lines": "28, 32-34",
+        "sha256": "90582355c2949f87c5590c259e8ea2e74e48ed6dfc61253ff4f35a67e913799f"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreDescriptionDao.php",
+        "lines": "40-42",
+        "sha256": "8fbe9fc7c6f0533e19bc21c434b2b20abf7f01cf989012f0fe42c19644223e11"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+        "lines": "136-145, 172-175",
+        "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/content/ArticleContentPolicy.ts",
+        "lines": "191-201, 243-264",
+        "sha256": "28fa50b40dcdd61d08a8742c4eff417c05ff5760eaf7ab25c075c10a0b3f6126"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/scripts/data-migration/runner.ts",
+        "lines": "24-32, 307-313, 1044-1118, 1277-1326",
+        "sha256": "0fb05f86d750dd933f61bd4e763a8655d160d54665cc403b59651045fa818edc"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/scripts/data-migration/manifest.ts",
+        "lines": "374-377",
+        "sha256": "9668231ce2b89336befab2780e63dbb962df3012d474437194a99296e23a79f1"
+      }
+    ]
+  },
+  "implementationHashes": {
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "1a1dac43b243422e920d424042cb6a2add65da75f28b51215a700de692c2026b",
+    "workers-ts/src/controllers/api/v1/AdminLegacyProductReadController.ts": "5b3e94cae8d3ac9b058feb99cf28c89ebae00ac30b47d85da147678aea1478f1",
+    "workers-ts/src/routes/adminapi.ts": "d8882a1782a22c3b144a662ef8239b6d88a7c68671f44827e89bf69acaf43a1b",
+    "workers-ts/src/services/admin/AdminLegacyProductReadBudget.ts": "8bcf095d8b85108365f6af890f9761222c1729701ec032cf1753c26499d03e2c",
+    "workers-ts/src/services/admin/AdminLegacyProductReadService.ts": "ecf74aec76992f9ab0c0209bca461538b04d9f2f8a8c601074c2e73139d86a5c",
+    "workers-ts/src/utils/legacy-php-json.ts": "b9dc7e6e39442de62677817c9c1f17be9bbd711dcbbf2b3ed97d157b600ace77",
+    "workers-ts/test/admin-legacy-product-read-http.test.ts": "d84eacbc4510efb145b758de8264b898ea2070210db37139ac064d358d3e97cb",
+    "workers-ts/test/admin-legacy-product-read-native.test.ts": "8b10e0261e1de31f6ebfbf539b1b892cc37e8dd1e3706498d07b7c77c541ea72",
+    "workers-ts/test/admin-legacy-product-read.test.ts": "3650db59ba5802a3d2ec041c47744698750fecca0c23436a9ab8b324ef824225",
+    "workers-ts/test/helpers/adminLegacyProductRead.ts": "c294a523f5223975aff4b27f96deddd920b25b3512d8a15576ce560a604d0238"
+  },
+  "finalValidation": {
+    "ordinary-final": {
+      "name": "ordinary-final",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-input.test.ts",
+        "test/admin-legacy-product-save.test.ts",
+        "test/admin-legacy-product-save-http.test.ts",
+        "test/admin-product-rule-http.test.ts",
+        "test/admin-product-catalog-read.test.ts",
+        "test/admin-product-catalog-read-http.test.ts",
+        "test/admin-product-reply.test.ts",
+        "test/admin-product-reply-http.test.ts",
+        "test/admin-product-fictitious-reply.test.ts",
+        "test/admin-product-fictitious-reply-http.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:44:37.975350+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:46:08.886904+00:00",
+      "exitCode": 0,
+      "log": "ordinary-final.log",
+      "logSHA256": "7e765b6bdfdcee873d4b3601f21e901d1da77cf9184a9ae462317c31c76d0df6",
+      "passedTests": 204,
+      "passedFiles": 12,
+      "skippedTests": 0
+    },
+    "native-confirmed": {
+      "name": "native-confirmed",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-read-native.test.ts",
+        "test/admin-product-rule-http.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:43:41.715899+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:44:25.130899+00:00",
+      "exitCode": 0,
+      "log": "native-confirmed.log",
+      "logSHA256": "af0d2943b2f5345c241d0ed82cf6b9a7c399648478486590ccb23452b201a285",
+      "passedTests": 35,
+      "passedFiles": 4,
+      "skippedTests": 0
+    },
+    "types-unit": {
+      "name": "types-unit",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:46:18.277466+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:48:26.658222+00:00",
+      "exitCode": 0,
+      "log": "types-unit.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "types-runtime": {
+      "name": "types-runtime",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:48:37.526690+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:49:57.422542+00:00",
+      "exitCode": 0,
+      "log": "types-runtime.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "counts": {
+    "ordinaryPassed": 204,
+    "nativePassed": 35,
+    "overlappingDefinitions": 32,
+    "nativeOnlyDefinitions": 3,
+    "distinctPassingDefinitions": 207,
+    "passingExecutions": 239,
+    "ordinaryFiles": 12,
+    "nativeFiles": 4,
+    "distinctFiles": 13,
+    "skips": 0,
+    "developmentRepeatsExcluded": true
+  },
+  "developmentAttempts": {
+    "read-initial": {
+      "name": "read-initial",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-read.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:29:06.956610+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:29:17.355820+00:00",
+      "exitCode": 1,
+      "log": "read-initial.log",
+      "resolution": "Fixture changed spec_type but retained a valid default dimension; delete attrs before asserting ambiguous topology refusal. Production behavior was correct."
+    },
+    "read-http": {
+      "name": "read-http",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:30:16.953775+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:30:40.385471+00:00",
+      "exitCode": 0,
+      "log": "read-http.log"
+    },
+    "read-native": {
+      "name": "read-native",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-read-native.test.ts",
+        "test/admin-product-rule-http.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:31:28.165049+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:32:09.695627+00:00",
+      "exitCode": 0,
+      "log": "read-native.log"
+    },
+    "read-budget": {
+      "name": "read-budget",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:38:26.021667+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:38:50.460342+00:00",
+      "exitCode": 0,
+      "log": "read-budget.log"
+    },
+    "native-final": {
+      "name": "native-final",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-read-native.test.ts",
+        "test/admin-product-rule-http.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:41:15.090559+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:41:58.444336+00:00",
+      "exitCode": 0,
+      "log": "native-final.log"
+    },
+    "native-sealed": {
+      "name": "native-sealed",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-legacy-product-read.test.ts",
+        "test/admin-legacy-product-read-http.test.ts",
+        "test/admin-legacy-product-read-native.test.ts",
+        "test/admin-product-rule-http.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:42:44.010478+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:43:27.836870+00:00",
+      "exitCode": 1,
+      "log": "native-sealed.log",
+      "resolution": "New HTTP capacity fixture omitted system_form.status=1, so its initial POST correctly failed before GET. Set status1; all four files reran in native-confirmed."
+    }
+  },
+  "runtimeDiagnostics": {
+    "ordinary": "Passing ordinary run includes an unchanged duplicate changeTemplate key warning from the pinned old PHP Vue productList source.",
+    "native": "Expected fault/dispatch stderr in passing native tests is retained in full log; it does not prove real provider delivery."
+  },
+  "freeze": {
+    "capturedAt": "2026-10-15T04:43:37.762798+00:00",
+    "count": 3114,
+    "sha256": "1b1bb3856cf216d098a7d7dea0b80a02063ac64b46889a927149622a68f03ae0",
+    "manifestSHA256": "5725c814196f6449f5fae57d82b96c51483b218f6e364f6ee2480832eb77d60f",
+    "verifiedAtSeal": true,
+    "scope": "workers-ts src/test/scripts/migrations plus seven package/type/Vitest/generated declaration files selected by freeze.py",
+    "algorithm": "SHA256 of compact JSON sorted path/sha256 records from git ls-files --cached --others --exclude-standard; raw-byte individual hashes",
+    "boundary": "Selected inputs only; not every transitive dependency, wrangler config, view/common, installed dependency or environment value. Full per-input manifest retained locally in rawLocalEvidence/source-inputs.json. External PHP references separately pinned."
+  },
+  "proofBoundaries": {
+    "sql": "Owned real PGlite ordinary fixtures and local PG16.14 native fixtures. Native SELECT-only non-superuser LOGIN proves no DML/sequence and denied card credential column access, with independent peer PID/RR snapshot/DB-clock checks. This does not configure production ACL.",
+    "http": "Real old productInfoApi/productAddApi/request/Axios and actual Hono/JWT/SQL; explicit host cookie/UI/database factory doubles. Consumer projection is handwritten from pinned Vue, not a mounted editor.",
+    "media": "Existing canonicalization, metadata authorization and HMAC signing; no R2 byte delivery or external provider acceptance.",
+    "frontend": "No frontend changes or new browser/full editor acceptance.",
+    "encoding": "TS raw HTML is preserved; legacy PHP escaped-row normalization/provenance is not implemented."
+  },
+  "capacity": {
+    "sqlCumulativeEstimatedBytes": 1048576,
+    "productInfoActualUTF8Bytes": 786432,
+    "responseActualUTF8Bytes": 2097152,
+    "rowsPerCompleteCollection": 10000,
+    "formFields": 100,
+    "jsonNodes": 30000,
+    "jsonDepth": 24,
+    "jsonArrayLength": 1000,
+    "skuDimensions": 3,
+    "dimensionValues": 50,
+    "skuCombinations": 200,
+    "boundary": "Complete classified refusals, never silent truncation. Not every accepted POST or historical row can later be reopened/roundtripped by this GET."
+  },
+  "review": {
+    "mode": "Static source review plus receipt/hash verification; no reviewer-run heavy checks. Reviewer authored the SQL budget helper, disclosed in addendum; this is not a separate independent implementation review of that helper.",
+    "result": "Original P2 issues fixed by SQL budgets, bounded projection, separate editor metadata and explicit capacity narrowing; native final case passed; no additional confirmed P0-P2 code blocker. Historical reviewer pending-gate wording retained; completed root-run receipts above establish later final gates.",
+    "artifacts": {
+      "freeze.py": {
+        "path": "audit/product-read-20261015/freeze.py",
+        "sha256": "00191447ac8a3bf0629bf30a65be09105ce2415565c8576501e2fa58945597bf",
+        "bytes": 1664
+      },
+      "independent-review-addendum.md": {
+        "path": "audit/product-read-20261015/independent-review-addendum.md",
+        "sha256": "486709c596e9a6138416eaaa9ce372e7c125b3495de8d1f5a5ba65557dfb11ee",
+        "bytes": 13059
+      },
+      "independent-review.md": {
+        "path": "audit/product-read-20261015/independent-review.md",
+        "sha256": "82b23d296c6d91afce69699ef2485e8a5b54f0aeda8cc6392a70c193954e16fa",
+        "bytes": 8982
+      },
+      "native-confirmed.log": {
+        "path": "audit/product-read-20261015/native-confirmed.log",
+        "sha256": "af0d2943b2f5345c241d0ed82cf6b9a7c399648478486590ccb23452b201a285",
+        "bytes": 12705
+      },
+      "native-sealed-failed.log": {
+        "path": "audit/product-read-20261015/native-sealed-failed.log",
+        "sha256": "f09180d2d153c547640dde95d682058d09c5a9a7f2a06299aaa63dd0fa042de0",
+        "bytes": 12991
+      },
+      "ordinary-final.log": {
+        "path": "audit/product-read-20261015/ordinary-final.log",
+        "sha256": "7e765b6bdfdcee873d4b3601f21e901d1da77cf9184a9ae462317c31c76d0df6",
+        "bytes": 676
+      },
+      "publish-review.md": {
+        "path": "audit/product-read-20261015/publish-review.md",
+        "sha256": "ef728ed73584b94c1aa50e8f4b5018c4dd86ad7d52459c716b01121299f84da3",
+        "bytes": 7261
+      },
+      "read-initial-failed.log": {
+        "path": "audit/product-read-20261015/read-initial-failed.log",
+        "sha256": "1ed64a95e775a4488acfc01dc28a32f8e56ccb4b7c9d218cbfa5278fcb222f17",
+        "bytes": 5585
+      },
+      "source-investigation.json": {
+        "path": "audit/product-read-20261015/source-investigation.json",
+        "sha256": "0e87e2f23dba9949cf4ff82578867fae0c6ba5857f0eeb098fab64235522ccc8",
+        "bytes": 46494
+      },
+      "source-investigation.md": {
+        "path": "audit/product-read-20261015/source-investigation.md",
+        "sha256": "507b630dc5dc6d46acf14f5d51dea3a646d9c804d5f52fcc674dc09a692f67d6",
+        "bytes": 31540
+      }
+    }
+  },
+  "cleanup": {
+    "verifiedAt": "2026-10-15T04:46:19.472948+00:00",
+    "clusters": [
+      {
+        "ownedCluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-S7wJa6",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running\n"
+      },
+      {
+        "ownedCluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-GAiiZN",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running\n"
+      },
+      {
+        "ownedCluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-T6pNgZ",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running\n"
+      },
+      {
+        "ownedCluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-W5z7De",
+        "exitCode": 3,
+        "output": "pg_ctl: no server running\n"
+      }
+    ]
+  },
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "completed": 249,
+      "open": 155,
+      "checkboxLinesSHA256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+      "checkboxLinesUnchangedFromBase": true,
+      "hashAlgorithm": "SHA256 of newline-joined exact checkbox lines without trailing newline"
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "completed": 50,
+      "open": 38,
+      "checkboxLinesSHA256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+      "checkboxLinesUnchangedFromBase": true,
+      "hashAlgorithm": "SHA256 of newline-joined exact checkbox lines without trailing newline"
+    }
+  },
+  "remaining": [
+    "Full six-step Vue edit/copy UI, generate_attr and trusted copy HTTP",
+    "Unknown save commit outcome recovery",
+    "Original PHP description encoding/provenance normalization with source-data acceptance",
+    "Coupon fulfillment product type2",
+    "Full-repository CI and formal deployed ACL/provider/production acceptance"
+  ],
+  "production": {
+    "ddlExecuted": false,
+    "businessDataWritten": false,
+    "deployed": false
+  },
+  "rawLocalEvidence": "/tmp/cinashop-product-read-20261015",
+  "rawLocalEvidenceBoundary": "Final test logs, failed boundary attempts, commands, hashes and independent reports are persisted in this batch; other development logs and selected-input full manifest remain local diagnostic artifacts."
+}

@@ -1,5 +1,13 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-15 商品完整保存与编辑读取增量
+
+上一批提交 `ac04e154` 已接通真正旧 POST `/adminapi/product/product/:id`，主表、稳定SKU、描述、关系、库存、审计及持久化后续事件同事务保存，详见[保存报告](workers-ts/docs/php-ts-admin-product-save-20261015.md)。本批新增真正旧 GET，同一只读快照恢复主表／SKU／目录／表单回显；不隐式修复SKU、不读取卡密凭据，固定交付内容按已有查看权限保留。
+
+SQL读取累计1 MiB、整表单768 KiB、响应2 MiB及字段／集合边界明确拒绝超限。预览、退役SKU、历史快照移到独立元数据，避免新扩展混入旧表单整表保存。真实旧JS/request/Axios/App/JWT/SQL往返、SELECT-only原生LOGIN、独立会话一致快照及数据库时钟拒绝证据见[读取报告](workers-ts/docs/php-ts-admin-product-read-20261015.md)和[账本](workers-ts/audit/php-ts-admin-product-read-20261015.json)；失败尝试与独立复核保留，不把手写消费转换当作完整Vue／浏览器验收。
+
+完整六步界面／规格生成／复制、未知保存结果恢复、原始PHP描述编码归一化、正式运行账号／provider／生产验收和全库CI仍开放。PHP描述模型与服务双层decode的来源补充已留证，本批不宣称原始源数据已等价导入。本批没有生产DDL、业务写入或部署；所有复选行保持，Checklist404／249完成／155开放，Audit88／50／38。以下历史段落保留各批当时范围。
+
 ## 2026-10-15 商品目录四维筛选与旧供应商选择器增量
 
 主商品目录接通分类多选、供应商、完整品牌路径与分组商品标签；新增真正旧 GET `/adminapi/supplier/list`，包含停用未删除供应商、精确 ID/名称及倒序完整数组。保留分类计数例外、括号数组、独立权限和实时只读快照；已分类的供应商读取拒绝转换为旧 Axios 可消费的业务错误，未知500边界仍明确保留。

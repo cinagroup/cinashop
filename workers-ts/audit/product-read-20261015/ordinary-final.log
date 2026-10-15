@@ -1,0 +1,21 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+▲ [WARNING] Duplicate key "changeTemplate" in object literal [duplicate-object-key]
+
+    ../../cinashop-php/view/admin/src/pages/product/productList/index.vue:941:4:
+      941 │     changeTemplate(msg) {
+          ╵     ~~~~~~~~~~~~~~
+
+  The original key "changeTemplate" is here:
+
+    ../../cinashop-php/view/admin/src/pages/product/productList/index.vue:705:4:
+      705 │     changeTemplate(e) {
+          ╵     ~~~~~~~~~~~~~~
+
+
+ Test Files  12 passed (12)
+      Tests  204 passed (204)
+   Start at  04:44:38
+   Duration  90.36s (transform 11.04s, setup 0ms, import 30.39s, tests 58.43s, environment 1ms)
+

@@ -1,0 +1,118 @@
+{"version":"postgres (PostgreSQL) 16.14","host":"127.0.0.1","port":36527,"taskRoot":"/home/cina/cinagroup/cinashop/.cache/finance-postgres-S7wJa6","schemaMaintenance":true,"tests":["test/admin-legacy-product-read.test.ts","test/admin-legacy-product-read-http.test.ts","test/admin-legacy-product-read-native.test.ts","test/admin-product-rule-http.test.ts"]}
+FINANCE_LOCAL_IDENTITY {"data":"/home/cina/cinagroup/cinashop/.cache/finance-postgres-S7wJa6/data","version":"160014","host":"127.0.0.1","port":36527,"database":"cinashop_finance_test","role":"finance_test","superuser":true,"createdb":true}
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > loads the genuine old GET shape and saves its transformed whole DTO through the genuine old POST
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > loads the genuine old GET shape and saves its transformed whole DTO through the genuine old POST 635ms
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > admits seed620 read, refuses its write, denies unrelated/revoked identities and preserves no-store headers 496ms
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > returns old-Axios rejecting errors for missing/zero/path/query and classified repair refusal with no accidental mutation 555ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > retains fixed-content edit values through actual old helper reads and saves
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > retains fixed-content edit values through actual old helper reads and saves 699ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > keeps a valid large Unicode description editable without echoing a duplicate preview into the bounded POST
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > keeps a valid large Unicode description editable without echoing a duplicate preview into the bounded POST 691ms
+stderr | test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > refuses a large duplicated live form before returning a whole DTO the old form cannot resubmit
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_save_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_save',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-legacy-product-read-http.test.ts > actual productInfoApi/request/Axios → authenticated legacy GET and full save roundtrip > refuses a large duplicated live form before returning a whole DTO the old form cannot resubmit 662ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > returns the actual envelope, main scalar/JSON transforms and ordinary single attr, with no write side effects 633ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > reconstructs multi-SKU pic/detail/valueN and fresh stock from current rows instead of stale/camel snapshot JSON 520ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > does not backfill result, dimensions, identity or parent spec_type when a single legacy product has no SKU 329ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > refuses ambiguous dimensions rather than resetting spec_type or replacing active identities on GET 397ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > returns no historical card credentials, including assigned cards, and roundtrips only current inventory counts 507ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > retains actual fixed delivery for authorized editing, so an unchanged whole-form save cannot erase it 414ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > retains PHP live-template custom_form and formatter while separately exposing the persisted snapshot, including >32KiB form JSON 400ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > uses main selections rather than resurrecting stale relations, and resolves referenced inactive label/coupon rows 518ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > returns source platform shipping selectors, including inactive/deleted history, without mixing supplier templates 365ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > formats source conditional scheduled and presale values in Shanghai and expands relative video using the snapshot config 399ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > signs only owned private image/description previews and preserves editable HTML while never signing foreign references 423ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > reads deleted products, refuses missing/id0/query and rechecks actual password/role with no mutation 471ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > preserves the actual old physical-store supplier echo and pending owner1/cart branch on read-save 564ms
+ ✓ |regular-unit| test/admin-legacy-product-read.test.ts > true legacy Admin editor GET without implicit SKU/card mutations > refuses text budgets in SQL before loading a large value and bounds form expansion before mapping fields 410ms
+ ✓ |regular-unit| test/admin-legacy-product-read-native.test.ts > PG16 legacy editor GET restricted column LOGIN, RR snapshot and database expiry > reads with genuine seed620 SELECT-only LOGIN and only aggregate card columns, preserving all business rows and sequences 1506ms
+ ✓ |regular-unit| test/admin-legacy-product-read-native.test.ts > PG16 legacy editor GET restricted column LOGIN, RR snapshot and database expiry > keeps main, SKU, description, form and both directory selectors on one real RR snapshot while a distinct peer commits changes 1383ms
+ ✓ |regular-unit| test/admin-legacy-product-read-native.test.ts > PG16 legacy editor GET restricted column LOGIN, RR snapshot and database expiry > refuses expiry using actual PostgreSQL wall clock while the application clock remains before the deadline, without hidden writes 2543ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > serves five old contracts and both modern prefixes with their raw/parsed values and pagination differences 390ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > executes old saves with exact omitted-data success and full original detail echo for mutable edits 299ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > runs actual PHP-era rule APIs and the actual index del → modalSure → tableDelApi Axios empty-body chain 623ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > executes actual compiled modern Vue APIs and request-layer Axios against IDs, expanded DTOs and null deletes 400ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > admits exact 99 and numeric read APIs while anonymous/unrelated/wildcard580/read-only mutations fail 491ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > preserves the PHP falsy string-name refusal while the existing modern name contract accepts zero 272ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > rejects foreign rows, forged echoes, repeated/unknown queries and malformed canonical paths without effects 452ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > requires real empty deletion bodies, accepts only the legacy empty-ids compatibility and rejects malformed bodies 289ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > rejects invalid UTF8/JSON and declared or streaming bodies above 64 KiB and closes each opened SQL session 479ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > revalidates revoked roles, changed credentials, foreign account identity and JWT expiry without catalog changes 283ms
+stderr | test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > does not report success for create/update/delete when SQL skips the audit receipt
+{
+  schema: 'cinashop_operational_v1',
+  event: 'http_unhandled_exception',
+  component: 'http',
+  operation: 'request',
+  outcome: 'failure',
+  errorCode: 'error'
+}
+
+stderr | test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > does not report success for create/update/delete when SQL skips the audit receipt
+{
+  schema: 'cinashop_operational_v1',
+  event: 'http_unhandled_exception',
+  component: 'http',
+  operation: 'request',
+  outcome: 'failure',
+  errorCode: 'error'
+}
+
+stderr | test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > does not report success for create/update/delete when SQL skips the audit receipt
+{
+  schema: 'cinashop_operational_v1',
+  event: 'http_unhandled_exception',
+  component: 'http',
+  operation: 'request',
+  outcome: 'failure',
+  errorCode: 'error'
+}
+
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > does not report success for create/update/delete when SQL skips the audit receipt 265ms
+ ✓ |regular-unit| test/admin-product-rule-http.test.ts > actual rule App routes with JWT, SQL, old modal consumer and production Vue Axios > serves HEAD for legacy and both modern list/detail/selector contracts with no response body or effects 358ms
+
+ Test Files  4 passed (4)
+      Tests  35 passed (35)
+   Start at  04:43:44
+   Duration  40.76s (transform 9.80s, setup 0ms, import 16.69s, tests 23.52s, environment 0ms)
+
+FINANCE_LOCAL_FIXTURES remaining=0
+FINANCE_LOCAL_STOPPED /home/cina/cinagroup/cinashop/.cache/finance-postgres-S7wJa6
