@@ -46,6 +46,10 @@ const routes: RouteRecordRaw[] = [
         redirect: to => ({ path: "/product", query: to.query, hash: to.hash }),
       },
       {
+        path: "/admin/product/add_product/:id?",
+        redirect: to => ({ path: to.params.id === undefined || to.params.id === "0" ? "/product/create" : `/product/edit/${encodeURIComponent(String(to.params.id))}`, query: to.query, hash: to.hash }),
+      },
+      {
         path: "product/metadata",
         name: "product-metadata",
         component: () => import("@/pages/product/ProductMetadata.vue"),
@@ -61,6 +65,7 @@ const routes: RouteRecordRaw[] = [
         path: "product/edit/:id",
         name: "product-edit",
         component: () => import("@/pages/product/ProductForm.vue"),
+        beforeEnter: to => to.params.id === "0" ? { path: "/product/create", query: to.query, hash: to.hash } : true,
         meta: { title: "编辑商品" },
       },
       {

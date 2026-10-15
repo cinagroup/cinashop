@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { LegacyContentService } from "@/services/system/LegacyContentService";
+import { PRODUCT_DRAFT_MAX_BYTES } from "@/services/system/DatabaseCacheService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
 
@@ -106,7 +107,7 @@ export async function getProductDraft(c: C) {
 export async function saveProductDraft(c: C) {
   return jsonOk(
     c,
-    { info: await service(c).saveProductDraft(adminId(c), await boundedBody(c, 512 * 1024)) },
+    { info: await service(c).saveProductDraft(adminId(c), await boundedBody(c, PRODUCT_DRAFT_MAX_BYTES)) },
     "草稿已保存",
   );
 }

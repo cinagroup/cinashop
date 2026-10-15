@@ -13,7 +13,7 @@ export type AgreementCacheKey = typeof AGREEMENT_CACHE_KEYS[number] | "newcomer_
 
 const MAX_KF_CONTENT_LENGTH = 200_000;
 const MAX_URL_LENGTH = 2_048;
-const MAX_DRAFT_STRING_LENGTH = 200_000;
+const MAX_DRAFT_STRING_LENGTH = 512 * 1024;
 
 export interface OpenAdvItem {
   id: number;
@@ -55,7 +55,8 @@ export const PRODUCT_DRAFT_FIELDS = [
   "store_label_id", "ensure_id", "specs", "specs_id", "coupons",
   // Preserve unfinished editor limits across draft save/restore. The PHP
   // cache whitelist omitted these even though its final save accepted them.
-  "is_limit", "limit_type", "limit_num",
+  "is_limit", "limit_type", "limit_num", "recommend",
+  "editor_pending", "editor_target", "editor_contract_version",
 ] as const;
 
 const productDraftFieldSet = new Set<string>(PRODUCT_DRAFT_FIELDS);
@@ -189,21 +190,28 @@ function normalizeCachedLinks(value: unknown): Array<Record<string, unknown>> {
   });
 }
 
-function sanitizeJson(value: unknown, depth = 0): unknown {
-  if (depth > 8) throw new ValidateException("商品草稿嵌套层级过深");
+function sanitizeJson(value: unknown, budget: { nodes: number }, depth = 0): unknown {
+  if (++budget.nodes > 30_000 || depth > 24) throw new ValidateException("商品草稿结构超过容量");
   if (value === null || typeof value === "boolean") return value;
   if (typeof value === "number") {
     if (!Number.isFinite(value)) throw new ValidateException("商品草稿包含非法数值");
     return value;
   }
-  if (typeof value === "string") return value.slice(0, MAX_DRAFT_STRING_LENGTH);
-  if (Array.isArray(value)) return value.slice(0, 2_000).map((item) => sanitizeJson(item, depth + 1));
+  if (typeof value === "string") {
+    if (value.length > MAX_DRAFT_STRING_LENGTH || /[\u0000\ud800-\udfff]/u.test(value)) throw new ValidateException("商品草稿字符串长度或字符错误");
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > 1000) throw new ValidateException("商品草稿数组超过1000项");
+    return value.map((item) => sanitizeJson(item, budget, depth + 1));
+  }
   const record = objectValue(value);
-  if (!record) return null;
+  if (!record || ![Object.prototype, null].includes(Object.getPrototypeOf(record))) throw new ValidateException("商品草稿包含非法对象");
+  if (Object.keys(record).length > 160) throw new ValidateException("商品草稿对象超过160字段");
   const result: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(record).slice(0, 256)) {
-    if (["__proto__", "constructor", "prototype"].includes(key)) continue;
-    result[key] = sanitizeJson(item, depth + 1);
+  for (const [key, item] of Object.entries(record)) {
+    if (["__proto__", "constructor", "prototype"].includes(key)) throw new ValidateException("商品草稿包含非法字段");
+    result[key] = sanitizeJson(item, budget, depth + 1);
   }
   return result;
 }
@@ -212,9 +220,10 @@ export function normalizeProductDraft(value: unknown): Record<string, unknown> {
   const record = objectValue(value);
   if (!record) throw new ValidateException("商品草稿格式错误");
   const result: Record<string, unknown> = {};
+  const budget = { nodes: 0 };
   for (const [key, item] of Object.entries(record)) {
     if (!productDraftFieldSet.has(key)) continue;
-    result[key] = sanitizeJson(item);
+    result[key] = sanitizeJson(item, budget);
   }
   return result;
 }
@@ -329,7 +338,18 @@ export class LegacyContentService {
 
   async saveProductDraft(adminId: number, value: unknown): Promise<Record<string, unknown>> {
     const draft = normalizeProductDraft(value);
-    await this.cache.set(productDraftKey(adminId), draft, PRODUCT_DRAFT_TTL_SECONDS);
+    if (draft.editor_contract_version !== undefined || draft.editor_target !== undefined || draft.editor_pending !== undefined) {
+      if (draft.editor_contract_version !== 1 || !Number.isSafeInteger(draft.editor_target) || Number(draft.editor_target) < 0
+        || Number(draft.editor_target) > 2147483647) throw new ValidateException("商品草稿编辑器版本或目标无效");
+      if (draft.editor_pending !== null && draft.editor_pending !== undefined) {
+        const pending = objectValue(draft.editor_pending);
+        if (!pending || Object.keys(pending).length !== 3 || pending.actor_id !== adminId
+          || pending.requested_id !== draft.editor_target || typeof pending.operation_id !== 'string'
+          || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(pending.operation_id))
+          throw new ValidateException("商品草稿操作身份或目标不一致");
+      }
+    }
+    await this.cache.setMany([{ key: productDraftKey(adminId), value: draft, ttlSeconds: PRODUCT_DRAFT_TTL_SECONDS, productDraft: true }]);
     return draft;
   }
 

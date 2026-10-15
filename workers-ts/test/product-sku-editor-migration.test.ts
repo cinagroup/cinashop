@@ -207,13 +207,20 @@ describe("FE-001E5A product SKU editor migration", () => {
       repositoryRoot,
       "view", "admin-ts", "src", "api", "product.ts",
     ), "utf8");
+    const fullApi = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "api", "productEditor.ts"), "utf8");
+    const model = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "pages", "product", "productEditorModel.ts"), "utf8");
 
-    expect(form).toContain("SKU规格与库存");
-    expect(form).toContain("applySkuRuleTemplate");
-    expect(form).toContain("skuCombinations");
-    expect(form).toContain("prepareSkuPayload");
-    expect(form).toContain('class="sku-table-shell"');
-    expect(form).toContain("不能删除、重命名或改唯一标识");
+    expect(form).toContain('aria-label="规格库存"');
+    expect(form).toContain("applySkuTemplate");
+    expect(form).toContain("apiGenerateEditorSkus");
+    expect(form).toContain("mergeGeneratedSkus");
+    expect(form).toContain("toLegacySave");
+    expect(form).toContain('class="sku-shell"');
+    expect(form).toContain("历史SKU身份不能通过改名或删除替换");
+    expect(fullApi).toContain('request.post(`/product/generate_attr/${id}/1`');
+    expect(fullApi).toContain('request.post(`/product/editor/save/${pending.requested_id}`');
+    expect(model).toContain("existing.some(row => row.unique && !targets.has(detailIdentity(row.detail)))");
+    expect(model).toContain("...(row.unique ? { unique: row.unique } : {})");
     expect(form).toContain("卡密/网盘");
     expect(form).toContain("一次性卡密");
     expect(form).toContain("固定内容");

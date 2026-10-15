@@ -68,7 +68,7 @@ function row(value: unknown, label: string): Row {
     || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw new ValidateException(`${label}须为JSON对象`);
   return value as Row;
 }
-function assertBoundedJson(value: unknown): void {
+export function assertBoundedJson(value: unknown): void {
   let nodes = 0;
   const seen = new Set<object>();
   const visit = (entry: unknown, depth: number): void => {

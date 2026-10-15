@@ -28,6 +28,7 @@ interface Proof {
   baselineAttrs: Row[]; assigned: ProductSkuEditorRow[]; snapshotRows: ProductSkuEditorRow[];
   categories: Array<typeof storeProductCategory.$inferSelect>; issues: Array<typeof storeCouponIssue.$inferSelect>;
   verifiedState: 0 | 1 | undefined;
+  replaceEmpty?: boolean;
 }
 /** Compare all persisted columns/rows, including other activity types, retired
  * SKUs, paid/deleted carts and assigned card inventory. Serial receipts are
@@ -98,7 +99,7 @@ export function verifyProductSavePlan(plan: Proof): void {
     [3, input.normalized.store_label_id as number[]], [4, input.normalized.label_id as number[]],
     [5, input.normalized.ensure_id as number[]], [6, input.normalized.specs_id ? [Number(input.normalized.specs_id)] : []],
   ]);
-  const replaced = new Set([...groups].filter(([, ids]) => ids.length).map(([type]) => type));
+  const replaced = new Set([...groups].filter(([, ids]) => plan.replaceEmpty || ids.length).map(([type]) => type));
   assertProductSaveSame(after.relations.filter(row => !replaced.has(row.type)), before.relations.filter(row => !replaced.has(row.type)), '保留关联');
   const expectedRelations = [...groups].flatMap(([type, ids]) => ids.map(relationId => ({
     ...productSaveDefaults(storeProductRelation), productId: actualId, type, relationId,
@@ -107,7 +108,7 @@ export function verifyProductSavePlan(plan: Proof): void {
   })));
   assertProductSaveGeneratedRows(after.relations.filter(row => replaced.has(row.type)), expectedRelations, watermarks.relations, '替换关联');
   const couponIds = input.normalized.coupon_ids as number[];
-  if (!couponIds.length) assertProductSaveSame(after.coupons, before.coupons, '保留赠券');
+  if (!couponIds.length && !plan.replaceEmpty) assertProductSaveSame(after.coupons, before.coupons, '保留赠券');
   else assertProductSaveGeneratedRows(after.coupons, plan.issues.map(issue => ({ ...productSaveDefaults(storeProductCoupon),
     productId: actualId, issueCouponId: issue.id, title: issue.couponTitle || issue.title, addTime: now,
   })), watermarks.coupons, '替换赠券');

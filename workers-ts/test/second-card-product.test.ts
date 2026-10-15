@@ -142,7 +142,9 @@ describe("FE-001E5E4 second-card product lifecycle", () => {
     expect(cart).toContain("productType: product.productType");
     for (const text of [admin, ...clients]) expect(text).toContain("次卡商品");
     expect(admin).toContain("write_times");
-    expect(admin).toContain("second_card_range");
+    expect(admin).toContain('v-model="form.attrs[0].section_time"');
+    expect(admin).toContain('v-model="form.attrs[0].days"');
+    expect(admin).toContain('v-model="form.attrs[0].write_valid"');
     for (const text of details) {
       expect(text).toContain("次卡权益");
       expect(text).toContain("write_surplus_times");

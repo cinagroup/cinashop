@@ -22,9 +22,10 @@ import { normalizeAdminLegacyProductInput, resolveAdminLegacyProductOwner, type 
 import { assertProductSaveSame, lockProductSaveTables, lockProductSaveRows, productSaveConflict, productSaveDefaults,
   productSaveSame, productSaveWatermarks, readProductSaveState, emptyProductSaveState, MAX_PRODUCT_SAVE_ROWS } from './AdminLegacyProductSaveState';
 import { verifyProductSavePlan, expectedProductSaveMain } from './AdminLegacyProductSaveProof';
+import { admitProductEditorSave, completeProductEditorSave, type ProductEditorIntent } from './AdminProductEditorReceipt';
 
 export interface AdminLegacyProductSaveEffects { dispatch(outboxId: number): Promise<void> }
-export interface AdminLegacyProductSaveContext { localCopy?: boolean }
+export interface AdminLegacyProductSaveContext { localCopy?: boolean; editorOperation?: ProductEditorIntent }
 function id(value: number): number {
   if (!Number.isSafeInteger(value) || value < 0 || value > 2_147_483_647) throw new ValidateException('商品ID错误');
   return value;
@@ -82,6 +83,9 @@ export class AdminLegacyProductSaveService {
     id(requestedId);
     try {
       const completed = await withAdminAuthorityWriteTx(this.container, actor, 'product.manage', async (tx, live) => {
+        const previous = context.editorOperation && await admitProductEditorSave(tx, context.editorOperation, requestedId, actor);
+        if (previous) return { id: previous.result!.id, committed: true as const, outboxId: null,
+          receipt: previous, message: '商品操作已完成' };
         const now = await dbClock(tx, actor);
         await lockProductUnitLifecycle(tx);
         // Candidate discovery precedes bargain/cart/product locks. The real
@@ -121,6 +125,9 @@ export class AdminLegacyProductSaveService {
         const input = normalizeAdminLegacyProductInput(body, { now, localCopy: context.localCopy,
           erpOpen: ['1', 'true'].includes(erpValue), siteUrl: settings.get('site_url') });
         if (input.copyMode === -1) throw new ValidateException('采集图片处理尚未接入，请先使用本地图文素材保存');
+        // Ordinary editing cannot replace trusted import provenance via its
+        // intentionally blank source-context fields.
+        if (context.editorOperation && existing) input.productValues.soureLink = existing.soureLink;
         if (input.productValues.isShow === 2) throw new ValidateException('定时上架必须填写有效上架时间');
         if (existing?.isDel === 1 && input.productValues.isShow !== 0) throw new ValidateException('回收站商品不能直接上架');
         const owner = resolveAdminLegacyProductOwner(input, existing);
@@ -140,6 +147,7 @@ export class AdminLegacyProductSaveService {
           if (!form || (form.isDel !== 0 || form.status !== 1) && existing?.systemFormId !== form.id) throw new ValidateException('系统表单不存在或已停用');
         }
         const userLabelIds = input.normalized.label_id as number[];
+        if (context.editorOperation) input.productValues.labelId = userLabelIds.join(',');
         const labels = userLabelIds.length ? await tx.select().from(userLabel).where(inArray(userLabel.id, userLabelIds)) : [];
         if (labels.length !== userLabelIds.length || labels.some(row => !(row.type === 0 && row.relationId === 0
           || row.type === owner.type && row.relationId === owner.relationId))) throw new ValidateException('用户标签不存在或不属于当前商品');
@@ -161,9 +169,12 @@ export class AdminLegacyProductSaveService {
         const saved = await new ProductAssociationService(createContainerFromDb(tx)).saveInTransaction(tx, productId,
           { ...input.normalized, attrs: baselineAttrs }, { id: actor.id, name: '', ip: '' }, {
             now, locks: 'already-held', audit: 'outer', legacy: { owner, mainValues: input.productValues,
-              verifiedState, creation, deliveryPolicy: 'legacy', allowHiddenDeleted: true, relationPolicy: 'preserve-empty' },
+              verifiedState, creation, deliveryPolicy: 'legacy', allowHiddenDeleted: true,
+              relationPolicy: context.editorOperation ? 'replace-all' : 'preserve-empty' },
           });
         const actualId = saved.id;
+        if (context.editorOperation) await tx.update(storeProduct).set({ labelId: userLabelIds.join(',') })
+          .where(eq(storeProduct.id, actualId));
         const inventory = new VirtualProductInventoryService(createContainerFromDb(tx));
         for (const item of input.cardImports) {
           const sku = saved.assignedSkuRows.find(row => row.suk === item.suk);
@@ -175,17 +186,17 @@ export class AdminLegacyProductSaveService {
         await tx.insert(storeProductDescription).values({ productId: actualId, type: 0, description: input.description });
         // Preserve source nonempty-only async replacement semantics, but commit
         // the verified relations/coupons synchronously with the full save.
-        if (userLabelIds.length) {
+        if (userLabelIds.length || context.editorOperation) {
           await tx.delete(storeProductRelation).where(and(eq(storeProductRelation.productId, actualId), eq(storeProductRelation.type, 4)));
-          await tx.insert(storeProductRelation).values(userLabelIds.map(relationId => ({ productId: actualId, type: 4, relationId,
+          if (userLabelIds.length) await tx.insert(storeProductRelation).values(userLabelIds.map(relationId => ({ productId: actualId, type: 4, relationId,
             relationPid: 0, status: 1, addTime: now })));
         }
         const couponIds = input.normalized.coupon_ids as number[];
         const issues = couponIds.length ? await tx.select().from(storeCouponIssue).where(and(inArray(storeCouponIssue.id, couponIds), eq(storeCouponIssue.isDel, 0))) : [];
         if (issues.length !== couponIds.length) throw new ValidateException('部分赠送优惠券不存在');
-        if (couponIds.length) {
+        if (couponIds.length || context.editorOperation) {
           await tx.delete(storeProductCoupon).where(eq(storeProductCoupon.productId, actualId));
-          await tx.insert(storeProductCoupon).values(issues.map(issue => ({ productId: actualId, issueCouponId: issue.id,
+          if (issues.length) await tx.insert(storeProductCoupon).values(issues.map(issue => ({ productId: actualId, issueCouponId: issue.id,
             title: issue.couponTitle || issue.title, addTime: now })));
         }
         if (existing) {
@@ -216,7 +227,8 @@ export class AdminLegacyProductSaveService {
           const [main] = await tx.select().from(storeProduct).where(eq(storeProduct.id, actualId)).limit(1);
           assertProductSaveSame(main, expectedMain, '主表');
           verifyProductSavePlan({ input, existing, before, after: await readProductSaveState(tx, actualId), actualId, owner,
-            now, watermarks, baselineAttrs, assigned: saved.assignedSkuRows, categories, issues, snapshotRows, verifiedState });
+            now, watermarks, baselineAttrs, assigned: saved.assignedSkuRows, categories, issues, snapshotRows, verifiedState,
+            replaceEmpty: !!context.editorOperation });
           assertProductSaveSame(await tx.select().from(systemConfig).where(and(eq(systemConfig.isStore, 0),
             inArray(systemConfig.menuName, ['erp_open', 'store_stock', 'site_url']))).orderBy(asc(systemConfig.id)), config, '配置');
         };
@@ -242,10 +254,13 @@ export class AdminLegacyProductSaveService {
         assertProductSaveSame(await tx.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.aggregateType, 'product'), eq(storeOrderOutbox.aggregateId, actualId))).orderBy(asc(storeOrderOutbox.id)),
           [...outboxBefore, outbox].sort((a, b) => a.id - b.id), '事件');
         await dbClock(tx, actor);
+        const receipt = context.editorOperation ? await completeProductEditorSave(tx, context.editorOperation,
+          { id: actualId, created: requestedId === 0 }, actor) : undefined;
         return { id: actualId, committed: true as const, outboxId: outbox.id,
+          receipt,
           message: requestedId ? '保存商品信息成功' : '添加商品成功!' };
       });
-      if (this.effects) try { await this.effects.dispatch(completed.outboxId); }
+      if (this.effects && completed.outboxId !== null) try { await this.effects.dispatch(completed.outboxId); }
       catch { emitOperationalEvent('error', { event: 'product_save_effects_dispatch_failed', component: 'queue', outcome: 'retry', operation: 'product_save', errorCode: 'dispatch_pending' }); }
       return completed;
     } catch (error) { return saveError(error); }

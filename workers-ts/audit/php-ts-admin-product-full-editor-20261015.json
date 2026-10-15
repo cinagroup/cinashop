@@ -1,0 +1,634 @@
+{
+  "schema": "cinashop_admin_full_product_editor_evidence_v1",
+  "date": "2026-10-15",
+  "base_commit": "ec8afd7b1c673cf9b5182ae5a3217eacf72d9b3b",
+  "status": "local_validation_passed",
+  "scope": [
+    "Six-step ordinary Admin editor",
+    "Explicit full59 request projection and bounded detail DTO",
+    "Atomic save plus immutable UUID operation receipt",
+    "Owner-bound recovery and durable not_applied fencing",
+    "Lossless bounded draft projection and serialized writes",
+    "Legacy routes and card-product edit entry"
+  ],
+  "routes": {
+    "detail": "GET /adminapi/product/editor/detail/:id",
+    "save": "POST /adminapi/product/editor/save/:id",
+    "receipt": "GET /adminapi/product/editor/operations/:operationId",
+    "resolve": "POST /adminapi/product/editor/operations/:operationId/resolve"
+  },
+  "contracts": {
+    "legacy_get_post_semantics_preserved": true,
+    "ordinary_editor_empty_arrays": "atomic replacement including clear",
+    "operation_identity": [
+      "lowercase UUIDv4",
+      "live actor id",
+      "requested product id",
+      "HMAC-SHA256 canonical full body"
+    ],
+    "receipt_states": [
+      "unknown",
+      "committed",
+      "not_applied"
+    ],
+    "receipt_has_raw_payload_or_card_credentials": false,
+    "recovery_requires_current_live_platform_identity_and_password_version": true,
+    "recovery_may_follow_product_grant_revocation": true,
+    "http_executes_ddl": false,
+    "draft_bytes": 1064960,
+    "draft_ttl_seconds": 68400,
+    "draft_slots_per_actor": 1,
+    "draft_overflow": "explicit refusal, no silent slices"
+  },
+  "maintenance": {
+    "sql": "src/migrations/maintenance/0184_admin_product_editor_operation.sql",
+    "installer": "installProductEditorOperation(existingMaintenanceTransaction, optionalRestrictedAdminRole)",
+    "table": "public.admin_product_editor_operation_v1",
+    "constraints_catalog_sha256": "04d89b23d364641cad8d960f774e591c4b7cb2bcacbeb44d805c2cba307f86ce",
+    "independent_addon": true,
+    "historical_bootstrap_and_orm_cohorts_changed": false,
+    "runtime_grants": [
+      "SELECT",
+      "INSERT"
+    ],
+    "production_installation_performed": false
+  },
+  "validation": {
+    "shared_serial_wrapper": "/home/cina/cinagroup/tools/validate-serial.sh",
+    "vitest_max_workers": 1,
+    "worker_unit_typecheck": {
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "exit_code": 0
+    },
+    "worker_runtime_typecheck": {
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+      "exit_code": 0
+    },
+    "admin_build": {
+      "commands": [
+        "node_modules/.bin/vue-tsc -b",
+        "node_modules/.bin/vite build"
+      ],
+      "exit_code": 0,
+      "logs": [
+        "/tmp/cinashop-editor-final-vue.log",
+        "/tmp/cinashop-editor-final-vite.log"
+      ]
+    },
+    "unit_regression": {
+      "initial_10_file_result": {
+        "passed": 111,
+        "failed": 1,
+        "failure": "Template fixture lacked Vue ref assignment semantics; corrected fixture, no product logic workaround"
+      },
+      "final_affected_files": [
+        "test/admin-product-full-editor-model-frontend.test.ts",
+        "test/admin-product-full-editor-workflow-frontend.test.ts"
+      ],
+      "final_affected_result": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0
+      },
+      "other_direct_regression_files_passed": [
+        "admin-product-editor",
+        "admin-permission",
+        "legacy-content-cache",
+        "manual-virtual-product",
+        "product-association-migration",
+        "product-sku-editor-migration",
+        "product-sku-retirement",
+        "second-card-product"
+      ]
+    },
+    "native_pg16": {
+      "version": "16.14",
+      "final_receipt_suite": {
+        "file": "test/admin-product-editor-native.test.ts",
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      "exercised": [
+        "Actual App/JWT create response discard and owner recovery after grant revocation",
+        "Exact same-key replay without duplicate product/audit/outbox",
+        "Changed-body refusal",
+        "Label/coupon clear and stable SKU identity",
+        "Late coupon rollback includes receipt",
+        "Schema/trigger drift and immutable rows",
+        "Independent SQL writer/recovery sessions and permanent fencing",
+        "Independent restricted LOGIN with SELECT/INSERT only on receipt"
+      ],
+      "legacy_save_read_draft_regression_passed": true
+    },
+    "browser": {
+      "result": "passed",
+      "engine": "Codex In-app Browser through installed Browser tooling",
+      "flow": "create -> six visible steps -> committed receipt replaced by synthetic 502 -> no automatic resend -> query original operation -> edit product1 -> clear user label -> full save same product",
+      "checks": {
+        "page_identity": true,
+        "nonblank": true,
+        "no_framework_overlay": true,
+        "relevant_js_console_errors": 0,
+        "screenshots": true,
+        "actual_interactions": true
+      },
+      "observed_viewport": {
+        "width": 662,
+        "height": 684
+      },
+      "explicit_viewport_override": "Requested desktop override had no effect on observed dimensions; reset; no phone/desktop override claim",
+      "synthetic": [
+        "Navigation/login shell",
+        "Bounded metadata candidates",
+        "Local picture",
+        "Header notification stream intentionally unavailable"
+      ],
+      "real": [
+        "App",
+        "JWT",
+        "save",
+        "detail",
+        "operation receipt",
+        "draft",
+        "PostgreSQL16"
+      ],
+      "screenshots": [
+        "/tmp/cinashop-editor-pending.png",
+        "/tmp/cinashop-editor-recovered.png"
+      ],
+      "sql_and_http_result": {
+        "fixture": "owned PG16, actual editor App/JWT/SQL; shell/candidates synthetic",
+        "products": [
+          {
+            "id": 1,
+            "name": "PG16 恢复验收商品",
+            "categories": "11",
+            "brands": "",
+            "labels": ""
+          }
+        ],
+        "skus": [
+          {
+            "product_id": 1,
+            "unique": "8ffc9d14",
+            "stock": 7
+          }
+        ],
+        "save_requests": 2,
+        "saves": [
+          {
+            "operation_id": "ef5b1844-0edc-4100-81b6-9f0b13948330",
+            "requested_id": 0,
+            "fields": [
+              "activity",
+              "attrs",
+              "auto_off_time",
+              "auto_on_time",
+              "bar_code",
+              "brand_id",
+              "cate_id",
+              "code",
+              "command_word",
+              "coupon_ids",
+              "custom_form",
+              "delivery_type",
+              "description",
+              "ensure_id",
+              "ficti",
+              "freight",
+              "give_integral",
+              "is_benefit",
+              "is_best",
+              "is_good",
+              "is_hot",
+              "is_limit",
+              "is_new",
+              "is_postage",
+              "is_presale_product",
+              "is_show",
+              "is_sub",
+              "is_support_refund",
+              "is_vip_product",
+              "items",
+              "keyword",
+              "label_id",
+              "limit_num",
+              "limit_type",
+              "mer_use",
+              "postage",
+              "presale_day",
+              "presale_time",
+              "product_type",
+              "recommend",
+              "recommend_image",
+              "recommend_list",
+              "slider_image",
+              "sort",
+              "soure_link",
+              "spec_type",
+              "specs",
+              "specs_id",
+              "store_info",
+              "store_label_id",
+              "store_name",
+              "supplier_id",
+              "system_form_id",
+              "tao_words",
+              "temp_id",
+              "type",
+              "unit_name",
+              "video_link",
+              "video_open"
+            ],
+            "state": "committed",
+            "result": {
+              "id": 1,
+              "created": true
+            }
+          },
+          {
+            "operation_id": "901d1a7e-d0cb-4784-8ace-bd238b54cb11",
+            "requested_id": 1,
+            "fields": [
+              "activity",
+              "attrs",
+              "auto_off_time",
+              "auto_on_time",
+              "bar_code",
+              "brand_id",
+              "cate_id",
+              "code",
+              "command_word",
+              "coupon_ids",
+              "custom_form",
+              "delivery_type",
+              "description",
+              "ensure_id",
+              "ficti",
+              "freight",
+              "give_integral",
+              "is_benefit",
+              "is_best",
+              "is_good",
+              "is_hot",
+              "is_limit",
+              "is_new",
+              "is_postage",
+              "is_presale_product",
+              "is_show",
+              "is_sub",
+              "is_support_refund",
+              "is_vip_product",
+              "items",
+              "keyword",
+              "label_id",
+              "limit_num",
+              "limit_type",
+              "mer_use",
+              "postage",
+              "presale_day",
+              "presale_time",
+              "product_type",
+              "recommend",
+              "recommend_image",
+              "recommend_list",
+              "slider_image",
+              "sort",
+              "soure_link",
+              "spec_type",
+              "specs",
+              "specs_id",
+              "store_info",
+              "store_label_id",
+              "store_name",
+              "supplier_id",
+              "system_form_id",
+              "tao_words",
+              "temp_id",
+              "type",
+              "unit_name",
+              "video_link",
+              "video_open"
+            ],
+            "state": "committed",
+            "result": {
+              "id": 1,
+              "created": false
+            }
+          }
+        ],
+        "dropped_responses": 1,
+        "dropped_operation": "ef5b1844-0edc-4100-81b6-9f0b13948330",
+        "recovered_operations": [
+          "ef5b1844-0edc-4100-81b6-9f0b13948330"
+        ],
+        "armed_drop_next": false,
+        "route_requests": [
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/save/0",
+            "method": "POST",
+            "status": 200,
+            "operation_id": "ef5b1844-0edc-4100-81b6-9f0b13948330"
+          },
+          {
+            "path": "/adminapi/product/editor/operations/ef5b1844-0edc-4100-81b6-9f0b13948330",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "DELETE",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/detail/1",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/save/1",
+            "method": "POST",
+            "status": 200,
+            "operation_id": "901d1a7e-d0cb-4784-8ace-bd238b54cb11"
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "DELETE",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/detail/1",
+            "method": "GET",
+            "status": 200
+          }
+        ],
+        "unexpected_requests": 0,
+        "unexpected_paths": [],
+        "outbound_requests": 0,
+        "finished": true
+      }
+    },
+    "secret_scan": {
+      "tool": "Gitleaks 8.29.0",
+      "input": "32 changed source files including untracked sources, mirrored outside repo",
+      "exit_code": 0,
+      "findings": 0,
+      "report": "/tmp/cinashop-editor-secret-scan.json"
+    }
+  },
+  "attempts_and_repairs": [
+    "4GB full typecheck exhausted its chosen V8 heap; rerun with repository-standard 8GB passed",
+    "Native catalog measured before pinning; placeholder refused writes as intended",
+    "New label CSV was filtered by legacy primitive; new coordinator now writes it explicitly and native suite passes",
+    "Native concurrency hook had an overescaped regexp; corrected without replacing SQL results",
+    "Frontend fixture missing resolveDir and template ref setter were corrected",
+    "SFC JSON snapshot narrowing and numeric-clear projection were corrected",
+    "Only committed outcomes now mark old server drafts consumed; draft response-loss refresh case passes",
+    "Socket destruction caused Chromium transport replay with the identical UUID; durable idempotency kept one product. Final fixture uses a synthetic gateway502 after commit for explicit UI recovery proof",
+    "Header notification socket was outside editor-only fixture; now explicitly marked unavailable synthetic shell",
+    "First interactive terminal ended with SIGTERM after its failed fixture assertion; verified parent gone and stopped only its owned cluster manually; subsequent hosts use a tracked independent monitor and complete normal cleanup",
+    "Post-commit secret scan identified the verified maintenance SQL source SHA256 in a path-keyed digest map; changed the new manifest to separate path and sha256 fields, retaining all digests and existing scanner rules unchanged"
+  ],
+  "cleanup": {
+    "independent_pg_ctl_verification": [
+      {
+        "cluster": "finance-postgres-c4sma9",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false
+      },
+      {
+        "cluster": "finance-postgres-8d6OJt",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false
+      },
+      {
+        "cluster": "finance-postgres-6rGnxg",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false
+      },
+      {
+        "cluster": "finance-postgres-f0ZFP9",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false
+      },
+      {
+        "cluster": "finance-postgres-7s8hSN",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false
+      },
+      {
+        "cluster": "finance-postgres-B2Jxu8",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false
+      }
+    ],
+    "final_browser_fixture_remaining_databases": 0,
+    "final_browser_exit_code": 0,
+    "first_browser_remaining_database_audit": "Not claimed after parent SIGTERM; physical cluster independently stopped",
+    "agent_created_browser_tabs_closed": true
+  },
+  "open_boundaries": [
+    "Reviewed production installation and least-privilege commissioning of independent receipt addon before deployment",
+    "Trusted copy/import route context",
+    "Video upload",
+    "Production accounts/providers/devices and complete cloud CI result",
+    "Parameter rows continue to require a valid selected template; empty synthetic fixture did not test template editing",
+    "Larger candidate catalogs need pagination/search beyond disclosed caps",
+    "Draft remains one shared actor slot for19h; no multi-window CAS guarantee"
+  ],
+  "checklist": {
+    "checkbox_lines_unchanged": 404,
+    "main_total": 404,
+    "main_done": 249,
+    "main_open": 155,
+    "audit_total": 88,
+    "audit_done": 50,
+    "audit_open": 38
+  },
+  "source_inputs": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "90fbbbc00a0094cf3b56706936df989c6041d872cb86011286a801c8d7000721"
+    },
+    {
+      "path": "view/admin-ts/src/api/productEditor.ts",
+      "sha256": "71ddad57be7eb80d1ae0458bd1752926cb9e6fd0e9d1a9b3964414397fb9af07"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductForm.vue",
+      "sha256": "867d63bef4abe2e3890c4c55592c3639540aadeee610e045ccdfb3965394b371"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductList.vue",
+      "sha256": "064247400a644f3fc4c0c0113489af726ea36fbfbd6435a6de7add2c7cf363df"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/productEditorModel.ts",
+      "sha256": "c4b4886c53d63d8cf95e0db8da06b5ccba9795f38caf615b4cff6af5492668c0"
+    },
+    {
+      "path": "view/admin-ts/src/router/index.ts",
+      "sha256": "bef9c9650dbd9abe3891d44b0ec53064477499c95c15b064e719b979eea517c6"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "df0e481718ac82aa2ce7579c0383304981aaf87495e9c428aa0d99f255c883b3"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminLegacyContentController.ts",
+      "sha256": "d4926fb05cb4bac53d8f651c970ea2afbf17d5c2ccab0bf55fb0da5d76004cb5"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminProductEditorController.ts",
+      "sha256": "917341e85e09ee02f0a2307139afca4ed638561eda480e269c5d816df75b4e0f"
+    },
+    {
+      "path": "workers-ts/src/migrations/adminProductEditorOperation.ts",
+      "sha256": "8c41bd13efce59c6a604d92bb4824374df72e656d3a24d9fdbd38b57175e0fc1"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0184_admin_product_editor_operation.sql",
+      "sha256": "854e7f8914fa551358be1208dda7139abf5962588fafd0c7aeb06eef8143c5f8"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "ae151c71223947e6eff8dfc2b04c172737c7ca4e7d29cd693b3c2cc9047a2b56"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+      "sha256": "1b13b18d0d95c62c8ed59667c32e3a5ceaa0ce568e575bea57885d4cb9f45f54"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+      "sha256": "84f4a0afa981eb31c1e184c54920c61f403eebcd59905874bdb70760f33c7e16"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveProof.ts",
+      "sha256": "1c8dc0fe9e6ce2489e499b61ebb3ea4a0738091164c7c7c2248ec8107d835d82"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+      "sha256": "80e0a156a01e28e5eb556ed27c7bce2a14490ef1cdc16b76d95fc68744e611e6"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "de5e8bf5aee65a9ceada0786a88e4135db13bb89b0d6087cae935f1033174deb"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductEditorReceipt.ts",
+      "sha256": "9b1933df00ea45d15d3c74ba88c77285994372f53fdc1fbbe2900f47f4e4dd60"
+    },
+    {
+      "path": "workers-ts/src/services/system/DatabaseCacheService.ts",
+      "sha256": "ecb3631e4e78a352ea725a3297d70ceffc316989479cc87d5e44907998365dfa"
+    },
+    {
+      "path": "workers-ts/src/services/system/LegacyContentService.ts",
+      "sha256": "7152ed09751da6190de2a6db9ca0f2318995511676e756a362cb3979c3ec4091"
+    },
+    {
+      "path": "workers-ts/test/admin-permission.test.ts",
+      "sha256": "a7350b0537ce506a9ef8d047b7445cda0f212f9f6fccd427e715454b76ba2314"
+    },
+    {
+      "path": "workers-ts/test/admin-product-draft-roundtrip.test.ts",
+      "sha256": "d895eb3708671750464314c856dad3f4012e7391134f5c3c245ccbf1f3f21d28"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor-native.test.ts",
+      "sha256": "93aa71fae93db6ef674ca4c9d4f4d34ce190145b145559e576f23608ccf1baf5"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor.test.ts",
+      "sha256": "74968f79fe5d99ee91754c689f595efc8f65be61cd8a44ec327c4c3157c608d8"
+    },
+    {
+      "path": "workers-ts/test/admin-product-full-editor-model-frontend.test.ts",
+      "sha256": "2ab527bf858e5424868b13e5c84d1df31406e95b3773d53fba3eb86eee429e03"
+    },
+    {
+      "path": "workers-ts/test/admin-product-full-editor-workflow-frontend.test.ts",
+      "sha256": "a8fcc9e8c492005323b6cf95d453e732ecb033f16915f7eed2963ecff8882f68"
+    },
+    {
+      "path": "workers-ts/test/browser/admin-product-editor.acceptance.ts",
+      "sha256": "6cd0990511e5dd6c01460bed0b0f7d9aeb6f733484a51102176e0fbf930354b7"
+    },
+    {
+      "path": "workers-ts/test/helpers/adminProductEditor.ts",
+      "sha256": "703bb3e5fba8f1f1b5a85cf621d6e6b1bb8e03f416fe2d9506282147df6fc221"
+    },
+    {
+      "path": "workers-ts/test/product-association-migration.test.ts",
+      "sha256": "9e914f8a95960d7e1d6d10dcd6431b72a22a452998bca44278d69b878ebd2812"
+    },
+    {
+      "path": "workers-ts/test/product-sku-editor-migration.test.ts",
+      "sha256": "2c778b86c9b8e30adf2101cce915942d1e5200cc4dfd7a07f8fd01b77f9eb378"
+    },
+    {
+      "path": "workers-ts/test/second-card-product.test.ts",
+      "sha256": "975c1c5af5631dcf7d91adbcb1291ca0b9a4a08a16b2c4e727fe62f50fb18e69"
+    },
+    {
+      "path": "workers-ts/vitest.product-editor-browser.config.ts",
+      "sha256": "c03edbb18e4dfa2eb2a66428d062e391782dcd394cf4efd94774717782c8d1fc"
+    }
+  ]
+}

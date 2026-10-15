@@ -114,7 +114,7 @@
             >
               卡密库存
             </el-button>
-            <el-button v-if="canMutateState && row.product_type !== 1" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
+            <el-button v-if="canMutateState" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
               编辑
             </el-button>
             <el-button v-if="canAdjustStock && row.product_type !== 1" link type="primary" @click="openStock(row)">库存管理</el-button>

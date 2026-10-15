@@ -54,6 +54,7 @@ import * as AdminProductCatalogRead from '@/controllers/api/v1/AdminProductCatal
 import * as AdminLegacyProductSave from '@/controllers/api/v1/AdminLegacyProductSaveController';
 import * as AdminLegacyProductRead from '@/controllers/api/v1/AdminLegacyProductReadController';
 import * as AdminLegacyProductGenerate from '@/controllers/api/v1/AdminLegacyProductGenerateController';
+import * as AdminProductEditor from '@/controllers/api/v1/AdminProductEditorController';
 import * as AdminProductStock from '@/controllers/api/v1/AdminProductStockController';
 import * as AdminProductModeration from '@/controllers/api/v1/AdminProductModerationController';
 import * as AdminProductRecycle from '@/controllers/api/v1/AdminProductRecycleController';
@@ -305,6 +306,10 @@ adminapiRoutes.get('/product/product/get_verify/:id', adminAuth, AdminProductMod
 adminapiRoutes.post('/product/product/set_verify/:id', adminAuth, AdminProductModeration.save);
 adminapiRoutes.delete('/product/product/:id', adminAuth, AdminProductRecycle.toggle);
 adminapiRoutes.post('/product/product/:id', adminAuth, AdminLegacyProductSave.save);
+adminapiRoutes.get('/product/editor/detail/:id', adminAuth, AdminProductEditor.detail);
+adminapiRoutes.post('/product/editor/save/:id', adminAuth, AdminProductEditor.save);
+adminapiRoutes.get('/product/editor/operations/:operationId', adminAuth, AdminProductEditor.receipt);
+adminapiRoutes.post('/product/editor/operations/:operationId/resolve', adminAuth, AdminProductEditor.resolve);
 adminapiRoutes.post('/product/generate_attr/:id/:type', adminAuth, AdminLegacyProductGenerate.generate);
 // Target-only stock stream; its namespace and product.view scope are independent of withdrawals.
 adminapiRoutes.get('/product/stock/notifications/socket', adminAuth, (c) => upgradeStaffNotification(c, 'admin', 'product_stock'));

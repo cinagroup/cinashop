@@ -8,6 +8,7 @@ import {
   normalizeRoleRules,
   requiredAdminPermission,
   isAdminAuthorityRecoveryRoute,
+  isAdminProductEditorRecoveryRoute,
 } from "@/services/admin/AdminPermissionService";
 import { createContainerFromDb } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -67,8 +68,13 @@ describe("admin permission catalog", () => {
       { method:'POST',path:'/api/admin/system/authority/resolve' },
     ]);
     const missing = routes.filter((route) => !isAdminAuthorityRecoveryRoute(route.method,route.path)
+      && !isAdminProductEditorRecoveryRoute(route.method,route.path)
       && !requiredAdminPermission(route.method, route.path));
     expect(missing).toEqual([]);
+    expect(routes.filter(route => isAdminProductEditorRecoveryRoute(route.method,route.path))).toEqual([
+      { method:'GET',path:'/adminapi/product/editor/operations/:operationId' },
+      { method:'POST',path:'/adminapi/product/editor/operations/:operationId/resolve' },
+    ]);
   });
 
   it("keeps route aliases in the same permission domain", () => {

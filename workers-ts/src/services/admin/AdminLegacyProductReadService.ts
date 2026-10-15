@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { storeProduct, storeProductAttr, storeProductAttrValue, storeProductDescription, storeProductVirtual,
   storeProductCoupon, storeCouponIssue, storeProductCategory, storeProductLabel, userLabel, systemForm,
-  shippingTemplates, systemConfig } from '@/models/schema';
+  shippingTemplates, systemConfig, storeProductRelation } from '@/models/schema';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { canonicalizePublishedAttachmentReference, canonicalizePublishedHtmlAttachmentReferences,
   sanitizePublishedArticleHtml } from '@/services/content/ArticleContentPolicy';
@@ -139,7 +139,7 @@ function error(error: unknown): never {
  * selects card credentials, invokes a provider, or issues business DML. */
 export class AdminLegacyProductReadService {
   constructor(private readonly container: Container, private readonly appKey?: string) {}
-  async detail(id: number, query: URLSearchParams, actor: AdminAuthorityActor) {
+  async detail(id: number, query: URLSearchParams, actor: AdminAuthorityActor, options: { editorContract?: boolean } = {}) {
     if (!Number.isSafeInteger(id) || id < 0 || id > 2_147_483_647) throw new ValidateException('商品ID错误');
     if (query.size) throw new ValidateException('商品详情不接受查询参数');
     assertAdminAuthoritySession(actor);
@@ -157,7 +157,8 @@ export class AdminLegacyProductReadService {
           { table: storeProductCoupon, where: eq(storeProductCoupon.productId, id) },
           { table: shippingTemplates, where: and(eq(shippingTemplates.ownerType, 0), eq(shippingTemplates.relationId, 0))! },
           { table: storeProductCategory, where: and(eq(storeProductCategory.type, 0), eq(storeProductCategory.relationId, 0), eq(storeProductCategory.isShow, 1))! },
-          { table: systemConfig, where: and(eq(systemConfig.isStore, 0), eq(systemConfig.menuName, 'site_url'))! },
+          { table: systemConfig, where: and(eq(systemConfig.isStore, 0), inArray(systemConfig.menuName, options.editorContract ? ['site_url', 'erp_open'] : ['site_url']))! },
+          ...(options.editorContract ? [{ table: storeProductRelation, where: and(eq(storeProductRelation.productId, id), eq(storeProductRelation.type, 4))! }] : []),
         ]);
         const [product] = await tx.select().from(storeProduct).where(eq(storeProduct.id, id)).limit(1);
         if (!product || !id) throw new ValidateException('商品不存在');
@@ -172,14 +173,22 @@ export class AdminLegacyProductReadService {
             .orderBy(desc(shippingTemplates.sort), desc(shippingTemplates.id)).limit(CAPACITY + 1)),
           bounded(tx.select().from(storeProductCategory).where(and(eq(storeProductCategory.type, 0), eq(storeProductCategory.relationId, 0), eq(storeProductCategory.isShow, 1)))
             .orderBy(desc(storeProductCategory.sort), desc(storeProductCategory.id)).limit(CAPACITY + 1)),
-          tx.select().from(systemConfig).where(and(eq(systemConfig.isStore, 0), eq(systemConfig.menuName, 'site_url'))).limit(2),
+          tx.select().from(systemConfig).where(and(eq(systemConfig.isStore, 0), inArray(systemConfig.menuName, options.editorContract ? ['site_url', 'erp_open'] : ['site_url']))).limit(3),
         ]);
-        if (descriptions.length > 1 || settings.length > 1) throw conflict('商品描述或站点配置存在重复记录');
+        if (descriptions.length > 1 || new Set(settings.map(row => row.menuName)).size !== settings.length) throw conflict('商品描述或站点配置存在重复记录');
+        const erp = normalizeConfigScalar(settings.find(row => row.menuName === 'erp_open')?.value ?? '0').toLowerCase();
+        if (options.editorContract && !['','0','false','1','true'].includes(erp)) throw conflict('商品ERP配置无效');
+        const labelRelations = options.editorContract ? await bounded(tx.select().from(storeProductRelation)
+          .where(and(eq(storeProductRelation.productId, id), eq(storeProductRelation.type, 4)))
+          .orderBy(asc(storeProductRelation.id)).limit(CAPACITY + 1)) : [];
+        if (new Set(labelRelations.map(row => row.relationId)).size !== labelRelations.length
+          || labelRelations.some(row => row.relationId <= 0 || row.relationPid !== 0 || row.status !== 1)) throw conflict('商品用户标签关联不完整');
         if (skus.some(row => ![0, 1].includes(row.isRetired)) || new Set(skus.map(row => row.unique)).size !== skus.length) throw conflict();
         const active = skus.filter(row => row.isRetired === 0), dims = dimensions(product, attrs, active);
         const countMap = new Map(counts.map(row => [row.unique, { available: Number(row.available), total: Number(row.total) }]));
         const skuRows = active.map(row => skuDto(row, dims, countMap));
-        const labelIds = csv(product.labelId), storeLabelIds = csv(product.storeLabelId), recommendationIds = csv(product.recommendList);
+        const labelIds = labelRelations.length ? labelRelations.map(row => row.relationId) : csv(product.labelId),
+          storeLabelIds = csv(product.storeLabelId), recommendationIds = csv(product.recommendList);
         const couponIds = [...new Set(couponRows.map(row => row.issueCouponId))];
         const scans: Parameters<typeof budgetLegacyProductRead>[1] = [];
         if (labelIds.length) scans.push({ table: userLabel, where: inArray(userLabel.id, labelIds) });
@@ -196,13 +205,14 @@ export class AdminLegacyProductReadService {
           product.systemFormId ? tx.select().from(systemForm).where(eq(systemForm.id, product.systemFormId)).limit(1) : [],
         ]);
         const storedForm = decode(product.customForm), customForm = forms[0]?.value ? decode(forms[0].value) : [];
+        if (options.editorContract && labels.length !== labelIds.length) throw conflict('商品用户标签缺失，请先核对');
         const info: Row = Object.fromEntries(Object.entries(product).map(([key, value]) => [key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`), value]));
         delete info.is_polices;
         Object.assign(info, { is_police: product.isPolices, cate_id: product.cateId.split(','), brand_id: csv(product.brandCom),
           label_id: labels, store_label_id: productLabels, ensure_id: csv(product.ensureId), slider_image: legacyPhpJsonDecodeWire(product.sliderImage), specs: decode(product.specs),
           is_sub: [...(product.isSub === 1 ? [1] : []), ...(product.isVip === 1 ? [0] : [])], recommend: [],
           is_limit: Boolean(product.isLimit), video_open: Boolean(product.videoOpen), delivery_type: product.deliveryType ? product.deliveryType.split(',') : [],
-          video_link: product.videoLink && !product.videoLink.includes('http') ? `${normalizeConfigScalar(settings[0]?.value ?? '')}${product.videoLink}` : product.videoLink,
+          video_link: product.videoLink && !product.videoLink.includes('http') ? `${normalizeConfigScalar(settings.find(row => row.menuName === 'site_url')?.value ?? '')}${product.videoLink}` : product.videoLink,
           coupons: coupons.map(row => ({ id: row.id, title: row.title })),
           presale_time: product.presaleStartTime ? [time(product.presaleStartTime), time(product.presaleEndTime)] : [],
           auto_on_time: product.isShow ? '' : product.autoOnTime ? time(product.autoOnTime) : '',
@@ -224,7 +234,8 @@ export class AdminLegacyProductReadService {
           throw new ServiceUnavailableException('商品详情完整表单超过768 KiB编辑容量');
         // Large read-only expansions are outside productInfo: the old Vue
         // echoes that object verbatim to POST, whose transport cap is 1 MiB.
-        const editor = { stored_custom_form: storedForm, retired_attrs: skus.filter(row => row.isRetired === 1).map(row => skuDto(row, dims, countMap)), description_preview: '' };
+        const editor = { ...(options.editorContract ? { contract_version: 1, erp_open: ['1','true'].includes(erp) } : {}),
+          stored_custom_form: storedForm, retired_attrs: skus.filter(row => row.isRetired === 1).map(row => skuDto(row, dims, countMap)), description_preview: '' };
         const slots: Slot[] = [];
         const collect = (raw: unknown, owner: Product, set: (value: string) => void) => {
           if (typeof raw !== 'string') return;

@@ -365,6 +365,12 @@ export function isAdminAuthorityRecoveryRoute(method:string,routePath:string):bo
     || (verb==='POST' && ['system/authority/resolve','setting/admin-authority/resolve','setting/role-authority/resolve'].includes(route));
 }
 
+export function isAdminProductEditorRecoveryRoute(method:string,routePath:string):boolean {
+  const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^product\/editor\/operations\/[^/]+$/.test(route))
+    || (verb==='POST' && /^product\/editor\/operations\/[^/]+\/resolve$/.test(route));
+}
+
 /** Both actual IDs and the two historical/router placeholder spellings have
  * the same narrow policy. Malformed IDs never fall through to config access. */
 function legacyAdminId(value: string): boolean {
@@ -517,7 +523,13 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // Only authenticated owners may recover their own immutable operation key.
   // Recovery service admits live identity independently of current role grants.
   if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
-  if (isAdminAuthorityRecoveryRoute(method,routePath)) return null;
+  if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath)) return null;
+  if (route === 'product/editor' || route.startsWith('product/editor/')) {
+    if (['GET','HEAD'].includes(method.toUpperCase()) && route==='product/editor/options') return 'product.view';
+    if (['GET','HEAD'].includes(method.toUpperCase()) && /^product\/editor\/detail\/(?:[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'product.view';
+    if (method.toUpperCase()==='POST' && /^product\/editor\/save\/(?:0|[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'product.manage';
+    return null;
+  }
   if (route === 'setting/admin-authority' || route.startsWith('setting/admin-authority/')) {
     return method.toUpperCase() === 'POST' && route === 'setting/admin-authority/preview' ? 'system.legacy_admin_manage' : null;
   }
@@ -1301,7 +1313,7 @@ export class AdminPermissionService {
     // Auth middleware has authenticated the account. The recovery service
     // repeats live realm/status/password checks and binds the receipt owner;
     // these two exact endpoints never perform a staff/role mutation.
-    if (isAdminAuthorityRecoveryRoute(method,routePath)) return;
+    if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath)) return;
     if (admin.level === 0) return;
     // Common header: authenticated financial/product-only roles need not hold
     // dashboard access. The controller independently filters EVERY count by role.

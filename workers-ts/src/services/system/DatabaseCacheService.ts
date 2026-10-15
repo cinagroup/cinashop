@@ -4,12 +4,15 @@ import { legacyCache } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 
 const MAX_CACHE_DOCUMENT_BYTES = 512 * 1024;
+export const PRODUCT_DRAFT_MAX_BYTES = 1040 * 1024;
 const MAX_CACHE_TTL_SECONDS = 366 * 24 * 60 * 60;
 
 export interface DatabaseCacheWrite {
   key: string;
   value: unknown;
   ttlSeconds?: number;
+  /** Internal product draft exception; ordinary content stays at 512 KiB. */
+  productDraft?: boolean;
 }
 
 function validKey(key: string): boolean {
@@ -19,7 +22,7 @@ function validKey(key: string): boolean {
     && !/[\u0000-\u001f\u007f]/.test(key);
 }
 
-function encode(value: unknown): string {
+function encode(value: unknown, maxBytes = MAX_CACHE_DOCUMENT_BYTES): string {
   let result: string;
   try {
     result = JSON.stringify(value);
@@ -27,8 +30,8 @@ function encode(value: unknown): string {
     throw new ValidateException("缓存内容无法序列化");
   }
   if (result === undefined) throw new ValidateException("缓存内容无法序列化");
-  if (new TextEncoder().encode(result).byteLength > MAX_CACHE_DOCUMENT_BYTES) {
-    throw new ValidateException("缓存内容不能超过512 KiB");
+  if (new TextEncoder().encode(result).byteLength > maxBytes) {
+    throw new ValidateException(`缓存内容不能超过${maxBytes / 1024} KiB`);
   }
   return result;
 }
@@ -78,7 +81,7 @@ export class DatabaseCacheService {
       }
       return {
         key: entry.key,
-        result: encode(entry.value),
+        result: encode(entry.value, entry.productDraft && /^[1-9]\d*_product_data$/.test(entry.key) ? PRODUCT_DRAFT_MAX_BYTES : MAX_CACHE_DOCUMENT_BYTES),
         expireTime: ttlSeconds ? now + ttlSeconds : 0,
         addTime: now,
       };

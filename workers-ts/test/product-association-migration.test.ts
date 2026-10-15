@@ -122,8 +122,8 @@ describe("admin product association migration", () => {
     expect(form).toContain('v-model="form.store_label_id"');
     expect(form).toContain('v-model="form.ensure_id"');
     expect(form).toContain('v-model="form.specs_id"');
-    expect(form).toContain('v-model="item.value"');
-    expect(form).toContain("@media (max-width: 640px)");
+    expect(form).toContain('v-model="parameter.value"');
+    expect(form).toMatch(/@media\s*\(max-width:\s*760px\)/);
     expect(api).toContain('request.get("/product/editor/options")');
   });
 });

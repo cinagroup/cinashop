@@ -70,8 +70,24 @@ describe('Admin unfinished product draft SQL round trips', () => {
   it('rejects an oversized actual request and leaves the prior complete draft untouched', async () => {
     await http()('POST', { store_name: '保留草稿', is_limit: 1, limit_type: 2, limit_num: 5 });
     const before = await f.db.select().from(legacyCache);
-    const result = await http()('POST', { description: '中'.repeat(180000) });
-    expect(result.status).toBe(400); expect(result.msg).toContain('512');
+    const result = await http()('POST', { description: '中'.repeat(360000) });
+    expect(result.status).toBe(400); expect(result.msg).toContain('1040');
     expect(await f.db.select().from(legacyCache)).toEqual(before);
+  });
+  it('retains large complete fields beyond the former silent cutoffs and rejects excess without replacing the prior draft', async () => {
+    const draft = { description: '中'.repeat(180000), recommend: [0, false], custom_form: { nested: { text: 'x'.repeat(220000) } },
+      editor_contract_version: 1, editor_target: 0, editor_pending: { operation_id: '785c158f-05d6-428b-a7e6-fba5fc5843fd', requested_id: 0, actor_id: 42 } };
+    expect((await http()('POST', draft)).data?.info).toEqual(draft);
+    expect((await http()('GET')).data?.info).toEqual(draft);
+    const before = await f.db.select().from(legacyCache);
+    for (const extra of [
+      { attrs: Array.from({length:1001}, () => 1) },
+      { custom_form: Object.fromEntries(Array.from({length:161}, (_,index) => [String(index),0])) },
+      { editor_pending: { ...draft.editor_pending, actor_id: 43 } },
+      { editor_target: 1 },
+    ]) {
+      expect((await http()('POST', { ...draft, ...extra })).status).toBe(400);
+      expect(await f.db.select().from(legacyCache)).toEqual(before);
+    }
   });
 });
