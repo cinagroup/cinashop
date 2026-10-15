@@ -13,15 +13,19 @@ import type { SeckillScheduleRuntimeTarget } from './runSeckillScheduleRuntimeUp
 
 export const ADMIN_AUTHORITY_MAINTENANCE_OPERATION = 'admin-authority-install-v1-and-legacy-v2-and-legacy-role-v3';
 export const ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG = 'legacy-role-v3';
+export const ADMIN_AUTHORITY_V2_MAINTENANCE_OPERATION = 'admin-authority-install-v1-and-legacy-v2';
+export const ADMIN_LEGACY_ROLE_MAINTENANCE_OPERATION = 'admin-legacy-role-install-v3';
 export type AdminAuthorityMaintenanceTarget = SeckillScheduleRuntimeTarget;
 type Query = Pick<DbClient, 'execute'>;
 type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
 export type AdminAuthorityRuntimeEvidence = Awaited<ReturnType<typeof auditRuntimeBusinessPrivileges>> & {
-  identity: { database: string; role: string; session: string; backend: string; supported: boolean };
+  identity: { database: string; role: string; session: string; backend: string; supported: boolean;
+    primary: boolean; originSha256: string };
 };
 export const ADMIN_AUTHORITY_PRODUCTION_TARGET: AdminAuthorityMaintenanceTarget = Object.freeze({
   database: 'postgres', maintenance: 'postgres', app: 'cinashop_app_v1', admin: 'cinashop_admin_v1',
 });
+
 /** Reviewed control-plane intent, not a claim of runtime Cloudflare identity.
  * Actual database identities and profiles are independently checked below. */
 export const ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE = Object.freeze({
@@ -36,14 +40,25 @@ export const ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE = Object.freeze({
 /** The original v1 grants remain exact. Historical grants are never repaired. */
 export const ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL = `GRANT SELECT,INSERT ON TABLE public.admin_authority_operation TO "cinashop_admin_v1";
 GRANT EXECUTE ON FUNCTION public.admin_authority_menu_lock_v1() TO "cinashop_admin_v1";`;
+export const ADMIN_AUTHORITY_V2_MAINTENANCE_SQL = [ADMIN_AUTHORITY_OPERATION_SQL,
+  ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL].join('\n');
 export const ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL = 'GRANT DELETE ON TABLE public.system_role TO "cinashop_admin_v1";';
-export const ADMIN_AUTHORITY_MAINTENANCE_SQL = [ADMIN_AUTHORITY_OPERATION_SQL,
-  ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL,
+export const ADMIN_AUTHORITY_MAINTENANCE_SQL = [ADMIN_AUTHORITY_V2_MAINTENANCE_SQL,
   ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL, ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL].join('\n');
+export const ADMIN_LEGACY_ROLE_MAINTENANCE_SQL = [ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL,
+  'GRANT DELETE ON TABLE public.system_role TO "cinashop_admin_v1";'].join('\n');
 
 export async function adminAuthorityEvidenceSha256(value: unknown): Promise<string> {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value))));
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+/** The SQL hashes the physical endpoint and postmaster epoch before returning
+ * evidence. No address, port, connection string or raw server epoch is exposed.
+ * A restart/route change invalidates approval, even if database rows match. */
+export function adminAuthoritySamePrimary(...reports: { identity: { primary: boolean; originSha256: string } }[]): boolean {
+  return reports.length === 3 && reports.every(report => report.identity.primary === true
+    && /^[0-9a-f]{64}$/.test(report.identity.originSha256)
+    && report.identity.originSha256 === reports[0].identity.originSha256);
 }
 export async function adminAuthorityInstallSqlSha256(target: AdminAuthorityMaintenanceTarget = ADMIN_AUTHORITY_PRODUCTION_TARGET): Promise<string> {
   assertTarget(target);
@@ -51,6 +66,21 @@ export async function adminAuthorityInstallSqlSha256(target: AdminAuthorityMaint
   const roleDeleteGrant = `GRANT DELETE ON TABLE public.system_role TO ${pricingIdentifier(target.admin)};`;
   const installation = [ADMIN_AUTHORITY_OPERATION_SQL, grants, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL,
     ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL, roleDeleteGrant].join('\n');
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(installation)));
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+export async function adminAuthorityV2InstallSqlSha256(target: AdminAuthorityMaintenanceTarget = ADMIN_AUTHORITY_PRODUCTION_TARGET): Promise<string> {
+  assertTarget(target);
+  const grants = `GRANT SELECT,INSERT ON TABLE public.admin_authority_operation TO ${pricingIdentifier(target.admin)};\nGRANT EXECUTE ON FUNCTION public.admin_authority_menu_lock_v1() TO ${pricingIdentifier(target.admin)};`;
+  const installation = [ADMIN_AUTHORITY_OPERATION_SQL, grants, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL].join('\n');
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(installation)));
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+/** The v3 digest covers both CHECK replacements and the sole new runtime GRANT. */
+export async function adminLegacyRoleInstallSqlSha256(target: AdminAuthorityMaintenanceTarget = ADMIN_AUTHORITY_PRODUCTION_TARGET): Promise<string> {
+  assertTarget(target);
+  const installation = [ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL,
+    `GRANT DELETE ON TABLE public.system_role TO ${pricingIdentifier(target.admin)};`].join('\n');
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(installation)));
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -130,12 +160,18 @@ export async function inspectAdminAuthorityMaintenanceSnapshot(tx: Query, option
     observation: 'repeatable-read pre/postflight; read-committed apply; only staff/menu/receipt are fenced; no whole-shop write fence' as const };
 }
 
-async function inspectInTransaction(tx: Query, target: AdminAuthorityMaintenanceTarget, write: boolean) {
-  const [identity] = await tx.execute<{ database: string; role: string; session: string; backend: string; supported: boolean; tablePresent: boolean; cleanAbsent: boolean }>(sql`SELECT
+async function inspectInTransaction(tx: Query, target: AdminAuthorityMaintenanceTarget, write: boolean,
+  phase: 'combined' | 'v1-v2' | 'v3' = 'combined') {
+  const [identity] = await tx.execute<{ database: string; role: string; session: string; backend: string; supported: boolean;
+    primary: boolean; originSha256: string; tablePresent: boolean; cleanAbsent: boolean }>(sql`SELECT
     current_database() AS database,current_user AS role,session_user AS session,
     (SELECT r.rolname FROM pg_stat_activity a JOIN pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend,
+    NOT pg_is_in_recovery() AS primary,
+    encode(sha256(convert_to(jsonb_build_array(inet_server_addr()::text,inet_server_port(),extract(epoch FROM pg_postmaster_start_time())::text)::text,'UTF8')),'hex') AS "originSha256",
     current_database()=${target.database} AND current_user=${target.maintenance} AND current_user=session_user
     AND current_setting('server_version_num')::integer/10000=16 AND current_setting('session_replication_role')='origin'
+    AND NOT pg_is_in_recovery()
+    AND inet_server_addr() IS NOT NULL AND inet_server_port()>0 AND pg_postmaster_start_time() IS NOT NULL
     AND current_setting('transaction_read_only')=${write ? 'off' : 'on'}
     AND current_setting('transaction_isolation')=${write ? 'read committed' : 'repeatable read'}
     AND EXISTS(SELECT 1 FROM pg_roles WHERE rolname=current_user AND rolsuper AND rolcanlogin)
@@ -163,16 +199,32 @@ async function inspectInTransaction(tx: Query, target: AdminAuthorityMaintenance
   const profiles = { app: await inspectRuntimeBusinessProfileInTransaction(tx, 'app', target, 'current'),
     admin: await inspectRuntimeBusinessProfileInTransaction(tx, 'admin', target, 'current') };
   const snapshot = await inspectAdminAuthorityMaintenanceSnapshot(tx);
+  const phaseReady = phase === 'v3' ? addon === 'legacy-admin-v2' || addon === 'legacy-role-v3'
+    : addon === 'absent' || addon === 'v1' || addon === 'legacy-admin-v2'
+      || phase === 'combined' && addon === 'legacy-role-v3';
   return { ready: identity.supported === true && identity.backend === target.maintenance
-      && !['drift', 'orphan'].includes(addon) && menuLock && profiles.app.ready && profiles.admin.ready,
+      && phaseReady && menuLock && profiles.app.ready && profiles.admin.ready,
     // Isolation/readOnly mode is validated above but omitted from reusable fingerprints.
-    identity: { database: identity.database, role: identity.role, session: identity.session, backend: identity.backend },
+    identity: { database: identity.database, role: identity.role, session: identity.session, backend: identity.backend,
+      primary: identity.primary, originSha256: identity.originSha256 },
     addon, menuLock, profiles, snapshot };
 }
 
 export async function inspectAdminAuthorityMaintenance(db: Root, target: AdminAuthorityMaintenanceTarget) {
   assertTarget(target); assertRoot(db);
   return db.transaction(async tx => { await timeouts(tx); return inspectInTransaction(tx, target, false); },
+    { isolationLevel: 'repeatable read', accessMode: 'read only' });
+}
+/** The staged runner stops at exact v2 and deliberately refuses v3. */
+export async function inspectAdminAuthorityV2Maintenance(db: Root, target: AdminAuthorityMaintenanceTarget) {
+  assertTarget(target); assertRoot(db);
+  return db.transaction(async tx => { await timeouts(tx); return inspectInTransaction(tx, target, false, 'v1-v2'); },
+    { isolationLevel: 'repeatable read', accessMode: 'read only' });
+}
+/** A separate read-only approval scope: v1/absent cannot be upgraded by the v3 adapter. */
+export async function inspectAdminLegacyRoleMaintenance(db: Root, target: AdminAuthorityMaintenanceTarget) {
+  assertTarget(target); assertRoot(db);
+  return db.transaction(async tx => { await timeouts(tx); return inspectInTransaction(tx, target, false, 'v3'); },
     { isolationLevel: 'repeatable read', accessMode: 'read only' });
 }
 export async function inspectAdminAuthorityRuntimeLogin(db: DbClient, target: AdminAuthorityMaintenanceTarget, kind: 'app' | 'admin'): Promise<AdminAuthorityRuntimeEvidence> {
@@ -182,9 +234,13 @@ export async function inspectAdminAuthorityRuntimeLogin(db: DbClient, target: Ad
     const [row] = await tx.execute<AdminAuthorityRuntimeEvidence['identity']>(sql`SELECT
       current_database() AS database,current_user AS role,session_user AS session,
       (SELECT r.rolname FROM pg_stat_activity a JOIN pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend,
+      NOT pg_is_in_recovery() AS primary,
+      encode(sha256(convert_to(jsonb_build_array(inet_server_addr()::text,inet_server_port(),extract(epoch FROM pg_postmaster_start_time())::text)::text,'UTF8')),'hex') AS "originSha256",
       current_database()=${target.database} AND current_user=${target[kind]} AND session_user=current_user
       AND current_setting('server_version_num')::integer/10000=16 AND current_setting('transaction_read_only')='on'
-      AND current_setting('transaction_isolation')='repeatable read' AND current_setting('session_replication_role')='origin' AS supported`);
+      AND current_setting('transaction_isolation')='repeatable read' AND current_setting('session_replication_role')='origin'
+      AND NOT pg_is_in_recovery() AND inet_server_addr() IS NOT NULL AND inet_server_port()>0
+      AND pg_postmaster_start_time() IS NOT NULL AS supported`);
     if (!row) throw Error('Runtime LOGIN context returned no row');
     return row;
   }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
@@ -199,6 +255,14 @@ export function adminAuthorityPreflightEvidence(sourceSha: string, installSqlSha
     deploymentScope: ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE,
     sourceSha, installSqlSha256, target, maintenance, app, admin };
 }
+export function adminAuthorityV2PreflightEvidence(...args: Parameters<typeof adminAuthorityPreflightEvidence>) {
+  return { ...adminAuthorityPreflightEvidence(...args), operation: ADMIN_AUTHORITY_V2_MAINTENANCE_OPERATION,
+    targetCatalog: 'legacy-admin-v2' as const };
+}
+export function adminLegacyRolePreflightEvidence(...args: Parameters<typeof adminAuthorityPreflightEvidence>) {
+  return { ...adminAuthorityPreflightEvidence(...args), operation: ADMIN_LEGACY_ROLE_MAINTENANCE_OPERATION,
+    targetCatalog: 'legacy-role-v3' as const };
+}
 export class AdminAuthorityPreflightMismatch extends Error {
   constructor() { super('Current locked preflight differs from approved evidence'); }
 }
@@ -207,13 +271,14 @@ export class AdminAuthorityPreflightMismatch extends Error {
  * originate from fresh preceding connections, while the full profiles and
  * owner/catalog/data evidence are checked again inside the locked transaction.
  * Ordinary business writes are not fenced and are excluded from approval. */
-export async function applyAdminAuthorityMaintenance(db: Root, target: AdminAuthorityMaintenanceTarget,
+async function applyAuthorityMaintenance(db: Root, target: AdminAuthorityMaintenanceTarget,
   approval: { sourceSha: string; installSqlSha256: string; fingerprint: string;
-    app: AdminAuthorityRuntimeEvidence; admin: AdminAuthorityRuntimeEvidence }) {
+    app: AdminAuthorityRuntimeEvidence; admin: AdminAuthorityRuntimeEvidence },
+  phase: 'combined' | 'v1-v2') {
   assertTarget(target); assertRoot(db);
   if (!/^[0-9a-f]{40}$/.test(approval.sourceSha) || !/^[0-9a-f]{64}$/.test(approval.fingerprint)
     || approval.fingerprint === '0'.repeat(64) || !approval.app.ready || !approval.admin.ready
-    || approval.installSqlSha256 !== await adminAuthorityInstallSqlSha256(target)) throw new AdminAuthorityPreflightMismatch();
+    || approval.installSqlSha256 !== await (phase === 'combined' ? adminAuthorityInstallSqlSha256(target) : adminAuthorityV2InstallSqlSha256(target))) throw new AdminAuthorityPreflightMismatch();
   return db.transaction(async tx => {
     await timeouts(tx);
     const [lock] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731626,8) AS locked`);
@@ -222,27 +287,75 @@ export async function applyAdminAuthorityMaintenance(db: Root, target: AdminAuth
     await tx.execute(sql.raw('LOCK TABLE ONLY public.system_menus IN SHARE MODE NOWAIT'));
     const [present] = await tx.execute(sql`SELECT to_regclass('public.admin_authority_operation') IS NOT NULL AS present`);
     if (present?.present === true) await tx.execute(sql.raw('LOCK TABLE ONLY public.admin_authority_operation IN ACCESS EXCLUSIVE MODE NOWAIT'));
-    const before = await inspectInTransaction(tx, target, true);
-    const fingerprint = await adminAuthorityEvidenceSha256(adminAuthorityPreflightEvidence(approval.sourceSha,
+    const before = await inspectInTransaction(tx, target, true, phase);
+    const fingerprint = await adminAuthorityEvidenceSha256((phase === 'combined' ? adminAuthorityPreflightEvidence : adminAuthorityV2PreflightEvidence)(approval.sourceSha,
       approval.installSqlSha256, target, before, approval.app, approval.admin));
-    if (!before.ready || fingerprint !== approval.fingerprint) throw new AdminAuthorityPreflightMismatch();
-    // Only missing stages run. In particular, the v2 installer must never be
-    // called on v3: it intentionally rejects that catalog rather than repairing it.
-    const v1 = before.addon === 'absent'
-      ? await installAdminAuthorityOperationUpgradeInTransaction(tx, target) : null;
+    if (!before.ready || !adminAuthoritySamePrimary(before, approval.app, approval.admin)
+      || fingerprint !== approval.fingerprint) throw new AdminAuthorityPreflightMismatch();
+    // Earlier installers reject later catalogs; skip completed stages without repair.
+    const v1 = before.addon === 'absent' ? await installAdminAuthorityOperationUpgradeInTransaction(tx, target) : null;
     const v2 = before.addon === 'absent' || before.addon === 'v1'
       ? await installAdminLegacyAdminOperationUpgradeInTransaction(tx, target) : null;
-    const v3 = await installAdminLegacyRoleOperationUpgradeInTransaction(tx, target);
-    const after = await inspectInTransaction(tx, target, true);
-    if (!after.ready || after.addon !== ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG) throw Error('Authority maintenance final profile/catalog verification failed');
-    const protectedDataObservationUnchanged = before.snapshot.data
-      .every(row => after.snapshot.data.some(next => next.name === row.name && next.rows === row.rows && next.sha256 === row.sha256));
+    const v3 = phase === 'combined' ? await installAdminLegacyRoleOperationUpgradeInTransaction(tx, target) : null;
+    const after = await inspectInTransaction(tx, target, true, phase);
+    const targetCatalog = phase === 'combined' ? ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG : 'legacy-admin-v2';
+    const protectedDataObservationUnchanged = before.snapshot.data.every(row => after.snapshot.data.some(next =>
+      next.name === row.name && next.rows === row.rows && next.sha256 === row.sha256));
+    const receipt = after.snapshot.data.find(row => row.name === 'admin_authority_operation');
     if (!protectedDataObservationUnchanged) throw Error('Authority maintenance changed protected data');
-    return { operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION,
-      targetCatalog: ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG,
-      fromCatalog: before.addon, toCatalog: after.addon, committed: true, v1, v2, v3,
+    if (!after.ready || after.addon !== targetCatalog
+      || !receipt || (before.addon === 'absent' && receipt.rows !== '0')
+      || after.snapshot.tableCount !== before.snapshot.tableCount + (before.addon === 'absent' ? 1 : 0)) {
+      throw Error('Authority maintenance final profile/catalog/data verification failed');
+    }
+    return { operation: phase === 'combined' ? ADMIN_AUTHORITY_MAINTENANCE_OPERATION : ADMIN_AUTHORITY_V2_MAINTENANCE_OPERATION,
+      targetCatalog, fromCatalog: before.addon, toCatalog: after.addon, committed: true, v1, v2, v3,
       approvedPreflightFingerprint: fingerprint, before: before.snapshot, after: after.snapshot,
       protectedDataObservationUnchanged,
       atomicBusinessDataProof: false };
+  }, { isolationLevel: 'read committed', accessMode: 'read write' });
+}
+
+export function applyAdminAuthorityMaintenance(db: Root, target: AdminAuthorityMaintenanceTarget,
+  approval: Parameters<typeof applyAuthorityMaintenance>[2]) {
+  return applyAuthorityMaintenance(db, target, approval, 'combined');
+}
+export function applyAdminAuthorityV2Maintenance(db: Root, target: AdminAuthorityMaintenanceTarget,
+  approval: Parameters<typeof applyAuthorityMaintenance>[2]) {
+  return applyAuthorityMaintenance(db, target, approval, 'v1-v2');
+}
+
+/** A separately approved v2→v3 owner transaction. Existing receipt rows are
+ * immutable and must retain identical bounded digests under the receipt lock. */
+export async function applyAdminLegacyRoleMaintenance(db: Root, target: AdminAuthorityMaintenanceTarget,
+  approval: { sourceSha: string; installSqlSha256: string; fingerprint: string;
+    app: AdminAuthorityRuntimeEvidence; admin: AdminAuthorityRuntimeEvidence }) {
+  assertTarget(target); assertRoot(db);
+  if (!/^[0-9a-f]{40}$/.test(approval.sourceSha) || !/^[0-9a-f]{64}$/.test(approval.fingerprint)
+    || approval.fingerprint === '0'.repeat(64) || !approval.app.ready || !approval.admin.ready
+    || approval.installSqlSha256 !== await adminLegacyRoleInstallSqlSha256(target)) throw new AdminAuthorityPreflightMismatch();
+  return db.transaction(async tx => {
+    await timeouts(tx);
+    const [lock] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731626,8) AS locked`);
+    if (lock?.locked !== true) throw Error('Legacy role maintenance is busy');
+    await tx.execute(sql.raw('LOCK TABLE ONLY public.system_admin, ONLY public.system_role IN SHARE ROW EXCLUSIVE MODE NOWAIT'));
+    await tx.execute(sql.raw('LOCK TABLE ONLY public.system_menus IN SHARE MODE NOWAIT'));
+    await tx.execute(sql.raw('LOCK TABLE ONLY public.admin_authority_operation IN ACCESS EXCLUSIVE MODE NOWAIT'));
+    const before = await inspectInTransaction(tx, target, true, 'v3');
+    const fingerprint = await adminAuthorityEvidenceSha256(adminLegacyRolePreflightEvidence(approval.sourceSha,
+      approval.installSqlSha256, target, before, approval.app, approval.admin));
+    if (!before.ready || !adminAuthoritySamePrimary(before, approval.app, approval.admin)
+      || fingerprint !== approval.fingerprint) throw new AdminAuthorityPreflightMismatch();
+    const v3 = await installAdminLegacyRoleOperationUpgradeInTransaction(tx, target);
+    const after = await inspectInTransaction(tx, target, true, 'v3');
+    if (!after.ready || after.addon !== 'legacy-role-v3' ||
+      before.snapshot.tableCount !== after.snapshot.tableCount ||
+      before.snapshot.dataSha256 !== after.snapshot.dataSha256 ||
+      (!v3.applied && before.snapshot.catalog.sha256 !== after.snapshot.catalog.sha256)) {
+      throw Error('Legacy role maintenance final profile/catalog/data verification failed');
+    }
+    return { operation: ADMIN_LEGACY_ROLE_MAINTENANCE_OPERATION, committed: true, v3,
+      approvedPreflightFingerprint: fingerprint, before: before.snapshot, after: after.snapshot,
+      protectedDataObservationUnchanged: true, atomicBusinessDataProof: false };
   }, { isolationLevel: 'read committed', accessMode: 'read write' });
 }
