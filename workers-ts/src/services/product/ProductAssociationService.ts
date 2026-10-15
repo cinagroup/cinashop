@@ -9,6 +9,19 @@ import {
   storeBrand,
   storeCouponIssue,
   storeProduct,
+  storeProductAttr,
+  storeProductAttrResult,
+  storeProductAttrValue,
+  storeProductDescription,
+  storeProductVirtual,
+  storeProductStockRecord,
+  storeProductCoupon,
+  storeCart,
+  storeDiscountsProducts,
+  storeSeckill,
+  storeCombination,
+  storeBargain,
+  storeIntegral,
   storeProductCategory,
   storeProductEnsure,
   storeProductLabel,
@@ -26,8 +39,10 @@ import {
   parseProductSkuRuleValue,
   productSkuSummary,
   replaceProductSkuEditor,
+  type ProductSkuEditorRow,
 } from "@/services/product/ProductSkuEditorService";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { tryLockVirtualProductInventory } from "@/services/product/VirtualProductInventoryService";
+import { HttpApiException, NotFoundException, ValidateException } from "@/utils/errors";
 
 const PRODUCT_WRITE_LOCK_NAMESPACE = 731_617;
 const CATEGORY_RELATION = 1;
@@ -53,6 +68,56 @@ export interface ProductEditorActor {
   id: number;
   name: string;
   ip: string;
+}
+
+/** These are the complete-form columns owned by the legacy input adapter.
+ * Identity, ownership, verification, real sales and association/SKU summaries
+ * deliberately cannot enter through this object, even from a trusted caller. */
+const LEGACY_MAIN_VALUE_COLUMNS = [
+  'productType', 'storeName', 'storeInfo', 'keyword', 'unitName', 'image',
+  'sliderImage', 'recommendImage', 'sort', 'ficti', 'giveIntegral', 'isShow',
+  'isHot', 'isBenefit', 'isBest', 'isNew', 'merUse', 'isPostage', 'isGood',
+  'isSub', 'isVip', 'videoOpen', 'videoLink', 'activity', 'commandWord',
+  'recommendList', 'soureLink', 'barCode', 'code', 'isSupportRefund',
+  'isPresaleProduct', 'presaleStartTime', 'presaleEndTime', 'presaleDay',
+  'isVipProduct', 'autoOnTime', 'autoOffTime', 'customForm', 'systemFormId',
+  'isLimit', 'limitType', 'limitNum', 'deliveryType', 'freight', 'postage', 'tempId',
+] as const satisfies readonly (keyof typeof storeProduct.$inferInsert)[];
+
+export type ProductLegacyMainValues = Partial<Pick<
+  typeof storeProduct.$inferInsert,
+  typeof LEGACY_MAIN_VALUE_COLUMNS[number]
+>>;
+
+export interface ProductSaveTransactionContext {
+  /** Legacy authority transactions supply their captured database clock. */
+  now: number;
+  locks: 'acquire' | 'already-held';
+  audit: 'primitive' | 'outer';
+  /** A code-only argument. Never construct this from an HTTP body flag. */
+  legacy?: {
+    owner: { type: number; relationId: number };
+    mainValues: ProductLegacyMainValues;
+    verifiedState?: 0 | 1;
+    creation?: { star: string; spu: string };
+    deliveryPolicy: 'legacy';
+    allowHiddenDeleted?: true;
+    relationPolicy: 'replace-all' | 'preserve-empty';
+  };
+}
+
+export interface ProductSaveTransactionResult {
+  id: number;
+  associations_verified: boolean;
+  sku_verified: boolean;
+  assignedSkuRows: ProductSkuEditorRow[];
+}
+
+function legacyMainValues(values: ProductLegacyMainValues | undefined): ProductLegacyMainValues {
+  if (!values) return {};
+  return Object.fromEntries(LEGACY_MAIN_VALUE_COLUMNS
+    .filter((key) => Object.prototype.hasOwnProperty.call(values, key))
+    .map((key) => [key, values[key]])) as ProductLegacyMainValues;
 }
 
 export interface ProductParameterSnapshot {
@@ -209,6 +274,17 @@ function relationIds(
   type: number,
 ): number[] {
   return rows.filter((row) => row.type === type).map((row) => row.relationId);
+}
+
+function associationRelationIds(associations: ProductAssociations, type: number): number[] {
+  switch (type) {
+    case CATEGORY_RELATION: return associations.categoryIds;
+    case BRAND_RELATION: return associations.brandIds;
+    case PRODUCT_LABEL_RELATION: return associations.productLabelIds;
+    case ENSURE_RELATION: return associations.ensureIds;
+    case PARAMETER_RELATION: return associations.parameterTemplateId > 0 ? [associations.parameterTemplateId] : [];
+    default: return [];
+  }
 }
 
 export function productAssociationReadbackMatches(
@@ -489,207 +565,275 @@ export class ProductAssociationService {
     if (!Number.isSafeInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
+      const result = await this.saveInTransaction(tx, productId, body, actor, {
+        now, locks: 'acquire', audit: 'primitive',
+      });
+      // Keep the public modern API shape unchanged; transaction receipts stay internal.
+      return {
+        id: result.id,
+        associations_verified: result.associations_verified,
+        sku_verified: result.sku_verified,
+      };
+    });
+  }
+
+  /** Execute inside the caller's existing transaction, without a nested savepoint
+   * or authority transaction. A legacy caller owns admission, full-set barriers,
+   * complete readbacks and the one durable audit/outbox receipt. */
+  async saveInTransaction(
+    tx: DbClient,
+    productId: number,
+    body: Record<string, unknown>,
+    actor: ProductEditorActor,
+    context: ProductSaveTransactionContext,
+  ): Promise<ProductSaveTransactionResult> {
+    if (!Number.isSafeInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
+    const now = integerValue(context.now, '商品保存时间', 0, 0);
+    if (context.locks === 'acquire') {
       await lockProductUnitLifecycle(tx);
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
         await lockBargainSourceProductChange(tx, productId);
         await lockProductWrite(tx, productId);
       }
-      const existingRows = productId > 0
-        ? await tx.select().from(storeProduct).where(eq(storeProduct.id, productId)).limit(1).for("update")
-        : [];
-      const existing = existingRows[0];
-      if (productId > 0 && (!existing || existing.isDel === 1)) throw new NotFoundException("商品不存在");
+    }
+    const existingRows = productId > 0
+      ? await tx.select().from(storeProduct).where(eq(storeProduct.id, productId)).limit(1).for("update")
+      : [];
+    const existing = existingRows[0];
+    if (productId > 0 && (!existing || (existing.isDel === 1 && !context.legacy?.allowHiddenDeleted))) {
+      throw new NotFoundException("商品不存在");
+    }
 
-      const productType = existing?.productType ?? integerValue(
+    const productType = existing?.productType ?? integerValue(
+      body.product_type,
+      "商品类型",
+      0,
+      0,
+      SECOND_CARD_PRODUCT_TYPE,
+    );
+    if (![0, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType)) {
+      throw new ValidateException("当前迁移阶段仅支持实物、卡密、手工虚拟或次卡商品");
+    }
+    if (existing && Object.prototype.hasOwnProperty.call(body, "product_type")) {
+      const requestedProductType = integerValue(
         body.product_type,
         "商品类型",
+        existing.productType,
         0,
-        0,
-        SECOND_CARD_PRODUCT_TYPE,
+        4,
       );
-      if (![0, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType)) {
-        throw new ValidateException("当前迁移阶段仅支持实物、卡密、手工虚拟或次卡商品");
+      if (requestedProductType !== existing.productType) {
+        throw new ValidateException("商品创建后不能修改履约类型");
       }
-      if (existing && Object.prototype.hasOwnProperty.call(body, "product_type")) {
-        const requestedProductType = integerValue(
-          body.product_type,
-          "商品类型",
-          existing.productType,
-          0,
-          4,
-        );
-        if (requestedProductType !== existing.productType) {
-          throw new ValidateException("商品创建后不能修改履约类型");
-        }
-      }
+    }
 
-      const skuPayload = hasProductSkuEditorPayload(body)
-        ? normalizeProductSkuEditorPayload(body, productType)
-        : null;
-      if (!existing && [CARD_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType) && !skuPayload) {
-        throw new ValidateException(productType === CARD_PRODUCT_TYPE
-          ? "卡密商品必须配置SKU及交付方式"
-          : "次卡商品必须配置单规格核销规则");
+    const skuPayload = hasProductSkuEditorPayload(body)
+      ? normalizeProductSkuEditorPayload(body, productType)
+      : null;
+    if (!existing && [CARD_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType) && !skuPayload) {
+      throw new ValidateException(productType === CARD_PRODUCT_TYPE
+        ? "卡密商品必须配置SKU及交付方式"
+        : "次卡商品必须配置单规格核销规则");
+    }
+    const skuSummary = skuPayload ? productSkuSummary(skuPayload) : null;
+    const storeName = textValue(body.store_name ?? existing?.storeName, "商品名称", 256);
+    if (!storeName) throw new ValidateException("商品名称不能为空");
+    const price = skuSummary?.price
+      ?? decimalValue(body.price, "价格", existing?.price ?? "0", true);
+    const otPrice = skuSummary?.otPrice
+      ?? decimalValue(body.ot_price, "原价", existing?.otPrice ?? price);
+    const vipPrice = skuSummary?.vipPrice
+      ?? decimalValue(body.vip_price, "会员价", existing?.vipPrice ?? "0");
+    const stock = skuSummary?.stock ?? integerValue(body.stock, "库存", existing?.stock ?? 0);
+    const sort = integerValue(body.sort, "排序", existing?.sort ?? 0, 0, context.legacy ? 2_147_483_647 : 999);
+    const isShow = integerValue(body.is_show, "上架状态", existing?.isShow ?? 1, 0, 1);
+    if (existing?.isDel === 1 && isShow !== 0) throw new ValidateException('回收站商品不能上架');
+    const isVip = integerValue(body.is_vip, "会员状态", existing?.isVip ?? 0, 0, 1);
+    const hasAssociations = productId === 0 || [
+      "cate_id", "brand_id", "store_label_id", "ensure_id", "specs_id", "specs",
+    ].some((key) => Object.prototype.hasOwnProperty.call(body, key));
+    const owner = context.legacy?.owner ?? { type: existing?.type ?? 0, relationId: existing?.relationId ?? 0 };
+    if (context.legacy) {
+      integerValue(owner.type, '商品归属类型', 0, 0, 2);
+      integerValue(owner.relationId, '商品归属ID', 0);
+      if ((owner.type === 0 && owner.relationId !== 0)
+        || (existing && existing.type !== 0
+          && (owner.type !== existing.type || owner.relationId !== existing.relationId))) {
+        throw new ValidateException('已有商品归属不能修改');
       }
-      const skuSummary = skuPayload ? productSkuSummary(skuPayload) : null;
-      const storeName = textValue(body.store_name ?? existing?.storeName, "商品名称", 256);
-      if (!storeName) throw new ValidateException("商品名称不能为空");
-      const price = skuSummary?.price
-        ?? decimalValue(body.price, "价格", existing?.price ?? "0", true);
-      const otPrice = skuSummary?.otPrice
-        ?? decimalValue(body.ot_price, "原价", existing?.otPrice ?? price);
-      const vipPrice = skuSummary?.vipPrice
-        ?? decimalValue(body.vip_price, "会员价", existing?.vipPrice ?? "0");
-      const stock = skuSummary?.stock ?? integerValue(body.stock, "库存", existing?.stock ?? 0);
-      const sort = integerValue(body.sort, "排序", existing?.sort ?? 0, 0, 999);
-      const isShow = integerValue(body.is_show, "上架状态", existing?.isShow ?? 1, 0, 1);
-      const isVip = integerValue(body.is_vip, "会员状态", existing?.isVip ?? 0, 0, 1);
-      const hasAssociations = productId === 0 || [
-        "cate_id", "brand_id", "store_label_id", "ensure_id", "specs_id", "specs",
-      ].some((key) => Object.prototype.hasOwnProperty.call(body, key));
-      const owner = { type: existing?.type ?? 0, relationId: existing?.relationId ?? 0 };
-      let associationBody = body;
-      let historicalParameters: { templateId: number; specs: ProductParameterSnapshot[] } | undefined;
-      let historicalEnsureIds: number[] = [];
-      if (hasAssociations && existing) {
-        const currentRelations = await tx.select({
-          type: storeProductRelation.type,
-          relationId: storeProductRelation.relationId,
-        }).from(storeProductRelation).where(and(
-          eq(storeProductRelation.productId, existing.id),
-          inArray(storeProductRelation.type, [...MANAGED_RELATIONS]),
-        ));
-        let existingSpecs: ProductParameterSnapshot[] = [];
-        try {
-          existingSpecs = normalizeProductParameterSnapshot(existing.specs);
-        } catch {
-          // A malformed historical snapshot cannot be silently copied into a new save.
-        }
-        const fallback = {
-          cate_id: normalizeProductAssociationIds([
-            ...normalizeProductAssociationIds(existing.cateId),
-            ...relationIds(currentRelations, CATEGORY_RELATION),
-          ]),
-          brand_id: normalizeProductAssociationIds([
-            ...normalizeProductAssociationIds(existing.brandCom),
-            ...(existing.brandId > 0 ? [existing.brandId] : []),
-            ...relationIds(currentRelations, BRAND_RELATION),
-          ]),
-          store_label_id: normalizeProductAssociationIds([
-            ...normalizeProductAssociationIds(existing.storeLabelId),
-            ...relationIds(currentRelations, PRODUCT_LABEL_RELATION),
-          ]),
-          ensure_id: normalizeProductAssociationIds([
-            ...normalizeProductAssociationIds(existing.ensureId),
-            ...relationIds(currentRelations, ENSURE_RELATION),
-          ]),
-          specs_id: existing.specsId || relationIds(currentRelations, PARAMETER_RELATION)[0] || 0,
-          specs: existingSpecs,
-        };
-        associationBody = { ...fallback, ...body };
-        historicalParameters = { templateId: fallback.specs_id, specs: existingSpecs };
-        historicalEnsureIds = fallback.ensure_id;
+    }
+    let associationBody = body;
+    let historicalParameters: { templateId: number; specs: ProductParameterSnapshot[] } | undefined;
+    let historicalEnsureIds: number[] = [];
+    let currentRelations: Array<typeof storeProductRelation.$inferSelect> = [];
+    if (hasAssociations && existing) {
+      currentRelations = await tx.select().from(storeProductRelation).where(and(
+        eq(storeProductRelation.productId, existing.id),
+        inArray(storeProductRelation.type, [...MANAGED_RELATIONS]),
+      )).orderBy(asc(storeProductRelation.id));
+      let existingSpecs: ProductParameterSnapshot[] = [];
+      try {
+        existingSpecs = normalizeProductParameterSnapshot(existing.specs);
+      } catch {
+        // A malformed historical snapshot cannot be silently copied into a new save.
       }
-      const associations = hasAssociations
-        ? await this.validateAssociations(tx, owner, associationBody, historicalParameters, historicalEnsureIds)
-        : null;
-
-      const values = {
-        storeName,
-        storeInfo: textValue(body.store_info, "商品简介", 256, existing?.storeInfo ?? ""),
-        image: textValue(body.image, "商品主图", 256, existing?.image ?? ""),
-        price,
-        otPrice,
-        vipPrice,
-        stock,
-        keyword: textValue(body.keyword, "关键词", 256, existing?.keyword ?? ""),
-        unitName: textValue(body.unit_name, "单位", 32, existing?.unitName ?? "件") || "件",
-        sort,
-        isShow,
-        isVip,
-        isSupportRefund: integerValue(
-          body.is_support_refund,
-          "退款支持状态",
-          existing?.isSupportRefund ?? 1,
-          0,
-          1,
-        ),
-        productType,
-        ...(productType === CARD_PRODUCT_TYPE || productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? {
-          deliveryType: "",
-          freight: 2,
-          postage: "0.00",
-          tempId: 0,
-          isPostage: 0,
-        } : {}),
-        ...(productType === SECOND_CARD_PRODUCT_TYPE ? {
-          deliveryType: "2",
-          freight: 1,
-          postage: "0.00",
-          tempId: 0,
-          isPostage: 0,
-        } : {}),
-        ...(skuPayload ? {
-          specType: skuPayload.specType,
-          settlePrice: skuSummary!.settlePrice,
-          cost: skuSummary!.cost,
-          isSold: skuSummary!.isSold,
-        } : {}),
-        ...(associations ? {
-          cateId: csv(associations.categoryIds),
-          brandId: associations.brandIds.at(-1) ?? 0,
-          brandCom: csv(associations.brandIds),
-          storeLabelId: csv(associations.productLabelIds),
-          ensureId: csv(associations.ensureIds),
-          specsId: associations.parameterTemplateId,
-          specs: associations.parameterSpecs.length ? JSON.stringify(associations.parameterSpecs) : "",
-        } : {}),
+      const fallback = {
+        cate_id: normalizeProductAssociationIds([
+          ...normalizeProductAssociationIds(existing.cateId),
+          ...relationIds(currentRelations, CATEGORY_RELATION),
+        ]),
+        brand_id: normalizeProductAssociationIds([
+          ...normalizeProductAssociationIds(existing.brandCom),
+          ...(existing.brandId > 0 ? [existing.brandId] : []),
+          ...relationIds(currentRelations, BRAND_RELATION),
+        ]),
+        store_label_id: normalizeProductAssociationIds([
+          ...normalizeProductAssociationIds(existing.storeLabelId),
+          ...relationIds(currentRelations, PRODUCT_LABEL_RELATION),
+        ]),
+        ensure_id: normalizeProductAssociationIds([
+          ...normalizeProductAssociationIds(existing.ensureId),
+          ...relationIds(currentRelations, ENSURE_RELATION),
+        ]),
+        specs_id: existing.specsId || relationIds(currentRelations, PARAMETER_RELATION)[0] || 0,
+        specs: existingSpecs,
       };
+      associationBody = { ...fallback, ...body };
+      historicalParameters = { templateId: fallback.specs_id, specs: existingSpecs };
+      historicalEnsureIds = fallback.ensure_id;
+    }
+    const associations = hasAssociations
+      ? await this.validateAssociations(tx, owner, associationBody, historicalParameters, historicalEnsureIds)
+      : null;
 
-      let savedProductId = productId;
-      if (existing) {
-        const updated = await tx.update(storeProduct).set(values).where(and(
-          eq(storeProduct.id, productId),
-          eq(storeProduct.isDel, 0),
-        )).returning({ id: storeProduct.id });
-        if (!updated[0]) throw new NotFoundException("商品不存在");
+    const values = {
+      ...legacyMainValues(context.legacy?.mainValues),
+      storeName,
+      storeInfo: textValue(body.store_info, "商品简介", 256, existing?.storeInfo ?? ""),
+      image: textValue(body.image, "商品主图", 256, existing?.image ?? ""),
+      price,
+      otPrice,
+      vipPrice,
+      stock,
+      keyword: textValue(body.keyword, "关键词", 256, existing?.keyword ?? ""),
+      unitName: textValue(body.unit_name, "单位", 32, existing?.unitName ?? "件") || "件",
+      sort,
+      isShow,
+      isVip,
+      isSupportRefund: integerValue(
+        body.is_support_refund,
+        "退款支持状态",
+        existing?.isSupportRefund ?? 1,
+        0,
+        1,
+      ),
+      productType,
+      ...(!context.legacy && (productType === CARD_PRODUCT_TYPE || productType === MANUAL_VIRTUAL_PRODUCT_TYPE) ? {
+        deliveryType: "",
+        freight: 2,
+        postage: "0.00",
+        tempId: 0,
+        isPostage: 0,
+      } : {}),
+      ...(productType === SECOND_CARD_PRODUCT_TYPE && !context.legacy ? {
+        deliveryType: "2",
+        freight: 1,
+        postage: "0.00",
+        tempId: 0,
+        isPostage: 0,
+      } : {}),
+      ...(skuPayload ? {
+        specType: skuPayload.specType,
+        settlePrice: skuSummary!.settlePrice,
+        cost: skuSummary!.cost,
+        isSold: skuSummary!.isSold,
+      } : {}),
+      ...(associations ? {
+        cateId: csv(associations.categoryIds),
+        brandId: associations.brandIds.at(-1) ?? 0,
+        brandCom: csv(associations.brandIds),
+        storeLabelId: csv(associations.productLabelIds),
+        ensureId: csv(associations.ensureIds),
+        specsId: associations.parameterTemplateId,
+        specs: associations.parameterSpecs.length ? JSON.stringify(associations.parameterSpecs) : "",
+      } : {}),
+      ...(context.legacy ? {
+        type: owner.type,
+        relationId: owner.relationId,
+        ...(context.legacy.verifiedState === undefined ? {} : { isVerify: context.legacy.verifiedState }),
+      } : {}),
+    };
+
+    let savedProductId = productId;
+    if (existing) {
+      const updated = await tx.update(storeProduct).set(values).where(and(
+        eq(storeProduct.id, productId),
+        ...(context.legacy?.allowHiddenDeleted ? [] : [eq(storeProduct.isDel, 0)]),
+      )).returning({ id: storeProduct.id });
+      if (!updated[0]) throw new NotFoundException("商品不存在");
+    } else {
+      const inserted = await tx.insert(storeProduct).values({
+        ...values,
+        type: owner.type,
+        relationId: owner.relationId,
+        isVerify: context.legacy ? (context.legacy.verifiedState ?? 0) : 1,
+        isDel: 0,
+        specType: integerValue(body.spec_type, "规格类型", 0, 0, 1),
+        addTime: now,
+        ficti: integerValue(body.ficti, "虚拟销量", 0),
+        ...(context.legacy?.creation ? {
+          star: context.legacy.creation.star,
+          spu: context.legacy.creation.spu,
+          codePath: '',
+        } : {}),
+      }).returning({ id: storeProduct.id });
+      if (!inserted[0]) throw new Error("商品创建后未返回ID");
+      savedProductId = inserted[0].id;
+      if (context.legacy) {
+        if (!await tryLockProductWrite(tx, savedProductId)
+          || (productType === CARD_PRODUCT_TYPE && !await tryLockVirtualProductInventory(tx, savedProductId))) {
+          throw new HttpApiException('商品库存正在变化，请刷新商品后重试', 409, 409);
+        }
+        // The coordinator holds real barriers on all these tables. Check the
+        // actual allocated ID before any child replacement: id0 is not the
+        // baseline of a new parent, and historical orphan rows must not be
+        // silently deleted or adopted by the new product.
+        const occupied = await tx.execute(sql`SELECT EXISTS (${sql.join([
+          storeProductAttrValue, storeProductAttr, storeProductAttrResult, storeProductDescription,
+          storeProductVirtual, storeProductStockRecord, storeCart, storeProductRelation, storeProductCoupon,
+          storeDiscountsProducts, storeSeckill, storeCombination, storeBargain, storeIntegral,
+        ].map(table => sql`SELECT 1 FROM ${table} WHERE ${table.productId}=${savedProductId}`), sql` UNION ALL `)}) AS occupied`) as unknown as Array<{ occupied: boolean }>;
+        if (occupied[0]?.occupied !== false) throw new HttpApiException('新商品编号已有未归属的历史数据，请先核对', 409, 409);
       } else {
-        const inserted = await tx.insert(storeProduct).values({
-          ...values,
-          type: 0,
-          relationId: 0,
-          isVerify: 1,
-          isDel: 0,
-          specType: integerValue(body.spec_type, "规格类型", 0, 0, 1),
-          addTime: now,
-          ficti: integerValue(body.ficti, "虚拟销量", 0),
-        }).returning({ id: storeProduct.id });
-        if (!inserted[0]) throw new Error("商品创建后未返回ID");
-        savedProductId = inserted[0].id;
         await lockProductWrite(tx, savedProductId);
       }
+    }
 
-      if (associations) {
-        await this.replaceRelations(tx, savedProductId, isShow, associations, now);
-        await this.assertAssociationReadback(tx, savedProductId, associations);
-      }
-      if (skuPayload) {
-        await replaceProductSkuEditor(tx, {
-          id: savedProductId,
-          productType,
-          image: values.image,
-          type: existing?.type ?? 0,
-          relationId: existing?.relationId ?? 0,
-        }, skuPayload, now);
-      }
-      await writeAudit(tx, actor, existing ? "update" : "create", savedProductId, now);
-      return {
+    if (associations) {
+      const preservedTypes = context.legacy?.relationPolicy === 'preserve-empty'
+        ? MANAGED_RELATIONS.filter((type) => !associationRelationIds(associations, type).length)
+        : [];
+      await this.replaceRelations(tx, savedProductId, isShow, associations, now, preservedTypes);
+      await this.assertAssociationReadback(tx, savedProductId, associations, preservedTypes, currentRelations);
+    }
+    let assignedSkuRows: ProductSkuEditorRow[] = [];
+    if (skuPayload) {
+      assignedSkuRows = await replaceProductSkuEditor(tx, {
         id: savedProductId,
-        associations_verified: associations !== null,
-        sku_verified: skuPayload !== null,
-      };
-    });
+        productType,
+        image: values.image,
+        type: owner.type,
+        relationId: owner.relationId,
+      }, skuPayload, now);
+    }
+    if (context.audit === 'primitive') await writeAudit(tx, actor, existing ? "update" : "create", savedProductId, now);
+    return {
+      id: savedProductId,
+      associations_verified: associations !== null,
+      sku_verified: skuPayload !== null,
+      assignedSkuRows,
+    };
   }
 
   async deleteBrand(id: number): Promise<void> {
@@ -828,15 +972,17 @@ export class ProductAssociationService {
     isShow: number,
     associations: ProductAssociations,
     now: number,
+    preservedTypes: readonly number[] = [],
   ): Promise<void> {
     const categoryRows = associations.categoryIds.length
       ? await tx.select({ id: storeProductCategory.id, pid: storeProductCategory.pid })
         .from(storeProductCategory).where(inArray(storeProductCategory.id, associations.categoryIds))
       : [];
     const categoryParent = new Map(categoryRows.map((item) => [item.id, item.pid]));
-    await tx.delete(storeProductRelation).where(and(
+    const replacedTypes = MANAGED_RELATIONS.filter((type) => !preservedTypes.includes(type));
+    if (replacedTypes.length) await tx.delete(storeProductRelation).where(and(
       eq(storeProductRelation.productId, productId),
-      inArray(storeProductRelation.type, [...MANAGED_RELATIONS]),
+      inArray(storeProductRelation.type, replacedTypes),
     ));
     const rows = [
       ...associations.categoryIds.map((relationId) => ({
@@ -857,13 +1003,16 @@ export class ProductAssociationService {
         relationPid: 0, status: 1, addTime: now,
       }] : []),
     ];
-    if (rows.length) await tx.insert(storeProductRelation).values(rows);
+    const replacedRows = rows.filter((row) => !preservedTypes.includes(row.type));
+    if (replacedRows.length) await tx.insert(storeProductRelation).values(replacedRows);
   }
 
   private async assertAssociationReadback(
     tx: DbClient,
     productId: number,
     expected: ProductAssociations,
+    preservedTypes: readonly number[] = [],
+    previousRelations: readonly (typeof storeProductRelation.$inferSelect)[] = [],
   ): Promise<void> {
     const [products, relations] = await Promise.all([
       tx.select({
@@ -875,13 +1024,16 @@ export class ProductAssociationService {
         specsId: storeProduct.specsId,
         specs: storeProduct.specs,
       }).from(storeProduct).where(eq(storeProduct.id, productId)).limit(1),
-      tx.select({ type: storeProductRelation.type, relationId: storeProductRelation.relationId })
+      tx.select()
         .from(storeProductRelation).where(and(
           eq(storeProductRelation.productId, productId),
           inArray(storeProductRelation.type, [...MANAGED_RELATIONS]),
-        )),
+        )).orderBy(asc(storeProductRelation.id)),
     ]);
-    const verified = productAssociationReadbackMatches(products[0], relations, expected);
+    const verified = productAssociationReadbackMatches(products[0],
+      relations.filter((row) => !preservedTypes.includes(row.type)), expected)
+      && JSON.stringify(relations.filter((row) => preservedTypes.includes(row.type)))
+        === JSON.stringify(previousRelations.filter((row) => preservedTypes.includes(row.type)));
     if (!verified) throw new Error("商品关联资料数据库回读校验失败");
   }
 }

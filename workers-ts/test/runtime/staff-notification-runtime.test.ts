@@ -42,6 +42,40 @@ describe("isolated staff notification workerd transport", () => {
     await runInDurableObject(withdrawal.stub, async instance => { await expect(instance.publish(session(), key)).rejects.toThrow('作用域'); });
     expect(leaked).toEqual([]); stock.client.close(); withdrawal.client.close();
   });
+  it('delivers save-effect stock frames and preserves event-key deduplication through DO eviction', async () => {
+    vi.spyOn(StaffNotificationAuthService.prototype, 'assertSession').mockResolvedValue(undefined);
+    const principal = { ...session(), scope: 'product_stock' as const };
+    const key = 'product.save.effects:10:12345678-1234-4123-8123-123456789abc';
+    const nextSaveKey = 'product.save.effects:10:12345678-1234-4123-8123-123456789abd';
+    const stock = await connect(principal), withdrawal = await connect();
+    const leaked: string[] = []; withdrawal.client.addEventListener('message', event => leaked.push(String(event.data)));
+    try {
+      let next = nextFrame(stock.client);
+      const first = await stock.stub.publish(principal, key);
+      expect(first.connected).toBe(1);
+      expect(await next).toEqual({ type: 'STORE_STOCK', data: { id: 10 }, revision: first.revision });
+      await evictDurableObject(stock.stub);
+      next = nextFrame(stock.client);
+      const replay = await stock.stub.publish(principal, key);
+      expect(replay).toEqual(first);
+      expect(await next).toEqual({ type: 'STORE_STOCK', data: { id: 10 }, revision: first.revision });
+      await runInDurableObject(stock.stub, (_instance, state) => {
+        expect(state.storage.sql.exec<{ count: number }>('SELECT count(*) AS count FROM signals').one().count).toBe(1);
+      });
+      // A second save of the same product is a new refresh, not a transport retry.
+      next = nextFrame(stock.client);
+      const second = await stock.stub.publish(principal, nextSaveKey);
+      expect(second.revision).toBeGreaterThan(first.revision);
+      expect(await next).toEqual({ type: 'STORE_STOCK', data: { id: 10 }, revision: second.revision });
+      await runInDurableObject(stock.stub, (_instance, state) => {
+        expect(state.storage.sql.exec<{ count: number }>('SELECT count(*) AS count FROM signals').one().count).toBe(2);
+      });
+      await runInDurableObject(withdrawal.stub, async instance => {
+        await expect(instance.publish(session(), key)).rejects.toThrow('作用域');
+      });
+      expect(leaked).toEqual([]);
+    } finally { stock.client.close(); withdrawal.client.close(); }
+  });
   it("rejects malformed upgrades and the wrong principal partition", async () => {
     const stub = bindings.STAFF_NOTICE.getByName(staffPrincipalName(session()));
     expect((await stub.fetch("https://staff-notice.internal/connect")).status).toBe(426);

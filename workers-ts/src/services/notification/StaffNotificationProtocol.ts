@@ -35,11 +35,12 @@ export function parseStaffSession(value: unknown): StaffSocketSession {
     ...(s.scope === undefined ? {} : { scope: s.scope }) };
 }
 export function parseStaffEventKey(value: unknown): string {
-  if (typeof value !== "string" || !/^(?:withdrawal\.staff\.refresh:[1-9]\d{0,9}|product\.stock\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(value)
+  if (typeof value !== "string" || !/^(?:withdrawal\.staff\.refresh:[1-9]\d{0,9}|product\.(?:stock|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(value)
     || Number(value.split(":")[1]) > 2_147_483_647) throw new ValidateException("通知事件键无效");
   return value;
 }
 export function assertStaffEventScope(principal: StaffPrincipal, key: string): void {
   parseStaffEventKey(key);
-  if ((principal.scope === 'product_stock') !== key.startsWith('product.stock.effects:')) throw new ValidateException('通知事件与作用域不匹配');
+  const stockEvent = key.startsWith('product.stock.effects:') || key.startsWith('product.save.effects:');
+  if ((principal.scope === 'product_stock') !== stockEvent) throw new ValidateException('通知事件与作用域不匹配');
 }

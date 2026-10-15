@@ -25,6 +25,13 @@ const CARD_PRODUCT_TYPE = 1;
 const PRODUCT_ATTR_TYPE = 0;
 const SUPPLIER_PRODUCT_TYPE = 2;
 const INVENTORY_LOCK_NAMESPACE = 731_603;
+
+/** Complete editor callers already own the product fence. Refuse reverse
+ * inventory contention instead of waiting on an importer holding this lock. */
+export async function tryLockVirtualProductInventory(tx: DbClient, productId: number): Promise<boolean> {
+  const rows = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(${INVENTORY_LOCK_NAMESPACE}, ${productId}) AS locked`) as unknown as Array<{ locked: boolean }>;
+  return rows[0]?.locked === true;
+}
 const MAX_IMPORT_CARDS = 1_000;
 const MAX_LIST_LIMIT = 100;
 const DEFAULT_ALERT_THRESHOLD = 5;
@@ -248,6 +255,7 @@ async function ownedProduct(
   owner: VirtualInventoryOwner,
   productId: number,
   lock = false,
+  allowHiddenDeleted = false,
 ): Promise<OwnedCardProduct> {
   let query = db
     .select({
@@ -261,7 +269,8 @@ async function ownedProduct(
     .where(
       and(
         eq(storeProduct.id, productId),
-        eq(storeProduct.isDel, 0),
+        allowHiddenDeleted && owner.kind === 'admin'
+          ? sql`(${storeProduct.isDel}=0 OR ${storeProduct.isShow}=0)` : eq(storeProduct.isDel, 0),
         ...ownerConditions(owner),
       ),
     )
@@ -288,6 +297,7 @@ function cardUnique(skuUnique: string, card: VirtualCardImportRow): string {
   // Keep PHP's historical digest input so migrated rows are recognized.
   return md5(`${skuUnique},${card.cardNo},${card.cardPwd}`);
 }
+export const virtualInventoryCardUnique = cardUnique;
 
 export class VirtualProductInventoryService {
   constructor(private readonly container: Container) {}
@@ -750,6 +760,18 @@ export class VirtualProductInventoryService {
     productIdValue: string | number,
     value: unknown,
   ) {
+    return withTx(this.container, tx => this.importCardsInTransaction(tx, owner, productIdValue, value));
+  }
+
+  /** Trusted code boundary: caller supplies its authorized transaction and DB
+   * clock. No HTTP body field enables historical hidden-product access. */
+  async importCardsInTransaction(
+    tx: DbClient,
+    owner: VirtualInventoryOwner,
+    productIdValue: string | number,
+    value: unknown,
+    options: { now?: number; allowHiddenDeleted?: boolean } = {},
+  ) {
     const productId = positiveInteger(productIdValue, "商品ID");
     const body = record(value, "卡密导入数据格式错误");
     const skuUniqueValue = body.attr_unique ?? body.attrUnique;
@@ -760,9 +782,10 @@ export class VirtualProductInventoryService {
     if (skuUnique.length > 8) throw new ValidateException("SKU标识错误");
     const normalized = normalizeVirtualCardImport(body.cards);
 
-    return withTx(this.container, async (tx) => {
+    const now = options.now ?? Math.floor(Date.now() / 1000);
+    if (!Number.isSafeInteger(now) || now < 0 || now > 2_147_483_647) throw new ValidateException('卡密导入时钟错误');
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${INVENTORY_LOCK_NAMESPACE}, ${productId})`);
-      const product = await ownedProduct(tx, owner, productId, true);
+      const product = await ownedProduct(tx, owner, productId, true, options.allowHiddenDeleted === true);
       const sku = (
         await tx
           .select({
@@ -876,7 +899,7 @@ export class VirtualProductInventoryService {
           costPrice: sku.cost,
           number: inserted.length,
           pm: 1,
-          addTime: Math.floor(Date.now() / 1000),
+          addTime: now,
         });
       }
 
@@ -916,6 +939,5 @@ export class VirtualProductInventoryService {
         sku_stock: currentSku[0]?.stock ?? sku.stock,
         product_stock: currentProduct[0]?.stock ?? 0,
       };
-    });
   }
 }

@@ -106,6 +106,8 @@ import { PRODUCT_STOCK_EFFECTS_SQL } from '@/migrations/productStockEffects';
 import { runProductStockEffects } from '@/migrations/runProductStockEffects';
 import { PRODUCT_RECYCLE_EFFECTS_SQL } from '@/migrations/productRecycleEffects';
 import { runProductRecycleEffects } from '@/migrations/runProductRecycleEffects';
+import { PRODUCT_SAVE_EFFECTS_SQL } from '@/migrations/productSaveEffects';
+import { runProductSaveEffects } from '@/migrations/runProductSaveEffects';
 import { PRODUCT_AUTO_SHELF_SQL } from '@/migrations/productAutoShelf';
 import { runProductAutoShelf } from '@/migrations/runProductAutoShelf';
 
@@ -113,6 +115,7 @@ export class MigrationService {
   constructor(private readonly container: Container) {}
 
   productRecycleEffectsSqlForVerification(): string { return this.migration_0182(); }
+  productSaveEffectsSqlForVerification(): string { return this.migration_0183(); }
 
   productAutoShelfSqlForVerification(): string {
     return this.migration_0181();
@@ -612,10 +615,16 @@ export class MigrationService {
       this.migration_0180(),
       this.migration_0181(),
       this.migration_0182(),
+      this.migration_0183(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 183) {
+          await runProductSaveEffects(this.container.db);
+          executed.push('0183');
+          continue;
+        }
         if (i === 182) {
           await runProductRecycleEffects(this.container.db);
           executed.push('0182');
@@ -8908,6 +8917,7 @@ $work_member_resolved_rename_fence$;
   }
 
   private migration_0182(): string { return PRODUCT_RECYCLE_EFFECTS_SQL; }
+  private migration_0183(): string { return PRODUCT_SAVE_EFFECTS_SQL; }
 
   private migration_0181(): string {
     return PRODUCT_AUTO_SHELF_SQL;

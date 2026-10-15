@@ -51,6 +51,7 @@ import * as AdminProductRules from '@/controllers/api/v1/AdminProductRuleControl
 import * as AdminProductReplies from '@/controllers/api/v1/AdminProductReplyController';
 import * as AdminProductFictitiousReplies from '@/controllers/api/v1/AdminProductFictitiousReplyController';
 import * as AdminProductCatalogRead from '@/controllers/api/v1/AdminProductCatalogReadController';
+import * as AdminLegacyProductSave from '@/controllers/api/v1/AdminLegacyProductSaveController';
 import * as AdminProductStock from '@/controllers/api/v1/AdminProductStockController';
 import * as AdminProductModeration from '@/controllers/api/v1/AdminProductModerationController';
 import * as AdminProductRecycle from '@/controllers/api/v1/AdminProductRecycleController';
@@ -301,6 +302,7 @@ adminapiRoutes.get('/product/product/remove/:id', adminAuth, AdminProductModerat
 adminapiRoutes.get('/product/product/get_verify/:id', adminAuth, AdminProductModeration.getVerify);
 adminapiRoutes.post('/product/product/set_verify/:id', adminAuth, AdminProductModeration.save);
 adminapiRoutes.delete('/product/product/:id', adminAuth, AdminProductRecycle.toggle);
+adminapiRoutes.post('/product/product/:id', adminAuth, AdminLegacyProductSave.save);
 // Target-only stock stream; its namespace and product.view scope are independent of withdrawals.
 adminapiRoutes.get('/product/stock/notifications/socket', adminAuth, (c) => upgradeStaffNotification(c, 'admin', 'product_stock'));
 adminapiRoutes.get('/product/category', adminAuth, AdminProductCategories.list);

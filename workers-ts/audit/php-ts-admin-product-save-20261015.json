@@ -1,0 +1,554 @@
+{
+  "scope": "Actual legacy Admin product POST with complete atomic save coordinator, strict whole-row proofs and dedicated durable effects; full editor migration remains open",
+  "status": "selected-validation-and-independent-source-review-passed",
+  "sealedAt": "2026-10-15T04:18:00.207795+00:00",
+  "baseCommit": "40582cf35b6f2a180a6d9167e8c909fb4fa96f52",
+  "source": {
+    "phpExecution": "Not executed; fixed static controller/service/Vue/model/ORM/cache references only",
+    "priorLedger": "audit/php-ts-admin-product-editor-input-20261015.json",
+    "prior31PinsUnchanged": true,
+    "references": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+        "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+        "bytes": 183912
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+        "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+        "bytes": 27131
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "bytes": 136399
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+        "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+        "bytes": 24769
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProduct.php",
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "bytes": 20315
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrServices.php",
+        "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9",
+        "bytes": 21089
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrResultServices.php",
+        "sha256": "136d66730ba803a8a4748edb3fd33f3c0b610556c466ddad6bde9f383704a9a1",
+        "bytes": 4284
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductVirtualServices.php",
+        "sha256": "1a44c129483d02f79b0f70f972fd5954b543eb7afb246a9e083de99e887613a1",
+        "bytes": 3560
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductStockRecordServices.php",
+        "sha256": "28ab8a4a5a4ce6a0e8e8124ecc079ae8f8e68f4349cfc2315fa39df9fc2aa273",
+        "bytes": 3188
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/listener/product/CreateSuccess.php",
+        "sha256": "06402ea2098c72255c99b63e005324651f1ea0ec53c1b742812de746c3c6ff70",
+        "bytes": 4489
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/listener/product/StatusSuccess.php",
+        "sha256": "0007f462041a83d597cee5344d743fdfbdf98fa54c65b57e291df2df7fb5f4fb",
+        "bytes": 935
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+        "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38",
+        "bytes": 7883
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductRelationJob.php",
+        "sha256": "67868469d8739ff1ab1b376b6817449c3d48f23e3ef8fbe3991df904aedfef4a",
+        "bytes": 1808
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductCouponJob.php",
+        "sha256": "36380034a2f194693d3c30a5f787f924ef20d4216041bc661183b2fb4c984d19",
+        "bytes": 2473
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductStockRecordJob.php",
+        "sha256": "1e39ca5eb666964665a41982f62c470629bb8efc8e1e06d35d275e0fb77c874b",
+        "bytes": 1788
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductStockTips.php",
+        "sha256": "02d2147f00fbd75801191642b8df150aa866bfeb626a958b636bcb026f0dcbcc",
+        "bytes": 2151
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductSupplierJob.php",
+        "sha256": "9e1a3047f7d25ed204d3aaabacb46a6a3c05e2c5e6cc4b5d7a1a9fb597b9522c",
+        "bytes": 2641
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductCopyJob.php",
+        "sha256": "46629f651ffdf45abec2245156127173dcdffffbcc19250d55be95093fe78050",
+        "bytes": 6462
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/CopyTaobao.php",
+        "sha256": "27e710188201426f54b8094cef7de5edc02ca5560745e9dada85c95277acc17f",
+        "bytes": 3307
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+        "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+        "bytes": 16957
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAdd/index.vue",
+        "sha256": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f",
+        "bytes": 157763
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+        "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+        "bytes": 62288
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/router/modules/product.js",
+        "sha256": "3845a1391ac6a31cbf1f32d2e0a9399e3a83c18445e91a32afd52f8833ff4790",
+        "bytes": 4460
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+        "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+        "bytes": 7322393
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/listener/system/AutoConfig.php",
+        "sha256": "4f2c20e460b42dc65a62bdd545f47afcb55ba268f235b5656726f49963ad4a4a",
+        "bytes": 7456
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/crmeb/listeners/InitSwooleLockListen.php",
+        "sha256": "ca3b40544f65a62e64d8eafcf480058d35ab7833e1dc3c0c12f0ad5452b69447",
+        "bytes": 1569
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/system/form/SystemFormServices.php",
+        "sha256": "7592c22bef6da315a09de29faa698fb3796c244e8286bb1bdbf215a30ff065c1",
+        "bytes": 2752
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/store/modules/admin/modules/mobildConfig.js",
+        "sha256": "d556239e2401344497d1697e4913c716cabfe5ddbb6004d60544a24d9606b8a2",
+        "bytes": 11129
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/setting/systemForm/create.vue",
+        "sha256": "56ddaa0912cd5887e69363aa0ce773c2c80ea6ec9dbef2a5c9ff9ca53f2f249b",
+        "bytes": 34812
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/Builder.php",
+        "sha256": "f8e63be6b9ac26b71f6e8c115169af32d227ec48b6cd45636a8a4ac9c7a17e50",
+        "bytes": 22391
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/addCarMy.vue",
+        "sha256": "bd79abca690e1dc7776fb042f2647b33fb0c5782400c35b047db50cfe9d307d4",
+        "bytes": 6039
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/plugins/request/index.js",
+        "sha256": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+        "bytes": 6699
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductRelationServices.php",
+        "sha256": "1bd25c8d6c91a3871f2d859e84eb4c3fc41855552e194b46c8fd19a77735c063",
+        "bytes": 6123
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/dao/CacheDaoTrait.php",
+        "sha256": "554c0aa9a0a45f22f41003aa7414acaf34040a729ce74112ca808e39de77bf43",
+        "bytes": 12833
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/crmeb/utils/Tag.php",
+        "sha256": "9223163364eafb2642da618e78a037d113ed02cb0ee1d04b9793a17b5b6c333f",
+        "bytes": 2086
+      }
+    ]
+  },
+  "implementationHashes": {
+    "workers-ts/migrations/0178_product_save_effects.sql": "0fcf472e56130811dfdd7812aa718cd4e131cbc010e21d792f9c9e8b442f4319",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "a5bfa91cca54db406b070854be29846e7a252553f03ab29652db6fb5b854db38",
+    "workers-ts/src/controllers/api/v1/AdminLegacyProductSaveController.ts": "7f4cc2b11c8f942f0a2ad406d47278e04b29b365f040a7c4993850c1d59a9fb6",
+    "workers-ts/src/migrations/productSaveEffects.ts": "cb04b623e0950f2653fe430a187bc568662b4d009e9cd30dd986e24b6d6e8043",
+    "workers-ts/src/migrations/runProductSaveEffects.ts": "23ac9aafa7d7439aad8086e92a722928f666dbc3810859b11bb13421c2eeaca8",
+    "workers-ts/src/models/schema/order_outbox.ts": "a12ecd27fac4c28a043d415b021f4d20488430e8618e457f046dc7e0ee48470d",
+    "workers-ts/src/routes/adminapi.ts": "f9be89ad94dd632a948c5ba035840ba74aa6624c76301f92250ef90469ef2deb",
+    "workers-ts/src/services/MigrationService.ts": "d2f9591be1e2f5fad9206b6e67f81e7d66d36597abc4ce6e009218c05de8263c",
+    "workers-ts/src/services/activity/ProductCouponService.ts": "19754197de72f8d28f26c84a5ea96c432773ff7a1c47aaec6d92b81f22df8d31",
+    "workers-ts/src/services/admin/AdminLegacyProductSaveProof.ts": "1b126c47e0a7ea820cced2029533fdbbea6ff3321c1f54f1df1b7a20ddf861e7",
+    "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts": "814db4de846c422152684523c169cec72f71f00806b351dc5446c4e26aaaad41",
+    "workers-ts/src/services/admin/AdminLegacyProductSaveState.ts": "90ce9f463fe4372c3c90357e511c7dfdc91f54bdf00ed068e2b96f844aba7fcf",
+    "workers-ts/src/services/notification/StaffNotificationProtocol.ts": "6e703d28d34e3e7a545e8d077285e19b828a8b24593a2da89926d5288b898f96",
+    "workers-ts/src/services/order/OrderOutboxService.ts": "192a85848e00d1a47ca9b07fa8c5a37ebaaf468d8b288b65bb9fac2424fcdd8a",
+    "workers-ts/src/services/product/ProductAssociationService.ts": "4e313af527821e22b6a237e2d41970640320a05e5ba5506bae03296ea73e99e2",
+    "workers-ts/src/services/product/ProductSaveEffects.ts": "5c017e2d1977362a24c19d1ffd9db80010499d84b5a765c600740b413e0cb411",
+    "workers-ts/src/services/product/VirtualProductInventoryService.ts": "83c32c3982e5525623864fbc7445fa369476db54020aee591b31801db8cc89e2",
+    "workers-ts/test/admin-legacy-product-save-http.test.ts": "54f4a31234a051b9da0caf0aa74f86d490ec8ac8c8a5fc8818c6487255278b21",
+    "workers-ts/test/admin-legacy-product-save-native.test.ts": "e52d02aed59456b8cbe8b3875dd24dd69a410fe6dc215f000cac9adcdc4e8c1e",
+    "workers-ts/test/admin-legacy-product-save.test.ts": "62a2ccc2071b09d73a69fa21363857088c2cd8776ec1be691a44795fad7d44d4",
+    "workers-ts/test/helpers/adminLegacyProductSave.ts": "59fee1ecab528551cecc8a84c91f6648a3ea90ed70f53f323ed1020eaa59e491",
+    "workers-ts/test/product-association-transaction.test.ts": "b819d61cfe371573ea9afc6239481e76ed9a4fd6ef4207d9c5c503f4dffe1793",
+    "workers-ts/test/product-save-effects-native.test.ts": "c0816212b3c81a8ca67f31a9e40a7a05faba01bff96d0aba27dc0f8982e18636",
+    "workers-ts/test/product-save-effects.test.ts": "96ab001e4d639f7d203cc5ef3688877f0f8fab74f7122eb7e0a616aec54ec462",
+    "workers-ts/test/runtime/product-save-effects-queue-runtime.test.ts": "40ec17c31292b7b555f03fa47407a911642316ea2a6e31e6d3c2317a6871f9f4",
+    "workers-ts/test/runtime/staff-notification-runtime.test.ts": "048c55c62929a0be8a55cd0eba8058d129db67a236277b83a4f21895d2e643e8"
+  },
+  "integration": {
+    "route": "POST /adminapi/product/product/:id",
+    "createId": 0,
+    "permission": "product.manage / exact legacy seed105",
+    "sourceEnvelope": "create: 添加商品成功!; edit: 保存商品信息成功; data: []",
+    "migration": {
+      "standalone": "migrations/0178_product_save_effects.sql",
+      "embedded": "0183",
+      "event": "product.save.effects",
+      "existingDatabasePolicy": "Dedicated standalone exact-prior-whitelist upgrade only; 10000 row maintenance budget; no business or ACL DML"
+    },
+    "frontendChanged": false,
+    "getEditorConnected": false,
+    "trustedLocalCopyHttpConnected": false
+  },
+  "tests": {
+    "ordinary": {
+      "files": 12,
+      "passed": 148,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native": {
+      "files": 9,
+      "passed": 60,
+      "failed": 0,
+      "skipped": 0,
+      "version": "PostgreSQL 16.14",
+      "perFile": {
+        "test/admin-legacy-product-save.test.ts": 18,
+        "test/admin-legacy-product-save-http.test.ts": 4,
+        "test/admin-product-recycle-native.test.ts": 7,
+        "test/product-save-effects.test.ts": 9,
+        "test/product-stock-effects.test.ts": 4,
+        "test/admin-product-stock-concurrency.test.ts": 5,
+        "test/admin-legacy-product-save-native.test.ts": 2,
+        "test/product-recycle-effects.test.ts": 6,
+        "test/product-save-effects-native.test.ts": 5
+      },
+      "overlapWithOrdinary": 41,
+      "additionalDefinitionsRelativeToOrdinary": 19
+    },
+    "workerd": {
+      "files": 4,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0
+    },
+    "finalGroupsPassedExecutions": 221,
+    "distinctDefinitionsInFinalGroups": 180,
+    "countBoundary": "148 ordinary + 60 native - 41 overlapping definitions + 13 workerd = 180. Earlier 22/41 passes are development repetitions, not additional credit."
+  },
+  "validation": {
+    "unit-regressions": {
+      "name": "unit-regressions",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-save.test.ts",
+        "test/admin-legacy-product-save-http.test.ts",
+        "test/product-association-transaction.test.ts",
+        "test/product-save-effects.test.ts",
+        "test/admin-legacy-product-input.test.ts",
+        "test/product-association-migration.test.ts",
+        "test/product-sku-editor-migration.test.ts",
+        "test/virtual-product-inventory.test.ts",
+        "test/product-stock-effects.test.ts",
+        "test/product-recycle-effects.test.ts",
+        "test/staff-notification-scenario.test.ts",
+        "test/order-outbox.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:10:24.414680+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:11:20.281758+00:00",
+      "exitCode": 0,
+      "log": "unit-regressions.log",
+      "logSha256": "62ef658026cbd8067ea8bb73e4f289e3c0252e285e6feef76201bb99291763d8",
+      "summary": [
+        "Test Files  12 passed (12)",
+        "Tests  148 passed (148)",
+        "Start at  04:10:30",
+        "Duration  49.56s (transform 10.57s, setup 0ms, import 25.11s, tests 22.76s, environment 2ms)"
+      ]
+    },
+    "native-regressions": {
+      "name": "native-regressions",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-legacy-product-save.test.ts",
+        "test/admin-legacy-product-save-http.test.ts",
+        "test/admin-legacy-product-save-native.test.ts",
+        "test/product-save-effects.test.ts",
+        "test/product-save-effects-native.test.ts",
+        "test/product-stock-effects.test.ts",
+        "test/product-recycle-effects.test.ts",
+        "test/admin-product-stock-concurrency.test.ts",
+        "test/admin-product-recycle-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:12:02.526465+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:12:55.850617+00:00",
+      "exitCode": 0,
+      "log": "native-regressions.log",
+      "logSha256": "1fca4bc06d56db334af580ee8cc5b2892f102660a930bd97421127d059a01308",
+      "summary": [
+        "Test Files  9 passed (9)",
+        "Tests  60 passed (60)",
+        "Start at  04:12:05",
+        "Duration  50.47s (transform 10.55s, setup 0ms, import 22.31s, tests 26.93s, environment 1ms)"
+      ]
+    },
+    "runtime-regressions": {
+      "name": "runtime-regressions",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.worker.config.ts",
+        "test/runtime/product-save-effects-queue-runtime.test.ts",
+        "test/runtime/product-recycle-effects-queue-runtime.test.ts",
+        "test/runtime/staff-notification-runtime.test.ts",
+        "test/runtime/staff-notification-proxy-runtime.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:13:11.546422+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:13:52.091038+00:00",
+      "exitCode": 0,
+      "log": "runtime-regressions.log",
+      "logSha256": "3982234ea6144784ece09786393ff0b6c39430fb5f18a37912399c8122fb80ba",
+      "summary": [
+        "Test Files  4 passed (4)",
+        "Tests  13 passed (13)",
+        "Start at  04:13:12",
+        "Duration  39.17s (transform 10.17s, setup 0ms, import 34.17s, tests 664ms, environment 0ms)"
+      ]
+    },
+    "typecheck-unit-final": {
+      "name": "typecheck-unit-final",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:14:05.211004+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:16:09.234074+00:00",
+      "exitCode": 0,
+      "log": "typecheck-unit-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": []
+    },
+    "typecheck-runtime-final": {
+      "name": "typecheck-runtime-final",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T04:16:18.127558+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:17:34.800917+00:00",
+      "exitCode": 0,
+      "log": "typecheck-runtime-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": []
+    }
+  },
+  "developmentAttempts": {
+    "coreInitial": {
+      "at": "2026-10-15T03:52:04.024118+00:00",
+      "sessionId": 57699,
+      "status": "Tool handle missing; independent /proc lookup found no matching process or lock; empty log and absent receipt do not prove validation executed",
+      "nextAction": "Rerun current candidate serially with a new receipt name"
+    },
+    "coreRestarted": {
+      "name": "core-restarted",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-save.test.ts",
+        "test/product-association-transaction.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T03:52:06.644236+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T03:52:18.801544+00:00",
+      "exitCode": 0,
+      "log": "core-restarted.log"
+    },
+    "saveExpanded": {
+      "name": "save-expanded",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-legacy-product-save.test.ts",
+        "test/admin-legacy-product-save-http.test.ts",
+        "test/product-association-transaction.test.ts",
+        "test/product-save-effects.test.ts",
+        "test/product-save-effects-native.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T03:58:00.795445+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T04:07:22.543889+00:00",
+      "exitCode": 0,
+      "log": "save-expanded.log"
+    },
+    "initialTypes": {
+      "receipt": {
+        "name": "typecheck-unit",
+        "argv": [
+          "node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "startedAt": "2026-10-15T04:07:44.636776+00:00",
+        "serialWrapperRequired": true,
+        "completedAt": "2026-10-15T04:10:08.202216+00:00",
+        "exitCode": 2,
+        "log": "typecheck-unit.log"
+      },
+      "diagnostics": "src/services/admin/AdminLegacyProductSaveService.ts(17,39): error TS6133: 'HttpApiException' is declared but its value is never read.\nsrc/services/admin/AdminLegacyProductSaveService.ts(26,6): error TS6196: 'Product' is declared but never used.\ntest/admin-legacy-product-save.test.ts(5,34): error TS6133: 'shippingTemplates' is declared but its value is never read.\n",
+      "resolution": "Removed exactly three unused bindings; final full unit and runtime type gates supersede this failed attempt."
+    }
+  },
+  "types": {
+    "unit": "complete tsconfig.json; 8192 MiB; exit0",
+    "runtime": "complete tsconfig.runtime-test.json; 8192 MiB; exit0"
+  },
+  "freeze": {
+    "capturedAt": "2026-10-15T04:10:21.787785+00:00",
+    "count": 3107,
+    "sha256": "110ab40ffaef0e77b6da33908b111eeab1e36a1c31fac406e119ed607241dabb",
+    "verifiedAtSeal": true,
+    "scope": "Selected workers-ts src/test/scripts/migrations and seven named package/type/Vitest/config declaration files; manifest is local source-inputs.json",
+    "configFiles": [
+      "workers-ts/package.json",
+      "workers-ts/package-lock.json",
+      "workers-ts/tsconfig.json",
+      "workers-ts/tsconfig.runtime-test.json",
+      "workers-ts/vitest.config.ts",
+      "workers-ts/vitest.worker.config.ts",
+      "workers-ts/worker-configuration.d.ts"
+    ],
+    "algorithm": "SHA256 of compact JSON sorted path/sha256 records selected from git ls-files --cached --others --exclude-standard; individual file digests cover raw bytes",
+    "boundary": "This is a selected-input freeze, not every transitive runtime/frontend/dependency/environment input. It excludes wrangler TOML and view/common. External PHP references are separately byte-pinned. Installed dependency bytes and environment values are not frozen."
+  },
+  "independentReview": {
+    "mode": "Read-only static source review; no heavy execution by reviewer",
+    "result": "Initial historical identity and orphan-child findings fixed; addendum/final publication review report no additional confirmed P0-P2",
+    "artifacts": {
+      "independent-review.md": {
+        "path": "audit/product-save-20261015/independent-review.md",
+        "sha256": "9c10e5b6ad0a5d0d9dc162bf495338c48d65da177082da4c17e47d61b329a4da"
+      },
+      "independent-review-addendum.md": {
+        "path": "audit/product-save-20261015/independent-review-addendum.md",
+        "sha256": "5c2496fed23147fe70bcb0a45743d550b52b5548bd1057633e591f28c1a209f2"
+      },
+      "publish-review.md": {
+        "path": "audit/product-save-20261015/publish-review.md",
+        "sha256": "c42b0358e0edd8a47d9da8284c7d06fe62741e6b199663623456f37d691ed4ae"
+      }
+    },
+    "boundary": "Review reports retain their original observation times and pending-gate wording. Actual completed gate receipts above are root-run validation, not reviewer-run tests."
+  },
+  "proofBoundaries": {
+    "sql": "Real SQL in owned PGlite and native PG16 fixture databases. HTTP uses actual old helper/request/Axios/App/JWT with explicit host and connection-factory doubles. Native schema-maintenance uses finance_test superuser and does not establish deployed runtime ACL.",
+    "concurrency": "New native coordinator tests prove actual independent cart/category DML NOWAIT refusal, complete rollback, and blocking of a previously absent target-cart insert behind the executed physical barrier. Adjacent stock/recycle races are regression evidence. Same-source-link and metadata absent-row races remain unproved.",
+    "runtime": "Actual workerd Queue routing with SQL/effect-processing ports mocked; actual DO SQL/RPC/WebSocket/eviction/dedup/scope paths with the existing database authorization port mocked.",
+    "providers": "Redis/Lua/socket publication providers are explicit local doubles. Real providers, upload/scraping, encrypted AutoConfig and production end-to-end were not exercised.",
+    "runtimeDiagnostics": "Passing workerd run emitted WebSocketPipe disconnected messages while sockets were torn down; no failed tests or unhandled-test-error result."
+  },
+  "cleanup": {
+    "ownedCluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-XtZcy1",
+    "runnerRemainingFixtureDatabases": 0,
+    "runnerStopped": true,
+    "independentPgCtlStatus": {
+      "exitCode": 3,
+      "output": "pg_ctl: no server running"
+    }
+  },
+  "checklists": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "completed": 249,
+      "open": 155,
+      "checkboxLinesSHA256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+      "checkboxLinesUnchangedFromBase": true,
+      "hashAlgorithm": "SHA256 of newline-joined exact checkbox lines without trailing newline"
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "completed": 50,
+      "open": 38,
+      "checkboxLinesSHA256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+      "checkboxLinesUnchangedFromBase": true,
+      "hashAlgorithm": "SHA256 of newline-joined exact checkbox lines without trailing newline"
+    }
+  },
+  "remaining": [
+    "GET editor DTO/attribute generation and related dependencies",
+    "Full six-step edit/copy UI and trusted local-copy HTTP flow",
+    "Unknown commit outcome recovery",
+    "Coupon fulfillment product type2",
+    "Same-source-link/metadata-insert peer races and deployed minimum runtime privileges",
+    "Real providers, encrypted AutoConfig and formal production acceptance"
+  ],
+  "production": {
+    "ddlExecuted": false,
+    "businessDataWritten": false,
+    "deployed": false
+  },
+  "rawLocalEvidence": "/tmp/cinashop-product-save-20261015",
+  "rawLocalEvidenceBoundary": "Local raw logs/manifests are diagnostic artifacts, not the only persisted proof; completed commands, summaries, fingerprints and review reports are preserved here."
+}

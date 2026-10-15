@@ -14,6 +14,10 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import { lockProductWrite } from "@/services/product/ProductAssociationService";
 
 const PRODUCT_COUPON_LOCK_NAMESPACE = 731_626;
+export async function tryLockProductCoupon(tx: DbClient, productId: number): Promise<boolean> {
+  const rows = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(${PRODUCT_COUPON_LOCK_NAMESPACE}, ${productId}) AS locked`) as unknown as Array<{ locked: boolean }>;
+  return rows[0]?.locked === true;
+}
 const MAX_COUPONS_PER_PRODUCT = 100;
 
 export interface CouponScopeItem {
