@@ -243,14 +243,20 @@ export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>
   assertCashierAuditManualRedNoteCatalog(manual.rows,scope==='current-bare-orm'?'orm':path==='orm'?'embedded':path);
 }
 export function assertExternalMigrationCohort(files:string[]) {
-  assert.equal(files.length,178);
-  assert.equal(digest(JSON.stringify(files)),"7a6d7fa097009a425eb3ff3b95eefa55f80aa056c932a031701b99e0c129c676");
+  assert.equal(files.length,179);
+  assert.equal(digest(JSON.stringify(files)),"7ab759fe7e80e8320a27bbe77d523907f14beb2b516fa7139dc25abbb07ca4c1");
+  const autoShelfFile='0176_product_auto_shelf.sql';
+  const autoShelfSource=readFileSync(resolve(root,'migrations',autoShelfFile),'utf8').replace(/\r\n?/g,'\n');
+  assert.equal(digest(autoShelfSource),'46b3e860bfafbd29bd17596c88f9b0299c3b04dd776ed81818a919bef92e9f07');
+  const throughStockFiles=files.filter(file=>file!==autoShelfFile);
+  assert.equal(throughStockFiles.length,178);
+  assert.equal(digest(JSON.stringify(throughStockFiles)),"7a6d7fa097009a425eb3ff3b95eefa55f80aa056c932a031701b99e0c129c676");
   // Main's reviewed stock outbox CHECK upgrade adds one file and no table.
   // Retain both older name-cohort hashes independently of that addition.
   const stockFile='0175_product_stock_effects.sql';
   const stockSource=readFileSync(resolve(root,'migrations',stockFile),'utf8').replace(/\r\n?/g,'\n');
   assert.equal(digest(stockSource),'31e2ec53cd275c77d8add059b89bd71c5d84871c3ce167ff48edc2abb56f35fc');
-  const throughAbandonFiles=files.filter(file=>file!==stockFile);
+  const throughAbandonFiles=throughStockFiles.filter(file=>file!==stockFile);
   assert.equal(throughAbandonFiles.length,177);
   assert.equal(digest(JSON.stringify(throughAbandonFiles)),"da361cb50bd8e57dd64dbb36f3189b9df87a88b152d52fc6c9adb8850c04b298");
   const historicalFiles=throughAbandonFiles.filter(file=>file!==externalAdditions.cashier_second_card_abandon_v1.file);
@@ -259,7 +265,7 @@ export function assertExternalMigrationCohort(files:string[]) {
   assert.deepEqual(files.filter(file=>!file.startsWith('0006a')&&!/^\d{4}_/.test(file)),[]);
   for(const file of ['0166_recharge_quota_group_seed.sql','0167_seckill_time_reference_lock.sql',
     '0170_order_promotion_gift_receipt.sql','0171_purchase_cancellation_gift_evidence.sql','0173_customer_city_delivery.sql',
-    externalAdditions.cashier_second_card_abandon_v1.file,stockFile])
+    externalAdditions.cashier_second_card_abandon_v1.file,stockFile,autoShelfFile])
     assert.equal(files.filter(value=>value===file).length,1);
 }
 // Explicit fixture composition mirrors the approved full nine-path audit.

@@ -100,6 +100,18 @@ describe("Admin frontend API registration audit", () => {
     expect(current).toEqual(merged);
   });
 
+  it("expands the moderation mode type alias into both registered form routes", () => {
+    const forms = current.calls.filter(call => call.source === "view/admin-ts/src/api/productModeration.ts"
+      && call.method === "GET" && /^\/product\/product\/(verify|remove)\/:param$/.test(call.path));
+    expect(forms.map(call => ({ path: call.path, route: call.matchedRoute, handler: call.matchedHandler,
+      registered: call.registered, availability: call.availability }))).toEqual([
+      { path: "/product/product/verify/:param", route: "/product/product/verify/:id",
+        handler: "AdminProductModeration.verifyForm", registered: true, availability: "executable" },
+      { path: "/product/product/remove/:param", route: "/product/product/remove/:id",
+        handler: "AdminProductModeration.removeForm", registered: true, availability: "executable" },
+    ]);
+  });
+
   it("resolves the absolute ERP consumer through the real mounted v1 Admin root and pins every source", () => {
     expect(current.calls.find(call => call.method === "GET" && call.path === "/api/admin/erp/config"))
       .toMatchObject({ source: "view/admin-ts/src/api/productStock.ts", registered: true,

@@ -144,18 +144,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds the current external 178-file and embedded 181-step catalogs with explicit city and abandonment composition and identical five-category schema and exact independent capability', async () => {
+  it('builds the current external 179-file and embedded 182-step catalogs with explicit city and abandonment composition and identical five-category schema and exact independent capability', async () => {
     const external = await checkoutPricingMigrationDatabase();
     const embedded = await checkoutPricingMigrationDatabase();
     try {
-      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0175_product_stock_effects.sql');
+      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0176_product_auto_shelf.sql');
       await applyExternal(external, list);
       // The second root connection can expire while the first full catalog is
       // built. Bind explicit owner settings to this actual maintenance session.
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 181 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 182 }, (_, index) => String(index).padStart(4, '0')));
       await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await catalog(embedded)).toEqual(await catalog(external));
       for (const f of [external, embedded]) {

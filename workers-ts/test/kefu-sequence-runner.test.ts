@@ -97,7 +97,15 @@ describe("standalone sequence transaction execution boundary", () => {
     // no filtering, deduplication or text normalization; execution stays in
     // the generator's original order. Every missing, extra or changed DDL fails.
     const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
-    const historicalSnapshot=structuredClone(snapshot);
+    const previousCurrentSnapshot=structuredClone(snapshot);
+    const autoShelfIndexNames=['sp_auto_on_due_idx','sp_auto_off_due_idx'] as const;
+    for(const name of autoShelfIndexNames){
+      expect(previousCurrentSnapshot.tables['public.store_product'].indexes[name]?.name).toBe(name);
+      delete previousCurrentSnapshot.tables['public.store_product'].indexes[name];
+    }
+    const previousCurrentStatements=await api.generateMigration(api.generateDrizzleJson({}),previousCurrentSnapshot);
+    const exactAutoShelfAddition=await api.generateMigration(previousCurrentSnapshot,snapshot);
+    const historicalSnapshot=structuredClone(previousCurrentSnapshot);
     for(const name of [...MANUAL_RED_NOTE_ORM_TABLE_NAMES,...ERP_ORM_TABLE_NAMES])
       delete historicalSnapshot.tables['public.'+name];
     expect(Object.keys(historicalSnapshot.tables).sort()).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
@@ -121,7 +129,7 @@ describe("standalone sequence transaction execution boundary", () => {
     stockSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=structuredClone(currentCheck);
     const exactStockUpgrade=await api.generateMigration(manualSnapshot,stockSnapshot);
     const stockStatements=await api.generateMigration(api.generateDrizzleJson({}),stockSnapshot);
-    const exactErpAddition=await api.generateMigration(stockSnapshot,snapshot);
+    const exactErpAddition=await api.generateMigration(stockSnapshot,previousCurrentSnapshot);
     const statementDigest=(statements:string[])=>createHash('sha256').update(JSON.stringify([...statements].sort()),'utf8').digest('hex');
     // Keep the independent historical285/1191 and manual287/1197 pins intact.
     // The current291 model adds exactly the four reviewed ERP table statements
@@ -139,11 +147,19 @@ describe("standalone sequence transaction execution boundary", () => {
     expect(stockStatements).toHaveLength(1197);
     expect(exactErpAddition).toHaveLength(4);
     expect(statementDigest(exactErpAddition)).toBe('8b30b93b6463561ec5dddc473be73fa5dcdc5370992a3781851fa8b682142001');
-    expect([...currentStatements].sort()).toEqual([...stockStatements,...exactErpAddition].sort());
-    expect(statementDigest(currentStatements)).toBe('fbfe3b21896a71969856d5341d08bccca75f3210dcae7676eeb4b4a1caca1a73');
-    expect(currentStatements).toHaveLength(1201);
+    expect([...previousCurrentStatements].sort()).toEqual([...stockStatements,...exactErpAddition].sort());
+    expect(statementDigest(previousCurrentStatements)).toBe('fbfe3b21896a71969856d5341d08bccca75f3210dcae7676eeb4b4a1caca1a73');
+    expect(previousCurrentStatements).toHaveLength(1201);
+    expect(exactAutoShelfAddition).toEqual([
+      'CREATE INDEX "sp_auto_on_due_idx" ON "store_product" USING btree ("auto_on_time","id") WHERE "store_product"."is_del"=0 AND "store_product"."is_show"=0 AND "store_product"."auto_on_time">0;',
+      'CREATE INDEX "sp_auto_off_due_idx" ON "store_product" USING btree ("auto_off_time","id") WHERE "store_product"."is_del"=0 AND "store_product"."is_show"=1 AND "store_product"."auto_off_time">0;',
+    ]);
+    expect(statementDigest(exactAutoShelfAddition)).toBe('cae05710e5933a05952d1ff5b0c6990e1ed274cb3ec78097d4ed661e4592579b');
+    expect([...currentStatements].sort()).toEqual([...previousCurrentStatements,...exactAutoShelfAddition].sort());
+    expect(statementDigest(currentStatements)).toBe('5b1724634d591d14d1bbd63cc05c441d88d1293c7ce8ba6d58bc927b5133fcd6');
+    expect(currentStatements).toHaveLength(1203);
     // The independently pinned previous sequence has no owning-column ALTER.
-    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length+exactErpAddition.length);
+    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length+exactErpAddition.length+exactAutoShelfAddition.length);
     expect(fullPath.generatedProposalStatements).toBe(2);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([

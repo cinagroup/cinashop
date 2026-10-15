@@ -268,17 +268,17 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 178 and embedded 181 paths with identical 286-table catalogs and preserves the stock-effect successor when the old installer refuses it', async () => {
+  it('builds fresh external 179 and embedded 182 paths with identical 286-table catalogs and preserves the stock-effect successor when the old installer refuses it', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
       embedded = await checkoutPricingMigrationDatabase();
-      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0175_product_stock_effects.sql');
+      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0176_product_auto_shelf.sql');
       await externalMigrations(external, files);
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 181 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 182 }, (_, index) => String(index).padStart(4, '0')));
       await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await fullCatalog(embedded)).toEqual(await fullCatalog(external));
       for (const f of [external, embedded]) {
@@ -289,8 +289,20 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
         // Current full construction includes external 0175 / embedded 0180.
         // The old forward-only installer must refuse this successor, never
         // narrow its event whitelist or repair it back to the older catalog.
-        await expect(runPinkSuccessNotice(f.db)).rejects.toMatchObject({ code: 'P0001',
-          message: 'Pink success outbox event CHECK drift; no automatic repair' });
+        const refused=await outcome(runPinkSuccessNotice(f.db));
+        expect(refused.ok).toBe(false);
+        if(!refused.ok){
+          let cause:unknown=refused.error, serverError:{code:string;message:unknown}|null=null;
+          for(let depth=0;depth<8&&cause&&typeof cause==='object';depth++){
+            const error=cause as {code?:unknown;message?:unknown;cause?:unknown};
+            if(typeof error.code==='string'&&/^[0-9A-Z]{5}$/.test(error.code)){
+              serverError={code:error.code,message:error.message}; break;
+            }
+            if(error.cause===cause)break;
+            cause=error.cause;
+          }
+          expect(serverError).toEqual({code:'P0001',message:'Pink success outbox event CHECK drift; no automatic repair'});
+        }
         expect(await eventCheck(f)).toEqual(check); expect(await identitiesAndAcl(f)).toEqual(identity);
         expect(await fullCatalog(f)).toEqual(catalog); expect(await businessRows(f)).toEqual(rows);
         const invalid = await outcome(f.exec("INSERT INTO public.store_order_outbox(event_key,event_type,aggregate_id,payload) VALUES('unknown-fixture','unknown.event',0,'{}')"));

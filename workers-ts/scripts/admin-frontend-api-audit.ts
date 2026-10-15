@@ -193,10 +193,22 @@ function collectApiCalls(files: string[]): { calls: Omit<ApiCall, "registered" |
     for (const unit of sourceUnits(file)) {
       const variables = new Map<string, ts.Expression>();
       const literalValues = new Map<string, string[]>();
-      const typeValues = (node: ts.TypeNode | undefined): string[] => {
+      const typeAliases = new Map<string, ts.TypeNode>();
+      const collectTypeAliases = (node: ts.Node) => {
+        if (ts.isTypeAliasDeclaration(node)) typeAliases.set(node.name.text, node.type);
+        ts.forEachChild(node, collectTypeAliases);
+      };
+      collectTypeAliases(unit.source);
+      const typeValues = (node: ts.TypeNode | undefined, seen = new Set<string>()): string[] => {
         if (!node) return [];
-        if (ts.isUnionTypeNode(node)) return unique(node.types.flatMap(typeValues));
+        if (ts.isUnionTypeNode(node)) return unique(node.types.flatMap(type => typeValues(type, seen)));
+        if (ts.isParenthesizedTypeNode(node)) return typeValues(node.type, seen);
         if (ts.isLiteralTypeNode(node) && ts.isStringLiteral(node.literal)) return [node.literal.text];
+        if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
+          const name = node.typeName.text;
+          if (seen.has(name) || seen.size >= 16) return [];
+          return typeValues(typeAliases.get(name), new Set([...seen, name]));
+        }
         return [];
       };
       const collectVariables = (node: ts.Node) => {

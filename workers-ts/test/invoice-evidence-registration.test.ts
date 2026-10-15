@@ -50,10 +50,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoi
   it.each(['external','embedded','orm'] as const)('complete %s construction proves protection before runtime commissioning',async path=>{
     if(path==='external') {
       const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();
-      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0175_product_stock_effects.sql');
+      assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0176_product_auto_shelf.sql');
       for(const file of files) await f.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
     } else if(path==='embedded') {
-      expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 181},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+      expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 182},(_,i)=>String(i).padStart(4,'0')),errors:[]});
     } else {
       const api=await import('drizzle-kit/api'),snapshot=api.generateDrizzleJson(allModels);
       assertRegisteredModelCohort(snapshot);
