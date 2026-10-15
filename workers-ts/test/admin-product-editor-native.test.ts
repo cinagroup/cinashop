@@ -5,7 +5,7 @@ import { createContainerFromDb, type DbClient } from '@/lib/di';
 import type { Env } from '@/env';
 import { systemAdmin, systemRole, storeProduct, storeProductAttrValue, storeProductRelation, storeProductCoupon,
   systemLog, storeOrderOutbox, userLabel, storeCouponIssue, systemStore, systemSupplier, storeProductVirtual,
-  storeProductDescription } from '@/models/schema';
+  storeProductDescription, systemAttachment } from '@/models/schema';
 import { PRODUCT_EDITOR_OPERATION_SQL, inspectProductEditorOperation, PRODUCT_EDITOR_OPERATION_CONSTRAINTS_SHA256,
   assertProductEditorOperationReady, installProductEditorOperation } from '@/migrations/adminProductEditorOperation';
 import { AdminProductEditorOperationService, prepareProductEditorCopySave, prepareProductEditorSave } from '@/services/admin/AdminProductEditorReceipt';
@@ -60,6 +60,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('PG16 full editor
   };
   const copyBody = (product: Record<string,unknown>, token: string, operationId = crypto.randomUUID()) =>
     ({operation_id:operationId,copy_token:token,product:{...product,attrs:(product.attrs as object[]).map(row=>({disk_info:'',virtual_list:[],...row}))}});
+  const seedVideo = (changes: Partial<typeof systemAttachment.$inferInsert> = {}) => f.db.insert(systemAttachment).values({
+    attId: 301, type: 1, relationId: 0, moduleType: 1, fileType: 2, imageType: 8,
+    name: 'attachments/admin/1/2026/10/product-video.mp4', attDir: '/api/assets/301', attType: 'video/mp4', ...changes });
   it('pins actual PostgreSQL16 catalog definitions independently of the TypeScript source', async () => {
     expect(readFileSync(resolve(import.meta.dirname,'../src/migrations/maintenance/0184_admin_product_editor_operation.sql'),'utf8')
       .split('\n').slice(1).join('\n')).toBe(PRODUCT_EDITOR_OPERATION_SQL);
@@ -301,4 +304,69 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('PG16 full editor
         REVOKE ALL ON SCHEMA public FROM "${role}"; DROP ROLE "${role}"`);
     }
   });
+  it('saves canonical private videos and returns separate signed edit/copy playback without changing the source', async () => {
+    await seedVideo();
+    const product = editorProduct({ video_open: 1, video_link: '/api/assets/301?expires=1&signature=old' });
+    const source = await save(prepared(product));
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, source.id)))[0].videoLink).toBe('/api/assets/301');
+    const before = await f.snapshot(), detail = await http('detail/'+source.id);
+    expect(detail.body.status).toBe(200);
+    expect(detail.body.data).toMatchObject({ productInfo: { video_link: '/api/assets/301' }, editor: { video_preview: expect.stringMatching(/^\/api\/assets\/301\?expires=\d+&signature=/) } });
+    const seed = await copySeed(source.id);
+    expect(seed.productInfo.video_link).toBe('/api/assets/301'); expect(seed.editor).toMatchObject({ video_preview: expect.stringMatching(/^\/api\/assets\/301\?expires=\d+&signature=/) });
+    expect(await f.snapshot()).toEqual(before);
+    const result = await http('copy/'+source.id,'POST',copyBody({ ...product, video_link: '/api/assets/301' },seed.editor.copy.token));
+    expect(result.body.status,result.body.msg).toBe(200);
+    const created = (result.body.data as {result:{id:number}}).result.id;
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,created)))[0].videoLink).toBe('/api/assets/301');
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,source.id)))[0]).toMatchObject({ videoLink:'/api/assets/301' });
+  });
+  it('shares platform video with actual store/supplier copy destinations and confines supplier private video', async () => {
+    await seedVideo(); await f.db.insert(systemStore).values({ id:71,name:'视频门店' });
+    await f.db.insert(systemSupplier).values([{ id:72,adminId:72,supplierName:'视频供应商' },{ id:73,adminId:73,supplierName:'其他供应商' }]);
+    for(const owner of [{type:1,relationId:71},{type:2,relationId:72}]) {
+      const product = editorProduct({ video_open:1,video_link:'/api/assets/301' }), source = await save(prepared(product));
+      await f.db.update(storeProduct).set(owner).where(eq(storeProduct.id,source.id));
+      const seed = await copySeed(source.id), result = await http('copy/'+source.id,'POST',copyBody({...product,supplier_id:owner.type===2?72:0},seed.editor.copy.token));
+      expect(result.body.status,result.body.msg).toBe(200);
+      const id=(result.body.data as {result:{id:number}}).result.id;
+      expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id,id)))[0]).toMatchObject({...owner,videoLink:'/api/assets/301'});
+    }
+    await seedVideo({attId:302,type:4,relationId:72,name:'attachments/supplier/72/2026/10/private.mp4',attDir:'/api/assets/302'});
+    const allowed = await save(prepared(editorProduct({supplier_id:72,video_open:1,video_link:'/api/assets/302'})));
+    expect((await http('detail/'+allowed.id)).body.data).toMatchObject({editor:{video_preview:expect.stringMatching(/^\/api\/assets\/302\?/)}});
+    const before=await f.snapshot();
+    for(const supplier_id of [0,73]) await expect(save(prepared(editorProduct({supplier_id,video_open:1,video_link:'/api/assets/302'})))).rejects.toThrow('视频');
+    expect(await f.snapshot()).toEqual(before);
+  });
+  it('rejects video type/owner drift and uncontrolled modern URLs before product or operation writes', async () => {
+    await seedVideo();
+    for(const reference of ['http://media.example/video.mp4','https://127.0.0.1/video.mp4','https://media.example/video.html','/uploads/local.mp4','/a/../api/assets/301','/api/assets/999']) {
+      const before=await f.snapshot(), p=prepared(editorProduct({video_open:1,video_link:reference}));
+      await expect(save(p)).rejects.toThrow('视频'); expect(await f.snapshot()).toEqual(before);
+      expect(await operations().receipt(p.intent.operationId,legacySaveActor())).toMatchObject({state:'unknown'});
+    }
+    const product=editorProduct({video_open:1,video_link:'/api/assets/301'}),source=await save(prepared(product)),seed=await copySeed(source.id);
+    await f.db.update(systemAttachment).set({attType:'text/html'}).where(eq(systemAttachment.attId,301));
+    const before=await f.snapshot(), copying=copyBody(product,seed.editor.copy.token);
+    expect((await http('copy/'+source.id)).body.status).toBe(409);
+    expect((await http('copy/'+source.id,'POST',copying)).body.status).not.toBe(200);
+    expect(await f.snapshot()).toEqual(before);
+    expect(await operations().receipt(copying.operation_id,legacySaveActor())).toMatchObject({state:'unknown'});
+  });
+  it('holds the real attachment table fence while validating a product video and refuses an active metadata writer', async () => {
+    await seedVideo();const product=prepared(editorProduct({video_open:1,video_link:'/api/assets/301'}));
+    await withFinancePeers(f.db,async ([writer,peer])=>{
+      await writer.exec('BEGIN');
+      try {await writer.exec("UPDATE public.system_attachment SET att_type='text/html' WHERE att_id=301");await expect(save(product,peer.db)).rejects.toMatchObject({httpStatus:409});}
+      finally {await writer.exec('ROLLBACK');}
+      const ready=signal(),release=signal();
+      const hooked=pauseModerationExecute(peer.db,/LOCK TABLE ONLY (?:(?:"public"|public)\.)?"store_product",[\s\S]*SHARE ROW EXCLUSIVE MODE NOWAIT/i,async()=>{ready.resolve();await release.promise;});
+      const pending=outcome(save(product,hooked));
+      try {await Promise.race([ready.promise,pending.then(result=>{if(!result.ok)throw result.error;throw Error('Video save missed actual table fence');})]);await writer.exec("SET lock_timeout='200ms'");await expect(writer.exec("UPDATE public.system_attachment SET att_type='text/html' WHERE att_id=301")).rejects.toMatchObject({code:'55P03'});}
+      finally {release.resolve();await pending;}
+      const result=await pending;if(!result.ok)throw result.error;expect(result.value.receipt).toMatchObject({state:'committed'});
+    });
+  },30000);
+
 });

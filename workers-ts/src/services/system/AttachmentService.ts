@@ -196,8 +196,9 @@ function normalizeHttpsMediaUrl(
   value: unknown,
   label: string,
   extensions: readonly string[],
+  maxLength = 200,
 ): string {
-  if (typeof value !== "string" || !value.trim() || value.length > 200) {
+  if (typeof value !== "string" || !value.trim() || value.length > maxLength) {
     throw new ValidateException(`${label}格式错误`);
   }
   let parsed: URL;
@@ -218,8 +219,8 @@ function normalizeHttpsMediaUrl(
   return parsed.toString();
 }
 
-export function normalizeExternalVideoUrl(value: unknown): string {
-  return normalizeHttpsMediaUrl(value, "视频地址", ["mp4"]);
+export function normalizeExternalVideoUrl(value: unknown, maxLength = 200): string {
+  return normalizeHttpsMediaUrl(value, "视频地址", ["mp4"], maxLength);
 }
 
 function normalizeExternalVideoCoverUrl(value: unknown): string {

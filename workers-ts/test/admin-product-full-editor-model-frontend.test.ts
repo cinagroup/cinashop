@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { canonicalProductImage, detailIdentity, fromCopyDetail, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorEntry, parseEditorRoute, parsePendingProductSave, parseProductEditorCopy, parseProductReceipt, PRODUCT_EDITOR_FIELDS, toLegacySave, validateProductSave, type ProductEditorCopy } from '../../view/admin-ts/src/pages/product/productEditorModel';
+import { canonicalProductImage, canonicalProductVideo, detailIdentity, fromCopyDetail, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorEntry, parseEditorRoute, parsePendingProductSave, parseProductEditorCopy, parseProductReceipt, PRODUCT_EDITOR_FIELDS, toLegacySave, validateProductSave, type ProductEditorCopy } from '../../view/admin-ts/src/pages/product/productEditorModel';
 
 const operation = { operation_id: '9d2a99ec-3798-4fbc-822f-33143bdb70e8', actor_id: 20, requested_id: 19 };
 function model() { const value = newProductEditor(); value.store_name = '完整商品'; value.cate_id = [11, 12]; value.brand_id = [21, 22]; value.slider_image = ['/api/assets/31']; value.attrs[0]!.price = 12; value.attrs[0]!.stock = 5; return value; }
@@ -38,6 +38,37 @@ describe('full Admin product editor field projection', () => {
     expect(payload.slider_image).toEqual(['/api/assets/31']); expect(payload.attrs[0]?.pic).toBe('/api/assets/31');
     expect(canonicalProductImage('https://cdn.example.test/api/assets/9?secret=x')).toBe('/api/assets/9');
     for (const value of ['javascript:alert(1)', '//foreign.test/a.png', '/api/assets/%252f9']) expect(() => canonicalProductImage(value)).toThrow();
+  });
+  it('keeps private video playback separate from the stable reference through load, draft and save', () => {
+    const value = model(); value.video_open = 1; value.video_link = '/api/assets/71';
+    const dto = detail(value), ticket = '/api/assets/71?expires=2000000000&signature=temporary-video-ticket';
+    const state = fromLegacyDetail({ ...dto, editor: { ...dto.editor, video_preview: ticket } });
+    expect(state.model.video_link).toBe('/api/assets/71'); expect(state.savedVideoLink).toBe('/api/assets/71'); expect(state.videoPreview).toBe(ticket);
+    expect(toLegacySave(state.model)).not.toHaveProperty('video_preview');
+    state.model.video_link = `https://shop.example.test${ticket}`;
+    const draft = makeEditorDraft(state.model, 19, null), restored = fromEditorDraft(draft, 20, 19);
+    expect(draft.video_link).toBe('/api/assets/71'); expect(JSON.stringify(draft)).not.toContain('temporary-video-ticket'); expect(JSON.stringify(draft)).not.toContain('expires=');
+    expect(toLegacySave(restored.model).video_link).toBe('/api/assets/71'); expect(() => validateProductSave(toLegacySave(restored.model), false)).not.toThrow();
+  });
+  it('preserves a copy seed video reference without persisting its playback ticket', () => {
+    const copy: ProductEditorCopy = { source_id: 19, token: 'c'.repeat(64), destination: { type: 1, relation_id: 500 } }, dto = detail();
+    Object.assign(dto.productInfo, { type: 1, relation_id: 500, video_open: 1, video_link: '/api/assets/71' });
+    dto.productInfo.attr = { ...toLegacySave(model()).attrs[0] } as any;
+    const state = fromCopyDetail({ ...dto, editor: { ...dto.editor, copy, video_preview: '/api/assets/71?signature=copy-preview' } }, 19);
+    expect(state.videoPreview).toContain('copy-preview'); expect(toLegacySave(state.model, state.copy).video_link).toBe('/api/assets/71');
+    const draft = makeEditorDraft(state.model, 0, null, state.copy), restored = fromEditorDraft(draft, 20, 0, 19);
+    expect(restored.copy).toEqual(copy); expect(toLegacySave(restored.model, restored.copy).video_link).toBe('/api/assets/71'); expect(JSON.stringify(draft)).not.toContain('copy-preview');
+  });
+  it('allows canonical videos and controlled HTTPS MP4 URLs up to 500 normalized characters', () => {
+    const base = 'https://cdn.example.test/product.mp4?key=', longest = base + 'a'.repeat(500 - base.length);
+    expect(canonicalProductVideo(longest)).toBe(longest); expect(canonicalProductVideo('/api/assets/71?signature=x')).toBe('/api/assets/71');
+    expect(canonicalProductVideo('https://cdn.example.test/product.MP4#play')).toBe('https://cdn.example.test/product.MP4');
+    for (const invalid of [longest + 'a', 'https://cdn.example.test/product.svg', 'http://cdn.example.test/product.mp4', 'https://localhost/product.mp4', 'https://127.1/product.mp4', 'https://192.168.1.2/product.mp4', 'https://user:password@cdn.example.test/product.mp4', 'https://cdn.example.test:444/product.mp4', '/product.mp4', '/a/../api/assets/71', '/api/assets/%37%31', '/kefuapi/assets/71']) {
+      expect(() => canonicalProductVideo(invalid)).toThrow('视频');
+      const payload = toLegacySave(model()); payload.video_link = invalid;
+      expect(() => validateProductSave(payload, false)).toThrow('视频');
+    }
+    const expanded = `https://cdn.example.test/${'中'.repeat(60)}.mp4`; expect(expanded.length).toBeLessThan(500); expect(() => canonicalProductVideo(expanded)).toThrow('视频');
   });
   it.each([1, 2, 3] as const)('roundtrips second-card validity mode %s through the same draft/save projection', valid => {
     const value = model(); value.product_type = 4; value.attrs[0]!.write_times = 18; value.attrs[0]!.write_valid = valid; value.attrs[0]!.days = 90;

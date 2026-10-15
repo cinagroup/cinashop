@@ -43,7 +43,7 @@ export interface ProductEditorDetail {
   productInfo: Record<string, unknown>;
   tempList: Array<{ id: number; name: string }>;
   cateList: unknown[];
-  editor: { stored_custom_form: unknown; retired_attrs: unknown[]; description_preview: string; contract_version?: number; erp_open?: boolean; copy?: ProductEditorCopy };
+  editor: { stored_custom_form: unknown; retired_attrs: unknown[]; description_preview: string; video_preview?: string; contract_version?: number; erp_open?: boolean; copy?: ProductEditorCopy };
 }
 export interface PendingProductSave { operation_id: string; requested_id: number; actor_id: number }
 export interface ProductSaveReceipt extends PendingProductSave {
@@ -81,6 +81,33 @@ export function canonicalProductImage(value: string): string {
   if (reference.kind === 'invalid') throw Error('图片须为素材引用或有效的HTTPS图片地址');
   return reference.reference;
 }
+/** Persist the stable asset identity, never the temporary playback ticket. */
+export function canonicalProductVideo(value: string): string {
+  if (!value) return '';
+  const reference = classifyProductMediaReference(value), invalid = () => Error('视频须为素材稳定地址或有效的HTTPS MP4地址（最长500字符）');
+  if (reference.kind === 'invalid') throw invalid();
+  if (reference.kind === 'asset') {
+    if (!/^\/api\/assets\/[1-9]\d*(?:[?#]|$)/u.test(value.trim())
+      && !/^https:\/\/[^/?#]+\/api\/assets\/[1-9]\d*(?:[?#]|$)/iu.test(value.trim())) throw invalid();
+    return reference.reference;
+  }
+  if (reference.reference.length > 500) throw invalid();
+  let parsed: URL;
+  try { parsed = new URL(reference.reference); } catch { throw invalid(); }
+  const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/gu, ''), parts = hostname.split('.');
+  const octets = parts.length === 4 && parts.every(part => /^\d{1,3}$/u.test(part)) ? parts.map(Number) : null;
+  const privateHost = hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '::1' || octets && (
+    octets.some(part => part > 255) || octets[0] === 0 || octets[0] === 10 || octets[0] === 127
+    || octets[0] === 100 && octets[1]! >= 64 && octets[1]! <= 127 || octets[0] === 169 && octets[1] === 254
+    || octets[0] === 172 && octets[1]! >= 16 && octets[1]! <= 31 || octets[0] === 192 && octets[1] === 168
+    || octets[0] === 198 && (octets[1] === 18 || octets[1] === 19) || octets[0]! >= 224);
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.port && parsed.port !== '443'
+    || !hostname || privateHost || !/\.mp4$/iu.test(parsed.pathname)) throw invalid();
+  parsed.hash = '';
+  const result = parsed.toString();
+  if (result.length > 500) throw invalid();
+  return result;
+}
 export function newEditorSku(detail: Record<string, string> = { 规格: '默认' }): EditorSku {
   return { suk: Object.values(detail).join(','), detail: { ...detail }, pic: '', price: 0, settle_price: 0, cost: 0, ot_price: 0,
     vip_price: 0, stock: 0, bar_code: '', code: '', weight: 0, volume: 0, brokerage: 0, brokerage_two: 0, disk_info: '', virtual_list: [],
@@ -115,7 +142,7 @@ export function restoreEditorSkus(value: unknown, dims: EditorDimension[]): Edit
 }
 export function fromLegacyDetail(value: ProductEditorDetail) {
   const dto = object(value), p = object(dto.productInfo), extra = object(dto.editor);
-  if (!Array.isArray(dto.tempList) || !Array.isArray(dto.cateList) || typeof extra.description_preview !== 'string' || !Array.isArray(extra.retired_attrs)) throw Error('完整商品资料响应不完整');
+  if (!Array.isArray(dto.tempList) || !Array.isArray(dto.cateList) || typeof extra.description_preview !== 'string' || extra.video_preview !== undefined && typeof extra.video_preview !== 'string' || !Array.isArray(extra.retired_attrs)) throw Error('完整商品资料响应不完整');
   const model = newProductEditor(), productType = number(p.product_type);
   if (![0, 1, 3, 4].includes(productType)) throw Error('商品履约类型不支持编辑'); model.product_type = productType as ProductType;
   const specType = number(p.spec_type); if (![0, 1].includes(specType)) throw Error('商品规格类型无效'); model.spec_type = specType as 0 | 1;
@@ -135,7 +162,8 @@ export function fromLegacyDetail(value: ProductEditorDetail) {
   model.specs = list(p.specs).map(item => { const row = object(item); return { name: text(row.name), value: text(row.value), sort: number(row.sort), status: flag(row.status, 1) }; });
   const snapshot = extra.stored_custom_form ?? []; if (!Array.isArray(snapshot)) object(snapshot); model.custom_form = cloneJson(snapshot) as ProductEditorModel['custom_form'];
   return { model, owner: { type: number(p.type), relation_id: number(p.relation_id), supplier_id: model.supplier_id },
-    retired: restoreEditorSkus(extra.retired_attrs, model.items), preview: extra.description_preview, savedDescription: model.description };
+    retired: restoreEditorSkus(extra.retired_attrs, model.items), preview: extra.description_preview, savedDescription: model.description,
+    videoPreview: text(extra.video_preview), savedVideoLink: model.video_link };
 }
 export function parseProductEditorCopy(value: unknown, sourceId: number): ProductEditorCopy {
   const row = object(value), destination = object(row.destination);
@@ -175,7 +203,7 @@ export function toLegacySave(m: ProductEditorModel, copy: ProductEditorCopy | nu
     keyword: m.keyword, unit_name: m.unit_name, recommend_image: canonicalProductImage(m.recommend_image), slider_image: m.slider_image.map(canonicalProductImage),
     is_sub: [...m.is_sub], sort: number(m.sort), ficti: number(m.ficti), give_integral: number(m.give_integral), is_show: m.auto_on_time ? 0 : number(m.is_show) as 0 | 1 | 2,
     is_hot: flag(m.is_hot), is_benefit: flag(m.is_benefit), is_best: flag(m.is_best), is_new: flag(m.is_new), mer_use: flag(m.mer_use), is_postage: flag(m.is_postage),
-    is_good: flag(m.is_good), description: m.description, spec_type: productType === 4 ? 0 : number(m.spec_type) as 0 | 1, video_open: flag(m.video_open), video_link: m.video_link,
+    is_good: flag(m.is_good), description: m.description, spec_type: productType === 4 ? 0 : number(m.spec_type) as 0 | 1, video_open: flag(m.video_open), video_link: canonicalProductVideo(m.video_link),
     items: m.items.map(row => ({ value: row.value, detail: [...row.detail] })), attrs, recommend: cloneJson(m.recommend), activity: [...m.activity],
     coupon_ids: [...m.coupon_ids], label_id: [...m.label_id], command_word: m.command_word, tao_words: '', type: 0,
     delivery_type: productType === 4 ? [2] : productType === 0 ? [...m.delivery_type] : [], freight: productType === 0 || productType === 4 ? freight : 1,
@@ -203,7 +231,7 @@ export function validateProductSave(p: ProductSavePayload, erp: boolean | null, 
   if (p.product_type === 4 && (p.attrs.length !== 1 || p.spec_type !== 0 || p.attrs.some(row => !Number.isSafeInteger(row.write_times) || row.write_times < 1 || row.write_times > 99999999 || ![1, 2, 3].includes(row.write_valid) || row.write_valid === 2 && (!Number.isSafeInteger(row.days) || row.days < 1 || row.days > 3650) || row.write_valid === 3 && (row.section_time.length !== 2 || row.section_time[1]! <= row.section_time[0]!)))) throw Error('请完善次卡次数及有效期');
   if (p.is_limit && (!p.limit_num || ![1, 2].includes(p.limit_type))) throw Error('请填写限购方式和数量');
   if (p.specs.length && !p.specs_id) throw Error('商品参数已填写，请先选择参数模板');
-  if (p.video_open && !/^https:\/\/[^\s]+$/u.test(p.video_link)) throw Error('视频请填写完整HTTPS外链');
+  canonicalProductVideo(p.video_link);
   if (erp === true && p.product_type === 0 && (!p.code || p.attrs.some(row => !row.code))) throw Error('ERP已开启，请填写商品及每个SKU编码');
   if (p.is_presale_product && (p.presale_time.length !== 2 || p.presale_time.some(value => { const date = Date.parse(`${value.replace(' ', 'T')}+08:00`); return !Number.isFinite(date) || date < now; }))) throw Error('预售起止时间均不能早于当前时间（北京时间）');
   if (new TextEncoder().encode(JSON.stringify({ operation_id: '00000000-0000-4000-8000-000000000000', ...(copy ? { copy_token: copy.token } : {}), product: p })).byteLength > 1024 * 1024) throw Error('完整商品请求超过1 MiB，请减少详情或规格');

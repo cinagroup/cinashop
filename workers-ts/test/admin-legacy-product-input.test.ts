@@ -165,6 +165,15 @@ describe('Complete bounded old Admin product body adapter', () => {
     expect(normalizeAdminLegacyProductInput(body({ video_link: '/uploads/video.mp4' }), { siteUrl: 'https://shop.example' }).productValues.videoLink)
       .toBe('https://shop.example/uploads/video.mp4');
   });
+  it('keeps private video references canonical without site_url and controls only modern external video writes', () => {
+    for (const reference of ['/api/assets/31', '/api/assets/31?expires=2000000000&signature=old', 'https://shop.example/api/assets/31?signature=old']) {
+      expect(normalize({ video_link: reference }).productValues.videoLink).toBe('/api/assets/31');
+      expect(normalizeAdminLegacyProductInput(body({ video_link: reference }), { controlledVideo: true }).productValues.videoLink).toBe('/api/assets/31');
+    }
+    expect(normalize({ video_link: 'http://legacy.example/video' }).productValues.videoLink).toBe('http://legacy.example/video');
+    for (const reference of ['http://legacy.example/video.mp4', '/uploads/video.mp4', 'https://127.0.0.1/video.mp4', 'https://media.example/video.svg', '/a/../api/assets/31'])
+      expect(() => normalizeAdminLegacyProductInput(body({ video_link: reference }), { controlledVideo: true, siteUrl: 'https://shop.example' })).toThrow();
+  });
   it('validates ERP main and SKU codes independently only when the transaction supplies its current ERP setting', () => {
     for (const changes of [{ code: '' }, { attrs: [sku({ code: '' })] }]) {
       expect(() => normalizeAdminLegacyProductInput(body(changes), { erpOpen: true })).toThrow();

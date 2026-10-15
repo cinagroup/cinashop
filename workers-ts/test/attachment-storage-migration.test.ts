@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
-import { describe, expect, it } from "vitest";
-import type { Env } from "@/env";
+import { describe, expect, it, vi } from "vitest";
+import type { AppVariables, Env } from "@/env";
+import { Hono } from 'hono';
+import { asset as serveAttachmentAsset } from '@/controllers/system/AttachmentController';
 import type { Container } from "@/lib/di";
 import {
   systemAttachment,
@@ -108,6 +110,45 @@ describe("attachment and R2 storage migration boundary", () => {
       .toThrow("视频地址格式错误");
     expect(() => normalizeExternalVideoUrl("https://media.example.test/demo.svg"))
       .toThrow("视频地址格式错误");
+    const productVideo = `https://media.example.test/${'v'.repeat(220)}.mp4`;
+    expect(() => normalizeExternalVideoUrl(productVideo)).toThrow();
+    expect(normalizeExternalVideoUrl(productVideo, 500)).toBe(productVideo);
+  });
+  it('serves signed MP4 byte ranges through the real asset controller with 206 and bounded invalid-range refusals', async () => {
+    const bytes = new TextEncoder().encode('owned-video-range-body'), key = 'attachments/admin/1/2026/10/range.mp4';
+    const get = vi.fn(async (requestedKey: string, options?: { range?: Headers }) => {
+      expect(requestedKey).toBe(key);
+      const header = options?.range?.get('Range'); let start = 0, end = bytes.length - 1;
+      if (header) {
+        const match = /^bytes=(\d+)-(\d*)$/.exec(header);
+        if (!match) return null;
+        start = Number(match[1]); end = match[2] ? Math.min(Number(match[2]), end) : end;
+        if (!Number.isSafeInteger(start) || start >= bytes.length || end < start) return null;
+      }
+      return { size: bytes.length, body: new Response(bytes.slice(start, end + 1)).body!, httpEtag: '"owned-video"',
+        ...(header ? { range: { offset: start, length: end - start + 1 } } : {}),
+        writeHttpMetadata(headers: Headers) { headers.set('Content-Type', 'video/mp4'); } };
+    });
+    const db = { select: () => ({ from: () => ({ where: () => ({ limit: async () => [{ key }] }) }) }) };
+    const env = { APP_KEY: 'owned-video-controller-key', ASSETS_BUCKET: { get } } as unknown as Env;
+    const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    app.use('*', async (c, next) => { c.set('container', { db } as unknown as Container); await next(); });
+    app.get('/api/assets/:id', serveAttachmentAsset);
+    const [reference] = await signAttachmentReferences(env.APP_KEY, ['/api/assets/71']);
+    const ranged = await app.request(`https://video.local${reference}`, { headers: { Range: 'bytes=3-7' } }, env);
+    expect(ranged.status).toBe(206); expect(ranged.headers.get('Content-Range')).toBe(`bytes 3-7/${bytes.length}`);
+    expect(ranged.headers.get('Content-Length')).toBe('5'); expect(ranged.headers.get('Accept-Ranges')).toBe('bytes');
+    expect(ranged.headers.get('Content-Type')).toBe('video/mp4'); expect(ranged.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(ranged.headers.get('X-Content-Type-Options')).toBe('nosniff'); expect(await ranged.text()).toBe(new TextDecoder().decode(bytes.slice(3, 8)));
+    const complete = await app.request(`https://video.local${reference}`, {}, env);
+    expect(complete.status).toBe(200); expect(complete.headers.get('Content-Range')).toBeNull(); expect(await complete.text()).toBe(new TextDecoder().decode(bytes));
+    const before = get.mock.calls.length;
+    const malformed = await app.request(`https://video.local${reference}`, { headers: { Range: 'bytes=0-1,3-4' } }, env);
+    expect(malformed.status).toBe(404); expect(get.mock.calls).toHaveLength(before);
+    for (const range of ['bytes=999-', 'bytes=7-3']) {
+      const unavailable = await app.request(`https://video.local${reference}`, { headers: { Range: range } }, env);
+      expect(unavailable.status).toBe(404); expect(unavailable.headers.get('Cache-Control')).toBe('no-store');
+    }
   });
 
   it("signs only canonical asset paths with a bounded expiry", async () => {

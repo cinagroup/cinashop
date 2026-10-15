@@ -25,6 +25,8 @@ import { verifyProductSavePlan, expectedProductSaveMain } from './AdminLegacyPro
 import { admitProductEditorSave, completeProductEditorSave, type ProductEditorIntent } from './AdminProductEditorReceipt';
 import { admitProductCopy } from './AdminProductCopy';
 import { authorizeAdminLegacyProductRead } from './AdminLegacyProductReadAuthority';
+import { assertProductVideoReference } from '@/services/product/ProductVideoPolicy';
+import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
 
 export interface AdminLegacyProductSaveEffects { dispatch(outboxId: number): Promise<void> }
 export interface AdminLegacyProductSaveContext { localCopy?: boolean; editorOperation?: ProductEditorIntent }
@@ -130,7 +132,7 @@ export class AdminLegacyProductSaveService {
           || Number(thresholdValue) > 2_147_483_647) throw productSaveConflict('商品库存配置无效');
         const threshold = Number(thresholdValue);
         const input = normalizeAdminLegacyProductInput(body, { now, localCopy: context.localCopy || !!copy,
-          erpOpen: ['1', 'true'].includes(erpValue), siteUrl: settings.get('site_url') });
+          erpOpen: ['1', 'true'].includes(erpValue), siteUrl: settings.get('site_url'), controlledVideo: !!context.editorOperation });
         if (input.copyMode === -1) throw new ValidateException('采集图片处理尚未接入，请先使用本地图文素材保存');
         // Ordinary editing cannot replace trusted import provenance via its
         // intentionally blank source-context fields.
@@ -163,6 +165,11 @@ export class AdminLegacyProductSaveService {
         if (labels.length !== userLabelIds.length || labels.some(row => !(row.type === 0 && row.relationId === 0
           || row.type === owner.type && row.relationId === owner.relationId))) throw new ValidateException('用户标签不存在或不属于当前商品');
         await canonicalizeMedia(tx, input, owner);
+        const video = input.productValues.videoLink ?? '';
+        if (context.editorOperation || parseCanonicalAttachmentId(video) !== null) {
+          const reference = await assertProductVideoReference(tx, video, owner);
+          input.productValues.videoLink = reference; input.normalized.video_link = reference;
+        }
         const before = productId ? await readProductSaveState(tx, productId) : emptyProductSaveState();
         const watermarks = await productSaveWatermarks(tx);
         if (input.productType === 1) for (const sku of before.skus.filter(row => row.type === 0 && row.isRetired === 0 && !row.diskInfo?.trim())) {

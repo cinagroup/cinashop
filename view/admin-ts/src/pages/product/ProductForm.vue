@@ -33,7 +33,7 @@
             <el-form-item label="商品标签"><el-select v-model="form.store_label_id" multiple filterable clearable><el-option v-for="item in optionsFor('product_labels', form.store_label_id)" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
             <el-form-item label="商品条码"><el-input v-model="form.bar_code" maxlength="15" /></el-form-item>
             <el-form-item label="商品编码"><el-input v-model="form.code" maxlength="50" /><el-text v-if="erpEnabled" type="warning">ERP已开启，商品与每个SKU均须填写编码；库存通过ERP维护。</el-text></el-form-item>
-            <el-form-item label="商品视频"><div class="stack wide"><el-switch v-model="form.video_open" :active-value="1" :inactive-value="0" /><el-input v-if="form.video_open" v-model="form.video_link" maxlength="500" placeholder="完整 HTTPS 视频外链" /><el-text type="info">当前支持受控外链，视频上传尚未接入。</el-text></div></el-form-item>
+            <el-form-item label="商品视频"><div class="stack wide"><el-switch v-model="form.video_open" :active-value="1" :inactive-value="0" /><div v-if="form.video_open || form.video_link" class="field-row"><el-input v-model="form.video_link" maxlength="500" placeholder="素材稳定地址 /api/assets/ID 或完整 HTTPS MP4 地址" /><el-button v-if="form.video_link" @click="form.video_link = ''">移除视频</el-button></div><video v-if="videoPreviewUrl" class="video-preview" :src="videoPreviewUrl" controls preload="metadata" aria-label="商品视频预览" /><el-text type="info">可保留已有视频或填写 HTTPS MP4 地址。素材地址修改后保存并重新读取可预览。</el-text></div></el-form-item>
             <el-form-item label="上架状态"><el-select v-model="form.is_show" :disabled="!!form.auto_on_time"><el-option :value="0" label="下架" /><el-option :value="1" label="上架" /><el-option v-if="form.is_show === 2" :value="2" label="保留历史状态 2" /></el-select></el-form-item>
             <el-form-item label="定时上架"><el-date-picker v-model="form.auto_on_time" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="北京时间；设置后当前保存为下架" clearable /></el-form-item>
             <el-form-item label="定时下架"><el-date-picker v-model="form.auto_off_time" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="北京时间" clearable /></el-form-item>
@@ -135,7 +135,7 @@ import { apiSystemFormInfo } from '@/api/systemForms';
 import { apiAttachmentCategories, apiAttachmentList, type AttachmentCategoryItem, type AttachmentItem } from '@/api/attachment';
 import { getAdminSession, getToken } from '@/utils/auth';
 import { AdminResponseError } from '@/utils/request';
-import { canonicalProductImage, fromCopyDetail, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorEntry, parsePendingProductSave, toLegacySave, validateProductSave, type EditorDimension, type EditorSku, type Json, type PendingProductSave, type ProductEditorCopy, type ProductSavePayload } from './productEditorModel';
+import { canonicalProductImage, canonicalProductVideo, fromCopyDetail, fromEditorDraft, fromLegacyDetail, makeEditorDraft, mergeGeneratedSkus, newEditorSku, newProductEditor, parseEditorEntry, parsePendingProductSave, toLegacySave, validateProductSave, type EditorDimension, type EditorSku, type Json, type PendingProductSave, type ProductEditorCopy, type ProductSavePayload } from './productEditorModel';
 
 const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const route = useRoute(), router = useRouter();
@@ -172,7 +172,7 @@ function readPending(actor: number): PendingProductSave | null { const raw = ses
 function syncCustomForm(): void { customFormText.value = JSON.stringify(form.custom_form, null, 2); customFormError.value = ''; }
 function clearSensitive(): void {
   stopDraft(); readAbort?.abort(); readAbort = null; turn++; loaded.value = false; loading.value = false;
-  Object.assign(form, newProductEditor()); copySourceId.value = 0; copyContext.value = null; copyProductType.value = null; retired.value = []; owner.value = null; availableDraft.value = null; serverPreview.value = ''; savedDescription.value = ''; inFlightPayload = null;
+  Object.assign(form, newProductEditor()); copySourceId.value = 0; copyContext.value = null; copyProductType.value = null; retired.value = []; owner.value = null; availableDraft.value = null; serverPreview.value = ''; savedDescription.value = ''; serverVideoPreview.value = ''; savedVideoLink.value = ''; inFlightPayload = null;
   assets.value = []; assetCategories.value = []; assetOpen.value = false; previewOpen.value = false; pending.value = null; selectedActive.value = []; selectedRetired.value = [];
   categoryTree.value = []; brandTree.value = []; units.value = []; historicalNames.value = {}; erpEnabled.value = null; imagePreviews.clear();
   for (const key of Object.keys(options) as Array<keyof ProductEditorOptions>) options[key] = [];
@@ -201,7 +201,7 @@ async function initializeEditor(restoreDraft: boolean): Promise<void> {
     erpEnabled.value = erp.status === 'fulfilled' ? erp.value : null;
     if (detail.status === 'rejected') throw detail.reason;
     if (detail.value) {
-      const copied = copySourceId.value ? fromCopyDetail(detail.value, copySourceId.value) : null; const state = copied ?? fromLegacyDetail(detail.value); if (copied) { copyContext.value = copied.copy; copyProductType.value = copied.model.product_type; } Object.assign(form, state.model); owner.value = state.owner; retired.value = state.retired; serverPreview.value = state.preview; savedDescription.value = state.savedDescription; if (typeof detail.value.editor.erp_open === 'boolean') erpEnabled.value = detail.value.editor.erp_open;
+      const copied = copySourceId.value ? fromCopyDetail(detail.value, copySourceId.value) : null; const state = copied ?? fromLegacyDetail(detail.value); if (copied) { copyContext.value = copied.copy; copyProductType.value = copied.model.product_type; } Object.assign(form, state.model); owner.value = state.owner; retired.value = state.retired; serverPreview.value = state.preview; savedDescription.value = state.savedDescription; serverVideoPreview.value = state.videoPreview; savedVideoLink.value = state.savedVideoLink; if (typeof detail.value.editor.erp_open === 'boolean') erpEnabled.value = detail.value.editor.erp_open;
       for (const source of [...form.slider_image, form.recommend_image, ...form.attrs.map(row => row.pic), ...[...state.preview.matchAll(/\bsrc="([^"]+)"/g)].map(match => match[1]!)]) { try { if (source) { const preview = source.replaceAll('&amp;', '&'); imagePreviews.set(canonicalProductImage(preview), preview); } } catch { /* editable validation reports invalid stored media on save */ } }
       const p = detail.value.productInfo; historicalNames.value = {
         product_labels: nameMap(p.store_label_id, 'label_name'), user_labels: nameMap(p.label_id, 'label_name'), gift_coupons: nameMap(p.coupons, 'title'),
@@ -344,6 +344,16 @@ function applyCustomFormText(): void { try { const value: Json = JSON.parse(cust
 async function applyFormTemplate(): Promise<void> { if (locked.value || !form.system_form_id) return; const run = turn, id = form.system_form_id; formTemplateLoading.value = true; try { const template = await apiSystemFormInfo(id); if (current(run) && form.system_form_id === id) { form.custom_form = cloneJson(template.value) as unknown as Json[]; syncCustomForm(); } } catch (error) { if (current(run)) ElMessage.error(`表单模板读取失败，原快照保持：${errorText(error)}`); } finally { if (current(run)) formTemplateLoading.value = false; } }
 
 const serverPreview = ref(''), savedDescription = ref(''), previewOpen = ref(false), imagePreviews = new Map<string, string>();
+const serverVideoPreview = ref(''), savedVideoLink = ref('');
+const videoPreviewUrl = computed(() => {
+  if (!form.video_open || !form.video_link) return '';
+  try {
+    const reference = canonicalProductVideo(form.video_link);
+    if (!reference.startsWith('/api/assets/')) return reference;
+    return reference === canonicalProductVideo(savedVideoLink.value) && serverVideoPreview.value
+      && canonicalProductVideo(serverVideoPreview.value) === reference ? serverVideoPreview.value : '';
+  } catch { return ''; }
+});
 const imagePreview = (value: string) => imagePreviews.get(value) || value;
 const previewDocument = computed(() => {
   let html = form.description === savedDescription.value ? serverPreview.value : localPreview(form.description);
@@ -362,6 +372,7 @@ onBeforeUnmount(() => { alive = false; stopDraft(); readAbort?.abort(); window.r
 </script>
 
 <style scoped>
+.video-preview{width:100%;max-width:640px;max-height:360px;background:#111}
 .product-form{max-width:1420px}.heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.heading h1{font-size:20px;margin:0}.notice{margin-bottom:16px}.muted{font-size:13px;color:var(--el-text-color-secondary);line-height:1.7}.steps{margin:20px 0}.step-links{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 24px}.step-links .el-button{margin:0}.editor-form{min-width:0}.editor-form :deep(.el-select),.editor-form :deep(.el-cascader){width:100%;max-width:640px}.wide{width:100%}.stack{display:grid;gap:12px}.field-row{display:flex;align-items:center;gap:8px;width:100%;min-width:0}.field-row .el-select,.field-row .el-input{flex:1}.wrap{flex-wrap:wrap}.field-row .compact{max-width:180px}.image-row{display:flex;align-items:center;gap:8px}.image-row img{width:60px;height:60px;object-fit:cover;border-radius:4px}.dimension-row{display:grid;grid-template-columns:160px minmax(180px,1fr) auto;gap:8px}.parameter-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(150px,2fr) 120px 45px auto;gap:8px;align-items:center}.sku-shell{width:100%;overflow:hidden;margin-bottom:18px}.sku-shell :deep(.el-input-number){width:100%}.lifecycle{display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--el-border-color-lighter);padding-top:20px;margin-top:24px}.actions .el-button{margin:0}.pending-panel{padding:16px;border:1px solid var(--el-color-warning-light-5);background:var(--el-color-warning-light-9);border-radius:6px;margin-bottom:20px;overflow-wrap:anywhere}.pending-panel p{line-height:1.7}.description-preview{width:100%;height:560px;border:1px solid var(--el-border-color);background:white}.asset-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0;min-height:160px}.asset-tile{background:var(--el-fill-color-blank);border:1px solid var(--el-border-color);padding:8px;cursor:pointer;display:grid;gap:8px;min-width:0;color:var(--el-text-color-primary)}.asset-tile img{width:100%;height:120px;object-fit:contain}.asset-tile span{overflow-wrap:anywhere;font-size:12px}
 @media(max-width:760px){.steps{display:none}.editor-form :deep(.el-form-item){display:block}.editor-form :deep(.el-form-item__label){width:auto!important;height:auto;margin-bottom:7px;line-height:1.5}.editor-form :deep(.el-form-item__content){margin-left:0!important}.image-row{flex-wrap:wrap}.image-row .el-input{flex:1;min-width:170px}.dimension-row,.parameter-row{grid-template-columns:1fr}.field-row{flex-wrap:wrap}.asset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.step-links .el-button{flex:1 1 28%;height:auto;min-height:32px}.description-preview{height:480px}}
 </style>

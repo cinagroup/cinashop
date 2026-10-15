@@ -1,0 +1,585 @@
+{
+  "schema": "cinashop_product_video_reference_evidence_v1",
+  "date": "2026-10-15",
+  "base_commit": "57aca2f184f04ed936b3de2d6cb3ed6d5620309e",
+  "status": "local_validation_passed",
+  "contract": {
+    "stable_reference": "Private product videos persist /api/assets/:id; temporary tickets never enter drafts or product save bodies.",
+    "modern_read": "productInfo.video_link remains durable; editor.video_preview is resolved under the actual owner in the read transaction and signed separately afterward.",
+    "ownership": "Platform type1/relation0 product-library MP4 usable by platform/store/supplier products. Supplier type4 MP4 limited to its same active, undeleted supplier. Metadata file/module/image/MIME/key/directory must match.",
+    "save": "Modern saves validate video references within the existing actual attachment table fence; bad or inaccessible references roll back product, audit, outbox and immutable receipt.",
+    "copy": "Invalid or inaccessible source videos fail the complete copy seed; save revalidates destination video. Copy retains the stable reference and original operation recovery.",
+    "external": "Modern product writes require controlled HTTPS MP4, at most 500 normalized characters; AttachmentService existing external attachment default limit remains 200.",
+    "legacy": "Old public save URLs retain old adapter semantics. Public legacy relative MP4 playback remains read compatibility; private references are canonical and owner checked.",
+    "frontend": "Edit/copy can retain and remove private videos; previews match current and loaded asset identity. Different draft references and account changes cannot reuse the old preview.",
+    "range": "AttachmentController preserves service HTTP206 and range headers; invalid/unavailable range behavior stays the existing404 contract.",
+    "schema_changes": false,
+    "video_upload_added": false,
+    "production_changes": false
+  },
+  "validation": {
+    "serial_wrapper": "bash /home/cina/cinagroup/tools/validate-serial.sh; Vitest --maxWorkers=1",
+    "unit": {
+      "files": [
+        "admin-legacy-product-input.test.ts",
+        "attachment-storage-migration.test.ts"
+      ],
+      "passed": 79,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native": {
+      "command": "node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests <owned PG16 bin> test/admin-product-editor-native.test.ts test/admin-legacy-product-read.test.ts test/admin-legacy-product-save-native.test.ts test/product-detail-design-consumers-postgres.test.ts",
+      "files": 4,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "postgres": "16.14",
+      "log": "/tmp/cinashop-video-native.log"
+    },
+    "frontend_tests": {
+      "files": [
+        "admin-product-full-editor-model-frontend.test.ts",
+        "admin-product-full-editor-workflow-frontend.test.ts",
+        "admin-product-editor.test.ts"
+      ],
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/cinashop-video-frontend-tests.log"
+    },
+    "distinct_nonbrowser_tests": 193,
+    "worker_types": {
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "exit_code": 0,
+      "log": "/tmp/cinashop-video-types-final.log"
+    },
+    "runtime_types": {
+      "command": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit",
+      "exit_code": 0,
+      "log": "/tmp/cinashop-video-runtime-types.log"
+    },
+    "admin_build": {
+      "command": "node_modules/.bin/vue-tsc -b && node_modules/.bin/vite build",
+      "exit_code": 0,
+      "log": "/tmp/cinashop-video-admin-build.log",
+      "warnings": "Existing third-party PURE annotation placement warning; production build completed."
+    },
+    "browser": {
+      "path": "Installed Browser plugin; Codex in-app browser; no fallback",
+      "flow": "create with canonical video -> saved edit and decoded playback -> legacy copy URL -> copy commit with synthetic502 -> same operation GET -> edit2 and decoded playback",
+      "actual": [
+        "Admin App",
+        "JWT/SQL authority",
+        "product save/detail/copy/draft/operation services",
+        "PG16",
+        "HMAC signatures",
+        "asset controller",
+        "Range HTTP",
+        "browser MP4 decoder"
+      ],
+      "synthetic": [
+        "navigation shell",
+        "metadata candidates",
+        "product image",
+        "R2 bytes stand-in"
+      ],
+      "clip": {
+        "source": "Locally generated GStreamer videotestsrc/VP9/mp4mux; no external media download",
+        "bytes": 7743,
+        "duration_seconds": 3,
+        "dimensions": [
+          320,
+          180
+        ],
+        "sha256": "1d4f0ef09f32e5199ec2f48df5cfc3f05103cbf829dd2b7654d1e2589aac9b0e",
+        "generation_command": "gst-launch-1.0 -q videotestsrc num-buffers=30 pattern=ball ! videoconvert ! video/x-raw,format=I420,width=320,height=180,framerate=10/1 ! vp9enc deadline=1 threads=1 ! capssetter caps=video/x-vp9,chroma-format=4:2:0 ! mp4mux faststart=true ! filesink location=/tmp/cinashop-owned-video.mp4"
+      },
+      "viewport": {
+        "height": 684,
+        "width": 662
+      },
+      "other_viewports_verified": false,
+      "identity": {
+        "url": "http://127.0.0.1:39583/product/edit/2",
+        "title": "编辑商品 - CinaShop 管理后台"
+      },
+      "checks": {
+        "page_identity": "passed",
+        "nonblank": "passed",
+        "framework_overlay": "none",
+        "console": [],
+        "decoded_video": "readyState4;320x180;duration3;error null;source observed currentTime3/ended true after click",
+        "recovered_player": {
+          "currentTime": 0.045399,
+          "duration": 3,
+          "error": null,
+          "height": 180,
+          "readyState": 4,
+          "source": "/api/assets/301",
+          "width": 320
+        },
+        "recovery": "same UUID; no replay POST"
+      },
+      "screenshots": [
+        "/tmp/cinashop-video-edit.png",
+        "/tmp/cinashop-video-copy-recovered.png"
+      ],
+      "result": {
+        "fixture": "owned PG16, actual editor App/JWT/SQL; shell/candidates synthetic",
+        "video_fixture": "locally generated MP4; synthetic R2 bytes",
+        "asset_requests": [
+          {
+            "range": "bytes=0-",
+            "status": 206,
+            "bytes": 7743
+          },
+          {
+            "range": "bytes=0-",
+            "status": 206,
+            "bytes": 7743
+          },
+          {
+            "range": "bytes=0-",
+            "status": 206,
+            "bytes": 7743
+          }
+        ],
+        "products": [
+          {
+            "id": 1,
+            "name": "本机私有视频商品",
+            "categories": "11",
+            "brands": "",
+            "labels": "",
+            "video": "/api/assets/301"
+          },
+          {
+            "id": 2,
+            "name": "本机私有视频副本",
+            "categories": "11",
+            "brands": "",
+            "labels": "",
+            "video": "/api/assets/301"
+          }
+        ],
+        "skus": [
+          {
+            "product_id": 1,
+            "unique": "00766406",
+            "stock": 7
+          },
+          {
+            "product_id": 2,
+            "unique": "9c7b7873",
+            "stock": 7
+          }
+        ],
+        "save_requests": 2,
+        "saves": [
+          {
+            "operation_id": "62ffd908-682d-4a9e-a643-df49e929b604",
+            "requested_id": 0,
+            "fields": [
+              "activity",
+              "attrs",
+              "auto_off_time",
+              "auto_on_time",
+              "bar_code",
+              "brand_id",
+              "cate_id",
+              "code",
+              "command_word",
+              "coupon_ids",
+              "custom_form",
+              "delivery_type",
+              "description",
+              "ensure_id",
+              "ficti",
+              "freight",
+              "give_integral",
+              "is_benefit",
+              "is_best",
+              "is_good",
+              "is_hot",
+              "is_limit",
+              "is_new",
+              "is_postage",
+              "is_presale_product",
+              "is_show",
+              "is_sub",
+              "is_support_refund",
+              "is_vip_product",
+              "items",
+              "keyword",
+              "label_id",
+              "limit_num",
+              "limit_type",
+              "mer_use",
+              "postage",
+              "presale_day",
+              "presale_time",
+              "product_type",
+              "recommend",
+              "recommend_image",
+              "recommend_list",
+              "slider_image",
+              "sort",
+              "soure_link",
+              "spec_type",
+              "specs",
+              "specs_id",
+              "store_info",
+              "store_label_id",
+              "store_name",
+              "supplier_id",
+              "system_form_id",
+              "tao_words",
+              "temp_id",
+              "type",
+              "unit_name",
+              "video_link",
+              "video_open"
+            ],
+            "state": "committed",
+            "result": {
+              "id": 1,
+              "created": true
+            }
+          },
+          {
+            "operation_id": "01bf5e7a-8b28-4066-8d01-11ab2609eabd",
+            "requested_id": 0,
+            "source_id": 1,
+            "fields": [
+              "activity",
+              "attrs",
+              "auto_off_time",
+              "auto_on_time",
+              "bar_code",
+              "brand_id",
+              "cate_id",
+              "code",
+              "command_word",
+              "coupon_ids",
+              "custom_form",
+              "delivery_type",
+              "description",
+              "ensure_id",
+              "ficti",
+              "freight",
+              "give_integral",
+              "is_benefit",
+              "is_best",
+              "is_good",
+              "is_hot",
+              "is_limit",
+              "is_new",
+              "is_postage",
+              "is_presale_product",
+              "is_show",
+              "is_sub",
+              "is_support_refund",
+              "is_vip_product",
+              "items",
+              "keyword",
+              "label_id",
+              "limit_num",
+              "limit_type",
+              "mer_use",
+              "postage",
+              "presale_day",
+              "presale_time",
+              "product_type",
+              "recommend",
+              "recommend_image",
+              "recommend_list",
+              "slider_image",
+              "sort",
+              "soure_link",
+              "spec_type",
+              "specs",
+              "specs_id",
+              "store_info",
+              "store_label_id",
+              "store_name",
+              "supplier_id",
+              "system_form_id",
+              "tao_words",
+              "temp_id",
+              "type",
+              "unit_name",
+              "video_link",
+              "video_open"
+            ],
+            "state": "committed",
+            "result": {
+              "id": 2,
+              "created": true
+            }
+          }
+        ],
+        "dropped_responses": 1,
+        "dropped_operation": "01bf5e7a-8b28-4066-8d01-11ab2609eabd",
+        "recovered_operations": [
+          "01bf5e7a-8b28-4066-8d01-11ab2609eabd"
+        ],
+        "armed_drop_next": false,
+        "route_requests": [
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/save/0",
+            "method": "POST",
+            "status": 200,
+            "operation_id": "62ffd908-682d-4a9e-a643-df49e929b604"
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "DELETE",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/detail/1",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/copy/1",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/copy/1",
+            "method": "POST",
+            "status": 200,
+            "operation_id": "01bf5e7a-8b28-4066-8d01-11ab2609eabd"
+          },
+          {
+            "path": "/adminapi/product/editor/operations/01bf5e7a-8b28-4066-8d01-11ab2609eabd",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "DELETE",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/cache",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/adminapi/product/editor/detail/2",
+            "method": "GET",
+            "status": 200
+          }
+        ],
+        "unexpected_requests": 0,
+        "unexpected_paths": [],
+        "outbound_requests": 0,
+        "finished": true
+      },
+      "exit_code": 0,
+      "log": "/tmp/cinashop-video-browser.log"
+    },
+    "review_repairs": [
+      "Frontend preflight formerly rejected loaded canonical private videos; added stable-video projection and separate preview before validation.",
+      "Moved optional clip validation before fixture DB creation so bad file inputs do not leak newly created fixture databases.",
+      "Native Element Plus check action did not toggle the styled switch; inspected fresh DOM and clicked its observed core, then verified checked state.",
+      "Initial local GStreamer clip lacked negotiated chroma caps; explicit capssetter produced the validated MP4."
+    ],
+    "final_code_inputs_unchanged": true,
+    "secret_scan": {
+      "status": "passed",
+      "tool": "Gitleaks8.29.0",
+      "files": 19,
+      "bytes": 1468620,
+      "findings": 0,
+      "report": "/tmp/cinashop-video-source-secrets.json",
+      "configuration_changed": false
+    }
+  },
+  "cleanup": {
+    "clusters": [
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-MWajIp",
+        "runner_fixture_databases_remaining": 0,
+        "independent_pg_ctl_status": 3
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-BU3kkD",
+        "runner_fixture_databases_remaining": 0,
+        "independent_pg_ctl_status": 3
+      }
+    ],
+    "browser_tabs_created": [
+      7,
+      8
+    ],
+    "browser_tabs_closed": true,
+    "browser_monitor_exit_code": 0
+  },
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productAdd/index.vue",
+      "sha256": "3146b4167f07bdcdd5f996be46a1e7f7801465e8b06c7afdfa81543dcea7019f"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/uploadVideos/index.vue",
+      "sha256": "6f7168ba66e629f90591a801bf59843ac81f75beee81c3c1018ebbd351a1cb3e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/utils/upload.js",
+      "sha256": "d9ecb1a58353482dd77b7cbec101b2589ffaed04c5ec64485c9b75c0467937f3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/attachment/SystemAttachmentServices.php",
+      "sha256": "710faee5e1597801f59855efa7da77f4c2b2bf822c55a6bff80e28076b2f81fc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+    }
+  ],
+  "source_inputs": [
+    {
+      "path": "view/admin-ts/src/api/productEditor.ts",
+      "sha256": "32d4baae0ed72273ccff7014fc9a7d084b1d68eadfcd1739987527478acf3e4f"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductForm.vue",
+      "sha256": "653186b398123acc456a6ce777379f535ec44b01b34644525a6faa66c7dafc11"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/productEditorModel.ts",
+      "sha256": "8665478c660ff1beb356bc769a54e393f7e949df93ed06143bf4dfd0f690b97b"
+    },
+    {
+      "path": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "sha256": "eb1aa09f6d4e131911c94f3016fdb77c9d236c8c99ba6119fa4174ca3ab80494"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductInput.ts",
+      "sha256": "29896dbc423fd85e4745d406a119882dcee65d5e15f1a2cd973b8d1e25307f25"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+      "sha256": "4c10d5baff3173b37ac48d93af35f567137b2edbc739ad76fdf1c8e48dbc14e9"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+      "sha256": "5ffd58685501614d7efe4b3c0e1a94498fd5cde3b0ec915f0d10c7288cb81ab4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductDetailDesignData.ts",
+      "sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductVideoPolicy.ts",
+      "sha256": "78f7e56f50a8fff97531331552e2d3e1b11144fcfd8635de7d2a9b03aceaeeea"
+    },
+    {
+      "path": "workers-ts/src/services/system/AttachmentService.ts",
+      "sha256": "ff5c2425b01fdcd9a83d7325a195054a4b16716489c616080e1d97264a683fd4"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-product-input.test.ts",
+      "sha256": "85fc9f2297a20e0401070fbf2b6876f398a262d6bfd9feb8cd9e9cd4fadac0df"
+    },
+    {
+      "path": "workers-ts/test/admin-legacy-product-read.test.ts",
+      "sha256": "eacc487d2de0e1f4ac0b8f82c59525cfa091914b603eb6bbfdb79421a2e0da24"
+    },
+    {
+      "path": "workers-ts/test/admin-product-editor-native.test.ts",
+      "sha256": "439638ed82ad5cb64c272fe461f05a612ef9eb20c6f68bdec8116fe0e6eec910"
+    },
+    {
+      "path": "workers-ts/test/admin-product-full-editor-model-frontend.test.ts",
+      "sha256": "f2b47f4543dacc1142f9cd5e1b8eed0a7459042736d832a292a978cd8ab0571d"
+    },
+    {
+      "path": "workers-ts/test/admin-product-full-editor-workflow-frontend.test.ts",
+      "sha256": "c6a3eaf5782bf104aefe9d85cb72c1f653bffbb928e28950044b753456c01e70"
+    },
+    {
+      "path": "workers-ts/test/attachment-storage-migration.test.ts",
+      "sha256": "e24db671b0509833b7defa72c9042c8e62a81434ce762a893797aeafd135a9e2"
+    },
+    {
+      "path": "workers-ts/test/browser/admin-product-editor.acceptance.ts",
+      "sha256": "f69ab358089d44e5a343d4b6e3cf3ddf7f21cb3fecc329ac5770c3f1e109e949"
+    }
+  ],
+  "remaining": [
+    "Admin video upload UI and durable multipart upload/recovery/cancel protocol",
+    "Existing Supplier chunk retry and uncertain COMMIT cleanup risk is unchanged",
+    "Real R2 provider range behavior; complete416/If-Range negotiation",
+    "Other browser viewports/codecs and real account/device acceptance",
+    "Production commissioning and complete CI for the new commit",
+    "Overall PHP to TS migration remains active; no old production data inheritance"
+  ],
+  "counts": {
+    "checklist": {
+      "total": 404,
+      "done": 249,
+      "open": 155
+    },
+    "audit": {
+      "total": 88,
+      "done": 50,
+      "open": 38
+    },
+    "checkbox_rows_changed": false
+  }
+}

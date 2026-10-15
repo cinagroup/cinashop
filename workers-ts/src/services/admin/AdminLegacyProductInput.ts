@@ -5,6 +5,8 @@ import { readBoundedUtf8Text } from '@/utils/request-body';
 import { ValidateException } from '@/utils/errors';
 import { parseLevelActivationJson } from './AdminLevelActivationInput';
 import { adminProductModerationTime } from './AdminProductModerationInput';
+import { normalizeProductVideoReference } from '@/services/product/ProductVideoPolicy';
+import { classifyProductMediaReference } from '../../../../view/common/productMediaReference';
 
 export const ADMIN_LEGACY_PRODUCT_MAX_BODY_BYTES = 1024 * 1024;
 const MAX_INTEGER = 2_147_483_647;
@@ -34,6 +36,8 @@ export interface AdminLegacyProductInputOptions {
   /** Needed only for PHP's relative-video expansion. Do not invent a production origin. */
   siteUrl?: string;
   erpOpen?: boolean;
+  /** The modern full editor writes controlled HTTPS MP4 or private asset references. */
+  controlledVideo?: boolean;
 }
 export interface AdminLegacyProductCardImport {
   suk: string;
@@ -296,7 +300,10 @@ export function normalizeAdminLegacyProductInput(value: unknown, options: AdminL
   else if (freight === 2) { tempId = 0; if (postage === '0.00') throw new ValidateException('请设置运费金额'); }
   else { postage = '0.00'; if (!tempId) throw new ValidateException('请选择运费模版'); }
   let videoLink = text(source.video_link, '商品视频', 500);
-  if (videoLink && !videoLink.includes('http')) {
+  const videoReference = classifyProductMediaReference(videoLink);
+  if (options.controlledVideo || videoReference.kind === 'asset' || videoReference.kind === 'invalid' && videoReference.privateNamespace) {
+    videoLink = normalizeProductVideoReference(videoLink);
+  } else if (videoLink && !videoLink.includes('http')) {
     if (!options.siteUrl) throw new ValidateException('相对视频地址需要配置站点地址');
     videoLink = text(`${options.siteUrl}${videoLink}`, '商品视频', 500);
   }

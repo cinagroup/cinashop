@@ -6,13 +6,13 @@ import { expect, it, vi } from 'vitest';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import { extname, resolve, sep } from 'node:path';
+import { extname, isAbsolute, resolve, sep } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { createApp } from '@/app';
 import { createContainerFromDb, type Container } from '@/lib/di';
 import type { Env } from '@/env';
 import { legacyCache, storeProduct, storeProductAttrValue, storeProductCategory, storeBrand, storeProductLabel, storeProductEnsure,
-  userLabel, storeCouponIssue, systemForm, shippingTemplates, systemAdmin, systemRole, systemConfig } from '@/models/schema';
+  userLabel, storeCouponIssue, systemForm, shippingTemplates, systemAdmin, systemRole, systemConfig, systemAttachment } from '@/models/schema';
 import { PRODUCT_EDITOR_OPERATION_SQL, assertProductEditorOperationReady } from '@/migrations/adminProductEditorOperation';
 import { ADMIN_LEGACY_PRODUCT_FIELDS } from '@/services/admin/AdminLegacyProductInput';
 import { createToken, md5 } from '@/utils/jwt';
@@ -34,9 +34,36 @@ async function bodyOf(request: IncomingMessage): Promise<string> {
 }
 it('serves real full-editor SQL for installed Browser acceptance until the explicit finish control', async () => {
   const root = resolve(import.meta.dirname, '../../../view/admin-ts/dist'); expect((await stat(resolve(root, 'index.html'))).isFile()).toBe(true);
+  const videoPath = process.env.TEST_PRODUCT_EDITOR_VIDEO_PATH;
+  let video: Buffer | undefined;
+  if (videoPath) {
+    expect(isAbsolute(videoPath)).toBe(true); video = await readFile(videoPath);
+    expect(video.length).toBeGreaterThan(12); expect(video.length).toBeLessThanOrEqual(256 * 1024);
+    expect(video.subarray(4, 8).toString()).toBe('ftyp');
+  }
   const f = await financePostgres([...Object.values(legacySaveSchema), legacyCache], { namespace: 'public' });
   const appKey = randomUUID(), password = randomUUID(), control = `/__product_editor_fixture/${randomUUID()}`;
   const app = createApp(), env = { APP_KEY: appKey, NODE_ENV: 'test', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '', ORDER_QUEUE: { sendBatch: async () => {} } } as unknown as Env;
+  // Optional locally generated clip. Metadata/signature/controller/HTTP remain
+  // real; the provider boundary is an explicit in-memory R2 stand-in.
+  const assetRequests: Array<{ range: string | null; status: number; bytes: number }> = [];
+  const videoKey = 'attachments/admin/1/2026/10/browser-owned.mp4';
+  if (video) {
+    env.ASSETS_BUCKET = { get: async (key: string, options?: { range?: Headers }) => {
+      expect(key).toBe(videoKey); const bytes = video!; const range = options?.range?.get('Range');
+      let start = 0, end = bytes.length - 1;
+      if (range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+        if (!match || !match[1] && !match[2]) return null;
+        if (!match[1]) start = Math.max(0, bytes.length - Number(match[2]));
+        else { start = Number(match[1]); if (match[2]) end = Math.min(end, Number(match[2])); }
+        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= bytes.length || end < start) return null;
+      }
+      return { size: bytes.length, body: new Response(bytes.subarray(start, end + 1)).body!, httpEtag: '"owned-generated-clip"',
+        ...(range ? { range: { offset: start, length: end - start + 1 } } : {}),
+        writeHttpMetadata(headers: Headers) { headers.set('Content-Type', 'video/mp4'); } };
+    } } as unknown as R2Bucket;
+  }
   const paths: Array<{ path: string; method: string; status: number; operation_id?: string }> = [];
   const saves: Array<{ operation_id: string; requested_id: number; source_id?: number; fields: string[]; state: string; result: unknown }> = [];
   const copySources = new Map<number,string>();
@@ -50,7 +77,7 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
   const session = (id: number) => ({ userInfo: { id, account: `本机商品验收${id}`, head_pic: '', real_name: '本地合成数据', level: 1, roles: '1' }, menus: [{ id: 1, pid: 0, path: '/product', name: '商品管理', icon: '', sort: 1, type: 1, children: [] }], uniqueAuth: permissions });
   const formSnapshot = [{ id: 'synthetic-message', timestamp: 1, name: 'texts', titleConfig: { value: '合成留言' }, titleShow: { val: true }, value: '' }];
   const candidates = { categories: [{ id: 11, name: '生活' }, { id: 12, name: '家居' }], brands: [{ id: 21, name: '本机品牌一' }, { id: 22, name: '本机品牌二' }], product_labels: [{ id: 31, name: '合成商品标签' }], user_labels: [{ id: 71, name: '合成购买者标签' }], gift_coupons: [{ id: 81, name: '合成赠券' }], system_forms: [{ id: 91, name: '合成留言表单' }], shipping_templates: [{ id: 101, name: '合成运费模板' }], ensures: [{ id: 41, name: '合成保障' }], parameter_templates: [], sku_rule_templates: [{ id: 61, name: '合成颜色', dimensions: [{ value: '颜色', detail: ['红', '蓝'] }] }] };
-  const state = async () => ({ fixture: 'owned PG16, actual editor App/JWT/SQL; shell/candidates synthetic', products: (await f.db.select({ id: storeProduct.id, name: storeProduct.storeName, categories: storeProduct.cateId, brands: storeProduct.brandCom, labels: storeProduct.labelId }).from(storeProduct)).sort((a, b) => a.id - b.id), skus: (await f.db.select({ product_id: storeProductAttrValue.productId, unique: storeProductAttrValue.unique, stock: storeProductAttrValue.stock }).from(storeProductAttrValue)).sort((a, b) => a.product_id - b.product_id), save_requests: saves.length, saves, dropped_responses: dropped, dropped_operation: droppedOperation || null, recovered_operations: [...recovered], armed_drop_next: dropNext, route_requests: paths, unexpected_requests: unexpected, unexpected_paths: unexpectedPaths, outbound_requests: outbound, finished });
+  const state = async () => ({ fixture: 'owned PG16, actual editor App/JWT/SQL; shell/candidates synthetic', ...(video ? { video_fixture: 'locally generated MP4; synthetic R2 bytes', asset_requests: assetRequests } : {}), products: (await f.db.select({ id: storeProduct.id, name: storeProduct.storeName, categories: storeProduct.cateId, brands: storeProduct.brandCom, labels: storeProduct.labelId, video: storeProduct.videoLink }).from(storeProduct)).sort((a, b) => a.id - b.id), skus: (await f.db.select({ product_id: storeProductAttrValue.productId, unique: storeProductAttrValue.unique, stock: storeProductAttrValue.stock }).from(storeProductAttrValue)).sort((a, b) => a.product_id - b.product_id), save_requests: saves.length, saves, dropped_responses: dropped, dropped_operation: droppedOperation || null, recovered_operations: [...recovered], armed_drop_next: dropNext, route_requests: paths, unexpected_requests: unexpected, unexpected_paths: unexpectedPaths, outbound_requests: outbound, finished });
   const escapeHtml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   const controlPage = async () => `<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>完整商品编辑器 PG16 联合验收</title><style>body{font:16px/1.7 sans-serif;max-width:1000px;margin:32px auto;padding:0 16px}button{margin:6px;padding:10px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:16px}</style><h1>完整商品编辑器 PG16 联合验收</h1><p>真实 Admin App、JWT、完整保存/详情/操作回执/草稿 SQL；数据库仅本机新建，候选资料、登录壳与图片为合成夹具，页头通知流在本夹具中停用。未连接生产；此页状态不替代实际界面检查。</p><p>图片地址：<code>/uploads/product-editor-fixture.svg</code>。可选择分类11与12、品牌21与22，填写SKU售价及库存；参数模板候选为空；本夹具不测试依赖模板的参数编辑。留言模板91为合成候选。</p><button id="login1">使用账号1进入新建商品</button><button id="login2">使用账号2进入新建商品</button><button id="logout">清除测试登录</button><p><button data-action="status">刷新SQL状态</button><button data-action="drop-next">下次保存提交后丢弃响应</button><button data-action="role-off">撤销商品权限</button><button data-action="role-on">恢复商品权限</button><button data-action="finish">完成验收并关闭服务器</button></p><pre id="state">${escapeHtml(JSON.stringify(await state(), null, 2))}</pre><script>const login=(token,session)=>{localStorage.setItem('admin_token',token);localStorage.setItem('admin_session',JSON.stringify(session));location.href='/product/create';};document.getElementById('login1').onclick=()=>login(${JSON.stringify(token1)},${JSON.stringify(session(1))});document.getElementById('login2').onclick=()=>login(${JSON.stringify(token2)},${JSON.stringify(session(2))});document.getElementById('logout').onclick=()=>{localStorage.removeItem('admin_token');localStorage.removeItem('admin_session');document.getElementById('state').textContent='已清除测试登录';};document.querySelectorAll('[data-action]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const response=await fetch(${JSON.stringify(control)}+'/'+button.dataset.action,{method:'POST'});document.getElementById('state').textContent=await response.text();}finally{button.disabled=false;}});</script></html>`;
   const server = createServer((request, response) => { void (async () => {
@@ -79,6 +106,11 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
         expect(copySku.unique).not.toBe(sourceSku.unique);
         expect(copySku).toMatchObject({price:sourceSku.price,stock:sourceSku.stock,sales:0});
         expect(copyProduct).toMatchObject({customForm:sourceProduct.customForm,type:sourceProduct.type,relationId:sourceProduct.relationId,sales:0});
+        if (video) {
+          expect(sourceProduct).toMatchObject({ videoOpen: 1, videoLink: '/api/assets/301' });
+          expect(copyProduct).toMatchObject({ videoOpen: 1, videoLink: '/api/assets/301' });
+          expect(assetRequests.some(row => row.status === 206 && row.bytes > 0)).toBe(true);
+        }
         for (const [id, snapshot] of copySources) expect(await sourceState(id)).toBe(snapshot);
         expect(unexpected).toBe(0); expect(outbound).toBe(0); finished = true;
       }
@@ -103,6 +135,13 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
     if (candidate !== undefined) return json(response, { status: 200, msg: 'Synthetic shell/candidate fixture only', data: candidate });
     if (path === '/uploads/product-editor-fixture.svg' && method === 'GET') return send(response, '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#e7f1ed"/><circle cx="150" cy="130" r="70" fill="#538a73"/><text x="150" y="245" text-anchor="middle" font-size="24" fill="#244b3b">LOCAL PRODUCT</text></svg>', 200, 'image/svg+xml');
     if (path.startsWith('/adminapi/') || path.startsWith('/api/')) {
+      if (video && method === 'GET' && path === '/api/assets/301') {
+        const headers = new Headers(); for (let index = 0; index < request.rawHeaders.length; index += 2) headers.append(request.rawHeaders[index]!, request.rawHeaders[index + 1]!);
+        const result = await app.fetch(new Request(origin + request.url, { headers }), env);
+        const bytes = Buffer.from(await result.arrayBuffer());
+        assetRequests.push({ range: headers.get('Range'), status: result.status, bytes: bytes.length });
+        response.writeHead(result.status, Object.fromEntries(result.headers)); response.end(bytes); return;
+      }
       const allowed = method === 'GET' && /^\/adminapi\/product\/editor\/(?:(?:detail|copy)\/[1-9]\d*|operations\/[a-f0-9-]{36})$/.test(path)
         || method === 'POST' && /^\/adminapi\/product\/editor\/(?:save\/(?:0|[1-9]\d*)|copy\/[1-9]\d*|operations\/[a-f0-9-]{36}\/resolve)$/.test(path)
         || ['GET', 'POST', 'DELETE'].includes(method) && path === '/adminapi/product/cache'
@@ -138,6 +177,8 @@ it('serves real full-editor SQL for installed Browser acceptance until the expli
     await f.db.insert(systemRole).values({ id: 1, roleName: 'Owned editor fixture', rules: 'product.manage' });
     await f.db.insert(systemAdmin).values([1, 2].map(id => ({ id, account: `owned-product-editor-${id}`, pwd: password, roles: '1', level: 1 })));
     await f.db.insert(systemConfig).values([{ menuName: 'store_stock', value: '2' }, { menuName: 'erp_open', value: '0' }]);
+    if (video) await f.db.insert(systemAttachment).values({ attId: 301, type: 1, relationId: 0, moduleType: 1, fileType: 2,
+      imageType: 8, name: videoKey, attDir: '/api/assets/301', attType: 'video/mp4', attSize: String(video.length) });
     await f.db.insert(storeProductCategory).values([{ id: 11, cateName: '生活' }, { id: 12, pid: 11, path: '11', level: 1, cateName: '家居' }]);
     await f.db.insert(storeBrand).values([{ id: 21, brandName: '本机品牌一' }, { id: 22, brandName: '本机品牌二' }]);
     await f.db.insert(storeProductLabel).values({ id: 31, labelName: '合成商品标签' }); await f.db.insert(storeProductEnsure).values({ id: 41, name: '合成保障' });

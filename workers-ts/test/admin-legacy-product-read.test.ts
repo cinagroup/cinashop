@@ -2,11 +2,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { eq } from 'drizzle-orm';
 import { storeProduct, storeProductAttr, storeProductAttrValue, storeProductAttrResult, storeProductDescription, storeProductVirtual,
   storeProductRelation, storeProductLabel, userLabel, systemForm, systemConfig, systemRole, systemAdmin, shippingTemplates,
-  storeCouponIssue, storeProductCoupon, systemAttachment, storeCart } from '@/models/schema';
+  storeCouponIssue, storeProductCoupon, systemAttachment, systemSupplier, storeCart } from '@/models/schema';
 import { AdminLegacyProductReadService } from '@/services/admin/AdminLegacyProductReadService';
 import { normalizeAdminLegacyProductInput } from '@/services/admin/AdminLegacyProductInput';
 import { legacySaveFixture, legacySaveActor, legacySaveBody, legacySaveSku } from './helpers/adminLegacyProductSave';
 import { oldEditorSaveBody } from './helpers/adminLegacyProductRead';
+import { assertProductVideoReference, normalizeProductVideoReference, resolveProductVideoReference } from '@/services/product/ProductVideoPolicy';
+import { readDetailVideo } from '@/services/product/ProductDetailDesignData';
 type Row = Record<string, unknown>;
 describe('true legacy Admin editor GET without implicit SKU/card mutations', () => {
   let f: Awaited<ReturnType<typeof legacySaveFixture>>, service: AdminLegacyProductReadService;
@@ -36,6 +38,51 @@ describe('true legacy Admin editor GET without implicit SKU/card mutations', () 
     expect(normalizeAdminLegacyProductInput(body).productValues).toMatchObject({ isLimit: 1, isVip: 1, isSub: 1, giveIntegral: '1.25' });
     await f.service.save(1, body, legacySaveActor());
     expect((await read()).productInfo.attr).toMatchObject(info.attr as Row);
+  });
+  it('shares platform product videos with all owners while confining supplier videos and rejecting metadata drift', async () => {
+    await f.db.insert(systemSupplier).values([{ id: 20, adminId: 20, supplierName: '供应商20' }, { id: 21, adminId: 21, supplierName: '供应商21' }]);
+    const platform = { attId: 71, type: 1, relationId: 0, moduleType: 1, fileType: 2, imageType: 8,
+      attDir: '/api/assets/71', name: 'attachments/admin/1/2026/10/video.mp4', attType: 'video/mp4' };
+    await f.db.insert(systemAttachment).values([platform, { ...platform, attId: 72, type: 4, relationId: 20, attDir: '/api/assets/72', name: 'attachments/supplier/20/2026/10/video.mp4' }]);
+    const before = await f.snapshot();
+    for (const owner of [{ type: 0, relationId: 0 }, { type: 1, relationId: 9 }, { type: 2, relationId: 20 }]) {
+      expect(await assertProductVideoReference(f.db, '/api/assets/71?expires=1&signature=old', owner)).toBe('/api/assets/71');
+      expect(await readDetailVideo(f.db, { ...owner, videoOpen: 1, videoLink: '/api/assets/71' })).toBe('/api/assets/71');
+      expect(await readDetailVideo(f.db, { ...owner, videoOpen: 0, videoLink: '/api/assets/71' })).toBe('');
+    }
+    expect(await resolveProductVideoReference(f.db, '/api/assets/72', { type: 2, relationId: 20 })).toBe('/api/assets/72');
+    for (const owner of [{ type: 0, relationId: 0 }, { type: 1, relationId: 9 }, { type: 2, relationId: 21 }]) {
+      expect(await resolveProductVideoReference(f.db, '/api/assets/72', owner)).toBe('');
+      await expect(assertProductVideoReference(f.db, '/api/assets/72', owner)).rejects.toThrow('当前商品');
+    }
+    expect(await f.snapshot()).toEqual(before);
+    for (const changed of [{ fileType: 1 }, { moduleType: 2 }, { imageType: 0 }, { attType: 'text/html' },
+      { attDir: '/api/assets/71?signature=stored' }, { name: 'attachments/admin/0/video.mp4' }, { name: 'attachments/admin/1/../secret.mp4' }]) {
+      await f.db.update(systemAttachment).set({ ...platform, ...changed }).where(eq(systemAttachment.attId, 71));
+      expect(await resolveProductVideoReference(f.db, '/api/assets/71', { type: 0, relationId: 0 })).toBe('');
+    }
+    await f.db.update(systemSupplier).set({ isShow: 0 }).where(eq(systemSupplier.id, 20));
+    expect(await resolveProductVideoReference(f.db, '/api/assets/72', { type: 2, relationId: 20 })).toBe('');
+  });
+  it('keeps the 500-character product video contract distinct from legacy relative playback and private URL aliases', () => {
+    const long = `https://media.example/${'x'.repeat(450)}.mp4`;
+    expect(normalizeProductVideoReference(long)).toBe(long);
+    expect(normalizeProductVideoReference('/uploads/video.mp4', { allowLegacyRelative: true })).toBe('/uploads/video.mp4');
+    expect(normalizeProductVideoReference('https://shop.example/api/assets/31?signature=old')).toBe('/api/assets/31');
+    for (const reference of ['/uploads/video.mp4', '/a/../api/assets/31', '/api/assets/%2531', '/kefuapi/assets/31', 'https://media.example/video.svg', 'https://localhost/video.mp4', `https://media.example/${'x'.repeat(500)}.mp4`])
+      expect(() => normalizeProductVideoReference(reference)).toThrow();
+  });
+  it('returns canonical private video to both editors and a separate signed modern preview without site-url expansion', async () => {
+    await f.db.insert(systemAttachment).values({ attId: 71, type: 1, relationId: 0, moduleType: 1, fileType: 2, imageType: 8,
+      attDir: '/api/assets/71', name: 'attachments/admin/1/2026/10/video.mp4', attType: 'video/mp4' });
+    await create({ video_open: 1, video_link: '/api/assets/71?expires=1&signature=old' });
+    const before = await f.snapshot(), old = await read(), modern = await service.detail(1, new URLSearchParams(), legacySaveActor(), { editorContract: true });
+    expect(old.productInfo.video_link).toBe('/api/assets/71'); expect(modern.productInfo.video_link).toBe('/api/assets/71');
+    expect(modern.editor.video_preview).toMatch(/^\/api\/assets\/71\?expires=\d+&signature=/); expect(await f.snapshot()).toEqual(before);
+    await f.db.update(systemAttachment).set({ attType: 'text/html' }).where(eq(systemAttachment.attId, 71));
+    const changed = await service.detail(1, new URLSearchParams(), legacySaveActor(), { editorContract: true });
+    expect(changed.productInfo.video_link).toBe('/api/assets/71'); expect(changed.editor.video_preview).toBe('');
+    await expect(service.detail(1, new URLSearchParams(), legacySaveActor(), { editorContract: true, copy: true })).rejects.toMatchObject({ httpStatus: 409 });
   });
 
   it('reconstructs multi-SKU pic/detail/valueN and fresh stock from current rows instead of stale/camel snapshot JSON', async () => {

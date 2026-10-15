@@ -13,6 +13,8 @@ import { assertAdminAuthoritySession, type AdminAuthorityActor } from './AdminAu
 import { budgetLegacyProductRead } from './AdminLegacyProductReadBudget';
 import { authorizeAdminLegacyProductRead, assertAdminLegacyProductReadDeadline } from './AdminLegacyProductReadAuthority';
 import { assertProductCopyDestination, productCopyDescriptor } from './AdminProductCopy';
+import { assertProductVideoReference, normalizeProductVideoReference, resolveProductVideoReference } from '@/services/product/ProductVideoPolicy';
+import { classifyProductMediaReference } from '../../../../view/common/productMediaReference';
 
 type Row = Record<string, unknown>;
 type Product = typeof storeProduct.$inferSelect;
@@ -210,13 +212,26 @@ export class AdminLegacyProductReadService {
         ]);
         const storedForm = decode(product.customForm), customForm = forms[0]?.value ? decode(forms[0].value) : [];
         if (options.editorContract && labels.length !== labelIds.length) throw conflict('商品用户标签缺失，请先核对');
+        const classifiedVideo = classifyProductMediaReference(product.videoLink);
+        let storedVideo = product.videoLink;
+        if (classifiedVideo.kind === 'asset') {
+          try { storedVideo = normalizeProductVideoReference(product.videoLink); }
+          catch (caught) { if (options.copy && caught instanceof ValidateException) throw conflict('来源视频地址无效，请先在来源商品替换视频'); }
+        }
+        let videoReference: string;
+        if (options.copy) {
+          try { videoReference = await assertProductVideoReference(tx, storedVideo, product); }
+          catch (caught) { if (caught instanceof ValidateException) throw conflict('来源视频无效、不存在或不属于复制目标可用素材，请先在来源商品替换视频'); throw caught; }
+        } else videoReference = await resolveProductVideoReference(tx, storedVideo, product, { allowLegacyRelative: true });
+        const videoPreview = product.videoOpen === 1 ? videoReference : '';
         const info: Row = Object.fromEntries(Object.entries(product).map(([key, value]) => [key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`), value]));
         delete info.is_polices;
         Object.assign(info, { is_police: product.isPolices, cate_id: product.cateId.split(','), brand_id: csv(product.brandCom),
           label_id: labels, store_label_id: productLabels, ensure_id: csv(product.ensureId), slider_image: legacyPhpJsonDecodeWire(product.sliderImage), specs: decode(product.specs),
           is_sub: [...(product.isSub === 1 ? [1] : []), ...(product.isVip === 1 ? [0] : [])], recommend: [],
           is_limit: Boolean(product.isLimit), video_open: Boolean(product.videoOpen), delivery_type: product.deliveryType ? product.deliveryType.split(',') : [],
-          video_link: product.videoLink && !product.videoLink.includes('http') ? `${normalizeConfigScalar(settings.find(row => row.menuName === 'site_url')?.value ?? '')}${product.videoLink}` : product.videoLink,
+          video_link: options.editorContract || classifiedVideo.kind === 'asset' ? storedVideo
+            : product.videoLink && !product.videoLink.includes('http') ? `${normalizeConfigScalar(settings.find(row => row.menuName === 'site_url')?.value ?? '')}${product.videoLink}` : product.videoLink,
           coupons: coupons.map(row => ({ id: row.id, title: row.title })),
           presale_time: product.presaleStartTime ? [time(product.presaleStartTime), time(product.presaleEndTime)] : [],
           auto_on_time: product.isShow ? '' : product.autoOnTime ? time(product.autoOnTime) : '',
@@ -238,7 +253,7 @@ export class AdminLegacyProductReadService {
           throw new ServiceUnavailableException('商品详情完整表单超过768 KiB编辑容量');
         // Large read-only expansions are outside productInfo: the old Vue
         // echoes that object verbatim to POST, whose transport cap is 1 MiB.
-        const editor = { ...(options.editorContract ? { contract_version: 1, erp_open: ['1','true'].includes(erp) } : {}),
+        const editor = { ...(options.editorContract ? { contract_version: 1, erp_open: ['1','true'].includes(erp), video_preview: '' } : {}),
           ...(copy ? { copy } : {}), stored_custom_form: storedForm,
           retired_attrs: copy ? [] : skus.filter(row => row.isRetired === 1).map(row => skuDto(row, dims, countMap)), description_preview: '' };
         if (copy) {
@@ -274,10 +289,11 @@ export class AdminLegacyProductReadService {
         if (copy && references.some((reference, index) => reference !== slots[index].image))
           throw conflict('来源包含不存在或不属于复制目标的私有图片，请先在来源商品替换素材');
         await assertAdminLegacyProductReadDeadline(tx, actor);
-        return { data: { tempList: templates.map(row => ({ id: row.id, name: row.name })), cateList: tree(categories), productInfo: info, editor }, slots, references, html, preview };
+        return { data: { tempList: templates.map(row => ({ id: row.id, name: row.name })), cateList: tree(categories), productInfo: info, editor }, slots, references, html, preview, videoPreview };
       });
       const signed = await renderProductPictures(this.appKey, snapshot.references);
       snapshot.slots.forEach((slot, index) => slot.set(signed[index]));
+      if (options.editorContract) snapshot.data.editor.video_preview = (await renderProductPictures(this.appKey, [snapshot.videoPreview]))[0] ?? '';
       snapshot.data.editor.description_preview = snapshot.html.replace(/\b(href|src)="(\/api\/assets\/[1-9]\d*)"/g,
         (_all, attribute: string, reference: string) => `${attribute}="${(snapshot.preview.get(reference) ?? '').replaceAll('&', '&amp;')}"`);
       if (new TextEncoder().encode(JSON.stringify(snapshot.data)).byteLength > 2 * 1024 * 1024) throw new ServiceUnavailableException('商品详情响应超过2 MiB容量');

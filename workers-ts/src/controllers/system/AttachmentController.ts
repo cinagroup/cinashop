@@ -244,7 +244,7 @@ export async function asset(c: C) {
     headers.set("Cache-Control", "private, no-store");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
-    return new Response(asset.response.body, { status: 200, headers });
+    return new Response(asset.response.body, { status: asset.response.status, headers });
   } catch (error) {
     if (error instanceof NotFoundException) {
       return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });

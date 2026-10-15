@@ -6,14 +6,13 @@ import { readProductDetailDesignSnapshot, publicProductDetailDesign } from '@/se
 import { integralDescriptionAssetReferences, integralDescriptionHtml } from '@/services/activity/IntegralCatalogReadability';
 import { integralDetailIds, integralDetailMoney, integralDetailSpecs, integralDetailText, integralPublicH5Origin } from '@/services/activity/IntegralProductDetailData';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
-import { parseCanonicalAttachmentId,normalizeExternalVideoUrl } from '@/services/system/AttachmentService';
-import { canonicalizePublishedAttachmentReference } from '@/services/content/ArticleContentPolicy';
-import { pcBannerLink } from '@/services/admin/AdminPcBannerInput';
+import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
 import { seckillTimePicture } from '@/services/activity/SeckillTimeAssetPolicy';
 import { ReplyService } from './ReplyService';
 import { publicOrdinaryProductIdentitySql } from './OrdinaryProductReadData';
 import { NotFoundException, ValidateException } from '@/utils/errors';
 import {decimalToCents,centsToDecimal} from '@/services/order/OrderBrokerageService';
+import { resolveProductVideoReference } from './ProductVideoPolicy';
 
 type Product = {id:number;type:number;relationId:number;ensureId:string|null;specs:string|null;recommendList:string;isPresaleProduct:number};
 const owner = (p:Pick<Product,'type'|'relationId'>) => p.type === 1 ? {type:0,relationId:0} : {type:p.type,relationId:p.relationId};
@@ -54,14 +53,7 @@ export async function readDetailDescription(tx:DbClient,id:number,type:number,pr
 }
 export async function readDetailVideo(tx:DbClient,product:{type:number;relationId:number;videoOpen:number;videoLink:string}){
   if(product.videoOpen!==1||!product.videoLink)return '';
-  const ref=canonicalizePublishedAttachmentReference(product.videoLink),id=parseCanonicalAttachmentId(ref);
-  if(id===null){try{const safe=pcBannerLink(ref);if(safe.startsWith('/')){
-    let layer=safe;for(let depth=0;depth<3;depth++){const path=new URL(layer,'https://detail.invalid').pathname;if(path.startsWith('/api/assets/'))return '';try{layer=decodeURIComponent(layer);}catch{return '';}}
-    return /\.mp4(?:[?#]|$)/i.test(safe)?safe:'';
-  }return normalizeExternalVideoUrl(safe);}catch{return '';}}
-  const [asset]=await tx.select({type:systemAttachment.type,relationId:systemAttachment.relationId,module:systemAttachment.moduleType,file:systemAttachment.fileType,imageType:systemAttachment.imageType,name:systemAttachment.name,dir:systemAttachment.attDir,mime:systemAttachment.attType}).from(systemAttachment).where(eq(systemAttachment.attId,id)).limit(1);
-  const scope=owner(product),assetType=scope.type===2?4:1,relation=scope.type===2?scope.relationId:0,prefix=scope.type===2?`attachments/supplier/${relation}/`:'attachments/admin/1/';
-  return asset&&asset.type===assetType&&asset.relationId===relation&&asset.module===1&&asset.file===2&&asset.imageType===8&&asset.dir===ref&&asset.mime.trim().toLowerCase()==='video/mp4'&&asset.name.startsWith(prefix)&&/\.mp4$/i.test(asset.name)&&!asset.name.split('/').some(part=>part==='.'||part==='..')&&!/[\\\u0000-\u001f\u007f]/u.test(asset.name)?ref:'';
+  return resolveProductVideoReference(tx,product.videoLink,product,{allowLegacyRelative:true});
 }
 export async function renderDetailDescription(appKey:string|undefined,description:string){
   const refs=integralDescriptionAssetReferences(description),signed=await renderProductPictures(appKey,refs),map=new Map(refs.map((ref,i)=>[ref,signed[i]]));

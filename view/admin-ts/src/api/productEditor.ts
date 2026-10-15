@@ -4,7 +4,7 @@ import { parseProductEditorCopy, parseProductReceipt, type EditorDimension, type
 export async function apiFullProductDetail(id: number, signal?: AbortSignal): Promise<ProductEditorDetail> {
   if (!Number.isSafeInteger(id) || id < 1 || id > 2147483647) throw Error('商品ID无效');
   const value = await getData<ProductEditorDetail>(request.get(`/product/editor/detail/${id}`, { signal }));
-  if (value?.editor?.contract_version !== 1 || typeof value.editor.erp_open !== 'boolean') throw Error('完整商品编辑契约或ERP状态未能确认');
+  if (value?.editor?.contract_version !== 1 || typeof value.editor.erp_open !== 'boolean' || value.editor.video_preview !== undefined && typeof value.editor.video_preview !== 'string') throw Error('完整商品编辑契约或ERP状态未能确认');
   return value;
 }
 export async function apiFullProductSave(pending: PendingProductSave, product: ProductSavePayload, signal?: AbortSignal) {
@@ -13,7 +13,7 @@ export async function apiFullProductSave(pending: PendingProductSave, product: P
 export async function apiProductCopyDetail(id: number, signal?: AbortSignal): Promise<ProductEditorDetail> {
   if (!Number.isSafeInteger(id) || id < 1 || id > 2147483647) throw Error('复制来源ID无效');
   const value = await getData<ProductEditorDetail>(request.get(`/product/editor/copy/${id}`, { signal }));
-  if (value?.editor?.contract_version !== 1 || typeof value.editor.erp_open !== 'boolean') throw Error('可信复制契约或ERP状态未能确认');
+  if (value?.editor?.contract_version !== 1 || typeof value.editor.erp_open !== 'boolean' || value.editor.video_preview !== undefined && typeof value.editor.video_preview !== 'string') throw Error('可信复制契约或ERP状态未能确认');
   parseProductEditorCopy(value.editor.copy, id);
   return value;
 }

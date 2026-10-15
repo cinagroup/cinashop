@@ -244,3 +244,34 @@ it('blocks parameter rows without a template before saving a prerequisite draft 
   const h = await mount(); Object.assign(h.view.form, completeModel()); h.view.form.specs = [{ name: '产地', value: '合成地区', sort: 0, status: 1 }]; h.view.form.specs_id = 0; h.view.syncCustomForm(); await h.view.submit();
   expect(saves(h.calls)).toHaveLength(0); expect(h.calls.some(c => c.url === '/product/cache' && c.method === 'post')).toBe(false); expect(runtime.messages.errors.at(-1)).toContain('参数模板');
 });
+it('renders a private video ticket while keeping draft and save requests canonical', async () => {
+  const dto: any = productDetail(), ticket = '/api/assets/71?expires=2000000000&signature=temporary-editor-video';
+  Object.assign(dto.productInfo, { video_open: 1, video_link: '/api/assets/71' }); dto.editor.video_preview = ticket;
+  const h = await mount('19', c => c.url === '/product/editor/detail/19' ? dto : undefined);
+  expect(h.view.form.video_link).toBe('/api/assets/71'); expect(renderNodes(h.view).find(n => n.type === 'video')?.props.src).toBe(ticket);
+  await h.view.saveDraftNow(); const draft = parsedBody(h.calls.find(c => c.url === '/product/cache' && c.method === 'post'));
+  expect(draft.video_link).toBe('/api/assets/71'); expect(JSON.stringify(draft)).not.toContain('temporary-editor-video');
+  await h.view.submit(); expect(parsedBody(saves(h.calls)[0]).product.video_link).toBe('/api/assets/71');
+  expect(JSON.stringify(parsedBody(saves(h.calls)[0]))).not.toContain('temporary-editor-video');
+  expect([...storage.values(), ...sessionValues.values()].join('')).not.toContain('temporary-editor-video');
+});
+it('does not reuse a loaded video ticket for a different draft or manually changed private asset', async () => {
+  const dto: any = productDetail(), ticket = '/api/assets/71?signature=only-asset-71';
+  Object.assign(dto.productInfo, { video_open: 1, video_link: '/api/assets/71' }); dto.editor.video_preview = ticket;
+  const m = completeModel(); Object.assign(m, { video_open: 1, video_link: '/api/assets/72' }); const draft = runtime.makeEditorDraft(m, 19, null);
+  const h = await mount('19', c => c.url === '/product/editor/detail/19' ? dto : c.url === '/product/cache' && c.method === 'get' ? { info: draft } : undefined);
+  expect(h.view.videoPreviewUrl.value).toBe(ticket); h.view.restoreAvailableDraft(); expect(h.view.form.video_link).toBe('/api/assets/72'); expect(h.view.videoPreviewUrl.value).toBe('');
+  expect(renderNodes(h.view).some(n => n.type === 'video')).toBe(false);
+  h.view.form.video_link = '/api/assets/71'; expect(h.view.videoPreviewUrl.value).toBe(ticket);
+  h.view.form.video_link = 'https://cdn.example.test/fresh.mp4#position'; expect(h.view.videoPreviewUrl.value).toBe('https://cdn.example.test/fresh.mp4');
+  h.view.form.video_link = '/api/assets/73'; expect(h.view.videoPreviewUrl.value).toBe('');
+  login(21); browser.dispatchEvent(new Event('admin-session-changed')); expect(h.view.form.video_link).toBe(''); expect(h.view.serverVideoPreview.value).toBe(''); expect(h.view.videoPreviewUrl.value).toBe('');
+});
+it('renders copied private video through the seed preview and writes only its stable reference', async () => {
+  const dto = copyDetail(), ticket = '/api/assets/71?signature=temporary-copy-video'; Object.assign(dto.productInfo, { video_open: 1, video_link: '/api/assets/71' }); dto.editor.video_preview = ticket;
+  runtime.routing.route.query = { copy: '19' }; const h = await mount(undefined, c => c.url === '/product/editor/copy/19' && c.method === 'get' ? dto : undefined);
+  expect(renderNodes(h.view).find(n => n.type === 'video')?.props.src).toBe(ticket); await h.view.submit();
+  const call = h.calls.find(c => c.url === '/product/editor/copy/19' && c.method === 'post'), body = parsedBody(call);
+  expect(body.product.video_link).toBe('/api/assets/71'); expect(JSON.stringify(body)).not.toContain('temporary-copy-video');
+  const draft = parsedBody(h.calls.find(c => c.url === '/product/cache' && c.method === 'post')); expect(draft.video_link).toBe('/api/assets/71'); expect(JSON.stringify(draft)).not.toContain('temporary-copy-video');
+});
