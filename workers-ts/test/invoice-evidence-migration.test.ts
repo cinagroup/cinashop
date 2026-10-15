@@ -126,9 +126,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('invoice evidence
           await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       } else {
         const report=await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(180);
-        expect(report.executed.at(-1)).toBe('0179');
-        expect(report.executed).toEqual(Array.from({length:180},(_,i)=>String(i).padStart(4,'0')));
+        expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(181);
+        expect(report.executed.at(-1)).toBe('0180');
+        expect(report.executed).toEqual(Array.from({length:181},(_,i)=>String(i).padStart(4,'0')));
       }
       expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);
       expect((await whole.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE \"C\"")).map(row=>row.name)).toEqual(completeConstructionTableNames(path));

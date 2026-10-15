@@ -63,6 +63,8 @@ import { ORDER_PROMOTION_GIFT_RECEIPT_SQL } from '../src/migrations/orderPromoti
 import { runOrderPromotionGiftReceipt } from '../src/migrations/runOrderPromotionGiftReceipt';
 import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from '../src/migrations/purchaseCancellationGiftEvidenceInstallation';
 import { runPurchaseCancellationGiftEvidence } from '../src/migrations/runPurchaseCancellationGiftEvidence';
+import { PRODUCT_STOCK_EFFECTS_SQL } from '../src/migrations/productStockEffects';
+import { runProductStockEffects } from '../src/migrations/runProductStockEffects';
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -95,6 +97,7 @@ vi.mock('../src/migrations/runSeckillTimeReferenceLock', () => ({ runSeckillTime
 vi.mock('../src/migrations/runPinkSuccessNotice', () => ({ runPinkSuccessNotice: vi.fn() }));
 vi.mock('../src/migrations/runOrderPromotionGiftReceipt', () => ({ runOrderPromotionGiftReceipt: vi.fn() }));
 vi.mock('../src/migrations/runPurchaseCancellationGiftEvidence', () => ({ runPurchaseCancellationGiftEvidence: vi.fn() }));
+vi.mock('../src/migrations/runProductStockEffects', () => ({ runProductStockEffects: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
@@ -124,9 +127,10 @@ const pinkNoticeRunner = vi.mocked(runPinkSuccessNotice);
 const couponCatalogRunner = vi.mocked(runCouponTemplateCatalog);
 const promotionGiftRunner = vi.mocked(runOrderPromotionGiftReceipt);
 const cancellationGiftRunner = vi.mocked(runPurchaseCancellationGiftEvidence);
+const stockEffectsRunner = vi.mocked(runProductStockEffects);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 180 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 181 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -276,6 +280,10 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(db).toBe(container.db); expect(depth, '0179 must receive the root DB').toBe(0);
     expect(quotaSeedRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  stockEffectsRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0180 must receive the root DB').toBe(0);
+    expect(slotLockRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -309,10 +317,11 @@ beforeEach(() => {
   couponCatalogRunner.mockReset();
   promotionGiftRunner.mockReset();
   cancellationGiftRunner.mockReset();
+  stockEffectsRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0179, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0180, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -382,6 +391,9 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.service.purchaseCancellationGiftEvidenceSqlForVerification()).toBe(PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL);
     expect(PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0171_purchase_cancellation_gift_evidence.sql'),'utf8').trim());
     expect(cancellationGiftRunner).not.toHaveBeenCalled();
+    expect(setup.service.productStockEffectsSqlForVerification()).toBe(PRODUCT_STOCK_EFFECTS_SQL);
+    expect(PRODUCT_STOCK_EFFECTS_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0175_product_stock_effects.sql'),'utf8').trim());
+    expect(stockEffectsRunner).not.toHaveBeenCalled();
     expect(CHECKOUT_PRICING_LOCK_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0160_checkout_pricing_lock.sql'),'utf8').trim());
     expect(OFFLINE_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0159_offline_order.sql'),'utf8').trim());
     expect(REFUND_SPLIT_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0158_refund_order_split.sql'),'utf8').trim());
@@ -394,7 +406,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 180 steps in order and dispatches 0151–0179 to independent root transaction runners", async () => {
+  it("executes all 181 steps in order and dispatches 0151–0180 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -422,6 +434,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(seckillSkuRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(memberBarcodeRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(slotLockRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(stockEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(pinkNoticeRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(couponCatalogRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(quotaSeedRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
@@ -455,6 +468,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.sqlCalls.some(c => c.sql === COUPON_TEMPLATE_CATALOG_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === ORDER_PROMOTION_GIFT_RECEIPT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === PRODUCT_STOCK_EFFECTS_SQL)).toBe(false);
   });
 
   it.each([new Error("already exists"), new Error("sequence drift"), "raw rejection"])(
@@ -780,6 +794,13 @@ describe("embedded 0151 sequence registration", () => {
     expect(slotLockRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(quotaSeedRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(pinkNoticeRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+  });
+  it.each([new Error('owner missing'), new Error('outbox CHECK drift'), 'raw rejection'])('fails closed at 0180 without retry or false success (%s)', async error => {
+    const setup = harness(); stockEffectsRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,180), errors: [`0180: ${error instanceof Error ? error.message : error}`] });
+    expect(stockEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(slotLockRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
 });

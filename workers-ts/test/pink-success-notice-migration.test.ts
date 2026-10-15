@@ -6,6 +6,7 @@ import { createContainerFromDb } from '@/lib/di';
 import { MigrationService } from '@/services/MigrationService';
 import { PINK_SUCCESS_NOTICE_SQL, PINK_SUCCESS_NOTICE_CHECK_DEFINITION, PINK_SUCCESS_NOTICE_EVENTS } from '@/migrations/pinkSuccessNotice';
 import { runPinkSuccessNotice } from '@/migrations/runPinkSuccessNotice';
+import { PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION } from '@/migrations/productStockEffects';
 import { financePostgres } from './helpers/financePostgres';
 import { outcome, withFinancePeers } from './helpers/financePeers';
 import { checkoutPricingMigrationDatabase } from './helpers/checkoutPricingMigrationDatabase';
@@ -267,25 +268,29 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 177 and embedded 180 paths with explicit city and abandonment composition and identical five-category contracts for 286 tables', async () => {
+  it('builds fresh external 178 and embedded 181 paths with identical 286-table catalogs and preserves the stock-effect successor when the old installer refuses it', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
       embedded = await checkoutPricingMigrationDatabase();
-      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0174_customer_cashier_abandon.sql');
+      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0175_product_stock_effects.sql');
       await externalMigrations(external, files);
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 180 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 181 }, (_, index) => String(index).padStart(4, '0')));
       await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await fullCatalog(embedded)).toEqual(await fullCatalog(external));
       for (const f of [external, embedded]) {
         const rows = await businessRows(f), identity = await identitiesAndAcl(f), check = await eventCheck(f), catalog = await fullCatalog(f);
         expect(Object.keys(rows)).toEqual(registeredTableNames('external'));
-        expect(check).toHaveLength(1); expect(check[0]).toMatchObject({ convalidated: true, definition: PINK_SUCCESS_NOTICE_CHECK_DEFINITION });
+        expect(check).toHaveLength(1); expect(check[0]).toMatchObject({ convalidated: true, definition: PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION });
         for (const table of ['user', 'store_order', 'store_combination', 'store_pink', 'store_order_outbox']) expect(rows[table]).toEqual([]);
-        await runPinkSuccessNotice(f.db);
+        // Current full construction includes external 0175 / embedded 0180.
+        // The old forward-only installer must refuse this successor, never
+        // narrow its event whitelist or repair it back to the older catalog.
+        await expect(runPinkSuccessNotice(f.db)).rejects.toMatchObject({ code: 'P0001',
+          message: 'Pink success outbox event CHECK drift; no automatic repair' });
         expect(await eventCheck(f)).toEqual(check); expect(await identitiesAndAcl(f)).toEqual(identity);
         expect(await fullCatalog(f)).toEqual(catalog); expect(await businessRows(f)).toEqual(rows);
         const invalid = await outcome(f.exec("INSERT INTO public.store_order_outbox(event_key,event_type,aggregate_id,payload) VALUES('unknown-fixture','unknown.event',0,'{}')"));

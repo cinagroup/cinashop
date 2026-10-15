@@ -131,14 +131,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('recharge seed in
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds from all 180 embedded steps with exactly one canonical empty group and one seed audit', async () => {
+  it('builds from all 181 embedded steps with exactly one canonical empty group and one seed audit', async () => {
     const f = await checkoutPricingMigrationDatabase();
     try {
       expect((await f.query("SELECT to_regclass('public.system_group') AS relation")).rows[0].relation).toBeNull();
       const service = new MigrationService(createContainerFromDb(f.db));
       const result = await service.runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 180 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 181 }, (_, index) => String(index).padStart(4, '0')));
       await assertRegisteredDatabaseCohort(f.db,'embedded');
       await assertEmptyRechargeSeed(f);
       for (const name of ['system_group_data', 'user', 'user_recharge', 'user_bill', 'store_order']) {

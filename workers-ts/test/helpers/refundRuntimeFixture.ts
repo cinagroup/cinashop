@@ -70,7 +70,7 @@ export async function refundRuntimeFixture() {
     expect(paidAgentPlan.tables.agent_level_task_record).toEqual(['SELECT', 'INSERT']);
     await whole.exec('SET client_min_messages=warning');
     expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({
-      executed: Array.from({ length: 180 }, (_, i) => String(i).padStart(4, '0')), errors: [],
+      executed: Array.from({ length: 181 }, (_, i) => String(i).padStart(4, '0')), errors: [],
     });
     const [catalog] = await whole.db.execute(sql`SELECT count(*)::integer AS tables FROM pg_class
       WHERE relnamespace='public'::regnamespace AND relkind='r'`);
