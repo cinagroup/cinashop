@@ -17,3 +17,4 @@ export const storeOrderInvoiceManualRedReview=pgTable('store_order_invoice_manua
  check('soimrr_identity_ck',sql`${t.id} ~ '^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$' AND ${t.recordId} ~ '^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$' AND ${t.invoiceId}>0 AND ${t.sourceOrderId}>0 AND ${t.paymentOrderId}>0 AND ${t.uid}>=0 AND ${t.actorId}>0 AND ${t.createdTime}>0 AND ${t.decision} IN ('confirm','reject') AND btrim(${t.originalDocumentNumber})<>'' AND ${t.originalDocumentNumber} !~ '[[:cntrl:]]' AND ${t.redDocumentNumber} ~ '^[0-9]{8,20}$'`),
  check('soimrr_hash_ck',sql`${t.requestHash} ~ '^[a-f0-9]{64}$' AND ${t.recordHash} ~ '^[a-f0-9]{64}$' AND ${t.reviewHash} ~ '^[a-f0-9]{64}$'`),
  check('soimrr_json_ck',sql`octet_length(${t.reviewJson})<=4096 AND jsonb_typeof(${t.reviewJson}::jsonb)='object' AND ${t.reviewJson}::jsonb @> '{"version":"invoice-manual-red-review-v1","manual_checked":true}'::jsonb`)]);
+

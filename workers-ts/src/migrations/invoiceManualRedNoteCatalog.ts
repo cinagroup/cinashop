@@ -40,3 +40,4 @@ export async function invoiceManualRedNoteReadiness(db:Query,mode:'reader'|'admi
   OR (NOT ${permitWriter} AND (has_table_privilege(a.oid,to_regclass(n.name),'INSERT') OR has_any_column_privilege(a.oid,to_regclass(n.name),'INSERT')))) AS ready`);
  return{ready:p?.ready===true,reason:p?.ready===true?'':'manual_red_note_runtime_authority_unreviewed',catalog};
 }
+

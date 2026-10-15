@@ -11,3 +11,4 @@ export async function list(c:C){return jsonOk(c,await scope(c).list(c.req.param(
 export async function record(c:C){return jsonOk(c,await scope(c).record(c.req.param('id'),await readBoundedJsonObject(c.req.raw,16384),actor(c)),'人工红字凭据已录入，尚待独立核对');}
 export async function review(c:C){return jsonOk(c,await scope(c).review(c.req.param('id'),c.req.param('recordId'),await readBoundedJsonObject(c.req.raw,4096),actor(c)),'人工核对凭据已保存');}
 export async function operation(c:C){return jsonOk(c,await scope(c).operation(c.req.param('id'),c.req.param('requestId'),actor(c)));}
+

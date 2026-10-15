@@ -106,3 +106,4 @@ CREATE TRIGGER soimrr_no_truncate BEFORE TRUNCATE ON public.store_order_invoice_
 REVOKE ALL ON public.store_order_invoice_manual_red_note,public.store_order_invoice_manual_red_review FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.guard_invoice_manual_red_note(),public.protect_invoice_manual_red_note() FROM PUBLIC;
 `;
+

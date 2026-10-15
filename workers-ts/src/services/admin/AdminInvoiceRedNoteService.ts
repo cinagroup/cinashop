@@ -121,3 +121,4 @@ export class AdminInvoiceRedNoteService{
  const receipt=await this.receipt(tx,invoiceId,input.request_id,actorId,requestHash);if(!receipt||!(await invoiceManualRedNoteReadiness(tx,'admin-write')).ready)throw manualRedInvalid();return{...receipt,idempotent:false};
  });}
 }
+

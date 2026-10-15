@@ -39,3 +39,4 @@ END $manual_red_install$;
 COMMIT;
 `;
 writeFileSync(resolve(root,'src/migrations/maintenance/0181_invoice_manual_red_note.sql'),sql);
+
