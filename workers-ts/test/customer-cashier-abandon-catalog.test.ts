@@ -4,6 +4,10 @@ import {inspectCashierSecondCardAbandon,cashierSecondCardAbandonBaseReadiness,ca
   assertCashierSecondCardAbandonReads,installCashierSecondCardAbandon} from '../src/migrations/runCashierSecondCardAbandon';
 import {assertCashierNotAbandoned,readCashierAbandonment} from '../src/services/customer-work/CustomerCashierAbandon';
 import {cashierSecondCardAbandonRuntimePrivilegePlan,cashierSecondCardAbandonRuntimeGrantSql} from '../src/migrations/cashierSecondCardAbandonRuntimePlan';
+import {assertCashierAbandonHistoricalBasis,assertCashierAuditManualRedNoteCatalog,reviewedCashierAuditCatalogView,CASHIER_ABANDON_TABLE} from '../scripts/data-migration/cashier-abandon-catalog';
+import {completeConstructionTableNames,MANUAL_RED_NOTE_ORM_TABLE_NAMES} from './helpers/completeConstructionInventory';
+import {INVOICE_MANUAL_RED_NOTE_PINS} from '../src/migrations/invoiceManualRedNoteCatalog';
+import type {Catalog} from '../scripts/data-migration/postgres-catalog-audit';
 
 /** These probes prove pre-admission failure without a business/maintenance database.
  * Successful constraints, independent LOGIN ACLs and concurrency use the native PG16 suite. */
@@ -46,5 +50,67 @@ describe('cashier abandonment catalog admission boundaries',()=>{
   });
   it('rejects a role identifier that could escape the fixed grant compiler',()=>{
     expect(()=>cashierSecondCardAbandonRuntimeGrantSql('cashier";GRANT ALL TO PUBLIC;--',[])).toThrow();
+  });
+});
+
+describe('complete historical cashier audit with the separately registered bare manual ORM pair',()=>{
+  const manual = [...MANUAL_RED_NOTE_ORM_TABLE_NAMES];
+  const mature = completeConstructionTableNames('orm').filter(name=>!manual.some(table=>table===name));
+  const full = completeConstructionTableNames('orm');
+  function catalogRows(present=true):Record<string,unknown>[] {
+    return [
+      {kind:'table',name:manual[0],present,owned:present,safe:present,fingerprint:present?INVOICE_MANUAL_RED_NOTE_PINS.bareRecord:null},
+      {kind:'table',name:manual[1],present,owned:present,safe:present,fingerprint:present?INVOICE_MANUAL_RED_NOTE_PINS.bareReview:null},
+      {kind:'function',name:'guard_invoice_manual_red_note',present:false},
+      {kind:'function',name:'protect_invoice_manual_red_note',present:false},
+    ];
+  }
+  it.each(['orm','orm_upgrade','orm_default_upgrade','orm_constraints','orm_fk_names','orm_checks','orm_sequences'] as const)
+    ('requires the same complete fixed 285-table basis plus both manual tables on %s',path=>{
+      expect(assertCashierAbandonHistoricalBasis(full,path)).toEqual({historical:mature,manualTables:manual,actualTables:287});
+      expect(()=>assertCashierAuditManualRedNoteCatalog(catalogRows(),path)).not.toThrow();
+    });
+  it.each(['embedded','external'] as const)('keeps manual maintenance objects absent from %s',path=>{
+    const names=path==='external'?[...mature,CASHIER_ABANDON_TABLE].sort():mature;
+    expect(assertCashierAbandonHistoricalBasis(names,path).historical).toEqual(names);
+    expect(()=>assertCashierAuditManualRedNoteCatalog(catalogRows(false),path)).not.toThrow();
+    expect(()=>assertCashierAbandonHistoricalBasis([...names,...manual].sort(),path)).toThrow('exact two');
+    expect(()=>assertCashierAuditManualRedNoteCatalog(catalogRows(),path)).toThrow('absent');
+  });
+  it.each([
+    ['missing mature table',full.filter(name=>name!=='user')],
+    ['foreign replacement with the same count',full.map(name=>name==='user'?'foreign_same_count':name).sort()],
+    ['only one manual table',full.filter(name=>name!==manual[1])],
+    ['no manual pair',mature],
+    ['unknown extra table',[...full,'unreviewed_extension'].sort()],
+    ['duplicate identity',[...full,full[0]].sort()],
+  ] as const)('refuses %s before composing any DDL',(_reason,names)=>{
+    expect(()=>assertCashierAbandonHistoricalBasis(names,'orm')).toThrow();
+  });
+  it.each(['changed-column-fingerprint','unsafe-table','foreign-owner','installed-guard','duplicate-object'] as const)
+    ('does not waive a changed full manual ORM contract: %s',scenario=>{
+      const rows=catalogRows();
+      if(scenario==='changed-column-fingerprint')rows[0].fingerprint='0'.repeat(64);
+      if(scenario==='unsafe-table')rows[0].safe=false;
+      if(scenario==='foreign-owner')rows[0].owned=false;
+      if(scenario==='installed-guard')rows[2].present=true;
+      if(scenario==='duplicate-object')rows[1]={...rows[0]};
+      expect(()=>assertCashierAuditManualRedNoteCatalog(rows,'orm')).toThrow();
+    });
+  it('retains every raw manual column/index/constraint while removing no historical metadata from the comparison view',()=>{
+    const historicalColumn={key:'user.uid',name:'uid',table:'user',type:'integer',notNull:true};
+    const manualColumn={key:manual[0]+'.record_json',name:'record_json',table:manual[0],type:'text',notNull:true,default:null,identity:'',generated:'',collation:'pg_catalog.default'};
+    const manualIndex={key:manual[1]+'.soimrr_confirmed_red_uq',name:'soimrr_confirmed_red_uq',table:manual[1],definition:"public.store_order_invoice_manual_red_review USING btree (red_document_number) WHERE ((decision)::text = 'confirm'::text)",unique:true,valid:true,ready:true};
+    const manualConstraint={key:manual[0]+'.soimrn_json_ck',name:'soimrn_json_ck',table:manual[0],definition:'CHECK (octet_length(record_json) <= 65536)',validated:true};
+    const raw:Catalog={tables:[...full,CASHIER_ABANDON_TABLE].sort().map(name=>({key:name,name})),columns:[historicalColumn,manualColumn],indexes:[manualIndex],constraints:[manualConstraint],sequences:[]};
+    const before=JSON.stringify(raw),view=reviewedCashierAuditCatalogView(raw,'orm',catalogRows());
+    expect(view.historical.tables.map(row=>row.name)).toEqual([...mature,CASHIER_ABANDON_TABLE].sort());
+    expect(view.historical.columns).toEqual([historicalColumn]);
+    expect(view.manual).toEqual({tables:manual.map(name=>({key:name,name})),columns:[manualColumn],constraints:[manualConstraint],indexes:[manualIndex],sequences:[]});
+    expect(JSON.stringify(raw)).toBe(before);
+    const changedRows=catalogRows();changedRows[0].fingerprint='0'.repeat(64);
+    expect(()=>reviewedCashierAuditCatalogView(raw,'orm',changedRows)).toThrow('column');
+    const extra:Catalog={...raw,tables:[...raw.tables,{key:'foreign',name:'foreign'}].sort((a,b)=>a.name.localeCompare(b.name))};
+    expect(()=>reviewedCashierAuditCatalogView(extra,'orm',catalogRows())).toThrow();
   });
 });

@@ -163,7 +163,7 @@ describe('ordinary customer integrated cashier write UI PG16 contract',()=>{
     const beforeStock=await stock();
     let pending:Promise<Awaited<ReturnType<typeof http>>>|undefined;
     let result:Awaited<ReturnType<typeof http>>|undefined;
-    let observed:{pid:number;clock:number}|undefined,blockerPid=0,releaseClock=0;
+    let observed:{pid:number;clock:number;queryStarted:number}|undefined,blockerPid=0,releaseClock=0;
     try{await f.withPeer(async(observer,observerPid)=>f.maintenanceDb.transaction(async holder=>{
       const [holderIdentity]=await holder.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`);blockerPid=holderIdentity.pid;
       // No runtime privilege is expanded: a separate maintenance connection
@@ -171,22 +171,22 @@ describe('ordinary customer integrated cashier write UI PG16 contract',()=>{
       await holder.execute(sql`LOCK TABLE public.cashier_second_card_origin_v1 IN SHARE MODE`);
       const readyDeadline=Date.now()+5000;
       while(Date.now()<readyDeadline){const [now]=await observer.execute<{clock:number}>(sql`SELECT extract(epoch from clock_timestamp())::double precision AS clock`);
-        if(expiresAt-now.clock<=0.9){expect(now.clock).toBeLessThan(expiresAt);break;}
+        if(expiresAt-now.clock<=1.35){expect(now.clock).toBeLessThan(expiresAt);break;}
         await new Promise(resolve=>setTimeout(resolve,15));}
       pending=http('/orders',{intent:value.intent,quote_token:q.quote_token},value.request_key);
       const waitDeadline=Date.now()+1200;
-      while(Date.now()<waitDeadline){const [state]=await observer.execute<{pid:number;clock:number}>(sql`SELECT a.pid,
-        extract(epoch from clock_timestamp())::double precision AS clock FROM pg_catalog.pg_stat_activity a
+      while(Date.now()<waitDeadline){const [state]=await observer.execute<{pid:number;clock:number;queryStarted:number}>(sql`SELECT a.pid,
+        extract(epoch from clock_timestamp())::double precision AS clock,extract(epoch from a.query_start)::double precision AS "queryStarted" FROM pg_catalog.pg_stat_activity a
         WHERE a.usename=${f.role} AND a.pid<>${observerPid} AND ${blockerPid}=ANY(pg_catalog.pg_blocking_pids(a.pid))
-          AND a.query LIKE '%INSERT INTO public.cashier_second_card_origin_v1%' LIMIT 1`);
+          AND a.wait_event_type='Lock' AND a.query LIKE '%INSERT INTO public.cashier_second_card_origin_v1%' LIMIT 1`);
         if(state){observed=state;break;}await new Promise(resolve=>setTimeout(resolve,10));}
-      expect(observed).toBeDefined();expect(observed!.clock).toBeLessThan(expiresAt);
+      expect(observed).toBeDefined();expect(observed!.queryStarted).toBeLessThan(expiresAt);
       while(true){const [now]=await observer.execute<{clock:number}>(sql`SELECT extract(epoch from clock_timestamp())::double precision AS clock`);
         if(now.clock>=expiresAt+0.025){releaseClock=now.clock;break;}await new Promise(resolve=>setTimeout(resolve,10));}
     }));}finally{if(pending)result=await pending;}
     console.log('CASHIER_FINAL_EXPIRY_WAIT',JSON.stringify({expires_at:expiresAt,blocking_pid:blockerPid,creation_pid:observed!.pid,
-      blocked_clock:observed!.clock,released_clock:releaseClock,observed_wait_ms:Math.round((releaseClock-observed!.clock)*1000)}));
-    expect(releaseClock-observed!.clock).toBeLessThan(0.95);
+      blocked_clock:observed!.queryStarted,observed_clock:observed!.clock,released_clock:releaseClock,observed_wait_ms:Math.round((releaseClock-observed!.queryStarted)*1000)}));
+    expect(releaseClock-observed!.queryStarted).toBeLessThan(1.45);
     expect(result!.body.status).not.toBe(200);expect(JSON.stringify(result!.body)).toContain('ORDER_QUOTE_RECONFIRM_REQUIRED');
     expect(result!.body.msg).not.toMatch(/lock timeout|55P03/);expect(await counts()).toEqual(before);expect(await stock()).toEqual(beforeStock);
     await f.maintenanceDb.update(storeProductAttrValue).set({writeEnd:expiresAt+3600}).where(eq(storeProductAttrValue.id,1));

@@ -84,6 +84,7 @@ export * from "./shipping_create_replay";
 export * from "./admin_refund_operation";
 export * from "./admin_refund_creation";
 export * from "./invoice_evidence";
+export * from "./invoice_manual_red_note";
 export * from "./coupon_templates";
 export * from "./invoice_allocation";
 export * from "./order_refund_split";

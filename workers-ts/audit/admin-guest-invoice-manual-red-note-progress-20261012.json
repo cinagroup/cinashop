@@ -1,0 +1,132 @@
+{
+  "version": "admin-guest-invoice-manual-red-note-progress-v1",
+  "date": "2026-10-12",
+  "status": "implemented_pending_final_integrated_acceptance",
+  "wholeMigrationComplete": false,
+  "actualGlobalMainCredit": false,
+  "deployed": false,
+  "source": {
+    "branch": "codex/admin-guest-invoice-integration-20261012",
+    "codeHead": "581b4a2a760c951f168faafbee0318d7bcfb7656",
+    "baseCommit": "fed1313538c074f7de7f2f7355462ec616255537",
+    "applicationDeltaFiles": 33,
+    "finalSourceManifestSha256": null,
+    "finalSourceInputCount": null,
+    "sourceSnapshotFrozen": false
+  },
+  "behavior": {
+    "buyerUidZeroSupported": true,
+    "guestAccountsCreated": false,
+    "redNoteSource": "manual_tax_platform_entry",
+    "amountRule": "each_actual_original_invoice_full_amount_CNY",
+    "recordState": "RECORDED_PENDING_HUMAN_REVIEW",
+    "reviewDecisions": [
+      "confirm",
+      "reject"
+    ],
+    "sameAdminMayRecordAndReview": true,
+    "externalTaxVerification": false,
+    "recovery": "same_original_UUID_and_full_original_intent_GET_only",
+    "partialRefundAfterEveryOriginalInvoiceCovered": true,
+    "remainingGenerationInvoice": "new_unissued_application",
+    "zeroPaidInvoiceIssuance": false,
+    "zeroUnissuedRefund": "existing_real_ZERO_SUCCESS",
+    "oldFinancialWireVersionsChanged": false
+  },
+  "completedEvidence": {
+    "oldSourceNativeQ85": {
+      "sourceManifestSha256": "98c45c245638adba6b7b3bce58f2784d9011c3b563fae328479f266f3a4b0fd3",
+      "passed": 85,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "0f5d544d1d71270d73ad98abdb12e10ea8a8bd5104e07b4aa593a94356c56165",
+      "currentIntegratedCredit": false
+    },
+    "uiComponent": {
+      "base": "Main821 plus two exact canonical UI files",
+      "sourceFiles": 686,
+      "dependencies": 14059,
+      "compiledAssets": 265,
+      "fullTypesExitCode": 0,
+      "buildExitCode": 0,
+      "actualBrowserChecks": 17,
+      "screenshots": 7,
+      "api": "synthetic local API and identities",
+      "buildReceiptSha256": "c0bc13da50ba534affe3f3d27cd9a4b4b3446a509a257ce266912b3021241cdd",
+      "browserReceiptSha256": "fcafa329d29a593a29831ceba8159feaa5b7ce84094cdc746df7356cc3994353",
+      "independentCandidateProofSha256": "203f4bab9993ec24af481ba9cc743d52c7c71614ec1f8b0172c10d4b5677a3c7",
+      "exactArchive": {
+        "files": 32,
+        "bytes": 3816533,
+        "receiptSha256": "5a0f8a0f1d641c749f509e40826061c2a2e998c1580f58e2edffddc67914eda7"
+      }
+    },
+    "workerV2DependencyPreparation": {
+      "files": 7639,
+      "normalNpmCi": true,
+      "projectPostinstall": true,
+      "threeDrizzleEntriesVerified": true,
+      "receiptSha256": "3ed4841f4638ba7a1723b964cd7986b81ab195155623a2756bbcb3ea5d07ed74",
+      "finalSourceCredit": false,
+      "reason": "upstream lockfile resolved path changed; final direct-worktree Worker-v3 install pending"
+    },
+    "independentSemanticMergeProofSha256": "1ea1d6e5e86d04e1ab4ec5285d4db62f57963832156d2ec24f043e9973b003e0"
+  },
+  "finalRequiredAcceptance": {
+    "fullWorkerTypes": 2,
+    "ordinaryWholeFiles": 27,
+    "nativeWholeFiles": 43,
+    "nativeSerialGroups": 24,
+    "originalStaticClis": 2,
+    "executionStarted": false,
+    "dependencyInputsExactRawBindingRequired": true,
+    "oldPublishedPinsUnchangedRequired": true,
+    "allSourceAndToolBeforeAfterRequired": true,
+    "nativeFixtureCountZeroAndStoppedAndIndependentPgCtlRequired": true,
+    "independentFullBranchVerificationRequired": true
+  },
+  "maintenance": {
+    "entry": "src/migrations/runInvoiceManualRedNote.ts",
+    "ownerSql": "src/migrations/maintenance/0181_invoice_manual_red_note.sql",
+    "ownerSqlSha256": "347edd64921196f65c649e4e291a422e7e6d4ad7b154dd410f432dfa5f01c881",
+    "old0180Unchanged": true,
+    "runtimeStartupDdl": false,
+    "productionInstalled": false,
+    "readerLedgerPermissions": "SELECT only",
+    "adminLedgerPermissions": "SELECT/INSERT only"
+  },
+  "deliverables": {
+    "operatorGuide": "workers-ts/docs/admin-guest-invoice-manual-red-note-20261012.md",
+    "rawEvidence": "ignored audit evidence directories on remote disk",
+    "rawLogsScreenshotsSnapshotsIncludedInGit": false
+  },
+  "remaining": [
+    "Finalize same-Git-blob non-owned raw input calibration",
+    "Install Worker-v3 from final six direct worktree sources",
+    "Freeze the complete direct worktree source manifest and exact validation plan",
+    "Execute full acceptance and preserve every failure before fixes",
+    "Replace pending claims with measured final branch evidence in a separate final report"
+  ],
+  "intermediateFailuresPreserved": [
+    {
+      "kind": "old_native_q85_verifier_v1_only_dispatch",
+      "sourceManifestSha256": "463410ba1f1897ea898077c1fb8ee902a1cebd02bfcfa84d473c9162dc679d82",
+      "passed": 72,
+      "failed": 13,
+      "skipped": 0,
+      "resolution": "explicit complete manual-red-v2 verification; old 98c45 whole file rerun85passed",
+      "logSha256": "cc184d96d1ce78790d2b0647f2b5f983a546b44e24e302d468a3f20ca3afff79"
+    },
+    {
+      "kind": "old_ordinary_admin_frontend_import_failure",
+      "sourceManifestSha256": "98c45c245638adba6b7b3bce58f2784d9011c3b563fae328479f266f3a4b0fd3",
+      "passedAssertions": 451,
+      "skippedAssertions": 338,
+      "failedSuites": 1,
+      "reason": "Admin dependency mapping incorrectly pointed at UniApp root and axios could not resolve",
+      "frontend70AssertionsExecuted": 0,
+      "logSha256": "f630f68e1c1072cf11d24713eacc7712ebcb1b32609ba6fabc86f1c7c4463fbd",
+      "finalCurrentOrdinaryRerunRequired": true
+    }
+  ]
+}

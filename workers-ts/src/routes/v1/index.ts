@@ -106,6 +106,7 @@ import * as AdminCombination from "@/controllers/api/v1/AdminCombinationControll
 import * as AdminCouponTemplate from "@/controllers/api/v1/AdminCouponTemplateController";
 import * as AdminCouponIssue from "@/controllers/api/v1/AdminCouponIssueController";
 import * as AdminInvoice from "@/controllers/api/v1/AdminInvoiceController";
+import * as AdminInvoiceRedNote from "@/controllers/api/v1/AdminInvoiceRedNoteController";
 import * as AdminLevelActivation from '@/controllers/api/v1/AdminLevelActivationController';
 import * as AdminPaidMembershipConfig from '@/controllers/api/v1/AdminPaidMembershipConfigController';
 import * as AdminCombinationStatistics from "@/controllers/api/v1/AdminCombinationStatisticsController";
@@ -2276,6 +2277,10 @@ v1Routes.patch("/admin/marketing/full-gifts/:id/status", adminAuth, AdminFullGif
 v1Routes.delete("/admin/marketing/full-gifts/:id", adminAuth, AdminFullGift.remove);
 v1Routes.get("/admin/marketing/coupon-issues", adminAuth, AdminCouponIssue.list);
 v1Routes.get("/admin/order/invoices", adminAuth, AdminInvoice.list);
+v1Routes.get('/admin/order/invoices/:id/red-notes',adminAuth,AdminInvoiceRedNote.list);
+v1Routes.post('/admin/order/invoices/:id/red-notes',adminAuth,AdminInvoiceRedNote.record);
+v1Routes.post('/admin/order/invoices/:id/red-notes/:recordId/review',adminAuth,AdminInvoiceRedNote.review);
+v1Routes.get('/admin/order/invoices/:id/red-notes/operations/:requestId',adminAuth,AdminInvoiceRedNote.operation);
 v1Routes.get("/admin/finance/recharge-orders", adminAuth, AdminRechargeOrder.list);
 v1Routes.get("/admin/finance/recharge-orders/stats", adminAuth, AdminRechargeOrder.stats);
 v1Routes.get("/admin/finance/recharge-orders/:id", adminAuth, AdminRechargeOrder.detail);

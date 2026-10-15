@@ -5,9 +5,11 @@ import { storeOrderInvoiceAllocation as allocation } from '@/models/schema/invoi
 import { amountToCents } from '@/services/payment/RefundGateway';
 import { ValidateException } from '@/utils/errors';
 import { assertUnissuedInvoiceHistory } from './InvoiceIssuanceEvidence';
+import {invoiceHasReportedHistory,readInvoiceManualDisposition,type ManualInvoiceDisposition} from './InvoiceManualRedNoteEvidence';
 
 type Order = typeof storeOrder.$inferSelect;
 type Invoice = typeof storeOrderInvoice.$inferSelect;
+const manualDispositions=new WeakMap<Invoice,ManualInvoiceDisposition>();
 type Reason = 'fulfillment' | 'supplier';
 const invalid = () => new ValidateException('拆单发票归属或金额证据不一致，请先核对订单');
 const ids = (source: Order) => source.pid > 0 ? [source.pid, source.id] : [source.id];
@@ -25,13 +27,14 @@ function transaction(tx: DbClient) {
   if (Object.hasOwn(tx, '$client')) throw Error('Split invoice requires a caller-owned transaction');
 }
 function validate(source: Order, invoice: Invoice) {
+  if(![-1,0,1].includes(invoice.isInvoice))throw invalid();
   if (source.pid < 0 || source.paid !== 1 || source.isDel || source.isSystemDel
     || invoice.orderId !== source.id || invoice.uid !== source.uid || invoice.category !== 'order'
     || invoice.isPay !== 1 || invoice.isDel !== 0 || invoice.isRefund !== 0
     || cents(invoice.invoiceAmount) !== cents(source.payPrice)) throw invalid();
   // Out also uses invoiceTime for metadata/rejection edits; only immutable
   // history, not that mutable timestamp, establishes never-issued status.
-  if (![0, -1].includes(invoice.isInvoice) || invoice.invoiceNumber !== '') {
+  if ((![0, -1].includes(invoice.isInvoice) || invoice.invoiceNumber !== '')&&!manualDispositions.has(invoice)) {
     throw new ValidateException('已开票或票据状态不明，拆单需先完成原票核验与红冲处理');
   }
   bounded(invoice);
@@ -54,8 +57,8 @@ export async function prepareSplitInvoice(tx: DbClient, source: Order, locked?: 
   await tx.select({ id: allocation.id }).from(allocation).limit(0);
   if (rows.length > 1) throw invalid();
   const invoice = rows[0];
-  if (invoice) validate(source, invoice);
   await assertUnissuedInvoiceHistory(tx, source, invoice);
+  if(invoice){if(await invoiceHasReportedHistory(tx,source))manualDispositions.set(invoice,await readInvoiceManualDisposition(tx,source));validate(source,invoice);}
   return invoice ?? null;
 }
 
@@ -70,6 +73,8 @@ export async function materializeSplitInvoice(tx: DbClient, source: Order, prepa
   if (!prepared || current.length !== 1 || bounded(current[0]) !== bounded(prepared)) throw invalid();
   validate(source, prepared);
   await assertUnissuedInvoiceHistory(tx, source, prepared);
+  const manual=manualDispositions.get(prepared);
+  if(manual&&bounded(await readInvoiceManualDisposition(tx,source))!==bounded(manual))throw invalid();
   if (targetIds.length < 2 || targetIds.length > 200 || new Set(targetIds).size !== targetIds.length
     || targetIds.some(id => !Number.isSafeInteger(id) || id <= 0)) throw invalid();
   const rows = await tx.select().from(storeOrder).where(inArray(storeOrder.id, targetIds)).limit(200);
@@ -85,12 +90,13 @@ export async function materializeSplitInvoice(tx: DbClient, source: Order, prepa
     inArray(storeOrderInvoice.orderId, targetIds.filter(id => id !== source.id)), eq(storeOrderInvoice.isDel, 0),
   )).limit(1);
   if (existing.length) throw invalid();
-  const { id: _id, ...base } = prepared;
+  const { id: _id, ...originalBase } = prepared;
+  const base=manual?{...originalBase,isInvoice:0,invoiceNumber:'',invoiceTime:0}:originalBase;
   const receipt: Array<{ invoiceId: number; orderId: number; supplierId: number; amount: string }> = [];
   for (const target of targets) {
     if (!target) throw invalid();
     let invoice: Invoice | undefined;
-    if (target.id === source.id) {
+    if (target.id === source.id&&!manual) {
       [invoice] = await tx.update(storeOrderInvoice).set({ invoiceAmount: target.payPrice })
         .where(and(eq(storeOrderInvoice.id, prepared.id), eq(storeOrderInvoice.isDel, 0))).returning();
     } else {
@@ -101,7 +107,7 @@ export async function materializeSplitInvoice(tx: DbClient, source: Order, prepa
     await assertUnissuedInvoiceHistory(tx, target, invoice);
     receipt.push({ invoiceId: invoice.id, orderId: target.id, supplierId: target.supplierId, amount: target.payPrice });
   }
-  if (source.pid === 0) {
+  if (source.pid === 0||manual) {
     const [archived] = await tx.update(storeOrderInvoice).set({ isDel: 1 })
       .where(and(eq(storeOrderInvoice.id, prepared.id), eq(storeOrderInvoice.isDel, 0))).returning();
     if (!archived || bounded(archived) !== bounded({ ...prepared, isDel: 1 })) throw invalid();
@@ -109,10 +115,10 @@ export async function materializeSplitInvoice(tx: DbClient, source: Order, prepa
   await assertUnissuedInvoiceHistory(tx, source);
   const receiptValues = { id: crypto.randomUUID().replaceAll('-', ''),
     sourceInvoiceId: prepared.id, sourceOrderId: source.id, paymentOrderId: rootId, uid: source.uid,
-    reason, sourceSnapshot: bounded(prepared), targets: bounded(receipt, 65536), addTime: now };
+    reason, sourceSnapshot: bounded(manual?{...prepared,allocation_version:'invoice-manual-split-v2',manual_disposition:manual}:prepared), targets: bounded(receipt, 65536), addTime: now };
   const [saved] = await tx.insert(allocation).values(receiptValues).returning();
   if (!saved || bounded(saved, 98304) !== bounded(receiptValues, 98304)) throw invalid();
-  if (source.pid === 0) {
+  if (source.pid === 0||manual) {
     const [archived] = await tx.select().from(storeOrderInvoice).where(eq(storeOrderInvoice.id, prepared.id)).limit(1);
     if (!archived || bounded(archived) !== bounded({ ...prepared, isDel: 1 })) throw invalid();
   }
@@ -126,8 +132,9 @@ export async function materializeSplitInvoice(tx: DbClient, source: Order, prepa
     if (!target) throw invalid();
     const expected = receipt.find(row => row.orderId === target.id)!;
     const [invoice] = await tx.select().from(storeOrderInvoice).where(eq(storeOrderInvoice.id, expected.invoiceId)).limit(1);
-    if (!invoice || bounded(invoice) !== bounded({ ...prepared, id: expected.invoiceId,
+    if (!invoice || bounded(invoice) !== bounded({ ...prepared,...(manual?{isInvoice:0,invoiceNumber:'',invoiceTime:0}:{}), id: expected.invoiceId,
       orderId: target.id, invoiceAmount: target.payPrice })) throw invalid();
     await assertUnissuedInvoiceHistory(tx, target, invoice);
   }
+  if(manual&&bounded(await readInvoiceManualDisposition(tx,source))!==bounded(manual))throw invalid();
 }

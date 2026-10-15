@@ -238,7 +238,8 @@ it.each([
 ])('rejects inconsistent or issued invoice evidence before application admission: %j', async changes => {
   const source = await create(), original = await invoice(source.id);
   await f.db.update(storeOrderInvoice).set(changes).where(eq(storeOrderInvoice.id, original.id));
-  const expected = Object.hasOwn(changes, 'isInvoice') || Object.hasOwn(changes, 'invoiceNumber') ? '已开票' : '退款发票归属';
+  const expected = Object.hasOwn(changes, 'invoiceNumber') || ('isInvoice' in changes && changes.isInvoice === 1)
+    ? '开票历史或未核验票据' : '退款发票归属';
   const before = await state(); await expect(apply(source.id)).rejects.toThrow(expected); expect(await state()).toEqual(before);
 });
 
@@ -262,7 +263,7 @@ it('does not independently allocate an active payment-root application onto just
   const source = await create(), first = await apply(source.id); await finish(first.refundId);
   const remaining = (await receipt(first.refundId)).remainingOrderId!;
   await f.db.insert(storeOrderInvoice).values({ uid: 11, orderId: source.id, isPay: 1, invoiceAmount: '55.00' });
-  const before = await state(); await expect(apply(remaining)).rejects.toThrow('主单发票'); expect(await state()).toEqual(before);
+  const before = await state(); await expect(apply(remaining)).rejects.toThrow('发票创建历史缺失或关联不一致'); expect(await state()).toEqual(before);
 });
 
 it.each(['application', 'provider'])('rejects invoice cash concessions before %s writes or provider requests', async stage => {
@@ -319,7 +320,7 @@ it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('locks invoices before 
     await blocker.exec(`SELECT uid FROM "user" WHERE uid IN (11,22) FOR UPDATE NOWAIT;
       UPDATE store_order_invoice SET is_invoice=1, invoice_number='12345678' WHERE id=${original.id}; COMMIT`);
     const before = await state(); const result = await pending; expect(result.ok).toBe(false);
-    if (!result.ok) expect(String(result.error)).toContain('已开票');
+    if (!result.ok) expect(String(result.error)).toContain('开票历史或未核验票据');
     expect(await state()).toEqual(before);
   });
 });
@@ -654,7 +655,7 @@ it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['out-first', 'ref
     const b = outcome((async () => mode === 'out-first' ? request(second.db) : issue(second.db))());
     await waitForFinanceBlock(f.db, second.pid, first.pid); await blocker.exec('COMMIT');
     expect((await a).ok).toBe(true); const denied = await b; expect(denied.ok).toBe(false);
-    if (!denied.ok) expect(String(denied.error)).toContain(mode === 'out-first' ? '已开票' : '申请退款');
+    if (!denied.ok) expect(String(denied.error)).toContain(mode === 'out-first' ? '开票历史或未核验票据' : '申请退款');
   });
   const done = await state(); expect(done.refunds).toHaveLength(mode === 'out-first' ? 0 : 1);
   expect(done.invoices).toHaveLength(1); expect(done.invoices[0].isInvoice).toBe(mode === 'out-first' ? 1 : 0);

@@ -1,5 +1,6 @@
 /** Offline test-service audit. Never consumes production DATABASE_URL/Hyperdrive. */
 import { createHash, randomUUID } from "node:crypto";
+import assert from 'node:assert/strict';
 import { readFile, readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
@@ -50,7 +51,8 @@ import { assertForeignKeyNamesAligned } from "./data-migration/foreign-key-name-
 import { assertAllConstraintsAligned, assertCheckStatesAligned } from "./data-migration/check-state-contracts";
 import { assertAllSequencesAligned, assertKefuSequenceAligned } from "./data-migration/kefu-sequence-contracts";
 import { assertAllTablesAligned, TABLE_CATALOG_FIELDS } from "./data-migration/table-catalog-contracts";
-import { composeReviewedCashierAbandonCatalog } from './data-migration/cashier-abandon-catalog';
+import { composeReviewedCashierAbandonCatalog, assertCashierAuditManualRedNoteCatalog, reviewedCashierAuditCatalogView } from './data-migration/cashier-abandon-catalog';
+import { inspectInvoiceManualRedNote } from '../src/migrations/invoiceManualRedNoteCatalog';
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -73,6 +75,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const created: string[] = [];
   const pricingOwners: string[] = [];
   const catalogs: Record<string, Catalog> = {};
+  const rawCompleteCatalogs: Record<string, Catalog> = {};
+  const manualRedNoteOrmCatalogs: Record<string, Catalog> = {};
+  const manualRedNoteOrmVerification: Record<string, unknown> = {};
   const paths: Array<{ path: string; steps: number }> = [];
   let upgradeVerification;
   let externalDuplicateIndexRetirement;
@@ -598,9 +603,29 @@ if (!registeredOfflineGift) {
           exec: (query: string) => client.unsafe(query),
           query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
         });
-        catalogs[path] = await readCatalog(async (query) => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        const manualBeforeRead = await inspectInvoiceManualRedNote(shippingDb);
+        assertCashierAuditManualRedNoteCatalog(manualBeforeRead.rows, path);
+        const rawCatalog = await readCatalog(async (query) => Array.from(await client.unsafe(query)) as CatalogRow[]);
+        const manualAfterRead = await inspectInvoiceManualRedNote(shippingDb);
+        assertCashierAuditManualRedNoteCatalog(manualAfterRead.rows, path);
+        assert.deepEqual(Array.from(manualAfterRead.rows), Array.from(manualBeforeRead.rows), 'Manual ORM catalog changed during the complete five-category read');
+        const reviewed = reviewedCashierAuditCatalogView(rawCatalog, path, manualAfterRead.rows);
+        // Keep every raw table/column/index/constraint/sequence in the output.
+        // Only a complete fixed bare pair is a separate ORM registration realm;
+        // the historical five-category gates below retain their exact contracts.
+        rawCompleteCatalogs[path] = rawCatalog;
+        catalogs[path] = reviewed.historical;
+        manualRedNoteOrmCatalogs[path] = reviewed.manual;
+        manualRedNoteOrmVerification[path] = { profile: path === 'external' || path === 'embedded' ? 'absent' : 'exact-bare-orm',
+          completeCatalogBefore: manualBeforeRead.rows, completeCatalogAfter: manualAfterRead.rows,
+          allFiveCategories: reviewed.manual, maintenanceProtectionInstalled: false };
         paths.push({ path, steps });
       } finally { await client.end({ timeout: 5 }); }
+    }
+    for (const [path, manual] of Object.entries(manualRedNoteOrmCatalogs)) {
+      if (path === 'external' || path === 'embedded') {
+        for (const kind of catalogKinds) assert.deepEqual(manual[kind], [], 'Manual realm is not externally/embedded registered');
+      } else assert.deepEqual(manual, manualRedNoteOrmCatalogs.orm, 'Complete manual ORM columns/indexes/constraints/sequences differ on ' + path);
     }
     const externalVsEmbedded = compareCatalogs(catalogs.external, catalogs.embedded);
     const externalVsOrm = compareCatalogs(catalogs.external, catalogs.orm);
@@ -704,9 +729,12 @@ if (!registeredOfflineGift) {
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
       paths,
+      rawCompleteCatalogs,
+      rawCompleteCounts: Object.fromEntries(Object.entries(rawCompleteCatalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
+      manualRedNoteOrmVerification,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: `all nine paths: exact ${catalogs.external.tables.length} unique public tables and every raw metadata field; no omissions, additions or aliases waived`, count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: `all nine paths: exact ${catalogs.external.tables.length} unique historical public tables and every raw metadata field; no historical omissions, additions or aliases waived. The exact two bare manual ORM tables are separately pinned and their complete five categories are equal on all seven ORM paths; raw complete catalogs remain in the output`, count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },

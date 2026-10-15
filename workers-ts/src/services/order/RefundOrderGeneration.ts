@@ -8,6 +8,7 @@ import { captureRefundEarnedIncomeScope, readRefundEarnedIncomeScope, type Refun
 import { readRefundGenerationMarker } from './RefundGenerationMarker';
 import { loadRefundFulfillmentBranch, validateBranchCarts } from './RefundFulfillmentBranch';
 import {readRefundQuantityReservation,CUSTOMER_ROW_REFUND_VERSION,refundClaimCartKey} from './RefundQuantityReservation';
+import {assertStoredManualInvoiceAllocation} from './InvoiceManualRedNoteEvidence';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -41,7 +42,7 @@ export interface RefundOrderGeneration {
  * the candidate table, so ordinary deployed schema has no new prerequisite.
  * Marked rows MUST resolve durable evidence; never catch a missing table/record
  * or use an ID/time cutoff as authority to ignore another refund. */
-export async function loadRefundOrderGeneration(tx: DbClient, order: Order, supplied?: Cart[]): Promise<RefundOrderGeneration | null> {
+export async function loadRefundOrderGeneration(tx: DbClient, order: Order, supplied?: Cart[],invoiceEvidenceMode:'reader'|'admin-read'='reader'): Promise<RefundOrderGeneration | null> {
   const rows = supplied ?? await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
     .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
   const markers = rows.map(row => {
@@ -69,6 +70,7 @@ export async function loadRefundOrderGeneration(tx: DbClient, order: Order, supp
     baseBranchId: storeOrderRefundSplit.baseBranchId,
     returnedPointBillIds: sql<unknown>`${storeOrderRefundSplit.returnedPointBillIds}::jsonb`,
     earnedIncomeScope: sql<unknown>`${storeOrderRefundSplit.earnedIncomeScope}::jsonb`,
+    manualInvoiceAllocation: sql<string|null>`CASE WHEN ${storeOrderRefundSplit.invoiceAllocation}::jsonb->>'version'='refund-invoice-allocation-manual-red-v2' THEN ${storeOrderRefundSplit.invoiceAllocation} ELSE NULL END`,
     partitions: sql<unknown>`CASE WHEN ${storeOrderRefundSplit.refundId} = ${refundId} THEN ${storeOrderRefundSplit.partitions}::jsonb ELSE NULL END`,
   }).from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.remainingOrderId, order.id))
     .orderBy(asc(storeOrderRefundSplit.refundId)).limit(202);
@@ -82,6 +84,7 @@ export async function loadRefundOrderGeneration(tx: DbClient, order: Order, supp
     if (record.uid !== order.uid || record.supplierId !== order.supplierId || record.storeId !== order.storeId
       || record.paymentOrderId !== (order.pid || order.id) || record.disposition !== 'split'
       || !/^[0-9a-f]{64}$/.test(record.fingerprint)) throw invalid();
+    if(record.manualInvoiceAllocation!==null)await assertStoredManualInvoiceAllocation(tx,record.manualInvoiceAllocation,record.uid,record.paymentOrderId,invoiceEvidenceMode);
     if (prior.has(record.refundId) && (prior.get(record.refundId) !== record.fingerprint
       || (record.sourceOrderId === order.id) !== baseline!.materialized.has(record.refundId))) throw invalid();
   }

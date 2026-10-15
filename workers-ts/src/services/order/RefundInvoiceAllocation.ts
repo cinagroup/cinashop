@@ -5,9 +5,11 @@ import { amountToCents } from '@/services/payment/RefundGateway';
 import { ValidateException } from '@/utils/errors';
 import type { RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 import { assertUnissuedInvoiceHistory } from './InvoiceIssuanceEvidence';
+import {invoiceHasReportedHistory,readInvoiceManualDisposition,type ManualInvoiceDisposition} from './InvoiceManualRedNoteEvidence';
 
 type Order = typeof storeOrder.$inferSelect;
 export type RefundInvoiceSnapshot = typeof storeOrderInvoice.$inferSelect;
+const manualDispositions=new WeakMap<RefundInvoiceSnapshot,ManualInvoiceDisposition>();
 const invalid = () => new ValidateException('退款发票归属或金额证据不一致，请先核对订单');
 const invoiceOrders = (source: Order) => source.pid > 0 ? [source.pid, source.id] : [source.id];
 function cents(value: string): number {
@@ -19,10 +21,11 @@ function bounded(value: unknown): string {
   return result;
 }
 function validateInvoice(source: Order, invoice: RefundInvoiceSnapshot, selectedPayment: string, refundAmount: string) {
+  if(![-1,0,1].includes(invoice.isInvoice))throw invalid();
   if (invoice.orderId !== source.id) throw new ValidateException('支付主单发票尚需履约子单归属适配');
   if (invoice.uid !== source.uid || invoice.category !== 'order' || invoice.isPay !== 1 || invoice.isRefund !== 0 || invoice.isDel !== 0
     || cents(invoice.invoiceAmount) !== cents(source.payPrice)) throw invalid();
-  if (![0, -1].includes(invoice.isInvoice) || invoice.invoiceNumber !== '') {
+  if ((![0, -1].includes(invoice.isInvoice) || invoice.invoiceNumber !== '')&&!manualDispositions.has(invoice)) {
     throw new ValidateException('已开票订单退款尚需原票与红冲处理，不能复制票号');
   }
   if (cents(selectedPayment) !== cents(refundAmount)) {
@@ -43,8 +46,9 @@ export async function prepareRefundInvoice(tx: DbClient, source: Order, selected
   if (!rows.length) { await assertUnissuedInvoiceHistory(tx, source); return null; }
   if (rows.length !== 1) throw invalid();
   const invoice = rows[0];
-  validateInvoice(source, invoice, selectedPayment, refundAmount);
   await assertUnissuedInvoiceHistory(tx, source, invoice);
+  if(await invoiceHasReportedHistory(tx,source))manualDispositions.set(invoice,await readInvoiceManualDisposition(tx,source));
+  validateInvoice(source, invoice, selectedPayment, refundAmount);
   return invoice;
 }
 
@@ -70,6 +74,23 @@ export async function materializeRefundInvoice(tx: DbClient, source: Order, refu
     || cents(selected.payPrice) + (remaining ? cents(remaining.payPrice) : 0) !== cents(prepared.invoiceAmount)) throw invalid();
   validateInvoice(source, prepared, selected.payPrice, refund.refundPrice);
   await assertUnissuedInvoiceHistory(tx, source, prepared);
+  const manual=manualDispositions.get(prepared);
+  if(manual){
+    if(bounded(await readInvoiceManualDisposition(tx,source))!==bounded(manual))throw invalid();
+    const {id:_id,...originalBase}=prepared,base={...originalBase,isInvoice:0,invoiceNumber:'',invoiceTime:0};
+    const [returned]=await tx.insert(storeOrderInvoice).values({...base,orderId:selected.id,invoiceAmount:selected.payPrice,isRefund:1}).returning();
+    const [retained]=remaining?await tx.insert(storeOrderInvoice).values({...base,orderId:remaining.id,invoiceAmount:remaining.payPrice,isRefund:0}).returning():[];
+    if(!returned||remaining&&!retained)throw invalid();
+    const [archived]=await tx.update(storeOrderInvoice).set({isDel:1,isRefund:1}).where(and(eq(storeOrderInvoice.id,prepared.id),eq(storeOrderInvoice.isDel,0))).returning();
+    if(!archived||bounded(archived)!==bounded({...prepared,isDel:1,isRefund:1}))throw invalid();
+    for(const invoice of [returned,...(retained?[retained]:[])]){
+      const target=invoice.orderId===selected.id?selected:remaining;if(!target||invoice.uid!==source.uid||invoice.invoiceAmount!==target.payPrice||invoice.isInvoice!==0||invoice.invoiceNumber!=='')throw invalid();
+      await assertUnissuedInvoiceHistory(tx,target,invoice);
+    }
+    if(bounded(await readInvoiceManualDisposition(tx,source))!==bounded(manual))throw invalid();
+    return bounded({version:'refund-invoice-allocation-manual-red-v2',sourceOrderId:source.id,paymentOrderId:source.pid||source.id,original:prepared,manual_disposition:manual,
+      selected:{invoiceId:returned.id,orderId:selected.id,amount:selected.payPrice},remaining:retained&&remaining?{invoiceId:retained.id,orderId:remaining.id,amount:remaining.payPrice}:null});
+  }
   let selectedInvoiceId = prepared.id, remainingInvoiceId: number | null = null;
   let sourceChange: Partial<typeof storeOrderInvoice.$inferInsert>;
   if (remaining) {

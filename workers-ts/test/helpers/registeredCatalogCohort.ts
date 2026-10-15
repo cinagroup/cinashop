@@ -6,7 +6,9 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../../src/lib/di';
 import { parseCreateTables } from '../../scripts/data-migration/schema-audit';
 import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '../../src/migrations/customerCityDelivery';
-import { composeReviewedCashierAbandonCatalog } from '../../scripts/data-migration/cashier-abandon-catalog';
+import { composeReviewedCashierAbandonCatalog, assertCashierAuditManualRedNoteCatalog } from '../../scripts/data-migration/cashier-abandon-catalog';
+import { completeConstructionTableNames, MANUAL_RED_NOTE_ORM_TABLE_NAMES } from './completeConstructionInventory';
+import { inspectInvoiceManualRedNote } from '../../src/migrations/invoiceManualRedNoteCatalog';
 
 // Fixed independent 281-table SQL cohort through 0169, before the five reviewed
 // additions. Never generate expected table names from the live ORM under test.
@@ -123,16 +125,26 @@ const additionalExplicitDeclarations = [
   ['cashierSecondCardFormImages.ts','a22e5de1110223b6943726f8d59da9c5ae8ddc2fc46659fcd416e8db3b8c77fb',['cashier_second_card_form_session_v1','cashier_second_card_form_upload_v1']],
   ['customerManualRefund.ts','bb7781fd1b070144610ebe7860a594acabaaa31d9d299ac5abc0c8d55cc86c67',['customer_financial_manual_refund_v1']],
 ] as const;
+const manualRedNoteSourceSha256 = 'be8460ba4e331d6db2b23e301a73d31ae787f638e516a1298f2c01a3f8cd8418';
+const manualRedNoteColumns = {
+  store_order_invoice_manual_red_note: ['id','invoice_id','source_order_id','payment_order_id','uid','actor_id','request_hash','record_hash','record_json','created_time'],
+  store_order_invoice_manual_red_review: ['id','record_id','invoice_id','source_order_id','payment_order_id','uid','actor_id','decision','original_document_number','red_document_number','request_hash','record_hash','review_hash','review_json','created_time'],
+} as const;
+const manualRedNoteExplicitDeclarations = [
+  ['invoiceManualRedNote.ts',manualRedNoteSourceSha256,['store_order_invoice_manual_red_note','store_order_invoice_manual_red_review']],
+] as const;
 export function reviewedExplicitDeclarationTables() {
-  for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations]) {
+  for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
     assert.deepEqual([...parseCreateTables(source,'postgres').keys()].sort(),[...tables].sort());
   }
   const historicalTables=explicitDeclarations.flatMap(([, , tables])=>[...tables]).sort();
   assert.equal(historicalTables.length,12);assert.equal(new Set(historicalTables).size,12);
-  const tables=[...historicalTables,...additionalExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
-  assert.equal(tables.length,16);assert.equal(new Set(tables).size,16);
+  const previousTables=[...historicalTables,...additionalExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
+  assert.equal(previousTables.length,16);assert.equal(new Set(previousTables).size,16);
+  const tables=[...previousTables,...manualRedNoteExplicitDeclarations.flatMap(([, , names])=>[...names])].sort();
+  assert.equal(tables.length,18);assert.equal(new Set(tables).size,18);
   // This fixed external registration is present on both declaration sides.
   return tables.filter(name=>!Object.hasOwn(externalAdditions,name));
 }
@@ -155,18 +167,39 @@ export function assertHistoricalCatalogBasis() {
     assert.deepEqual([...parseCreateTables(source,'postgres').get(table)!.columns.keys()],contract.columns);
   }
 }
-export function registeredTableNames(path:'external'|'embedded'|'orm') {
-  assertHistoricalCatalogBasis(); return path==='embedded'?embeddedNames:path==='external'?externalNames:ormNames;
+type RegisteredCatalogScope = 'historical'|'current-bare-orm';
+function assertManualRedNoteSourceBasis() {
+  const source=readFileSync(resolve(root,'src/migrations/invoiceManualRedNote.ts'),'utf8').replace(/\r\n/g,'\n');
+  assert.equal(digest(source),manualRedNoteSourceSha256,'Complete reviewed manual red-note source changed');
+  const parsed=parseCreateTables(source,'postgres');
+  assert.deepEqual([...parsed.keys()].sort(),[...MANUAL_RED_NOTE_ORM_TABLE_NAMES]);
+  assert.deepEqual(Object.keys(manualRedNoteColumns).sort(),[...MANUAL_RED_NOTE_ORM_TABLE_NAMES]);
+  for(const [table,columns] of Object.entries(manualRedNoteColumns))
+    assert.deepEqual([...parsed.get(table)!.columns.keys()],columns);
+}
+export function registeredTableNames(path:'external'|'embedded'|'orm',scope:RegisteredCatalogScope=path==='orm'?'current-bare-orm':'historical') {
+  assertHistoricalCatalogBasis();
+  const historical=path==='embedded'?embeddedNames:path==='external'?externalNames:ormNames;
+  if(scope==='historical')return historical;
+  assert.equal(path,'orm','Only actual ORM construction may include the bare manual red-note realm');
+  assertManualRedNoteSourceBasis();
+  const current=[...historical,...MANUAL_RED_NOTE_ORM_TABLE_NAMES].sort();
+  assert.deepEqual(current,completeConstructionTableNames('orm'),'Current ORM must be the independent historical 285 plus exactly the two reviewed bare tables');
+  return current;
 }
 export function assertRegisteredModelCohort(snapshot:{tables:Record<string,{columns?:Record<string,unknown>}>}) {
   assert.deepEqual(Object.keys(snapshot.tables).sort(),registeredTableNames('orm').map(name=>'public.'+name));
   for(const [table,contract] of Object.entries(additions))
     assert.deepEqual(Object.keys(snapshot.tables['public.'+table].columns??{}),contract.columns);
+  for(const [table,columns] of Object.entries(manualRedNoteColumns))
+    assert.deepEqual(Object.keys(snapshot.tables['public.'+table].columns??{}),columns);
 }
-export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>,path:'external'|'embedded'|'orm') {
+export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>,path:'external'|'embedded'|'orm',scope:RegisteredCatalogScope=path==='orm'?'current-bare-orm':'historical') {
   const rows=await db.execute(sql`SELECT relname AS name FROM pg_catalog.pg_class
     WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname`);
-  assert.deepEqual(rows.map(row=>row.name),registeredTableNames(path));
+  assert.deepEqual(rows.map(row=>row.name),registeredTableNames(path,scope));
+  const manual=await inspectInvoiceManualRedNote(db);
+  assertCashierAuditManualRedNoteCatalog(manual.rows,scope==='current-bare-orm'?'orm':path==='orm'?'embedded':path);
 }
 export function assertExternalMigrationCohort(files:string[]) {
   assert.equal(files.length,177);
@@ -195,7 +228,7 @@ export async function composeExplicitCityCatalog(db:DbClient,path:'external'|'em
     SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace
     ORDER BY kind,oid`);
   assert.deepEqual(after.filter(row=>before.some(old=>old.kind===row.kind&&old.oid===row.oid)),Array.from(before));
-  await assertRegisteredDatabaseCohort(db,path==='external'?'external':'orm');
+  await assertRegisteredDatabaseCohort(db,path==='external'?'external':'orm','historical');
   await assert.rejects(installCustomerCityDelivery(db,{maintenance:true}));
   await assertCustomerCityDeliveryReady(db,false);
   const repeat=await db.execute(sql`SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text AS acl

@@ -23,15 +23,15 @@
       ]
     },
     "target": {
-      "logicalManifestRouteRecords": 128,
-      "manifestSha256": "A99E62691811D86BFB2DA5EBD1186842CFF7FAC7F1ABE1FBA3C9444A17B4376A",
+      "logicalManifestRouteRecords": 129,
+      "manifestSha256": "1502BB15E8B01329AE3F9450D9619EA9C7C71452BF15C1BC730D7B26890C3B75",
       "manifestHashNormalization": "LF"
     },
     "routeLedger": {
-      "directRegistered": 28,
-      "legacyCompatibilityRules": 116,
+      "directRegistered": 29,
+      "legacyCompatibilityRules": 115,
       "candidateCoveredRules": 62,
-      "partialReplacementRules": 54,
+      "partialReplacementRules": 53,
       "unmappedOrCrossSurface": 7,
       "accountedLegacyRoutes": 151
     }
@@ -64,7 +64,8 @@
     "/pages/users/agent/apply",
     "/pages/users/agent/state",
     "/pages/users/agent/record",
-    "/pages/users/agent/staff_list"
+    "/pages/users/agent/staff_list",
+    "/pages/users/user_member_code/index"
   ],
   "gaps": [
     {
@@ -113,9 +114,19 @@
     "legacyAliasChanges": 0,
     "genericAssistedOrderComplete": false
   },
+  "inventoryCorrection": {
+    "reviewDate": "2026-10-13",
+    "directRegisteredLegacyRoutes": [
+      "/pages/users/user_member_code/index"
+    ],
+    "reason": "The existing member writeoff-code page is registered at its original legacy path; account for it directly instead of retaining its removed compatibility rule.",
+    "staticInventoryOnly": true,
+    "memberGovernanceOrProviderParityComplete": false
+  },
   "limitations": [
     "Registration does not prove functional, provider, device or production parity.",
     "Existing generic assisted-order and AdminJWT legacy contracts remain open and their classifications are unchanged.",
-    "Prior source hashes and test executions retain their historical scope; current tests are separate."
+    "Prior source hashes and test executions retain their historical scope; current tests are separate.",
+    "The member writeoff-code inventory correction does not close membership governance, balance or points display, scan-payment, device or provider parity."
   ]
 }
