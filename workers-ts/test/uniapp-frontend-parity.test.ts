@@ -30,6 +30,20 @@ const parity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-product-det
 const currentParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-work-writeoff-followup-20261005.json", "utf8")) as Omit<ParityAudit, "checklist">;
 const checkoutParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-cashier-checkout-followup-20261011.json", "utf8")) as Omit<ParityAudit, "checklist">;
 const ordinaryParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-customer-ordinary-cashier-followup-20261013.json", "utf8")) as Omit<ParityAudit, "checklist">;
+const mergedParity = JSON.parse(readFileSync("audit/uniapp-frontend-parity-merged-work-branches-20261015.json", "utf8")) as Omit<ParityAudit, "checklist">;
+// These later main records must remain present in the merged app. Remove only
+// their exact bytes when verifying immutable October 5/11/13 manifest hashes.
+const laterMainRecords = [
+  '    {\n      "path": "pages/users/agent/bind",\n      "style": {\n        "navigationBarTitleText": "员工邀请"\n      }\n    },\n',
+  ',\n    {\n      "path": "pages/share/landing",\n      "style": { "navigationBarTitleText": "分享内容核对" }\n    }',
+];
+function historicalCashierManifest(manifest: string): string {
+  for (const record of laterMainRecords) {
+    expect(manifest.split(record)).toHaveLength(2);
+    manifest = manifest.replace(record, "");
+  }
+  return manifest;
+}
 const memberCodeRoute = "/pages/users/user_member_code/index";
 const currentDirectRoutes = [...currentParity.directRegisteredLegacyRoutes, memberCodeRoute];
 const pages = JSON.parse(readFileSync("../view/uniapp-ts/src/pages.json", "utf8")) as {
@@ -62,7 +76,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect([...SERVER_REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(130);
+    expect(manifestRoutes).toHaveLength(132);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
     const cashierRecords = [
       { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
@@ -81,7 +95,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
     const ordinaryRecord = '    {\n      "path": "pages/customer-work/ordinaryCashier",\n      "style": { "navigationBarTitleText": "普通商品现金收银" }\n    },\n';
     expect(manifest.split(ordinaryRecord)).toHaveLength(2);
-    const checkoutManifest = manifest.replace(ordinaryRecord, "");
+    const checkoutManifest = historicalCashierManifest(manifest).replace(ordinaryRecord, "");
     expect(JSON.parse(checkoutManifest).pages).toHaveLength(129);
     expect(checkoutParity.counting.target.logicalManifestRouteRecords).toBe(129);
     expect(checkoutParity.counting.target.manifestHashNormalization).toBe("LF");
@@ -131,32 +145,35 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   it("aligns the current ordinary cashier ledger with the complete manifest without replacing the historical checkout ledger", () => {
     const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
     const mappedRoutes = Object.keys(LEGACY_ROUTE_RULES);
-    const gapRoutes = ordinaryParity.gaps.flatMap((gap) => gap.legacyRoutes);
-    const accounted = [...ordinaryParity.directRegisteredLegacyRoutes, ...mappedRoutes, ...gapRoutes];
+    const gapRoutes = mergedParity.gaps.flatMap((gap) => gap.legacyRoutes);
+    const accounted = [...mergedParity.directRegisteredLegacyRoutes, ...mappedRoutes, ...gapRoutes];
     const historicalAccounted = [
       ...currentDirectRoutes,
       ...mappedRoutes,
       ...currentParity.gaps.flatMap((gap) => gap.legacyRoutes),
     ];
 
-    expect(ordinaryParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length);
-    expect(ordinaryParity.counting.target.manifestHashNormalization).toBe("LF");
-    expect(ordinaryParity.counting.target.manifestSha256)
+    expect(ordinaryParity.counting.target.logicalManifestRouteRecords).toBe(130);
+    expect(ordinaryParity.counting.target.manifestSha256).toBe(createHash("sha256")
+      .update(historicalCashierManifest(manifest)).digest("hex").toUpperCase());
+    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length);
+    expect(mergedParity.counting.target.manifestHashNormalization).toBe("LF");
+    expect(mergedParity.counting.target.manifestSha256)
       .toBe(createHash("sha256").update(manifest).digest("hex").toUpperCase());
-    expect([...ordinaryParity.directRegisteredLegacyRoutes].sort()).toEqual([...currentDirectRoutes].sort());
-    expect(ordinaryParity.directRegisteredLegacyRoutes).toEqual(checkoutParity.directRegisteredLegacyRoutes);
-    expect(ordinaryParity.gaps).toEqual(checkoutParity.gaps);
-    expect(ordinaryParity.directRegisteredLegacyRoutes).not.toContain('/pages/customer-work/ordinaryCashier');
+    expect([...mergedParity.directRegisteredLegacyRoutes].sort()).toEqual([...currentDirectRoutes].sort());
+    expect(mergedParity.directRegisteredLegacyRoutes).toEqual(checkoutParity.directRegisteredLegacyRoutes);
+    expect(mergedParity.gaps).toEqual(checkoutParity.gaps);
+    expect(mergedParity.directRegisteredLegacyRoutes).not.toContain('/pages/customer-work/ordinaryCashier');
     expect(gapRoutes).toContain('/pages/goods/cashier/index');
     expect(LEGACY_ROUTE_RULES).not.toHaveProperty('/pages/goods/cashier/index');
-    for (const route of ordinaryParity.directRegisteredLegacyRoutes) {
+    for (const route of mergedParity.directRegisteredLegacyRoutes) {
       expect(REGISTERED_PAGE_ROUTES.has(route)).toBe(true);
     }
-    expect(accounted).toHaveLength(ordinaryParity.counting.legacy.logicalManifestRouteRecords);
+    expect(accounted).toHaveLength(mergedParity.counting.legacy.logicalManifestRouteRecords);
     expect(new Set(accounted).size).toBe(accounted.length);
     expect([...accounted].sort()).toEqual([...historicalAccounted].sort());
-    expect(ordinaryParity.counting.routeLedger).toEqual({
-      directRegistered: ordinaryParity.directRegisteredLegacyRoutes.length,
+    expect(mergedParity.counting.routeLedger).toEqual({
+      directRegistered: mergedParity.directRegisteredLegacyRoutes.length,
       legacyCompatibilityRules: mappedRoutes.length,
       candidateCoveredRules: Object.values(LEGACY_ROUTE_RULES)
         .filter((rule) => rule.coverage === "candidate_covered").length,

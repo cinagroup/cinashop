@@ -18,6 +18,7 @@ interface ApiCall {
 }
 
 interface RegisteredRoute {
+  source?: string;
   method: HttpMethod;
   path: string;
   line: number;
@@ -30,6 +31,9 @@ const workerRoot = resolve(scriptDir, "..");
 const repositoryRoot = resolve(workerRoot, "..");
 const adminRoot = join(repositoryRoot, "view", "admin-ts");
 const backendFile = join(workerRoot, "src", "routes", "adminapi.ts");
+const v1BackendFile = join(workerRoot, "src", "routes", "v1", "index.ts");
+const apiMountFile = join(workerRoot, "src", "routes", "index.ts");
+const appMountFile = join(workerRoot, "src", "app.ts");
 const outputFile = join(workerRoot, "audit", "admin-frontend-api-contracts.json");
 const methodNames = new Set(["get", "post", "put", "delete", "patch"]);
 
@@ -238,16 +242,16 @@ function collectApiCalls(files: string[]): { calls: Omit<ApiCall, "registered" |
   return { calls, unresolved };
 }
 
-function collectRegisteredRoutes(): RegisteredRoute[] {
-  const text = normalizeAdminAuditSource(readFileSync(backendFile, "utf8"));
-  const source = ts.createSourceFile(backendFile, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+function collectRegisteredRoutes(file = backendFile, router = "adminapiRoutes"): RegisteredRoute[] {
+  const text = normalizeAdminAuditSource(readFileSync(file, "utf8"));
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const routes: RegisteredRoute[] = [];
   const visit = (node: ts.Node) => {
     if (
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       ts.isIdentifier(node.expression.expression) &&
-      node.expression.expression.text === "adminapiRoutes" &&
+      node.expression.expression.text === router &&
       methodNames.has(node.expression.name.text)
     ) {
       const paths = expressionPaths(node.arguments[0]);
@@ -266,6 +270,33 @@ function collectRegisteredRoutes(): RegisteredRoute[] {
   };
   visit(source);
   return routes;
+}
+
+/** Read the actual router mounts rather than assuming v1 adds a URL prefix. */
+function collectMounts(file: string, parent: string, child: string): string[] {
+  const source = ts.createSourceFile(file, normalizeAdminAuditSource(readFileSync(file, "utf8")),
+    ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const mounts: string[] = [];
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
+      && ts.isIdentifier(node.expression.expression) && node.expression.expression.text === parent
+      && node.expression.name.text === "route" && node.arguments.length === 2
+      && ts.isIdentifier(node.arguments[1]) && node.arguments[1].text === child) {
+      mounts.push(...expressionPaths(node.arguments[0]));
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return unique(mounts);
+}
+
+function collectV1AdminRootRoutes(): RegisteredRoute[] {
+  const mounts = collectMounts(appMountFile, "app", "apiRoutes").flatMap(appMount =>
+    collectMounts(apiMountFile, "apiRoutes", "v1Routes").map(v1Mount => normalizePath(`${appMount}/${v1Mount}`)));
+  return collectRegisteredRoutes(v1BackendFile, "v1Routes")
+    .filter(route => route.path.startsWith("/admin/"))
+    .flatMap(route => mounts.map(mount => ({ ...route,
+      path: normalizePath(`${mount}/${route.path}`), source: normalizedRelative(repositoryRoot, v1BackendFile) })));
 }
 
 function segments(path: string): string[] {
@@ -290,7 +321,7 @@ export function buildAdminFrontendApiAuditReport() {
     ...listFiles(join(adminRoot, "src", "pages"), new Set([".vue"])),
   ];
   const collected = collectApiCalls(frontendFiles);
-  const registeredRoutes = collectRegisteredRoutes();
+  const registeredRoutes = [...collectRegisteredRoutes(), ...collectV1AdminRootRoutes()];
   const calls: ApiCall[] = collected.calls.map((call) => {
     const match = registeredRoutes.find(
       (route) => route.method === call.method && routeMatches(call.path, route.path),
@@ -308,12 +339,16 @@ export function buildAdminFrontendApiAuditReport() {
     version: 2,
     methodology: {
       scope: "Static request.get/post/put/delete/patch calls in Admin api modules and page scripts.",
+      backendMounts: "Relative Admin calls match adminapiRoutes; absolute Admin root calls also match v1Routes through the literal app/api router mount chain. Supplemental source hashes retain that evidence.",
       dynamicSegments: "Resolvable conditionals and local URL maps expand to path variants; remaining runtime values normalize to :param by path segment.",
       limitation: "Runtime-computed URLs that cannot be reduced to a path are reported separately.",
     },
     backend: {
       file: normalizedRelative(repositoryRoot, backendFile),
       sha256: sha256(backendFile),
+      rootRouteSources: [appMountFile, apiMountFile, v1BackendFile].map(file => ({
+        file: normalizedRelative(repositoryRoot, file), sha256: sha256(file),
+      })),
       registeredRoutes,
     },
     frontendSources: sourceFiles.map((file) => ({

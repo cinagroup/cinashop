@@ -42,7 +42,11 @@ describe('complete role reference history across existing authority consumers in
     await fixture.exec(ADMIN_AUTHORITY_OPERATION_SQL); await fixture.exec(ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL);
     await fixture.exec(ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL);
     await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
-    await fixture.db.insert(systemMenus).values({ id:2,menuName:'商品读取',authType:2,apiUrl:'product/list',methods:'GET' });
+    // Menu 2 is the protected legacy product-list page. Its complete source
+    // identity is required; a synthetic API tuple at this ID is ungrantable.
+    await fixture.db.insert(systemMenus).values({ id:2,menuName:'商品读取',type:1,authType:1,
+      apiUrl:'',methods:'',menuPath:'/admin/product/product_list',uniqueAuth:'admin-store-storeProuduct-index' });
+    expect(await permissions.resolveManyRulePermissionKeys(['2'])).toEqual([['product.view']]);
     await fixture.db.insert(systemRole).values([
       { id:50,level:1,roleName:'将删除身份',rules:'user.manage' },
       { id:51,level:1,roleName:'剩余写身份',rules:'system.manage,product.view,2' },

@@ -11,7 +11,9 @@ interface ApiAuditReport {
   backend: {
     file: string;
     sha256: string;
+    rootRouteSources?: Array<{ file: string; sha256: string }>;
     registeredRoutes: Array<{
+      source?: string;
       method: string;
       path: string;
       line: number;
@@ -46,10 +48,13 @@ interface ApiAuditReport {
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(testDir, "..");
-const committed = JSON.parse(readFileSync(
-  join(workerRoot, "audit", "admin-frontend-api-contracts-guest-invoice-manual-red-note-followup-20261013.json"),
-  "utf8",
-)) as ApiAuditReport;
+const guestFollowupRaw = readFileSync(
+  join(workerRoot, "audit", "admin-frontend-api-contracts-guest-invoice-manual-red-note-followup-20261013.json"), "utf8");
+const guestFollowup = JSON.parse(guestFollowupRaw) as ApiAuditReport;
+const current = JSON.parse(readFileSync(
+  join(workerRoot, "audit", "admin-frontend-api-contracts.json"), "utf8")) as ApiAuditReport;
+const merged = JSON.parse(readFileSync(
+  join(workerRoot, "audit", "admin-frontend-api-contracts-merged-work-branches-20261015.json"), "utf8")) as ApiAuditReport;
 const historicalRaw = readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json"),
   "utf8",
@@ -77,24 +82,44 @@ describe("Admin frontend API registration audit", () => {
   });
 
   it("has no statically unregistered or unresolved request paths", () => {
-    expect(committed.version).toBe(2);
-    expect(committed.counts.callSites).toBeGreaterThan(250);
-    expect(committed.counts.pathVariants).toBe(committed.calls.length);
-    expect(committed.counts.registered).toBe(committed.calls.length);
-    expect(committed.counts.executable + committed.counts.controlledUnavailable).toBe(committed.calls.length);
-    expect(committed.counts.controlledUnavailable).toBe(committed.controlledUnavailable.length);
-    expect(committed.counts.unregistered).toBe(0);
-    expect(committed.counts.unresolved).toBe(0);
-    expect(committed.unregistered).toEqual([]);
-    expect(committed.unresolved).toEqual([]);
-    expect(committed.calls.every((call) => call.registered && call.matchedRoute && call.matchedHandler)).toBe(true);
+    expect(current.version).toBe(2);
+    expect(current.counts.callSites).toBeGreaterThan(250);
+    expect(current.counts.pathVariants).toBe(current.calls.length);
+    expect(current.counts.registered).toBe(current.calls.length);
+    expect(current.counts.executable + current.counts.controlledUnavailable).toBe(current.calls.length);
+    expect(current.counts.controlledUnavailable).toBe(current.controlledUnavailable.length);
+    expect(current.counts.unregistered).toBe(0);
+    expect(current.counts.unresolved).toBe(0);
+    expect(current.unregistered).toEqual([]);
+    expect(current.unresolved).toEqual([]);
+    expect(current.calls.every((call) => call.registered && call.matchedRoute && call.matchedHandler)).toBe(true);
   });
 
   it("recomputes the same deterministic report from the current frontend and routes", () => {
-    expect(buildAdminFrontendApiAuditReport()).toEqual(committed);
+    expect(buildAdminFrontendApiAuditReport()).toEqual(current);
+    expect(current).toEqual(merged);
+  });
+
+  it("resolves the absolute ERP consumer through the real mounted v1 Admin root and pins every source", () => {
+    expect(current.calls.find(call => call.method === "GET" && call.path === "/api/admin/erp/config"))
+      .toMatchObject({ source: "view/admin-ts/src/api/productStock.ts", registered: true,
+        matchedRoute: "/api/admin/erp/config", matchedHandler: "AdminController.adminErpConfig", availability: "executable" });
+    const route = current.backend.registeredRoutes.find(route => route.method === "GET" && route.path === "/api/admin/erp/config");
+    expect(route).toMatchObject({ source: "workers-ts/src/routes/v1/index.ts", handler: "AdminController.adminErpConfig" });
+    expect(route?.line).toBeGreaterThan(0);
+    expect(current.backend.rootRouteSources?.map(source => source.file)).toEqual([
+      "workers-ts/src/app.ts", "workers-ts/src/routes/index.ts", "workers-ts/src/routes/v1/index.ts",
+    ]);
+    for (const source of current.backend.rootRouteSources ?? []) {
+      const text = readFileSync(join(workerRoot, "..", source.file), "utf8");
+      expect(source.sha256).toBe(createHash("sha256").update(normalizeAdminAuditSource(text)).digest("hex"));
+    }
+    expect(current.backend.registeredRoutes.some(route => route.path === "/api/v1/admin/erp/config")).toBe(false);
   });
 
   it("retains the reviewed October 9 inventory and adds exactly the four manual red-note API contracts", () => {
+    expect(createHash("sha256").update(normalizeAdminAuditSource(guestFollowupRaw)).digest("hex"))
+      .toBe("570b1f0ae132e3fd9b52ace2d7d6ecfceb31f1bd38d0d36c9c144b6c2320611e");
     expect(createHash("sha256").update(normalizeAdminAuditSource(historicalRaw)).digest("hex"))
       .toBe("2f870baccb6152d19d62327b52ba58f3954119e4789201c9040dbb7f84858ab9");
     const routes = [
@@ -118,27 +143,27 @@ describe("Admin frontend API registration audit", () => {
       calls.some((expected) => call.method === expected.method && call.path === expected.path);
     expect(historical.backend.registeredRoutes.some(isManualRoute)).toBe(false);
     expect(historical.calls.some(isManualCall)).toBe(false);
-    expect(committed.backend.registeredRoutes.filter(isManualRoute).map(withoutLine)).toEqual(routes);
-    expect(committed.calls.filter(isManualCall).map(withoutLine)).toEqual(calls);
-    expect(semanticCounts(committed.backend.registeredRoutes.filter((route) => !isManualRoute(route))))
+    expect(guestFollowup.backend.registeredRoutes.filter(isManualRoute).map(withoutLine)).toEqual(routes);
+    expect(guestFollowup.calls.filter(isManualCall).map(withoutLine)).toEqual(calls);
+    expect(semanticCounts(guestFollowup.backend.registeredRoutes.filter((route) => !isManualRoute(route))))
       .toEqual(semanticCounts(historical.backend.registeredRoutes));
-    expect(semanticCounts(committed.calls.filter((call) => !isManualCall(call))))
+    expect(semanticCounts(guestFollowup.calls.filter((call) => !isManualCall(call))))
       .toEqual(semanticCounts(historical.calls));
-    expect(committed.counts).toEqual({
+    expect(guestFollowup.counts).toEqual({
       ...historical.counts,
       callSites: historical.counts.callSites + calls.length,
       pathVariants: historical.counts.pathVariants + calls.length,
       registered: historical.counts.registered + calls.length,
       executable: historical.counts.executable + calls.length,
     });
-    expect(committed.methodology).toEqual(historical.methodology);
-    expect(committed.backend.file).toBe(historical.backend.file);
-    expect(committed.frontendSources).toEqual(historical.frontendSources.map((entry) =>
+    expect(guestFollowup.methodology).toEqual(historical.methodology);
+    expect(guestFollowup.backend.file).toBe(historical.backend.file);
+    expect(guestFollowup.frontendSources).toEqual(historical.frontendSources.map((entry) =>
       entry.file === "view/admin-ts/src/api/invoiceManagement.ts"
         ? { ...entry, sha256: "9678c08907accc39f13a7fcf4e785709b0821ba68264abbaa2a0a37fcc700aec" }
         : entry));
-    expect(committed.controlledUnavailable).toEqual(historical.controlledUnavailable);
-    expect(committed.unregistered).toEqual(historical.unregistered);
-    expect(committed.unresolved).toEqual(historical.unresolved);
+    expect(guestFollowup.controlledUnavailable).toEqual(historical.controlledUnavailable);
+    expect(guestFollowup.unregistered).toEqual(historical.unregistered);
+    expect(guestFollowup.unresolved).toEqual(historical.unresolved);
   });
 });

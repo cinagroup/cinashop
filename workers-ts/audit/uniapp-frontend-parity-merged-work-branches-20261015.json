@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-10-15",
+  "scope": "Merged ordinary customer cashier, staff invitation and share landing page inventory; static route conservation only",
+  "status": "merged_static_inventory",
+  "baselineLedger": "workers-ts/audit/uniapp-frontend-parity-customer-ordinary-cashier-followup-20261013.json",
+  "counting": {
+    "legacy": {
+      "pagesTreeVueFiles": 250,
+      "logicalManifestRouteRecords": 151,
+      "platformActiveRouteRecords": {
+        "H5": 151,
+        "MP-WEIXIN": 150,
+        "APP-PLUS": 150
+      },
+      "mainRoutes": 7,
+      "subPackageRoutes": 144,
+      "subPackages": 10,
+      "manifestSha256": "B3F0D0DB6F6E7E1E2C039695712797FBBB0B1146ACC85D304C24BB344E185EB7",
+      "conditionalNotes": [
+        "H5 includes pages/users/alipay_invoke/index",
+        "APP-PLUS selects pages/discover/discoverVideo/app while other builds select index; the route record count is unchanged"
+      ]
+    },
+    "target": {
+      "pagesTreeVueFiles": 132,
+      "logicalManifestRouteRecords": 132,
+      "platformActiveRouteRecords": {
+        "H5": 132,
+        "MP-WEIXIN": 132,
+        "APP-PLUS": 132
+      },
+      "manifestSha256": "5C738326164CEA4CE01CA19A3795A7176C53AF104AEA5B80A0C5DBEF782D2F36",
+      "manifestHashNormalization": "LF"
+    },
+    "routeLedger": {
+      "directRegistered": 29,
+      "legacyCompatibilityRules": 115,
+      "candidateCoveredRules": 62,
+      "partialReplacementRules": 53,
+      "unmappedOrCrossSurface": 7,
+      "accountedLegacyRoutes": 151
+    }
+  },
+  "directRegisteredLegacyRoutes": [
+    "/pages/columnGoods/rank/index",
+    "/pages/columnGoods/live_list/index",
+    "/pages/activity/new_customer/index",
+    "/pages/discover/discoverTopic/index",
+    "/pages/discover/discoverSearch/index",
+    "/pages/discover/discoverVideo/index",
+    "/pages/extension/customer_list/feedback",
+    "/pages/work/userInfo/index",
+    "/pages/work/orderList/index",
+    "/pages/work/orderDetail/index",
+    "/pages/work/record/index",
+    "/pages/work/groupInfo/index",
+    "/pages/behalf/cashier/index",
+    "/pages/behalf/order_confirm/index",
+    "/pages/behalf/user_list/index",
+    "/pages/behalf/goods_list/index",
+    "/pages/behalf/record/index",
+    "/pages/index/index",
+    "/pages/user/index",
+    "/pages/annex/vip_active/index",
+    "/pages/annex/offline_pay/index",
+    "/pages/annex/offline_result/index",
+    "/pages/activity/goods_combination_status/index",
+    "/pages/users/distributor/apply",
+    "/pages/users/agent/apply",
+    "/pages/users/agent/state",
+    "/pages/users/agent/record",
+    "/pages/users/agent/staff_list",
+    "/pages/users/user_member_code/index"
+  ],
+  "gaps": [
+    {
+      "id": "FE-003B",
+      "legacyRoutes": [
+        "/pages/users/user_cancellation/index"
+      ]
+    },
+    {
+      "id": "FE-003C",
+      "legacyRoutes": []
+    },
+    {
+      "id": "FE-003D",
+      "legacyRoutes": []
+    },
+    {
+      "id": "FE-003E",
+      "legacyRoutes": [
+        "/pages/admin/order_cancellation/index"
+      ]
+    },
+    {
+      "id": "FE-003F",
+      "legacyRoutes": [
+        "/pages/users/alipay_invoke/index",
+        "/pages/annex/web_view/index",
+        "/pages/annex/record_list/index",
+        "/pages/goods/cashier/index",
+        "/pages/goods/match_pay/index"
+      ]
+    },
+    {
+      "id": "FE-003G",
+      "legacyRoutes": []
+    },
+    {
+      "id": "FE-003H",
+      "legacyRoutes": []
+    }
+  ],
+  "currentIncrement": {
+    "newRegisteredPages": [
+      "/pages/customer-work/ordinaryCashier"
+    ],
+    "legacyAliasChanges": 0,
+    "legacyDirectRegistrationChanges": 0,
+    "gapRoutesChanged": 0,
+    "legacyGoodsCashierMigrationComplete": false,
+    "genericAssistedOrderComplete": false,
+    "staticInventoryOnly": true
+  },
+  "inventoryCorrection": {
+    "reviewDate": "2026-10-13",
+    "directRegisteredLegacyRoutes": [
+      "/pages/users/user_member_code/index"
+    ],
+    "reason": "The existing member writeoff-code page is registered at its original legacy path; account for it directly instead of retaining its removed compatibility rule.",
+    "staticInventoryOnly": true,
+    "memberGovernanceOrProviderParityComplete": false
+  },
+  "limitations": [
+    "Registration does not prove functional, provider, device or production parity.",
+    "Existing generic assisted-order and AdminJWT legacy contracts remain open and their classifications are unchanged.",
+    "Prior source hashes and test executions retain their historical scope; current tests are separate.",
+    "The member writeoff-code inventory correction does not close membership governance, balance or points display, scan-payment, device or provider parity.",
+    "The newly registered ordinary cashier page does not implement or close the unmapped legacy /pages/goods/cashier/index route.",
+    "This artifact records current registration inventory only; actual runtime, type, database, browser and production evidence has separate source-bound scopes."
+  ],
+  "historicalManifestConservation": {
+    "ordinaryExactRecordRemoved": true,
+    "checkoutTargetRecords": 129,
+    "checkoutManifestSha256": "1502BB15E8B01329AE3F9450D9619EA9C7C71452BF15C1BC730D7B26890C3B75",
+    "memberAndThreeCashierExactRecordsRemoved": true,
+    "writeoffTargetRecords": 125,
+    "writeoffManifestSha256": "01679C81AFA061835E113A1DAA38E1174EBCC296766A0658441863E7B5873637"
+  }
+}
