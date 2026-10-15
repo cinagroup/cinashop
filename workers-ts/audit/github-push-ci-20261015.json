@@ -1,0 +1,713 @@
+{
+  "date": "2026-10-15",
+  "baselineCommit": "c8b885b0fa6763cedf273a968d2de0af29e9dd12",
+  "originalGithubRun": "https://github.com/cinagroup/cinashop/actions/runs/38686669304",
+  "scope": "Repair observed CI audit/test drift while preserving runtime, production schema and immutable historical audit evidence.",
+  "changes": [
+    "Advance the current exact outbox catalog gate from eleven to fourteen events after 0175/0177/0178.",
+    "Preserve nine/ten/eleven-event history; execute each product-event expansion, full non-target preservation, idempotence and narrower-upgrade refusal in CJS, ESM and native PostgreSQL audit paths.",
+    "Verify the independently source-pinned bare ERP realm (4 tables, 79 columns, 4 primary constraints, 4 indexes, no sequences) before explicitly projecting it from the fixed historical cohort; preserve every raw catalog category and default historical refusals.",
+    "Update the actual UniApp staff DTO/session fixture; preserve account-switch removal and late-write protections, additionally verify outgoing revision and replacement account state.",
+    "Allow only the reviewed exact non-secret audit metadata lines in exact files for generic-api-key; preserve every other detection rule and full-history scan."
+  ],
+  "secretReview": {
+    "findings": 1980,
+    "exactLineValues": 101,
+    "exactFiles": 46,
+    "allowlistGroups": 28,
+    "sourceDigestsVerifiedAgainstCorrespondingGitCommitBytes": 1851,
+    "remainingNonsecretMetadata": {
+      "frozenIntermediateSourceDigestsOrPhpSourceDigests": 33,
+      "syntheticDeliverySnapshotChecksums": 96
+    },
+    "deliveryEvidence": [
+      "workers-ts/audit/delivery-shared-read-key-01a1332d-20261013/delivery-context-candidate-sanitized-envelopes.json",
+      "workers-ts/src/services/store/DeliveryPrincipalScope.ts",
+      "workers-ts/src/services/store/DeliveryReadService.ts"
+    ],
+    "reviewMetadataSha256": "36722fff4ec15b82e247e9b50dbeefe6d2128e2d66599791cd8a94c861c4d001"
+  },
+  "browserVerification": {
+    "pluginConnection": "Chrome extension",
+    "profile": "CinaGroup",
+    "inAppBrowserVerifiedGithubLatestCommit": true
+  },
+  "completionCriteria": [
+    "Original local tests and full-history scan pass",
+    "Dedicated PostgreSQL catalog databases and roles cleaned; owned server stopped",
+    "Frozen inputs unchanged",
+    "Commit pushed and remote full SHA independently verified"
+  ],
+  "migrationChecklistCounts": {
+    "total": 404,
+    "done": 249,
+    "open": 155,
+    "unchanged": true
+  },
+  "localValidation": [
+    {
+      "name": "typecheck-unit",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:57:17.770854+00:00",
+      "completedAt": "2026-10-15T05:59:38.083034+00:00",
+      "exitCode": 0,
+      "serialWrapper": "outer audit-contracts run",
+      "log": "typecheck-unit.log"
+    },
+    {
+      "name": "audit-tests-final",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/check-state-alignment.test.ts",
+        "test/erp-bare-orm-catalog.test.ts",
+        "test/customer-cashier-abandon-catalog.test.ts",
+        "test/table-catalog-gate.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T05:59:38.083435+00:00",
+      "completedAt": "2026-10-15T06:03:10.177053+00:00",
+      "exitCode": 0,
+      "serialWrapper": "outer audit-contracts run",
+      "log": "audit-tests-final.log"
+    },
+    {
+      "name": "secrets",
+      "argv": [
+        "python3",
+        "/tmp/cinashop-push-ci-20261015/check-secrets.py"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop",
+      "startedAt": "2026-10-15T05:50:24.488127+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T05:50:40.293784+00:00",
+      "exitCode": 0,
+      "log": "secrets.log"
+    },
+    {
+      "name": "postgres-catalog-final",
+      "argv": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:orm"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T06:03:10.177408+00:00",
+      "completedAt": "2026-10-15T06:08:27.897498+00:00",
+      "exitCode": 0,
+      "serialWrapper": "outer audit-contracts run",
+      "log": "postgres-catalog-final.log"
+    }
+  ],
+  "uniValidation": {
+    "format": "cinashop-uni-validation-receipt-v1",
+    "source": "Observed exec_command/write_stdin terminal completion results and original test logs; no tests rerun to create this receipt.",
+    "nodeBinary": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "serialWrapper": "/home/cina/cinagroup/tools/validate-serial.sh",
+    "runs": [
+      {
+        "name": "agent-self-service-runtime",
+        "cwd": "/home/cina/cinagroup/cinashop/view/uniapp-ts",
+        "command": "bash /home/cina/cinagroup/tools/validate-serial.sh /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test --test-concurrency=1 scripts/agent-self-service-runtime.test.cjs > /tmp/cinashop-push-ci-20261015/uni-agent-runtime.log 2>&1",
+        "argv": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/agent-self-service-runtime.test.cjs"
+        ],
+        "exitCode": 0,
+        "counts": {
+          "tests": 11,
+          "pass": 11,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "terminalSessionId": 73732,
+        "terminalCompletionChunkId": "e3ea9a",
+        "durationMs": 2698.902019,
+        "log": "uni-agent-runtime.log",
+        "logPath": "/tmp/cinashop-push-ci-20261015/uni-agent-runtime.log",
+        "logSha256": "e393f595edf5b7bbb423a1f3c4f484941f2a30517ccaf9e3d52c537b3378cd34"
+      },
+      {
+        "name": "full-test-toolchain-single-concurrency",
+        "cwd": "/home/cina/cinagroup/cinashop/view/uniapp-ts",
+        "command": "bash /home/cina/cinagroup/tools/validate-serial.sh /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node -e 'const script = require(\"./package.json\").scripts[\"test:toolchain\"]; if (!script.startsWith(\"node --test \")) throw Error(\"Unexpected toolchain command\"); const files = script.split(\" \").slice(2); const result = require(\"node:child_process\").spawnSync(process.execPath, [\"--test\", \"--test-concurrency=1\", ...files], { stdio: \"inherit\" }); process.exit(result.status ?? 1);' > /tmp/cinashop-push-ci-20261015/uni-toolchain.log 2>&1",
+        "argv": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "-e",
+          "const script = require(\"./package.json\").scripts[\"test:toolchain\"]; if (!script.startsWith(\"node --test \")) throw Error(\"Unexpected toolchain command\"); const files = script.split(\" \").slice(2); const result = require(\"node:child_process\").spawnSync(process.execPath, [\"--test\", \"--test-concurrency=1\", ...files], { stdio: \"inherit\" }); process.exit(result.status ?? 1);"
+        ],
+        "exitCode": 0,
+        "counts": {
+          "tests": 1177,
+          "pass": 1177,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "terminalSessionId": 50615,
+        "terminalCompletionChunkId": "dc22df",
+        "durationMs": 264539.992952,
+        "log": "uni-toolchain.log",
+        "logPath": "/tmp/cinashop-push-ci-20261015/uni-toolchain.log",
+        "logSha256": "955e74e20cce5601719ec24195266ec4b3459c74d781d5f8ff142556d1a85264"
+      }
+    ]
+  },
+  "secretControls": {
+    "gitleaksVersion": "8.29.0",
+    "checksumVerified": true,
+    "historyExitCode": 0,
+    "controls": [
+      {
+        "case": "exact-reviewed-row",
+        "exitCode": 0,
+        "findingCount": 0,
+        "ruleIds": []
+      },
+      {
+        "case": "same-row-outside-reviewed-path",
+        "exitCode": 1,
+        "findingCount": 1,
+        "ruleIds": [
+          "generic-api-key"
+        ]
+      },
+      {
+        "case": "changed-digest-same-reviewed-path",
+        "exitCode": 1,
+        "findingCount": 1,
+        "ruleIds": [
+          "generic-api-key"
+        ]
+      },
+      {
+        "case": "unreviewed-credential-line-same-path",
+        "exitCode": 1,
+        "findingCount": 1,
+        "ruleIds": [
+          "generic-api-key"
+        ]
+      }
+    ]
+  },
+  "preservedFailure": {
+    "name": "postgres-catalog",
+    "exitCode": 1,
+    "reason": "The exact historic 285-table cohort correctly refused four separate bare ERP ORM tables; fixed with independently verified explicit realm projection, preserving the default refusal.",
+    "receipt": "/tmp/cinashop-push-ci-20261015/postgres-catalog-status.json",
+    "log": "/tmp/cinashop-push-ci-20261015/postgres-catalog.log"
+  },
+  "frozenInputs": {
+    "fileCount": 3686,
+    "sha256": "9fc4a458f4f8e54833f91080ddc53243fdfc7c624a8cdab8553644c7d76f5af4",
+    "changedAfterFinalValidation": []
+  },
+  "status": "local-validation-passed",
+  "nativeCatalog": {
+    "serverVersionNum": 160014,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 181
+      },
+      {
+        "path": "embedded",
+        "steps": 184
+      },
+      {
+        "path": "orm",
+        "steps": 1203
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1323
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1204
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1195
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1204
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1197
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1203
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "embedded": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm_upgrade": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm_default_upgrade": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm_constraints": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm_fk_names": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm_checks": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm_sequences": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      }
+    },
+    "rawCompleteCounts": {
+      "external": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "embedded": {
+        "tables": 286,
+        "columns": 3969,
+        "constraints": 706,
+        "indexes": 1103,
+        "sequences": 231
+      },
+      "orm": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      },
+      "orm_upgrade": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      },
+      "orm_default_upgrade": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      },
+      "orm_constraints": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      },
+      "orm_fk_names": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      },
+      "orm_checks": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      },
+      "orm_sequences": {
+        "tables": 292,
+        "columns": 4073,
+        "constraints": 718,
+        "indexes": 1113,
+        "sequences": 231
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "cleanupConfirmed": true,
+    "checkStateContracts": {
+      "mode": "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated fourteen-event list after standalone 0175/0177/0178; immutable 0144/0161/0168 history independently verified; no normalized waiver",
+      "keys": [
+        "division_apply.da_status_ck",
+        "store_order.so_division_brokerage_ck",
+        "store_order.so_supplier_allocation_status_ck",
+        "store_order_cart_info.soci_split_state_ck",
+        "store_order_outbox.soob_event_type_ck",
+        "store_product_reply.spr_scores_ck",
+        "user.user_division_percent_ck",
+        "user.user_division_status_ck",
+        "user.user_division_type_ck"
+      ]
+    },
+    "productEffectsOutboxVerification": {
+      "external": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "embedded": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_upgrade": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_default_upgrade": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_constraints": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_fk_names": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_checks": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      },
+      "orm_sequences": {
+        "initialRegistered": true,
+        "exactFourteenEvents": true,
+        "repeatPreserved": true
+      }
+    },
+    "erpRealms": {
+      "external": {
+        "profile": "absent",
+        "counts": {
+          "tables": 0,
+          "columns": 0,
+          "constraints": 0,
+          "indexes": 0,
+          "sequences": 0
+        }
+      },
+      "embedded": {
+        "profile": "absent",
+        "counts": {
+          "tables": 0,
+          "columns": 0,
+          "constraints": 0,
+          "indexes": 0,
+          "sequences": 0
+        }
+      },
+      "orm": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      },
+      "orm_upgrade": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      },
+      "orm_default_upgrade": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      },
+      "orm_constraints": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      },
+      "orm_fk_names": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      },
+      "orm_checks": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      },
+      "orm_sequences": {
+        "profile": "exact-bare-orm",
+        "counts": {
+          "tables": 4,
+          "columns": 79,
+          "constraints": 4,
+          "indexes": 4,
+          "sequences": 0
+        }
+      }
+    },
+    "productEffectsForward": [
+      {
+        "migration": "0175_product_stock_effects.sql",
+        "eventCount": 12,
+        "applied": true,
+        "generatedProposalStatements": 2,
+        "exactSingleCatalogChange": true,
+        "repeatPreserved": true,
+        "previousDowngradeRefused": true
+      },
+      {
+        "migration": "0177_product_recycle_effects.sql",
+        "eventCount": 13,
+        "applied": true,
+        "generatedProposalStatements": 2,
+        "exactSingleCatalogChange": true,
+        "repeatPreserved": true,
+        "previousDowngradeRefused": true
+      },
+      {
+        "migration": "0178_product_save_effects.sql",
+        "eventCount": 14,
+        "applied": true,
+        "generatedProposalStatements": 2,
+        "exactSingleCatalogChange": true,
+        "repeatPreserved": true,
+        "previousDowngradeRefused": true
+      }
+    ],
+    "clusterDirectory": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-D9qFcq",
+    "remainingFixtureDatabases": 0
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/uni-agent-runtime.log",
+      "sha256": "e393f595edf5b7bbb423a1f3c4f484941f2a30517ccaf9e3d52c537b3378cd34"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/uni-toolchain.log",
+      "sha256": "955e74e20cce5601719ec24195266ec4b3459c74d781d5f8ff142556d1a85264"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/check-state.log",
+      "sha256": "cc16cdf459c07932712b2a8097ac1d97c9a65ee5dc4db954db00b44b8e010632"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/typecheck-unit.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/audit-tests-final.log",
+      "sha256": "473ea3a26dfaa12e728b935e4c356405b287a12874f95c3b07ef112cdbabf722"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/postgres-catalog.log",
+      "sha256": "fe7ab938c184ed267af566300448363263dc71f7dcc1eecee38d6de77f575e7b"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/postgres-catalog-final.log",
+      "sha256": "528b6f65cb1700b4d03a62161d092b24d9589d2b36951c8463aee29a97aa71b5"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/gitleaks-history.log",
+      "sha256": "0681e42354c08a2b94698d75e232835bbff480e0facac78d27beb9e0a2e2e604"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/secret-controls.json",
+      "sha256": "ec0e8520c7cee5d8389011b2fc58d5b078e86ceffff3538b2e122bd22a0ef3ba"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/source-digest-review.json",
+      "sha256": "36722fff4ec15b82e247e9b50dbeefe6d2128e2d66599791cd8a94c861c4d001"
+    },
+    {
+      "path": "/tmp/cinashop-push-ci-20261015/input-hashes.json",
+      "sha256": "eaa3845303a5b1c7bdf40d8125afeb3b2ba351ed10bb7d798d0c9a7c5bbbb8fc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-D9qFcq/catalog-audit.log",
+      "sha256": "67b1e89af58b440a4a60c0bbdb1e6ab389f67786977de03efbbaef813045d417"
+    }
+  ],
+  "independentStopVerification": [
+    {
+      "cluster": "finance-postgres-WAhRQL",
+      "pgCtlExitCode": 3,
+      "message": "pg_ctl: no server running",
+      "postmasterPidAbsent": true
+    },
+    {
+      "cluster": "finance-postgres-D9qFcq",
+      "pgCtlExitCode": 3,
+      "message": "pg_ctl: no server running",
+      "postmasterPidAbsent": true
+    }
+  ]
+}

@@ -8,6 +8,7 @@ const { readCatalog } = tsx.require("../../scripts/data-migration/postgres-catal
 const { assertCheckStatesAligned } = tsx.require("../../scripts/data-migration/check-state-contracts.ts", __filename);
 const { PRESALE_OUTBOX_CHECK_KEY, LEGACY_OUTBOX_CHECK_SNAPSHOT, PRESALE_OUTBOX_CHECK_SNAPSHOT, withPresaleOutboxContract } = tsx.require("../../scripts/data-migration/presale-outbox-contract.ts", __filename);
 const { PINK_SUCCESS_OUTBOX_CHECK_SNAPSHOT, withPinkSuccessOutboxContract } = tsx.require("../../scripts/data-migration/pink-success-outbox-contract.ts", __filename);
+const { PRODUCT_EFFECTS_OUTBOX_CHECK_SNAPSHOT, PRODUCT_EFFECTS_OUTBOX_STAGES, withProductEffectsOutboxContract } = tsx.require("../../scripts/data-migration/product-effects-outbox-contract.ts", __filename);
 const { matchesDatabaseError } = require("./constraintNameAudit.cjs");
 const f = require("./checkStateFixtures.cjs"), q=f.quote, l=f.literal;
 const root=join(__dirname,"../..");
@@ -28,7 +29,7 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
   for(const e of entries) {
     const presale=e.key===PRESALE_OUTBOX_CHECK_KEY;
     if(presale)assert.deepEqual(e.snapshot,LEGACY_OUTBOX_CHECK_SNAPSHOT);
-    assert.deepEqual(JSON.parse(JSON.stringify(snapshot.tables["public."+e.catalog.table].checkConstraints[e.catalog.name])),presale?PINK_SUCCESS_OUTBOX_CHECK_SNAPSHOT:e.snapshot);
+    assert.deepEqual(JSON.parse(JSON.stringify(snapshot.tables["public."+e.catalog.table].checkConstraints[e.catalog.name])),presale?PRODUCT_EFFECTS_OUTBOX_CHECK_SNAPSHOT:e.snapshot);
     historicTarget.tables["public."+e.catalog.table].checkConstraints[e.catalog.name]=e.snapshot;
     old.tables["public."+e.catalog.table].checkConstraints[e.catalog.name]=e.previousSnapshot;
   }
@@ -317,7 +318,10 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
     }finally{await db.exec("ROLLBACK");}
     assert.deepEqual(await capture(),forward,"Historic bootstrap cannot downgrade the forward CHECK");
     const pinkManifest=withPinkSuccessOutboxContract(currentManifest);
-    const pinkProposal=await api.generateMigration(presaleTarget,api.generateDrizzleJson(models,presaleTarget.id));
+    const pinkTarget=structuredClone(presaleTarget);
+    pinkTarget.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=PINK_SUCCESS_OUTBOX_CHECK_SNAPSHOT;
+    pinkTarget.prevId=presaleTarget.id;
+    const pinkProposal=await api.generateMigration(presaleTarget,pinkTarget);
     assert.equal(pinkProposal.length,2);
     assert.ok(pinkProposal.every(statement=>statement.includes('"soob_event_type_ck"')));
     await db.exec('BEGIN');
@@ -335,6 +339,50 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
     try {await savepoint(()=>assert.rejects(db.exec(presaleSql),error=>error.code==='P0001'&&error.message.includes('CHECK drift')));}
     finally {await db.exec('ROLLBACK');}
     assert.deepEqual(await capture(),pink,'Historic ten-event upgrade cannot narrow the eleven-event contract');
+    const productEffectsForward=[];
+    let precedingTarget=pinkTarget,preceding= pink,precedingSql=pinkSql;
+    for(const stage of PRODUCT_EFFECTS_OUTBOX_STAGES) {
+      assert.equal(preceding.catalog.constraints.find(c=>c.key===PRESALE_OUTBOX_CHECK_KEY).definition,stage.previousDefinition);
+      const nextTarget=structuredClone(precedingTarget);
+      nextTarget.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck={name:'soob_event_type_ck',
+        value:'"store_order_outbox"."event_type" IN (\n'+stage.events.map(event=>`      '${event}'`).join(',\n')+'\n    )'};
+      nextTarget.prevId=precedingTarget.id;
+      const stageProposal=await api.generateMigration(precedingTarget,nextTarget);
+      assert.equal(stageProposal.length,2);
+      assert.ok(stageProposal.every(statement=>statement.includes('"soob_event_type_ck"')));
+      const stageSql=readFileSync(join(root,'migrations',stage.migration),'utf8');
+      await db.exec('BEGIN');
+      try {await db.exec(stageSql);await db.exec('COMMIT');}
+      catch(error){await db.exec('ROLLBACK');throw error;}
+      const installed=await capture(),expected=structuredClone(preceding);
+      expected.catalog.constraints.find(c=>c.key===PRESALE_OUTBOX_CHECK_KEY).definition=stage.definition;
+      const beforeCheck=expected.constraints.find(c=>c.metadata.conname==='soob_event_type_ck');
+      const afterCheck=installed.constraints.find(c=>c.metadata.conname==='soob_event_type_ck');
+      assert.notEqual(String(beforeCheck.oid),String(afterCheck.oid));
+      const metadata=c=>{const value={...c.metadata};delete value.oid;delete value.conbin;return value;};
+      assert.deepEqual(metadata(afterCheck),metadata(beforeCheck));
+      assert.equal(afterCheck.comment,beforeCheck.comment);
+      assert.equal(afterCheck.definition,stage.definition);
+      expected.constraints=expected.constraints.map(c=>c===beforeCheck?afterCheck:c).sort((a,b)=>Number(a.oid)-Number(b.oid));
+      for(const dependency of expected.dependencies) if(String(dependency.classid)===String(constraintClass)
+        &&String(dependency.objid)===String(beforeCheck.oid))dependency.objid=afterCheck.oid;
+      assert.deepEqual(normalized(installed.dependencies),normalized(expected.dependencies));
+      expected.dependencies=installed.dependencies;
+      assert.deepEqual(installed,expected,stage.migration+' changes only the exact CHECK and outgoing dependency identity');
+      await db.exec('BEGIN');
+      try {await db.exec(stageSql);await db.exec('COMMIT');}
+      catch(error){await db.exec('ROLLBACK');throw error;}
+      assert.deepEqual(await capture(),installed,stage.migration+' repeat preserves all identities and rows');
+      await db.exec('BEGIN');
+      try {await savepoint(()=>assert.rejects(db.exec(precedingSql),error=>error.code==='P0001'&&error.message.includes('CHECK drift')));}
+      finally {await db.exec('ROLLBACK');}
+      assert.deepEqual(await capture(),installed,stage.migration+' refuses the preceding narrower upgrade');
+      productEffectsForward.push({migration:stage.migration,eventCount:stage.events.length,applied:true,
+        generatedProposalStatements:stageProposal.length,exactSingleCatalogChange:true,repeatPreserved:true,previousDowngradeRefused:true});
+      precedingTarget=nextTarget;preceding=installed;precedingSql=stageSql;
+    }
+    assertCheckStatesAligned(preceding.catalog,withProductEffectsOutboxContract(pinkManifest));
+    assert.deepEqual(await api.generateMigration(precedingTarget,api.generateDrizzleJson(models,precedingTarget.id)),[]);
     assert.equal(rejectionCases.length,55);
     assert.equal(invalidInsertContracts,58);assert.equal(invalidUpdateContracts,58);
     assert.equal(validBoundaryContracts,70);assert.equal(nullColumns,32);assert.equal(committedOldRows,8);
@@ -344,6 +392,7 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
     return {initialStatements:initial.length,guardedStatements:2,generatedProposalStatements:proposal.length,
       presaleForward:{applied:true,generatedProposalStatements:forwardProposal.length,exactSingleCatalogChange:true,repeatPreserved:true,historicalDowngradeRefused:true},
       pinkSuccessForward:{applied:true,generatedProposalStatements:pinkProposal.length,exactSingleCatalogChange:true,repeatPreserved:true,presaleDowngradeRefused:true},
+      productEffectsForward,
       alignedKeys:entries.map(e=>e.key),rejectionCases,rawProposalReplacements,
       changedTargetConstraintOids:9,targetDependencyObjectIdsChanged:true,commentsPreserved:true,
       expressionComparison:{ignoredInternalFields:["location"],semanticDriftRefusals:7,

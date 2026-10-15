@@ -8,6 +8,7 @@ import { inspectCashierSecondCardAbandon, installCashierSecondCardAbandon } from
 import { inspectInvoiceManualRedNote, INVOICE_MANUAL_RED_NOTE_PINS } from '../../src/migrations/invoiceManualRedNoteCatalog';
 import { completeConstructionTableNames, ERP_ORM_TABLE_NAMES, MANUAL_RED_NOTE_ORM_TABLE_NAMES } from '../../test/helpers/completeConstructionInventory';
 import { catalogKinds, type Catalog } from './postgres-catalog-audit';
+import { ReviewedErpAuditContext } from './erp-bare-orm-catalog';
 
 export const CASHIER_ABANDON_EXTERNAL_FILE = '0174_customer_cashier_abandon.sql';
 export const CASHIER_ABANDON_TABLE = 'cashier_second_card_abandon_v1';
@@ -90,13 +91,16 @@ export function reviewedCashierAuditCatalogView(raw: Catalog, path: string, rows
 
 /** Explicit composition on an owned, empty audit fixture only. This does not
  * register the table in runAll or alter the frozen 285-table historical base. */
-export async function composeReviewedCashierAbandonCatalog(db: DbClient, path: string, root: string) {
+export async function composeReviewedCashierAbandonCatalog(db: DbClient, path: string, root: string, erpContext?: ReviewedErpAuditContext) {
   assertReviewedCashierAbandonSources(root);
+  if (erpContext !== undefined) assert.ok(erpContext instanceof ReviewedErpAuditContext, 'Expected a source-pinned live ERP audit context');
   const initial = await inspectCashierSecondCardAbandon(db);
   assert.ok(path === 'external' ? initial.complete : !initial.present, 'Unexpected abandonment registration on ' + path);
   const beforeNames = await db.execute(sql`SELECT relname AS name FROM pg_class
     WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE "C"`);
-  const basis = assertCashierAbandonHistoricalBasis(beforeNames.map(row => String(row.name)), path);
+  const rawBeforeNames = beforeNames.map(row => String(row.name));
+  const projectedBeforeNames = erpContext ? await erpContext.projectTableNames(rawBeforeNames, path) : rawBeforeNames;
+  const basis = assertCashierAbandonHistoricalBasis(projectedBeforeNames, path);
   const manualBefore = await inspectInvoiceManualRedNote(db);
   assertCashierAuditManualRedNoteCatalog(manualBefore.rows, path);
   const before = await db.execute(objectIdentities);
@@ -108,6 +112,9 @@ export async function composeReviewedCashierAbandonCatalog(db: DbClient, path: s
     WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p') ORDER BY relname COLLATE "C"`);
   assert.deepEqual(afterNames.map(row => row.name), path === 'external' ? beforeNames.map(row => row.name)
     : [...beforeNames.map(row => row.name), CASHIER_ABANDON_TABLE].sort(), 'Unexpected table composition difference');
+  if (erpContext) assert.deepEqual(await erpContext.projectTableNames(afterNames.map(row => String(row.name)), path),
+    path === 'external' ? projectedBeforeNames : [...projectedBeforeNames, CASHIER_ABANDON_TABLE].sort(),
+    'Verified non-ERP table composition changed');
   const [count] = await db.execute(sql`SELECT count(*)::integer AS count FROM public.cashier_second_card_abandon_v1`);
   assert.equal(count.count, 0, 'Abandonment audit fixture must remain empty');
   await assert.rejects(installCashierSecondCardAbandon(db), error => {

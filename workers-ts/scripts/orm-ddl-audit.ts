@@ -31,8 +31,8 @@ import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPrici
 import { inspectSeckillTimeReferenceLock } from '../src/migrations/seckillTimeReferenceLock';
 import { seckillTimeReferenceLockCatalogReady, SECKILL_TIME_REFERENCE_OWNER_SETTING } from '../src/migrations/seckillTimeReferenceLockCatalog';
 import { runSeckillTimeReferenceLockSchema } from '../src/migrations/runSeckillTimeReferenceLock';
-import { runPinkSuccessNotice } from '../src/migrations/runPinkSuccessNotice';
-import { PINK_SUCCESS_NOTICE_CHECK_DEFINITION } from '../src/migrations/pinkSuccessNotice';
+import { runProductSaveEffects } from '../src/migrations/runProductSaveEffects';
+import { PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION } from '../src/migrations/productSaveEffects';
 import { inspectCouponTemplateCatalog } from '../src/migrations/couponTemplateCatalog';
 import { runCouponTemplateCatalog } from '../src/migrations/runCouponTemplateCatalog';
 import { runSupplierRefundLookupIndexes } from '../src/migrations/runSupplierRefundLookupIndexes';
@@ -40,6 +40,7 @@ import { inspectPurchaseOriginEvidence, runPurchaseOriginEvidenceSchema, complet
 import { inspectPurchaseCancellationEvidence, runPurchaseCancellationEvidenceSchema, completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import { withPresaleOutboxContract } from './data-migration/presale-outbox-contract';
 import { withPinkSuccessOutboxContract } from './data-migration/pink-success-outbox-contract';
+import { withProductEffectsOutboxContract } from './data-migration/product-effects-outbox-contract';
 import { dropOwnedAuditDatabase } from './data-migration/drop-owned-audit-database';
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
@@ -52,6 +53,7 @@ import { assertAllConstraintsAligned, assertCheckStatesAligned } from "./data-mi
 import { assertAllSequencesAligned, assertKefuSequenceAligned } from "./data-migration/kefu-sequence-contracts";
 import { assertAllTablesAligned, TABLE_CATALOG_FIELDS } from "./data-migration/table-catalog-contracts";
 import { composeReviewedCashierAbandonCatalog, assertCashierAuditManualRedNoteCatalog, reviewedCashierAuditCatalogView } from './data-migration/cashier-abandon-catalog';
+import { ReviewedErpAuditContext, ERP_AUDIT_ORM_PATHS } from './data-migration/erp-bare-orm-catalog';
 import { inspectInvoiceManualRedNote } from '../src/migrations/invoiceManualRedNoteCatalog';
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
@@ -78,6 +80,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const rawCompleteCatalogs: Record<string, Catalog> = {};
   const manualRedNoteOrmCatalogs: Record<string, Catalog> = {};
   const manualRedNoteOrmVerification: Record<string, unknown> = {};
+  const erpBareOrmCatalogs: Record<string, Catalog> = {};
+  const erpBareOrmVerification: Record<string, unknown> = {};
   const paths: Array<{ path: string; steps: number }> = [];
   let upgradeVerification;
   let externalDuplicateIndexRetirement;
@@ -101,7 +105,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const customerWaybillActorVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
   const seckillTimeReferenceLockVerification: Record<string, unknown> = {};
-  const pinkSuccessOutboxVerification: Record<string, unknown> = {};
+  const productEffectsOutboxVerification: Record<string, unknown> = {};
   const couponTemplateCatalogVerification: Record<string, unknown> = {};
   const supplierRefundLookupVerification: Record<string, unknown> = {};
   const purchaseOriginVerification: Record<string, unknown> = {};
@@ -281,7 +285,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         customerCityDeliveryVerification[path] = { initial: path === 'embedded' ? 'absent' : 'exact-catalog', explicitInstallation: path === 'embedded', complete: true, existingObjectsPreserved: true, repeatRefused: true, noBackfill: true, rows: cityRowCounts };
         // Preserve the historical 285-table base. Only this fixed independently
         // commissioned protocol is composed into every complete audit path.
-        cashierAbandonmentVerification[path] = await composeReviewedCashierAbandonCatalog(shippingDb,path,root);
+        // Separately validate the entire source-pinned bare ERP realm before
+        // handing a live, explicitly verified non-ERP projection to that gate.
+        const erpContext = await ReviewedErpAuditContext.read(async query => Array.from(await client.unsafe(query)) as CatalogRow[], path, root);
+        cashierAbandonmentVerification[path] = await composeReviewedCashierAbandonCatalog(shippingDb,path,root,erpContext);
         // Compose the independently reviewed customer actor owner forward only
         // into exact empty legacy paths. Existing ORM targets must already be ready.
         const registeredWaybill = path === 'external' || path === 'embedded';
@@ -396,12 +403,12 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         const presaleIdentityQuery = `SELECT c.oid::text,to_jsonb(c) AS metadata,pg_get_constraintdef(c.oid) AS definition
           FROM pg_constraint c WHERE c.conrelid='public.store_order_outbox'::regclass AND c.conname='soob_event_type_ck'`;
         const presaleBefore = await client.unsafe(presaleIdentityQuery);
-        if (presaleBefore.length !== 1 || presaleBefore[0].definition !== PINK_SUCCESS_NOTICE_CHECK_DEFINITION)
-          throw new Error(`Pink success event registration differs on ${path}; no automatic repair`);
-        await runPinkSuccessNotice(shippingDb); await runPinkSuccessNotice(shippingDb);
+        if (presaleBefore.length !== 1 || presaleBefore[0].definition !== PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION)
+          throw new Error(`Product effects event registration differs on ${path}; no automatic repair`);
+        await runProductSaveEffects(shippingDb); await runProductSaveEffects(shippingDb);
         if (JSON.stringify(presaleBefore) !== JSON.stringify(await client.unsafe(presaleIdentityQuery)))
-          throw new Error(`Pink success event repeat changed identity on ${path}`);
-        pinkSuccessOutboxVerification[path] = { initialRegistered: true, exactElevenEvents: true, repeatPreserved: true };
+          throw new Error(`Product effects event repeat changed identity on ${path}`);
+        productEffectsOutboxVerification[path] = { initialRegistered: true, exactFourteenEvents: true, repeatPreserved: true };
         if (!(await inspectCouponTemplateCatalog(shippingDb)).ready)
           throw Error(`Coupon template catalog not registered on ${path}; no automatic repair`);
         const couponTemplateIdentities = () => client.unsafe(`SELECT c.oid::text,c.relfilenode::text,c.relname,c.relowner::text,c.relacl::text
@@ -609,11 +616,17 @@ if (!registeredOfflineGift) {
         const manualAfterRead = await inspectInvoiceManualRedNote(shippingDb);
         assertCashierAuditManualRedNoteCatalog(manualAfterRead.rows, path);
         assert.deepEqual(Array.from(manualAfterRead.rows), Array.from(manualBeforeRead.rows), 'Manual ORM catalog changed during the complete five-category read');
-        const reviewed = reviewedCashierAuditCatalogView(rawCatalog, path, manualAfterRead.rows);
+        const erpReviewed = erpContext.review(rawCatalog, path);
+        const reviewed = reviewedCashierAuditCatalogView(erpReviewed.nonErp, path, manualAfterRead.rows);
         // Keep every raw table/column/index/constraint/sequence in the output.
-        // Only a complete fixed bare pair is a separate ORM registration realm;
-        // the historical five-category gates below retain their exact contracts.
+        // Both independently verified bare realms are recorded separately;
+        // the historical five-category gates retain their exact contracts.
         rawCompleteCatalogs[path] = rawCatalog;
+        erpBareOrmCatalogs[path] = erpReviewed.erp;
+        erpBareOrmVerification[path] = { profile: path === 'external' || path === 'embedded' ? 'absent' : 'exact-bare-orm',
+          sources: erpReviewed.sources, allFiveCategories: erpReviewed.erp,
+          counts: Object.fromEntries(catalogKinds.map(kind => [kind, erpReviewed.erp[kind].length])),
+          liveCompositionReadsVerified: true, scope: 'Raw table/column/constraint/index/sequence metadata only; no maintenance installation or privilege/policy/trigger equivalence claim' };
         catalogs[path] = reviewed.historical;
         manualRedNoteOrmCatalogs[path] = reviewed.manual;
         manualRedNoteOrmVerification[path] = { profile: path === 'external' || path === 'embedded' ? 'absent' : 'exact-bare-orm',
@@ -626,6 +639,12 @@ if (!registeredOfflineGift) {
       if (path === 'external' || path === 'embedded') {
         for (const kind of catalogKinds) assert.deepEqual(manual[kind], [], 'Manual realm is not externally/embedded registered');
       } else assert.deepEqual(manual, manualRedNoteOrmCatalogs.orm, 'Complete manual ORM columns/indexes/constraints/sequences differ on ' + path);
+    }
+    assert.deepEqual(Object.keys(erpBareOrmCatalogs).sort(), ['external', 'embedded', ...ERP_AUDIT_ORM_PATHS].sort(), 'Incomplete ERP construction-path audit');
+    for (const [path, erp] of Object.entries(erpBareOrmCatalogs)) {
+      if (path === 'external' || path === 'embedded') {
+        for (const kind of catalogKinds) assert.deepEqual(erp[kind], [], 'ERP realm is not externally/embedded registered');
+      } else assert.deepEqual(erp, erpBareOrmCatalogs.orm, 'Complete bare ERP five-category realm differs on ' + path);
     }
     const externalVsEmbedded = compareCatalogs(catalogs.external, catalogs.embedded);
     const externalVsOrm = compareCatalogs(catalogs.external, catalogs.orm);
@@ -666,7 +685,7 @@ if (!registeredOfflineGift) {
     const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
     const missingConstraintManifest = JSON.parse(await readFile(resolve(root, "audit/orm-missing-constraint-reconciliation.json"), "utf8"));
     const foreignKeyNameManifest = JSON.parse(await readFile(resolve(root, "audit/orm-foreign-key-name-reconciliation.json"), "utf8"));
-    const checkStateManifest = withPinkSuccessOutboxContract(withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8"))));
+    const checkStateManifest = withProductEffectsOutboxContract(withPinkSuccessOutboxContract(withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8")))));
     const kefuSequenceManifest = JSON.parse(await readFile(resolve(root, "audit/orm-kefu-sequence-reconciliation.json"), "utf8"));
     // Original complete gates below still throw. Preserve each already-read raw
     // category difference for diagnosis before a generic gate loses the path.
@@ -732,9 +751,10 @@ if (!registeredOfflineGift) {
       rawCompleteCatalogs,
       rawCompleteCounts: Object.fromEntries(Object.entries(rawCompleteCatalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       manualRedNoteOrmVerification,
+      erpBareOrmVerification,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: `all nine paths: exact ${catalogs.external.tables.length} unique historical public tables and every raw metadata field; no historical omissions, additions or aliases waived. The exact two bare manual ORM tables are separately pinned and their complete five categories are equal on all seven ORM paths; raw complete catalogs remain in the output`, count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: `all nine paths: exact ${catalogs.external.tables.length} unique historical public tables and every raw metadata field; no historical omissions, additions or aliases waived. The exact two bare manual ORM tables and four source-pinned bare ERP ORM tables are separate independently verified realms; each complete five-category realm is equal on all seven ORM paths and absent externally/embedded; raw complete catalogs remain in the output`, count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -745,8 +765,8 @@ if (!registeredOfflineGift) {
       missingConstraintContracts: { mode: "all nine paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived", keys: missingConstraintManifest.entries.map((e: { key: string }) => e.key) },
       foreignKeyNameContracts: { mode: "all nine paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases", keys: foreignKeyNameManifest.entries.map((e: { key: string }) => e.key), oldKeys: foreignKeyNameManifest.entries.map((e: { previousKey: string }) => e.previousKey) },
       foreignKeyNameUpgradeVerification: { ...foreignKeyNameUpgradeVerification, freshCatalogMatched: true },
-      checkStateContracts: { mode: "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated eleven-event list after standalone 0168; immutable 0144 history independently verified; no normalized waiver", keys: checkStateManifest.entries.map((e: { key: string }) => e.key) },
-      pinkSuccessOutboxVerification,
+      checkStateContracts: { mode: "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated fourteen-event list after standalone 0175/0177/0178; immutable 0144/0161/0168 history independently verified; no normalized waiver", keys: checkStateManifest.entries.map((e: { key: string }) => e.key) },
+      productEffectsOutboxVerification,
       couponTemplateCatalogVerification,
       supplierRefundLookupVerification,
       purchaseOriginVerification,

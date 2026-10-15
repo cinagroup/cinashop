@@ -771,3 +771,608 @@ paths = [
 regexes = [
   '''^\s*it\('rejects User/Admin tokens, mismatched/revoked buckets and changed passwords instead of substituting staff identity',async\(\)=>run\(async\(\{peer,request,token\}\)=>\{\s*$''',
 ]
+
+# Reviewed 2026-10-15 CI findings: exact source digests and synthetic read-context
+# checksums in immutable audit evidence. No general hash/path exemption.
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 1)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "97f198e37e6c55bf928977617f569e61b42b11d3a52553bdd8ddaf1dc31310d5",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 2)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/recycle-20261015/browser-source-integration\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-integrated\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+  '''^workers-ts/audit/rule-20261014/admin-build-inputs-unchanged\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/final-candidate-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/frozen-final-2-before\.json$''',
+]
+regexes = [
+  '''^\s*"view/admin-ts/src/stores/auth\.ts": "78b9225c82de1dc3888abfa27cca2e348be325e1957d58e66e702c5a75e21866",\s*$''',
+  '''^\s*"view/admin-ts/src/utils/auth\.ts": "e2432f676cb76bcc6bd7e41c22f190ba799be7840b6c1303668332a61cf77b7b",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 3)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-integrated\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+  '''^workers-ts/audit/rule-20261014/admin-build-inputs-unchanged\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/final-candidate-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/frozen-final-2-before\.json$''',
+]
+regexes = [
+  '''^\s*"view/admin-ts/src/api/auth\.ts": "c9a14ee53225560e139075e227518f108de49f760918c1b6c07fca3c3e67bb68",\s*$''',
+  '''^\s*"view/admin-ts/src/api/externalApi\.ts": "6e610001c2f10473057e40f0d3ca16dd10f9717bcb33aadade605f002a90c2b3",\s*$''',
+  '''^\s*"view/admin-ts/src/components/CityDeliveryCredentialField\.vue": "16a4a10a10cf62ae0b0e770926916f6b0261ed5aa6b47baf984062f329ce2177",\s*$''',
+  '''^\s*"view/admin-ts/src/pages/system/ExternalApi\.vue": "512c97f46b0ef63c0ce4c4a545b19689dc66f40a652bac8a0206a016b386e3c8",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 4)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-integrated\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/final-candidate-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/frozen-final-2-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/migrations/0075_external_api\.sql": "581260334b177a218ea935c390af8ef900d33085cc0a1189811983f2b184cb1d",\s*$''',
+  '''^\s*"workers-ts/migrations/0083_out_api_audit\.sql": "cd4f7824747659f5a58527bd09f919301923a6dc8be211787362af24bbebcd7b",\s*$''',
+  '''^\s*"workers-ts/scripts/audit-runtime-table-access\.ts": "05f5108ed277490d222ce0e61387f864f6f61236cb46a221cb9f1e7ff89a350f",\s*$''',
+  '''^\s*"workers-ts/src/controllers/api/v1/AdminOutApiController\.ts": "8e4acfef36f15bb664f8385f2ac3977ed384c03889d9efd9b577bec444eee66a",\s*$''',
+  '''^\s*"workers-ts/src/controllers/api/v1/AppleAuthController\.ts": "84e528679d3f157af64b3ff68bade56a340c26d7bfff97b1877a594f98780106",\s*$''',
+  '''^\s*"workers-ts/src/controllers/api/v1/V2WechatAuthController\.ts": "9785138bb152333fce7e5134f372550a97c8ff5412dfc772af0b28c8f158f30a",\s*$''',
+  '''^\s*"workers-ts/src/controllers/out/OutApiController\.ts": "21bab85795333324ac30e7684409f0c64b09e7e183efbc245939480f1f639f45",\s*$''',
+  '''^\s*"workers-ts/src/do/TokenBucketDO\.ts": "04f857258e9237603b3a4c364960361a5dfbad68c353962bdb87c681e8291db8",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-auth\.ts": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",\s*$''',
+  '''^\s*"workers-ts/src/middleware/admin-runtime-auth\.ts": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",\s*$''',
+  '''^\s*"workers-ts/src/middleware/auth\.ts": "fe53f37a4e82268c66f96c9bf2b266ee18fc9d6bfc834d46b8380f133cfbd1c4",\s*$''',
+  '''^\s*"workers-ts/src/middleware/kefu-auth\.ts": "26df8bb7285d41f1f2e5b6e97a36dd6d822632fdfe838aaef8ddc0a512bb553e",\s*$''',
+  '''^\s*"workers-ts/src/middleware/manager-runtime-auth\.ts": "5f860095ceeff987a4bc74b62db2d2b1da3c52ac28b057e478973c27dfdd3ed6",\s*$''',
+  '''^\s*"workers-ts/src/middleware/operations-auth\.ts": "1546ffc4b23ec40bf5fcdf18e1c7ff04345cb472b00b16713806adf566bbd748",\s*$''',
+  '''^\s*"workers-ts/src/middleware/out-auth\.ts": "d40b5e5e2cc629e9834972a559c7d0e9ce5ab500f6bb0f7f5471d384ed3eb94a",\s*$''',
+  '''^\s*"workers-ts/src/middleware/supplier-auth\.ts": "7f420c47c11c135ba25e1621ce9c738e1ba8bfab7f23d6368ef2fdce8af36d48",\s*$''',
+  '''^\s*"workers-ts/src/middleware/visitor-auth\.ts": "5990e159f26424a059e2d3eda8e16a7c829717f56c79dfd91cb3ae624335192d",\s*$''',
+  '''^\s*"workers-ts/src/routes/erpapi\.ts": "7797205ff460cc6f25b43d4d4cef58a639474414a62f84348d202156d15a7c69",\s*$''',
+  '''^\s*"workers-ts/src/routes/kefuapi\.ts": "aa5d22d1efcb8d882981bad1232402b07a5181c5bc340e8330ee56ca1ec547dd",\s*$''',
+  '''^\s*"workers-ts/src/routes/outapi\.ts": "29423ec72749778c88374fb4c4165d1fb4b451678f9dd8d10fb1ec1e9b85d38f",\s*$''',
+  '''^\s*"workers-ts/src/routes/supplierapi\.ts": "f5020efc3a7ffce797d5f1833f9eed7e29313e14feba39c2c39604196b11a210",\s*$''',
+  '''^\s*"workers-ts/src/services/admin/AdminAuthService\.ts": "aea2c2f24625c7eee8395cdc7caf060d70b4383634955ef2021c12777c585b91",\s*$''',
+  '''^\s*"workers-ts/src/services/auth/AppleAuthService\.ts": "fc89dc144cc7ee57985e4599f73142d5f2554a334f032b3c2edd3ce717343f1c",\s*$''',
+  '''^\s*"workers-ts/src/services/auth/OauthBrowserCookie\.ts": "6c46a958eea6ee03d6e0d11461412b143590fe3d903f03f6dffba55d95c42225",\s*$''',
+  '''^\s*"workers-ts/src/services/auth/TrustedAuthClient\.ts": "ac7fe6d4ad66617396c3a1788809c30ae6257f3ba71f8306465a0feb9deb7e50",\s*$''',
+  '''^\s*"workers-ts/src/services/delivery/CityDeliverySecretCodec\.ts": "e462e883797db5a4fe741fdb0fad4d651dc9b0a13ec74a4988220a09d655ada2",\s*$''',
+  '''^\s*"workers-ts/src/services/erp/ErpSecretCodec\.ts": "71084a2f791a9199c5f07b22b2bdcc7f6fa6db59e503f625621ec94deed287f3",\s*$''',
+  '''^\s*"workers-ts/src/services/kefu/KefuAuthService\.ts": "508c74d81ad9e51d7d7c1f24df2a1327700cbe2b88574dd389e577c28d67b05e",\s*$''',
+  '''^\s*"workers-ts/src/services/out/OutApiService\.ts": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",\s*$''',
+  '''^\s*"workers-ts/src/services/wechat/WechatAuthService\.ts": "ea15420f84b57afc6aad88a68172c6420964ad32c0e6545ed22adeee7da6cfa0",\s*$''',
+  '''^\s*"workers-ts/src/services/wechat/WechatOpenWebAuthService\.ts": "10724bb3bf1c238aa334778c223a1a5ba0548a55ae584a8253c3d6236a17bed6",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-contract\.test\.ts": "8c6f91461fa77d46366999b6d6860f4c5618a705f4fa05591132562a686d2cf7",\s*$''',
+  '''^\s*"workers-ts/test/admin-runtime-auth\.test\.ts": "7fe602b67e825e7a3565d3bc34c57a7beebf049a521fd1ff3c583e22c59113d2",\s*$''',
+  '''^\s*"workers-ts/test/apple-social-auth\.test\.ts": "70cea05e724fefa8bba201fa747634235aa1e757d77f4489b9354d3bba5b16f2",\s*$''',
+  '''^\s*"workers-ts/test/assisted-provider-payment-key\.test\.ts": "b6b8cc23fb2e3e46523115599b4f4e7fc71608507ed4adbe425ea790ccd74bbb",\s*$''',
+  '''^\s*"workers-ts/test/helpers/orderDeliveryAddressAuth\.ts": "395ed54a673fcc38e564ad538401c8ed09b258de8498f124636cef17c750dd39",\s*$''',
+  '''^\s*"workers-ts/test/helpers/servePcAuthFixture\.ts": "80b4baaa87687080961ffd9ea0e3f4f87de820c6470339726117fd6753207648",\s*$''',
+  '''^\s*"workers-ts/test/integration/Api004AuthAuditWorker\.ts": "ec4537f1ad73f1a6dbc6e0913cfe3e86bcdb48f65eadf03245d14363cb3b0237",\s*$''',
+  '''^\s*"workers-ts/test/integration/AuthPhoneAuditWorker\.ts": "7a508d3d3194e6542d67ae548e4220bd781306622e3dc8328e3163f00f05af27",\s*$''',
+  '''^\s*"workers-ts/test/integration/OutApiCouponAuditWorker\.ts": "ce6163b3f5ddb0240b778cc7eb798acec4dc0380d8efab2629cbd055bd0b0257",\s*$''',
+  '''^\s*"workers-ts/test/integration/OutApiReadAuditWorker\.ts": "13fe20dfaf9f2428a224645b13e50fe41399b419ecf99bb8b53f2f4bdf548719",\s*$''',
+  '''^\s*"workers-ts/test/integration/OutApiUserAuditWorker\.ts": "a10f9ff7ec8e705786d0d1b4e0e2f6b6ad91735d0040676ffa550f723927074c",\s*$''',
+  '''^\s*"workers-ts/test/manager-runtime-auth\.test\.ts": "de812f6499877a760cf176509388a2919df83d99022b0da6c6a01d63a3b9741d",\s*$''',
+  '''^\s*"workers-ts/test/newcomer-cart-replay-key\.test\.ts": "fb53bff877b12dae37147e75797faa3b7b3f8862773f8449f397834dd8119232",\s*$''',
+  '''^\s*"workers-ts/test/out-api-migration\.test\.ts": "e39d244d30e1414b54f23aa512b9d0401678225efddec12fc00118ca3c96be64",\s*$''',
+  '''^\s*"workers-ts/test/pc-auth-navigation\.test\.ts": "cca704b62dc4d09fa18bcf5d0674e7cf8db37441e5bf5dac25bf82830e9eda0f",\s*$''',
+  '''^\s*"workers-ts/test/shipping-lifecycle-route-auth\.test\.ts": "cd62e04eb4aa6918c496e6a562ffbc855a000f3d2ec1291e3c046c7aa2b7ca4b",\s*$''',
+  '''^\s*"workers-ts/test/turnstile-auth-migration\.test\.ts": "fdb4880ac2213e627c41653d018fb725f81cb94d95fb5be3ee4304791baf345c",\s*$''',
+  '''^\s*"workers-ts/test/user-soft-delete-auth\.test\.ts": "ceba95422067f87c283b9567cc464269c6e5b99cb5b5767ac224844f95479e2b",\s*$''',
+  '''^\s*"workers-ts/test/v2-wechat-auth-migration\.test\.ts": "bf37be6b43f47ef3bfe4c215ab4e32cec0dd2c20c2cea6b298459842964f727c",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 5)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/final-candidate-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/frozen-final-2-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "d8cfefee5328fa00842a86a1d4f123cab7a90d21fbaf6ff6cf49a004bac2dbac",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "18c9b5a1e00f94040aaefc9abad997f2a15b16c0357b5824550346d7a16387cb",\s*$''',
+  '''^\s*"workers-ts/test/helpers/drizzleApiAudit\.cjs": "a6ea205bfffa121e1ae7293a16c289ab4006b6aad115275eb093e4c736e9acbe",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 6)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/final-candidate-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/frozen-final-2-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/services/notification/StaffNotificationAuthService\.ts": "86e2646f4598c032cdce0e412bb9d91dc821cda927a42126d50b6e9900d88da3",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 7)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/catalog-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-integrated\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+]
+regexes = [
+  '''^\s*"view/supplier-ts/src/stores/auth\.ts": "9069ab5c0288943382f239e82c28a7d1bdaa1b6b5da49ea30a802138126e3acb",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 8)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/delivery-shared-read-key-01a1332d-20261013/delivery-context-baseline-2-sanitized-envelopes\.json$''',
+  '''^workers-ts/audit/delivery-shared-read-key-01a1332d-20261013/delivery-context-candidate-sanitized-envelopes\.json$''',
+  '''^workers-ts/audit/legacy-share-scanner-current-01a1332d-20261013/delivery-context-baseline-2-sanitized-envelopes\.json$''',
+  '''^workers-ts/audit/legacy-share-scanner-current-01a1332d-20261013/delivery-context-candidate-sanitized-envelopes\.json$''',
+]
+regexes = [
+  '''^\s*"consistency_key": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",\s*$''',
+  '''^\s*"consistency_key": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",\s*$''',
+  '''^\s*"scope_key": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 9)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/delivery-shared-read-key-01a1332d-20261013/delivery-context-baseline-2-sanitized-envelopes\.json$''',
+  '''^workers-ts/audit/legacy-share-scanner-current-01a1332d-20261013/delivery-context-baseline-2-sanitized-envelopes\.json$''',
+]
+regexes = [
+  '''^\s*"consistency_key": "149a0a7bc5452d801432ba262f3856d3b30e761b3ccb30ad11ee491a0e108a0d",\s*$''',
+  '''^\s*"consistency_key": "642f61f4d9ae7c300885c62707aa33c9d64d5ad07a51544c4e37e4b3047df929",\s*$''',
+  '''^\s*"consistency_key": "ae0f8e2df2260cf2daee438daa1b974277dc6602f8c7071c7553fb34d7cb892b",\s*$''',
+  '''^\s*"consistency_key": "af195b54dd38d1c57fc311bd7e94850c83e7a55ec0b2db1717c04b943f1fb5d9",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 10)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/ensure-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/ensure-20261014/frozen-final-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "7eb25d31186a09c0034678d3b5bd4920480983e80dde356e8a60c92592357d90",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 11)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/ensure-20261014/static-delta\.json$''',
+]
+regexes = [
+  '''^\s*"beforeAdminapiSha256": "2a54a2b887a86c299fbca10973ccf4fb15f031cbcc6e9827bd7359da8b4061dc"\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 12)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/fictitious-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-coverage-acl-ui-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-type-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/fictitious-20261014/pre-unit-lock-bound-repair-frozen-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "02327093a8121c2e1fdd4b1ac325c342adc36a5e76c8d1a4f3172dfc8547205a",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 13)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/legacy-share-scanner-current-01a1332d-20261013/private-share-delivery-actual-dto-sfc-proof\.json$''',
+  '''^workers-ts/audit/legacy-share-scanner-current-01a1332d-20261013/private-share-scanner-complete-evidence-20261013\.json$''',
+]
+regexes = [
+  '''^\s*"actualContextKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",\s*$''',
+  '''^\s*"actualContextKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",\s*$''',
+  '''^\s*"actualReadKey": "149a0a7bc5452d801432ba262f3856d3b30e761b3ccb30ad11ee491a0e108a0d",\s*$''',
+  '''^\s*"actualReadKey": "5d626dc3f099fbf35fcf8b2fa8709ea5504f243d8d02d25979d04d6869ddc209",\s*$''',
+  '''^\s*"actualReadKey": "642f61f4d9ae7c300885c62707aa33c9d64d5ad07a51544c4e37e4b3047df929",\s*$''',
+  '''^\s*"actualReadKey": "ab4835c945fe402b162957b09d9d9c027bedb95889ed52d6af8d4268d29cc497",\s*$''',
+  '''^\s*"actualReadKey": "ae0f8e2df2260cf2daee438daa1b974277dc6602f8c7071c7553fb34d7cb892b",\s*$''',
+  '''^\s*"actualReadKey": "af195b54dd38d1c57fc311bd7e94850c83e7a55ec0b2db1717c04b943f1fb5d9",\s*$''',
+  '''^\s*"actualScopeKey": "49eb22f39c58e1dcbf75822325a2e125d0d7d790a2a4d8539e987439697543b7",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 14)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/php-ts-admin-product-generator-20261015\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "437e43e31ec86a63d7acb62a0661499b3dd62db57987a76f82c7c80b325917fe",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 15)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/php-ts-admin-product-read-20261015\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "d8882a1782a22c3b144a662ef8239b6d88a7c68671f44827e89bf69acaf43a1b",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 16)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/php-ts-admin-product-save-20261015\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "f9be89ad94dd632a948c5ba035840ba74aa6624c76301f92250ef90469ef2deb",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 17)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/php-ts-catalog-filters-migration-20261015\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "5692afb475d7da0837e4c6ba2c88c06702e98f5c7c36520ab7eab41b0af16daa",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 18)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/php-ts-rule-migration-20261014\.json$''',
+  '''^workers-ts/audit/rule-20261014/php-sources\.json$''',
+]
+regexes = [
+  '''^\s*"app/controller/admin/AuthController\.php": "31a7650cf8155ea6e43aa6d707407ae473708006eb95684e075cd124426e96da",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 19)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/recycle-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-integrated\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+]
+regexes = [
+  '''^\s*"view/common/checkoutApi\.ts": "06bbc6c60566ccad09f016d4c569e53c2299ac1f2e5602d4036387e22c7baba9",\s*$''',
+  '''^\s*"view/kefu-ts/src/stores/auth\.ts": "e633c9cecc2bbd8a2c398c82e889c191d76615defb43c583b024706afd94f695",\s*$''',
+  '''^\s*"workers-ts/src/services/notification/StaffNotificationAuthService\.ts": "420cd588e79bcc7b4f214776926cb6b11b38e1604f59c6ace4e679b6a09b5c97",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 20)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/recycle-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-integrated\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/scripts/admin-frontend-api-audit\.ts": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472",\s*$''',
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "b051f0238829d73e2c47ce0386e2df8899991c2b7419200bbd02b7b06ba52942",\s*$''',
+  '''^\s*"workers-ts/test/admin-frontend-api-audit\.test\.ts": "7e9f51fabb308dda9d28e465318214cb9ee625add85217f83142299ecb73243a",\s*$''',
+  '''^\s*"workers-ts/test/helpers/drizzleApiAudit\.cjs": "d98075a61cfa73d439324d9045738f00e3701babebdf0e503003768f2012c402",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 21)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/recycle-20261015/frozen-for-final-gates\.json$''',
+  '''^workers-ts/audit/recycle-20261015/frozen-for-validation\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "53b6ab9ffcf731826535893757333338eb436baac8da26b98b590407142b6fba",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 22)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/reply-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/reply-20261014/frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-epochzero-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-json-wire-repair-frozen-before\.json$''',
+  '''^workers-ts/audit/reply-20261014/pre-native-sequence-repair-frozen-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "8cb05551c3680ee937e24623ec9a3629da9df05dce0960fe22a961febb562cd5",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 23)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/review-20261015/frozen-after\.json$''',
+  '''^workers-ts/audit/review-20261015/frozen-candidate\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "5c070a6168a7246402ab9461e13fb5a5ae56c5b20db8f6cf9bdbaf8ad876cf78",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 24)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/rule-20261014/frozen-final-after\.json$''',
+  '''^workers-ts/audit/rule-20261014/frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-identity-repair-frozen-inputs\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-supplier-unicode-frozen-final-before\.json$''',
+  '''^workers-ts/audit/rule-20261014/pre-type-repair-frozen-final-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "e05491ba3fb0b152d8a9dc6493810ac530a5f13ab452003c16bf1f5e44d0960c",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 25)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/specs-20261014/frozen-after\.json$''',
+  '''^workers-ts/audit/specs-20261014/frozen-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "2a54a2b887a86c299fbca10973ccf4fb15f031cbcc6e9827bd7359da8b4061dc",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 26)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/specs-20261014/static-delta\.json$''',
+]
+regexes = [
+  '''^\s*"beforeAdminapiSha256": "c6b7473d26123652099d7b212f5c6e2c817c4ee618e147468d3ed7fa90146947"\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 27)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/stock-20261015/frozen-after\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "65fb505233dd6ae61e8a7c58eb6a99dd36b04a202d060445c11fa8b2b435188b",\s*$''',
+]
+
+[[allowlists]]
+description = "Exact reviewed non-secret audit digest entries (2026-10-15 group 28)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/unit-group-20261014/final-candidate-before\.json$''',
+  '''^workers-ts/audit/unit-group-20261014/frozen-final-2-before\.json$''',
+]
+regexes = [
+  '''^\s*"workers-ts/src/routes/adminapi\.ts": "c6b7473d26123652099d7b212f5c6e2c817c4ee618e147468d3ed7fa90146947",\s*$''',
+]

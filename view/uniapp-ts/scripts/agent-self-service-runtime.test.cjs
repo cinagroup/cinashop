@@ -220,37 +220,53 @@ test('staff removal prompt and percent write ignore changed login sessions', asy
   let modal;
   const write = deferred();
   const writes = [];
-  const row = uid => ({ uid, nickname: `User ${uid}`, phone: '13800138000', divisionPercent: 10, orderCount: 2,
-    spreadTime: 0, payCount: 0, numberCount: '0', avatar: '' });
+  const row = uid => ({ uid, nickname: `User ${uid}`, phone: '13800138000', divisionPercent: 10, division_percent: 10,
+    orderCount: 2, spreadTime: 0, spread_time: '1970/01/01', spread_uid: 0, childCount: 0,
+    payCount: 0, pay_count: 0, numberCount: '0', avatar: '', revision: uid.toString(16).padStart(64, '0') });
   const r = runtime({ component: 'pages/users/agent/staff_list.vue', modal: options => { modal = options; }, send: call => {
-    if (call.url.endsWith('/division/agent/staff_list')) return { data: { list: [row(r.auth.uid === 11 ? 33 : 44)], count: 1,
-      page: 1, limit: 20, brokerage: '0' } };
+    if (call.url.endsWith('/division/agent/staff_list')) return { data: { list: [row(r.auth.uid === 11 ? 33 : r.auth.uid === 22 ? 44 : 55)], count: 1,
+      page: 1, limit: 20, brokerage: '0', agent: { uid: r.auth.uid, divisionPercent: 40, divisionEndTime: 0 } } };
     if (call.url.endsWith('/division/agent/staff_percent')) { writes.push(call); return write.promise; }
     if (call.url.includes('/division/agent/staff/')) { writes.push(call); return { data: null }; }
     throw Error(`unexpected ${call.url}`);
   } });
   try {
     await r.start();
-    r.checkout.remove(r.checkout.staff.value[0]);
+    assert.equal(r.checkout.state.value.error, '');
+    assert.equal(r.checkout.state.value.result.agent.uid, 11);
+    r.checkout.remove(r.checkout.state.value.result.items[0]);
+    assert.ok(modal, 'the original owner must reach the removal confirmation');
     r.auth.setLogin('second-user-token', 22);
     await tick();
     modal.success({ confirm: true });
     await tick();
     assert.equal(writes.length, 0, 'old owner confirmation must not issue DELETE');
 
-    r.checkout.beginPercent(r.checkout.staff.value[0]);
+    assert.equal(r.checkout.state.value.result.agent.uid, 22);
+    r.checkout.beginPercent(r.checkout.state.value.result.items[0]);
     r.checkout.percent.value = '20';
     const saving = r.checkout.savePercent();
     await tick();
     assert.equal(writes.length, 1);
+    assert.deepEqual(writes[0].data, { uid: 44, division_percent: 20, revision: row(44).revision });
+    assert.equal(r.checkout.writing.value, true);
     r.auth.setLogin('third-user-token', 33);
     await tick();
+    assert.equal(r.checkout.state.value.result.agent.uid, 33);
+    const latestResult = r.checkout.state.value.result;
+    const reads = r.calls.filter(call => call.url.endsWith('/division/agent/staff_list')).length;
     write.resolve({ data: null });
     await saving;
     await tick();
+    assert.equal(writes.length, 1);
+    assert.equal(r.calls.filter(call => call.url.endsWith('/division/agent/staff_list')).length, reads,
+      'the old write response must not refresh the replacement account');
+    assert.equal(r.checkout.state.value.result, latestResult);
+    assert.equal(r.checkout.state.value.error, '');
     assert.equal(r.checkout.writeNotice.value, '');
     assert.equal(r.checkout.writing.value, false);
-    assert.equal(r.checkout.staff.value[0].uid, 44);
+    assert.equal(r.checkout.editing.value, null);
+    assert.equal(r.checkout.state.value.result.items[0].uid, 55);
   } finally { r.stop(); }
 });
 

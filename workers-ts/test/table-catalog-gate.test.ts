@@ -129,7 +129,14 @@ describe("DB-009F complete table catalog hard gate", () => {
 
   it("wires the hard gate to every collected catalog, retains the nine project paths, and keeps CLI failures nonzero", () => {
     const source = readFileSync(resolve(import.meta.dirname, "../scripts/orm-ddl-audit.ts"), "utf8");
-    expect(source).toContain('cashierAbandonmentVerification[path] = await composeReviewedCashierAbandonCatalog(shippingDb,path,root)');
+    expect(source).toContain('const erpContext = await ReviewedErpAuditContext.read(async query => Array.from(await client.unsafe(query)) as CatalogRow[], path, root)');
+    expect(source).toContain('cashierAbandonmentVerification[path] = await composeReviewedCashierAbandonCatalog(shippingDb,path,root,erpContext)');
+    expect(source).toContain('const erpReviewed = erpContext.review(rawCatalog, path)');
+    expect(source).toContain('reviewedCashierAuditCatalogView(erpReviewed.nonErp, path, manualAfterRead.rows)');
+    expect(source).toContain('rawCompleteCatalogs[path] = rawCatalog');
+    expect(source).toContain('erpBareOrmCatalogs[path] = erpReviewed.erp');
+    expect(source).toContain("['external', 'embedded', ...ERP_AUDIT_ORM_PATHS].sort()");
+    expect(source).toContain("assert.deepEqual(erp, erpBareOrmCatalogs.orm, 'Complete bare ERP five-category realm differs on ' + path)");
     const file = ts.createSourceFile("audit.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const loops: ts.ForOfStatement[] = [];
     const visit = (node: ts.Node) => { if (ts.isForOfStatement(node)) loops.push(node); ts.forEachChild(node, visit); }; visit(file);
