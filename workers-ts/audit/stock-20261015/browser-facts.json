@@ -1,0 +1,50 @@
+{
+  "status": "pass-limited-local-browser",
+  "plugin": "installed Browser/unified-computer-use via cua_repl, Codex IAB",
+  "url": "http://127.0.0.1:4978/product",
+  "viewports": [
+    [
+      1280,
+      850
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "actualAdminSfcAndElementPlus": true,
+  "transport": "explicit synthetic loopback HTTP/WebSocket fixture on 4977; Vite API proxy target explicitly overridden",
+  "flows": [
+    "Actual login and catalog render; ordinary stock entry exists, card shortcut absent",
+    "GET full ordinary rows including barcode/code and disabled retired row",
+    "Relative +3 save refreshes catalog stock 10 -> 13",
+    "Intentional committed-fixture HTTP500 retains uncertainty and blocks resubmit",
+    "Fresh GET and manual acknowledgement reset quantities; final numeric input accepts a new value",
+    "After ARIA fix: real input value=2,disabled=false,aria-disabled=false",
+    "390px dialog width374.3984375 with wrapped footer and horizontally scrollable adjustment columns"
+  ],
+  "pageIdentity": "商品管理 - CinaShop 管理后台",
+  "noBlankPage": true,
+  "noFrameworkOverlay": true,
+  "console": "No error/warn after corrected fixture final reload. Initial mock get_script JSON-as-JS and incomplete Dashboard fixture errors are preserved in /tmp console.json and are not app validation passes. Intentional HTTP500 and stopped/restarted mock proxy errors are expected test setup observations.",
+  "artifacts": {
+    "dialog-mobile-final.png": {
+      "path": "/tmp/cinashop-stock-qa/dialog-mobile-final.png",
+      "sha256": "c410aeaa54a4a2893ef5cc355e040ff1253a99416203a50e66453130a705491e"
+    },
+    "unknown-outcome.png": {
+      "path": "/tmp/cinashop-stock-qa/unknown-outcome.png",
+      "sha256": "f726b63567e9a080329406477eec1d0cfdea1d5ecf9594f310622ce0eb4bfb16"
+    },
+    "dialog-desktop.png": {
+      "path": "/tmp/cinashop-stock-qa/dialog-desktop.png",
+      "sha256": "185b9f88419271cb00a8fff663172626906ac1eab604bf86e2c5234a529c5a7d"
+    }
+  },
+  "artifactPortability": "Screenshots and mock script remain /tmp and are not included in Git; only this facts receipt is uploaded",
+  "limits": [
+    "No live Cloudflare, Redis, Queue, R2 or real credentials",
+    "Desktop recovery exercised; mobile validates final rendered layout and horizontal scrolling without separately repeating the whole recovery flow",
+    "Browser smoke is narrower than the actual SFC/Axios and native SQL regression matrices"
+  ]
+}

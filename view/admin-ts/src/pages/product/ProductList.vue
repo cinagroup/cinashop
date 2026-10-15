@@ -3,6 +3,7 @@
     <el-alert v-if="!canView" title="没有商品查看权限" type="warning" :closable="false" />
     <el-alert v-if="readError" :title="readError" type="error" :closable="false" />
     <el-alert v-if="headerError" :title="headerError" type="warning" :closable="false" />
+    <el-alert v-if="stockGuardError" :title="stockGuardError" type="warning" :closable="false" />
     <div v-if="canView" class="catalog-states">
       <el-button v-for="item in headers" :key="item.type" :type="query.type === item.type ? 'primary' : 'default'" @click="chooseType(item.type)">
         {{ item.name }} ({{ item.count }})
@@ -92,6 +93,7 @@
             <el-button v-if="canMutateState && row.product_type !== 1" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
               编辑
             </el-button>
+            <el-button v-if="canAdjustStock && row.product_type !== 1" link type="primary" @click="openStock(row)">库存管理</el-button>
             <el-button v-if="canMutateState" link :type="row.is_show === 1 ? 'warning' : 'success'" @click="toggleShow(row)">
               {{ row.is_show === 1 ? "下架" : "上架" }}
             </el-button>
@@ -111,6 +113,9 @@
         @current-change="fetch"
       />
     </el-card>
+
+    <ProductStockDialog v-model="stockVisible" :product-id="stockProduct?.id ?? 0" :product-name="stockProduct?.store_name ?? ''"
+      :spec-type="Number(stockProduct?.spec_type ?? 0)" :can-view="canView" :can-manage="canAdjustStock" :context-key="stockContext" @saved="stockSaved" />
 
     <el-dialog v-model="batchDialogVisible" title="批量操作商品" width="min(520px, 94vw)">
       <el-alert
@@ -219,6 +224,8 @@ import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { getToken, getAdminSession } from "@/utils/auth";
+import ProductStockDialog from './ProductStockDialog.vue';
+import { apiAdminStockErpEnabled } from '@/api/productStock';
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   apiAdminProductList,
@@ -257,7 +264,7 @@ const canMutateState = computed(() => canManage.value && [1, 2].includes(Number(
 function current(value: string, token: string, session: string | null): boolean {
   return alive && canView.value && identity.value === value && getToken() === token && auth.token === token && stored === session && localStorage.getItem("admin_session") === session;
 }
-function clearReads(): void { readTurn++; batchRun++; batchSubmitting.value = false; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
+function clearReads(): void { readTurn++; batchRun++; batchSubmitting.value = false; stockVisible.value = false; stockProduct.value = null; stockGeneration.value++; erpEnabled.value = null; stockGuardError.value = ''; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
 type MutationScope = { owner: string; token: string; session: string | null; turn: number; type: number | ""; ids: number[] };
 function mutationScope(ids: number[]): MutationScope { return { owner: identity.value, token: auth.token, session: stored, turn: readTurn, type: query.type, ids: [...ids] }; }
 function activeMutation(scope: MutationScope, selected = false): boolean {
@@ -278,6 +285,15 @@ function viewReplies(row: AdminProductCatalogItem): void {
 const selectedRows = ref<AdminProductCatalogItem[]>([]);
 const batchDialogVisible = ref(false);
 const batchSubmitting = ref(false);
+const stockVisible = ref(false), stockProduct = ref<AdminProductCatalogItem | null>(null), stockGeneration = ref(0);
+const erpEnabled = ref<boolean | null>(null), stockGuardError = ref('');
+const canAdjustStock = computed(() => canManage.value && erpEnabled.value === false);
+const stockContext = computed(() => `${identity.value}:${stored}:${query.type}:${stockGeneration.value}`);
+function openStock(row: AdminProductCatalogItem): void {
+  if (!canAdjustStock.value || row.product_type === 1 || !list.value.includes(row)) return;
+  stockGeneration.value++; stockProduct.value = row; stockVisible.value = true;
+}
+function stockSaved(): void { if (canView.value) void fetch(); }
 type BatchOperation =
   | "show"
   | "hide"
@@ -328,6 +344,8 @@ async function fetch(): Promise<void> {
   const turn = ++readTurn, owner = identity.value, token = auth.token, session = stored;
   const params = { page: query.page, limit: query.limit, store_name: query.store_name, type: query.type };
   loading.value = true; readError.value = headerError.value = ""; list.value = []; selectedRows.value = [];
+  stockVisible.value = false; stockProduct.value = null; stockGeneration.value++;
+  erpEnabled.value = null; stockGuardError.value = '';
   const active = () => current(owner, token, session) && turn === readTurn;
   // Keep the known count during a page switch; Element Plus otherwise clamps
   // page2 back to1. Only the source's count<=limit fallback changes the page.
@@ -341,7 +359,12 @@ async function fetch(): Promise<void> {
     try { const result = await apiAdminProductTypeHeader(params, controller.signal); if (active()) headers.value = result; }
     catch (error) { if (active()) { headers.value = []; headerError.value = error instanceof Error ? error.message : "商品状态计数读取失败"; } }
   })();
-  await Promise.all([rows, counts]); if (active()) { loading.value = false; abort = null; }
+  const inventory = (async () => {
+    if (!canManage.value) return;
+    try { const enabled = await apiAdminStockErpEnabled(controller.signal); if (active()) erpEnabled.value = enabled; }
+    catch (error) { if (active()) stockGuardError.value = `库存开关读取失败，暂不可调整：${error instanceof Error ? error.message : '请重试'}`; }
+  })();
+  await Promise.all([rows, counts, inventory]); if (active()) { loading.value = false; abort = null; }
 }
 function chooseType(type: number): void { if (!canView.value || batchSubmitting.value) return; void router.replace({ path: "/product", query: { ...route.query, type: String(type) }, hash: route.hash }); }
 function applyRoute(): void {
@@ -357,6 +380,12 @@ function syncSession(): void {
   query.page = 1; query.store_name = ""; applyRoute();
 }
 function syncStorage(event: StorageEvent): void { if (event.key === null || ["admin_token", "admin_session"].includes(event.key)) syncSession(); }
+function stockNotice(event: Event): void {
+  if (!canView.value || stockVisible.value) return;
+  const product = (event as CustomEvent<{ productId?: number }>).detail?.productId ?? 0;
+  if (product === 0 || list.value.some(row => row.id === product)) void fetch();
+}
+function stockNoticeDenied(): void { if (canView.value) void fetch(); }
 
 function handleSelectionChange(rows: AdminProductCatalogItem[]) {
   selectedRows.value = canMutateState.value ? rows.slice(0, 100) : [];
@@ -521,8 +550,8 @@ async function del(row: AdminProductCatalogItem) {
 
 watch(identity, () => { if (alive && !syncing) syncSession(); }, { flush: "sync" });
 watch(() => route.query.type, () => { if (alive) applyRoute(); });
-onMounted(() => { alive = true; window.addEventListener("admin-session-changed", syncSession); window.addEventListener("admin-auth-expired", syncSession); window.addEventListener("storage", syncStorage); syncSession(); });
-onBeforeUnmount(() => { alive = false; clearReads(); window.removeEventListener("admin-session-changed", syncSession); window.removeEventListener("admin-auth-expired", syncSession); window.removeEventListener("storage", syncStorage); });
+onMounted(() => { alive = true; window.addEventListener("admin-session-changed", syncSession); window.addEventListener("admin-auth-expired", syncSession); window.addEventListener("storage", syncStorage); window.addEventListener('cinashop:product-stock-changed', stockNotice); window.addEventListener('cinashop:product-stock-notice-denied', stockNoticeDenied); syncSession(); });
+onBeforeUnmount(() => { alive = false; clearReads(); window.removeEventListener("admin-session-changed", syncSession); window.removeEventListener("admin-auth-expired", syncSession); window.removeEventListener("storage", syncStorage); window.removeEventListener('cinashop:product-stock-changed', stockNotice); window.removeEventListener('cinashop:product-stock-notice-denied', stockNoticeDenied); });
 </script>
 
 <style scoped>

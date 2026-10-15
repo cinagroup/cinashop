@@ -26,9 +26,10 @@ export interface NoticeSocket {
 }
 export interface NoticeOptions {
   url(): string;
-  onRefresh(): void;
+  onRefresh(productId?: number): void;
   onState(state: NoticeState): void;
   onDenied(): void;
+  parseFrame?: (value: unknown) => { type: 'ready' | 'changed'; revision: number; productId?: number } | null;
   connect?: (url: string, protocols: string[]) => NoticeSocket;
   random?: () => number;
 }
@@ -97,7 +98,7 @@ export class StaffNoticeClient {
     socket.addEventListener("message", (event) => {
       if (this.socket !== socket) return;
       if (event.data === "pong" && ready) { clearTimeout(this.deadline); clearTimeout(this.heartbeat); this.ping(socket); return; }
-      const frame = parseNoticeFrame(event.data);
+      const frame: { type: 'ready' | 'changed'; revision: number; productId?: number } | null = (this.options.parseFrame ?? parseNoticeFrame)(event.data);
       if (!frame) { this.recover(); return; }
       if (frame.type === "ready") {
         if (ready) { this.recover(); return; }
@@ -105,7 +106,7 @@ export class StaffNoticeClient {
         clearTimeout(this.deadline); this.options.onState("open"); this.ping(socket);
         this.options.onRefresh(); // Always refresh on reconnect, including an unchanged/lower revision.
       } else if (!ready) this.recover();
-      else if (frame.revision > this.revision) { this.revision = frame.revision; this.options.onRefresh(); }
+      else if (frame.revision > this.revision) { this.revision = frame.revision; this.options.onRefresh(frame.productId); }
     });
     socket.addEventListener("close", (event) => {
       if (this.socket !== socket) return;

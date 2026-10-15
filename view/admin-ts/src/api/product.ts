@@ -246,6 +246,7 @@ export interface AdminProductCatalogItem extends Omit<AdminProduct, "stock"> {
   plate_name?: string;
   stock_attr?: boolean;
   branch_stock?: number;
+  spec_type?: number;
 }
 export interface AdminProductCatalogHeader { type: number; name: string; count: number; }
 export interface AdminProductCatalogQuery { page?: number; limit?: number; store_name?: string; type?: number | ""; }

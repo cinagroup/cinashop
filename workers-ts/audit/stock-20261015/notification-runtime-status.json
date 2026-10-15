@@ -1,0 +1,22 @@
+{
+  "name": "notification-runtime",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.worker.config.ts",
+    "--maxWorkers=1",
+    "test/runtime/staff-notification-runtime.test.ts",
+    "test/runtime/staff-notification-proxy-runtime.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/stock-20261015/notification-runtime.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:38:45.252014+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:39:09.144616+00:00",
+  "exitCode": 0,
+  "log": "notification-runtime.log"
+}

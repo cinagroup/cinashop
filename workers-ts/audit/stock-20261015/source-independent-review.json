@@ -1,0 +1,1465 @@
+{
+  "schemaVersion": 1,
+  "scope": "Independent read-only source review of genuine Admin relative stock adjustment, durable effects and modern stock UI",
+  "createdAt": "2026-10-15T00:17:55.491277+00:00",
+  "status": "independent-source-review-complete-four-findings-resolved-native-upgrade-and-races-passed-final-release-gates-pending",
+  "mutationPolicy": {
+    "productionEdited": false,
+    "testsEdited": true,
+    "databaseAccessed": false,
+    "networkAccessed": false,
+    "heavyValidationRun": false,
+    "onlyWrittenArtifact": null,
+    "priorSevenMigrationReceiptsEdited": false,
+    "testAuthorization": "Root explicitly requested only new admin-product-stock-concurrency.test.ts after initial read-only review.",
+    "writtenPaths": [
+      "workers-ts/audit/stock-20261015/source-independent-review.json",
+      "workers-ts/test/admin-product-stock-concurrency.test.ts",
+      "workers-ts/docs/php-ts-admin-stock-migration-20261015.md"
+    ],
+    "documentAuthorization": "Root explicitly requested this one new migration document after successful native rerun; no old migration receipt or global checklist edited."
+  },
+  "proofLimits": [
+    "PHP interpreter and encoded BaseController were not executed.",
+    "No test execution, browser execution, production database, Redis, Queue, Durable Object or provider commissioning performed by this reviewer.",
+    "Source consistency observations are not a runtime pass or a final delivery approval."
+  ],
+  "stages": [
+    {
+      "name": "initial-source-review",
+      "observedAt": "2026-10-15T00:17:55.491277+00:00",
+      "gitHead": "657d2d07c110b959208976118d834a507b157829",
+      "inputs": [
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductStockService.ts",
+          "bytes": 19343,
+          "sha256": "0b8eb71f588e262837b44e7598681264ee606ed6ba6380f74f74c42616eddfd3"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminProductStockController.ts",
+          "bytes": 1747,
+          "sha256": "74387594d093834eacfa0a67cfc1f5b130a562c9dd491a8828743980e7939441"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductStockEffects.ts",
+          "bytes": 7895,
+          "sha256": "d7c160d0628c9e3b679f057e5986b287efb3193c71855622be27fa31778004d4"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationProtocol.ts",
+          "bytes": 2863,
+          "sha256": "83543026c666b22504d546355ef7b7f2d6dc7603d2f1746f5eb58737ee3a59f0"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationAuthService.ts",
+          "bytes": 3258,
+          "sha256": "1dbb94b6a48d01c28d19273e5fdfffdf3d95bd81dd2de2f1e2f591542ddd440f"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationGateway.ts",
+          "bytes": 2005,
+          "sha256": "e4e688401f72051aeb35f35d5c5b70cd5094ec013d518f5bb1819e41445fdba1"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/do/StaffNotificationDO.ts",
+          "bytes": 5681,
+          "sha256": "674777262648569431e10b312116591a0af6ed1651cbb10e848aef5406d3b5fd"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderOutboxService.ts",
+          "bytes": 33815,
+          "sha256": "2a027dfb3b19dd139c405186afa0ca132558b04369938aa3220e9fdedaaeaeca"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/order_outbox.ts",
+          "bytes": 4885,
+          "sha256": "24956c9d1e21dbdc3105915f94cc13a218f1a3e58b05845e38b6373c01f105f4"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/adminapi.ts",
+          "bytes": 104722,
+          "sha256": "65fb505233dd6ae61e8a7c58eb6a99dd36b04a202d060445c11fa8b2b435188b"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+          "bytes": 105653,
+          "sha256": "88c4a83778539be4d6c66fa85dfc2f8ba379e8296a3d16d4e554d107bad96ef8"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/MigrationService.ts",
+          "bytes": 375049,
+          "sha256": "132d442dd171306aba21a23c34bcd6acc6eeab6bf012d5d1238486b9a6462ec8"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/productStockEffects.ts",
+          "bytes": 5026,
+          "sha256": "d7e0fe72d2378a47abec20951ab2853ba3b5cbb30d96cf3e6a3ece56494cfbdf"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/runProductStockEffects.ts",
+          "bytes": 494,
+          "sha256": "30b9a3cb366958f5278195c28afa1051cff956fb1948bf589ac523d9620eff65"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/migrations/0175_product_stock_effects.sql",
+          "bytes": 4437,
+          "sha256": "31e2ec53cd275c77d8add059b89bd71c5d84871c3ce167ff48edc2abb56f35fc"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/productStock.ts",
+          "bytes": 5259,
+          "sha256": "54442d733ecda11429f6cd21fbbf9f1ca1e8e5d2aafbdd12e41091908d870252"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10117,
+          "sha256": "a3cf4ac794c0d12dcb9cb4d372fa597148904f0501c6e247610c73f7cea17cd1"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductList.vue",
+          "bytes": 29261,
+          "sha256": "fb7ff4830dc576213e211b424671989cafb137b4f0bd9f3c69aed4c758b99b5e"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/layouts/AdminStockNotice.vue",
+          "bytes": 3485,
+          "sha256": "ebb16c67fc6f6bb6250707442669e3fca38d7e132e63acc45361ba06f6eae11a"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/layouts/AdminLayout.vue",
+          "bytes": 31687,
+          "sha256": "f394543da5c57c75fda152095553da59d8e93dc892fdd145a6d546fc918efd36"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/common/product-stock-notifications.ts",
+          "bytes": 1257,
+          "sha256": "a36918145173253b324fc80907f3667ab705938adbf85d0004aaa7613310be03"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/common/staff-notifications.ts",
+          "bytes": 7092,
+          "sha256": "776d7fe287832c7db41afccb3451a14a2d6ad3065b9c1f2e655abc9889037b1b"
+        },
+        {
+          "kind": "new-or-modified-production",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/product.ts",
+          "bytes": 18799,
+          "sha256": "2d1e7f1eed5c29473347ee849de1e74fccca598a0ac75b32849c882fbb43fee8"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+          "bytes": 25434,
+          "sha256": "290335b5ee34c8fc521bb12506c042078c20bdf68d39d5e14a51c32c44a63f74"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminLegacyRoleDeletionProof.ts",
+          "bytes": 7061,
+          "sha256": "19b291e7b961bf620ad0b9c57b468d1e5d71ad241554f6cc6ab71eb5a8a30fb2"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/erp/ErpConnectionPolicy.ts",
+          "bytes": 10017,
+          "sha256": "6ac4890639e16a6800e6a6cc35754e786b6e9e7b6dc7d3508da5e046cf33f8a6"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+          "bytes": 23992,
+          "sha256": "7e7316c0c03b4f0e74b1651db7159062151ff219a940cdc557fa1429493741d7"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/ErpCapabilityService.ts",
+          "bytes": 908,
+          "sha256": "3982e058c8de3a7f163c26b66bf5ad1ab2412b992146e33d912296bda8b853a4"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/SystemConfigService.ts",
+          "bytes": 3242,
+          "sha256": "f2171014a7d225c36a5cf8713d0e9256538d80403a12a2c14a5d0ec4346c8a37"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/dao/system/SystemConfigDao.ts",
+          "bytes": 3581,
+          "sha256": "daf281f2f2eedc57a852424e3eb979aaad6ed108c61511391447af4d0b8066f2"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+          "bytes": 108386,
+          "sha256": "88881e405963ddabdf8e9e046d8bd01f78aa107e424b6aaa720fa15864b43dde"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+          "bytes": 170020,
+          "sha256": "ab0661c9e788d32c512736f3c5e69e619a375d0199fe60c90d8a1683579be052"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/ProductAssetPolicy.ts",
+          "bytes": 4581,
+          "sha256": "f1993cede04603a9926160bbe54edcc48ed8f5ed8b784a060685fc828ff04a57"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/utils/cache.ts",
+          "bytes": 4807,
+          "sha256": "34a4b7537c87a8a8c77269bb9fda682e44b86feda83310c8c232e5182b4a576a"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/utils/auth.ts",
+          "bytes": 1738,
+          "sha256": "e2432f676cb76bcc6bd7e41c22f190ba799be7840b6c1303668332a61cf77b7b"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/utils/request.ts",
+          "bytes": 2321,
+          "sha256": "adccd3953f4034a1118f1e2e46b537714ab8b4b536ed20ebe76974ef4033424d"
+        },
+        {
+          "kind": "existing-target-context",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/layouts/AdminTodoBell.vue",
+          "bytes": 7252,
+          "sha256": "1da68de2dd1f73a39e4bff4b365ad2c667db65345e601a122593d4b406ec8c91"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+          "bytes": 183912,
+          "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+          "bytes": 27131,
+          "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+          "bytes": 22891,
+          "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductAttrValueDao.php",
+          "bytes": 8354,
+          "sha256": "a6c3f481a168544605185059287e9e86c541a31b296a82d18421725dc05e3b8e"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+          "bytes": 3751,
+          "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductStockTips.php",
+          "bytes": 2151,
+          "sha256": "02d2147f00fbd75801191642b8df150aa866bfeb626a958b636bcb026f0dcbcc"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrServices.php",
+          "bytes": 21089,
+          "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+          "bytes": 136399,
+          "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/PublicController.php",
+          "bytes": 2882,
+          "sha256": "1b7d16f35aa55dc544214b5e91c132d5150fec4f0bdb166b035ab7cd1ed41194"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/stockEdit.vue",
+          "bytes": 7870,
+          "sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+          "bytes": 62288,
+          "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+          "bytes": 16957,
+          "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42"
+        },
+        {
+          "kind": "php-readable-source",
+          "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+          "bytes": 7322393,
+          "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+        }
+      ],
+      "findingIds": [
+        "stock-source-001",
+        "stock-source-002"
+      ]
+    },
+    {
+      "name": "active-config-route-correction",
+      "observedAt": "2026-10-15T00:18:34.817115+00:00",
+      "inputs": [
+        {
+          "kind": "actual-active-config-writer",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/system/AdminConfigBatchService.ts",
+          "bytes": 6917,
+          "sha256": "51bf463e3a1ee8394a8b4187e5e098d7a9e3ef62f6ccd46bcda29bf1f6a89a4a"
+        },
+        {
+          "kind": "actual-active-config-writer",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/v1/index.ts",
+          "bytes": 170020,
+          "sha256": "ab0661c9e788d32c512736f3c5e69e619a375d0199fe60c90d8a1683579be052"
+        },
+        {
+          "kind": "actual-active-config-writer",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+          "bytes": 108386,
+          "sha256": "88881e405963ddabdf8e9e046d8bd01f78aa107e424b6aaa720fa15864b43dde"
+        }
+      ],
+      "findingIds": [
+        "stock-source-002"
+      ],
+      "result": "Confirmed active generic config writer; replaced unregistered legacy SMS handler evidence. No runtime validation performed."
+    },
+    {
+      "name": "scoped-admin-level-consistency",
+      "observedAt": "2026-10-15T00:19:08.087141+00:00",
+      "findingIds": [
+        "stock-source-003"
+      ],
+      "inputs": [],
+      "result": "Stock branch is stricter for role history but misses the main domain 0..9 Admin-level bound. No runtime validation performed."
+    },
+    {
+      "name": "initial-root-test-evidence-and-authorized-concurrency-tests",
+      "observedAt": "2026-10-15T00:21:18.929390+00:00",
+      "findingIds": [
+        "stock-source-001",
+        "stock-source-002",
+        "stock-source-003",
+        "stock-source-004"
+      ],
+      "inputs": [
+        {
+          "kind": "new-reviewer-test-not-executed",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 9742,
+          "sha256": "ae4175fbbd2dd361f696c7db1a9bfe2cb54e4899dcc29083b63c0a2b1d66e469"
+        }
+      ],
+      "rootReport": {
+        "path": "workers-ts/audit/stock-20261015/initial-ordinary.json",
+        "passed": 12,
+        "failed": 13,
+        "conditional": 0,
+        "backendTestContractErrors": [
+          "JSONB payload object key ordering compared without sorting",
+          "resolveRulePermissionKeys string[] incorrectly used with .has"
+        ],
+        "frontendFailures": 11
+      },
+      "result": "Added one actual-SQL scoped auth definition and two conditional PG16 definitions exercising the real AdminConfigBatchService against stock table locks. No heavy command run by reviewer."
+    },
+    {
+      "name": "first-production-repair-source-review",
+      "observedAt": "2026-10-15T00:22:11.646211+00:00",
+      "inputs": [
+        {
+          "kind": "repair-or-new-regression-input",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductStockService.ts",
+          "bytes": 19575,
+          "sha256": "02b514c19c855bf360cb9c3f508d52ffa96ae7aafe45334523de9e94361458ec"
+        },
+        {
+          "kind": "repair-or-new-regression-input",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationAuthService.ts",
+          "bytes": 3426,
+          "sha256": "420cd588e79bcc7b4f214776926cb6b11b38e1604f59c6ace4e679b6a09b5c97"
+        },
+        {
+          "kind": "repair-or-new-regression-input",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/productStock.ts",
+          "bytes": 7218,
+          "sha256": "d2380e4104c2077dce4e7ad5de058a5c8d2a47800cafae2aeb52d5d9cee5f6ca"
+        },
+        {
+          "kind": "repair-or-new-regression-input",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10290,
+          "sha256": "fa1744ab47adee65e201b923c07976bd2de3a31c0de2eab4032430fc11e1834f"
+        },
+        {
+          "kind": "repair-or-new-regression-input",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 9757,
+          "sha256": "2e3f2090ce16f93ca6c599f4fe07a8c2709af8d99bfd98dcca1d974df41650a3"
+        }
+      ],
+      "findingIds": [
+        "stock-source-001",
+        "stock-source-002",
+        "stock-source-003",
+        "stock-source-004"
+      ],
+      "runtimeStatus": "Root owns the running validation; this reviewer did not execute tests."
+    },
+    {
+      "name": "final-source-repair-review",
+      "observedAt": "2026-10-15T00:24:02.307216+00:00",
+      "inputs": [
+        {
+          "kind": "final-source-repair-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminProductStockService.ts",
+          "bytes": 19575,
+          "sha256": "02b514c19c855bf360cb9c3f508d52ffa96ae7aafe45334523de9e94361458ec"
+        },
+        {
+          "kind": "final-source-repair-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationAuthService.ts",
+          "bytes": 3426,
+          "sha256": "420cd588e79bcc7b4f214776926cb6b11b38e1604f59c6ace4e679b6a09b5c97"
+        },
+        {
+          "kind": "final-source-repair-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/productStock.ts",
+          "bytes": 7797,
+          "sha256": "294b86bec703aebc30c59a8df1f52bfa56c7d1193749f72fbb2424856df296be"
+        },
+        {
+          "kind": "final-source-repair-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10428,
+          "sha256": "053b5c9e1d196d60dbd78ce1379e0d60a6fb7c59ed5f4a8fa13feeca2032e238"
+        },
+        {
+          "kind": "final-source-repair-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 9940,
+          "sha256": "b00e04edfa1fe024dd31e53cbb12444241cfb666b6dd34d757e9e9a91bbfc30d"
+        }
+      ],
+      "findingIds": [
+        "stock-source-001",
+        "stock-source-002",
+        "stock-source-003",
+        "stock-source-004"
+      ],
+      "result": "All four reported source defects have direct source repairs. Added regression definitions have not been executed by this reviewer. This is not an immutable delivery freeze or runtime pass."
+    },
+    {
+      "name": "scoped-web-lock-followup-and-native-upgrade-login-tests",
+      "observedAt": "2026-10-15T00:26:11.991294+00:00",
+      "inputs": [
+        {
+          "kind": "followup-current-production-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/api/productStock.ts",
+          "bytes": 8349,
+          "sha256": "a676e476f8e95baf9c56440bbfc1cb081ca87ce86e7c889f34c9a6ddef297cee"
+        },
+        {
+          "kind": "followup-current-production-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10428,
+          "sha256": "053b5c9e1d196d60dbd78ce1379e0d60a6fb7c59ed5f4a8fa13feeca2032e238"
+        },
+        {
+          "kind": "followup-current-production-or-authored-regression",
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 16342,
+          "sha256": "1c98b55f1f71eb0c930cb1dcba97b7cb3dc8813fbca62113e574784af5cacbc5"
+        }
+      ],
+      "findingIds": [
+        "stock-source-001"
+      ],
+      "authoredTestDefinitions": {
+        "total": 5,
+        "ordinarySqlAuthority": 1,
+        "conditionalNative": 4,
+        "nativeScopes": [
+          "actual AdminConfigBatchService blocked by held stock table barrier",
+          "stock NOWAIT refusal while actual generic config writer holds table fence",
+          "0175 exact previous CHECK forward upgrade/replay/comment+business immutability/drift refusal",
+          "actual owned PG16 SELECT-only LOGIN full GET with DML and sequence permission refusal"
+        ]
+      },
+      "result": "All reported source findings remain repaired. New regression definitions await root serial execution. No production/provider/PHP runtime proof."
+    },
+    {
+      "name": "unit-type-log-and-pending-git-publication-scope-review",
+      "observedAt": "2026-10-15T00:28:04.515366+00:00",
+      "inputs": [
+        {
+          "path": "view/admin-ts/src/api/product.ts",
+          "bytes": 18799,
+          "sha256": "2d1e7f1eed5c29473347ee849de1e74fccca598a0ac75b32849c882fbb43fee8"
+        },
+        {
+          "path": "view/admin-ts/src/api/productStock.ts",
+          "bytes": 8349,
+          "sha256": "a676e476f8e95baf9c56440bbfc1cb081ca87ce86e7c889f34c9a6ddef297cee"
+        },
+        {
+          "path": "view/admin-ts/src/layouts/AdminLayout.vue",
+          "bytes": 31687,
+          "sha256": "f394543da5c57c75fda152095553da59d8e93dc892fdd145a6d546fc918efd36"
+        },
+        {
+          "path": "view/admin-ts/src/layouts/AdminStockNotice.vue",
+          "bytes": 3485,
+          "sha256": "ebb16c67fc6f6bb6250707442669e3fca38d7e132e63acc45361ba06f6eae11a"
+        },
+        {
+          "path": "view/admin-ts/src/pages/product/ProductList.vue",
+          "bytes": 29261,
+          "sha256": "fb7ff4830dc576213e211b424671989cafb137b4f0bd9f3c69aed4c758b99b5e"
+        },
+        {
+          "path": "view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10428,
+          "sha256": "053b5c9e1d196d60dbd78ce1379e0d60a6fb7c59ed5f4a8fa13feeca2032e238"
+        },
+        {
+          "path": "view/common/product-stock-notifications.ts",
+          "bytes": 1257,
+          "sha256": "a36918145173253b324fc80907f3667ab705938adbf85d0004aaa7613310be03"
+        },
+        {
+          "path": "view/common/staff-notifications.ts",
+          "bytes": 7092,
+          "sha256": "776d7fe287832c7db41afccb3451a14a2d6ad3065b9c1f2e655abc9889037b1b"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/baseline-from-catalog.json",
+          "bytes": 1087,
+          "sha256": "ec70fb45bd5a28b846b460550d9d28c22324f1a556eaeb68b1837b0be99dbbec"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/checklist-before.json",
+          "bytes": 327654,
+          "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/initial-admin-types-status.json",
+          "bytes": 440,
+          "sha256": "4d5adc59109ff27add1b724d1f81c52e48b7c76f4043667feaa2701a874b461e"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/initial-ordinary-status.json",
+          "bytes": 699,
+          "sha256": "c1aa2506bd7993e21214960eb69d06e562319d8b4af88b2a56ea1753a0337a15"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/initial-ordinary.json",
+          "bytes": 21761,
+          "sha256": "1bb4840a22751ccba5d3c6a548bbe4d3da387c54be3691a6ecf7bb3f9b296707"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/run-check.py",
+          "bytes": 838,
+          "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/source-decisions.json",
+          "bytes": 13731,
+          "sha256": "0d06bb2d48cd67aeafe32a502042f9b3899d3e0e578fc41e0570409ff3fffdcb"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/source-independent-review.json",
+          "bytes": 37888,
+          "sha256": "32b6919b1596476571deb31fdb0772116af2e931ec9f700775401a908794a237"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-corrected-ordinary-status.json",
+          "bytes": 768,
+          "sha256": "6781b5e522a86b71547ff006217fec4ed979106d1fbe493a0cde62d2e6301a3f"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-corrected-ordinary.json",
+          "bytes": 23825,
+          "sha256": "3a98d4ab2f4bad7ca2955a01dc8aca5d0a0f027cef9a5758f448505f9f61c4ff"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-final-ordinary-status.json",
+          "bytes": 1008,
+          "sha256": "e91d19a136455914d2990afb111da8806869b117fb7b3a01672435b86ce0da58"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-final-ordinary.json",
+          "bytes": 36695,
+          "sha256": "44334ffbe46acdf0d1bf5f623bee7680311b986e51f3961406c0586367dce944"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-http-workflow-v2-status.json",
+          "bytes": 774,
+          "sha256": "0db421e990b5cc13768c7eba6444e8d2e11d70506a8ed164e956c7d53d5441e5"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-http-workflow-v2.json",
+          "bytes": 13341,
+          "sha256": "81f569a8d0769c2455eb0ec2c0179cb669f02eb4a0b3b89f3f7bc20eeef6e3b2"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-native-status.json",
+          "bytes": 712,
+          "sha256": "02e398adbe4b9129f5d6a2466134bd93719bcfd7c1b1a108d170d80a1431ee17"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-workflow-http-status.json",
+          "bytes": 713,
+          "sha256": "7ac9835d3def1ab999b54e0ce092e5540560b8f895f37ff472320f40b46e0b57"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-workflow-http.json",
+          "bytes": 13163,
+          "sha256": "661ce3d707fca4b97215069868bfd5d1bfcfc385390fb81c422fe82024560e4c"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/worker-unit-types-status.json",
+          "bytes": 468,
+          "sha256": "893e63fa9dd5803cb1d7f1ae8d5120d5c5878e0568e88f0cb4674d2dfaa339c8"
+        },
+        {
+          "path": "workers-ts/migrations/0175_product_stock_effects.sql",
+          "bytes": 4437,
+          "sha256": "31e2ec53cd275c77d8add059b89bd71c5d84871c3ce167ff48edc2abb56f35fc"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "bytes": 51888,
+          "sha256": "52a934d11b693674f4a21fb194f4abefb6e2617f599a453ab27820ef02f8f954"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/AdminProductStockController.ts",
+          "bytes": 1747,
+          "sha256": "74387594d093834eacfa0a67cfc1f5b130a562c9dd491a8828743980e7939441"
+        },
+        {
+          "path": "workers-ts/src/do/StaffNotificationDO.ts",
+          "bytes": 5681,
+          "sha256": "674777262648569431e10b312116591a0af6ed1651cbb10e848aef5406d3b5fd"
+        },
+        {
+          "path": "workers-ts/src/migrations/productStockEffects.ts",
+          "bytes": 5026,
+          "sha256": "d7e0fe72d2378a47abec20951ab2853ba3b5cbb30d96cf3e6a3ece56494cfbdf"
+        },
+        {
+          "path": "workers-ts/src/migrations/runProductStockEffects.ts",
+          "bytes": 494,
+          "sha256": "30b9a3cb366958f5278195c28afa1051cff956fb1948bf589ac523d9620eff65"
+        },
+        {
+          "path": "workers-ts/src/models/schema/order_outbox.ts",
+          "bytes": 4885,
+          "sha256": "24956c9d1e21dbdc3105915f94cc13a218f1a3e58b05845e38b6373c01f105f4"
+        },
+        {
+          "path": "workers-ts/src/routes/adminapi.ts",
+          "bytes": 104722,
+          "sha256": "65fb505233dd6ae61e8a7c58eb6a99dd36b04a202d060445c11fa8b2b435188b"
+        },
+        {
+          "path": "workers-ts/src/services/MigrationService.ts",
+          "bytes": 375049,
+          "sha256": "132d442dd171306aba21a23c34bcd6acc6eeab6bf012d5d1238486b9a6462ec8"
+        },
+        {
+          "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+          "bytes": 105653,
+          "sha256": "88c4a83778539be4d6c66fa85dfc2f8ba379e8296a3d16d4e554d107bad96ef8"
+        },
+        {
+          "path": "workers-ts/src/services/admin/AdminProductStockService.ts",
+          "bytes": 19575,
+          "sha256": "02b514c19c855bf360cb9c3f508d52ffa96ae7aafe45334523de9e94361458ec"
+        },
+        {
+          "path": "workers-ts/src/services/notification/StaffNotificationAuthService.ts",
+          "bytes": 3426,
+          "sha256": "420cd588e79bcc7b4f214776926cb6b11b38e1604f59c6ace4e679b6a09b5c97"
+        },
+        {
+          "path": "workers-ts/src/services/notification/StaffNotificationGateway.ts",
+          "bytes": 2005,
+          "sha256": "e4e688401f72051aeb35f35d5c5b70cd5094ec013d518f5bb1819e41445fdba1"
+        },
+        {
+          "path": "workers-ts/src/services/notification/StaffNotificationProtocol.ts",
+          "bytes": 2863,
+          "sha256": "83543026c666b22504d546355ef7b7f2d6dc7603d2f1746f5eb58737ee3a59f0"
+        },
+        {
+          "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+          "bytes": 33815,
+          "sha256": "2a027dfb3b19dd139c405186afa0ca132558b04369938aa3220e9fdedaaeaeca"
+        },
+        {
+          "path": "workers-ts/src/services/product/ProductStockEffects.ts",
+          "bytes": 7895,
+          "sha256": "d7c160d0628c9e3b679f057e5986b287efb3193c71855622be27fa31778004d4"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 16342,
+          "sha256": "1c98b55f1f71eb0c930cb1dcba97b7cb3dc8813fbca62113e574784af5cacbc5"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-http.test.ts",
+          "bytes": 13439,
+          "sha256": "e5c161743d3c34ebb89689ef108f71e016fb857866cbe5814d27ef0980da0266"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-workflow-frontend.test.ts",
+          "bytes": 40061,
+          "sha256": "21fb07ebbb9fa4d85acb9bd6b167552b0748851d22b958da1c9934d072bb3b75"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock.test.ts",
+          "bytes": 14290,
+          "sha256": "5121318b7558cca31995b5eb9e8d91fde7a9f54753cffdab2357168f731d78ec"
+        },
+        {
+          "path": "workers-ts/test/helpers/adminProductStocks.ts",
+          "bytes": 6216,
+          "sha256": "853eb14361962638467a1a3b96cd294abed1342fc8f82fcc047ee587ed6aa37f"
+        },
+        {
+          "path": "workers-ts/test/product-stock-effects.test.ts",
+          "bytes": 7613,
+          "sha256": "624308eaf29d6288098d1aaa0133f634d81b41cd3121243764ca6cb509b23580"
+        },
+        {
+          "path": "workers-ts/test/runtime/staff-notification-runtime.test.ts",
+          "bytes": 9968,
+          "sha256": "a182d933f8e3f84381d5e0b0dbae91da2b9b602c580ed8cbfd9ec71e6f8ce09b"
+        }
+      ],
+      "snapshotSemantics": "As-of review input hashes. The review JSON self hash refers to its prior saved bytes before this stage was appended; this is not a final immutable publication freeze.",
+      "typeLog": {
+        "path": "workers-ts/audit/stock-20261015/worker-unit-types.log",
+        "sha256": "d7d84ffc6a4b6944e0b7c704adaa6a3363431afb6424303ada1c828c4d6a0773",
+        "concurrencyFileDiagnostics": 0,
+        "otherDiagnostics": 5,
+        "otherCategories": [
+          "admin-product-stock-http unused import",
+          "admin-product-stock unused import",
+          "product-stock-effects mismatched parser export name",
+          "product-stock-effects unused client/socket imports"
+        ],
+        "reviewerEditsMade": false,
+        "limit": "The inspected log predates the two newly added native migration/LOGIN definitions; root must validate current inputs."
+      },
+      "publicationScopeReview": {
+        "trackedAndNonignoredUntrackedFiles": 49,
+        "binaryOrUnreadableFiles": 0,
+        "result": "No real external/provider/account credentials or unrelated modifications found in the inspected pending files.",
+        "methods": [
+          "Enumerated all tracked changes relative to HEAD and all nonignored untracked files.",
+          "Read all pending artifact bytes and checked private-key, known provider-token, literal JWT, credential-bearing URL and credential-like literal assignment shapes without printing values.",
+          "Manually classified all five credential-shaped hits: four synthetic stock fixture assignments and one loopback disposable PostgreSQL test URL already present at HEAD.",
+          "Inspected runner whitelist and staff runtime additions as direct validation support for this stock scope."
+        ],
+        "credentialShapedPaths": [
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "category": "existing loopback disposable database fixture URL; unchanged at HEAD"
+          },
+          {
+            "path": "workers-ts/test/admin-product-stock-http.test.ts",
+            "category": "explicit synthetic APP_KEY fixture"
+          },
+          {
+            "path": "workers-ts/test/admin-product-stock-workflow-frontend.test.ts",
+            "category": "two explicit synthetic Admin session fixture defaults"
+          },
+          {
+            "path": "workers-ts/test/helpers/adminProductStocks.ts",
+            "category": "explicit synthetic Admin password fixture"
+          }
+        ],
+        "scopeCategories": [
+          "stock production API/UI and notification scope/effects",
+          "forward-only stock outbox event CHECK maintenance candidate",
+          "stock regression tests and local native runner whitelist",
+          "stock audit reports and failed/successful validation receipts"
+        ],
+        "limits": [
+          "Ignored/untracked ignored files were excluded and are not publication candidates.",
+          "This review covers current pending files, not an exhaustive Git history or generic security scan.",
+          "Additional files or edits created after this snapshot require the root final publication inventory to be checked."
+        ]
+      }
+    },
+    {
+      "name": "publication-candidate-credential-rescan-after-new-receipts",
+      "observedAt": "2026-10-15T00:29:48.221807+00:00",
+      "inputs": [
+        {
+          "path": "view/admin-ts/src/api/product.ts",
+          "bytes": 18799,
+          "sha256": "2d1e7f1eed5c29473347ee849de1e74fccca598a0ac75b32849c882fbb43fee8"
+        },
+        {
+          "path": "view/admin-ts/src/api/productStock.ts",
+          "bytes": 8349,
+          "sha256": "a676e476f8e95baf9c56440bbfc1cb081ca87ce86e7c889f34c9a6ddef297cee"
+        },
+        {
+          "path": "view/admin-ts/src/layouts/AdminLayout.vue",
+          "bytes": 31687,
+          "sha256": "f394543da5c57c75fda152095553da59d8e93dc892fdd145a6d546fc918efd36"
+        },
+        {
+          "path": "view/admin-ts/src/layouts/AdminStockNotice.vue",
+          "bytes": 3485,
+          "sha256": "ebb16c67fc6f6bb6250707442669e3fca38d7e132e63acc45361ba06f6eae11a"
+        },
+        {
+          "path": "view/admin-ts/src/pages/product/ProductList.vue",
+          "bytes": 29261,
+          "sha256": "fb7ff4830dc576213e211b424671989cafb137b4f0bd9f3c69aed4c758b99b5e"
+        },
+        {
+          "path": "view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10428,
+          "sha256": "053b5c9e1d196d60dbd78ce1379e0d60a6fb7c59ed5f4a8fa13feeca2032e238"
+        },
+        {
+          "path": "view/common/product-stock-notifications.ts",
+          "bytes": 1257,
+          "sha256": "a36918145173253b324fc80907f3667ab705938adbf85d0004aaa7613310be03"
+        },
+        {
+          "path": "view/common/staff-notifications.ts",
+          "bytes": 7092,
+          "sha256": "776d7fe287832c7db41afccb3451a14a2d6ad3065b9c1f2e655abc9889037b1b"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/baseline-from-catalog.json",
+          "bytes": 1087,
+          "sha256": "ec70fb45bd5a28b846b460550d9d28c22324f1a556eaeb68b1837b0be99dbbec"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/checklist-before.json",
+          "bytes": 327654,
+          "sha256": "36fb88fd871ca518b9d687043bbf012d90aca1eb35d1d35d9a8b9323d0a58da6"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/initial-admin-types-status.json",
+          "bytes": 440,
+          "sha256": "4d5adc59109ff27add1b724d1f81c52e48b7c76f4043667feaa2701a874b461e"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/initial-ordinary-status.json",
+          "bytes": 699,
+          "sha256": "c1aa2506bd7993e21214960eb69d06e562319d8b4af88b2a56ea1753a0337a15"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/initial-ordinary.json",
+          "bytes": 21761,
+          "sha256": "1bb4840a22751ccba5d3c6a548bbe4d3da387c54be3691a6ecf7bb3f9b296707"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/run-check.py",
+          "bytes": 838,
+          "sha256": "984c9a77e7efe0396ace4442177695d62c115a0b00010dcdfde35a6f1fb6a6de"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/source-decisions.json",
+          "bytes": 13731,
+          "sha256": "0d06bb2d48cd67aeafe32a502042f9b3899d3e0e578fc41e0570409ff3fffdcb"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/source-independent-review.json",
+          "bytes": 51469,
+          "sha256": "f8fda051da89919c73c51bcc85b18e8426c3876e6133af0fa987dde1b59faeab"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-corrected-ordinary-status.json",
+          "bytes": 768,
+          "sha256": "6781b5e522a86b71547ff006217fec4ed979106d1fbe493a0cde62d2e6301a3f"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-corrected-ordinary.json",
+          "bytes": 23825,
+          "sha256": "3a98d4ab2f4bad7ca2955a01dc8aca5d0a0f027cef9a5758f448505f9f61c4ff"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-final-ordinary-status.json",
+          "bytes": 1008,
+          "sha256": "e91d19a136455914d2990afb111da8806869b117fb7b3a01672435b86ce0da58"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-final-ordinary.json",
+          "bytes": 36695,
+          "sha256": "44334ffbe46acdf0d1bf5f623bee7680311b986e51f3961406c0586367dce944"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-http-workflow-v2-status.json",
+          "bytes": 774,
+          "sha256": "0db421e990b5cc13768c7eba6444e8d2e11d70506a8ed164e956c7d53d5441e5"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-http-workflow-v2.json",
+          "bytes": 13341,
+          "sha256": "81f569a8d0769c2455eb0ec2c0179cb669f02eb4a0b3b89f3f7bc20eeef6e3b2"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-native-status.json",
+          "bytes": 712,
+          "sha256": "02e398adbe4b9129f5d6a2466134bd93719bcfd7c1b1a108d170d80a1431ee17"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-ordinary-pass-status.json",
+          "bytes": 1005,
+          "sha256": "84bd334d8e1e49b1421cea9288097540c47a9da1fc473ef804bfd00edac27117"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "bytes": 36192,
+          "sha256": "08099157dbfcf3cd70d88e82a02b163f86777c0ec99ec9fcef0798081d12f7ab"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-workflow-http-status.json",
+          "bytes": 713,
+          "sha256": "7ac9835d3def1ab999b54e0ce092e5540560b8f895f37ff472320f40b46e0b57"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-workflow-http.json",
+          "bytes": 13163,
+          "sha256": "661ce3d707fca4b97215069868bfd5d1bfcfc385390fb81c422fe82024560e4c"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/worker-unit-types-status.json",
+          "bytes": 468,
+          "sha256": "893e63fa9dd5803cb1d7f1ae8d5120d5c5878e0568e88f0cb4674d2dfaa339c8"
+        },
+        {
+          "path": "workers-ts/migrations/0175_product_stock_effects.sql",
+          "bytes": 4437,
+          "sha256": "31e2ec53cd275c77d8add059b89bd71c5d84871c3ce167ff48edc2abb56f35fc"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "bytes": 51888,
+          "sha256": "52a934d11b693674f4a21fb194f4abefb6e2617f599a453ab27820ef02f8f954"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/AdminProductStockController.ts",
+          "bytes": 1747,
+          "sha256": "74387594d093834eacfa0a67cfc1f5b130a562c9dd491a8828743980e7939441"
+        },
+        {
+          "path": "workers-ts/src/do/StaffNotificationDO.ts",
+          "bytes": 5681,
+          "sha256": "674777262648569431e10b312116591a0af6ed1651cbb10e848aef5406d3b5fd"
+        },
+        {
+          "path": "workers-ts/src/migrations/productStockEffects.ts",
+          "bytes": 5026,
+          "sha256": "d7e0fe72d2378a47abec20951ab2853ba3b5cbb30d96cf3e6a3ece56494cfbdf"
+        },
+        {
+          "path": "workers-ts/src/migrations/runProductStockEffects.ts",
+          "bytes": 494,
+          "sha256": "30b9a3cb366958f5278195c28afa1051cff956fb1948bf589ac523d9620eff65"
+        },
+        {
+          "path": "workers-ts/src/models/schema/order_outbox.ts",
+          "bytes": 4885,
+          "sha256": "24956c9d1e21dbdc3105915f94cc13a218f1a3e58b05845e38b6373c01f105f4"
+        },
+        {
+          "path": "workers-ts/src/routes/adminapi.ts",
+          "bytes": 104722,
+          "sha256": "65fb505233dd6ae61e8a7c58eb6a99dd36b04a202d060445c11fa8b2b435188b"
+        },
+        {
+          "path": "workers-ts/src/services/MigrationService.ts",
+          "bytes": 375049,
+          "sha256": "132d442dd171306aba21a23c34bcd6acc6eeab6bf012d5d1238486b9a6462ec8"
+        },
+        {
+          "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+          "bytes": 105653,
+          "sha256": "88c4a83778539be4d6c66fa85dfc2f8ba379e8296a3d16d4e554d107bad96ef8"
+        },
+        {
+          "path": "workers-ts/src/services/admin/AdminProductStockService.ts",
+          "bytes": 19575,
+          "sha256": "02b514c19c855bf360cb9c3f508d52ffa96ae7aafe45334523de9e94361458ec"
+        },
+        {
+          "path": "workers-ts/src/services/notification/StaffNotificationAuthService.ts",
+          "bytes": 3426,
+          "sha256": "420cd588e79bcc7b4f214776926cb6b11b38e1604f59c6ace4e679b6a09b5c97"
+        },
+        {
+          "path": "workers-ts/src/services/notification/StaffNotificationGateway.ts",
+          "bytes": 2005,
+          "sha256": "e4e688401f72051aeb35f35d5c5b70cd5094ec013d518f5bb1819e41445fdba1"
+        },
+        {
+          "path": "workers-ts/src/services/notification/StaffNotificationProtocol.ts",
+          "bytes": 2863,
+          "sha256": "83543026c666b22504d546355ef7b7f2d6dc7603d2f1746f5eb58737ee3a59f0"
+        },
+        {
+          "path": "workers-ts/src/services/order/OrderOutboxService.ts",
+          "bytes": 33815,
+          "sha256": "2a027dfb3b19dd139c405186afa0ca132558b04369938aa3220e9fdedaaeaeca"
+        },
+        {
+          "path": "workers-ts/src/services/product/ProductStockEffects.ts",
+          "bytes": 7895,
+          "sha256": "d7c160d0628c9e3b679f057e5986b287efb3193c71855622be27fa31778004d4"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 16630,
+          "sha256": "41c6795070ecc975b82c908df56e137df139db356d1562153c5ba18d5052ef0d"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-http.test.ts",
+          "bytes": 13439,
+          "sha256": "e5c161743d3c34ebb89689ef108f71e016fb857866cbe5814d27ef0980da0266"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-workflow-frontend.test.ts",
+          "bytes": 40061,
+          "sha256": "21fb07ebbb9fa4d85acb9bd6b167552b0748851d22b958da1c9934d072bb3b75"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock.test.ts",
+          "bytes": 14290,
+          "sha256": "5121318b7558cca31995b5eb9e8d91fde7a9f54753cffdab2357168f731d78ec"
+        },
+        {
+          "path": "workers-ts/test/helpers/adminProductStocks.ts",
+          "bytes": 6216,
+          "sha256": "853eb14361962638467a1a3b96cd294abed1342fc8f82fcc047ee587ed6aa37f"
+        },
+        {
+          "path": "workers-ts/test/product-stock-effects.test.ts",
+          "bytes": 7613,
+          "sha256": "624308eaf29d6288098d1aaa0133f634d81b41cd3121243764ca6cb509b23580"
+        },
+        {
+          "path": "workers-ts/test/runtime/staff-notification-runtime.test.ts",
+          "bytes": 9968,
+          "sha256": "a182d933f8e3f84381d5e0b0dbae91da2b9b602c580ed8cbfd9ec71e6f8ce09b"
+        }
+      ],
+      "result": "No real external/provider/account credentials or unrelated changes identified. This rescan includes every current pending nonignored artifact, including receipts added during the previous scan.",
+      "candidateFiles": 51,
+      "binaryOrUnreadableFiles": [],
+      "credentialShapedHits": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "line": 854,
+          "category": "url-with-literal-credentials",
+          "valueSuppressed": true
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-http.test.ts",
+          "line": 19,
+          "category": "credential-like-assignment",
+          "valueSuppressed": true
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-workflow-frontend.test.ts",
+          "line": 77,
+          "category": "credential-like-assignment",
+          "valueSuppressed": true
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-workflow-frontend.test.ts",
+          "line": 198,
+          "category": "credential-like-assignment",
+          "valueSuppressed": true
+        },
+        {
+          "path": "workers-ts/test/helpers/adminProductStocks.ts",
+          "line": 18,
+          "category": "credential-like-assignment",
+          "valueSuppressed": true
+        }
+      ],
+      "unexpectedOrUnclassifiedHits": [],
+      "credentialValueDisclosure": false,
+      "manualClassifications": "The five credential-shaped matches remain four explicit synthetic fixture assignments and the preexisting loopback disposable PostgreSQL fixture URL. Native LOGIN passwords are generated at runtime, never persisted as literal credentials.",
+      "snapshotSemantics": "As-of hash inventory; review JSON hash is the saved input before appending this stage, not a self-referential final artifact hash."
+    },
+    {
+      "name": "native-first-run-observed-and-migration-fixture-correction",
+      "observedAt": "2026-10-15T00:29:48.221807+00:00",
+      "inputs": [
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-native.log",
+          "bytes": 13057,
+          "sha256": "2fb9a285cd645db0b08545915bce1c893819fd536067e7cadc6ee34007ae9e37"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-native-status.json",
+          "bytes": 712,
+          "sha256": "02e398adbe4b9129f5d6a2466134bd93719bcfd7c1b1a108d170d80a1431ee17"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "bytes": 36192,
+          "sha256": "08099157dbfcf3cd70d88e82a02b163f86777c0ec99ec9fcef0798081d12f7ab"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 16630,
+          "sha256": "41c6795070ecc975b82c908df56e137df139db356d1562153c5ba18d5052ef0d"
+        }
+      ],
+      "rootExecutedNativeResult": {
+        "terminalExitCode": 1,
+        "passed": 25,
+        "failed": 1,
+        "definitions": 26,
+        "conditionalSkipped": 0,
+        "failedDefinition": "exact previous native event CHECK upgrade fixture",
+        "cleanupObserved": [
+          "FINANCE_LOCAL_FIXTURES remaining=0",
+          "FINANCE_LOCAL_STOPPED owned cluster"
+        ]
+      },
+      "nativeVerifiedScopes": [
+        "Both true AdminConfigBatchService/stock lock directions passed under independent PG16 peers.",
+        "Stock-only level=10 denial/unchanged withdrawal branch passed.",
+        "SELECT-only LOGIN full stock read and 42501 DML/sequence refusal passed."
+      ],
+      "fixtureCorrection": "The original fixture reparsed pg_get_constraintdef output as DDL, changing per-element casts before reaching the production upgrade. It now builds the exact previous migration CHECK(event_type IN (...)) from PINK_SUCCESS_NOTICE_EVENTS and keeps the strict original catalog-definition expectation. Production drift checks were not changed.",
+      "migrationRuntimeStatus": "Corrected fixture rerun required; no successful upgrade claim yet.",
+      "rootOrdinaryResult": {
+        "passed": 65,
+        "failed": 0,
+        "conditional": 4
+      },
+      "reviewerHeavyExecution": false
+    },
+    {
+      "name": "native-corrected-run-verified-and-current-source-documentation",
+      "observedAt": "2026-10-15T00:33:37.517150+00:00",
+      "inputs": [
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-native-pass-status.json",
+          "bytes": 722,
+          "sha256": "21099f8439d6ff6d2aaa71d828993145019207fabf59fa5e55d8a0c307e41230"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-native-pass.log",
+          "bytes": 10562,
+          "sha256": "7085d3517d1b5807d4da283ef3eb1a0d9aeb1fe274d3f879196eae2dcf8a209a"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-ordinary-pass-status.json",
+          "bytes": 1005,
+          "sha256": "84bd334d8e1e49b1421cea9288097540c47a9da1fc473ef804bfd00edac27117"
+        },
+        {
+          "path": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "bytes": 36192,
+          "sha256": "08099157dbfcf3cd70d88e82a02b163f86777c0ec99ec9fcef0798081d12f7ab"
+        },
+        {
+          "path": "workers-ts/test/admin-product-stock-concurrency.test.ts",
+          "bytes": 16630,
+          "sha256": "41c6795070ecc975b82c908df56e137df139db356d1562153c5ba18d5052ef0d"
+        },
+        {
+          "path": "view/admin-ts/src/api/productStock.ts",
+          "bytes": 8349,
+          "sha256": "a676e476f8e95baf9c56440bbfc1cb081ca87ce86e7c889f34c9a6ddef297cee"
+        },
+        {
+          "path": "view/admin-ts/src/pages/product/ProductStockDialog.vue",
+          "bytes": 10506,
+          "sha256": "0cbb3af661cac856cfe4bb02fa225a66bcb6034762754843a05cc17ddc888b85"
+        },
+        {
+          "path": "workers-ts/docs/php-ts-admin-stock-migration-20261015.md",
+          "bytes": 8707,
+          "sha256": "18316f2cd78f02e78bc8b6435ab04aebafad7bc6e00830b3423cb6be03ae1332"
+        }
+      ],
+      "rootRuntimeEvidence": {
+        "native": {
+          "files": 4,
+          "passed": 26,
+          "failed": 0,
+          "conditionalSkipped": 0,
+          "terminalExitCode": 0,
+          "conditionalOrdinaryDefinitionsSupplemented": 4,
+          "cleanupMarkers": [
+            "FINANCE_LOCAL_FIXTURES remaining=0",
+            "FINANCE_LOCAL_STOPPED owned cluster"
+          ]
+        },
+        "ordinary": {
+          "files": 8,
+          "passed": 65,
+          "failed": 0,
+          "conditionalSkipped": 4
+        },
+        "countsNotAdded": "Native repeats 22 ordinary definitions; four previously conditional definitions execute natively."
+      },
+      "sourceFollowup": "Re-read the actual productStock transformRequest preflight and current Dialog pending-read guard. Both preserve current owner/token/session through the asynchronous lock and Axios boundaries. Browser-reported Element Plus aria-disabled stale attribute is addressed by disabled-dependent input keys preserving parent v-model values; source inspected, final rendered proof remains root-owned.",
+      "migrationUpgradeResult": "Strict previous CHECK/source upgrade/comment preservation/business immutability/replay and drift refusal now passed natively with actual prior DDL.",
+      "pendingFinalGates": [
+        "current final types/build",
+        "workerd/DO runtime final execution",
+        "Browser plugin rendered recheck after ARIA repair"
+      ],
+      "reviewerHeavyExecution": false,
+      "productionOrProviderCommissioning": false
+    },
+    {
+      "name": "document-candidate-status-wording-final",
+      "observedAt": "2026-10-15T00:33:58.857534+00:00",
+      "inputs": [
+        {
+          "path": "workers-ts/docs/php-ts-admin-stock-migration-20261015.md",
+          "bytes": 8695,
+          "sha256": "9d51990cc76b4980823607bdccb2de345f83e41adc475881525c0b4507dd7817"
+        }
+      ],
+      "result": "Document calls this a GitHub source candidate without asserting that a future push has already happened. Production/DDL/PHP shutdown remain explicitly absent; final gate table remains pending."
+    }
+  ],
+  "findings": [
+    {
+      "id": "stock-source-001",
+      "status": "resolved-source-and-targeted-root-runtime-observed",
+      "priority": "P1",
+      "title": "Manual acknowledgement can clear a still-live relative request after context reset",
+      "files": [
+        "view/admin-ts/src/pages/product/ProductStockDialog.vue:55",
+        "view/admin-ts/src/pages/product/ProductStockDialog.vue:74",
+        "view/admin-ts/src/api/productStock.ts:24"
+      ],
+      "sourceEvidence": "Changing catalog type/context calls reset(), closes the dialog and clears local busy while the actual PUT promise continues. Reopening the same owner/product exposes the persisted marker, a fresh GET and an acknowledgement button. acknowledgeStockRead() removes the marker without checking whether that owner/product still has a live API request. A second relative PUT can begin before the first returns.",
+      "requiredResolution": "Prevent acknowledgement and new relative submission while a request for the same owner/product is still pending; retain unknown-outcome manual reconciliation only after the request settles. Add the real SFC/Axios delayed-PUT, same-owner catalog-out-and-back regression.",
+      "runtimeStatus": "Not executed by reviewer; reachable from actual production source.",
+      "resolutionHistory": [
+        {
+          "observedAt": "2026-10-15T00:22:11.646211+00:00",
+          "method": "Independent re-read of actual production source; no test execution by reviewer.",
+          "result": "API tracks owner/product in-flight requests, holds an exclusive origin Web Lock for request/marker operations when supported, rejects pending acknowledgement and rechecks current persisted token/session within the lock. Dialog awaits acknowledgement under its epoch/token/session stamp. Follow-up requested: a GET completed during an existing pending write must not remain eligible as the fresh read used for later manual acknowledgement."
+        },
+        {
+          "observedAt": "2026-10-15T00:24:02.307216+00:00",
+          "method": "Independent final repair source read",
+          "result": "Dialog now sets freshRead=false when its same-owner/product PUT remains pending and shows an explicit wait-then-reread message. A pre-completion read cannot be used for acknowledgement after the request settles without a new read. Web Locks protect marker/request/ack operations across supported browser tabs; unsupported browser fallback is per-tab only."
+        },
+        {
+          "observedAt": "2026-10-15T00:26:11.991294+00:00",
+          "method": "Independent follow-up source review after root refined browser locks",
+          "result": "Long Web Lock now scopes to owner+product; synchronous marker array read-modify-write holds a separate short global lock. Captured identity is rechecked inside the queued marker mutation, immediately before PUT, and in Axios transformRequest after its asynchronous auth interceptor. A preflight identity failure removes only this request marker, before any send; unknown transport results remain persisted. Same-process pending reads remain ineligible for manual acknowledgement."
+        }
+      ],
+      "runtimeEvidence": [
+        {
+          "nativeLog": "workers-ts/audit/stock-20261015/stock-native.log",
+          "ordinaryReport": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "scope": "Related reported-finding cases passed in root executions; this does not assert all migration or release gates passed."
+        }
+      ]
+    },
+    {
+      "id": "stock-source-002",
+      "status": "resolved-source-and-targeted-root-runtime-observed",
+      "priority": "P1",
+      "title": "Missing configuration keys have no lock against an active uncooperative insertion path",
+      "files": [
+        "workers-ts/src/services/admin/AdminProductStockService.ts:143",
+        "workers-ts/src/services/admin/AdminProductStockService.ts:146",
+        "workers-ts/src/services/system/AdminConfigBatchService.ts:80",
+        "workers-ts/src/controllers/api/v1/AdminCrudController.ts:756",
+        "workers-ts/src/routes/v1/index.ts:1867"
+      ],
+      "sourceEvidence": "The stock writer takes ERP and commerce advisory locks and FOR SHARE on existing config rows, but does not validate the candidate ERP config trigger. Active POST /api/admin/config/save calls AdminConfigBatchService.save: erp_open/store_stock are permitted, missing keys are inserted, and the writer takes only SHARE ROW EXCLUSIVE on system_config for these ordinary keys. Stock SELECT FOR SHARE acquires ROW SHARE table lock, compatible with that table mode; no existing erp_open row can be locked when the key is absent. Without a verified ERP trigger, the generic batch may insert erp_open=1 after the final stock config read and before stock commit.",
+      "requiredResolution": "Use a real table barrier covering missing inserts and existing mutations, or make a verified complete config-write handshake an admission requirement. Add a native two-connection missing-key insertion regression; retain NOWAIT/retry semantics.",
+      "runtimeStatus": "Not executed by reviewer; active writer and absence of admission barrier inspected from source.",
+      "correctionHistory": [
+        {
+          "at": "2026-10-15T00:18:34.817115+00:00",
+          "reason": "The old AdminCrud.adminSmsConfigSave function is unregistered. Its comment was initially mistaken for a live route. This was corrected by inspecting the actual route registry before reporting a final finding.",
+          "supersededSourceEvidence": "The stock writer takes ERP and commerce advisory locks and FOR SHARE on existing config rows, but does not validate the candidate ERP config trigger. The active legacy adminSmsConfigSave handler accepts arbitrary non-city keys and inserts missing system_config rows without these advisory locks. If erp_open is absent and the ERP trigger is absent/uncommissioned, another transaction may insert erp_open=1 after the final config read but before stock commit. Existing row locks do not protect a missing row.",
+          "replacement": "POST /api/admin/config/save is currently registered to AdminCrud.adminConfigSave and calls AdminConfigBatchService.save, which genuinely permits these keys and missing-key INSERTs."
+        }
+      ],
+      "resolutionHistory": [
+        {
+          "observedAt": "2026-10-15T00:22:11.646211+00:00",
+          "method": "Independent re-read of actual production source; no test execution by reviewer.",
+          "result": "Actual system_config SHARE MODE NOWAIT table lock now executes before current config read. It conflicts with the active generic config writer SHARE ROW EXCLUSIVE and all ROW EXCLUSIVE DML, including insertion of a missing ERP/threshold key, without depending on an uncommissioned candidate trigger."
+        }
+      ],
+      "runtimeEvidence": [
+        {
+          "nativeLog": "workers-ts/audit/stock-20261015/stock-native.log",
+          "ordinaryReport": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "scope": "Related reported-finding cases passed in root executions; this does not assert all migration or release gates passed."
+        }
+      ]
+    },
+    {
+      "id": "stock-source-003",
+      "status": "resolved-source-and-targeted-root-runtime-observed",
+      "priority": "P2",
+      "title": "Stock WebSocket accepts one Admin level rejected by stock HTTP and recipient enumeration",
+      "files": [
+        "workers-ts/src/services/notification/StaffNotificationAuthService.ts:36",
+        "workers-ts/src/services/admin/AdminLegacyRoleDeletionProof.ts:87",
+        "workers-ts/src/services/admin/AdminProductStockService.ts:110",
+        "workers-ts/src/services/product/ProductStockEffects.ts:74"
+      ],
+      "sourceEvidence": "The stock stream validates role history but does not independently bound the live Admin level. The shared history helper accepts 0..10; stock HTTP and ProductStockEffects recipient selection require 0..9. An already connected level=10 Admin with a product.view role remains authorized for connect/publish heartbeat even though the new stock HTTP domain rejects that actor tuple.",
+      "requiredResolution": "Apply the stock-specific 0..9 current Admin level check in the stock notification branch while preserving existing withdrawal semantics; add a scoped auth regression.",
+      "runtimeStatus": "Not executed by reviewer; exact range mismatch inspected from source.",
+      "resolutionHistory": [
+        {
+          "observedAt": "2026-10-15T00:22:11.646211+00:00",
+          "method": "Independent re-read of actual production source; no test execution by reviewer.",
+          "result": "Only product_stock now rejects nonintegral/out-of-range live admin.level outside 0..9 before role history/permission resolution. Withdrawal default/explicit branch keeps its existing semantics."
+        }
+      ],
+      "runtimeEvidence": [
+        {
+          "nativeLog": "workers-ts/audit/stock-20261015/stock-native.log",
+          "ordinaryReport": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "scope": "Related reported-finding cases passed in root executions; this does not assert all migration or release gates passed."
+        }
+      ]
+    },
+    {
+      "id": "stock-source-004",
+      "status": "resolved-source-and-targeted-root-runtime-observed",
+      "priority": "P1",
+      "title": "Dialog opening is mistaken for stale context and immediately closed",
+      "files": [
+        "view/admin-ts/src/pages/product/ProductStockDialog.vue:97",
+        "view/admin-ts/src/pages/product/ProductList.vue:291"
+      ],
+      "sourceEvidence": "On first real row entry, ProductList sets stockProduct from null to row and modelValue from false to true in one render. The stock watcher has an existing previous tuple and treats the changed productId/context as invalidation without requiring previous modelValue=true; it resets and emits false. Thus the genuine inventory entry immediately closes, consistent with 11 initial actual-SFC test failures.",
+      "requiredResolution": "Apply changed-context cancellation only to an already open prior dialog; on the first opening reset and load. Preserve stale pending response checks and cover the actual row entry.",
+      "runtimeStatus": "Initial root test report contains 11 actual SFC/Axios failures with no rendered dialog/fields. Reviewer independently inspected the root cause but did not execute tests.",
+      "resolutionHistory": [
+        {
+          "observedAt": "2026-10-15T00:22:11.646211+00:00",
+          "method": "Independent re-read of actual production source; no test execution by reviewer.",
+          "result": "Watcher now handles first opening before comparing prior product/context; changed context cancels only an already open dialog. Default pre-flush observes the combined parent prop update."
+        }
+      ],
+      "runtimeEvidence": [
+        {
+          "nativeLog": "workers-ts/audit/stock-20261015/stock-native.log",
+          "ordinaryReport": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+          "scope": "Related reported-finding cases passed in root executions; this does not assert all migration or release gates passed."
+        }
+      ]
+    }
+  ],
+  "sourceObservations": [
+    {
+      "topic": "relative algorithm",
+      "result": "Consistent with readable PHP within declared finite/canonical input boundary",
+      "detail": "All type0 rows are ordered id ASC; duplicate stored alias uses last row, every recognized request uses original SKU stock/sumStock, duplicate requests overwrite rather than accumulate SKU, every requested delta contributes to main net and one ledger, unknown skips, zero still records. SKU/main floor at zero; signed cumulative stock does not floor."
+    },
+    {
+      "topic": "transaction and full verification",
+      "result": "Source mechanism inspected; runtime unverified",
+      "detail": "Admin authority table barrier and product/identity NOWAIT fences; parent/all SKU rows locked; full RETURNING and post-audit product/SKU/prior+new ledger/audit/config readback; actor re-resolved and DB clock checked. Outbox full insert and full immediate readback occur in the same transaction."
+    },
+    {
+      "topic": "permission and source seed boundary",
+      "result": "Source mechanism inspected; runtime unverified",
+      "detail": "No installer one-id attrs/saveStocks source seeds invented. Unproved one-id numeric claims and target stock stream metadata are rejected before generic API mapping and opaque retention; single and batch resolution share resolveTokensWithMenus. Page 2 remains product.view; canonical product.manage required for PUT."
+    },
+    {
+      "topic": "retirement, ownership and secrets",
+      "result": "Declared target extensions are visible and explicit",
+      "detail": "GET retains type0 tombstones and orphan rows; disk_info always null; private imagery uses current parent owner and existing publication policy. PUT refuses bad owner tuples/card inventory/nonzero retired adjustments; no deleted/hidden/unverified-only restriction. Normalized finite int32 boundary is narrower than unexecuted PHP transport."
+    },
+    {
+      "topic": "outbox effects and cache",
+      "result": "Source mechanism inspected; runtime unverified",
+      "detail": "Stock intent shares inventory/audit commit; postcommit dispatch failures preserve successful stock response. Existing notification Queue claim/retry/scanner path accepts product.stock.effects, rechecks PROCESSING lease identity, and guards completion by token+event+payload. Redis deletion uses explicit product_info and readable PHP ordinary attr keys; configured errors propagate, missing keys succeed, no broad tag/KEYS scan claimed. Current target product detail has no assembled detail cache."
+    },
+    {
+      "topic": "stock and withdrawal stream isolation",
+      "result": "Source mechanism inspected; runtime unverified",
+      "detail": "Stock namespace staff-stock:admin:<id>, explicit product_stock scope, live product.view auth/history and scoped event key checks; withdrawal default namespace/parser/extract.view preserved. DO ready and changed payloads are distinct and stock parser refuses withdrawal frames; caller-supplied URL tokens are not introduced."
+    },
+    {
+      "topic": "modern inventory UI",
+      "result": "Source mechanism inspected except open pending-reconciliation finding",
+      "detail": "ERP capability false is required to show adjustment actions, all catalog source states remain eligible, card type1 hidden; SFC uses GET initialization, pm/delta semantics, zero retired rows, busy gate, current session/token/context snapshots and nonreplaying persistent identifiers-only unknown-result marker. Late prior-context results are discarded; unknown-result manual acknowledgement currently lacks the pending-request gate."
+    }
+  ],
+  "remainingLimitations": [
+    "Runtime tests and browser behavior must be judged from the root serial executions, not this source review.",
+    "The authored native configuration race cases require actual PG16 via TEST_FINANCE_POSTGRES_URL; their two skipped definitions in ordinary mode are not lock proof.",
+    "No production DDL, provider delivery or PHP execution proof.",
+    "Owner/product Web Lock protection applies to browsers with navigator.locks; the explicit older-browser fallback protects only the current tab."
+  ],
+  "finalSourceReviewConclusion": {
+    "reportedSourceFindings": 4,
+    "sourceResolved": 4,
+    "targetedRootRuntimeProved": true,
+    "nativeUpgradeRerunPassed": true,
+    "publicationCandidateOnly": true,
+    "oldReceiptsUnchangedByReviewer": true,
+    "globalMigrationMarkedComplete": false,
+    "typesBuildRuntimeBrowserFinalGates": "Pending root final receipts and any necessary source revalidation.",
+    "credentialScopeConclusion": "Prior current-pending-file scan found only synthetic stock fixture credentials and a preexisting loopback disposable database URL; no real provider/account credentials or unrelated changes were identified. The new document contains no credential values."
+  }
+}

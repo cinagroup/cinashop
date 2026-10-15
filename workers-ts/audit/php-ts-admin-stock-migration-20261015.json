@@ -1,0 +1,203 @@
+{
+  "status": "verified-local-source-candidate",
+  "capturedAt": "2026-10-15T00:40:23.904488+00:00",
+  "baselineCommit": "657d2d07c110b959208976118d834a507b157829",
+  "userRequest": "继续推进 PHP 到 TS 迁移；推送到 GitHub",
+  "routes": [
+    "GET /adminapi/product/product/attrs/:id",
+    "PUT /adminapi/product/product/saveStocks/:id"
+  ],
+  "newTargetRoute": "GET /adminapi/product/stock/notifications/socket",
+  "inputFreeze": {
+    "path": "workers-ts/audit/stock-20261015/frozen-after.json",
+    "sha256": "3acfafd99e42632ed45249901d8f2cc1b58e25f7d4ab382b0dcad8f9349c2af4",
+    "count": 3478,
+    "digest": "5dc796c85f8a53ba57f4e0d8b49dd8f6ecba4474c997575b6fa4a5a6f559594d",
+    "allDeclaredInputsRehashedUnchanged": true,
+    "fullBuildGraph": false
+  },
+  "report": {
+    "path": "workers-ts/docs/php-ts-admin-stock-migration-20261015.md",
+    "sha256": "a3ff369608f0728c05fecb4707f51c5ccfd3f89b3ad4f4f4dd1e2ff52a46e042"
+  },
+  "evidence": [
+    {
+      "path": "workers-ts/audit/stock-20261015/frozen-after.json",
+      "sha256": "3acfafd99e42632ed45249901d8f2cc1b58e25f7d4ab382b0dcad8f9349c2af4"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/delta-from-catalog.json",
+      "sha256": "313c1c3b359dbd14e05039c5c8f2ab6ae8895b451cf979d6129b133ca7bf25be"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/source-decisions.json",
+      "sha256": "0d06bb2d48cd67aeafe32a502042f9b3899d3e0e578fc41e0570409ff3fffdcb"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/source-independent-review.json",
+      "sha256": "e58a89fa6c225a3687787d4966d61daedd602bd8678382bc35c612fef78da8ce"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/browser-facts.json",
+      "sha256": "b895e56dd29e49334c8d3a1f74ed706abdcf204a40fb55e6bfa1c05a4543114f"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/browser-cleanup.json",
+      "sha256": "58163b5ec791d17aab15b27e12a91df9ceede03da4397b5dec9aea86096c2695"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/checklists-after.json",
+      "sha256": "88fcfb733bdd9148a496dfe5ee2c31bd81280af26e54c9bcfcd035649006abee"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/baseline-from-catalog.json",
+      "sha256": "ec70fb45bd5a28b846b460550d9d28c22324f1a556eaeb68b1837b0be99dbbec"
+    },
+    {
+      "path": "workers-ts/audit/stock-20261015/eof-normalization.json",
+      "sha256": "cb65d2c3d7e48fe2c3a8df2510a88e0ffbc83da60795c6e2c5f6b3277110b75c"
+    }
+  ],
+  "validation": [
+    {
+      "name": "stock-ordinary-pass",
+      "receipt": "workers-ts/audit/stock-20261015/stock-ordinary-pass-status.json",
+      "receiptSha256": "84bd334d8e1e49b1421cea9288097540c47a9da1fc473ef804bfd00edac27117",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/stock-ordinary-pass.log",
+        "sha256": "229f61c4ebcdbe6cde8ed6105471f8e8e33f05100357a9b08a495f6beea04883",
+        "includedInGit": false
+      },
+      "report": "workers-ts/audit/stock-20261015/stock-ordinary-pass.json",
+      "reportSha256": "08099157dbfcf3cd70d88e82a02b163f86777c0ec99ec9fcef0798081d12f7ab",
+      "files": 8,
+      "passed": 65,
+      "pending": 4
+    },
+    {
+      "name": "stock-native-pass",
+      "receipt": "workers-ts/audit/stock-20261015/stock-native-pass-status.json",
+      "receiptSha256": "21099f8439d6ff6d2aaa71d828993145019207fabf59fa5e55d8a0c307e41230",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/stock-native-pass.log",
+        "sha256": "7085d3517d1b5807d4da283ef3eb1a0d9aeb1fe274d3f879196eae2dcf8a209a",
+        "includedInGit": false
+      },
+      "files": 4,
+      "passed": 26,
+      "pending": 0,
+      "fixtureCleanupRemaining": 0,
+      "clusterStopped": true
+    },
+    {
+      "name": "worker-unit-types-final",
+      "receipt": "workers-ts/audit/stock-20261015/worker-unit-types-final-status.json",
+      "receiptSha256": "4a5559913f0d956d0c09df95adab6f34f582fdfadfdaa63c60e00ba8b6106c91",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/worker-unit-types-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "includedInGit": false
+      }
+    },
+    {
+      "name": "worker-runtime-types",
+      "receipt": "workers-ts/audit/stock-20261015/worker-runtime-types-status.json",
+      "receiptSha256": "1c899153a97406ddce080268eb0d785212e0a54ef9c5338b14e1104da7355bc2",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/worker-runtime-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "includedInGit": false
+      }
+    },
+    {
+      "name": "admin-build",
+      "receipt": "workers-ts/audit/stock-20261015/admin-build-status.json",
+      "receiptSha256": "e4e12caa8fd100bd8f4c60a2428b0342ac0b5b90c34822730a026ef7dd3a5c53",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/admin-build.log",
+        "sha256": "0c28486437910107e2e2e928dae152c04798dde5c77f07901dc9663547ff0402",
+        "includedInGit": false
+      }
+    },
+    {
+      "name": "kefu-build",
+      "receipt": "workers-ts/audit/stock-20261015/kefu-build-status.json",
+      "receiptSha256": "d6ccabc95c200523c37f236c000448f3dca796caf98c1b33daaa1add2af493ea",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/kefu-build.log",
+        "sha256": "3f9859b32fdd990d854a065423e022845946a7eb4408fd3ec16a41efe5bceb38",
+        "includedInGit": false
+      }
+    },
+    {
+      "name": "notification-runtime",
+      "receipt": "workers-ts/audit/stock-20261015/notification-runtime-status.json",
+      "receiptSha256": "cb54065b5bc7ea1e706c4a0a83a80069361f56792161d3dba3f4308becb62c44",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/notification-runtime.log",
+        "sha256": "3d90f4ad892b93dce34a5d2f55265961c8f3fc6bb34a791eaa7a3d9384ada9e0",
+        "includedInGit": false
+      },
+      "report": "workers-ts/audit/stock-20261015/notification-runtime.json",
+      "reportSha256": "d4cf3bf38eb30897c5af6f5d97bea5bdb3890a0aa1cee00434ff347ea3b19ed3",
+      "files": 2,
+      "passed": 10,
+      "pending": 0
+    },
+    {
+      "name": "final-frontend",
+      "receipt": "workers-ts/audit/stock-20261015/final-frontend-status.json",
+      "receiptSha256": "9af85b3a30d21ce94e3bc0e87bc92af546350d836de819037a1210de8fac9394",
+      "exitCode": 0,
+      "localRawLog": {
+        "path": "workers-ts/audit/stock-20261015/final-frontend.log",
+        "sha256": "26b391cdaa65671d01d198e859cfff25dee55d6c31d8cdccc7f599ffd9b7bda9",
+        "includedInGit": false
+      },
+      "report": "workers-ts/audit/stock-20261015/final-frontend.json",
+      "reportSha256": "907998bae611d17262f166ac587870a0b82bcb151fca7afcf95d10e4bc7dbc10",
+      "files": 2,
+      "passed": 27,
+      "pending": 0
+    }
+  ],
+  "coverageAccounting": {
+    "ordinaryFiles": 8,
+    "ordinaryPassed": 65,
+    "ordinaryConditionalSkipped": 4,
+    "nativeFiles": 4,
+    "nativePassed": 26,
+    "nativeOrdinaryOverlap": 22,
+    "allFourConditionalDefinitionsSupplemented": true,
+    "runtimeFiles": 2,
+    "runtimePassed": 10,
+    "finalFrontendAfterAriaFixPassed": 27,
+    "frontendRevalidationOverlapsOrdinaryNotAdditionalCoverage": true,
+    "finalFrontendAdditionalDefinitions": 0,
+    "ordinaryAndFinalFrontendDistinctExecuted": 65,
+    "ordinaryPlusNativeAndFinalFrontendDistinctExecuted": 69,
+    "ordinaryPlusNativeDistinctExecuted": 69
+  },
+  "preservedFailures": "Initial failing tests/types, fixture normalization failure, missing npm executable and interrupted process observations remain historical; only explicit final receipts above establish passes.",
+  "buildWarnings": "Admin Rollup removed two misplaced PURE annotations from installed @vueuse/core; build exit0. workerd emitted WebSocketPipe disconnect messages during socket teardown; both runtime files passed with no unhandled test errors.",
+  "boundaries": [
+    "Local synthetic identities/transport and owned PostgreSQL16 only; no live provider validation",
+    "PHP source read, no PHP interpreter/encoded BaseController execution",
+    "Strict SQL 0175/embedded0180 is a source candidate; no production DDL or data changes",
+    "No deployment or PHP shutdown",
+    "Existing signed asset bearer links retain existing TTL semantics",
+    "No new backend idempotency guarantee for arbitrary relative HTTP retries; modern client never automatically retries unknown outcomes",
+    "Browser origin Web Locks protect same-owner/product and marker updates when supported; fallback is same-tab pending plus persistent markers",
+    "Screenshots and raw logs outside tracked source are not portable with this Git commit",
+    "Global /api/get_script registration/retirement consumer conflict remains open",
+    "Whole migration goal remains active; checklists unchanged"
+  ],
+  "postValidationEdit": "Removed one final blank line from the frontend test file; identical non-trailing-whitespace bytes, no semantic edit and no repeat tests."
+}

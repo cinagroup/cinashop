@@ -1,0 +1,7 @@
+{
+  "name": "worker-unit-types-pass",
+  "observedExecExitCode": 143,
+  "scriptReceiptMissing": true,
+  "result": "interrupted, no typecheck pass claimed",
+  "supersededBy": "worker-unit-types-final-status.json"
+}

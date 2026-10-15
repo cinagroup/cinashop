@@ -1,0 +1,22 @@
+{
+  "name": "stock-workflow-http",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-stock-http.test.ts",
+    "test/admin-product-stock-workflow-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/stock-20261015/stock-workflow-http.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:21:16.612871+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:21:35.578114+00:00",
+  "exitCode": 1,
+  "log": "stock-workflow-http.log"
+}

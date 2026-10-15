@@ -1,0 +1,28 @@
+{
+  "name": "stock-ordinary-pass",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-stock.test.ts",
+    "test/admin-product-stock-http.test.ts",
+    "test/admin-product-stock-workflow-frontend.test.ts",
+    "test/admin-product-stock-concurrency.test.ts",
+    "test/product-stock-effects.test.ts",
+    "test/staff-notification-scenario.test.ts",
+    "test/staff-notification-frontend.test.ts",
+    "test/admin-product-catalog-navigation-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/stock-20261015/stock-ordinary-pass.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:28:23.700103+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:29:07.032158+00:00",
+  "exitCode": 0,
+  "log": "stock-ordinary-pass.log"
+}

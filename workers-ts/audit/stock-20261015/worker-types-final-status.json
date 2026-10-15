@@ -1,0 +1,14 @@
+{
+  "name": "worker-types-final",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+    "run",
+    "typecheck"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:30:22.376011+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:30:22.381589+00:00",
+  "exitCode": 127,
+  "log": "worker-types-final.log"
+}

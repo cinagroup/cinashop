@@ -102,9 +102,15 @@ import { ORDER_PROMOTION_GIFT_RECEIPT_SQL } from '@/migrations/orderPromotionGif
 import { runOrderPromotionGiftReceipt } from '@/migrations/runOrderPromotionGiftReceipt';
 import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from '@/migrations/purchaseCancellationGiftEvidenceInstallation';
 import { runPurchaseCancellationGiftEvidence } from '@/migrations/runPurchaseCancellationGiftEvidence';
+import { PRODUCT_STOCK_EFFECTS_SQL } from '@/migrations/productStockEffects';
+import { runProductStockEffects } from '@/migrations/runProductStockEffects';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  productStockEffectsSqlForVerification(): string {
+    return this.migration_0180();
+  }
 
   purchaseCancellationGiftEvidenceSqlForVerification(): string {
     return this.migration_0177();
@@ -593,10 +599,16 @@ export class MigrationService {
       this.migration_0177(),
       this.migration_0178(),
       this.migration_0179(),
+      this.migration_0180(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 180) {
+          await runProductStockEffects(this.container.db);
+          executed.push('0180');
+          continue;
+        }
         if (i === 179) {
           await runSeckillTimeReferenceLockSchema(this.container.db);
           executed.push('0179');
@@ -8867,5 +8879,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0179(): string {
     return SECKILL_TIME_REFERENCE_LOCK_INSTALLATION_SQL;
+  }
+
+  private migration_0180(): string {
+    return PRODUCT_STOCK_EFFECTS_SQL;
   }
 }

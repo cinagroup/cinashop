@@ -743,6 +743,16 @@ const auditedLegacyPageAuth = new Set([
 type LegacyAdminMenuMetadata = Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>;
 
+/** Installer has NO numeric API seeds for these one-id stock contracts or
+ * the new scoped notification stream. Never manufacture a writer from a
+ * copied tuple; canonical role capabilities remain the admission authority.
+ * The old two-argument attrs/<id>/<type> selector is a separate contract. */
+function unprovedProductStockMenuClaim(menu: LegacyAdminMenuMetadata): boolean {
+  const claims = [normalizeAdminRoute(menu.apiUrl), normalizeAdminRoute(menu.menuPath.replace(/^\/admin\//i, ''))];
+  return claims.some(route => /^product\/product\/(?:attrs|savestocks)\/[^/]+$/i.test(route)
+    || route.toLowerCase() === 'product/stock/notifications/socket');
+}
+
 function isProductCatalogReadRoute(route: string): boolean {
   return ['product/product', 'product/product/type_header', 'product/product/list'].includes(route);
 }
@@ -991,7 +1001,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (unprovedProductStockMenuClaim(menu) || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1425,6 +1435,7 @@ export class AdminPermissionService {
         // Wildcard attachment rows cannot acquire a grant by rewriting their
         // metadata into a protected or generic API tuple.
         if (menu.id === 579 || menu.id === 580) continue;
+        if (unprovedProductStockMenuClaim(menu)) continue;
         const catalogReadBinding = productCatalogReadMenuBinding(menu);
         if (catalogReadBinding.protected) {
           if (catalogReadBinding.permission) resolved.add(catalogReadBinding.permission);

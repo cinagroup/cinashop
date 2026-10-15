@@ -1,0 +1,14 @@
+{
+  "name": "admin-build",
+  "argv": [
+    "bash",
+    "-c",
+    "node node_modules/vue-tsc/bin/vue-tsc.js -b && node node_modules/vite/bin/vite.js build"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "startedAt": "2026-10-15T00:36:54.818326+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:37:51.929690+00:00",
+  "exitCode": 0,
+  "log": "admin-build.log"
+}

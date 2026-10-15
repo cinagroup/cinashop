@@ -1,0 +1,22 @@
+{
+  "name": "final-frontend",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-stock-workflow-frontend.test.ts",
+    "test/admin-product-catalog-navigation-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/stock-20261015/final-frontend.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:39:22.877309+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:39:25.554026+00:00",
+  "exitCode": 0,
+  "log": "final-frontend.log"
+}

@@ -20,12 +20,28 @@ async function connect(s = session()) {
   const response = await stub.fetch(request(s)); expect(response.status).toBe(101);
   const client = response.webSocket; if (!client) throw new Error("Missing WebSocket upgrade");
   const hello = nextFrame(client); client.accept();
-  expect(await hello).toMatchObject({ type: "staff_notification_ready", refresh: true });
+  expect(await hello).toMatchObject({ type: s.scope === 'product_stock' ? 'product_stock_ready' : 'staff_notification_ready', refresh: true });
   return { stub, client };
 }
 afterEach(async () => { await reset(); vi.restoreAllMocks(); });
 
 describe("isolated staff notification workerd transport", () => {
+  it('keeps stock and withdrawal partitions isolated and delivers only the stock identifier with a stable retry revision', async () => {
+    vi.spyOn(StaffNotificationAuthService.prototype, 'assertSession').mockResolvedValue(undefined);
+    const principal = { ...session(), scope: 'product_stock' as const }, key = 'product.stock.effects:10:12345678-1234-4123-8123-123456789abc';
+    const stock = await connect(principal), withdrawal = await connect();
+    const leaked: string[] = []; withdrawal.client.addEventListener('message', event => leaked.push(String(event.data)));
+    let next = nextFrame(stock.client); const first = await stock.stub.publish(principal, key);
+    expect(await next).toEqual({ type: 'STORE_STOCK', data: { id: 10 }, revision: first.revision });
+    next = nextFrame(stock.client); expect((await stock.stub.publish(principal, key)).revision).toBe(first.revision);
+    expect(await next).toEqual({ type: 'STORE_STOCK', data: { id: 10 }, revision: first.revision });
+    await runInDurableObject(stock.stub, async (instance, state) => {
+      await expect(instance.publish(principal, 'withdrawal.staff.refresh:19')).rejects.toThrow('作用域');
+      expect(state.storage.sql.exec<{ count: number }>('SELECT count(*) AS count FROM signals').one().count).toBe(1);
+    });
+    await runInDurableObject(withdrawal.stub, async instance => { await expect(instance.publish(session(), key)).rejects.toThrow('作用域'); });
+    expect(leaked).toEqual([]); stock.client.close(); withdrawal.client.close();
+  });
   it("rejects malformed upgrades and the wrong principal partition", async () => {
     const stub = bindings.STAFF_NOTICE.getByName(staffPrincipalName(session()));
     expect((await stub.fetch("https://staff-notice.internal/connect")).status).toBe(426);

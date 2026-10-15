@@ -1,0 +1,20 @@
+{
+  "name": "stock-native-pass",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/admin-product-stock.test.ts",
+    "test/admin-product-stock-http.test.ts",
+    "test/admin-product-stock-concurrency.test.ts",
+    "test/product-stock-effects.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:29:39.369354+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:30:09.949100+00:00",
+  "exitCode": 0,
+  "log": "stock-native-pass.log"
+}

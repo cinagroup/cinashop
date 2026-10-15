@@ -67,6 +67,10 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    'test/admin-product-stock.test.ts',
+    'test/admin-product-stock-http.test.ts',
+    'test/admin-product-stock-concurrency.test.ts',
+    'test/product-stock-effects.test.ts',
     'test/admin-product-catalog-read.test.ts',
     'test/admin-product-catalog-read-http.test.ts',
     'test/admin-product-catalog-read-native.test.ts',
@@ -673,6 +677,10 @@ try {
     // exhaust Windows commit memory; one Vitest worker retains those proofs.
     : ['node_modules/vitest/vitest.mjs', 'run', ...tests,
       tests.some(test => new Set([
+        'test/admin-product-stock.test.ts',
+        'test/admin-product-stock-http.test.ts',
+        'test/admin-product-stock-concurrency.test.ts',
+        'test/product-stock-effects.test.ts',
         'test/admin-product-catalog-read.test.ts',
     'test/admin-product-catalog-read-http.test.ts',
     'test/admin-product-catalog-read-native.test.ts',

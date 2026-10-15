@@ -1,0 +1,28 @@
+{
+  "name": "stock-final-ordinary",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "test/admin-product-stock.test.ts",
+    "test/admin-product-stock-http.test.ts",
+    "test/admin-product-stock-workflow-frontend.test.ts",
+    "test/admin-product-stock-concurrency.test.ts",
+    "test/product-stock-effects.test.ts",
+    "test/staff-notification-scenario.test.ts",
+    "test/staff-notification-frontend.test.ts",
+    "test/admin-product-catalog-navigation-frontend.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/stock-20261015/stock-final-ordinary.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:26:40.466085+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:27:19.743704+00:00",
+  "exitCode": 1,
+  "log": "stock-final-ordinary.log"
+}

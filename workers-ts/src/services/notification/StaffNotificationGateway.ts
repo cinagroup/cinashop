@@ -2,14 +2,14 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { AuthException } from "@/utils/errors";
 import { StaffNotificationAuthService } from "./StaffNotificationAuthService";
-import { parseStaffSession, staffPrincipalName, type StaffAudience } from "./StaffNotificationProtocol";
+import { parseStaffSession, staffPrincipalName, type StaffAudience, type StaffNotificationScope } from "./StaffNotificationProtocol";
 
-export async function upgradeStaffNotification(c: Context<{ Bindings: Env; Variables: AppVariables }>, audience: StaffAudience) {
+export async function upgradeStaffNotification(c: Context<{ Bindings: Env; Variables: AppVariables }>, audience: StaffAudience, scope?: StaffNotificationScope) {
   if (c.req.method !== "GET" || c.req.header("Upgrade")?.toLowerCase() !== "websocket") return new Response("WebSocket required", { status: 426 });
   const origin = c.req.header("Origin");
   const allowed = (audience === "admin" ? c.env.AUTH_ALLOWED_ORIGINS : c.env.KEFU_AUTH_ALLOWED_ORIGINS)?.split(",").map((o) => o.trim()) ?? [];
   if (!origin || !allowed.includes(origin) || origin === "null") throw new AuthException("通知连接来源未授权");
-  const session = parseStaffSession({ audience, id: audience === "admin" ? c.get("adminId") : c.get("kefuUid"),
+  const session = parseStaffSession({ audience, ...(scope === undefined ? {} : { scope }), id: audience === "admin" ? c.get("adminId") : c.get("kefuUid"),
     authId: c.get("socketAuthId"), tokenKey: c.get("socketTokenKey"), authVersion: c.get("socketAuthVersion"), expiresAt: c.get("socketTokenExp") });
   await new StaffNotificationAuthService(c.get("container"), c.env).assertSession(session);
   // Only trusted context metadata crosses the binding. No URL token, cookies, or raw JWT.

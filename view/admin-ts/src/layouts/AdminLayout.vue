@@ -425,6 +425,7 @@
         <div class="header-left">{{ currentTitle }}</div>
         <div class="header-right">
           <AdminTodoBell :key="authStore.token" />
+          <AdminStockNotice :key="authStore.token" />
           <el-dropdown @command="handleCommand">
             <span class="user-name">
               {{ authStore.userInfo?.account ?? "管理员" }}
@@ -453,6 +454,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import AdminTodoBell from "./AdminTodoBell.vue";
+import AdminStockNotice from './AdminStockNotice.vue';
 
 const route = useRoute();
 const router = useRouter();

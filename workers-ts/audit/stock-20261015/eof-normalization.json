@@ -1,0 +1,9 @@
+{
+  "path": "workers-ts/test/admin-product-stock-workflow-frontend.test.ts",
+  "beforeSha256": "21fb07ebbb9fa4d85acb9bd6b167552b0748851d22b958da1c9934d072bb3b75",
+  "afterSha256": "9043c9892686d537850524c80c6763b2e372ac1291cc585a0370168acfa28193",
+  "onlyTrailingWhitespaceChanged": true,
+  "priorFreezeDigest": "bde1b6fa8468e92053b7983855122996390da3a6e44a1bfb652cd89d2386ae23",
+  "finalFreezeDigest": "5dc796c85f8a53ba57f4e0d8b49dd8f6ecba4474c997575b6fa4a5a6f559594d",
+  "testsNotRepeatedForWhitespaceOnlyEdit": true
+}

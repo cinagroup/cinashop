@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-15T00:07:45.772972+00:00",
+  "status": "implementation-source-decisions-before-root-validation",
+  "scope": "genuine Admin relative SKU stock read/write plus durable warning effects; not Supplier stock normalization",
+  "inputs": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/admin.php",
+      "bytes": 183912,
+      "sha256": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/product/StoreProduct.php",
+      "bytes": 27131,
+      "sha256": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrValueServices.php",
+      "bytes": 22891,
+      "sha256": "eb77e534bf4aa2beb1881eea73e1012631141128ea85cbf3cd6256a98393b5f8"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/sku/StoreProductAttrValueDao.php",
+      "bytes": 8354,
+      "sha256": "a6c3f481a168544605185059287e9e86c541a31b296a82d18421725dc05e3b8e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/product/sku/StoreProductAttrValue.php",
+      "bytes": 3751,
+      "sha256": "5f314d6aa61ea7cbf86803616cb49e948b441d9c69dd09a6f78e6ed54de2366d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/product/ProductStockTips.php",
+      "bytes": 2151,
+      "sha256": "02d2147f00fbd75801191642b8df150aa866bfeb626a958b636bcb026f0dcbcc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/sku/StoreProductAttrServices.php",
+      "bytes": 21089,
+      "sha256": "dae3878db9eb0392b01f52c5db1d8ba1cbf35456a9ddb081150a1955f87b0de9"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+      "bytes": 136399,
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/PublicController.php",
+      "bytes": 2882,
+      "sha256": "1b7d16f35aa55dc544214b5e91c132d5150fec4f0bdb166b035ab7cd1ed41194"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/components/stockEdit.vue",
+      "bytes": 7870,
+      "sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/product/productList/index.vue",
+      "bytes": 62288,
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/api/product.js",
+      "bytes": 16957,
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/public/install/crmeb.sql",
+      "bytes": 7322393,
+      "sha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/StoreProductService.ts",
+      "bytes": 28756,
+      "sha256": "f2e5fccf262bf1ae28760c48392465e9c7222b0d612525fb27fea0ad48354291"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "bytes": 32887,
+      "sha256": "ca7e483bba5e64b2ed45ab7d584f56d57c5aa5efa86cfd4640bca48890a96cf7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/MobileProductManagementCore.ts",
+      "bytes": 27834,
+      "sha256": "86e56d5e0a57a479e0f8ee3aae794ddc59870886830a3ad26c09e91a560f488e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/erp/ErpStockService.ts",
+      "bytes": 7738,
+      "sha256": "342ceb6319d6564061e327e5d0385cc430e34d08a6f52e3ce8621563f87432b7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductAssociationService.ts",
+      "bytes": 37986,
+      "sha256": "468d327beb5026143fa4ed2dc040dd197f2c3bedb1cdc7c185c6e3244efdd2f3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/ProductSkuRetirementService.ts",
+      "bytes": 15291,
+      "sha256": "793d483df11a1c54090b1ee7be42292fd6cbae6164425a8707219419f4926d9c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderCompensationInventoryLocks.ts",
+      "bytes": 2379,
+      "sha256": "dbdfeaf8ed6958bfa7edd7cf5cadfa327ef7bc396d2161b2028b6c9938a3284b"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminAuthorityWriteService.ts",
+      "bytes": 25434,
+      "sha256": "290335b5ee34c8fc521bb12506c042078c20bdf68d39d5e14a51c32c44a63f74"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 104889,
+      "sha256": "61191efd03678c5244fb9665ccc4fa8a814492167209ede0890bca43f4dfa134"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationAuthService.ts",
+      "bytes": 3258,
+      "sha256": "1dbb94b6a48d01c28d19273e5fdfffdf3d95bd81dd2de2f1e2f591542ddd440f"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/notification/StaffNotificationProtocol.ts",
+      "bytes": 2863,
+      "sha256": "83543026c666b22504d546355ef7b7f2d6dc7603d2f1746f5eb58737ee3a59f0"
+    }
+  ],
+  "decisions": {
+    "get": {
+      "source": "StoreProduct.php:726; StoreProductAttrValueDao.getProductAttrValue id ASC",
+      "route": "GET /adminapi/product/product/attrs/:id",
+      "rows": "All type0 rows idASC, includes TS retirement tombstones; absent parent returns [] or orphan SKUs, never auto-404",
+      "dto": "All persisted schema fields camel→snake; decimal strings/raw ordinary image unchanged; disk_info always null as explicit secret-boundary extension; private media uses current parent owner and existing publication attachment policy only",
+      "capacity": "10000 rows, exceed explicit503, never truncate"
+    },
+    "put": {
+      "source": "StoreProduct.php:740; StoreProductAttrValueServices.php:404-468",
+      "route": "PUT /adminapi/product/product/saveStocks/:id",
+      "inputs": "Nonempty attrs [{unique,pm,stock}], canonical numeric/string 0/1 pm, nonnegative int32 numeric/string deltas including zero; alias max8 exact nonempty; malformed/unknown fields explicit compatibility status400 envelope",
+      "lookup": "Type0 idASC collapsed Map(unique,lastRow), preserving source last alias row",
+      "unknown": "Unknown alias is skipped, including only-unknown request; no ledger for unknown; parent update+flags+audit+effects still occur",
+      "duplicateRequests": "EVERY recognized request computes SKUstock=max(originalSKUstock ± requestedDelta,0) and SUM_STOCK=originalSum ± requestedDelta, duplicate last write overwrites earlier; parent stock=max(originalParent + NET all recognized requested deltas,0), NOT SUM(SKUs)",
+      "signedSum": "sum_stock signed int32 with no floor; requested ledger delta unchanged even if stock clamped",
+      "zero": "Recognized zero produces source UPDATE + zero number ledger; retiredzero remains unchanged full row and records0",
+      "ledger": "store_id=0 even nonplatform owner; original cost retained, one common now per batch; every persisted full ledger row including prior history verified",
+      "stockReturn": "positive main stock canonical numeric string, clamped0 literal number0",
+      "writeExtensions": [
+        "One full short Admin authority/row-lock transaction instead of source no surrounding transaction",
+        "Current canonical product.manage only; page2 product.view never grants write; no invented stock menu seed",
+        "Canonical finite bounded inputs, unknown body fields refused",
+        "Bad owner tuples refused; legitimate platform/store/supplier, deleted, hidden, unverified not refused merely for those source statuses",
+        "All card type1 refused so relative edits cannot manufacture backed inventory; PHP only UI hid it",
+        "Current ERP flag erp_open prevents quick adjustment; PHP only UI gate from PublicController.erpConfig",
+        "Retired nonzero refused; retiredzero retained; mixed active/retired same-alias nonzero409; ordinary duplicate active aliases preserve last-row source lookup",
+        "10000 SKU+10000 preexisting product ledger capacity explicit503; int32 overflow refused before write",
+        "Unknown query parameters refused; source no query declared. Validation failures use current PHP-compatible status400 envelope, not an invented HTTP422."
+      ]
+    },
+    "permission": {
+      "stockExactSeeds": 0,
+      "read": "product.view via current canonical/exact existing tuples",
+      "write": "product.manage via current canonical existing grants; no reinterpretation of attrs/<id>/<type> IDs630/631/632/942; page2 remains view only",
+      "sourceFailOpen": "Readable SystemRoleServices unknown-route admission is not copied",
+      "sourceExactSeedRescan": {
+        "oneIdAttrs": 0,
+        "saveStocks": 0,
+        "differentTwoIdAttrs": 4
+      },
+      "numericForgeryProtection": "Unseeded exact one-id attrs/saveStocks and targetstockstream numeric claims refused before generic prefix and opaque fallback in shared single/batch resolution; canonical roles retain existing capabilities."
+    },
+    "locks": {
+      "order": "AdminAuthorityWriteService SHARE ROW EXCLUSIVE system_admin/system_role NOWAIT; try product fence731617/id; try identity731602/0; shared ERP config731745/0+commerce config handshake; parent FORUPDATE NOWAIT then ALL product SKU rows idASC FORUPDATE NOWAIT",
+      "reverseConsumers": "Checkout/compensation/ERP can hold SKU before parent; stock writer never waits backwards on these row locks; whole transaction409 retry",
+      "deadlines": "statement5s,lock2s,idle5s; host+DBclock at admission and after audit+DML; current authority re-resolved and compared at end",
+      "verification": "Full product/SKU/updateRETURNING; all relevant prior/new product ledger rows; complete11field+id Admin audit; full durableoutbox intent readback; config re-read twice",
+      "configurationRowPrivilege": "FOR SHARE on system_config requires UPDATE privilege in PostgreSQL; existing dedicated Admin runtime plans include this. SELECT-only GET requires none."
+    },
+    "flags": {
+      "source": "ProductStockTips.doJob",
+      "timingExtension": "Synchronous in same inventory transaction rather than queued later PHP product.save",
+      "algorithm": "is_sold = exists ANY ordinary type0 SKU stock ==0; is_police=store_stock>=MAINproduct.stock OR any ordinarytype0SKU.stock<=store_stock; retired rows retained for exact algorithm",
+      "config": "Current uncached system_config is_store0 store_stock winner sortASC/idASC last equals DAO canonical sortDESC/idDESC first; missing0; malformed threshold explicit409"
+    },
+    "effects": {
+      "event": "product.stock.effects:<productId>:<uuid>",
+      "payload": [
+        "productId",
+        "auditId",
+        "warning"
+      ],
+      "persistence": "Existing store_order_outbox same inventory/audit transaction; no new table; external0175/embedded0180 exact forward-only CHECK expansion maintenance candidate",
+      "retry": "Existing processOrderNotificationOutbox/lease/FAILED/scanner path; no provider/Redis calls inside inventory transaction; dispatch failure aftercommit cannot turn committed relative write into an error response",
+      "cacheActualTS": "StoreProductService614 no assembled detail cache;654 explicit legacy product_info_id / product_info_id_1..7 cleanup only. No current TS attr cache readers found; do not claim PHP cache tags transferred.",
+      "cachePhpEvidence": "StoreProductAttrServices301 attr_id_type_productId;311 attr_value_id_type;340 attr_sku_productId_type. Clear only explicit ordinary keys derived there and TS product_info compatibility keys, not whole tag or provider KEYS scan.",
+      "cacheErrors": "Redis configured errors propagate to outbox retry; absent key is success, missing Redis binding is current uncached fallback",
+      "notification": "Only captured warning and current is_police1; current live platform Admin+roles/history product.view targets; missing binding/partialRPC leaves retryable; recovered products suppress stalewarning",
+      "channel": "Independent target GET /adminapi/product/stock/notifications/socket; staff-stock:admin:<id> scope product_stock and product.view each connect/publish heartbeat; original withdrawal stream scope/defaultnamespace+extract.view unchanged, cross-scope event keys refused",
+      "protocol": {
+        "auth": "Sec-WebSocket-Protocol cinashop + cinashop-auth.<JWT>, allowed Origin; no query token",
+        "ready": [
+          "type:product_stock_ready",
+          "revision",
+          "refresh:true"
+        ],
+        "changed": [
+          "type:STORE_STOCK",
+          "data:{id:productId}",
+          "revision"
+        ]
+      },
+      "sourceErpEvidence": "PHP app/controller/admin/PublicController.php:51 returns open_erp=!!sys_config(erp_open); TS target additionally enforces current database gate for PUT."
+    },
+    "proofLimits": [
+      "PHP interpreter/BaseController binary not executed; readable source semantics only",
+      "No production database/Redis/Queue/DO/provider work or commissioning",
+      "No PHP retired column exists; target retirement preservation explicitly extended",
+      "Source original stock signed/unsigned deployment wire not executed; transport follows readable bc arithmetic"
+    ]
+  }
+}

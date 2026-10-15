@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-10-15T00:12:07.048675+00:00",
+  "baselineCommit": "657d2d07c110b959208976118d834a507b157829",
+  "cleanStartObservedByRoot": true,
+  "previousGoalTurn": "progress: seven completed local migrations committed and pushed; final catalog independent audit completed; goal active resumed",
+  "previousArtifactsAsOfSnapshot": [
+    {
+      "path": "workers-ts/docs/php-ts-catalog-navigation-migration-20261014.md",
+      "sha256": "0e3a2b01ab4d84684f891fb1b8a94b09c9883908325f566c4f114ca82404c3c4"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-catalog-navigation-migration-20261014.json",
+      "sha256": "155f0f9105da2bc6190ea450e6f981a95f59248ba211e25430158320caf85b2d"
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/frozen-before.json",
+      "sha256": "bf031c12a8b2730f06a7751f2e5e8fc8d18fc9f6cfb7798a5a791a21f17ee62a"
+    },
+    {
+      "path": "workers-ts/audit/catalog-20261014/delivery-independent-review.json",
+      "sha256": "4decedbeb92dc299b62d7aa8d8bbe5e417d38dc8f40a786dfa9121ba0b2fb72d"
+    }
+  ],
+  "notNewPreEditDiskFreeze": true
+}

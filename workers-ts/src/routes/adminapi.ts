@@ -51,6 +51,7 @@ import * as AdminProductRules from '@/controllers/api/v1/AdminProductRuleControl
 import * as AdminProductReplies from '@/controllers/api/v1/AdminProductReplyController';
 import * as AdminProductFictitiousReplies from '@/controllers/api/v1/AdminProductFictitiousReplyController';
 import * as AdminProductCatalogRead from '@/controllers/api/v1/AdminProductCatalogReadController';
+import * as AdminProductStock from '@/controllers/api/v1/AdminProductStockController';
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
@@ -289,6 +290,10 @@ adminapiRoutes.get("/product/list", adminAuth, AdminCrud.adminProductList);
 adminapiRoutes.get('/product/product/list', adminAuth, AdminProductFictitiousReplies.products);
 adminapiRoutes.get('/product/product', adminAuth, AdminProductCatalogRead.list);
 adminapiRoutes.get('/product/product/type_header', adminAuth, AdminProductCatalogRead.header);
+adminapiRoutes.get('/product/product/attrs/:id', adminAuth, AdminProductStock.attrs);
+adminapiRoutes.put('/product/product/saveStocks/:id', adminAuth, AdminProductStock.save);
+// Target-only stock stream; its namespace and product.view scope are independent of withdrawals.
+adminapiRoutes.get('/product/stock/notifications/socket', adminAuth, (c) => upgradeStaffNotification(c, 'admin', 'product_stock'));
 adminapiRoutes.get('/product/category', adminAuth, AdminProductCategories.list);
 adminapiRoutes.get('/product/category/tree/:type', adminAuth, AdminProductCategories.tree);
 adminapiRoutes.get('/product/category/cascader_list', adminAuth, AdminProductCategories.cascader);

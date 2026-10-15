@@ -3,7 +3,7 @@ import type { Env } from "@/env";
 import { createContainer } from "@/lib/di";
 import { AuthException } from "@/utils/errors";
 import { StaffNotificationAuthService } from "@/services/notification/StaffNotificationAuthService";
-import { parseStaffEventKey, parseStaffSession, staffPrincipalName, type StaffPrincipal } from "@/services/notification/StaffNotificationProtocol";
+import { assertStaffEventScope, parseStaffSession, staffPrincipalName, type StaffPrincipal } from "@/services/notification/StaffNotificationProtocol";
 
 /** Per-admin or per-bound-kefu-UID invalidation stream, never a financial data store. */
 export class StaffNotificationDO extends DurableObject<Env> {
@@ -39,12 +39,12 @@ export class StaffNotificationDO extends DurableObject<Env> {
     const pair = new WebSocketPair(), client = pair[0], server = pair[1];
     this.ctx.acceptWebSocket(server); server.serializeAttachment(session);
     await this.scheduleCheck();
-    server.send(JSON.stringify({ type: "staff_notification_ready", revision: this.revision(), refresh: true }));
+    server.send(JSON.stringify({ type: session.scope === 'product_stock' ? 'product_stock_ready' : 'staff_notification_ready', revision: this.revision(), refresh: true }));
     return new Response(null, { status: 101, webSocket: client, headers: request.headers.get("Sec-WebSocket-Protocol") === "cinashop" ? { "Sec-WebSocket-Protocol": "cinashop" } : undefined });
   }
   /** RPC from the durable outbox only. Retry resends the SAME revision; clients deduplicate it. */
   async publish(principal: StaffPrincipal, key: string): Promise<{ revision: number; connected: number }> {
-    this.assertPrincipal(principal); parseStaffEventKey(key);
+    this.assertPrincipal(principal); assertStaffEventScope(principal, key);
     this.ctx.storage.sql.exec("INSERT OR IGNORE INTO signals(event_key) VALUES (?)", key);
     const revision = this.ctx.storage.sql.exec<{ revision: number }>("SELECT revision FROM signals WHERE event_key = ?", key).one().revision;
     // Bound dedup storage. A very old replay is a harmless extra refresh, not a duplicated message/payment.
@@ -52,7 +52,9 @@ export class StaffNotificationDO extends DurableObject<Env> {
     let connected = 0;
     for (const socket of this.ctx.getWebSockets()) {
       if (!await this.active(socket)) continue;
-      try { socket.send(JSON.stringify({ type: "staff_notification_changed", revision })); connected++; }
+      try { socket.send(JSON.stringify(principal.scope === 'product_stock'
+        ? { type: 'STORE_STOCK', data: { id: Number(key.split(':')[1]) }, revision }
+        : { type: "staff_notification_changed", revision })); connected++; }
       catch { socket.close(1011, "Reconnect and refresh"); }
     }
     return { revision, connected };

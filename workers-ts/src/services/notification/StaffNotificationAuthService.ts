@@ -7,6 +7,8 @@ import { getTokenBucket, type RedisEnv } from "@/utils/cache";
 import { AuthException } from "@/utils/errors";
 import { md5 } from "@/utils/jwt";
 import { parseStaffSession, type StaffSocketSession } from "./StaffNotificationProtocol";
+import { loadAdminLegacyRoleReferenceHistory } from '@/services/admin/AdminLegacyRoleDeletionProof';
+import { parseAdminAuthorityRoleIds } from '@/services/admin/AdminAuthorityWriteService';
 
 /** Recheck the token and current database authority before EVERY connection/delivery/heartbeat. */
 export class StaffNotificationAuthService {
@@ -29,11 +31,17 @@ export class StaffNotificationAuthService {
         if (!account || md5(account.password) !== s.authVersion) throw new AuthException("客服通知权限已撤销");
       } else {
         const [admin] = await tx.select().from(systemAdmin).where(and(eq(systemAdmin.id, s.id),
-          eq(systemAdmin.adminType, 1), eq(systemAdmin.status, 1), eq(systemAdmin.isDel, 0))).limit(1);
+          eq(systemAdmin.adminType, 1), eq(systemAdmin.relationId, 0), eq(systemAdmin.status, 1), eq(systemAdmin.isDel, 0))).limit(1);
         if (!admin || md5(admin.pwd) !== s.authVersion) throw new AuthException("管理员通知身份已撤销");
+        if (s.scope === 'product_stock') {
+          if (!Number.isInteger(admin.level) || admin.level < 0 || admin.level > 9) throw new AuthException('管理员库存通知身份无效');
+          await loadAdminLegacyRoleReferenceHistory(tx, parseAdminAuthorityRoleIds(admin.roles), admin.level);
+        }
         const keys = await new AdminPermissionService(createContainerFromDb(tx)).resolveAdminPermissionKeys(admin);
-        if (!keys.has("extract.view")) throw new AuthException("无提现通知查看权限");
+        if (!keys.has(s.scope === 'product_stock' ? 'product.view' : 'extract.view')) throw new AuthException(s.scope === 'product_stock' ? '无库存通知查看权限' : '无提现通知查看权限');
       }
+      const [clock] = await tx.execute(sql`SELECT extract(epoch FROM clock_timestamp()) >= ${s.expiresAt} AS expired`) as unknown as Array<{ expired: boolean }>;
+      if (clock?.expired !== false) throw new AuthException('通知登录已过期');
     });
   }
 }
