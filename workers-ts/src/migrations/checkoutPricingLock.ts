@@ -78,10 +78,17 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   validatePricingRuntimeScope(scope);
   pricingIdentifier(schema);
   const state=await inspectCheckoutPricingLock(tx,schema);
-  const sharedScope = scope === 'shared-shop' || scope === 'customer-work';
+  const ordinaryScope=scope==='customer-work-ordinary',customerScopeSelected=scope==='customer-work'||ordinaryScope;
+  const sharedScope = scope === 'shared-shop' || customerScopeSelected;
   const offlineOid = sharedScope ? await reviewedOfflinePricingOid(tx, schema) : null;
   const managerScope = sharedScope ? await managerScopeLockReadiness(tx,schema) : null;
-  const customerScope = scope === 'customer-work' ? await customerWorkScopeLockReadiness(tx,schema) : null;
+  const customerScope = customerScopeSelected ? await customerWorkScopeLockReadiness(tx,schema) : null;
+  // An explicit new scope alone can admit these two mature NOLOGIN routines.
+  // Their actual full definition/owner/ACL, taxonomy SELECT-only authority and
+  // this independent LOGIN's EXECUTE must verify before any OID exemption.
+  const productCatalog=ordinaryScope?await(await import('./runCustomerProductCatalogLock')).customerProductCatalogLockReadiness(tx,schema):null;
+  const userCatalog=ordinaryScope?await(await import('./runCustomerUserCatalogLock')).customerUserCatalogLockReadiness(tx,schema):null;
+  const ordinaryOids=[...(productCatalog?.ready?productCatalog.catalog.functionOids:[]),...(userCatalog?.ready?userCatalog.catalog.functionOids:[])];
   // Exact catalog, NOLOGIN owner and caller ACL verification precedes OID use.
   // A matching function name cannot exempt an unknown definer routine.
   const managerOids = managerScope?.ready ? managerScope.catalog.functionOids : [];
@@ -90,9 +97,9 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   // Only this explicit customer scope admits the three exact reviewed lock
   // capabilities. Catalog, owner, ACL and this LOGIN's EXECUTE must all pass.
   const customerOids = customerScope?.ready ? customerScope.catalog.functionOids : [];
-  const manualOid=scope==='customer-work'&&schema==='public'
+  const manualOid=customerScopeSelected&&schema==='public'
     ?await(await import('./runCustomerManualRefund')).reviewedCustomerManualRefundPromotionOid(tx):null;
-  const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[])];
+  const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),...ordinaryOids];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
@@ -122,7 +129,8 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
       AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE oid::text=${state.functionOid}
         AND pg_catalog.has_function_privilege(current_user,oid,'EXECUTE')) AS "requiredPrivileges"`);
   return { ready: pricingCatalogReady(state) && row?.callerSafe===true && row?.requiredPrivileges===true && row?.noUnreviewedDefinerRoutine===true
-      && (scope!=='customer-work' || customerScope?.ready===true),
+      && (!customerScopeSelected || customerScope?.ready===true)
+      && (!ordinaryScope || (productCatalog?.ready===true&&userCatalog?.ready===true)),
     catalogReady: pricingCatalogReady(state), callerSafe: row?.callerSafe===true, requiredPrivileges: row?.requiredPrivileges===true,
     noUnreviewedDefinerRoutine: row?.noUnreviewedDefinerRoutine===true };
 }

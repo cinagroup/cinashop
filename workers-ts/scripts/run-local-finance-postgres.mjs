@@ -165,6 +165,8 @@ if (schemaMaintenance) {
     'test/cashier-second-card-origin-postgres.test.ts',
     'test/customer-work-writeoff-postgres.test.ts',
     'test/customer-cashier-second-card-postgres.test.ts',
+    'test/cashier-ordinary-catalog-postgres.test.ts',
+    'test/customer-cashier-ordinary-postgres.test.ts',
     'test/customer-cashier-records-postgres.test.ts',
     'test/customer-cashier-write-ui-postgres.test.ts',
     'test/customer-cashier-form-images-postgres.test.ts',

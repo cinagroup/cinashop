@@ -131,6 +131,10 @@ import { loadCashierFormSubmission, captureCashierFormConsumption } from '@/serv
 import { lockCashierOperationRequest, assertCashierNotAbandoned } from '@/services/customer-work/CustomerCashierAbandon';
 import { cashierSecondCardCreationFacts, authorizeCashierSecondCardCreation, captureCashierSecondCardCreation,
   assertCashierSecondCardCreationReplay, type CashierSecondCardCreationCapability } from './CashierSecondCardOrigin';
+import { cashierOrdinaryCreationFacts, assertCashierOrdinaryParams, authorizeCashierOrdinaryCreation,
+  captureCashierOrdinaryCreation, assertCashierOrdinaryCreationReplay, type CashierOrdinaryCreationCapability } from './CashierOrdinaryOrigin';
+import { lockOrdinaryCashierRequest } from '@/services/customer-work/CustomerOrdinaryCashierLedger';
+import { loadOrdinaryCashierFormSubmission } from '@/services/customer-work/CustomerOrdinaryCashierForm';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -188,6 +192,8 @@ export interface CreateOrderParams {
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
   /** Live server capability issued exclusively by the customer cashier adapter. */
   cashierSecondCardCreation?: CashierSecondCardCreationCapability;
+  /** Independent ordinary/multi-SKU Customer capability. Never request JSON. */
+  cashierOrdinaryCreation?: CashierOrdinaryCreationCapability;
   /** All public service entry points require a server-issued receipt. Pure core fixtures may omit this adapter policy. */
   requireConfirmation?: boolean;
   /** Public checkout always captures. Omission is reserved for isolated core/legacy fixtures, never an HTTP or env option. */
@@ -241,9 +247,11 @@ export interface OrderPricingQuote {
   paidMemberDiscountCents: number;
   promotionSavingsCents: number;
   giveIntegral: number;
+  /** New ordinary quote only; the mature quote wire remains unchanged. */
+  productIntegral?: number;
   giveCoupon: number[];
   giveCouponInfo: Array<{ id: number; title: string; price: string; minPrice: string }>;
-  promotionsDetail: Array<{ id: number; tierId: number; name: string; threshold: string; repetitions: number }>;
+  promotionsDetail: Array<{ id: number; tierId: number; name: string; threshold: string; repetitions: number; thresholdType?:1|2 }>;
   giveCartInfo: Array<{ cartId: string; productId: number; skuUnique: string; quantity: number; promotionId: number }>;
   storeFreePostageCents: number;
   isStoreFreePostage: boolean;
@@ -965,6 +973,8 @@ export class StoreOrderCreateService {
     const { uid, key, cartIds } = params;
     const assisted = params.assisted;
     const cashier = cashierSecondCardCreationFacts(runtime.cashierSecondCardCreation);
+    const ordinary = cashierOrdinaryCreationFacts(runtime.cashierOrdinaryCreation);
+    if(ordinary){if(cashier)throw new ValidateException('不能混用普通商品与次卡收银来源');assertCashierOrdinaryParams(ordinary,params);}
     if(cashier && (assisted || uid!==cashier.buyer_uid || key!==cashier.request_key.replaceAll('-','')
       ||cartIds.length!==1||cartIds[0]!==cashier.cart_ids[0]||params.shippingType!==2||params.storeId!==0
       ||(params.type??0)!==0||params.manualAddress!==undefined))throw new ValidateException('客户次卡收银来源与下单参数不一致');
@@ -982,12 +992,13 @@ export class StoreOrderCreateService {
           !/^[A-Za-z0-9_-]+$/.test(assisted.touristUid)
         )
       ) throw new ValidateException("游客标识无效");
-    } else if (uid === 0 && !cashier) {
+    } else if (uid === 0 && !cashier && !ordinary) {
       throw new ValidateException("游客订单必须通过代客下单创建");
     }
 
     const assertExistingScope = async (order: typeof storeOrder.$inferSelect,db=c.db) => {
       if(cashier){await assertCashierSecondCardCreationReplay(db,runtime.cashierSecondCardCreation!,order);return;}
+      if(ordinary){await assertCashierOrdinaryCreationReplay(db,runtime.cashierOrdinaryCreation!,order);return;}
       if (!assisted) return;
       if (order.staffId !== assisted.adminId || order.isChannel !== 2) {
         throw new ValidateException("订单确认标识已被其他代客会话使用");
@@ -1012,7 +1023,8 @@ export class StoreOrderCreateService {
     const pickupStoreId = shippingType === 2 ? Number(params.storeId ?? 0) : 0;
     // Legacy coupon selection can precede choosing a pickup store. Normal quote/create still require one.
     const couponPreview = options?.preview === true && options.couponQuery !== undefined;
-    if (shippingType === 2 && (!Number.isSafeInteger(pickupStoreId) || pickupStoreId < (cashier || couponPreview ? 0 : 1))) {
+    const ordinaryCounter = Boolean(ordinary && shippingType === 2 && pickupStoreId === 0);
+    if (shippingType === 2 && (!Number.isSafeInteger(pickupStoreId) || pickupStoreId < (cashier || ordinaryCounter || couponPreview ? 0 : 1))) {
       throw new ValidateException("请选择有效的自提门店");
     }
 
@@ -1027,6 +1039,9 @@ export class StoreOrderCreateService {
       if(cashier){
         if(cart.staffId!==cashier.actor.uid||cart.touristUid!==cashier.tourist_key||cart.productType!==4||cart.type!==0)
           throw new ValidateException('购物行不属于实际客户次卡收银来源');
+      } else if(ordinary){
+        if(cart.staffId!==ordinary.actor.uid||cart.touristUid!==ordinary.intent.tourist_key||cart.productType!==0||cart.type!==0||cart.activityId!==0)
+          throw new ValidateException('购物行不属于实际普通商品收银来源');
       } else if (assisted) {
         if (
           cart.staffId !== assisted.adminId ||
@@ -1220,6 +1235,8 @@ export class StoreOrderCreateService {
         ||![1,2,3].includes(sku.writeValid)||(sku.writeValid===2&&sku.writeDays<=0)
         ||(sku.writeValid===3&&(sku.writeStart<=0||sku.writeEnd<=sku.writeStart||sku.writeEnd<=Math.floor(Date.now()/1000)))))
         throw new ValidateException('收银次卡商品或规格已失效，请重新选品');
+      if(ordinary&&(product.pid!==0||product.productType!==0||product.isVerify!==1||sku.isRetired!==0))
+        throw new ValidateException('普通收银商品或规格已失效，请重新选品');
       const presale = type === 6 ? preparePresalePurchase(cart, product, sku, user) : null;
 
       // 活动价 (M17: 秒杀/砍价/拼团替换 SKU 价)
@@ -1550,7 +1567,7 @@ export class StoreOrderCreateService {
         throw new ValidateException(`每人总共限购 ${legacyActivityTotalNum} 件`);
       }
     }
-    const gainIntegral = calculateProductIntegralSnapshot(
+    const gainIntegral = ordinary && uid === 0 ? 0 : calculateProductIntegralSnapshot(
       orderItems.map(({ cart, product, activityGiveIntegral }) => ({
         giveIntegral: activityGiveIntegral ?? product.giveIntegral,
         quantity: cart.cartNum,
@@ -1570,13 +1587,14 @@ export class StoreOrderCreateService {
     }
     const orderProductType = productTypes.size === 1 ? [...productTypes][0] : 0;
     if(cashier && (orderProductType!==4||type!==0||orderItems.length!==1))throw new ValidateException('客户收银仅接受一个真实普通次卡规格');
+    if(ordinary&&(orderProductType!==0||type!==0||orderItems.length!==ordinary.cart_ids.length))throw new ValidateException('普通收银需要完整实体商品购物行');
     assertProductCheckoutShippingType(orderProductType, shippingType);
-    let pickupPolicy = shippingType === 2 && !cashier
+    let pickupPolicy = shippingType === 2 && !cashier && !ordinaryCounter
       ? await readCheckoutPickupPolicy(c.db, pickupStoreId, couponPreview) : null;
     if (type === 2 && shippingType === 2) await assertBargainPickupQuote(c, orderItems[0].product, pickupStoreId);
     const deliveryAddress = shippingType === 1 && ![1, 2, 3].includes(orderProductType)
       ? await resolveDeliveryAddress(c.db, { uid, addressId: params.addressId, addressAlias: params.addressAlias,
-          manual: params.manualAddress, assisted: Boolean(assisted), required: !options?.preview })
+          manual: params.manualAddress, assisted: Boolean(assisted || ordinary), required: !options?.preview })
       : null;
     // Never mutate the caller's DTO. Saved-address fields, not client overrides,
     // are the shared source of pricing and the persisted delivery snapshot.
@@ -1584,7 +1602,7 @@ export class StoreOrderCreateService {
       realName: deliveryAddress?.fields.realName, userPhone: deliveryAddress?.fields.phone,
       province: deliveryAddress?.fields.province, cityId: deliveryAddress?.fields.cityId,
       userAddress: deliveryAddress ? deliveryAddressText(deliveryAddress.fields) : undefined };
-    else params = { ...params, ...checkoutContact(params.realName, params.userPhone, shippingType === 2 && !options?.preview),
+    else params = { ...params, ...checkoutContact(params.realName, params.userPhone, shippingType === 2 && !options?.preview && (!ordinary || uid>0)),
       province: undefined, cityId: undefined, userAddress: undefined };
     const staffIds = new Set(
       orderItems.map(({ cart }) => cart.staffId).filter((staffId) => staffId > 0),
@@ -1786,6 +1804,9 @@ export class StoreOrderCreateService {
       version: 1, uid, adminId: assisted?.adminId ?? 0, touristUid: assisted?.touristUid ?? '',
       ...(cashier?{customerCashier:{creatorUid:cashier.actor.uid,serviceId:cashier.service_id,scopeKey:cashier.scope_key,
         requestKey:cashier.request_key,requestHash:cashier.request_hash,touristUid:cashier.tourist_key,mode:'second-card-counter-v1'}}:{}),
+      ...(ordinary?{customerOrdinaryCashier:{creatorUid:ordinary.actor.uid,serviceId:ordinary.service_id,scopeKey:ordinary.intent.scope_key,
+        requestKey:ordinary.request_key,requestHash:ordinary.request_hash,draftKey:ordinary.intent.draft_key,draftHash:ordinary.intent.draft_hash,
+        touristUid:ordinary.intent.tourist_key,mode:'ordinary-products-v1'}}:{}),
       type, shippingType, pickupStoreId, pickupPolicy, offlinePricing: payType === 'offline',
       couponId: params.couponId ?? 0, wantsIntegral, pinkId: params.pinkId ?? 0,
       bargainActivityId, bargainParticipantId, bargainParticipantQuote, pinkCombinationId,
@@ -1798,6 +1819,7 @@ export class StoreOrderCreateService {
       combinationConfirmationRules, newcomerConfig, orderSystemFormId,
       ...(assisted ? { assistedForm: assistedFormConfirmation } : {}),
       ...(cashier ? { cashierForm: assistedFormConfirmation } : {}),
+      ...(ordinary ? { ordinaryCashierForm: assistedFormConfirmation } : {}),
       integralActivityId, discountActivityId, newcomerActivityId, newcomerActivitySkuId,
       address: deliveryAddress ? { id: deliveryAddress.saved?.id ?? 0, fields: deliveryAddress.fields, regions: deliveryAddress.regions } : null,
       shippingSnapshot, pricingConfig, firstOrderConfig, levelDiscountPercent, activePaidMember, membershipSnapshot,
@@ -1831,7 +1853,7 @@ export class StoreOrderCreateService {
       totalNum, isStoreFreePostage, gainIntegral,
     });
     if (options?.preview) {
-      if ((assisted || cashier) && orderSystemFormId > 0) {
+      if ((assisted || cashier || ordinary) && orderSystemFormId > 0) {
         assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
       }
       return {
@@ -1841,7 +1863,7 @@ export class StoreOrderCreateService {
         integralPolicy: { enabled: Boolean(user) && supportsIntegralDeduction && pricingConfig.integralEnabled,
           ratio: pricingConfig.integralRatio },
         systemFormId: orderSystemFormId,
-        ...(cashier?{systemForm:assistedFormConfirmation}:{}),
+        ...((cashier||ordinary)?{systemForm:assistedFormConfirmation}:{}),
         ...(cashier?{card:{product_id:orderItems[0].product.id,sku_unique:orderItems[0].sku.unique,
           quantity:orderItems[0].cart.cartNum,unit_write_times:orderItems[0].sku.writeTimes,
           total_write_times:orderItems[0].sku.writeTimes*orderItems[0].cart.cartNum,
@@ -1867,13 +1889,14 @@ export class StoreOrderCreateService {
         paidMemberDiscountCents,
         promotionSavingsCents: promotionQuote?.totalSavingsCents ?? 0,
         giveIntegral: giftQuote?.totalIntegral ?? 0,
+        ...(ordinary?{productIntegral:gainIntegral}:{}),
         giveCoupon: giftQuote?.couponIssueIds ?? [],
         giveCouponInfo: giftQuote?.intent?.promotions.flatMap(campaign => campaign.coupons.map(coupon => ({
           id: coupon.issue_id, title: coupon.title, price: coupon.price, minPrice: coupon.min_price,
         }))) ?? [],
         promotionsDetail: giftQuote?.intent?.promotions.map(campaign => ({ id: campaign.id,
           tierId: campaign.tier_id, name: campaign.name, threshold: campaign.threshold,
-          repetitions: campaign.repetitions })) ?? [],
+          repetitions: campaign.repetitions,...(ordinary?{thresholdType:campaign.threshold_type}:{}) })) ?? [],
         giveCartInfo: giftQuote?.intent?.promotions.flatMap(campaign => campaign.products.map(product => ({
           cartId: product.cart_id, productId: product.product_id, skuUnique: product.unique,
           quantity: product.quantity, promotionId: campaign.id,
@@ -1894,10 +1917,11 @@ export class StoreOrderCreateService {
     }
 
     if(cashier&&!cashier.confirmation)throw new OrderQuoteReconfirmRequired(key);
-    const confirmation = cashier ? cashier.confirmation! : runtime.requireConfirmation || params.quoteToken !== undefined
+    if(ordinary&&!ordinary.confirmation)throw new OrderQuoteReconfirmRequired(key);
+    const confirmation = ordinary ? ordinary.confirmation! : cashier ? cashier.confirmation! : runtime.requireConfirmation || params.quoteToken !== undefined
       ? await readCheckoutConfirmation(runtime.CONFIG_KV, { uid, key, adminId: assisted?.adminId, touristUid: assisted?.touristUid }, params.quoteToken)
       : null;
-    if (confirmation && (assisted || cashier) && orderSystemFormId > 0) {
+    if (confirmation && (assisted || cashier || ordinary) && orderSystemFormId > 0) {
       assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
     }
     if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
@@ -1944,6 +1968,7 @@ export class StoreOrderCreateService {
     const orderRow = await withTx(c, async (tx) => {
       if(cashier){await lockCashierOperationRequest(tx,cashier.actor.uid,cashier.request_key);
         await assertCashierNotAbandoned(tx,cashier.actor.uid,cashier.request_key,'creation',cashier.request_hash);}
+      if(ordinary)await lockOrdinaryCashierRequest(tx,ordinary.actor.uid,ordinary.request_key,ordinary.intent.draft_key);
       // Bound values come from activity rows locked/compared below. Their terms stay
       // stable, but time must be evaluated again after every possible business wait.
       let finalActivityWindow: SQL | undefined;
@@ -1964,6 +1989,7 @@ export class StoreOrderCreateService {
       if (concurrentExistingRows[0]) await assertExistingScope(concurrentExistingRows[0],tx);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
       if(cashier)await authorizeCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!);
+      if(ordinary)await authorizeCashierOrdinaryCreation(tx,runtime.cashierOrdinaryCreation!);
 
       if (promotionQuote) {
         try {
@@ -2122,10 +2148,10 @@ export class StoreOrderCreateService {
       }
       let verifyCode = "";
       if (shippingType === 2) {
-        if(!cashier)await lockCheckoutPickupStore(tx, pickupStoreId);
+        if(!cashier&&!ordinaryCounter)await lockCheckoutPickupStore(tx, pickupStoreId);
         verifyCode = await generatePickupVerifyCode(tx);
       }
-      if (confirmation && (assisted || cashier) && orderSystemFormId > 0) {
+      if (confirmation && (assisted || cashier || ordinary) && orderSystemFormId > 0) {
         // The early read is only a fast rejection. This NOWAIT row lock is the
         // decisive check: form management cannot edit between validation and
         // commit, and changed fields demand a fresh quote before answers are
@@ -2133,7 +2159,8 @@ export class StoreOrderCreateService {
         assistedFormConfirmation = await loadActiveOrderSystemForm(tx, orderSystemFormId, true);
         assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
       }
-      const preparedSystemForm = cashier ? await loadCashierFormSubmission(tx,cashier,orderSystemFormId,params.customForm) : await loadOrderSystemFormSubmission(
+      const preparedSystemForm = ordinary ? await loadOrdinaryCashierFormSubmission(tx,ordinary,orderSystemFormId,params.customForm)
+        : cashier ? await loadCashierFormSubmission(tx,cashier,orderSystemFormId,params.customForm) : await loadOrderSystemFormSubmission(
         tx,
         orderSystemFormId,
         params.customForm,
@@ -2308,8 +2335,8 @@ export class StoreOrderCreateService {
           and(
             inArray(storeCart.id, cartIds),
             eq(storeCart.uid, uid),
-            eq(storeCart.staffId, cashier?.actor.uid ?? assisted?.adminId ?? 0),
-            eq(storeCart.touristUid, cashier?.tourist_key ?? (assisted && uid === 0 ? assisted.touristUid : "")),
+            eq(storeCart.staffId, ordinary?.actor.uid ?? cashier?.actor.uid ?? assisted?.adminId ?? 0),
+            eq(storeCart.touristUid, ordinary?.intent.tourist_key ?? cashier?.tourist_key ?? (assisted && uid === 0 ? assisted.touristUid : "")),
             eq(storeCart.isPay, 0),
             eq(storeCart.isDel, 0),
             eq(storeCart.status, 1),
@@ -2665,7 +2692,7 @@ export class StoreOrderCreateService {
           // Assisted carts were already exact-set validated against assisted.adminId;
           // deriving from the immutable cart set keeps the ordinary order path unchanged.
           staffId: orderStaffId,
-          isChannel: assisted || cashier ? 2 : 0,
+          isChannel: assisted || cashier || ordinary ? 2 : 0,
           merId: orderMerId,
           spreadUid: brokerage.spreadUid,
           spreadTwoUid: brokerage.spreadTwoUid,
@@ -2797,10 +2824,12 @@ export class StoreOrderCreateService {
             // The assisted form row is pinned above. Also pin the product's
             // choice of that row at its inventory UPDATE, so an editor cannot
             // swap form IDs between the pre-transaction quote and this commit.
-            (assisted || cashier) && type === 0 && cart.activityId === 0
+            (assisted || cashier || ordinary) && type === 0 && cart.activityId === 0
               ? eq(storeProduct.systemFormId, product.systemFormId) : undefined,
             cashier ? and(eq(storeProduct.pid,0),eq(storeProduct.type,product.type),eq(storeProduct.relationId,product.relationId),
               eq(storeProduct.productType,4),eq(storeProduct.isShow,1),eq(storeProduct.isDel,0),eq(storeProduct.isVerify,1),eq(storeProduct.isPresaleProduct,0)) : undefined,
+            ordinary ? and(eq(storeProduct.pid,0),eq(storeProduct.type,product.type),eq(storeProduct.relationId,product.relationId),
+              eq(storeProduct.productType,0),eq(storeProduct.isShow,1),eq(storeProduct.isDel,0),eq(storeProduct.isVerify,1),eq(storeProduct.isPresaleProduct,0)) : undefined,
             // Activity overrides are protected by their existing activity UPDATE.
             // Only freeze the base gift amount when it actually supplies the snapshot.
             activityGiveIntegral === null ? eq(storeProduct.giveIntegral, product.giveIntegral) : undefined,
@@ -2909,7 +2938,7 @@ export class StoreOrderCreateService {
               activityName || discountItem?.entry.title || integralActivity?.storeName ||
               product.storeName,
             image: activityImage || activitySku?.image || integralActivity?.image || product.image,
-            giveIntegral: activityGiveIntegral ?? String(product.giveIntegral),
+            giveIntegral: ordinary && uid === 0 ? '0' : activityGiveIntegral ?? String(product.giveIntegral),
             integral: activitySku?.integral ?? 0,
           },
           sku: {
@@ -3064,10 +3093,10 @@ export class StoreOrderCreateService {
       // the final order quantity are present. This remains in the same commit.
       await enqueueAutomaticReceiptPrintJobs(tx, [order], "created", now);
 
-      if (couponResolution.template) await assertCheckoutCouponTemplate(tx, couponResolution.template);
+      if (couponResolution.template) await assertCheckoutCouponTemplate(tx, couponResolution.template, runtime.cashierOrdinaryCreation);
       const presaleTerms = orderItems[0]?.presale;
       const finalPresaleWindow = presaleTerms ? await protectPresalePrincipal(tx, uid, presaleTerms) : undefined;
-      const finalMembershipWindow = membershipSnapshot ? await assertCheckoutMembershipSnapshot(tx, membershipSnapshot) : undefined;
+      const finalMembershipWindow = membershipSnapshot ? await assertCheckoutMembershipSnapshot(tx, membershipSnapshot, runtime.cashierOrdinaryCreation) : undefined;
       const finalBrokerageWindow = brokerage.authority ? await assertCheckoutBrokerageAuthority(tx, brokerage.authority) : undefined;
       if (deliveryAddress) await assertDeliveryAddressSnapshot(tx, deliveryAddress);
       if (shippingSnapshot) await assertShippingTemplateSnapshot(tx, shippingSnapshot, templateIds, params.cityId);
@@ -3075,7 +3104,7 @@ export class StoreOrderCreateService {
       // Protect duplicate-winner changes and absent/default keys until commit.
       // Re-read the same semantic projection; never consult KV inside this fence.
       await protectCheckoutPricingSources(tx);
-      if (shippingType === 2 && !cashier) {
+      if (shippingType === 2 && !cashier && !ordinaryCounter) {
         const currentPickup = await readCheckoutPickupPolicy(tx, pickupStoreId);
         if (JSON.stringify(currentPickup) !== JSON.stringify(pickupPolicy))
           throw new ValidateException('自提门店信息已变化，请重新确认');
@@ -3115,6 +3144,7 @@ export class StoreOrderCreateService {
       // Origin/audit INSERTs can also wait. Persist them before the last pure
       // clock guard so a cashier card cannot expire during those waits.
       if(cashier)await captureCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!,order,await confirmationFingerprint());
+      if(ordinary)await captureCashierOrdinaryCreation(tx,runtime.cashierOrdinaryCreation!,order,await confirmationFingerprint());
       if(cashier)await captureCashierFormConsumption(tx,cashier,order,preparedSystemForm);
       const finalCashierWindow = cashier && orderItems[0].sku.writeValid === 3
         ? sql`clock_timestamp() < to_timestamp(${orderItems[0].sku.writeEnd})` : undefined;

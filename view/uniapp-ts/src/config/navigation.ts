@@ -20,6 +20,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/customer-work/cashierRecords",
   "/pages/customer-work/cashierRecord",
   "/pages/customer-work/cashier",
+  "/pages/customer-work/ordinaryCashier",
   "/pages/customer-work/orders",
   "/pages/customer-work/orderDetail",
   "/pages/customer-work/refunds",

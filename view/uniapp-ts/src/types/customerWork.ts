@@ -12,9 +12,10 @@ export interface CustomerWorkContext {
   metric_scopes: CustomerWorkScopes;
   profile: { uid: number; nickname: string; phone: string; avatar: string };
   capabilities: { statistics: true; orders: true; refunds: true; logistics: true;
-    product_management: boolean; user_management: boolean; writeoff_read?: boolean; cashier_records?: boolean; cashier_second_card?: boolean; cashier_form_images?: boolean; assisted_order: false; writes: false };
+    product_management: boolean; user_management: boolean; writeoff_read?: boolean; cashier_records?: boolean; cashier_second_card?: boolean; cashier_form_images?: boolean; cashier_ordinary?: boolean; assisted_order: false; writes: false };
   cashier_readiness?: { writes: boolean; reason: string };
   cashier_form_images_readiness?: { writes: boolean; reason: string };
+  cashier_ordinary_readiness?: { writes: boolean; reason: string };
 }
 export interface CustomerWorkSummary {
   after_price: string; growth_rate: number; increase_time: string; increase_time_status: number;

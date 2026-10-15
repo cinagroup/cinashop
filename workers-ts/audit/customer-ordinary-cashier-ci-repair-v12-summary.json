@@ -1,0 +1,854 @@
+{
+  "kind": "customer-ordinary-cashier-ci-repair-v12-summary",
+  "createdAtUtc": "2026-10-13T07:40:24.483Z",
+  "candidate": {
+    "head": "b19a21c627b41b093b27753e1110ddd4927ded8f",
+    "sourceRoot": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012",
+    "validationRoot": "C:/Users/cina/.codex/visualizations/2026/10/11/01a12a82-4fc9-7511-aac5-e8957b4e7f1f/customer-ordinary-backend-v12",
+    "sourceManifest": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\source-manifest.json",
+      "bytes": 1544302,
+      "sha256": "e242eed87d5fbf8474fc77ca470251484d6a94bc3cc09c6c3ded95cc8c631108"
+    },
+    "toolSeal": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\tools-seal.json",
+      "bytes": 4918,
+      "sha256": "ae81d3680f3b69d5d902fc401982b97e760a034c32b1c62e5ab10b0f6a031ec3"
+    },
+    "finalReceipt": {
+      "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\final-receipt.json",
+      "bytes": 41457,
+      "sha256": "296ff359ca5a0426056ea2c4b1a43aa62a1ea2e8c5398f19c1be352cc05d3593"
+    },
+    "frozenRepairFiles": [
+      {
+        "path": "workers-ts/test/customer-cashier-ordinary-postgres.test.ts",
+        "bytes": 42065,
+        "sha256": "b00f04f5b6cc9f3d4d5418764e3f7ba8ad86bf6adb02e33aa65a8f0a98e17922",
+        "change": "Move the genuine creation-versus-abandonment hold to the protected creation receipt INSERT before COMMIT; prove first-transaction order/origin/receipt each 1 and external visibility each 0, observe the actual PostgreSQL Lock wait and release immediately. Retain the opposite direction and original budgets/titles. Extend the existing form case with a genuine legacy order copying the canonical creator attachment and complete ordinary marker but lacking protected ordinary origin; same actual buyer/staff, signature calls 0, images empty and reserved marker removed."
+      },
+      {
+        "path": "workers-ts/test/data-migration.test.ts",
+        "bytes": 73829,
+        "sha256": "1636d6b8cde1c0d31a7ddd1ce1eee6bd9345b4815b00d7c43cdbc66f3da5a813",
+        "change": "Keep historical catalogs independently fixed and recognize the explicit current four-table ordinary delta from actual parser output; preserve exact source definitions and reject unknown, omitted or changed authority."
+      },
+      {
+        "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+        "bytes": 23534,
+        "sha256": "fd6071c724dd3f276a728c0c8b60ee674af4fd3b9304faf63b1479dd78b662ed",
+        "change": "Add explicit four-table source/column authority under a new current scope, retaining default historical scope. Broaden only the local tables collection element type to string[] to fix TS2345; all literal contents, source hashes and rejection behavior remain fixed."
+      },
+      {
+        "path": "workers-ts/test/theme-host-chain.test.ts",
+        "bytes": 17899,
+        "sha256": "5f5346b5a4a8796376de392ef01b3e425fd7541567594c051489f863578d0bdc",
+        "change": "Derive the complete current 130-page manifest and 21 customer consumers, independently retaining the original 20 consumers and all host/import/default-slot assertions."
+      },
+      {
+        "path": "workers-ts/scripts/uniapp-frontend-parity-audit.ts",
+        "bytes": 9091,
+        "sha256": "430afb713a22d286105e8c9a355dbfafc974df14160fec77e59c077024d82fca",
+        "change": "Append only the exact customer-ordinary-cashier-followup selector for the dated ordinary ledger; preserve previous selectors and original historical ledger bytes."
+      },
+      {
+        "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+        "bytes": 22643,
+        "sha256": "354680ed93b585ddc413e885bc0be01b70d712eeb7d6c608715bf13a1a117af3",
+        "change": "Assert complete current client/server 130-page sets and shared canonical ordinary route with six invalid-query rejections in the existing case. Keep inverse historical manifest hashes and legacy 151-page accounting fixed."
+      },
+      {
+        "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+        "bytes": 21880,
+        "sha256": "a5dd8b829ee38d1844cce0c6016ef5717e98a1595e5cd492ce337335a4041667",
+        "change": "Add the ordinary page to the complete server registered-page set; the shared work resolver already handled it."
+      },
+      {
+        "path": "workers-ts/audit/uniapp-frontend-parity-customer-ordinary-cashier-followup-20261013.json",
+        "bytes": 5432,
+        "sha256": "0c40540b58a77bd0ea4c7c2b09925773abd86d084d0cf28adfc67e5b7889c993",
+        "change": "Add a separate dated current ordinary parity ledger; do not rewrite the three historical raw ledgers or grant legacy cashier gap coverage."
+      },
+      {
+        "path": "workers-ts/src/services/order/OrderSystemFormService.ts",
+        "bytes": 15301,
+        "sha256": "e2f42a4b9791ecd888745119c7acde83ca2e5b5d4c261c818989f16557f2cfaa",
+        "change": "Run original bounded snapshot parsing first, returning [] without SQL for invalid input. Dispatch ordinary image lookup only for uploadPicture with an own ordinaryCashierImageScope property. Retain all real root/origin/hash/creator/UUID/attachment checks; remove the reserved marker from old public and assisted projections. Preserve old no-marker assisted behavior and SQL error propagation."
+      },
+      {
+        "path": "workers-ts/test/admin-assisted-order-migration.test.ts",
+        "bytes": 6810,
+        "sha256": "68f0d46b59a300cfade1fec06086e2ae0d8e13e584eb497bd0d916cdf9349c5c",
+        "change": "Update one obsolete source assertion to the complete actual staff authority chain ordinary?.actor.uid ?? cashier?.actor.uid ?? assisted?.adminId ?? 0; preserve the remaining actor/ownership assertions."
+      }
+    ],
+    "repairFileCount": 10,
+    "frontendSourceEditsInThisRepair": 0
+  },
+  "problemAndResult": "The b19 candidate CI exposed current-versus-historical catalog/route assertions and an ordinary image dispatch regression in legacy assisted form reads. This candidate fixes those exact sources and strengthens the actual creation/abandonment handshake without increasing production lock budgets. V12 passes its full declared local scope; the failed published b19 CI remains failed history.",
+  "validation": {
+    "labels": [
+      {
+        "label": "typecheck-unit",
+        "startedAtUtc": "2026-10-13T07:11:06.364Z",
+        "endedAtUtc": "2026-10-13T07:15:30.509Z",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": true,
+        "wholeFiles": 0,
+        "tests": 0,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-unit-receipt.json",
+          "bytes": 1641,
+          "sha256": "3e6d6b0cb231bca202a44cf7a23fc71d790c26d3da87880bf2c832b558e1d2d1"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-unit.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-unit-before.json",
+          "bytes": 24681,
+          "sha256": "6db33fd03fffb4403ec62c53ee228412630840ee61af1bef51451f9b74ef4086"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-unit-after.json",
+          "bytes": 24681,
+          "sha256": "0bf0edd7373fba6011c37241d8a5c90614735ca3279b5ec4a0f36b0c415d91cb"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "typecheck-runtime",
+        "startedAtUtc": "2026-10-13T07:16:08.276Z",
+        "endedAtUtc": "2026-10-13T07:17:43.957Z",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": true,
+        "wholeFiles": 0,
+        "tests": 0,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-runtime-receipt.json",
+          "bytes": 1653,
+          "sha256": "1874ac118e057281c21b0fb9d48c759042dbf5679c8a86767a9d6930128969db"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-runtime.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-runtime-before.json",
+          "bytes": 24681,
+          "sha256": "76ba60ea613608b5c82a837c28f4570ec5e57ac81e82c4eb37ea59f569f0fa7d"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\typecheck-runtime-after.json",
+          "bytes": 24681,
+          "sha256": "c8a1091757aa00379f414996a9ed04c24ddb7bb490cd72242b3dc8a6c974ee6e"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "unit-contract",
+        "startedAtUtc": "2026-10-13T07:19:17.047Z",
+        "endedAtUtc": "2026-10-13T07:20:00.482Z",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/customer-cashier-ordinary-contract.test.ts",
+          "--maxWorkers=1",
+          "--reporter",
+          "verbose"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "wholeFiles": 1,
+        "tests": 6,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [
+          "Test Files  1 passed (1)",
+          "Tests  6 passed (6)",
+          "Duration  7.99s (transform 5.99s, setup 0ms, import 7.80s, tests 11ms, environment 0ms)"
+        ],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-contract-receipt.json",
+          "bytes": 1796,
+          "sha256": "d425156b8bff0c47ecd48d479fd37b2ec19a1821d10bf10ccb305b565ff1d245"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-contract.log",
+          "bytes": 1518,
+          "sha256": "0d8bf11e5e22441beb56118d4da7d9c8b791e28d9c44a889ce64e1848f95d971"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-contract-before.json",
+          "bytes": 24681,
+          "sha256": "78221037c3ca0a316ab14d5fcb6bc303a31df87dfe39451f4594505eba4b4097"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-contract-after.json",
+          "bytes": 24681,
+          "sha256": "12ceb39c6f418abf7049f16f12d84ba10b69b8aa9a5c76218224c0be433bfd86"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "unit-data-migration",
+        "startedAtUtc": "2026-10-13T07:20:27.545Z",
+        "endedAtUtc": "2026-10-13T07:20:57.169Z",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/data-migration.test.ts",
+          "--maxWorkers=2",
+          "--reporter",
+          "verbose"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "wholeFiles": 1,
+        "tests": 35,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [
+          "Test Files  1 passed (1)",
+          "Tests  35 passed (35)",
+          "Duration  4.14s (transform 1.21s, setup 0ms, import 660ms, tests 3.30s, environment 0ms)"
+        ],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-data-migration-receipt.json",
+          "bytes": 1823,
+          "sha256": "2bb839a5a80788d815e35eefe1222ff156708efbffa9e1c86bb925fda899d2f7"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-data-migration.log",
+          "bytes": 5866,
+          "sha256": "ed91ab911c0a5b8c3a412c13262109488f9242a6a303ca9776144c31d647a3ab"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-data-migration-before.json",
+          "bytes": 24681,
+          "sha256": "21de4f0b8d39deff4f486c30c58a66fdf25642d2fc89ce3564ee1a18fcc77fdc"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-data-migration-after.json",
+          "bytes": 24681,
+          "sha256": "2c9b45767e0943b4dd8975fbcdb722dcf40e4c78b25575e4562a0ff7058f1a0f"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "unit-ui",
+        "startedAtUtc": "2026-10-13T07:18:10.581Z",
+        "endedAtUtc": "2026-10-13T07:18:52.108Z",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/admin-fab-settings.test.ts",
+          "test/uniapp-frontend-parity.test.ts",
+          "test/theme-host-chain.test.ts",
+          "--maxWorkers=2",
+          "--reporter",
+          "verbose"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "wholeFiles": 3,
+        "tests": 76,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [
+          "Test Files  3 passed (3)",
+          "Tests  76 passed (76)",
+          "Duration  7.73s (transform 5.17s, setup 0ms, import 7.74s, tests 2.34s, environment 0ms)"
+        ],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-ui-receipt.json",
+          "bytes": 1776,
+          "sha256": "50f07febf194cf81245376f1839fc83bfa0c46d580e3b977d2f926b73b4c7833"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-ui.log",
+          "bytes": 15086,
+          "sha256": "1a09542b716ec6a948c94ba17cc1af21bb571c6ae077e3b3111b464d18d7df7a"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-ui-before.json",
+          "bytes": 24681,
+          "sha256": "3e642f609df13cedf1872b56be784f23c8ad50332728b4cff07b8c1838e83879"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-ui-after.json",
+          "bytes": 24681,
+          "sha256": "7ff717e9c993c9e83c896066038e8e2e1a24f9e484f3bb8b585dde677e8cc752"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "unit-admin-assisted",
+        "startedAtUtc": "2026-10-13T07:21:23.279Z",
+        "endedAtUtc": "2026-10-13T07:21:55.809Z",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/admin-assisted-order-migration.test.ts",
+          "--maxWorkers=2",
+          "--reporter",
+          "verbose"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "wholeFiles": 1,
+        "tests": 5,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [
+          "Test Files  1 passed (1)",
+          "Tests  5 passed (5)",
+          "Duration  5.82s (transform 4.20s, setup 0ms, import 5.60s, tests 22ms, environment 0ms)"
+        ],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-admin-assisted-receipt.json",
+          "bytes": 1820,
+          "sha256": "b30c338b8bfe670f19c0a2fe705f753d99861339918654d9dff1d4917bd733f5"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-admin-assisted.log",
+          "bytes": 1197,
+          "sha256": "9a363768eb8308e8b9728a41c037791ef82c3d557a1827ff16ce80a0bb61a89b"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-admin-assisted-before.json",
+          "bytes": 24681,
+          "sha256": "dd9893612920d4efbabd7b6c3cc1b9e5f55ffcdc965e0e00f1dc12f67f9ba84c"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-admin-assisted-after.json",
+          "bytes": 24681,
+          "sha256": "6964e68eb3ac3dd029653b55794a7c8629c5e2a60ccabeb43466dbb4cd8b3f24"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "unit-assisted-form",
+        "startedAtUtc": "2026-10-13T07:22:26.304Z",
+        "endedAtUtc": "2026-10-13T07:23:00.265Z",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/assisted-form-read.test.ts",
+          "--maxWorkers=2",
+          "--reporter",
+          "verbose"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "wholeFiles": 1,
+        "tests": 18,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [
+          "Test Files  1 passed (1)",
+          "Tests  18 passed (18)",
+          "Duration  5.46s (transform 3.92s, setup 0ms, import 5.26s, tests 12ms, environment 0ms)"
+        ],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-assisted-form-receipt.json",
+          "bytes": 1818,
+          "sha256": "37279ab30298ec56fc28aeb70ed3bbd5bf266f283cb758a02a45de44d5dc0cbf"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-assisted-form.log",
+          "bytes": 4142,
+          "sha256": "55837f1b14d9f4394a956a6de1d926174a40ed96683ebd1f787bb816b3215dae"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-assisted-form-before.json",
+          "bytes": 24681,
+          "sha256": "4e88e2a3377373dae4b9b711a2b496c423bf5bef09446b79e2d88e3d32e3987c"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\unit-assisted-form-after.json",
+          "bytes": 24681,
+          "sha256": "7480b005f7afb94ecd5be70f2f513c204bccc8a09de9a9363e3fc3f825368698"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": null
+      },
+      {
+        "label": "native-catalog",
+        "startedAtUtc": "2026-10-13T07:23:26.466Z",
+        "endedAtUtc": "2026-10-13T07:25:53.784Z",
+        "args": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-cashier-images-validation\\native-tools\\pgsql\\bin",
+          "test/cashier-ordinary-catalog-postgres.test.ts",
+          "test/customer-cashier-ordinary-postgres.test.ts",
+          "test/checkout-coupon-item-authority.test.ts",
+          "test/order-promotion-paid-labels.test.ts",
+          "test/customer-cashier-second-card-postgres.test.ts"
+        ],
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullTypeConfiguration": false,
+        "wholeFiles": 5,
+        "tests": 111,
+        "failed": 0,
+        "skipped": 0,
+        "summaries": [
+          "Test Files  5 passed (5)",
+          "Tests  111 passed (111)",
+          "Duration  107.38s (transform 10.70s, setup 0ms, import 18.79s, tests 192.99s, environment 1ms)"
+        ],
+        "originalReceipt": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\native-catalog-receipt.json",
+          "bytes": 2094,
+          "sha256": "87cf28bc0e7854114b911c93679082f69fd7906d8aa483900fcc4fab867cac02"
+        },
+        "originalLog": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\native-catalog.log",
+          "bytes": 45934,
+          "sha256": "97e91e6edad08565b9e76f6ad5f435e9a21baf404931c8af6b73e491af44bd68"
+        },
+        "beforeGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\native-catalog-before.json",
+          "bytes": 24681,
+          "sha256": "9c85ab0ccd36e59b23ab1b5dafab3d9247c758982bb09f80cbe59997853b75a0"
+        },
+        "afterGuard": {
+          "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\native-catalog-after.json",
+          "bytes": 24681,
+          "sha256": "abcbb0c813785f637d4af3498d17bb3fd08d4fddd5add304ea73c83418c9c397"
+        },
+        "fullSourceAndToolsBeforeAfter": true,
+        "cleanup": {
+          "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\pg-cache-native-catalog\\finance-postgres-WR8Jvi",
+          "fixturesRemainingZero": true,
+          "runnerStopped": true,
+          "independentStatus": 3
+        }
+      }
+    ],
+    "allEightLabelsPassed": true,
+    "fullTypeConfigurations": 2,
+    "wholeTestFiles": 12,
+    "tests": 251,
+    "failed": 0,
+    "skipped": 0,
+    "fullSourceBeforeAfterAndFinal": {
+      "head": "b19a21c627b41b093b27753e1110ddd4927ded8f",
+      "fullLiveAndStageRawBytes": true,
+      "capturedSourceFiles": 3889,
+      "ownedWorkerFiles": 2840,
+      "auxiliaryFiles": 12,
+      "fullInventoryUnchanged": true,
+      "allVerified": true
+    },
+    "fullToolBeforeAfterAndFinal": {
+      "borrowedPhysicalFiles": 43992,
+      "freshNormalPostinstallWorkerFiles": 7639,
+      "originalInstallationInputBindings": 15,
+      "stagedMappings": {
+        "physicalRoots": 4,
+        "aliases": 1037,
+        "copiedFiles": 4,
+        "allVerified": true
+      },
+      "immutableAdditionalTools": {
+        "sealSha256": "ae81d3680f3b69d5d902fc401982b97e760a034c32b1c62e5ab10b0f6a031ec3",
+        "verifiedExtraFiles": 16,
+        "allVerified": true
+      },
+      "completePhysicalInventoriesVerified": true,
+      "allVerified": true,
+      "frontendInstallationCredit": false
+    },
+    "recursiveTestSourceBodies": 994,
+    "recursiveTestBodyCountIsNotWholeUnitCredit": true,
+    "selectedOriginalConfigTitlesCasesAndBudgetsPreserved": true,
+    "native": {
+      "serverVersion": "PostgreSQL 16.15",
+      "serverVersionNum": 160015,
+      "privateHost": "127.0.0.1",
+      "privatePort": 60068,
+      "cleanup": {
+        "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v12\\pg-cache-native-catalog\\finance-postgres-WR8Jvi",
+        "fixturesRemainingZero": true,
+        "runnerStopped": true,
+        "independentStatus": 3
+      }
+    },
+    "fullCICredit": false,
+    "wholeRepositoryTestsCredit": false
+  },
+  "sourceAuthority": {
+    "newOrdinaryRawTables": 4,
+    "newOrdinaryORMModels": 0,
+    "currentDeclaredTables": 22,
+    "currentTSOnlyTables": 21,
+    "historicalDeclaredTables": 18,
+    "historicalTSOnlyTables": 17,
+    "historicalWorkerTables": 300,
+    "currentWorkerTables": 304,
+    "historicalMySqlTables": 201,
+    "externalTables": 286,
+    "completeORMModels": 287,
+    "embeddedTables": 282,
+    "runAllTables": 180,
+    "normalizedOrdinaryDDLSourceSha256": "5da40f39afd13ea03f43865ed5e88d3e7af6a448d0c7042ce9e47091c67d8d79",
+    "exactFourTableColumnsAndUnknownOmittedChangedRejectionsRetained": true,
+    "legacyParity": {
+      "pages": 151,
+      "direct": 29,
+      "compatible": 115,
+      "gaps": 7,
+      "currentManifestPages": 130,
+      "customerConsumers": 21,
+      "historicalRawLedgersUnchanged": true
+    }
+  },
+  "concurrencyAndImageProof": {
+    "creationBeforeCommit": "Protected creation operation receipt INSERT is reached after real order and origin materialization; first transaction sees one order, one origin and one receipt while a separate maintenance connection sees zero. A genuine same-UUID abandonment waits on the actual PostgreSQL Lock and the creation transaction is released immediately; abandonment returns the same immutable creation receipt, leaving one order and one origin.",
+    "oppositeAbandonThenLateCreationCaseRetained": true,
+    "productionLockTimeoutMs": 1500,
+    "productionStatementTimeoutMs": 5000,
+    "imageMarkerIsDispatchOnly": true,
+    "protectedRootOriginHashCreatorUUIDAndOwnedAttachmentChecksRemainMandatory": true,
+    "refinedNativeNegative": "A real legacy channel-2 order uses actual.order.uid and staffId, exact copied form/ordinary marker and actual canonical creator attachment but has no protected ordinary origin. Reading returns empty image value with zero signer calls and removes the reserved marker.",
+    "negativeConstraintLimit": "The duplicate uses a different order id/orderId and different root unique because the original schema has UNIQUE(unique,uid). It is not a claim that every variable except id is identical. The application reader was not changed for this refinement.",
+    "originalNegativeCaseTitleCountAndBudgetRetained": true
+  },
+  "unchangedOrdinaryContractAndReadiness": {
+    "internalUserJwtRoutes": 16,
+    "originalUUIDRecoveryAndAtomicAbandonmentProtocolUnchanged": true,
+    "guestBuyerUidZeroSupported": true,
+    "buyerCreatorAndPayerRemainDistinctFacts": true,
+    "ordinaryTypeZeroMultiSkuMatureQuoteCreationCashZeroStockCouponPointsGiftDeliveryAndPaidConsumerLogicUnchangedByThisRepair": true,
+    "ownerMaintenancePlan": "Four append-only raw ordinary realms remain an explicitly owned maintenance installation. This report describes the existing plan and executes no production DDL. Runtime readiness remains false unless actual owner commission, full catalog/function/ACL admission and privileges are satisfied.",
+    "uncommissionedCapabilityClosed": true,
+    "manualInvoiceSQLPinsRunAllUnchanged": true,
+    "productionDDL": false,
+    "deployed": false
+  },
+  "history": {
+    "publishedB19CI": {
+      "runId": 38350294555,
+      "head": "b19a21c627b41b093b27753e1110ddd4927ded8f",
+      "conclusion": "failure",
+      "successJobs": 8,
+      "failedJobs": 3,
+      "cancelledJobs": 0,
+      "actualWholeWorkerFiles": 973,
+      "actualWorkerTests": 16162,
+      "actualFailures": 22,
+      "failureFiles": [
+        {
+          "file": "test/data-migration.test.ts",
+          "failures": 1
+        },
+        {
+          "file": "test/uniapp-frontend-parity.test.ts",
+          "failures": 2
+        },
+        {
+          "file": "test/theme-host-chain.test.ts",
+          "failures": 1
+        },
+        {
+          "file": "test/admin-fab-settings.test.ts",
+          "failures": 1
+        },
+        {
+          "file": "test/admin-assisted-order-migration.test.ts",
+          "failures": 1
+        },
+        {
+          "file": "test/assisted-form-read.test.ts",
+          "failures": 16
+        }
+      ],
+      "archive": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-b19a21c6-38350294555\\archive-manifest.json",
+        "bytes": 14220,
+        "sha256": "2aa6c4604fbc4398a14940f4e92cc020bfc42a441d3e81cc762fa8462c7f40a7"
+      },
+      "summary": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-b19a21c6-38350294555\\terminal-summary.json",
+        "bytes": 74090,
+        "sha256": "e456b20cb12cefb294d24d12a13bd4dc73889d0006992959f567cb01c604d664"
+      },
+      "allElevenOriginalJobLogsPreserved": true,
+      "originalJobLogBytes": 97986903,
+      "currentV12LocalPassDoesNotChangeThisCIConclusion": true
+    },
+    "precedingCbCI": {
+      "runId": 38346709697,
+      "head": "cb5985ef8422ee391c333ede2b843ebe1a00297e",
+      "conclusion": "cancelled",
+      "successJobs": 7,
+      "failedJobs": 2,
+      "cancelledJobs": 2,
+      "realFailuresBeforeCancellation": "UniApp navigation inventory failure and five actual Worker shard-2 failures: data migration, creation-versus-abandonment, two parity assertions and theme consumer inventory. Cancellation is not used to erase these failures. The creation lock failure has no PostgreSQL error code in the original raw output; no timeout cause/code is invented.",
+      "archive": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-cb5985ef-38346709697\\archive-manifest.json",
+        "bytes": 12474,
+        "sha256": "6fcead20fdbe98ff28ddaee8063d07e8e0d7d823f8054788e76048bb397c0d77"
+      },
+      "summary": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\github-pr99-cb5985ef-38346709697\\terminal-summary.json",
+        "bytes": 18009,
+        "sha256": "6ecb32e31603545dce42992447d834541691a8b8cd38a467c97f1632461cc888"
+      },
+      "allElevenOriginalJobLogsPreserved": true,
+      "originalJobLogBytes": 84648153
+    },
+    "v9": {
+      "status": "partial-failure",
+      "unitTypes": "TS2345 exit2",
+      "runtimeTypes": "exit0",
+      "otherChecksStarted": false,
+      "summary": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\backend-v9-partial\\partial-summary.json",
+        "bytes": 6979,
+        "sha256": "151d0a9fe42db073d1aa9b3e469231d52e7e1832cef468a3a7cdc35c22ecdeed"
+      }
+    },
+    "v10": {
+      "status": "partial-failure",
+      "typesBothPassed": true,
+      "ui76AndContract6Passed": true,
+      "data": "34 pass / 1 ENOENT failure: missing original audit/legacy-schema-authority.sql input",
+      "remainingChecksStarted": false,
+      "summary": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\backend-v10-partial\\partial-summary.json",
+        "bytes": 15072,
+        "sha256": "12a00f66b95d64dd52030996aec587006a56b259208db0e29b7dd99e51d42fc3"
+      }
+    },
+    "v11": {
+      "status": "prepared-only",
+      "typesOrTestsStarted": false,
+      "reason": "Prepared candidate held to refine the existing genuine negative case buyer/staff to the actual creation facts; unique constraint required keeping a different root unique.",
+      "summary": {
+        "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\backend-v11-prepared\\prepared-summary.json",
+        "bytes": 2512,
+        "sha256": "04abd60ec9de1d8a9694a4e97efdcf35eefafa675cba8a250e6128cbd6fb15f5"
+      }
+    },
+    "priorEpochPassCreditBorrowedForV12": false
+  },
+  "historicalFrontendCorrespondence": {
+    "report": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-navigation-v8-summary.json",
+      "bytes": 22072,
+      "sha256": "f57a5c231437c85315fa44fbd8811c38570aa605216fb7e00c6e5f315aa02ca3"
+    },
+    "byteVerifiedCurrentFrontendSources": [
+      {
+        "path": "view/common/customerWorkRoute.ts",
+        "bytes": 13118,
+        "sha256": "f15607e34b412a43b6f54f64926f6ae0f6f7bb4e05a30c99e17a91144d529a81",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/package.json",
+        "bytes": 5861,
+        "sha256": "6a9430cc88cbc853c855596300a43753587d8d893de414874c0a0bc5867d4b2e",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/composables/useCustomerWork.ts",
+        "bytes": 8628,
+        "sha256": "c72dd9274a78169676172841c8819f07b35997d96801fce1b2d73b048a096ba4",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/pages.json",
+        "bytes": 18970,
+        "sha256": "74594f7a1153e44b1e4a11f759503d63590cca5a60d9a0de01d1b7506c528261",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/pages/customer-work/index.vue",
+        "bytes": 6448,
+        "sha256": "41a54cb10b2a77ff67bd66fbcf6f30cbf348c16c348d702b66a0c6c320caa07c",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/types/customerWork.ts",
+        "bytes": 6397,
+        "sha256": "8fd55c5422ed53e1789da009e008b44d94de28e6b7547d77ddfd94fcd46dbce0",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/utils/customerWork.ts",
+        "bytes": 15531,
+        "sha256": "4cb533bd42a5546ba063f4cb39899a85d48e6ea583369715c2ec6b76cf90fe06",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-page.test.cjs",
+        "bytes": 12080,
+        "sha256": "c4501ec017e5c388c9abdfa95b35eb41c225aa0f5584525047ce8ab02f50317a",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-protocol.test.cjs",
+        "bytes": 19557,
+        "sha256": "ab9a3f598c0e43d3ccebc4175ea3eba3bf1b57447e0e568ac55a65af235590b2",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-read.test.cjs",
+        "bytes": 9851,
+        "sha256": "ffb6505cfa6e34813d31baf0056690107062d862a49865ee156ed6f0c69c6672",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-request.test.cjs",
+        "bytes": 8786,
+        "sha256": "f5cce4a5de23ccbce7a853e4696e737377d4c28bb517067a0725c259f056460c",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-runtime.test.cjs",
+        "bytes": 19441,
+        "sha256": "4fcad55f2b4ffb239360ec12bda08d9dbc4db3c2c842bd0e64ec36c3e0cdf3bd",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/api/customerWorkOrdinaryCashier.ts",
+        "bytes": 8131,
+        "sha256": "5f9658a986357d42e38178ad050ff9461b6d705aa9148a658fe4befca3238a14",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/api/customerWorkOrdinaryCashierAssets.ts",
+        "bytes": 2619,
+        "sha256": "759323fa7b0efc6fc7d78944c94d5897a362940b984f3f9f69c178ccfcf8b027",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/composables/useCustomerOrdinaryCashier.ts",
+        "bytes": 18017,
+        "sha256": "94cdcae2931d41179303efab2117dd79cf466eff4e953e80bc9d2f4af0010f60",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/pages/customer-work/ordinaryCashier.vue",
+        "bytes": 33840,
+        "sha256": "02b725cbe72d7f00df534cd40f75217e1639ea20a4964ce7ac9442a8522be400",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/types/customerWorkOrdinaryCashierRead.ts",
+        "bytes": 3219,
+        "sha256": "d4b7fca5af43c1c7e3c7c4eeaedca5b310b65383aba02b097a0e79900c2cec00",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/utils/customerWorkOrdinaryCashier.ts",
+        "bytes": 28448,
+        "sha256": "822196bd4ced7300db02e154cbcc685c46f64de934580e446d744f59dbca7151",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/utils/customerWorkOrdinaryCashierRead.ts",
+        "bytes": 9723,
+        "sha256": "8627ecdd4149fa12cdfdea21c306533b73b8f2d58862ceb0988e4f885d42613e",
+        "unchangedFromHistoricalC8": true
+      },
+      {
+        "path": "view/uniapp-ts/src/config/navigation.ts",
+        "bytes": 21870,
+        "sha256": "d8d573fa00377fc87714ff8058f5ead2b21242efdb6066860212d869171fdb23",
+        "unchangedFromHistoricalC8": true
+      }
+    ],
+    "allTwentyFrontendSourcesUnchangedAndBoundInCurrentV12Manifest": true,
+    "originalC8ProtectedSourceInputs": 536,
+    "originalC8VueFiles": 178,
+    "originalHookWholeFiles": 58,
+    "originalHookTests": 1180,
+    "originalHookFailed": 0,
+    "originalHookSkipped": 0,
+    "originalBrowserInstrumentVersion": 13,
+    "originalBrowserScenarioCount": 2,
+    "actualChromiumVersion": "154.0.8037.98",
+    "description": "C8 full Vue types/build, original hook and Browser13 are unchanged-source historical evidence. V12 does not rerun the browser/build or award a new frontend installation/full CI pass.",
+    "currentFrontendBuildOrBrowserCredit": false
+  },
+  "rawArchive": {
+    "manifest": {
+      "path": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012\\workers-ts\\audit\\customer-ordinary-cashier-20261013-evidence\\backend-v12\\archive-manifest.json",
+      "bytes": 30859,
+      "sha256": "f1dc3b69db4cab944c191cdfbc05ed031c50f46827e48420166d56d2dc38119d"
+    },
+    "originalRawFiles": 66,
+    "originalRawBytes": 2951278,
+    "ignoredByGit": true,
+    "exactCopiesVerified": true,
+    "originalCStageToolsDataAndCachesPreserved": true
+  },
+  "next": "Root may review and stage only the exact ten repairs plus these new summary files, commit/push a new candidate and evaluate its new full CI. No commit, push, deployment or production DDL is performed by this report generator."
+}

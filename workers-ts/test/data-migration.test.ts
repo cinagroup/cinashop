@@ -322,7 +322,12 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(MIGRATION_TABLES.map((table) => table.table).sort()).toEqual(
       report.sharedTables.map((table) => table.table).sort(),
     );
-    expect(definitionDrift).toEqual({
+    const historicalDeclarations = [
+      readFileSync("src/services/MigrationService.ts", "utf8"),
+      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts").map(({ sql }) => sql),
+    ].join("\n");
+    const historicalDefinitionDrift = comparePostgresDefinitions(externalTargetSql, historicalDeclarations);
+    expect(historicalDefinitionDrift).toEqual({
       externalTableCount: 286,
       // Eighteen independently installed ledgers are declared; abandonment is
       // also the single explicit external addition, leaving seventeen TS-only tables.
@@ -333,9 +338,21 @@ describe("MySQL to PostgreSQL schema audit", () => {
         'customer_city_delivery_binding',
         'customer_city_delivery_job',
       ],
-      workerOnlyTables: reviewedExplicitDeclarationTables(),
+      workerOnlyTables: reviewedExplicitDeclarationTables('historical'),
       columnDrift: [],
     });
+    expect(definitionDrift).toEqual({
+      externalTableCount: 286,
+      // Four fixed ordinary owner-maintenance declarations are additional to
+      // the historical declaration view; ORM and bootstrap cohorts stay separate.
+      workerTableCount: 304,
+      externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
+      workerOnlyTables: reviewedExplicitDeclarationTables('current-ordinary'),
+      columnDrift: [],
+    });
+    expect(definitionDrift.workerOnlyTables.filter(table => !historicalDefinitionDrift.workerOnlyTables.includes(table))).toEqual([
+      'cashier_ordinary_cart_v1','cashier_ordinary_draft_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1',
+    ]);
     for (const tableName of [
       "store_order",
       "store_order_economize",

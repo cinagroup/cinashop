@@ -1,0 +1,742 @@
+{
+  "kind": "customer-ordinary-cashier-backend-v8-summary",
+  "createdAtUtc": "2026-10-13T03:58:42.3456026Z",
+  "baseHead": "168d0005c4d6e9b17a99357a8b77f747eb7b9ac4",
+  "sourceRoot": "\\\\tsclient\\I\\cinagroup\\cinashop\\.cache\\worktrees\\customer-ordinary-cashier-20261012",
+  "scope": "exact ordinary backend implementation and owned fixture; summary-only files added after successful v8 runtime freeze",
+  "source": {
+    "capturedApplicationInputs": 3889,
+    "ownedWorkersInputs": 2840,
+    "verifiedAliases": 738,
+    "changedBackendSources": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "bytes": 45635,
+        "sha256": "3653ecd8c48afc9830dc9000632818e50c1e22b9719bb518d7324ed459344f43",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/migrations/checkoutPricingLock.ts",
+        "bytes": 10530,
+        "sha256": "a73f2324f3e3c9b9184418b17259479198f468c8c21de128dcb6c509d71d8ca5",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/migrations/reviewedOfflinePricingCapability.ts",
+        "bytes": 1375,
+        "sha256": "fb9320a8520f1261db019cb571bed86ca471f58040db59dedeb089cecd03adbc",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "bytes": 172078,
+        "sha256": "f63c046da3b9f3f83f0002567829bff755732d74729a5a787ac4bd624de12778",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkReadService.ts",
+        "bytes": 39403,
+        "sha256": "7e20bc61e58a2844d8a976211f6866e71d989c42af9d0fa72e11dd6dee0d2457",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/CheckoutCouponItemAuthority.ts",
+        "bytes": 5614,
+        "sha256": "2dcbbf8d0c0d3f24983a2bf84d361530258bed88601b36d5ad9be53d3136d5be",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/CheckoutCouponTemplateAuthority.ts",
+        "bytes": 5101,
+        "sha256": "4e27b0bab2402c7030974cfd6150eedb1ecd4205e550627ab52bad5507051d44",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/CheckoutMembershipSnapshot.ts",
+        "bytes": 3715,
+        "sha256": "3bc19486389ac3097a832f9981d7c90fd9fa919fbbe2c0913b7b7c655eca1f54",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/CustomerManualRefund.ts",
+        "bytes": 23834,
+        "sha256": "b56f2eb3924c8b8cfffca5cb8db62cdc82f5cd26080cb3bd5a0d4ed6435ad945",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/OrderRewardService.ts",
+        "bytes": 24675,
+        "sha256": "c2b3a2921efa0e711236835e6c627802a271916bfe0acfc9a5e121a4d354d6bb",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/OrderSystemFormService.ts",
+        "bytes": 14856,
+        "sha256": "a926787fea65c4af479d5ce121284aa317aedf81c4dd5b8f8968a9bd24dd2330",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "bytes": 186862,
+        "sha256": "cb406e674279ee71f3b90076c696959db6cd0ce20ca40adbfd767b836d7bfd6d",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/CustomerWorkOrdinaryCashierController.ts",
+        "bytes": 5426,
+        "sha256": "fddc80f8238b26c4f81cc60c6fc348fbba1d5243ed20b5f649eca98e15c20a82",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/migrations/cashierOrdinary.ts",
+        "bytes": 6867,
+        "sha256": "5da40f39afd13ea03f43865ed5e88d3e7af6a448d0c7042ce9e47091c67d8d79",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/migrations/cashierOrdinaryRuntimePlan.ts",
+        "bytes": 2886,
+        "sha256": "bda71d97ae6a7f61dd73a547b57eb26afb5b22f78a24235de0188930751b8515",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/migrations/cashierOrdinarySourceRights.ts",
+        "bytes": 6022,
+        "sha256": "990ae32bf07ab754d57d367adbec73b1b4492e28c245da8f33b8bb40287c80da",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/migrations/runCashierOrdinary.ts",
+        "bytes": 8396,
+        "sha256": "a797b2d48a77d5c174643b115b9ecc13f7fe8724503daa2643804bcb0ab0b023",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerOrdinaryCashierContract.ts",
+        "bytes": 10023,
+        "sha256": "b59a5763c11619a10485016b44616522ca58f8fabaef8294da88449f9ab82247",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerOrdinaryCashierForm.ts",
+        "bytes": 6420,
+        "sha256": "097d5cb7ffb7322d3c4ee5c09c42761e2f9cbda8c7a0abb1d92cf87b7bd595c4",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerOrdinaryCashierLedger.ts",
+        "bytes": 24726,
+        "sha256": "dab5620e6aeb8eb78a697215030218a1bfc01e4a9dac1a08eac1da87e9e00edf",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkOrdinaryCashierReadService.ts",
+        "bytes": 8617,
+        "sha256": "4cfaeceb739eadc340fcf14178381070921b0ee554db37414813f053cd6d54aa",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkOrdinaryCashierService.ts",
+        "bytes": 21179,
+        "sha256": "eeaed9c505624fe8e803adac27e418ab02b3539d9b4d965ad9d9537dbfd60bb9",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/CashierOrdinaryOrigin.ts",
+        "bytes": 20355,
+        "sha256": "72e61b191275eb3cd41a6c0e3c5a26c8cb9470376962d297f153dadb481f9234",
+        "inOriginalProtected17": true,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/src/services/order/CashierOrdinaryTaxonomy.ts",
+        "bytes": 3367,
+        "sha256": "3ffed550b09d92dee1fc66b397ee332b8b1282a2821bc28d917760fb982ff395",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/test/cashier-ordinary-catalog-postgres.test.ts",
+        "bytes": 4028,
+        "sha256": "bebff9cac6a06742b55a336a01f33841cd92937950948f2b9c660f5f8e25da6f",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-ordinary-contract.test.ts",
+        "bytes": 4132,
+        "sha256": "d4303eb93cfab28471106b04b83eb15a2970f804068d21bc33657ef1b2e4e2b4",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-ordinary-postgres.test.ts",
+        "bytes": 38087,
+        "sha256": "377d2d78c50522f8fe5fa27c7896144cfc27895127e41fd14788177d8c1270b0",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      },
+      {
+        "path": "workers-ts/test/helpers/customerCashierOrdinaryFixture.ts",
+        "bytes": 15680,
+        "sha256": "2717075f22b1e4d125475cb76efb660e4674ad1acff4f1a99b244a9e41bfd90d",
+        "inOriginalProtected17": false,
+        "matchesV8Freeze": true
+      }
+    ],
+    "changedBackendSourceCount": 28,
+    "originalMerge": {
+      "beforeHead": "9b060ffbb53a9080bac4de87142f61a6b61f680d",
+      "afterHead": "168d0005c4d6e9b17a99357a8b77f747eb7b9ac4",
+      "fastForward": true,
+      "filesPreserved": [
+        {
+          "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-request.test.cjs",
+          "bytes": 8120,
+          "sha256": "e6c36ef7bfb9aee252cdb7d9b5fcc71bcbbccbea1ca7f4d065466dc27c0ed8a4"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/customerWorkOrdinaryCashier.ts",
+          "bytes": 7806,
+          "sha256": "144bb00f90c9b63908bcf70bcc7a0e63b8ea22cce226c85de3ecf3034ab2f7b3"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/CustomerWorkOrdinaryCashierController.ts",
+          "bytes": 5088,
+          "sha256": "13f2c0fe1fa1dc78a93d991de5cdbe8bbd84ca07d98d2fd8e0a2699847d2d478"
+        },
+        {
+          "path": "workers-ts/src/migrations/cashierOrdinary.ts",
+          "bytes": 6867,
+          "sha256": "5da40f39afd13ea03f43865ed5e88d3e7af6a448d0c7042ce9e47091c67d8d79"
+        },
+        {
+          "path": "workers-ts/src/migrations/cashierOrdinaryRuntimePlan.ts",
+          "bytes": 2886,
+          "sha256": "bda71d97ae6a7f61dd73a547b57eb26afb5b22f78a24235de0188930751b8515"
+        },
+        {
+          "path": "workers-ts/src/migrations/cashierOrdinarySourceRights.ts",
+          "bytes": 4935,
+          "sha256": "48b18d171c81c2ef8f04eb85b52d901a77ed3b3c0c5dae616c95520dbf401f08"
+        },
+        {
+          "path": "workers-ts/src/migrations/runCashierOrdinary.ts",
+          "bytes": 8180,
+          "sha256": "609f918f53f9065dc22e30d57a590ed035ef9c5c966bdc5f397f0256a3117c5b"
+        },
+        {
+          "path": "workers-ts/src/routes/v1/index.ts",
+          "bytes": 171940,
+          "sha256": "82f889aaeb80218063ed8623f463faae0edbfce26548b36734cf1e296c233bd1"
+        },
+        {
+          "path": "workers-ts/src/services/customer-work/CustomerOrdinaryCashierContract.ts",
+          "bytes": 10023,
+          "sha256": "b59a5763c11619a10485016b44616522ca58f8fabaef8294da88449f9ab82247"
+        },
+        {
+          "path": "workers-ts/src/services/customer-work/CustomerOrdinaryCashierForm.ts",
+          "bytes": 6420,
+          "sha256": "097d5cb7ffb7322d3c4ee5c09c42761e2f9cbda8c7a0abb1d92cf87b7bd595c4"
+        },
+        {
+          "path": "workers-ts/src/services/customer-work/CustomerOrdinaryCashierLedger.ts",
+          "bytes": 21498,
+          "sha256": "587d087ae4993af4571d467e964da80a8f21ae6772f1e362c1874c4cfe460685"
+        },
+        {
+          "path": "workers-ts/src/services/customer-work/CustomerWorkOrdinaryCashierReadService.ts",
+          "bytes": 8361,
+          "sha256": "a3e1fd5c3de712250799645a2679385b849f60d52ae91303da0f7073d9951dd7"
+        },
+        {
+          "path": "workers-ts/src/services/customer-work/CustomerWorkOrdinaryCashierService.ts",
+          "bytes": 19488,
+          "sha256": "875893cdc945fd9f0164939c1c34f319104532f650f5941066407e4c19660dd8"
+        },
+        {
+          "path": "workers-ts/src/services/order/CashierOrdinaryOrigin.ts",
+          "bytes": 17107,
+          "sha256": "00514b8fbd15484167160712250c2609985960a2475f287a44fe79f25bc515a5"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerManualRefund.ts",
+          "bytes": 23834,
+          "sha256": "b56f2eb3924c8b8cfffca5cb8db62cdc82f5cd26080cb3bd5a0d4ed6435ad945"
+        },
+        {
+          "path": "workers-ts/src/services/order/OrderSystemFormService.ts",
+          "bytes": 14856,
+          "sha256": "a926787fea65c4af479d5ce121284aa317aedf81c4dd5b8f8968a9bd24dd2330"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "bytes": 186556,
+          "sha256": "0ab20617ce605eceeab8af5c93ecdb8345e7fc49dd70ed4b708620174d255b95"
+        }
+      ],
+      "frontendPreserved": [
+        {
+          "path": "view/uniapp-ts/scripts/customer-ordinary-cashier-request.test.cjs",
+          "bytes": 8120,
+          "sha256": "e6c36ef7bfb9aee252cdb7d9b5fcc71bcbbccbea1ca7f4d065466dc27c0ed8a4"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/customerWorkOrdinaryCashier.ts",
+          "bytes": 7806,
+          "sha256": "144bb00f90c9b63908bcf70bcc7a0e63b8ea22cce226c85de3ecf3034ab2f7b3"
+        }
+      ],
+      "dirtyOverlap": [],
+      "noCommit": true,
+      "noPush": true
+    },
+    "originalProtectedFilesCount": 17,
+    "originalProtectedWorkersCount": 15,
+    "additionalWorkerPathsSinceProtected17": [
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/migrations/checkoutPricingLock.ts",
+      "workers-ts/src/migrations/reviewedOfflinePricingCapability.ts",
+      "workers-ts/src/services/customer-work/CustomerWorkReadService.ts",
+      "workers-ts/src/services/order/CheckoutCouponItemAuthority.ts",
+      "workers-ts/src/services/order/CheckoutCouponTemplateAuthority.ts",
+      "workers-ts/src/services/order/CheckoutMembershipSnapshot.ts",
+      "workers-ts/src/services/order/OrderRewardService.ts",
+      "workers-ts/src/services/order/CashierOrdinaryTaxonomy.ts",
+      "workers-ts/test/cashier-ordinary-catalog-postgres.test.ts",
+      "workers-ts/test/customer-cashier-ordinary-contract.test.ts",
+      "workers-ts/test/customer-cashier-ordinary-postgres.test.ts",
+      "workers-ts/test/helpers/customerCashierOrdinaryFixture.ts"
+    ],
+    "summaryOnlyAddedAfterRuntimeFreeze": true,
+    "frontendAfterCaptureCredit": false
+  },
+  "api": {
+    "base": "/api/mobile/work/cashier/ordinary",
+    "auth": "force UserJWT; actor/service/global scope revalidated against server source",
+    "inputVersion": "customer-cashier-ordinary-v1",
+    "paymentVersion": "customer-cashier-ordinary-payment-v1",
+    "readVersion": "customer-cashier-ordinary-read-v1",
+    "receiptVersion": "customer-cashier-ordinary-receipt-v1",
+    "routes": [
+      {
+        "method": "POST",
+        "path": "/drafts",
+        "purpose": "建立实际多 SKU owner 草稿；原 draft UUID"
+      },
+      {
+        "method": "GET",
+        "path": "/drafts/:key",
+        "purpose": "读取 owner 原草稿及行状态"
+      },
+      {
+        "method": "POST",
+        "path": "/drafts/:key/rows",
+        "purpose": "追加、合并及恢复移除的 SKU 行"
+      },
+      {
+        "method": "POST",
+        "path": "/drafts/:key/quantity",
+        "purpose": "修改实际购物车行数量"
+      },
+      {
+        "method": "POST",
+        "path": "/drafts/:key/remove",
+        "purpose": "移除指定行并保留恢复事实"
+      },
+      {
+        "method": "POST",
+        "path": "/quote",
+        "purpose": "原 creation UUID + 完整 intent 的真实成熟报价"
+      },
+      {
+        "method": "POST",
+        "path": "/orders",
+        "purpose": "真实 quote token 确认并创建订单"
+      },
+      {
+        "method": "POST",
+        "path": "/orders/:id/cash",
+        "purpose": "独立 payment UUID；实际现金或零元支付"
+      },
+      {
+        "method": "GET",
+        "path": "/operations/:key",
+        "purpose": "owner 按原 UUID 查询原事实；null 仍为未知"
+      },
+      {
+        "method": "POST",
+        "path": "/operations/:key/abandon",
+        "purpose": "原 actor/key/hash 同锁永久放弃；已提交事实返回原回执"
+      },
+      {
+        "method": "GET",
+        "path": "/readiness",
+        "purpose": "当前真实目录、权限和来源验收状态"
+      },
+      {
+        "method": "GET",
+        "path": "/catalog",
+        "purpose": "实际 type0 商品搜索及分页"
+      },
+      {
+        "method": "GET",
+        "path": "/catalog/:id",
+        "purpose": "实际商品、多 SKU 和图片投影"
+      },
+      {
+        "method": "GET",
+        "path": "/users",
+        "purpose": "实际会员搜索及分页"
+      },
+      {
+        "method": "GET",
+        "path": "/users/:uid/addresses",
+        "purpose": "实际会员归属地址；游客 uid0 无地址簿"
+      },
+      {
+        "method": "GET",
+        "path": "/quotes/:token/coupons",
+        "purpose": "原报价上下文中的真实可用优惠券及游标"
+      }
+    ],
+    "operationIdentity": "UUID actor + original kind + canonical complete intent hash + scope; draft/creation/payment UUIDs must differ",
+    "quoteToken": "32 lowercase hex characters from random UUID with dashes removed; actor + original creation UUID bound; KV TTL 1800 seconds",
+    "quoteFingerprint": "64 lowercase hex; actual same preview confirmationFingerprint",
+    "readConsistency": "SHA256({scope_key,data}) after actual image signing/projection and scope recheck",
+    "promotionThresholdType": "required 1|2 from same actual gift intent; type1 monetary and type2 count",
+    "limits": {
+      "bodyBytes": 262144,
+      "idsMax": 2147483647,
+      "skuCharacters": 16,
+      "quantityMax": 32767,
+      "uniqueSkusPerDraftLifetimeMax": 200,
+      "money": "canonical nonnegative decimal with 2 fraction digits, max 10 integer digits"
+    }
+  },
+  "behavior": [
+    "真实 type0 实体多 SKU、库存、会员优惠券/积分、配送地址/邮费、等级价格、赠积分/赠券/赠商品/赠标签及原自定义表单。",
+    "游客 buyer_uid=0 保留真实 tourist_key，不构造用户0、积分/优惠券/地址归属；operator creator_uid 与 actual payer_uid 可不同。",
+    "cash/真实零元沿成熟创建、支付和 consumer；payment receipt 表示 durable payment/outbox 入账，不提前宣称 consumer COMPLETED。",
+    "只有真实 COMPLETED consumer 与受保护 creation/origin/payment 全来源匹配后，人工退款读可使用新普通现金来源。",
+    "UNKNOWN 只查询原 UUID；GET null 不释放原操作。abandon 与原 POST 同锁，先到的真实提交不可篡改，先到 abandon 永久阻止晚到原 POST。",
+    "仅 server WeakMap 同 tx capability 可复用两既有完整审计 NOLOGIN taxonomy 锁；锁后 fresh SELECT，旧成熟路径保留 FOR SHARE。无新增 taxonomy UPDATE grant。",
+    "旧 app LOGIN 无新 realm SELECT 时 metadata-first 返回旧路径；不捕获任意 SQL 错误或放宽已有 issued/unverified 拒绝。",
+    "原 16 manual pins/SQL/runAll、second-card-v1 和旧 API wire 不变；新四表为 literal owner DDL，不新增 ORM PgTable cohort。"
+  ],
+  "commissioning": {
+    "productionReadyCredit": false,
+    "productionDDLExecuted": false,
+    "deployed": false,
+    "readyGate": "catalog PG16 exact fingerprint; existing scope/promotion locks; ordinary-only reviewed routines/OIDs/owners/definitions/ACL; actual source tables/columns/sequences/functions; real LOGIN and SELECT/INSERT-only four append realms",
+    "catalogPin": "c3045d4094b759d189876d4883c2c984ffd89e7f48cd99745da564ef20860ab3",
+    "realms": [
+      "cashier_ordinary_draft_v1",
+      "cashier_ordinary_cart_v1",
+      "cashier_ordinary_operation_v1",
+      "cashier_ordinary_origin_v1"
+    ],
+    "installation": "Explicit root maintenance runCashierOrdinary in READ COMMITTED read-write transaction; only approved isolated PG fixtures executed; startup/runAll never call it; production install requires separate real approval and acceptance",
+    "appendProtection": "owner invoker trigger protects UPDATE/DELETE/TRUNCATE, PUBLIC revoked, no runtime owner or DML/schema/elevated authority",
+    "functions": [
+      "public.customer_product_lock_catalog_v1(text,integer[])",
+      "public.customer_user_lock_catalog_v1(text,integer[])"
+    ],
+    "functionsProtocol": "unchanged existing NOLOGIN definitions; ordinary-only exact OID/owner/ACL/definition audit; originals retained",
+    "productionInstallationByThisWork": false
+  },
+  "validation": {
+    "epoch": "v8",
+    "wrapperSession": 23468,
+    "terminalExitCode": 0,
+    "codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "wholeWorkersTypes": 2,
+    "contract": {
+      "wholeFiles": 1,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native": {
+      "wholeFiles": [
+        "test/cashier-ordinary-catalog-postgres.test.ts",
+        "test/customer-cashier-ordinary-postgres.test.ts",
+        "test/checkout-coupon-item-authority.test.ts",
+        "test/order-promotion-paid-labels.test.ts",
+        "test/customer-cashier-second-card-postgres.test.ts"
+      ],
+      "passed": 111,
+      "failed": 0,
+      "skipped": 0,
+      "timeoutSeconds": 600,
+      "runnerAllowlist": "only two new ordinary files appended; existing files and timeout retained"
+    },
+    "sourceAndToolsAfterVerified": true,
+    "oldVerifiedPhysicalToolFiles": 43992,
+    "freshNormalNpmCiWorkerFiles": 7639,
+    "freshNormalPostinstall": true,
+    "installationInputs": 15,
+    "cleanup": "owned kDpMXF fixtures remaining 0; runner STOPPED; independent pg_ctl status 3",
+    "rawArchive": "workers-ts/audit/customer-ordinary-cashier-20261013-evidence/backend-v8",
+    "archivedFiles": [
+      {
+        "name": "native-catalog-receipt.json",
+        "bytes": 1253,
+        "sha256": "4e9ad4d48dea255b02daf73c91bd229da6bcdd6bf53b9a61c8ab22edf5b0c834",
+        "copySha256": "4e9ad4d48dea255b02daf73c91bd229da6bcdd6bf53b9a61c8ab22edf5b0c834"
+      },
+      {
+        "name": "native-catalog.log",
+        "bytes": 45783,
+        "sha256": "ae5fc80a8adc315069525440e583694c716fb4f9611f70ab6bbce40851599732",
+        "copySha256": "ae5fc80a8adc315069525440e583694c716fb4f9611f70ab6bbce40851599732"
+      },
+      {
+        "name": "source-after.json",
+        "bytes": 243,
+        "sha256": "9bce9ccc4f03d6272339cdd5daa18e56bac1df699ffe6ef01844ac9b0c096b5e",
+        "copySha256": "9bce9ccc4f03d6272339cdd5daa18e56bac1df699ffe6ef01844ac9b0c096b5e"
+      },
+      {
+        "name": "source-before.json",
+        "bytes": 212,
+        "sha256": "f0d507e031da8fff4772aacc08ccdf5a976d4b5568be004044331b8dbd3cbf4d",
+        "copySha256": "f0d507e031da8fff4772aacc08ccdf5a976d4b5568be004044331b8dbd3cbf4d"
+      },
+      {
+        "name": "source-manifest.json",
+        "bytes": 1033187,
+        "sha256": "e0fd53954fb34c18af12ffac44b49ef40804942134e494fb5741642fe91c28dd",
+        "copySha256": "e0fd53954fb34c18af12ffac44b49ef40804942134e494fb5741642fe91c28dd"
+      },
+      {
+        "name": "tools-after.json",
+        "bytes": 18344,
+        "sha256": "f9451bde1908919e39c7941e72238898c2fa1762174f813f8c293e3dd7594ead",
+        "copySha256": "f9451bde1908919e39c7941e72238898c2fa1762174f813f8c293e3dd7594ead"
+      },
+      {
+        "name": "tools-before.json",
+        "bytes": 24026,
+        "sha256": "acb3cad3939de0b81ce658e03975d4ad7c99d88d3ad9b0e3caaad186a4cc3b0d",
+        "copySha256": "acb3cad3939de0b81ce658e03975d4ad7c99d88d3ad9b0e3caaad186a4cc3b0d"
+      },
+      {
+        "name": "typecheck-runtime-receipt.json",
+        "bytes": 826,
+        "sha256": "86fa1559eb9268efd6c1fe958822fd4a1d41dccecb79b10a0ea92b2fde480764",
+        "copySha256": "86fa1559eb9268efd6c1fe958822fd4a1d41dccecb79b10a0ea92b2fde480764"
+      },
+      {
+        "name": "typecheck-runtime.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "copySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "typecheck-unit-receipt.json",
+        "bytes": 820,
+        "sha256": "cf2475a6ed3bf18a02564fc0722f9211f7f16e169298048f2adb55b5129f906a",
+        "copySha256": "cf2475a6ed3bf18a02564fc0722f9211f7f16e169298048f2adb55b5129f906a"
+      },
+      {
+        "name": "typecheck-unit.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "copySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "unit-contract-receipt.json",
+        "bytes": 976,
+        "sha256": "025e8d7aa63366b3ba35e66566adb640b36086cf898771605835cfc3e23abb97",
+        "copySha256": "025e8d7aa63366b3ba35e66566adb640b36086cf898771605835cfc3e23abb97"
+      },
+      {
+        "name": "unit-contract.log",
+        "bytes": 1519,
+        "sha256": "a2cdacd8d342fd041d34a6adaa22abf5c5f1e81c0e1af2e59de2eb6c99e1a15b",
+        "copySha256": "a2cdacd8d342fd041d34a6adaa22abf5c5f1e81c0e1af2e59de2eb6c99e1a15b"
+      }
+    ],
+    "receipts": [
+      {
+        "label": "typecheck-unit",
+        "startedAt": "2026-10-13T03:40:35.574Z",
+        "endedAt": "2026-10-13T03:43:12.496Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v8\\typecheck-unit.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source": {
+          "capturedSourceFiles": 3889,
+          "ownedWorkerFiles": 2840,
+          "stageAllRawBytes": true,
+          "workerSourceAndInventory": true,
+          "aliasesVerified": 738,
+          "frontendSourceVerification": "Root frontend may progress after capture; snapshot only"
+        },
+        "cleanup": null,
+        "summaries": [],
+        "scope": "entire captured ordinary candidate application inputs; backend checks only",
+        "passed": true
+      },
+      {
+        "label": "typecheck-runtime",
+        "startedAt": "2026-10-13T03:43:33.403Z",
+        "endedAt": "2026-10-13T03:45:00.822Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v8\\typecheck-runtime.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source": {
+          "capturedSourceFiles": 3889,
+          "ownedWorkerFiles": 2840,
+          "stageAllRawBytes": true,
+          "workerSourceAndInventory": true,
+          "aliasesVerified": 738,
+          "frontendSourceVerification": "Root frontend may progress after capture; snapshot only"
+        },
+        "cleanup": null,
+        "summaries": [],
+        "scope": "entire captured ordinary candidate application inputs; backend checks only",
+        "passed": true
+      },
+      {
+        "label": "unit-contract",
+        "startedAt": "2026-10-13T03:46:28.721Z",
+        "endedAt": "2026-10-13T03:46:53.527Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v8\\unit-contract.log",
+        "logSha256": "a2cdacd8d342fd041d34a6adaa22abf5c5f1e81c0e1af2e59de2eb6c99e1a15b",
+        "source": {
+          "capturedSourceFiles": 3889,
+          "ownedWorkerFiles": 2840,
+          "stageAllRawBytes": true,
+          "workerSourceAndInventory": true,
+          "aliasesVerified": 738,
+          "frontendSourceVerification": "Root frontend may progress after capture; snapshot only"
+        },
+        "cleanup": null,
+        "summaries": [
+          "Test Files  1 passed (1)",
+          "Tests  6 passed (6)",
+          "Duration  18.83s (transform 9.47s, setup 0ms, import 17.23s, tests 15ms, environment 1ms)"
+        ],
+        "scope": "entire captured ordinary candidate application inputs; backend checks only",
+        "passed": true
+      },
+      {
+        "label": "native-catalog",
+        "startedAt": "2026-10-13T03:47:53.918Z",
+        "endedAt": "2026-10-13T03:50:54.901Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "path": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v8\\native-catalog.log",
+        "logSha256": "ae5fc80a8adc315069525440e583694c716fb4f9611f70ab6bbce40851599732",
+        "source": {
+          "capturedSourceFiles": 3889,
+          "ownedWorkerFiles": 2840,
+          "stageAllRawBytes": true,
+          "workerSourceAndInventory": true,
+          "aliasesVerified": 738,
+          "frontendSourceVerification": "Root frontend may progress after capture; snapshot only"
+        },
+        "cleanup": {
+          "taskRoot": "C:\\Users\\cina\\.codex\\visualizations\\2026\\10\\11\\01a12a82-4fc9-7511-aac5-e8957b4e7f1f\\customer-ordinary-backend-v8\\pg-cache\\finance-postgres-kDpMXF",
+          "fixturesRemainingZero": true,
+          "runnerStopped": true,
+          "independentStatus": 3
+        },
+        "summaries": [
+          "Test Files  5 passed (5)",
+          "Tests  111 passed (111)",
+          "Duration  157.17s (transform 16.47s, setup 0ms, import 31.75s, tests 275.68s, environment 1ms)"
+        ],
+        "scope": "entire captured ordinary candidate application inputs; backend checks only",
+        "passed": true
+      }
+    ],
+    "creditBounds": [
+      "两套完整 Workers 类型检查及 exact backend native/contract scope；整个 captured candidate 与跨 view/common/Admin/Uni/Kefu 输入可读，不赋予 current frontend 安装、UI 或 whole repository 通过信用。",
+      "实际佣金创建计算及成熟等待订单完成的结算边界，不宣称已经派发佣金。",
+      "旧 runtimeBusinessPrivilegePlan(app) 真实 LOGIN 在当前 fixture cohort 无新 realm SELECT/函数 EXEC 仍完成旧 consumer 分支；未额外宣称 whole shop profile admission 或 legacy 无 ordinary origin 用例。"
+    ]
+  },
+  "history": [
+    {
+      "epoch": "v1",
+      "result": "worker-only source lacked real cross-view inputs and surfaced actual unused/nullable type errors; later fixed; paused native interruption has no pass credit"
+    },
+    {
+      "epoch": "v2",
+      "result": "preflight rejected borrowed raw Worker patch script EOL mismatch before tests; no test pass credit"
+    },
+    {
+      "epoch": "v3",
+      "result": "fresh normal offline npm ci child exit0; wrapper exact old output comparison failed on EOL; independent fresh installation finalizer verified actual7639 files without treating normalized bytes as equal"
+    },
+    {
+      "epoch": "v4",
+      "result": "two Workers types and contract6 passed; native catalog2 passed1 failed because outer Drizzle message assertion missed actual P0001; original raw retained"
+    },
+    {
+      "epoch": "v5",
+      "result": "whole catalog3 passed with precise underlying P0001/messages and unchanged side effects; no new full-types credit"
+    },
+    {
+      "epoch": "v6",
+      "result": "types and contract6 passed; catalog3 passed; business22 skipped by actual beforeAll source rights failure (taxonomy UPDATE/label lock), no business pass credit"
+    },
+    {
+      "epoch": "v7",
+      "result": "types and contract6 passed; two whole native files25 passed2 failed0 skip: expected mature address omitted real spaces; gift test seeded JSON instead of actual label CSV. Corrected precise expectation/actual CSV seed before v8; raw preserved"
+    },
+    {
+      "epoch": "v8",
+      "result": "2 whole Workers types + whole contract6 + 5 whole native files111 all passed, zero fail/skip; all after-source/tool guards and owned PG cleanup verified"
+    }
+  ],
+  "delivery": {
+    "committed": false,
+    "pushed": false,
+    "noAdditionalImplementationTests": "summary-only addition; exact28 sources rehashed equal v8 before report write",
+    "next": "Root owns frontend and unified commit/push; later common CI repairs must be integrated and validated separately; no entire repository/UI/production release claim"
+  }
+}

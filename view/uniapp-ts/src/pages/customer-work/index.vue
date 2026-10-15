@@ -12,6 +12,7 @@
       <view v-if="manager.context.value?.data.capabilities.writeoff_read===true" class="cw-card"><text class="cw-subtitle">普通客户核销</text><text class="cw-scope">扫码、手输或会员条码查单，核对实际商品与次数，再明确提交分次或全部核销。</text><button class="cw-full" @tap="manager.go('scanning')">进入客户核销</button></view>
       <view v-if="manager.context.value?.data.capabilities.cashier_records===true" class="cw-card"><text class="cw-subtitle">本人次卡收银记录</text><text class="cw-scope">查看由本经营账号实际创建的次卡订单，核对原购买商品、创建来源与现金付款凭据。</text><button class="cw-full" @tap="manager.go('cashierRecords')">查询本人收银记录</button></view>
       <view v-if="manager.context.value?.data.capabilities.cashier_second_card===true" class="cw-card"><text class="cw-subtitle">次卡现金收银</text><text class="cw-scope">选择实际次卡和购买人，核对报价后创建订单，再确认现金或零元付款。中断后可核对原收银编号。</text><button class="cw-full" @tap="manager.go('cashier')">进入次卡现金收银</button></view>
+      <view v-if="manager.context.value?.data.capabilities.cashier_ordinary===true" class="cw-card"><text class="cw-subtitle">普通商品现金收银</text><text class="cw-scope">添加多个商品规格，核对会员、配送与实际优惠，再分别确认创建订单和现金付款。</text><button class="cw-full" :disabled="manager.context.value.data.cashier_ordinary_readiness?.writes!==true" @tap="manager.go('ordinaryCashier')">进入普通商品收银</button></view>
       <text class="cw-subtitle">待处理概况</text>
       <view class="cw-grid">
         <view class="cw-metric"><text class="cw-money">{{ overview.badges.unshipped_count }}</text><text>待发货</text><text class="cw-muted">平台履约订单</text></view>

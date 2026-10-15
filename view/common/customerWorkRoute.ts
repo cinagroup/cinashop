@@ -1,7 +1,7 @@
 /** Shared by the public menu resolver and actual UniApp pages. No auth grant is inferred here. */
 import {parseCustomerWriteoffQuery,writeoffLookupValue,decodeCustomerWriteoffScan,parseCustomerWriteoffLegacyChoice} from './customerWorkWriteoff';
-export type CustomerWorkPage = 'index' | 'statistics' | 'orders' | 'orderDetail' | 'refunds' | 'refundDetail' | 'refund' | 'logistics' | 'delivery' | 'products' | 'productSkus' | 'users' | 'userDetail' | 'scanning' | 'writeoff' | 'writeoffRecords' | 'writeoffResult' | 'cashierRecords' | 'cashierRecord' | 'cashier';
-export const CUSTOMER_WORK_PAGES: CustomerWorkPage[] = ['index','statistics','orders','orderDetail','refunds','refundDetail','refund','logistics','delivery','products','productSkus','users','userDetail','scanning','writeoff','writeoffRecords','writeoffResult','cashierRecords','cashierRecord','cashier'];
+export type CustomerWorkPage = 'index' | 'statistics' | 'orders' | 'orderDetail' | 'refunds' | 'refundDetail' | 'refund' | 'logistics' | 'delivery' | 'products' | 'productSkus' | 'users' | 'userDetail' | 'scanning' | 'writeoff' | 'writeoffRecords' | 'writeoffResult' | 'cashierRecords' | 'cashierRecord' | 'cashier' | 'ordinaryCashier';
+export const CUSTOMER_WORK_PAGES: CustomerWorkPage[] = ['index','statistics','orders','orderDetail','refunds','refundDetail','refund','logistics','delivery','products','productSkus','users','userDetail','scanning','writeoff','writeoffRecords','writeoffResult','cashierRecords','cashierRecord','cashier','ordinaryCashier'];
 const aliases: Record<string,CustomerWorkPage> = {
   '/pages/admin/work/index':'index', '/pages/admin/order/index':'statistics', '/pages/admin/orderList/index':'orders',
   '/pages/admin/orderDetail/index':'orderDetail', '/pages/admin/refundOrderList/index':'refunds',
@@ -31,7 +31,7 @@ export function parseCustomerWorkQuery(page: CustomerWorkPage, input: string | R
   const allowed:Record<CustomerWorkPage,string[]>={scanning:[],writeoff:[],writeoffRecords:[],writeoffResult:[],index:[],statistics:['type'],orders:['status','types','keyword','data','pay_type','type','field_key','is_del'],
     orderDetail:['orderId','id','status','types','goname'],refunds:['refundTypes','apply_type','order_id','time'],refundDetail:['refundOrderId','id'],refund:['orderId','id','listId'],logistics:['orderId','id','type'],
     delivery:['orderId','id','listId','totalNum','orderStatus','comeType','productType'],products:['type','keyword','store_name'],productSkus:['productId','id'],
-    users:['nickname','keyword','group_id','level','label_ids','label_id','isMember'],userDetail:['uid'],cashierRecords:[],cashierRecord:['orderId','orderNo'],cashier:[]};
+    users:['nickname','keyword','group_id','level','label_ids','label_id','isMember'],userDetail:['uid'],cashierRecords:[],cashierRecord:['orderId','orderNo'],cashier:[],ordinaryCashier:[]};
   for(const [key,value]of entries){if(!allowed[page].includes(key)||Object.hasOwn(fields,key)||value.length>(page==='users'&&['label_ids','label_id'].includes(key)?1099:512))throw Error('经营入口参数重复或无效');fields[key]=value;}
   if(page==='users'){
     for(const [alias,key]of [['keyword','nickname'],['label_id','label_ids']])if(fields[alias]!==undefined){

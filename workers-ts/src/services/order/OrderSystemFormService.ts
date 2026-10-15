@@ -10,6 +10,7 @@ import {
   type AttachmentService,
 } from "@/services/system/AttachmentService";
 import { ValidateException } from "@/utils/errors";
+import { readOrdinaryCashierFormForOrder } from '@/services/customer-work/CustomerOrdinaryCashierForm';
 
 import {
   MAX_FORM_COMPONENTS, isRecord, parseArray, cloneRecord, parseOrderSystemFormTemplate,
@@ -163,6 +164,14 @@ export async function readOrderSystemFormForOrder(
   if (order.isChannel !== 2) return readOrderSystemFormSnapshot(db, attachments, order.uid, order.customForm);
   const components = snapshotComponents(order.customForm);
   if (!components) return [];
+  // This bounded immutable snapshot only chooses a candidate reader. The
+  // ordinary reader still requires the actual order and its protected origin
+  // before any creator-owned attachment can be signed.
+  if (components.some(component => component.name === 'uploadPicture'
+    && Object.hasOwn(component, 'ordinaryCashierImageScope'))) {
+    const ordinary = await readOrdinaryCashierFormForOrder(db, attachments, order);
+    if (ordinary !== null) return ordinary;
+  }
   let root: FormOrder | undefined = order;
   if (order.pid > 0) {
     [root] = await db.select({ id: storeOrder.id, uid: storeOrder.uid, staffId: storeOrder.staffId,
@@ -192,7 +201,7 @@ export async function readOrderSystemFormForOrder(
   const allowed = owned.filter(row => scopes.some(scope => scope && belongsToAssistedFormScope(row.name, scope)));
   const signed = allowed.length ? await attachments.signReferences(allowed.map(row => canonicalAttachmentPath(row.id))) : [];
   return components.map((component, index) => {
-    const scope = scopes[index]; delete component[IMAGE_SCOPE]; delete component.cashierImageScope;
+    const scope = scopes[index]; delete component[IMAGE_SCOPE]; delete component.cashierImageScope; delete component.ordinaryCashierImageScope;
     if (component.name !== 'uploadPicture') return component;
     return { ...component, value: scope && Array.isArray(component.value) ? component.value.flatMap(value => {
       const id = scopedImageId(value);
@@ -234,7 +243,7 @@ export async function readOrderSystemFormSnapshot(
 ): Promise<JsonRecord[]> {
   const components = snapshotComponents(snapshotValue);
   if (!components) return [];
-  components.forEach(component => { delete component[IMAGE_SCOPE]; delete component.cashierImageScope; });
+  components.forEach(component => { delete component[IMAGE_SCOPE]; delete component.cashierImageScope; delete component.ordinaryCashierImageScope; });
   const canonicalIds = [...new Set(components.flatMap((component) => (
     component.name === "uploadPicture" && Array.isArray(component.value)
       ? component.value.flatMap((value) => {

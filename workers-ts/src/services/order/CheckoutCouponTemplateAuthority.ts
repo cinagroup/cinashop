@@ -4,6 +4,7 @@ import { ValidateException } from '@/utils/errors';
 import { parseCouponScopeIds, reconcileCouponProductScopeIds, type CouponScopeItem } from '@/services/activity/ProductCouponService';
 import { lockCheckoutCouponRelationProtocol, type CouponAuthorityTransaction } from './CheckoutCouponRelationsAuthority';
 import { assertCheckoutCouponItems } from './CheckoutCouponItemAuthority';
+import type {CashierOrdinaryCreationCapability} from './CashierOrdinaryOrigin';
 
 type Template = Pick<typeof storeCouponIssue.$inferSelect,
   'id' | 'type' | 'category' | 'couponType' | 'legacyProductIds' | 'productId' | 'legacyCategoryId' | 'category_id' | 'legacyBrandId' | 'brandId'>;
@@ -30,7 +31,7 @@ export type CouponTemplateSnapshot = ReturnType<typeof couponTemplateSnapshot>;
  * display metadata and unused scope aliases are deliberately not frozen facts.
  */
 export async function assertCheckoutCouponTemplate(
-  tx: CouponAuthorityTransaction, expected: CouponTemplateSnapshot,
+  tx: CouponAuthorityTransaction, expected: CouponTemplateSnapshot, ordinary?:CashierOrdinaryCreationCapability,
 ) {
   if (tx.$client) throw new Error('Coupon template authority requires the owning transaction');
   try {
@@ -57,7 +58,7 @@ export async function assertCheckoutCouponTemplate(
       || current.scopeIds.some((id, index) => id !== expected.scopeIds[index])) {
       throw new ValidateException('优惠券模板规则已变化，请重新确认');
     }
-    if (expected.items) await assertCheckoutCouponItems(tx, expected.items, expected.scopeType);
+    if (expected.items) await assertCheckoutCouponItems(tx, expected.items, expected.scopeType,ordinary);
   } catch (error) {
     let cause: unknown = error;
     for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {

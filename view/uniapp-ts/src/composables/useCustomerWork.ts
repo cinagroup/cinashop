@@ -30,7 +30,7 @@ export function useCustomerWork(options: CustomerWorkOptions):CustomerWorkContro
   function dropLease(){const prior=lease;lease=null;if(prior?.timer)clearTimeout(prior.timer);}
   const suspendLeaseActive=()=>!!lease?.active();
   function beginSuspendLease(durationMs=60_000):CustomerWorkSuspendLease {
-    if(options.page!=='cashier'||!current()||!context.value||!auth.isLoggedIn||lease||!Number.isSafeInteger(durationMs)||durationMs<1||durationMs>60_000)throw Error('当前图片选择范围不可用');
+    if(!['cashier','ordinaryCashier'].includes(options.page)||!current()||!context.value||!auth.isLoggedIn||lease||!Number.isSafeInteger(durationMs)||durationMs<1||durationMs>60_000)throw Error('当前图片选择范围不可用');
     const owner={uid:auth.uid,token:auth.token,version:auth.sessionVersion,epoch,routeStamp,scope:context.value.scope_key,service:context.value.principal.service_id,consistency:context.value.consistency_key};
     const until=Date.now()+durationMs,created:SuspendLeaseState={hiddenOnce:false,timer:null,active:()=>lease===created&&!disposed&&Date.now()<until
       &&epoch===owner.epoch&&routeStamp===owner.routeStamp&&!routeError&&auth.uid===owner.uid&&auth.token===owner.token&&auth.sessionVersion===owner.version

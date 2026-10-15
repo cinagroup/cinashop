@@ -17,6 +17,7 @@ import { loadRefundLineCompensation } from './RefundLineCompensation';
 import { targetLineCompensation, type RefundLineCompensation } from './OrderSplitFinance';
 import { ValidateException } from '@/utils/errors';
 import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
+import {lockOrdinaryPaidLabels,assertOrdinaryTaxonomyProof} from './CashierOrdinaryTaxonomy';
 
 /** Labels are purchase effects, never eligibility or refundable gift inventory. */
 export function promotionPaidLabelIds(value: string | null): number[] | null {
@@ -49,14 +50,16 @@ export function promotionPaidLabelIds(value: string | null): number[] | null {
 
 /** Called once by the owning paid outbox transaction, on the original payment root. */
 export async function grantPaidPromotionLabels(tx: DbClient,
-  order: Pick<typeof storeOrder.$inferSelect, 'uid' | 'pid' | 'paid' | 'promotionsGive'>): Promise<void> {
+  order: Pick<typeof storeOrder.$inferSelect, 'uid' | 'pid' | 'paid' | 'promotionsGive'>&{id?:number}): Promise<void> {
   const ids = promotionPaidLabelIds(order.promotionsGive);
   if (!ids?.length || order.uid === 0) return;
   if (order.paid !== 1 || order.pid > 0) throw new ValidateException('促销标签付款归属无效');
   const [account] = await tx.select({ uid: user.uid }).from(user).where(eq(user.uid, order.uid)).limit(1).for('update');
   if (!account) throw new ValidateException('促销标签用户不存在');
-  const labels = await tx.select({ id: userLabel.id }).from(userLabel)
-    .where(and(inArray(userLabel.id, ids), eq(userLabel.type, 0), eq(userLabel.relationId, 0), eq(userLabel.status, 1))).for('share');
+  const proof=await lockOrdinaryPaidLabels(tx,order,ids);if(proof)assertOrdinaryTaxonomyProof(tx,proof,'label',ids);
+  const labelQuery=tx.select({ id: userLabel.id }).from(userLabel)
+    .where(and(inArray(userLabel.id, ids), eq(userLabel.type, 0), eq(userLabel.relationId, 0), eq(userLabel.status, 1)));
+  const labels=await(proof?labelQuery:labelQuery.for('share'));
   // A label deliberately retired after checkout is no longer assigned at payment.
   if (!labels.length) return;
   const existing = await tx.select({ id: userLabelRelation.labelId }).from(userLabelRelation)
