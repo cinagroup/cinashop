@@ -7,9 +7,12 @@ import { auditRuntimeBusinessPrivileges, inspectRuntimeBusinessProfileInTransact
 import { installAdminAuthorityOperationUpgradeInTransaction } from './runAdminAuthorityOperationUpgrade';
 import { ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL,
   installAdminLegacyAdminOperationUpgradeInTransaction } from './runAdminLegacyAdminOperationUpgrade';
+import { ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL,
+  installAdminLegacyRoleOperationUpgradeInTransaction } from './runAdminLegacyRoleOperationUpgrade';
 import type { SeckillScheduleRuntimeTarget } from './runSeckillScheduleRuntimeUpgrade';
 
-export const ADMIN_AUTHORITY_MAINTENANCE_OPERATION = 'admin-authority-install-v1-and-legacy-v2';
+export const ADMIN_AUTHORITY_MAINTENANCE_OPERATION = 'admin-authority-install-v1-and-legacy-v2-and-legacy-role-v3';
+export const ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG = 'legacy-role-v3';
 export type AdminAuthorityMaintenanceTarget = SeckillScheduleRuntimeTarget;
 type Query = Pick<DbClient, 'execute'>;
 type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
@@ -19,12 +22,24 @@ export type AdminAuthorityRuntimeEvidence = Awaited<ReturnType<typeof auditRunti
 export const ADMIN_AUTHORITY_PRODUCTION_TARGET: AdminAuthorityMaintenanceTarget = Object.freeze({
   database: 'postgres', maintenance: 'postgres', app: 'cinashop_app_v1', admin: 'cinashop_admin_v1',
 });
+/** Reviewed control-plane intent, not a claim of runtime Cloudflare identity.
+ * Actual database identities and profiles are independently checked below. */
+export const ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE = Object.freeze({
+  accountId: '7ea8e46d8210bad342fa7595f7935fea',
+  hyperdriveBindings: Object.freeze({
+    HYPERDRIVE_MAINTENANCE: '9748c294e21c49a99579c9cef70102e0',
+    HYPERDRIVE: 'ba7faa6680cd48d4b3a1d36a7a5fc8f7',
+    HYPERDRIVE_ADMIN: '446e94a4de0143f58c8e5178ec55db8b',
+  }),
+});
 
-/** These are the only commissioning GRANTs. Historical grants are never repaired. */
+/** The original v1 grants remain exact. Historical grants are never repaired. */
 export const ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL = `GRANT SELECT,INSERT ON TABLE public.admin_authority_operation TO "cinashop_admin_v1";
 GRANT EXECUTE ON FUNCTION public.admin_authority_menu_lock_v1() TO "cinashop_admin_v1";`;
+export const ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL = 'GRANT DELETE ON TABLE public.system_role TO "cinashop_admin_v1";';
 export const ADMIN_AUTHORITY_MAINTENANCE_SQL = [ADMIN_AUTHORITY_OPERATION_SQL,
-  ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL].join('\n');
+  ADMIN_AUTHORITY_MAINTENANCE_GRANTS_SQL, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL,
+  ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL, ADMIN_AUTHORITY_MAINTENANCE_V3_GRANT_SQL].join('\n');
 
 export async function adminAuthorityEvidenceSha256(value: unknown): Promise<string> {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value))));
@@ -33,7 +48,9 @@ export async function adminAuthorityEvidenceSha256(value: unknown): Promise<stri
 export async function adminAuthorityInstallSqlSha256(target: AdminAuthorityMaintenanceTarget = ADMIN_AUTHORITY_PRODUCTION_TARGET): Promise<string> {
   assertTarget(target);
   const grants = `GRANT SELECT,INSERT ON TABLE public.admin_authority_operation TO ${pricingIdentifier(target.admin)};\nGRANT EXECUTE ON FUNCTION public.admin_authority_menu_lock_v1() TO ${pricingIdentifier(target.admin)};`;
-  const installation = [ADMIN_AUTHORITY_OPERATION_SQL, grants, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL].join('\n');
+  const roleDeleteGrant = `GRANT DELETE ON TABLE public.system_role TO ${pricingIdentifier(target.admin)};`;
+  const installation = [ADMIN_AUTHORITY_OPERATION_SQL, grants, ADMIN_LEGACY_ADMIN_OPERATION_UPGRADE_SQL,
+    ADMIN_LEGACY_ROLE_OPERATION_UPGRADE_SQL, roleDeleteGrant].join('\n');
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(installation)));
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -138,7 +155,8 @@ async function inspectInTransaction(tx: Query, target: AdminAuthorityMaintenance
   if (!identity) throw Error('Maintenance identity inspection returned no row');
   const names = { maintenance: target.maintenance, admin: target.admin };
   const addon = identity.tablePresent
-    ? await inspectAdminAuthorityOperation(tx, names, 'legacy-admin-v2') ? 'legacy-admin-v2'
+    ? await inspectAdminAuthorityOperation(tx, names, 'legacy-role-v3') ? 'legacy-role-v3'
+      : await inspectAdminAuthorityOperation(tx, names, 'legacy-admin-v2') ? 'legacy-admin-v2'
       : await inspectAdminAuthorityOperation(tx, names, 'v1') ? 'v1' : 'drift'
     : identity.cleanAbsent ? 'absent' : 'orphan';
   const menuLock = !identity.tablePresent ? addon === 'absent' : await inspectAdminAuthorityMenuLock(tx, names);
@@ -176,7 +194,10 @@ export async function inspectAdminAuthorityRuntimeLogin(db: DbClient, target: Ad
 export function adminAuthorityPreflightEvidence(sourceSha: string, installSqlSha256: string,
   target: AdminAuthorityMaintenanceTarget, maintenance: Awaited<ReturnType<typeof inspectAdminAuthorityMaintenance>>,
   app: AdminAuthorityRuntimeEvidence, admin: AdminAuthorityRuntimeEvidence) {
-  return { sourceSha, installSqlSha256, target, maintenance, app, admin };
+  return { operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION,
+    targetCatalog: ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG,
+    deploymentScope: ADMIN_AUTHORITY_PRODUCTION_DEPLOYMENT_SCOPE,
+    sourceSha, installSqlSha256, target, maintenance, app, admin };
 }
 export class AdminAuthorityPreflightMismatch extends Error {
   constructor() { super('Current locked preflight differs from approved evidence'); }
@@ -205,14 +226,23 @@ export async function applyAdminAuthorityMaintenance(db: Root, target: AdminAuth
     const fingerprint = await adminAuthorityEvidenceSha256(adminAuthorityPreflightEvidence(approval.sourceSha,
       approval.installSqlSha256, target, before, approval.app, approval.admin));
     if (!before.ready || fingerprint !== approval.fingerprint) throw new AdminAuthorityPreflightMismatch();
-    const v1 = await installAdminAuthorityOperationUpgradeInTransaction(tx, target);
-    const v2 = await installAdminLegacyAdminOperationUpgradeInTransaction(tx, target);
+    // Only missing stages run. In particular, the v2 installer must never be
+    // called on v3: it intentionally rejects that catalog rather than repairing it.
+    const v1 = before.addon === 'absent'
+      ? await installAdminAuthorityOperationUpgradeInTransaction(tx, target) : null;
+    const v2 = before.addon === 'absent' || before.addon === 'v1'
+      ? await installAdminLegacyAdminOperationUpgradeInTransaction(tx, target) : null;
+    const v3 = await installAdminLegacyRoleOperationUpgradeInTransaction(tx, target);
     const after = await inspectInTransaction(tx, target, true);
-    if (!after.ready || after.addon !== 'legacy-admin-v2') throw Error('Authority maintenance final profile/catalog verification failed');
-    return { operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION, committed: true, v1, v2,
+    if (!after.ready || after.addon !== ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG) throw Error('Authority maintenance final profile/catalog verification failed');
+    const protectedDataObservationUnchanged = before.snapshot.data
+      .every(row => after.snapshot.data.some(next => next.name === row.name && next.rows === row.rows && next.sha256 === row.sha256));
+    if (!protectedDataObservationUnchanged) throw Error('Authority maintenance changed protected data');
+    return { operation: ADMIN_AUTHORITY_MAINTENANCE_OPERATION,
+      targetCatalog: ADMIN_AUTHORITY_MAINTENANCE_TARGET_CATALOG,
+      fromCatalog: before.addon, toCatalog: after.addon, committed: true, v1, v2, v3,
       approvedPreflightFingerprint: fingerprint, before: before.snapshot, after: after.snapshot,
-      protectedDataObservationUnchanged: before.snapshot.data.filter(row => row.name !== 'admin_authority_operation')
-        .every(row => after.snapshot.data.some(next => next.name === row.name && next.rows === row.rows && next.sha256 === row.sha256)),
+      protectedDataObservationUnchanged,
       atomicBusinessDataProof: false };
   }, { isolationLevel: 'read committed', accessMode: 'read write' });
 }
