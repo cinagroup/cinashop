@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../../src/lib/di';
 import { inspectCashierSecondCardAbandon, installCashierSecondCardAbandon } from '../../src/migrations/runCashierSecondCardAbandon';
 import { inspectInvoiceManualRedNote, INVOICE_MANUAL_RED_NOTE_PINS } from '../../src/migrations/invoiceManualRedNoteCatalog';
-import { completeConstructionTableNames, MANUAL_RED_NOTE_ORM_TABLE_NAMES } from '../../test/helpers/completeConstructionInventory';
+import { completeConstructionTableNames, ERP_ORM_TABLE_NAMES, MANUAL_RED_NOTE_ORM_TABLE_NAMES } from '../../test/helpers/completeConstructionInventory';
 import { catalogKinds, type Catalog } from './postgres-catalog-audit';
 
 export const CASHIER_ABANDON_EXTERNAL_FILE = '0174_customer_cashier_abandon.sql';
@@ -32,6 +32,7 @@ const objectIdentities = sql`SELECT 'relation' AS kind,oid::text,relfilenode::te
 
 const ormPaths = ['orm','orm_upgrade','orm_default_upgrade','orm_constraints','orm_fk_names','orm_checks','orm_sequences'] as const;
 const manualTables = new Set<string>(MANUAL_RED_NOTE_ORM_TABLE_NAMES);
+const erpTables = new Set<string>(ERP_ORM_TABLE_NAMES);
 function isOrmPath(path: string) {
   assert.ok(path === 'external' || path === 'embedded' || ormPaths.some(name => name === path), 'Unreviewed construction path');
   return ormPaths.some(name => name === path);
@@ -39,7 +40,7 @@ function isOrmPath(path: string) {
 /** The fixed historical cohort is never regenerated from current models. Only
  * the two independently reviewed bare ORM tables may be additional objects. */
 export function assertCashierAbandonHistoricalBasis(names: readonly string[], path: string) {
-  const orm = isOrmPath(path), mature = completeConstructionTableNames('orm').filter(name => !manualTables.has(name));
+  const orm = isOrmPath(path), mature = completeConstructionTableNames('orm').filter(name => !manualTables.has(name) && !erpTables.has(name));
   assert.equal(mature.length, 285, 'Independent historical table inventory changed');
   assert.equal(new Set(names).size, names.length, 'Duplicate complete table identity');
   const extras = names.filter(name => manualTables.has(name));
