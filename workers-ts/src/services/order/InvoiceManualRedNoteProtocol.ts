@@ -93,5 +93,3 @@ export function parseManualRedReviewPayload(text:string):ManualRedReviewPayload{
   source_order_id:payloadId(p.source_order_id),payment_order_id:payloadId(p.payment_order_id),uid:payloadId(p.uid,true),original_document_number:manualRedOriginalDocument(p.original_document_number),red_document_number:document(p.red_document_number),
   decision:input.decision,manual_checked:true,review_note:input.review_note,created_time:payloadId(p.created_time)};
 }
-
-

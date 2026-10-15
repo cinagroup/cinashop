@@ -124,4 +124,3 @@ export async function invoiceHasReportedHistory(tx:DbClient,source:typeof storeO
  const [row]=await tx.execute<{reported:boolean}>(sql`SELECT EXISTS(${reported}) AS reported`);
  return row?.reported===true;
 }
-

@@ -57,4 +57,3 @@ export async function runInvoiceManualRedNote(db:Root,roles:{adminRole:string;re
   if(!(await inspectInvoiceManualRedNote(tx)).complete)throw Error('Manual red-note grant catalog post-check failed');
  },{isolationLevel:'read committed',accessMode:'read write'});
 }
-
