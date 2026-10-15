@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-10-15T02:28:32.584163+00:00",
+  "baseHead": "a89b1c36a89c78f1100ffecee322cb1955dcd850",
+  "scopeFiles": 3547,
+  "scopeDigest": "6e7e8f4c01f49d87e8264328e09a46e0a7b0ccbc3432d457bd500ef39164474b",
+  "allFilesAndDirectoryInventoryMatched": true,
+  "phpSourceInputs": 25,
+  "externalBrowserFiles": 13,
+  "productionValidated": false
+}

@@ -1,0 +1,100 @@
+{
+  "reviewer": "recycle_independent_review",
+  "reviewType": "independent lightweight final evidence audit; read-only Git index queries, no source/test edits or heavy execution",
+  "verifiedAt": "2026-10-15T02:29:38.516258+00:00",
+  "referenceVerification": {
+    "manifest": "workers-ts/audit/php-ts-admin-recycle-migration-20261015.json",
+    "referencesBeforeAddingThisReport": 66,
+    "missingFiles": [],
+    "sha256Mismatches": [],
+    "referencesMissingFromIndex": [],
+    "indexContentMismatches": [],
+    "note": "Ledger body SHA intentionally omitted to avoid a reference cycle; root will add this report hash to ledger references and stage the resulting ledger."
+  },
+  "sourceFreeze": {
+    "path": "workers-ts/audit/recycle-20261015/frozen-after.json",
+    "fileCount": 3547,
+    "digest": "6e7e8f4c01f49d87e8264328e09a46e0a7b0ccbc3432d457bd500ef39164474b",
+    "currentFileSha256Mismatches": [],
+    "filesystemDirectoryInventoryAndExplicitInputsMatched": true,
+    "sourceFilesMissingFromIndex": [],
+    "indexContentMismatches": [],
+    "scopeExclusions": "Environment values and installed dependency bytes; not the complete build input graph"
+  },
+  "externalInputs": {
+    "php-source-inputs.json": {
+      "files": 25,
+      "hashMismatches": []
+    },
+    "browser-proof.json": {
+      "files": 13,
+      "hashMismatches": []
+    }
+  },
+  "canonicalGateExitCodes": {
+    "native-integrated": 0,
+    "ordinary-integrated": 0,
+    "runtime-integrated": 0,
+    "worker-types-integrated": 0,
+    "worker-runtime-types-integrated": 0,
+    "admin-types-repaired": 0,
+    "admin-build-integrated": 0,
+    "frontend-import-final": 0
+  },
+  "testDefinitions": {
+    "ordinaryFiles": 11,
+    "ordinaryPassed": 83,
+    "nativeFiles": 4,
+    "nativePassed": 28,
+    "ordinaryNativeOverlap": 17,
+    "distinctOrdinaryNativeDefinitions": 94,
+    "workerdFiles": 3,
+    "workerdPassed": 8,
+    "workerdNew": 1,
+    "workerdExisting": 7,
+    "frontendImportCleanupFiles": 3,
+    "frontendImportCleanupPassed": 23,
+    "frontendCleanupDefinitionsAllAlreadyInOrdinary": true,
+    "nativeFixtureCleanup": "remaining0 and cluster stopped markers verified",
+    "runtimeUnhandledErrorsObservedInAcceptedLog": false
+  },
+  "postCoreGateSourceDelta": {
+    "changedPathsSinceIntegratedFreeze": {
+      "view/admin-ts/src/pages/product/ProductList.vue": {
+        "before": "49dd380ce4f246de2d405a7755cd2598a7876b40c59dd9e0ce70391b2386f77c",
+        "after": "c8986b30f8a556ac2d825e8351024c746b11104dd6cdebf4fc04e13e5531000f"
+      },
+      "workers-ts/test/admin-product-recycle-frontend.test.ts": {
+        "before": "538eb8de3cf6bef481611ffc4044341783741eb0432baaf55abc4133249ceef5",
+        "after": "55bc725d0b2f3050f367bb3716e3d973860c26cbd4605d2508644581a8388e2f"
+      }
+    },
+    "unusedImport": "Exact reverse replacement of current ElMessage import reconstructs recorded pre-repair SHA; no template/handler/state changed. All23 affected frontend definitions, full Admin types and build passed afterward. Backend/Worker/Queue bytes unchanged.",
+    "eofNormalization": "Current test bytes plus exactly two terminal LF reconstruct recorded original SHA; substituting that pre-normalization file hash reproduces old7cb50f0e freeze digest. No semantic source change; no heavy rerun required for terminal whitespace."
+  },
+  "globalChecklistsUnchanged": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "checked": 249,
+      "open": 155,
+      "sha256": "28472f4e603a3d570ed1599e55bf220b401a13c9492de5f3f590a04057988da2"
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "checked": 50,
+      "open": 38,
+      "sha256": "53f33f14d0cdab0bff6aee959fd410a9e4a5342a8e2cf4610f1511df554a7fdc"
+    }
+  },
+  "gitCachedWhitespaceCheck": {
+    "exitCode": 0
+  },
+  "findings": [],
+  "outstandingBlockingFindings": [],
+  "boundaries": [
+    "This audit reads existing execution receipts; reviewer did not rerun heavy checks. Eight canonical accepted gate statuses are all zero; earlier failed receipts remain historical evidence.",
+    "SQL/frontend94 unique definitions and workerd8 are separate evidence classes; repeated/native/frontend reruns are not counted again. Workerd mocks SQL/effects and generic notification follow-up.",
+    "Actual Redis/Lua/Upstash execution and production cache binding remain unverified. Encoded AutoConfig get.config internal behavior remains unproved. No production deployment/DDL or full Checkout end-to-end concurrency claim.",
+    "No final Git publication or remote SHA claim is made in this precommit audit; whole PHP-to-TypeScript goal remains active."
+  ]
+}

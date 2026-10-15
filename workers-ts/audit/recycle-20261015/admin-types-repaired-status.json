@@ -1,0 +1,14 @@
+{
+  "name": "admin-types-repaired",
+  "argv": [
+    "node",
+    "node_modules/vue-tsc/bin/vue-tsc.js",
+    "-b"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "startedAt": "2026-10-15T02:24:22.952689+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:24:49.086842+00:00",
+  "exitCode": 0,
+  "log": "admin-types-repaired.log"
+}

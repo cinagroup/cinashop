@@ -1,0 +1,11 @@
+{
+  "capturedAt": "2026-10-15T01:39:10.494572+00:00",
+  "baselineHead": "26207ea326a7b83a3500e27f1df0ca7984b121ad",
+  "remoteMainObserved": "26207ea326a7b83a3500e27f1df0ca7984b121ad",
+  "previousTurn": "progress: committed, pushed and independently read remote main",
+  "previousFreezeFileCount": 3495,
+  "previousFreezeDigest": "4758c8bb69e44867b535f484ab63305109e9c4209b520a4c93476d2286ef8932",
+  "previousFilesMismatched": [],
+  "previousLedgerSha256": "aa32efb90ef560b3bd778af8c7871cc99dbc2d2be573c61aa5e7575a67511e0d",
+  "goalStatus": "active: whole PHP to TS migration remains open"
+}

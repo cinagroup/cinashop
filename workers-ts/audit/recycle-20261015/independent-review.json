@@ -1,0 +1,89 @@
+{
+  "reviewer": "recycle_independent_review",
+  "reviewType": "independent read-only source review; reviewer authored no implementation or tests; only this review artifact is written",
+  "baseHead": "26207ea326a7b83a3500e27f1df0ca7984b121ad",
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P2",
+      "path": "workers-ts/src/services/admin/AdminProductRecycleService.ts",
+      "line": 59,
+      "title": "Preserve the real legacy transport error envelope",
+      "problem": "A stale old product row targeting an absent product initially received HTTP200/body.status404 from NotFoundException; PHP del throws AdminException400. The real old plugins/request/index.js returns only status200, rejects400/400011/400012, and resolves undefined for status404. Its ProductList delete handler then reads res.msg from undefined. Initial canonical HttpApiException409/503 likewise enters the old HTTP-error interceptor which logs but returns undefined.",
+      "reproduction": "Call the genuine old tableDelApi({url:product/product/998,method:DELETE,ids:\"\"}) through the genuine old plugins/request transport; the initial source resolves undefined rather than rejecting with msg 商品数据不存在. Under a product/authority table conflict the initial409 path has the same undefined outcome.",
+      "testGap": "Initial old-client test compiled tableDelApi but replaced the entire old transport with a new reject-all interceptor, so it could not detect the genuine interceptor behavior.",
+      "status": "resolved by root; corrected implementation and genuine old transport fixture independently read back; execution remains root validation responsibility",
+      "agreedCorrection": "Missing product retains status400. Canonical legacy wire without expected_is_del maps definite409/503 failures to HTTP200/status400; guarded modern wire retains strict409/503. Unknown failures retain unknown semantics. Compile the genuine old request module with host dependencies stubbed instead of replacing its interceptors.",
+      "resolutionReadback": {
+        "service": "Absent parent now throws ValidateException 商品数据不存在, preserving PHP status400.",
+        "controller": "Only canonical mode toggle with absent expected_is_del catches definite HttpApiException409/503 and returns jsonFail HTTP200/status400. Explicit expected state, aliases and unknown failures retain their existing strict/unknown behavior. The catch surrounds service.change; postcommit dispatch errors are already swallowed after durable success.",
+        "tests": "The fixture now bundles actual old plugins/request/index.js plus common.js.tableDelApi, stubs only store/util/setting/view-design hosts and keeps source interceptors. The adapter explicitly throws AxiosError for actual App non2xx, matching native adapter behavior. New trigger cases compare old400 rejection and modernHTTP409/503, while missing parent asserts400; not executed by reviewer.",
+        "artifact": "workers-ts/audit/recycle-20261015/legacy-http-compatibility.json"
+      }
+    }
+  ],
+  "checkedSemantics": {
+    "phpMutation": "Independently read StoreProduct controller delete, StoreProductServices del and DeleteSuccess/changeStatus: is_del1 restores to0 preserving parent is_show; all other states recycle to1 and parent is_show0. Type0 all direct pid children change only is_del; self pid final parent update wins. Type1 declared source schema has no product_verify_status and sets is_verify0 both directions. All parent cart statuses become0, child carts/SKUs/relations/orders remain unchanged.",
+    "lockOrder": "Authority barriers precede unlocked complete family snapshot, ascending bargain exclusive fences and product try-fences. Four physical SHARE ROW EXCLUSIVE NOWAIT table barriers precede exact family re-read and row readsets; this avoids holding product/cart barriers while awaiting a bargain admission shared holder. Complete result/readback and final authority/database-clock checks are explicit. Table barriers intentionally block unrelated writes and require documented UPDATE privileges.",
+    "permissions": "Source installer169 DELETE product/product/<id>,105 editorPOST and620 detailGET tuples were independently cross-checked against crmeb.sql. Only exact corresponding metadata binds in the new resource claim path; API route DELETE is product.manage and malformedIDs cannot fall through. Single/batch/opaque logic share the protected binding.",
+    "cache": "Independently read CacheDaoTrait, custom Tag, Think TagSet and Redis driver. Members already contain REDIS_PREFIX; sets contain REDIS_PREFIX+CACHE_TAG_PREFIX+CRMEB:+md5(tag). Independent MD5 hashes equal19ebc6b9c156e99ca987fba0feabe5f9 and87e6f0d8c14295287d6239d77f69c1fb. Lua validates both types/cardinalities and every complete member prefix before any DEL, with bounded reads and delete batches.",
+    "durability": "Dedicated product.recycle.effects audit/intent is committed with business writes. Postcommit dispatch failure is logged and leaves durable pending intent rather than producing false business failure. Outbox classifier, source-audit check, lease-conditional completion and standalone event CHECK expansion are wired independently of stock/withdrawal effects.",
+    "frontend": "Canonical explicit-direction DELETE has empty body and validates [] success. Persistent owner/product/run markers and Web Locks fence pending or uncertain requests; later same-session catalog read plus manual acknowledgment is required before a new decision. Dialog closes on identity/route replacement, ignores late scoped results, exposes restore visibility/child propagation/cart invalidation, and works in recycle list type6."
+  },
+  "validationEvidenceLimitations": [
+    "Reviewer ran no Vitest, typecheck, Vite build, installation, provider or browser validation. Root serial receipts are separate and not independently re-executed here.",
+    "Effects tests replace redis.eval with a spy. The actual Lua was reviewed statically only; no actual Redis/Lua, Upstash networking, invalid-second-member or10000/10001 Redis execution proof was observed.",
+    "Both PHP AutoConfig files independently hashed to4f2c20e460b42dc65a62bdd545f47afcb55ba268f235b5656726f49963ad4a4a,7456bytes, Swoole Loader encoded. Internal get.config Redis/config/WS semantics cannot be proved or ruled out. No complete migration claim is made for this opaque listener.",
+    "Configured Upstash database and legacy REDIS_PREFIX/CACHE_TAG_PREFIX must point to the actual PHP cache domain; deployment binding identity is not validated by source review.",
+    "Four business-table barriers and authority/menu row privileges are intentional declared runtime requirements. No production SQL/Redis/Queue or external effects were exercised."
+  ],
+  "outstandingBlockingFindings": [],
+  "initialReviewedFileSha256": {
+    "workers-ts/src/services/admin/AdminProductRecycleService.ts": "4bb6d90d8d02fa9f484d9e16a41f86e376c4e5d3ce8430bf6f9f3195f66b0190",
+    "workers-ts/src/controllers/api/v1/AdminProductRecycleController.ts": "dba3be939b40b4ae3f2666690515e801d44c807357e4ae962d322efe2a3c2556",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "d91ebeb7547a19a0c72b8433f2e4a6fa9735a28a698490be712eeb184838b138",
+    "workers-ts/src/services/product/ProductRecycleEffects.ts": "ba4b8b55817f7109a168baa6d306b17802cc53c7ebfb4dd75276999724d761cb",
+    "workers-ts/src/migrations/productRecycleEffects.ts": "048e957691e934d92b26a142f301aafea6d3d6b52fc7d7607337214aeacd62ca",
+    "workers-ts/src/migrations/runProductRecycleEffects.ts": "957cdf3051f117bc8c85dc5249f961c008c89f3f30f0375d7837a5899f78899d",
+    "workers-ts/migrations/0177_product_recycle_effects.sql": "bd77226f8f5733e979483f4b0a5999a1c233ecfcdae230e5f8c20126d175b43c",
+    "workers-ts/src/services/MigrationService.ts": "81df7f91c52d5a41a9dffd0333d0b0a142b96e5553d955601439c3a3b0142d28",
+    "workers-ts/src/services/order/OrderOutboxService.ts": "3b9d53a140cb4753af1d8b115b244bc9e5c5ef9aa008ee809d8fb7ef0f96c360",
+    "workers-ts/src/models/schema/order_outbox.ts": "0c1e6ebdf3229cac232130441efbdbf4d25dbe3b346a13381e26325d23707376",
+    "view/admin-ts/src/api/productRecycle.ts": "98dfc8c8d1cf55b87dc1a05f51aeef7dfb427d8cab26a2096a10e1e2e3c751f5",
+    "view/admin-ts/src/api/product.ts": "df652522b9b16b0953845358b241d304d6749dda056078855c84dfc57f8891ec",
+    "view/admin-ts/src/pages/product/ProductRecycleDialog.vue": "f507d8cc252babe4599670cdb0d90c3ab5664a8c2d53c49369c82627172e1b7f",
+    "view/admin-ts/src/pages/product/ProductList.vue": "49dd380ce4f246de2d405a7755cd2598a7876b40c59dd9e0ce70391b2386f77c",
+    "workers-ts/test/admin-product-recycle.test.ts": "99fd97748915a69031d38b811b7f85be4c4b52521950187fbcdc2965507b8d3b",
+    "workers-ts/test/admin-product-recycle-native.test.ts": "077a711d673b2968ebdb67f3063325da32c700d345c8945aeb44cadc0f770aa9",
+    "workers-ts/test/helpers/adminProductRecycle.ts": "ba20c009a26904565efa80d473360ddd070405e03b909ef81f8686668d68abff",
+    "workers-ts/test/admin-product-recycle-frontend.test.ts": "e44a6f168456db6caf8e1d04ec8c6f26f19537a2aebc512c4b9267c519bb0c54",
+    "workers-ts/test/admin-product-recycle-tabs.test.ts": "e3ba24d439fff720cd68c51c0e8a71c067f01d8a7e56f845e45179f63e32e0a1",
+    "workers-ts/test/product-recycle-effects.test.ts": "208e1aa6979f9e3e9c18abbcaa96c44b8c4e0fd17779575f66bf7dbac07dca6d",
+    "workers-ts/test/product-recycle-effects-native.test.ts": "bcdfbb3dde4ebc00047ec2624f11cec742396b9e5560dcaee4d815c19b1e6797"
+  },
+  "reviewedFileSha256": {
+    "workers-ts/src/services/admin/AdminProductRecycleService.ts": "4bb6d90d8d02fa9f484d9e16a41f86e376c4e5d3ce8430bf6f9f3195f66b0190",
+    "workers-ts/src/controllers/api/v1/AdminProductRecycleController.ts": "dba3be939b40b4ae3f2666690515e801d44c807357e4ae962d322efe2a3c2556",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "d91ebeb7547a19a0c72b8433f2e4a6fa9735a28a698490be712eeb184838b138",
+    "workers-ts/src/services/product/ProductRecycleEffects.ts": "ba4b8b55817f7109a168baa6d306b17802cc53c7ebfb4dd75276999724d761cb",
+    "workers-ts/src/migrations/productRecycleEffects.ts": "048e957691e934d92b26a142f301aafea6d3d6b52fc7d7607337214aeacd62ca",
+    "workers-ts/src/migrations/runProductRecycleEffects.ts": "957cdf3051f117bc8c85dc5249f961c008c89f3f30f0375d7837a5899f78899d",
+    "workers-ts/migrations/0177_product_recycle_effects.sql": "bd77226f8f5733e979483f4b0a5999a1c233ecfcdae230e5f8c20126d175b43c",
+    "workers-ts/src/services/MigrationService.ts": "81df7f91c52d5a41a9dffd0333d0b0a142b96e5553d955601439c3a3b0142d28",
+    "workers-ts/src/services/order/OrderOutboxService.ts": "3b9d53a140cb4753af1d8b115b244bc9e5c5ef9aa008ee809d8fb7ef0f96c360",
+    "workers-ts/src/models/schema/order_outbox.ts": "0c1e6ebdf3229cac232130441efbdbf4d25dbe3b346a13381e26325d23707376",
+    "view/admin-ts/src/api/productRecycle.ts": "98dfc8c8d1cf55b87dc1a05f51aeef7dfb427d8cab26a2096a10e1e2e3c751f5",
+    "view/admin-ts/src/api/product.ts": "df652522b9b16b0953845358b241d304d6749dda056078855c84dfc57f8891ec",
+    "view/admin-ts/src/pages/product/ProductRecycleDialog.vue": "f507d8cc252babe4599670cdb0d90c3ab5664a8c2d53c49369c82627172e1b7f",
+    "view/admin-ts/src/pages/product/ProductList.vue": "49dd380ce4f246de2d405a7755cd2598a7876b40c59dd9e0ce70391b2386f77c",
+    "workers-ts/test/admin-product-recycle.test.ts": "99fd97748915a69031d38b811b7f85be4c4b52521950187fbcdc2965507b8d3b",
+    "workers-ts/test/admin-product-recycle-native.test.ts": "077a711d673b2968ebdb67f3063325da32c700d345c8945aeb44cadc0f770aa9",
+    "workers-ts/test/helpers/adminProductRecycle.ts": "ba20c009a26904565efa80d473360ddd070405e03b909ef81f8686668d68abff",
+    "workers-ts/test/admin-product-recycle-frontend.test.ts": "e44a6f168456db6caf8e1d04ec8c6f26f19537a2aebc512c4b9267c519bb0c54",
+    "workers-ts/test/admin-product-recycle-tabs.test.ts": "e3ba24d439fff720cd68c51c0e8a71c067f01d8a7e56f845e45179f63e32e0a1",
+    "workers-ts/test/product-recycle-effects.test.ts": "208e1aa6979f9e3e9c18abbcaa96c44b8c4e0fd17779575f66bf7dbac07dca6d",
+    "workers-ts/test/product-recycle-effects-native.test.ts": "bcdfbb3dde4ebc00047ec2624f11cec742396b9e5560dcaee4d815c19b1e6797",
+    "workers-ts/audit/recycle-20261015/legacy-http-compatibility.json": "0e573d173506d32831c83a3e9c1f8e769bc41503a6d4058bb88bfdcd931c1c8f"
+  },
+  "pendingValidationEvidence": "Root must attach serial ordinary/native/type/runtime/build receipts for final source. No test success is inferred from this static resolution."
+}

@@ -6,6 +6,7 @@
  */
 import { sql } from "drizzle-orm";
 import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
+import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
 import type { ProductStockEffectsPayload } from '@/services/product/ProductStockEffects';
 import {
   check,
@@ -80,6 +81,7 @@ export interface WithdrawalApplicationOutboxPayload {
 }
 
 export type OrderOutboxPayload =
+  | ProductRecycleEffectsPayload
   | ProductStockEffectsPayload
   | OrderPaidOutboxPayload
   | OrderPinkSuccessNoticeOutboxPayload
@@ -127,7 +129,8 @@ export const storeOrderOutbox = pgTable(
       'withdrawal.staff.refresh',
       'order.presale.fulfillment',
       'order.pink.success.notice',
-      'product.stock.effects'
+      'product.stock.effects',
+      'product.recycle.effects'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),
     index("soob_aggregate").on(t.aggregateType, t.aggregateId),

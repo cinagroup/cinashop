@@ -3,6 +3,7 @@
  * 对应后端 /adminapi/product/* (已实现的 CRUD)
  */
 import request, { getData } from "@/utils/request";
+import { beginRecycleRead } from './productRecycle';
 import { beginModerationRead } from './productModeration';
 import type { AdminProduct } from "@/types/admin";
 
@@ -269,12 +270,13 @@ export async function apiAdminProductList(params: AdminProductCatalogQuery, sign
     const actualPage = rows.length <= limit ? 1 : page;
     return { list: rows.slice((actualPage - 1) * limit, actualPage * limit), count: rows.length };
   }
-  const observe = await beginModerationRead();
+  const observe = await beginModerationRead(), observeRecycle = await beginRecycleRead();
   const value = await getData<{ list: AdminProductCatalogItem[]; count: number }>(request.get("/product/product", { params, signal }));
   if (!value || !Array.isArray(value.list) || value.list.some(row => !row || !Number.isSafeInteger(row.id) || row.id < 1 || row.id > 2_147_483_647 ||
     row.stock !== null && !Number.isSafeInteger(row.stock))) throw Error("商品列表响应格式错误");
   const count = catalogCount(value.count);
   observe(value.list.map(row => row.id));
+  observeRecycle(value.list.map(row => row.id));
   return { list: value.list, count };
 }
 export async function apiAdminProductTypeHeader(params: AdminProductCatalogQuery, signal?: AbortSignal): Promise<AdminProductCatalogHeader[]> {

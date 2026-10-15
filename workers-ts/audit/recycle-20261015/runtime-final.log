@@ -1,0 +1,250 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+stderr | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > continues an empty recent window and retries the original cursor if continuation delivery fails
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > continues an empty recent window and retries the original cursor if continuation delivery fails
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_pink_cancellation_recovery',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 2,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 55P03 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 55P03 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_pink_cancellation_recovery',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 57014 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 57014 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_pink_cancellation_recovery',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+ ✓ test/runtime/pink-recovery-queue-runtime.test.ts (3 tests) 112ms
+stderr | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'start' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'start' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'isolated_shelf_completed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'scan' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_product_shelf_failed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'scan' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'isolated_shelf_completed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'process' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_product_shelf_failed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'process' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'isolated_shelf_completed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+ ✓ test/runtime/product-auto-shelf-queue-runtime.test.ts (4 tests) 110ms
+stderr | test/runtime/product-recycle-effects-queue-runtime.test.ts > actual workerd recycle outbox Queue routing with mocked SQL/effect processing > keeps the immutable recycle reference on failure and acknowledges a successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'order_notification_outbox_consume_failed',
+  component: 'queue',
+  operation: 'notification_outbox',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+failed to connect to local database; e = kj/async-io-unix.c++:1534: disconnected: connect(): Connection refused
+stack: /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ec72 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ee55 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b5c428 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5734a90 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5735250 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2490450 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@24909a7 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@243b4b0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c6a291 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c696c0
+stderr | test/runtime/product-recycle-effects-queue-runtime.test.ts > actual workerd recycle outbox Queue routing with mocked SQL/effect processing > keeps the immutable recycle reference on failure and acknowledges a successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'order_notification_delivery_dispatch_failed',
+  component: 'queue',
+  operation: 'notification_delivery',
+  outcome: 'failure',
+  durationMs: 11,
+  errorCode: 'error'
+}
+
+exception = kj/async-io-unix.c++:1534: disconnected: connect(): Connection refused
+stack: /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ec72 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ee55 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b5c428 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5734a90 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5735250 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2490450 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@24909a7 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@243b4b0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c6a291 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c696c0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b49b30 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b49de0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@30b2f30 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@356a5c0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@369d830 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@369e3b0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@308eb00
+stdout | test/runtime/product-recycle-effects-queue-runtime.test.ts > actual workerd recycle outbox Queue routing with mocked SQL/effect processing > keeps the immutable recycle reference on failure and acknowledges a successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'order_notification_outbox_consumed',
+  component: 'queue',
+  operation: 'notification_outbox',
+  outcome: 'success',
+  result: 'completed',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+failed to connect to local database; e = kj/async-io-unix.c++:1534: disconnected: connect(): Connection refused
+stack: /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ec72 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ee55 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b5c428 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5734a90 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5735250 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2490450 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@24909a7 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@243b4b0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c6a291 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c696c0
+exception = kj/async-io-unix.c++:1534: disconnected: connect(): Connection refused
+stack: /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ec72 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@573ee55 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b5c428 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5734a90 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5735250 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2490450 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@24909a7 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@243b4b0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c6a291 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2c696c0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b49b30 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@5b49de0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@30b2f30 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@356a5c0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@369d830 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@369e3b0 /home/cina/cinagroup/cinashop/workers-ts/node_modules/@cloudflare/workerd-linux-64/bin/workerd@308eb00
+stderr | test/runtime/product-recycle-effects-queue-runtime.test.ts > actual workerd recycle outbox Queue routing with mocked SQL/effect processing > keeps the immutable recycle reference on failure and acknowledges a successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'order_notification_delivery_dispatch_failed',
+  component: 'queue',
+  operation: 'notification_delivery',
+  outcome: 'failure',
+  durationMs: 2,
+  errorCode: 'error'
+}
+
+ ✓ test/runtime/product-recycle-effects-queue-runtime.test.ts (1 test) 112ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: Network connection lost.
+ ❯ read node_modules/postgres/cf/polyfills.js:201:33
+    199|       let done
+    200|         , value
+    201|       while (({ done, value } = await tcp.reader.read(), !done))
+       |                                 ^
+    202|         tcp.emit('data', Buffer.from(value))
+    203|     } catch (err) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { retryable: true }
+This error originated in "test/runtime/product-recycle-effects-queue-runtime.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "keeps the immutable recycle reference on failure and acknowledges a successful replay". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: Network connection lost.
+ ❯ read node_modules/postgres/cf/polyfills.js:201:33
+    199|       let done
+    200|         , value
+    201|       while (({ done, value } = await tcp.reader.read(), !done))
+       |                                 ^
+    202|         tcp.emit('data', Buffer.from(value))
+    203|     } catch (err) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { retryable: true }
+This error originated in "test/runtime/product-recycle-effects-queue-runtime.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 passed (3)
+      Tests  8 passed (8)
+     Errors  2 errors
+   Start at  02:12:52
+   Duration  34.24s (transform 9.09s, setup 0ms, import 30.54s, tests 334ms, environment 1ms)
+
+JSON report written to /home/cina/cinagroup/cinashop/workers-ts/audit/recycle-20261015/runtime-final.json

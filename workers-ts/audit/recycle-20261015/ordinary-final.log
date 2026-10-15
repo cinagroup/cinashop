@@ -1,0 +1,119 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ✓ |regular-unit| test/admin-product-moderation.test.ts (13 tests) 9552ms
+     ✓ retains refusal/is_show anomalies, all source owner/product/deletion states and timestamp-forced hide without rewriting descendants  430ms
+     ✓ separates genuine view/manage and denies all unseeded numerical aliases in single/batch/opaque permission paths  304ms
+     ✓ rolls back complete product/cart/SKU/relation/audit suppression, rewrites, post-audit side effects and inserted target phantoms  951ms
+     ✓ bounds complete physical SKU/cart sets without partial changes instead of silently truncating source data  2102ms
+     ✓ returns all three read contracts under true view and rejects absent/unproved writers with real live account/role/password checks  440ms
+stderr | test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > keeps one-way aliases idempotent, rejects stale explicit intent and reports postcommit dispatch failure as durable success
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > lets the genuine old interceptor reject definite rolled-back conflicts while modern guarded requests keep HTTP409/503
+{
+  schema: 'cinashop_operational_v1',
+  event: 'http_request_completed',
+  component: 'http',
+  operation: 'request',
+  outcome: 'failure',
+  statusCode: 503,
+  durationMs: 63,
+  thresholdMs: 1000,
+  slow: false
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts (11 tests) 14140ms
+     ✓ recycles/restores all direct children, invalidates every parent cart status and preserves full SKU/relation/grandchild/order data  331ms
+     ✓ honors all source owner/card/deleted/review flags and declared-schema type1 verify0 without querying or requiring a store  709ms
+     ✓ refuses revoked/password/foreign/expired and real read-only authorities before any business change  330ms
+     ✓ rolls back suppressed/rewritten parent, child, cart, full audit/outbox and post-audit/intent trigger changes or phantoms  1778ms
+     ✓ refuses an over-capacity complete family before mutation  4398ms
+     ✓ executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages  323ms
+     ✓ lets the genuine old interceptor reject definite rolled-back conflicts while modern guarded requests keep HTTP409/503  401ms
+     ✓ enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures  677ms
+stderr | test/admin-product-stock.test.ts > genuine Admin stock source reads, relative changes and complete transaction receipts > dispatches committed durable effects only after transaction release and never converts a queue failure to false stock write failure
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_stock_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_stock_adjustment',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-stock.test.ts (12 tests) 4544ms
+     ✓ refuses card fabrication, malformed ownership, invalid ERP/config, integer overflow and changed actor atomically  322ms
+     ✓ rolls back suppressed/rewritten SKU, product, ledger and full audit fields including post-audit mutations and extra ledger rows  474ms
+ ✓ |regular-unit| test/product-stock-effects.test.ts (4 tests) 3041ms
+ ✓ |regular-unit| test/admin-product-unit-http.test.ts (7 tests) 3071ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts (6 tests) 2789ms
+ ✓ |regular-unit| test/admin-product-catalog-navigation-frontend.test.ts (12 tests) 871ms
+ ✓ |regular-unit| test/admin-product-moderation-frontend.test.ts (6 tests) 458ms
+ ✓ |regular-unit| test/admin-product-recycle-frontend.test.ts (5 tests) 459ms
+ ✓ |regular-unit| test/admin-product-recycle-tabs.test.ts (4 tests) 93ms
+ ✓ |regular-unit| test/admin-product-moderation-tabs.test.ts (3 tests) 88ms
+
+ Test Files  11 passed (11)
+      Tests  83 passed (83)
+   Start at  02:11:51
+   Duration  60.53s (transform 9.63s, setup 0ms, import 19.76s, tests 39.11s, environment 1ms)
+
+JSON report written to /home/cina/cinagroup/cinashop/workers-ts/audit/recycle-20261015/ordinary-final.json

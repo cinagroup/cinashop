@@ -1,0 +1,23 @@
+{
+  "name": "runtime-integrated",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.worker.config.ts",
+    "test/runtime/product-recycle-effects-queue-runtime.test.ts",
+    "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+    "test/runtime/pink-recovery-queue-runtime.test.ts",
+    "--maxWorkers=1",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=audit/recycle-20261015/runtime-integrated.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T02:17:17.398293+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:17:57.441765+00:00",
+  "exitCode": 0,
+  "log": "runtime-integrated.log"
+}

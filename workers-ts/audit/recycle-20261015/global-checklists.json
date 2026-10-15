@@ -1,0 +1,14 @@
+{
+  "MIGRATION_CHECKLIST.md": {
+    "total": 404,
+    "checked": 249,
+    "open": 155,
+    "sha256": "28472f4e603a3d570ed1599e55bf220b401a13c9492de5f3f590a04057988da2"
+  },
+  "MIGRATION_AUDIT.md": {
+    "total": 88,
+    "checked": 50,
+    "open": 38,
+    "sha256": "53f33f14d0cdab0bff6aee959fd410a9e4a5342a8e2cf4610f1511df554a7fdc"
+  }
+}

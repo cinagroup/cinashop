@@ -1,0 +1,20 @@
+{
+  "name": "native-final-repaired",
+  "argv": [
+    "node",
+    "scripts/run-local-finance-postgres.mjs",
+    "--schema-maintenance",
+    "--verbose-tests",
+    "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+    "test/admin-product-recycle.test.ts",
+    "test/admin-product-recycle-native.test.ts",
+    "test/product-recycle-effects.test.ts",
+    "test/product-recycle-effects-native.test.ts"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T02:10:53.684720+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:11:28.235012+00:00",
+  "exitCode": 0,
+  "log": "native-final-repaired.log"
+}

@@ -1,0 +1,166 @@
+{
+  "acceptedAt": "2026-10-15T02:26:30.641464+00:00",
+  "allAcceptedExitCodesZero": true,
+  "canonical": {
+    "native-integrated": {
+      "name": "native-integrated",
+      "argv": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/admin-product-recycle.test.ts",
+        "test/admin-product-recycle-native.test.ts",
+        "test/product-recycle-effects.test.ts",
+        "test/product-recycle-effects-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T02:15:41.749887+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:16:14.321327+00:00",
+      "exitCode": 0,
+      "log": "native-integrated.log"
+    },
+    "ordinary-integrated": {
+      "name": "ordinary-integrated",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-product-recycle.test.ts",
+        "test/product-recycle-effects.test.ts",
+        "test/admin-product-recycle-frontend.test.ts",
+        "test/admin-product-recycle-tabs.test.ts",
+        "test/admin-product-catalog-navigation-frontend.test.ts",
+        "test/admin-product-moderation.test.ts",
+        "test/admin-product-moderation-frontend.test.ts",
+        "test/admin-product-moderation-tabs.test.ts",
+        "test/admin-product-stock.test.ts",
+        "test/product-stock-effects.test.ts",
+        "test/admin-product-unit-http.test.ts",
+        "--maxWorkers=1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=audit/recycle-20261015/ordinary-integrated.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T02:16:14.354095+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:17:17.332349+00:00",
+      "exitCode": 0,
+      "log": "ordinary-integrated.log"
+    },
+    "runtime-integrated": {
+      "name": "runtime-integrated",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.worker.config.ts",
+        "test/runtime/product-recycle-effects-queue-runtime.test.ts",
+        "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+        "test/runtime/pink-recovery-queue-runtime.test.ts",
+        "--maxWorkers=1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=audit/recycle-20261015/runtime-integrated.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T02:17:17.398293+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:17:57.441765+00:00",
+      "exitCode": 0,
+      "log": "runtime-integrated.log"
+    },
+    "worker-types-integrated": {
+      "name": "worker-types-integrated",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T02:17:57.471562+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:20:22.762286+00:00",
+      "exitCode": 0,
+      "log": "worker-types-integrated.log"
+    },
+    "worker-runtime-types-integrated": {
+      "name": "worker-runtime-types-integrated",
+      "argv": [
+        "node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T02:20:22.959065+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:21:37.714258+00:00",
+      "exitCode": 0,
+      "log": "worker-runtime-types-integrated.log"
+    },
+    "admin-types-repaired": {
+      "name": "admin-types-repaired",
+      "argv": [
+        "node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-15T02:24:22.952689+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:24:49.086842+00:00",
+      "exitCode": 0,
+      "log": "admin-types-repaired.log"
+    },
+    "admin-build-integrated": {
+      "name": "admin-build-integrated",
+      "argv": [
+        "node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+      "startedAt": "2026-10-15T02:25:39.785402+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:26:07.510418+00:00",
+      "exitCode": 0,
+      "log": "admin-build-integrated.log"
+    },
+    "frontend-import-final": {
+      "name": "frontend-import-final",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-product-recycle-frontend.test.ts",
+        "test/admin-product-catalog-navigation-frontend.test.ts",
+        "test/admin-product-moderation-frontend.test.ts",
+        "--maxWorkers=1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=audit/recycle-20261015/frontend-import-final.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "startedAt": "2026-10-15T02:23:14.232325+00:00",
+      "serialWrapperRequired": true,
+      "completedAt": "2026-10-15T02:23:17.382908+00:00",
+      "exitCode": 0,
+      "log": "frontend-import-final.log"
+    }
+  },
+  "supersededFailureReceipts": [
+    "ordinary-initial",
+    "native-final",
+    "runtime-final",
+    "admin-types-integrated"
+  ],
+  "sourceDeltaAfterIntegratedCoreGates": "One unused Vue import removal plus two excess terminal LF removed from a test. Both exact byte changes proved in unused-import-repair.json/eof-normalization.json.23 affected frontend cases/Admin types/build rerun after import removal; EOF-only cleanup requires no repeated heavy validation."
+}

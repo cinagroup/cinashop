@@ -48,6 +48,7 @@ import type { WithdrawalWecomGap } from "@/services/user/WithdrawalApplicationNo
 import { emitOperationalEvent } from "@/utils/observability";
 import { deliverStaffRefresh, type StaffPublisher } from "@/services/notification/StaffNotificationDeliveryService";
 import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
+import { deliverProductRecycleEffects, PRODUCT_RECYCLE_EFFECTS_EVENT } from '@/services/product/ProductRecycleEffects';
 import { deliverProductStockEffects, PRODUCT_STOCK_EFFECTS_EVENT } from '@/services/product/ProductStockEffects';
 import { recordPaidOrderMembershipSavings } from './OrderMembershipSavings';
 import { grantPaidPromotionLabels } from './OrderRewardService';
@@ -85,6 +86,8 @@ export interface OrderOutboxEnvironment {
   UPSTASH_REDIS_URL?: string;
   UPSTASH_REDIS_TOKEN?: string;
   NODE_ENV?: string;
+  REDIS_PREFIX?: string;
+  CACHE_TAG_PREFIX?: string;
 }
 
 interface PaymentOrder {
@@ -143,7 +146,7 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|product\.stock\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|product\.(?:stock|recycle)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
   );
 }
 
@@ -161,6 +164,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === WITHDRAWAL_APPLICATION_EVENT
     || eventType === STAFF_REFRESH_EVENT
     || eventType === PRODUCT_STOCK_EFFECTS_EVENT
+    || eventType === PRODUCT_RECYCLE_EFFECTS_EVENT
     || eventType === ORDER_DELIVERY_NOTICE_EVENT
     || eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
@@ -536,18 +540,19 @@ export class OrderOutboxService {
   }
 
   private async runClaimedEvent(claim: ClaimedEvent): Promise<void | 'deferred'> {
-    if (claim.eventType === PRODUCT_STOCK_EFFECTS_EVENT) {
+    if (claim.eventType === PRODUCT_STOCK_EFFECTS_EVENT || claim.eventType === PRODUCT_RECYCLE_EFFECTS_EVENT) {
       const [event] = await this.container.db.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.id, claim.id),
         eq(storeOrderOutbox.status, 'PROCESSING'), eq(storeOrderOutbox.leaseToken, claim.leaseToken))).limit(1);
       if (!event || event.eventKey !== claim.eventKey || event.aggregateId !== claim.aggregateId || event.eventType !== claim.eventType
-        || JSON.stringify(event.payload) !== JSON.stringify(claim.payload)) throw Error('Stock effects lease or immutable identity invalid');
-      await deliverProductStockEffects(this.container, { ...this.env, UPSTASH_REDIS_URL: this.env.UPSTASH_REDIS_URL ?? '', UPSTASH_REDIS_TOKEN: this.env.UPSTASH_REDIS_TOKEN ?? '' }, event);
+        || JSON.stringify(event.payload) !== JSON.stringify(claim.payload)) throw Error('Product effects lease or immutable identity invalid');
+      const deliver = claim.eventType === PRODUCT_RECYCLE_EFFECTS_EVENT ? deliverProductRecycleEffects : deliverProductStockEffects;
+      await deliver(this.container, { ...this.env, UPSTASH_REDIS_URL: this.env.UPSTASH_REDIS_URL ?? '', UPSTASH_REDIS_TOKEN: this.env.UPSTASH_REDIS_TOKEN ?? '' }, event);
       const now = Math.floor(Date.now() / 1000);
       const completed = await this.container.db.update(storeOrderOutbox).set({ status: 'COMPLETED', leaseUntil: 0, leaseToken: '', lastError: '', processedTime: now, updateTime: now })
         .where(and(eq(storeOrderOutbox.id, claim.id), eq(storeOrderOutbox.status, 'PROCESSING'), eq(storeOrderOutbox.leaseToken, claim.leaseToken),
           eq(storeOrderOutbox.eventKey, claim.eventKey), eq(storeOrderOutbox.eventType, claim.eventType), eq(storeOrderOutbox.aggregateId, claim.aggregateId),
           sql`${storeOrderOutbox.payload} = ${JSON.stringify(claim.payload)}::jsonb`)).returning({ id: storeOrderOutbox.id });
-      if (completed.length !== 1) throw Error('Stock effects completion lease invalid');
+      if (completed.length !== 1) throw Error('Product effects completion lease invalid');
       return;
     }
     if (claim.eventType === STAFF_REFRESH_EVENT) {

@@ -1,0 +1,152 @@
+{
+  "reviewer": "recycle_independent_review",
+  "reviewType": "narrow independent integration review; no source/test modifications and no heavy execution",
+  "originalBaseline": "26207ea326a7b83a3500e27f1df0ca7984b121ad",
+  "integratedMain": "a89b1c36a89c78f1100ffecee322cb1955dcd850",
+  "currentHead": "a89b1c36a89c78f1100ffecee322cb1955dcd850",
+  "overlapFiles": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "remoteSha256": "6e05cb596e19564953d32dc1ab0bb9827059dfcad5701bdd0062a89f8b83acc7",
+      "workingSha256": "6aa1047baeda2c4819a4a97024248c2d71e235871b469b3fd415818aeb6c76e3",
+      "remoteAddedLineCount": 14,
+      "remoteAddedLinesAbsent": [],
+      "workingChangesSinceIntegratedMain": [
+        {
+          "operation": "insert",
+          "remoteLines": [
+            70,
+            69
+          ],
+          "workingLines": [
+            70,
+            73
+          ],
+          "remote": [],
+          "working": [
+            "    'test/admin-product-recycle.test.ts',",
+            "    'test/admin-product-recycle-native.test.ts',",
+            "    'test/product-recycle-effects.test.ts',",
+            "    'test/product-recycle-effects-native.test.ts',"
+          ]
+        },
+        {
+          "operation": "insert",
+          "remoteLines": [
+            697,
+            696
+          ],
+          "workingLines": [
+            701,
+            704
+          ],
+          "remote": [],
+          "working": [
+            "        'test/admin-product-recycle.test.ts',",
+            "        'test/admin-product-recycle-native.test.ts',",
+            "        'test/product-recycle-effects.test.ts',",
+            "        'test/product-recycle-effects-native.test.ts',"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "remoteSha256": "3adbf7092c11944d78e4492fcf68de8c9813ae8003ce1f5fd483b64a026a18bd",
+      "workingSha256": "b051f0238829d73e2c47ce0386e2df8899991c2b7419200bbd02b7b06ba52942",
+      "remoteAddedLineCount": 5,
+      "remoteAddedLinesAbsent": [],
+      "workingChangesSinceIntegratedMain": [
+        {
+          "operation": "insert",
+          "remoteLines": [
+            56,
+            55
+          ],
+          "workingLines": [
+            56,
+            56
+          ],
+          "remote": [],
+          "working": [
+            "import * as AdminProductRecycle from '@/controllers/api/v1/AdminProductRecycleController';"
+          ]
+        },
+        {
+          "operation": "replace",
+          "remoteLines": [
+            145,
+            145
+          ],
+          "workingLines": [
+            146,
+            146
+          ],
+          "remote": [
+            "for (const path of ['/product/product/verify/*', '/product/product/remove/*', '/product/product/get_verify/*', '/product/product/set_verify/*', '/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',"
+          ],
+          "working": [
+            "for (const path of ['/product/product/:id', '/product/del/:id', '/product/product/verify/*', '/product/product/remove/*', '/product/product/get_verify/*', '/product/product/set_verify/*', '/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',"
+          ]
+        },
+        {
+          "operation": "insert",
+          "remoteLines": [
+            301,
+            300
+          ],
+          "workingLines": [
+            302,
+            302
+          ],
+          "remote": [],
+          "working": [
+            "adminapiRoutes.delete('/product/product/:id', adminAuth, AdminProductRecycle.toggle);"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "remoteSha256": "a8cb2ae0ef230ee391940b187e8c7c602cd41c0e8142afaf38e62fca99c3b59e",
+      "workingSha256": "d081c2c55fcf87a50c260ee4fc0f407681bf15910637589743f7a52297d53a89",
+      "remoteAddedLineCount": 22,
+      "remoteAddedLinesAbsent": [],
+      "workingChangesSinceIntegratedMain": [
+        {
+          "operation": "insert",
+          "remoteLines": [
+            1587,
+            1586
+          ],
+          "workingLines": [
+            1587,
+            1587
+          ],
+          "remote": [],
+          "working": [
+            "v1Routes.use('/admin/product/del/:id', async (c, next) => { c.header('Cache-Control', 'private, no-store'); c.header('Pragma', 'no-cache'); await next(); });"
+          ]
+        }
+      ]
+    }
+  ],
+  "findings": [],
+  "routeReadback": {
+    "invoice": "AdminInvoiceRedNote imports and four authenticated routes are preserved in both adminapi.ts and v1/index.ts. The current diff against integrated main changes none of those remote lines. Ordinary cashier import and all16 authenticated ordinary routes in v1/index.ts are retained exactly.",
+    "recycle": "Canonical DELETE /product/product/:id is retained with adminAuth and AdminProductRecycle.toggle. Both /product/del/:id and /admin/product/del/:id retain adminAuth/AdminCrud.adminProductDel, whose current body delegates recycleAlias. Both canonical/adminapi alias paths have preauth Cache-Control private,no-store and Pragma no-cache via early middleware; v1 alias has equivalent middleware before its authenticated route.",
+    "runner": "The new four recycle suites appear in both maintenance allowlist and single-worker selector. Remote cashier ordinary/manual invoice suites, nine merged regression entries and Linux-wide maxWorkers1 expression are preserved exactly."
+  },
+  "runtimeFixtureReadback": {
+    "path": "workers-ts/test/runtime/product-recycle-effects-queue-runtime.test.ts",
+    "sha256": "54a4836fe21cee67b667c993f1d36c405f9237d565908c53e50856923db5a036",
+    "repair": "The actual queue generic outbox branch unconditionally calls notificationDeliveries.dispatchPending(10,eventKey) after process handling. The fixture now spies on OrderNotificationDeliveryService.prototype.dispatchPending and returns an empty receipt; it also verifies both invocations. This confines SQL/effect processing to mocks as the test declares and leaves actual Queue classification/retry/ack handling executed. No runtime production source repair was introduced.",
+    "initialReceipt": "runtime-final-status.json records exit1; runtime-final run had8passed definitions but2 unhandled loopback TCP failures. This is failed evidence, not a successful gate. Integrated rerun is required and not inferred from static review."
+  },
+  "validationBoundaries": [
+    "No review of the158 already-published remote file differences was requested or performed. This review proves preservation only for the three overlapping files and the runtime fixture repair.",
+    "No heavy tests/typechecks/builds, production services or provider networking were executed by this reviewer. Integrated root receipts establish execution results.",
+    "Previous full independent review boundaries remain: Redis Lua static-only; actual Redis/Upstash and opaque AutoConfig get.config effects unverified."
+  ],
+  "outstandingBlockingFindings": []
+}

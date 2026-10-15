@@ -1,0 +1,9 @@
+{
+  "reason": "Admin vue-tsc6133 after obsolete delete confirmation function was replaced by recycle dialog; ElMessageBox import now unused",
+  "onlyChange": "Remove unused ElMessageBox named import from ProductList.vue",
+  "path": "view/admin-ts/src/pages/product/ProductList.vue",
+  "beforeSha256": "49dd380ce4f246de2d405a7755cd2598a7876b40c59dd9e0ce70391b2386f77c",
+  "afterSha256": "c8986b30f8a556ac2d825e8351024c746b11104dd6cdebf4fc04e13e5531000f",
+  "exactReplacement": true,
+  "scope": "No template, handlers, script state or backend/Worker code changed. Existing83 ordinary/28native/8workerd and2 Worker types receipts retained; rerun all3 affected product frontend suites plus Admin types/build."
+}

@@ -1,0 +1,182 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+stderr | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > continues an empty recent window and retries the original cursor if continuation delivery fails
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > continues an empty recent window and retries the original cursor if continuation delivery fails
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_pink_cancellation_recovery',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 2,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 55P03 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 55P03 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_pink_cancellation_recovery',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 57014 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/pink-recovery-queue-runtime.test.ts > recovery scan failures through actual workerd Queue handler > retries SQL error 57014 without ack or continuation, then acknowledges successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_pink_cancellation_recovery',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+ ✓ test/runtime/pink-recovery-queue-runtime.test.ts (3 tests) 137ms
+stderr | test/runtime/product-recycle-effects-queue-runtime.test.ts > actual workerd recycle outbox Queue routing with mocked SQL/effect processing > keeps the immutable recycle reference on failure and acknowledges a successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'order_notification_outbox_consume_failed',
+  component: 'queue',
+  operation: 'notification_outbox',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-recycle-effects-queue-runtime.test.ts > actual workerd recycle outbox Queue routing with mocked SQL/effect processing > keeps the immutable recycle reference on failure and acknowledges a successful replay
+{
+  schema: 'cinashop_operational_v1',
+  event: 'order_notification_outbox_consumed',
+  component: 'queue',
+  operation: 'notification_outbox',
+  outcome: 'success',
+  result: 'completed',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+ ✓ test/runtime/product-recycle-effects-queue-runtime.test.ts (1 test) 64ms
+stderr | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'start' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_maintenance_failed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'retry',
+  durationMs: 1,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'start' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'isolated_shelf_completed',
+  component: 'queue',
+  operation: 'scheduled_maintenance',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'scan' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_product_shelf_failed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'scan' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'isolated_shelf_completed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+stderr | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'process' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'scheduled_product_shelf_failed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'retry',
+  durationMs: 0,
+  queueAttempt: 1,
+  retryDelaySeconds: 30,
+  errorCode: 'error'
+}
+
+stdout | test/runtime/product-auto-shelf-queue-runtime.test.ts > actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'process' and acknowledges successful replay without losing the reference
+{
+  schema: 'cinashop_operational_v1',
+  event: 'isolated_shelf_completed',
+  component: 'queue',
+  operation: 'product_auto_shelf',
+  outcome: 'success',
+  durationMs: 0,
+  queueAttempt: 2
+}
+
+ ✓ test/runtime/product-auto-shelf-queue-runtime.test.ts (4 tests) 156ms
+
+ Test Files  3 passed (3)
+      Tests  8 passed (8)
+   Start at  02:17:18
+   Duration  38.97s (transform 10.44s, setup 0ms, import 35.87s, tests 357ms, environment 1ms)
+
+JSON report written to /home/cina/cinagroup/cinashop/workers-ts/audit/recycle-20261015/runtime-integrated.json

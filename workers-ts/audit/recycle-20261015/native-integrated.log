@@ -1,0 +1,125 @@
+{"version":"postgres (PostgreSQL) 16.14","host":"127.0.0.1","port":33269,"taskRoot":"/home/cina/cinagroup/cinashop/.cache/finance-postgres-qQv5MV","schemaMaintenance":true,"tests":["test/admin-product-recycle.test.ts","test/admin-product-recycle-native.test.ts","test/product-recycle-effects.test.ts","test/product-recycle-effects-native.test.ts"]}
+FINANCE_LOCAL_IDENTITY {"data":"/home/cina/cinagroup/cinashop/.cache/finance-postgres-qQv5MV/data","version":"160014","host":"127.0.0.1","port":33269,"database":"cinashop_finance_test","role":"finance_test","superuser":true,"createdb":true}
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > recycles/restores all direct children, invalidates every parent cart status and preserves full SKU/relation/grandchild/order data 385ms
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > honors all source owner/card/deleted/review flags and declared-schema type1 verify0 without querying or requiring a store 671ms
+stderr | test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > keeps one-way aliases idempotent, rejects stale explicit intent and reports postcommit dispatch failure as durable success
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > keeps one-way aliases idempotent, rejects stale explicit intent and reports postcommit dispatch failure as durable success 301ms
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > uses only exact source169/105/620 grants and fences single/batch/opaque copied DELETE and misleading GET metadata 315ms
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > refuses revoked/password/foreign/expired and real read-only authorities before any business change 345ms
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > rolls back suppressed/rewritten parent, child, cart, full audit/outbox and post-audit/intent trigger changes or phantoms 1202ms
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > refuses an over-capacity complete family before mutation 1496ms
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages 364ms
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > lets the genuine old interceptor reject definite rolled-back conflicts while modern guarded requests keep HTTP409/503
+{
+  schema: 'cinashop_operational_v1',
+  event: 'http_request_completed',
+  component: 'http',
+  operation: 'request',
+  outcome: 'failure',
+  statusCode: 503,
+  durationMs: 25,
+  thresholdMs: 1000,
+  slow: false
+}
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > lets the genuine old interceptor reject definite rolled-back conflicts while modern guarded requests keep HTTP409/503 345ms
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures 585ms
+ ✓ |regular-unit| test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > rejects ambiguous/unknown query, any nonempty body, invalid UTF8, invalid ID and declared/streamed overflow without mutations 231ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > proves SELECT-only and missing SKU/relation UPDATE denial, then succeeds with only declared barriers and audit/intent insert privileges 420ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > rejects real price/product/child-cart/relation/authority row and product-fence conflicts with no partial data, then succeeds 473ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > takes every sorted bargain fence before business locks, permits cart-first checkout to finish, then refuses its changed full family snapshot 318ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > refuses new child/pid phantoms that commit during the initial bargain wait, without touching the newly observed family 280ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > holds all four real table barriers across audit and blocks later family/SKU/cart/relation inserts until commit 346ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > uses DB wallclock after mutation and fails closed on post-audit native triggers with complete rollback 1123ms
+ ✓ |regular-unit| test/admin-product-recycle-native.test.ts > PG16 recycle LOGIN, physical family fences and exact rollback > serializes with the actual ProductAssociation visibility writer while holding source/product fences 318ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts > dedicated durable recycle cache effects, source identity and Queue lease recovery > matches the external maintenance artifact and rejects malformed or unsorted identities 126ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts > dedicated durable recycle cache effects, source identity and Queue lease recovery > uses PHP physical tag set and member prefixes, with no duplicated Redis prefix 138ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts > dedicated durable recycle cache effects, source identity and Queue lease recovery > commits an exact pending intent with its audit and validates both restore and recycle delivery without changing business rows 239ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts > dedicated durable recycle cache effects, source identity and Queue lease recovery > rejects forged domain, event key, audit method, path, operation or family before invoking Redis 208ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts > dedicated durable recycle cache effects, source identity and Queue lease recovery > requires configured cache bindings even outside production and validates the provider receipt 112ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts > dedicated durable recycle cache effects, source identity and Queue lease recovery > replays only the failed cache intent, completes under its lease and treats duplicate messages as already completed 180ms
+stdout | test/product-recycle-effects-native.test.ts > PG16 standalone recycle event whitelist maintenance > upgrades only the exact previous whitelist, preserves comments, repeats without OID replacement and leaves business rows/sequences unchanged
+{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '00000',
+  message: 'constraint "soob_event_type_ck" of relation "store_order_outbox" does not exist, skipping',
+  file: 'tablecmds.c',
+  line: '12283',
+  routine: 'ATExecDropConstraint'
+}
+
+ ✓ |regular-unit| test/product-recycle-effects-native.test.ts > PG16 standalone recycle event whitelist maintenance > upgrades only the exact previous whitelist, preserves comments, repeats without OID replacement and leaves business rows/sequences unchanged 174ms
+ ✓ |regular-unit| test/product-recycle-effects-native.test.ts > PG16 standalone recycle event whitelist maintenance > refuses an unknown existing CHECK without repairing it or mutating data 149ms
+ ✓ |regular-unit| test/product-recycle-effects-native.test.ts > PG16 standalone recycle event whitelist maintenance > refuses a concurrent real outbox writer immediately and succeeds after release 187ms
+ ✓ |regular-unit| test/product-recycle-effects-native.test.ts > PG16 standalone recycle event whitelist maintenance > preserves stricter caller timeout budgets and rolls back an over-budget candidate without CHECK replacement 201ms
+
+ Test Files  4 passed (4)
+      Tests  28 passed (28)
+   Start at  02:15:44
+   Duration  29.84s (transform 9.70s, setup 0ms, import 15.31s, tests 14.03s, environment 0ms)
+
+FINANCE_LOCAL_FIXTURES remaining=0
+FINANCE_LOCAL_STOPPED /home/cina/cinagroup/cinashop/.cache/finance-postgres-qQv5MV

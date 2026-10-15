@@ -1,0 +1,183 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ✓ |regular-unit| test/admin-product-moderation.test.ts (13 tests) 9485ms
+     ✓ retains refusal/is_show anomalies, all source owner/product/deletion states and timestamp-forced hide without rewriting descendants  477ms
+     ✓ separates genuine view/manage and denies all unseeded numerical aliases in single/batch/opaque permission paths  316ms
+     ✓ rolls back complete product/cart/SKU/relation/audit suppression, rewrites, post-audit side effects and inserted target phantoms  830ms
+     ✓ bounds complete physical SKU/cart sets without partial changes instead of silently truncating source data  2175ms
+     ✓ returns all three read contracts under true view and rejects absent/unproved writers with real live account/role/password checks  377ms
+ ✓ |regular-unit| test/admin-product-catalog-navigation-frontend.test.ts (12 tests) 866ms
+ ✓ |regular-unit| test/admin-product-moderation-frontend.test.ts (6 tests) 557ms
+stderr | test/admin-product-recycle.test.ts > Admin reversible product deletion with complete business and receipt verification > keeps one-way aliases idempotent, rejects stale explicit intent and reports postcommit dispatch failure as durable success
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > executes genuine old ids empty-string delete/restore twice and exposes source Chinese messages
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > lets the genuine old interceptor reject definite rolled-back conflicts while modern guarded requests keep HTTP409/503
+{
+  schema: 'cinashop_operational_v1',
+  event: 'http_request_completed',
+  component: 'http',
+  operation: 'request',
+  outcome: 'failure',
+  statusCode: 503,
+  durationMs: 33,
+  thresholdMs: 1000,
+  slow: false
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+stderr | test/admin-product-recycle.test.ts > actual legacy tableDelApi and all product recycle HTTP aliases through App/JWT/SQL > enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_recycle_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_recycle',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-recycle.test.ts (11 tests) 13917ms
+     ✓ recycles/restores all direct children, invalidates every parent cart status and preserves full SKU/relation/grandchild/order data  360ms
+     ✓ honors all source owner/card/deleted/review flags and declared-schema type1 verify0 without querying or requiring a store  820ms
+     ✓ refuses revoked/password/foreign/expired and real read-only authorities before any business change  333ms
+     ✓ rolls back suppressed/rewritten parent, child, cart, full audit/outbox and post-audit/intent trigger changes or phantoms  1616ms
+     ✓ refuses an over-capacity complete family before mutation  4600ms
+     ✓ lets the genuine old interceptor reject definite rolled-back conflicts while modern guarded requests keep HTTP409/503  310ms
+     ✓ enforces live real auth and exact source permissions on canonical plus both runtime aliases with private failures  620ms
+ ❯ |regular-unit| test/admin-product-recycle-frontend.test.ts (5 tests | 4 failed) 5378ms
+     ✓ moves into recycle then restores from state six through the canonical guarded DELETE, refreshing list and counters 59ms
+     × persists a lost toggle result, blocks replay, and requires a later read plus manual acknowledgement before a new opposite operation 5007ms
+     × clears an explicitly rejected stale-direction result and makes no mutation for a viewer 20ms
+     × drops dialogs on route or owner replacement and ignores late old-owner results without refreshing the replacement context 14ms
+     × keeps a pending recycle decision visible when an inventory push requests a background refresh 10ms
+stderr | test/admin-product-stock.test.ts > genuine Admin stock source reads, relative changes and complete transaction receipts > dispatches committed durable effects only after transaction release and never converts a queue failure to false stock write failure
+{
+  schema: 'cinashop_operational_v1',
+  event: 'product_stock_effects_dispatch_failed',
+  component: 'queue',
+  outcome: 'retry',
+  operation: 'product_stock_adjustment',
+  errorCode: 'dispatch_pending'
+}
+
+ ✓ |regular-unit| test/admin-product-stock.test.ts (12 tests) 4237ms
+     ✓ refuses card fabrication, malformed ownership, invalid ERP/config, integer overflow and changed actor atomically  327ms
+     ✓ rolls back suppressed/rewritten SKU, product, ledger and full audit fields including post-audit mutations and extra ledger rows  456ms
+ ✓ |regular-unit| test/admin-product-unit-http.test.ts (7 tests) 2871ms
+ ✓ |regular-unit| test/admin-product-moderation-tabs.test.ts (3 tests) 85ms
+ ✓ |regular-unit| test/admin-product-recycle-tabs.test.ts (3 tests) 83ms
+ ✓ |regular-unit| test/product-stock-effects.test.ts (4 tests) 2911ms
+ ✓ |regular-unit| test/product-recycle-effects.test.ts (6 tests) 2562ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |regular-unit| test/admin-product-recycle-frontend.test.ts > actual Admin recycle and restore entry, dialog and owner-scoped Axios > persists a lost toggle result, blocks replay, and requires a later read plus manual acknowledgement before a new opposite operation
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/admin-product-recycle-frontend.test.ts:200:3
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |regular-unit| test/admin-product-recycle-frontend.test.ts > actual Admin recycle and restore entry, dialog and owner-scoped Axios > clears an explicitly rejected stale-direction result and makes no mutation for a viewer
+AssertionError: expected 'v-ifv-ifv-ifv-if销售中 (31) 仓库中 (6) 已售罄 …' to contain '商品状态已变化'
+
+Expected: "商品状态已变化"
+Received: "v-ifv-ifv-ifv-if销售中 (31) 仓库中 (6) 已售罄 (4) 库存预警 (2) 回收站 (3) 待审核 (8) 审核未通过 (1) 强制下架 (9)  搜索栏 搜索重置 工具栏  商品基础资料  卡密预警  添加商品  已选择 0 项（单次最多100项）  批量操作  表格 515253v-if供应商商品 51v-if供应商商品 52v-if供应商商品 53¥29.90¥29.90¥29.90121212444上架v-ifv-if上架v-ifv-if上架v-ifv-ifv-if 编辑 库存管理下架移入回收站v-if强制下架v-if 卡密库存 v-ifv-if下架移入回收站v-if强制下架v-ifv-if 编辑 库存管理下架移入回收站v-if强制下架v-if 分页 总计 3供应商商品 51（#51）当前状态：未回收；上架标记开启移入回收站后，该商品将下架。v-ifv-if此操作会使该商品现有的全部购物车记录失效。操作未完成：其他页面的回收请求尚未结束，请稍后重新读取商品v-if取消v-ifv-if确认移入回收站v-if"
+
+ ❯ test/admin-product-recycle-frontend.test.ts:214:90
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |regular-unit| test/admin-product-recycle-frontend.test.ts > actual Admin recycle and restore entry, dialog and owner-scoped Axios > drops dialogs on route or owner replacement and ignores late old-owner results without refreshing the replacement context
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ test/admin-product-recycle-frontend.test.ts:222:25
+    220|     try {
+    221|       await open(f); const writing=click(f,'确认移入回收站'); await flush();
+    222|       expect(writes(f)).toHaveLength(1); login(['product.view','produc…
+       |                         ^
+    223|       const count=f.calls.length; expect(dialogs(f)).toHaveLength(0); …
+    224|       await open(f); await f.navigate('/product?type=6'); expect(dialo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |regular-unit| test/admin-product-recycle-frontend.test.ts > actual Admin recycle and restore entry, dialog and owner-scoped Axios > keeps a pending recycle decision visible when an inventory push requests a background refresh
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ test/admin-product-recycle-frontend.test.ts:232:111
+    230|       await open(f);const writing=click(f,'确认移入回收站');await flush();con…
+    231|       browser.dispatchEvent(new CustomEvent('cinashop:product-stock-ch…
+    232|       expect(dialogs(f)).toHaveLength(1);expect(reads(f,catalog)).toHa…
+       |                                                                                                               ^
+    233|       pending.resolve(envelope(500,'lost pending result'));await writi…
+    234|     }finally{pending.resolve([]);f.close();}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  4 failed | 78 passed (82)
+   Start at  02:07:20
+   Duration  64.31s (transform 9.86s, setup 0ms, import 19.90s, tests 42.95s, environment 1ms)
+
+JSON report written to /home/cina/cinagroup/cinashop/workers-ts/audit/recycle-20261015/ordinary-initial.json

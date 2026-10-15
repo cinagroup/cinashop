@@ -1,0 +1,42 @@
+{
+  "reviewer": "next_product_gap_scout",
+  "reviewType": "read-only cross-check of root-authored effects, maintenance and frontend; no tests executed by reviewer",
+  "authorshipBoundary": {
+    "reviewerAuthoredExcludedFromIndependentConclusion": ["AdminProductRecycleService.ts", "AdminProductRecycleController.ts", "AdminPermissionService recycle binding", "route/controller recycle wiring", "admin-product-recycle.test.ts", "admin-product-recycle-native.test.ts", "helpers/adminProductRecycle.ts"],
+    "rootAuthoredReviewed": ["src/services/product/ProductRecycleEffects.ts", "src/migrations/productRecycleEffects.ts", "src/migrations/runProductRecycleEffects.ts", "migrations/0177_product_recycle_effects.sql", "src/models/schema/order_outbox.ts", "src/services/order/OrderOutboxService.ts recycle branch", "src/services/MigrationService.ts embedded0182", "view/admin-ts/src/api/productRecycle.ts", "view/admin-ts/src/api/product.ts recycle read integration", "view/admin-ts/src/pages/product/ProductRecycleDialog.vue", "view/admin-ts/src/pages/product/ProductList.vue recycle integration", "test/admin-product-recycle-frontend.test.ts", "test/admin-product-recycle-tabs.test.ts", "test/product-recycle-effects.test.ts", "test/product-recycle-effects-native.test.ts"]
+  },
+  "findings": [
+    {
+      "severity": "P2",
+      "path": "view/admin-ts/src/pages/product/ProductList.vue",
+      "line": 408,
+      "problem": "Initial stockNotice guard omitted recycleVisible. A live stock frame for a listed product or productId0 entered fetch, which clears recycleProduct and closes even a busy recycle dialog; the late DELETE result is then ignored by the unmounted dialog scope.",
+      "recommendation": "Guard recycleVisible alongside stockVisible/moderationVisible and retain the busy dialog during stock pushes.",
+      "status": "root corrected; readback at line408 now includes recycleVisible; rendered regression execution belongs to root validation receipts"
+    }
+  ],
+  "sourceSemanticsChecked": {
+    "globalTags": "Two complete PHP tag domains, not only affected product IDs: product/SKU caches for all products, direct children, unrelated products and activity types.",
+    "physicalPrefix": "Think TagSet.append stores already-prefixed physical data-key members. Redis set keys get REDIS_PREFIX once around CACHE_TAG_PREFIX+'CRMEB:'+md5(tag). ProductRecycleEffects key hashes/prefixes match the actual PHP Driver/Redis/Tag sources.",
+    "luaOrdering": "TYPE/SCARD both sets and combined10000 bound precede SMEMBERS; all member prefix/2048-byte checks precede ANY DEL. Keys delete in256-member batches, then both tag sets. No KEYS, SCAN or flush. Invalid second set/member fails before deleting a valid first set.",
+    "declaredDifferences": "Current cache binding must refer to the retired PHP Redis domain. Missing binding, unknown type/member or oversized set fails retryably. Encoded AutoConfig get.config effects remain unproved and no inventory/withdrawal WS is invented."
+  },
+  "durabilityChecked": {
+    "identity": "Dedicated product.recycle.effects payload has exact productId/auditId/sorted affectedProductIds; delivery binds product aggregate, UUID event key and canonical product_recycle DELETE audit with exact three-field action/recycle-or-restore operation before invoking Redis.",
+    "lease": "OrderOutbox generic notification envelope accepts the dedicated event; claim/readback binds PROCESSING lease token plus immutable identity; completion conditions bind current lease and payload. Dedicated effect runs outside inventory business locks. Cache failures remain retryable and duplicate completed messages are skipped.",
+    "maintenance": "External0177 equals embedded0182 SQL. Only known previous CHECK definition is upgraded; current definition is idempotent, unknown drift refuses; checks persistent plain table/RLS/inheritance/event-trigger prerequisites, obtains NOWAIT exclusive maintenance lock, keeps lower timeout budgets, preserves constraint comment and applies10000-row bound. No role/privilege/business updates."
+  },
+  "frontendChecked": {
+    "wire": "Canonical guarded DELETE with sole expected_is_del and empty body; validates exact empty-array success. No automatic resend after uncertain outcomes.",
+    "markers": "Owner/product/run persistent marker, per-module pending set and cross-tab owner/product Web Lock protect writes; short marker mutex never spans network await. Identity/token/session rechecked after mutex waiting and in Axios transformRequest.",
+    "readRecovery": "Catalog read probes outcome lock before GET and captures marker run; callback requires same token/session/current run and returned product. A read begun during another tab's pending write cannot acknowledge that write after it later settles. Acknowledgement separately acquires outcome+marker locks and checks session again.",
+    "componentScope": "Dialog captures product/state/context/token/session/epoch; route or owner replacement unmounts and ignores old response. Source consequences are visible: preserve restore visibility, type0 child propagation, type1 waiting-review status, all parent carts invalidated."
+  },
+  "validationBoundaries": [
+    "Static cross-review does not substitute for root serial typecheck, ordinary, native, workerd or rendered/browser checks.",
+    "Reviewed effects unit tests spy on redis.eval; they do not execute Lua against a real Redis engine. Actual two-set, invalid-second-member and10000/10001 Lua execution boundaries remain a test-evidence gap at review time, not an observed runtime defect.",
+    "Reviewed native maintenance tests cover actual PG16 catalog/comment/idempotence, drift, NOWAIT contention, stricter timeout and row budget; they do not exercise Redis provider networking.",
+    "Existing generic getRedis isolate singleton behavior predates this slice; configured physical target/prefix remains an explicit deployment requirement."
+  ],
+  "outstandingBlockingFindings": []
+}

@@ -15,6 +15,9 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   UPSTASH_REDIS_URL: string;
   /** Upstash Redis REST Token */
   UPSTASH_REDIS_TOKEN: string;
+  /** PHP Redis cache prefix and pre-CRMEB tag prefix; both default empty. */
+  REDIS_PREFIX?: string;
+  CACHE_TAG_PREFIX?: string;
   /** 微信商户私钥 PEM (M6: Workers 不能读文件, 从环境变量读) */
   WECHAT_MCH_PRIVATE_KEY: string;
   /** 微信支付 APIv3 32 字节密钥；只允许通过 Worker secret 注入。 */

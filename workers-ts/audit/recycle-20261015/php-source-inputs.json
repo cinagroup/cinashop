@@ -1,0 +1,33 @@
+{
+  "root": "/home/cina/cinagroup/cinashop-php",
+  "capturedAt": "2026-10-15T02:17:35.871192+00:00",
+  "scope": "Explicit PHP source contracts and genuine old JavaScript consumer inputs; no PHP interpreter/service or encrypted listener execution",
+  "excluded": "Not a complete build input graph; installed dependency bytes and runtime environment values excluded",
+  "files": {
+    "route/admin.php": "8350eca9e328ed615cea117089589274d7e262324b979af588a714415f522652",
+    "app/controller/admin/v1/product/StoreProduct.php": "c25566e19ed22fdec15380467996f821f4f57a38ea915a39599404e962c6ba60",
+    "app/services/product/product/StoreProductServices.php": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+    "app/listener/product/DeleteSuccess.php": "b2ceacea7e240ce093d4c49040e5d8b72ca0b3eb55def37a90e75171eaab5f4d",
+    "app/services/order/StoreCartServices.php": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+    "app/event.php": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38",
+    "app/services/store/SystemStoreServices.php": "a985470de363b786649b6d07d7a2df73ba7f4d2b1d7286ad4e09603189bbed4f",
+    "app/dao/store/SystemStoreDao.php": "cfc686f31d71e11b1ab8760881e4f121ace3bd1e0398be14561fa52621337190",
+    "app/model/store/SystemStore.php": "be7d6fc6604234957dcf9b9907a0ef59a38bec16b5f45d79ee5d4596924a1d00",
+    "crmeb/basic/BaseModel.php": "d09d99c98900f9e9f2ed2bf328d6d879592656cbf358f19208bcf9eee086748a",
+    "crmeb/traits/dao/CacheDaoTrait.php": "554c0aa9a0a45f22f41003aa7414acaf34040a729ce74112ca808e39de77bf43",
+    "crmeb/utils/Tag.php": "9223163364eafb2642da618e78a037d113ed02cb0ee1d04b9793a17b5b6c333f",
+    "config/cache.php": "af768499f67283edc2ea187f0f1ea7cc08ef19fe3f7ad6396f7018a1bd3afaac",
+    "vendor/topthink/framework/src/think/cache/TagSet.php": "40001f49a2fb97e54a725f81f609c0a99ed99be2afefe0ec88d066ea48ceeac2",
+    "vendor/topthink/framework/src/think/cache/Driver.php": "76de646b94d0b1e2f31009045ccadf4ed20348cce78df3b80936b729402936ee",
+    "vendor/topthink/framework/src/think/cache/driver/Redis.php": "4a7eea4158211c5bfd60806394e6ce0d230a18018a79e1fb585270be3b59d11e",
+    "vendor/topthink/think-orm/src/Model.php": "dfa105cdb9a1d3737f042e43f0e39610fa22986dd56a600cb389e1b2d6ea0773",
+    "view/admin/src/pages/product/productList/index.vue": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+    "view/admin/src/utils/public.js": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+    "view/admin/src/api/common.js": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+    "view/admin/src/plugins/request/index.js": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+    "crmeb/listeners/InitSwooleLockListen.php": "ca3b40544f65a62e64d8eafcf480058d35ab7833e1dc3c0c12f0ad5452b69447",
+    "app/listener/system/AutoConfig.php": "4f2c20e460b42dc65a62bdd545f47afcb55ba268f235b5656726f49963ad4a4a",
+    "view/admin/src/layouts/basic-layout/header-notice/index.vue": "da3f61c408e2e0e5b2d5484efc5a2bf0cb36cadac129064d834591ad63975c9b",
+    "public/install/crmeb.sql": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+  }
+}

@@ -338,11 +338,12 @@ describe('actual Admin catalog pages, counted Axios consumers and real Router re
         login(['product.view', 'product.manage', 'reply.view'], `catalog-admin-restored-${changed}`, 20);
         browser.dispatchEvent(new Event('admin-session-changed')); await flush();
         await f.navigate('/product?type=1'); runtime.dialogs.state.confirm = () => confirmation.promise;
-        const deleting = button(f, '删除').props.onClick(); await flush();
-        expect(runtime.dialogs.state.confirmations.at(-1)[0]).toContain('供应商商品 51');
+        const deleting = button(f, '移入回收站').props.onClick(); await flush();
+        expect(f.view.recycleProduct.value.store_name).toBe('供应商商品 51'); expect(f.view.recycleVisible.value).toBe(true);
         expect(f.calls.filter((config: any) => config.method !== 'get')).toHaveLength(0);
         await changeContext(); const afterDeleteChange = f.calls.length;
         confirmation.resolve(); await deleting; await flush();
+        expect(f.view.recycleVisible.value).toBe(false); expect(f.view.recycleProduct.value).toBeNull();
         expect(f.calls).toHaveLength(afterDeleteChange); expect(f.calls.filter((config: any) => config.method !== 'get')).toHaveLength(0);
         expect(f.view.list.value[0].stock).toBeNull(); expect(f.fixture.products).toEqual(originalProducts);
         expect(f.view.canManage.value).toBe(changed !== 'capability'); expect(f.view.canMutateState.value).toBe(changed === 'session');

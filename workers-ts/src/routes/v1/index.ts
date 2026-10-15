@@ -1584,6 +1584,7 @@ v1Routes.post("/wechat/auth_binding_phone", authMiddleware({ force: true }), Wec
 // 管理员登录 (无需 auth)
 v1Routes.post("/admin/login", AdminController.adminLogin);
 const adminAuth = adminRuntimeAuthMiddleware();
+v1Routes.use('/admin/product/del/:id', async (c, next) => { c.header('Cache-Control', 'private, no-store'); c.header('Pragma', 'no-cache'); await next(); });
 // Dashboard + 通知 (需 admin token)
 v1Routes.get("/admin/home/header", adminAuth, AdminController.adminHomeHeader);
 v1Routes.get("/admin/home/order", adminAuth, AdminController.adminOrderChart);

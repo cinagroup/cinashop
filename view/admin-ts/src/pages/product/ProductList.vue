@@ -99,7 +99,7 @@
             <el-button v-if="canMutateState" link :type="row.is_show === 1 ? 'warning' : 'success'" @click="toggleShow(row)">
               {{ row.is_show === 1 ? "下架" : "上架" }}
             </el-button>
-            <el-button v-if="canMutateState" link type="danger" @click="del(row)">删除</el-button>
+            <el-button v-if="canManage && [0,1].includes(row.is_del)" link :type="row.is_del === 1 ? 'primary' : 'danger'" @click="openRecycle(row)">{{ row.is_del === 1 ? '恢复' : '移入回收站' }}</el-button>
             <el-button v-if="canManage && query.type === 0" link type="primary" @click="openModeration(row, 'verify')">审核</el-button>
             <el-button v-if="canManage && row.is_verify === 1 && row.is_del === 0" link type="danger" @click="openModeration(row, 'remove')">强制下架</el-button>
             <el-button v-if="canReplyView" link type="primary" @click="viewReplies(row)">查看评价</el-button>
@@ -117,6 +117,8 @@
         @current-change="fetch"
       />
     </el-card>
+
+    <ProductRecycleDialog v-if="recycleProduct" v-model="recycleVisible" :product="recycleProduct" :can-manage="canManage" :context-key="stockContext" @saved="stockSaved" @refresh="stockSaved" />
 
     <ProductModerationDialog v-if="moderationProduct" v-model="moderationVisible" :product="moderationProduct" :mode="moderationMode"
       :can-manage="canManage" :context-key="stockContext" @saved="stockSaved" @refresh="stockSaved" />
@@ -232,17 +234,17 @@ import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { getToken, getAdminSession } from "@/utils/auth";
 import ProductStockDialog from './ProductStockDialog.vue';
+import ProductRecycleDialog from './ProductRecycleDialog.vue';
 import ProductModerationDialog from './ProductModerationDialog.vue';
 import type { ProductModerationMode } from '@/api/productModeration';
 import { apiAdminStockErpEnabled } from '@/api/productStock';
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import {
   apiAdminProductList,
   apiAdminProductTypeHeader,
   type AdminProductCatalogItem,
   type AdminProductCatalogHeader,
   apiAdminProductSetShow,
-  apiAdminProductDel,
   apiAdminProductBatchOperation,
   apiAdminProductBatchRelations,
   apiAdminProductBatchSetShow,
@@ -273,7 +275,7 @@ const canMutateState = computed(() => canManage.value && [1, 2].includes(Number(
 function current(value: string, token: string, session: string | null): boolean {
   return alive && canView.value && identity.value === value && getToken() === token && auth.token === token && stored === session && localStorage.getItem("admin_session") === session;
 }
-function clearReads(): void { readTurn++; batchRun++; batchSubmitting.value = false; stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; stockGeneration.value++; erpEnabled.value = null; stockGuardError.value = ''; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
+function clearReads(): void { readTurn++; batchRun++; batchSubmitting.value = false; stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; recycleVisible.value = false; recycleProduct.value = null; stockGeneration.value++; erpEnabled.value = null; stockGuardError.value = ''; abort?.abort(); abort = null; list.value = []; total.value = 0; headers.value = []; readError.value = headerError.value = ""; loading.value = false; selectedRows.value = []; batchDialogVisible.value = false; batchOptionsLoaded.value = false; }
 type MutationScope = { owner: string; token: string; session: string | null; turn: number; type: number | ""; ids: number[] };
 function mutationScope(ids: number[]): MutationScope { return { owner: identity.value, token: auth.token, session: stored, turn: readTurn, type: query.type, ids: [...ids] }; }
 function activeMutation(scope: MutationScope, selected = false): boolean {
@@ -295,11 +297,17 @@ const selectedRows = ref<AdminProductCatalogItem[]>([]);
 const batchDialogVisible = ref(false);
 const batchSubmitting = ref(false);
 const stockVisible = ref(false), stockProduct = ref<AdminProductCatalogItem | null>(null), stockGeneration = ref(0);
+const recycleVisible = ref(false), recycleProduct = ref<AdminProductCatalogItem | null>(null);
+function openRecycle(row: AdminProductCatalogItem) {
+  if (!canManage.value || !list.value.includes(row) || ![0,1].includes(row.is_del)) return;
+  stockVisible.value = moderationVisible.value = false; stockProduct.value = moderationProduct.value = null; stockGeneration.value++;
+  recycleProduct.value = row; recycleVisible.value = true;
+}
 const moderationVisible = ref(false), moderationProduct = ref<AdminProductCatalogItem | null>(null), moderationMode = ref<ProductModerationMode>('verify');
 const scheduleTime = (value: number) => new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'short', hour12: false }).format(value * 1000);
 function openModeration(row: AdminProductCatalogItem, mode: ProductModerationMode) {
   if (!canManage.value || !list.value.includes(row) || mode === 'verify' && query.type !== 0 || mode === 'remove' && (row.is_verify !== 1 || row.is_del !== 0)) return;
-  stockVisible.value = false; stockProduct.value = null; stockGeneration.value++;
+  recycleVisible.value = false; recycleProduct.value = null; stockVisible.value = false; stockProduct.value = null; stockGeneration.value++;
   moderationProduct.value = row; moderationMode.value = mode; moderationVisible.value = true;
 }
 const erpEnabled = ref<boolean | null>(null), stockGuardError = ref('');
@@ -307,7 +315,7 @@ const canAdjustStock = computed(() => canManage.value && erpEnabled.value === fa
 const stockContext = computed(() => `${identity.value}:${stored}:${query.type}:${stockGeneration.value}`);
 function openStock(row: AdminProductCatalogItem): void {
   if (!canAdjustStock.value || row.product_type === 1 || !list.value.includes(row)) return;
-  moderationVisible.value = false; moderationProduct.value = null; stockGeneration.value++; stockProduct.value = row; stockVisible.value = true;
+  moderationVisible.value = false; moderationProduct.value = null; recycleVisible.value = false; recycleProduct.value = null; stockGeneration.value++; stockProduct.value = row; stockVisible.value = true;
 }
 function stockSaved(): void { if (canView.value) void fetch(); }
 type BatchOperation =
@@ -360,7 +368,7 @@ async function fetch(): Promise<void> {
   const turn = ++readTurn, owner = identity.value, token = auth.token, session = stored;
   const params = { page: query.page, limit: query.limit, store_name: query.store_name, type: query.type };
   loading.value = true; readError.value = headerError.value = ""; list.value = []; selectedRows.value = [];
-  stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; stockGeneration.value++;
+  stockVisible.value = false; stockProduct.value = null; moderationVisible.value = false; moderationProduct.value = null; recycleVisible.value = false; recycleProduct.value = null; stockGeneration.value++;
   erpEnabled.value = null; stockGuardError.value = '';
   const active = () => current(owner, token, session) && turn === readTurn;
   // Keep the known count during a page switch; Element Plus otherwise clamps
@@ -397,7 +405,7 @@ function syncSession(): void {
 }
 function syncStorage(event: StorageEvent): void { if (event.key === null || ["admin_token", "admin_session"].includes(event.key)) syncSession(); }
 function stockNotice(event: Event): void {
-  if (!canView.value || stockVisible.value || moderationVisible.value) return;
+  if (!canView.value || stockVisible.value || moderationVisible.value || recycleVisible.value) return;
   const product = (event as CustomEvent<{ productId?: number }>).detail?.productId ?? 0;
   if (product === 0 || list.value.some(row => row.id === product)) void fetch();
 }
@@ -545,24 +553,6 @@ async function toggleShow(row: AdminProductCatalogItem) {
   }
 }
 
-async function del(row: AdminProductCatalogItem) {
-  if (!canMutateState.value || !list.value.some(item => item.id === row.id)) return;
-  const scope = mutationScope([row.id]);
-  try {
-    await ElMessageBox.confirm(`确定删除商品「${row.store_name}」?`, "确认");
-  } catch {
-    return;
-  }
-  if (!activeMutation(scope)) return;
-  try {
-    await apiAdminProductDel(row.id);
-    if (!activeMutation(scope)) return;
-    ElMessage.success("已删除");
-    fetch();
-  } catch (e) {
-    if (activeMutation(scope)) ElMessage.error(e instanceof Error ? e.message : "删除失败");
-  }
-}
 
 watch(identity, () => { if (alive && !syncing) syncSession(); }, { flush: "sync" });
 watch(() => route.query.type, () => { if (alive) applyRoute(); });

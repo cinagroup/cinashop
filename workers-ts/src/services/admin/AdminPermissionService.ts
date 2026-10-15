@@ -484,6 +484,13 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   if (isProductReplyRoute(route)) return productReplyPermission(method.toUpperCase(), route);
   if (isProductModerationRoute(route)) return productModerationPermission(method.toUpperCase(), route);
   if (isProductCatalogReadRoute(route)) return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'product.view' : null;
+  // Resource delete is the reversible PHP contract; invalid DELETE IDs cannot
+  // fall through to the broad product namespace. Existing source editor POST,
+  // detail GET and named unit/rule/ensure contracts retain their own policies.
+  if (method.toUpperCase() === 'DELETE' && /^product\/product\/[^/]+$/.test(route)) {
+    if (!legacyAdminId(route.split('/')[2])) return null;
+    return 'product.manage';
+  }
   if (isOperationalGroupRoute(route)) return operationalGroupPermission(method.toUpperCase(), route);
   if (isProductCategoryRoute(route)) return productCategoryPermission(method.toUpperCase(), route);
   if (isProductBrandRoute(route)) return productBrandPermission(method.toUpperCase(), route);
@@ -770,6 +777,22 @@ function unprovedProductModerationMenuClaim(menu: LegacyAdminMenuMetadata): bool
     || /^product-product-(?:verify|remove|get_verify|set_verify)$/i.test(menu.uniqueAuth);
 }
 
+/** Installer 169 is the only DELETE resource seed. Protect the entire shared
+ * resource claim before generic method collapsing/unique_auth/page fallbacks:
+ * a copied GET tuple with product.manage must never become a delete writer.
+ * The existing editor105/detail620 tuples remain exact independent bindings.
+ * Both resolver queries already require type=1/access=1/is_del=0. */
+function productRecycleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const claimed = [normalizeAdminRoute(menu.apiUrl), normalizeAdminRoute(menu.menuPath.replace(/^\/admin(?=\/|product\/)/i, ''))]
+    .some(route => /^product\/product\/[^/]+$/.test(route) && legacyAdminId(route.split('/')[2]));
+  if (![105, 169, 620].includes(menu.id) && !claimed) return { protected: false, permission: null };
+  if (menu.authType !== 2 || menu.apiUrl !== 'product/product/<id>') return { protected: true, permission: null };
+  const permission = menu.id === 169 && menu.methods === 'DELETE' && menu.menuPath === '' && menu.uniqueAuth === '' ? 'product.manage'
+    : menu.id === 105 && menu.methods === 'POST' && menu.menuPath === '/admin/product/save' && menu.uniqueAuth === 'product-save' ? 'product.manage'
+    : menu.id === 620 && menu.methods === 'GET' && menu.menuPath === '' && menu.uniqueAuth === '' ? 'product.view' : null;
+  return { protected: true, permission };
+}
+
 function isProductCatalogReadRoute(route: string): boolean {
   return ['product/product', 'product/product/type_header', 'product/product/list'].includes(route);
 }
@@ -1018,7 +1041,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1454,6 +1477,11 @@ export class AdminPermissionService {
         if (menu.id === 579 || menu.id === 580) continue;
         if (unprovedProductStockMenuClaim(menu)) continue;
         if (unprovedProductModerationMenuClaim(menu)) continue;
+        const recycleBinding = productRecycleMenuBinding(menu);
+        if (recycleBinding.protected) {
+          if (recycleBinding.permission) resolved.add(recycleBinding.permission);
+          continue;
+        }
         const catalogReadBinding = productCatalogReadMenuBinding(menu);
         if (catalogReadBinding.protected) {
           if (catalogReadBinding.permission) resolved.add(catalogReadBinding.permission);

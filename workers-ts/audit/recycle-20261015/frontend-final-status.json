@@ -1,0 +1,20 @@
+{
+  "name": "frontend-final",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "test/admin-product-recycle-frontend.test.ts",
+    "test/admin-product-recycle-tabs.test.ts",
+    "--maxWorkers=1",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=audit/recycle-20261015/frontend-final.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T02:09:21.484995+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:09:22.944263+00:00",
+  "exitCode": 0,
+  "log": "frontend-final.log"
+}

@@ -1,0 +1,12 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ✓ |regular-unit| test/admin-product-recycle-frontend.test.ts (5 tests) 477ms
+ ✓ |regular-unit| test/admin-product-recycle-tabs.test.ts (4 tests) 89ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  02:09:21
+   Duration  1.03s (transform 92ms, setup 0ms, import 203ms, tests 566ms, environment 0ms)
+
+JSON report written to /home/cina/cinagroup/cinashop/workers-ts/audit/recycle-20261015/frontend-final.json

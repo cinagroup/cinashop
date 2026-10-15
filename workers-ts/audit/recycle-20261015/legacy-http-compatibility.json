@@ -1,0 +1,13 @@
+{
+  "source": "cinashop-php/view/admin/src/plugins/request/index.js",
+  "finding": "Old interceptor rejects body.status400/400011/400012 only; 404/409/503 default resolves undefined, and actual non2xx error interceptor also swallows rejection. Initial tableDelApi test replaced transport and could not prove failure consumption.",
+  "repair": "Missing parent uses source ValidateException400. Canonical requests with no expected_is_del translate definite rolled-back HttpApiException409/503 to HTTP200/status400; guarded modern requests keep actual HTTP409/503, unknown errors retain unknown outcome. Aliases keep strict target errors.",
+  "testMethod": "Compile genuine tableDelApi and genuine old plugins/request/index.js; stub only store/util/setting/view-design hosts. Actual installed Axios adapter drives real App/JWT/SQL; its custom adapter explicitly rejects non2xx as the native adapter would. No replacement response interceptor.",
+  "cases": [
+    "recycle and restore success source messages",
+    "absent parent source400 rejection",
+    "triggered full-row mismatch rollback old400 vs modern409",
+    "triggered PG42501 rollback old400 vs modern503"
+  ],
+  "status": "authored; final execution receipts separate"
+}

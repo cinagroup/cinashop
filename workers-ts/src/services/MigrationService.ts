@@ -104,11 +104,15 @@ import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from '@/migrations/purcha
 import { runPurchaseCancellationGiftEvidence } from '@/migrations/runPurchaseCancellationGiftEvidence';
 import { PRODUCT_STOCK_EFFECTS_SQL } from '@/migrations/productStockEffects';
 import { runProductStockEffects } from '@/migrations/runProductStockEffects';
+import { PRODUCT_RECYCLE_EFFECTS_SQL } from '@/migrations/productRecycleEffects';
+import { runProductRecycleEffects } from '@/migrations/runProductRecycleEffects';
 import { PRODUCT_AUTO_SHELF_SQL } from '@/migrations/productAutoShelf';
 import { runProductAutoShelf } from '@/migrations/runProductAutoShelf';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  productRecycleEffectsSqlForVerification(): string { return this.migration_0182(); }
 
   productAutoShelfSqlForVerification(): string {
     return this.migration_0181();
@@ -607,10 +611,16 @@ export class MigrationService {
       this.migration_0179(),
       this.migration_0180(),
       this.migration_0181(),
+      this.migration_0182(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 182) {
+          await runProductRecycleEffects(this.container.db);
+          executed.push('0182');
+          continue;
+        }
         if (i === 181) {
           await runProductAutoShelf(this.container.db);
           executed.push('0181');
@@ -8896,6 +8906,8 @@ $work_member_resolved_rename_fence$;
   private migration_0180(): string {
     return PRODUCT_STOCK_EFFECTS_SQL;
   }
+
+  private migration_0182(): string { return PRODUCT_RECYCLE_EFFECTS_SQL; }
 
   private migration_0181(): string {
     return PRODUCT_AUTO_SHELF_SQL;

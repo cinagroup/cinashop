@@ -1,0 +1,70 @@
+{
+  "scope": "Admin main product recycle/restore; no permanent delete",
+  "sourceRoot": "/home/cina/cinagroup/cinashop-php",
+  "targetBase": "26207ea3",
+  "status": "source evidence and declared implementation contract; validation receipts are separate",
+  "routeAndConsumer": {
+    "route": "route/admin.php:1511 DELETE product/:id in product group -> v1.product.StoreProduct/delete",
+    "controller": "app/controller/admin/v1/product/StoreProduct.php:580-591 calls del, product.delete, both global cache tags clear, then success(res)",
+    "visibleUI": "view/admin/src/pages/product/productList/index.vue:359-361,1293-1296,1621-1639: recycle menu3 and restore menu2 share DELETE product/product/{id}; ids=''; success consumes res.msg, removes row and refreshes counts; failure displays res.msg",
+    "realModal": "view/admin/src/main.js:103,122 installs utils/public.js.modalSure; utils/public.js:11-46 invokes api/common.js.tableDelApi after confirmation",
+    "realWire": "view/admin/src/api/common.js:32-39 passes data.ids directly as request.data; ids='' produces empty request body, not a JSON object",
+    "responseBoundary": "The encoded Admin BaseController is not plaintext-verifiable. Old consumer requires status200 and msg only. Target declares data[] plus source Chinese messages for canonical; existing one-way aliases retain data:null/msg:删除成功."
+  },
+  "sourceMutation": {
+    "service": "app/services/product/product/StoreProductServices.php:1011-1050",
+    "admission": "Missing/falsy id throws 参数不正确; absent parent throws 商品数据不存在. Existing parent has no owner/card/review/deleted/activity prohibition; controller activity check is commented out.",
+    "restore": "Only is_del==1 restores to0; parent is_show preserved; message 成功恢复商品.",
+    "recycle": "All other stored is_del values recycle to1 and set parent is_show0; message 成功移到回收站.",
+    "type0": "Every direct row pid=id receives only is_del, without child type/owner/deleted filtering. Grandchildren do not propagate. A self pid is included in PHP child update, with final parent update winning.",
+    "type1": "Calls getStoreInfo(relation_id), sets parent is_verify0; optional truthy returned product_verify_status could set1 only if such a source field exists. Declared installer/model has no such field, so both transitions set0.",
+    "otherTypes": "No extra branch; parent deletion/visibility only.",
+    "failureMessages": ["恢复失败,请稍候再试!", "删除失败,请稍候再试!"],
+    "cartListener": "app/event.php:84 product.delete -> app/listener/product/DeleteSuccess.php:25-32 -> app/services/order/StoreCartServices.php:547 changeStatus(id,0). StoreCartDao.search does not add a status predicate when absent. Every parent product_id cart row, all prior statuses and paid/deleted/new/activity flags, becomes status0. Child cart rows remain unchanged.",
+    "unchangedByThisPath": ["all SKU fields", "product relations", "child visibility/review and all fields except is_del", "grandchildren", "orders and order-cart snapshots", "stock ledger", "auto_on_time", "auto_off_time"]
+  },
+  "storeImmunityProof": {
+    "getter": "app/services/store/SystemStoreServices.php:52-69: nonzero id selects id/is_del0; zero chooses first id-desc active store; absent/deleted returns [] without throwing; only day_time is transformed before toArray.",
+    "dao": "app/dao/store/SystemStoreDao.php extends BaseDao; getStoreList:60 orders id DESC; app/dao/BaseDao.php getOne/get do not inject product_verify_status.",
+    "model": "app/model/store/SystemStore.php only relevant getter is getLatlngAttr; no append or product_verify_status getter. crmeb/basic/BaseModel.php and ModelTrait contain no such injection.",
+    "schema": "public/install/crmeb.sql:9734-9767 eb_system_store has no product_verify_status/product_status. workers-ts/src/models/schema/store_operations.ts systemStore also has neither.",
+    "writeDoesNotCreateColumn": "app/controller/admin/v1/store/SystemStore.php:213 accepts product_verify_status default0, passed through SystemStoreServices.saveStore:270. ThinkORM vendor/topthink/think-orm/src/Model.php:571 checkAllowFields derives actual fields; :655/:710 strict(false)+field(allowFields) ignores unknown values. This request parameter is not a getter or config append.",
+    "declaredResult": "is_verify0 for type1 on recycle and restore, including missing/deleted/default-absent store; no new column/config/staff substitute added.",
+    "limit": "An external deployment with an undocumented custom store column cannot be reconstructed from this source; no immunity is invented for it."
+  },
+  "cacheTagProof": {
+    "tagConstruction": "crmeb/traits/dao/CacheDaoTrait.php:77-84 cacheTag -> cacheKey+'tag'; :400 cacheKey='mc:'+model.getName()+':'",
+    "tags": ["mc:store_product:tag", "mc:store_product_attr:tag"],
+    "logicalDataKeys": ["mc:store_product:tag{id}", "mc:store_product_attr:tagattr_{id}_{type}_{productId}", "mc:store_product_attr:tagattr_value_{id}_{type}", "mc:store_product_attr:tagattr_sku_{productId}_{type}"],
+    "logicalKeyConsumers": "crmeb/utils/Tag.php:58-73 directly concatenates tagStr+name when cache.is_data; StoreProductServices.getCacheProductInfo:1274; StoreProductAttrServices:301,311,340 include all activity types as well as ordinary products.",
+    "physicalMemberSemantics": "vendor/topthink/framework/src/think/cache/TagSet.php:54-60 append calls Driver.getCacheKey(name) before adding a member; members therefore already contain REDIS_PREFIX and are physical data keys. Driver.php:86 returns options.prefix+name.",
+    "physicalSetSemantics": "Driver.php:226 getTagKey=options.tag_prefix+md5(tag) without Redis prefix. driver/Redis.php:233 append applies getCacheKey(tagKey) then SADD(member); :244 applies same prefix then SMEMBERS. config/cache.php:50 prefix=REDIS_PREFIX default'', :52 tag_prefix=CACHE_TAG_PREFIX default'' + CRMEB:.",
+    "physicalSetKeys": ["{REDIS_PREFIX}{CACHE_TAG_PREFIX}CRMEB:19ebc6b9c156e99ca987fba0feabe5f9", "{REDIS_PREFIX}{CACHE_TAG_PREFIX}CRMEB:87e6f0d8c14295287d6239d77f69c1fb"],
+    "clearSemantics": "TagSet.php:108-119 reads complete member sets, driver/Redis.php:219 clearTag directly native DEL(members), then TagSet deletes getTagKey through driver.delete:192 which adds Redis prefix once. Clear covers ALL registered products, children, unrelated products and activity types globally, not only the deleted id.",
+    "notClearedDirectly": "Cart_Nums_uid lives under separate store_cart cache tag; delete has no explicit clear for it.",
+    "targetExtension": "Dedicated product.recycle.effects durable outbox, not product.stock.effects; root implementation performs bounded complete-set validation before global tag deletion. Missing/oversized/invalid cache bindings retain retryable failure. Current TS assembled detail reads are uncached."
+  },
+  "getConfigBoundary": {
+    "registration": "crmeb/listeners/InitSwooleLockListen.php:33 registers get.config -> app/listener/system/AutoConfig.php during swoole.init; DeleteSuccess emits get.config.",
+    "encryptedListener": "app/listener/system/AutoConfig.php is Swoole Loader encoded, 7456 bytes, sha256 4f2c20e460b42dc65a62bdd545f47afcb55ba268f235b5656726f49963ad4a4a; help/8.0 copy is identical.",
+    "visibleFrames": "view/admin/src/layouts/basic-layout/header-notice/index.vue:90 listens ADMIN_NEW_PUSH and fetches jnotice; :142 STORE_STOCK shows inventory warning. ProductStockTips.php explicitly sends stock warnings; visible delete listener has no direct stock/admin push call.",
+    "unverified": "All Redis/config/WS effects inside encoded AutoConfig cannot be proved or ruled out. Target migrates proven cart and global product/SKU cache side effects and does not claim opaque AutoConfig parity or invent inventory/withdrawal frames."
+  },
+  "permissionSeeds": [
+    { "id": 169, "source": "public/install/crmeb.sql:8753", "type": 1, "authType": 2, "methods": "DELETE", "apiUrl": "product/product/<id>", "menuPath": "", "uniqueAuth": "", "permission": "product.manage + implied product.view", "note": "Only exact original tuple grants; copied numeric claims and GET metadata cannot upgrade." },
+    { "id": 105, "source": "public/install/crmeb.sql:8724", "type": 1, "authType": 2, "methods": "POST", "apiUrl": "product/product/<id>", "menuPath": "/admin/product/save", "uniqueAuth": "product-save", "permission": "Existing independent product.manage editor binding retained exactly." },
+    { "id": 620, "source": "public/install/crmeb.sql:9101", "type": 1, "authType": 2, "methods": "GET", "apiUrl": "product/product/<id>", "menuPath": "", "uniqueAuth": "", "permission": "product.view only; cannot write recycle." }
+  ],
+  "targetConcurrencyAndCompatibility": {
+    "canonical": "DELETE /adminapi/product/product/:id toggles; optional sole unique expected_is_del=0|1 verifies current source state; empty body only with finite UTF8 streaming bound.",
+    "aliases": ["DELETE /adminapi/product/del/:id", "DELETE /api/admin/product/del/:id"],
+    "aliasBehavior": "Existing one-way recycle contract retained; already-deleted alias succeeds with no repeated cart/audit/outbox effects. Alias audit uses canonical path.",
+    "lockOrder": "Live authority barriers -> no-lock full family snapshot <=10000 -> ascending every affected bargain exclusive -> every product try fence -> real store_product/SKU/cart/relation SHARE ROW EXCLUSIVE NOWAIT barriers -> reread exact initial family -> row locks/readsets -> writes/full RETURNING -> business, complete audit/outbox sets -> final live authority -> final readbacks and database clock.",
+    "declaredTradeoff": "Four table barriers briefly block unrelated business writes and require UPDATE privileges even on unchanged SKU/relation tables. Existing authority barriers require system_admin/system_role UPDATE; numeric legacy grants such as169 additionally require system_menus UPDATE for decision-time FOR SHARE. Capacity bounds and NOWAIT fail closed. Conflicts/new family members during the initial bargain wait cause409, rather than silently omitting a child. No order locks or order DML are used; normal independent order changes do not reject recycle.",
+    "durability": "Business, canonical product_recycle DELETE audit and dedicated outbox commit atomically. Postcommit dispatch failure cannot turn a committed transition into a business failure; later Queue/outbox processing retries external effects.",
+    "auditAction": ["operation", "productId", "affectedProductIds"],
+    "transport": "Canonical source toggle is relative and non-idempotent. Unknown network outcome must not be automatically resent; modern UI supplies explicit expected state and performs a fresh read."
+  },
+  "testsAuthoredNotRunByScout": ["test/admin-product-recycle.test.ts", "test/admin-product-recycle-native.test.ts", "test/helpers/adminProductRecycle.ts"],
+  "scoutChecks": ["Read-only PHP/source cross-checks", "Lightweight esbuild transform syntax-only for nine changed TS files; not a typecheck/build/test receipt"]
+}

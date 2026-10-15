@@ -1,0 +1,29 @@
+{
+  "name": "ordinary-final",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "test/admin-product-recycle.test.ts",
+    "test/product-recycle-effects.test.ts",
+    "test/admin-product-recycle-frontend.test.ts",
+    "test/admin-product-recycle-tabs.test.ts",
+    "test/admin-product-catalog-navigation-frontend.test.ts",
+    "test/admin-product-moderation.test.ts",
+    "test/admin-product-moderation-frontend.test.ts",
+    "test/admin-product-moderation-tabs.test.ts",
+    "test/admin-product-stock.test.ts",
+    "test/product-stock-effects.test.ts",
+    "test/admin-product-unit-http.test.ts",
+    "--maxWorkers=1",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=audit/recycle-20261015/ordinary-final.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T02:11:50.645140+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:12:51.697990+00:00",
+  "exitCode": 0,
+  "log": "ordinary-final.log"
+}

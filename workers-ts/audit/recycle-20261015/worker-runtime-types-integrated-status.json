@@ -1,0 +1,17 @@
+{
+  "name": "worker-runtime-types-integrated",
+  "argv": [
+    "node",
+    "--max-old-space-size=8192",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.runtime-test.json",
+    "--noEmit"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T02:20:22.959065+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:21:37.714258+00:00",
+  "exitCode": 0,
+  "log": "worker-runtime-types-integrated.log"
+}

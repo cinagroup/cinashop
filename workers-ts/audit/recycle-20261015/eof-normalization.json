@@ -1,0 +1,12 @@
+{
+  "path": "workers-ts/test/admin-product-recycle-frontend.test.ts",
+  "reason": "git diff --cached --check: new blank lines at EOF",
+  "beforeSha256": "538eb8de3cf6bef481611ffc4044341783741eb0432baaf55abc4133249ceef5",
+  "afterSha256": "55bc725d0b2f3050f367bb3716e3d973860c26cbd4605d2508644581a8388e2f",
+  "bytesRemoved": 2,
+  "removedBytes": "Two excess LF at EOF",
+  "exactProof": "before == after + two LF; all code and test bytes before those terminal LF identical",
+  "beforeFreezeDigest": "7cb50f0e0fb663a71561fdeecdc1f35a8821ad313d4038f6c642020a3c6e563f",
+  "heavyValidationRepeated": false,
+  "scope": "Terminal whitespace only after all tests/type/build gates; no source semantics changed"
+}

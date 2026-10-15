@@ -1,0 +1,29 @@
+{
+  "updatedAt": "2026-10-15T02:22:06.370216+00:00",
+  "gates": [
+    {
+      "name": "native-integrated",
+      "exitCode": 0
+    },
+    {
+      "name": "ordinary-integrated",
+      "exitCode": 0
+    },
+    {
+      "name": "runtime-integrated",
+      "exitCode": 0
+    },
+    {
+      "name": "worker-types-integrated",
+      "exitCode": 0
+    },
+    {
+      "name": "worker-runtime-types-integrated",
+      "exitCode": 0
+    },
+    {
+      "name": "admin-types-integrated",
+      "exitCode": 1
+    }
+  ]
+}

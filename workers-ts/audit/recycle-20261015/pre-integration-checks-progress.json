@@ -1,0 +1,13 @@
+{
+  "updatedAt": "2026-10-15T02:13:27.349217+00:00",
+  "gates": [
+    {
+      "name": "ordinary-final",
+      "exitCode": 0
+    },
+    {
+      "name": "runtime-final",
+      "exitCode": 1
+    }
+  ]
+}

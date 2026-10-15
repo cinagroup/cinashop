@@ -1,0 +1,13 @@
+
+ RUN  v4.1.11 /home/cina/cinagroup/cinashop/workers-ts
+
+ ✓ |regular-unit| test/admin-product-catalog-navigation-frontend.test.ts (12 tests) 1015ms
+ ✓ |regular-unit| test/admin-product-moderation-frontend.test.ts (6 tests) 472ms
+ ✓ |regular-unit| test/admin-product-recycle-frontend.test.ts (5 tests) 451ms
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  02:23:14
+   Duration  2.72s (transform 129ms, setup 0ms, import 386ms, tests 1.94s, environment 0ms)
+
+JSON report written to /home/cina/cinagroup/cinashop/workers-ts/audit/recycle-20261015/frontend-import-final.json

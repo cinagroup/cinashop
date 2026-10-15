@@ -53,6 +53,7 @@ import * as AdminProductFictitiousReplies from '@/controllers/api/v1/AdminProduc
 import * as AdminProductCatalogRead from '@/controllers/api/v1/AdminProductCatalogReadController';
 import * as AdminProductStock from '@/controllers/api/v1/AdminProductStockController';
 import * as AdminProductModeration from '@/controllers/api/v1/AdminProductModerationController';
+import * as AdminProductRecycle from '@/controllers/api/v1/AdminProductRecycleController';
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
@@ -142,7 +143,7 @@ export const adminapiRoutes = new Hono<{
   Variables: AppVariables;
 }>();
 const adminAuth = adminRuntimeAuthMiddleware();
-for (const path of ['/product/product/verify/*', '/product/product/remove/*', '/product/product/get_verify/*', '/product/product/set_verify/*', '/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',
+for (const path of ['/product/product/:id', '/product/del/:id', '/product/product/verify/*', '/product/product/remove/*', '/product/product/get_verify/*', '/product/product/set_verify/*', '/product/brand', '/product/brand/*', '/brand/*', '/product/category', '/product/category/*', '/category/*',
   '/setting/group_data', '/setting/group_data/*', '/setting/operational_group_data', '/setting/operational_group_data/*', '/erp/connections', '/erp/connections/*']) {
   adminapiRoutes.use(path, async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
@@ -298,6 +299,7 @@ adminapiRoutes.get('/product/product/verify/:id', adminAuth, AdminProductModerat
 adminapiRoutes.get('/product/product/remove/:id', adminAuth, AdminProductModeration.removeForm);
 adminapiRoutes.get('/product/product/get_verify/:id', adminAuth, AdminProductModeration.getVerify);
 adminapiRoutes.post('/product/product/set_verify/:id', adminAuth, AdminProductModeration.save);
+adminapiRoutes.delete('/product/product/:id', adminAuth, AdminProductRecycle.toggle);
 // Target-only stock stream; its namespace and product.view scope are independent of withdrawals.
 adminapiRoutes.get('/product/stock/notifications/socket', adminAuth, (c) => upgradeStaffNotification(c, 'admin', 'product_stock'));
 adminapiRoutes.get('/product/category', adminAuth, AdminProductCategories.list);

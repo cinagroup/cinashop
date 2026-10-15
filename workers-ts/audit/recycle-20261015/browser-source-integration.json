@@ -1,0 +1,14 @@
+{
+  "method": "Feature UI, request/auth and route/layout SHA comparison across remote integration; browser proof remains local synthetic HTTP only",
+  "equalFiles": {
+    "view/admin-ts/src/pages/product/ProductList.vue": "49dd380ce4f246de2d405a7755cd2598a7876b40c59dd9e0ce70391b2386f77c",
+    "view/admin-ts/src/pages/product/ProductRecycleDialog.vue": "f507d8cc252babe4599670cdb0d90c3ab5664a8c2d53c49369c82627172e1b7f",
+    "view/admin-ts/src/api/productRecycle.ts": "98dfc8c8d1cf55b87dc1a05f51aeef7dfb427d8cab26a2096a10e1e2e3c751f5",
+    "view/admin-ts/src/api/product.ts": "df652522b9b16b0953845358b241d304d6749dda056078855c84dfc57f8891ec",
+    "view/admin-ts/src/utils/request.ts": "adccd3953f4034a1118f1e2e46b537714ab8b4b536ed20ebe76974ef4033424d",
+    "view/admin-ts/src/utils/auth.ts": "e2432f676cb76bcc6bd7e41c22f190ba799be7840b6c1303668332a61cf77b7b",
+    "view/admin-ts/src/stores/auth.ts": "78b9225c82de1dc3888abfa27cca2e348be325e1957d58e66e702c5a75e21866",
+    "view/admin-ts/src/router/index.ts": "15eafd89025b21be714c30b9df526328d1ef67b5d66b95373338470e6cecdd30",
+    "view/admin-ts/src/layouts/AdminLayout.vue": "f394543da5c57c75fda152095553da59d8e93dc892fdd145a6d546fc918efd36"
+  }
+}

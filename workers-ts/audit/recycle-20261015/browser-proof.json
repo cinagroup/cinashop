@@ -1,0 +1,55 @@
+{
+  "capturedAt": "2026-10-15T01:48:28.943230+00:00",
+  "runtime": "installed browser capability via CUA, existing in-app browser 2; no Playwright fallback",
+  "targetFlow": "product state1 -> guarded DELETE response unknown -> later state6 read -> manual acknowledge -> restore -> state2 down",
+  "application": "Actual Vue ProductList/ProductRecycleDialog, Element Plus and Axios through Vite dev server",
+  "backend": "Explicit synthetic loopback API fixture only; no PostgreSQL or production/provider claim",
+  "addresses": [
+    "http://127.0.0.1:4981",
+    "http://127.0.0.1:4982"
+  ],
+  "viewport": [
+    "1280x720 default",
+    "390x844 mobile; reset after proof"
+  ],
+  "consoleErrorsAndWarnings": [],
+  "files": {
+    "/tmp/cinashop-recycle-qa/mock.mjs": "5391c29a9c84c1e736da97c5d62a801e170a4ce3496338664a512d03fa53f553",
+    "/tmp/cinashop-recycle-qa/requests.jsonl": "eff6566db956a9ed105dec8916ad73ede4837ebe84f1866e81d6a09277163b6e",
+    "/tmp/cinashop-recycle-qa/confirm-desktop.png": "d0a92968d7d45bac32fd1a310aeeb257e7eb5f11069d4b4b07c1c062dc7f39a1",
+    "/tmp/cinashop-recycle-qa/unknown-desktop.png": "e1ce333a2ac09f0cf733b520fef96e879c4ae4a03b8d1647a1dad49f6adb8dc2",
+    "/tmp/cinashop-recycle-qa/recovery-mobile.png": "815a4fccff0577e5a55513136898590b89591608caf3e1a0cb77dc7e3caaf7ca",
+    "/tmp/cinashop-recycle-qa/restore-mobile.png": "55166828e3e792efbdcfbeaee80ffd06ef4727193bd2c864f89ef393724c0edd",
+    "/tmp/cinashop-recycle-qa/final-desktop.png": "4efa416736a916e398f4d6ba7cc98cccc51ad20763730f537f6243dbcbd7ead2",
+    "/tmp/cinashop-recycle-qa/console.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "/tmp/cinashop-recycle-qa/final-dom.txt": "644e0b6e00e68687f848ad6433053b6348a416968482853d14f3a4d82c4f8686",
+    "/tmp/cinashop-recycle-qa/fixture-stopped-dom.txt": "c62c3d7655deae07afa0bdfd2040a910a3d555df67e6ebeb174591f31309f2f1",
+    "/tmp/cinashop-recycle-qa/final-sanity-desktop.png": "f49cf9d202dde158c507d3f33ec15fe812c0f61dbfcab49e6c568d067b081bd0",
+    "/tmp/cinashop-recycle-qa/final-sanity-console.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "/tmp/cinashop-recycle-qa/final-sanity-dom.txt": "644e0b6e00e68687f848ad6433053b6348a416968482853d14f3a4d82c4f8686"
+  },
+  "requestCounts": {
+    "GET /api/site_config": 3,
+    "POST /adminapi/login": 1,
+    "GET /adminapi/home/header": 1,
+    "GET /adminapi/new_push": 32,
+    "GET /adminapi/statistic/overview": 1,
+    "GET /adminapi/home/order": 1,
+    "GET /adminapi/home/user": 1,
+    "GET /adminapi/product/product/type_header": 13,
+    "GET /api/admin/erp/config": 13,
+    "GET /adminapi/product/product": 13,
+    "POST /__qa": 1,
+    "DELETE /adminapi/product/product/10": 4
+  },
+  "expectedUnknownHttp500": 1,
+  "screenshotsOutsideGit": true,
+  "followUp": {
+    "observedFixtureProcessExit": 143,
+    "failure": "Temporary API process stopped; later reload correctly showed read errors from refused proxy connections. Initial successful recovery evidence retained separately.",
+    "repair": "Restarted owned fixture; fresh independent tab on final UI source completed canonical recycle then restore and warehouse/down confirmation again.",
+    "finalConsole": [],
+    "cleanup": "Both root-created browser tabs closed; viewport reset; both owned servers stopped with Ctrl-C."
+  },
+  "finalizedAt": "2026-10-15T02:02:00.743261+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "initialOrdinary": "ordinary-initial-status.json / ordinary-initial.json",
+  "initialOrdinaryOutcome": "78 passed,4 failed; failing DOM-free recycle renderer accidentally used Node native LockManager, timed out and left a pending lock affecting later cases in that file. Not claimed to be a browser engine defect.",
+  "repair": "Explicit navigator host without Web Locks in DOM-free component tests; dedicated independent-module Web Locks fixture retains real lock semantics and adds existing-marker rejection release proof. Actual browser unknown/read/ack/restore flow had passed separately.",
+  "narrowFollowUp": "frontend-final-status.json:2 files9 passed; included in later final full suite, not additional coverage.",
+  "initialNative": "native-final-status.json / native-final.log",
+  "initialNativeOutcome": "24 passed,4 failed; owned finance fixture builder omitted event CHECKs, but new DDL test beforeEach dropped the CHECK without IF EXISTS. No runtime SQL service failure.",
+  "nativeRepair": "DROP CONSTRAINT IF EXISTS before explicitly installing known previous event whitelist; final native4 files28 passed, owned fixture databases0/cluster stopped.",
+  "changedValidationInputsAfterFirstFreeze": [
+    "workers-ts/test/admin-product-recycle-frontend.test.ts",
+    "workers-ts/test/admin-product-recycle-tabs.test.ts",
+    "workers-ts/test/product-recycle-effects-native.test.ts"
+  ],
+  "finalFreezeDigest": "f6d06a72780db6713755d115eef4ca91bc7d728a4651793b3c053d67c9119691",
+  "noProductionDDL": true,
+  "firstRuntimeOutcome": "runtime-final:8 tests passed but2 unhandled loopback TCP rejections; not accepted as passing gate.",
+  "runtimeRepair": "The real generic Queue branch follows processMessage with OrderNotificationDeliveryService.dispatchPending. Mocked this additional declared SQL boundary in runtime fixture; runtime source unchanged, integrated gate must pass without unhandled errors.",
+  "adminTypeRepair": "Admin vue-tsc found an obsolete ElMessageBox import after delete entry was replaced by recycle dialog. Removed only unused named import; all23 affected product-page tests pass and full Admin typecheck repeated exit0. Exact replacement and source delta recorded separately; no backend/Worker/Queue input changes."
+}

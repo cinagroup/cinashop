@@ -1,0 +1,14 @@
+{
+  "name": "admin-types-integrated",
+  "argv": [
+    "node",
+    "node_modules/vue-tsc/bin/vue-tsc.js",
+    "-b"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+  "startedAt": "2026-10-15T02:21:37.746340+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T02:22:06.361710+00:00",
+  "exitCode": 1,
+  "log": "admin-types-integrated.log"
+}
