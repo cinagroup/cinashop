@@ -92,8 +92,8 @@ describe('authority confirmation and immutable operation receipts in owned local
     expiresAt = Math.floor(Date.now()/1000)+3600;
     await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
     await fixture.db.insert(systemMenus).values([
-      { id:2,menuName:'商品读取',authType:2,apiUrl:'product/list',methods:'GET' },
-      { id:3,menuName:'用户读取',authType:2,apiUrl:'user/list',methods:'GET' },
+      { id:2,menuName:'商品读取',type: 1, authType:1,apiUrl:'',methods:'',menuPath:'/admin/product/product_list',uniqueAuth:'admin-store-storeProuduct-index' },
+      { id:930003,menuName:'用户读取',authType:2,apiUrl:'user/list',methods:'GET' },
     ]);
     await fixture.db.insert(systemRole).values([
       { id:900,roleName:'管理者',rules:'system.manage,product.manage',level:1 },
@@ -228,7 +228,7 @@ describe('authority confirmation and immutable operation receipts in owned local
         await fixture.db.update(systemRole).set({ roleName:'独立旧规则名' }).where(eq(systemRole.id,52));
       }
       if (change === 'target') await fixture.db.update(systemRole).set({ roleName:'独立目标名' }).where(eq(systemRole.id,50));
-      if (change === 'catalogue') await fixture.db.update(systemMenus).set({ menuName:'独立目录名' }).where(eq(systemMenus.id,3));
+      if (change === 'catalogue') await fixture.db.update(systemMenus).set({ menuName:'独立目录名' }).where(eq(systemMenus.id,930003));
       const afterExternal = await snapshot();
       await expect(service.commit(confirmation(input,value),actor())).rejects.toThrow('影响范围已变化');
       expect(await snapshot()).toEqual(afterExternal);

@@ -112,6 +112,22 @@ describe("Admin frontend API registration audit", () => {
     ]);
   });
 
+  it('accounts for all six durable video upload endpoints through their actual Admin handlers', () => {
+    const actual=current.calls.filter(call=>call.source==='view/admin-ts/src/api/productVideoUpload.ts')
+      .map(call=>({method:call.method,path:call.path,route:call.matchedRoute,handler:call.matchedHandler,
+        registered:call.registered,availability:call.availability})).sort((a,b)=>(a.method+a.path).localeCompare(b.method+b.path));
+    const expected=[
+      ['GET','/file/video_uploads/:param','/file/video_uploads/:uploadId','query'],
+      ['GET','/file/video_uploads/:param/preview','/file/video_uploads/:uploadId/preview','preview'],
+      ['POST','/file/video_uploads/:param','/file/video_uploads/:uploadId','initialize'],
+      ['POST','/file/video_uploads/:param/cancel','/file/video_uploads/:uploadId/cancel','cancel'],
+      ['POST','/file/video_uploads/:param/complete','/file/video_uploads/:uploadId/complete','complete'],
+      ['PUT','/file/video_uploads/:param/parts/:param','/file/video_uploads/:uploadId/parts/:part','part'],
+    ].map(([method,path,route,handler])=>({method,path,route,handler:'AdminProductVideo.'+handler,registered:true,availability:'executable'}))
+      .sort((a,b)=>(a.method+a.path).localeCompare(b.method+b.path));
+    expect(actual).toEqual(expected);
+  });
+
   it("resolves the absolute ERP consumer through the real mounted v1 Admin root and pins every source", () => {
     expect(current.calls.find(call => call.method === "GET" && call.path === "/api/admin/erp/config"))
       .toMatchObject({ source: "view/admin-ts/src/api/productStock.ts", registered: true,

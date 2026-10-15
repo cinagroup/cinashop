@@ -134,8 +134,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Legacy role form
     await fixture.exec(ddl);
     await fixture.db.insert(systemMenus).values([
       { id: 1, pid: 0, type: 1, authType: 0, menuName: '业务目录' },
-      { id: 2, pid: 1, type: 1, authType: 2, menuName: '商品读取', apiUrl: 'product/list', methods: 'GET' },
-      { id: 3, pid: 0, type: 1, authType: 2, menuName: '旧角色保存', apiUrl: 'setting/role/:id', methods: 'POST' },
+      { id: 2, pid: 1, type: 1, authType: 1, menuName: '商品读取', apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' },
+      { id: 930003, pid: 0, type: 1, authType: 2, menuName: '旧角色保存', apiUrl: 'setting/role/:id', methods: 'POST' },
       { id: 4, pid: 0, type: 1, authType: 2, menuName: '有权限的父节点', apiUrl: 'product/list', methods: 'GET' },
       { id: 5, pid: 4, type: 1, authType: 2, menuName: '有权限的子节点', apiUrl: 'order/list', methods: 'GET' },
       { id: 8, pid: 0, type: 4, authType: 2, menuName: '供应商目录', apiUrl: 'product/list', methods: 'GET' },
@@ -149,7 +149,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Legacy role form
       { id: 70, type: 4, relationId: 7, level: 2, roleName: '外域角色', rules: '8', status: 1 },
       { id: 900, type: 0, relationId: 0, level: 1, roleName: '表单只读', rules: 'system.legacy_role_form_view,2,4,5' },
       { id: 901, type: 1, relationId: 0, level: 1, roleName: '当前管理员', rules: 'system.manage,2,4,5' },
-      { id: 902, type: 0, relationId: 0, level: 1, roleName: '旧数字管理员', rules: '3,2' },
+      { id: 902, type: 0, relationId: 0, level: 1, roleName: '旧数字管理员', rules: '930003,2' },
     ]);
     await fixture.db.insert(systemAdmin).values([100, 101, 102].map((id, index) => ({ id,
       account: `owned-legacy-role-${id}`, pwd: password, adminType: 1, relationId: 0, level: 1,
@@ -333,7 +333,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Legacy role form
   it('locks the real numeric authority menu and rejects its concurrent and committed revocation', async () => {
     await runtime(async env => fixture.withPeer!(async writer => {
       const before = await snapshot();
-      await writer.exec('BEGIN; UPDATE system_menus SET access=0 WHERE id=3');
+      await writer.exec('BEGIN; UPDATE system_menus SET access=0 WHERE id=930003');
       try {
         const conflicted = await post(writeApplication(), env, tokens.numericManager);
         expect(conflicted).toMatchObject({ http: 409, body: { status: 409, data: null } });
@@ -341,7 +341,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Legacy role form
         await writer.exec('COMMIT');
         const rejected = await post(writeApplication(), env, tokens.numericManager);
         expect(rejected.body.status).toBe(400011);
-        expect(await snapshot()).toEqual({ ...before, menus: before.menus.map(row => row.id === 3 ? { ...row, access: 0 } : row) });
+        expect(await snapshot()).toEqual({ ...before, menus: before.menus.map(row => row.id === 930003 ? { ...row, access: 0 } : row) });
       } finally { await writer.exec('ROLLBACK'); }
     }));
   }, 60_000);

@@ -4,6 +4,9 @@ import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { inspectWithdrawalEffectsUpgrade,runWithdrawalEffectsUpgrade } from '../src/migrations/runWithdrawalEffectsUpgrade';
 import { runWithdrawalReplayUpgrade } from '../src/migrations/runWithdrawalReplayUpgrade';
 import * as models from '../src/models/schema';
+import { PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION, PRODUCT_STOCK_EFFECTS_EVENTS } from '../src/migrations/productStockEffects';
+import { PRODUCT_RECYCLE_EFFECTS_CHECK_DEFINITION, PRODUCT_RECYCLE_EFFECTS_EVENTS } from '../src/migrations/productRecycleEffects';
+import { PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION, PRODUCT_SAVE_EFFECTS_EVENTS } from '../src/migrations/productSaveEffects';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('DB-007 bounded production increment',()=>{
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -80,6 +83,42 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('DB-007 bounded p
     f.db.$client.options.debug=(_c,q)=>{ queries.push(q); };
     expect(await runWithdrawalEffectsUpgrade(f.db)).toMatchObject({ applied:true,before:before.fingerprint,after:before.fingerprint });
     expect(queries.some(q=>/DROP CONSTRAINT/i.test(q))).toBe(false);
+  });
+
+  it.each([
+    [12,PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION,'product.stock.effects',PRODUCT_STOCK_EFFECTS_EVENTS],
+    [13,PRODUCT_RECYCLE_EFFECTS_CHECK_DEFINITION,'product.recycle.effects',PRODUCT_RECYCLE_EFFECTS_EVENTS],
+    [14,PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION,'product.save.effects',PRODUCT_SAVE_EFFECTS_EVENTS],
+  ] as const)('preserves the exact reviewed %s-event successor and its rows when repeating or completing another additive index',async(_count,definition,event,events)=>{
+    await runWithdrawalEffectsUpgrade(f.db);
+    await exec(`ALTER TABLE store_order_outbox DROP CONSTRAINT soob_event_type_ck;
+      ALTER TABLE store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK(event_type IN (${events.map(value=>`'${value}'`).join(',')}));
+      INSERT INTO store_order_outbox(event_type,payload) VALUES('${event}','{"owned":"successor-row"}')`);
+    const constraint=()=>exec("SELECT oid::text,pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'");
+    const original=await constraint(),before=await inspectWithdrawalEffectsUpgrade(f.db),queries:string[]=[];
+    expect(original[0].definition).toBe(definition);
+    expect(before).toMatchObject({supported:true,ready:true,withinBudget:true});
+    f.db.$client.options.debug=(_c,q)=>{queries.push(q);};
+    expect(await runWithdrawalEffectsUpgrade(f.db)).toMatchObject({applied:false,ready:true,before:before.fingerprint,after:before.fingerprint});
+    expect(queries.some(q=>/^\s*(ALTER|CREATE|DROP|GRANT|REVOKE)\b/i.test(q))).toBe(false);
+    await exec('DROP INDEX cf_event_key_uq'); queries.length=0;
+    expect(await runWithdrawalEffectsUpgrade(f.db)).toMatchObject({applied:true,ready:true,before:before.fingerprint,after:before.fingerprint});
+    expect(queries.some(q=>/^\s*ALTER\b/i.test(q))).toBe(false);
+    expect(await constraint()).toEqual(original);
+    expect((await exec(`SELECT count(*)::integer AS count FROM store_order_outbox WHERE event_type='${event}'`))[0].count).toBe(1);
+  });
+
+  it.each(['unregistered','reordered'] as const)('rejects an %s fourteen-event successor before DDL while preserving its exact catalog',async kind=>{
+    await runWithdrawalEffectsUpgrade(f.db);
+    const events:string[]=[...PRODUCT_SAVE_EFFECTS_EVENTS];
+    if(kind==='unregistered') events[events.length-1]='unregistered.event'; else [events[0],events[1]]=[events[1],events[0]];
+    await exec(`ALTER TABLE store_order_outbox DROP CONSTRAINT soob_event_type_ck; ALTER TABLE store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK(event_type IN (${events.map(value=>`'${value}'`).join(',')}))`);
+    const constraint=()=>exec("SELECT oid::text,pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'");
+    const original=await constraint(),before=await inspectWithdrawalEffectsUpgrade(f.db),queries:string[]=[];
+    expect(before).toMatchObject({supported:false,ready:false,fingerprint:null});f.db.$client.options.debug=(_c,q)=>{queries.push(q);};
+    await expect(runWithdrawalEffectsUpgrade(f.db)).rejects.toThrow('prerequisite drift');
+    expect(queries.some(q=>/^\s*(ALTER|CREATE|DROP|GRANT|REVOKE|LOCK)\b/i.test(q))).toBe(false);
+    expect(await constraint()).toEqual(original);expect(await inspectWithdrawalEffectsUpgrade(f.db)).toEqual(before);
   });
 
   it('rolls back all earlier column and CHECK changes if the late unique index fails',async()=>{

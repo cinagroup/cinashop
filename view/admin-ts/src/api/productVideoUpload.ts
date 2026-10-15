@@ -82,18 +82,17 @@ export async function videoFileManifest(file: File, chunkSize = VIDEO_CHUNK_SIZE
   }
   return { ...base, sha256: hashes };
 }
-const endpoint = (pending: PendingVideoUpload) => `/file/video_uploads/${id(pending.upload_id)}`;
 async function receipt(pending: PendingVideoUpload, call: Promise<AxiosResponse<unknown>>) { return parseVideoReceipt(await getData(call), pending); }
-export const apiVideoQuery = (pending: PendingVideoUpload, signal?: AbortSignal) => receipt(pending, request.get(endpoint(pending), { signal }));
-export const apiVideoInitialize = (pending: PendingVideoUpload, manifest: VideoManifest, signal?: AbortSignal) => receipt(pending, request.post(endpoint(pending), validateVideoManifest(manifest), { signal }));
+export const apiVideoQuery = (pending: PendingVideoUpload, signal?: AbortSignal) => receipt(pending, request.get(`/file/video_uploads/${id(pending.upload_id)}`, { signal }));
+export const apiVideoInitialize = (pending: PendingVideoUpload, manifest: VideoManifest, signal?: AbortSignal) => receipt(pending, request.post(`/file/video_uploads/${id(pending.upload_id)}`, validateVideoManifest(manifest), { signal }));
 export function apiVideoPart(pending: PendingVideoUpload, part: number, bytes: Uint8Array, signal?: AbortSignal) {
   if (!positive(part, 100) || !bytes.length || bytes.length > 5 * 1024 * 1024) throw Error('视频分片无效');
-  return receipt(pending, request.put(`${endpoint(pending)}/parts/${part}`, bytes.slice().buffer, { signal, timeout: 120000, headers: { 'Content-Type': 'application/octet-stream' } }));
+  return receipt(pending, request.put(`/file/video_uploads/${id(pending.upload_id)}/parts/${part}`, bytes.slice().buffer, { signal, timeout: 120000, headers: { 'Content-Type': 'application/octet-stream' } }));
 }
-export const apiVideoComplete = (pending: PendingVideoUpload, signal?: AbortSignal) => receipt(pending, request.post(`${endpoint(pending)}/complete`, undefined, { signal, timeout: 120000 }));
-export const apiVideoCancel = (pending: PendingVideoUpload, signal?: AbortSignal) => receipt(pending, request.post(`${endpoint(pending)}/cancel`, undefined, { signal }));
+export const apiVideoComplete = (pending: PendingVideoUpload, signal?: AbortSignal) => receipt(pending, request.post(`/file/video_uploads/${id(pending.upload_id)}/complete`, undefined, { signal, timeout: 120000 }));
+export const apiVideoCancel = (pending: PendingVideoUpload, signal?: AbortSignal) => receipt(pending, request.post(`/file/video_uploads/${id(pending.upload_id)}/cancel`, undefined, { signal }));
 export async function apiVideoPreview(pending: PendingVideoUpload, expectedUrl: string, signal?: AbortSignal): Promise<string> {
-  const value = await getData<{ url: string; src: string }>(request.get(`${endpoint(pending)}/preview`, { signal }));
+  const value = await getData<{ url: string; src: string }>(request.get(`/file/video_uploads/${id(pending.upload_id)}/preview`, { signal }));
   if (value.url !== expectedUrl || typeof value.src !== 'string' || !value.src.startsWith(expectedUrl + '?') || !value.src.includes('signature=')) throw Error('视频预览身份无效');
   return value.src;
 }

@@ -12,6 +12,10 @@ describe("legacy server operation-log permissions", () => {
     permissions = new AdminPermissionService(createContainerFromDb(fixture.db));
     await fixture.db.insert(systemMenus).values([
       { id: 1, authType: 1, type: 1, menuPath: "/admin/system/maintain/system_log/index", uniqueAuth: "system-maintain-system-log" },
+      { id: 930002, authType: 2, type: 1, apiUrl: "system/log", methods: "GET" },
+      { id: 930003, authType: 2, type: 1, apiUrl: "system/log/search_admin", methods: "HEAD" },
+      // The old synthetic IDs are real protected product/category page IDs.
+      // Keep their conflicting tuples as explicit rejection evidence.
       { id: 2, authType: 2, type: 1, apiUrl: "system/log", methods: "GET" },
       { id: 3, authType: 2, type: 1, apiUrl: "system/log/search_admin", methods: "HEAD" },
       { id: 4, authType: 1, type: 1, menuPath: "/admin/system/maintain/system_log/index", uniqueAuth: "wrong-page" },
@@ -41,9 +45,14 @@ describe("legacy server operation-log permissions", () => {
   });
 
   it("resolves the reviewed legacy page and API tuples to read authority", async () => {
-    expect(await permissions.resolveManyRulePermissionKeys(["1", "2", "3", "4,5,6,7,8"]))
+    expect(await permissions.resolveManyRulePermissionKeys(["1", "930002", "930003", "4,5,6,7,8"]))
       .toEqual([["log.view"], ["log.view"], ["log.view"], []]);
-    expect(await permissions.resolveRulePermissionKeys("1,2,3")).toEqual(["log.view"]);
+    expect(await permissions.resolveRulePermissionKeys("1,930002,930003")).toEqual(["log.view"]);
+  });
+
+  it("rejects the former synthetic log tuples on protected product/category IDs in single and batch resolution", async () => {
+    expect(await permissions.resolveManyRulePermissionKeys(["2", "3", "2,3"])).toEqual([[], [], []]);
+    for (const rules of ["2", "3", "2,3"]) expect(await permissions.resolveRulePermissionKeys(rules)).toEqual([]);
   });
 
   it("admits log readers without granting settings or a log writer", async () => {

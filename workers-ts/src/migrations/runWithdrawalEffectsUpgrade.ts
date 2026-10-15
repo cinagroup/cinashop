@@ -7,7 +7,13 @@ import { inspectWithdrawalReplayUpgrade } from './runWithdrawalReplayUpgrade';
 const TABLES = ['capital_flow', 'order_notification_delivery', 'store_order_outbox', 'system_message'] as const;
 const EVENTS = ['order.paid', 'order.delivery.notice', 'order.refund.refused.notice',
   'order.second_card.advent.notice', 'order.second_card.expired.notice',
-  'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice'];
+  'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice',
+  'product.stock.effects', 'product.recycle.effects', 'product.save.effects'];
+// Preserve only the exact reviewed successors from external0175/0177/0178.
+// DB-007 itself still installs its original nine-event CHECK when upgrading an
+// older prerequisite; it never installs product migrations or narrows a successor.
+const SUPPORTED_EVENT_COUNTS = [5,7,8,9,10,11,12,13,14] as const;
+const READY_EVENT_COUNTS = [9,10,11,12,13,14] as const;
 const eventDefinition = (count: number) => `CHECK (((event_type)::text = ANY ((ARRAY[${EVENTS.slice(0,count).map(e => `'${e}'::character varying`).join(', ')}])::text[])))`;
 const SUBJECT = 'CHECK ((((withdrawal_id IS NULL) AND (order_id IS NOT NULL)) OR ((withdrawal_id IS NOT NULL) AND (withdrawal_id > 0) AND (order_id IS NULL))))';
 const INDEXES = {
@@ -73,11 +79,11 @@ async function state(tx: postgres.TransactionSql): Promise<State> {
 function supported(s: State): boolean {
   return s.baseSupported && s.noEventTriggers && (!s.keyPresent || s.keyCorrect)
     && (!s.withdrawalPresent || s.withdrawalCorrect) && (!s.subjectPresent || s.subjectCorrect)
-    && s.eventValidated && [5,7,8,9,10,11].some(n => eventDefinition(n) === s.eventDefinition)
+    && s.eventValidated && SUPPORTED_EVENT_COUNTS.some(n => eventDefinition(n) === s.eventDefinition)
     && s.indexes.every(i => i.valid && i.ready && Object.entries(INDEXES).some(([name,definition]) => name===i.name && definition===i.definition));
 }
 const ready = (s: State) => supported(s) && s.keyCorrect && s.withdrawalCorrect && s.orderNullable
-  && s.subjectCorrect && [9,10,11].some(n => s.eventDefinition===eventDefinition(n)) && s.indexes.length===3;
+  && s.subjectCorrect && READY_EVENT_COUNTS.some(n => s.eventDefinition===eventDefinition(n)) && s.indexes.length===3;
 function validate(s: State) { if (!supported(s)) throw new Error('Withdrawal effects prerequisite drift; no automatic repair'); }
 async function configure(tx: postgres.TransactionSql) {
   await tx`SELECT pg_catalog.set_config('search_path','pg_catalog,public,pg_temp',true),
@@ -141,7 +147,7 @@ export async function runWithdrawalEffectsUpgrade(db: Pick<DbClient,'$client'>) 
     if (!initial.orderNullable) await tx`ALTER TABLE public.order_notification_delivery ALTER COLUMN order_id DROP NOT NULL`;
     if (!initial.subjectPresent) await tx`ALTER TABLE public.order_notification_delivery ADD CONSTRAINT ond_subject_ck CHECK (
       (withdrawal_id IS NULL AND order_id IS NOT NULL) OR (withdrawal_id IS NOT NULL AND withdrawal_id>0 AND order_id IS NULL))`;
-    if (![9,10,11].some(n => initial.eventDefinition===eventDefinition(n))) {
+    if (!READY_EVENT_COUNTS.some(n => initial.eventDefinition===eventDefinition(n))) {
       await tx`ALTER TABLE public.store_order_outbox DROP CONSTRAINT soob_event_type_ck`;
       await tx.unsafe(`ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (event_type IN (${EVENTS.slice(0,9).map(e => `'${e}'`).join(',')}))`);
     }

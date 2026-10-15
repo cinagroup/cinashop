@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { build } from 'esbuild';
@@ -59,7 +60,7 @@ describe('actual Admin review App JWT/SQL and compiled old and modern Axios cons
     request.interceptors.response.use((response: { data: Envelope }) => response.data.status === 200 ? response.data : Promise.reject(response.data));
     request.defaults.adapter = async (config: Config) => { const url = new URL(request.getUri(config), 'http://localhost'); oldCalls.push({ path: url.pathname, data: config.data }); return dispatch(url, config); };
     Reflect.set(globalThis, '__replyLegacyRequest', request);
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const php = legacyAdminReferenceRoot();
     const old = await build({ bundle: true, write: false, platform: 'node', format: 'cjs', stdin: { resolveDir: php,
       contents: `export {replyListApi,setReplyApi,productReplycomment,productReplySave} from ${JSON.stringify(resolve(php, 'api/product.js'))}; export {modalSure} from ${JSON.stringify(resolve(php, 'utils/public.js'))}; export {default as index} from ${JSON.stringify(resolve(php, 'pages/product/productReply/index.vue'))};` },
       plugins: [{ name: 'reply-actual-old-consumer', setup(plugin) {

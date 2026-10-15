@@ -4,7 +4,9 @@ import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
-import { adminCouponSave, adminCategorySave, adminCategoryDel, adminBrandSave } from '../src/controllers/api/v1/AdminCrudController';
+import { adminCouponSave, adminCategoryList, adminCategorySave, adminCategoryDel, adminBrandSave } from '../src/controllers/api/v1/AdminCrudController';
+import { adminAuthMiddleware } from '../src/middleware/admin-auth';
+import { createToken, md5 } from '../src/utils/jwt';
 import { couponCreate, couponStatus, couponDelete } from '../src/controllers/out/OutApiController';
 import { runCouponProductScopeFence } from '../src/migrations/runCouponProductScopeFence';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
@@ -14,12 +16,15 @@ import { waitForFinanceBlock, withFinancePeers, type FinancePeer } from './helpe
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { storeCouponIssue, storeCouponProduct, storeCouponUser, storeCouponIssueUser, storeProduct, storeProductCategory, storeBrand,
   storeOrderCartInfo, storeOrderStatus, printDocument, shippingTemplatesFree, outCouponWriteReplay,
-  storeProductCoupon, luckPrize, luckLottery, storePromotions, storePromotionsAuxiliary, systemConfig } from '../src/models/schema';
+  storeProductCoupon, luckPrize, luckLottery, storePromotions, storePromotionsAuxiliary, systemConfig,
+  systemAdmin, systemRole, systemMenus, systemLog, storeProductCate, storeProductCategoryBrand, storeCouponTemplate } from '../src/models/schema';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 'orm'] as const)('real coupon management HTTP handlers versus checkout (%s)', schemaMode => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   let fullDatabase: Awaited<ReturnType<typeof sequenceRunnerDatabase>> | undefined;
   let beforeSequence: (() => Promise<void>) | undefined;
+  let adminToken: string;
+  const adminPassword='owned-coupon-management-admin-password';
   const input = { cartIds: [1], addressId: 11, couponId: 41, type: 0 };
   const adminBody = { id: 1, title: 'managed coupon', type: 2, coupon_type: 1, product_id: '70', coupon_price: '1.00', use_min_price: '0.00' };
   const outBody = { coupon_title: 'out isolated coupon', coupon_price: '1.00', use_min_price: '0.00', coupon_time: 7,
@@ -37,14 +42,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
   const application = (db: DbClient) => {
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use('*', async (c, next) => {
-      c.set('container', createContainerFromDb(db)); c.set('uid', 11); c.set('adminId', 1);
-      // Identity/KV/Sequence are synthetic; controller/service/DAO and SQL are real.
-      // This suite does not claim to exercise production authentication middleware.
+      c.set('container', createContainerFromDb(db)); c.set('uid', 11);
+      // User/Out identity, KV and Sequence are synthetic. Admin writes use the
+      // actual JWT middleware and current SQL account; no production provider.
       c.set('outInfo', { id: 7, appid: 'isolated', title: 'local test', rules: [] }); await next();
     });
+    app.use('/admin/*',adminAuthMiddleware());
     app.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
     app.post('/api/order/create/:key', orderCreate);
     app.post('/admin/coupon/save', adminCouponSave);
+    app.get('/admin/category/list',adminCategoryList);
     app.post('/admin/category/save', adminCategorySave); app.delete('/admin/category/:id', adminCategoryDel);
     app.post('/admin/brand/save', adminBrandSave);
     app.post('/outapi/coupon', couponCreate); app.put('/outapi/coupon/status/:id/:status', couponStatus); app.delete('/outapi/coupon/:id', couponDelete);
@@ -66,11 +73,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
     };
     f = await createPcCheckoutQuoteFixture([storeCouponIssue, storeCouponUser, storeCouponProduct, storeCouponIssueUser,
       storeProductCategory, storeBrand, storeOrderCartInfo, storeOrderStatus, printDocument, outCouponWriteReplay,
-      storeProductCoupon, luckPrize, luckLottery, storePromotions, storePromotionsAuxiliary, systemConfig], schemaMode === 'orm' ? createFullDatabase : undefined);
+      storeProductCoupon, luckPrize, luckLottery, storePromotions, storePromotionsAuxiliary, systemConfig,
+      systemAdmin,systemRole,systemMenus,systemLog,storeProductCate,storeProductCategoryBrand,storeCouponTemplate], schemaMode === 'orm' ? createFullDatabase : undefined);
+    Object.assign(f.env,{APP_KEY:'owned-coupon-management-key',UPSTASH_REDIS_URL:'',UPSTASH_REDIS_TOKEN:''});
+    await f.db.insert(systemAdmin).values({id:1,account:'coupon-management-admin',pwd:adminPassword,level:0,adminType:1,relationId:0});
+    adminToken=(await createToken(1,'admin',md5(adminPassword),f.env.APP_KEY)).token;
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(storeProduct).set({ cateId: '9', brandId: 9 }).where(eq(storeProduct.id, 70));
     await f.db.insert(storeProduct).values({ id: 71, storeName: 'unrelated eligible scope item', isShow: 1, isVerify: 1 });
-    await f.db.insert(storeProductCategory).values({ id: 9 }); await f.db.insert(storeBrand).values({ id: 9 });
+    await f.db.insert(storeProductCategory).values([{id:3,cateName:'scope parent'},{id:9,cateName:'coupon category'}]);
+    await f.db.insert(storeBrand).values({ id: 9 });
     await f.db.insert(storeCouponIssue).values({ id: 1, type: 1, couponType: 2, productId: '70', legacyProductIds: '70',
       couponTitle: 'managed coupon', title: 'managed coupon', couponPrice: '1.00', day: 7, status: 0, receiveType: 1, isPermanent: 1 });
     await f.db.insert(storeCouponProduct).values({ couponId: 1, productId: 70 });
@@ -87,6 +99,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
   afterEach(async () => { await f?.close(); }, 120_000);
   const request = async (app: ReturnType<typeof application>, path: string, body?: object, method = 'POST', key?: string) => {
     const response = await app.request(path, { method, headers: { 'content-type': 'application/json', 'x-fixture-user': '11',
+      ...(path.startsWith('/admin/')?{'Authori-zation':`Bearer ${adminToken}`} : {}),
       ...(key ? { 'Idempotency-Key': key } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }, f.env);
     return response.json() as Promise<{ status: number; msg: string; data: { id: number; idempotent: boolean; errorCode?: string;
       orderKey: string; quoteToken: string; pay_price: string; priceGroup: { pay_price: string }; preserved_usage: { issued_rows: number; reserved_rows: number } } }>;
@@ -94,6 +107,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
   const confirm = async () => { const result = await request(f.app, '/api/order/confirm', input); expect(result.status, result.msg).toBe(200); return result.data; };
   const buy = (db: DbClient, receipt: Awaited<ReturnType<typeof confirm>>) =>
     request(application(db), `/api/order/create/${receipt.orderKey}`, { ...input, quoteToken: receipt.quoteToken });
+  const categoryRevision=async(db:DbClient)=>{
+    const result=await request(application(db),'/admin/category/list',undefined,'GET');expect(result.status,result.msg).toBe(200);
+    const rows=result.data as unknown as Array<{id:number;revision:string}>;
+    const stamp=rows.find(row=>row.id===9)?.revision;expect(stamp).toMatch(/^[a-f0-9]{64}$/);return stamp!;
+  };
   const state = async () => ({ ...await f.snapshot(), coupons: await f.db.select().from(storeCouponUser),
     templates: await f.db.select().from(storeCouponIssue).orderBy(storeCouponIssue.id),
     relations: await f.db.select().from(storeCouponProduct).orderBy(storeCouponProduct.couponId, storeCouponProduct.productId),
@@ -261,38 +279,65 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
         category_id: '9', brand_id: '9' })).status).toBe(200);
       const receipt = await confirm(); let edited: Awaited<ReturnType<typeof state>> | undefined;
       beforeSequence = async () => {
+        const before=await state(),stamp=brand?undefined:await categoryRevision(f.db);
         const result = operation === 'category-delete'
-          ? await request(application(f.db), '/admin/category/9', undefined, 'DELETE')
-          : await request(application(f.db), brand ? '/admin/brand/save' : '/admin/category/save', {
-            id: 9, pid: operation === 'category-change' ? 3 : 0, cate_name: 'renamed', brand_name: 'renamed', is_show: 0,
-          });
+          ? await request(application(f.db), '/admin/category/9', {expected_revision:stamp}, 'DELETE')
+          : await request(application(f.db), brand ? '/admin/brand/save' : '/admin/category/save', brand
+            ? {id:9,fid:[],brand_name:'renamed',is_show:0}
+            : {id:9,pid:operation==='category-change'?[3]:[0],cate_name:'renamed',is_show:0,expected_revision:stamp});
+        if(operation==='category-delete'){
+          expect(result).toMatchObject({status:400,msg:'分类仍有商品、历史关联或优惠券引用，不能删除'});
+          expect(await state()).toEqual(before);edited=before;return;
+        }
         expect(result.status, result.msg).toBe(200); edited = await state();
       };
-      const result = await buy(f.db, receipt), allowed = operation.endsWith('cosmetic');
+      const result = await buy(f.db, receipt), allowed = operation.endsWith('cosmetic')||operation==='category-delete';
       expect(result.status, result.msg).toBe(allowed ? 200 : 400);
       if (!allowed) { expect(result.data.errorCode).toBe('ORDER_QUOTE_RECONFIRM_REQUIRED'); expect(await state()).toEqual(edited); }
     });
 
+  it('rejects mixed category/brand fields, stale category revisions and a mismatched JWT without catalog or audit writes',async()=>{
+    const before=await state(),logs=await f.db.select().from(systemLog),stamp=await categoryRevision(f.db);
+    for(const [path,body] of [
+      ['/admin/category/save',{id:9,pid:[0],cate_name:'renamed',brand_name:'mixed',expected_revision:stamp}],
+      ['/admin/brand/save',{id:9,fid:[],brand_name:'renamed',cate_name:'mixed'}],
+      ['/admin/brand/save',{id:9,brand_name:'renamed',pid:0}],
+    ] as const){
+      const result=await request(application(f.db),path,body);expect(result.status).toBe(400);expect(result.msg).toContain('未知字段');
+    }
+    const stale=await request(application(f.db),'/admin/category/save',{id:9,pid:[0],cate_name:'renamed',expected_revision:'0'.repeat(64)});
+    expect(stale).toMatchObject({status:400,msg:'分类已变化，请刷新后重试'});
+    const wrongToken=(await createToken(1,'admin',md5('wrong-admin-password'),f.env.APP_KEY)).token;
+    const response=await application(f.db).request('/admin/category/save',{method:'POST',headers:{
+      'content-type':'application/json','Authori-zation':`Bearer ${wrongToken}`},
+      body:JSON.stringify({id:9,pid:[0],cate_name:'renamed',expected_revision:stamp})},f.env);
+    expect(await response.json()).toMatchObject({status:400,msg:'登录已过期'});
+    expect(await state()).toEqual(before);expect(await f.db.select().from(systemLog)).toEqual(logs);
+  });
+
   it.each([
     ['category', 'commit'], ['category', 'rollback'], ['brand', 'commit'], ['brand', 'rollback'],
-  ] as const)('holds the real %s save until checkout %s', async (target, ending) => {
+  ] as const)('refuses a real %s save during checkout and permits retry after checkout %s', async (target, ending) => {
     const isBrand = target === 'brand';
     expect((await request(application(f.db), '/admin/coupon/save', { ...adminBody, type: isBrand ? 3 : 1, category_id: '9', brand_id: '9' })).status).toBe(200);
-    const receipt = await confirm(), before = await state();
+    const receipt = await confirm(), before = await state(),stamp=isBrand?undefined:await categoryRevision(f.db);
+    const body=isBrand?{id:9,fid:[],brand_name:'laterbrand'}:{id:9,pid:[3],cate_name:'later category',expected_revision:stamp};
     await withPeers(async ([holder, buyer, shippingEditor]) => {
       await holder.exec('BEGIN; LOCK TABLE store_order_cart_info IN SHARE MODE');
       const buying = buy(buyer.db, receipt); await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
       await shippingEditor.exec('BEGIN; LOCK TABLE shipping_templates_free IN ACCESS EXCLUSIVE MODE');
       await holder.exec('COMMIT'); await waitForFinanceBlock(f.db, buyer.pid, shippingEditor.pid);
-      const saving = request(application(holder.db), isBrand ? '/admin/brand/save' : '/admin/category/save',
-        { id: 9, pid: 3, brand_name: 'later brand', cate_name: 'later category' });
-      await waitForFinanceBlock(f.db, holder.pid, buyer.pid);
+      const refused=await request(application(holder.db),isBrand?'/admin/brand/save':'/admin/category/save',body);
+      expect(refused).toMatchObject({status:400});expect(refused.msg).toMatch(/(?:分类|品牌|关联商品).*正在更新/);
+      expect(await state()).toEqual(before);
       if (ending === 'rollback') await shippingEditor.db.insert(shippingTemplatesFree).values({ id: 99, tempId: 10, cityId: 101 });
       await shippingEditor.exec('COMMIT'); expect((await buying).status).toBe(ending === 'commit' ? 200 : 400);
-      expect((await saving).status).toBe(200); const after = await state();
+      const retried=await request(application(holder.db),isBrand?'/admin/brand/save':'/admin/category/save',
+        isBrand?body:{...body,expected_revision:await categoryRevision(holder.db)});
+      expect(retried.status,retried.msg).toBe(200); const after = await state();
       if (ending === 'rollback') expect({ ...after, categories: before.categories, brands: before.brands }).toEqual(before);
       else expect(after.orders).toHaveLength(1);
-      if (isBrand) expect(after.brands[0].brandName).toBe('later brand'); else expect(after.categories[0].pid).toBe(3);
+      if (isBrand) expect(after.brands[0].brandName).toBe('laterbrand'); else expect(after.categories.find(row=>row.id===9)?.pid).toBe(3);
     });
   }, 15_000);
 

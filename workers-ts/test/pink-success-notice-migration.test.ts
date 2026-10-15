@@ -6,7 +6,7 @@ import { createContainerFromDb } from '@/lib/di';
 import { MigrationService } from '@/services/MigrationService';
 import { PINK_SUCCESS_NOTICE_SQL, PINK_SUCCESS_NOTICE_CHECK_DEFINITION, PINK_SUCCESS_NOTICE_EVENTS } from '@/migrations/pinkSuccessNotice';
 import { runPinkSuccessNotice } from '@/migrations/runPinkSuccessNotice';
-import { PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION } from '@/migrations/productStockEffects';
+import { PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION } from '@/migrations/productSaveEffects';
 import { financePostgres } from './helpers/financePostgres';
 import { outcome, withFinancePeers } from './helpers/financePeers';
 import { checkoutPricingMigrationDatabase } from './helpers/checkoutPricingMigrationDatabase';
@@ -268,25 +268,25 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 179 and embedded 182 paths with identical 286-table catalogs and preserves the stock-effect successor when the old installer refuses it', async () => {
+  it('builds fresh external 181 and embedded 184 paths with identical 286-table catalogs and preserves the product-save successor when the old installer refuses it', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
       embedded = await checkoutPricingMigrationDatabase();
-      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0176_product_auto_shelf.sql');
+      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0178_product_save_effects.sql');
       await externalMigrations(external, files);
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 182 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 184 }, (_, index) => String(index).padStart(4, '0')));
       await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await fullCatalog(embedded)).toEqual(await fullCatalog(external));
       for (const f of [external, embedded]) {
         const rows = await businessRows(f), identity = await identitiesAndAcl(f), check = await eventCheck(f), catalog = await fullCatalog(f);
         expect(Object.keys(rows)).toEqual(registeredTableNames('external'));
-        expect(check).toHaveLength(1); expect(check[0]).toMatchObject({ convalidated: true, definition: PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION });
+        expect(check).toHaveLength(1); expect(check[0]).toMatchObject({ convalidated: true, definition: PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION });
         for (const table of ['user', 'store_order', 'store_combination', 'store_pink', 'store_order_outbox']) expect(rows[table]).toEqual([]);
-        // Current full construction includes external 0175 / embedded 0180.
+        // Current full construction includes external 0178 / embedded 0183.
         // The old forward-only installer must refuse this successor, never
         // narrow its event whitelist or repair it back to the older catalog.
         const refused=await outcome(runPinkSuccessNotice(f.db));

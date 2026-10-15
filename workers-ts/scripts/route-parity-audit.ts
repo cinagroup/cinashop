@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { maskPhpComments } from "./php-source";
+import { legacyRouteAuthorityEvidenceFiles } from "./route-authority-evidence";
 
 type Method = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "ANY";
 
@@ -349,10 +350,6 @@ function readAuthoritySnapshot(): LegacyRouteAuthoritySnapshot {
   return snapshot;
 }
 
-function canonicalEvidencePath(reference: string): string | undefined {
-  return /^(cinashop-php\/[A-Za-z0-9_./-]+):(\d+)$/.exec(reference)?.[1];
-}
-
 function sourceFileFromCanonical(reference: string): string {
   if (!reference.startsWith("cinashop-php/")) {
     throw new Error(`Invalid legacy source reference: ${reference}`);
@@ -372,19 +369,14 @@ function buildAuthoritySnapshot(decisions: LegacyRouteDecision[]): LegacyRouteAu
   if (!existsSync(join(phpRoot, "route", "api.php"))) {
     throw new Error(`PHP source not found at ${phpRoot}; cannot build authority snapshot`);
   }
-  const fileNames = new Set(
+  const fileNames = legacyRouteAuthorityEvidenceFiles(
     surfaces.map((surface) => `cinashop-php/${surface.phpFile}`),
+    decisions,
   );
-  for (const decision of decisions) {
-    for (const evidence of decision.evidence ?? []) {
-      const reference = canonicalEvidencePath(evidence);
-      if (reference) fileNames.add(reference);
-    }
-  }
   return {
     version: 1,
     files: Object.fromEntries(
-      [...fileNames].sort().map((reference) => [reference, sourceFileAuthority(reference)]),
+      fileNames.map((reference) => [reference, sourceFileAuthority(reference)]),
     ),
     surfaces: Object.fromEntries(
       surfaces.map((surface) => [surface.name, unique(parsePhpRoutes(surface.phpFile))]),

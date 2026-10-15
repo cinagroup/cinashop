@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -30,7 +31,7 @@ describe('actual generateAttrApi/request/Axios → readonly POST and stable save
     const storage = () => { const values = new Map<string, string>(); return { getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: unknown) => values.set(key, String(value)), clear: () => values.clear() }; };
     vi.stubGlobal('localStorage', storage()); vi.stubGlobal('sessionStorage', storage()); vi.stubGlobal('window', { router: { replace: vi.fn() } });
-    const source = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const source = legacyAdminReferenceRoot();
     const require = createRequire(resolve(import.meta.dirname, '../../view/admin-ts/package.json'));
     const bundle = await build({ bundle: true, write: false, platform: 'node', format: 'cjs',
       stdin: { resolveDir: source, contents: `export {productInfoApi,productAddApi,generateAttrApi} from ${JSON.stringify(resolve(source, 'api/product.js'))};export {default as request} from ${JSON.stringify(resolve(source, 'plugins/request/index.js'))};` },

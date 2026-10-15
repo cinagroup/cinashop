@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -60,7 +61,7 @@ describe('virtual review actual App JWT/SQL and actual old form/addReply/goodsLi
         headers: Object.fromEntries(response.headers.entries()), config, request: {} };
     };
     Reflect.set(globalThis, '__fictitiousLegacyRequest', request);
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const php = legacyAdminReferenceRoot();
     const old = await build({ bundle: true, write: false, platform: 'node', format: 'cjs', stdin: { resolveDir: php,
       contents: `export {fictitiousReply,saveFictitiousReply,changeListApi} from ${JSON.stringify(resolve(php, 'api/product.js'))}; export {default as addReply} from ${JSON.stringify(resolve(php, 'pages/product/components/addReply.vue'))}; export {default as goodsList} from ${JSON.stringify(resolve(php, 'components/goodsList/index.vue'))};` },
       plugins: [{ name: 'fictitious-actual-php-consumers', setup(plugin) {

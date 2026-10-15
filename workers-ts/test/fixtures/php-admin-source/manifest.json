@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "source_repository": "cinashop-php",
+  "source_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "scope": "Unmodified PHP-era Admin SPA source subset required by actual compatibility consumers. Auth/transport/framework fixture boundaries remain explicit in each existing test. No local sibling directory or remote fetch is needed to run this snapshot.",
+  "files": [
+    {
+      "path": "api/product.js",
+      "source": "view/admin/src/api/product.js",
+      "bytes": 16957,
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "git_blob": "462ba998847c1ce8ef32d546ea341d749a3fd81e"
+    },
+    {
+      "path": "api/common.js",
+      "source": "view/admin/src/api/common.js",
+      "bytes": 1463,
+      "sha256": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+      "git_blob": "a53c4799f0e004a013fd24af59be06673f231dad"
+    },
+    {
+      "path": "api/supplier.js",
+      "source": "view/admin/src/api/supplier.js",
+      "bytes": 9442,
+      "sha256": "ee4077187667c82d9341ce1d6b039cc3ba6ec54c6d0a41d9950b704bf1d16d32",
+      "git_blob": "6b14f8f3d29911b908af6304474566c8bc7c1263"
+    },
+    {
+      "path": "plugins/request/index.js",
+      "source": "view/admin/src/plugins/request/index.js",
+      "bytes": 6699,
+      "sha256": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+      "git_blob": "4ac24d8f9c855b181b823020b5f27489d2b5a4d2"
+    },
+    {
+      "path": "utils/public.js",
+      "source": "view/admin/src/utils/public.js",
+      "bytes": 3241,
+      "sha256": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+      "git_blob": "caf8f73c414b61def6e4d39c0c6b6aef517ac315"
+    },
+    {
+      "path": "pages/product/productList/index.vue",
+      "source": "view/admin/src/pages/product/productList/index.vue",
+      "bytes": 62288,
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+      "git_blob": "4bb6a5f6f9e536ddfd647c97c7e8f74d798fc70d"
+    },
+    {
+      "path": "pages/product/productAttr/index.vue",
+      "source": "view/admin/src/pages/product/productAttr/index.vue",
+      "bytes": 5521,
+      "sha256": "d0c4a3a0c7a63fb61e6f5dcbdeaab9f2d65a839db51cad8269c437a58eda1e4c",
+      "git_blob": "bf305a766a6c3c18aeb4fe923c474e22af3a1214"
+    },
+    {
+      "path": "pages/product/productReply/index.vue",
+      "source": "view/admin/src/pages/product/productReply/index.vue",
+      "bytes": 17097,
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+      "git_blob": "1216f3f768f0789194d5a86b4d8d50a40d5a4eee"
+    },
+    {
+      "path": "pages/product/components/stockEdit.vue",
+      "source": "view/admin/src/pages/product/components/stockEdit.vue",
+      "bytes": 7870,
+      "sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734",
+      "git_blob": "410a581730aaeb2afbd2c5044bb0da21d0b8455f"
+    },
+    {
+      "path": "pages/product/components/addReply.vue",
+      "source": "view/admin/src/pages/product/components/addReply.vue",
+      "bytes": 6916,
+      "sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+      "git_blob": "cb6693d0c226841b341d28fcde13ef5ac9ec30cf"
+    },
+    {
+      "path": "components/goodsList/index.vue",
+      "source": "view/admin/src/components/goodsList/index.vue",
+      "bytes": 12185,
+      "sha256": "bfa21f742ec0331d59cdaa399ef020d6e674d6e2b5bb597745322d7910a8e3b2",
+      "git_blob": "e3b004e60092073980fca989059072a66a27f035"
+    }
+  ]
+}

@@ -1,0 +1,2385 @@
+{
+  "schema_version": 1,
+  "status": "locally_validated_increment_additional_ci_followups_open",
+  "generated_at": "2026-10-15T11:33:41.557653+00:00",
+  "repository": {
+    "root": "/home/cina/cinagroup/cinashop",
+    "remote": "https://github.com/cinagroup/cinashop.git",
+    "base_commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+    "recorded_before_commit": true
+  },
+  "scope": "Reproducible CI inputs, strict catalog and authority fixtures, explicit statistics restoration evidence, and bounded withdrawal upgrade compatibility for the continuing PHP-to-TypeScript migration.",
+  "provenance": {
+    "prepared_by": "Primary migration agent with independent read-only source and contract review",
+    "human_statistics_decision": {
+      "statement": "保留已恢复的 PHP 兼容行为，更新退役审计",
+      "source": "Explicit human choice in the current migration task",
+      "effect": "Keep the already restored implementation and update the retirement audit; no runtime change is authorized or claimed by this evidence update."
+    },
+    "validation_ownership": "All heavy validation ran serially through the shared wrapper with Vitest maxWorkers1; independent review performed reads only.",
+    "source_snapshot_note": "Hashes describe this captured working tree. Parent must refresh after any edits, API report generation and final validation before promoting evidence."
+  },
+  "php_legacy_reference": {
+    "source_repository": "cinashop-php",
+    "source_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "source_root_for_independent_read_only_comparison": "/home/cina/cinagroup/cinashop-php",
+    "file_count": 11,
+    "manifest": {
+      "file": "workers-ts/test/fixtures/php-admin-source/manifest.json",
+      "bytes": 3536,
+      "sha256": "37f92dc583760178baee821a3a079ffe105b74fe5ebe5de37add79c3605c51e8",
+      "helper_pin": "37f92dc583760178baee821a3a079ffe105b74fe5ebe5de37add79c3605c51e8"
+    },
+    "files": [
+      {
+        "path": "api/product.js",
+        "source": "view/admin/src/api/product.js",
+        "bytes": 16957,
+        "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+        "git_blob": "462ba998847c1ce8ef32d546ea341d749a3fd81e",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/api/product.js",
+        "actual_sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "api/common.js",
+        "source": "view/admin/src/api/common.js",
+        "bytes": 1463,
+        "sha256": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+        "git_blob": "a53c4799f0e004a013fd24af59be06673f231dad",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/api/common.js",
+        "actual_sha256": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "api/supplier.js",
+        "source": "view/admin/src/api/supplier.js",
+        "bytes": 9442,
+        "sha256": "ee4077187667c82d9341ce1d6b039cc3ba6ec54c6d0a41d9950b704bf1d16d32",
+        "git_blob": "6b14f8f3d29911b908af6304474566c8bc7c1263",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/api/supplier.js",
+        "actual_sha256": "ee4077187667c82d9341ce1d6b039cc3ba6ec54c6d0a41d9950b704bf1d16d32",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "plugins/request/index.js",
+        "source": "view/admin/src/plugins/request/index.js",
+        "bytes": 6699,
+        "sha256": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+        "git_blob": "4ac24d8f9c855b181b823020b5f27489d2b5a4d2",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/plugins/request/index.js",
+        "actual_sha256": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "utils/public.js",
+        "source": "view/admin/src/utils/public.js",
+        "bytes": 3241,
+        "sha256": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+        "git_blob": "caf8f73c414b61def6e4d39c0c6b6aef517ac315",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/utils/public.js",
+        "actual_sha256": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "pages/product/productList/index.vue",
+        "source": "view/admin/src/pages/product/productList/index.vue",
+        "bytes": 62288,
+        "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+        "git_blob": "4bb6a5f6f9e536ddfd647c97c7e8f74d798fc70d",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/productList/index.vue",
+        "actual_sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "pages/product/productAttr/index.vue",
+        "source": "view/admin/src/pages/product/productAttr/index.vue",
+        "bytes": 5521,
+        "sha256": "d0c4a3a0c7a63fb61e6f5dcbdeaab9f2d65a839db51cad8269c437a58eda1e4c",
+        "git_blob": "bf305a766a6c3c18aeb4fe923c474e22af3a1214",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/productAttr/index.vue",
+        "actual_sha256": "d0c4a3a0c7a63fb61e6f5dcbdeaab9f2d65a839db51cad8269c437a58eda1e4c",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "pages/product/productReply/index.vue",
+        "source": "view/admin/src/pages/product/productReply/index.vue",
+        "bytes": 17097,
+        "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+        "git_blob": "1216f3f768f0789194d5a86b4d8d50a40d5a4eee",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/productReply/index.vue",
+        "actual_sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "pages/product/components/stockEdit.vue",
+        "source": "view/admin/src/pages/product/components/stockEdit.vue",
+        "bytes": 7870,
+        "sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734",
+        "git_blob": "410a581730aaeb2afbd2c5044bb0da21d0b8455f",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/components/stockEdit.vue",
+        "actual_sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "pages/product/components/addReply.vue",
+        "source": "view/admin/src/pages/product/components/addReply.vue",
+        "bytes": 6916,
+        "sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+        "git_blob": "cb6693d0c226841b341d28fcde13ef5ac9ec30cf",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/components/addReply.vue",
+        "actual_sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      },
+      {
+        "path": "components/goodsList/index.vue",
+        "source": "view/admin/src/components/goodsList/index.vue",
+        "bytes": 12185,
+        "sha256": "bfa21f742ec0331d59cdaa399ef020d6e674d6e2b5bb597745322d7910a8e3b2",
+        "git_blob": "e3b004e60092073980fca989059072a66a27f035",
+        "snapshot_file": "workers-ts/test/fixtures/php-admin-source/src/components/goodsList/index.vue",
+        "actual_sha256": "bfa21f742ec0331d59cdaa399ef020d6e674d6e2b5bb597745322d7910a8e3b2",
+        "byte_identical_to_named_git_commit": true,
+        "size_sha256_git_blob_verified": true
+      }
+    ],
+    "gate_contract": [
+      "Exact manifest digest pinned before use",
+      "Exact recursive source inventory; missing/extra/nonregular/symlink entries rejected",
+      "Each source size and SHA256 checked",
+      "No sibling-directory or network fallback at runtime",
+      "Changed-source, edited-manifest, missing/extra/symlink/missing-snapshot negative tests retained"
+    ],
+    "helper_file": "workers-ts/test/helpers/legacyAdminReference.ts",
+    "integrity_test": "workers-ts/test/legacy-admin-reference.test.ts",
+    "limits": "Auth/transport/framework doubles remain explicitly declared by each existing compatibility test; source copying itself does not establish provider or browser acceptance."
+  },
+  "migration_cohorts": {
+    "external_root": {
+      "files": 181,
+      "last_file": "0178_product_save_effects.sql",
+      "ordered_filename_json_sha256": "c05f257ea765a374894d35542df54a709cdea7935529178f2f139d8562e0cb07",
+      "prior_cohorts_preserved": {
+        "through_recycle_180": "d88e6466bdf25f409a941b00fce53be2472f725abfad2a31ec0c67a86ac85f65",
+        "through_auto_shelf_179": "7ab759fe7e80e8320a27bbe77d523907f14beb2b516fa7139dc25abbb07ca4c1"
+      },
+      "new_registered_sources": [
+        {
+          "file": "workers-ts/migrations/0177_product_recycle_effects.sql",
+          "bytes": 4568,
+          "sha256": "bd77226f8f5733e979483f4b0a5999a1c233ecfcdae230e5f8c20126d175b43c",
+          "modified_in_this_batch": false
+        },
+        {
+          "file": "workers-ts/migrations/0178_product_save_effects.sql",
+          "bytes": 4670,
+          "sha256": "0fcf472e56130811dfdd7812aa718cd4e131cbc010e21d792f9c9e8b442f4319",
+          "modified_in_this_batch": false
+        }
+      ],
+      "new_sources_add_tables": false
+    },
+    "embedded_runAll": {
+      "steps": 184,
+      "first": "0000",
+      "last": "0183",
+      "new_dispatch": {
+        "0182": "runProductRecycleEffects",
+        "0183": "runProductSaveEffects"
+      },
+      "root_transaction_dispatch_and_failure_short_circuit_tested": true
+    },
+    "independent_declarations": {
+      "historical_worker_tables": 300,
+      "ordinary_worker_tables": 304,
+      "current_product_worker_tables": 306,
+      "historical_independent_tables": 18,
+      "ordinary_independent_tables": 22,
+      "product_independent_tables": 24,
+      "new_product_tables": [
+        "admin_product_editor_operation_v1",
+        "admin_product_video_upload_v1"
+      ],
+      "editor_columns": 7,
+      "video_columns": 12,
+      "whole_source_sha256_and_exact_columns_pinned": true,
+      "video_0185_excluded_from": [
+        "root SQL migration directory",
+        "MigrationService.runAll/bootstrap",
+        "ORM construction cohort"
+      ],
+      "operational_requirement": "0185 is a separately commissioned owner-maintenance addon; deployment must explicitly install and verify it. No addon was silently registered in historical bootstrap."
+    },
+    "assertion_policy": "Frozen exact counts, directory hashes, full DDL source digests and column sets. No dynamic-count replacement or production migration-source edits."
+  },
+  "authority_and_sql_fixtures": {
+    "protected_product_id_2": "Use genuine page tuple type1/authType1, empty API/method, /admin/product/product_list, admin-store-storeProuduct-index. Numeric rules/parent/body/tree references stay coherent.",
+    "synthetic_reserved_id_3": "Move synthetic user/opaque/role-save tuples to930003 and update rules/revision/HTTP/tree/mutation references.",
+    "legacy_log_ids": "Move synthetic log API2/3 to930002/930003; retain original wrong tuples as independent single/batch resolver rejection tests.",
+    "production_permission_implementation_unchanged": true,
+    "negative_contracts": [
+      "Former conflicting protected tuples rejected even for super/raw numeric membership",
+      "Mixed category/brand payload fields rejected",
+      "Stale category revision rejected",
+      "JWT mismatched to persisted account hash rejected without business/audit writes"
+    ],
+    "coupon_actual_boundaries": "Actual Admin JWT middleware, SQL account and current category/brand handlers; categories use pid arrays and GET-derived revision, brands fid only. User/Out identities, KV and Sequence are explicit stand-ins. Referenced category deletion refused; NOWAIT conflicts refused without mutation then retried after commit/rollback.",
+    "integral_actual_sql": "Replace select-only DB fake with real financeMemoryPostgres SQL; observe original REPEATABLE READ + READ ONLY transaction settings; actual setter fails25006 and stored account remains unchanged. DAO display mapper remains an explicit double."
+  },
+  "withdrawal_runtime_compatibility": {
+    "production_file": "workers-ts/src/migrations/runWithdrawalEffectsUpgrade.ts",
+    "supported_exact_event_counts": [
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "ready_exact_event_counts": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "DB007_own_installation_still_nine_events": true,
+    "constraints": [
+      "Full canonical pg_get_constraintdef equality, not subset/contains matching",
+      "Validated CHECK and existing catalog/ACL/drift guards retained",
+      "Exact reviewed12/13/14 successors remain unchanged, including rows and constraint OID",
+      "Missing independent index can be added without narrowing successor CHECK",
+      "Unregistered/reordered14-event CHECK rejected before DDL",
+      "Prior5/7/8 upgrade behavior retained"
+    ],
+    "actual_validation": {
+      "passed_cases": 30,
+      "log": "/tmp/cinashop-ci-withdrawal-successors-native-retry.log",
+      "postgres_version": "16.14",
+      "runtime_profiles": "Actual owned native PG16 maintenance and real restricted LOGIN consumers; not provider acceptance"
+    }
+  },
+  "statistics_restoration": {
+    "user_choice": "保留已恢复的 PHP 兼容行为，更新退役审计",
+    "route": {
+      "surface": "api",
+      "method": "GET",
+      "path": "/api/get_script",
+      "php_target": "v1.PublicController/getScript",
+      "worker_target": "PublicController.getScript"
+    },
+    "artifact": "workers-ts/audit/statistics-script-restoration-20261015.json",
+    "old_manifest_sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+    "old_retirement_exactly_preserved": true,
+    "only_current_get_script_retirement_removed": true,
+    "remaining_retirements": 16,
+    "remaining_decision_object_json_sha256": "1f239cb9054ade283f46cd3476c8a0664883c94370e3b6120124f0fb5c41af77",
+    "php_source_proofs": [
+      {
+        "file": "cinashop-php/route/api.php",
+        "sha256": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",
+        "line_count": 860,
+        "evidence_lines": [
+          [
+            26,
+            26
+          ]
+        ]
+      },
+      {
+        "file": "cinashop-php/app/controller/api/v1/PublicController.php",
+        "sha256": "251db0d57b12ee876c196a23b73a960dc0df36e041e2785a354fdcaacc46b296",
+        "line_count": 661,
+        "evidence_lines": [
+          [
+            636,
+            643
+          ]
+        ]
+      },
+      {
+        "file": "cinashop-php/view/uniapp/App.vue",
+        "sha256": "c8ac053899436bc7ece40b5e72896256316e8074f4bfeead434f83283906be6e",
+        "line_count": 348,
+        "evidence_lines": [
+          [
+            286,
+            293
+          ]
+        ]
+      },
+      {
+        "file": "cinashop-php/app/services/system/config/SystemConfigServices.php",
+        "sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+        "line_count": 2657,
+        "evidence_lines": [
+          [
+            1841,
+            1844
+          ],
+          [
+            1874,
+            1874
+          ]
+        ]
+      }
+    ],
+    "current_source_proofs": [
+      {
+        "role": "worker_handler",
+        "file": "workers-ts/src/controllers/api/v1/PublicController.ts",
+        "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+        "evidence_lines": [
+          23,
+          24,
+          25
+        ]
+      },
+      {
+        "role": "worker_route",
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "d081c2c55fcf87a50c260ee4fc0f407681bf15910637589743f7a52297d53a89",
+        "evidence_lines": [
+          197
+        ]
+      },
+      {
+        "role": "shared_loader",
+        "file": "view/common/statisticsScript.ts",
+        "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+        "evidence_lines": [
+          13,
+          14,
+          16,
+          34,
+          37,
+          40,
+          50
+        ]
+      },
+      {
+        "role": "admin_entry",
+        "file": "view/admin-ts/src/main.ts",
+        "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+        "evidence_lines": [
+          9,
+          22
+        ]
+      },
+      {
+        "role": "supplier_entry",
+        "file": "view/supplier-ts/src/main.ts",
+        "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+        "evidence_lines": [
+          8,
+          11
+        ]
+      },
+      {
+        "role": "uniapp_h5_entry",
+        "file": "view/uniapp-ts/src/App.vue",
+        "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+        "evidence_lines": [
+          6,
+          17
+        ]
+      }
+    ],
+    "restoration_contract_gate": "Real handler/config read/raw response, real registered route, actual shared loader and Admin/Supplier/UniApp-H5 call sites plus functional loader retry/deduplication; old historical evidence retained.",
+    "positive_behavior_tests_unchanged": [
+      "workers-ts/test/public-statistics-script-http.test.ts",
+      "workers-ts/test/statistics-script-frontend.test.ts"
+    ],
+    "operator_script_execution_risk": "Preserved intentionally by the human choice. Prior arbitrary-script/supply-chain rationale remains verbatim in historical evidence; audit update is not a claim of a safer fixed-provider integration.",
+    "validation": {
+      "status": "passed_serial_local_validation",
+      "contract_group": {
+        "files": 8,
+        "passed_cases": 75,
+        "failed": 0,
+        "skipped": 0,
+        "log": {
+          "path": "/tmp/cinashop-ci-contract-contracts-unit.log",
+          "bytes": 230,
+          "sha256": "1f9d2a38ff4e4e71b92ba1dc88913d31c1a7323aca4311d0b647e74b99934dfa"
+        },
+        "note": "Combined restoration, original HTTP/frontend, evidence inventory, log permission, API audit and video frontend suites;75 is not statistics-only."
+      },
+      "statistics_native": {
+        "passed_cases": 4,
+        "failed": 0,
+        "skipped": 0,
+        "log": {
+          "path": "/tmp/cinashop-ci-contract-statistics-native.log",
+          "bytes": 2099,
+          "sha256": "416bbf94518de6d3f6d45e905901e76ab82b7198d42a6a1d426f2faf1c0ea23a"
+        },
+        "distinct_count_note": "Repeated4 public HTTP cases already in the75-case group; credited once."
+      },
+      "php_authority": {
+        "file_count": 26,
+        "all_raw_sha256_and_line_counts_match": true,
+        "snapshot_regenerated": false,
+        "live_cli_log": {
+          "path": "/tmp/cinashop-ci-contract-route-audit.log",
+          "bytes": 1273408,
+          "sha256": "d12e573a1af6d494a87c408a5e51f942446eaf831bc55cc8791bff458177dcb0"
+        },
+        "inventory_fix": "Explicitly retain the four restored statistics sources; live full-source comparison remains mandatory."
+      },
+      "production_or_new_browser_acceptance_claimed": false
+    }
+  },
+  "api_literal_refactor": {
+    "file": "view/admin-ts/src/api/productVideoUpload.ts",
+    "contract": "Expand one local endpoint helper into six visible literal URL templates for existing static audit. Methods, body/bytes, validated UUID, signal, timeouts and runtime endpoint paths remain equal.",
+    "six_endpoints": [
+      {
+        "method": "GET",
+        "path": "/file/video_uploads/:uploadId",
+        "handler": "AdminProductVideo.query"
+      },
+      {
+        "method": "POST",
+        "path": "/file/video_uploads/:uploadId",
+        "handler": "AdminProductVideo.initialize"
+      },
+      {
+        "method": "PUT",
+        "path": "/file/video_uploads/:uploadId/parts/:part",
+        "handler": "AdminProductVideo.part"
+      },
+      {
+        "method": "POST",
+        "path": "/file/video_uploads/:uploadId/complete",
+        "handler": "AdminProductVideo.complete"
+      },
+      {
+        "method": "POST",
+        "path": "/file/video_uploads/:uploadId/cancel",
+        "handler": "AdminProductVideo.cancel"
+      },
+      {
+        "method": "GET",
+        "path": "/file/video_uploads/:uploadId/preview",
+        "handler": "AdminProductVideo.preview"
+      }
+    ],
+    "new_gate": "workers-ts/test/admin-frontend-api-audit.test.ts verifies all six exact method/path/matchedRoute/matchedHandler/availability tuples; full deterministic report recomputation remains required.",
+    "reports": [
+      {
+        "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+        "sha256": "286253c07e2e96ab0ba522cb6b1c604cbc1b459585c99e7d427dc6033d8c825f",
+        "durable_video_call_count": 6,
+        "counts": {
+          "callSites": 696,
+          "pathVariants": 732,
+          "registered": 732,
+          "executable": 732,
+          "controlledUnavailable": 0,
+          "unregistered": 0,
+          "unresolved": 0
+        },
+        "status": "regenerated_and_deterministically_verified"
+      },
+      {
+        "file": "workers-ts/audit/admin-frontend-api-contracts-merged-work-branches-20261015.json",
+        "sha256": "286253c07e2e96ab0ba522cb6b1c604cbc1b459585c99e7d427dc6033d8c825f",
+        "durable_video_call_count": 6,
+        "counts": {
+          "callSites": 696,
+          "pathVariants": 732,
+          "registered": 732,
+          "executable": 732,
+          "controlledUnavailable": 0,
+          "unregistered": 0,
+          "unresolved": 0
+        },
+        "status": "regenerated_and_deterministically_verified"
+      }
+    ],
+    "historical_reports_must_not_be_regenerated": [
+      "admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json",
+      "admin-frontend-api-contracts-guest-invoice-manual-red-note-followup-20261013.json"
+    ]
+  },
+  "validation": {
+    "count_definition": "1059 distinct complete case definitions: original457 + seven native groups527 + final contracts75. Public statistics4 repeated on native PG16, withdrawal27 repeated before retry, interrupted125 and other repeated cases count once or are excluded. Builds/types/static inventories are not case counts.",
+    "completed_distinct_cases": 1059,
+    "completed_groups": [
+      {
+        "name": "DIY module inputs",
+        "files_reported": 1,
+        "passed_cases": 11,
+        "log": {
+          "path": "/tmp/cinashop-ci-diy-module-inputs.log",
+          "bytes": 226,
+          "sha256": "67de2c30799a7c5820ec9ffb0fc27d2c0bbd07256cbf12976a0b785c7ba5ce5b",
+          "captured_at": "2026-10-15T11:01:59.055489+00:00",
+          "mutable": false
+        },
+        "status": "passed_complete_group"
+      },
+      {
+        "name": "PHP source and strict migration cohort inputs",
+        "files_reported": 3,
+        "passed_cases": 155,
+        "log": {
+          "path": "/tmp/cinashop-ci-cohort-source-unit.log",
+          "bytes": 229,
+          "sha256": "f349e94ac7629616e25be8eebd4b3b5d6bf727c9866ff82aa5d0883b43d7c5e6",
+          "captured_at": "2026-10-15T11:01:59.055537+00:00",
+          "mutable": false
+        },
+        "status": "passed_complete_group"
+      },
+      {
+        "name": "authority fixtures and integral actual SQL transactions",
+        "files_reported": 6,
+        "passed_cases": 176,
+        "log": {
+          "path": "/tmp/cinashop-ci-authority-integral-unit.log",
+          "bytes": 232,
+          "sha256": "3c506117e0fb64de5d96ba539d97b912a80dda08a60f1e1e5512c69ff2634f0e",
+          "captured_at": "2026-10-15T11:01:59.055559+00:00",
+          "mutable": false
+        },
+        "status": "passed_complete_group"
+      },
+      {
+        "name": "eleven genuine legacy Admin consumers",
+        "files_reported": 11,
+        "passed_cases": 85,
+        "files": [
+          "test/admin-product-stock-http.test.ts",
+          "test/admin-product-fictitious-reply-http.test.ts",
+          "test/admin-product-supplier-options-http.test.ts",
+          "test/admin-product-rule-http.test.ts",
+          "test/admin-legacy-product-save-http.test.ts",
+          "test/admin-legacy-product-generate-http.test.ts",
+          "test/admin-product-recycle.test.ts",
+          "test/admin-product-catalog-read-http.test.ts",
+          "test/admin-legacy-product-read-http.test.ts",
+          "test/admin-product-moderation.test.ts",
+          "test/admin-product-reply-http.test.ts"
+        ],
+        "log": {
+          "path": "/tmp/cinashop-ci-legacy-consumers-withdrawal-native.log",
+          "bytes": 49370,
+          "sha256": "ee782fcd120d9a54a0591a2853a96e903a09f207bf26a22b37d99575a48ee3c9",
+          "captured_at": "2026-10-15T11:01:59.055607+00:00",
+          "mutable": false
+        },
+        "count_note": "Original run reports112 passed plus3 failed. It contains27 withdrawal cases later repeated in the full30-case retry; only the85 cases in the eleven completely passed consumer files are credited here.",
+        "status": "passed_complete_group"
+      },
+      {
+        "name": "withdrawal exact successor compatibility retry",
+        "files_reported": 1,
+        "passed_cases": 30,
+        "files": [
+          "test/withdrawal-effects-upgrade.test.ts"
+        ],
+        "log": {
+          "path": "/tmp/cinashop-ci-withdrawal-successors-native-retry.log",
+          "bytes": 9018,
+          "sha256": "083dad1f8acc927e8a64286f87472a833f9e465d2e4c2672ae15ed64f5f1aa35",
+          "captured_at": "2026-10-15T11:01:59.055634+00:00",
+          "mutable": false
+        },
+        "cleanup": {
+          "remaining_fixtures": 0,
+          "stopped_cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-VaQaTU"
+        },
+        "status": "passed_complete_group"
+      },
+      {
+        "name": "final statistics, authority logs, evidence and API/video contracts",
+        "files_reported": 8,
+        "passed_cases": 75,
+        "failed": 0,
+        "skipped": 0,
+        "files": [
+          "test/dynamic-statistics-script-retirement.test.ts",
+          "test/admin-legacy-log-permission.test.ts",
+          "test/public-statistics-script-http.test.ts",
+          "test/statistics-script-frontend.test.ts",
+          "test/admin-frontend-api-audit.test.ts",
+          "test/route-parity-audit.test.ts",
+          "test/admin-product-video-upload-frontend.test.ts",
+          "test/legacy-authority-snapshot.test.ts"
+        ],
+        "log": {
+          "path": "/tmp/cinashop-ci-contract-contracts-unit.log",
+          "bytes": 230,
+          "sha256": "1f9d2a38ff4e4e71b92ba1dc88913d31c1a7323aca4311d0b647e74b99934dfa"
+        },
+        "status": "passed_complete_group"
+      }
+    ],
+    "read_only_checks": {
+      "git_diff_check": {
+        "status": "passed_for_all_nonreference_changes",
+        "command": [
+          "git",
+          "diff",
+          "--cached",
+          "--check",
+          "--",
+          ".",
+          ":(exclude)workers-ts/test/fixtures/php-admin-source/src/**"
+        ],
+        "immutable_reference_exception": {
+          "warnings": 10,
+          "files": [
+            "src/api/common.js",
+            "src/components/goodsList/index.vue",
+            "src/pages/product/productList/index.vue"
+          ],
+          "reason": "Inherited whitespace in genuine unmodified PHP reference inputs. All11 files were rechecked byte-for-byte against the pinned source commit; formatting would invalidate the reviewed source provenance. No global whitespace setting was changed."
+        }
+      },
+      "restoration_old_decision_and_other_sixteen": "exact match",
+      "restoration_current_source_pins": "6/6 actual raw-byte SHA256 match",
+      "restoration_php_authority_pins": "4/4 match frozen authority snapshot",
+      "legacy_php_source_commit_comparison": "11/11 exact byte match; hashes and Git blobs verified"
+    },
+    "native_serial_rerun": {
+      "overall_status": "passed_all_seven_groups",
+      "credited_cases": 527,
+      "files": 22,
+      "receipts": [
+        {
+          "group": 1,
+          "files": [
+            "test/admin-authority-write-native.test.ts",
+            "test/admin-authority-operation-native.test.ts",
+            "test/admin-legacy-role-operation-native.test.ts",
+            "test/admin-legacy-role-workflow-native.test.ts",
+            "test/admin-legacy-admin-workflow-native.test.ts",
+            "test/agent-level-events-postgres.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-1.log",
+          "exit_code": 0,
+          "duration_seconds": 130.71,
+          "passed_cases": 46,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "5e402be271850ca1be8da4b6f6e8133bc84afaded028b91c4f50c910fc871c02",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-dBJje2",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        },
+        {
+          "group": 2,
+          "files": [
+            "test/checkout-coupon-management.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-2.log",
+          "exit_code": 0,
+          "duration_seconds": 268.07,
+          "passed_cases": 56,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "21d58846ebb2ebbd5bf9b62757466518448480d491539363d765ca298722df76",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mNiEMS",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        },
+        {
+          "group": 3,
+          "files": [
+            "test/offline-order-installation.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-3.log",
+          "exit_code": 0,
+          "duration_seconds": 340.51,
+          "passed_cases": 39,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "03c3749c3a5858df559d9a67e9bc66267e0de1aff5580c41a52f2a8a15a5d426",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mqFkpD",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        },
+        {
+          "group": 4,
+          "files": [
+            "test/admin-refund-creation-migration.test.ts",
+            "test/admin-refund-operation-migration.test.ts",
+            "test/brokerage-paid-order-migration.test.ts",
+            "test/coupon-product-scope-migration.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-4.log",
+          "exit_code": 0,
+          "duration_seconds": 183.02,
+          "passed_cases": 104,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "9070315e637c63963fcc341f732a52586c1124f3242669e87dfbf5edcabca1af",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-h5C2uR",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        },
+        {
+          "group": 5,
+          "files": [
+            "test/invoice-evidence-migration.test.ts",
+            "test/invoice-evidence-registration.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-5.log",
+          "exit_code": 0,
+          "duration_seconds": 82.71,
+          "passed_cases": 58,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "2b076d9467002b47f2075eb01d39d6cbc42e38cfa47ab2c16db98bae47cde702",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-4W4NLl",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        },
+        {
+          "group": 6,
+          "files": [
+            "test/pink-success-notice-migration.test.ts",
+            "test/recharge-quota-seed-upgrade.test.ts",
+            "test/refund-split-migration.test.ts",
+            "test/seckill-time-reference-lock-upgrade.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-6.log",
+          "exit_code": 0,
+          "duration_seconds": 166.61,
+          "passed_cases": 70,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "a815ccb72c1712046dff9a874e1505ac1dcb4dbfe609bf3118a5f76737e6657b",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-69pdtZ",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        },
+        {
+          "group": 7,
+          "files": [
+            "test/shipping-lifecycle-indexes.test.ts",
+            "test/shipping-lifecycle-interactions.test.ts",
+            "test/shipping-lifecycle-migration.test.ts",
+            "test/refund-runtime-permissions.test.ts"
+          ],
+          "log": "/tmp/cinashop-ci-native-split-7.log",
+          "exit_code": 0,
+          "duration_seconds": 225.48,
+          "passed_cases": 154,
+          "failed": 0,
+          "skipped": 0,
+          "log_sha256": "aca727214f1d913bdfe9273dcf57d9b7d7cfd0422da4b8b917caab287226ae17",
+          "cleanup": {
+            "remaining": 0,
+            "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Mvpuq2",
+            "independent_pg_ctl_exit": 3,
+            "postmaster_pid_exists": false
+          }
+        }
+      ],
+      "serial_command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-ci-native-split.py"
+      ]
+    },
+    "other_validation": {
+      "worker_standard_type": "passed_full_8192MiB",
+      "worker_runtime_type": "passed_full_8192MiB",
+      "admin_type": "passed_full_vue_tsc_build_mode",
+      "admin_build": "passed_vite_production",
+      "API_report_regeneration_and_gate": "passed732/732 executable, no unresolved/unregistered",
+      "route_audit": {
+        "status": "passed_real_PHP_sources",
+        "totals": {
+          "php": 1904,
+          "ts": 2565,
+          "matched": 1028,
+          "executableMatched": 1007,
+          "unavailable": 21,
+          "missing": 876,
+          "retired": 16,
+          "actionableMissing": 860,
+          "coveragePercent": 54,
+          "executableCoveragePercent": 52.9,
+          "effectiveExecutableCoveragePercent": 53.3
+        },
+        "limitations": [
+          "Static route registration coverage does not prove response, permission, state-machine, data, or third-party parity.",
+          "PHP line and block comments are masked before parsing, so disabled route declarations do not count as authority.",
+          "ThinkPHP resource routes are expanded to the standard seven REST actions after only/except filters.",
+          "Wildcard 501 fallbacks never count as migrated routes.",
+          "Routes wired to handlers named *Unavailable or containing an inline 501 are registered but not executable.",
+          "Retired routes remain in the raw PHP denominator and missing count; effective coverage excludes only manifest entries with source evidence and a replacement."
+        ]
+      },
+      "full_cloud_CI": "new_commit_run_pending",
+      "browser": "No new page behavior test in this batch. Browser tools callable; connected inventory lists Codex In-app Browser and MCP Apps; no Chrome extension session observed. Prior feature browser evidence remains separately scoped.",
+      "production_or_provider_acceptance": "not_claimed"
+    },
+    "final_commands": [
+      {
+        "name": "api-audit",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "args": [
+          "node",
+          "node_modules/tsx/dist/cli.mjs",
+          "scripts/admin-frontend-api-audit.ts",
+          "--write",
+          "--summary",
+          "--strict"
+        ],
+        "log": "/tmp/cinashop-ci-contract-api-audit.log",
+        "exit_code": 0,
+        "duration_seconds": 2.0,
+        "log_sha256": "0a69858255a636de95cda4fe65c44c64dafc2d303493855460e499adee76e537"
+      },
+      {
+        "name": "route-audit",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "args": [
+          "node",
+          "node_modules/tsx/dist/cli.mjs",
+          "scripts/route-parity-audit.ts"
+        ],
+        "log": "/tmp/cinashop-ci-contract-route-audit.log",
+        "exit_code": 0,
+        "duration_seconds": 0.85,
+        "log_sha256": "d12e573a1af6d494a87c408a5e51f942446eaf831bc55cc8791bff458177dcb0"
+      },
+      {
+        "name": "contracts-unit",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "args": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "test/dynamic-statistics-script-retirement.test.ts",
+          "test/admin-legacy-log-permission.test.ts",
+          "test/public-statistics-script-http.test.ts",
+          "test/statistics-script-frontend.test.ts",
+          "test/admin-frontend-api-audit.test.ts",
+          "test/route-parity-audit.test.ts",
+          "test/admin-product-video-upload-frontend.test.ts",
+          "test/legacy-authority-snapshot.test.ts"
+        ],
+        "log": "/tmp/cinashop-ci-contract-contracts-unit.log",
+        "exit_code": 0,
+        "duration_seconds": 24.32,
+        "log_sha256": "1f9d2a38ff4e4e71b92ba1dc88913d31c1a7323aca4311d0b647e74b99934dfa"
+      },
+      {
+        "name": "statistics-native",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "args": [
+          "node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/public-statistics-script-http.test.ts"
+        ],
+        "log": "/tmp/cinashop-ci-contract-statistics-native.log",
+        "exit_code": 0,
+        "duration_seconds": 16.33,
+        "log_sha256": "416bbf94518de6d3f6d45e905901e76ab82b7198d42a6a1d426f2faf1c0ea23a"
+      },
+      {
+        "name": "worker-type",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "args": [
+          "node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-ci-contract-worker-type.log",
+        "exit_code": 0,
+        "duration_seconds": 147.16,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "worker-runtime-type",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "args": [
+          "node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-ci-contract-worker-runtime-type.log",
+        "exit_code": 0,
+        "duration_seconds": 87.19,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "admin-type",
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "args": [
+          "node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "log": "/tmp/cinashop-ci-contract-admin-type.log",
+        "exit_code": 0,
+        "duration_seconds": 35.19,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "admin-build",
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "args": [
+          "node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "log": "/tmp/cinashop-ci-contract-admin-build.log",
+        "exit_code": 0,
+        "duration_seconds": 36.62,
+        "log_sha256": "5c45b2c1e479561fa6f3d79d395c0d12c5d5aa80781fc69837e0bdee094e8490"
+      }
+    ],
+    "independent_cluster_shutdown_checks": [
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Pek9YJ",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-legacy-consumers-withdrawal-native.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-VaQaTU",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-withdrawal-successors-native-retry.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-SGDspH",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": "one interrupted fixture DB retained at rest",
+        "log": "/tmp/cinashop-ci-catalog-authority-native.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-dBJje2",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-1.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mNiEMS",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-2.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mqFkpD",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-3.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-h5C2uR",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-4.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-4W4NLl",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-5.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-69pdtZ",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-6.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Mvpuq2",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-native-split-7.log"
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-G8IVuT",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "remaining_fixtures": 0,
+        "log": "/tmp/cinashop-ci-contract-statistics-native.log"
+      }
+    ],
+    "input_freeze": {
+      "initial": {
+        "path": "/tmp/cinashop-ci-contract-inputs-frozen.json",
+        "bytes": 996445,
+        "sha256": "07f6474cb839def03f4e2bb45a75b5121dd98e30b6fd26cae556d3093c5ced65"
+      },
+      "late_reviewed_audit_only_changes": {
+        "reason": "Preserve exact original 26-file PHP evidence inventory after explicit get_script restoration; full real-source equality remains mandatory. Prior native suites do not import these audit scripts. Final75-case contract run and all subsequent type checks include these changes.",
+        "changed": [
+          {
+            "file": "workers-ts/scripts/route-parity-audit.ts",
+            "before_sha256": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef",
+            "after_sha256": "aba9633edd7b3ddf34cc4b639898a8d19bf995400b1361213ed82fca5e0aac83"
+          },
+          {
+            "file": "workers-ts/test/route-parity-audit.test.ts",
+            "before_sha256": "23824134eaaa0620cab6b4bb527db8b43131c210ccfbe9586017bc9a7fad8db4",
+            "after_sha256": "b7ef62702956d697be73882c654057466943f557b312902d1db57695ff4157fb"
+          }
+        ],
+        "added": [
+          {
+            "file": "workers-ts/scripts/route-authority-evidence.ts",
+            "sha256": "0d3ef7ab3045b6d3e6390a5117ab946f9c72b3336c6bd05fecdcf7dca292d3a1"
+          }
+        ]
+      },
+      "final": {
+        "path": "/tmp/cinashop-ci-contract-inputs-final-frozen.json",
+        "bytes": 996605,
+        "sha256": "8e422ba6db4b04171eb973cf212a6079950ba18e9810a98fbc0416e220c1e725"
+      },
+      "final_file_count": 5836,
+      "final_input_changes_after_final_tests": 0,
+      "planned_output_exclusions": [
+        "MIGRATION_CHECKLIST.md",
+        "MIGRATION_AUDIT.md",
+        "workers-ts/audit/admin-frontend-api-contracts.json",
+        "workers-ts/audit/admin-frontend-api-contracts-merged-work-branches-20261015.json",
+        "workers-ts/audit/statistics-script-restoration-20261015.json",
+        "workers-ts/audit/github-push-ci-followups-20261015.json",
+        "workers-ts/audit/php-ts-ci-contract-inputs-20261015.json"
+      ]
+    },
+    "parent_checkboxes": [
+      {
+        "file": "MIGRATION_CHECKLIST.md",
+        "total": 404,
+        "completed": 249,
+        "open": 155,
+        "checkbox_lines_sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+        "unchanged": true
+      },
+      {
+        "file": "MIGRATION_AUDIT.md",
+        "total": 88,
+        "completed": 50,
+        "open": 38,
+        "checkbox_lines_sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+        "unchanged": true
+      }
+    ],
+    "secret_source_scan": {
+      "version": "8.29.0",
+      "files": 74,
+      "findings": 0,
+      "first_report": "/tmp/cinashop-ci-contract-gitleaks-source.json",
+      "final_source_and_commit_checks": "Final metadata source scan and exact commit-range scan are repeated after this record before push; results reported in task."
+    }
+  },
+  "failed_or_interrupted_attempt_history": [
+    {
+      "kind": "strict_withdrawal_fixture_cast_failure",
+      "log": {
+        "path": "/tmp/cinashop-ci-legacy-consumers-withdrawal-native.log",
+        "bytes": 49370,
+        "sha256": "ee782fcd120d9a54a0591a2853a96e903a09f207bf26a22b37d99575a48ee3c9",
+        "captured_at": "2026-10-15T11:01:59.066277+00:00",
+        "mutable": false
+      },
+      "outcome": {
+        "test_files_passed": 11,
+        "test_files_failed": 1,
+        "cases_passed": 112,
+        "cases_failed": 3
+      },
+      "three_failed_cases": [
+        "preserves the exact reviewed12-event successor",
+        "preserves the exact reviewed13-event successor",
+        "preserves the exact reviewed14-event successor"
+      ],
+      "cause": "Initial test fixture replayed pg_get_constraintdef display text as new DDL, which changed the canonical cast tree. Exact production guard correctly refused the noncanonical fixture.",
+      "resolution": "Construct original CHECK IN (...) from each independent reviewed product migration EVENTS list, then compare actual PG canonical definition to its independently declared expected definition. No guard weakening; retry30/30 passed.",
+      "cleanup": {
+        "remaining_fixtures": 0,
+        "stopped_cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Pek9YJ"
+      }
+    },
+    {
+      "kind": "native_batch_total_deadline",
+      "log": {
+        "path": "/tmp/cinashop-ci-catalog-authority-native.log",
+        "bytes": 33438,
+        "sha256": "ac7c9ad46489cd5de25f3003369c8ea9810d36863e3b4364c93f574197fa4ad4",
+        "captured_at": "2026-10-15T11:01:59.066339+00:00",
+        "mutable": false
+      },
+      "requested_files": [
+        "test/admin-refund-creation-migration.test.ts",
+        "test/admin-refund-operation-migration.test.ts",
+        "test/brokerage-paid-order-migration.test.ts",
+        "test/coupon-product-scope-migration.test.ts",
+        "test/invoice-evidence-migration.test.ts",
+        "test/invoice-evidence-registration.test.ts",
+        "test/offline-order-installation.test.ts",
+        "test/pink-success-notice-migration.test.ts",
+        "test/recharge-quota-seed-upgrade.test.ts",
+        "test/refund-split-migration.test.ts",
+        "test/seckill-time-reference-lock-upgrade.test.ts",
+        "test/shipping-lifecycle-indexes.test.ts",
+        "test/shipping-lifecycle-interactions.test.ts",
+        "test/shipping-lifecycle-migration.test.ts",
+        "test/refund-runtime-permissions.test.ts",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-authority-operation-native.test.ts",
+        "test/admin-legacy-role-operation-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/admin-legacy-admin-workflow-native.test.ts",
+        "test/checkout-coupon-management.test.ts",
+        "test/agent-level-events-postgres.test.ts"
+      ],
+      "exit_observation": "Finance tests failed (143); outer owned runner receipt exit1",
+      "observed_case_passes": 125,
+      "observed_assertion_failures": 0,
+      "completed_files_before_interruption": [
+        "test/admin-authority-operation-native.test.ts",
+        "test/admin-legacy-admin-workflow-native.test.ts",
+        "test/checkout-coupon-management.test.ts",
+        "test/admin-authority-write-native.test.ts",
+        "test/admin-legacy-role-workflow-native.test.ts",
+        "test/admin-legacy-role-operation-native.test.ts"
+      ],
+      "completed_cases_in_those_files": 98,
+      "partial_file": {
+        "file": "test/offline-order-installation.test.ts",
+        "observed_passes": 27,
+        "static_total_cases": 39,
+        "cases_not_completed": 12
+      },
+      "complete_files_to_rerun": [
+        "test/admin-refund-creation-migration.test.ts",
+        "test/admin-refund-operation-migration.test.ts",
+        "test/brokerage-paid-order-migration.test.ts",
+        "test/coupon-product-scope-migration.test.ts",
+        "test/invoice-evidence-migration.test.ts",
+        "test/invoice-evidence-registration.test.ts",
+        "test/offline-order-installation.test.ts",
+        "test/pink-success-notice-migration.test.ts",
+        "test/recharge-quota-seed-upgrade.test.ts",
+        "test/refund-split-migration.test.ts",
+        "test/seckill-time-reference-lock-upgrade.test.ts",
+        "test/shipping-lifecycle-indexes.test.ts",
+        "test/shipping-lifecycle-interactions.test.ts",
+        "test/shipping-lifecycle-migration.test.ts",
+        "test/refund-runtime-permissions.test.ts",
+        "test/agent-level-events-postgres.test.ts"
+      ],
+      "deadline": {
+        "source": "workers-ts/scripts/run-local-finance-postgres.mjs:930-933",
+        "targeted_batch_total_seconds": 600,
+        "shared_wrapper_has_timeout": false,
+        "PG_start_UTC": "2026-10-15T10:43:09.466Z",
+        "PG_fast_shutdown_request_UTC": "2026-10-15T10:53:09.863Z",
+        "interpretation": "Strong evidence of whole-batch ten-minute deadline/SIGTERM; not proof of a business assertion failure. The diagnostic prints status143 before timeout error code, so log alone does not expose ETIMEDOUT."
+      },
+      "cleanup": {
+        "cluster_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-SGDspH",
+        "stopped_marker_present": true,
+        "postmaster_pid_absent_verified": true,
+        "remaining_fixture_databases": [
+          "cinashop_kefu_runner_3e5ea1907924467d8f7e4ca9a3171037"
+        ],
+        "remaining_roles_check": "not reached after database-cleanup assertion failed",
+        "remaining_zero": false,
+        "classification": "Owned cluster was stopped; fixture cleanup was incomplete. Retain stopped diagnostics, do not describe as a clean pass or silently erase the residual database."
+      }
+    },
+    {
+      "kind": "restored_route_authority_inventory_shrink",
+      "log": {
+        "path": "/tmp/cinashop-ci-contract-route-audit-before-restored-evidence-fix.log",
+        "bytes": 542,
+        "sha256": "a9c26ab297835b294ce04b0a2a7c6ae8419011f0a3b3b33f14c3ed2372535be8"
+      },
+      "cause": "buildAuthoritySnapshot selected sources only from current retirement decisions, dropping3 original evidence files after get_script restoration. All original26 actual PHP file digests still matched; this was inventory loss, not PHP source drift.",
+      "resolution": "Explicitly retain the four restored statistics sources, preserving the exact original26-file authority; full raw-source equality and decision checks remain unchanged. Inventory regression, restored-contract gate and final real-source CLI pass. Authority JSON was not regenerated."
+    },
+    {
+      "kind": "precommit_whitespace_check_on_new_raw_reference_inputs",
+      "stage": "After staging74 reviewed files and before creating any commit",
+      "exit_code": 2,
+      "outcome": "No commit created;10 inherited whitespace warnings in3 original PHP reference files. Strict check on all other changes succeeds, all11 reference bytes independently match source commit, and reference formatting is preserved."
+    }
+  ],
+  "cloud_ci_history": {
+    "previous_run": {
+      "run_id": 38705607954,
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/38705607954",
+      "commit": "6057681f3c26985de20262b5ffa5b1f7b601da43",
+      "status": "failed",
+      "failed_checks": [
+        "Worker type, unit, schema and route execution (shard1/2)",
+        "Worker type, unit, schema and route execution (shard2/2)"
+      ],
+      "other_checks": "Eight non-unit jobs completed successfully; this does not establish the new increment cloud result.",
+      "failure_log": {
+        "path": "/tmp/cinashop-video-previous-ci-failed.log",
+        "bytes": 14074948,
+        "sha256": "1aaa362bd4145315ae0ee773cc435a8f67a953db2030bcb372f54674c24d566f",
+        "captured_at": "2026-10-15T11:01:59.083271+00:00",
+        "mutable": false
+      },
+      "review_classification": "Strict migration-cohort drift; protected menu synthetic ID collisions; old consumer source inputs absent on cloud; current strict input/JWT and actual read transaction fixture mismatch; statistics retirement conflict explicitly resolved by human; API report/source discoverability. Paid agent-event failures in old log were setup count drift, not independent proof of paid handler failure."
+    },
+    "base_commit_run": {
+      "run_id": 38718696576,
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/38718696576",
+      "commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+      "status": "completed",
+      "conclusion": "failure",
+      "observed_at": "2026-10-15T11:33:41.561281+00:00",
+      "note": "Base SHA failed unit shards; other8 jobs succeeded. New patch result is not claimed.",
+      "additional_unresolved_families": [
+        {
+          "file": "workers-ts/test/admin-fab-settings.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/admin-fab-settings.test.ts:19",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 47325,
+            "case": "FAIL   regular-unit  test/admin-fab-settings.test.ts > complete FAB input and historical numeric preservation > keeps the exact opaque navigation registry equal to the real Uniapp registry",
+            "cause": "AssertionError: expected [ NodeObject{ pos: +0, …(15) }, …(1) ] to have a length of 1 but got 2"
+          },
+          "note": "Registry comparison assumes one import; both actual registries now import divisionStaff as a second real dependency.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/admin-frontend-inventory.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/admin-frontend-inventory.test.ts:104",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 47345,
+            "case": "FAIL   regular-unit  test/admin-frontend-inventory.test.ts > Admin frontend navigation inventory > fails when target pages or router records drift from the committed audit",
+            "cause": "AssertionError: expected [ 'src/pages/ConfigList.vue', …(131) ] to deeply equal [ 'src/pages/ConfigList.vue', …(137) ]"
+          },
+          "note": "Committed report lists132 target page Vue files while actual filesystem scan lists138, including six newly added dialog/catalog/component files.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+          "observed_failed_cases": 2,
+          "source_location": "test/admin-legacy-setting-read-permission.test.ts:16",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 47461,
+            "case": "FAIL   regular-unit  test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > resolves audited numeric page and API rules to read authority in single and batch paths",
+            "cause": "AssertionError: expected [ Array(7) ] to deeply equal [ Array(7) ]"
+          },
+          "note": "Positive synthetic role-page/admin-API tuples occupy protected product/category IDs2/3; numeric rules must move with the tuples and explicit wrong-ID refusal must remain.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/admin-permission.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/admin-permission.test.ts:70",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 47679,
+            "case": "FAIL   regular-unit  test/admin-permission.test.ts > admin permission catalog > covers every route guarded by adminAuth in both compatibility surfaces",
+            "cause": "AssertionError: expected [ { method: 'GET', …(1) }, …(1) ] to deeply equal []"
+          },
+          "note": "All-route permission gate excludes authority/editor recovery but not the new exact video query/cancel owned-recovery routes; runtime policy intentionally handles them separately.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+          "observed_failed_cases": 2,
+          "source_location": "test/admin-product-category-style-coverage.test.ts:70",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 47707,
+            "case": "FAIL   regular-unit  test/admin-product-category-style-coverage.test.ts > complete legacy product-category layout source coverage > connects all current implementations and rejects page-only or commentary-only replacements",
+            "cause": "AssertionError: expected [ [ 'publicTaxonomy', false ] ] to deeply equal []"
+          },
+          "note": "Current publicTaxonomy source-connection gate false. Inspect the real delegation chain; do not weaken the gate or assume runtime failure.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/admin-user-center-design-coverage.test.ts",
+          "observed_failed_cases": 3,
+          "source_location": "test/admin-user-center-design-coverage.test.ts:151",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 47880,
+            "case": "FAIL   regular-unit  test/admin-user-center-design-coverage.test.ts > complete personal-centre connected source gates > generic normalized member deletion",
+            "cause": "AssertionError: generic normalized member deletion: current live gate: expected false to be true // Object.is equality"
+          },
+          "note": "Current live gates fail for generic normalized member deletion, generic list exclusion and newly registered generic group-write rejection. Runtime cause not established.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/kefu-sequence-runner.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/kefu-sequence-runner.test.ts:120",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 48518,
+            "case": "FAIL   regular-unit  test/kefu-sequence-runner.test.ts > standalone sequence transaction execution boundary > runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function",
+            "cause": "AssertionError: expected { name: 'soob_event_type_ck', …(1) } to deeply equal { name: 'soob_event_type_ck', …(1) }"
+          },
+          "note": "Own independent frozen current CHECK expects stock12, but actual ORM includes reviewed recycle/save14. This assertion is outside the shared cohort helper changed in the current patch.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/presale-sku-catalog-postgres.test.ts",
+          "observed_failed_cases": 7,
+          "source_location": "test/presale-sku-catalog-postgres.test.ts:86",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 48649,
+            "case": "FAIL   regular-unit  test/presale-sku-catalog-postgres.test.ts > presale selection view with real disposable SQL > feeds both frontend catalogues from actual SQL HTTP rows for all three time filters without writes",
+            "cause": "Error: 预售列表数据无效，请刷新"
+          },
+          "note": "Actual HTTP response data is null, causing shared parser/count assertions to fail. Direct Hono requests omit Env; exact reason must be confirmed before changing expected behavior.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/product-auxiliary-migration.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/product-auxiliary-migration.test.ts",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 48681,
+            "case": "FAIL   regular-unit  test/product-auxiliary-migration.test.ts > superseded product auxiliary migration > keeps store_product_relation authoritative and writes the PHP immediate-parent semantics",
+            "cause": "AssertionError: expected 'import {\\n  and,\\n  eq,\\n  inArray,\\n…' to contain '.set({ relationPid: storeProductCateg…'"
+          },
+          "note": "Source gate expects inline relationPid parent update inside SupplierProductManagementService. Verify the actual category-service delegation and preserve immediate-parent behavior.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/product-hot-frames.test.ts",
+          "observed_failed_cases": 12,
+          "source_location": "test/product-hot-frames.test.ts:43",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 49465,
+            "case": "FAIL   regular-unit  test/product-hot-frames.test.ts > hot product frame display against disposable SQL > adds the legacy empty array while retaining every existing response field",
+            "cause": "AssertionError: Cannot read properties of undefined (reading 'APP_KEY'): expected 400 to be 200 // Object.is equality"
+          },
+          "note": "Direct Hono requests omit Env; log explicitly reports undefined.APP_KEY. Preserve real frame and error-boundary assertions when correcting the fixture.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/product-hot-pagination.test.ts",
+          "observed_failed_cases": 6,
+          "source_location": "test/product-hot-pagination.test.ts:44",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 49632,
+            "case": "FAIL   regular-unit  test/product-hot-pagination.test.ts > legacy product/hot offset contract > defaults to ten and advances past the first page in stable sort/id order",
+            "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+          },
+          "note": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/product-rank-navigation-postgres.test.ts",
+          "observed_failed_cases": 4,
+          "source_location": "test/product-rank-navigation-postgres.test.ts:55",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 49732,
+            "case": "FAIL   regular-unit  test/product-rank-navigation-postgres.test.ts > ranked product activity navigation against disposable SQL > adds only exact current-page activity identities while retaining the ranked rows and tabs",
+            "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+          },
+          "note": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/recommendation-navigation.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/recommendation-navigation.test.ts:140",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "line": 49859,
+            "case": "FAIL   regular-unit  test/recommendation-navigation.test.ts > hot recommendation navigation against real disposable SQL > adds exact target metadata at the real hot endpoint and reaches the same base through the real seckill detail",
+            "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+          },
+          "note": "Direct hot endpoint fixture request returns400, with Env omitted. Confirm successful response before restoring recommendation assertions.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        },
+        {
+          "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+          "observed_failed_cases": 1,
+          "source_location": "test/seckill-schedule-postgres.test.ts:123",
+          "first_failure": {
+            "log": "/tmp/cinashop-ci-base721-job116367607070.log",
+            "line": 55142,
+            "case": "FAIL   regular-unit  test/seckill-schedule-postgres.test.ts > seckill schedule admission on disposable SQL > cancels an existing order and restores stock even when parent-missing",
+            "cause": "AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]"
+          },
+          "note": "parent-missing cancellation stock snapshot differs by reversed SKU identity order(id1/id2). This is not evidence of stock corruption; inspect snapshot ordering and compare exact identities/values.",
+          "runtime_defect_proven": false,
+          "current_patch_changes_this_file": false,
+          "status": "open_next_batch"
+        }
+      ],
+      "interpretation": "Shared fixture failures are corrected and covered locally for the chosen suites. These additional test families remain open; no complete-CI repair or new runtime failure conclusion is asserted.",
+      "complete_log_classification": {
+        "schema_version": 1,
+        "run": {
+          "id": 38718696576,
+          "url": "https://github.com/cinagroup/cinashop/actions/runs/38718696576",
+          "base_commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+          "conclusion": "failure",
+          "other_eight_jobs": "success, confirmed by parent"
+        },
+        "complete_job_logs": [
+          {
+            "job_id": 116367606610,
+            "path": "/tmp/cinashop-ci-base721-job116367606610.log",
+            "exit_code": 0,
+            "complete": true,
+            "bytes": 33304772,
+            "sha256": "f885de34f596dbe17e35966183bbf50dafc8f6ee09f7f393067aac7383a52e52"
+          },
+          {
+            "job_id": 116367607070,
+            "path": "/tmp/cinashop-ci-base721-job116367607070.log",
+            "exit_code": 0,
+            "complete": true,
+            "bytes": 36550109,
+            "sha256": "61c72e6cace78318adc301ff31057c7fd90bec86cee993b636d889f20add6da2"
+          }
+        ],
+        "aggregate_cli_log": {
+          "path": "/tmp/cinashop-ci-base721-failed.log",
+          "exit_code": 0,
+          "bytes": 14204747,
+          "sha256": "099e2ce69726f161a4742d0f22ca63333269d58aba48283287fd2c92a07bc023",
+          "limitation": "Despite a successful gh --log-failed exit, this aggregate includes shard2 full summary but only partial shard1 failure output. Use the two direct job logs above as complete evidence."
+        },
+        "download_history": [
+          "GitHub connector both joblog calls returned Transport closed",
+          "Initial gh HTTP2 aggregate download failed: stream ID1 CANCEL received from peer",
+          "Retried gh with GODEBUG=http2client=0; completed but aggregate did not include full shard1 failure section",
+          "Direct gh api job downloads succeeded with HTTP2 disabled and --allow-escape-sequences; ANSI color is retained only in saved log data and stripped before analysis"
+        ],
+        "summaries": [
+          {
+            "job_id": 116367606610,
+            "failed_files": 59,
+            "passed_files": 500,
+            "failed_cases": 487,
+            "passed_cases": 9176,
+            "skipped": 24
+          },
+          {
+            "job_id": 116367607070,
+            "failed_files": 49,
+            "passed_files": 510,
+            "failed_cases": 346,
+            "passed_cases": 7988,
+            "skipped": 44
+          }
+        ],
+        "fail_headers": 845,
+        "failed_cases_total": 833,
+        "failed_suite_headers": 12,
+        "failed_files_total": 108,
+        "uncovered_file_count": 14,
+        "uncovered_case_count": 43,
+        "uncovered_families": [
+          {
+            "file": "workers-ts/test/admin-fab-settings.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/admin-fab-settings.test.ts:19",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 47325,
+              "case": "FAIL   regular-unit  test/admin-fab-settings.test.ts > complete FAB input and historical numeric preservation > keeps the exact opaque navigation registry equal to the real Uniapp registry",
+              "cause": "AssertionError: expected [ NodeObject{ pos: +0, …(15) }, …(1) ] to have a length of 1 but got 2"
+            },
+            "note": "Registry comparison assumes one import; both actual registries now import divisionStaff as a second real dependency.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/admin-frontend-inventory.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/admin-frontend-inventory.test.ts:104",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 47345,
+              "case": "FAIL   regular-unit  test/admin-frontend-inventory.test.ts > Admin frontend navigation inventory > fails when target pages or router records drift from the committed audit",
+              "cause": "AssertionError: expected [ 'src/pages/ConfigList.vue', …(131) ] to deeply equal [ 'src/pages/ConfigList.vue', …(137) ]"
+            },
+            "note": "Committed report lists132 target page Vue files while actual filesystem scan lists138, including six newly added dialog/catalog/component files.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+            "observed_failed_cases": 2,
+            "source_location": "test/admin-legacy-setting-read-permission.test.ts:16",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 47461,
+              "case": "FAIL   regular-unit  test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > resolves audited numeric page and API rules to read authority in single and batch paths",
+              "cause": "AssertionError: expected [ Array(7) ] to deeply equal [ Array(7) ]"
+            },
+            "note": "Positive synthetic role-page/admin-API tuples occupy protected product/category IDs2/3; numeric rules must move with the tuples and explicit wrong-ID refusal must remain.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/admin-permission.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/admin-permission.test.ts:70",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 47679,
+              "case": "FAIL   regular-unit  test/admin-permission.test.ts > admin permission catalog > covers every route guarded by adminAuth in both compatibility surfaces",
+              "cause": "AssertionError: expected [ { method: 'GET', …(1) }, …(1) ] to deeply equal []"
+            },
+            "note": "All-route permission gate excludes authority/editor recovery but not the new exact video query/cancel owned-recovery routes; runtime policy intentionally handles them separately.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+            "observed_failed_cases": 2,
+            "source_location": "test/admin-product-category-style-coverage.test.ts:70",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 47707,
+              "case": "FAIL   regular-unit  test/admin-product-category-style-coverage.test.ts > complete legacy product-category layout source coverage > connects all current implementations and rejects page-only or commentary-only replacements",
+              "cause": "AssertionError: expected [ [ 'publicTaxonomy', false ] ] to deeply equal []"
+            },
+            "note": "Current publicTaxonomy source-connection gate false. Inspect the real delegation chain; do not weaken the gate or assume runtime failure.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/admin-user-center-design-coverage.test.ts",
+            "observed_failed_cases": 3,
+            "source_location": "test/admin-user-center-design-coverage.test.ts:151",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 47880,
+              "case": "FAIL   regular-unit  test/admin-user-center-design-coverage.test.ts > complete personal-centre connected source gates > generic normalized member deletion",
+              "cause": "AssertionError: generic normalized member deletion: current live gate: expected false to be true // Object.is equality"
+            },
+            "note": "Current live gates fail for generic normalized member deletion, generic list exclusion and newly registered generic group-write rejection. Runtime cause not established.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/kefu-sequence-runner.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/kefu-sequence-runner.test.ts:120",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 48518,
+              "case": "FAIL   regular-unit  test/kefu-sequence-runner.test.ts > standalone sequence transaction execution boundary > runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function",
+              "cause": "AssertionError: expected { name: 'soob_event_type_ck', …(1) } to deeply equal { name: 'soob_event_type_ck', …(1) }"
+            },
+            "note": "Own independent frozen current CHECK expects stock12, but actual ORM includes reviewed recycle/save14. This assertion is outside the shared cohort helper changed in the current patch.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/presale-sku-catalog-postgres.test.ts",
+            "observed_failed_cases": 7,
+            "source_location": "test/presale-sku-catalog-postgres.test.ts:86",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 48649,
+              "case": "FAIL   regular-unit  test/presale-sku-catalog-postgres.test.ts > presale selection view with real disposable SQL > feeds both frontend catalogues from actual SQL HTTP rows for all three time filters without writes",
+              "cause": "Error: 预售列表数据无效，请刷新"
+            },
+            "note": "Actual HTTP response data is null, causing shared parser/count assertions to fail. Direct Hono requests omit Env; exact reason must be confirmed before changing expected behavior.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/product-auxiliary-migration.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/product-auxiliary-migration.test.ts",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 48681,
+              "case": "FAIL   regular-unit  test/product-auxiliary-migration.test.ts > superseded product auxiliary migration > keeps store_product_relation authoritative and writes the PHP immediate-parent semantics",
+              "cause": "AssertionError: expected 'import {\\n  and,\\n  eq,\\n  inArray,\\n…' to contain '.set({ relationPid: storeProductCateg…'"
+            },
+            "note": "Source gate expects inline relationPid parent update inside SupplierProductManagementService. Verify the actual category-service delegation and preserve immediate-parent behavior.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/product-hot-frames.test.ts",
+            "observed_failed_cases": 12,
+            "source_location": "test/product-hot-frames.test.ts:43",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 49465,
+              "case": "FAIL   regular-unit  test/product-hot-frames.test.ts > hot product frame display against disposable SQL > adds the legacy empty array while retaining every existing response field",
+              "cause": "AssertionError: Cannot read properties of undefined (reading 'APP_KEY'): expected 400 to be 200 // Object.is equality"
+            },
+            "note": "Direct Hono requests omit Env; log explicitly reports undefined.APP_KEY. Preserve real frame and error-boundary assertions when correcting the fixture.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/product-hot-pagination.test.ts",
+            "observed_failed_cases": 6,
+            "source_location": "test/product-hot-pagination.test.ts:44",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 49632,
+              "case": "FAIL   regular-unit  test/product-hot-pagination.test.ts > legacy product/hot offset contract > defaults to ten and advances past the first page in stable sort/id order",
+              "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+            },
+            "note": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/product-rank-navigation-postgres.test.ts",
+            "observed_failed_cases": 4,
+            "source_location": "test/product-rank-navigation-postgres.test.ts:55",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 49732,
+              "case": "FAIL   regular-unit  test/product-rank-navigation-postgres.test.ts > ranked product activity navigation against disposable SQL > adds only exact current-page activity identities while retaining the ranked rows and tabs",
+              "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+            },
+            "note": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/recommendation-navigation.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/recommendation-navigation.test.ts:140",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+              "line": 49859,
+              "case": "FAIL   regular-unit  test/recommendation-navigation.test.ts > hot recommendation navigation against real disposable SQL > adds exact target metadata at the real hot endpoint and reaches the same base through the real seckill detail",
+              "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+            },
+            "note": "Direct hot endpoint fixture request returns400, with Env omitted. Confirm successful response before restoring recommendation assertions.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          },
+          {
+            "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+            "observed_failed_cases": 1,
+            "source_location": "test/seckill-schedule-postgres.test.ts:123",
+            "first_failure": {
+              "log": "/tmp/cinashop-ci-base721-job116367607070.log",
+              "line": 55142,
+              "case": "FAIL   regular-unit  test/seckill-schedule-postgres.test.ts > seckill schedule admission on disposable SQL > cancels an existing order and restores stock even when parent-missing",
+              "cause": "AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]"
+            },
+            "note": "parent-missing cancellation stock snapshot differs by reversed SKU identity order(id1/id2). This is not evidence of stock corruption; inspect snapshot ordering and compare exact identities/values.",
+            "runtime_defect_proven": false,
+            "current_patch_changes_this_file": false,
+            "status": "open_next_batch"
+          }
+        ],
+        "already_addressed_failure_families": [
+          "Strict root181/runAll184 and shared refundRuntimeFixture count/cohort drift",
+          "Protected menu positive synthetic IDs and authority workflows already included in the current patch",
+          "Genuine PHP Admin source inputs missing from cloud checkout",
+          "Coupon category/brand strict payload, revision/JWT and NOWAIT behavior fixtures",
+          "Integral real read transaction fixture",
+          "Withdrawal exact successor support",
+          "Statistics human retirement supersession with retained authority evidence",
+          "Current API report/source discovery and deterministic gates"
+        ],
+        "coverage_limit": "The remaining802 FAIL headers map to modified test/input families or changed shared helpers. This maps recorded original causes to the patch, not proof every previously masked business case is now successful. Exact new-commit CI must verify that.",
+        "comparison_to_previous605": "The previous --log-failed aggregate had full shard2 but only partial shard1 output, so these newly visible families are not asserted to be regressions introduced at721. The13 Admin video detail design coverage failures fixed at721 are absent from the new failure files.",
+        "current_patch_decision": "Parent explicitly keeps the independently validated1059-case patch scoped, records these14 files/43 failures as open followups, then commits/pushes the verified increment. No overall CI success or goal completion claim.",
+        "read_only_evidence_review": {
+          "repository_evidence": "workers-ts/audit/php-ts-ci-contract-inputs-20261015.json",
+          "source_hashes": "73/73 matched captured current working-tree files",
+          "completed_group_log_hashes": "13/13 matched",
+          "count_arithmetic": "1059=457+527+75; native527=sum46+56+39+104+58+70+154; statistics native4 repeated cases excluded",
+          "checkboxes": "MIGRATION_CHECKLIST404/249/155 and MIGRATION_AUDIT88/50/38 unchanged",
+          "top_chinese_records": "No count/source/status error found; new-commit cloud success not claimed"
+        },
+        "repository_changes_by_this_review": false,
+        "heavy_validation_started": false
+      }
+    },
+    "new_patch_cloud_run": "Created by the authorized push after this evidence record; inspect exact commit run in the task. Full CI success is not claimed."
+  },
+  "difference_source_hashes": [
+    {
+      "file": "MIGRATION_AUDIT.md",
+      "bytes": 1999409,
+      "sha256": "de8be005db77581df7ab2967edfb9b512d4877f1a17c500dff60c1faf6421042",
+      "status": "modified_tracked",
+      "base_sha256": "dc260c2a3ef4147df84597a18685700f7d5b5025b9e6f25f5c503ef2ed3798c6"
+    },
+    {
+      "file": "MIGRATION_CHECKLIST.md",
+      "bytes": 1000863,
+      "sha256": "ffa50650ff95949a09ee7142cde0862769f00810d73dd93dc1c777577913d9e2",
+      "status": "modified_tracked",
+      "base_sha256": "17f34db9bd3602287d7289373e2bbcc1f49cee97c77959ab6331fba30b19ddce"
+    },
+    {
+      "file": "view/admin-ts/src/api/productVideoUpload.ts",
+      "bytes": 8488,
+      "sha256": "2e106763549f533113f110666e18948cdd3998af3288016b4f35ada1b889e7e7",
+      "status": "modified_tracked",
+      "base_sha256": "2360b6f5218494d6b89908d186e6eaf88123e19008defa0307f22720e51228b2"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-merged-work-branches-20261015.json",
+      "bytes": 633950,
+      "sha256": "286253c07e2e96ab0ba522cb6b1c604cbc1b459585c99e7d427dc6033d8c825f",
+      "status": "modified_tracked",
+      "base_sha256": "fd082a4670f0f6d389322b883ec2d0ff896c1ed321036dd36503ea6fe6f47541"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 633950,
+      "sha256": "286253c07e2e96ab0ba522cb6b1c604cbc1b459585c99e7d427dc6033d8c825f",
+      "status": "modified_tracked",
+      "base_sha256": "fd082a4670f0f6d389322b883ec2d0ff896c1ed321036dd36503ea6fe6f47541"
+    },
+    {
+      "file": "workers-ts/audit/github-push-ci-followups-20261015.json",
+      "bytes": 20646,
+      "sha256": "d80acdf446f586295ebbfe8a4183a0d1d0320e61035fe3d43787237c11ed89bd",
+      "status": "modified_tracked",
+      "base_sha256": "891cb809ca0ede244a1ef0dcc8ab6086c45d9d099e501d7d5d5b8206c420ef57"
+    },
+    {
+      "file": "workers-ts/audit/legacy-route-decisions.json",
+      "bytes": 12531,
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "status": "modified_tracked",
+      "base_sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56"
+    },
+    {
+      "file": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "bytes": 9306,
+      "sha256": "f1557c223e76e289988f7fdfd1fc833baaa6063fc9bbf488983d0aa9b438017b",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/scripts/route-authority-evidence.ts",
+      "bytes": 923,
+      "sha256": "0d3ef7ab3045b6d3e6390a5117ab946f9c72b3336c6bd05fecdcf7dca292d3a1",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/scripts/route-parity-audit.ts",
+      "bytes": 19077,
+      "sha256": "aba9633edd7b3ddf34cc4b639898a8d19bf995400b1361213ed82fca5e0aac83",
+      "status": "modified_tracked",
+      "base_sha256": "85e70fe2f948a4993ea86812876ab2d1b3b8ce8c40ee84f25cc994085fd7b5ef"
+    },
+    {
+      "file": "workers-ts/src/migrations/runWithdrawalEffectsUpgrade.ts",
+      "bytes": 12990,
+      "sha256": "75edf2626aecb29e7f8c89352942a980ed8f8ed58a5d852ca3d768bda81c3aea",
+      "status": "modified_tracked",
+      "base_sha256": "631d5b519b9f2f11d3da9123d418c069d7ce5e8d938cfed507917da51b8293de"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-operation-native.test.ts",
+      "bytes": 57456,
+      "sha256": "38a3300cade1967b0fd89bb7920a3a81c9dde1ca0d9a8044e4160172396da5fb",
+      "status": "modified_tracked",
+      "base_sha256": "e2c5f6295704b78f4f41d01a8f60404bdda7ea6fa36ec43382b648543df6ccee"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-operation.test.ts",
+      "bytes": 33323,
+      "sha256": "a060ae2b1dc9710bf45757ddcb98a2401196a009a7cd689a2a8623bbb9a7ba2c",
+      "status": "modified_tracked",
+      "base_sha256": "ed746ca262ddb925609bcb91fd9b7ac35a3584d5159b597a299b985ebf2e391d"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-write-native.test.ts",
+      "bytes": 27247,
+      "sha256": "083bcbe0bb688e305dba359bc5e985e6a997cb455672d2fe98440a4573e95842",
+      "status": "modified_tracked",
+      "base_sha256": "a1476a6d7d8affb4b8f108fc892bd5a7f06b21eab747322c94809ec0f8ade743"
+    },
+    {
+      "file": "workers-ts/test/admin-authority-write.test.ts",
+      "bytes": 23818,
+      "sha256": "8aa96ddfab2bcf0195e5e67b13a5ff330751e3719582155054da2c46535cf84a",
+      "status": "modified_tracked",
+      "base_sha256": "1b7831d0fd529575d70ec70723de4180ac1563126e3d163bf6bbe8e3b610ef93"
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "bytes": 10871,
+      "sha256": "b31576033863248b33fa98960700ca147ae53b0d096f9203892870510e22cbed",
+      "status": "modified_tracked",
+      "base_sha256": "7e9f51fabb308dda9d28e465318214cb9ee625add85217f83142299ecb73243a"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-workflow-native.test.ts",
+      "bytes": 33017,
+      "sha256": "93e0f0d2900d07b7fed7b7344d9092135b3bb2dd2e715ef189f1d2d08bb92b53",
+      "status": "modified_tracked",
+      "base_sha256": "9db20365f8a1f4509a6932209d630cfcd68f1b992e0316595e29db8e920bb162"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-admin-workflow.test.ts",
+      "bytes": 17909,
+      "sha256": "98160b82458ae30e383d3c25f8c6d07934d46b68509948017eb1e72dde0d0f0c",
+      "status": "modified_tracked",
+      "base_sha256": "358d080dbfaa64097d0e5cd69f75814957c4c6eca01c176bac3157e0ae57e2d2"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-log-permission.test.ts",
+      "bytes": 4646,
+      "sha256": "d605c10e1dc66ac02379f177d004cdb0e68c76c5b1fbb2a0bf958593d783086c",
+      "status": "modified_tracked",
+      "base_sha256": "d2e4d292e61748802d6d78fc4500b338d2c65150407861fe00a85d8bc76838db"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-product-generate-http.test.ts",
+      "bytes": 12357,
+      "sha256": "b03bc85baa6d89f315e511393ce603b2c743ffcfa8d6435a755f9c351d7df65f",
+      "status": "modified_tracked",
+      "base_sha256": "acdd122086a51f04a2456347c851298e86f86061dbdb4c99aa8900dcde5f6f7f"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-product-read-http.test.ts",
+      "bytes": 10907,
+      "sha256": "e009e0ab1e24a46d1a46b4ad52dcdde8ae2761d35299a2b9dafaaddc8bf60839",
+      "status": "modified_tracked",
+      "base_sha256": "d84eacbc4510efb145b758de8264b898ea2070210db37139ac064d358d3e97cb"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-product-save-http.test.ts",
+      "bytes": 9333,
+      "sha256": "d9cdcfbdb1dec0df496f30a75e0b26162524b905334d95584da761fcbd7de07d",
+      "status": "modified_tracked",
+      "base_sha256": "54f4a31234a051b9da0caf0aa74f86d490ec8ac8c8a5fc8818c6487255278b21"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-operation-native.test.ts",
+      "bytes": 23251,
+      "sha256": "d4eba325d830cbe92ac4b1c0abe129ef74508ee44c27d7c5bd7b88fb9ceb8c7d",
+      "status": "modified_tracked",
+      "base_sha256": "d88eca831c9e2f673cdd9e45f334d8f699a079bd382f14e3386401ce5eb5db85"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-operation.test.ts",
+      "bytes": 23447,
+      "sha256": "7f5abbcc2078ab3f2bd62a9ef38dd2f2294a9af06972a84f0d8fd6642eb88e83",
+      "status": "modified_tracked",
+      "base_sha256": "f039e397621abc5a5e432d9e41c730cf09f16cffd365e12e1fd217c2cc51b01e"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow-native.test.ts",
+      "bytes": 25224,
+      "sha256": "ccf53a51f8db918e51391825aa30844342d2ac93835cee4ab86ac22486356fc0",
+      "status": "modified_tracked",
+      "base_sha256": "fc3b82a1134e2ca3ab88658f2c9be933f0c426b4b72e6956010f09c5be84b0b6"
+    },
+    {
+      "file": "workers-ts/test/admin-legacy-role-workflow.test.ts",
+      "bytes": 29254,
+      "sha256": "a696b7e7a6826e1adf61c5244de364d9745e28722d1c64b220c42fe13102586e",
+      "status": "modified_tracked",
+      "base_sha256": "e52341899e196e58187c56f1e4ab519778797e4ea4ed1fb30ff8c6d2605d1a53"
+    },
+    {
+      "file": "workers-ts/test/admin-product-catalog-read-http.test.ts",
+      "bytes": 19588,
+      "sha256": "9662d3ec47216ffe55291665c5e7e9213a3cba61aefc4ae94720b87aca63e7d7",
+      "status": "modified_tracked",
+      "base_sha256": "db720d0c0d051829dc9403b8f8348895ac2004a87f59fc5b7b0789fe16213f88"
+    },
+    {
+      "file": "workers-ts/test/admin-product-fictitious-reply-http.test.ts",
+      "bytes": 27859,
+      "sha256": "c0165edfc213bce4d98422d128f7c5383911bfe463f572b59a9c67be022b533a",
+      "status": "modified_tracked",
+      "base_sha256": "a9595e5c1ccc51884f28407a38211f0c84ccb8385f64a90f16ddcb95af411a15"
+    },
+    {
+      "file": "workers-ts/test/admin-product-moderation.test.ts",
+      "bytes": 24420,
+      "sha256": "9cfa813d7987aa822a0266aa2416da8175d50b751d1d9d4444bc25935b611c9b",
+      "status": "modified_tracked",
+      "base_sha256": "356954acbf738c18c051849f4037d5f026ebc6e13de486fd72647d3257bd1bd2"
+    },
+    {
+      "file": "workers-ts/test/admin-product-recycle.test.ts",
+      "bytes": 24462,
+      "sha256": "e0bd33c1dc5670ed7891eae6c38c5099c7bde5ca99ca3817bedaaabc30ca2811",
+      "status": "modified_tracked",
+      "base_sha256": "99fd97748915a69031d38b811b7f85be4c4b52521950187fbcdc2965507b8d3b"
+    },
+    {
+      "file": "workers-ts/test/admin-product-reply-http.test.ts",
+      "bytes": 17998,
+      "sha256": "6be00f6b1170748b549f0deca8338eb0efee5828344d8af8013dab1c12bc5433",
+      "status": "modified_tracked",
+      "base_sha256": "53acc133d094c711d7dd561fb645b86bd58169754549cdc8eaa429f434f9b0cb"
+    },
+    {
+      "file": "workers-ts/test/admin-product-rule-http.test.ts",
+      "bytes": 25035,
+      "sha256": "c6375bf3ad362923a9a9d76f72b52c968845967aeccf5b8fe2eb6bf2f77b463e",
+      "status": "modified_tracked",
+      "base_sha256": "902649a9338d600148ef0c224d9a3d407e9d632c881f29e6d8a66139fe151f32"
+    },
+    {
+      "file": "workers-ts/test/admin-product-stock-http.test.ts",
+      "bytes": 13472,
+      "sha256": "a8bfe64dad6e14a935ca59c065258f7bcb966218bc169874a6cea99ea8cb123f",
+      "status": "modified_tracked",
+      "base_sha256": "e5c161743d3c34ebb89689ef108f71e016fb857866cbe5814d27ef0980da0266"
+    },
+    {
+      "file": "workers-ts/test/admin-product-supplier-options-http.test.ts",
+      "bytes": 10448,
+      "sha256": "0a7075422fcc9a6dfac2c7d61c38d71a0955e7f4c98d1773d152807b11129b75",
+      "status": "modified_tracked",
+      "base_sha256": "ffce070e7d7fcae02fed8a6d417abc1e3bfb2350445908cb40a5b456a67549eb"
+    },
+    {
+      "file": "workers-ts/test/admin-refund-creation-migration.test.ts",
+      "bytes": 18639,
+      "sha256": "48fc0e332707df894f1ba6c121e4fa5f53cc2a41701433a139c31880f20442de",
+      "status": "modified_tracked",
+      "base_sha256": "9b95eee4046584c41b7277e7dc6309c28e11a0d707994f564e66b1f65ea6a66a"
+    },
+    {
+      "file": "workers-ts/test/admin-refund-operation-migration.test.ts",
+      "bytes": 17193,
+      "sha256": "57602c847eae5e98f770d52f577a40e8cdba0f15b385a0dc40b7b708b5d20022",
+      "status": "modified_tracked",
+      "base_sha256": "a3c88cf930687d4945627f5bfd2cf1f8cb7cd621dd6fe9e4d55d663b7f5f93fd"
+    },
+    {
+      "file": "workers-ts/test/brokerage-paid-order-migration.test.ts",
+      "bytes": 9647,
+      "sha256": "cde9e3dfb4132f30349efceb8d4c037e5465d312d9e2edeaca59dd1c66e7ff70",
+      "status": "modified_tracked",
+      "base_sha256": "c77251108d17b81084b31f8ff294d967fd6033cacd0eaf96ca21b8f5c1a187bf"
+    },
+    {
+      "file": "workers-ts/test/checkout-coupon-management.test.ts",
+      "bytes": 29326,
+      "sha256": "a9b3fcdb3759c1936ebffa78e1e3e031b168436bd3973c13da83a56e934980a3",
+      "status": "modified_tracked",
+      "base_sha256": "9f366cc7476a079bd3742e5f6f7f496ca6c3ed11000eec220d0e311f1c4386fb"
+    },
+    {
+      "file": "workers-ts/test/coupon-product-scope-migration.test.ts",
+      "bytes": 8441,
+      "sha256": "605181168b765bc2bda187a3bd5d351c8a435a30f6bda83432ee78505c7449f9",
+      "status": "modified_tracked",
+      "base_sha256": "9921457d45e99b5cf7e2a781068d04cb87888981b7fa40cd29fbc286c11a517c"
+    },
+    {
+      "file": "workers-ts/test/data-migration.test.ts",
+      "bytes": 74655,
+      "sha256": "fd52e663573fc64da1f11715cd8f9517455cbe76119a38272d1101a604aa3c79",
+      "status": "modified_tracked",
+      "base_sha256": "0bbce173606020728fb6f0b9d0d245e3568c974e68827b51005c0c877e026721"
+    },
+    {
+      "file": "workers-ts/test/diy-home-frontend-migration.test.ts",
+      "bytes": 13439,
+      "sha256": "43afc16e996a5bf8d1eb97b7533a9d8a00a152dce74218773fff031ea10e38dc",
+      "status": "modified_tracked",
+      "base_sha256": "b0261e097970bb86966fffe079105cf992ec2d74a99447331080a9b9d053f338"
+    },
+    {
+      "file": "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+      "bytes": 11941,
+      "sha256": "0806510734fa639d87680519e553b7206558f773124583534c1f1cd69a63e516",
+      "status": "modified_tracked",
+      "base_sha256": "183cdbf7e1f96ea949e2e01012cdd2ff48868e17f0ddb5de1b9fcecbb87b02d8"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/README.md",
+      "bytes": 1138,
+      "sha256": "11503302f8ca1bfed71df0afe7d8a6aa06a71b40ed3086eadd3c8ddf8524449f",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/manifest.json",
+      "bytes": 3536,
+      "sha256": "37f92dc583760178baee821a3a079ffe105b74fe5ebe5de37add79c3605c51e8",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/api/common.js",
+      "bytes": 1463,
+      "sha256": "93e5264099bb94d156d1919e73829d56cbe1c4d36e59ed7910b26ee4ae254e7e",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/api/product.js",
+      "bytes": 16957,
+      "sha256": "54d74b9804719d3e35d3eb9942c76af886a1cf9dc12f8204adb9e9e0ddc72e42",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/api/supplier.js",
+      "bytes": 9442,
+      "sha256": "ee4077187667c82d9341ce1d6b039cc3ba6ec54c6d0a41d9950b704bf1d16d32",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/components/goodsList/index.vue",
+      "bytes": 12185,
+      "sha256": "bfa21f742ec0331d59cdaa399ef020d6e674d6e2b5bb597745322d7910a8e3b2",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/components/addReply.vue",
+      "bytes": 6916,
+      "sha256": "6e562a81dc9343bf1af17961d4642b23b1b37b5a6cdf9d0830a1ca514b80c766",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/components/stockEdit.vue",
+      "bytes": 7870,
+      "sha256": "288473d48ec612c2e5dd023956de9ba7da7f7b57c227571d9b8b2ca6e612e734",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/productAttr/index.vue",
+      "bytes": 5521,
+      "sha256": "d0c4a3a0c7a63fb61e6f5dcbdeaab9f2d65a839db51cad8269c437a58eda1e4c",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/productList/index.vue",
+      "bytes": 62288,
+      "sha256": "5b109cc0e8ce9d810dfc2f07d251d29f3de55a943647e1c8cb25343cb6d76cb1",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/pages/product/productReply/index.vue",
+      "bytes": 17097,
+      "sha256": "c3618bafc0ed56f304649fc0334eb3a800dae30776ff89872e98451a341ea407",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/plugins/request/index.js",
+      "bytes": 6699,
+      "sha256": "9dd5ce11bee5aaf3c43c0ca7215993866e1fac85cd444024f37dc576d08644d5",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/fixtures/php-admin-source/src/utils/public.js",
+      "bytes": 3241,
+      "sha256": "3511485572aba30d5b693dd65405fee74b69b0082c9cf86dc6afe550889faa3d",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/helpers/legacyAdminReference.ts",
+      "bytes": 2405,
+      "sha256": "4bc6ed45f8d23a392fb0675c4a813a82a48a82979ea450df0311a71bd738595c",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "bytes": 12566,
+      "sha256": "68673cb1e673841af8c5adf7bf575d7b6bf1a159429607257418fc3765ffc421",
+      "status": "modified_tracked",
+      "base_sha256": "9442a3e9e09cd8a31e79cb4ab5ee4b8cdb2652614099bd9c1d5891b9f7472b37"
+    },
+    {
+      "file": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "bytes": 30457,
+      "sha256": "24824ff72923576892aa469a4c3c584259a9e9d3b71120c9592170d266a1d883",
+      "status": "modified_tracked",
+      "base_sha256": "d4a773c85d8110590e74ea96d4ceb1738525e74332ec7ef173586c3df83c7b4b"
+    },
+    {
+      "file": "workers-ts/test/integral-storefront-compatibility.test.ts",
+      "bytes": 7929,
+      "sha256": "a6888285f55fdf5a349dbf8977b7cc779cf98ca7acbf68c65a55983faebbb32e",
+      "status": "modified_tracked",
+      "base_sha256": "96c019bb7c8614687c441e42bc9e02129a1b660cf74e3196e37c8a9e75eff001"
+    },
+    {
+      "file": "workers-ts/test/invoice-evidence-migration.test.ts",
+      "bytes": 21822,
+      "sha256": "b40b2939b2cce1d9eb8df60aed36a65acae0edae7eae3fbe12849f4c36a3ea84",
+      "status": "modified_tracked",
+      "base_sha256": "12f95eab772c57f48683d793e6a38d9fe110637ffa333675d4006fe974fa16ae"
+    },
+    {
+      "file": "workers-ts/test/invoice-evidence-registration.test.ts",
+      "bytes": 12013,
+      "sha256": "570fce2c2f268820fd049910051bc2df81fb686732ad0b5e39273c45ef189545",
+      "status": "modified_tracked",
+      "base_sha256": "d66dcf4a0e894df385ac24de8ede2511aeb897322a629a098cc669b8f4a7b5ba"
+    },
+    {
+      "file": "workers-ts/test/kefu-sequence-registration.test.ts",
+      "bytes": 62624,
+      "sha256": "f824f6fc0ee8e990b41b1c278f3c9e301479387a541153ae13b92f1f8292b321",
+      "status": "modified_tracked",
+      "base_sha256": "02c36dc12b1611fb7eaebbb1f39d6211648971fc0183e333ee805481b02aa7ec"
+    },
+    {
+      "file": "workers-ts/test/legacy-admin-reference.test.ts",
+      "bytes": 2706,
+      "sha256": "6971d719cd7dea9ddc03503396285bfa97698ebc486bc7f00a807ba7ab80f2ad",
+      "status": "new_untracked"
+    },
+    {
+      "file": "workers-ts/test/offline-order-installation.test.ts",
+      "bytes": 18611,
+      "sha256": "93a8c13efb2235eb51c707e4ea1b067628acbdee1f68cc73726111e25c4940d1",
+      "status": "modified_tracked",
+      "base_sha256": "c29ab12b370e6715403d5fbe6dfbd6a49b0e8e4597269cac8a8a9770e7bfdfb0"
+    },
+    {
+      "file": "workers-ts/test/pink-success-notice-migration.test.ts",
+      "bytes": 22602,
+      "sha256": "ad0ff9da789b28a1d86b9d3bd63baba08ef3d0dc0276385021a6252effc130ca",
+      "status": "modified_tracked",
+      "base_sha256": "ed9a49d169aef9e385ea0472347dee11e065f3d411b5b904201259e53f8a3d21"
+    },
+    {
+      "file": "workers-ts/test/recharge-quota-seed-upgrade.test.ts",
+      "bytes": 9627,
+      "sha256": "5b7788ceedd97762399e6cbf314e8c142ce65e3a10e6e717f8e6c0d502ae9e91",
+      "status": "modified_tracked",
+      "base_sha256": "06438e3de5b66f8ab18668049a2f8280efe8384b17d34b0dbdabcd6994364080"
+    },
+    {
+      "file": "workers-ts/test/refund-split-migration.test.ts",
+      "bytes": 23010,
+      "sha256": "8da0912158a4d0142e17356060442d5093b34ab9d2c0459f08ad950f58e80692",
+      "status": "modified_tracked",
+      "base_sha256": "5052bcce96cdce11826f9ba3209ed2b2ff6da2757a4e75189bd12d4f41ad6297"
+    },
+    {
+      "file": "workers-ts/test/route-parity-audit.test.ts",
+      "bytes": 2804,
+      "sha256": "b7ef62702956d697be73882c654057466943f557b312902d1db57695ff4157fb",
+      "status": "modified_tracked",
+      "base_sha256": "23824134eaaa0620cab6b4bb527db8b43131c210ccfbe9586017bc9a7fad8db4"
+    },
+    {
+      "file": "workers-ts/test/seckill-time-reference-lock-upgrade.test.ts",
+      "bytes": 13067,
+      "sha256": "3c4a2cbf0c8de269a343cd8093c0cb53d3a8301b3833eef22f9669765cb51990",
+      "status": "modified_tracked",
+      "base_sha256": "61f74e2d1ed51d4b878ac3380cc42883a0f5fa8c4a160f2ef1b0da30970b058a"
+    },
+    {
+      "file": "workers-ts/test/shipping-lifecycle-indexes.test.ts",
+      "bytes": 13091,
+      "sha256": "850aef8b6d62f0711c41cdc46a545df62ab2efc89da2c0698653a70f865d6658",
+      "status": "modified_tracked",
+      "base_sha256": "da97b21cbeb86e9bc65b594bd908c9ba039b531765a51a5ef677e9199de4a423"
+    },
+    {
+      "file": "workers-ts/test/shipping-lifecycle-interactions.test.ts",
+      "bytes": 14139,
+      "sha256": "cd627aa894b04ae1e6c5ce9cb2ac2872298c3b546a31ec339581bc2293bec48d",
+      "status": "modified_tracked",
+      "base_sha256": "281c028a04687452150d6268824bc6a82c313ef675e90f27de0cb3ada72a30f3"
+    },
+    {
+      "file": "workers-ts/test/shipping-lifecycle-migration.test.ts",
+      "bytes": 11943,
+      "sha256": "60999c37780d77421707d03dc58c41cac7db6d6ead9ee3c6b8ba8bad6c890204",
+      "status": "modified_tracked",
+      "base_sha256": "6c56b493f31bf7a1e1e42c330c84e0c1f13031670b63481851fb22779e6a9497"
+    },
+    {
+      "file": "workers-ts/test/withdrawal-effects-upgrade.test.ts",
+      "bytes": 17965,
+      "sha256": "52a3f930128a0f243f3760899e722f2c56e35bcd0d19ab7e28097b81e80d4a37",
+      "status": "modified_tracked",
+      "base_sha256": "f68c0dd1da1ada216ec6754445bd38bc47451d49435223eb75707d2e0de44d25"
+    }
+  ],
+  "difference_source_file_count": 73,
+  "additional_contract_source_hashes": [
+    {
+      "file": "workers-ts/src/services/MigrationService.ts",
+      "bytes": 376518,
+      "sha256": "d2f9591be1e2f5fad9206b6e67f81e7d66d36597abc4ce6e009218c05de8263c",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/migrations/productRecycleEffects.ts",
+      "bytes": 5169,
+      "sha256": "048e957691e934d92b26a142f301aafea6d3d6b52fc7d7607337214aeacd62ca",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/migrations/productSaveEffects.ts",
+      "bytes": 5260,
+      "sha256": "cb04b623e0950f2653fe430a187bc568662b4d009e9cd30dd986e24b6d6e8043",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/migrations/0177_product_recycle_effects.sql",
+      "bytes": 4568,
+      "sha256": "bd77226f8f5733e979483f4b0a5999a1c233ecfcdae230e5f8c20126d175b43c",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/migrations/0178_product_save_effects.sql",
+      "bytes": 4670,
+      "sha256": "0fcf472e56130811dfdd7812aa718cd4e131cbc010e21d792f9c9e8b442f4319",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/migrations/adminProductEditorOperation.ts",
+      "bytes": 11974,
+      "sha256": "8c41bd13efce59c6a604d92bb4824374df72e656d3a24d9fdbd38b57175e0fc1",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/migrations/adminProductVideoUpload.ts",
+      "bytes": 12811,
+      "sha256": "08e82e9bbd7ca61d9ef210b08eb9a585f7e3f9f294824f7bde6751204cf75fa2",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 113337,
+      "sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminProductCategoryService.ts",
+      "bytes": 26886,
+      "sha256": "baa65e75570367844d2966fe3f2aed2642f4927f8ee4aade716fc19f4b195aeb",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-auth.ts",
+      "bytes": 3254,
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "modified_in_this_batch": false
+    },
+    {
+      "file": "workers-ts/src/services/product/PublicCatalogService.ts",
+      "bytes": 33736,
+      "sha256": "5db8060fa0e24c6df1cee355290403b6ea867455f4200c4b3c287972bae007e6",
+      "modified_in_this_batch": false
+    }
+  ],
+  "pending_finalization": [
+    "Authorized commit/push and exact-SHA cloud CI observation follow this local evidence record. Additional base-run failure families, overall migration and provider/production acceptance remain open."
+  ],
+  "limitations": [
+    "1059 is targeted local coverage, not the complete unit-shard result or overall migration completion.",
+    "No production DDL, grants, data import, deployment or provider operation was performed; new TS deployment does not inherit old real production data.",
+    "One stopped cluster from the interrupted attempt retains a fixture database at rest; it is excluded from clean-fixture claims. All seven final native groups and final statistics cluster report0 and are independently checked stopped.",
+    "Supplier durable video upload, saved video ownership/preview integration and unknown-commit cleanup remain a prioritized next slice; this batch does not change Supplier upload behavior."
+  ],
+  "pre_push_secret_checks": "Fixed-version source and commit-range Gitleaks checks run after this evidence is written and before the authorized push; results are reported in the task."
+}

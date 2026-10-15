@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -33,7 +34,7 @@ describe('genuine productAddApi/request/Axios → real App/JWT/complete-save SQL
       setItem: (key: string, value: unknown) => map.set(key, String(value)), clear: () => map.clear() }; };
     vi.stubGlobal('localStorage', storage()); vi.stubGlobal('sessionStorage', storage());
     vi.stubGlobal('window', { router: { replace: vi.fn() } });
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const php = legacyAdminReferenceRoot();
     const require = createRequire(resolve(import.meta.dirname, '../../view/admin-ts/package.json'));
     const bundle = await build({ bundle: true, write: false, platform: 'node', format: 'cjs',
       stdin: { resolveDir: php, contents: `export {productAddApi} from ${JSON.stringify(resolve(php, 'api/product.js'))};export {default as request} from ${JSON.stringify(resolve(php, 'plugins/request/index.js'))};` },

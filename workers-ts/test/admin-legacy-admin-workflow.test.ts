@@ -61,18 +61,18 @@ describe('legacy next-level staff decisions and durable operation business seman
     await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
     await fixture.db.insert(systemMenus).values([
       { id: 1, menuName: '结构', authType: 0 },
-      { id: 2, pid: 1, menuName: '商品读取', authType: 2, apiUrl: 'product/list', methods: 'GET' },
-      { id: 3, menuName: '旧未知可保留', authType: 2, apiUrl: 'old-owned-extension', methods: 'GET' },
+      { id: 2, pid: 1, menuName: '商品读取', type: 1, authType: 1, apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' },
+      { id: 930003, menuName: '旧未知可保留', authType: 2, apiUrl: 'old-owned-extension', methods: 'GET' },
       { id: 4, menuName: '不可委派', authType: 2, apiUrl: 'user/list', methods: 'GET' },
       { id: 20, authType: 1, menuPath: '/admin/setting/system_admin/index', uniqueAuth: 'setting-system-list' },
     ]);
     await fixture.db.insert(systemRole).values([
-      { id: 900, level: 1, rules: 'system.legacy_admin_manage,2,3' },
-      { id: 901, level: 1, rules: 'system.legacy_admin_form_view,2,3' },
+      { id: 900, level: 1, rules: 'system.legacy_admin_manage,2,930003' },
+      { id: 901, level: 1, rules: 'system.legacy_admin_form_view,2,930003' },
       { id: 902, level: 1, rules: '20' },
       { id: 50, level: 2, roleName: '数字身份', rules: '1,2' },
       { id: 51, level: 2, rules: '4' },
-      { id: 52, type: 1, level: 2, roleName: 'opaque兼容身份', rules: '3' },
+      { id: 52, type: 1, level: 2, roleName: 'opaque兼容身份', rules: '930003' },
       { id: 53, level: 2, rules: 'unknown.permission' },
       { id: 54, level: 2, rules: '999' },
       { id: 55, level: 3, rules: '2' },
@@ -192,7 +192,7 @@ describe('legacy next-level staff decisions and durable operation business seman
     expect(await service.receipt(input.operation_id, input.operation, claims)).toMatchObject({ state: 'unknown', result: null });
     const sealed = await service.resolve({ operation_id: input.operation_id, operation: input.operation }, claims);
     expect(sealed).toMatchObject({ state: 'not_applied', request_hash: null, result: null });
-    await fixture.db.update(systemRole).set({ rules: 'system.legacy_admin_manage,2,3' }).where(eq(systemRole.id, 900));
+    await fixture.db.update(systemRole).set({ rules: 'system.legacy_admin_manage,2,930003' }).where(eq(systemRole.id, 900));
     await expect(service.commit({ ...input, revision: preview.revision, expires_at: preview.expires_at, confirmed: true }, claims)).rejects.toThrow('封存');
     expect(await service.resolve({ operation_id: input.operation_id, operation: input.operation }, claims)).toEqual(sealed);
     await expect(service.receipt(input.operation_id, 'admin-save', claims)).rejects.toThrow('类型');

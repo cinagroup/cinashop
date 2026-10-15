@@ -2,39 +2,44 @@
   "date": "2026-10-15",
   "base_commit": "6057681f3c26985de20262b5ffa5b1f7b601da43",
   "run_url": "https://github.com/cinagroup/cinashop/actions/runs/38705607954",
-  "status": "triaged_followups_open",
+  "status": "validated_increment_with_additional_ci_followups_open",
   "log": "/tmp/cinashop-video-previous-ci-failed.log",
   "scope": "Prior main CI; not an assertion that current local video validation or all cloud checks fail",
   "groups": [
     {
       "id": "php-reference-inputs",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "Six old SPA consumer suites cannot resolve sibling cinashop-php files absent in CI checkout",
-      "next": "Supply pinned genuine PHP reference inputs with source hashes; preserve real old-consumer execution"
+      "previous_next": "Supply pinned genuine PHP reference inputs with source hashes; preserve real old-consumer execution",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "migration-cohort-baselines",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "refundRuntimeFixture expected182 vs184; registeredCatalogCohort external179 vs181",
-      "next": "Explicitly admit0177 product recycle effects and0178 product save effects with hashes while preserving historical cohort;0185 video addon stays independent"
+      "previous_next": "Explicitly admit0177 product recycle effects and0178 product save effects with hashes while preserving historical cohort;0185 video addon stays independent",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "protected-menu-fixtures",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "Synthetic authority/menu fixtures reuse protected actual PHP page IDs with incompatible tuples",
-      "next": "Use genuine protected tuples or nonreserved IDs; retain production permission protection"
+      "previous_next": "Use genuine protected tuples or nonreserved IDs; retain production permission protection",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "diy-module-resolution",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "Restricted test resolver rejects newly imported common/divisionStaff pure module",
-      "next": "Resolve and cache the actual module without copying navigation policy"
+      "previous_next": "Resolve and cache the actual module without copying navigation policy",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "api-audit-reports",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "Committed current API inventory differs from live final route/frontend sources",
-      "next": "Regenerate current and merged-work-branch inventories, preserve historical frozen reports"
+      "previous_next": "Regenerate current and merged-work-branch inventories, preserve historical frozen reports",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "video-design-source-gate",
@@ -45,31 +50,276 @@
         "failed": 0,
         "skipped": 0,
         "log": "/tmp/cinashop-product-video-design-coverage.log"
-      }
+      },
+      "scope_note": "Previous415-case video delivery evidence; unchanged in this CI-input patch."
     },
     {
       "id": "category-brand-management-fixtures",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "checkout coupon fixture sends mixed old cate_name/brand_name, body.id and pid types rejected by current strict controllers",
-      "next": "Exercise each real current input/revision/JWT contract without weakening unknown-field checks"
+      "previous_next": "Exercise each real current input/revision/JWT contract without weakening unknown-field checks",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "integral-read-fixture",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "select-only fake DB lacks the current RR/read-only transaction API",
-      "next": "Use an actual SQL fixture or support real transaction/execute boundaries"
+      "previous_next": "Use an actual SQL fixture or support real transaction/execute boundaries",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "statistics-script-contract",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "Retirement test conflicts with restored get_script/system_statistics read behavior",
-      "next": "Resolve the actual retirement contract explicitly; retain rejection tests until adjudicated"
+      "previous_next": "Resolve the actual retirement contract explicitly; retain rejection tests until adjudicated",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
     },
     {
       "id": "withdrawal-effects-catalog",
-      "status": "open",
+      "status": "fixed_and_locally_validated",
       "evidence": "Readiness remains false in upgrade case",
-      "next": "Inspect complete live catalog diff before changing readiness expectations"
+      "previous_next": "Inspect complete live catalog diff before changing readiness expectations",
+      "validation_evidence": "php-ts-ci-contract-inputs-20261015.json"
+    },
+    {
+      "id": "remaining-admin-fab-settings",
+      "status": "open",
+      "file": "workers-ts/test/admin-fab-settings.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "Registry comparison assumes one import; both actual registries now import divisionStaff as a second real dependency.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47325,
+        "case": "FAIL   regular-unit  test/admin-fab-settings.test.ts > complete FAB input and historical numeric preservation > keeps the exact opaque navigation registry equal to the real Uniapp registry",
+        "cause": "AssertionError: expected [ NodeObject{ pos: +0, …(15) }, …(1) ] to have a length of 1 but got 2"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-admin-frontend-inventory",
+      "status": "open",
+      "file": "workers-ts/test/admin-frontend-inventory.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "Committed report lists132 target page Vue files while actual filesystem scan lists138, including six newly added dialog/catalog/component files.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47345,
+        "case": "FAIL   regular-unit  test/admin-frontend-inventory.test.ts > Admin frontend navigation inventory > fails when target pages or router records drift from the committed audit",
+        "cause": "AssertionError: expected [ 'src/pages/ConfigList.vue', …(131) ] to deeply equal [ 'src/pages/ConfigList.vue', …(137) ]"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-admin-legacy-setting-read-permission",
+      "status": "open",
+      "file": "workers-ts/test/admin-legacy-setting-read-permission.test.ts",
+      "observed_failed_cases": 2,
+      "evidence": "Positive synthetic role-page/admin-API tuples occupy protected product/category IDs2/3; numeric rules must move with the tuples and explicit wrong-ID refusal must remain.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47461,
+        "case": "FAIL   regular-unit  test/admin-legacy-setting-read-permission.test.ts > legacy staff list permissions > resolves audited numeric page and API rules to read authority in single and batch paths",
+        "cause": "AssertionError: expected [ Array(7) ] to deeply equal [ Array(7) ]"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-admin-permission",
+      "status": "open",
+      "file": "workers-ts/test/admin-permission.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "All-route permission gate excludes authority/editor recovery but not the new exact video query/cancel owned-recovery routes; runtime policy intentionally handles them separately.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47679,
+        "case": "FAIL   regular-unit  test/admin-permission.test.ts > admin permission catalog > covers every route guarded by adminAuth in both compatibility surfaces",
+        "cause": "AssertionError: expected [ { method: 'GET', …(1) }, …(1) ] to deeply equal []"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-admin-product-category-style-coverage",
+      "status": "open",
+      "file": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "observed_failed_cases": 2,
+      "evidence": "Current publicTaxonomy source-connection gate false. Inspect the real delegation chain; do not weaken the gate or assume runtime failure.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47707,
+        "case": "FAIL   regular-unit  test/admin-product-category-style-coverage.test.ts > complete legacy product-category layout source coverage > connects all current implementations and rejects page-only or commentary-only replacements",
+        "cause": "AssertionError: expected [ [ 'publicTaxonomy', false ] ] to deeply equal []"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-admin-user-center-design-coverage",
+      "status": "open",
+      "file": "workers-ts/test/admin-user-center-design-coverage.test.ts",
+      "observed_failed_cases": 3,
+      "evidence": "Current live gates fail for generic normalized member deletion, generic list exclusion and newly registered generic group-write rejection. Runtime cause not established.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 47880,
+        "case": "FAIL   regular-unit  test/admin-user-center-design-coverage.test.ts > complete personal-centre connected source gates > generic normalized member deletion",
+        "cause": "AssertionError: generic normalized member deletion: current live gate: expected false to be true // Object.is equality"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-kefu-sequence-runner",
+      "status": "open",
+      "file": "workers-ts/test/kefu-sequence-runner.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "Own independent frozen current CHECK expects stock12, but actual ORM includes reviewed recycle/save14. This assertion is outside the shared cohort helper changed in the current patch.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 48518,
+        "case": "FAIL   regular-unit  test/kefu-sequence-runner.test.ts > standalone sequence transaction execution boundary > runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function",
+        "cause": "AssertionError: expected { name: 'soob_event_type_ck', …(1) } to deeply equal { name: 'soob_event_type_ck', …(1) }"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-presale-sku-catalog-postgres",
+      "status": "open",
+      "file": "workers-ts/test/presale-sku-catalog-postgres.test.ts",
+      "observed_failed_cases": 7,
+      "evidence": "Actual HTTP response data is null, causing shared parser/count assertions to fail. Direct Hono requests omit Env; exact reason must be confirmed before changing expected behavior.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 48649,
+        "case": "FAIL   regular-unit  test/presale-sku-catalog-postgres.test.ts > presale selection view with real disposable SQL > feeds both frontend catalogues from actual SQL HTTP rows for all three time filters without writes",
+        "cause": "Error: 预售列表数据无效，请刷新"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-product-auxiliary-migration",
+      "status": "open",
+      "file": "workers-ts/test/product-auxiliary-migration.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "Source gate expects inline relationPid parent update inside SupplierProductManagementService. Verify the actual category-service delegation and preserve immediate-parent behavior.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 48681,
+        "case": "FAIL   regular-unit  test/product-auxiliary-migration.test.ts > superseded product auxiliary migration > keeps store_product_relation authoritative and writes the PHP immediate-parent semantics",
+        "cause": "AssertionError: expected 'import {\\n  and,\\n  eq,\\n  inArray,\\n…' to contain '.set({ relationPid: storeProductCateg…'"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-product-hot-frames",
+      "status": "open",
+      "file": "workers-ts/test/product-hot-frames.test.ts",
+      "observed_failed_cases": 12,
+      "evidence": "Direct Hono requests omit Env; log explicitly reports undefined.APP_KEY. Preserve real frame and error-boundary assertions when correcting the fixture.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49465,
+        "case": "FAIL   regular-unit  test/product-hot-frames.test.ts > hot product frame display against disposable SQL > adds the legacy empty array while retaining every existing response field",
+        "cause": "AssertionError: Cannot read properties of undefined (reading 'APP_KEY'): expected 400 to be 200 // Object.is equality"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-product-hot-pagination",
+      "status": "open",
+      "file": "workers-ts/test/product-hot-pagination.test.ts",
+      "observed_failed_cases": 6,
+      "evidence": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49632,
+        "case": "FAIL   regular-unit  test/product-hot-pagination.test.ts > legacy product/hot offset contract > defaults to ten and advances past the first page in stable sort/id order",
+        "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-product-rank-navigation-postgres",
+      "status": "open",
+      "file": "workers-ts/test/product-rank-navigation-postgres.test.ts",
+      "observed_failed_cases": 4,
+      "evidence": "Direct Hono requests omit Env and return400/null. Likely related environment fixture issue, but runtime defect is not proven.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49732,
+        "case": "FAIL   regular-unit  test/product-rank-navigation-postgres.test.ts > ranked product activity navigation against disposable SQL > adds only exact current-page activity identities while retaining the ranked rows and tabs",
+        "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-recommendation-navigation",
+      "status": "open",
+      "file": "workers-ts/test/recommendation-navigation.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "Direct hot endpoint fixture request returns400, with Env omitted. Confirm successful response before restoring recommendation assertions.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "line": 49859,
+        "case": "FAIL   regular-unit  test/recommendation-navigation.test.ts > hot recommendation navigation against real disposable SQL > adds exact target metadata at the real hot endpoint and reaches the same base through the real seckill detail",
+        "cause": "AssertionError: expected 400 to be 200 // Object.is equality"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
+    },
+    {
+      "id": "remaining-seckill-schedule-postgres",
+      "status": "open",
+      "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+      "observed_failed_cases": 1,
+      "evidence": "parent-missing cancellation stock snapshot differs by reversed SKU identity order(id1/id2). This is not evidence of stock corruption; inspect snapshot ordering and compare exact identities/values.",
+      "first_failure": {
+        "log": "/tmp/cinashop-ci-base721-job116367607070.log",
+        "line": 55142,
+        "case": "FAIL   regular-unit  test/seckill-schedule-postgres.test.ts > seckill schedule admission on disposable SQL > cancels an existing order and restores stock even when parent-missing",
+        "cause": "AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]"
+      },
+      "runtime_defect_proven": false,
+      "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files."
     }
-  ]
+  ],
+  "resolution_base_commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+  "resolution_evidence": "workers-ts/audit/php-ts-ci-contract-inputs-20261015.json",
+  "statistics_human_choice": "保留已恢复的 PHP 兼容行为，更新退役审计",
+  "full_cloud_ci": "The exact new commit run is observed after push; no full cloud success claim.",
+  "additional_base_run": {
+    "commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+    "run_url": "https://github.com/cinagroup/cinashop/actions/runs/38718696576",
+    "complete_job_logs": [
+      {
+        "job_id": 116367606610,
+        "path": "/tmp/cinashop-ci-base721-job116367606610.log",
+        "exit_code": 0,
+        "complete": true,
+        "bytes": 33304772,
+        "sha256": "f885de34f596dbe17e35966183bbf50dafc8f6ee09f7f393067aac7383a52e52"
+      },
+      {
+        "job_id": 116367607070,
+        "path": "/tmp/cinashop-ci-base721-job116367607070.log",
+        "exit_code": 0,
+        "complete": true,
+        "bytes": 36550109,
+        "sha256": "61c72e6cace78318adc301ff31057c7fd90bec86cee993b636d889f20add6da2"
+      }
+    ],
+    "uncovered_file_count": 14,
+    "uncovered_failed_cases": 43,
+    "coverage_limit": "The remaining802 FAIL headers map to modified test/input families or changed shared helpers. This maps recorded original causes to the patch, not proof every previously masked business case is now successful. Exact new-commit CI must verify that.",
+    "comparison_to_previous605": "The previous --log-failed aggregate had full shard2 but only partial shard1 output, so these newly visible families are not asserted to be regressions introduced at721. The13 Admin video detail design coverage failures fixed at721 are absent from the new failure files."
+  }
 }

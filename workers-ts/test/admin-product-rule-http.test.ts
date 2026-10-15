@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { build } from 'esbuild';
@@ -78,7 +79,7 @@ describe('actual rule App routes with JWT, SQL, old modal consumer and productio
       return dispatch(url, config as AdapterConfig);
     };
     Reflect.set(globalThis, '__ruleLegacyRequest', legacyRequest);
-    const phpAdminRoot = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const phpAdminRoot = legacyAdminReferenceRoot();
     const oldResult = await build({ bundle: true, write: false, platform: 'node', format: 'cjs',
       stdin: { contents: `export {modalSure} from ${JSON.stringify(resolve(phpAdminRoot, 'utils/public.js'))}; export {default as index} from ${JSON.stringify(resolve(phpAdminRoot, 'pages/product/productAttr/index.vue'))}; export {ruleInfoApi,ruleAddApi} from ${JSON.stringify(resolve(phpAdminRoot, 'api/product.js'))};`,
         resolveDir: phpAdminRoot, sourcefile: 'rule-old-consumer.js' },

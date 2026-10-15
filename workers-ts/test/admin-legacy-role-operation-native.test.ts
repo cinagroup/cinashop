@@ -91,7 +91,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy role oper
         await admin.db.transaction(tx => assertAdminLegacyRoleOperationReady(tx));
         await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
         await fixture.db.insert(systemMenus).values([{ id: 1, authType: 0, menuName: '平台结构' },
-          { id: 2, pid: 1, authType: 2, menuName: '商品读取', apiUrl: 'product/list', methods: 'GET' }]);
+          { id: 2, pid: 1, type: 1, authType: 1, menuName: '商品读取', apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' }]);
         await fixture.db.insert(systemRole).values([{ id: 900, level: 1, rules: writerRules },
           { id: 50, level: 2, roleName: '被引用角色50', rules: '1,2' }, { id: 51, level: 2, roleName: '被引用角色51', rules: '2' }]);
         await fixture.db.insert(systemAdmin).values([{ id: 101, account: 'native-role-manager', pwd: password, level: 1, roles: '900' },

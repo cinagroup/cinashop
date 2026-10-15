@@ -106,16 +106,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy staff wor
     await fixture.db.transaction(async tx => { await installAdminAuthorityOperation(tx); await installAdminLegacyAdminOperationUpgrade(tx); await assertAdminLegacyAdminOperationReady(tx); });
     await fixture.db.insert(systemMenus).values([
       { id: 1, authType: 0, menuName: '平台目录' },
-      { id: 2, pid: 1, authType: 2, menuName: '商品读取', apiUrl: 'product/list', methods: 'GET' },
-      { id: 3, authType: 2, menuName: 'opaque extension', apiUrl: 'owned-historical-extension', methods: 'GET' },
+      { id: 2, pid: 1, type: 1, authType: 1, menuName: '商品读取', apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' },
+      { id: 930003, authType: 2, menuName: 'opaque extension', apiUrl: 'owned-historical-extension', methods: 'GET' },
       { id: 4, authType: 2, menuName: '用户读取', apiUrl: 'user/list', methods: 'GET' },
     ]);
     await fixture.db.insert(systemRole).values([
       { id: 50, level: 2, roleName: '平台数字角色', rules: '1,2' },
-      { id: 51, type: 1, level: 2, roleName: '旧opaque身份', rules: '3' },
+      { id: 51, type: 1, level: 2, roleName: '旧opaque身份', rules: '930003' },
       { id: 52, level: 2, roleName: '超出委派', rules: '4' },
-      { id: 900, level: 1, rules: 'system.legacy_admin_manage,2,3' },
-      { id: 901, level: 1, rules: 'system.legacy_admin_form_view,2,3' },
+      { id: 900, level: 1, rules: 'system.legacy_admin_manage,2,930003' },
+      { id: 901, level: 1, rules: 'system.legacy_admin_form_view,2,930003' },
     ]);
     await fixture.db.insert(systemAdmin).values([
       { id: 100, account: 'native-super', pwd: password, level: 0 },
@@ -309,7 +309,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy staff wor
       const absent = intent('legacy-admin-delete', { id: 200 });
       expect((await request(env, `setting/admin-authority/receipt/${absent.operation_id}?operation=${absent.operation}`, 'GET')).body.data).toMatchObject({ state: 'unknown' });
       expect((await request(env, 'setting/admin-authority/resolve', 'POST', { operation_id: absent.operation_id, operation: absent.operation })).body.data).toMatchObject({ state: 'not_applied', result: null });
-      await fixture.db.update(systemRole).set({ rules: 'system.legacy_admin_manage,2,3' }).where(eq(systemRole.id, 900));
+      await fixture.db.update(systemRole).set({ rules: 'system.legacy_admin_manage,2,930003' }).where(eq(systemRole.id, 900));
       expect((await request(env, 'setting/admin-authority/preview', 'POST', absent)).http).toBe(409);
       expect((await fixture.db.select().from(systemAdmin).where(eq(systemAdmin.id, 200)))[0].isDel).toBe(0);
       const oldToken = tokens.get(101)!;

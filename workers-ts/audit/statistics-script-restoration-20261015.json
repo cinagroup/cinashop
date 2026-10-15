@@ -1,0 +1,282 @@
+{
+  "version": 1,
+  "date": "2026-10-15",
+  "status": "restored_php_compatibility",
+  "base_commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+  "route": {
+    "surface": "api",
+    "method": "GET",
+    "path": "/api/get_script",
+    "php_target": "v1.PublicController/getScript",
+    "worker_target": "PublicController.getScript"
+  },
+  "human_decision": {
+    "statement": "保留已恢复的 PHP 兼容行为，更新退役审计",
+    "source": "Explicit human choice in the current migration task",
+    "effect": "Keep the already restored implementation and update the retirement audit; this evidence update records the existing runtime behavior."
+  },
+  "previous_manifest": {
+    "file": "workers-ts/audit/legacy-route-decisions.json",
+    "commit": "721654e0645a636c882d4de81d38ed6511236a1f",
+    "sha256": "c92bd28c9ca29f3cbbf9108c52153c20af5e65ecc1ed195afb257c537ac01b56",
+    "retired_count": 17
+  },
+  "previous_retirement": {
+    "surface": "api",
+    "method": "GET",
+    "path": "/api/get_script",
+    "status": "retired",
+    "reason": "The PHP endpoint returns the operator-editable system_statistics value verbatim as executable JavaScript, and the legacy UniApp H5 injects it through a script element. Recreating this contract would restore a persistent arbitrary-script and third-party supply-chain execution surface; no current TypeScript client consumes it.",
+    "evidence": [
+      "cinashop-php/route/api.php:26",
+      "cinashop-php/app/controller/api/v1/PublicController.php:640",
+      "cinashop-php/view/uniapp/App.vue:290",
+      "cinashop-php/app/services/system/config/SystemConfigServices.php:1843"
+    ],
+    "replacement": "No dynamic script endpoint. Any future analytics provider must be implemented as an explicit reviewed integration with fixed provider identity, consent and Content-Security-Policy controls."
+  },
+  "previous_retirement_json_sha256": "300cfac2602b507dc88726df2c9b7452fd2e282469b172dd843f97f0e044a4db",
+  "retained_retirements": {
+    "count": 16,
+    "decisions_json_sha256": "1f239cb9054ade283f46cd3476c8a0664883c94370e3b6120124f0fb5c41af77",
+    "identities": [
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/file/file/move"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/file/scan/qrcode"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/file/remove/qrcode"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/file/scan/image/list/:scan_token"
+      },
+      {
+        "surface": "supplier",
+        "method": "POST",
+        "path": "/supplierapi/file/online/upload"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/file/set/way_data/:is_way"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/file/category/:id"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/refund/agree/:order_id"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/queue/again/do_queue/:id/:type"
+      },
+      {
+        "surface": "supplier",
+        "method": "DELETE",
+        "path": "/supplierapi/product/reply/:id"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/queue/del/wrong_queue/:id/:type"
+      },
+      {
+        "surface": "supplier",
+        "method": "GET",
+        "path": "/supplierapi/queue/stop/wrong_queue/:id"
+      },
+      {
+        "surface": "kefu",
+        "method": "POST",
+        "path": "/kefuapi/order/refund"
+      },
+      {
+        "surface": "kefu",
+        "method": "GET",
+        "path": "/kefuapi/refund/agree/:order_id"
+      },
+      {
+        "surface": "kefu",
+        "method": "ANY",
+        "path": "/kefuapi/ticket/[:appid]"
+      },
+      {
+        "surface": "api",
+        "method": "GET",
+        "path": "/api/order/nopay"
+      }
+    ]
+  },
+  "source_hash_format": "SHA-256 of the complete raw file bytes; decision-object digests use UTF-8 JSON.stringify-compatible compact JSON in recorded key order.",
+  "php_sources": [
+    {
+      "file": "cinashop-php/route/api.php",
+      "sha256": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",
+      "line_count": 860,
+      "evidence_lines": [
+        [
+          26,
+          26
+        ]
+      ]
+    },
+    {
+      "file": "cinashop-php/app/controller/api/v1/PublicController.php",
+      "sha256": "251db0d57b12ee876c196a23b73a960dc0df36e041e2785a354fdcaacc46b296",
+      "line_count": 661,
+      "evidence_lines": [
+        [
+          636,
+          643
+        ]
+      ]
+    },
+    {
+      "file": "cinashop-php/view/uniapp/App.vue",
+      "sha256": "c8ac053899436bc7ece40b5e72896256316e8074f4bfeead434f83283906be6e",
+      "line_count": 348,
+      "evidence_lines": [
+        [
+          286,
+          293
+        ]
+      ]
+    },
+    {
+      "file": "cinashop-php/app/services/system/config/SystemConfigServices.php",
+      "sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "line_count": 2657,
+      "evidence_lines": [
+        [
+          1841,
+          1844
+        ],
+        [
+          1874,
+          1874
+        ]
+      ]
+    }
+  ],
+  "current_sources": [
+    {
+      "role": "worker_handler",
+      "file": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "evidence_lines": [
+        23,
+        24,
+        25
+      ]
+    },
+    {
+      "role": "worker_route",
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "d081c2c55fcf87a50c260ee4fc0f407681bf15910637589743f7a52297d53a89",
+      "evidence_lines": [
+        197
+      ]
+    },
+    {
+      "role": "shared_loader",
+      "file": "view/common/statisticsScript.ts",
+      "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "evidence_lines": [
+        13,
+        14,
+        16,
+        34,
+        37,
+        40,
+        50
+      ]
+    },
+    {
+      "role": "admin_entry",
+      "file": "view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "evidence_lines": [
+        9,
+        22
+      ]
+    },
+    {
+      "role": "supplier_entry",
+      "file": "view/supplier-ts/src/main.ts",
+      "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "evidence_lines": [
+        8,
+        11
+      ]
+    },
+    {
+      "role": "uniapp_h5_entry",
+      "file": "view/uniapp-ts/src/App.vue",
+      "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "evidence_lines": [
+        6,
+        17
+      ]
+    }
+  ],
+  "current_contract": {
+    "response": "The public endpoint returns the platform system_statistics setting as raw application/javascript; an absent or empty setting produces an empty successful script.",
+    "configuration": "The existing SystemConfigService/DAO and cache invalidation remain the setting authority.",
+    "browser_loading": "Admin and Supplier startup and UniApp H5 onLaunch call the shared script-element loader; Mini Program/native contexts have no document and do not create a script.",
+    "execution_scope": "Configured operator-authored JavaScript remains executable. The previous retirement rationale is retained verbatim above; the human choice supersedes that decision for this one route only.",
+    "unchanged_scope": "All other 16 route retirements remain byte-equivalent at the decision-object level; no implementation or production deployment is changed by this audit update."
+  },
+  "validation": {
+    "status": "passed_serial_local_validation",
+    "contract_group": {
+      "files": 8,
+      "passed_cases": 75,
+      "failed": 0,
+      "skipped": 0,
+      "log": {
+        "path": "/tmp/cinashop-ci-contract-contracts-unit.log",
+        "bytes": 230,
+        "sha256": "1f9d2a38ff4e4e71b92ba1dc88913d31c1a7323aca4311d0b647e74b99934dfa"
+      },
+      "note": "Combined restoration, original HTTP/frontend, evidence inventory, log permission, API audit and video frontend suites;75 is not statistics-only."
+    },
+    "statistics_native": {
+      "passed_cases": 4,
+      "failed": 0,
+      "skipped": 0,
+      "log": {
+        "path": "/tmp/cinashop-ci-contract-statistics-native.log",
+        "bytes": 2099,
+        "sha256": "416bbf94518de6d3f6d45e905901e76ab82b7198d42a6a1d426f2faf1c0ea23a"
+      },
+      "distinct_count_note": "Repeated4 public HTTP cases already in the75-case group; credited once."
+    },
+    "php_authority": {
+      "file_count": 26,
+      "all_raw_sha256_and_line_counts_match": true,
+      "snapshot_regenerated": false,
+      "live_cli_log": {
+        "path": "/tmp/cinashop-ci-contract-route-audit.log",
+        "bytes": 1273408,
+        "sha256": "d12e573a1af6d494a87c408a5e51f942446eaf831bc55cc8791bff458177dcb0"
+      },
+      "inventory_fix": "Explicitly retain the four restored statistics sources; live full-source comparison remains mandatory."
+    },
+    "production_or_new_browser_acceptance_claimed": false
+  }
+}

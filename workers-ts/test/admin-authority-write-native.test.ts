@@ -83,7 +83,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('modern authority
     if (fixture.format !== 'pg16' || !fixture.withPeer || !fixture.withRuntimeRole) throw Error('Owned real PG16 LOGINs required');
     await fixture.exec(ddl);
     await fixture.db.insert(systemMenus).values([
-      { id: 2, type: 1, authType: 2, menuName: '商品读取权限', apiUrl: 'product/list', methods: 'GET' },
+      { id: 2, type: 1, authType: 1, menuName: '商品读取权限', apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' },
     ]);
     await fixture.db.insert(systemRole).values([
       { id: 50, type: 0, relationId: 0, level: 2, roleName: '未引用角色', rules: 'product.view', status: 1 },

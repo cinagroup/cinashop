@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -191,7 +192,7 @@ describe('four genuine product review routes through actual App/JWT/SQL and old 
       return { data: await response.json(), status: response.status, statusText: response.statusText, headers: Object.fromEntries(response.headers), config, request: {} };
     };
     Reflect.set(globalThis, '__moderationLegacyRequest', request);
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const php = legacyAdminReferenceRoot();
     const compiled = await build({ bundle: true, write: false, platform: 'node', format: 'cjs', stdin: { resolveDir: php,
       contents: `export {productGetVerifyApi,productReviewApi,forcedRemovalApi} from ${JSON.stringify(resolve(php, 'api/product.js'))};` },
       plugins: [{ name: 'actual-old-product-api', setup(plugin) {

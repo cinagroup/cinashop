@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -34,7 +35,7 @@ describe('genuine stock old modal and modern Axios through actual App/JWT/SQL', 
     const request = require('axios').create({ baseURL: '/adminapi', headers: { 'Authori-zation': `Bearer ${tokens[101]}` } });
     request.interceptors.response.use((response: { data: Envelope }) => response.data.status === 200 ? response.data : Promise.reject(response.data));
     request.defaults.adapter = adapter(request); Reflect.set(globalThis, '__stockLegacyRequest', request);
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src'), modal = resolve(php, 'pages/product/components/stockEdit.vue');
+    const php = legacyAdminReferenceRoot(), modal = resolve(php, 'pages/product/components/stockEdit.vue');
     const script = (await readFile(modal, 'utf8')).match(/<script>([\s\S]*?)<\/script>/)?.[1]; if (!script) throw Error('Actual stockEdit script missing');
     const compiled = await build({ bundle: true, write: false, platform: 'node', format: 'cjs', stdin: { resolveDir: php,
       contents: `export {productAttrsApi,productSaveStocksApi} from ${JSON.stringify(resolve(php, 'api/product.js'))};export {default as modal} from ${JSON.stringify(modal)};` },

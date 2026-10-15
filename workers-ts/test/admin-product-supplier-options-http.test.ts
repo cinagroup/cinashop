@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -34,7 +35,7 @@ describe('genuine old supplier.js/request/Axios selector → real App/JWT/SQL', 
       setItem: (key: string, value: unknown) => values.set(key, String(value)), clear: () => values.clear() }; };
     vi.stubGlobal('sessionStorage', storage()); vi.stubGlobal('localStorage', storage());
     vi.stubGlobal('window', { router: { replace: vi.fn() } });
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const php = legacyAdminReferenceRoot();
     const require = createRequire(resolve(import.meta.dirname, '../../view/admin-ts/package.json'));
     const result = await build({ bundle: true, write: false, platform: 'node', format: 'cjs',
       stdin: { resolveDir: php, contents: `export {getSupplierList} from ${JSON.stringify(resolve(php, 'api/supplier.js'))}; export {default as request} from ${JSON.stringify(resolve(php, 'plugins/request/index.js'))};` },

@@ -115,15 +115,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('authority previe
       await assertAdminAuthorityOperationReady(tx);
     });
     await fixture.db.insert(systemMenus).values([
-      { id: 2, type: 1, authType: 2, menuName: '商品读取权限', apiUrl: 'product/list', methods: 'GET' },
-      { id: 3, type: 1, authType: 2, menuName: '用户读取权限', apiUrl: 'user/list', methods: 'GET' },
+      { id: 2, type: 1, authType: 1, menuName: '商品读取权限', apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' },
+      { id: 930003, type: 1, authType: 2, menuName: '用户读取权限', apiUrl: 'user/list', methods: 'GET' },
     ]);
     await fixture.db.insert(systemRole).values([
       { id: 50, type: 0, relationId: 0, level: 2, roleName: '被引用角色', rules: 'product.view', status: 1 },
       { id: 51, type: 1, relationId: 0, level: 2, roleName: '另一个平台角色', rules: 'product.view', status: 1 },
       { id: 52, type: 4, relationId: 7, level: 2, roleName: '供应商角色', rules: 'product.view', status: 1 },
       { id: 53, type: 1, relationId: 7, level: 2, roleName: '外关系角色', rules: 'product.view', status: 1 },
-      { id: 900, type: 0, relationId: 0, level: 1, roleName: '当前管理者', rules: 'system.manage,2,3', status: 1 },
+      { id: 900, type: 0, relationId: 0, level: 1, roleName: '当前管理者', rules: 'system.manage,2,930003', status: 1 },
       { id: 901, type: 0, relationId: 0, level: 1, roleName: '目录只读', rules: 'system.view', status: 1 },
     ]);
     await fixture.db.insert(systemAdmin).values([
@@ -456,7 +456,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('authority previe
           if (change === 'added-reference') await peer.exec("INSERT INTO public.system_admin(id,account,pwd,roles,level) VALUES(211,'late-reference','hash','50',2)");
           if (change === 'removed-reference') await peer.exec("UPDATE public.system_admin SET roles='' WHERE id=200");
           if (change === 'target-role') await peer.exec("UPDATE public.system_role SET role_name='独立新名称' WHERE id=50");
-          if (change === 'catalogue') await peer.exec("UPDATE public.system_menus SET menu_name='独立新目录名称' WHERE id=3");
+          if (change === 'catalogue') await peer.exec("UPDATE public.system_menus SET menu_name='独立新目录名称' WHERE id=930003");
         });
         const afterPeer = await snapshot(), refused = await request(env, 'commit', confirmation(input, value));
         expect(refused).toMatchObject({ http: 409, body: { status: 409 } });
@@ -592,7 +592,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('authority previe
         expect(businessRows(final)).toEqual({ ...businessRows(before),
           roles: before.roles.map(row => row.id === 50 ? { ...row, rules: 'user.view' } : row),
           admins: before.admins.map(row => row.id === 210 ? { ...row, roles: '50' } : row),
-          menus: [...before.menus,{ ...before.menus.find(row => row.id === 2)!, id: 4, menuName: '提交后新目录', apiUrl: 'order/list' }] });
+          menus: [...before.menus,{ ...before.menus.find(row => row.id === 2)!, id: 4, authType: 2,
+            menuName: '提交后新目录', apiUrl: 'order/list', methods: 'GET', menuPath: '', uniqueAuth: '' }].sort((a,b)=>a.id-b.id) });
         expect((await readReceipt(env, input)).body.data).toEqual(receipt);
       } finally { release.resolve(); await pending; if (peerUpdate) await peerUpdate; if (menuInsert) await menuInsert; }
     })));

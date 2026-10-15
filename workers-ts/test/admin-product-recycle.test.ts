@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -159,7 +160,7 @@ describe('actual legacy tableDelApi and all product recycle HTTP aliases through
     f = await recycleFixture(); wiring.application.mockImplementation(() => f.container); wiring.open.mockImplementation(() => ({ container: f.container, close: wiring.close }));
     for (const id of [100, 101, 102, 106, 109, 200, 201, 202, 203, 204, 205, 206]) tokens[id] = (await createToken(id, 'admin', md5('stock-fixture-password'), env.APP_KEY)).token;
     const require = createRequire(resolve(import.meta.dirname, '../../view/admin-ts/package.json'));
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src');
+    const php = legacyAdminReferenceRoot();
     Reflect.set(globalThis, '__recycleLegacyToken', tokens[200]);
     const compiled = await build({ bundle: true, write: false, platform: 'node', format: 'cjs', external: ['axios'],
       define: { 'process.env.NODE_ENV': '"test"' },

@@ -55,7 +55,7 @@ describe('atomic modern Admin authority writes in owned local memory', () => {
   }, 30_000);
   beforeEach(async () => {
     await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
-    await fixture.db.insert(systemMenus).values({ id: 2, menuName: '商品读取', authType: 2, apiUrl: 'product/list', methods: 'GET' });
+    await fixture.db.insert(systemMenus).values({ id: 2, menuName: '商品读取', type: 1, authType: 1, apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' });
     await fixture.db.insert(systemRole).values([
       { id: 900, roleName: '管理者', rules: 'system.manage,product.view', level: 1 },
       { id: 901, roleName: '只有只读', rules: 'system.view', level: 1 },

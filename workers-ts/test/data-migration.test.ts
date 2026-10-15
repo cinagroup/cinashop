@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { registeredTableNames, assertRegisteredModelCohort, reviewedExplicitDeclarationTables } from './helpers/registeredCatalogCohort';
+import { registeredTableNames, assertRegisteredModelCohort, reviewedExplicitDeclarationTables, assertExternalMigrationCohort } from './helpers/registeredCatalogCohort';
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
@@ -75,6 +75,18 @@ afterEach(() => {
 });
 
 describe("MySQL to PostgreSQL schema audit", () => {
+  it('binds the exact 181-file root migration cohort and refuses renamed, reordered, omitted or addon files',()=>{
+    const files=readdirSync(resolve(import.meta.dirname,'../migrations')).filter(name=>name.endsWith('.sql')).sort();
+    expect(()=>assertExternalMigrationCohort(files)).not.toThrow();
+    expect(files.at(-1)).toBe('0178_product_save_effects.sql');
+    for(const invalid of [
+      files.filter(name=>name!=='0177_product_recycle_effects.sql'),
+      files.map(name=>name==='0178_product_save_effects.sql'?'0178_unregistered.sql':name),
+      [...files].reverse(),
+      [...files,'0185_admin_product_video_upload.sql'],
+      files.map(name=>name==='0178_product_save_effects.sql'?'0185_admin_product_video_upload.sql':name),
+    ])expect(()=>assertExternalMigrationCohort(invalid)).toThrow();
+  });
   it('rejects unknown, omitted or aliased registered tables and changed reviewed additions',async()=>{
     const api=await import('drizzle-kit/api'),models=await import('../src/models/schema');
     const snapshot=api.generateDrizzleJson(models);assertRegisteredModelCohort(snapshot);
@@ -209,6 +221,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const migrationFiles = readdirSync(migrationsDirectory)
       .filter((name) => name.endsWith(".sql"))
       .sort();
+    assertExternalMigrationCohort(migrationFiles);
     const migrationSources = migrationFiles.map((name) => ({
       name,
       sql: readFileSync(resolve(migrationsDirectory, name), "utf8"),
@@ -326,9 +339,15 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(MIGRATION_TABLES.map((table) => table.table).sort()).toEqual(
       report.sharedTables.map((table) => table.table).sort(),
     );
+    const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts'];
+    expect(embeddedMigrationSources.filter(({name})=>productAddonSources.includes(name)).map(({name})=>name)).toEqual(productAddonSources);
+    const ordinaryDeclarations = [
+      readFileSync("src/services/MigrationService.ts", "utf8"),
+      ...embeddedMigrationSources.filter(({ name }) => !productAddonSources.includes(name)).map(({ sql }) => sql),
+    ].join("\n");
     const historicalDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts").map(({ sql }) => sql),
+      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDefinitionDrift = comparePostgresDefinitions(externalTargetSql, historicalDeclarations);
     expect(historicalDefinitionDrift).toEqual({
@@ -345,7 +364,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       workerOnlyTables: reviewedExplicitDeclarationTables('historical'),
       columnDrift: [],
     });
-    expect(definitionDrift).toEqual({
+    const ordinaryDefinitionDrift = comparePostgresDefinitions(externalTargetSql, ordinaryDeclarations);
+    expect(ordinaryDefinitionDrift).toEqual({
       externalTableCount: 286,
       // Four fixed ordinary owner-maintenance declarations are additional to
       // the historical declaration view; ORM and bootstrap cohorts stay separate.
@@ -354,9 +374,22 @@ describe("MySQL to PostgreSQL schema audit", () => {
       workerOnlyTables: reviewedExplicitDeclarationTables('current-ordinary'),
       columnDrift: [],
     });
-    expect(definitionDrift.workerOnlyTables.filter(table => !historicalDefinitionDrift.workerOnlyTables.includes(table))).toEqual([
+    expect(ordinaryDefinitionDrift.workerOnlyTables.filter(table => !historicalDefinitionDrift.workerOnlyTables.includes(table))).toEqual([
       'cashier_ordinary_cart_v1','cashier_ordinary_draft_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1',
     ]);
+    expect(definitionDrift).toEqual({
+      externalTableCount: 286,
+      // Exactly two independently installed product addons follow the frozen
+      // ordinary declaration scope. They do not join any construction cohort.
+      workerTableCount: 306,
+      externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
+      workerOnlyTables: reviewedExplicitDeclarationTables('current-product'),
+      columnDrift: [],
+    });
+    const productOnly=definitionDrift.workerOnlyTables.filter(table=>!ordinaryDefinitionDrift.workerOnlyTables.includes(table));
+    expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1']);
+    for(const path of ['embedded','external','orm'] as const)
+      expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
     for (const tableName of [
       "store_order",
       "store_order_economize",

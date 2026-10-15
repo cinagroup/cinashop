@@ -1,3 +1,4 @@
+import { legacyAdminReferenceRoot } from './helpers/legacyAdminReference';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
@@ -48,7 +49,7 @@ describe('main catalogue actual old SPA/Axios and modern API → App/JWT/SQL sou
     const request = require('axios').create({ baseURL: '/adminapi', headers: { 'Authori-zation': `Bearer ${tokens[120]}` } });
     request.interceptors.response.use((response: { data: Envelope }) => response.data.status === 200 ? response.data : Promise.reject(response.data));
     request.defaults.adapter = adapter(request); Reflect.set(globalThis, '__catalogLegacyRequest', request);
-    const php = resolve(import.meta.dirname, '../../../cinashop-php/view/admin/src'), pagePath = resolve(php, 'pages/product/productList/index.vue');
+    const php = legacyAdminReferenceRoot(), pagePath = resolve(php, 'pages/product/productList/index.vue');
     const script = (await readFile(pagePath, 'utf8')).match(/<script>([\s\S]*?)<\/script>/)?.[1];
     if (!script) throw Error('Actual old productList script missing');
     const imports = new Map<string, Set<string>>();

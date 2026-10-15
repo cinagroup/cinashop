@@ -156,8 +156,18 @@ const ordinaryExplicitColumns = {
   cashier_ordinary_operation_v1: ['actor_uid','request_key','kind','request_hash','scope_key','draft_key','order_id','intent_json','evidence_json','evidence_hash','created_at'],
   cashier_ordinary_origin_v1: ['order_id','actor_uid','service_id','buyer_uid','request_key','request_hash','scope_key','origin_json','origin_hash','created_at'],
 } as const;
-export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'='historical') {
-  assert.ok(scope==='historical'||scope==='current-ordinary','Unknown independently commissioned declaration scope');
+// Product receipts and durable video sessions are independently commissioned
+// addons. Declaration scans see them; runAll, root SQL and the ORM do not.
+const productExplicitDeclarations = [
+  ['adminProductEditorOperation.ts','8c41bd13efce59c6a604d92bb4824374df72e656d3a24d9fdbd38b57175e0fc1',['admin_product_editor_operation_v1']],
+  ['adminProductVideoUpload.ts','08e82e9bbd7ca61d9ef210b08eb9a585f7e3f9f294824f7bde6751204cf75fa2',['admin_product_video_upload_v1']],
+] as const;
+const productExplicitColumns = {
+  admin_product_editor_operation_v1: ['operation_id','actor_id','requested_id','request_hash','state','result','created_at'],
+  admin_product_video_upload_v1: ['upload_id','actor_id','request_hash','intent','object_key','state','parts','confirmed','attachment_id','created_at','updated_at','expires_at'],
+} as const;
+export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'='historical') {
+  assert.ok(scope==='historical'||scope==='current-ordinary'||scope==='current-product','Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
@@ -187,7 +197,22 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
   assert.equal(currentTables.length,22);assert.equal(new Set(currentTables).size,22);
   const currentOnly=currentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
   assert.equal(currentOnly.length,21);assert.equal(new Set(currentOnly).size,21);
-  return currentOnly;
+  if(scope==='current-ordinary')return currentOnly;
+  for(const [file,sha256,names] of productExplicitDeclarations){
+    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n'),parsed=parseCreateTables(source,'postgres');
+    assert.equal(digest(source),sha256,'Complete independently commissioned product DDL source changed: '+file);
+    assert.deepEqual([...parsed.keys()].sort(),[...names].sort());
+    for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...productExplicitColumns[name]]);
+  }
+  const productTables=productExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
+  assert.equal(productTables.length,2);assert.equal(new Set(productTables).size,2);
+  assert.deepEqual(Object.keys(productExplicitColumns).sort(),productTables);
+  for(const name of productTables)assert.ok(!currentTables.includes(name),'Product declaration must not replace a historical or ordinary declaration');
+  const productCurrentTables=[...currentTables,...productTables].sort();
+  assert.equal(productCurrentTables.length,24);assert.equal(new Set(productCurrentTables).size,24);
+  const productCurrentOnly=productCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(productCurrentOnly.length,23);assert.equal(new Set(productCurrentOnly).size,23);
+  return productCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();
@@ -243,12 +268,28 @@ export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>
   assertCashierAuditManualRedNoteCatalog(manual.rows,scope==='current-bare-orm'?'orm':path==='orm'?'embedded':path);
 }
 export function assertExternalMigrationCohort(files:string[]) {
-  assert.equal(files.length,179);
-  assert.equal(digest(JSON.stringify(files)),"7ab759fe7e80e8320a27bbe77d523907f14beb2b516fa7139dc25abbb07ca4c1");
+  assert.equal(files.length,181);
+  assert.equal(digest(JSON.stringify(files)),"c05f257ea765a374894d35542df54a709cdea7935529178f2f139d8562e0cb07");
+  // These two registered CHECK successors add no table. Preserve every older
+  // directory cohort rather than accepting an arbitrary pair of new files.
+  const saveFile='0178_product_save_effects.sql';
+  const saveSource=readFileSync(resolve(root,'migrations',saveFile),'utf8').replace(/\r\n?/g,'\n');
+  assert.equal(digest(saveSource),'0fcf472e56130811dfdd7812aa718cd4e131cbc010e21d792f9c9e8b442f4319');
+  assert.deepEqual([...parseCreateTables(saveSource,'postgres').keys()],[]);
+  const throughRecycleFiles=files.filter(file=>file!==saveFile);
+  assert.equal(throughRecycleFiles.length,180);
+  assert.equal(digest(JSON.stringify(throughRecycleFiles)),"d88e6466bdf25f409a941b00fce53be2472f725abfad2a31ec0c67a86ac85f65");
+  const recycleFile='0177_product_recycle_effects.sql';
+  const recycleSource=readFileSync(resolve(root,'migrations',recycleFile),'utf8').replace(/\r\n?/g,'\n');
+  assert.equal(digest(recycleSource),'bd77226f8f5733e979483f4b0a5999a1c233ecfcdae230e5f8c20126d175b43c');
+  assert.deepEqual([...parseCreateTables(recycleSource,'postgres').keys()],[]);
+  const throughAutoShelfFiles=throughRecycleFiles.filter(file=>file!==recycleFile);
+  assert.equal(throughAutoShelfFiles.length,179);
+  assert.equal(digest(JSON.stringify(throughAutoShelfFiles)),"7ab759fe7e80e8320a27bbe77d523907f14beb2b516fa7139dc25abbb07ca4c1");
   const autoShelfFile='0176_product_auto_shelf.sql';
   const autoShelfSource=readFileSync(resolve(root,'migrations',autoShelfFile),'utf8').replace(/\r\n?/g,'\n');
   assert.equal(digest(autoShelfSource),'46b3e860bfafbd29bd17596c88f9b0299c3b04dd776ed81818a919bef92e9f07');
-  const throughStockFiles=files.filter(file=>file!==autoShelfFile);
+  const throughStockFiles=throughAutoShelfFiles.filter(file=>file!==autoShelfFile);
   assert.equal(throughStockFiles.length,178);
   assert.equal(digest(JSON.stringify(throughStockFiles)),"7a6d7fa097009a425eb3ff3b95eefa55f80aa056c932a031701b99e0c129c676");
   // Main's reviewed stock outbox CHECK upgrade adds one file and no table.
@@ -265,7 +306,7 @@ export function assertExternalMigrationCohort(files:string[]) {
   assert.deepEqual(files.filter(file=>!file.startsWith('0006a')&&!/^\d{4}_/.test(file)),[]);
   for(const file of ['0166_recharge_quota_group_seed.sql','0167_seckill_time_reference_lock.sql',
     '0170_order_promotion_gift_receipt.sql','0171_purchase_cancellation_gift_evidence.sql','0173_customer_city_delivery.sql',
-    externalAdditions.cashier_second_card_abandon_v1.file,stockFile,autoShelfFile])
+    externalAdditions.cashier_second_card_abandon_v1.file,stockFile,autoShelfFile,recycleFile,saveFile])
     assert.equal(files.filter(value=>value===file).length,1);
 }
 // Explicit fixture composition mirrors the approved full nine-path audit.

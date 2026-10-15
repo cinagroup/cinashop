@@ -57,20 +57,20 @@ describe('legacy independent role impact decisions and immutable results in PGli
     await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
     await fixture.db.insert(systemMenus).values([
       { id: 1, menuName: '结构', authType: 0 },
-      { id: 2, pid: 1, menuName: '商品读取', authType: 2, apiUrl: 'product/list', methods: 'GET' },
-      { id: 3, menuName: '旧未知可保留', authType: 2, apiUrl: 'owned-historical-extension', methods: 'GET' },
+      { id: 2, pid: 1, menuName: '商品读取', type: 1, authType: 1, apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index' },
+      { id: 930003, menuName: '旧未知可保留', authType: 2, apiUrl: 'owned-historical-extension', methods: 'GET' },
       { id: 4, menuName: '不可委派', authType: 2, apiUrl: 'user/list', methods: 'GET' },
       { id: 329, authType: 2, apiUrl: 'setting/role/set_status/<id>/<status>', uniqueAuth: 'setting-role-set_status', methods: 'PUT' },
       { id: 330, authType: 2, apiUrl: 'setting/role/<id>', uniqueAuth: 'setting-role-delete', methods: 'DELETE' },
     ]);
     await fixture.db.insert(systemRole).values([
-      { id: 900, level: 1, rules: 'system.legacy_role_status,system.legacy_role_delete,product.view,3' },
-      { id: 901, level: 1, rules: 'system.legacy_role_status,product.view,3' },
-      { id: 902, level: 1, rules: 'system.legacy_role_delete,product.view,3' },
-      { id: 903, level: 1, rules: 'system.legacy_role_manage,product.view,3' },
+      { id: 900, level: 1, rules: 'system.legacy_role_status,system.legacy_role_delete,product.view,930003' },
+      { id: 901, level: 1, rules: 'system.legacy_role_status,product.view,930003' },
+      { id: 902, level: 1, rules: 'system.legacy_role_delete,product.view,930003' },
+      { id: 903, level: 1, rules: 'system.legacy_role_manage,product.view,930003' },
       { id: 50, level: 2, roleName: '被引用数字身份', rules: '1,2' },
       { id: 51, level: 2, roleName: '重复授予商品读取', rules: 'product.view' },
-      { id: 52, level: 2, roleName: 'opaque扩展', rules: '3' },
+      { id: 52, level: 2, roleName: 'opaque扩展', rules: '930003' },
       { id: 53, level: 2, rules: '4' }, { id: 54, level: 2, rules: '999' },
       { id: 55, level: 3, rules: '2' }, { id: 56, level: 2, status: -1, rules: '2' },
       { id: 57, level: 2, type: 4, relationId: 9, rules: '2' },
@@ -179,7 +179,7 @@ describe('legacy independent role impact decisions and immutable results in PGli
     if (defect === 'foreign-role') await fixture.db.update(systemAdmin).set({ roles: '50,57' }).where(eq(systemAdmin.id, 200));
     if (defect === 'outside-grant') await fixture.db.update(systemAdmin).set({ roles: '50,53' }).where(eq(systemAdmin.id, 200));
     if (defect === 'malformed-csv') await fixture.db.update(systemAdmin).set({ roles: '50,,51' }).where(eq(systemAdmin.id, 200));
-    if (defect === 'malformed-rule') await fixture.db.update(systemRole).set({ rules: '1,2,,3' }).where(eq(systemRole.id, 50));
+    if (defect === 'malformed-rule') await fixture.db.update(systemRole).set({ rules: '1,2,,930003' }).where(eq(systemRole.id, 50));
     const before = await snapshot(); await expect(service.preview(intent('legacy-role-delete', { id: 50 }), actor())).rejects.toThrow(); expect(await snapshot()).toEqual(before);
   });
   it('supports retained proven-deleted CSV during a second role operation, without accepting a forged missing, foreign or different-level identity', async () => {
@@ -190,7 +190,7 @@ describe('legacy independent role impact decisions and immutable results in PGli
     await expect(service.preview(intent('legacy-role-delete', { id: 51 }), actor())).rejects.toThrow('角色域');
   });
   it('allows a current actor with an immutable proven-deleted role and another live action role to use the remaining narrow capability', async () => {
-    await fixture.db.insert(systemRole).values({ id: 905, level: 1, rules: 'system.legacy_role_status,system.legacy_role_delete,product.view,3' });
+    await fixture.db.insert(systemRole).values({ id: 905, level: 1, rules: 'system.legacy_role_status,system.legacy_role_delete,product.view,930003' });
     await fixture.db.update(systemAdmin).set({ roles: '900,905' }).where(eq(systemAdmin.id, 101));
     await commit(intent('legacy-role-delete', { id: 900 }), actor(100));
     expect((await snapshot()).admins.find(row => row.id === 101)?.roles).toBe('900,905');
@@ -217,7 +217,7 @@ describe('legacy independent role impact decisions and immutable results in PGli
     const absent = intent('legacy-role-delete', { id: 51 });
     expect(await service.receipt(absent.operation_id, absent.operation, actor())).toMatchObject({ state: 'unknown', result: null });
     const sealed = await service.resolve({ operation_id: absent.operation_id, operation: absent.operation }, actor()); expect(sealed).toMatchObject({ state: 'not_applied', result: null });
-    await fixture.db.update(systemRole).set({ rules: 'system.legacy_role_status,system.legacy_role_delete,product.view,3' }).where(eq(systemRole.id, 900));
+    await fixture.db.update(systemRole).set({ rules: 'system.legacy_role_status,system.legacy_role_delete,product.view,930003' }).where(eq(systemRole.id, 900));
     await expect(service.preview(absent, actor())).rejects.toThrow('耐久');
     await fixture.db.update(systemAdmin).set({ pwd: 'new-current-password' }).where(eq(systemAdmin.id, 101));
     await expect(service.receipt(input.operation_id, input.operation, actor())).rejects.toThrow('凭据');

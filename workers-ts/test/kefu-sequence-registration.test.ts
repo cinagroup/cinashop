@@ -67,6 +67,10 @@ import { PRODUCT_STOCK_EFFECTS_SQL } from '../src/migrations/productStockEffects
 import { runProductStockEffects } from '../src/migrations/runProductStockEffects';
 import { PRODUCT_AUTO_SHELF_SQL } from '../src/migrations/productAutoShelf';
 import { runProductAutoShelf } from '../src/migrations/runProductAutoShelf';
+import { PRODUCT_RECYCLE_EFFECTS_SQL } from '../src/migrations/productRecycleEffects';
+import { runProductRecycleEffects } from '../src/migrations/runProductRecycleEffects';
+import { PRODUCT_SAVE_EFFECTS_SQL } from '../src/migrations/productSaveEffects';
+import { runProductSaveEffects } from '../src/migrations/runProductSaveEffects';
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -101,6 +105,8 @@ vi.mock('../src/migrations/runOrderPromotionGiftReceipt', () => ({ runOrderPromo
 vi.mock('../src/migrations/runPurchaseCancellationGiftEvidence', () => ({ runPurchaseCancellationGiftEvidence: vi.fn() }));
 vi.mock('../src/migrations/runProductStockEffects', () => ({ runProductStockEffects: vi.fn() }));
 vi.mock('../src/migrations/runProductAutoShelf', () => ({ runProductAutoShelf: vi.fn() }));
+vi.mock('../src/migrations/runProductRecycleEffects', () => ({ runProductRecycleEffects: vi.fn() }));
+vi.mock('../src/migrations/runProductSaveEffects', () => ({ runProductSaveEffects: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
@@ -132,9 +138,11 @@ const promotionGiftRunner = vi.mocked(runOrderPromotionGiftReceipt);
 const cancellationGiftRunner = vi.mocked(runPurchaseCancellationGiftEvidence);
 const stockEffectsRunner = vi.mocked(runProductStockEffects);
 const autoShelfRunner = vi.mocked(runProductAutoShelf);
+const recycleEffectsRunner = vi.mocked(runProductRecycleEffects);
+const saveEffectsRunner = vi.mocked(runProductSaveEffects);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 182 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 184 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -292,6 +300,14 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(db).toBe(container.db); expect(depth, '0181 must receive the root DB').toBe(0);
     expect(stockEffectsRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  recycleEffectsRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0182 must receive the root DB').toBe(0);
+    expect(autoShelfRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
+  saveEffectsRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db); expect(depth, '0183 must receive the root DB').toBe(0);
+    expect(recycleEffectsRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -327,10 +343,12 @@ beforeEach(() => {
   cancellationGiftRunner.mockReset();
   stockEffectsRunner.mockReset();
   autoShelfRunner.mockReset();
+  recycleEffectsRunner.mockReset();
+  saveEffectsRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0181, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0183, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -406,6 +424,12 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.service.productAutoShelfSqlForVerification()).toBe(PRODUCT_AUTO_SHELF_SQL);
     expect(PRODUCT_AUTO_SHELF_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0176_product_auto_shelf.sql'),'utf8').trim());
     expect(autoShelfRunner).not.toHaveBeenCalled();
+    expect(setup.service.productRecycleEffectsSqlForVerification()).toBe(PRODUCT_RECYCLE_EFFECTS_SQL);
+    expect(PRODUCT_RECYCLE_EFFECTS_SQL).toBe(readFileSync(resolve(root,'migrations/0177_product_recycle_effects.sql'),'utf8'));
+    expect(recycleEffectsRunner).not.toHaveBeenCalled();
+    expect(setup.service.productSaveEffectsSqlForVerification()).toBe(PRODUCT_SAVE_EFFECTS_SQL);
+    expect(PRODUCT_SAVE_EFFECTS_SQL).toBe(readFileSync(resolve(root,'migrations/0178_product_save_effects.sql'),'utf8'));
+    expect(saveEffectsRunner).not.toHaveBeenCalled();
     expect(CHECKOUT_PRICING_LOCK_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0160_checkout_pricing_lock.sql'),'utf8').trim());
     expect(OFFLINE_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0159_offline_order.sql'),'utf8').trim());
     expect(REFUND_SPLIT_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root,'migrations/0158_refund_order_split.sql'),'utf8').trim());
@@ -418,7 +442,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 182 steps in order and dispatches 0151–0181 to independent root transaction runners", async () => {
+  it("executes all 184 steps in order and dispatches 0151–0183 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -448,6 +472,8 @@ describe("embedded 0151 sequence registration", () => {
     expect(slotLockRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(stockEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(autoShelfRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(recycleEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(saveEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(pinkNoticeRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(couponCatalogRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(quotaSeedRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
@@ -483,6 +509,8 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.sqlCalls.some(c => c.sql === PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PRODUCT_STOCK_EFFECTS_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PRODUCT_AUTO_SHELF_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === PRODUCT_RECYCLE_EFFECTS_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === PRODUCT_SAVE_EFFECTS_SQL)).toBe(false);
   });
 
   it.each([new Error("already exists"), new Error("sequence drift"), "raw rejection"])(
@@ -822,6 +850,23 @@ describe("embedded 0151 sequence registration", () => {
     expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,181), errors: [`0181: ${error instanceof Error ? error.message : error}`] });
     expect(autoShelfRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(stockEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(recycleEffectsRunner).not.toHaveBeenCalled();
+    expect(saveEffectsRunner).not.toHaveBeenCalled();
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+  });
+  it.each([new Error('owner missing'), new Error('recycle CHECK drift'), 'raw rejection'])('fails closed at 0182 without retry or false success (%s)', async error => {
+    const setup = harness(); recycleEffectsRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,182), errors: [`0182: ${error instanceof Error ? error.message : error}`] });
+    expect(recycleEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(autoShelfRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(saveEffectsRunner).not.toHaveBeenCalled();
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+  });
+  it.each([new Error('owner missing'), new Error('save CHECK drift'), 'raw rejection'])('fails closed at 0183 without retry or false success (%s)', async error => {
+    const setup = harness(); saveEffectsRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,183), errors: [`0183: ${error instanceof Error ? error.message : error}`] });
+    expect(saveEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(recycleEffectsRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.transaction).toHaveBeenCalledTimes(151);
   });
 });

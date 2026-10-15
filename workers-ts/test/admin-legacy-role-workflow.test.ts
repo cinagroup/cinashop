@@ -10,6 +10,7 @@ import { adminAuthMiddleware } from '@/middleware/admin-auth';
 import { adminLegacyRoleCreateForm, adminLegacyRoleEditForm, adminLegacyRoleSave } from '@/controllers/api/v1/AdminLegacyRoleController';
 import { AdminLegacyRoleWorkflowService, MAX_LEGACY_ROLE_MENU_ROWS, MAX_LEGACY_ROLE_SELECTED_MENUS,
   parseLegacyRoleSave, type AdminLegacyRoleActor } from '@/services/admin/AdminLegacyRoleWorkflowService';
+import { AdminPermissionService } from '@/services/admin/AdminPermissionService';
 import { ApiException, HttpApiException } from '@/utils/errors';
 import { createToken, md5 } from '@/utils/jwt';
 import { financeMemoryPostgres } from './helpers/financePostgres';
@@ -57,7 +58,7 @@ describe('legacy platform role forms and numeric-menu writes', () => {
     await fixture.db.delete(systemAdmin); await fixture.db.delete(systemRole); await fixture.db.delete(systemMenus);
     await fixture.db.insert(systemMenus).values([
       { id: 1, menuName: '平台', authType: 0 },
-      { id: 2, pid: 1, menuName: '商品父权限', authType: 2, apiUrl: 'product/list', methods: 'GET', sort: 4 },
+      { id: 2, pid: 1, menuName: '商品父权限', type: 1, authType: 1, apiUrl: '', methods: '', menuPath: '/admin/product/product_list', uniqueAuth: 'admin-store-storeProuduct-index', sort: 4 },
       { id: 4, pid: 2, menuName: '商品子权限', authType: 2, apiUrl: 'product/list', methods: 'GET', sort: 3, isShow: 0 },
       { id: 5, pid: 1, menuName: '尚未迁移的旧权限', authType: 2, apiUrl: 'legacy/unmigrated-operation', methods: 'POST', sort: 2 },
       { id: 6, pid: 1, menuName: '无权限孤叶', authType: 0 },
@@ -224,6 +225,27 @@ describe('legacy platform role forms and numeric-menu writes', () => {
     expect((await request('59', { body: payload([1,2]) })).body.status).toBe(200);
     const [row] = await fixture.db.select().from(systemRole).where(eq(systemRole.id, 59)); expect(row.rules).toBe('2');
     for (const checked of [[1],[6],[6,2]]) expect((await request('0', { body: payload(checked) })).body.status).not.toBe(200);
+  });
+  it.each([
+    { id: 2, apiUrl: 'product/list', methods: 'GET' },
+    { id: 3, apiUrl: 'user/list', methods: 'GET' },
+    { id: 3, apiUrl: 'owned-historical-extension', methods: 'GET' },
+    { id: 3, apiUrl: 'setting/role/:id', methods: 'POST' },
+  ])('rejects the former conflicting fixture tuple $id $methods $apiUrl even for super or raw-ID members', async claim => {
+    const invalid={ ...claim, type: 1, authType: 2, menuName: '受保护ID的错误旧夹具', menuPath: '', uniqueAuth: '' };
+    if(claim.id===2)await fixture.db.update(systemMenus).set(invalid).where(eq(systemMenus.id,2));
+    else await fixture.db.insert(systemMenus).values(invalid);
+    const permissions=new AdminPermissionService(container);
+    expect(await permissions.resolveManyRulePermissionKeys([String(claim.id)])).toEqual([[]]);
+    for(const target of [50,99])await fixture.db.update(systemRole).set({rules:String(claim.id)}).where(eq(systemRole.id,target));
+    const before=await allRoles();
+    for(const id of [102,100]){
+      const tree=await request('create',{id});expect(tree.body.status).toBe(200);
+      expect(tree.body.data.menus.map((node:any)=>node.id)).not.toContain(claim.id);
+      expect((await request(`${id===100?99:50}/edit`,{id})).body.status).toBe(409);
+      expect((await request('0',{id,body:payload([claim.id])})).body.status).toBe(409);
+    }
+    expect(await allRoles()).toEqual(before);
   });
   it('never reclassifies explicitly rejected known-policy metadata as opaque, even for super or raw-ID members', async () => {
     const claims = [
