@@ -1,0 +1,45 @@
+{
+  "status": "read-only candidates for a later goal turn; no implementation in this batch",
+  "reviewer": "/root/next_product_gap_scout",
+  "candidates": [
+    {
+      "priority": 1,
+      "scope": "Product recycle/restore lifecycle",
+      "oldRoute": "DELETE /adminapi/product/product/:id",
+      "numericSeed": 169,
+      "sources": [
+        "route/admin.php:1511",
+        "app/controller/admin/v1/product/StoreProduct.php:580",
+        "app/services/product/product/StoreProductServices.php:1011",
+        "view/admin/src/pages/product/productList/index.vue:359",
+        "app/listener/product/DeleteSuccess.php:25"
+      ],
+      "actualGap": "TS alias currently DELETE /product/del/:id only sets isDel1; no source toggle restore, platform child propagation, all-status cart invalidation or source cache effects; modern type6 lacks restore",
+      "sourceNuances": [
+        "Move sets parent is_del1/is_show0; restore only clears is_del",
+        "Platform type0 syncs child pid is_del, not child is_show",
+        "Both directions invalidate ALL parent carts, not just status1",
+        "Store type1 resets is_verify from product_verify_status; field not found in installer/TS schema, investigate actual historical extension before choosing a rule",
+        "Permanent thorough delete is separate and not in restore scope"
+      ]
+    },
+    {
+      "priority": 2,
+      "scope": "Actual four-dimensional catalog filter consumption and supplier selector",
+      "oldRouteMissing": "GET /adminapi/supplier/list",
+      "sources": [
+        "route/admin.php:2459",
+        "app/controller/admin/v1/supplier/SystemSupplier.php:159",
+        "app/services/supplier/SystemSupplierServices.php:295",
+        "view/admin/src/pages/product/productList/index.vue:31"
+      ],
+      "actualGap": "Backend already handles cate_id/brand_id/store_label_id/supplier_id; modern page and DTO do not expose filters. Existing supplier directory pagination/fields/auth is different from source full id+supplier_name selector. Verify correct PHP file paths before implementation.",
+      "sourceNuances": [
+        "Selector includes is_show0 and is_del0, orders id DESC, no contact/account fields",
+        "No proven selector numeric seed; do not invent grant",
+        "Preserve existing count/header quirks, wire array formats and stale-await fencing"
+      ]
+    }
+  ],
+  "frozenCurrentSourceUnmodifiedByScout": true
+}

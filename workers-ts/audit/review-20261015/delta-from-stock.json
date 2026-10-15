@@ -1,0 +1,163 @@
+{
+  "baselineCommit": "b05fefe90e74055344cedf2135de47d77b539769",
+  "previousFreezeDigest": "5dc796c85f8a53ba57f4e0d8b49dd8f6ecba4474c997575b6fa4a5a6f559594d",
+  "newFreezeDigest": "df28b2130a93d3b0a563f419ba95ecb371d7a69ff4cfe30b7908caaa16df58e4",
+  "changedInputs": [
+    {
+      "path": "view/admin-ts/src/api/product.ts",
+      "before": "2d1e7f1eed5c29473347ee849de1e74fccca598a0ac75b32849c882fbb43fee8",
+      "after": "8f7c547a8699f4e9a341efddaeb0512e47b01c7ca1314cdd05190a2774576a21"
+    },
+    {
+      "path": "view/admin-ts/src/api/productModeration.ts",
+      "before": null,
+      "after": "bcc182916ea310ff596dd03b96c568a14acfdf645960c6a84ab9631add1cdf0d"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductList.vue",
+      "before": "fb7ff4830dc576213e211b424671989cafb137b4f0bd9f3c69aed4c758b99b5e",
+      "after": "ef3523e6d2901135a643e10e9c3767e9387544d48c2086e6ea67bbff8a8bf241"
+    },
+    {
+      "path": "view/admin-ts/src/pages/product/ProductModerationDialog.vue",
+      "before": null,
+      "after": "771caf390b31ad24a1a84810dbedc72783e3b828915cf769c6a9bc409513fae9"
+    },
+    {
+      "path": "workers-ts/migrations/0176_product_auto_shelf.sql",
+      "before": null,
+      "after": "6bdc0b11ff0c60901fdbe73f809a13f3f586f8f7ca28ccd301c4b6002c943852"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "before": "52a934d11b693674f4a21fb194f4abefb6e2617f599a453ab27820ef02f8f954",
+      "after": "977038f5b25e713764b896cfbde0940022b0e6745a5903ee52af8ee25c66176b"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminProductModerationController.ts",
+      "before": null,
+      "after": "20c76c182b33945ac4920bb7288f3b9f9187b3963d19a23b21a99c3d74fd3c99"
+    },
+    {
+      "path": "workers-ts/src/env.ts",
+      "before": "a848ea24ade9801ba1f1301e8d697509d69c3332a206248dfcddffd632e91325",
+      "after": "93fc3a8f9d665e1f01f55a2750da2826cedfbd4dfbcc18fb186f54ec3e1146e0"
+    },
+    {
+      "path": "workers-ts/src/index.ts",
+      "before": "921c8dac000c19a2f4a8c4d1234cea5ddd5471f20188777557af7b5adf6f830e",
+      "after": "ac6fa246f356b63f851f20dd2f0055eb4e86ba9eff8b96762fb9ec230a321d27"
+    },
+    {
+      "path": "workers-ts/src/migrations/productAutoShelf.ts",
+      "before": null,
+      "after": "9ba4fbefdafcbd3703904f4d5cd622ddcc345809831cf6847223e664738f0022"
+    },
+    {
+      "path": "workers-ts/src/migrations/runProductAutoShelf.ts",
+      "before": null,
+      "after": "6128ce829c6efa177f217c7e1050ec3b52e8aa5a2e7df484135129d44aa9798e"
+    },
+    {
+      "path": "workers-ts/src/models/schema/product.ts",
+      "before": "aeab9bf36b6695f66de4e2ac4fd8cc316730a15a2f1ffa4c3eeec0b0e32c5c9b",
+      "after": "2f43140480f12dc77c91c21721d1f5e948e3de673f37b35d1ea6ac8c6222e25a"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "before": "65fb505233dd6ae61e8a7c58eb6a99dd36b04a202d060445c11fa8b2b435188b",
+      "after": "5c070a6168a7246402ab9461e13fb5a5ae56c5b20db8f6cf9bdbaf8ad876cf78"
+    },
+    {
+      "path": "workers-ts/src/services/MigrationService.ts",
+      "before": "132d442dd171306aba21a23c34bcd6acc6eeab6bf012d5d1238486b9a6462ec8",
+      "after": "c335d0c8c7afe3462d8f9e74f11463c7f7c6c6d71d768b6856b6c237298d2000"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "before": "88c4a83778539be4d6c66fa85dfc2f8ba379e8296a3d16d4e554d107bad96ef8",
+      "after": "f9f84100b3f0b488fd2c5037c304ea71d7599ff31f381ffd6f648baa82e60966"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationInput.ts",
+      "before": null,
+      "after": "4f9a743332552b7077cb553d96d9282e84d65eb25644ca2ab5b3ea86e9371887"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationService.ts",
+      "before": null,
+      "after": "55eb1343feaca81e8a8a56e3c0659a693db7fd007289c76c42967f7b72c1b51d"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderQueueDeadLetterService.ts",
+      "before": "d9b893b2b15980d0023881ded38b93cddc0f28873db4b8143ef94c00a0b0b4aa",
+      "after": "2f90eee759a60731d12373a92065558718e805213acc7f0f5e78c0ff8bfa7c13"
+    },
+    {
+      "path": "workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+      "before": "33dc4aa4d0eb0fea32648ff152050d1b8c6df5858bbfc4e546b190d4ef9f46d7",
+      "after": "d6e61f16ccfa342e177ff419d29d927459fc1976951d97b1bae41366da876bda"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductAutoShelfService.ts",
+      "before": null,
+      "after": "08af044b20f2e751df416778d2dc2e9d13fdfae25a4063bd66e2b1e064cf746b"
+    },
+    {
+      "path": "workers-ts/src/services/system/LegacyRuntimeCatalogService.ts",
+      "before": "fa46b53c7257be05c9246e2730fa3254db0069bf5f3a307d5c259014554cbced",
+      "after": "4454b9c14025c5a96e34d8f0438338f87a22c60e612331df082e35a619639c7b"
+    },
+    {
+      "path": "workers-ts/test/admin-product-moderation-frontend.test.ts",
+      "before": null,
+      "after": "80ecbafd40a720c8589e8b52f65fdca4221642fbfe3d4c634af2e521e552394f"
+    },
+    {
+      "path": "workers-ts/test/admin-product-moderation-native.test.ts",
+      "before": null,
+      "after": "38a0c35d7313b62f0e1f9630d2a8546569c3bf2eae6ea2a77e51bffc1a57d055"
+    },
+    {
+      "path": "workers-ts/test/admin-product-moderation-tabs.test.ts",
+      "before": null,
+      "after": "42283920ae37f5b15b6b22101bf29e2fe8419d6c7fa6a0f26a33622f61ff0e90"
+    },
+    {
+      "path": "workers-ts/test/admin-product-moderation.test.ts",
+      "before": null,
+      "after": "356954acbf738c18c051849f4037d5f026ebc6e13de486fd72647d3257bd1bd2"
+    },
+    {
+      "path": "workers-ts/test/helpers/adminProductModeration.ts",
+      "before": null,
+      "after": "d039c41a0b07c875912321e8077181b5e7e708b900a14add6b152dfb43d8d48e"
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf-native.test.ts",
+      "before": null,
+      "after": "05a34cb20fb72017e3132ca7681da04beb27f221cc890382e3e8824208bd2dff"
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf.test.ts",
+      "before": null,
+      "after": "90f7e8b413226cd5f7f396ba4ea5364b5deb3ef5f1a0f73c976fedced779eed6"
+    },
+    {
+      "path": "workers-ts/test/runtime/product-auto-shelf-queue-runtime.test.ts",
+      "before": null,
+      "after": "5823c139767a2999ebd2caede84af4c23d78745392b1f395ae2340a28a5a3703"
+    },
+    {
+      "path": "workers-ts/test/scheduled-maintenance.test.ts",
+      "before": "444b7edd475c05f119381c32929dde26203e25aed0de9bb376688ff11842ea78",
+      "after": "518564f847be110ffca51b3160f6ee22872036fa248cb1190bd47399daea30f9"
+    },
+    {
+      "path": "workers-ts/wrangler.toml",
+      "before": "49f1e4df38dbd3bc5dabd7181e5b87581d7a15252c9109cd57e7ff825ec2a35f",
+      "after": "6812af137a5572adaa8b08fe46c5abb2290ee7dab5b0be8d458c18133fca8842"
+    }
+  ],
+  "removedInputs": []
+}

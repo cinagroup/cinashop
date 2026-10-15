@@ -482,6 +482,7 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   }
   // Central review moderation has independent capabilities even on old product URLs.
   if (isProductReplyRoute(route)) return productReplyPermission(method.toUpperCase(), route);
+  if (isProductModerationRoute(route)) return productModerationPermission(method.toUpperCase(), route);
   if (isProductCatalogReadRoute(route)) return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'product.view' : null;
   if (isOperationalGroupRoute(route)) return operationalGroupPermission(method.toUpperCase(), route);
   if (isProductCategoryRoute(route)) return productCategoryPermission(method.toUpperCase(), route);
@@ -753,6 +754,22 @@ function unprovedProductStockMenuClaim(menu: LegacyAdminMenuMetadata): boolean {
     || route.toLowerCase() === 'product/stock/notifications/socket');
 }
 
+function isProductModerationRoute(route: string): boolean {
+  return /^product\/product\/(?:verify|remove|get_verify|set_verify)(?:\/|$)/i.test(route);
+}
+function productModerationPermission(method: string, route: string): string | null {
+  const parts = route.split('/');
+  if (parts.length !== 4 || !legacyAdminId(parts[3])) return null;
+  if (['GET', 'HEAD'].includes(method) && ['verify', 'remove', 'get_verify'].includes(parts[2])) return 'product.view';
+  return method === 'POST' && parts[2] === 'set_verify' ? 'product.manage' : null;
+}
+/** No installer numeric API seed proves any of the four review contracts.
+ * Reject claims before generic API/path/auth and opaque-menu fallbacks. */
+function unprovedProductModerationMenuClaim(menu: LegacyAdminMenuMetadata): boolean {
+  return [normalizeAdminRoute(menu.apiUrl), normalizeAdminRoute(menu.menuPath.replace(/^\/admin(?=\/|product\/)/i, ''))].some(isProductModerationRoute)
+    || /^product-product-(?:verify|remove|get_verify|set_verify)$/i.test(menu.uniqueAuth);
+}
+
 function isProductCatalogReadRoute(route: string): boolean {
   return ['product/product', 'product/product/type_header', 'product/product/list'].includes(route);
 }
@@ -1001,7 +1018,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (unprovedProductStockMenuClaim(menu) || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1436,6 +1453,7 @@ export class AdminPermissionService {
         // metadata into a protected or generic API tuple.
         if (menu.id === 579 || menu.id === 580) continue;
         if (unprovedProductStockMenuClaim(menu)) continue;
+        if (unprovedProductModerationMenuClaim(menu)) continue;
         const catalogReadBinding = productCatalogReadMenuBinding(menu);
         if (catalogReadBinding.protected) {
           if (catalogReadBinding.permission) resolved.add(catalogReadBinding.permission);

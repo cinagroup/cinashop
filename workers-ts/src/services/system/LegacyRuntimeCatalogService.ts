@@ -62,6 +62,10 @@ export const LEGACY_TIMER_TASK_NAMES: Readonly<Record<string, string>> = {
 const TIMER_RUNTIME: Readonly<
   Record<string, { workerJob: string; note: string; status?: "partially_implemented" }>
 > = {
+  auto_show: {
+    workerJob: 'product_auto_shelf',
+    note: 'Worker 候选通过定时根任务、时间/ID分页扫描和引用型Queue消费者自动上下架；保留先上后下及原时间字段，尚未发布验收。',
+  },
   auto_take: {
     workerJob: "auto_receipt",
     note: "Worker 已通过可重放 scheduled 根任务和 Queue 消费者实现；执行阈值来自商城配置。",

@@ -1,0 +1,15 @@
+{
+  "ports": {
+    "4979": {
+      "connectable": false
+    },
+    "4980": {
+      "connectable": false
+    }
+  },
+  "agentCreatedTabsClosed": true,
+  "temporaryViewportReset": true,
+  "mockExited": 1,
+  "viteExited": 130,
+  "artifactsRemainOutsideRepository": true
+}

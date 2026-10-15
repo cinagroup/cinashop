@@ -1,0 +1,8 @@
+{
+  "path": "view/admin-ts/src/pages/product/ProductModerationDialog.vue",
+  "before": "771caf390b31ad24a1a84810dbedc72783e3b828915cf769c6a9bc409513fae9",
+  "after": "d7bbf88fe6dc85418039030c92e187ae5357cfb12587da4c47d770cde819e4c1",
+  "previousFreezeDigest": "011e4d54e6318d564087be5f2c713c0e5c387ca52a1649133d2ec038ba085605",
+  "finalDigest": "33758afa02f2e31037d1f88ea1b3289906ae7d829a27e02e2b88acb90fefe464",
+  "change": "Hoist same four status labels into explicitly typed Record<string,string> for dynamic string indexing; rendered labels and unknown-state fallback unchanged. Queued final frontend pass and Admin types/build consume this version."
+}

@@ -1,0 +1,22 @@
+{
+  "name": "queue-runtime",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.worker.config.ts",
+    "--maxWorkers=1",
+    "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+    "test/runtime/worker-runtime.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=audit/review-20261015/queue-runtime.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T01:13:12.035914+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T01:13:41.161592+00:00",
+  "exitCode": 0,
+  "log": "queue-runtime.log"
+}

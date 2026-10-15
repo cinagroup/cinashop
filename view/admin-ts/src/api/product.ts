@@ -3,6 +3,7 @@
  * 对应后端 /adminapi/product/* (已实现的 CRUD)
  */
 import request, { getData } from "@/utils/request";
+import { beginModerationRead } from './productModeration';
 import type { AdminProduct } from "@/types/admin";
 
 const previewMode =
@@ -247,6 +248,9 @@ export interface AdminProductCatalogItem extends Omit<AdminProduct, "stock"> {
   stock_attr?: boolean;
   branch_stock?: number;
   spec_type?: number;
+  refusal?: string;
+  auto_on_time?: number;
+  auto_off_time?: number;
 }
 export interface AdminProductCatalogHeader { type: number; name: string; count: number; }
 export interface AdminProductCatalogQuery { page?: number; limit?: number; store_name?: string; type?: number | ""; }
@@ -265,10 +269,13 @@ export async function apiAdminProductList(params: AdminProductCatalogQuery, sign
     const actualPage = rows.length <= limit ? 1 : page;
     return { list: rows.slice((actualPage - 1) * limit, actualPage * limit), count: rows.length };
   }
+  const observe = await beginModerationRead();
   const value = await getData<{ list: AdminProductCatalogItem[]; count: number }>(request.get("/product/product", { params, signal }));
   if (!value || !Array.isArray(value.list) || value.list.some(row => !row || !Number.isSafeInteger(row.id) || row.id < 1 || row.id > 2_147_483_647 ||
     row.stock !== null && !Number.isSafeInteger(row.stock))) throw Error("商品列表响应格式错误");
-  return { list: value.list, count: catalogCount(value.count) };
+  const count = catalogCount(value.count);
+  observe(value.list.map(row => row.id));
+  return { list: value.list, count };
 }
 export async function apiAdminProductTypeHeader(params: AdminProductCatalogQuery, signal?: AbortSignal): Promise<AdminProductCatalogHeader[]> {
   if (previewMode) return catalogStates.map((type, index) => ({ type, name: ["销售中", "仓库中", "已售罄", "库存预警", "回收站", "待审核", "审核未通过", "强制下架"][index]!, count: type === 1 ? previewProducts.length : 0 }));

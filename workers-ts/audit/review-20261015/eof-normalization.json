@@ -1,0 +1,12 @@
+{
+  "path": "view/admin-ts/src/api/productModeration.ts",
+  "beforeSha256": "bcc182916ea310ff596dd03b96c568a14acfdf645960c6a84ab9631add1cdf0d",
+  "afterSha256": "17c469ac46c01f866e229206048139285b089a67f3709950b4bff7db9ece9051",
+  "removedBytes": 1,
+  "beforeDigest": "33758afa02f2e31037d1f88ea1b3289906ae7d829a27e02e2b88acb90fefe464",
+  "afterDigest": "4758c8bb69e44867b535f484ab63305109e9c4209b520a4c93476d2286ef8932",
+  "proof": "before.rstrip(newline)==after.rstrip(newline); sole change removes one terminal empty line",
+  "executableBytesBeforeTrailingNewlinesIdentical": true,
+  "testsRerun": false,
+  "reason": "Whitespace-only normalization required by staged git diff --check; no executable change"
+}

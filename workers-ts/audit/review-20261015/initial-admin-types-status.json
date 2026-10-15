@@ -1,0 +1,15 @@
+{
+  "name": "initial-admin-types",
+  "argv": [
+    "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "../view/admin-ts/node_modules/vue-tsc/bin/vue-tsc.js",
+    "-b",
+    "../view/admin-ts/tsconfig.json"
+  ],
+  "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+  "startedAt": "2026-10-15T00:57:29.448950+00:00",
+  "serialWrapperRequired": true,
+  "completedAt": "2026-10-15T00:57:55.318634+00:00",
+  "exitCode": 0,
+  "log": "initial-admin-types.log"
+}

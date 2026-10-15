@@ -124,6 +124,7 @@ export default {
       isPinkTimeoutMessage,
       scheduledRetryDelaySeconds,
     } = await import("./services/order/ScheduledMaintenanceService");
+    const { ProductAutoShelfService, isProductAutoShelfMessage, isProductAutoShelfScanMessage } = await import('./services/product/ProductAutoShelfService');
     const {
       consumeSignReminderQueueMessage,
       isSignReminderMessage,
@@ -547,6 +548,21 @@ export default {
         continue;
       }
 
+      if (isProductAutoShelfMessage(msg.body) || isProductAutoShelfScanMessage(msg.body)) {
+        try {
+          const products = new ProductAutoShelfService(container, env);
+          const result = isProductAutoShelfScanMessage(msg.body) ? await products.scan(msg.body) : await products.process(msg.body);
+          emitOperationalEvent('info', { event: String(result.event), component: 'queue', operation: 'product_auto_shelf', outcome: 'success', durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts });
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = scheduledRetryDelaySeconds(msg.attempts);
+          emitOperationalEvent('error', { event: 'scheduled_product_shelf_failed', component: 'queue', operation: 'product_auto_shelf', outcome: 'retry', durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts, retryDelaySeconds: delaySeconds, errorCode: operationalErrorCode(error) });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
       if (isScheduledMaintenanceMessage(msg.body) || isScheduledOrderMessage(msg.body)) {
         try {
           const result = isScheduledMaintenanceMessage(msg.body)
@@ -740,15 +756,19 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<void> {
-    ctx.waitUntil(handleScheduled(env, controller.scheduledTime));
+    ctx.waitUntil(handleScheduled(env, controller.scheduledTime, controller.cron));
   },
 } satisfies ExportedHandler<Env, OrderMessage>;
 
 /** Cron stays off the database critical path and only writes replayable root jobs. */
-async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
-  const { enqueueScheduledRun } = await import(
+async function handleScheduled(env: Env, scheduledAt: number, cron: string): Promise<void> {
+  const { enqueueScheduledRun, createProductAutoShelfRoot } = await import(
     "./services/order/ScheduledMaintenanceService"
   );
+  if (cron === '* * * * *') {
+    await env.ORDER_QUEUE.send(createProductAutoShelfRoot(scheduledAt), { contentType: 'json' });
+    return;
+  }
   await Promise.all([
     env.ORDER_QUEUE.send({
       action: "dispatchPaymentCallbackOutbox",

@@ -1,0 +1,85 @@
+{
+  "capturedAt": "2026-10-15T01:08:03.702803+00:00",
+  "flow": "actual Admin /product?type=0 -> review -> Shanghai schedule -> below-settlement confirmation -> committed synthetic response loss -> disabled replay -> later catalog read -> explicit acknowledgement -> new forced removal",
+  "runtime": "installed Browser plugin through cua_repl, actual Vue/ElementPlus/Axios, synthetic loopback HTTP/WS only",
+  "url": "http://127.0.0.1:4980/product",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "checks": {
+    "identity": true,
+    "meaningfulDOM": true,
+    "noViteOverlay": true,
+    "targetProductConsoleCleanInIndependentTab": true,
+    "priceConfirmation": true,
+    "datetimeStringExactly": "2026-11-15 13:25:00",
+    "unknownOutcomeNoReplay": true,
+    "laterReadManualAcknowledgement": true,
+    "newRemovalReasonInput": true,
+    "newRemovalSavedAndCountsRefreshed": true,
+    "narrowDocumentWidth": 390
+  },
+  "consoleQualification": "Initial login redirect Dashboard failed to render fixture incomplete home/header (sales undefined); unrelated to product flow. Original console.json retained. Independent direct product final tab has empty warn/error log product-console.json. No claim of whole-dashboard QA.",
+  "exclusions": [
+    "production services",
+    "real PostgreSQL in browser",
+    "provider side effects",
+    "all browsers",
+    "independent full mobile approval sequence",
+    "recovery-mobile.png was captured during viewport transition, excluded from evidence"
+  ],
+  "artifacts": [
+    {
+      "path": "/tmp/cinashop-moderation-qa/console.json",
+      "sha256": "5eecb0920cd54cc06dfada507ea943dac1e33e5b958f33acb09069abdc590436",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/final-desktop.png",
+      "sha256": "63baaa19ffa9993314c85d23bb0c241df2e9d7b72de79949c2ffabd18b44817f",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/mock.mjs",
+      "sha256": "f7ab058c9dd98d8cdc18d8b9eb52101c04ca351bc594255256fda06fd6cc373f",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/product-console.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/product-final-dom.txt",
+      "sha256": "cf1f839b74b49899ed2cc7d924605d1bcbb253f2259999701420b0a3ad8dc356",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/remove-mobile.png",
+      "sha256": "146276895f20a3e8255d4a0bd197d0101ec71921d13deacd006c06a395d002ce",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/requests.jsonl",
+      "sha256": "9b896bcc3a5f7a0eaddb5414541f30b3f3a5e8f6628fb20ea9cee0d1df4aab08",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/schedule-desktop.png",
+      "sha256": "cf9518ef4ac91f8a675e2383665fa70f1134af0b4cd6a858c5b70b3b20ea36e7",
+      "includedInGit": false
+    },
+    {
+      "path": "/tmp/cinashop-moderation-qa/unknown-desktop.png",
+      "sha256": "68d300fea5abab37b05959314e9286492d3ecd7cae21d583e2a492033d77d5dd",
+      "includedInGit": false
+    }
+  ]
+}
