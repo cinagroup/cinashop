@@ -7,7 +7,7 @@ import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-cat
 import { assertAllTablesAligned, TABLE_CATALOG_BASE_COUNT, TABLE_CATALOG_COUNT, TABLE_CATALOG_FIELDS } from "../scripts/data-migration/table-catalog-contracts";
 import { verifyTableCatalogGate } from "./helpers/tableCatalogGateAudit";
 import { assertRegisteredModelCohort, registeredTableNames } from './helpers/registeredCatalogCohort';
-import { MANUAL_RED_NOTE_ORM_TABLE_NAMES } from './helpers/completeConstructionInventory';
+import { MANUAL_RED_NOTE_ORM_TABLE_NAMES, ERP_ORM_TABLE_NAMES } from './helpers/completeConstructionInventory';
 
 const table = (key: string): CatalogRow => ({
   key, name: key, kind: "r", persistence: "p", rowSecurity: false,
@@ -88,7 +88,7 @@ describe("DB-009F complete table catalog hard gate", () => {
     } finally { await db.close(); }
   }, 60_000);
 
-  it("retains the fixed historical 285-table cohort and binds exactly two reviewed bare manual ORM tables", async () => {
+  it("retains the fixed historical 285-table cohort and binds exactly two manual and four ERP bare ORM tables", async () => {
     const { generateDrizzleJson } = await import('drizzle-kit/api');
     const models = await import('../src/models/schema');
     const snapshot = generateDrizzleJson(models) as { tables: Record<string, {columns?:Record<string,unknown>}> };
@@ -97,9 +97,11 @@ describe("DB-009F complete table catalog hard gate", () => {
       'public.customer_city_delivery_job', 'public.store_order_promotion_gift_coupon_reward'];
     assertRegisteredModelCohort(snapshot);
     const manual = MANUAL_RED_NOTE_ORM_TABLE_NAMES.map(name=>'public.'+name);
-    expect(keys).toHaveLength(287); expect(new Set(keys).size).toBe(287);
+    const erp=ERP_ORM_TABLE_NAMES.map(name=>'public.'+name);
+    expect(keys).toHaveLength(291); expect(new Set(keys).size).toBe(291);
+    expect(keys.filter(key=>erp.includes(key))).toEqual(erp);
     expect(keys.filter(key=>manual.includes(key))).toEqual(manual);
-    const historical=keys.filter(key=>!manual.includes(key));
+    const historical=keys.filter(key=>!manual.includes(key)&&!erp.includes(key));
     expect(historical).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
     expect(historical).toHaveLength(285);
     expect(keys.filter(key => additions.includes(key))).toEqual(additions);

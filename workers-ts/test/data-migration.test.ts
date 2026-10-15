@@ -78,8 +78,12 @@ describe("MySQL to PostgreSQL schema audit", () => {
   it('rejects unknown, omitted or aliased registered tables and changed reviewed additions',async()=>{
     const api=await import('drizzle-kit/api'),models=await import('../src/models/schema');
     const snapshot=api.generateDrizzleJson(models);assertRegisteredModelCohort(snapshot);
+    expect(Object.keys(snapshot.tables)).toHaveLength(291);
     for(const mutate of [
       (value:typeof snapshot)=>{delete value.tables['public.customer_city_delivery_attempt'];},
+      (value:typeof snapshot)=>{delete value.tables['public.erp_connection'];},
+      (value:typeof snapshot)=>{delete value.tables['public.erp_operation'].columns.request_hash;},
+      (value:typeof snapshot)=>{value.tables['public.erp_auth_state'].columns.unknown=value.tables['public.erp_auth_state'].columns.state_hash;},
       (value:typeof snapshot)=>{value.tables['public.unregistered']=value.tables['public.store_order'];},
       (value:typeof snapshot)=>{value.tables['private.store_order']=value.tables['public.store_order'];delete value.tables['public.store_order'];},
       (value:typeof snapshot)=>{delete value.tables['public.store_order_promotion_gift_coupon_reward'].columns.auxiliary_id;},

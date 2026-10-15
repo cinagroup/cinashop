@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { assertRegisteredModelCohort, registeredTableNames } from './helpers/registeredCatalogCohort';
 import { createHash } from 'node:crypto';
+import { MANUAL_RED_NOTE_ORM_TABLE_NAMES, ERP_ORM_TABLE_NAMES } from './helpers/completeConstructionInventory';
 import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { sql, type SQL } from "drizzle-orm";
@@ -97,25 +98,52 @@ describe("standalone sequence transaction execution boundary", () => {
     // the generator's original order. Every missing, extra or changed DDL fails.
     const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
     const historicalSnapshot=structuredClone(snapshot);
-    for(const name of ['public.store_order_invoice_manual_red_note','public.store_order_invoice_manual_red_review'] as const)
-      delete historicalSnapshot.tables[name];
+    for(const name of [...MANUAL_RED_NOTE_ORM_TABLE_NAMES,...ERP_ORM_TABLE_NAMES])
+      delete historicalSnapshot.tables['public.'+name];
     expect(Object.keys(historicalSnapshot.tables).sort()).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
+    // Main also expands this one CHECK without adding a table or statement.
+    // Bind both exact values before projecting the separately reviewed old DDL.
+    const oldEvents=['order.paid','order.delivery.notice','order.refund.refused.notice',
+      'order.second_card.advent.notice','order.second_card.expired.notice','withdrawal.approved.notice',
+      'withdrawal.refused.notice','withdrawal.applied.notice','withdrawal.staff.refresh',
+      'order.presale.fulfillment','order.pink.success.notice'];
+    const checkValue=(events:string[])=>`"store_order_outbox"."event_type" IN (\n      ${events.map(event=>"'"+event+"'").join(',\n      ')}\n    )`;
+    const currentCheck=snapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck;
+    expect(currentCheck).toEqual({name:'soob_event_type_ck',value:checkValue([...oldEvents,'product.stock.effects'])});
+    historicalSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=
+      {name:'soob_event_type_ck',value:checkValue(oldEvents)};
     const historicalStatements=await api.generateMigration(api.generateDrizzleJson({}),historicalSnapshot);
-    const exactManualAddition=await api.generateMigration(historicalSnapshot,snapshot);
+    const manualSnapshot=structuredClone(historicalSnapshot);
+    for(const name of MANUAL_RED_NOTE_ORM_TABLE_NAMES)manualSnapshot.tables['public.'+name]=snapshot.tables['public.'+name];
+    const exactManualAddition=await api.generateMigration(historicalSnapshot,manualSnapshot);
+    const manualStatements=await api.generateMigration(api.generateDrizzleJson({}),manualSnapshot);
+    const stockSnapshot=structuredClone(manualSnapshot);
+    stockSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=structuredClone(currentCheck);
+    const exactStockUpgrade=await api.generateMigration(manualSnapshot,stockSnapshot);
+    const stockStatements=await api.generateMigration(api.generateDrizzleJson({}),stockSnapshot);
+    const exactErpAddition=await api.generateMigration(stockSnapshot,snapshot);
     const statementDigest=(statements:string[])=>createHash('sha256').update(JSON.stringify([...statements].sort()),'utf8').digest('hex');
-    // The complete 287-table model was checked above. Preserve the independent
-    // 285-table pin and prove its exact six-statement, two-table addition.
+    // Keep the independent historical285/1191 and manual287/1197 pins intact.
+    // The current291 model adds exactly the four reviewed ERP table statements
+    // and the separately pinned stock CHECK replacement changes no table count.
     expect(statementDigest(historicalStatements))
       .toBe('446204483beeaac88d9f77ea90d5bd294a885fb24668e05b4ae6cf37c00ff400');
     expect(historicalStatements).toHaveLength(1191);
     expect(exactManualAddition).toHaveLength(6);
     expect(statementDigest(exactManualAddition)).toBe('35ca850d550eea2cc29f170a675b7d12aa1683f6f8b20baa7c388cd5d1401da6');
-    expect([...currentStatements].sort()).toEqual([...historicalStatements,...exactManualAddition].sort());
-    expect(statementDigest(currentStatements)).toBe('3126c12be33a6966301f389a1e4bb50f104aca9e70816620040b85afb20a5b3d');
-    expect(currentStatements).toHaveLength(1197);
-    // The independently pinned previous sequence has no owning-column ALTER;
-    // the historical 1190 statements retain the exact same six new statements.
-    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length);
+    expect([...manualStatements].sort()).toEqual([...historicalStatements,...exactManualAddition].sort());
+    expect(statementDigest(manualStatements)).toBe('3126c12be33a6966301f389a1e4bb50f104aca9e70816620040b85afb20a5b3d');
+    expect(manualStatements).toHaveLength(1197);
+    expect(exactStockUpgrade).toHaveLength(2);
+    expect(statementDigest(exactStockUpgrade)).toBe('2c23cebf5370a626d1cb169178ae58bbcad2e647ea103cf018e18363f9d30e90');
+    expect(stockStatements).toHaveLength(1197);
+    expect(exactErpAddition).toHaveLength(4);
+    expect(statementDigest(exactErpAddition)).toBe('8b30b93b6463561ec5dddc473be73fa5dcdc5370992a3781851fa8b682142001');
+    expect([...currentStatements].sort()).toEqual([...stockStatements,...exactErpAddition].sort());
+    expect(statementDigest(currentStatements)).toBe('fbfe3b21896a71969856d5341d08bccca75f3210dcae7676eeb4b4a1caca1a73');
+    expect(currentStatements).toHaveLength(1201);
+    // The independently pinned previous sequence has no owning-column ALTER.
+    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length+exactErpAddition.length);
     expect(fullPath.generatedProposalStatements).toBe(2);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([

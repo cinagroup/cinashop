@@ -7,7 +7,7 @@ import type { DbClient } from '../../src/lib/di';
 import { parseCreateTables } from '../../scripts/data-migration/schema-audit';
 import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '../../src/migrations/customerCityDelivery';
 import { composeReviewedCashierAbandonCatalog, assertCashierAuditManualRedNoteCatalog } from '../../scripts/data-migration/cashier-abandon-catalog';
-import { completeConstructionTableNames, MANUAL_RED_NOTE_ORM_TABLE_NAMES } from './completeConstructionInventory';
+import { completeConstructionTableNames, MANUAL_RED_NOTE_ORM_TABLE_NAMES, ERP_ORM_TABLE_NAMES } from './completeConstructionInventory';
 import { inspectInvoiceManualRedNote } from '../../src/migrations/invoiceManualRedNoteCatalog';
 
 // Fixed independent 281-table SQL cohort through 0169, before the five reviewed
@@ -133,6 +133,19 @@ const manualRedNoteColumns = {
 const manualRedNoteExplicitDeclarations = [
   ['invoiceManualRedNote.ts',manualRedNoteSourceSha256,['store_order_invoice_manual_red_note','store_order_invoice_manual_red_review']],
 ] as const;
+// Independently reviewed main ERP model and offline DDL; neither is runAll SQL.
+const erpColumns = {"erp_auth_state":["state_hash","connection_id","connection_revision","capability_version","app_key","credential_fingerprint","actor_id","actor_auth_version","actor_expires_at","required_permission","created_at","expires_at","state","code_hash","exchange_lease_hash","lease_expires_at","consumed_at","error_code"],"erp_connection":["id","provider","name","state","revision","app_key","credential_fingerprint","capability_hash","capability_version","rotated_at","bindings","scope_revision","shop_observation_hash","created_by","updated_by","created_at","updated_at","revoked_at","revoke_reason"],"erp_credential":["connection_id","version","app_key","credential_fingerprint","access_token_sealed","refresh_token_sealed","issued_at","expires_at","refresh_after","auth_state_hash","shop_observation_hash","refresh_lease_hash","refresh_lease_expires_at","updated_at","state","error_code"],"erp_operation":["id","connection_id","kind","business_key","provider_event_id","request_hash","source_ts","received_at","connection_revision","capability_version","scope_revision","credential_version","state","lease_hash","lease_expires_at","attempt_count","scope","observation_hash","observed_at","provider_facts","business_result","payment_admission_id","error_code","created_at","updated_at","completed_at"]} as const;
+function assertErpSourceBasis() {
+  const model=readFileSync(resolve(root,'src/models/erp.ts'),'utf8').replace(/\r\n/g,'\n');
+  const ddl=readFileSync(resolve(root,'src/migrations/maintenance/0181_erp_connection_lifecycle.sql'),'utf8').replace(/\r\n/g,'\n');
+  assert.equal(digest(model),'553cde9f8091b14c5ffcd2046e20654466844a4837d341a79de2dba4860a22ec','Complete reviewed ERP model changed');
+  assert.equal(digest(ddl),'52bd7739a29c966a07b358c240f43898b4c51b21861d27152b1cf8573b433f64','Complete reviewed ERP maintenance DDL changed');
+  const parsed=parseCreateTables(ddl,'postgres');
+  assert.deepEqual([...parsed.keys()].sort(),[...ERP_ORM_TABLE_NAMES]);
+  assert.deepEqual(Object.keys(erpColumns).sort(),[...ERP_ORM_TABLE_NAMES]);
+  for(const [table,columns] of Object.entries(erpColumns))
+    assert.deepEqual([...parsed.get(table)!.columns.keys()],columns);
+}
 const ordinaryExplicitDeclarations = [
   ['cashierOrdinary.ts','5da40f39afd13ea03f43865ed5e88d3e7af6a448d0c7042ce9e47091c67d8d79',
     ['cashier_ordinary_cart_v1','cashier_ordinary_draft_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1']],
@@ -210,16 +223,16 @@ export function registeredTableNames(path:'external'|'embedded'|'orm',scope:Regi
   const historical=path==='embedded'?embeddedNames:path==='external'?externalNames:ormNames;
   if(scope==='historical')return historical;
   assert.equal(path,'orm','Only actual ORM construction may include the bare manual red-note realm');
-  assertManualRedNoteSourceBasis();
-  const current=[...historical,...MANUAL_RED_NOTE_ORM_TABLE_NAMES].sort();
-  assert.deepEqual(current,completeConstructionTableNames('orm'),'Current ORM must be the independent historical 285 plus exactly the two reviewed bare tables');
+  assertManualRedNoteSourceBasis(); assertErpSourceBasis();
+  const current=[...historical,...MANUAL_RED_NOTE_ORM_TABLE_NAMES,...ERP_ORM_TABLE_NAMES].sort();
+  assert.deepEqual(current,completeConstructionTableNames('orm'),'Current ORM must be the independent historical 285 plus exactly the two reviewed manual and four ERP bare tables');
   return current;
 }
 export function assertRegisteredModelCohort(snapshot:{tables:Record<string,{columns?:Record<string,unknown>}>}) {
   assert.deepEqual(Object.keys(snapshot.tables).sort(),registeredTableNames('orm').map(name=>'public.'+name));
   for(const [table,contract] of Object.entries(additions))
     assert.deepEqual(Object.keys(snapshot.tables['public.'+table].columns??{}),contract.columns);
-  for(const [table,columns] of Object.entries(manualRedNoteColumns))
+  for(const [table,columns] of Object.entries({...manualRedNoteColumns,...erpColumns}))
     assert.deepEqual(Object.keys(snapshot.tables['public.'+table].columns??{}),columns);
 }
 export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>,path:'external'|'embedded'|'orm',scope:RegisteredCatalogScope=path==='orm'?'current-bare-orm':'historical') {

@@ -575,6 +575,16 @@ if (schemaMaintenance) {
     'test/public-product-catalog-promotion-slots.test.ts',
     'test/pc-product-detail-contract.test.ts',
     'test/v2-public-diy-compatibility-migration.test.ts',
+    // Exact merged-branch regression suites; each runs only on this owned cluster.
+    'test/customer-cashier-abandon-catalog.test.ts',
+    'test/admin-frontend-api-audit.test.ts',
+    'test/admin-legacy-role-history.test.ts',
+    'test/data-migration.test.ts',
+    'test/kefu-sequence-registration.test.ts',
+    'test/order-auxiliary-migration.test.ts',
+    'test/table-catalog-gate.test.ts',
+    'test/theme-host-chain.test.ts',
+    'test/uniapp-frontend-parity.test.ts',
   ]);
   assert.ok(tests.every(test => allowed.has(test)), 'Schema maintenance accepts only the explicit schema/ACL suites');
 }

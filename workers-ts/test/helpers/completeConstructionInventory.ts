@@ -1,4 +1,4 @@
-/** Fixed complete registration inventory of all 287 registered ORM tables.
+/** Fixed complete registration inventory of all 291 registered ORM tables.
  * Complete external and embedded paths intentionally have their own
  * exact published sets; unknown/missing relations must never pass by count. */
 export type CompleteConstructionPath = 'external' | 'embedded' | 'orm';
@@ -32,6 +32,10 @@ export const COMPLETE_ORM_TABLE_NAMES = [
   "data_migration_run",
   "delivery_service",
   "division_apply",
+  "erp_auth_state",
+  "erp_connection",
+  "erp_credential",
+  "erp_operation",
   "express_company",
   "kefu_visitor_session",
   "live_anchor",
@@ -306,13 +310,17 @@ export const MANUAL_RED_NOTE_ORM_TABLE_NAMES = [
   'store_order_invoice_manual_red_note',
   'store_order_invoice_manual_red_review',
 ] as const;
+/** Main's independently commissioned ERP realm is bare in ORM construction.
+ * It is not part of the published external or embedded bootstrap cohorts. */
+export const ERP_ORM_TABLE_NAMES = ['erp_auth_state','erp_connection','erp_credential','erp_operation'] as const;
+const erpTables = new Set<string>(ERP_ORM_TABLE_NAMES);
 const manualRedTables = new Set<string>(MANUAL_RED_NOTE_ORM_TABLE_NAMES);
-export const COMPLETE_CONSTRUCTION_COUNTS = { external: 286, embedded: 282, orm: 287 } as const;
+export const COMPLETE_CONSTRUCTION_COUNTS = { external: 286, embedded: 282, orm: 291 } as const;
 export function completeConstructionTableNames(path: CompleteConstructionPath): string[] {
   const names: string[] = path === 'embedded'
-    ? COMPLETE_ORM_TABLE_NAMES.filter(name => !cityTables.has(name) && !manualRedTables.has(name))
+    ? COMPLETE_ORM_TABLE_NAMES.filter(name => !cityTables.has(name) && !manualRedTables.has(name) && !erpTables.has(name))
     : path === 'external'
-      ? [...COMPLETE_ORM_TABLE_NAMES.filter(name => !manualRedTables.has(name)), 'cashier_second_card_abandon_v1'].sort()
+      ? [...COMPLETE_ORM_TABLE_NAMES.filter(name => !manualRedTables.has(name) && !erpTables.has(name)), 'cashier_second_card_abandon_v1'].sort()
       : [...COMPLETE_ORM_TABLE_NAMES];
   if (names.length !== COMPLETE_CONSTRUCTION_COUNTS[path] || new Set(names).size !== names.length)
     throw Error('Unreviewed complete construction inventory');

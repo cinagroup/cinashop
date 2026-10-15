@@ -5,7 +5,7 @@ import {inspectCashierSecondCardAbandon,cashierSecondCardAbandonBaseReadiness,ca
 import {assertCashierNotAbandoned,readCashierAbandonment} from '../src/services/customer-work/CustomerCashierAbandon';
 import {cashierSecondCardAbandonRuntimePrivilegePlan,cashierSecondCardAbandonRuntimeGrantSql} from '../src/migrations/cashierSecondCardAbandonRuntimePlan';
 import {assertCashierAbandonHistoricalBasis,assertCashierAuditManualRedNoteCatalog,reviewedCashierAuditCatalogView,CASHIER_ABANDON_TABLE} from '../scripts/data-migration/cashier-abandon-catalog';
-import {completeConstructionTableNames,MANUAL_RED_NOTE_ORM_TABLE_NAMES} from './helpers/completeConstructionInventory';
+import {completeConstructionTableNames,MANUAL_RED_NOTE_ORM_TABLE_NAMES,ERP_ORM_TABLE_NAMES} from './helpers/completeConstructionInventory';
 import {INVOICE_MANUAL_RED_NOTE_PINS} from '../src/migrations/invoiceManualRedNoteCatalog';
 import type {Catalog} from '../scripts/data-migration/postgres-catalog-audit';
 
@@ -55,8 +55,12 @@ describe('cashier abandonment catalog admission boundaries',()=>{
 
 describe('complete historical cashier audit with the separately registered bare manual ORM pair',()=>{
   const manual = [...MANUAL_RED_NOTE_ORM_TABLE_NAMES];
-  const mature = completeConstructionTableNames('orm').filter(name=>!manual.some(table=>table===name));
-  const full = completeConstructionTableNames('orm');
+  const current=completeConstructionTableNames('orm');
+  const erp=[...ERP_ORM_TABLE_NAMES];
+  // The legacy cashier comparison remains the reviewed 285+manual2 scope.
+  // Independently commissioned ERP tables are explicit current-only objects.
+  const full=current.filter(name=>!erp.some(table=>table===name));
+  const mature=full.filter(name=>!manual.some(table=>table===name));
   function catalogRows(present=true):Record<string,unknown>[] {
     return [
       {kind:'table',name:manual[0],present,owned:present,safe:present,fingerprint:present?INVOICE_MANUAL_RED_NOTE_PINS.bareRecord:null},
@@ -65,6 +69,12 @@ describe('complete historical cashier audit with the separately registered bare 
       {kind:'function',name:'protect_invoice_manual_red_note',present:false},
     ];
   }
+  it('keeps current291 explicit and refuses to waive ERP objects in the historical cashier audit',()=>{
+    expect(current).toHaveLength(291); expect(full).toHaveLength(287); expect(mature).toHaveLength(285);
+    expect(current.filter(name=>erp.some(table=>table===name))).toEqual(erp);
+    expect(current).toEqual([...mature,...manual,...erp].sort());
+    expect(()=>assertCashierAbandonHistoricalBasis(current,'orm')).toThrow();
+  });
   it.each(['orm','orm_upgrade','orm_default_upgrade','orm_constraints','orm_fk_names','orm_checks','orm_sequences'] as const)
     ('requires the same complete fixed 285-table basis plus both manual tables on %s',path=>{
       expect(assertCashierAbandonHistoricalBasis(full,path)).toEqual({historical:mature,manualTables:manual,actualTables:287});
