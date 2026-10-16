@@ -72,7 +72,7 @@ async function mount(override: (config: any, fixture: any) => unknown = () => un
     remove(n: Node) { if (n.parent) n.parent.children = n.parent.children.filter(item => item !== n); }, parentNode: (n: Node) => n.parent,
     nextSibling: (n: Node) => n.parent?.children[n.parent.children.indexOf(n) + 1] ?? null, patchProp(n: Node, key: string, _: unknown, value: unknown) { n.props[key] = value; },
     setText(n: Node, value: string) { n.text = value; }, setElementText(n: Node, value: string) { n.text = value; n.children = []; } });
-  const router = runtime.createRouter({ history: runtime.createMemoryHistory(), routes: [{ path: '/products/recycle', component: runtime.Page }, { path: '/products', component: { render: () => null } }] });
+  const router = runtime.createRouter({ history: runtime.createMemoryHistory(), routes: [{ path: '/products/recycle', component: runtime.Page }, { path: '/products/new', component: { render: () => null } }, { path: '/products', component: { render: () => null } }] });
   const app = renderer.createApp({ render: () => runtime.h(runtime.RouterView) }); app.use(pinia); app.use(router);
   for (const [name, tag] of Object.entries({ 'el-button': 'button', 'el-input': 'input', 'el-alert': 'alert', 'el-pagination': 'pagination' })) app.component(name, { inheritAttrs: false, setup(_: unknown, { slots, attrs }: any) { return () => runtime.h(tag, attrs, slots.default?.()); } });
   app.component('el-table', { props: ['data'], setup(props: any, { slots }: any) { runtime.provide('owned-recycle-rows', () => props.data); return () => runtime.h('table', {}, slots.default?.()); } });
@@ -83,6 +83,17 @@ async function mount(override: (config: any, fixture: any) => unknown = () => un
 }
 const writes = (f: any) => f.calls.filter((config: any) => config.method === 'delete');
 describe('rendered Supplier recycle SFC with actual Axios and scoped state transitions', () => {
+  it('enters a fresh copy from the rendered recycle row without restoring or deleting the source', async () => {
+    const f = await mount(); try { await f.press('复制为新商品'); expect(f.router.currentRoute.value.fullPath).toBe('/products/new?copy=1'); expect(writes(f)).toEqual([]); }
+    finally { f.close(); }
+  });
+  it('blocks recycled copy navigation while another result is unknown or the loaded filter changed', async () => {
+    const f = await mount(config => config.method === 'delete' ? Promise.reject(Error('owned unknown delete')) : undefined);
+    try { const row = f.view.rows.value[0]; await f.view.change(row, 'restore'); f.view.copyProduct(row); await flush(); expect(f.router.currentRoute.value.path).toBe('/products/recycle'); }
+    finally { f.close(); }
+    const g = await mount(); try { const row = g.view.rows.value[0]; g.view.filters.store_name = 'stale'; g.view.copyProduct(row); await flush(); expect(g.router.currentRoute.value.path).toBe('/products/recycle'); }
+    finally { g.close(); }
+  });
   it('reads only recycled products and renders guarded restore and permanent-delete controls', async () => {
     const f = await mount(); try { expect(f.view.ready.value).toBe(true); expect(text(f.host)).toContain('商品回收站'); expect(text(f.host)).toContain('彻底删除');
       expect(f.calls[0].params).toEqual({ page: 1, limit: 20, store_name: '', is_del: 1 }); } finally { f.close(); }

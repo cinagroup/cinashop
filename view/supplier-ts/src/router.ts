@@ -34,6 +34,7 @@ const router = createRouter({
         { path: "dashboard", component: () => import("@/pages/Dashboard.vue"), meta: { permission: "supplier.dashboard.view" } },
         { path: "products", component: () => import("@/pages/Products.vue"), meta: { permission: "supplier.product.view" } },
         { path: 'products/recycle', component: () => import('@/pages/ProductRecycle.vue'), meta: { permission: 'supplier.product.view' } },
+        { path: 'products/copy-result', component: () => import('@/pages/ProductForm.vue') },
         { path: "product-specifications", component: () => import("@/pages/ProductSpecifications.vue"), meta: { permission: "supplier.product.view" } },
         { path: "product-reviews", component: () => import("@/pages/ProductReviews.vue"), meta: { permission: "supplier.product.view" } },
         { path: 'product-labels', component: () => import('@/pages/ProductLabels.vue'), meta: { permission: 'supplier.product.view' } },

@@ -1,5 +1,17 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-16 Supplier 商品完整复制与原操作恢复
+
+商品管理和回收站接通“复制”，支持实物、卡密、手工虚拟商品。后端从受签名绑定的实时来源重建完整保存数据，保留品牌、赠券、保障、参数、标签、运费及未展示配置；新商品独立分配商品/SKU身份、销量清零、下架待审核。卡密和固定交付正文不随来源复制，卡密库存从0开始；原商品、退役SKU、订单与已发/未发卡密事实均保持。完整保存核心使用真实Supplier事务身份，Admin入口及提交后派发合同保持。
+
+复制操作UUID与结果在同一事务持久保存；相同请求重放返回原商品，未知GET不写入，显式确认可封存未执行结果。前端首次提交前仅持久4项操作身份，刷新、换路由及权限撤销后仍可核对原请求，不自动重发写入。实际Browser发现卡密SKU投影读取旧表单类型的问题，已用明确的来源类型修复，同时证明普通编辑保留既有固定交付内容。
+
+独立PG16维护项0190仅安装不可变复制回执；当前商品声明为5个附加项／309表，历史300表及当前普通304表保持。真实受限LOGIN验证回执SELECT/INSERT与完整保存所需表锁/DML权限，缺失目录或权限返回503；本批未执行生产DDL、GRANT或部署。
+
+本地18文件285个不同相关用例通过：原生88、前端145、目录/源码/权限51、实际Browser1；重复原生30不再累计。Worker两套完整8192MiB类型、Supplier完整类型与生产构建通过；初始失败、修正和证明范围见[验证账本](workers-ts/audit/php-ts-supplier-product-copy-20261016.json)。Browser以真实App/JWT/PG16验证回收站卡密安全种子、提交后502、刷新阻止重复创建、撤权后回执恢复及唯一新商品；桌面1280×720与手机390×844检查通过，控制台警告/错误0，9个自建集群夹具0并独立确认停止。
+
+用户确认的统计脚本PHP兼容接口及三端加载器保留，旧API-009段落已相邻注明后续裁决。全部复选行保持，Checklist404／249／155、Audit88／50／38及摘要不变；整项迁移继续active。上一提交云端8／10成功、两分片运行，新提交完整云端CI和生产验收仍待确认。
+
 ## 2026-10-16 Supplier 商品回收站与现有订单补偿
 
 供应商商品页接通回收站、恢复和彻底删除。旧 DELETE 保持 PHP toggle；现代请求绑定 expected_is_del 防止重复回收反向恢复。回收令全部父商品购物车失效，恢复仅改变 is_del；列表及八类计数保留 PHP 状态条件，原商品未知结果以单次全状态 RR 快照核对，不自动重发写入。彻删精确清除 PHP 十集合，包含退役基础 SKU，保留其他 type/category 以及现有订单、卡密、支付、活动、库存日志和附件事实。
@@ -1949,6 +1961,9 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [x] **ADMIN-D 内嵌用户 8 条（代码、生产 DDL、静态合同与服务回归完成，未发布）**：精确恢复用户标签、可赠/用户券、分组、等级、余额/积分调整、五类用户更新及地址列表/默认地址。全部使用受限 Admin session；GET 要求 `user.view`、POST 要求 `user.manage`，响应均为 `private, no-store`。读取固定平台标签范围与可见等级，地址只按路径 UID 和 `is_del=0` 查询；送券只接受有效 `receive_type=3` 模板和最多 100 个活动用户，用户→券模板固定锁序、库存不足整批回滚，不复制 PHP 静默截断。余额/积分扣减钳制到 0，余额写 `user_money`、积分写 `user_bill`，不复制 PHP 积分可变负；余额/积分、会员天数、送券强制 UUID-v4 `Idempotency-Key`，专用 `admin_user_write_replay` 只保存管理员/操作/请求摘要和有界证据 ID，数据库唯一键阻断并发重复，`system_log` 另存内容脱敏审计。会员时长同时写 `other_order`/状态记录；等级、分组、标签采用行锁下原子替换，标签可显式清空。外部 `0119` 与 Worker 内嵌 `0125` 的同义幂等 DDL 已按 DB-005 在生产执行两遍并精确复核，表为空且仓库/生产均为 263 表；新写路由仍须等待真实最小权限角色 E2E 和明确发布批准。
   - [x] **ADMIN-E ERP 配置 1 条（代码与静态合同完成，未发布）**：精确恢复 `GET /api/admin/erp/config`，强制现有 Admin token 与 `config.view` ACL，响应设置 `private, no-store` 且只返回 `{open_erp:boolean}`。共享能力服务只读取 `erp_open`，缺失/`0`/非法值失败关闭，不读取或返回 ERP token/secret/account；定向测试覆盖开关、空配置、真实响应 envelope/cache header、路由与权限。实际 ERP 认证、同步、真实账号/沙箱和发布仍归 ERP-001/002 与 REL-001/002。
 - [x] **API-009 退役动态统计脚本入口**：旧 `GET /api/get_script` 将运营可编辑的 `system_statistics` 原样作为 JavaScript 返回，旧 UniApp H5 再用动态 `<script>` 执行；新五端和 Worker 均无调用。为避免恢复持久化任意脚本与第三方供应链执行面，已按路由、控制器、配置表单和旧调用点四项源证据正式退役；未来分析能力只能以固定 provider、用户同意和 CSP 约束的显式集成重新设计。专项测试同时阻断当前源码重新暴露或消费该合同；API 面可执行缺口 `35→34`。
+
+> 后续裁决：上行保留2026-09-05历史决定，不再表示当前合同。用户于2026-10-15明确选择“保留已恢复的 PHP 兼容行为，更新退役审计”；当前 Worker 已恢复原始 JavaScript 接口，Admin、Supplier、UniApp H5 均接通真实加载器。该接口已移出当前退役清单，其余16条决定保持；原专项测试现验证恢复合同。原决定与源码证据完整保存在[恢复审计](workers-ts/audit/statistics-script-restoration-20261015.json)。
+
 - [x] **API-010 公共启动配置5条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET wechat/get_logo`、`wechat/teml_ids`、`logistics`、`copy_words`、`get_customer_type`，全部保留 PHP 的站点开启与可选登录边界。登录Logo对稳定R2引用生成短期签名并只接受相对路径或HTTPS；14个小程序订阅事件按PHP short ID从启用的`legacy_type=0`模板确定性投影，缺失模板显式为`null`；客服类型字段按数字/有界文本返回，客服URL只接受站内相对路径或HTTPS。物流列表保持旧端实际使用的`id/name/code`，不再公开PHP曾返回的`partner_id/partner_key/account/key/net*`承运商凭据。专项5/5、全量218文件/1,375项和双TypeScript通过，API面可执行缺口`34→29`；未读取或写入生产数据库、未调用provider、未部署主Worker或前端。
 - [x] **API-011 城市与门店发现4条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET city`、`city_list`、`store_list`、`nearby_store`，保留 PHP 的 StationOpen 以及后三条可选登录边界。`city`按`city_area.parent_id`惰性返回子级和可展开标记，`city_list`从`system_city`构造完整`v/n/parent_id/children`树；门店只读取营业且未删除记录，保留坐标校验、6367km Haversine距离、提货过滤、关键词与登录用户常用门店范围。公开投影明确排除`bank_code/bank_address/alipay_account/alipay_qrcode_url/wechat/wechat_qrcode_url`，门店图片对canonical R2引用短期签名。PHP在缺坐标时会把客户端IP发送给外部定位服务，本实现不向未声明provider披露IP，改为确定性`id DESC`；分页默认10、上限100、offset上限10,000，城市全树和单层也有显式上限。专项5/5、全量219文件/1,380项、双TypeScript和路由审计通过，API面可执行缺口`29→25`、退役后有效覆盖`93.0%→93.8%`；提交`35ef232`已推送，[Actions `33938423701`](https://github.com/cinagroup/cinashop/actions/runs/33938423701)八项全部成功。未读写生产数据库、未调用外部定位、未部署主Worker或前端。
 - [x] **API-012 积分商城首页与分类2条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET store_integral/index` 与 `category`，并复审同组既有 `list/detail`；四条浏览合同现统一保持 PHP 的 StationOpen 加可选登录边界。首页返回`banner/list/integral`，推荐商品限定`is_host=1`，登录用户只读当前积分、匿名为0；分类从可见`category.group=5`按`sort DESC,id DESC`映射`label/value`，最多1,000项。复审发现旧`list`虽已注册却忽略`store_name/priceOrder/salesOrder/range`且品牌恒空，现已恢复关键词/ID、积分加现金价排序、销量排序、积分区间、基础商品删除门禁和品牌投影；分页最多50、offset约束沿用活动列表门禁。商品与banner只接受站内相对路径或无凭据HTTPS，canonical R2引用响应时短期签名，危险banner跳转清空。专项7/7、全量220文件/1,385项、双TypeScript、结构/路由/可观测性/生产依赖审计和主Worker dry-run通过；API面可执行缺口`25→23`、退役后有效覆盖`93.8%→94.3%`。实现提交`4582e06`已推送，[Actions `33939387023`](https://github.com/cinagroup/cinashop/actions/runs/33939387023)八项全部成功；未读取或写入生产数据库、未调用provider、未部署主Worker或前端。

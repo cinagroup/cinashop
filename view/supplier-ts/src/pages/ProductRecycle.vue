@@ -64,6 +64,11 @@ function changePage(page: number) {
   if (busy.value || pending.value || page === filters.page || !integer(page) || page <= 0) return;
   filters.page = page; void load();
 }
+function copyProduct(row: RecycleProduct) {
+  if (!current() || !ready.value || ![0, 1, 3].includes(row.product_type)
+    || !rows.value.some(value => value.id === row.id && value.is_del === 1)) return;
+  void router.push({ path: '/products/new', query: { copy: String(row.id) } });
+}
 async function change(row: RecycleProduct, operation: 'restore' | 'delete') {
   if (!current() || !ready.value || !rows.value.some(value => value.id === row.id && value.is_del === 1)) return;
   const version = generation, requestKey = key(), id = row.id, title = row.store_name;
@@ -112,7 +117,7 @@ onMounted(load);
 
 <template>
   <section class="page-section recycle-page">
-    <header class="page-heading"><div><h1>商品回收站</h1><p>查看当前供应商回收的商品，恢复或彻底删除</p></div><el-button @click="router.push('/products')">返回商品管理</el-button></header>
+    <header class="page-heading"><div><h1>商品回收站</h1><p>查看当前供应商回收的商品，可恢复、复制或彻底删除</p></div><el-button @click="router.push('/products')">返回商品管理</el-button></header>
     <el-alert v-if="previewMode" title="当前为预览模式，仅操作示例商品" type="info" :closable="false" />
     <el-alert v-if="error" :title="error" type="warning" :closable="false" />
     <el-alert v-if="notice" :title="notice" type="success" :closable="false" />
@@ -123,7 +128,7 @@ onMounted(load);
         <el-table-column label="商品" min-width="240"><template #default="scope"><strong>{{ scope.row.store_name || '未命名商品' }}</strong><div class="secondary-text">ID {{ scope.row.id }}</div></template></el-table-column>
         <el-table-column label="价格" width="110"><template #default="scope">{{ formatMoney(scope.row.price) }}</template></el-table-column>
         <el-table-column prop="stock" label="库存" width="90" />
-        <el-table-column label="操作" min-width="220"><template #default="scope"><template v-if="canManage"><el-button link type="primary" :disabled="!ready" @click="change(scope.row, 'restore')">恢复</el-button><el-button link type="danger" :disabled="!ready" @click="change(scope.row, 'delete')">彻底删除</el-button></template><span v-else>只读</span></template></el-table-column>
+        <el-table-column label="操作" min-width="320"><template #default="scope"><template v-if="canManage"><el-button link type="primary" :disabled="!ready" @click="change(scope.row, 'restore')">恢复</el-button><el-button v-if="[0, 1, 3].includes(scope.row.product_type)" link type="primary" :disabled="!ready" @click="copyProduct(scope.row)">复制为新商品</el-button><el-button link type="danger" :disabled="!ready" @click="change(scope.row, 'delete')">彻底删除</el-button></template><span v-else>只读</span></template></el-table-column>
       </el-table>
       <div class="pagination-row"><span>共 {{ total }} 件</span><el-pagination :current-page="filters.page" :page-size="filters.limit" :total="total" :disabled="busy || Boolean(pending)" layout="prev, pager, next" @current-change="changePage" /></div>
     </div>

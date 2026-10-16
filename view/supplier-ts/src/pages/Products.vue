@@ -69,6 +69,12 @@ function categoryCurrent(context: ReturnType<typeof categoryContext>, manage = f
   return categorySession.isCurrent() && context.generation === categoryContextGeneration && context.url === route.fullPath
     && (manage ? canManageCategories.value : canViewCategories.value);
 }
+function copyProduct(row: ProductRow) {
+  if (!categoryCurrent(categoryContext(), true) || !productFresh.value || loading.value || productWriting.value
+    || ![0, 1, 3].includes(row.product_type) || !rows.value.some(current => current.id === row.id)
+    || !Number.isSafeInteger(row.id) || row.id <= 0) return;
+  void router.push({ path: '/products/new', query: { copy: String(row.id) } });
+}
 watch(() => route.fullPath, clearCategoryContext, { flush: 'sync' });
 watch(categoryVisible, visible => {
   if (!visible) { categoryReadGeneration += 1; categoryFormGeneration += 1; categoryFormVisible.value = false; categoryLoading.value = false; }
@@ -374,6 +380,7 @@ onMounted(load);
       <div class="heading-actions">
         <el-button type="warning" plain :icon="WarningFilled" @click="router.push('/products/virtual-alerts')">卡密预警</el-button>
         <el-button v-if="canViewCategories" :icon="Delete" @click="router.push('/products/recycle')">回收站</el-button>
+        <el-button v-if="canViewCategories" @click="router.push('/products/copy-result')">复制操作结果</el-button>
         <el-button v-if="canViewCategories" :icon="Setting" @click="openCategories">分类管理</el-button>
         <el-button type="primary" :icon="Plus" @click="router.push('/products/new')">新增商品</el-button>
       </div>
@@ -412,9 +419,10 @@ onMounted(load);
         <el-table-column label="审核" width="105"><template #default="scope"><span class="status-text" :class="scope.row.is_verify === 1 ? 'success' : scope.row.is_verify < 0 ? 'danger' : 'warning'">{{ verifyLabel(scope.row.is_verify) }}</span></template></el-table-column>
         <el-table-column label="上下架" width="90"><template #default="scope"><el-switch :model-value="Boolean(scope.row.is_show)" @change="toggleShow(scope.row)" /></template></el-table-column>
         <el-table-column label="创建时间" width="165"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
-        <el-table-column label="操作" width="350" fixed="right">
+        <el-table-column label="操作" width="400" fixed="right">
           <template #default="scope">
             <el-button v-if="[0, 1, 3].includes(scope.row.product_type)" link type="primary" :icon="Edit" @click="router.push(`/products/${scope.row.id}/edit`)">编辑</el-button>
+            <el-button v-if="canManageCategories && [0, 1, 3].includes(scope.row.product_type)" link type="primary" :disabled="!productFresh || productWriting || loading" @click="copyProduct(scope.row)">复制</el-button>
             <el-button
               v-if="scope.row.product_type === 1"
               link

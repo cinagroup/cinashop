@@ -159,12 +159,14 @@ const ordinaryExplicitColumns = {
 // Product receipts and durable video sessions are independently commissioned
 // addons. Declaration scans see them; runAll, root SQL and the ORM do not.
 const productExplicitDeclarations = [
+  ['supplierProductCopyOperation.ts','6d0340ae87e87d14d3d93bfba248abdbdecf0111c39bb415ba962a22c6275011',['supplier_product_copy_operation_v1']],
   ['adminProductEditorOperation.ts','8c41bd13efce59c6a604d92bb4824374df72e656d3a24d9fdbd38b57175e0fc1',['admin_product_editor_operation_v1']],
   ['adminProductVideoUpload.ts','08e82e9bbd7ca61d9ef210b08eb9a585f7e3f9f294824f7bde6751204cf75fa2',['admin_product_video_upload_v1']],
   ['supplierProductVideoUpload.ts','fccded58af2a05339109bdf06ef87bb40732e6793f0f8b742378a18697a4ae26',['supplier_product_video_upload_v1']],
   ['productVideoGc.ts','fa49727fde6cd174870bcdd816cb3a7472efd8373b2f19c526200946a7d565be',['product_video_gc_state_v1']],
 ] as const;
 const productExplicitColumns = {
+  supplier_product_copy_operation_v1: ['operation_id','actor_id','supplier_id','source_id','request_hash','state','result','created_at'],
   admin_product_editor_operation_v1: ['operation_id','actor_id','requested_id','request_hash','state','result','created_at'],
   admin_product_video_upload_v1: ['upload_id','actor_id','request_hash','intent','object_key','state','parts','confirmed','attachment_id','created_at','updated_at','expires_at'],
   product_video_gc_state_v1: ['scope','cursor','maximum','cycle','lease_token','lease_until','last_completed_at','updated_at'],
@@ -209,13 +211,13 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
     for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...productExplicitColumns[name]]);
   }
   const productTables=productExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
-  assert.equal(productTables.length,4);assert.equal(new Set(productTables).size,4);
+  assert.equal(productTables.length,5);assert.equal(new Set(productTables).size,5);
   assert.deepEqual(Object.keys(productExplicitColumns).sort(),productTables);
   for(const name of productTables)assert.ok(!currentTables.includes(name),'Product declaration must not replace a historical or ordinary declaration');
   const productCurrentTables=[...currentTables,...productTables].sort();
-  assert.equal(productCurrentTables.length,26);assert.equal(new Set(productCurrentTables).size,26);
+  assert.equal(productCurrentTables.length,27);assert.equal(new Set(productCurrentTables).size,27);
   const productCurrentOnly=productCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
-  assert.equal(productCurrentOnly.length,25);assert.equal(new Set(productCurrentOnly).size,25);
+  assert.equal(productCurrentOnly.length,26);assert.equal(new Set(productCurrentOnly).size,26);
   return productCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();

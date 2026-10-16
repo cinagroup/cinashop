@@ -46,6 +46,7 @@ if (caseNames.length) assert.ok(tests.every(test => /^test\/[a-z0-9-]+\.test\.ts
 const offlineAdminBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-offline-browser';
 const supplierVideoBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-video-browser';
 const supplierRecycleBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-recycle-browser';
+const supplierCopyBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-copy-browser';
 const productEditorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-product-editor-browser';
 // Refund fixtures now install the reviewed NOLOGIN checkout pricing owner too.
 // Require explicit maintenance of a newly owned local cluster, never elevate an existing host.
@@ -53,7 +54,7 @@ const adminBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[
 const customerBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-order-browser';
 const adminOrderBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-order-browser';
 const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance;
-if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser,
+if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser,
   'Verbose reporting applies only to explicit native test files');
 if (browserAcceptance) {
   for (const key of ['TEST_BROWSER_PACKAGE_JSON', 'TEST_BROWSER_EXECUTABLE', 'TEST_BROWSER_OUTPUT_DIR']) {
@@ -64,7 +65,7 @@ if (browserAcceptance) {
   const inside = relative(checkout, output);
   assert.ok(inside.startsWith('..') || isAbsolute(inside), 'Browser output must be outside the repository');
 }
-for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || unitShard ? [] : tests) {
+for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || unitShard ? [] : tests) {
   assert.match(test, /^test\/[a-z0-9-]+\.test\.ts$/, 'Only explicit unit test paths are accepted');
   assert.ok(existsSync(resolve(workerRoot, test)), `Test does not exist: ${test}`);
 }
@@ -76,6 +77,8 @@ if (schemaMaintenance) {
     'test/product-video-gc-catalog-native.test.ts',
     'test/product-video-gc-native.test.ts',
     'test/supplier-product-recycle-native.test.ts',
+    'test/supplier-product-copy-native.test.ts',
+    'test/supplier-product-copy-operation-catalog-native.test.ts',
     'test/supplier-product-recycle-compensation-native.test.ts',
     'test/bargain-inventory-compensation.test.ts',
     'test/permanently-deleted-base-inventory-native.test.ts',
@@ -610,6 +613,7 @@ if (schemaMaintenance) {
     'audit:admin-product-editor-browser',
     'audit:supplier-video-browser',
     'audit:supplier-recycle-browser',
+    'audit:supplier-copy-browser',
       // Exact existing category consumer regressions in an owned local test cluster.
     'test/product-detail-cache-isolation.test.ts',
     'test/sku-membership-price.test.ts',
@@ -723,6 +727,7 @@ try {
     inventoryFiles: preparedUnitGate.partition.files.length, selectedFiles: preparedUnitGate.partition.shards[unitShard - 1].length,
     inventorySha256: preparedUnitGate.partition.digest, inputFiles: preparedUnitGate.inputs.files.length, inputSha256: preparedUnitGate.inputs.sha256 })}`);
   const commandArgs = unitGate ? unitGate.unitGateArguments(unitShard, taskRoot)
+    : supplierCopyBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-copy-browser.config.ts', '--maxWorkers=1']
     : supplierRecycleBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-recycle-browser.config.ts', '--maxWorkers=1']
     : supplierVideoBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-video-browser.config.ts', '--maxWorkers=1']
     : productEditorBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.product-editor-browser.config.ts', '--maxWorkers=1']
@@ -741,6 +746,8 @@ try {
     'test/product-video-gc-catalog-native.test.ts',
     'test/product-video-gc-native.test.ts',
     'test/supplier-product-recycle-native.test.ts',
+    'test/supplier-product-copy-native.test.ts',
+    'test/supplier-product-copy-operation-catalog-native.test.ts',
     'test/supplier-product-recycle-compensation-native.test.ts',
     'test/bargain-inventory-compensation.test.ts',
     'test/permanently-deleted-base-inventory-native.test.ts',
@@ -951,12 +958,12 @@ try {
     // These complete-schema assisted suites create two independent LOGIN
     // profiles for every case. Retain every original case and allow their full
     // files to finish; the individual SQL/HTTP lock deadlines remain bounded.
-    timeout: (unitShard ? 40 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser) ? 20 : tests.some(test => new Set([
+    timeout: (unitShard ? 40 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser) ? 20 : tests.some(test => new Set([
       'test/assisted-purchase-flow-postgres.test.ts',
       'test/assisted-purchase-runtime-postgres.test.ts',
     ]).has(test)) ? 20 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,
     env: unitGate ? unitGate.unitGateEnvironment(process.env, testConnection, taskRoot)
-      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}) },
+      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}) },
   });
   if (unitGate) {
     const result = await unitGate.finishUnitGate(workerRoot, taskRoot, preparedUnitGate, testRun);

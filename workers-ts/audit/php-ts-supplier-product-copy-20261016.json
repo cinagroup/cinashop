@@ -1,0 +1,904 @@
+{
+  "schema": "cinashop_supplier_trusted_product_copy_evidence_v1",
+  "date": "2026-10-16",
+  "status": "local_validation_passed",
+  "base_commit": "41dec7bdf9df79eb1083a45a89d2d49489fb5abe",
+  "goal": "active",
+  "php_contract": {
+    "sources": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/productList/index.vue",
+        "sha256": "19d0366b02244f4b6cb1e01ebc760c9e85bc25aaa9bb358619a124a3a98ba313"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/productEdit/index.vue",
+        "sha256": "cad1d45b2e6067d499d857cf51a94071a57f2819fbfbb8d081ef28a381b02001"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/product/StoreProduct.php",
+        "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+        "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+      }
+    ],
+    "entry": "Active and recycle product rows open edit_product?copy=id; getInfo reads that source and save sets id0/empty soure_link. Supplier UI creates fulfillment types0/1/3. PHP controller forces delivery_type[1].",
+    "preserved": "Create a new own type2 product; copy effective configuration/associations; fresh identities, pending/down state; do not modify the source or existing transaction facts.",
+    "delivery_boundary": "Existing trusted-copy policy: never read/copy source card rows or expose fixed content; no retired SKU, source sales, inventory history, provenance or credentials are reused. Card targets start with zero inventory and require independent configuration."
+  },
+  "routes": {
+    "seed": "GET /supplierapi/product/product/copy/:id",
+    "save": "POST /supplierapi/product/product/copy/:id",
+    "receipt": "GET /supplierapi/product/product/copy_operations/:operationId",
+    "resolve": "POST /supplierapi/product/product/copy_operations/:operationId/resolve",
+    "save_body": [
+      "operation_id",
+      "copy_token",
+      "product(safe complete editor whitelist)"
+    ],
+    "resolve_body": [
+      "source_id"
+    ],
+    "frontend": [
+      "/products/new?copy=id",
+      "/products/copy-result",
+      "/products/recycle"
+    ]
+  },
+  "write_contract": {
+    "authority": "Real Supplier adminType4/relationId/live role or primary identity, authVersion and DB clock; fixed own type2 target0. No fake Admin login. Read seed requires view at route and live manage at service; save requires manage. Receipt/resolve require live same actor/supplier even after manage revocation.",
+    "source_snapshot": "Separate Supplier HMAC domain binds full root, type0 attributes/SKUs including retired metadata and fixed-content MAC, description, all effective relations and coupons, Supplier/actor/authVersion. Repeated in actual transaction after full physical barriers and late writes; no source card table is selected.",
+    "full_save": "Build all59 legacy fields server-side from current source, overlay only Supplier editable whitelist; reuse authenticated transaction core of complete writer, with fixed Supplier capability, canonical media validation, real table locks, fresh SKU allocator, full expected-state proof, audit and durable outbox. Admin public wrappers, receipts, legacy empty-set behavior and postcommit dispatch remain.",
+    "configuration": "Retain brand, gift coupons, user/product labels, guarantees, parameters, membership/commission switches, integral, promotion flags/order, schedules/presale, custom/system form, recommendation, shipping and hidden config; validate current bindings and ERP only for physical products. Explicit empty labels clear only product-label bindings; omission inherits source.",
+    "canonical_legacy_labels": "Effective type4 relation is authoritative for a stale historical empty label_id scalar. Target uses canonical scalar; source scalar and all source rows remain unchanged. Dedicated regression covers this case.",
+    "unknown_result": "Persist only operation UUID+actor+Supplier+source before first POST. Server receipt is atomic with copy; exact replay returns original result without second DML; conflicting actor/body/source rejected. Unknown GET is read-only; explicit resolve serializes and seals not_applied. UI never automatically retransmits, survives route/reload and allows same-owner recovery after manage withdrawal.",
+    "frontend_fences": "Actual SFC and Axios tests cover stale source/session/storage/ABA, malformed envelopes/receipts, storage failure, source reload confirmation, type0/1/3 seed defaults, active and recycled entry permissions. Pending recycle operation blocks copy navigation."
+  },
+  "maintenance": {
+    "id": "0190_supplier_product_copy_operation.sql",
+    "table": "public.supplier_product_copy_operation_v1",
+    "columns": 8,
+    "constraints_hash": "77e6e703155e85c13046caab735f424446a7bb4a5b84cb2fc64d3bf30caebba1",
+    "sources": [
+      {
+        "path": "workers-ts/src/migrations/supplierProductCopyOperation.ts",
+        "sha256": "6d0340ae87e87d14d3d93bfba248abdbdecf0111c39bb415ba962a22c6275011"
+      },
+      {
+        "path": "workers-ts/src/migrations/maintenance/0190_supplier_product_copy_operation.sql",
+        "sha256": "d52008f0ad9704ac8ab0b058759837cb76a056e00c8582b2fc0d030d45b243bd"
+      }
+    ],
+    "scope": "Independent explicit addon only; current-product declaration309=304+5. Historical/bootstrap/runAll/ORM,0189 and frozen manager privilege plan unchanged. Runtime never installs or repairs DDL.",
+    "runtime_dependency": "Receipt SELECT/INSERT only; no receipt UPDATE/DELETE/TRUNCATE or immutable-function EXECUTE. Full complete-writer table-lock privileges and exact business DML/sequence grants are separate feature commissioning requirements; absent grants fail closed with503.",
+    "production_ddl": false,
+    "production_grants": false,
+    "deployed": false
+  },
+  "validation": {
+    "native": {
+      "passed": 88,
+      "files": {
+        "test/supplier-product-copy-native.test.ts": 24,
+        "test/admin-product-editor-native.test.ts": 17,
+        "test/admin-legacy-product-read.test.ts": 17,
+        "test/admin-legacy-product-save.test.ts": 18,
+        "test/admin-legacy-product-save-http.test.ts": 4,
+        "test/admin-legacy-product-save-native.test.ts": 2,
+        "test/supplier-product-copy-operation-catalog-native.test.ts": 6
+      },
+      "log": "/tmp/cinashop-supplier-copy-native-verified.log"
+    },
+    "frontend": {
+      "passed": 145,
+      "files": [
+        {
+          "path": "supplier-product-batch-frontend.test.ts",
+          "passed": 21
+        },
+        {
+          "path": "supplier-product-category-frontend.test.ts",
+          "passed": 18
+        },
+        {
+          "path": "supplier-product-copy-frontend.test.ts",
+          "passed": 27
+        },
+        {
+          "path": "supplier-product-media-frontend.test.ts",
+          "passed": 34
+        },
+        {
+          "path": "supplier-product-recycle-frontend.test.ts",
+          "passed": 19
+        },
+        {
+          "path": "supplier-product-video-upload-frontend.test.ts",
+          "passed": 26
+        }
+      ],
+      "log": "/tmp/cinashop-supplier-copy-frontend.log",
+      "report": "/tmp/cinashop-supplier-copy-frontend-result.json"
+    },
+    "runtime_types": {
+      "exit_code": 0,
+      "memory_mib": 8192,
+      "log": "/tmp/cinashop-supplier-copy-runtime-types.log",
+      "receipt": "/tmp/cinashop-supplier-copy-runtime-types-receipt.json"
+    },
+    "standard_types": {
+      "exit_code": 0,
+      "memory_mib": 8192,
+      "command": "bash /home/cina/cinagroup/tools/validate-serial.sh /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit",
+      "cwd": "workers-ts",
+      "log": "/tmp/cinashop-supplier-copy-worker-types-final.log",
+      "terminal_session": 85733,
+      "source_freeze": "All25 recorded changed source/test/config files unchanged across terminal success; runtime1288 input hashes independently rechecked unchanged."
+    },
+    "supplier_final_build": {
+      "exit_code": 0,
+      "scope": "Complete Supplier vue-tsc -b then production Vite build, after explicit detail.product_type projection for both active/retired SKU and ordinary fixed-content preservation, watcher and recycle navigation fixes.",
+      "log": "/tmp/cinashop-supplier-copy-build.log",
+      "warnings": "Existing VueUse PURE annotation and >500k chunk warnings only"
+    },
+    "browser": {
+      "exit_code": 0,
+      "passed": 1,
+      "log": "/tmp/cinashop-supplier-copy-browser.log",
+      "result": "/tmp/cinashop-supplier-copy-browser-result.json",
+      "engine": "Installed Browser plugin via actual Codex in-app Browser; actual production Supplier bundle, App/JWT, owned PostgreSQL16; synthetic local data only",
+      "flow": "Recycle source81 actual copy entry; type1 safe zero-card seed and corrected explicit SKU modes; ordinary list source80 copy; one POST commits then local host deliberately loses response502; reload retains pending UUID and disables save; actual role21 management withdrawal; /products/copy-result self-service GET recovers committed new product83; exactly one product/receipt, source/order/card/bill rows preserved",
+      "desktop": {
+        "width": 1280,
+        "height": 720,
+        "screenshot": "/tmp/cinashop-supplier-copy-desktop.png"
+      },
+      "mobile": {
+        "width": 390,
+        "height": 844,
+        "page_scroll_width": 375,
+        "screenshot": "/tmp/cinashop-supplier-copy-mobile.png"
+      },
+      "pending_screenshot": "/tmp/cinashop-supplier-copy-pending.png",
+      "console_warn_error_entries": 0,
+      "statistics_raw_script_status": 200,
+      "outbound_provider_calls": 0,
+      "temporary_viewport_reset": true,
+      "agent_tab_closed": true,
+      "boundary": "Browser host deliberately substitutes empty statistics KV, static local image responses and one postcommit502 transport fault; all copy JWT/business SQL/receipt paths are genuine local App. No production provider or deployment validation."
+    },
+    "catalog_source_regression": {
+      "passed": 51,
+      "files": [
+        {
+          "path": "data-migration.test.ts",
+          "passed": 36
+        },
+        {
+          "path": "supplier-product-batch-permission.test.ts",
+          "passed": 2
+        },
+        {
+          "path": "supplier-product-category-permission.test.ts",
+          "passed": 3
+        },
+        {
+          "path": "supplier-rbac-migration.test.ts",
+          "passed": 10
+        }
+      ],
+      "report": "/tmp/cinashop-supplier-copy-contracts-result.json",
+      "log": "/tmp/cinashop-supplier-copy-contracts.log",
+      "historical_declared_tables": 300,
+      "current_ordinary_declared_tables": 304,
+      "current_product_declared_tables": 309
+    },
+    "count_policy": "88 native +145 frontend +51 catalog/source/permission +1 actual Browser =285 distinct related cases in18 files. Native30 final rerun and catalog6 calibration/final reruns overlap the88 and are not counted again. Failed calibration/red attempts are retained separately.",
+    "serial": "Every TypeScript/Vue/Vitest/Vite invocation used shared validate-serial wrapper, one heavy process at a time; Vitest maxWorkers1.",
+    "native_after_test_type_fixes": {
+      "passed": 30,
+      "files": 2,
+      "log": "/tmp/cinashop-supplier-copy-native-final.log",
+      "duplicate_of_final_88_cases": true
+    },
+    "distinct_related_tests": 285,
+    "distinct_files": 18
+  },
+  "calibrations_and_corrections": [
+    {
+      "log": "/tmp/cinashop-supplier-copy-catalog-calibration.log",
+      "result": "Expected PENDING catalog pin failure; PG16 independently returned actual77e6...ba1, all catalog booleans true; pin then fixed, final6pass."
+    },
+    {
+      "result": "Initial Supplier type check TS18046 on aliased unknown destination; corrected narrowing, complete build later passed. No type suppression or broadening."
+    },
+    {
+      "log": "/tmp/cinashop-supplier-copy-first-native.log",
+      "result": "Fixture beforeAll rejected numeric schedule timestamps at actual strict Admin input; DatePicker ISO strings fixed, no production admission weakening."
+    },
+    {
+      "log": "/tmp/cinashop-supplier-copy-first-native-rerun.log",
+      "result": "Real complete copy committed; fixture scalar user label was empty while effective relation61 existed. Canonical baseline explicitly aligned and dedicated historical scalar/association regression added."
+    },
+    {
+      "log": "/tmp/cinashop-supplier-copy-native.log",
+      "result": "22pass/1fail: test incorrectly demanded ERP rules for manual type3. Corrected physical type0 negative and manual positive, matching PHP; no production change."
+    },
+    {
+      "result": "Cross review caught copy type watcher changing unit/freight, missing recycle navigation, and preserving disabled video_open when unchanged link. All corrected with focused regressions."
+    },
+    {
+      "log": "/tmp/cinashop-supplier-copy-worker-types.log",
+      "result": "Initial standard types reported4 dynamic-test narrowing errors; corrected real builder object/array guards and explicit actual SQL row shape without any or ts-ignore. Production runtime types had already passed. Final standard complete8192MiB check subsequently passed exit0."
+    },
+    {
+      "log": "/tmp/cinashop-supplier-copy-manifest-diagnostic.log",
+      "result": "Source-manifest regression first exposed an omitted explicit0190 exclusion that leaked one declaration into historical301. Preserved historical300/currentordinary304, added exact five-addon source list, strict cardinalities5/27/26 and exact productOnly table difference. No historical pins, manifests or ORM/bootstrap tables changed; final four-file51-case source/permission regression passed."
+    },
+    {
+      "log": "/tmp/cinashop-supplier-copy-card-mode-red.log",
+      "result": "Actual Browser before any product write found editableSku closing over the default physical form while Object.assign arguments were being evaluated. Actual compiled SFC red2fail/1pass reproduced missing copied-card delivery_mode and cleared existing fixed content. SKU projection now receives explicit detail.product_type for active and retired rows; final145 frontend and full Supplier types/build pass. First owned Browser was closed through its fixture finish path; expected incomplete-flow failure and zero fixture cleanup recorded in /tmp/cinashop-supplier-copy-browser-before-mode-fix.log."
+    },
+    {
+      "result": "Final staged scanner preflight initially compared the extracted executable with the release archive checksum and stopped before running a scan. Corrected the artifact distinction: official archive39e0...522c; exact archive member matches executable7013...ca5b. No scanner/config/allowlist change."
+    }
+  ],
+  "cross_review": {
+    "path": "/tmp/cinashop-supplier-copy-cross-review.json",
+    "sha256": "dc29e817060263d46bda9d1c2b05ca851943be6dfed9647bb6a0493266ddad19",
+    "record": {
+      "kind": "supplier_product_trusted_copy_independent_cross_review",
+      "reviewed_at_utc": "2026-10-16T01:59:34.885484+00:00",
+      "base_commit": "41dec7bdf9df79eb1083a45a89d2d49489fb5abe",
+      "status": "no_remaining_blocker_identified_in_reviewed_paths_awaiting_final_validation",
+      "review_mode": "Read-only source review; no heavy validation, production calls, repository edits, commits or pushes performed for this review.",
+      "fixed_findings": [
+        {
+          "id": "copy_seed_product_type_watcher",
+          "former_issue": "Applying type1 or type3 copy seed triggered the new-product type watcher, which silently changed source unit_name and freight/postage/temp_id/is_postage.",
+          "final_implementation": "ProductForm.vue:383 returns for editing, copying or recoveryOnly. The product type stays disabled during copy. Ordinary creation retains the previous watcher behavior.",
+          "regression": "supplier-product-copy-frontend.test.ts includes type1 and type3 loaded seed unit/shipping preservation cases; root reports the final 6-file frontend batch passed 144 cases."
+        },
+        {
+          "id": "recycled_copy_discovery",
+          "former_issue": "The backend supported recycled source copy but the separate recycle page lacked the existing PHP copy entry; a direct copy query alone did not demonstrate discoverability.",
+          "final_implementation": "ProductRecycle.vue:67-70 navigates only. current() checks the live mounted session; ready includes manage, fresh loaded filter key, no reading/writing/checking and no unresolved lifecycle operation; the row must be an actually loaded recycled id and have product_type 0/1/3. The rendered entry is manage-only and disabled when not ready.",
+          "preview": "productCopy.ts now permits a genuine previewProductRows source regardless of is_del; getProductDetail reads its existing preview detail. Existence remains required.",
+          "regression": "supplier-product-recycle-frontend.test.ts covers rendered navigation, pending unknown lifecycle result and loaded-filter mismatch; Browser host is intended to enter recycled card copy through the actual page."
+        },
+        {
+          "id": "preserve_disabled_source_video_switch",
+          "former_issue": "Deriving video_open from a nonempty unchanged link silently enabled a source video that was stored but disabled.",
+          "final_implementation": "overlaySupplierCopy preserves source.body.video_open when editable video_link equals source.safe.video_link; an explicit link replacement/removal derives the new switch.",
+          "regression": "supplier-product-copy-native.test.ts covers unchanged disabled video, replacement and removal; that case passed in the first complete native attempt."
+        },
+        {
+          "id": "loaded_sku_delivery_mode_used_stale_form_type",
+          "discovered_by": "Root installed-Browser acceptance before any product write; independently reproduced by actual SFC focused red tests. The earlier cross-review did not identify this bug.",
+          "former_issue": "Object.assign arguments are evaluated before assigning detail.product_type. editableSku read the old default physical form.product_type=0 while mapping an incoming card detail: copy delivery_mode became undefined, and ordinary existing fixed-content card editing discarded disk_info and original_disk_info.",
+          "final_implementation": "editableSku now takes the explicit incoming ProductDetail.product_type. applyProductDetail maps both active and retired SKU arrays through arrow callbacks passing detail.product_type; no source type is inferred from the old mutable form or Array.map index argument.",
+          "ordinary_preservation_case": "The actual SFC test loads ordinary /products/81/edit into the default physical form and asserts delivery_mode=fixed, unchanged disk_info/original_disk_info and stock4. The copied card test asserts mode=card, empty disk_info and zero stock. Both preserve the separate existing watcher safeguard.",
+          "red_evidence": {
+            "log": "/tmp/cinashop-supplier-copy-card-mode-red.log",
+            "failed": 2,
+            "passed": 1,
+            "filtered_skipped": 24
+          },
+          "review_result": "Minimal correction matches existing card editing semantics and copy seed sanitation; no additional blocker identified. Full frontend post-fix evidence is separately qualified below."
+        }
+      ],
+      "final_contract_review": [
+        "Copy entry rejects zero/overflow/array copy ids and positive edit route mixed with copy. Route path plus copy query and request generations isolate late responses between source routes.",
+        "Copy uses the explicit trusted seed. Destination is fixed to authenticated type2 supplier, new id0 and review/show0; editable requests project only the exact safe fields. Hidden source configuration is reconstructed and validated server-side. Omitted store_label_id inherits effective source bindings, while explicit empty selection clears only that association.",
+        "Before the first copy POST, sessionStorage persists only operation_id,actor_id,supplier_id,source_id. No text, source MAC, card credential or signed media URL enters that marker. Persistence failure prevents dispatch; ambiguous responses retain the original UUID and block new creates.",
+        "Recovery only queries or resolves the original UUID. The marker is removed only after an exact identity/source terminal receipt and successful storage removal. Route/session generation checks ignore stale responses. Source draft reload requires a concise explicit replacement confirmation.",
+        "The independent /products/copy-result route requires login without product.manage. Its load returns before category/rule/product reads and its submit path is disabled. Server receipt/resolve still require the current live actor/supplier/authVersion/expiry; disabled, deleted or moved identities are denied.",
+        "Canonical video/image references enter product state and saving; short-lived signed preview fields are excluded. Denied source private media, including hidden recommendation and HTML slots, rejects the complete copy rather than silently clearing media.",
+        "Card source seed omits source SKU ids/uniques, retired rows, cards, fixed delivery material and counts. Card stock is zero; delivery switching is disabled in copy and new delivery is configured separately after save. Physical/manual eligible current stock is carried with new SKU and SPU identities.",
+        "Actual Supplier authority is checked inside its authenticated transaction. Full Admin writer core is reused only through an internal typed server capability with owner fixed; existing Admin public guard/receipt wrapper and post-commit effects dispatch remain in place.",
+        "0190 is an explicit independent PG16 maintenance addon with exact immutable receipt catalog and SELECT/INSERT runtime access. Current-product declaration is 309 with exact source/8 columns. Historical cohorts/bootstrap/ORM and frozen manager privilege plans are not expanded.",
+        "Final declaration integration explicitly excludes the exact five reviewed product addon source files from historical and current-ordinary scans. Product lengths and unique counts are frozen to 5 addons,27 combined declarations,26 TS-only declarations; current-product total309, historical300 and ordinary304 stay fixed. The exact productOnly five-table array and exclusion from embedded/external/ORM construction remain asserted."
+      ],
+      "remaining_blockers": [],
+      "validation_phase": {
+        "frontend": {
+          "status": "observed_result_json_passed",
+          "files": 6,
+          "cases": 145,
+          "result": "/tmp/cinashop-supplier-copy-frontend-result.json",
+          "log": "/tmp/cinashop-supplier-copy-frontend.log",
+          "qualifier": "Post stale-form-type correction; final aggregate Vue/build pipeline terminal remains root-owned."
+        },
+        "receipt_catalog": {
+          "status": "root_reported_passed",
+          "files": 1,
+          "cases": 6,
+          "log": "/tmp/cinashop-supplier-copy-catalog-native.log"
+        },
+        "first_complete_native": {
+          "status": "historical_failed",
+          "passed": 22,
+          "failed": 1,
+          "log": "/tmp/cinashop-supplier-copy-native.log",
+          "failure": "Test incorrectly expected ERP admission to reject manual virtual source82; real PHP/TS ERP code requirement applies only to physical type0. Corrected to physical80 negative plus manual82 positive; no production guard relaxed."
+        },
+        "current_native_and_admin_regression": {
+          "status": "observed_log_passed",
+          "files": 7,
+          "cases": 88,
+          "log": "/tmp/cinashop-supplier-copy-native-verified.log",
+          "cleanup": "remaining0 and FINANCE_LOCAL_STOPPED finance-postgres-hxR2Os",
+          "qualifier": "No deduplicated total across later native repeats is claimed."
+        },
+        "final_worker_types": {
+          "status": "pending"
+        },
+        "final_supplier_types_build": {
+          "status": "pending_root_pipeline_terminal",
+          "pipeline_log": "/tmp/cinashop-supplier-copy-frontend-final-pipeline.log",
+          "build_log": "/tmp/cinashop-supplier-copy-build.log"
+        },
+        "installed_browser_acceptance": {
+          "status": "pending_rerun_after_browser_discovered_ui_fix",
+          "historical_attempt": "Root found stale-form-type delivery UI before any product write; focused red tests2fail/1pass/24filteredskips preserved.",
+          "historical_log": "/tmp/cinashop-supplier-copy-browser-before-mode-fix.log"
+        },
+        "production_maintenance_or_provider_execution": {
+          "status": "not_performed"
+        },
+        "frontend_before_browser_finding": {
+          "status": "root_reported_passed",
+          "files": 6,
+          "cases": 144,
+          "log": "/tmp/cinashop-supplier-copy-frontend.log"
+        },
+        "declaration_and_permission_contracts": {
+          "status": "observed_result_json_passed",
+          "files": 4,
+          "cases": 51,
+          "result": "/tmp/cinashop-supplier-copy-contracts-result.json",
+          "log": "/tmp/cinashop-supplier-copy-contracts.log",
+          "scope": "Exact historical300/currentordinary304/currentproduct309; addon5/declarations27/TS-only26; Supplier RBAC/category/batch permissions."
+        },
+        "native_after_test_type_guards": {
+          "status": "observed_log_passed",
+          "files": 2,
+          "cases": 30,
+          "log": "/tmp/cinashop-supplier-copy-native-final.log",
+          "cleanup": "remaining0 and FINANCE_LOCAL_STOPPED finance-postgres-5ajtoU",
+          "qualifier": "Repeat of Supplier copy24 + catalog6 after test-only type corrections, not additional distinct cases."
+        }
+      },
+      "source_files": [
+        [
+          "view/supplier-ts/src/api/productCopy.ts",
+          "9b5917cb4467a281458f2b39846bda7c01adfaedb5afb66b419227ddd4b247c7"
+        ],
+        [
+          "view/supplier-ts/src/pages/ProductForm.vue",
+          "9fb3fcb186f5f6038e91f4cbee89208f17e3f5a1b44669ec23fc06983356b849"
+        ],
+        [
+          "view/supplier-ts/src/pages/Products.vue",
+          "5fe28d3db630fa143fdeedead85f83f15aacd991323477584b9832c3519ec851"
+        ],
+        [
+          "view/supplier-ts/src/pages/ProductRecycle.vue",
+          "1dd08d6e86101f2fcbab37b43f56af39b74a7b88a2a537d9630fa68ce02b7673"
+        ],
+        [
+          "view/supplier-ts/src/router.ts",
+          "6930b69c0bd3dfdab252ccbf6919b0b961c149098ca52cf9f9ca05b266964444"
+        ],
+        [
+          "view/supplier-ts/src/utils/supplierSession.ts",
+          "a60504b75dda889f49936688431fa6b9ce35abec98f8cb2b207bac992fa126d0"
+        ],
+        [
+          "view/supplier-ts/src/api/http.ts",
+          "130c8dfdc58ab6057406529e2cfcc2be53a86015ec80a04fab7b7853b87ea75d"
+        ],
+        [
+          "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+          "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918"
+        ],
+        [
+          "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+          "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7"
+        ],
+        [
+          "workers-ts/src/services/supplier/SupplierProductCopyOperation.ts",
+          "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf"
+        ],
+        [
+          "workers-ts/src/services/supplier/SupplierVideoAuthority.ts",
+          "0662e066e3944db80444012df3ebe52bd983a28d64aaa16ac0ee8d0ff4bdf189"
+        ],
+        [
+          "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+          "72b5deca1d3a0313c7cdca06c44a57b78422a3ea627b5ce0101554a0e17cf540"
+        ],
+        [
+          "workers-ts/src/controllers/supplier/SupplierProductCopyController.ts",
+          "2a54e5be0d5be4dc570de3e61dd561ef0a33b086d584f23876834b1e794f5671"
+        ],
+        [
+          "workers-ts/src/routes/supplierapi.ts",
+          "dc8faf3403c02c1521267dcde675316be6a395e30d458ab7457f047b48b392d6"
+        ],
+        [
+          "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+          "469dba9b97bd48846cd12088be87c76f0c043dcd543fe5fcff19daed5887b37a"
+        ],
+        [
+          "workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+          "184bb61b4dbf3982c00d9ed877695d32530c78ed9c0cfc94856394ba23f8343a"
+        ],
+        [
+          "workers-ts/src/services/product/ProductSaveEffects.ts",
+          "5c017e2d1977362a24c19d1ffd9db80010499d84b5a765c600740b413e0cb411"
+        ],
+        [
+          "workers-ts/src/migrations/supplierProductCopyOperation.ts",
+          "6d0340ae87e87d14d3d93bfba248abdbdecf0111c39bb415ba962a22c6275011"
+        ],
+        [
+          "workers-ts/src/migrations/maintenance/0190_supplier_product_copy_operation.sql",
+          "d52008f0ad9704ac8ab0b058759837cb76a056e00c8582b2fc0d030d45b243bd"
+        ],
+        [
+          "workers-ts/test/helpers/registeredCatalogCohort.ts",
+          "d541d8d0afd3f0dc432ed9084240685915988cb1fc7e4eee41f6e7bd5c3bcc02"
+        ],
+        [
+          "workers-ts/test/data-migration.test.ts",
+          "a05be73396e099f52a706a964d98cb33354ae2f20cc1db52709ddc231ecbe062"
+        ],
+        [
+          "workers-ts/test/helpers/supplierProductCopy.ts",
+          "7f345ab8d0a19f4f000d7234009c587717782939be57baa67fced59035d3d5d1"
+        ],
+        [
+          "workers-ts/test/supplier-product-copy-native.test.ts",
+          "dbe97ace6d22d129bda085073b1378c1d8f1d457faf3fff53c7a08d47fc0c69c"
+        ],
+        [
+          "workers-ts/test/supplier-product-copy-operation-catalog-native.test.ts",
+          "f049c7296467a6e76a247040135a1b0f46d3bbbeefe4f75083adaeb505fec9f6"
+        ],
+        [
+          "workers-ts/test/supplier-product-copy-frontend.test.ts",
+          "23425a647c526d8892fd3a6e530840fd57977710aa48036348edf1235d5a921d"
+        ],
+        [
+          "workers-ts/test/supplier-product-recycle-frontend.test.ts",
+          "7a21bbd3152d82fb65996f58aea440c0978d0ef63534f78032a6faecfd9e5241"
+        ],
+        [
+          "workers-ts/test/browser/supplier-product-copy.acceptance.ts",
+          "203935fcc896cc44e8366b1d7834dc4a04b8ecb4dcda204a888b03dbb38a9cd1"
+        ]
+      ],
+      "source_sha_format": "[repository_relative_path, sha256] arrays avoid ambiguous token-like free-form assignments.",
+      "updated_at_utc": "2026-10-16T02:12:01.931301+00:00",
+      "test_type_corrections": {
+        "initial_standard_type_log": "/tmp/cinashop-supplier-copy-worker-types.log",
+        "initial_errors": 4,
+        "changes": [
+          "Actual Drizzle select builder is checked non-null/object before Proxy construction.",
+          "Copy seed is inspected as Record<string,unknown>; attrs must be an actual array and each SKU an object before shape assertions.",
+          "Manual seed product_type is verified with toMatchObject rather than accessing a statically omitted Row-spread property.",
+          "Actual catalog SQL current_database rows are explicitly typed before destructuring."
+        ],
+        "production_source_changed": false,
+        "ts_ignore_or_new_any_annotations": false,
+        "revalidation": "Both new native files reran30 cases successfully; final standard Worker tsc remains root-owned and its terminal result is not inferred here."
+      },
+      "completed_evidence_files": [
+        [
+          "/tmp/cinashop-supplier-copy-card-mode-red.log",
+          "a0d990c967a8c0eba5fa6b325e420002487fdf4032c91576cd884281fd6fdb4f"
+        ],
+        [
+          "/tmp/cinashop-supplier-copy-contracts-result.json",
+          "32e8657cd4ec9d3cc65ab44876faca4cd90ed516cdf9a643c4de92dd906f5da5"
+        ],
+        [
+          "/tmp/cinashop-supplier-copy-frontend-result.json",
+          "9b41e53b3c9a97d2af5d4fd2ece3f0ae017e500eab4a175955667ef6e04e5030"
+        ],
+        [
+          "/tmp/cinashop-supplier-copy-native-verified.log",
+          "63be207128dad753ca819b873de7ef47affd62e6594e123632588f1fc2db909c"
+        ],
+        [
+          "/tmp/cinashop-supplier-copy-native-final.log",
+          "c3e3d2f969981069e94f4115fb3b4b7c7df0c624d21f8614768399105b919416"
+        ]
+      ]
+    },
+    "phase_note": "Embedded independent review records the pre-final Browser/Worker pending state honestly; later terminal success is recorded in validation above."
+  },
+  "statistics_contract": "User-selected restored PHP-compatible /api/get_script and all real loaders retained; owned Browser uses explicit empty statistics KV and forwards actual raw200 JavaScript.",
+  "parent_checkboxes": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "checked": 249,
+      "open": 155,
+      "sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2"
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "checked": 50,
+      "open": 38,
+      "sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4"
+    }
+  },
+  "remaining_scope": "Whole PHP-to-TS migration remains active. Advanced legacy configuration editing and unpaid Supplier order editing remain open; actual feature maintenance0190/runtime privileges, real providers and production commissioning require separate rollout. Full new-commit cloud CI is pending. No production DDL, GRANT or deployment performed.",
+  "documentation_review": {
+    "path": "/tmp/cinashop-supplier-copy-final-doc-review.json",
+    "sha256": "415206238a2dd19946c804b40bba12f48cb81b6d284835d6015bb7b86736b620",
+    "resolution": "Added adjacent supersession notes to original API-009 checklist and dated audit without altering historical checkbox lines or runtime; final batch evidence corrections included here."
+  },
+  "owned_cleanup": {
+    "fixture_remaining": 0,
+    "clusters": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fVCcAz/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-csy58r/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zV0ibz/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-R8DTkW/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ua0cwn/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-hxR2Os/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-5ajtoU/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-2aLfTw/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ewS5GS/data",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_exists": false,
+        "status": "pg_ctl: no server running"
+      }
+    ],
+    "proof": "All9 task-owned runs reported FINANCE_LOCAL_FIXTURES remaining=0 and STOPPED; independent pg_ctl status exit3 and missing postmaster.pid rechecked after final Browser completion.",
+    "logs": [
+      {
+        "root_suffix": "fVCcAz",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-catalog-calibration.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "csy58r",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-catalog-native.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "zV0ibz",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-first-native.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "R8DTkW",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-first-native-rerun.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "ua0cwn",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-native.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "hxR2Os",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-native-verified.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "5ajtoU",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-native-final.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "2aLfTw",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-browser-before-mode-fix.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      },
+      {
+        "root_suffix": "ewS5GS",
+        "logs": [
+          {
+            "path": "/tmp/cinashop-supplier-copy-browser.log",
+            "remaining_zero": true,
+            "stopped": true
+          }
+        ]
+      }
+    ]
+  },
+  "source_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/api/productCopy.ts",
+      "sha256": "9b5917cb4467a281458f2b39846bda7c01adfaedb5afb66b419227ddd4b247c7"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "9fb3fcb186f5f6038e91f4cbee89208f17e3f5a1b44669ec23fc06983356b849"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductRecycle.vue",
+      "sha256": "1dd08d6e86101f2fcbab37b43f56af39b74a7b88a2a537d9630fa68ce02b7673"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Products.vue",
+      "sha256": "5fe28d3db630fa143fdeedead85f83f15aacd991323477584b9832c3519ec851"
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "6930b69c0bd3dfdab252ccbf6919b0b961c149098ca52cf9f9ca05b266964444"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "e24637da8678bd523abb8748e49529707c67d6bd73ce5d7f18e414ad1f87a122"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductCopyController.ts",
+      "sha256": "2a54e5be0d5be4dc570de3e61dd561ef0a33b086d584f23876834b1e794f5671"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0190_supplier_product_copy_operation.sql",
+      "sha256": "d52008f0ad9704ac8ab0b058759837cb76a056e00c8582b2fc0d030d45b243bd"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProductCopyOperation.ts",
+      "sha256": "6d0340ae87e87d14d3d93bfba248abdbdecf0111c39bb415ba962a22c6275011"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "dc8faf3403c02c1521267dcde675316be6a395e30d458ab7457f047b48b392d6"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductReadService.ts",
+      "sha256": "184bb61b4dbf3982c00d9ed877695d32530c78ed9c0cfc94856394ba23f8343a"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminLegacyProductSaveService.ts",
+      "sha256": "469dba9b97bd48846cd12088be87c76f0c043dcd543fe5fcff19daed5887b37a"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "72b5deca1d3a0313c7cdca06c44a57b78422a3ea627b5ce0101554a0e17cf540"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyOperation.ts",
+      "sha256": "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-copy.acceptance.ts",
+      "sha256": "203935fcc896cc44e8366b1d7834dc4a04b8ecb4dcda204a888b03dbb38a9cd1"
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "a05be73396e099f52a706a964d98cb33354ae2f20cc1db52709ddc231ecbe062"
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "d541d8d0afd3f0dc432ed9084240685915988cb1fc7e4eee41f6e7bd5c3bcc02"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+      "sha256": "7f345ab8d0a19f4f000d7234009c587717782939be57baa67fced59035d3d5d1"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-frontend.test.ts",
+      "sha256": "23425a647c526d8892fd3a6e530840fd57977710aa48036348edf1235d5a921d"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "dbe97ace6d22d129bda085073b1378c1d8f1d457faf3fff53c7a08d47fc0c69c"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-operation-catalog-native.test.ts",
+      "sha256": "f049c7296467a6e76a247040135a1b0f46d3bbbeefe4f75083adaeb505fec9f6"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recycle-frontend.test.ts",
+      "sha256": "7a21bbd3152d82fb65996f58aea440c0978d0ef63534f78032a6faecfd9e5241"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-copy-browser.config.ts",
+      "sha256": "7152ae4abdb8cff9d01d4e92c718528ad7de5c34c607d21fc553f09ce4075533"
+    }
+  ],
+  "source_fingerprint_scope": "All changed/new production source, tests, helper, config, migration and runner files relative to base41dec7; excludes this audit and the two evolving mother documents to avoid self-reference.",
+  "validated_at_utc": "2026-10-16T02:17:37.187460+00:00",
+  "validation_log_fingerprints": [
+    {
+      "path": "/tmp/cinashop-supplier-copy-native-verified.log",
+      "bytes": 27337,
+      "sha256": "63be207128dad753ca819b873de7ef47affd62e6594e123632588f1fc2db909c"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-native-final.log",
+      "bytes": 12603,
+      "sha256": "c3e3d2f969981069e94f4115fb3b4b7c7df0c624d21f8614768399105b919416"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-frontend.log",
+      "bytes": 72,
+      "sha256": "dab4a97e1685f95af538f176d90c033b51a4ca882d553ffa9ad963b2dde1d323"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-frontend-result.json",
+      "bytes": 58128,
+      "sha256": "9b41e53b3c9a97d2af5d4fd2ece3f0ae017e500eab4a175955667ef6e04e5030"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-contracts.log",
+      "bytes": 73,
+      "sha256": "d97edb823081d79a22b37132f8e7df6118cf49388f4ffd76d44d10fc79270c0b"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-contracts-result.json",
+      "bytes": 18792,
+      "sha256": "32e8657cd4ec9d3cc65ab44876faca4cd90ed516cdf9a643c4de92dd906f5da5"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-runtime-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-runtime-types-receipt.json",
+      "bytes": 177370,
+      "sha256": "0bf27df05ce9de085605ddb64f58a7bd64a314a0876d44f3e03456919eb52a34"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-worker-types-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-build.log",
+      "bytes": 4399,
+      "sha256": "f298cf83077e6dafca2bc6ad54c3ad9f93abea8c06f3988f9202e7ced409498c"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-browser.log",
+      "bytes": 4231,
+      "sha256": "117cd6dcd752d370f8a1f9da30a4eaaf605f4a55dc8bee181287e84dfc1cc2db"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-browser-result.json",
+      "bytes": 4654,
+      "sha256": "9aec4465f726273235f516fb84b6ad30b1762d6ba62c8082419fa42f09fea4f1"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-cleanup.json",
+      "bytes": 1713,
+      "sha256": "72b7f59db083095c0c3149cef5329f138c8c45ff66cda043f0b4bb46ecb5b3ee"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-desktop.png",
+      "bytes": 49933,
+      "sha256": "55f08a1cf3c259d1d51a4a7b293d117d2289d2acf9206a820b7a279fbb816517"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-mobile.png",
+      "bytes": 30178,
+      "sha256": "c2f921dbec2717e9ba86afc10f1d192201ea5c0aa88d59d7313f6e926236d6b7"
+    },
+    {
+      "path": "/tmp/cinashop-supplier-copy-pending.png",
+      "bytes": 54424,
+      "sha256": "6fa8b2768bd8acda27ad0a46f3b0e0972ff8627f0c3a58b8779a32f6c2196166"
+    }
+  ],
+  "secret_scan": {
+    "phase": "Completed changed-file snapshot before final audit/docs terminal fields; exact final staged patch and commit range are scanned separately before push. No allowlist changes.",
+    "exit_code": 0,
+    "files": 28,
+    "report": "/tmp/cinashop-supplier-copy-final-source-secrets.json",
+    "findings": 0,
+    "scanner": "Official gitleaks8.29.0; retained release archive checksum verified, extracted binary matches archive member byte-for-byte.",
+    "config": ".gitleaks.toml",
+    "release_archive_sha256": "39e07ad810336fd0ae80d0bd61c60d0521f628173e7583583b5df4a38738522c",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b"
+  },
+  "cloud_ci": {
+    "scope": "Previous base41dec7, independent read at final local verification",
+    "run": "https://github.com/cinagroup/cinashop/actions/runs/38835877862",
+    "success": 8,
+    "in_progress": 2,
+    "new_commit_full_ci": "pending; local285 tests/types/build do not imply full cloud CI success"
+  }
+}

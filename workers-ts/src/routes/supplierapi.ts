@@ -18,6 +18,7 @@ import * as PrintDocumentController from "@/controllers/system/PrintDocumentCont
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
 import * as SupplierVideo from '@/controllers/supplier/SupplierProductVideoController';
+import * as SupplierProductCopy from '@/controllers/supplier/SupplierProductCopyController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -184,6 +185,10 @@ supplierapiRoutes.post("/waybill/jobs/:id/confirm-issued", WaybillJobController.
 supplierapiRoutes.post("/waybill/jobs/:id/confirm-retry", WaybillJobController.supplierConfirmRetry);
 supplierapiRoutes.post("/waybill/jobs/:id/close", WaybillJobController.supplierClose);
 
+supplierapiRoutes.get('/product/product/copy/:id', SupplierProductCopy.seed);
+supplierapiRoutes.post('/product/product/copy/:id', SupplierProductCopy.save);
+supplierapiRoutes.get('/product/product/copy_operations/:operationId', SupplierProductCopy.receipt);
+supplierapiRoutes.post('/product/product/copy_operations/:operationId/resolve', SupplierProductCopy.resolve);
 supplierapiRoutes.get("/product/product/list", SupplierController.productList);
 supplierapiRoutes.get("/product/product", SupplierController.productList);
 supplierapiRoutes.get("/product/category", SupplierCategory.list);

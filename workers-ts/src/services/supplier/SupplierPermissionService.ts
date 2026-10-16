@@ -105,6 +105,18 @@ export function normalizeSupplierRoute(routePath: string): string {
 /** Empty means authenticated self-service; null means an unknown route. */
 export function requiredSupplierPermissions(method: string, routePath: string): string[] | null {
   const route = normalizeSupplierRoute(routePath);
+  if (route === 'product/product/copy' || route.startsWith('product/product/copy/')
+    || route === 'product/product/copy_operations' || route.startsWith('product/product/copy_operations/')) {
+    const id='(?:[1-9][0-9]{0,9}|:id|<id>)', uuid='(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:operationid|<operationid>)';
+    // A numeric GET menu never creates a global manage capability. The seed
+    // service additionally requires live manage for its edit context.
+    if(readMethod(method)&&new RegExp(`^product/product/copy/${id}$`).test(route))return ['supplier.product.view'];
+    if(method.toUpperCase()==='POST'&&new RegExp(`^product/product/copy/${id}$`).test(route))return ['supplier.product.manage'];
+    if(readMethod(method)&&new RegExp(`^product/product/copy_operations/${uuid}$`).test(route)
+      ||method.toUpperCase()==='POST'&&new RegExp(`^product/product/copy_operations/${uuid}/resolve$`).test(route))return [];
+    return null;
+  }
+
   if (route === 'product/type_header' || route.startsWith('product/type_header/')
     || route === 'product/product/thorough' || route.startsWith('product/product/thorough/')) {
     if (readMethod(method) && route === 'product/type_header') return ['supplier.product.view'];

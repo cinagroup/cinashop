@@ -91,7 +91,7 @@ function numeric(value: string | number | null): number {
   if (!Number.isFinite(number)) throw new ServiceUnavailableException('商品历史金额无效');
   return number;
 }
-function dimensions(product: Product, attrs: Array<typeof storeProductAttr.$inferSelect>, skus: Sku[]): Dimension[] {
+export function dimensions(product: Product, attrs: Array<typeof storeProductAttr.$inferSelect>, skus: Sku[]): Dimension[] {
   if (product.specType === 0) {
     if (skus.length > 1 || skus.some(row => row.suk !== '默认')) throw conflict();
     return [{ value: '规格', detail: ['默认'] }];

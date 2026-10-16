@@ -339,7 +339,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(MIGRATION_TABLES.map((table) => table.table).sort()).toEqual(
       report.sharedTables.map((table) => table.table).sort(),
     );
-    const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts','productVideoGc.ts','supplierProductVideoUpload.ts'];
+    const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts','productVideoGc.ts','supplierProductCopyOperation.ts','supplierProductVideoUpload.ts'];
     expect(embeddedMigrationSources.filter(({name})=>productAddonSources.includes(name)).map(({name})=>name)).toEqual(productAddonSources);
     const ordinaryDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
@@ -379,15 +379,15 @@ describe("MySQL to PostgreSQL schema audit", () => {
     ]);
     expect(definitionDrift).toEqual({
       externalTableCount: 286,
-      // Exactly four independently installed product addons follow the frozen
+      // Exactly five independently installed product addons follow the frozen
       // ordinary declaration scope. They do not join any construction cohort.
-      workerTableCount: 308,
+      workerTableCount: 309,
       externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables: reviewedExplicitDeclarationTables('current-product'),
       columnDrift: [],
     });
     const productOnly=definitionDrift.workerOnlyTables.filter(table=>!ordinaryDefinitionDrift.workerOnlyTables.includes(table));
-    expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','product_video_gc_state_v1','supplier_product_video_upload_v1']);
+    expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','product_video_gc_state_v1','supplier_product_copy_operation_v1','supplier_product_video_upload_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
     for (const tableName of [
