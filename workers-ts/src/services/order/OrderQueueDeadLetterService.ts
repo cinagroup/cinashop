@@ -25,6 +25,7 @@ import {
 import { isAttachmentObjectCleanupMessage } from "@/services/system/AttachmentService";
 import { isProductVideoCleanupMessage } from '@/services/admin/AdminProductVideoUploadService';
 import { isSupplierVideoCleanupMessage } from '@/services/supplier/SupplierProductVideoUploadService';
+import { isProductVideoGcMessage } from '@/services/system/ProductVideoGcService';
 import { isProductAutoShelfMessage, isProductAutoShelfScanMessage } from '@/services/product/ProductAutoShelfService';
 import { isOfficialAccountQrcodeMessage } from "@/services/wechat/OfficialAccountQrcodeService";
 import {
@@ -242,7 +243,7 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
       replayMessage: value,
     };
   }
-  if (isAttachmentObjectCleanupMessage(value) || isProductVideoCleanupMessage(value) || isSupplierVideoCleanupMessage(value)) {
+  if (isAttachmentObjectCleanupMessage(value) || isProductVideoCleanupMessage(value) || isSupplierVideoCleanupMessage(value) || isProductVideoGcMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",

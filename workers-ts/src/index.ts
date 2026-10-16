@@ -145,6 +145,7 @@ export default {
       "./services/system/AttachmentService"
     );
     const { SupplierProductVideoUploadService, isSupplierVideoCleanupMessage } = await import('./services/supplier/SupplierProductVideoUploadService');
+    const { ProductVideoGcService, isProductVideoGcMessage } = await import('./services/system/ProductVideoGcService');
     const { AdminProductVideoUploadService, isProductVideoCleanupMessage } = await import('./services/admin/AdminProductVideoUploadService');
     const {
       OfficialAccountQrcodeService,
@@ -678,6 +679,22 @@ export default {
         continue;
       }
 
+      if (isProductVideoGcMessage(msg.body)) {
+        try {
+          const result = await new ProductVideoGcService(container, env).dispatch(msg.body);
+          emitOperationalEvent('info', { event: 'product_video_gc_dispatched', component: 'queue', operation: 'cleanup',
+            outcome: 'success', resourceCount: result.enqueued, examined: result.examined,
+            durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts });
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent('error', { event: 'product_video_gc_failed', component: 'queue', operation: 'cleanup',
+            outcome: 'retry', durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds, errorCode: operationalErrorCode(error) });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
       if (isSupplierVideoCleanupMessage(msg.body)) {
         try {
           const result = await new SupplierProductVideoUploadService(container, env).cleanup(msg.body);
@@ -802,6 +819,8 @@ async function handleScheduled(env: Env, scheduledAt: number, cron: string): Pro
     return;
   }
   await Promise.all([
+    env.ORDER_QUEUE.send({ action: 'dispatchProductVideoCleanup', scope: 'admin' }),
+    env.ORDER_QUEUE.send({ action: 'dispatchProductVideoCleanup', scope: 'supplier' }),
     env.ORDER_QUEUE.send({
       action: "dispatchPaymentCallbackOutbox",
       scheduledAt,

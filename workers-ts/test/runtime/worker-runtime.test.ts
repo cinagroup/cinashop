@@ -100,7 +100,7 @@ describe("Worker runtime bindings", () => {
     await testEnv.ASSETS_BUCKET.delete(key);
   });
 
-  it("turns a non-reminder Cron event into twenty-one replayable root Queue jobs without touching PostgreSQL", async () => {
+  it("turns a non-reminder Cron event into twenty-three replayable root Queue jobs without touching PostgreSQL", async () => {
     const scheduledTime = new Date("2026-08-09T12:00:00.000Z");
     const controller = createScheduledController({
       scheduledTime,
@@ -121,7 +121,7 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(21);
+    expect(messages).toHaveLength(23);
     expect(messages.filter((message) => message.action === "runScheduledMaintenance"))
       .toHaveLength(14);
     expect(messages.filter((message) => message.action === "runScheduledMaintenance" && message.job === "pink_cancellation_recovery"))
@@ -135,9 +135,15 @@ describe("Worker runtime bindings", () => {
       "dispatchWechatCallbackOutbox",
       "dispatchWorkCallbackOutbox",
       "dispatchWorkContactActions",
+      "dispatchProductVideoCleanup",
+      "dispatchProductVideoCleanup",
       ...Array.from({ length: 14 }, () => "runScheduledMaintenance"),
     ].sort());
-    expect(messages.every((message) => "scheduledAt" in message
+    expect(messages.filter(message => message.action === 'dispatchProductVideoCleanup')).toEqual([
+      { action: 'dispatchProductVideoCleanup', scope: 'admin' },
+      { action: 'dispatchProductVideoCleanup', scope: 'supplier' },
+    ]);
+    expect(messages.filter(message => message.action !== 'dispatchProductVideoCleanup').every((message) => "scheduledAt" in message
       && message.scheduledAt === scheduledTime.getTime())).toBe(true);
   });
 
@@ -159,7 +165,7 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(22);
+    expect(messages).toHaveLength(24);
     expect(messages.filter((message) =>
       message.action === "runScheduledMaintenance" && message.job === "sign_remind_time"
     )).toHaveLength(1);

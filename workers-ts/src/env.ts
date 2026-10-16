@@ -351,6 +351,12 @@ export interface SupplierVideoCleanupMessage {
   uploadId: string;
 }
 
+/** Fixed-scope durable traversal; all cursors and leases stay in SQL. */
+export interface ProductVideoGcMessage {
+  action: 'dispatchProductVideoCleanup';
+  scope: 'admin' | 'supplier';
+}
+
 /** Permanent official-account QR codes are provisioned outside HTTP requests. */
 export interface OfficialAccountQrcodeMessage {
   action: "provisionOfficialAccountQrcode";
@@ -472,6 +478,7 @@ export type OrderMessage =
   | AttachmentObjectCleanupMessage
   | ProductVideoCleanupMessage
   | SupplierVideoCleanupMessage
+  | ProductVideoGcMessage
   | OfficialAccountQrcodeMessage
   | WorkCallbackOutboxMessage
   | WorkCallbackDispatchMessage

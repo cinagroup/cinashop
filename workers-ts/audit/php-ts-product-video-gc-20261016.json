@@ -1,0 +1,555 @@
+{
+  "schema_version": 1,
+  "title": "Admin/Supplier 视频清理持久恢复、分页租约与实际 PG16 验证",
+  "base_commit": "f5cd4e707273bafa4db7a14707b6e352965003d7",
+  "status": "locally_validated_cloud_ci_pending",
+  "recorded_at": "2026-10-16T00:46:58.621337+00:00",
+  "goal_status": "active",
+  "scope": {
+    "implemented": [
+      "五分钟Cron分别投递Admin和Supplier固定scope根消息；分钟自动上下架保留",
+      "持久两行游标、UUID固定高水位、每页80条先取窗口再判终态或实际到期，120秒租约及300秒完成周期节流",
+      "claim/bind/Queue/ACK分离，所有SQL终态CAS+精确回读，不跨Queue I/O持有SQL事务；接受结果不明允许重复而不跳过",
+      "从持久上传事实重新派发原有严格UUID清理消费者，全部旧消息或续页丢失由下一Cron恢复；每周期重访长期终态以收敛迟到写入",
+      "缺失/漂移addon、权限或素材name索引均停止派发；Admin和Supplier独立就绪",
+      "严格两字段普通Queue和DLQ协议，不接受caller cursor/key/lease/tenant/cutoff"
+    ],
+    "unchanged": [
+      "原0185/0186上传合同及目录摘要",
+      "HTTP路由、前端、统计接口及用户选择保留的PHP兼容行为",
+      "既有逐上传cleanup仍是唯一R2删除授权路径：持久owner事实+真实附件表fence+所有owner对象名引用检查",
+      "历史/ordinary/bootstrap/runAll/ORM构造cohort及SQL根迁移"
+    ]
+  },
+  "migrations": {
+    "0187": {
+      "table": "public.product_video_gc_state_v1",
+      "columns": 8,
+      "constraints": 5,
+      "indexes": 1,
+      "triggers": 2,
+      "seed_scopes": [
+        "admin",
+        "supplier"
+      ],
+      "runtime_privileges": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "constraints_sha256": "c1cafbee7cb15b8ebadbe4c69a953e31198c181db50ddaee5c5b9d18953ab27f"
+    },
+    "0188": {
+      "index": "public.system_attachment_video_gc_name_idx",
+      "definition": "btree(name), nonunique, no predicate/expressions/include",
+      "maintenance_row_budget": 100000,
+      "runtime": "read-only exact catalog proof plus SELECT name LIMIT0; no install/repair"
+    },
+    "rollout": "Both addons require explicit PG16 owner maintenance transactions and reviewed runtime grants. Install the attachment lookup index and GC state before enabling the new runtime. The requested upload scope must be installed; the other scope can be absent. No production DDL/deploy performed.",
+    "current_product_addons": 4,
+    "current_worker_table_declarations": 308
+  },
+  "validation": {
+    "distinct_test_definitions": 135,
+    "test_files": 10,
+    "logs": [
+      {
+        "group": "native",
+        "log": "/tmp/cinashop-video-gc-final-native.log",
+        "sha256": "6e64489a3e7f7482c9f548ab9bc96c99eaeb449825d6b890c8380d78a1978c11",
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "group": "unit",
+        "log": "/tmp/cinashop-video-gc-final-unit.log",
+        "sha256": "02c0907ab171842dc8e130b291dad5a6cbe549a60a4d748bf9c3d8a1338566a9",
+        "passed": 55,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "group": "runtime",
+        "log": "/tmp/cinashop-video-gc-final-runtime.log",
+        "sha256": "03aa4bbe9fda65bc09b3802632185c3fb0202d16ec5c125e3908eaf659e0c62d",
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "group": "runtime-base",
+        "log": "/tmp/cinashop-video-gc-final-runtime-base.log",
+        "sha256": "59b6dfb249e321afff1fb8bb2eec10c26f3986b58af0173358c572ea8f85a3c5",
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "cases_by_file": {
+      "test/product-video-gc-native.test.ts": [
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > rebuilds admin cleanup solely from durable roots after every original and DLQ message is discarded",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > rebuilds supplier cleanup solely from durable roots after every original and DLQ message is discarded",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > preserves the admin final key after unknown publication COMMIT and while any library owner still references it",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > preserves the supplier final key after unknown publication COMMIT and while any library owner still references it",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > cancels an actually expired admin root and collects only its durable owner-derived keys",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > cancels an actually expired supplier root and collects only its durable owner-derived keys",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > collects a very late admin provider composition when every pre-write/post-write/old cleanup message is lost",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > collects a very late supplier provider composition when every pre-write/post-write/old cleanup message is lost",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > advances a bounded admin active prefix, resumes after losing its continuation, and freezes the high-water UUID",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > advances a bounded supplier active prefix, resumes after losing its continuation, and freezes the high-water UUID",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > collects a late admin part after cancellation even when every post-write cleanup send fails",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > collects a late supplier part after cancellation even when every post-write cleanup send fails",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > restarts an old completed cycle from the beginning, including lower UUIDs and long-terminal rows",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > keeps the cursor after accepted-but-unconfirmed Queue delivery and repeats the same bounded page safely",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > handles real claim COMMIT acknowledgement loss without advancing unaccepted work or rewinding accepted work",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > handles real bind COMMIT acknowledgement loss without advancing unaccepted work or rewinding accepted work",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > handles real ack COMMIT acknowledgement loss without advancing unaccepted work or rewinding accepted work",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > lets only one independent database session hold a scope lease and holds no SQL lock over Queue I/O",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > reclaims a genuinely expired lease using the database wall clock",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > refuses stale ACK after a replacement token and never releases the new lease",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > fails closed on absent or drifted addons/indexes with zero Queue and R2 work, while keeping scopes independent",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > uses the existing UUID primary key and nonunique attachment-name index with the genuine default planner",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > uses a repeatable-read read-only bounded discovery snapshot and preserves stricter caller deadlines",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > rejects a real competing GC table lock instead of acknowledging an empty successful page",
+        "durable video GC dispatch on actual PG16 with explicit R2 and Queue stand-ins > dispatches using a separate restricted LOGIN with only SELECT UPDATE on GC state and no schema ownership"
+      ],
+      "test/product-video-gc-catalog-native.test.ts": [
+        "independent two-scope product video GC catalog on genuine PG16 > pins the actual PG16 constraints, eight columns, fixed scopes and independent SQL mirror",
+        "independent two-scope product video GC catalog on genuine PG16 > seeds exactly two fixed rows before enabling guards and preserves existing rows on supported owner maintenance rerun",
+        "independent two-scope product video GC catalog on genuine PG16 > rejects unsupported maintenance entry contexts before creating any catalog",
+        "independent two-scope product video GC catalog on genuine PG16 > refuses either partial catalog without repairing or replacing its objects",
+        "independent two-scope product video GC catalog on genuine PG16 > fails closed on exact column CHECK index trigger function table and ACL drift without repairing it",
+        "independent two-scope product video GC catalog on genuine PG16 > requires both fixed scope rows and never silently reseeds a damaged catalog",
+        "independent two-scope product video GC catalog on genuine PG16 > allows claim bind release strict advance and finish while preserving the other scope exactly",
+        "independent two-scope product video GC catalog on genuine PG16 > uses actual database expiry for reclaim and rejects renewal same-token live takeover or excessive lease bounds",
+        "independent two-scope product video GC catalog on genuine PG16 > refuses every unleased header mutation and every bind advance or finish outside its exact transition",
+        "independent two-scope product video GC catalog on genuine PG16 > permanently rejects INSERT DELETE and TRUNCATE even for its owner and enforces native CHECK bounds",
+        "independent two-scope product video GC catalog on genuine PG16 > works through an independent SELECT UPDATE-only LOGIN and rejects missing widened or grantable ACLs",
+        "independent product video GC attachment name index on genuine PG16 > installs exactly one nonunique name index without rewriting duplicate names data or sequences and reruns identically",
+        "independent product video GC attachment name index on genuine PG16 > rejects unsupported installation contexts and wrong table or operand columns without adding objects",
+        "independent product video GC attachment name index on genuine PG16 > rejects every same-name index drift rather than adopting or repairing it",
+        "independent product video GC attachment name index on genuine PG16 > refuses more than100k existing rows before building and accepts exactly100k without changing them",
+        "independent product video GC attachment name index on genuine PG16 > pins the name equality lookup to an executed native plan after the formal index install",
+        "independent product video GC attachment name index on genuine PG16 > preserves stricter local deadlines and refuses a real competing attachment writer before index creation",
+        "independent product video GC attachment name index on genuine PG16 > lets an independent SELECT-only no-DDL LOGIN prove readiness and rejects missing lookup permission"
+      ],
+      "test/data-migration.test.ts": [
+        "MySQL to PostgreSQL schema audit > binds the exact 181-file root migration cohort and refuses renamed, reordered, omitted or addon files",
+        "MySQL to PostgreSQL schema audit > rejects unknown, omitted or aliased registered tables and changed reviewed additions",
+        "MySQL to PostgreSQL schema audit > parses inline and table-level primary keys without splitting numeric type commas",
+        "MySQL to PostgreSQL schema audit > merges multi-column PostgreSQL ALTER TABLE additions",
+        "MySQL to PostgreSQL schema audit > parses current-schema format DDL with static PostgreSQL table and column identifiers",
+        "MySQL to PostgreSQL schema audit > keeps the first duplicate CREATE definition because IF NOT EXISTS does not add columns",
+        "MySQL to PostgreSQL schema audit > recognizes fixed public-qualified PostgreSQL tables without collapsing other schemas",
+        "MySQL to PostgreSQL schema audit > audits an explicitly renamed source table as one logical shared table",
+        "MySQL to PostgreSQL schema audit > keeps the explicit manifest aligned with all currently shared repository tables",
+        "live migration safety plan > uses an explicit source table name while retaining the target checkpoint name",
+        "live migration safety plan > accepts a scalar text primary key and records binary keyset semantics",
+        "live migration safety plan > plans sequence synchronization for copied identity columns outside a scalar key",
+        "live migration safety plan > rejects duplicate logical source or target table assignments",
+        "live migration safety plan > allows a primary-key table and plans epoch-to-timestamp conversion",
+        "live migration safety plan > maps explicit source columns into target names for planning and keyset reads",
+        "live migration safety plan > blocks source data loss, missing target defaults, unsafe keys and incompatible types",
+        "live migration safety plan > requires live unsigned range checks and blocks lossy decimal, time and text casts",
+        "live migration safety plan > validates text-to-JSON conversions before target insertion",
+        "live migration safety plan > treats MySQL enum and set values as bounded text for lossless PostgreSQL copies",
+        "live migration safety plan > only converts legacy numeric timestamp strings when the manifest opts in",
+        "live migration safety plan > blocks source NULLs that cannot populate a required target column",
+        "live migration safety plan > enables proven target keys but requires a live duplicate check when MySQL is weaker",
+        "live migration safety plan > reports missing and mismatched target rows after canonical conversion",
+        "live migration safety plan > requires explicit target confirmation and an extra remote-write gate",
+        "live migration safety plan > rejects identifier injection and unbounded batches",
+        "live migration safety plan > refuses write mode and command-line secrets before opening a database",
+        "live migration safety plan > validates the copy target confirmation before opening database connections",
+        "live migration safety plan > requires an explicit verification table list and run id before connecting",
+        "live migration safety plan > resumes from the last committed key after a batch failure without replaying earlier rows",
+        "live migration safety plan > does not skip negative integer keys on the first keyset page",
+        "live migration safety plan > resumes composite integer keysets lexicographically without dropping equal prefixes",
+        "live migration safety plan > resumes scalar text keysets in binary UTF-8 order and stores JSON cursors",
+        "live migration safety plan > paginates mixed integer/text composite keys in numeric and binary UTF-8 order",
+        "live migration safety plan > pages keyless tables as duplicate-preserving full-row multisets",
+        "live migration safety plan > compares composite-key verification batches without exposing row values",
+        "live migration safety plan > keeps the physical and embedded control/parity migrations identical"
+      ],
+      "test/order-queue-dead-letter.test.ts": [
+        "order Queue dead-letter operations > replays guarded cleanupProductVideoUpload identity while refusing caller-selected object keys",
+        "order Queue dead-letter operations > replays guarded cleanupSupplierVideoUpload identity while refusing caller-selected object keys",
+        "order Queue dead-letter operations > compares production safety snapshots independent of JSONB object key order",
+        "order Queue dead-letter operations > only allows replay for messages accepted by a current idempotent consumer",
+        "order Queue dead-letter operations > redacts SMS credentials and unknown secrets before persistence",
+        "order Queue dead-letter operations > never exposes the internal replay lease token in the admin list projection",
+        "order Queue dead-letter operations > acks only after durable archive and retries archive failures with a bounded delay",
+        "order Queue dead-letter operations > keeps the physical/embedded schema, queue bindings and admin controls wired"
+      ],
+      "test/product-video-gc-message.test.ts": [
+        "video GC Queue and DLQ protocol > allows only the opaque fixed admin scope for replay",
+        "video GC Queue and DLQ protocol > allows only the opaque fixed supplier scope for replay",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 0",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 1",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 2",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 3",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 4",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 5",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 6",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 7",
+        "video GC Queue and DLQ protocol > rejects malformed or caller-selected authority 8"
+      ],
+      "test/runtime/supplier-product-video-compose.test.ts": [
+        "verifies ordered digests through native workerd FixedLengthStream and the isolated R2 binding",
+        "refuses changed source bytes without deleting or replacing an existing final object",
+        "returns an early provider rejection promptly with the actual native fixed stream",
+        "rejects mixed sessions and owners before any R2 I/O",
+        "actual Queue handler acknowledges only completed guarded cleanup (failure=false)",
+        "actual Queue handler acknowledges only completed guarded cleanup (failure=true)"
+      ],
+      "test/runtime/product-auto-shelf-queue-runtime.test.ts": [
+        "actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > enqueues just the product root on the minute cron, retaining the five-minute jobs separately",
+        "actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'start' and acknowledges successful replay without losing the reference",
+        "actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'scan' and acknowledges successful replay without losing the reference",
+        "actual workerd shelf root/scan/work Queue dispatch with mocked SQL services > retries failed 'process' and acknowledges successful replay without losing the reference"
+      ],
+      "test/runtime/product-video-compose.test.ts": [
+        "verifies ordered digests through native workerd FixedLengthStream and the isolated R2 binding",
+        "refuses changed source bytes without deleting or replacing an existing final object",
+        "returns an early provider rejection promptly with the actual native fixed stream",
+        "rejects mixed sessions and owners before any R2 I/O",
+        "actual Queue handler acknowledges only completed guarded cleanup (failure=false)",
+        "actual Queue handler acknowledges only completed guarded cleanup (failure=true)"
+      ],
+      "test/runtime/product-video-gc-queue-runtime.test.ts": [
+        "actual workerd video GC cron and Queue with mocked SQL service boundary > publishes both fixed-scope roots only on the five-minute cron and retains minute shelf behavior",
+        "actual workerd video GC cron and Queue with mocked SQL service boundary > retries failed admin dispatch and acknowledges successful replay",
+        "actual workerd video GC cron and Queue with mocked SQL service boundary > retries failed supplier dispatch and acknowledges successful replay",
+        "actual workerd video GC cron and Queue with mocked SQL service boundary > acknowledges busy results without treating an empty page as failure",
+        "actual workerd video GC cron and Queue with mocked SQL service boundary > acknowledges throttled results without treating an empty page as failure",
+        "actual workerd video GC cron and Queue with mocked SQL service boundary > acknowledges completed results without treating an empty page as failure"
+      ],
+      "test/runtime/worker-runtime.test.ts": [
+        "Worker runtime bindings > keeps KV writes inside the isolated workerd binding",
+        "Worker runtime bindings > round-trips object data and metadata inside the isolated R2 binding",
+        "Worker runtime bindings > streams ordered temporary video chunks into one fixed-length R2 object",
+        "Worker runtime bindings > transforms private R2 image bytes through the isolated Images binding",
+        "Worker runtime bindings > turns a non-reminder Cron event into twenty-three replayable root Queue jobs without touching PostgreSQL",
+        "Worker runtime bindings > adds one sign-reminder root only at 10:25 Asia/Shanghai",
+        "Queue acknowledgement and retry semantics > explicitly acknowledges a recognized legacy message",
+        "Queue acknowledgement and retry semantics > marks a failed outbox delivery for retry without acknowledging it",
+        "Queue acknowledgement and retry semantics > acknowledges a DLQ message only after archival and retries archival failure",
+        "SequenceDO durability > restores the persisted snowflake sequence after isolate eviction",
+        "SequenceDO durability > serializes concurrent RPC allocations without duplicate IDs",
+        "Kefu ChatRoomDO WebSocket hibernation > rejects non-upgrades and malformed sessions before PostgreSQL access",
+        "Kefu ChatRoomDO WebSocket hibernation > restores a tagged session attachment and revokes its token after eviction",
+        "Scan-login Durable Object state > lets only the scanning uid reject and invalidate a pending approval",
+        "Scan-login Durable Object state > binds, approves, audience-checks, and redelivers one fixed token"
+      ]
+    },
+    "commands": [
+      {
+        "name": "native",
+        "args": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/product-video-gc-catalog-native.test.ts",
+          "test/product-video-gc-native.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "duration_ms": 29112,
+        "log": "/tmp/cinashop-video-gc-final-native.log"
+      },
+      {
+        "name": "unit",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "test/product-video-gc-message.test.ts",
+          "test/order-queue-dead-letter.test.ts",
+          "test/data-migration.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "duration_ms": 10594,
+        "log": "/tmp/cinashop-video-gc-final-unit.log"
+      },
+      {
+        "name": "runtime",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.worker.config.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "test/runtime/product-video-gc-queue-runtime.test.ts",
+          "test/runtime/product-auto-shelf-queue-runtime.test.ts",
+          "test/runtime/product-video-compose.test.ts",
+          "test/runtime/supplier-product-video-compose.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "duration_ms": 44563,
+        "log": "/tmp/cinashop-video-gc-final-runtime.log"
+      },
+      {
+        "name": "worker-type",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "duration_ms": 120763,
+        "log": "/tmp/cinashop-video-gc-final-worker-type.log"
+      },
+      {
+        "name": "runtime-type",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "duration_ms": 71345,
+        "log": "/tmp/cinashop-video-gc-final-runtime-type.log"
+      },
+      {
+        "name": "runtime-base",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.worker.config.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "test/runtime/worker-runtime.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "duration_ms": 20160,
+        "log": "/tmp/cinashop-video-gc-final-runtime-base.log"
+      }
+    ],
+    "actual_pg16_default_plans": [
+      {
+        "references": [
+          {
+            "QUERY PLAN": [
+              {
+                "Plan": {
+                  "Node Type": "Limit",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 0.28,
+                  "Total Cost": 8.3,
+                  "Plan Rows": 1,
+                  "Plan Width": 4,
+                  "Plans": [
+                    {
+                      "Node Type": "Index Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Scan Direction": "Forward",
+                      "Index Name": "system_attachment_video_gc_name_idx",
+                      "Relation Name": "system_attachment",
+                      "Alias": "system_attachment",
+                      "Startup Cost": 0.28,
+                      "Total Cost": 8.3,
+                      "Plan Rows": 1,
+                      "Plan Width": 4,
+                      "Index Cond": "((name)::text = 'owned-explain-4999'::text)"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "window": [
+          {
+            "QUERY PLAN": [
+              {
+                "Plan": {
+                  "Node Type": "Limit",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 0.14,
+                  "Total Cost": 13.46,
+                  "Plan Rows": 80,
+                  "Plan Width": 59,
+                  "Plans": [
+                    {
+                      "Node Type": "Index Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Scan Direction": "Forward",
+                      "Index Name": "spvu_pk",
+                      "Relation Name": "supplier_product_video_upload_v1",
+                      "Alias": "source",
+                      "Startup Cost": 0.14,
+                      "Total Cost": 16.62,
+                      "Plan Rows": 99,
+                      "Plan Width": 59,
+                      "Index Cond": "((upload_id > '00000064-0000-4000-8000-000000000001'::uuid) AND (upload_id <= '000000c8-0000-4000-8000-000000000001'::uuid))"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "read_only_snapshot_and_budgets": "Actual REPEATABLE READ READ ONLY discovery; tests verify stricter 1700/150/2500 ms statement/lock/idle settings retained and restored; writes use separate transactions.",
+    "native_fault_boundaries": [
+      "all pre/post/DLQ cleanup messages lost",
+      "actual expired root cancellation and owner-derived keys only",
+      "very late part and final composition with post-write Queue failure",
+      "actual publication COMMIT discarded with cross-owner/MIME alias preservation",
+      "real GC claim/bind/ACK COMMIT acknowledgement discarded",
+      "accepted-but-unconfirmed Queue repeats identical bounded page",
+      "more than two pages and active prefix, frozen UUID ceiling, lost continuation",
+      "old completed cycle revisits low UUID and terminal rows",
+      "independent database sessions, no SQL locks over Queue I/O, stale ACK token refusal, real DB lease expiry",
+      "restricted LOGIN, no GC INSERT/DELETE/TRUNCATE/schema ownership",
+      "missing/drifted addons/index/ACL, actual competing NOWAIT lock refusal"
+    ],
+    "runtime_scope": "Real local workerd Queue/cron integration; SQL service mocked at dispatch boundary. Existing compose suites exercise native local R2/FixedLengthStream. Native SQL behavior uses genuine owned PG16 with explicit memory R2/Queue substitutes.",
+    "frontend": "No frontend changed; no additional Browser acceptance claimed this batch. Prior published actual Browser acceptance remains in its own audit."
+  },
+  "frozen_source": {
+    "files": 4157,
+    "manifest": "/tmp/cinashop-video-gc-final-frozen.json",
+    "manifest_sha256": "34793dcf95a9d744da1adb34f0fde86a3cb3f728f3982dac5c9e41afa37e20db",
+    "changed_source_sha256": {
+      "workers-ts/scripts/run-local-finance-postgres.mjs": "2be8ee7e9f6af489dd2694828472c8aac8718b87c6ec2e272d581126d53552db",
+      "workers-ts/src/env.ts": "5319981ef467c6ab2ac83331f2677a75e94257e704a22b2eb3b1a0683ab437e3",
+      "workers-ts/src/index.ts": "9e8b701d6072be8c64e4191871f0f474dcece31464d2384597abb82f6b704e0c",
+      "workers-ts/src/migrations/maintenance/0187_product_video_gc.sql": "b5ee87c915c15da1a6133cc051b963b680372ff9cc669fa36604ac6ba81c2a09",
+      "workers-ts/src/migrations/maintenance/0188_product_video_gc_attachment_index.sql": "95b5863d894daf262cc8f34ff98aad5999c3b16a145add4103c4518ba5497076",
+      "workers-ts/src/migrations/productVideoGc.ts": "fa49727fde6cd174870bcdd816cb3a7472efd8373b2f19c526200946a7d565be",
+      "workers-ts/src/migrations/productVideoGcAttachmentIndex.ts": "4230e050b234fd320d95f0de576ee703a09bdf45671e0c4423cae6ed4b6a4256",
+      "workers-ts/src/services/order/OrderQueueDeadLetterService.ts": "b6a6f1b4ff0b98b3b016150f51c083999b36ca647b2952661bf90bcf8661a17d",
+      "workers-ts/src/services/system/ProductVideoGcService.ts": "d577b3e28833dabcc6ce38cc659f08d7d7447f664eab7dc7dc8a4133c29fdd37",
+      "workers-ts/test/data-migration.test.ts": "8a7645d9658699a63fd6d8a4ce7f38480da064fd9e6d467fcc6675c6e6fac2ed",
+      "workers-ts/test/helpers/registeredCatalogCohort.ts": "f2769f574b73b72a2041f41a82f770c47a983d1c97657b6622edb7daf34282b0",
+      "workers-ts/test/product-video-gc-catalog-native.test.ts": "33c64e1fd357b35ae18560ef526083c40e388f4b25463be64f471ee1a92ca043",
+      "workers-ts/test/product-video-gc-message.test.ts": "a8f7f3f458b8adaceedecfb4f5b44c83f1ee53cae569bb187abce7d55cdaebd1",
+      "workers-ts/test/product-video-gc-native.test.ts": "6c1c6c50d67e4600ab12ab54cfeb4bf02b3030d914760f2f6031782804029f50",
+      "workers-ts/test/runtime/product-video-gc-queue-runtime.test.ts": "dee8d4637ff88bbf6c9cac5427a85fcca533469db3a5665daf8b5813669a3812",
+      "workers-ts/test/runtime/worker-runtime.test.ts": "af71ecf781a205f2862fe43c6d46c2210443fd2ecd9f56bfe156266782c22069"
+    },
+    "drift": [],
+    "runtime_contract_delta": {
+      "file": "workers-ts/test/runtime/worker-runtime.test.ts",
+      "before": "a336790913aeeae4d7c6940c401a5807566f53368584bcb9963758ca622d72a3",
+      "after": "af71ecf781a205f2862fe43c6d46c2210443fd2ecd9f56bfe156266782c22069",
+      "reason": "Existing comprehensive runtime Cron assertions need 23/24 jobs plus exact Admin/Supplier two-field roots; PostgreSQL scheduledAt assertion remains for every previous root. Standard worker type excludes runtime; full runtime type and added complete runtime regression run verify the final source. No production or already-accepted test file changed."
+    },
+    "initial_manifest_sha256": "c9600de7ccc38e09e752fa0dc977799092fa479a515ce3cdbb7672996966649d"
+  },
+  "parent_checkboxes": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2"
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4"
+    }
+  },
+  "historical_attempts": [
+    {
+      "log": "/tmp/cinashop-video-gc-calibration.log",
+      "sha256": "65c0dd695a6ff1a596fc27b1ed6d6d53c636474f38215fe348265bd5be51bf22",
+      "scope": "intentional pending-pin calibration: one case fails before pin; ten filtered skips"
+    },
+    {
+      "log": "/tmp/cinashop-video-gc-native-first.log",
+      "sha256": "a2cf2075e456d5de3365f2862adb37aa5e2dc64384acf9204aa22a70b1e4030b",
+      "scope": "35 pass, two fixture assertions fail; savepoint and Drizzle cause assertions corrected"
+    },
+    {
+      "log": "/tmp/cinashop-video-gc-native-final.log",
+      "sha256": "4e908fe5e0205d98e32c9287b87b1b08c8fb72265122f17d61be742bf27143c8",
+      "scope": "41 pass before adding the two final expired-root cleanup cases"
+    }
+  ],
+  "owned_clusters": [
+    {
+      "log": "/tmp/cinashop-video-gc-calibration.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ysN62l",
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "remaining_fixture_databases": 0
+    },
+    {
+      "log": "/tmp/cinashop-video-gc-native-first.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-OodJBE",
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "remaining_fixture_databases": 0
+    },
+    {
+      "log": "/tmp/cinashop-video-gc-native-final.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-KfHK67",
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "remaining_fixture_databases": 0
+    },
+    {
+      "log": "/tmp/cinashop-video-gc-final-native.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-WjrtNp",
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "remaining_fixture_databases": 0
+    }
+  ],
+  "ci_before_push": {
+    "head": "f5cd4e707273bafa4db7a14707b6e352965003d7",
+    "run_id": 38829832183,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38829832183",
+    "status": "in_progress",
+    "successful_jobs": 8,
+    "running_worker_unit_shards": 2,
+    "snapshot": "/tmp/cinashop-ci-f5cd4e7-run38829832183-snapshot.json",
+    "snapshot_sha256": "9ba6feb2e97e64725a4f65b3d88594987fa3b0a132fe2864dd88dfaa138b770c",
+    "full_green_claimed": false
+  },
+  "limits": [
+    "Local stand-ins do not prove production Cloudflare fault timing or provider integration.",
+    "The new index is proven at dispatch admission; DDL after a transaction releases its lock remains an external catalog change. Existing per-upload cleanup keeps its own bounded statement/lock errors and reference checks.",
+    "Periodic GC covers durable 0185/0186 roots, not old objects with no durable upload owner record.",
+    "The completed-cycle throttle is real DB wall time; future cron delivery is required for liveness.",
+    "The complete PHP-to-TS migration, full new-head cloud CI and production acceptance remain open."
+  ],
+  "production": {
+    "deployed": false,
+    "ddl_executed": false,
+    "real_legacy_production_data_inherited": false
+  },
+  "secret_scanning": {
+    "tool": "gitleaks 8.29.0",
+    "config": ".gitleaks.toml",
+    "source": {
+      "files": 16,
+      "report": "/tmp/cinashop-video-gc-gitleaks-source.json",
+      "findings": 0
+    },
+    "final_patch_and_exact_commit_range": "Required before push; external exact-final receipts record the immutable patch and commit scans."
+  }
+}

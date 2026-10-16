@@ -339,7 +339,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(MIGRATION_TABLES.map((table) => table.table).sort()).toEqual(
       report.sharedTables.map((table) => table.table).sort(),
     );
-    const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts','supplierProductVideoUpload.ts'];
+    const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts','productVideoGc.ts','supplierProductVideoUpload.ts'];
     expect(embeddedMigrationSources.filter(({name})=>productAddonSources.includes(name)).map(({name})=>name)).toEqual(productAddonSources);
     const ordinaryDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
@@ -379,15 +379,15 @@ describe("MySQL to PostgreSQL schema audit", () => {
     ]);
     expect(definitionDrift).toEqual({
       externalTableCount: 286,
-      // Exactly three independently installed product addons follow the frozen
+      // Exactly four independently installed product addons follow the frozen
       // ordinary declaration scope. They do not join any construction cohort.
-      workerTableCount: 307,
+      workerTableCount: 308,
       externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables: reviewedExplicitDeclarationTables('current-product'),
       columnDrift: [],
     });
     const productOnly=definitionDrift.workerOnlyTables.filter(table=>!ordinaryDefinitionDrift.workerOnlyTables.includes(table));
-    expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','supplier_product_video_upload_v1']);
+    expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','product_video_gc_state_v1','supplier_product_video_upload_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
     for (const tableName of [
