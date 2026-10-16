@@ -158,6 +158,11 @@ async function openUnpaidOrderEdit(row: OrderRow) {
   if (!canEditUnpaidOrder(row)) return;
   await router.push(`/orders/${row.id}/edit`);
 }
+function canReceiveOffline(row: OrderRow) { return !previewMode && canEditUnpaidOrder(row) && row.pay_type === 'offline'; }
+async function openOfflineReceipt(row: OrderRow) {
+  if (!canReceiveOffline(row)) return;
+  await router.push(`/orders/${row.id}/offline`);
+}
 const isManualVirtualOrder = computed(() => deliveryTarget.value?.product_type === 3);
 
 const deliveryTitle = computed(() => {
@@ -504,6 +509,7 @@ onMounted(load);
       <div><h1>订单管理</h1><p>订单、发货和收货操作均严格限定当前供应商</p></div>
       <div class="heading-actions">
         <el-button @click="router.push('/orders/edit-result')">编辑操作结果</el-button>
+        <el-button @click="router.push('/orders/cash-result')">线下收款结果</el-button>
         <el-button :loading="exportLoading" @click="downloadExpressDirectory">物流公司对照表</el-button>
         <el-button @click="openQueueHistory">批量任务历史</el-button>
       </div>
@@ -537,7 +543,7 @@ onMounted(load);
         <el-table-column label="支付方式" width="120"><template #default="scope">{{ payType(scope.row.pay_type) }}</template></el-table-column>
         <el-table-column label="状态" width="110"><template #default="scope"><span class="status-text" :class="orderStatus(scope.row).tone">{{ orderStatus(scope.row).label }}</span></template></el-table-column>
         <el-table-column label="下单时间" width="180"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
-        <el-table-column label="操作" width="290"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button v-if="canEditUnpaidOrder(scope.row)" link type="primary" @click.stop="openUnpaidOrderEdit(scope.row)">修改</el-button><el-button link type="primary" @click.stop="openPickingSheets([scope.row])">配货单</el-button><el-button v-if="canManagePrint" link type="primary" :disabled="actionLoading || uncertainIds.has(scope.row.id)" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" :disabled="actionLoading" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" :disabled="actionLoading" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
+        <el-table-column label="操作" width="370"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button v-if="canEditUnpaidOrder(scope.row)" link type="primary" @click.stop="openUnpaidOrderEdit(scope.row)">修改</el-button><el-button v-if="canReceiveOffline(scope.row)" link type="primary" @click.stop="openOfflineReceipt(scope.row)">确认收款</el-button><el-button link type="primary" @click.stop="openPickingSheets([scope.row])">配货单</el-button><el-button v-if="canManagePrint" link type="primary" :disabled="actionLoading || uncertainIds.has(scope.row.id)" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" :disabled="actionLoading" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" :disabled="actionLoading" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
       </el-table>
       <div class="pagination-row"><span>共 {{ total }} 个订单</span><el-pagination v-model:current-page="filters.page" :page-size="filters.limit" :total="total" layout="prev, pager, next" @current-change="load" /></div>
     </div>
@@ -561,6 +567,7 @@ onMounted(load);
           </dl>
           <div class="drawer-actions delivery-actions">
             <el-button v-if="canEditUnpaidOrder(current)" type="primary" plain @click="openUnpaidOrderEdit(current)">修改金额与积分</el-button>
+            <el-button v-if="canReceiveOffline(current)" type="primary" @click="openOfflineReceipt(current)">确认线下收款</el-button>
             <el-button v-if="canManagePrint" plain :disabled="uncertainIds.has(current.id)" :loading="actionLoading" @click="printOrder(current)">打印小票</el-button>
             <el-button v-if="canDeliver(current)" type="primary" :disabled="actionLoading" @click="openDelivery(current)">订单发货</el-button>
             <el-button v-if="canConfirmTake(current)" type="success" plain :loading="actionLoading" @click="confirmTake(current)">确认收货</el-button>

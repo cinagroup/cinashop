@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from "vue";
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search } from "@element-plus/icons-vue";
 import {
@@ -46,6 +46,7 @@ const uncertainIds = reactive(new Set<number>());
 const brokenImages = reactive(new Set<string>());
 const auth = useAuthStore();
 const route = useRoute();
+const router = useRouter();
 const mountedPath = route.fullPath;
 let detailGeneration = 0, listGeneration = 0, confirmationPending = false;
 function clearDetail() {
@@ -112,6 +113,9 @@ const canRefund = computed(
       (current.value.refund_type === 4 && current.value.apply_type === 3)) &&
     ["yue", "weixin", "alipay"].includes(current.value.pay_type),
 );
+const canManualRefund = computed(() => !previewMode && canProcess.value && current.value
+  && ['cash', 'offline'].includes(current.value.pay_type) && !current.value.provider_status
+  && ([0, 1, 2, 5].includes(current.value.refund_type) || current.value.refund_type === 4 && current.value.apply_type === 3));
 const canRefuse = computed(() => {
   if (!canProcess.value || !current.value) return false;
   return !["REQUESTING", "PROCESSING", "SUCCESS", "UNKNOWN", "ABNORMAL"].includes(current.value.provider_status ?? "");
@@ -249,7 +253,7 @@ onMounted(() => {
 
 <template>
   <section class="page-section">
-    <header class="page-heading"><div><h1>售后管理</h1><p>所有售后操作均限定当前供应商订单</p></div></header>
+    <header class="page-heading"><div><h1>售后管理</h1><p>所有售后操作均限定当前供应商订单</p></div><el-button @click="router.push('/refunds/cash-result')">现金退款结果</el-button></header>
     <el-alert v-if="invalidated" title="账号、权限或页面已改变，请重新进入售后管理。" type="warning" :closable="false" />
     <el-alert v-if="listError" :title="listError" type="error" :closable="false" />
     <div class="surface list-surface">
@@ -338,6 +342,7 @@ onMounted(() => {
             <el-button v-if="canAgreeReturn" type="primary" plain :loading="actionLoading" @click="agreeReturnAction">同意退货</el-button>
             <el-button v-if="canRefuse" type="danger" plain :loading="actionLoading" @click="openRefuse">拒绝退款</el-button>
             <el-button v-if="canRefund" type="primary" :loading="actionLoading" @click="refundAction">{{ current.provider_status ? "查询 / 重试退款" : "确认退款" }}</el-button>
+            <el-button v-if="canManualRefund" type="primary" :disabled="actionLoading" @click="router.push(`/refunds/${current.id}/cash`)">确认现金退款</el-button>
           </div>
           <p v-if="current.provider_error" class="security-note">渠道信息：{{ current.provider_error }}</p>
           <p v-if="current.provider_status && current.refund_type !== 6" class="security-note">渠道受理不等于退款完成；系统仅在验签回调或主动查询确认成功后完成本地入账。</p>

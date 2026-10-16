@@ -339,22 +339,24 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(MIGRATION_TABLES.map((table) => table.table).sort()).toEqual(
       report.sharedTables.map((table) => table.table).sort(),
     );
+    const cashAddonSources = ['supplierManualRefund.ts','supplierOfflinePaymentOperation.ts'];
+    expect(embeddedMigrationSources.filter(({name})=>cashAddonSources.includes(name)).map(({name})=>name)).toEqual(cashAddonSources);
     const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts','productVideoGc.ts','supplierProductCopyOperation.ts','supplierProductVideoUpload.ts'];
     expect(embeddedMigrationSources.filter(({name})=>productAddonSources.includes(name)).map(({name})=>name)).toEqual(productAddonSources);
     const orderAddonSources = ['legacyOrderGainPartition.ts','supplierOrderEditOperation.ts','supplierOrderPriceRevision.ts'];
     expect(embeddedMigrationSources.filter(({name})=>orderAddonSources.includes(name)).map(({name})=>name)).toEqual(orderAddonSources);
     const productDeclarations = [
       readFileSync('src/services/MigrationService.ts','utf8'),
-      ...embeddedMigrationSources.filter(({name})=>!orderAddonSources.includes(name)).map(({sql})=>sql),
+      ...embeddedMigrationSources.filter(({name})=>!orderAddonSources.includes(name) && !cashAddonSources.includes(name)).map(({sql})=>sql),
     ].join('\n');
     const productDefinitionDrift = comparePostgresDefinitions(externalTargetSql, productDeclarations);
     const ordinaryDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => !productAddonSources.includes(name) && !orderAddonSources.includes(name)).map(({ sql }) => sql),
+      ...embeddedMigrationSources.filter(({ name }) => !productAddonSources.includes(name) && !orderAddonSources.includes(name) && !cashAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name) && !orderAddonSources.includes(name)).map(({ sql }) => sql),
+      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name) && !orderAddonSources.includes(name) && !cashAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDefinitionDrift = comparePostgresDefinitions(externalTargetSql, historicalDeclarations);
     expect(historicalDefinitionDrift).toEqual({
@@ -397,13 +399,22 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','product_video_gc_state_v1','supplier_product_copy_operation_v1','supplier_product_video_upload_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
-    expect(definitionDrift).toEqual({ externalTableCount:286, workerTableCount:311,
+    const orderDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!cashAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
+    const orderDefinitionDrift = comparePostgresDefinitions(externalTargetSql, orderDeclarations);
+    expect(orderDefinitionDrift).toEqual({ externalTableCount:286, workerTableCount:311,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-order'), columnDrift:[] });
-    const orderOnly=definitionDrift.workerOnlyTables.filter(table=>!productDefinitionDrift.workerOnlyTables.includes(table));
+    const orderOnly=orderDefinitionDrift.workerOnlyTables.filter(table=>!productDefinitionDrift.workerOnlyTables.includes(table));
     expect(orderOnly).toEqual(['legacy_order_gain_partition_v1','supplier_order_edit_operation_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>orderOnly.includes(table))).toEqual([]);
+    expect(definitionDrift).toEqual({externalTableCount:286,workerTableCount:314,
+      externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
+      workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-cash'),columnDrift:[]});
+    const cashOnly=definitionDrift.workerOnlyTables.filter(table=>!orderDefinitionDrift.workerOnlyTables.includes(table));
+    expect(cashOnly).toEqual(['supplier_manual_refund_operation_v1','supplier_manual_refund_proof_v1','supplier_offline_payment_operation_v1']);
+    for(const path of ['embedded','external','orm'] as const)
+      expect(registeredTableNames(path).filter(table=>cashOnly.includes(table))).toEqual([]);
     for (const tableName of [
       "store_order",
       "store_order_economize",

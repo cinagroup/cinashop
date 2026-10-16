@@ -176,6 +176,14 @@ export async function inspectCashierSecondCardPromotionLock(db: Query, runtimeRo
   if(schema==='public'&&row?.aclSafe===false){
     const {customerManualRefundReadiness}=await import('./runCustomerManualRefund');
     if((await customerManualRefundReadiness(db)).ready){const [proof]=await db.execute<{owner:number}>(sql`SELECT proowner::integer AS owner FROM pg_catalog.pg_proc WHERE oid='public.customer_manual_refund_promotion_delete_v1(integer,integer)'::regprocedure`);if(Number.isSafeInteger(proof?.owner)&&proof.owner>0)manualOwner=proof.owner;}
+    if(manualOwner===null){
+      const {reviewedSupplierManualRefundCapabilityOids}=await import('./supplierManualRefund');
+      if((await reviewedSupplierManualRefundCapabilityOids(db)).length===3){
+        const [proof]=await db.execute<{owner:number}>(sql`SELECT proowner::integer AS owner FROM pg_catalog.pg_proc
+          WHERE oid='public.supplier_manual_refund_promotion_delete_v1(integer,integer)'::regprocedure`);
+        if(Number.isSafeInteger(proof?.owner)&&proof.owner>0)manualOwner=proof.owner;
+      }
+    }
   }
   if(manualOwner!==null)[row]=await db.execute(promotionLockCatalogQuery(runtimeRole,schema,manualOwner));
   const state = { absent: row?.absent === true, tablesSafe: row?.tablesSafe === true, definitionSafe: row?.definitionSafe === true,

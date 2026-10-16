@@ -40,11 +40,11 @@ export async function manualRefundPaymentFacts(db:DbClient,order:Order){
  // time() may be arbitrarily later; a guessed time window would reject valid
  // imported payments. Read the whole bounded payment history for this root,
  // then distinguish the actual legacy record from TS's atomic paid protocol.
- const audits=await db.select().from(storeOrderStatus).where(and(eq(storeOrderStatus.oid,root.id),inArray(storeOrderStatus.changeType,['pay_success','customer_cashier_paid','customer_ordinary_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline','offline','pay_cash']))).orderBy(asc(storeOrderStatus.id)).limit(201);
+ const audits=await db.select().from(storeOrderStatus).where(and(eq(storeOrderStatus.oid,root.id),inArray(storeOrderStatus.changeType,['pay_success','customer_cashier_paid','customer_ordinary_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline','supplier_order_offline','offline','pay_cash']))).orderBy(asc(storeOrderStatus.id)).limit(201);
  fact(audits.length>0&&audits.length<=200&&audits.every(x=>x.changeMessage.trim().length>0));
  const events=await db.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.eventKey,`order.paid:${root.id}`)).limit(2);fact(events.length<=1);
  if(events.length){const event=events[0],payload=event.payload as {orderId?:unknown;orderNo?:unknown};fact(event.aggregateType==='order'&&event.aggregateId===root.id&&event.eventType==='order.paid'&&payload?.orderId===root.id&&payload.orderNo===root.orderId);}
- const tsAudits=audits.filter(x=>['customer_cashier_paid','customer_ordinary_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline'].includes(x.changeType));
+ const tsAudits=audits.filter(x=>['customer_cashier_paid','customer_ordinary_cashier_paid','cw_financial_confirm_offline','manager_order_offline','admin_order_offline','supplier_order_offline'].includes(x.changeType));
  // New TS evidence cannot fall back to legacy admission after a missing event
  // or altered timestamp. PHP OrderStatusJob/saveStatus is not idempotent, so a
  // redelivered job can append repeated canonical success records. Every record
@@ -81,7 +81,7 @@ export async function manualRefundPaymentFacts(db:DbClient,order:Order){
    }
    consumerCompletion={status:'COMPLETED',processed_time:event.processedTime,supplier_allocation:supplierAllocation};
   }
-  if(['manager_order_offline','admin_order_offline'].includes(primary.changeType))payment_origin=await readCustomerManualOfflineOrigin(db,root,primary,event);
+  if(['manager_order_offline','admin_order_offline','supplier_order_offline'].includes(primary.changeType))payment_origin=await readCustomerManualOfflineOrigin(db,root,primary,event);
  }
  else fact(audits.every(x=>x.changeType==='pay_success'&&x.changeMessage==='用户付款成功'&&x.changeTime>=root.payTime));
  let origin_hash:string|null=null;

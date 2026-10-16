@@ -18,7 +18,8 @@ import { captureReturnedPointBills, loadRefundOrderGeneration } from './RefundOr
 import { captureRefundEarnedIncomeScope } from './RefundEarnedIncome';
 import { splitSupplierRefundPayment } from '@/services/supplier/SupplierRefundSplitFinance';
 import { materializeRefundInvoice, type RefundInvoiceSnapshot } from './RefundInvoiceAllocation';
-import {isManualRefundOrder,readCustomerManualRefundProof,deleteCustomerManualRefundPromotionRows} from './CustomerManualRefund';
+import {isManualRefundOrder} from './CustomerManualRefund';
+import {readBoundManualRefundProof,deleteBoundManualRefundPromotionRows} from '@/services/supplier/SupplierManualRefundProof';
 import {assertStoredManualInvoiceAllocation} from './InvoiceManualRedNoteEvidence';
 export type { RefundMaterializationIdentity } from './RefundOrderSplitIdentity';
 
@@ -127,7 +128,7 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
   const payments = await tx.select().from(storeOrderRefundPayment).where(eq(storeOrderRefundPayment.refundId, refund.id)).limit(2);
   if(isManualRefundOrder(source)&&cents(refund.refundPrice)>0){
     if(payments.length)throw invalid();
-    await readCustomerManualRefundProof(tx,refund,source);
+    await readBoundManualRefundProof(tx,refund,source);
   }else if (payments.length > 1 || (source.payType !== 'yue' && cents(refund.refundPrice) > 0 && payments.length !== 1)) throw invalid();
   if (payments.some(payment => payment.storeOrderId !== source.id || payment.providerStatus !== 'SUCCESS'
     || payment.requestAmount !== cents(refund.refundPrice) || payment.totalAmount !== cents(root.payPrice))) throw invalid();
@@ -211,7 +212,7 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
       if (removedIds.length) await tx.delete(storeOrderCartInfo).where(and(eq(storeOrderCartInfo.oid, source.id), inArray(storeOrderCartInfo.id, removedIds)));
       for (const row of remainingRows) await tx.update(storeOrderCartInfo).set(row).where(and(eq(storeOrderCartInfo.id, row.id!), eq(storeOrderCartInfo.oid, source.id)));
       if (hasPromotionLedger) {
-        if(isManualRefundOrder(source))await deleteCustomerManualRefundPromotionRows(tx,refund.id,source.id);
+        if(isManualRefundOrder(source))await deleteBoundManualRefundPromotionRows(tx,refund.id,source.id);
         await writeOrderPromotionLedger(tx,
           { id: source.id, uid: source.uid, promotionsPrice: String(plan.remaining.promotionsPrice) }, promotionCarts(remainingRows), now,!isManualRefundOrder(source));
       }

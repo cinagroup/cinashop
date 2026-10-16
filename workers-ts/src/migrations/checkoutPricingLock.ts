@@ -99,7 +99,13 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   const customerOids = customerScope?.ready ? customerScope.catalog.functionOids : [];
   const manualOid=customerScopeSelected&&schema==='public'
     ?await(await import('./runCustomerManualRefund')).reviewedCustomerManualRefundPromotionOid(tx):null;
-  const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),...ordinaryOids];
+  // A separately commissioned Supplier feature may share this actual LOGIN.
+  // Only its exact addon/owner/ACL proof admits this fixed definer; the frozen
+  // default profile and every original owner predicate stay unchanged.
+  const supplierManualOids=sharedScope&&schema==='public'
+    ?await(await import('./supplierManualRefund')).reviewedSupplierManualRefundCapabilityOids(tx):[];
+  const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
+    ...supplierManualOids,...ordinaryOids];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()

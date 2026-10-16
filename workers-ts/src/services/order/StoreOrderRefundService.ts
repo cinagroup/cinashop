@@ -77,6 +77,7 @@ import { materializeCompletedRefundOrder } from './RefundOrderMaterialization';
 import { assertFullGiftRefundAdmission, reverseWholeOrderPromotionGiftPoints } from './OrderPromotionGiftRefund';
 import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
 import {authorizeCustomerManualRefundApplication,persistCustomerManualRefundProof,isManualRefundOrder,type CustomerManualRefundApplicationCapability,type CustomerManualRefundExecutionCapability} from './CustomerManualRefund';
+import {authorizeSupplierManualRefundApplication,persistSupplierManualRefundProof,type SupplierManualRefundApplicationCapability,type SupplierManualRefundExecutionCapability} from '@/services/supplier/SupplierManualRefundProof';
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -99,6 +100,8 @@ export interface RefundExecutionResult {
 export interface RefundExecutionScope {
   /** Live, server-issued global customer admission; never a JSON request flag. */
   manualRefund?: CustomerManualRefundExecutionCapability;
+  /** Independent genuine Supplier realm; conflicting admissions are rejected. */
+  supplierManualRefund?: SupplierManualRefundExecutionCapability;
   expectedStoreId?: number;
   expectedSupplierId?: number;
   expectedUid?: number;
@@ -141,6 +144,7 @@ type RefundExecutionScopeInput = number | RefundExecutionScope;
 
 export interface ApplyOrderRefundInput {
   manualRefundCapability?: CustomerManualRefundApplicationCapability;
+  supplierManualRefundCapability?: SupplierManualRefundApplicationCapability;
   uid: number;
   orderId: string;
   refundReason: string;
@@ -149,7 +153,7 @@ export interface ApplyOrderRefundInput {
   applyType: number;
   /** Server-only business policy. Authentication remains the caller's locked
    * authorizeApplication callback; a store manager is never a system_admin. */
-  privilegedActor?: "admin" | "store-manager" | "customer-work" | "erp";
+  privilegedActor?: "admin" | "store-manager" | "customer-work" | "erp" | "supplier";
   /** Trusted customer policy, never forwarded from public HTTP payloads. */
   selectorNamespace?: 'row';
   cartIds?: number[];
@@ -349,7 +353,9 @@ function normalizeRefundExecutionScope(
   input?: RefundExecutionScopeInput,
 ): RefundExecutionScope | undefined {
   if (input === undefined) return undefined;
-  return typeof input === "number" ? { expectedSupplierId: input } : input;
+  const scope=typeof input === "number" ? { expectedSupplierId: input } : input;
+  if(scope.manualRefund&&scope.supplierManualRefund)throw new ValidateException('不能混用两种人工退款主体');
+  return scope;
 }
 
 function assertRefundExecutionScope(
@@ -603,8 +609,10 @@ export async function finalizeStoreOrderRefund(
     if (refundCents === null || refundCents < 0) throw new ValidateException("退款金额无效");
     if (paidCents === null || paidCents < 0) throw new ValidateException("订单实付金额无效");
 
-    const manualRefund=scope?.manualRefund;
-    if(manualRefund)await persistCustomerManualRefundProof(tx,manualRefund,refund,order);
+    if(scope?.manualRefund&&scope.supplierManualRefund)throw new ValidateException('不能混用两种人工退款主体');
+    const manualRefund=scope?.manualRefund??scope?.supplierManualRefund;
+    if(scope?.manualRefund)await persistCustomerManualRefundProof(tx,scope.manualRefund,refund,order);
+    if(scope?.supplierManualRefund)await persistSupplierManualRefundProof(tx,scope.supplierManualRefund,refund,order);
     if (refundCents > 0 && order.payType !== "yue" && !manualRefund) {
       const payment = await getRefundPaymentRow(tx, refundId);
       if (!payment || payment.providerStatus !== "SUCCESS") {
@@ -827,12 +835,12 @@ async function createOrderRefundApplication(
   options: RefundApplicationOptions,
 ): Promise<{ refundId: number } | OrderRefundApplicationQuote> {
   const { uid, orderId } = params;
-  if ((params.privilegedActor === 'store-manager' || params.privilegedActor === 'customer-work' || params.privilegedActor === 'erp') && !params.authorizeApplication) {
+  if ((params.privilegedActor === 'store-manager' || params.privilegedActor === 'customer-work' || params.privilegedActor === 'erp' || params.privilegedActor === 'supplier') && !params.authorizeApplication) {
     throw new ValidateException('门店主动退款必须提供真实锁内管理身份授权');
   }
   if (
     ![1, 2].includes(params.applyType) &&
-    !(params.applyType === 4 && (params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work" || params.privilegedActor === "erp"))
+    !(params.applyType === 4 && (params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work" || params.privilegedActor === "erp" || params.privilegedActor === "supplier"))
   ) {
     throw new ValidateException("退款申请类型无效");
   }
@@ -845,7 +853,7 @@ async function createOrderRefundApplication(
     throw Error('Quote preparation cannot replay or write a refund application');
   }
   if (requestedRefundAmountCents !== undefined && (
-    !['admin','store-manager','customer-work'].includes(params.privilegedActor ?? '') || params.applyType !== 4 || !params.authorizeApplication
+    !['admin','store-manager','customer-work','supplier'].includes(params.privilegedActor ?? '') || params.applyType !== 4 || !params.authorizeApplication
     || !Number.isSafeInteger(requestedRefundAmountCents) || requestedRefundAmountCents < 0
   )) throw new ValidateException('主动退款金额必须经过锁内管理员授权');
   if (!refundReason || (params.privilegedActor === 'customer-work' ? Array.from(refundReason).length : refundReason.length) > 255) throw new ValidateException("请填写有效的退款原因");
@@ -969,14 +977,20 @@ async function createOrderRefundApplication(
     const cartInfos = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
       .orderBy(asc(storeOrderCartInfo.id)).for('update');
     if(options.cashierZeroRefund)await authorizeCashierZeroRefund(tx,options.cashierZeroRefund,order,cartInfos);
+    if(params.manualRefundCapability&&params.supplierManualRefundCapability)throw new ValidateException('不能混用两种人工退款申请主体');
+    if(params.supplierManualRefundCapability){
+      if(params.privilegedActor!=='supplier'||!params.authorizeApplication||!options.materializeOrders)throw new ValidateException('供应商人工退款须绑定真实经营授权与实体退款');
+      await authorizeSupplierManualRefundApplication(tx,params.supplierManualRefundCapability,order,cartInfos);
+    }
     if(params.manualRefundCapability){
       if(params.privilegedActor!=='customer-work'||!params.authorizeApplication||!options.materializeOrders)throw new ValidateException('人工退款必须绑定真实经营授权与成熟实体退款');
       await authorizeCustomerManualRefundApplication(tx,params.manualRefundCapability,order,cartInfos);
     }
-    const zeroCashierQuantityReturn=Boolean(options.cashierZeroRefund||params.manualRefundCapability)&&isManualRefundOrder(order)&&amountToCents(order.payPrice)===0;
+    const zeroCashierQuantityReturn=Boolean(options.cashierZeroRefund||params.manualRefundCapability||params.supplierManualRefundCapability)&&isManualRefundOrder(order)&&amountToCents(order.payPrice)===0;
     const customerRows=params.selectorNamespace==='row';
-    if(customerRows&&(!['customer-work','erp'].includes(params.privilegedActor??'')||!params.authorizeApplication))throw new ValidateException('真实行退款选择策略缺少经营授权');
+    if(customerRows&&(!['customer-work','erp','supplier'].includes(params.privilegedActor??'')||!params.authorizeApplication))throw new ValidateException('真实行退款选择策略缺少经营授权');
     if(params.privilegedActor==='customer-work'&&!customerRows)throw new ValidateException('经营退款必须使用真实行标识');
+    if(params.privilegedActor==='supplier'&&(!customerRows||!params.supplierManualRefundCapability))throw new ValidateException('供应商真实行退款须有独立人工退款能力');
     if(params.privilegedActor==='erp'&&!customerRows)throw new ValidateException('ERP退款必须使用真实行标识');
     const canonicalCart=(cart:typeof cartInfos[number])=>customerRows?cart.id:Number(cart.cartId);
     const financialCartKey=(id:number)=>customerRows?cartInfos.find(x=>x.id===id)!.cartId:String(id);
@@ -1197,7 +1211,7 @@ async function createOrderRefundApplication(
     });
     await assertVirtualProductRefundPolicy(tx, order, refundPolicyCarts, {
       applyType: params.applyType,
-      allowIrreversibleSecretRefund: params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work",
+      allowIrreversibleSecretRefund: params.privilegedActor === "admin" || params.privilegedActor === "store-manager" || params.privilegedActor === "customer-work" || params.privilegedActor === "supplier" && Boolean(params.supplierManualRefundCapability),
     });
     if (refundNum <= 0 || (!pureIntegralOrder && !zeroCashierQuantityReturn && refundCents <= 0)) {
       throw new ValidateException("没有可退款的商品或金额");
@@ -1345,7 +1359,7 @@ export async function applyCashierZeroRefundWithMaterialization(container:Contai
  * allocation, rollback-as-quote, operation key or audit event is manufactured. */
 export async function quoteOrderRefundApplication(
   container: Container,
-  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays' | 'manualRefundCapability'>,
+  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays' | 'manualRefundCapability' | 'supplierManualRefundCapability'>,
   refundTimeDays: number,
 ): Promise<OrderRefundApplicationQuote> {
   return createOrderRefundApplication(container, {
@@ -1363,7 +1377,7 @@ export async function quoteOrderRefundApplication(
  * the materialized creator. Ordinary customer entry remains unchanged. */
 export async function quoteOrderRefundWithMaterialization(
   container: Container,
-  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays' | 'manualRefundCapability'>,
+  params: Pick<ApplyOrderRefundInput, 'uid' | 'orderId' | 'applyType' | 'privilegedActor' | 'selectorNamespace' | 'cartSelections' | 'authorizeApplication' | 'resolveRefundTimeDays' | 'manualRefundCapability' | 'supplierManualRefundCapability'>,
   refundTimeDays: number,
 ): Promise<OrderRefundApplicationQuote> {
   return createOrderRefundApplication(container, {
@@ -1533,14 +1547,15 @@ export class StoreOrderRefundService {
 
     const refundCents = amountToCents(refund.refundPrice);
     if (refundCents === null || refundCents < 0) throw new ValidateException("退款金额无效");
-    if (refundCents === 0 || order.payType === "yue" || scope?.manualRefund) {
+    if(scope?.manualRefund&&scope.supplierManualRefund)throw new ValidateException('不能混用两种人工退款主体');
+    if (refundCents === 0 || order.payType === "yue" || scope?.manualRefund || scope?.supplierManualRefund) {
       await finalizeStoreOrderRefund(
         this.container,
         refundId,
         Math.floor(Date.now() / 1000),
         scope,
       );
-      return { completed: true, status: scope?.manualRefund ? refundCents===0 ? 'ZERO_SUCCESS' : 'CASH_SUCCESS' : "BALANCE_SUCCESS" };
+      return { completed: true, status: scope?.manualRefund||scope?.supplierManualRefund ? refundCents===0 ? 'ZERO_SUCCESS' : 'CASH_SUCCESS' : "BALANCE_SUCCESS" };
     }
     if (order.payType !== "weixin" && order.payType !== "alipay") {
       throw new ValidateException(`支付方式 ${order.payType || "未知"} 不支持原路退款`);

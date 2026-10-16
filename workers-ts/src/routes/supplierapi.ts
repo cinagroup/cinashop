@@ -20,6 +20,8 @@ import * as WaybillJobController from "@/controllers/system/WaybillJobController
 import * as SupplierVideo from '@/controllers/supplier/SupplierProductVideoController';
 import * as SupplierProductCopy from '@/controllers/supplier/SupplierProductCopyController';
 import * as SupplierUnpaidOrderEdit from '@/controllers/supplier/SupplierUnpaidOrderEditController';
+import * as SupplierOfflinePayment from '@/controllers/supplier/SupplierOfflinePaymentController';
+import * as SupplierManualRefund from '@/controllers/supplier/SupplierManualRefundController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -268,6 +270,10 @@ supplierapiRoutes.get('/order/edit/:id', SupplierUnpaidOrderEdit.seed);
 supplierapiRoutes.put('/order/update/:id', SupplierUnpaidOrderEdit.save);
 supplierapiRoutes.get('/order/edit_operations/:operationId', SupplierUnpaidOrderEdit.receipt);
 supplierapiRoutes.post('/order/edit_operations/:operationId/resolve', SupplierUnpaidOrderEdit.resolve);
+supplierapiRoutes.get('/order/pay_offline/:id', SupplierOfflinePayment.seed);
+supplierapiRoutes.post('/order/pay_offline/:id', SupplierOfflinePayment.pay);
+supplierapiRoutes.get('/order/payment_operations/:operationId', SupplierOfflinePayment.receipt);
+supplierapiRoutes.post('/order/payment_operations/:operationId/resolve', SupplierOfflinePayment.resolve);
 supplierapiRoutes.get("/order/distribution_info", SupplierController.pickingSheets);
 supplierapiRoutes.get("/order/split_cart_info/:id", SupplierController.splitCartInfo);
 supplierapiRoutes.put("/order/split_delivery/:id", SupplierController.splitDelivery);
@@ -282,6 +288,10 @@ supplierapiRoutes.get("/order/status/:id", SupplierController.orderStatus);
 supplierapiRoutes.put("/order/take/:id", SupplierController.confirmOrderTake);
 
 supplierapiRoutes.get("/refund/list", SupplierController.refundList);
+supplierapiRoutes.get('/refund/manual/:id', SupplierManualRefund.seed);
+supplierapiRoutes.put('/refund/manual/:id', SupplierManualRefund.execute);
+supplierapiRoutes.get('/refund/manual_operations/:operationId', SupplierManualRefund.receipt);
+supplierapiRoutes.post('/refund/manual_operations/:operationId/resolve', SupplierManualRefund.resolve);
 supplierapiRoutes.get("/refund/detail/:id", SupplierController.refundDetail);
 supplierapiRoutes.get("/refund/refund/:id", SupplierController.refundForm);
 supplierapiRoutes.get("/refund/reason", SupplierController.refundReasons);

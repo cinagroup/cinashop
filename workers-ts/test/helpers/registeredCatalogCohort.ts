@@ -180,8 +180,19 @@ const supplierOrderExplicitColumns = {
   supplier_order_edit_operation_v1: ['operation_id','actor_id','supplier_id','order_id','request_hash','state','before_hash','after_hash','evidence','result','created_at'],
   legacy_order_gain_partition_v1: ['partition_id','operation_id','source_order_id','child_order_id','buyer_id','supplier_id','kind','source_hash','child_hash','evidence','created_at'],
 } as const;
-export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'='historical') {
-  assert.ok(['historical','current-ordinary','current-product','current-supplier-order'].includes(scope),'Unknown independently commissioned declaration scope');
+// New cash collection/refund evidence remains a separate explicit cohort.
+// None of these relations enters the historical bootstrap or ORM constructor.
+const supplierCashExplicitDeclarations = [
+  ['supplierOfflinePaymentOperation.ts','be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355',['supplier_offline_payment_operation_v1']],
+  ['supplierManualRefund.ts','d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3',['supplier_manual_refund_operation_v1','supplier_manual_refund_proof_v1']],
+] as const;
+const supplierCashExplicitColumns = {
+  supplier_offline_payment_operation_v1: ['operation_id','actor_id','supplier_id','order_id','request_hash','state','intent','source','source_hash','evidence','result','created_at'],
+  supplier_manual_refund_operation_v1: ['operation_id','actor_id','supplier_id','refund_id','request_hash','state','intent','source_hash','proof_hash','result','created_at'],
+  supplier_manual_refund_proof_v1: ['refund_id','operation_id','actor_id','supplier_id','order_id','payment_order_id','buyer_id','pay_type','amount','intent','intent_json','request_hash','source','source_json','source_hash','proof','proof_json','proof_hash','transaction_id','created_at'],
+} as const;
+export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'|'current-supplier-cash'='historical') {
+  assert.ok(['historical','current-ordinary','current-product','current-supplier-order','current-supplier-cash'].includes(scope),'Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
@@ -241,7 +252,22 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
   assert.equal(orderCurrentTables.length,29);assert.equal(new Set(orderCurrentTables).size,29);
   const orderCurrentOnly=orderCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
   assert.equal(orderCurrentOnly.length,28);assert.equal(new Set(orderCurrentOnly).size,28);
-  return orderCurrentOnly;
+  if(scope==='current-supplier-order')return orderCurrentOnly;
+  for(const [file,sha256,names] of supplierCashExplicitDeclarations){
+    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n'),parsed=parseCreateTables(source,'postgres');
+    assert.equal(digest(source),sha256,'Complete independently commissioned Supplier cash DDL source changed: '+file);
+    assert.deepEqual([...parsed.keys()].sort(),[...names].sort());
+    for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...supplierCashExplicitColumns[name]]);
+  }
+  const cashTables=supplierCashExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
+  assert.equal(cashTables.length,3);assert.equal(new Set(cashTables).size,3);
+  assert.deepEqual(Object.keys(supplierCashExplicitColumns).sort(),cashTables);
+  for(const name of cashTables)assert.ok(!orderCurrentTables.includes(name),'Cash declaration must not replace an existing declaration');
+  const cashCurrentTables=[...orderCurrentTables,...cashTables].sort();
+  assert.equal(cashCurrentTables.length,32);assert.equal(new Set(cashCurrentTables).size,32);
+  const cashCurrentOnly=cashCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(cashCurrentOnly.length,31);assert.equal(new Set(cashCurrentOnly).size,31);
+  return cashCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();

@@ -5,6 +5,7 @@ import {ValidateException} from '@/utils/errors';
 import {outRequestHash,normalizeOutRequestKey} from '@/services/out/OutIdempotency';
 import {financialRecord,financialId,financialHash} from '@/services/customer-work/CustomerWorkFinancialProtocol';
 import {customerManualManagerOriginReadiness} from '@/migrations/customerManualOfflineOriginCatalog';
+import {parseSupplierOfflinePaymentOrigin,readSupplierOfflinePaymentOrigin,type SupplierOfflinePaymentOrigin} from '@/services/supplier/SupplierOfflinePaymentOrigin';
 export const CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION='customer-manual-offline-payment-origin-v2' as const;
 const managerVersion='merchant-order-operation-v1' as const;
 type Order=typeof storeOrder.$inferSelect;
@@ -23,6 +24,7 @@ interface OriginalManagerReceipt{
  intent:OriginalManagerIntent;evidence:{order_id:number;outbox_id:number};created_at:string;
 }
 export type CustomerManualOfflineOrigin=
+ |SupplierOfflinePaymentOrigin
  |{version:typeof CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION;kind:'manager_order_offline';primary_audit_id:number;actor_uid:number;receipt:OriginalManagerReceipt}
  |{version:typeof CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION;kind:'admin_order_offline';primary_audit_id:number;admin_id:number};
 async function managerReceipt(value:unknown):Promise<OriginalManagerReceipt>{
@@ -44,6 +46,7 @@ async function managerReceipt(value:unknown):Promise<OriginalManagerReceipt>{
  * cashier/customer/PHP objects and their existing hashes are not rewritten. */
 export async function parseCustomerManualOfflineOrigin(value:unknown):Promise<CustomerManualOfflineOrigin>{
  fact(value&&typeof value==='object'&&!Array.isArray(value));const discriminator=value as Record<string,unknown>;
+ if(discriminator.kind==='supplier_order_offline')return parseSupplierOfflinePaymentOrigin(value);
  if(discriminator.kind==='manager_order_offline'){
   const r=financialRecord(value,['version','kind','primary_audit_id','actor_uid','receipt']);fact(r.version===CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION);
   const actor_uid=financialId(r.actor_uid),receipt=await managerReceipt(r.receipt);fact(receipt.actor_uid===actor_uid);
@@ -53,6 +56,7 @@ export async function parseCustomerManualOfflineOrigin(value:unknown):Promise<Cu
  return{version:CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION,kind:'admin_order_offline',primary_audit_id:financialId(r.primary_audit_id),admin_id:financialId(r.admin_id)};
 }
 export async function readCustomerManualOfflineOrigin(db:DbClient,root:Order,primary:Audit,event:Event):Promise<CustomerManualOfflineOrigin>{
+ if(primary.changeType==='supplier_order_offline')return readSupplierOfflinePaymentOrigin(db,root,primary,event);
  fact(root.payType==='offline'&&primary.changeTime===root.payTime&&root.paid===1&&root.payTime>0&&event.status==='COMPLETED');
  const payload=financialRecord(event.payload,['orderId','orderNo']);fact(payload.orderId===root.id&&payload.orderNo===root.orderId);
  if(primary.changeType==='admin_order_offline'){

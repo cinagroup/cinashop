@@ -126,7 +126,7 @@ export async function refundRuntimeFixture() {
       }
       return rows;
     };
-    function operations(peer: SequenceRunnerPeer & { role: string }) {
+    function operations(peer: SequenceRunnerPeer & { role: string; connectionString: string }) {
       const container = createContainerFromDb(peer.db);
       let applicationNumber = 0;
       const order = async (id: number) => (await peer.db.select().from(storeOrder).where(eq(storeOrder.id, id)))[0];
